@@ -1,0 +1,7 @@
+# Docs
+public
+
+# JS
+node_modules
+.eslintcache
+tsconfig.tsbuildinfo
