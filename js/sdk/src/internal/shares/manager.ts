@@ -1,9 +1,9 @@
-import { ProtonDriveAccount } from "../../interface/index";
-import { NotFoundAPIError } from "../apiService/index";
-import { sharesAPIService } from "./apiService";
-import { sharesCache } from "./cache";
-import { sharesCryptoCache } from "./cryptoCache";
-import { sharesCryptoService } from "./cryptoService";
+import { ProtonDriveAccount } from "../../interface";
+import { NotFoundAPIError } from "../apiService";
+import { SharesAPIService } from "./apiService";
+import { SharesCache } from "./cache";
+import { SharesCryptoCache } from "./cryptoCache";
+import { SharesCryptoService } from "./cryptoService";
 
 /**
  * Provides high-level actions for managing shares.
@@ -14,42 +14,50 @@ import { sharesCryptoService } from "./cryptoService";
  * This module uses other modules providing low-level operations, such
  * as API service, cache, crypto service, etc.
  */
-export function sharesManager(
-    apiService: ReturnType<typeof sharesAPIService>,
-    cache: ReturnType<typeof sharesCache>,
-    cryptoCache: ReturnType<typeof sharesCryptoCache>,
-    cryptoService: ReturnType<typeof sharesCryptoService>,
-    account: ProtonDriveAccount,
-) {
+export class SharesManager {
     // Cache for My files IDs.
     // Those IDs are required very often, so it is better to keep them in memory.
     // The IDs are not cached in the cache module, as we want to always fetch
-    // them from the API, and not from the cache.
-    const myFilesIds: {
+    // them from the API, and not from the this.cache.
+    private myFilesIds: {
         volumeId: string;
         shareId: string;
         rootNodeId: string;
     } | null = null;
+
+    constructor(
+        private apiService: SharesAPIService,
+        private cache: SharesCache,
+        private cryptoCache: SharesCryptoCache,
+        private cryptoService: SharesCryptoService,
+        private account: ProtonDriveAccount,
+    ) {
+        this.apiService = apiService;
+        this.cache = cache;
+        this.cryptoCache = cryptoCache;
+        this.cryptoService = cryptoService;
+        this.account = account;
+    }
 
     /**
      * It returns the IDs of the My files section.
      * 
      * If the default volume or My files section doesn't exist, it creates it.
      */
-    async function getMyFilesIDs() {
-        if (myFilesIds) {
-            return myFilesIds;
+    async getMyFilesIDs() {
+        if (this.myFilesIds) {
+            return this.myFilesIds;
         }
 
         try {
-            const encryptedShare = await apiService.getMyFiles();
+            const encryptedShare = await this.apiService.getMyFiles();
 
             // Once any place needs IDs for My files, it will most likely
             // need also the keys for decrypting the tree. It is better to
             // decrypt the share here right away.
-            const myFilesShare = await cryptoService.decryptRootShare(encryptedShare);
-            await cryptoCache.setShareKey(myFilesShare.shareId, myFilesShare.decryptedCrypto);
-            await cache.setVolume({
+            const myFilesShare = await this.cryptoService.decryptRootShare(encryptedShare);
+            await this.cryptoCache.setShareKey(myFilesShare.shareId, myFilesShare.decryptedCrypto);
+            await this.cache.setVolume({
                 volumeId: myFilesShare.volumeId,
                 shareId: myFilesShare.shareId,
                 rootNodeId: myFilesShare.rootNodeId,
@@ -64,7 +72,7 @@ export function sharesManager(
 
         } catch (error: unknown) {
             if (error instanceof NotFoundAPIError) {
-                return createVolume();
+                return this.createVolume();
             }
             throw error;
         }
@@ -80,10 +88,10 @@ export function sharesManager(
      * 
      * @throws If the volume cannot be created (e.g., one already exists).
      */
-    async function createVolume() {
-        const { addressKey, addressId, addressKeyId } = await account.getOwnPrimaryKey();
-        const bootstrap = await cryptoService.generateVolumeBootstrap(addressKey);
-        const myFilesIds = await apiService.createVolume(
+    async createVolume() {
+        const { addressKey, addressId, addressKeyId } = await this.account.getOwnPrimaryKey();
+        const bootstrap = await this.cryptoService.generateVolumeBootstrap(addressKey);
+        const myFilesIds = await this.apiService.createVolume(
             {
                 addressId,
                 addressKeyId,
@@ -95,7 +103,7 @@ export function sharesManager(
                 armoredHashKey: bootstrap.rootNode.armoredHashKey,
             },
         );
-        await cryptoCache.setShareKey(myFilesIds.shareId, bootstrap.shareKey.decrypted);
+        await this.cryptoCache.setShareKey(myFilesIds.shareId, bootstrap.shareKey.decrypted);
         return myFilesIds;
     }
 
@@ -108,31 +116,31 @@ export function sharesManager(
      * @returns The private key for the share.
      * @throws If the share is not found or cannot be decrypted, or cached.
      */
-    async function getSharePrivateKey(shareId: string) {
-        const keys = await cryptoCache.getShareKey(shareId);
+    async getSharePrivateKey(shareId: string) {
+        const keys = await this.cryptoCache.getShareKey(shareId);
         if (keys) {
             return keys.key;
         }
 
-        const encryptedShare = await apiService.getRootShare(shareId);
-        const share = await cryptoService.decryptRootShare(encryptedShare);
-        await cryptoCache.setShareKey(share.shareId, share.decryptedCrypto);
+        const encryptedShare = await this.apiService.getRootShare(shareId);
+        const share = await this.cryptoService.decryptRootShare(encryptedShare);
+        await this.cryptoCache.setShareKey(share.shareId, share.decryptedCrypto);
         return share.decryptedCrypto.key;
     }
 
-    async function getVolumeEmailKey(volumeId: string) {
-        const volume = await cache.getVolume(volumeId);
+    async getVolumeEmailKey(volumeId: string) {
+        const volume = await this.cache.getVolume(volumeId);
         if (volume) {
             return {
                 email: volume.creatorEmail,
-                key: await account.getOwnPrivateKey(volume.creatorEmail),
+                key: await this.account.getOwnPrivateKey(volume.creatorEmail),
             };
         }
 
-        const { shareId } = await apiService.getVolume(volumeId);
-        const share = await apiService.getShare(shareId);
+        const { shareId } = await this.apiService.getVolume(volumeId);
+        const share = await this.apiService.getShare(shareId);
 
-        await cache.setVolume({
+        await this.cache.setVolume({
             volumeId: share.volumeId,
             shareId: share.shareId,
             rootNodeId: share.rootNodeId,
@@ -141,13 +149,7 @@ export function sharesManager(
 
         return {
             email: share.creatorEmail,
-            key: await account.getOwnPrivateKey(share.creatorEmail),
+            key: await this.account.getOwnPrivateKey(share.creatorEmail),
         };
-    }
-
-    return {
-        getMyFilesIDs,
-        getSharePrivateKey,
-        getVolumeEmailKey,
     }
 }

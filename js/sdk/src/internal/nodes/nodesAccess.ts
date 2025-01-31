@@ -1,7 +1,7 @@
-import { nodeAPIService } from "./apiService";
-import { nodesCache } from "./cache"
-import { nodesCryptoCache } from "./cryptoCache";
-import { nodesCryptoService } from "./cryptoService";
+import { NodeAPIService } from "./apiService";
+import { NodesCache } from "./cache"
+import { NodesCryptoCache } from "./cryptoCache";
+import { NodesCryptoService } from "./cryptoService";
 import { SharesService, EncryptedNode, DecryptedNode, DecryptedNodeKeys } from "./interface";
 
 /**
@@ -10,79 +10,80 @@ import { SharesService, EncryptedNode, DecryptedNode, DecryptedNodeKeys } from "
  * The node access module is responsible for fetching, decrypting and caching
  * nodes metadata.
  */
-export function nodesAccess(
-    apiService: ReturnType<typeof nodeAPIService>,
-    cache: ReturnType<typeof nodesCache>,
-    cryptoCache: ReturnType<typeof nodesCryptoCache>,
-    cryptoService: ReturnType<typeof nodesCryptoService>,
-    shareService: SharesService,
-) {
-    async function getNode(nodeUid: string) {
+export class NodesAccess {
+    constructor(
+        private apiService: NodeAPIService,
+        private cache: NodesCache,
+        private cryptoCache: NodesCryptoCache,
+        private cryptoService: NodesCryptoService,
+        private shareService: SharesService,
+    ) {
+        this.apiService = apiService;
+        this.cache = cache;
+        this.cryptoCache = cryptoCache;
+        this.cryptoService = cryptoService;
+        this.shareService = shareService;
+    }
+
+    async getNode(nodeUid: string): Promise<DecryptedNode> {
         let cachedNode;
         try {
-            cachedNode = await cache.getNode(nodeUid);
+            cachedNode = await this.cache.getNode(nodeUid);
         } catch {}
 
         if (cachedNode && !cachedNode.isStale) {
             return cachedNode;
         }
 
-        const { node } = await loadNode(nodeUid);
+        const { node } = await this.loadNode(nodeUid);
         return node;
     }
 
-    async function loadNode(nodeUid: string) {
-        const encryptedNode = await apiService.getNode(nodeUid);
-        return decryptNode(encryptedNode);
+    private async loadNode(nodeUid: string): Promise<{ node: DecryptedNode, keys?: DecryptedNodeKeys }> {
+        const encryptedNode = await this.apiService.getNode(nodeUid);
+        return this.decryptNode(encryptedNode);
     }
 
-    async function loadNodes(nodeUids: string[], signal?: AbortSignal) {
+    async loadNodes(nodeUids: string[], signal?: AbortSignal): Promise<DecryptedNode[]> {
         // TODO: batching
-        const encryptedNodes = await apiService.getNodes(nodeUids, signal);
-        const results = await Promise.all(encryptedNodes.map(decryptNode));
+        const encryptedNodes = await this.apiService.getNodes(nodeUids, signal);
+        const results = await Promise.all(encryptedNodes.map((encryptedNode) => this.decryptNode(encryptedNode)));
         return results.map(({ node }) => node);
     }
 
-    async function decryptNode(encryptedNode: EncryptedNode) {
-        const { key: parentKey } = await getParentKeys(encryptedNode);
-        const { node, keys } = await cryptoService.decryptNode(encryptedNode, parentKey);
-        cache.setNode(node);
+    private async decryptNode(encryptedNode: EncryptedNode): Promise<{ node: DecryptedNode, keys?: DecryptedNodeKeys }> {
+        const { key: parentKey } = await this.getParentKeys(encryptedNode);
+        const { node, keys } = await this.cryptoService.decryptNode(encryptedNode, parentKey);
+        this.cache.setNode(node);
         if (keys) {
-            cryptoCache.setNodeKeys(node.uid, keys);
+            this.cryptoCache.setNodeKeys(node.uid, keys);
         }
         return { node, keys };
     }
 
-    async function getParentKeys(node: Pick<DecryptedNode, 'parentUid' | 'shareId'>): Promise<Pick<DecryptedNodeKeys, 'key' | 'hashKey'>> {
+    async getParentKeys(node: Pick<DecryptedNode, 'parentUid' | 'shareId'>): Promise<Pick<DecryptedNodeKeys, 'key' | 'hashKey'>> {
         if (node.parentUid) {
-            return getNodeKeys(node.parentUid);
+            return this.getNodeKeys(node.parentUid);
         }
         if (!node.shareId) {
             // TODO: better error message
             throw new Error('Node tree has no parent to access the keys');
         }
         return {
-            key: await shareService.getSharePrivateKey(node.shareId),
+            key: await this.shareService.getSharePrivateKey(node.shareId),
         }
     }
 
-    async function getNodeKeys(nodeUid: string): Promise<DecryptedNodeKeys> {
+    async getNodeKeys(nodeUid: string): Promise<DecryptedNodeKeys> {
         try {
-            return cryptoCache.getNodeKeys(nodeUid);
+            return this.cryptoCache.getNodeKeys(nodeUid);
         } catch {
-            const { keys } = await loadNode(nodeUid);
+            const { keys } = await this.loadNode(nodeUid);
             if (!keys) {
                 // TODO: better error message
                 throw new Error('Parent node cannot be decrypted');
             }
             return keys;
         }
-    }
-
-    return {
-        getNode,
-        getParentKeys,
-        getNodeKeys,
-        loadNodes,
     }
 }

@@ -1,11 +1,11 @@
 import { MemberRole, NodeType, resultOk } from "../../interface";
-import { nodeAPIService, ResultErrors, NodeErrors } from "./apiService.js";
-import { nodesCache } from "./cache.js"
-import { nodesCryptoCache } from "./cryptoCache.js"
-import { nodesCryptoService } from "./cryptoService.js";
-import { SharesService, DecryptedNode } from "./interface.js";
-import { nodesAccess } from "./nodesAccess.js";
-import { makeNodeUid } from "./nodeUid.js";
+import { NodeAPIService, ResultErrors, NodeErrors } from "./apiService";
+import { NodesCache } from "./cache";
+import { NodesCryptoCache } from "./cryptoCache";
+import { NodesCryptoService } from "./cryptoService";
+import { SharesService, DecryptedNode } from "./interface";
+import { NodesAccess } from "./nodesAccess";
+import { makeNodeUid } from "./nodeUid";
 
 const BATCH_LOADING = 10;
 
@@ -18,30 +18,39 @@ const BATCH_LOADING = 10;
  * This module uses other modules providing low-level operations, such
  * as API service, cache, crypto service, etc.
  */
-export function nodesManager(
-    apiService: ReturnType<typeof nodeAPIService>,
-    cache: ReturnType<typeof nodesCache>,
-    cryptoCache: ReturnType<typeof nodesCryptoCache>,
-    cryptoService: ReturnType<typeof nodesCryptoService>,
-    shareService: SharesService,
-    nodesAccessFunctions: ReturnType<typeof nodesAccess>,
-) {
-    async function getMyFilesRootFolder() {
-        const { volumeId, rootNodeId } = await shareService.getMyFilesIDs();
+export class NodesManager {
+    constructor(
+        private apiService: NodeAPIService,
+        private cache: NodesCache,
+        private cryptoCache: NodesCryptoCache,
+        private cryptoService: NodesCryptoService,
+        private shareService: SharesService,
+        private nodesAccess: NodesAccess,
+    ) {
+        this.apiService = apiService;
+        this.cache = cache;
+        this.cryptoCache = cryptoCache;
+        this.cryptoService = cryptoService;
+        this.shareService = shareService;
+        this.nodesAccess = nodesAccess;
+    }
+
+    async getMyFilesRootFolder() {
+        const { volumeId, rootNodeId } = await this.shareService.getMyFilesIDs();
         const nodeUid = makeNodeUid(volumeId, rootNodeId);
-        return nodesAccessFunctions.getNode(nodeUid);
+        return this.nodesAccess.getNode(nodeUid);
     }
 
     // Improvement requested: keep status of loaded children and leverage cache.
-    async function *iterateChildren(parentNodeUid: string, signal?: AbortSignal) {
+    async *iterateChildren(parentNodeUid: string, signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
         // Ensure the parent is loaded and up-to-date.
-        const parentNode = await nodesAccessFunctions.getNode(parentNodeUid);
+        const parentNode = await this.nodesAccess.getNode(parentNodeUid);
 
-        const batchLoading = new BatchNodesLoading(nodesAccessFunctions.loadNodes);
-        for await (const nodeUid of apiService.iterateChildrenNodeUids(parentNode.uid, signal)) {
+        const batchLoading = new BatchNodesLoading(this.nodesAccess.loadNodes);
+        for await (const nodeUid of this.apiService.iterateChildrenNodeUids(parentNode.uid, signal)) {
             let node;
             try {
-                node = await cache.getNode(nodeUid);
+                node = await this.cache.getNode(nodeUid);
             } catch {}
 
             if (node && !node.isStale) {
@@ -52,13 +61,13 @@ export function nodesManager(
         }
     }
 
-    async function *iterateTrashedNodes(signal?: AbortSignal) {
-        const { volumeId } = await shareService.getMyFilesIDs();
-        const batchLoading = new BatchNodesLoading(nodesAccessFunctions.loadNodes);
-        for await (const nodeUid of apiService.iterateTrashedNodeUids(volumeId, signal)) {
+    async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
+        const { volumeId } = await this.shareService.getMyFilesIDs();
+        const batchLoading = new BatchNodesLoading(this.nodesAccess.loadNodes);
+        for await (const nodeUid of this.apiService.iterateTrashedNodeUids(volumeId, signal)) {
             let node;
             try {
-                node = await cache.getNode(nodeUid);
+                node = await this.cache.getNode(nodeUid);
             } catch {}
 
             if (node && !node.isStale) {
@@ -69,9 +78,9 @@ export function nodesManager(
         }
     }
 
-    async function *iterateNodes(nodeUids: string[], signal?: AbortSignal) {
-        const batchLoading = new BatchNodesLoading(nodesAccessFunctions.loadNodes);
-        for await (const result of cache.iterateNodes(nodeUids)) {
+    async *iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
+        const batchLoading = new BatchNodesLoading(this.nodesAccess.loadNodes);
+        for await (const result of this.cache.iterateNodes(nodeUids)) {
             if (result.ok && !result.node.isStale) {
                 yield result.node;
             } else {
@@ -80,9 +89,9 @@ export function nodesManager(
         }
     }
 
-    async function renameNode(nodeUid: string, newName: string) {
-        const node = await nodesAccessFunctions.getNode(nodeUid);
-        const parentKeys = await nodesAccessFunctions.getParentKeys(node);
+    async renameNode(nodeUid: string, newName: string): Promise<void> {
+        const node = await this.nodesAccess.getNode(nodeUid);
+        const parentKeys = await this.nodesAccess.getParentKeys(node);
 
         if (!node.hash || !parentKeys.hashKey) {
             throw new Error('Renaming root nodes is not supported')
@@ -92,8 +101,8 @@ export function nodesManager(
             signatureEmail,
             armoredNodeName,
             hash,
-        } = await cryptoService.encryptNewName(node, { key: parentKeys.key, hashKey: parentKeys.hashKey }, newName);
-        await apiService.renameNode(
+        } = await this.cryptoService.encryptNewName(node, { key: parentKeys.key, hashKey: parentKeys.hashKey }, newName);
+        await this.apiService.renameNode(
             nodeUid,
             {
                 hash: node.hash,
@@ -104,7 +113,7 @@ export function nodesManager(
                 hash: hash,
             }
         );
-        await cache.setNode({
+        await this.cache.setNode({
             ...node,
             name: resultOk(newName),
             nameAuthor: resultOk(signatureEmail),
@@ -112,14 +121,14 @@ export function nodesManager(
         });
     }
 
-    async function moveNode(nodeUid: string, newParentUid: string) {
+    async moveNode(nodeUid: string, newParentUid: string): Promise<void> {
         const [node, newParentNode] = await Promise.all([
-            nodesAccessFunctions.getNode(nodeUid),
-            nodesAccessFunctions.getNode(newParentUid),
+            this.nodesAccess.getNode(nodeUid),
+            this.nodesAccess.getNode(newParentUid),
         ]);
         const [keys, newParentKeys] = await Promise.all([
-            nodesAccessFunctions.getNodeKeys(nodeUid),
-            nodesAccessFunctions.getNodeKeys(newParentUid),
+            this.nodesAccess.getNodeKeys(nodeUid),
+            this.nodesAccess.getNodeKeys(newParentUid),
         ]);
 
         if (!node.hash) {
@@ -129,13 +138,13 @@ export function nodesManager(
             throw new Error('Moving nodes to a non-folder is not supported');
         }
 
-        const encryptedCrypto = await cryptoService.moveNode(
+        const encryptedCrypto = await this.cryptoService.moveNode(
             node,
             keys,
             newParentNode,
             { key: newParentKeys.key, hashKey: newParentKeys.hashKey },
         );
-        await apiService.moveNode(
+        await this.apiService.moveNode(
             nodeUid, 
             {
                 hash: node.hash,
@@ -151,16 +160,16 @@ export function nodesManager(
                 // TODO: content hash
             }
         );
-        await cache.setNode({
+        await this.cache.setNode({
             ...node,
             parentUid: newParentUid,
         });
     }
 
-    async function trashNodes(nodeUids: string[], signal?: AbortSignal) {
+    async trashNodes(nodeUids: string[], signal?: AbortSignal): Promise<void> {
         const nodesPerParent = new Map<string, DecryptedNode[]>();
 
-        for await (const node of iterateNodes(nodeUids, signal)) {
+        for await (const node of this.iterateNodes(nodeUids, signal)) {
             if (!node.parentUid) {
                 throw new Error('Trashing root nodes is not supported');
             }
@@ -177,7 +186,7 @@ export function nodesManager(
         for (const [parentNodeUid, nodes] of nodesPerParent) {
             let updatedNodes: DecryptedNode[];
             try {
-                await apiService.trashNodes(parentNodeUid, nodes.map(node => node.uid), signal);
+                await this.apiService.trashNodes(parentNodeUid, nodes.map(node => node.uid), signal);
                 updatedNodes = nodes;
             } catch (error: unknown) {
                 if (error instanceof ResultErrors) {
@@ -189,7 +198,7 @@ export function nodesManager(
                 }
             }
             for (const node of updatedNodes) {
-                await cache.setNode({
+                await this.cache.setNode({
                     ...node,
                     trashedDate: new Date(),
                 });
@@ -201,13 +210,13 @@ export function nodesManager(
         }
     }
 
-    async function restoreNodes(nodeUids: string[], signal?: AbortSignal) {
-        const nodes = await Array.fromAsync(iterateNodes(nodeUids, signal));
+    async restoreNodes(nodeUids: string[], signal?: AbortSignal): Promise<void> {
+        const nodes = await Array.fromAsync(this.iterateNodes(nodeUids, signal));
         let updatedNodes: DecryptedNode[];
         let catchedError: unknown;
 
         try {
-            await apiService.restoreNodes(nodeUids, signal);
+            await this.apiService.restoreNodes(nodeUids, signal);
             updatedNodes = nodes;
         } catch (error: unknown) {
             catchedError = error;
@@ -219,7 +228,7 @@ export function nodesManager(
         }
 
         for (const node of updatedNodes) {
-            await cache.setNode({
+            await this.cache.setNode({
                 ...node,
                 trashedDate: new Date(),
             });
@@ -230,12 +239,12 @@ export function nodesManager(
         }
     }
 
-    async function deleteNodes(nodeUids: string[], signal?: AbortSignal) {
+    async deleteNodes(nodeUids: string[], signal?: AbortSignal): Promise<void> {
         let updatedNodeUids: string[];
         let catchedError: unknown;
 
         try {
-            await apiService.restoreNodes(nodeUids, signal);
+            await this.apiService.restoreNodes(nodeUids, signal);
             updatedNodeUids = nodeUids;
         } catch (error: unknown) {
             catchedError = error;
@@ -247,7 +256,7 @@ export function nodesManager(
         }
 
         if (updatedNodeUids) {
-            await cache.removeNodes(updatedNodeUids);
+            await this.cache.removeNodes(updatedNodeUids);
         }
 
         if (catchedError) {
@@ -255,15 +264,15 @@ export function nodesManager(
         }
     }
 
-    async function createFolder(parentNodeUid: string, folderName: string, signal?: AbortSignal) {
-        const parentNode = await nodesAccessFunctions.getNode(parentNodeUid);
-        const parentKeys = await nodesAccessFunctions.getNodeKeys(parentNodeUid);
+    async createFolder(parentNodeUid: string, folderName: string, signal?: AbortSignal): Promise<DecryptedNode> {
+        const parentNode = await this.nodesAccess.getNode(parentNodeUid);
+        const parentKeys = await this.nodesAccess.getNodeKeys(parentNodeUid);
         if (!parentKeys.hashKey) {
             throw new Error('Creating folders in non-folders is not supported');
         }
 
-        const { encryptedCrypto, keys } = await cryptoService.createFolder(parentNode, { key: parentKeys.key, hashKey: parentKeys.hashKey }, folderName);
-        const nodeUid = await apiService.createFolder(parentNodeUid, {
+        const { encryptedCrypto, keys } = await this.cryptoService.createFolder(parentNode, { key: parentKeys.key, hashKey: parentKeys.hashKey }, folderName);
+        const nodeUid = await this.apiService.createFolder(parentNodeUid, {
             armoredKey: encryptedCrypto.armoredKey,
             armoredHashKey: encryptedCrypto.folder.armoredHashKey,
             armoredNodePassphrase: encryptedCrypto.armoredNodePassphrase,
@@ -274,7 +283,7 @@ export function nodesManager(
             encryptedExtendedAttributes: encryptedCrypto.folder.encryptedExtendedAttributes || "", // TODO
         }, signal);
 
-        await cache.setNode({
+        const node: DecryptedNode = {
             // Internal metadata
             volumeId: parentNode.volumeId,
             hash: encryptedCrypto.hash,
@@ -296,21 +305,11 @@ export function nodesManager(
             nameAuthor: resultOk(encryptedCrypto.signatureEmail),
             name: resultOk(folderName),
             activeRevision: resultOk(null),
-        });
-        await cryptoCache.setNodeKeys(nodeUid, keys);
-    }
+        }
 
-    return {
-        getMyFilesRootFolder,
-        iterateChildren,
-        iterateTrashedNodes,
-        iterateNodes,
-        renameNode,
-        moveNode,
-        trashNodes,
-        restoreNodes,
-        deleteNodes,
-        createFolder,
+        await this.cache.setNode(node);
+        await this.cryptoCache.setNodeKeys(nodeUid, keys);
+        return node;
     }
 }
 

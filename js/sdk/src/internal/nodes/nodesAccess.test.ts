@@ -1,18 +1,18 @@
 import { PrivateKey } from "../../crypto";
-import { nodeAPIService } from "./apiService";
-import { nodesCache } from "./cache"
-import { nodesCryptoCache } from "./cryptoCache";
-import { nodesCryptoService } from "./cryptoService";
-import { nodesAccess } from './nodesAccess';
+import { NodeAPIService } from "./apiService";
+import { NodesCache } from "./cache"
+import { NodesCryptoCache } from "./cryptoCache";
+import { NodesCryptoService } from "./cryptoService";
+import { NodesAccess } from './nodesAccess';
 import { SharesService, DecryptedNode, EncryptedNode, DecryptedNodeKeys } from "./interface";
 
 describe('nodesAccess', () => {
-    let apiService: ReturnType<typeof nodeAPIService>;
-    let cache: ReturnType<typeof nodesCache>;
-    let cryptoCache: ReturnType<typeof nodesCryptoCache>;
-    let cryptoService: ReturnType<typeof nodesCryptoService>;
+    let apiService: NodeAPIService;
+    let cache: NodesCache;
+    let cryptoCache: NodesCryptoCache;
+    let cryptoService: NodesCryptoService;
     let shareService: SharesService;
-    let access: ReturnType<typeof nodesAccess>;
+    let access: NodesAccess;
 
     beforeEach(() => {
         // @ts-expect-error No need to implement all methods for mocking
@@ -39,7 +39,7 @@ describe('nodesAccess', () => {
             getSharePrivateKey: jest.fn(),
         };
 
-        access = nodesAccess(apiService, cache, cryptoCache, cryptoService, shareService);
+        access = new NodesAccess(apiService, cache, cryptoCache, cryptoService, shareService);
     });
 
     describe('getNode', () => {

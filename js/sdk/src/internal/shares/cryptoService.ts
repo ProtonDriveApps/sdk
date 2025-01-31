@@ -1,6 +1,6 @@
-import { ProtonDriveAccount } from "../../interface/index.js";
-import { DriveCrypto, PrivateKey, VERIFICATION_STATUS } from "../../crypto/index.js";
-import { EncryptedRootShare, DecryptedRootShare, EncryptedShareCrypto, DecryptedShareCrypto } from "./interface.js";
+import { ProtonDriveAccount } from "../../interface";
+import { DriveCrypto, PrivateKey, VERIFICATION_STATUS } from "../../crypto";
+import { EncryptedRootShare, DecryptedRootShare, EncryptedShareCrypto, DecryptedShareCrypto } from "./interface";
 
 /**
  * Provides crypto operations for share keys.
@@ -12,8 +12,13 @@ import { EncryptedRootShare, DecryptedRootShare, EncryptedShareCrypto, Decrypted
  * 
  * The service owns the logic to switch between old and new crypto model.
  */
-export function sharesCryptoService(driveCrypto: DriveCrypto, account: ProtonDriveAccount) {
-    async function generateVolumeBootstrap(addressKey: PrivateKey): Promise<{
+export class SharesCryptoService {
+    constructor(private driveCrypto: DriveCrypto, private account: ProtonDriveAccount) {
+        this.driveCrypto = driveCrypto;
+        this.account = account;
+    }
+
+    async generateVolumeBootstrap(addressKey: PrivateKey): Promise<{
         shareKey: { encrypted: EncryptedShareCrypto, decrypted: DecryptedShareCrypto },
         rootNode: {
             keys: { encrypted: EncryptedShareCrypto, decrypted: DecryptedShareCrypto },
@@ -21,10 +26,10 @@ export function sharesCryptoService(driveCrypto: DriveCrypto, account: ProtonDri
             armoredHashKey: string,
         }
     }> {
-        const shareKey = await driveCrypto.generateKey([addressKey], addressKey);
-        const rootNodeKeys = await driveCrypto.generateKey([shareKey.decrypted.key], addressKey);
-        const { armoredNodeName } = await driveCrypto.encryptNodeName('root', shareKey.decrypted.key, addressKey);
-        const { armoredHashKey } = await driveCrypto.generateHashKey(rootNodeKeys.decrypted.key);
+        const shareKey = await this.driveCrypto.generateKey([addressKey], addressKey);
+        const rootNodeKeys = await this.driveCrypto.generateKey([shareKey.decrypted.key], addressKey);
+        const { armoredNodeName } = await this.driveCrypto.encryptNodeName('root', shareKey.decrypted.key, addressKey);
+        const { armoredHashKey } = await this.driveCrypto.generateHashKey(rootNodeKeys.decrypted.key);
         return {
             shareKey,
             rootNode: {
@@ -35,11 +40,11 @@ export function sharesCryptoService(driveCrypto: DriveCrypto, account: ProtonDri
         }
     }
 
-    async function decryptRootShare(share: EncryptedRootShare): Promise<DecryptedRootShare> {
-        const addressPrivateKeys = await account.getOwnPrivateKeys(share.addressId);
-        const addressPublicKeys = await account.getPublicKeys(share.creatorEmail);
+    async decryptRootShare(share: EncryptedRootShare): Promise<DecryptedRootShare> {
+        const addressPrivateKeys = await this.account.getOwnPrivateKeys(share.addressId);
+        const addressPublicKeys = await this.account.getPublicKeys(share.creatorEmail);
 
-        const { key, sessionKey, verified } = await driveCrypto.decryptKey(
+        const { key, sessionKey, verified } = await this.driveCrypto.decryptKey(
             share.encryptedCrypto.armoredKey,
             share.encryptedCrypto.armoredPassphrase,
             share.encryptedCrypto.armoredPassphraseSignature,
@@ -59,10 +64,5 @@ export function sharesCryptoService(driveCrypto: DriveCrypto, account: ProtonDri
                 sessionKey,
             }
         }
-    }
-
-    return {
-        generateVolumeBootstrap,
-        decryptRootShare,
     }
 }

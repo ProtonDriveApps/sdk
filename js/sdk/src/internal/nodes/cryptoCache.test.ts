@@ -1,6 +1,6 @@
 import { PrivateKey, SessionKey } from "../../crypto";
 import { MemoryCache } from "../../cache";
-import { nodesCryptoCache } from "./cryptoCache";
+import { NodesCryptoCache } from "./cryptoCache";
 
 jest.mock('../../crypto/openPGPSerialisation', () => ({
     serializePrivateKey: jest.fn((value) => value),
@@ -16,7 +16,7 @@ jest.mock('../../crypto/openPGPSerialisation', () => ({
 
 describe('nodesCryptoCache', () => {
     let memoryCache: MemoryCache;
-    let cache: ReturnType<typeof nodesCryptoCache>;
+    let cache: NodesCryptoCache;
 
     const generatePrivateKey = (name: string) => {
         return name as unknown as PrivateKey
@@ -31,7 +31,7 @@ describe('nodesCryptoCache', () => {
         memoryCache.setEntity('nodeKeys-badKeysObject', 'aaa');
         memoryCache.setEntity('nodeKeys-badSessionKey', '{ "passphrase": "pass", "key": "aaa", "sessionKey": "badSessionKey" }');
 
-        cache = nodesCryptoCache(memoryCache);
+        cache = new NodesCryptoCache(memoryCache);
     });
 
     it('should store and retrieve keys', async () => {

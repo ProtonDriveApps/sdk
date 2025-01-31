@@ -1,6 +1,6 @@
 import { MemoryCache } from "../../cache";
 import { NodeType, MemberRole } from "../../interface";
-import { CACHE_TAG_KEYS, nodesCache } from "./cache";
+import { CACHE_TAG_KEYS, NodesCache } from "./cache";
 import { DecryptedNode } from "./interface";
 
 function generateNode(uid: string, parentUid='root', params: Partial<DecryptedNode> = {}): DecryptedNode {
@@ -18,7 +18,7 @@ function generateNode(uid: string, parentUid='root', params: Partial<DecryptedNo
     } as DecryptedNode;
 }
 
-async function generateTreeStructure(cache: ReturnType<typeof nodesCache>) {
+async function generateTreeStructure(cache: NodesCache) {
     for (const node of [
         generateNode('node1', 'root'),
         generateNode('node1a', 'node1'),
@@ -37,7 +37,7 @@ async function generateTreeStructure(cache: ReturnType<typeof nodesCache>) {
     }
 }
 
-async function verifyNodesCache(cache: ReturnType<typeof nodesCache>, expectedNodes: string[], expectedMissingNodes: string[]) {
+async function verifyNodesCache(cache: NodesCache, expectedNodes: string[], expectedMissingNodes: string[]) {
     for (const nodeUid of expectedNodes) {
         try {
             await cache.getNode(nodeUid);
@@ -58,14 +58,14 @@ async function verifyNodesCache(cache: ReturnType<typeof nodesCache>, expectedNo
 
 describe('nodesCache', () => {
     let memoryCache: MemoryCache;
-    let cache: ReturnType<typeof nodesCache>;
+    let cache: NodesCache;
 
     beforeEach(() => {
         memoryCache = new MemoryCache([CACHE_TAG_KEYS.ParentUid, CACHE_TAG_KEYS.Trashed]);
         memoryCache.setEntity('node-root', JSON.stringify(generateNode('root', '')));
         memoryCache.setEntity('node-badObject', 'aaa', { [CACHE_TAG_KEYS.ParentUid]: 'root' });
 
-        cache = nodesCache(memoryCache);
+        cache = new NodesCache(memoryCache);
     });
 
     it('should store and retrieve node', async () => {

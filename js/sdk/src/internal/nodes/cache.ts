@@ -1,11 +1,16 @@
 import { ProtonDriveCache, EntityResult } from "../../cache";
 import { Logger } from "../../interface";
-import { DecryptedNode } from "./interface.js";
+import { DecryptedNode } from "./interface";
 
 export enum CACHE_TAG_KEYS {
     ParentUid = 'parentUid',
     Trashed = 'trashed',
 }
+
+type DecryptedNodeResult = (
+    {uid: string, ok: true, node: DecryptedNode} |
+    {uid: string, ok: false, error: string}
+);
 
 /**
  * Provides caching for nodes metadata.
@@ -15,8 +20,13 @@ export enum CACHE_TAG_KEYS {
  * 
  * The cache of node metadata should not contain any crypto material.
  */
-export function nodesCache(driveCache: ProtonDriveCache, logger?: Logger) {
-    async function setNode(node: DecryptedNode) {
+export class NodesCache {
+    constructor(private driveCache: ProtonDriveCache, private logger?: Logger) {
+        this.driveCache = driveCache;
+        this.logger = logger;
+    }
+
+    async setNode(node: DecryptedNode): Promise<void> {
         const key = getCacheUid(node.uid);
         const nodeData = serialiseNode(node);
         
@@ -28,16 +38,16 @@ export function nodesCache(driveCache: ProtonDriveCache, logger?: Logger) {
             tags[CACHE_TAG_KEYS.Trashed] = 'true';
         }
 
-        await driveCache.setEntity(key, nodeData, tags);
+        await this.driveCache.setEntity(key, nodeData, tags);
     }
 
-    async function getNode(nodeUid: string): Promise<DecryptedNode> {
+    async getNode(nodeUid: string): Promise<DecryptedNode> {
         const key = getCacheUid(nodeUid);
-        const nodeData = await driveCache.getEntity(key);
+        const nodeData = await this.driveCache.getEntity(key);
         try {
             return deserialiseNode(nodeData);
         } catch (error: unknown) {
-            removeCorruptedNode({ nodeUid }, error);
+            this.removeCorruptedNode({ nodeUid }, error);
             throw new Error(`Failed to deserialise node: ${error instanceof Error ? error.message : error}`)
         }
     }
@@ -48,72 +58,72 @@ export function nodesCache(driveCache: ProtonDriveCache, logger?: Logger) {
      * nodes and rather let SDK re-fetch them than to auotmatically
      * fix issues and do not bother user with it.
      */
-    async function removeCorruptedNode({ nodeUid, cacheUid }: { nodeUid?: string, cacheUid?: string }, corruptionError: unknown) {
-        logger?.error(`Removing corrupted nodes from the cache: ${corruptionError instanceof Error ? corruptionError.message : corruptionError}`);
+    private async removeCorruptedNode({ nodeUid, cacheUid }: { nodeUid?: string, cacheUid?: string }, corruptionError: unknown): Promise<void> {
+        this.logger?.error(`Removing corrupted nodes from the cache: ${corruptionError instanceof Error ? corruptionError.message : corruptionError}`);
         try {
             if (nodeUid) {
-                await removeNodes([nodeUid]);
+                await this.removeNodes([nodeUid]);
             } else if (cacheUid) {
-                await driveCache.removeEntities([cacheUid]);
+                await this.driveCache.removeEntities([cacheUid]);
             }
         } catch (removingError: unknown) {
             // The node will not be returned, thus SDK will re-fetch
             // and re-cache it. Setting it again should then fix the
             // problem.
-            logger?.warn(`Failed to remove corrupted node from the cache: ${removingError instanceof Error ? removingError.message : removingError}`);
+            this.logger?.warn(`Failed to remove corrupted node from the cache: ${removingError instanceof Error ? removingError.message : removingError}`);
         }
     }
 
-    async function removeNodes(nodeUids: string[]) {
+    async removeNodes(nodeUids: string[]): Promise<void> {
         const cacheUids = nodeUids.map(getCacheUid);
-        await driveCache.removeEntities(cacheUids);
+        await this.driveCache.removeEntities(cacheUids);
         for (const nodeUid of nodeUids) {
             try {
-                const childrenCacheUids = await getRecursiveChildrenCacheUids(nodeUid);
+                const childrenCacheUids = await this.getRecursiveChildrenCacheUids(nodeUid);
                 // Reverse the order to remove children first.
                 // Crucial to not leave any children without parent
                 // if removing nodes fails.
                 childrenCacheUids.reverse();
-                await driveCache.removeEntities(childrenCacheUids);
+                await this.driveCache.removeEntities(childrenCacheUids);
             } catch (error: unknown) {
                 // TODO: Should we throw here to the client?
-                logger?.error(`Failed to remove children from the cache: ${error instanceof Error ? error.message : error}`);
+                this.logger?.error(`Failed to remove children from the cache: ${error instanceof Error ? error.message : error}`);
             }
         }
     }
 
-    async function getRecursiveChildrenCacheUids(parentNodeUid: string): Promise<string[]> {
+    private async getRecursiveChildrenCacheUids(parentNodeUid: string): Promise<string[]> {
         const cacheUids = [];
-        for await (const result of driveCache.iterateEntitiesByTag(CACHE_TAG_KEYS.ParentUid, parentNodeUid)) {
+        for await (const result of this.driveCache.iterateEntitiesByTag(CACHE_TAG_KEYS.ParentUid, parentNodeUid)) {
             cacheUids.push(result.uid);
-            const childrenCacheUids = await getRecursiveChildrenCacheUids(getNodeUid(result.uid));
+            const childrenCacheUids = await this.getRecursiveChildrenCacheUids(getNodeUid(result.uid));
             cacheUids.push(...childrenCacheUids);
         }
         return cacheUids;
     }
 
-    async function *iterateNodes(nodeUids: string[]) {
+    async *iterateNodes(nodeUids: string[]): AsyncGenerator<DecryptedNodeResult> {
         const cacheUids = nodeUids.map(getCacheUid);
-        for await (const result of driveCache.iterateEntities(cacheUids)) {
-            const node = await convertCacheResult(result);
+        for await (const result of this.driveCache.iterateEntities(cacheUids)) {
+            const node = await this.convertCacheResult(result);
             if (node) {
                 yield node;
             }
         }
     }
 
-    async function *iterateChildren(parentNodeUid: string) {
-        for await (const result of driveCache.iterateEntitiesByTag(CACHE_TAG_KEYS.ParentUid, parentNodeUid)) {
-            const node = await convertCacheResult(result);
+    async *iterateChildren(parentNodeUid: string): AsyncGenerator<DecryptedNodeResult> {
+        for await (const result of this.driveCache.iterateEntitiesByTag(CACHE_TAG_KEYS.ParentUid, parentNodeUid)) {
+            const node = await this.convertCacheResult(result);
             if (node) {
                 yield node;
             }
         }
     }
 
-    async function *iterateTrashedNodes() {
-        for await (const result of driveCache.iterateEntitiesByTag(CACHE_TAG_KEYS.Trashed, 'true')) {
-            const node = await convertCacheResult(result);
+    async *iterateTrashedNodes(): AsyncGenerator<DecryptedNodeResult> {
+        for await (const result of this.driveCache.iterateEntitiesByTag(CACHE_TAG_KEYS.Trashed, 'true')) {
+            const node = await this.convertCacheResult(result);
             if (node) {
                 yield node;
             }
@@ -124,16 +134,12 @@ export function nodesCache(driveCache: ProtonDriveCache, logger?: Logger) {
      * Converts result from the cache with cache UID and data to result of node
      * with node UID and DecryptedNode.
      */
-    async function convertCacheResult(result: EntityResult): Promise<(
-        {uid: string, ok: true, node: DecryptedNode} | 
-        {uid: string, ok: false, error: string} | 
-        null
-    )> {
+    private async convertCacheResult(result: EntityResult): Promise<DecryptedNodeResult | null> {
         let nodeUid;
         try {
             nodeUid = getNodeUid(result.uid);
         } catch (error: unknown) {
-            await removeCorruptedNode({ cacheUid: result.uid }, error)
+            await this.removeCorruptedNode({ cacheUid: result.uid }, error)
             return null;
         }
         if (result.ok) {
@@ -141,7 +147,7 @@ export function nodesCache(driveCache: ProtonDriveCache, logger?: Logger) {
             try {
                 node = deserialiseNode(result.data)
             } catch (error: unknown) {
-                await removeCorruptedNode({ nodeUid }, error);
+                await this.removeCorruptedNode({ nodeUid }, error);
                 return null;
             }
             return {
@@ -156,51 +162,42 @@ export function nodesCache(driveCache: ProtonDriveCache, logger?: Logger) {
             };
         }
     }
+}
 
-    function getCacheUid(nodeUid: string) {
-        return `node-${nodeUid}`;
-    }
+function getCacheUid(nodeUid: string) {
+    return `node-${nodeUid}`;
+}
 
-    function getNodeUid(cacheUid: string) {
-        if (!cacheUid.startsWith('node-')) {
-            throw new Error('Unexpected cached node uid');
-        }
-        return cacheUid.substring(5);
+function getNodeUid(cacheUid: string) {
+    if (!cacheUid.startsWith('node-')) {
+        throw new Error('Unexpected cached node uid');
     }
+    return cacheUid.substring(5);
+}
 
-    function serialiseNode(node: DecryptedNode) {
-        return JSON.stringify(node);
-    }
+function serialiseNode(node: DecryptedNode) {
+    return JSON.stringify(node);
+}
 
-    function deserialiseNode(nodeData: string): DecryptedNode {
-        const node = JSON.parse(nodeData);
-        if (
-           !node || typeof node !== 'object' ||
-           !node.uid || typeof node.uid !== 'string' ||
-           typeof node.parentUid !== 'string' ||
-           !node.directMemberRole || typeof node.directMemberRole !== 'string' ||
-           !node.type || typeof node.type !== 'string' ||
-           !node.mimeType || typeof node.mimeType !== 'string' ||
-           typeof node.isShared !== 'boolean' ||
-           !node.createdDate || typeof node.createdDate !== 'string' ||
-           (typeof node.trashedDate !== 'string' && node.trashedDate !== null) ||
-           !node.volumeId || typeof node.volumeId !== 'string'
-       ) {
-           throw new Error(`Invalid node data: ${nodeData}`);
-       }
-       return {
-           ...node,
-           createdDate: new Date(node.createdDate),
-           trashedDate: node.trashedDate ? new Date(node.trashedDate) : null,
-       };
-    }
-
-    return {
-        setNode,
-        getNode,
-        removeNodes,
-        iterateNodes,
-        iterateChildren,
-        iterateTrashedNodes,
-    }
+function deserialiseNode(nodeData: string): DecryptedNode {
+    const node = JSON.parse(nodeData);
+    if (
+       !node || typeof node !== 'object' ||
+       !node.uid || typeof node.uid !== 'string' ||
+       typeof node.parentUid !== 'string' ||
+       !node.directMemberRole || typeof node.directMemberRole !== 'string' ||
+       !node.type || typeof node.type !== 'string' ||
+       !node.mimeType || typeof node.mimeType !== 'string' ||
+       typeof node.isShared !== 'boolean' ||
+       !node.createdDate || typeof node.createdDate !== 'string' ||
+       (typeof node.trashedDate !== 'string' && node.trashedDate !== null) ||
+       !node.volumeId || typeof node.volumeId !== 'string'
+   ) {
+       throw new Error(`Invalid node data: ${nodeData}`);
+   }
+   return {
+       ...node,
+       createdDate: new Date(node.createdDate),
+       trashedDate: node.trashedDate ? new Date(node.trashedDate) : null,
+   };
 }

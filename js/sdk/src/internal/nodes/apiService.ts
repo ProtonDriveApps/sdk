@@ -34,18 +34,23 @@ type PostCreateFolderResponse = drivePaths['/drive/v2/volumes/{volumeID}/folders
  * The service is responsible for transforming local objects to API payloads
  * and vice versa. It should not contain any business logic.
  */
-export function nodeAPIService(apiService: DriveAPIService, logger?: Logger) {
-    async function getNode(nodeUid: string, signal?: AbortSignal): Promise<EncryptedNode> {
-        const nodes = await getNodes([nodeUid], signal);
+export class NodeAPIService {
+    constructor(private apiService: DriveAPIService, private logger?: Logger) {
+        this.apiService = apiService;
+        this.logger = logger;
+    }
+
+    async getNode(nodeUid: string, signal?: AbortSignal): Promise<EncryptedNode> {
+        const nodes = await this.getNodes([nodeUid], signal);
         return nodes[0];
     }
 
     // Improvement requested: support multiple volumes.
-    async function getNodes(nodeUids: string[], signal?: AbortSignal): Promise<EncryptedNode[]> {
+    async getNodes(nodeUids: string[], signal?: AbortSignal): Promise<EncryptedNode[]> {
         const nodeIds = nodeUids.map(splitNodeUid);
         const volumeId = assertAndGetSingleVolumeId("getNodes", nodeIds);
 
-        const response = await apiService.post<PostLoadLinksMetadataRequest, PostLoadLinksMetadataResponse>(`drive/volumes/${volumeId}/links`, {
+        const response = await this.apiService.post<PostLoadLinksMetadataRequest, PostLoadLinksMetadataResponse>(`drive/volumes/${volumeId}/links`, {
             LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
         }, signal);
 
@@ -66,7 +71,7 @@ export function nodeAPIService(apiService: DriveAPIService, logger?: Logger) {
                 // Sharing node metadata
                 shareId: link.SharingSummary?.ShareID || undefined,
                 isShared: !!link.SharingSummary,
-                directMemberRole: sharingSummaryToDirectMemberRole(link.SharingSummary, logger),
+                directMemberRole: sharingSummaryToDirectMemberRole(link.SharingSummary, this.logger),
             }
             const baseCryptoNodeMetadata = {
                 encryptedName: link.Link.Name,
@@ -111,12 +116,12 @@ export function nodeAPIService(apiService: DriveAPIService, logger?: Logger) {
     }
 
     // Improvement requested: load next page sooner before all IDs are yielded.
-    async function* iterateChildrenNodeUids(parentNodeUid: string, signal?: AbortSignal): AsyncGenerator<string> {
+    async *iterateChildrenNodeUids(parentNodeUid: string, signal?: AbortSignal): AsyncGenerator<string> {
         const { volumeId, nodeId } = splitNodeUid(parentNodeUid);
 
         let anchor = "";
         while (true) {
-            const response = await apiService.get<GetChildrenResponse>(`drive/volumes/${volumeId}/folders/${nodeId}/children?AnchorID=${anchor}`, signal);
+            const response = await this.apiService.get<GetChildrenResponse>(`drive/volumes/${volumeId}/folders/${nodeId}/children?AnchorID=${anchor}`, signal);
             for (const linkID of response.LinkIDs) {
                 yield makeNodeUid(volumeId, linkID);
             }
@@ -129,10 +134,10 @@ export function nodeAPIService(apiService: DriveAPIService, logger?: Logger) {
     }
 
     // Improvement requested: load next page sooner before all IDs are yielded.
-    async function* iterateTrashedNodeUids(volumeId: string, signal?: AbortSignal): AsyncGenerator<string> {
+    async *iterateTrashedNodeUids(volumeId: string, signal?: AbortSignal): AsyncGenerator<string> {
         let page = 0;
         while (true) {
-            const response = await apiService.get<GetTrashedNodesResponse>(`drive/volumes/${volumeId}/trash?Page=${page}`, signal);
+            const response = await this.apiService.get<GetTrashedNodesResponse>(`drive/volumes/${volumeId}/trash?Page=${page}`, signal);
             
             // The API returns items per shares which is not straightforward to
             // count if there is another page. We had mistakes in the past, thus
@@ -156,7 +161,7 @@ export function nodeAPIService(apiService: DriveAPIService, logger?: Logger) {
         }
     }
 
-    async function renameNode(
+    async renameNode(
         nodeUid: string,
         originalNode: {
             hash: string,
@@ -170,7 +175,7 @@ export function nodeAPIService(apiService: DriveAPIService, logger?: Logger) {
     ): Promise<void> {
         const { volumeId, nodeId } = splitNodeUid(nodeUid);
 
-        await apiService.put<
+        await this.apiService.put<
             Omit<PutRenameNodeRequest, "SignatureAddress" | "MIMEType">,
             PutRenameNodeResponse
         >(`drive/v2/volumes/${volumeId}/links/${nodeId}/rename`, {
@@ -181,7 +186,7 @@ export function nodeAPIService(apiService: DriveAPIService, logger?: Logger) {
         }, signal);
     }
 
-    async function moveNode(
+    async moveNode(
         nodeUid: string,
         oldNode: {
             hash: string,
@@ -201,7 +206,7 @@ export function nodeAPIService(apiService: DriveAPIService, logger?: Logger) {
         const { volumeId, nodeId } = splitNodeUid(nodeUid);
         const { nodeId: newParentNodeId } = splitNodeUid(newNode.parentUid);
 
-        await apiService.put<
+        await this.apiService.put<
             Omit<PutMoveNodeRequest, "SignatureAddress" | "MIMEType">,
             PutMoveNodeResponse
         >(`/drive/v2/volumes/${volumeId}/links/${nodeId}/move`, {
@@ -219,12 +224,12 @@ export function nodeAPIService(apiService: DriveAPIService, logger?: Logger) {
 
     // Improvement requested: API without requiring parent node (to delete any nodes).
     // Improvement requested: split into multiple calls for many nodes.
-    async function trashNodes(parentNodeUid: string, nodeUids: string[], signal?: AbortSignal): Promise<void> {
+    async trashNodes(parentNodeUid: string, nodeUids: string[], signal?: AbortSignal): Promise<void> {
         const { volumeId, nodeId: parentNodeId } = splitNodeUid(parentNodeUid);
 
         const nodeIds = nodeUids.map(splitNodeUid);
 
-        const response = await apiService.post<
+        const response = await this.apiService.post<
             PostTrashNodesRequest,
             PostTrashNodesResponse
         >(`/drive/v2/volumes/${volumeId}/folders/${parentNodeId}/trash_multiple`, {
@@ -236,11 +241,11 @@ export function nodeAPIService(apiService: DriveAPIService, logger?: Logger) {
     }
 
     // Improvement requested: split into multiple calls for many nodes.
-    async function restoreNodes(nodeUids: string[], signal?: AbortSignal): Promise<void> {
+    async restoreNodes(nodeUids: string[], signal?: AbortSignal): Promise<void> {
         const nodeIds = nodeUids.map(splitNodeUid);
         const volumeId = assertAndGetSingleVolumeId("restoreNodes", nodeIds);
 
-        const response = await apiService.put<
+        const response = await this.apiService.put<
             PutRestoreNodesRequest,
             PutRestoreNodesResponse
         >(`/drive/v2/volumes/${volumeId}/trash/restore_multiple`, {
@@ -252,11 +257,11 @@ export function nodeAPIService(apiService: DriveAPIService, logger?: Logger) {
     }
 
     // Improvement requested: split into multiple calls for many nodes.
-    async function deleteNodes(nodeUids: string[], signal?: AbortSignal): Promise<void> {
+    async deleteNodes(nodeUids: string[], signal?: AbortSignal): Promise<void> {
         const nodeIds = nodeUids.map(splitNodeUid);
         const volumeId = assertAndGetSingleVolumeId("restoreNodes", nodeIds);
 
-        const response = await apiService.post<
+        const response = await this.apiService.post<
             PostDeleteNodesRequest,
             PostDeleteNodesResponse
         >(`/drive/v2/volumes/${volumeId}/trash/delete_multiple`, {
@@ -267,7 +272,7 @@ export function nodeAPIService(apiService: DriveAPIService, logger?: Logger) {
         handleResponseErrors(volumeId, response.Responses as LinkResponse[]);
     }
 
-    async function createFolder(
+    async createFolder(
         parentUid: string,
         newNode: {
             armoredKey: string,
@@ -283,7 +288,7 @@ export function nodeAPIService(apiService: DriveAPIService, logger?: Logger) {
     ): Promise<string> {
         const { volumeId, nodeId: parentId } = splitNodeUid(parentUid);
 
-        const response = await apiService.post<
+        const response = await this.apiService.post<
             PostCreateFolderRequest,
             PostCreateFolderResponse
         >(`/drive/v2/volumes/${volumeId}/folders`, {
@@ -299,19 +304,6 @@ export function nodeAPIService(apiService: DriveAPIService, logger?: Logger) {
         }, signal);
 
         return response.Folder.ID;
-    }
-
-    return {
-        getNode,
-        getNodes,
-        iterateChildrenNodeUids,
-        iterateTrashedNodeUids,
-        renameNode,
-        moveNode,
-        trashNodes,
-        restoreNodes,
-        deleteNodes,
-        createFolder,
     }
 }
 

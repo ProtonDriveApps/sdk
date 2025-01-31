@@ -3,14 +3,14 @@ import { ProtonDriveCache } from "../../cache";
 import { DriveCrypto } from "../../crypto";
 import { DriveEventsService } from "../events";
 import { Logger, ProtonDriveAccount } from "../../interface";
-import { nodeAPIService } from "./apiService";
-import { nodesCache } from "./cache";
+import { NodeAPIService } from "./apiService";
+import { NodesCache } from "./cache";
 import { nodesEvents } from "./events";
-import { nodesCryptoCache } from "./cryptoCache";
-import { nodesCryptoService } from "./cryptoService";
+import { NodesCryptoCache } from "./cryptoCache";
+import { NodesCryptoService } from "./cryptoService";
 import { SharesService, DecryptedNode } from "./interface";
-import { nodesAccess } from "./nodesAccess";
-import { nodesManager } from "./manager";
+import { NodesAccess } from "./nodesAccess";
+import { NodesManager } from "./manager";
 
 export type { DecryptedNode } from "./interface";
 
@@ -23,7 +23,7 @@ export type { DecryptedNode } from "./interface";
  * This facade provides internal interface that other modules can use to
  * interact with the nodes.
  */
-export function nodes(
+export function initNodesModule(
     apiService: DriveAPIService,
     driveEntitiesCache: ProtonDriveCache,
     driveCryptoCache: ProtonDriveCache,
@@ -33,23 +33,26 @@ export function nodes(
     sharesService: SharesService,
     logger?: Logger,
 ) {
-    const api = nodeAPIService(apiService, logger);
-    const cache = nodesCache(driveEntitiesCache, logger);
-    const cryptoCache = nodesCryptoCache(driveCryptoCache);
-    const cryptoService = nodesCryptoService(driveCrypto, account, sharesService);
-    const nodesAccessFunctions = nodesAccess(api, cache, cryptoCache, cryptoService, sharesService);
-    const nodesFunctions = nodesManager(api, cache, cryptoCache, cryptoService, sharesService, nodesAccessFunctions);
+    const api = new NodeAPIService(apiService, logger);
+    const cache = new NodesCache(driveEntitiesCache, logger);
+    const cryptoCache = new NodesCryptoCache(driveCryptoCache);
+    const cryptoService = new NodesCryptoService(driveCrypto, account, sharesService);
+    const nodesAccess = new NodesAccess(api, cache, cryptoCache, cryptoService, sharesService);
+    const nodesManager = new NodesManager(api, cache, cryptoCache, cryptoService, sharesService, nodesAccess);
     const nodesEventsFunctions = nodesEvents(cache, driveEvents);
 
     return {
-        getNode: nodesAccessFunctions.getNode,
-        getNodeKeys: nodesAccessFunctions.getNodeKeys,
-        ...nodesFunctions,
+        // TODO: expose in better way
+        getNode: nodesAccess.getNode,
+        getNodeKeys: nodesAccess.getNodeKeys,
+        getMyFilesRootFolder: nodesManager.getMyFilesRootFolder,
+        iterateChildren: nodesManager.iterateChildren,
+        iterateNodes: nodesManager.iterateNodes,
         ...nodesEventsFunctions,
     }
 }
 
-export function publicNodes(
+export function initPublicNodesModule(
     apiService: DriveAPIService,
     driveEntitiesCache: ProtonDriveCache,
     driveCryptoCache: ProtonDriveCache,
@@ -57,13 +60,13 @@ export function publicNodes(
     sharesService: SharesService,
 ) {
     // TODO: create public node API service
-    const api = nodeAPIService(apiService);
-    const cache = nodesCache(driveEntitiesCache);
-    const cryptoCache = nodesCryptoCache(driveCryptoCache);
+    const api = new NodeAPIService(apiService);
+    const cache = new NodesCache(driveEntitiesCache);
+    const cryptoCache = new NodesCryptoCache(driveCryptoCache);
     // @ts-expect-error TODO
-    const cryptoService = nodesCryptoService(driveCrypto);
-    const nodesAccessFunctions = nodesAccess(api, cache, cryptoCache, cryptoService, sharesService);
-    const nodesListingFunctions = nodesManager(api, cache, cryptoCache, cryptoService, sharesService, nodesAccessFunctions);
+    const cryptoService = new NodesCryptoService(driveCrypto, account, sharesService);
+    const nodesAccessFunctions = new NodesAccess(api, cache, cryptoCache, cryptoService, sharesService);
+    const nodesManager = new NodesManager(api, cache, cryptoCache, cryptoService, sharesService, nodesAccessFunctions);
 
     return {
         // TODO: use public root node, not my files
@@ -71,7 +74,7 @@ export function publicNodes(
         getPublicRootNode: async (token: string, password: string, customPassword?: string): Promise<DecryptedNode> => { return {} as DecryptedNode },
         getNode: nodesAccessFunctions.getNode,
         getNodeKeys: nodesAccessFunctions.getNodeKeys,
-        iterateChildren: nodesListingFunctions.iterateChildren,
-        iterateNodes: nodesListingFunctions.iterateNodes,
+        iterateChildren: nodesManager.iterateChildren,
+        iterateNodes: nodesManager.iterateNodes,
     }
 }

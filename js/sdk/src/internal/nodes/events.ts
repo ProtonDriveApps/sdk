@@ -1,6 +1,6 @@
-import { NodeEventCallback } from "../../interface/index.js";
-import { DriveEventsService } from "../events/index.js";
-import { nodesCache } from "./cache.js";
+import { NodeEventCallback } from "../../interface/index";
+import { DriveEventsService } from "../events/index";
+import { NodesCache } from "./cache";
 
 type NodeEventInfo = {
     parentNodeUid: string,
@@ -17,7 +17,7 @@ type NodeEventInfo = {
  * any update for trashed nodes.
  */
 export function nodesEvents(
-    cache: ReturnType<typeof nodesCache>,
+    cache: NodesCache,
     events: DriveEventsService,
 ) {
     const listeners: { condition: (nodeEventInfo: NodeEventInfo) => boolean, callback: NodeEventCallback }[] = [];

@@ -13,19 +13,23 @@ import { DecryptedShareCrypto } from "./interface";
  * from the server again. Otherwise the rest of the tree requires
  * only the root node, thus share cache is not needed.
  */
-export function sharesCryptoCache(driveCache: ProtonDriveCache) {
-    async function setShareKey(shareId: string, keys: DecryptedShareCrypto) {
-        await driveCache.setEntity(getCacheUid(shareId), serializeShareKey(keys));
+export class SharesCryptoCache {
+    constructor(private driveCache: ProtonDriveCache) {
+        this.driveCache = driveCache;
     }
 
-    async function getShareKey(shareId: string): Promise<DecryptedShareCrypto> {
-        const shareKeyData = await driveCache.getEntity(getCacheUid(shareId));
+    async setShareKey(shareId: string, keys: DecryptedShareCrypto): Promise<void> {
+        await this.driveCache.setEntity(getCacheUid(shareId), serializeShareKey(keys));
+    }
+
+    async getShareKey(shareId: string): Promise<DecryptedShareCrypto> {
+        const shareKeyData = await this.driveCache.getEntity(getCacheUid(shareId));
         try {
             const keys = await deserializeShareKey(shareKeyData);
             return keys;
         } catch (error: unknown) {
             try {
-                await removeShareKey([shareId]);
+                await this.removeShareKey([shareId]);
             } catch {
                 // TODO: log error
             }
@@ -34,50 +38,44 @@ export function sharesCryptoCache(driveCache: ProtonDriveCache) {
         }
     }
 
-    async function removeShareKey(shareIds: string[]) {
-        await driveCache.removeEntities(shareIds.map(getCacheUid));
+    async removeShareKey(shareIds: string[]): Promise<void> {
+        await this.driveCache.removeEntities(shareIds.map(getCacheUid));
+    }
+}
+
+function getCacheUid(shareId: string) {
+    return `shareKey-${shareId}`;
+}
+
+function serializeShareKey(keys: DecryptedShareCrypto) {
+    // TODO: verify how we want to serialize keys
+    return JSON.stringify({
+        key: serializePrivateKey(keys.key),
+        sessionKey: serializeSessionKey(keys.sessionKey),
+    });
+}
+
+async function deserializeShareKey(shareKeyData: string): Promise<DecryptedShareCrypto> {
+    const result = JSON.parse(shareKeyData);
+    if (!result || typeof result !== 'object') {
+        throw new Error('Invalid share keys data');
     }
 
-    function getCacheUid(shareId: string) {
-        return `shareKey-${shareId}`;
+    let key, sessionKey;
+
+    try {
+        key = await deserializePrivateKey(result.key);
+    } catch (error: unknown) {
+        throw new Error(`Invalid share private key: ${error instanceof Error ? error.message : error}`);
     }
-
-    function serializeShareKey(keys: DecryptedShareCrypto) {
-        // TODO: verify how we want to serialize keys
-        return JSON.stringify({
-            key: serializePrivateKey(keys.key),
-            sessionKey: serializeSessionKey(keys.sessionKey),
-        });
+    try {
+        sessionKey = deserializeSessionKey(result.sessionKey);
+    } catch (error: unknown) {
+        throw new Error(`Invalid share session key: ${error instanceof Error ? error.message : error}`);
     }
-
-    async function deserializeShareKey(shareKeyData: string): Promise<DecryptedShareCrypto> {
-        const result = JSON.parse(shareKeyData);
-        if (!result || typeof result !== 'object') {
-            throw new Error('Invalid share keys data');
-        }
-
-        let key, sessionKey;
-
-        try {
-            key = await deserializePrivateKey(result.key);
-        } catch (error: unknown) {
-            throw new Error(`Invalid share private key: ${error instanceof Error ? error.message : error}`);
-        }
-        try {
-            sessionKey = deserializeSessionKey(result.sessionKey);
-        } catch (error: unknown) {
-            throw new Error(`Invalid share session key: ${error instanceof Error ? error.message : error}`);
-        }
-        
-        return {
-            key,
-            sessionKey,
-        };
-    }
-
+    
     return {
-        setShareKey,
-        getShareKey,
-        removeShareKey,
-    }
+        key,
+        sessionKey,
+    };
 }
