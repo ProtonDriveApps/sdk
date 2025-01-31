@@ -5,3 +5,4 @@ public
 node_modules
 .eslintcache
 tsconfig.tsbuildinfo
+bin

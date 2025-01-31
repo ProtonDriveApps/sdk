@@ -1,0 +1,43 @@
+import { NodeOrUid } from './nodes.js';
+
+export interface Upload {
+    getFileUploader(
+        parentFolder: NodeOrUid,
+        name: string,
+        metadata: UploadMetadata,
+        signal?: AbortSignal
+    ): Promise<Fileuploader>,
+
+    getFileRevisionUploader(
+        node: NodeOrUid,
+        metadata: UploadMetadata,
+        signal?: AbortSignal
+    ): Promise<Fileuploader>,
+}
+
+export type UploadMetadata = {
+    mimeType: string,
+    expectedSize: number,
+    additionalMetadata?: object,
+};
+
+export interface Fileuploader {
+    writeStream(stream: ReadableStream, thumnbails: Thumbnail[], onProgress: (uploadedBytes: number) => void): UploadController,
+    writeFile(fileObject: File, thumnbails: Thumbnail[], onProgress: (uploadedBytes: number) => void): UploadController,
+}
+
+export interface UploadController {
+    pause(): void,
+    resume(): void,
+    completion(): Promise<string>,
+}
+
+export type Thumbnail = {
+    type: ThumbnailType,
+    thumbnail: Uint8Array,
+}
+
+export enum ThumbnailType {
+    THUMBNAIL_TYPE_1 = 1,
+    THUMBNAIL_TYPE_2 = 2,
+}

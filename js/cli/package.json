@@ -1,0 +1,26 @@
+{
+    "name": "proton-drive-cli",
+    "private": true,
+    "version": "0.0.1",
+    "main": "dist/main.js",
+    "scripts": {
+        "generate-types": "bunx openapi-typescript ../../api/openapi-core.json -o ./src/account/api-core-types.ts && bunx openapi-typescript ../../api/openapi-auth.json -o ./src/account/api-auth-types.ts",
+        "build:bin": "bun build --compile ./src/bin.ts --minify-identifiers"
+    },
+    "devDependencies": {
+        "@types/bcryptjs": "^2.4.6",
+        "@types/sharedworker": "^0.0.130",
+        "bun-types": "^1.1.31",
+        "openapi-typescript": "^7.4.1",
+        "typescript": "^5.5.3",
+        "vite": "^5.4.8",
+        "vite-plugin-dts": "^4.2.4"
+    },
+    "dependencies": {
+        "@protontech/pmcrypto": "^7.20.0",
+        "bcryptjs": "^2.4.3",
+        "ky": "^1.7.2",
+        "pmcrypto-v6-canary": "npm:@protontech/pmcrypto@^8.0.0-canary.5.patch.0",
+    },
+    "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
+}
