@@ -1,12 +1,13 @@
 import { ErrorCode } from './errorCodes';
 
-export function apiErrorFactory({ response, result }: { response: Response, result?: any }): APIError {
+export function apiErrorFactory({ response, result }: { response: Response, result?: unknown }): APIError {
     if (!result) {
         return new APIHTTPError(response.statusText, response.status);
     }
 
-    const code = result.Code;
-    const message = result.Error;
+    // @ts-expect-error: Result from API can be any JSON that might not have
+    // error or code set which next lines should handle.
+    const [code, message] = [result.Code || 0, result.Error || "Unknown error"];
     switch (code) {
         case ErrorCode.NOT_EXISTS:
             return new NotFoundAPIError(message, code);

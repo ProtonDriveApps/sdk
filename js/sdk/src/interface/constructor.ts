@@ -15,10 +15,10 @@ export interface ProtonDriveHTTPClient {
 export type GetLogger = (name: string) => Logger;
 
 export interface Logger {
-    debug(msg: string, ...x: any[]): void;
-    info(msg: string, ...x: any[]): void;
-    warn(msg: string, ...x: any[]): void;
-    error(msg: string, ...x: any[]): void;
+    debug(msg: string, ...x: any[]): void; // eslint-disable-line @typescript-eslint/no-explicit-any
+    info(msg: string, ...x: any[]): void; // eslint-disable-line @typescript-eslint/no-explicit-any
+    warn(msg: string, ...x: any[]): void; // eslint-disable-line @typescript-eslint/no-explicit-any
+    error(msg: string, ...x: any[]): void; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export type ProtonDriveConfig = {

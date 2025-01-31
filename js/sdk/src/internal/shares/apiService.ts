@@ -1,10 +1,10 @@
 import { DriveAPIService, drivePaths } from "../apiService/index.js";
 import { EncryptedShare, EncryptedRootShare, EncryptedShareCrypto } from "./interface.js";
 
-type PostCreateVolumeRequest = Extract<drivePaths['/drive/volumes']['post']['requestBody'], { 'content': any }>['content']['application/json'];
+type PostCreateVolumeRequest = Extract<drivePaths['/drive/volumes']['post']['requestBody'], { 'content': object }>['content']['application/json'];
 type PostCreateVolumeResponse = drivePaths['/drive/volumes']['post']['responses']['200']['content']['application/json'];
 
-type PostCreateShareRequest = Extract<drivePaths['/drive/volumes/{volumeID}/shares']['post']['requestBody'], { 'content': any }>['content']['application/json'];
+type PostCreateShareRequest = Extract<drivePaths['/drive/volumes/{volumeID}/shares']['post']['requestBody'], { 'content': object }>['content']['application/json'];
 type PostCreateShareResponse = drivePaths['/drive/volumes/{volumeID}/shares']['post']['responses']['200']['content']['application/json'];
 
 type GetMyFilesResponse = drivePaths['/drive/v2/shares/my-files']['get']['responses']['200']['content']['application/json'];

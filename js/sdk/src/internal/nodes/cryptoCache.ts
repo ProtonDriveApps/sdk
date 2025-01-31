@@ -23,7 +23,7 @@ export function nodesCryptoCache(driveCache: ProtonDriveCache) {
         } catch (error: unknown) {
             try {
                 await removeNodeKeys([nodeUid]);
-            } catch (error: unknown) {
+            } catch {
                 // TODO: log error
             }
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -64,18 +64,18 @@ export function nodesCryptoCache(driveCache: ProtonDriveCache) {
         const passphrase = result.passphrase;
         try {
             key = await deserializePrivateKey(result.key);
-        } catch (error: any) {
-            throw new Error(`Invalid node private key: ${error}`);
+        } catch (error: unknown) {
+            throw new Error(`Invalid node private key: ${error instanceof Error ? error.message : error}`);
         }
         try {
             sessionKey = deserializeSessionKey(result.sessionKey);
-        } catch (error: any) {
-            throw new Error(`Invalid node session key: ${error}`);
+        } catch (error: unknown) {
+            throw new Error(`Invalid node session key: ${error instanceof Error ? error.message : error}`);
         }
         try {
             hashKey = result.hashKey ? deserializeHashKey(result.hashKey) : undefined;
-        } catch (error: any) {
-            throw new Error(`Invalid node hash key: ${error}`);
+        } catch (error: unknown) {
+            throw new Error(`Invalid node hash key: ${error instanceof Error ? error.message : error}`);
         }
 
         return {

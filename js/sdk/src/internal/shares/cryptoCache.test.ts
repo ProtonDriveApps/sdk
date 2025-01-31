@@ -103,7 +103,7 @@ describe('sharesCryptoCache', () => {
             await cache.getShareKey('badSessionKey');
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(`${error}`).toBe('Error: Failed to deserialize share keys: Invalid share session key: Error: Bad session key');
+            expect(`${error}`).toBe('Error: Failed to deserialize share keys: Invalid share session key: Bad session key');
         }
 
         try {

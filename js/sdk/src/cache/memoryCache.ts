@@ -81,8 +81,8 @@ export class MemoryCache implements ProtonDriveCache {
     async removeEntities(uids: string[]) {
         for (const uid of uids) {
             delete this.entities[uid];
-            Object.entries(this.entitiesByTag).forEach(([ key, tag ]) => {
-                Object.entries(tag).forEach(([ value, uids ]) => {
+            Object.values(this.entitiesByTag).forEach((tag) => {
+                Object.values(tag).forEach((uids) => {
                     const index = uids.indexOf(uid);
                     if (index !== -1) {
                         uids.splice(index, 1);

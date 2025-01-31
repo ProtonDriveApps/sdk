@@ -3,13 +3,13 @@ import { Result } from './result.js';
 // Note: Node is reserved by JS/DOM, thus we need exception how the entity is called
 export type NodeEntity = {
     uid: string,
-    parentUid: string,
+    parentUid?: string,
     name: Result<string, InvalidNameError>,
-    author: Result<string | AnonymousUser, UnverifiedAuthorError>,
+    keyAuthor: Result<string | AnonymousUser, UnverifiedAuthorError>,
     nameAuthor: Result<string | AnonymousUser, UnverifiedAuthorError>,
     directMemberRole: MemberRole,
     type: NodeType,
-    mimeType: string,
+    mimeType?: string,
     isShared: boolean,
     createdDate: Date, // created on server date
     trashedDate?: Date,
@@ -87,4 +87,5 @@ export interface Revisions {
 }
 
 export type NodesResults = { processedNodeIds: string[], errors: NodeErrorResult[] };
-export type NodeErrorResult = { nodeId: string, error: any };
+// TODO: fix type - will be solved by converting to different structure
+export type NodeErrorResult = { nodeId: string, error: any }; // eslint-disable-line @typescript-eslint/no-explicit-any

@@ -36,9 +36,9 @@ export function nodesCache(driveCache: ProtonDriveCache, logger?: Logger) {
         const nodeData = await driveCache.getEntity(key);
         try {
             return deserialiseNode(nodeData);
-        } catch (error: any) {
+        } catch (error: unknown) {
             removeCorruptedNode({ nodeUid }, error);
-            throw new Error(`Failed to deserialise node: ${error.message}`)
+            throw new Error(`Failed to deserialise node: ${error instanceof Error ? error.message : error}`)
         }
     }
 
@@ -48,19 +48,19 @@ export function nodesCache(driveCache: ProtonDriveCache, logger?: Logger) {
      * nodes and rather let SDK re-fetch them than to auotmatically
      * fix issues and do not bother user with it.
      */
-    async function removeCorruptedNode({ nodeUid, cacheUid }: { nodeUid?: string, cacheUid?: string }, corruptionError: any) {
-        logger?.error(`Removing corrupted nodes from the cache: ${corruptionError.message}`);
+    async function removeCorruptedNode({ nodeUid, cacheUid }: { nodeUid?: string, cacheUid?: string }, corruptionError: unknown) {
+        logger?.error(`Removing corrupted nodes from the cache: ${corruptionError instanceof Error ? corruptionError.message : corruptionError}`);
         try {
             if (nodeUid) {
                 await removeNodes([nodeUid]);
             } else if (cacheUid) {
                 await driveCache.removeEntities([cacheUid]);
             }
-        } catch (removingError: any) {
+        } catch (removingError: unknown) {
             // The node will not be returned, thus SDK will re-fetch
             // and re-cache it. Setting it again should then fix the
             // problem.
-            logger?.warn(`Failed to remove corrupted node from the cache: ${removingError.message}`);
+            logger?.warn(`Failed to remove corrupted node from the cache: ${removingError instanceof Error ? removingError.message : removingError}`);
         }
     }
 
@@ -75,9 +75,9 @@ export function nodesCache(driveCache: ProtonDriveCache, logger?: Logger) {
                 // if removing nodes fails.
                 childrenCacheUids.reverse();
                 await driveCache.removeEntities(childrenCacheUids);
-            } catch (error: any) {
+            } catch (error: unknown) {
                 // TODO: Should we throw here to the client?
-                logger?.error(`Failed to remove children from the cache: ${error.message}`);
+                logger?.error(`Failed to remove children from the cache: ${error instanceof Error ? error.message : error}`);
             }
         }
     }
@@ -132,7 +132,7 @@ export function nodesCache(driveCache: ProtonDriveCache, logger?: Logger) {
         let nodeUid;
         try {
             nodeUid = getNodeUid(result.uid);
-        } catch (error: any) {
+        } catch (error: unknown) {
             await removeCorruptedNode({ cacheUid: result.uid }, error)
             return null;
         }
@@ -140,7 +140,7 @@ export function nodesCache(driveCache: ProtonDriveCache, logger?: Logger) {
             let node;
             try {
                 node = deserialiseNode(result.data)
-            } catch (error: any) {
+            } catch (error: unknown) {
                 await removeCorruptedNode({ nodeUid }, error);
                 return null;
             }

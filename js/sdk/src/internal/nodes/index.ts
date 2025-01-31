@@ -12,6 +12,8 @@ import { SharesService, DecryptedNode } from "./interface";
 import { nodesAccess } from "./nodesAccess";
 import { nodesManager } from "./manager";
 
+export type { DecryptedNode } from "./interface";
+
 /**
  * Provides facade for the whole nodes module.
  * 
@@ -65,6 +67,7 @@ export function publicNodes(
 
     return {
         // TODO: use public root node, not my files
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         getPublicRootNode: async (token: string, password: string, customPassword?: string): Promise<DecryptedNode> => { return {} as DecryptedNode },
         getNode: nodesAccessFunctions.getNode,
         getNodeKeys: nodesAccessFunctions.getNodeKeys,

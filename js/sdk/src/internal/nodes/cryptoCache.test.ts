@@ -103,7 +103,7 @@ describe('nodesCryptoCache', () => {
             await cache.getNodeKeys('badSessionKey');
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(`${error}`).toBe('Error: Failed to deserialize node keys: Invalid node session key: Error: Bad session key');
+            expect(`${error}`).toBe('Error: Failed to deserialize node keys: Invalid node session key: Bad session key');
         }
 
         try {

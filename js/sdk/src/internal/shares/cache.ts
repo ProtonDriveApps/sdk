@@ -1,4 +1,4 @@
-import { ProtonDriveCache, EntityResult } from "../../cache/index.js";
+import { ProtonDriveCache } from "../../cache/index.js";
 import { Volume } from "./interface.js";
 
 /**
@@ -19,13 +19,13 @@ export function sharesCache(driveCache: ProtonDriveCache) {
 
         try {
             return deserializeVolume(volumeData);
-        } catch (error: any) {
+        } catch (error: unknown) {
             try {
                 await removeVolume(volumeId);
-            } catch (error: any) {
+            } catch {
                 // TODO: log error
             }
-            throw new Error(`Failed to deserialize volume: ${error.message}`);
+            throw new Error(`Failed to deserialize volume: ${error instanceof Error ? error.message : error}`);
         }
     }
 
