@@ -3,29 +3,29 @@ import { DriveAPIService, drivePaths } from "../apiService";
 import { splitNodeUid, makeNodeUid } from "./nodeUid";
 import { EncryptedNode } from "./interface";
 
-type PostLoadLinksMetadataRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['requestBody'], { 'content': any }>['content']['application/json'];
+type PostLoadLinksMetadataRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['requestBody'], { 'content': object }>['content']['application/json'];
 type PostLoadLinksMetadataResponse = drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['responses']['200']['content']['application/json'];
 
 type GetChildrenResponse = drivePaths['/drive/v2/volumes/{volumeID}/folders/{linkID}/children']['get']['responses']['200']['content']['application/json'];
 
 type GetTrashedNodesResponse = drivePaths['/drive/volumes/{volumeID}/trash']['get']['responses']['200']['content']['application/json'];
 
-type PutRenameNodeRequest = Extract<drivePaths['/drive/v2/volumes/{volumeId}/links/{linkID}/rename']['put']['requestBody'], { 'content': any }>['content']['application/json'];
+type PutRenameNodeRequest = Extract<drivePaths['/drive/v2/volumes/{volumeId}/links/{linkID}/rename']['put']['requestBody'], { 'content': object }>['content']['application/json'];
 type PutRenameNodeResponse = drivePaths['/drive/v2/volumes/{volumeId}/links/{linkID}/rename']['put']['responses']['200']['content']['application/json'];
 
-type PutMoveNodeRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/links/{linkID}/move']['put']['requestBody'], { 'content': any }>['content']['application/json'];
+type PutMoveNodeRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/links/{linkID}/move']['put']['requestBody'], { 'content': object }>['content']['application/json'];
 type PutMoveNodeResponse = drivePaths['/drive/v2/volumes/{volumeID}/links/{linkID}/move']['put']['responses']['200']['content']['application/json'];
 
-type PostTrashNodesRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/folders/{linkID}/trash_multiple']['post']['requestBody'], { 'content': any }>['content']['application/json'];
+type PostTrashNodesRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/folders/{linkID}/trash_multiple']['post']['requestBody'], { 'content': object }>['content']['application/json'];
 type PostTrashNodesResponse = drivePaths['/drive/v2/volumes/{volumeID}/folders/{linkID}/trash_multiple']['post']['responses']['200']['content']['application/json'];
 
-type PutRestoreNodesRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/trash/restore_multiple']['put']['requestBody'], { 'content': any }>['content']['application/json'];
+type PutRestoreNodesRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/trash/restore_multiple']['put']['requestBody'], { 'content': object }>['content']['application/json'];
 type PutRestoreNodesResponse = drivePaths['/drive/v2/volumes/{volumeID}/trash/restore_multiple']['put']['responses']['200']['content']['application/json'];
 
-type PostDeleteNodesRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/trash/delete_multiple']['post']['requestBody'], { 'content': any }>['content']['application/json'];
+type PostDeleteNodesRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/trash/delete_multiple']['post']['requestBody'], { 'content': object }>['content']['application/json'];
 type PostDeleteNodesResponse = drivePaths['/drive/v2/volumes/{volumeID}/trash/delete_multiple']['post']['responses']['200']['content']['application/json'];
 
-type PostCreateFolderRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/folders']['post']['requestBody'], { 'content': any }>['content']['application/json'];
+type PostCreateFolderRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/folders']['post']['requestBody'], { 'content': object }>['content']['application/json'];
 type PostCreateFolderResponse = drivePaths['/drive/v2/volumes/{volumeID}/folders']['post']['responses']['200']['content']['application/json'];
 
 /**

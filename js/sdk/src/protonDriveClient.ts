@@ -16,7 +16,7 @@ export function protonDriveClient({
     account,
     getLogger,
     config,
-    metrics,
+    metrics, // eslint-disable-line @typescript-eslint/no-unused-vars
     openPGPCryptoModule,
     acceptNoGuaranteeWithCustomModules,
 }: ProtonDriveClientContructorParameters): Partial<ProtonDriveClientInterface> {
@@ -37,6 +37,8 @@ export function protonDriveClient({
     const upload = uploadModule(apiService, cryptoModule, nodes);
 
     return {
+        // TODO
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         getNodeUid: (shareId: string, nodeId: string) => Promise.resolve(""),
         getMyFilesRootFolder: () => {
             return convertInternalNodePromise(nodes.getMyFilesRootFolder());

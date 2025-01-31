@@ -335,7 +335,7 @@ export function nodesManager(
  */
 class BatchNodesLoading {
     private nodesToFetch: string[];
-    private loadNodes: (nodeUids: string[]) => Promise<DecryptedNode[]>;
+    private loadNodes: (nodeUids: string[], signal?: AbortSignal) => Promise<DecryptedNode[]>;
 
     constructor(loadNodes: (nodeUids: string[]) => Promise<DecryptedNode[]>) {
         this.nodesToFetch = [];
@@ -346,7 +346,7 @@ class BatchNodesLoading {
         this.nodesToFetch.push(nodeUid);
 
         if (this.nodesToFetch.length >= BATCH_LOADING) {
-            const nodes = await this.loadNodes(this.nodesToFetch);
+            const nodes = await this.loadNodes(this.nodesToFetch, signal);
             for (const node of nodes) {
                 yield node;
             }

@@ -17,7 +17,7 @@ export function protonDrivePublicClient({
     account,
     getLogger,
     config,
-    metrics,
+    metrics, // eslint-disable-line @typescript-eslint/no-unused-vars
     openPGPCryptoModule,
     acceptNoGuaranteeWithCustomModules,
 }: ProtonDriveClientContructorParameters): ProtonDrivePublicClientInterface {

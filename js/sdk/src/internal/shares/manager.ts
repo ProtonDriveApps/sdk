@@ -62,7 +62,7 @@ export function sharesManager(
                 rootNodeId: myFilesShare.rootNodeId,
             };
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             if (error instanceof NotFoundAPIError) {
                 return createVolume();
             }
@@ -81,7 +81,7 @@ export function sharesManager(
      * @throws If the volume cannot be created (e.g., one already exists).
      */
     async function createVolume() {
-        const { email, addressKey, addressId, addressKeyId } = await account.getOwnPrimaryKey();
+        const { addressKey, addressId, addressKeyId } = await account.getOwnPrimaryKey();
         const bootstrap = await cryptoService.generateVolumeBootstrap(addressKey);
         const myFilesIds = await apiService.createVolume(
             {

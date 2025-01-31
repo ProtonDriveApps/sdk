@@ -1,4 +1,5 @@
-import { NodeOrUid, NodeEntity } from './interface/index.js';
+import { NodeOrUid, NodeEntity as PublicNode } from './interface';
+import { DecryptedNode as InternalNode } from './internal/nodes';
 
 export function getUid(nodeUid: NodeOrUid): string {
     if (typeof nodeUid === "string") {
@@ -11,21 +12,30 @@ export function getUids(nodeUids: NodeOrUid[]): string[] {
     return nodeUids.map(getUid);
 }
 
-// TODO: type
-export async function *convertInternalNodeIterator(nodeIterator: AsyncGenerator<any>): AsyncGenerator<NodeEntity> {
+export async function *convertInternalNodeIterator(nodeIterator: AsyncGenerator<InternalNode>): AsyncGenerator<PublicNode> {
     for await (const node of nodeIterator) {
         yield convertInternalNode(node);
     }
 }
 
-// TODO: type
-export async function convertInternalNodePromise(nodePromise: Promise<any>): Promise<NodeEntity> {
+export async function convertInternalNodePromise(nodePromise: Promise<InternalNode>): Promise<PublicNode> {
     const node = await nodePromise;
     return convertInternalNode(node);
 }
 
-// TODO: type
-export function convertInternalNode(node: any): NodeEntity {
-    // TODO: implement
-    return {} as NodeEntity
+export function convertInternalNode(node: InternalNode): PublicNode {
+    return {
+        uid: node.uid,
+        parentUid: node.parentUid,
+        name: node.name,
+        keyAuthor: node.keyAuthor,
+        nameAuthor: node.nameAuthor,
+        directMemberRole: node.directMemberRole,
+        type: node.type,
+        mimeType: node.mimeType,
+        isShared: node.isShared,
+        createdDate: node.createdDate,
+        trashedDate: node.trashedDate,
+        activeRevision: node.activeRevision,
+    };
 }

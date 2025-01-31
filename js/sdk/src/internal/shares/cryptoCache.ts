@@ -26,7 +26,7 @@ export function sharesCryptoCache(driveCache: ProtonDriveCache) {
         } catch (error: unknown) {
             try {
                 await removeShareKey([shareId]);
-            } catch (error: unknown) {
+            } catch {
                 // TODO: log error
             }
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -60,13 +60,13 @@ export function sharesCryptoCache(driveCache: ProtonDriveCache) {
 
         try {
             key = await deserializePrivateKey(result.key);
-        } catch (error: any) {
-            throw new Error(`Invalid share private key: ${error}`);
+        } catch (error: unknown) {
+            throw new Error(`Invalid share private key: ${error instanceof Error ? error.message : error}`);
         }
         try {
             sessionKey = deserializeSessionKey(result.sessionKey);
-        } catch (error: any) {
-            throw new Error(`Invalid share session key: ${error}`);
+        } catch (error: unknown) {
+            throw new Error(`Invalid share session key: ${error instanceof Error ? error.message : error}`);
         }
         
         return {
