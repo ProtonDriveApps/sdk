@@ -1,6 +1,6 @@
 import { MemberRole, NodeType } from "../../interface";
 import { DriveAPIService } from "../apiService";
-import { nodeAPIService } from './apiService';
+import { NodeAPIService } from './apiService';
 
 function generateAPIFileNode(linkOverrides = {}, overrides = {}) {
     const node = generateAPINode();
@@ -125,18 +125,19 @@ function generateNode() {
 
 describe("nodeAPIService", () => {
     let apiMock: DriveAPIService;
-    let api: ReturnType<typeof nodeAPIService>;
+    let api: NodeAPIService;
 
     beforeEach(() => {
         jest.clearAllMocks();
 
+        // @ts-expect-error Mocking for testing purposes
         apiMock = {
             get: jest.fn(),
             post: jest.fn(),
             put: jest.fn(),
         };
 
-        api = nodeAPIService(apiMock);
+        api = new NodeAPIService(apiMock);
     });
 
     describe('getNodes', () => {

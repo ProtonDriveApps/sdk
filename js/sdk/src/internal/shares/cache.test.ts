@@ -1,15 +1,15 @@
 import { MemoryCache } from "../../cache";
-import { sharesCache } from "./cache";
+import { SharesCache } from "./cache";
 
 describe('sharesCache', () => {
     let memoryCache: MemoryCache;
-    let cache: ReturnType<typeof sharesCache>;
+    let cache: SharesCache;
 
     beforeEach(() => {
         memoryCache = new MemoryCache([]);
         memoryCache.setEntity('volume-badObject', 'aaa');
 
-        cache = sharesCache(memoryCache);
+        cache = new SharesCache(memoryCache);
     });
 
     it('should store and retrieve volume', async () => {

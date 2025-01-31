@@ -1,14 +1,14 @@
 import { DriveCrypto, PrivateKey, SessionKey, VERIFICATION_STATUS } from "../../crypto";
 import { ProtonDriveAccount } from "../../interface";
 import { EncryptedNode, SharesService } from "./interface";
-import { nodesCryptoService } from "./cryptoService";
+import { NodesCryptoService } from "./cryptoService";
 
 describe("nodesCryptoService", () => {
     let driveCrypto: DriveCrypto;
     let account: ProtonDriveAccount;
     let sharesService: SharesService;
 
-    let cryptoService: ReturnType<typeof nodesCryptoService>;
+    let cryptoService: NodesCryptoService;
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -45,7 +45,7 @@ describe("nodesCryptoService", () => {
             })),
         };
 
-        cryptoService = nodesCryptoService(driveCrypto, account, sharesService);
+        cryptoService = new NodesCryptoService(driveCrypto, account, sharesService);
     });
 
     it("should decrypt node with same author everywhere", async () => {

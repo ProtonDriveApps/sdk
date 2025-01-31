@@ -8,21 +8,25 @@ import { DecryptedNodeKeys } from "./interface";
  * The cache is responsible for serialising and deserialising node
  * crypto material.
  */
-export function nodesCryptoCache(driveCache: ProtonDriveCache) {
-    async function setNodeKeys(nodeUid: string, keys: DecryptedNodeKeys) {
-        const cacheUid = getCacheUid(nodeUid);
-        const nodeKeysData = serializeNodeKeys(keys);
-        driveCache.setEntity(cacheUid, nodeKeysData);
+export class NodesCryptoCache {
+    constructor(private driveCache: ProtonDriveCache) {
+        this.driveCache = driveCache;
     }
 
-    async function getNodeKeys(nodeUid: string): Promise<DecryptedNodeKeys> {
-        const nodeKeysData = await driveCache.getEntity(getCacheUid(nodeUid));
+    async setNodeKeys(nodeUid: string, keys: DecryptedNodeKeys): Promise<void> {
+        const cacheUid = getCacheUid(nodeUid);
+        const nodeKeysData = serializeNodeKeys(keys);
+        this.driveCache.setEntity(cacheUid, nodeKeysData);
+    }
+
+    async getNodeKeys(nodeUid: string): Promise<DecryptedNodeKeys> {
+        const nodeKeysData = await this.driveCache.getEntity(getCacheUid(nodeUid));
         try {
             const keys = await deserializeNodeKeys(nodeKeysData);
             return keys;
         } catch (error: unknown) {
             try {
-                await removeNodeKeys([nodeUid]);
+                await this.removeNodeKeys([nodeUid]);
             } catch {
                 // TODO: log error
             }
@@ -31,64 +35,58 @@ export function nodesCryptoCache(driveCache: ProtonDriveCache) {
         }
     }
 
-    async function removeNodeKeys(nodeUids: string[]) {
+    async removeNodeKeys(nodeUids: string[]): Promise<void> {
         const cacheUids = nodeUids.map(getCacheUid);
-        await driveCache.removeEntities(cacheUids);
+        await this.driveCache.removeEntities(cacheUids);
+    }
+}
+
+function getCacheUid(nodeUid: string) {
+    return `nodeKeys-${nodeUid}`;
+}
+
+function serializeNodeKeys(keys: DecryptedNodeKeys) {
+    // TODO: verify how we want to serialize keys
+    return JSON.stringify({
+        passphrase: keys.passphrase,
+        key: serializePrivateKey(keys.key),
+        sessionKey: serializeSessionKey(keys.sessionKey),
+        hashKey: keys.hashKey ? serializeHashKey(keys.hashKey) : undefined,
+    });
+}
+
+async function deserializeNodeKeys(shareKeyData: string): Promise<DecryptedNodeKeys> {
+    const result = JSON.parse(shareKeyData);
+    if (!result || typeof result !== 'object') {
+        throw new Error('Invalid node keys data');
     }
 
-    function getCacheUid(nodeUid: string) {
-        return `nodeKeys-${nodeUid}`;
+    let key, sessionKey, hashKey;
+
+    if (!result.passphrase || typeof result.passphrase !== 'string') {
+        throw new Error('Invalid node passphrase');
     }
-    
-    function serializeNodeKeys(keys: DecryptedNodeKeys) {
-        // TODO: verify how we want to serialize keys
-        return JSON.stringify({
-            passphrase: keys.passphrase,
-            key: serializePrivateKey(keys.key),
-            sessionKey: serializeSessionKey(keys.sessionKey),
-            hashKey: keys.hashKey ? serializeHashKey(keys.hashKey) : undefined,
-        });
+    const passphrase = result.passphrase;
+    try {
+        key = await deserializePrivateKey(result.key);
+    } catch (error: unknown) {
+        throw new Error(`Invalid node private key: ${error instanceof Error ? error.message : error}`);
+    }
+    try {
+        sessionKey = deserializeSessionKey(result.sessionKey);
+    } catch (error: unknown) {
+        throw new Error(`Invalid node session key: ${error instanceof Error ? error.message : error}`);
+    }
+    try {
+        hashKey = result.hashKey ? deserializeHashKey(result.hashKey) : undefined;
+    } catch (error: unknown) {
+        throw new Error(`Invalid node hash key: ${error instanceof Error ? error.message : error}`);
     }
 
-    async function deserializeNodeKeys(shareKeyData: string): Promise<DecryptedNodeKeys> {
-        const result = JSON.parse(shareKeyData);
-        if (!result || typeof result !== 'object') {
-            throw new Error('Invalid node keys data');
-        }
-
-        let key, sessionKey, hashKey;
-
-        if (!result.passphrase || typeof result.passphrase !== 'string') {
-            throw new Error('Invalid node passphrase');
-        }
-        const passphrase = result.passphrase;
-        try {
-            key = await deserializePrivateKey(result.key);
-        } catch (error: unknown) {
-            throw new Error(`Invalid node private key: ${error instanceof Error ? error.message : error}`);
-        }
-        try {
-            sessionKey = deserializeSessionKey(result.sessionKey);
-        } catch (error: unknown) {
-            throw new Error(`Invalid node session key: ${error instanceof Error ? error.message : error}`);
-        }
-        try {
-            hashKey = result.hashKey ? deserializeHashKey(result.hashKey) : undefined;
-        } catch (error: unknown) {
-            throw new Error(`Invalid node hash key: ${error instanceof Error ? error.message : error}`);
-        }
-
-        return {
-            passphrase,
-            key,
-            sessionKey,
-            hashKey,
-        };
-    }
-    
     return {
-        setNodeKeys,
-        getNodeKeys,
-        removeNodeKeys,
-    }
+        passphrase,
+        key,
+        sessionKey,
+        hashKey,
+    };
 }

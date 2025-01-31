@@ -25,26 +25,32 @@ interface OpenPGPCryptoProxyDecryptMessage {
 }
 
 /**
- * See interface for more info.
+ * Implementation of OpenPGPCrypto interface using CryptoProxy from clients
+ * monorepo that must be passed as dependency. In the future, CryptoProxy
+ * will be published separately and this implementation will use it directly.
  */
-export function openPGPCrypto(cryptoProxy: OpenPGPCryptoProxy): OpenPGPCrypto {
-    function generatePassphrase(): string {
+export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
+    constructor(private cryptoProxy: OpenPGPCryptoProxy) {
+        this.cryptoProxy = cryptoProxy;
+    }
+
+    generatePassphrase(): string {
         const value = crypto.getRandomValues(new Uint8Array(32));
         return uint8ArrayToBase64String(value);
     }
 
-    async function generateSessionKey(encryptionKeys: PrivateKey[]) {
-        return cryptoProxy.generateSessionKey({ recipientKeys: encryptionKeys });
+    async generateSessionKey(encryptionKeys: PrivateKey[]) {
+        return this.cryptoProxy.generateSessionKey({ recipientKeys: encryptionKeys });
     }
 
-    async function generateKey(passphrase: string) {
-        const key = await cryptoProxy.generateKey({
+    async generateKey(passphrase: string) {
+        const key = await this.cryptoProxy.generateKey({
             userIDs: [{ name: 'Drive key' }],
             type: 'ecc',
             curve: 'ed25519Legacy',
         });
 
-        const armoredKey = await cryptoProxy.exportPrivateKey({
+        const armoredKey = await this.cryptoProxy.exportPrivateKey({
             key,
             passphrase,
         });
@@ -55,12 +61,12 @@ export function openPGPCrypto(cryptoProxy: OpenPGPCryptoProxy): OpenPGPCrypto {
         };
     }
 
-    async function encryptArmored(
+    async encryptArmored(
         data: Uint8Array,
         sessionKey: SessionKey,
         encryptionKeys: PrivateKey[],
     ) {
-        const { message: armoredData } = await cryptoProxy.encryptMessage({
+        const { message: armoredData } = await this.cryptoProxy.encryptMessage({
             binaryData: data,
             sessionKey,
             encryptionKeys,
@@ -70,13 +76,13 @@ export function openPGPCrypto(cryptoProxy: OpenPGPCryptoProxy): OpenPGPCrypto {
         }
     }
 
-    async function encryptAndSign(
+    async encryptAndSign(
         data: Uint8Array,
         sessionKey: SessionKey,
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
     ) {
-        const { message: encryptedData } = await cryptoProxy.encryptMessage({
+        const { message: encryptedData } = await this.cryptoProxy.encryptMessage({
             binaryData: data,
             sessionKey,
             signingKeys: signingKey,
@@ -89,12 +95,12 @@ export function openPGPCrypto(cryptoProxy: OpenPGPCryptoProxy): OpenPGPCrypto {
         };
     }
 
-    async function encryptAndSignArmored(
+    async encryptAndSignArmored(
         data: Uint8Array,
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
     ) {
-        const { message: armoredData } = await cryptoProxy.encryptMessage({
+        const { message: armoredData } = await this.cryptoProxy.encryptMessage({
             binaryData: data,
             encryptionKeys,
             signingKeys: signingKey,
@@ -105,13 +111,13 @@ export function openPGPCrypto(cryptoProxy: OpenPGPCryptoProxy): OpenPGPCrypto {
         };
     }
 
-    async function encryptAndSignDetached(
+    async encryptAndSignDetached(
         data: Uint8Array,
         sessionKey: SessionKey,
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
     ) {
-        const { message: encryptedData, signature } = await cryptoProxy.encryptMessage({
+        const { message: encryptedData, signature } = await this.cryptoProxy.encryptMessage({
             binaryData: data,
             sessionKey,
             signingKeys: signingKey,
@@ -125,13 +131,13 @@ export function openPGPCrypto(cryptoProxy: OpenPGPCryptoProxy): OpenPGPCrypto {
         }
     }
 
-    async function encryptAndSignDetachedArmored(
+    async encryptAndSignDetachedArmored(
         data: Uint8Array,
         sessionKey: SessionKey,
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
     ) {
-        const { message: armoredData, signature: armoredSignature } = await cryptoProxy.encryptMessage({
+        const { message: armoredData, signature: armoredSignature } = await this.cryptoProxy.encryptMessage({
             binaryData: data,
             sessionKey,
             signingKeys: signingKey,
@@ -144,11 +150,11 @@ export function openPGPCrypto(cryptoProxy: OpenPGPCryptoProxy): OpenPGPCrypto {
         }
     }
 
-    async function decryptSessionKey(
+    async decryptSessionKey(
         armoredPassphrase: string,
         decryptionKeys: PrivateKey[],
     ) {
-        const sessionKey = await cryptoProxy.decryptSessionKey({
+        const sessionKey = await this.cryptoProxy.decryptSessionKey({
             armoredMessage: armoredPassphrase,
             decryptionKeys,
         });
@@ -161,23 +167,23 @@ export function openPGPCrypto(cryptoProxy: OpenPGPCryptoProxy): OpenPGPCrypto {
         return sessionKey;
     }
 
-    async function decryptKey(
+    async decryptKey(
         armoredKey: string,
         passphrase: string,
     ) {
-        const key = await cryptoProxy.importPrivateKey({
+        const key = await this.cryptoProxy.importPrivateKey({
             armoredKey,
             passphrase,
         });
         return key;
     }
 
-    async function decryptArmoredAndVerify(
+    async decryptArmoredAndVerify(
         armoredData: string,
         decryptionKeys: PrivateKey[],
         verificationKeys: PublicKey[],
     ) {
-        const { data, verified } = await cryptoProxy.decryptMessage({
+        const { data, verified } = await this.cryptoProxy.decryptMessage({
             armoredMessage: armoredData,
             decryptionKeys,
             verificationKeys,
@@ -190,13 +196,13 @@ export function openPGPCrypto(cryptoProxy: OpenPGPCryptoProxy): OpenPGPCrypto {
         }
     }
 
-    async function decryptArmoredAndVerifyDetached(
+    async decryptArmoredAndVerifyDetached(
         armoredData: string,
         armoredSignature: string,
         sessionKey: SessionKey,
         verificationKeys: PublicKey[],
     ) {
-        const { data, verified } = await cryptoProxy.decryptMessage({
+        const { data, verified } = await this.cryptoProxy.decryptMessage({
             armoredMessage: armoredData,
             signature: armoredSignature,
             sessionKeys: sessionKey,
@@ -208,20 +214,5 @@ export function openPGPCrypto(cryptoProxy: OpenPGPCryptoProxy): OpenPGPCrypto {
             data,
             verified,
         }
-    }
-
-    return {
-        generatePassphrase,
-        generateSessionKey,
-        generateKey,
-        encryptArmored,
-        encryptAndSign,
-        encryptAndSignArmored,
-        encryptAndSignDetached,
-        encryptAndSignDetachedArmored,
-        decryptSessionKey,
-        decryptKey,
-        decryptArmoredAndVerify,
-        decryptArmoredAndVerifyDetached,
     }
 }

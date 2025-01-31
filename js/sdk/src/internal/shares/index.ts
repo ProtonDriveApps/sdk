@@ -1,12 +1,12 @@
-import { ProtonDriveAccount } from "../../interface/index.js";
-import { DriveCrypto } from '../../crypto/index.js';
-import { DriveAPIService } from "../apiService/index.js";
-import { ProtonDriveCache } from "../../cache/index.js";
-import { sharesAPIService } from "./apiService.js";
-import { sharesCryptoCache } from "./cryptoCache.js";
-import { sharesCache } from "./cache.js";
-import { sharesCryptoService } from "./cryptoService.js";
-import { sharesManager } from "./manager.js";
+import { ProtonDriveAccount } from "../../interface";
+import { DriveCrypto } from '../../crypto';
+import { DriveAPIService } from "../apiService";
+import { ProtonDriveCache } from "../../cache";
+import { SharesAPIService } from "./apiService";
+import { SharesCryptoCache } from "./cryptoCache";
+import { SharesCache } from "./cache";
+import { SharesCryptoService } from "./cryptoService";
+import { SharesManager } from "./manager";
 
 /**
  * Provides facade for the whole shares module.
@@ -17,17 +17,17 @@ import { sharesManager } from "./manager.js";
  * This facade provides internal interface that other modules can use to
  * interact with the shares.
  */
-export function shares(
+export function initSharesModule(
     apiService: DriveAPIService,
     driveEntitiesCache: ProtonDriveCache,
     driveCryptoCache: ProtonDriveCache,
     account: ProtonDriveAccount,
     crypto: DriveCrypto,
 ) {
-    const api = sharesAPIService(apiService);
-    const cache = sharesCache(driveEntitiesCache);
-    const cryptoCache = sharesCryptoCache(driveCryptoCache);
-    const cryptoService = sharesCryptoService(crypto, account);
-    const sharesFunctions = sharesManager(api, cache, cryptoCache, cryptoService, account);
-    return sharesFunctions;
+    const api = new SharesAPIService(apiService);
+    const cache = new SharesCache(driveEntitiesCache);
+    const cryptoCache = new SharesCryptoCache(driveCryptoCache);
+    const cryptoService = new SharesCryptoService(crypto, account);
+    const sharesManager = new SharesManager(api, cache, cryptoCache, cryptoService, account);
+    return sharesManager;
 }

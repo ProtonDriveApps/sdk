@@ -1,13 +1,13 @@
-import { getApiService } from './internal/apiService/index.js'
-import { ProtonDriveClientContructorParameters, ProtonDriveClientInterface, NodeOrUid, ShareNodeSettings, UploadMetadata } from './interface/index.js';
-import { driveCrypto } from './crypto/index.js'
-import { nodes as nodesModule } from './internal/nodes/index.js'
-import { shares as sharesModule } from './internal/shares/index.js'
-import { sharing as sharingModule } from './internal/sharing/index.js'
-import { events as eventsModule } from './internal/events/index.js'
-import { upload as uploadModule } from './internal/upload/index.js';
-import { getConfig } from './config.js';
-import { getUid, getUids, convertInternalNodePromise, convertInternalNodeIterator } from './transformers.js';
+import { DriveAPIService } from './internal/apiService';
+import { ProtonDriveClientContructorParameters, ProtonDriveClientInterface, NodeOrUid, ShareNodeSettings, UploadMetadata } from './interface';
+import { DriveCrypto } from './crypto';
+import { initSharesModule } from './internal/shares';
+import { initNodesModule } from './internal/nodes';
+import { sharing as sharingModule } from './internal/sharing';
+import { events as eventsModule } from './internal/events';
+import { upload as uploadModule } from './internal/upload';
+import { getConfig } from './config';
+import { getUid, getUids, convertInternalNodePromise, convertInternalNodeIterator } from './transformers';
 
 export function protonDriveClient({
     httpClient,
@@ -24,15 +24,15 @@ export function protonDriveClient({
         // TODO: define errors and use here
         throw Error('TODO');
     }
-    const cryptoModule = driveCrypto(openPGPCryptoModule);
+    const cryptoModule = new DriveCrypto(openPGPCryptoModule);
 
     const fullConfig = getConfig(config);
 
-    const apiService = getApiService(httpClient, fullConfig.baseUrl, fullConfig.language, getLogger?.('api'));
+    const apiService = new DriveAPIService(httpClient, fullConfig.baseUrl, fullConfig.language, getLogger?.('api'));
 
     const events = eventsModule(apiService);
-    const shares = sharesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule);
-    const nodes = nodesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares, getLogger?.('nodes'));
+    const shares = initSharesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule);
+    const nodes = initNodesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares, getLogger?.('nodes'));
     const sharing = sharingModule(apiService, account, cryptoModule, nodes);
     const upload = uploadModule(apiService, cryptoModule, nodes);
 

@@ -1,4 +1,4 @@
-import { PrivateKey, SessionKey } from "../../crypto/index.js";
+import { PrivateKey, SessionKey } from "../../crypto";
 
 /**
  * Internal interface providing basic identification of volume and its root

@@ -1,5 +1,5 @@
-import { DriveAPIService, drivePaths } from "../apiService/index.js";
-import { EncryptedShare, EncryptedRootShare, EncryptedShareCrypto } from "./interface.js";
+import { DriveAPIService, drivePaths } from "../apiService";
+import { EncryptedShare, EncryptedRootShare, EncryptedShareCrypto } from "./interface";
 
 type PostCreateVolumeRequest = Extract<drivePaths['/drive/volumes']['post']['requestBody'], { 'content': object }>['content']['application/json'];
 type PostCreateVolumeResponse = drivePaths['/drive/volumes']['post']['responses']['200']['content']['application/json'];
@@ -17,9 +17,13 @@ type GetShareResponse = drivePaths['/drive/shares/{shareID}']['get']['responses'
  * The service is responsible for transforming local objects to API payloads
  * and vice versa. It should not contain any business logic.
  */
-export function sharesAPIService(apiService: DriveAPIService) {
-    async function getMyFiles(): Promise<EncryptedRootShare> {
-        const response = await apiService.get<GetMyFilesResponse>('drive/v2/shares/my-files');
+export class SharesAPIService {
+    constructor(private apiService: DriveAPIService) {
+        this.apiService = apiService;
+    }
+
+    async getMyFiles(): Promise<EncryptedRootShare> {
+        const response = await this.apiService.get<GetMyFilesResponse>('drive/v2/shares/my-files');
         return {
             volumeId: response.Volume.VolumeID,
             shareId: response.Share.ShareID,
@@ -34,15 +38,15 @@ export function sharesAPIService(apiService: DriveAPIService) {
         };
     }
 
-    async function getVolume(volumeId: string): Promise<{ shareId: string }> {
-        const response = await apiService.get<GetVolumeResponse>(`drive/volumes/${volumeId}`);
+    async getVolume(volumeId: string): Promise<{ shareId: string }> {
+        const response = await this.apiService.get<GetVolumeResponse>(`drive/volumes/${volumeId}`);
         return {
             shareId: response.Volume.Share.ShareID,
         }
     }
 
-    async function getShare(shareId: string): Promise<EncryptedShare> {
-        const response = await apiService.get<GetShareResponse>(`drive/shares/${shareId}`);
+    async getShare(shareId: string): Promise<EncryptedShare> {
+        const response = await this.apiService.get<GetShareResponse>(`drive/shares/${shareId}`);
         return convertSharePayload(response);
     }
 
@@ -55,8 +59,8 @@ export function sharesAPIService(apiService: DriveAPIService) {
      * 
      * @throws Error when share is not root share.
      */
-    async function getRootShare(shareId: string): Promise<EncryptedRootShare> {
-        const response = await apiService.get<GetShareResponse>(`drive/shares/${shareId}`);
+    async getRootShare(shareId: string): Promise<EncryptedRootShare> {
+        const response = await this.apiService.get<GetShareResponse>(`drive/shares/${shareId}`);
 
         if (!response.AddressID) {
             throw new Error('Loading share without direct access is not supported');
@@ -68,21 +72,7 @@ export function sharesAPIService(apiService: DriveAPIService) {
         };
     }
 
-    function convertSharePayload(response: GetShareResponse): EncryptedShare {
-        return {
-            volumeId: response.VolumeID,
-            shareId: response.ShareID,
-            rootNodeId: response.LinkID,
-            creatorEmail: response.Creator,
-            encryptedCrypto: {
-                armoredKey: response.Key,
-                armoredPassphrase: response.Passphrase,
-                armoredPassphraseSignature: response.PassphraseSignature,
-            },
-        };
-    }
-
-    async function createVolume(
+    async createVolume(
         share: {
             addressId: string,
             addressKeyId: string,
@@ -95,7 +85,7 @@ export function sharesAPIService(apiService: DriveAPIService) {
             armoredHashKey: string,
         },
     ): Promise<{ volumeId: string, shareId: string, rootNodeId: string }> {
-        const response = await apiService.post<
+        const response = await this.apiService.post<
             // Volume & share names are deprecated.
             Omit<PostCreateVolumeRequest, 'VolumeName' | 'ShareName'>,
             PostCreateVolumeResponse
@@ -119,7 +109,7 @@ export function sharesAPIService(apiService: DriveAPIService) {
         }
     }
 
-    async function createShare(
+    async createShare(
         volumeId: string,
         share: {
             addressId: string,
@@ -131,7 +121,7 @@ export function sharesAPIService(apiService: DriveAPIService) {
             passphraseKeyPacket: string,
         },
     ): Promise<{ shareId: string }> {
-        const response = await apiService.post<
+        const response = await this.apiService.post<
             // Share name is deprecated.
             Omit<PostCreateShareRequest, 'Name'>,
             PostCreateShareResponse
@@ -149,13 +139,18 @@ export function sharesAPIService(apiService: DriveAPIService) {
             shareId: response.Share.ID,
         }
     }
+}
 
+function convertSharePayload(response: GetShareResponse): EncryptedShare {
     return {
-        getMyFiles,
-        getVolume,
-        getShare,
-        getRootShare,
-        createVolume,
-        createShare,
-    }
+        volumeId: response.VolumeID,
+        shareId: response.ShareID,
+        rootNodeId: response.LinkID,
+        creatorEmail: response.Creator,
+        encryptedCrypto: {
+            armoredKey: response.Key,
+            armoredPassphrase: response.Passphrase,
+            armoredPassphraseSignature: response.PassphraseSignature,
+        },
+    };
 }

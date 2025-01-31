@@ -15,8 +15,18 @@ import { importHmacKey, computeHmacSignature } from "./hmac";
  * 
  * The service owns the logic to switch between old and new crypto model.
  */
-export function nodesCryptoService(driveCrypto: DriveCrypto, account: ProtonDriveAccount, shareService: SharesService) {
-    async function decryptNode(node: EncryptedNode, parentKey: PrivateKey): Promise<{ node: DecryptedNode, keys?: DecryptedNodeKeys }> {
+export class NodesCryptoService {
+    constructor(
+        private driveCrypto: DriveCrypto,
+        private account: ProtonDriveAccount,
+        private shareService: SharesService,
+    ) {
+        this.driveCrypto = driveCrypto;
+        this.account = account;
+        this.shareService = shareService;
+    }
+
+    async decryptNode(node: EncryptedNode, parentKey: PrivateKey): Promise<{ node: DecryptedNode, keys?: DecryptedNodeKeys }> {
         const commonNodeMetadata = {
             ...node,
             encryptedCrypto: undefined,
@@ -24,7 +34,7 @@ export function nodesCryptoService(driveCrypto: DriveCrypto, account: ProtonDriv
 
         // Anonymous uploads (without signature email set) use parent key instead.
         const keyVerificationKeys = node.encryptedCrypto.signatureEmail
-            ? await account.getPublicKeys(node.encryptedCrypto.signatureEmail)
+            ? await this.account.getPublicKeys(node.encryptedCrypto.signatureEmail)
             : [parentKey];
 
         let nameVerificationKeys;
@@ -33,13 +43,13 @@ export function nodesCryptoService(driveCrypto: DriveCrypto, account: ProtonDriv
             nameVerificationKeys = keyVerificationKeys;
         } else {
             nameVerificationKeys = nameSignatureEmail
-                ? await account.getPublicKeys(nameSignatureEmail)
+                ? await this.account.getPublicKeys(nameSignatureEmail)
                 : [parentKey];
         }
 
         let passphrase, key, sessionKey, keyAuthor;
         try {
-            const keyResult = await decryptKey(node, parentKey, keyVerificationKeys);
+            const keyResult = await this.decryptKey(node, parentKey, keyVerificationKeys);
             passphrase = keyResult.passphrase;
             key = keyResult.key;
             sessionKey = keyResult.sessionKey;
@@ -67,12 +77,12 @@ export function nodesCryptoService(driveCrypto: DriveCrypto, account: ProtonDriv
             }
         }
 
-        const { name, author: nameAuthor } = await decryptName(node, parentKey, nameVerificationKeys);
+        const { name, author: nameAuthor } = await this.decryptName(node, parentKey, nameVerificationKeys);
 
         let hashKey;
         let hashKeyAuthor;
         if ("folder" in node.encryptedCrypto) {
-            const hashKeyResult = await decryptHashKey(node, key, keyVerificationKeys);
+            const hashKeyResult = await this.decryptHashKey(node, key, keyVerificationKeys);
             hashKey = hashKeyResult.hashKey;
             hashKeyAuthor = hashKeyResult.author;
         }
@@ -96,10 +106,10 @@ export function nodesCryptoService(driveCrypto: DriveCrypto, account: ProtonDriv
         };
     };
 
-    async function decryptKey(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PublicKey[]): Promise<DecryptedNodeKeys & {
+    async decryptKey(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PublicKey[]): Promise<DecryptedNodeKeys & {
         author: Result<string | AnonymousUser, UnverifiedAuthorError>,
     }> {
-        const key = await driveCrypto.decryptKey(
+        const key = await this.driveCrypto.decryptKey(
             node.encryptedCrypto.armoredKey,
             node.encryptedCrypto.armoredNodePassphrase,
             node.encryptedCrypto.armoredNodePassphraseSignature,
@@ -115,14 +125,14 @@ export function nodesCryptoService(driveCrypto: DriveCrypto, account: ProtonDriv
         };
     };
 
-    async function decryptName(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PrivateKey[]): Promise<{
+    async decryptName(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PrivateKey[]): Promise<{
         name: Result<string, InvalidNameError>,
         author: Result<string | AnonymousUser, UnverifiedAuthorError>,
     }> {
         const nameSignatureEmail = node.encryptedCrypto.nameSignatureEmail || node.encryptedCrypto.signatureEmail;
 
         try {
-            const { name, verified } = await driveCrypto.decryptNodeName(
+            const { name, verified } = await this.driveCrypto.decryptNodeName(
                 node.encryptedCrypto.encryptedName,
                 parentKey,
                 verificationKeys,
@@ -148,7 +158,7 @@ export function nodesCryptoService(driveCrypto: DriveCrypto, account: ProtonDriv
         }
     };
 
-    async function decryptHashKey(node: EncryptedNode, nodeKey: PrivateKey, addressKeys: PublicKey[]): Promise<{
+    async decryptHashKey(node: EncryptedNode, nodeKey: PrivateKey, addressKeys: PublicKey[]): Promise<{
         hashKey: Uint8Array,
         author: Result<string | AnonymousUser, UnverifiedAuthorError>,
     }> {
@@ -156,7 +166,7 @@ export function nodesCryptoService(driveCrypto: DriveCrypto, account: ProtonDriv
             throw new Error('Node is not a folder');
         }
 
-        const { hashKey, verified } = await driveCrypto.decryptNodeHashKey(
+        const { hashKey, verified } = await this.driveCrypto.decryptNodeHashKey(
             node.encryptedCrypto.folder.armoredHashKey,
             nodeKey,
             addressKeys,
@@ -168,22 +178,22 @@ export function nodesCryptoService(driveCrypto: DriveCrypto, account: ProtonDriv
         }
     }
 
-    async function createFolder(parentNode: DecryptedNode, parentKeys: { key: PrivateKey, hashKey: Uint8Array }, name: string): Promise<{
+    async createFolder(parentNode: DecryptedNode, parentKeys: { key: PrivateKey, hashKey: Uint8Array }, name: string): Promise<{
         encryptedCrypto: Required<EncryptedNodeFolderCrypto> & { hash: string },
         keys: DecryptedNodeKeys,
     }> {
-        const { email, key: addressKey } = await shareService.getVolumeEmailKey(parentNode.volumeId);
+        const { email, key: addressKey } = await this.shareService.getVolumeEmailKey(parentNode.volumeId);
         const [
             nodeKeys,
             { armoredNodeName },
             hash,
         ] = await Promise.all([
-            driveCrypto.generateKey([parentKeys.key], addressKey),
-            driveCrypto.encryptNodeName(name, parentKeys.key, addressKey),
-            generateLookupHash(name, parentKeys.hashKey),
+            this.driveCrypto.generateKey([parentKeys.key], addressKey),
+            this.driveCrypto.encryptNodeName(name, parentKeys.key, addressKey),
+            this.generateLookupHash(name, parentKeys.hashKey),
         ]);
 
-        const { armoredHashKey, hashKey } = await driveCrypto.generateHashKey(nodeKeys.decrypted.key);
+        const { armoredHashKey, hashKey } = await this.driveCrypto.generateHashKey(nodeKeys.decrypted.key);
 
         return {
             encryptedCrypto: {
@@ -208,14 +218,14 @@ export function nodesCryptoService(driveCrypto: DriveCrypto, account: ProtonDriv
         };
     }
 
-    async function encryptNewName(node: DecryptedNode, parentKeys: { key: PrivateKey, hashKey: Uint8Array }, newName: string): Promise<{
+    async encryptNewName(node: DecryptedNode, parentKeys: { key: PrivateKey, hashKey: Uint8Array }, newName: string): Promise<{
         signatureEmail: string,
         armoredNodeName: string,
         hash: string,
     }> {
-        const { email, key: addressKey } = await shareService.getVolumeEmailKey(node.volumeId);
-        const { armoredNodeName } = await driveCrypto.encryptNodeName(newName, parentKeys.key, addressKey);
-        const hash = await generateLookupHash(newName, parentKeys.hashKey);
+        const { email, key: addressKey } = await this.shareService.getVolumeEmailKey(node.volumeId);
+        const { armoredNodeName } = await this.driveCrypto.encryptNodeName(newName, parentKeys.key, addressKey);
+        const hash = await this.generateLookupHash(newName, parentKeys.hashKey);
         return {
             signatureEmail: email,
             armoredNodeName,
@@ -223,7 +233,7 @@ export function nodesCryptoService(driveCrypto: DriveCrypto, account: ProtonDriv
         };
     };
 
-    async function moveNode(node: DecryptedNode, keys: { passphrase: string, sessionKey: SessionKey }, parentNode: DecryptedNode, parentKeys: { key: PrivateKey, hashKey: Uint8Array }): Promise<{
+    async moveNode(node: DecryptedNode, keys: { passphrase: string, sessionKey: SessionKey }, parentNode: DecryptedNode, parentKeys: { key: PrivateKey, hashKey: Uint8Array }): Promise<{
         encryptedName: string,
         hash: string,
         armoredNodePassphrase: string,
@@ -238,10 +248,10 @@ export function nodesCryptoService(driveCrypto: DriveCrypto, account: ProtonDriv
             throw new Error('Cannot move node without a valid name, please rename the node first');
         }
 
-        const { email, key: addressKey } = await shareService.getVolumeEmailKey(parentNode.volumeId);
-        const { armoredNodeName } = await driveCrypto.encryptNodeName(node.name.value, parentKeys.key, addressKey);
-        const hash = await generateLookupHash(node.name.value, parentKeys.hashKey);
-        const { armoredPassphrase, armoredPassphraseSignature } = await driveCrypto.encryptPassphrase(keys.passphrase, keys.sessionKey, [parentKeys.key], addressKey);
+        const { email, key: addressKey } = await this.shareService.getVolumeEmailKey(parentNode.volumeId);
+        const { armoredNodeName } = await this.driveCrypto.encryptNodeName(node.name.value, parentKeys.key, addressKey);
+        const hash = await this.generateLookupHash(node.name.value, parentKeys.hashKey);
+        const { armoredPassphrase, armoredPassphraseSignature } = await this.driveCrypto.encryptPassphrase(keys.passphrase, keys.sessionKey, [parentKeys.key], addressKey);
 
         return {
             encryptedName: armoredNodeName,
@@ -253,18 +263,11 @@ export function nodesCryptoService(driveCrypto: DriveCrypto, account: ProtonDriv
         };
     }
 
-    async function generateLookupHash(newName: string, parentHashKey: Uint8Array): Promise<string> {
+    async generateLookupHash(newName: string, parentHashKey: Uint8Array): Promise<string> {
         const key = await importHmacKey(parentHashKey);
 
         const signature = await computeHmacSignature(key, new TextEncoder().encode(newName));
         return arrayToHexString(signature);
-    }
-
-    return {
-        decryptNode,
-        createFolder,
-        encryptNewName,
-        moveNode,
     }
 }
 
