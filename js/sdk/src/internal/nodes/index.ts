@@ -5,7 +5,7 @@ import { DriveEventsService } from "../events";
 import { Logger, ProtonDriveAccount } from "../../interface";
 import { NodeAPIService } from "./apiService";
 import { NodesCache } from "./cache";
-import { nodesEvents } from "./events";
+import { NodesEvents } from "./events";
 import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
 import { SharesService, DecryptedNode } from "./interface";
@@ -39,16 +39,12 @@ export function initNodesModule(
     const cryptoService = new NodesCryptoService(driveCrypto, account, sharesService);
     const nodesAccess = new NodesAccess(api, cache, cryptoCache, cryptoService, sharesService);
     const nodesManager = new NodesManager(api, cache, cryptoCache, cryptoService, sharesService, nodesAccess);
-    const nodesEventsFunctions = nodesEvents(cache, driveEvents);
+    const nodesEvents = new NodesEvents(cache, driveEvents);
 
     return {
-        // TODO: expose in better way
-        getNode: nodesAccess.getNode,
-        getNodeKeys: nodesAccess.getNodeKeys,
-        getMyFilesRootFolder: nodesManager.getMyFilesRootFolder,
-        iterateChildren: nodesManager.iterateChildren,
-        iterateNodes: nodesManager.iterateNodes,
-        ...nodesEventsFunctions,
+        access: nodesAccess,
+        management: nodesManager,
+        events: nodesEvents,
     }
 }
 
@@ -65,16 +61,14 @@ export function initPublicNodesModule(
     const cryptoCache = new NodesCryptoCache(driveCryptoCache);
     // @ts-expect-error TODO
     const cryptoService = new NodesCryptoService(driveCrypto, account, sharesService);
-    const nodesAccessFunctions = new NodesAccess(api, cache, cryptoCache, cryptoService, sharesService);
-    const nodesManager = new NodesManager(api, cache, cryptoCache, cryptoService, sharesService, nodesAccessFunctions);
+    const nodesAccess = new NodesAccess(api, cache, cryptoCache, cryptoService, sharesService);
+    const nodesManager = new NodesManager(api, cache, cryptoCache, cryptoService, sharesService, nodesAccess);
 
     return {
         // TODO: use public root node, not my files
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         getPublicRootNode: async (token: string, password: string, customPassword?: string): Promise<DecryptedNode> => { return {} as DecryptedNode },
-        getNode: nodesAccessFunctions.getNode,
-        getNodeKeys: nodesAccessFunctions.getNodeKeys,
-        iterateChildren: nodesManager.iterateChildren,
-        iterateNodes: nodesManager.iterateNodes,
+        access: nodesAccess,
+        management: nodesManager,
     }
 }

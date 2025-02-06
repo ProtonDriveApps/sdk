@@ -1,0 +1,65 @@
+import { Account } from "./account/account";
+import { Api as CryptoApi } from "./crypto/lib/worker/api";
+import { HTTPClient } from "./httpClient";
+import { getLogger } from "./logger";
+
+import { ProtonDriveClient, MemoryCache, OpenPGPCryptoWithCryptoProxy } from "../../sdk/src";
+
+interface APIConfig {
+    appVersion: string;
+    baseUrl: string;
+    uid?: string;
+    accessToken?: string;
+}
+
+export async function init() {
+    const cryptoApi = initCrypto();
+    const config = getAPIConfig();
+    const account = await initAccount(cryptoApi, config);
+    const sdk = initSDK(cryptoApi, config, account);
+    return {
+        account,
+        sdk,
+    };
+}
+
+function initCrypto() {
+    CryptoApi.init();
+    return new CryptoApi();
+}
+
+function getAPIConfig(): APIConfig {
+    return {
+        appVersion: 'web-drive-sdk-cli@5.0.999.999',
+        baseUrl: process.env.DRIVE_SDK_BASE_URL || 'drive.proton.me',
+    }
+}
+
+async function initAccount(cryptoApi: CryptoApi, config: APIConfig) {
+    const account = new Account(cryptoApi, config);
+    await account.loadSession();
+    return account;
+}
+
+function initSDK(cryptoApi: CryptoApi, config: APIConfig, account: Account) {
+    const httpClient = new HTTPClient({
+        ...config,
+        uid: account.session?.uid || "",
+        accessToken: account.session?.accessToken || "",
+    });
+    const openPGPCryptoModule = new OpenPGPCryptoWithCryptoProxy(cryptoApi as any); // TODO: fix typing
+
+    const entitiesCache = new MemoryCache([]);
+    const cryptoCache = new MemoryCache([]);
+
+    const sdk = new ProtonDriveClient({
+        httpClient,
+        entitiesCache,
+        cryptoCache,
+        account,
+        openPGPCryptoModule,
+        acceptNoGuaranteeWithCustomModules: true,
+        getLogger,
+    });
+    return sdk;
+}
