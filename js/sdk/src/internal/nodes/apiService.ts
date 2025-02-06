@@ -1,4 +1,4 @@
-import { Logger, NodeType, MemberRole } from "../../interface";
+import { Logger, NodeType, MemberRole, NodeResult } from "../../interface";
 import { DriveAPIService, drivePaths } from "../apiService";
 import { splitNodeUid, makeNodeUid } from "./nodeUid";
 import { EncryptedNode } from "./interface";
@@ -224,7 +224,7 @@ export class NodeAPIService {
 
     // Improvement requested: API without requiring parent node (to delete any nodes).
     // Improvement requested: split into multiple calls for many nodes.
-    async trashNodes(parentNodeUid: string, nodeUids: string[], signal?: AbortSignal): Promise<void> {
+    async* trashNodes(parentNodeUid: string, nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         const { volumeId, nodeId: parentNodeId } = splitNodeUid(parentNodeUid);
 
         const nodeIds = nodeUids.map(splitNodeUid);
@@ -237,11 +237,11 @@ export class NodeAPIService {
         }, signal);
 
         // TODO: remove `as` when backend fixes OpenAPI schema.
-        handleResponseErrors(volumeId, response.Responses as LinkResponse[]);
+        yield* handleResponseErrors(nodeUids, volumeId, response.Responses as LinkResponse[]);
     }
 
     // Improvement requested: split into multiple calls for many nodes.
-    async restoreNodes(nodeUids: string[], signal?: AbortSignal): Promise<void> {
+    async* restoreNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         const nodeIds = nodeUids.map(splitNodeUid);
         const volumeId = assertAndGetSingleVolumeId("restoreNodes", nodeIds);
 
@@ -253,13 +253,13 @@ export class NodeAPIService {
         }, signal);
 
         // TODO: remove `as` when backend fixes OpenAPI schema.
-        handleResponseErrors(volumeId, response.Responses as LinkResponse[]);
+        yield* handleResponseErrors(nodeUids, volumeId, response.Responses as LinkResponse[]);
     }
 
     // Improvement requested: split into multiple calls for many nodes.
-    async deleteNodes(nodeUids: string[], signal?: AbortSignal): Promise<void> {
+    async* deleteNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         const nodeIds = nodeUids.map(splitNodeUid);
-        const volumeId = assertAndGetSingleVolumeId("restoreNodes", nodeIds);
+        const volumeId = assertAndGetSingleVolumeId("deleteNodes", nodeIds);
 
         const response = await this.apiService.post<
             PostDeleteNodesRequest,
@@ -269,7 +269,7 @@ export class NodeAPIService {
         }, signal);
 
         // TODO: remove `as` when backend fixes OpenAPI schema.
-        handleResponseErrors(volumeId, response.Responses as LinkResponse[]);
+        yield* handleResponseErrors(nodeUids, volumeId, response.Responses as LinkResponse[]);
     }
 
     async createFolder(
@@ -334,39 +334,27 @@ function sharingSummaryToDirectMemberRole(sharingSummary: PostLoadLinksMetadataR
 type LinkResponse = {
     LinkID: string,
     Response: {
-        Error?: string
+        Code?: number,
+        Error?: string,
     }
 };
 
-export type NodeErrors = { [ nodeUid: string ]: string };
+function* handleResponseErrors(nodeUids: string[], volumeId: string, responses: LinkResponse[] = []): Generator<NodeResult> {
+    const errors = new Map();
 
-export class ResultErrors extends Error {
-    nodeErrors: NodeErrors;
-
-    constructor(nodeErrors: NodeErrors) {
-        super("Some nodes failed to process");
-        this.nodeErrors = nodeErrors;
-    }
-
-    get failingNodeUids(): string[] {
-        return Object.keys(this.nodeErrors);
-    }
-}
-
-function handleResponseErrors(volumeId: string, responses?: LinkResponse[]) {
-    if (!responses) {
-        return;
-    }
-
-    const errors: NodeErrors = {};
-
-    responses.map((response) => {
-        if (response.Response.Error) {
-            errors[makeNodeUid(volumeId, response.LinkID)] = response.Response.Error as string;
+    responses.forEach((response) => {
+        if (response.Response.Code !== 1000 || response.Response.Error) {
+            const nodeUid = makeNodeUid(volumeId, response.LinkID);
+            errors.set(nodeUid, response.Response.Error || 'Unknown error');
         }
     });
 
-    if (Object.keys(errors).length > 0) {
-        throw new ResultErrors(errors);
+    for (const uid of nodeUids) {
+        const error = errors.get(uid);
+        if (error) {
+            yield { uid, ok: false, error };
+        } else {
+            yield { uid, ok: true };
+        }
     }
 }

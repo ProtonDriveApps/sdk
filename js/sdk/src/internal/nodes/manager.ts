@@ -1,5 +1,5 @@
-import { MemberRole, NodeType, resultOk } from "../../interface";
-import { NodeAPIService, ResultErrors, NodeErrors } from "./apiService";
+import { MemberRole, NodeType, NodeResult, resultOk } from "../../interface";
+import { NodeAPIService } from "./apiService";
 import { NodesCache } from "./cache";
 import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
@@ -121,6 +121,24 @@ export class NodesManager {
         });
     }
 
+    async* moveNodes(nodeUids: string[], newParentUid: string): AsyncGenerator<NodeResult> {
+        for (const nodeUid of nodeUids) {
+            try {
+                await this.moveNode(nodeUid, newParentUid);
+                yield {
+                    uid: nodeUid,
+                    ok: true,
+                }
+            } catch (error: unknown) {
+                yield {
+                    uid: nodeUid,
+                    ok: false,
+                    error: error instanceof Error ? error.message : 'Unknown error',
+                }
+            }
+        }
+    }
+
     async moveNode(nodeUid: string, newParentUid: string): Promise<void> {
         const [node, newParentNode] = await Promise.all([
             this.nodesAccess.getNode(nodeUid),
@@ -166,7 +184,7 @@ export class NodesManager {
         });
     }
 
-    async trashNodes(nodeUids: string[], signal?: AbortSignal): Promise<void> {
+    async* trashNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         const nodesPerParent = new Map<string, DecryptedNode[]>();
 
         for await (const node of this.iterateNodes(nodeUids, signal)) {
@@ -181,87 +199,52 @@ export class NodesManager {
             }
         }
 
-        let errors: NodeErrors = {};
-
         for (const [parentNodeUid, nodes] of nodesPerParent) {
-            let updatedNodes: DecryptedNode[];
-            try {
-                await this.apiService.trashNodes(parentNodeUid, nodes.map(node => node.uid), signal);
-                updatedNodes = nodes;
-            } catch (error: unknown) {
-                if (error instanceof ResultErrors) {
-                    updatedNodes = nodes.filter(node => !error.failingNodeUids.includes(node.uid));
-                    errors = { ...errors, ...error.nodeErrors };
-                } else {
-                    updatedNodes = [];
-                    errors = { ...errors, ...Object.fromEntries(nodes.map(node => [node.uid, error instanceof Error ? error.message : `${error}`])) };
+            for await (const result of this.apiService.trashNodes(parentNodeUid, nodes.map(node => node.uid), signal)) {
+                if (result.ok) {
+                    const node = nodes.find(node => node.uid === result.uid);
+                    if (node) {
+                        await this.cache.setNode({
+                            ...node,
+                            trashedDate: new Date(),
+                        });
+                    }
+                }
+
+                yield result;
+            }
+        }
+    }
+
+    async* restoreNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
+        const nodes = await Array.fromAsync(this.iterateNodes(nodeUids, signal));
+
+        for await (const result of this.apiService.restoreNodes(nodeUids, signal)) {
+            if (result.ok) {
+                const node = nodes.find(node => node.uid === result.uid);
+                if (node) {
+                    await this.cache.setNode({
+                        ...node,
+                        trashedDate: undefined,
+                    });
                 }
             }
-            for (const node of updatedNodes) {
-                await this.cache.setNode({
-                    ...node,
-                    trashedDate: new Date(),
-                });
-            }
-        }
 
-        if (Object.keys(errors).length) {
-            throw new ResultErrors(errors);
+            yield result;
         }
     }
 
-    async restoreNodes(nodeUids: string[], signal?: AbortSignal): Promise<void> {
-        const nodes = await Array.fromAsync(this.iterateNodes(nodeUids, signal));
-        let updatedNodes: DecryptedNode[];
-        let catchedError: unknown;
+    async* deleteNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
+        const deletedNodeUids = [];
 
-        try {
-            await this.apiService.restoreNodes(nodeUids, signal);
-            updatedNodes = nodes;
-        } catch (error: unknown) {
-            catchedError = error;
-            if (error instanceof ResultErrors) {
-                updatedNodes = nodes.filter(node => !error.failingNodeUids.includes(node.uid));
-            } else {
-                updatedNodes = [];
+        for await (const result of this.apiService.deleteNodes(nodeUids, signal)) {
+            if (result.ok) {
+                deletedNodeUids.push(result.uid);
             }
+            yield result;
         }
 
-        for (const node of updatedNodes) {
-            await this.cache.setNode({
-                ...node,
-                trashedDate: new Date(),
-            });
-        }
-
-        if (catchedError) {
-            throw catchedError;
-        }
-    }
-
-    async deleteNodes(nodeUids: string[], signal?: AbortSignal): Promise<void> {
-        let updatedNodeUids: string[];
-        let catchedError: unknown;
-
-        try {
-            await this.apiService.restoreNodes(nodeUids, signal);
-            updatedNodeUids = nodeUids;
-        } catch (error: unknown) {
-            catchedError = error;
-            if (error instanceof ResultErrors) {
-                updatedNodeUids = nodeUids.filter(nodeUid => !error.failingNodeUids.includes(nodeUid));
-            } else {
-                updatedNodeUids = [];
-            }
-        }
-
-        if (updatedNodeUids) {
-            await this.cache.removeNodes(updatedNodeUids);
-        }
-
-        if (catchedError) {
-            throw catchedError;
-        }
+        await this.cache.removeNodes(deletedNodeUids);
     }
 
     async createFolder(parentNodeUid: string, folderName: string, signal?: AbortSignal): Promise<DecryptedNode> {

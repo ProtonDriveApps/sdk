@@ -69,14 +69,14 @@ export interface Nodes {
 export interface NodesManagement {
     createFolder(parentNodeUid: NodeOrUid, name: string): Promise<NodeEntity>,
     renameNode(nodeUid: NodeOrUid, newName: string): Promise<NodeEntity>,
-    moveNodes(nodeUids: NodeOrUid[], newParentNodeUid: NodeOrUid, signal?: AbortSignal): Promise<NodesResults>,
-    trashNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): Promise<NodesResults>,
-    restoreNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): Promise<NodesResults>,
+    moveNodes(nodeUids: NodeOrUid[], newParentNodeUid: NodeOrUid, signal?: AbortSignal): Promise<NodeResult>,
+    trashNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult>,
+    restoreNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult>,
 }
 
 export interface TrashManagement {
     iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<NodeEntity>,
-    deleteNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): Promise<NodesResults>,
+    deleteNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult>,
     emptyTrash(): Promise<void>,
 }
 
@@ -86,6 +86,4 @@ export interface Revisions {
     deleteRevision(revisionUid: RevisionOrUid): Promise<void>,
 }
 
-export type NodesResults = { processedNodeIds: string[], errors: NodeErrorResult[] };
-// TODO: fix type - will be solved by converting to different structure
-export type NodeErrorResult = { nodeId: string, error: any }; // eslint-disable-line @typescript-eslint/no-explicit-any
+export type NodeResult = {uid: string, ok: true} | {uid: string, ok: false, error: string};
