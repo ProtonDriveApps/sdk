@@ -9,51 +9,62 @@ import { upload as uploadModule } from './internal/upload';
 import { getConfig } from './config';
 import { getUid, getUids, convertInternalNodePromise, convertInternalNodeIterator } from './transformers';
 
-export function protonDriveClient({
-    httpClient,
-    entitiesCache,
-    cryptoCache,
-    account,
-    getLogger,
-    config,
-    metrics, // eslint-disable-line @typescript-eslint/no-unused-vars
-    openPGPCryptoModule,
-    acceptNoGuaranteeWithCustomModules,
-}: ProtonDriveClientContructorParameters): Partial<ProtonDriveClientInterface> {
-    if (openPGPCryptoModule && !acceptNoGuaranteeWithCustomModules) {
-        // TODO: define errors and use here
-        throw Error('TODO');
-    }
-    const cryptoModule = new DriveCrypto(openPGPCryptoModule);
+export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
+    private nodes: ReturnType<typeof initNodesModule>;
+    private sharing: ReturnType<typeof sharingModule>;
+    private upload: ReturnType<typeof uploadModule>;
 
-    const fullConfig = getConfig(config);
-
-    const apiService = new DriveAPIService(httpClient, fullConfig.baseUrl, fullConfig.language, getLogger?.('api'));
-
-    const events = eventsModule(apiService);
-    const shares = initSharesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule);
-    const nodes = initNodesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares, getLogger?.('nodes'));
-    const sharing = sharingModule(apiService, account, cryptoModule, nodes);
-    const upload = uploadModule(apiService, cryptoModule, nodes);
-
-    return {
-        // TODO
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        getNodeUid: (shareId: string, nodeId: string) => Promise.resolve(""),
-        getMyFilesRootFolder: () => {
-            return convertInternalNodePromise(nodes.getMyFilesRootFolder());
-        },
-        iterateChildren: (parentNodeUid: NodeOrUid, signal?: AbortSignal) => {
-            return convertInternalNodeIterator(nodes.iterateChildren(getUid(parentNodeUid), signal));
-        },
-        iterateNodes: (nodeUids: NodeOrUid[], signal?: AbortSignal) => {
-            return convertInternalNodeIterator(nodes.iterateNodes(getUids(nodeUids), signal));
-        },
-        shareNode: (nodeUid: NodeOrUid, settings: ShareNodeSettings) => {
-            return sharing.shareNode(getUid(nodeUid), settings);
-        },
-        getFileUploader: (nodeUid: NodeOrUid, name: string, metadata: UploadMetadata, signal?: AbortSignal) => {
-            return upload.getFileUploader(getUid(nodeUid), name, metadata, signal);
+    constructor({
+        httpClient,
+        entitiesCache,
+        cryptoCache,
+        account,
+        getLogger,
+        config,
+        metrics, // eslint-disable-line @typescript-eslint/no-unused-vars
+        openPGPCryptoModule,
+        acceptNoGuaranteeWithCustomModules,
+    }: ProtonDriveClientContructorParameters) {
+        if (openPGPCryptoModule && !acceptNoGuaranteeWithCustomModules) {
+            // TODO: define errors and use here
+            throw Error('TODO');
         }
+        const cryptoModule = new DriveCrypto(openPGPCryptoModule);
+    
+        const fullConfig = getConfig(config);
+    
+        const apiService = new DriveAPIService(httpClient, fullConfig.baseUrl, fullConfig.language, getLogger?.('api'));
+    
+        const events = eventsModule(apiService);
+        const shares = initSharesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule);
+        this.nodes = initNodesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares, getLogger?.('nodes'));
+        this.sharing = sharingModule(apiService, account, cryptoModule, this.nodes.access);
+        this.upload = uploadModule(apiService, cryptoModule, this.nodes.access);
+    }
+
+    // TODO
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async getNodeUid(shareId: string, nodeId: string) {
+        return Promise.resolve("")
+    }
+
+    async getMyFilesRootFolder() {
+        return convertInternalNodePromise(this.nodes.management.getMyFilesRootFolder());
+    }
+
+    async* iterateChildren(parentNodeUid: NodeOrUid, signal?: AbortSignal) {
+        return convertInternalNodeIterator(this.nodes.management.iterateChildren(getUid(parentNodeUid), signal));
+    }
+
+    async* iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal) {
+        return convertInternalNodeIterator(this.nodes.management.iterateNodes(getUids(nodeUids), signal));
+    }
+
+    async shareNode(nodeUid: NodeOrUid, settings: ShareNodeSettings) {
+        return this.sharing.shareNode(getUid(nodeUid), settings);
+    }
+
+    async getFileUploader(nodeUid: NodeOrUid, name: string, metadata: UploadMetadata, signal?: AbortSignal) {
+        return this.upload.getFileUploader(getUid(nodeUid), name, metadata, signal);
     }
 }
