@@ -14,7 +14,7 @@ export type { ProtonDriveAccount, ProtonDriveHTTPClient, ProtonDriveConfig, GetL
 export type { Device, DeviceOrUid } from './devices';
 export type { FileDownloader, DownloadController } from './download';
 export type { NodeEvent, DeviceEvent, SDKEvent, DeviceEventCallback, NodeEventCallback } from './events';
-export type { NodeEntity, InvalidNameError, UnverifiedAuthorError, AnonymousUser, Revision, NodeOrUid, RevisionOrUid, NodesResults, NodeErrorResult } from './nodes';
+export type { NodeEntity, InvalidNameError, UnverifiedAuthorError, AnonymousUser, Revision, NodeOrUid, RevisionOrUid, NodeResult } from './nodes';
 export { NodeType, MemberRole } from './nodes';
 export type { ProtonInvitation, NonProtonInvitation, NonProtonInvitationState, Member, PublicLink, Bookmark, ProtonInvitationOrUid, NonProtonInvitationOrUid, BookmarkOrUid, ShareNodeSettings, UnshareNodeSettings, ShareMembersSettings, ShareResult } from './sharing';
 export { ShareRole } from './sharing';

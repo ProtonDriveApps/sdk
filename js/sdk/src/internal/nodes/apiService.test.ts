@@ -208,4 +208,117 @@ describe("nodeAPIService", () => {
             );
         });
     });
+
+    describe('trashNodes', () => {
+        it('should trash nodes', async () => {
+            // @ts-expect-error Mocking for testing purposes
+            apiMock.post = jest.fn(async () => Promise.resolve({
+                Responses: [
+                    {
+                        LinkID: 'nodeId1',
+                        Response: {
+                            Code: 1000,
+                        }
+                    },
+                    {
+                        LinkID: 'nodeId2',
+                        Response: {
+                            Code: 2027,
+                            Error: 'INSUFFICIENT_SCOPE'
+                        }
+                    }
+                ],
+            }));
+
+            const parentUid = 'volume:volumeId;node:parentLinkId';
+            const result = await Array.fromAsync(api.trashNodes(parentUid, ['volume:volumeId;node:nodeId1', 'volume:volumeId;node:nodeId2']));
+            expect(result).toEqual([
+                { uid: 'volume:volumeId;node:nodeId1', ok: true },
+                { uid: 'volume:volumeId;node:nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
+            ]);
+        });
+    });
+
+    describe('restoreNodes', () => {
+        it('should restore nodes', async () => {
+            // @ts-expect-error Mocking for testing purposes
+            apiMock.put = jest.fn(async () => Promise.resolve({
+                Responses: [
+                    {
+                        LinkID: 'nodeId1',
+                        Response: {
+                            Code: 1000,
+                        }
+                    },
+                    {
+                        LinkID: 'nodeId2',
+                        Response: {
+                            Code: 2027,
+                            Error: 'INSUFFICIENT_SCOPE'
+                        }
+                    },
+                    {
+                        LinkID: 'nodeId3',
+                        Response: {
+                            Code: 2000,
+                        }
+                    },
+                ],
+            }));
+
+            const result = await Array.fromAsync(api.restoreNodes(['volume:volumeId;node:nodeId1', 'volume:volumeId;node:nodeId2', 'volume:volumeId;node:nodeId3']));
+            expect(result).toEqual([
+                { uid: 'volume:volumeId;node:nodeId1', ok: true },
+                { uid: 'volume:volumeId;node:nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
+                { uid: 'volume:volumeId;node:nodeId3', ok: false, error: 'Unknown error' },
+            ]);
+        });
+
+        it('should fail restoring from multiple volumes', async () => {  
+            try {
+                await Array.fromAsync(api.restoreNodes(['volume:volumeId1;node:nodeId1', 'volume:volumeId2;node:nodeId2']));
+                throw new Error('Should have thrown');
+            } catch (error: any) {
+                expect(error.message).toEqual('restoreNodes does not support multiple volumes');
+            }
+        });
+    });
+
+    describe('deleteNOdes', () => {
+        it('should delete nodes', async () => {
+            // @ts-expect-error Mocking for testing purposes
+            apiMock.post = jest.fn(async () => Promise.resolve({
+                Responses: [
+                    {
+                        LinkID: 'nodeId1',
+                        Response: {
+                            Code: 1000,
+                        }
+                    },
+                    {
+                        LinkID: 'nodeId2',
+                        Response: {
+                            Code: 2027,
+                            Error: 'INSUFFICIENT_SCOPE'
+                        }
+                    }
+                ],
+            }));
+
+            const result = await Array.fromAsync(api.deleteNodes(['volume:volumeId;node:nodeId1', 'volume:volumeId;node:nodeId2']));
+            expect(result).toEqual([
+                { uid: 'volume:volumeId;node:nodeId1', ok: true },
+                { uid: 'volume:volumeId;node:nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
+            ]);
+        });
+
+        it('should fail deleting nodes from multiple volumes', async () => {  
+            try {
+                await Array.fromAsync(api.deleteNodes(['volume:volumeId1;node:nodeId1', 'volume:volumeId2;node:nodeId2']));
+                throw new Error('Should have thrown');
+            } catch (error: any) {
+                expect(error.message).toEqual('deleteNodes does not support multiple volumes');
+            }
+        });
+    });
 });
