@@ -16,8 +16,6 @@ module.exports =  {
         {
             files: [
                 "*.test.ts",
-                "**/nodes/events.ts",
-                "**/events/**/*",
                 "**/sharing/**/*",
                 "**/upload/**/*",
             ],

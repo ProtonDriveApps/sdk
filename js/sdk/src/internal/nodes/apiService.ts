@@ -50,7 +50,7 @@ export class NodeAPIService {
         const nodeIds = nodeUids.map(splitNodeUid);
         const volumeId = assertAndGetSingleVolumeId("getNodes", nodeIds);
 
-        const response = await this.apiService.post<PostLoadLinksMetadataRequest, PostLoadLinksMetadataResponse>(`drive/volumes/${volumeId}/links`, {
+        const response = await this.apiService.post<PostLoadLinksMetadataRequest, PostLoadLinksMetadataResponse>(`drive/v2/volumes/${volumeId}/links`, {
             LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
         }, signal);
 
@@ -63,7 +63,7 @@ export class NodeAPIService {
                 // Basic node metadata
                 uid: makeNodeUid(volumeId, link.Link.LinkID),
                 parentUid: link.Link.ParentLinkID ? makeNodeUid(volumeId, link.Link.ParentLinkID) : undefined,
-                type: link.Link.Type === 1 ? NodeType.File : NodeType.Folder,
+                type: link.Link.Type === 1 ? NodeType.Folder : NodeType.File,
                 mimeType: link.Link.MIMEType || undefined,
                 createdDate: new Date(link.Link.CreateTime),
                 trashedDate: link.Link.TrashTime ? new Date(link.Link.TrashTime) : undefined,
@@ -82,7 +82,7 @@ export class NodeAPIService {
                 armoredNodePassphraseSignature: link.Link.NodePassphraseSignature,
             }
 
-            if (link.Link.Type === 1 && link.File && link.ActiveRevision) {
+            if (link.Link.Type === 2 && link.File && link.ActiveRevision) {
                 return {
                     ...baseNodeMetadata,
                     encryptedCrypto: {
@@ -98,7 +98,7 @@ export class NodeAPIService {
                     },
                 }
             }
-            if (link.Link.Type === 2 && link.Folder) {
+            if (link.Link.Type === 1 && link.Folder) {
                 return {
                     ...baseNodeMetadata,
                     encryptedCrypto: {

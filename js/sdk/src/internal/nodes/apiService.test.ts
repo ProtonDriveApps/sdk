@@ -7,7 +7,7 @@ function generateAPIFileNode(linkOverrides = {}, overrides = {}) {
     return {
         Link: {
             ...node.Link,
-            Type: 1,
+            Type: 2,
             MIMEType: 'text',
             ...linkOverrides,
         },
@@ -28,7 +28,7 @@ function generateAPIFolderNode(linkOverrides = {}, overrides = {}) {
     return {
         Link: {
             ...node.Link,
-            Type: 2,
+            Type: 1,
             MIMEType: 'Folder',
             ...linkOverrides,
         },

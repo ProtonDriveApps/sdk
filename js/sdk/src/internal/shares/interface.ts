@@ -1,4 +1,5 @@
 import { PrivateKey, SessionKey } from "../../crypto";
+import { Result, UnverifiedAuthorError } from "../../interface";
 
 /**
  * Internal interface providing basic identification of volume and its root
@@ -11,7 +12,7 @@ import { PrivateKey, SessionKey } from "../../crypto";
  * know what is the root share or node, thus we want to keep this for both
  * volumes or any type of share.
  */
-interface VolumeShareNodeIDs {
+export interface VolumeShareNodeIDs {
     volumeId: string;
     shareId: string;
     rootNodeId: string;
@@ -32,7 +33,6 @@ export type Volume = {
  * Internal share interface.
  */
 type BaseShare = {
-    creatorEmail: string;
     /**
      * Address ID is set only when user is member of the share.
      * Owner or invitee of share with higher access in the tree
@@ -56,6 +56,7 @@ interface BaseRootShare extends BaseShare {
  * Outside of the module, the decrypted share interface should be used.
  */
 export interface EncryptedShare extends BaseShare {
+    creatorEmail: string;
     encryptedCrypto: EncryptedShareCrypto;
 }
 
@@ -65,6 +66,7 @@ export interface EncryptedShare extends BaseShare {
  * Outside of the module, the decrypted share interface should be used.
  */
 export interface EncryptedRootShare extends BaseRootShare {
+    creatorEmail: string;
     encryptedCrypto: EncryptedShareCrypto;
 }
 
@@ -72,7 +74,7 @@ export interface EncryptedRootShare extends BaseRootShare {
  * Interface holding decrypted share metadata.
  */
 export interface DecryptedRootShare extends BaseRootShare {
-    decryptedCrypto: DecryptedShareCrypto;
+    author: Result<string, UnverifiedAuthorError>,
 }
 
 export interface EncryptedShareCrypto {
@@ -81,7 +83,7 @@ export interface EncryptedShareCrypto {
     armoredPassphraseSignature: string;
 }
 
-export interface DecryptedShareCrypto {
+export interface DecryptedShareKey {
     key: PrivateKey;
     sessionKey: SessionKey;
 }

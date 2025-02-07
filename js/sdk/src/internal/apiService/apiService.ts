@@ -38,6 +38,7 @@ export class DriveAPIService {
             headers: new Headers({
                 "Language": this.language,
             }),
+            body: JSON.stringify(data),
         }), signal);
 
         if (response.ok) {
