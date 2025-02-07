@@ -1,7 +1,10 @@
-// TODO: Re-export them from openpgp/CryptoProxy directly.
-export type PrivateKey = object;
-export type PublicKey = object;
-export type SessionKey = object;
+// TODO: Use CryptoProxy once available.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type PublicKey = any;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface PrivateKey extends PublicKey {};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type SessionKey = any;
 
 export enum VERIFICATION_STATUS {
     NOT_SIGNED = 0,

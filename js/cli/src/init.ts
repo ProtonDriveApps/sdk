@@ -3,7 +3,7 @@ import { Api as CryptoApi } from "./crypto/lib/worker/api";
 import { HTTPClient } from "./httpClient";
 import { getLogger } from "./logger";
 
-import { ProtonDriveClient, MemoryCache, OpenPGPCryptoWithCryptoProxy } from "../../sdk/src";
+import { CACHE_TAG_KEYS, ProtonDriveClient, MemoryCache, CachedCryptoMaterial, OpenPGPCryptoWithCryptoProxy } from "../../sdk/src";
 
 interface APIConfig {
     appVersion: string;
@@ -47,10 +47,10 @@ function initSDK(cryptoApi: CryptoApi, config: APIConfig, account: Account) {
         uid: account.session?.uid || "",
         accessToken: account.session?.accessToken || "",
     });
-    const openPGPCryptoModule = new OpenPGPCryptoWithCryptoProxy(cryptoApi as any); // TODO: fix typing
+    const openPGPCryptoModule = new OpenPGPCryptoWithCryptoProxy(cryptoApi);
 
-    const entitiesCache = new MemoryCache([]);
-    const cryptoCache = new MemoryCache([]);
+    const entitiesCache = new MemoryCache<string>(CACHE_TAG_KEYS);
+    const cryptoCache = new MemoryCache<CachedCryptoMaterial>([]);
 
     const sdk = new ProtonDriveClient({
         httpClient,

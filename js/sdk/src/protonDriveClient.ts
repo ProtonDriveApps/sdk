@@ -53,11 +53,11 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
     }
 
     async* iterateChildren(parentNodeUid: NodeOrUid, signal?: AbortSignal) {
-        return convertInternalNodeIterator(this.nodes.management.iterateChildren(getUid(parentNodeUid), signal));
+        yield* convertInternalNodeIterator(this.nodes.management.iterateChildren(getUid(parentNodeUid), signal));
     }
 
     async* iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal) {
-        return convertInternalNodeIterator(this.nodes.management.iterateNodes(getUids(nodeUids), signal));
+        yield* convertInternalNodeIterator(this.nodes.management.iterateNodes(getUids(nodeUids), signal));
     }
 
     async shareNode(nodeUid: NodeOrUid, settings: ShareNodeSettings) {

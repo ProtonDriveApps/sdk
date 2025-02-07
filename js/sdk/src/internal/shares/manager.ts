@@ -115,10 +115,12 @@ export class SharesManager {
      * @throws If the share is not found or cannot be decrypted, or cached.
      */
     async getSharePrivateKey(shareId: string): Promise<PrivateKey> {
-        const keys = await this.cryptoCache.getShareKey(shareId);
-        if (keys) {
-            return keys.key;
-        }
+        try {
+            const keys = await this.cryptoCache.getShareKey(shareId);
+            if (keys) {
+                return keys.key;
+            }
+        } catch {}
 
         const encryptedShare = await this.apiService.getRootShare(shareId);
         const { key } = await this.cryptoService.decryptRootShare(encryptedShare);

@@ -46,7 +46,7 @@ export class NodesManager {
         // Ensure the parent is loaded and up-to-date.
         const parentNode = await this.nodesAccess.getNode(parentNodeUid);
 
-        const batchLoading = new BatchNodesLoading(this.nodesAccess.loadNodes);
+        const batchLoading = new BatchNodesLoading((nodeUids) => this.nodesAccess.loadNodes(nodeUids));
         for await (const nodeUid of this.apiService.iterateChildrenNodeUids(parentNode.uid, signal)) {
             let node;
             try {
@@ -63,7 +63,7 @@ export class NodesManager {
 
     async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
         const { volumeId } = await this.shareService.getMyFilesIDs();
-        const batchLoading = new BatchNodesLoading(this.nodesAccess.loadNodes);
+        const batchLoading = new BatchNodesLoading((nodeUids) => this.nodesAccess.loadNodes(nodeUids));
         for await (const nodeUid of this.apiService.iterateTrashedNodeUids(volumeId, signal)) {
             let node;
             try {
@@ -79,7 +79,7 @@ export class NodesManager {
     }
 
     async *iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
-        const batchLoading = new BatchNodesLoading(this.nodesAccess.loadNodes);
+        const batchLoading = new BatchNodesLoading((nodeUids) => this.nodesAccess.loadNodes(nodeUids));
         for await (const result of this.cache.iterateNodes(nodeUids)) {
             if (result.ok && !result.node.isStale) {
                 yield result.node;

@@ -6,22 +6,35 @@ import { uint8ArrayToBase64String } from './utils';
  * clients/packages/crypto/lib/proxy/proxy.ts.
  */
 interface OpenPGPCryptoProxy {
-    generateKey: (options: { userIDs: { name: string }[], type: string, curve: string }) => Promise<{ privateKey: PrivateKey, publicKey: PublicKey }>,
-    exportPrivateKey: (options: { key: { privateKey: PrivateKey }, passphrase: string }) => Promise<string>,
+    generateKey: (options: { userIDs: { name: string }[], type: 'ecc', curve: 'ed25519' }) => Promise<PrivateKey>,
+    exportPrivateKey: (options: { privateKey: PrivateKey, passphrase: string }) => Promise<string>,
     importPrivateKey: (options: { armoredKey: string, passphrase: string }) => Promise<PrivateKey>,
     generateSessionKey: (options: { recipientKeys: PrivateKey[] }) => Promise<SessionKey>,
     decryptSessionKey: (options: { armoredMessage: string, decryptionKeys: PrivateKey[] }) => Promise<SessionKey | undefined>,
-    encryptMessage: OpenPGPCryptoProxyEncryptMessage,
-    decryptMessage: OpenPGPCryptoProxyDecryptMessage,
-}
-
-interface OpenPGPCryptoProxyEncryptMessage {
-    (options: { textData?: string, binaryData?: Uint8Array, sessionKey?: SessionKey, signingKeys?: PrivateKey, encryptionKeys?: PublicKey[], detached?: boolean }): Promise<{ message: string, signature: string }>;
-    (options: { format: 'binary', binaryData: Uint8Array, sessionKey: SessionKey, signingKeys: PrivateKey, encryptionKeys?: PublicKey[], detached: boolean }): Promise<{ message: Uint8Array, signature: Uint8Array }>;
-}
-interface OpenPGPCryptoProxyDecryptMessage {
-    (options: { armoredMessage: string, signature: string, sessionKeys: SessionKey, verificationKeys: PublicKey[] }): Promise<{ data: string, verified: VERIFICATION_STATUS }>;
-    (options: { format: 'binary', armoredMessage?: string, binaryMessage?: Uint8Array, signature?: string, binarySignature?: Uint8Array, sessionKeys?: SessionKey, decryptionKeys?: PrivateKey[], verificationKeys: PublicKey[] }): Promise<{ data: Uint8Array, verified: VERIFICATION_STATUS }>;
+    encryptMessage: (options: {
+        format?: 'armored' | 'binary',
+        binaryData: Uint8Array,
+        sessionKey?: SessionKey,
+        encryptionKeys: PrivateKey[],
+        signingKeys?: PrivateKey,
+        detached?: boolean,
+    }) => Promise<{
+        message: string | Uint8Array,
+        signature?: string | Uint8Array,
+    }>,
+    decryptMessage: (options: {
+        format: 'utf8' | 'binary',
+        armoredMessage?: string,
+        binaryMessage?: Uint8Array,
+        armoredSignature?: string,
+        binarySignature?: Uint8Array,
+        sessionKeys?: SessionKey,
+        decryptionKeys?: PrivateKey[],
+        verificationKeys: PublicKey[]
+    }) => Promise<{
+        data: Uint8Array | string,
+        verified: VERIFICATION_STATUS
+    }>,
 }
 
 /**
@@ -44,20 +57,21 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
     }
 
     async generateKey(passphrase: string) {
-        const key = await this.cryptoProxy.generateKey({
+        const privateKey = await this.cryptoProxy.generateKey({
             userIDs: [{ name: 'Drive key' }],
             type: 'ecc',
+            // @ts-expect-error The interface doesnt officially accept it anymore, but legacy is still supported.
             curve: 'ed25519Legacy',
         });
 
         const armoredKey = await this.cryptoProxy.exportPrivateKey({
-            key,
+            privateKey,
             passphrase,
         });
 
         return {
             armoredKey,
-            privateKey: key.privateKey,
+            privateKey,
         };
     }
 
@@ -72,7 +86,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             encryptionKeys,
         });
         return {
-            armoredData,
+            armoredData: armoredData as string,
         }
     }
 
@@ -91,7 +105,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             detached: false,
         });
         return {
-            encryptedData
+            encryptedData: encryptedData as Uint8Array,
         };
     }
 
@@ -107,7 +121,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             detached: false,
         });
         return {
-            armoredData
+            armoredData: armoredData as string,
         };
     }
 
@@ -126,8 +140,8 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             detached: true,
         });
         return {
-            encryptedData,
-            signature,
+            encryptedData: encryptedData as Uint8Array,
+            signature: signature as Uint8Array,
         }
     }
 
@@ -145,8 +159,8 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             detached: true,
         });
         return {
-            armoredData,
-            armoredSignature,
+            armoredData: armoredData as string,
+            armoredSignature: armoredSignature as string,
         }
     }
 
@@ -191,7 +205,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         });
 
         return {
-            data,
+            data: data as Uint8Array,
             verified,
         }
     }
@@ -204,14 +218,14 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
     ) {
         const { data, verified } = await this.cryptoProxy.decryptMessage({
             armoredMessage: armoredData,
-            signature: armoredSignature,
+            armoredSignature,
             sessionKeys: sessionKey,
             verificationKeys,
             format: 'binary',
         });
 
         return {
-            data,
+            data: data as Uint8Array,
             verified,
         }
     }
