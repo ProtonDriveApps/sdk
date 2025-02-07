@@ -57,7 +57,7 @@ async function verifyNodesCache(cache: NodesCache, expectedNodes: string[], expe
 }
 
 describe('nodesCache', () => {
-    let memoryCache: MemoryCache;
+    let memoryCache: MemoryCache<string>;
     let cache: NodesCache;
 
     beforeEach(() => {

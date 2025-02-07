@@ -1,4 +1,4 @@
-export interface ProtonDriveCacheConstructor {
+export interface ProtonDriveCacheConstructor<T> {
     /**
      * Initialize the cache.
      * 
@@ -13,10 +13,10 @@ export interface ProtonDriveCacheConstructor {
      * 
      * @param usedTagKeysBySDK - Example of tags: ["trashed", "shared", "parentUid"]
      */
-     new (usedTagKeysBySDK: string[]): ProtonDriveCache,
+     new (usedTagKeysBySDK: string[]): ProtonDriveCache<T>,
 }
 
-export interface ProtonDriveCache {
+export interface ProtonDriveCache<T> {
 
     /**
      * Re-creates the whole persistent cache.
@@ -67,14 +67,14 @@ export interface ProtonDriveCache {
      * @param tags - Clear metadata about the entity used for filtering. It is intended to store efficiently for fast look-up.
      * @throws Exception if `key` from `tags` is not one of the tag keys provided from `usedTagKeysBySDK` in constructor.
      */
-    setEntity(uid: string, data: string, tags?: { [ key: string ]: string }): Promise<void>,
+    setEntity(uid: string, data: T, tags?: { [ key: string ]: string }): Promise<void>,
     
     /**
      * Returns the data of the entity stored locally.
      * 
      * @throws Exception if entity is not present.
      */
-    getEntity(uid: string): Promise<string>,
+    getEntity(uid: string): Promise<T>,
 
     /**
      * Generator providing the data of the entities stored locally for given
@@ -82,7 +82,7 @@ export interface ProtonDriveCache {
      * 
      * No exception is thrown when data is missing.
      */
-    iterateEntities(uids: string[]): AsyncGenerator<EntityResult>,
+    iterateEntities(uids: string[]): AsyncGenerator<EntityResult<T>>,
 
     /**
      * Generator providing the data of the entities stored locally for given
@@ -100,7 +100,7 @@ export interface ProtonDriveCache {
      * @param value - The tag value, for example `"abc123"`
      * @throws Exception if `key` is not one of the tag keys provided from `usedTagKeysBySDK` in constructor
      */
-    iterateEntitiesByTag(key: string, value: string): AsyncGenerator<EntityResult>,
+    iterateEntitiesByTag(key: string, value: string): AsyncGenerator<EntityResult<T>>,
 
     /**
      * Removes completely the entity stored locally from the database.
@@ -110,4 +110,4 @@ export interface ProtonDriveCache {
     removeEntities(uids: string[]): Promise<void>,
 }
 
-export type EntityResult = {uid: string, ok: true, data: string} | {uid: string, ok: false, error: string};
+export type EntityResult<T> = {uid: string, ok: true, data: T} | {uid: string, ok: false, error: string};

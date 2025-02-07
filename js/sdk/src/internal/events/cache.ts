@@ -1,4 +1,4 @@
-import { ProtonDriveCache } from "../../cache";
+import { ProtonDriveEntitiesCache } from "../../interface";
 
 type CachedEventsData = {
     // Key is either a volume ID for volume events or 'core' for core events.
@@ -19,7 +19,7 @@ export class EventsCache {
      */
     private events?: CachedEventsData;
 
-    constructor(private driveCache: ProtonDriveCache) {
+    constructor(private driveCache: ProtonDriveEntitiesCache) {
         this.driveCache = driveCache;
     }
 

@@ -1,18 +1,7 @@
 // TODO: Re-export them from openpgp/CryptoProxy directly.
-// Depeding on openpgp requires additional setup for tests, so we can't do it yet.
-export type PrivateKey = {
-    armor(): string;
-};
-
-export type PublicKey = {
-    armor(): string;
-};
-
-export type SessionKey = {
-    data: Uint8Array,
-    algorithm: string,
-    aeadAlgorithm?: string,
-};
+export type PrivateKey = object;
+export type PublicKey = object;
+export type SessionKey = object;
 
 export enum VERIFICATION_STATUS {
     NOT_SIGNED = 0,

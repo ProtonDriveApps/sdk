@@ -1,4 +1,4 @@
-import { ProtonDriveCache } from "../../cache";
+import { ProtonDriveEntitiesCache } from "../../interface";
 import { Volume } from "./interface";
 
 /**
@@ -7,7 +7,7 @@ import { Volume } from "./interface";
  * The cache is responsible for serialising and deserialising volume metadata.
  */
 export class SharesCache {
-    constructor(private driveCache: ProtonDriveCache) {
+    constructor(private driveCache: ProtonDriveEntitiesCache) {
         this.driveCache = driveCache;
     }
 

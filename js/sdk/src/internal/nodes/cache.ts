@@ -1,5 +1,5 @@
-import { ProtonDriveCache, EntityResult } from "../../cache";
-import { Logger } from "../../interface";
+import { EntityResult } from "../../cache";
+import { ProtonDriveEntitiesCache, Logger } from "../../interface";
 import { DecryptedNode } from "./interface";
 
 export enum CACHE_TAG_KEYS {
@@ -21,7 +21,7 @@ type DecryptedNodeResult = (
  * The cache of node metadata should not contain any crypto material.
  */
 export class NodesCache {
-    constructor(private driveCache: ProtonDriveCache, private logger?: Logger) {
+    constructor(private driveCache: ProtonDriveEntitiesCache, private logger?: Logger) {
         this.driveCache = driveCache;
         this.logger = logger;
     }
@@ -134,7 +134,7 @@ export class NodesCache {
      * Converts result from the cache with cache UID and data to result of node
      * with node UID and DecryptedNode.
      */
-    private async convertCacheResult(result: EntityResult): Promise<DecryptedNodeResult | null> {
+    private async convertCacheResult(result: EntityResult<string>): Promise<DecryptedNodeResult | null> {
         let nodeUid;
         try {
             nodeUid = getNodeUid(result.uid);

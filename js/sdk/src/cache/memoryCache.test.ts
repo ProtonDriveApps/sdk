@@ -1,7 +1,7 @@
 import { MemoryCache } from "./memoryCache";
 
 describe('MemoryCache', () => {
-    let cache: MemoryCache;
+    let cache: MemoryCache<string>;
 
     beforeEach(() => {
         cache = new MemoryCache(['tag1', 'tag2']);

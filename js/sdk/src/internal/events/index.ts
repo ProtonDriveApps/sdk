@@ -1,5 +1,4 @@
-import { ProtonDriveCache } from "../../cache";
-import { Logger } from "../../interface";
+import { ProtonDriveEntitiesCache, Logger } from "../../interface";
 import { DriveAPIService } from "../apiService";
 import { DriveListener } from "./interface";
 import { EventsAPIService } from "./apiService";
@@ -25,7 +24,7 @@ export class DriveEventsService {
     private coreEvents: CoreEventManager;
     private volumesEvents: { [volumeId: string]: VolumeEventManager };
 
-    constructor(apiService: DriveAPIService, driveEntitiesCache: ProtonDriveCache, private log?: Logger) {
+    constructor(apiService: DriveAPIService, driveEntitiesCache: ProtonDriveEntitiesCache, private log?: Logger) {
         this.apiService = new EventsAPIService(apiService);
         this.cache = new EventsCache(driveEntitiesCache);
         this.log = log;

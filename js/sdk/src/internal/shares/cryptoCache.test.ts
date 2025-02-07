@@ -1,21 +1,10 @@
 import { PrivateKey, SessionKey } from "../../crypto";
 import { MemoryCache } from "../../cache";
+import { CachedCryptoMaterial } from "../../interface";
 import { SharesCryptoCache } from "./cryptoCache";
 
-jest.mock('../../crypto/openPGPSerialisation', () => ({
-    serializePrivateKey: jest.fn((value) => value),
-    deserializePrivateKey: jest.fn((value) => value),
-    serializeSessionKey: jest.fn((value) => value),
-    deserializeSessionKey: jest.fn((value) => {
-        if (value === 'badSessionKey') {
-            throw new Error('Bad session key');
-        }
-        return value;
-    }),
-}));
-
 describe('sharesCryptoCache', () => {
-    let memoryCache: MemoryCache;
+    let memoryCache: MemoryCache<CachedCryptoMaterial>;
     let cache: SharesCryptoCache;
 
     const generatePrivateKey = (name: string) => {
@@ -28,9 +17,6 @@ describe('sharesCryptoCache', () => {
 
     beforeEach(() => {
         memoryCache = new MemoryCache([]);
-        memoryCache.setEntity('shareKey-badKeysObject', 'aaa');
-        memoryCache.setEntity('shareKey-badSessionKey', '{ "key": "aaa", "sessionKey": "badSessionKey" }');
-
         cache = new SharesCryptoCache(memoryCache);
     });
 
@@ -76,38 +62,6 @@ describe('sharesCryptoCache', () => {
 
         try {
             await cache.getShareKey(shareId);
-            throw new Error('Should have thrown an error');
-        } catch (error) {
-            expect(`${error}`).toBe('Error: Entity not found');
-        }
-    });
-
-    it('should throw an error when retrieving a bad keys and remove the key', async () => {
-        try {
-            await cache.getShareKey('badKeysObject');
-            throw new Error('Should have thrown an error');
-        } catch (error) {
-            expect(`${error}`).toBe('Error: Failed to deserialize share keys: Unexpected token \'a\', \"aaa\" is not valid JSON');
-        }
-
-        try {
-            await memoryCache.getEntity('shareKey-badKeysObject');
-            throw new Error('Should have thrown an error');
-        } catch (error) {
-            expect(`${error}`).toBe('Error: Entity not found');
-        }
-    });
-
-    it('should throw an error when retrieving a bad session key and remove the key', async () => {
-        try {
-            await cache.getShareKey('badSessionKey');
-            throw new Error('Should have thrown an error');
-        } catch (error) {
-            expect(`${error}`).toBe('Error: Failed to deserialize share keys: Invalid share session key: Bad session key');
-        }
-
-        try {
-            await memoryCache.getEntity('shareKey-badSessingKey');
             throw new Error('Should have thrown an error');
         } catch (error) {
             expect(`${error}`).toBe('Error: Entity not found');

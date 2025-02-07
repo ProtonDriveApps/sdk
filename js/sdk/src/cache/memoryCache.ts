@@ -1,6 +1,6 @@
 import type { ProtonDriveCache, EntityResult } from './interface.js';
 
-type KeyValueCache = { [ uid: string ]: string };
+type KeyValueCache<T> = { [ uid: string ]: T };
 type TagsCache = { [ key: string ]: { [ value: string ]: string[] } };
 
 /**
@@ -10,8 +10,8 @@ type TagsCache = { [ key: string ]: { [ value: string ]: string[] } };
  * development only. It is not recommended to use this cache in production
  * environments.
  */
-export class MemoryCache implements ProtonDriveCache {
-    private entities: KeyValueCache;
+export class MemoryCache<T> implements ProtonDriveCache<T> {
+    private entities: KeyValueCache<T>;
     private entitiesByTag: TagsCache;
 
     constructor(usedTagKeysBySDK: string[]) {
@@ -26,7 +26,7 @@ export class MemoryCache implements ProtonDriveCache {
         this.entities = {};
     }
 
-    async setEntity(uid: string, data: string, tags?: { [ key: string ]: string }) {
+    async setEntity(uid: string, data: T, tags?: { [ key: string ]: string }) {
         this.entities[uid] = data;
         if (tags) {
             for (const key in tags) {
@@ -51,7 +51,7 @@ export class MemoryCache implements ProtonDriveCache {
         return data;
     }
 
-    async *iterateEntities(uids: string[]): AsyncGenerator<EntityResult> {
+    async *iterateEntities(uids: string[]): AsyncGenerator<EntityResult<T>> {
         for (const uid of uids) {
             try {
                 const data = await this.getEntity(uid);
@@ -62,7 +62,7 @@ export class MemoryCache implements ProtonDriveCache {
         }
     }
 
-    async *iterateEntitiesByTag(key: string, value: string): AsyncGenerator<EntityResult> {
+    async *iterateEntitiesByTag(key: string, value: string): AsyncGenerator<EntityResult<T>> {
         const tag = this.entitiesByTag[key];
         if (!tag) {
             throw Error('Tag is not recognised');

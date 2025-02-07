@@ -2,7 +2,7 @@ import { MemoryCache } from "../../cache";
 import { EventsCache } from "./cache";
 
 describe("EventsCache", () => {
-    let memoryCache: MemoryCache;
+    let memoryCache: MemoryCache<string>;
     let cache: EventsCache;
 
     beforeEach(() => {
