@@ -105,7 +105,7 @@ function generateNode() {
 
         uid: "volume:volumeId;node:linkId",
         parentUid: "volume:volumeId;node:parentLinkId",
-        createdDate: new Date(123456789),
+        createdDate: new Date(123456789000),
         trashedDate: undefined,
 
         shareId: undefined,
@@ -148,7 +148,7 @@ describe("nodeAPIService", () => {
             }));
 
             const nodes = await api.getNodes(['volume:volumeId;node:nodeId']);
-            expect(nodes).toEqual([expectedNode]);
+            expect(nodes).toStrictEqual([expectedNode]);
         }
     
         it('should get folder node', async () => {
@@ -204,6 +204,17 @@ describe("nodeAPIService", () => {
                     isShared: true,
                     shareId: 'shareId',
                     directMemberRole: MemberRole.Viewer,
+                }),
+            );
+        });
+
+        it('should get trashed file node', async () => {
+            await testGetNodes(
+                generateAPIFileNode({
+                    TrashTime: 123456,
+                }),
+                generateFileNode({
+                    trashedDate: new Date(123456000)
                 }),
             );
         });

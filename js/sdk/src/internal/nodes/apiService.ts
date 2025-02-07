@@ -65,8 +65,8 @@ export class NodeAPIService {
                 parentUid: link.Link.ParentLinkID ? makeNodeUid(volumeId, link.Link.ParentLinkID) : undefined,
                 type: link.Link.Type === 1 ? NodeType.Folder : NodeType.File,
                 mimeType: link.Link.MIMEType || undefined,
-                createdDate: new Date(link.Link.CreateTime),
-                trashedDate: link.Link.TrashTime ? new Date(link.Link.TrashTime) : undefined,
+                createdDate: new Date(link.Link.CreateTime*1000),
+                trashedDate: link.Link.TrashTime ? new Date(link.Link.TrashTime*1000) : undefined,
 
                 // Sharing node metadata
                 shareId: link.SharingSummary?.ShareID || undefined,
@@ -121,7 +121,7 @@ export class NodeAPIService {
 
         let anchor = "";
         while (true) {
-            const response = await this.apiService.get<GetChildrenResponse>(`drive/volumes/${volumeId}/folders/${nodeId}/children?AnchorID=${anchor}`, signal);
+            const response = await this.apiService.get<GetChildrenResponse>(`drive/v2/volumes/${volumeId}/folders/${nodeId}/children?${anchor ? `AnchorID=${anchor}` : ''}`, signal);
             for (const linkID of response.LinkIDs) {
                 yield makeNodeUid(volumeId, linkID);
             }
@@ -318,6 +318,7 @@ function assertAndGetSingleVolumeId(operationForErrorMessage: string, nodeIds: {
 
 function sharingSummaryToDirectMemberRole(sharingSummary: PostLoadLinksMetadataResponse['Links'][0]['SharingSummary'], logger?: Logger): MemberRole {
     switch (sharingSummary?.ShareAccess.Permissions) {
+        case undefined:
         case 4:
             return MemberRole.Viewer;
         case 6:
