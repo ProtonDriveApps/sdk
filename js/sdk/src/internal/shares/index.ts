@@ -1,7 +1,6 @@
-import { ProtonDriveAccount } from "../../interface";
+import { ProtonDriveEntitiesCache, ProtonDriveCryptoCache, ProtonDriveAccount } from "../../interface";
 import { DriveCrypto } from '../../crypto';
 import { DriveAPIService } from "../apiService";
-import { ProtonDriveCache } from "../../cache";
 import { SharesAPIService } from "./apiService";
 import { SharesCryptoCache } from "./cryptoCache";
 import { SharesCache } from "./cache";
@@ -19,8 +18,8 @@ import { SharesManager } from "./manager";
  */
 export function initSharesModule(
     apiService: DriveAPIService,
-    driveEntitiesCache: ProtonDriveCache,
-    driveCryptoCache: ProtonDriveCache,
+    driveEntitiesCache: ProtonDriveEntitiesCache,
+    driveCryptoCache: ProtonDriveCryptoCache,
     account: ProtonDriveAccount,
     crypto: DriveCrypto,
 ) {

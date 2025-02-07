@@ -1,5 +1,5 @@
 import { ProtonDriveCache } from '../cache';
-import { OpenPGPCrypto } from '../crypto';
+import { OpenPGPCrypto, PrivateKey, SessionKey } from '../crypto';
 import { ProtonDriveAccount, ProtonDriveHTTPClient, ProtonDriveConfig, GetLogger, Metrics } from './constructor';
 import { Devices } from './devices';
 import { Download } from './download';
@@ -20,9 +20,18 @@ export type { ProtonInvitation, NonProtonInvitation, NonProtonInvitationState, M
 export { ShareRole } from './sharing';
 export type { Fileuploader, UploadController, Thumbnail, ThumbnailType, UploadMetadata } from './upload';
 
+export type ProtonDriveEntitiesCache = ProtonDriveCache<string>;
+export type ProtonDriveCryptoCache = ProtonDriveCache<CachedCryptoMaterial>;
+export type CachedCryptoMaterial = {
+    passphrase?: string,
+    key: PrivateKey,
+    sessionKey: SessionKey,
+    hashKey?: Uint8Array,
+};
+
 export interface ProtonDriveClientContructorParameters {
-    entitiesCache: ProtonDriveCache,
-    cryptoCache: ProtonDriveCache,
+    entitiesCache: ProtonDriveEntitiesCache,
+    cryptoCache: ProtonDriveCryptoCache,
     account: ProtonDriveAccount,
     httpClient: ProtonDriveHTTPClient,
     getLogger?: GetLogger,

@@ -1,8 +1,7 @@
 import { DriveAPIService } from "../apiService";
-import { ProtonDriveCache } from "../../cache";
 import { DriveCrypto } from "../../crypto";
 import { DriveEventsService } from "../events";
-import { Logger, ProtonDriveAccount } from "../../interface";
+import { ProtonDriveEntitiesCache, ProtonDriveCryptoCache, Logger, ProtonDriveAccount } from "../../interface";
 import { NodeAPIService } from "./apiService";
 import { NodesCache } from "./cache";
 import { NodesEvents } from "./events";
@@ -25,8 +24,8 @@ export type { DecryptedNode } from "./interface";
  */
 export function initNodesModule(
     apiService: DriveAPIService,
-    driveEntitiesCache: ProtonDriveCache,
-    driveCryptoCache: ProtonDriveCache,
+    driveEntitiesCache: ProtonDriveEntitiesCache,
+    driveCryptoCache: ProtonDriveCryptoCache,
     account: ProtonDriveAccount,
     driveCrypto: DriveCrypto,
     driveEvents: DriveEventsService,
@@ -54,8 +53,8 @@ export function initNodesModule(
 
 export function initPublicNodesModule(
     apiService: DriveAPIService,
-    driveEntitiesCache: ProtonDriveCache,
-    driveCryptoCache: ProtonDriveCache,
+    driveEntitiesCache: ProtonDriveEntitiesCache,
+    driveCryptoCache: ProtonDriveCryptoCache,
     driveCrypto: DriveCrypto,
     sharesService: SharesService,
 ) {

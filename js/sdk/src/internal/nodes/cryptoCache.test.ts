@@ -1,21 +1,10 @@
 import { PrivateKey, SessionKey } from "../../crypto";
 import { MemoryCache } from "../../cache";
+import { CachedCryptoMaterial } from "../../interface";
 import { NodesCryptoCache } from "./cryptoCache";
 
-jest.mock('../../crypto/openPGPSerialisation', () => ({
-    serializePrivateKey: jest.fn((value) => value),
-    deserializePrivateKey: jest.fn((value) => value),
-    serializeSessionKey: jest.fn((value) => value),
-    deserializeSessionKey: jest.fn((value) => {
-        if (value === 'badSessionKey') {
-            throw new Error('Bad session key');
-        }
-        return value;
-    }),
-}));
-
 describe('nodesCryptoCache', () => {
-    let memoryCache: MemoryCache;
+    let memoryCache: MemoryCache<CachedCryptoMaterial>;
     let cache: NodesCryptoCache;
 
     const generatePrivateKey = (name: string) => {
@@ -28,8 +17,10 @@ describe('nodesCryptoCache', () => {
 
     beforeEach(() => {
         memoryCache = new MemoryCache([]);
-        memoryCache.setEntity('nodeKeys-badKeysObject', 'aaa');
-        memoryCache.setEntity('nodeKeys-badSessionKey', '{ "passphrase": "pass", "key": "aaa", "sessionKey": "badSessionKey" }');
+        memoryCache.setEntity('nodeKeys-missingPassphrase', {
+            key: 'privateKey',
+            sessionKey: 'sessionKey',
+        } as any);
 
         cache = new NodesCryptoCache(memoryCache);
     });
@@ -84,30 +75,14 @@ describe('nodesCryptoCache', () => {
 
     it('should throw an error when retrieving a bad keys and remove the key', async () => {
         try {
-            await cache.getNodeKeys('badKeysObject');
+            await cache.getNodeKeys('missingPassphrase');
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(`${error}`).toBe('Error: Failed to deserialize node keys: Unexpected token \'a\', \"aaa\" is not valid JSON');
+            expect(`${error}`).toBe('Error: Failed to deserialize node keys: missing passphrase');
         }
 
         try {
-            await memoryCache.getEntity('nodeKeys-badKeysObject');
-            throw new Error('Should have thrown an error');
-        } catch (error) {
-            expect(`${error}`).toBe('Error: Entity not found');
-        }
-    });
-
-    it('should throw an error when retrieving a bad session key and remove the key', async () => {
-        try {
-            await cache.getNodeKeys('badSessionKey');
-            throw new Error('Should have thrown an error');
-        } catch (error) {
-            expect(`${error}`).toBe('Error: Failed to deserialize node keys: Invalid node session key: Bad session key');
-        }
-
-        try {
-            await memoryCache.getEntity('nodeKeys-badSessingKey');
+            await memoryCache.getEntity('nodeKeys-missingPassphrase');
             throw new Error('Should have thrown an error');
         } catch (error) {
             expect(`${error}`).toBe('Error: Entity not found');
