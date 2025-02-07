@@ -1,6 +1,6 @@
 import { serializePrivateKey, deserializePrivateKey, serializeSessionKey, deserializeSessionKey } from "../../crypto";
 import { ProtonDriveCache } from "../../cache";
-import { DecryptedShareCrypto } from "./interface";
+import { DecryptedShareKey } from "./interface";
 
 /**
  * Provides caching for share crypto material.
@@ -18,15 +18,15 @@ export class SharesCryptoCache {
         this.driveCache = driveCache;
     }
 
-    async setShareKey(shareId: string, keys: DecryptedShareCrypto): Promise<void> {
-        await this.driveCache.setEntity(getCacheUid(shareId), serializeShareKey(keys));
+    async setShareKey(shareId: string, key: DecryptedShareKey): Promise<void> {
+        await this.driveCache.setEntity(getCacheUid(shareId), serializeShareKey(key));
     }
 
-    async getShareKey(shareId: string): Promise<DecryptedShareCrypto> {
+    async getShareKey(shareId: string): Promise<DecryptedShareKey> {
         const shareKeyData = await this.driveCache.getEntity(getCacheUid(shareId));
         try {
-            const keys = await deserializeShareKey(shareKeyData);
-            return keys;
+            const key = await deserializeShareKey(shareKeyData);
+            return key;
         } catch (error: unknown) {
             try {
                 await this.removeShareKey([shareId]);
@@ -47,15 +47,15 @@ function getCacheUid(shareId: string) {
     return `shareKey-${shareId}`;
 }
 
-function serializeShareKey(keys: DecryptedShareCrypto) {
+function serializeShareKey(key: DecryptedShareKey) {
     // TODO: verify how we want to serialize keys
     return JSON.stringify({
-        key: serializePrivateKey(keys.key),
-        sessionKey: serializeSessionKey(keys.sessionKey),
+        key: serializePrivateKey(key.key),
+        sessionKey: serializeSessionKey(key.sessionKey),
     });
 }
 
-async function deserializeShareKey(shareKeyData: string): Promise<DecryptedShareCrypto> {
+async function deserializeShareKey(shareKeyData: string): Promise<DecryptedShareKey> {
     const result = JSON.parse(shareKeyData);
     if (!result || typeof result !== 'object') {
         throw new Error('Invalid share keys data');

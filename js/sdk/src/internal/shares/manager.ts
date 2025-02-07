@@ -1,9 +1,11 @@
 import { ProtonDriveAccount } from "../../interface";
+import { PrivateKey } from "../../crypto";
 import { NotFoundAPIError } from "../apiService";
 import { SharesAPIService } from "./apiService";
 import { SharesCache } from "./cache";
 import { SharesCryptoCache } from "./cryptoCache";
 import { SharesCryptoService } from "./cryptoService";
+import { VolumeShareNodeIDs } from "./interface";
 
 /**
  * Provides high-level actions for managing shares.
@@ -19,11 +21,7 @@ export class SharesManager {
     // Those IDs are required very often, so it is better to keep them in memory.
     // The IDs are not cached in the cache module, as we want to always fetch
     // them from the API, and not from the this.cache.
-    private myFilesIds: {
-        volumeId: string;
-        shareId: string;
-        rootNodeId: string;
-    } | null = null;
+    private myFilesIds?: VolumeShareNodeIDs;
 
     constructor(
         private apiService: SharesAPIService,
@@ -44,7 +42,7 @@ export class SharesManager {
      * 
      * If the default volume or My files section doesn't exist, it creates it.
      */
-    async getMyFilesIDs() {
+    async getMyFilesIDs(): Promise<VolumeShareNodeIDs> {
         if (this.myFilesIds) {
             return this.myFilesIds;
         }
@@ -55,13 +53,13 @@ export class SharesManager {
             // Once any place needs IDs for My files, it will most likely
             // need also the keys for decrypting the tree. It is better to
             // decrypt the share here right away.
-            const myFilesShare = await this.cryptoService.decryptRootShare(encryptedShare);
-            await this.cryptoCache.setShareKey(myFilesShare.shareId, myFilesShare.decryptedCrypto);
+            const { share: myFilesShare, key } = await this.cryptoService.decryptRootShare(encryptedShare);
+            await this.cryptoCache.setShareKey(myFilesShare.shareId, key);
             await this.cache.setVolume({
                 volumeId: myFilesShare.volumeId,
                 shareId: myFilesShare.shareId,
                 rootNodeId: myFilesShare.rootNodeId,
-                creatorEmail: myFilesShare.creatorEmail,
+                creatorEmail: encryptedShare.creatorEmail,
             });
 
             return {
@@ -88,7 +86,7 @@ export class SharesManager {
      * 
      * @throws If the volume cannot be created (e.g., one already exists).
      */
-    async createVolume() {
+    async createVolume(): Promise<VolumeShareNodeIDs> {
         const { addressKey, addressId, addressKeyId } = await this.account.getOwnPrimaryKey();
         const bootstrap = await this.cryptoService.generateVolumeBootstrap(addressKey);
         const myFilesIds = await this.apiService.createVolume(
@@ -98,7 +96,7 @@ export class SharesManager {
                 ...bootstrap.shareKey.encrypted,
             },
             {
-                ...bootstrap.rootNode.keys.encrypted,
+                ...bootstrap.rootNode.key.encrypted,
                 encryptedName: bootstrap.rootNode.encryptedName,
                 armoredHashKey: bootstrap.rootNode.armoredHashKey,
             },
@@ -116,19 +114,19 @@ export class SharesManager {
      * @returns The private key for the share.
      * @throws If the share is not found or cannot be decrypted, or cached.
      */
-    async getSharePrivateKey(shareId: string) {
+    async getSharePrivateKey(shareId: string): Promise<PrivateKey> {
         const keys = await this.cryptoCache.getShareKey(shareId);
         if (keys) {
             return keys.key;
         }
 
         const encryptedShare = await this.apiService.getRootShare(shareId);
-        const share = await this.cryptoService.decryptRootShare(encryptedShare);
-        await this.cryptoCache.setShareKey(share.shareId, share.decryptedCrypto);
-        return share.decryptedCrypto.key;
+        const { key } = await this.cryptoService.decryptRootShare(encryptedShare);
+        await this.cryptoCache.setShareKey(shareId, key);
+        return key.key;
     }
 
-    async getVolumeEmailKey(volumeId: string) {
+    async getVolumeEmailKey(volumeId: string): Promise<{ email: string, key: PrivateKey }> {
         const volume = await this.cache.getVolume(volumeId);
         if (volume) {
             return {

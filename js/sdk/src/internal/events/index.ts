@@ -23,7 +23,7 @@ export class DriveEventsService {
     private subscribedToRemoteDataUpdates: boolean = false;
     private listeners: DriveListener[] = [];
     private coreEvents: CoreEventManager;
-    private volumesEvents: { [volumeId: string]: any };
+    private volumesEvents: { [volumeId: string]: VolumeEventManager };
 
     constructor(apiService: DriveAPIService, driveEntitiesCache: ProtonDriveCache, private log?: Logger) {
         this.apiService = new EventsAPIService(apiService);
@@ -59,7 +59,7 @@ export class DriveEventsService {
      * polled with lower frequency depending on the total number of
      * subsciptions.
      * 
-     * @param isOwnVolume Owned volumes are polled with higher frequency.
+     * @param isOwnVolume - Owned volumes are polled with higher frequency.
      */
     async listenToVolume(volumeId: string, isOwnVolume = false): Promise<void> {
         await this.loadSubscribedVolumeEventServices();

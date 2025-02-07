@@ -2,7 +2,9 @@ import { PrivateKey, SessionKey } from './interface';
 import { uint8ArrayToBase64String, base64StringToUint8Array } from './utils';
 
 export function serializePrivateKey(key: PrivateKey): string {
-    return key.armor();
+    // TODO: Implement this with real pmcrypto/CryptoProxy.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return key as any;
 }
 
 export function deserializePrivateKey(armoredKey: string): Promise<PrivateKey> {
@@ -11,9 +13,8 @@ export function deserializePrivateKey(armoredKey: string): Promise<PrivateKey> {
     // Maybe this will not be even needed if we solve serialising differently (probably we should).
     //import { readPrivateKey } from 'pmcrypto';
     //return readPrivateKey({ armoredKey });
-    return Promise.resolve({
-        armor: () => armoredKey,
-    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return armoredKey as any;
 }
 
 export function serializeSessionKey(key: SessionKey): string {
