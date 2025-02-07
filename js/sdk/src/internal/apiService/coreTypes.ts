@@ -22187,27 +22187,6 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-reports-sentry-api-{id}-{type}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                _version: string;
-                id: string;
-                type: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     "post_core-{_version}-reports-phishing": {
         parameters: {
             query?: never;

@@ -10,7 +10,7 @@
         "generate-types": "openapi-typescript ../../api/openapi-drive.json -o ./src/internal/apiService/driveTypes.ts && openapi-typescript ../../api/openapi-core.json -o ./src/internal/apiService/coreTypes.ts",
         "lint": "eslint src --ext .ts --cache --ignore-pattern '**/apiService/*Types.ts'",
         "pretty": "prettier --write  $(find src -type f -name '*.ts')",
-        "test": "jest",
+        "test": "jest --runInBand --no-cache",
         "test:watch": "jest --watch --coverage=false"
     },
     "dependencies": {

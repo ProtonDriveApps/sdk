@@ -1,11 +1,11 @@
 import { MemberRole, NodeType, NodeResult, resultOk } from "../../interface";
+import { makeNodeUid } from "../uids";
 import { NodeAPIService } from "./apiService";
 import { NodesCache } from "./cache";
 import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
 import { SharesService, DecryptedNode } from "./interface";
 import { NodesAccess } from "./nodesAccess";
-import { makeNodeUid } from "./nodeUid";
 
 const BATCH_LOADING = 10;
 

@@ -1,6 +1,6 @@
 import { Logger, NodeType, MemberRole, NodeResult } from "../../interface";
 import { DriveAPIService, drivePaths } from "../apiService";
-import { splitNodeUid, makeNodeUid } from "./nodeUid";
+import { splitNodeUid, makeNodeUid } from "../uids";
 import { EncryptedNode } from "./interface";
 
 type PostLoadLinksMetadataRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['requestBody'], { 'content': object }>['content']['application/json'];
