@@ -31,15 +31,19 @@ export function initNodesModule(
     driveCrypto: DriveCrypto,
     driveEvents: DriveEventsService,
     sharesService: SharesService,
-    logger?: Logger,
+    log?: Logger,
 ) {
-    const api = new NodeAPIService(apiService, logger);
-    const cache = new NodesCache(driveEntitiesCache, logger);
+    const api = new NodeAPIService(apiService, log);
+    const cache = new NodesCache(driveEntitiesCache, log);
     const cryptoCache = new NodesCryptoCache(driveCryptoCache);
     const cryptoService = new NodesCryptoService(driveCrypto, account, sharesService);
     const nodesAccess = new NodesAccess(api, cache, cryptoCache, cryptoService, sharesService);
+    const nodesEvents = new NodesEvents(driveEvents, cache, nodesAccess, log);
+    // TODO: Events are sent to the client once event is received from API
+    // If change is done locally, it will take a time to show up if client
+    // is waiting with UI update to events. Thus we need to emit events
+    // right away.
     const nodesManager = new NodesManager(api, cache, cryptoCache, cryptoService, sharesService, nodesAccess);
-    const nodesEvents = new NodesEvents(cache, driveEvents);
 
     return {
         access: nodesAccess,

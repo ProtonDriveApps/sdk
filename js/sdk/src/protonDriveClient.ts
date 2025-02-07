@@ -4,7 +4,7 @@ import { DriveCrypto } from './crypto';
 import { initSharesModule } from './internal/shares';
 import { initNodesModule } from './internal/nodes';
 import { sharing as sharingModule } from './internal/sharing';
-import { events as eventsModule } from './internal/events';
+import { DriveEventsService } from './internal/events';
 import { upload as uploadModule } from './internal/upload';
 import { getConfig } from './config';
 import { getUid, getUids, convertInternalNodePromise, convertInternalNodeIterator } from './transformers';
@@ -35,7 +35,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
     
         const apiService = new DriveAPIService(httpClient, fullConfig.baseUrl, fullConfig.language, getLogger?.('api'));
     
-        const events = eventsModule(apiService);
+        const events = new DriveEventsService(apiService, entitiesCache, getLogger?.('events'));
         const shares = initSharesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule);
         this.nodes = initNodesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares, getLogger?.('nodes'));
         this.sharing = sharingModule(apiService, account, cryptoModule, this.nodes.access);

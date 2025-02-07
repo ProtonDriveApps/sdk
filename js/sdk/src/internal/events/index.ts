@@ -1,38 +1,100 @@
-import { DriveAPIService } from "../apiService/index.js";
+import { ProtonDriveCache } from "../../cache";
+import { Logger } from "../../interface";
+import { DriveAPIService } from "../apiService";
+import { DriveListener } from "./interface";
+import { EventsAPIService } from "./apiService";
+import { EventsCache } from "./cache";
+import { CoreEventManager } from "./coreEventManager";
+import { VolumeEventManager } from "./volumeEventManager";
 
-export interface DriveEventsService {
-    subscribeToRemoteDataUpdates: () => void,
-    registerHandler: (callback: (event: DriveEvent) => Promise<void>) => void,
-    lastUsedVolume: (volumeId: string) => void,
-};
+export { DriveEvent, DriveEventType } from "./interface";
 
-// TODO: implement event handling, generic for both core+volume events
-export function events(apiService: DriveAPIService): DriveEventsService {
-    return {
-        // TODO: exposed to public, starts listening to core+volume events
-        // TODO: core should listen only to minimum events possible
-        // TODO: volume should listen: own always, others with limitations as per RFC
-        subscribeToRemoteDataUpdates: () => {},
+const OWN_VOLUME_POLLING_INTERVAL = 30;
+const OTHER_VOLUME_POLLING_INTERVAL = 60;
 
-        // TODO: internal only, other modules can react to events
-        // TODO: events module will wait for event to be processed - if its failing, it will not move forward
-        registerHandler: (callback: (event: DriveEvent) => Promise<void>) => {},
-        // TODO: helper that other modules can help say what volume is more important
-        lastUsedVolume: (volumeId: string) => {},
+/**
+ * Service for listening to drive events. The service is responsible for
+ * managing the subscriptions to the events and notifying the listeners
+ * about the new events.
+ */
+export class DriveEventsService {
+    private apiService: EventsAPIService;
+    private cache: EventsCache;
+    private subscribedToRemoteDataUpdates: boolean = false;
+    private listeners: DriveListener[] = [];
+    private coreEvents: CoreEventManager;
+    private volumesEvents: { [volumeId: string]: any };
+
+    constructor(apiService: DriveAPIService, driveEntitiesCache: ProtonDriveCache, private log?: Logger) {
+        this.apiService = new EventsAPIService(apiService);
+        this.cache = new EventsCache(driveEntitiesCache);
+        this.log = log;
+
+        // TODO: Allow to pass own core events manager from the public interface.
+        this.coreEvents = new CoreEventManager(this.apiService, this.cache, this.log);
+        this.volumesEvents = {};
     }
-}
 
-export type DriveEvent = {
-    type: 'node_created' | 'node_updated' | 'node_updated_metadata',
-    nodeUid: string,
-    parentNodeUid: string,
-    // TODO: needs RFC how we can pass it from events system efficiently without computing whole object
-    isTrashed: boolean,
-    isShared: boolean,
-} | {
-    type: 'node_deleted',
-    nodeUid: string,
-    parentNodeUid: string,
-} | {
-    type: 'share_with_me_updated',
+    /**
+     * Loads all the subscribed volumes (including core events) from the
+     * cache and starts listening to their events. Any additional volume
+     * that is subscribed to later will be automatically started.
+     */
+    async subscribeToRemoteDataUpdates(): Promise<void> {
+        if (this.subscribedToRemoteDataUpdates) {
+            return;
+        }
+
+        await this.loadSubscribedVolumeEventServices();
+
+        this.subscribedToRemoteDataUpdates = true;
+        this.coreEvents.startSubscription();
+        Object.values(this.volumesEvents).forEach((volumeEvents) => volumeEvents.startSubscription());
+    }
+
+    /**
+     * Subscribe to given volume. The volume will be polled for events
+     * with the polling interval depending on the type of the volume.
+     * Own volumes are polled with highest frequency, while others are
+     * polled with lower frequency depending on the total number of
+     * subsciptions.
+     * 
+     * @param isOwnVolume Owned volumes are polled with higher frequency.
+     */
+    async listenToVolume(volumeId: string, isOwnVolume = false): Promise<void> {
+        await this.loadSubscribedVolumeEventServices();
+
+        if (this.volumesEvents[volumeId]) {
+            return;
+        }
+        const volumeEvents = new VolumeEventManager(this.apiService, this.cache, volumeId, this.log);
+        this.volumesEvents[volumeId] = volumeEvents;
+
+        // TODO: Use dynamic algorithm to determine polling interval for non-own volumes.
+        volumeEvents.setPollingInterval(isOwnVolume ? OWN_VOLUME_POLLING_INTERVAL : OTHER_VOLUME_POLLING_INTERVAL);
+        if (this.subscribedToRemoteDataUpdates) {
+            volumeEvents.startSubscription();
+        }
+    }
+
+    private async loadSubscribedVolumeEventServices() {
+        for (const volumeId of await this.cache.getSubscribedVolumeIds()) {
+            if (!this.volumesEvents[volumeId]) {
+                this.volumesEvents[volumeId] = new VolumeEventManager(this.apiService, this.cache, volumeId, this.log);
+            }
+        }
+    }
+
+    /**
+     * Listen to the drive events. The listener will be called with the
+     * new events as they arrive.
+     * 
+     * One call always provides events from withing the same volume. The
+     * second argument of the callback `fullRefreshVolumeId` is thus single
+     * ID and if multiple volumes must be fully refreshed, client will
+     * receive multiple calls.
+     */
+    addListener(callback: DriveListener): void {
+        this.listeners.push(callback);
+    }
 }
