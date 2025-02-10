@@ -63,6 +63,7 @@ export class NodesManager {
         yield* batchLoading.loadRest(signal);
     }
 
+    // Improvement requested: keep status of loaded trash and leverage cache.
     async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
         const { volumeId } = await this.shareService.getMyFilesIDs();
         const batchLoading = new BatchNodesLoading((nodeUids) => this.nodesAccess.loadNodes(nodeUids));

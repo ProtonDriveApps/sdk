@@ -62,12 +62,12 @@ export class SharesManager {
                 creatorEmail: encryptedShare.creatorEmail,
             });
 
-            return {
+            this.myFilesIds = {
                 volumeId: myFilesShare.volumeId,
                 shareId: myFilesShare.shareId,
                 rootNodeId: myFilesShare.rootNodeId,
             };
-
+            return this.myFilesIds;
         } catch (error: unknown) {
             if (error instanceof NotFoundAPIError) {
                 return this.createVolume();
@@ -116,10 +116,8 @@ export class SharesManager {
      */
     async getSharePrivateKey(shareId: string): Promise<PrivateKey> {
         try {
-            const keys = await this.cryptoCache.getShareKey(shareId);
-            if (keys) {
-                return keys.key;
-            }
+            const { key } = await this.cryptoCache.getShareKey(shareId);
+            return key;
         } catch {}
 
         const encryptedShare = await this.apiService.getRootShare(shareId);
@@ -129,13 +127,13 @@ export class SharesManager {
     }
 
     async getVolumeEmailKey(volumeId: string): Promise<{ email: string, key: PrivateKey }> {
-        const volume = await this.cache.getVolume(volumeId);
-        if (volume) {
+        try {
+            const { creatorEmail } = await this.cache.getVolume(volumeId);
             return {
-                email: volume.creatorEmail,
-                key: await this.account.getOwnPrivateKey(volume.creatorEmail),
+                email: creatorEmail,
+                key: await this.account.getOwnPrivateKey(creatorEmail),
             };
-        }
+        } catch {}
 
         const { shareId } = await this.apiService.getVolume(volumeId);
         const share = await this.apiService.getShare(shareId);
