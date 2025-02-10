@@ -56,8 +56,36 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
         yield* convertInternalNodeIterator(this.nodes.management.iterateChildren(getUid(parentNodeUid), signal));
     }
 
+    async* iterateTrashedNodes(signal?: AbortSignal) {
+        yield* convertInternalNodeIterator(this.nodes.management.iterateTrashedNodes(signal));
+    }
+
     async* iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal) {
         yield* convertInternalNodeIterator(this.nodes.management.iterateNodes(getUids(nodeUids), signal));
+    }
+
+    async renameNode(nodeUid: NodeOrUid, newName: string) {
+        return this.nodes.management.renameNode(getUid(nodeUid), newName);
+    }
+
+    async* moveNodes(nodeUids: NodeOrUid[], newParentNodeUid: NodeOrUid, signal?: AbortSignal) {
+        yield* this.nodes.management.moveNodes(getUids(nodeUids), getUid(newParentNodeUid), signal);
+    }
+
+    async* trashNodes(nodeUids: NodeOrUid[], signal?: AbortSignal) {
+        yield* this.nodes.management.trashNodes(getUids(nodeUids), signal);
+    }
+
+    async* restoreNodes(nodeUids: NodeOrUid[], signal?: AbortSignal) {
+        yield* this.nodes.management.restoreNodes(getUids(nodeUids), signal);
+    }
+
+    async* deleteNodes(nodeUids: NodeOrUid[], signal?: AbortSignal) {
+        yield* this.nodes.management.deleteNodes(getUids(nodeUids), signal);
+    }
+
+    async createFolder(parentNodeUid: NodeOrUid, name: string) {
+        return convertInternalNodePromise(this.nodes.management.createFolder(getUid(parentNodeUid), name));
     }
 
     async shareNode(nodeUid: NodeOrUid, settings: ShareNodeSettings) {

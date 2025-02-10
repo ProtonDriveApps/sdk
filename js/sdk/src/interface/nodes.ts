@@ -69,7 +69,7 @@ export interface Nodes {
 export interface NodesManagement {
     createFolder(parentNodeUid: NodeOrUid, name: string): Promise<NodeEntity>,
     renameNode(nodeUid: NodeOrUid, newName: string): Promise<NodeEntity>,
-    moveNodes(nodeUids: NodeOrUid[], newParentNodeUid: NodeOrUid, signal?: AbortSignal): Promise<NodeResult>,
+    moveNodes(nodeUids: NodeOrUid[], newParentNodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<NodeResult>,
     trashNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult>,
     restoreNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult>,
 }

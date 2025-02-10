@@ -1,5 +1,6 @@
 import { MemberRole, NodeType, NodeResult, resultOk } from "../../interface";
 import { makeNodeUid } from "../uids";
+import { AbortError } from "../errors";
 import { NodeAPIService } from "./apiService";
 import { NodesCache } from "./cache";
 import { NodesCryptoCache } from "./cryptoCache";
@@ -59,6 +60,7 @@ export class NodesManager {
                 yield* batchLoading.loadNode(nodeUid, signal);
             }
         }
+        yield* batchLoading.loadRest(signal);
     }
 
     async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
@@ -76,6 +78,7 @@ export class NodesManager {
                 yield* batchLoading.loadNode(nodeUid, signal);
             }
         }
+        yield* batchLoading.loadRest(signal);
     }
 
     async *iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
@@ -87,9 +90,10 @@ export class NodesManager {
                 yield* batchLoading.loadNode(result.uid, signal);
             }
         }
+        yield* batchLoading.loadRest(signal);
     }
 
-    async renameNode(nodeUid: string, newName: string): Promise<void> {
+    async renameNode(nodeUid: string, newName: string): Promise<DecryptedNode> {
         const node = await this.nodesAccess.getNode(nodeUid);
         const parentKeys = await this.nodesAccess.getParentKeys(node);
 
@@ -113,18 +117,24 @@ export class NodesManager {
                 hash: hash,
             }
         );
-        await this.cache.setNode({
+        const newNode: DecryptedNode = {
             ...node,
             name: resultOk(newName),
             nameAuthor: resultOk(signatureEmail),
             hash,
-        });
+        }
+        await this.cache.setNode(newNode);
+        return newNode;
     }
 
-    async* moveNodes(nodeUids: string[], newParentUid: string): AsyncGenerator<NodeResult> {
+    // Improvement requested: move nodes in parallel
+    async* moveNodes(nodeUids: string[], newParentNodeUid: string, signal?: AbortSignal): AsyncGenerator<NodeResult> {
         for (const nodeUid of nodeUids) {
+            if (signal?.aborted) {
+                throw new AbortError('Move operation aborted');
+            }
             try {
-                await this.moveNode(nodeUid, newParentUid);
+                await this.moveNode(nodeUid, newParentNodeUid);
                 yield {
                     uid: nodeUid,
                     ok: true,
@@ -247,7 +257,7 @@ export class NodesManager {
         await this.cache.removeNodes(deletedNodeUids);
     }
 
-    async createFolder(parentNodeUid: string, folderName: string, signal?: AbortSignal): Promise<DecryptedNode> {
+    async createFolder(parentNodeUid: string, folderName: string): Promise<DecryptedNode> {
         const parentNode = await this.nodesAccess.getNode(parentNodeUid);
         const parentKeys = await this.nodesAccess.getNodeKeys(parentNodeUid);
         if (!parentKeys.hashKey) {
@@ -264,7 +274,7 @@ export class NodesManager {
             encryptedName: encryptedCrypto.encryptedName,
             hash: encryptedCrypto.hash,
             encryptedExtendedAttributes: encryptedCrypto.folder.encryptedExtendedAttributes || "", // TODO
-        }, signal);
+        });
 
         const node: DecryptedNode = {
             // Internal metadata
@@ -334,5 +344,17 @@ class BatchNodesLoading {
             }
             this.nodesToFetch = [];
         }
+    }
+
+    async *loadRest(signal?: AbortSignal) {
+        if (this.nodesToFetch.length === 0) {
+            return;
+        }
+
+        const nodes = await this.loadNodes(this.nodesToFetch, signal);
+        for (const node of nodes) {
+            yield node;
+        }
+        this.nodesToFetch = [];
     }
 }
