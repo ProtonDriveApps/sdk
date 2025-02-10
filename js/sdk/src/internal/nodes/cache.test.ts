@@ -12,7 +12,7 @@ function generateNode(uid: string, parentUid='root', params: Partial<DecryptedNo
         mimeType: "text",
         isShared: false,
         createdDate: new Date(),
-        trashedDate: null,
+        trashedDate: undefined,
         volumeId: "volumeId",
         ...params,
     } as DecryptedNode;
@@ -42,7 +42,7 @@ async function verifyNodesCache(cache: NodesCache, expectedNodes: string[], expe
         try {
             await cache.getNode(nodeUid);
         } catch (error) {
-            throw new Error(`${nodeUid} should be in the cache`);
+            throw new Error(`${nodeUid} should be in the cache: ${error}`);
         }
     }
 

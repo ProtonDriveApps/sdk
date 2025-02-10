@@ -184,13 +184,12 @@ function deserialiseNode(nodeData: string): DecryptedNode {
     if (
        !node || typeof node !== 'object' ||
        !node.uid || typeof node.uid !== 'string' ||
-       typeof node.parentUid !== 'string' ||
        !node.directMemberRole || typeof node.directMemberRole !== 'string' ||
        !node.type || typeof node.type !== 'string' ||
-       !node.mimeType || typeof node.mimeType !== 'string' ||
+       (typeof node.mimeType !== 'string' && node.mimeType !== undefined) ||
        typeof node.isShared !== 'boolean' ||
        !node.createdDate || typeof node.createdDate !== 'string' ||
-       (typeof node.trashedDate !== 'string' && node.trashedDate !== null) ||
+       (typeof node.trashedDate !== 'string' && node.trashedDate !== undefined) ||
        !node.volumeId || typeof node.volumeId !== 'string'
    ) {
        throw new Error(`Invalid node data: ${nodeData}`);
@@ -198,6 +197,6 @@ function deserialiseNode(nodeData: string): DecryptedNode {
    return {
        ...node,
        createdDate: new Date(node.createdDate),
-       trashedDate: node.trashedDate ? new Date(node.trashedDate) : null,
+       trashedDate: node.trashedDate ? new Date(node.trashedDate) : undefined,
    };
 }

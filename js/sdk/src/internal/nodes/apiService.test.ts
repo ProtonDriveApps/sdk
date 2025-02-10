@@ -1,5 +1,5 @@
 import { MemberRole, NodeType } from "../../interface";
-import { DriveAPIService } from "../apiService";
+import { DriveAPIService, ErrorCode } from "../apiService";
 import { NodeAPIService } from './apiService';
 
 function generateAPIFileNode(linkOverrides = {}, overrides = {}) {
@@ -228,7 +228,7 @@ describe("nodeAPIService", () => {
                     {
                         LinkID: 'nodeId1',
                         Response: {
-                            Code: 1000,
+                            Code: ErrorCode.OK,
                         }
                     },
                     {
@@ -258,7 +258,7 @@ describe("nodeAPIService", () => {
                     {
                         LinkID: 'nodeId1',
                         Response: {
-                            Code: 1000,
+                            Code: ErrorCode.OK,
                         }
                     },
                     {
@@ -303,7 +303,7 @@ describe("nodeAPIService", () => {
                     {
                         LinkID: 'nodeId1',
                         Response: {
-                            Code: 1000,
+                            Code: ErrorCode.OK,
                         }
                     },
                     {

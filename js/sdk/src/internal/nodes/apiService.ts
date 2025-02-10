@@ -284,7 +284,6 @@ export class NodeAPIService {
             hash: string,
             encryptedExtendedAttributes: string,
         },
-        signal?: AbortSignal,
     ): Promise<string> {
         const { volumeId, nodeId: parentId } = splitNodeUid(parentUid);
 
@@ -301,7 +300,7 @@ export class NodeAPIService {
             Name: newNode.encryptedName,
             Hash: newNode.hash,
             XAttr: newNode.encryptedExtendedAttributes,
-        }, signal);
+        });
 
         return response.Folder.ID;
     }
