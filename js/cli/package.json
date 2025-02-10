@@ -5,7 +5,7 @@
     "main": "dist/main.js",
     "scripts": {
         "generate-types": "bunx openapi-typescript ../../api/openapi-core.json -o ./src/account/api-core-types.ts && bunx openapi-typescript ../../api/openapi-auth.json -o ./src/account/api-auth-types.ts",
-        "build:bin": "bun build --compile ./src/bin.ts --minify-identifiers"
+        "build": "bun build --compile ./src/proton-drive.ts --minify-identifiers"
     },
     "devDependencies": {
         "@types/bcryptjs": "^2.4.6",

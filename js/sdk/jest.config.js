@@ -1,6 +1,6 @@
 module.exports = {
     moduleDirectories: ['<rootDir>/node_modules', 'node_modules'],
-    testPathIgnorePatterns: ['<rootDir>/tests'],
+    testPathIgnorePatterns: [],
     collectCoverage: false,
     transformIgnorePatterns: [],
     transform: {

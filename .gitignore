@@ -7,5 +7,5 @@ node_modules
 tsconfig.tsbuildinfo
 
 # JS CLI
-bin
+js/cli/proton-drive
 auth.txt
