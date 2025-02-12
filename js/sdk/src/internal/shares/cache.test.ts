@@ -6,7 +6,7 @@ describe('sharesCache', () => {
     let cache: SharesCache;
 
     beforeEach(() => {
-        memoryCache = new MemoryCache([]);
+        memoryCache = new MemoryCache();
         memoryCache.setEntity('volume-badObject', 'aaa');
 
         cache = new SharesCache(memoryCache);

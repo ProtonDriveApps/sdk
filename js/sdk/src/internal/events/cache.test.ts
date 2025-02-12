@@ -6,7 +6,7 @@ describe("EventsCache", () => {
     let cache: EventsCache;
 
     beforeEach(() => {
-        memoryCache = new MemoryCache([]);
+        memoryCache = new MemoryCache();
         cache = new EventsCache(memoryCache);
     });
 
