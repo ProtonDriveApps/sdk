@@ -61,9 +61,9 @@ describe('nodesCache', () => {
     let cache: NodesCache;
 
     beforeEach(() => {
-        memoryCache = new MemoryCache([CACHE_TAG_KEYS.ParentUid, CACHE_TAG_KEYS.Trashed]);
+        memoryCache = new MemoryCache();
         memoryCache.setEntity('node-root', JSON.stringify(generateNode('root', '')));
-        memoryCache.setEntity('node-badObject', 'aaa', { [CACHE_TAG_KEYS.ParentUid]: 'root' });
+        memoryCache.setEntity('node-badObject', 'aaa', [`${CACHE_TAG_KEYS.ParentUid}:root`]);
 
         cache = new NodesCache(memoryCache);
     });

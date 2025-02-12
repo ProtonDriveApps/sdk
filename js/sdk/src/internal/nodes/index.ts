@@ -12,7 +12,6 @@ import { NodesAccess } from "./nodesAccess";
 import { NodesManager } from "./manager";
 
 export type { DecryptedNode } from "./interface";
-export { CACHE_TAG_KEYS } from "./cache";
 
 /**
  * Provides facade for the whole nodes module.

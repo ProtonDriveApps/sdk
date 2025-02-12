@@ -5,15 +5,12 @@ export interface ProtonDriveCacheConstructor<T> {
      * The local database should follow document-based structure. The SDK does
      * serialisation and data is not intended to be read by 3rd party. The SDK,
      * however, provides also clear fields in form of tags that is used for
-     * search. Local database should have indexes, columns, or other structure
-     * for easier look-up. The list of used tags by the SDK is passed via
-     * `usedTagKeysBySDK` parameter.
+     * search. Local database should have index or other structure for easier
+     * look-up.
      * 
      * See {@link setEntity} for more details how tags are used.
-     * 
-     * @param usedTagKeysBySDK - Example of tags: ["trashed", "shared", "parentUid"]
      */
-     new (usedTagKeysBySDK: string[]): ProtonDriveCache<T>,
+     new (): ProtonDriveCache<T>,
 }
 
 export interface ProtonDriveCache<T> {
@@ -32,13 +29,13 @@ export interface ProtonDriveCache<T> {
      * The `data` doesn't include any keys. It is up to the client store this
      * information privately.
      * 
-     * The `tags` is an object that should be stored properly for fast look-up.
-     * The SDK provides list of used tags by the SDK in the {@link "constructor"}.
+     * The `tags` is a list of strings that should be stored properly for fast
+     * look-up.
      * 
      * @example Usage by the SDK
      * ```ts
-     * await cache.setEntity("node-abc42", "{ node abc42 serialised data }", { "parentUid": "abc123", "shared": "withMe" });
-     * await Array.fromAsync(cache.iterateEntitiesByTag("parentUid", "abc123")); // returns ["node-abc42"]
+     * await cache.setEntity("node-abc42", "{ node abc42 serialised data }", ["parentUid:abc123", "sharedWithMe"] });
+     * await Array.fromAsync(cache.iterateEntitiesByTag("parentUid:abc123")); // returns ["node-abc42"]
      * await cache.getEntity("node-abc42"); // returns "{ node abc42 serialised data }"
      * await Array.fromAsync(cache.iterateEntities(["node-abc42"])); // returns ["{ node abc42 serialised data }"]
      * ```
@@ -67,7 +64,7 @@ export interface ProtonDriveCache<T> {
      * @param tags - Clear metadata about the entity used for filtering. It is intended to store efficiently for fast look-up.
      * @throws Exception if `key` from `tags` is not one of the tag keys provided from `usedTagKeysBySDK` in constructor.
      */
-    setEntity(uid: string, data: T, tags?: { [ key: string ]: string }): Promise<void>,
+    setEntity(uid: string, data: T, tags?: string[] ): Promise<void>,
     
     /**
      * Returns the data of the entity stored locally.
@@ -96,11 +93,9 @@ export interface ProtonDriveCache<T> {
      * await Array.fromAsync(cache.iterateEntitiesByTag("parentUid", "abc123")); // returns ["node-abc42"]
      * ```
      * 
-     * @param key - The tag key, for example `parentUid`
-     * @param value - The tag value, for example `"abc123"`
-     * @throws Exception if `key` is not one of the tag keys provided from `usedTagKeysBySDK` in constructor
+     * @param tag - The tag, for example `parentUid:abc123`
      */
-    iterateEntitiesByTag(key: string, value: string): AsyncGenerator<EntityResult<T>>,
+    iterateEntitiesByTag(tag: string): AsyncGenerator<EntityResult<T>>,
 
     /**
      * Removes completely the entity stored locally from the database.

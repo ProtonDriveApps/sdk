@@ -1,7 +1,7 @@
 import type { ProtonDriveCache, EntityResult } from './interface.js';
 
 type KeyValueCache<T> = { [ uid: string ]: T };
-type TagsCache = { [ key: string ]: { [ value: string ]: string[] } };
+type TagsCache = { [ tag: string ]: string[] };
 
 /**
  * In-memory cache implementation for Proton Drive SDK.
@@ -11,38 +11,25 @@ type TagsCache = { [ key: string ]: { [ value: string ]: string[] } };
  * environments.
  */
 export class MemoryCache<T> implements ProtonDriveCache<T> {
-    private entities: KeyValueCache<T>;
-    private entitiesByTag: TagsCache;
-
-    constructor(usedTagKeysBySDK: string[]) {
-        this.entities = {};
-        this.entitiesByTag = usedTagKeysBySDK.reduce((acc, key) => {
-            acc[key] = {};
-            return acc;
-        }, {} as TagsCache);
-    }
+    private entities: KeyValueCache<T> = {};
+    private entitiesByTag: TagsCache = {};
 
     async purge() {
         this.entities = {};
     }
 
-    async setEntity(uid: string, data: T, tags?: { [ key: string ]: string }) {
+    async setEntity(uid: string, data: T, tags?: string[]) {
         this.entities[uid] = data;
         if (tags) {
-            for (const key in tags) {
-                const value = tags[key];
-                const tag = this.entitiesByTag[key];
-                if (!tag) {
-                    throw Error('Tag is not recognised');
+            for (const tag of tags) {
+                if (!this.entitiesByTag[tag]) {
+                    this.entitiesByTag[tag] = [];
                 }
-                if (!tag[value]) {
-                    tag[value] = [];
-                }
-                tag[value].push(uid);
+                this.entitiesByTag[tag].push(uid);
             }
         }
     }
-    
+
     async getEntity(uid: string) {
         const data = this.entities[uid];
         if (!data) {
@@ -62,13 +49,8 @@ export class MemoryCache<T> implements ProtonDriveCache<T> {
         }
     }
 
-    async *iterateEntitiesByTag(key: string, value: string): AsyncGenerator<EntityResult<T>> {
-        const tag = this.entitiesByTag[key];
-        if (!tag) {
-            throw Error('Tag is not recognised');
-        }
-
-        const uids = tag[value];
+    async *iterateEntitiesByTag(tag: string): AsyncGenerator<EntityResult<T>> {
+        const uids = this.entitiesByTag[tag];
         if (!uids) {
             return;
         }
@@ -81,13 +63,11 @@ export class MemoryCache<T> implements ProtonDriveCache<T> {
     async removeEntities(uids: string[]) {
         for (const uid of uids) {
             delete this.entities[uid];
-            Object.values(this.entitiesByTag).forEach((tag) => {
-                Object.values(tag).forEach((uids) => {
-                    const index = uids.indexOf(uid);
-                    if (index !== -1) {
-                        uids.splice(index, 1);
-                    }
-                });
+            Object.values(this.entitiesByTag).forEach((uids) => {
+                const index = uids.indexOf(uid);
+                if (index !== -1) {
+                    uids.splice(index, 1);
+                }
             });
         }
     }

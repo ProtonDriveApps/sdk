@@ -4,10 +4,10 @@ describe('MemoryCache', () => {
     let cache: MemoryCache<string>;
 
     beforeEach(() => {
-        cache = new MemoryCache(['tag1', 'tag2']);
+        cache = new MemoryCache();
 
-        cache.setEntity('uid1', 'data1', { tag1: 'hello' });
-        cache.setEntity('uid2', 'data2', { tag2: 'world' });
+        cache.setEntity('uid1', 'data1', ['tag1:hello', 'tag2:world']);
+        cache.setEntity('uid2', 'data2', ['tag2:world']);
         cache.setEntity('uid3', 'data3');
     });
 
@@ -47,7 +47,19 @@ describe('MemoryCache', () => {
 
     it('should iterate over entities by tag', async () => {
         const results = [];
-        for await (const result of cache.iterateEntitiesByTag('tag1', 'hello')) {
+        for await (const result of cache.iterateEntitiesByTag('tag2:world')) {
+            results.push(result);
+        }
+
+        expect(results).toEqual([
+            { uid: 'uid1', ok: true, data: 'data1' },
+            { uid: 'uid2', ok: true, data: 'data2' },
+        ]);
+    });
+
+    it('should iterate over entities with multiple tags by tag', async () => {
+        const results = [];
+        for await (const result of cache.iterateEntitiesByTag('tag1:hello')) {
             results.push(result);
         }
 
@@ -58,7 +70,7 @@ describe('MemoryCache', () => {
 
     it('should iterate over entities by empty tag', async () => {
         const results = [];
-        for await (const result of cache.iterateEntitiesByTag('tag1', 'nonexistent')) {
+        for await (const result of cache.iterateEntitiesByTag('nonexistent')) {
             results.push(result);
         }
 
@@ -97,7 +109,7 @@ describe('MemoryCache', () => {
         ]);
 
         const results2 = [];
-        for await (const result of cache.iterateEntitiesByTag('tag1', 'hello')) {
+        for await (const result of cache.iterateEntitiesByTag('tag1:hello')) {
             results2.push(result);
         }
         expect(results2).toEqual([]);

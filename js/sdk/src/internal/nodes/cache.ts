@@ -3,8 +3,8 @@ import { ProtonDriveEntitiesCache, Logger } from "../../interface";
 import { DecryptedNode } from "./interface";
 
 export enum CACHE_TAG_KEYS {
-    ParentUid = 'parentUid',
-    Trashed = 'trashed',
+    ParentUid = 'nodeParentUid',
+    Trashed = 'nodeTrashed',
 }
 
 type DecryptedNodeResult = (
@@ -30,12 +30,12 @@ export class NodesCache {
         const key = getCacheUid(node.uid);
         const nodeData = serialiseNode(node);
         
-        const tags: { [ key: string ]: string } = {};
+        const tags = [];
         if (node.parentUid) {
-            tags[CACHE_TAG_KEYS.ParentUid] = node.parentUid;
+            tags.push(`${CACHE_TAG_KEYS.ParentUid}:${node.parentUid}`)
         }
         if (node.trashedDate) {
-            tags[CACHE_TAG_KEYS.Trashed] = 'true';
+            tags.push(`${CACHE_TAG_KEYS.Trashed}`)
         }
 
         await this.driveCache.setEntity(key, nodeData, tags);
@@ -94,7 +94,7 @@ export class NodesCache {
 
     private async getRecursiveChildrenCacheUids(parentNodeUid: string): Promise<string[]> {
         const cacheUids = [];
-        for await (const result of this.driveCache.iterateEntitiesByTag(CACHE_TAG_KEYS.ParentUid, parentNodeUid)) {
+        for await (const result of this.driveCache.iterateEntitiesByTag(`${CACHE_TAG_KEYS.ParentUid}:${parentNodeUid}`)) {
             cacheUids.push(result.uid);
             const childrenCacheUids = await this.getRecursiveChildrenCacheUids(getNodeUid(result.uid));
             cacheUids.push(...childrenCacheUids);
@@ -113,7 +113,7 @@ export class NodesCache {
     }
 
     async *iterateChildren(parentNodeUid: string): AsyncGenerator<DecryptedNodeResult> {
-        for await (const result of this.driveCache.iterateEntitiesByTag(CACHE_TAG_KEYS.ParentUid, parentNodeUid)) {
+        for await (const result of this.driveCache.iterateEntitiesByTag(`${CACHE_TAG_KEYS.ParentUid}:${parentNodeUid}`)) {
             const node = await this.convertCacheResult(result);
             if (node) {
                 yield node;
@@ -122,7 +122,7 @@ export class NodesCache {
     }
 
     async *iterateTrashedNodes(): AsyncGenerator<DecryptedNodeResult> {
-        for await (const result of this.driveCache.iterateEntitiesByTag(CACHE_TAG_KEYS.Trashed, 'true')) {
+        for await (const result of this.driveCache.iterateEntitiesByTag(CACHE_TAG_KEYS.Trashed)) {
             const node = await this.convertCacheResult(result);
             if (node) {
                 yield node;

@@ -16,7 +16,7 @@ describe('nodesCryptoCache', () => {
     }
 
     beforeEach(() => {
-        memoryCache = new MemoryCache([]);
+        memoryCache = new MemoryCache();
         memoryCache.setEntity('nodeKeys-missingPassphrase', {
             key: 'privateKey',
             sessionKey: 'sessionKey',

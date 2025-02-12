@@ -16,7 +16,7 @@ describe('sharesCryptoCache', () => {
     }
 
     beforeEach(() => {
-        memoryCache = new MemoryCache([]);
+        memoryCache = new MemoryCache();
         cache = new SharesCryptoCache(memoryCache);
     });
 
