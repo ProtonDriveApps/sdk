@@ -3,6 +3,8 @@ import { NodesCache } from "./cache"
 import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
 import { SharesService, EncryptedNode, DecryptedNode, DecryptedNodeKeys } from "./interface";
+import { BatchLoading } from "../batchLoading";
+import { makeNodeUid } from "../uids";
 
 /**
  * Provides access to node metadata.
@@ -25,6 +27,12 @@ export class NodesAccess {
         this.shareService = shareService;
     }
 
+    async getMyFilesRootFolder() {
+        const { volumeId, rootNodeId } = await this.shareService.getMyFilesIDs();
+        const nodeUid = makeNodeUid(volumeId, rootNodeId);
+        return this.getNode(nodeUid);
+    }
+
     async getNode(nodeUid: string): Promise<DecryptedNode> {
         let cachedNode;
         try {
@@ -39,12 +47,64 @@ export class NodesAccess {
         return node;
     }
 
+    // Improvement requested: keep status of loaded children and leverage cache.
+    async *iterateChildren(parentNodeUid: string, signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
+        // Ensure the parent is loaded and up-to-date.
+        const parentNode = await this.getNode(parentNodeUid);
+
+        const batchLoading = new BatchLoading<string, DecryptedNode>({ loadItems: (nodeUids) => this.loadNodes(nodeUids, signal) });
+        for await (const nodeUid of this.apiService.iterateChildrenNodeUids(parentNode.uid, signal)) {
+            let node;
+            try {
+                node = await this.cache.getNode(nodeUid);
+            } catch {}
+
+            if (node && !node.isStale) {
+                yield node;
+            } else {
+                yield* batchLoading.load(nodeUid);
+            }
+        }
+        yield* batchLoading.loadRest();
+    }
+
+    // Improvement requested: keep status of loaded trash and leverage cache.
+    async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
+        const { volumeId } = await this.shareService.getMyFilesIDs();
+        const batchLoading = new BatchLoading<string, DecryptedNode>({ loadItems: (nodeUids) => this.loadNodes(nodeUids, signal) });
+        for await (const nodeUid of this.apiService.iterateTrashedNodeUids(volumeId, signal)) {
+            let node;
+            try {
+                node = await this.cache.getNode(nodeUid);
+            } catch {}
+
+            if (node && !node.isStale) {
+                yield node;
+            } else {
+                yield* batchLoading.load(nodeUid);
+            }
+        }
+        yield* batchLoading.loadRest();
+    }
+
+    async *iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
+        const batchLoading = new BatchLoading<string, DecryptedNode>({ loadItems: (nodeUids) => this.loadNodes(nodeUids, signal) });
+        for await (const result of this.cache.iterateNodes(nodeUids)) {
+            if (result.ok && !result.node.isStale) {
+                yield result.node;
+            } else {
+                yield* batchLoading.load(result.uid);
+            }
+        }
+        yield* batchLoading.loadRest();
+    }
+
     private async loadNode(nodeUid: string): Promise<{ node: DecryptedNode, keys?: DecryptedNodeKeys }> {
         const encryptedNode = await this.apiService.getNode(nodeUid);
         return this.decryptNode(encryptedNode);
     }
 
-    async loadNodes(nodeUids: string[], signal?: AbortSignal): Promise<DecryptedNode[]> {
+    private async loadNodes(nodeUids: string[], signal?: AbortSignal): Promise<DecryptedNode[]> {
         // TODO: batching
         const encryptedNodes = await this.apiService.getNodes(nodeUids, signal);
         const results = await Promise.all(encryptedNodes.map((encryptedNode) => this.decryptNode(encryptedNode)));

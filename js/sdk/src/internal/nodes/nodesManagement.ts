@@ -1,14 +1,11 @@
 import { MemberRole, NodeType, NodeResult, resultOk } from "../../interface";
-import { makeNodeUid } from "../uids";
 import { AbortError } from "../errors";
 import { NodeAPIService } from "./apiService";
 import { NodesCache } from "./cache";
 import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
-import { SharesService, DecryptedNode } from "./interface";
+import { DecryptedNode } from "./interface";
 import { NodesAccess } from "./nodesAccess";
-
-const BATCH_LOADING = 10;
 
 /**
  * Provides high-level actions for managing nodes.
@@ -19,79 +16,19 @@ const BATCH_LOADING = 10;
  * This module uses other modules providing low-level operations, such
  * as API service, cache, crypto service, etc.
  */
-export class NodesManager {
+export class NodesManagement {
     constructor(
         private apiService: NodeAPIService,
         private cache: NodesCache,
         private cryptoCache: NodesCryptoCache,
         private cryptoService: NodesCryptoService,
-        private shareService: SharesService,
         private nodesAccess: NodesAccess,
     ) {
         this.apiService = apiService;
         this.cache = cache;
         this.cryptoCache = cryptoCache;
         this.cryptoService = cryptoService;
-        this.shareService = shareService;
         this.nodesAccess = nodesAccess;
-    }
-
-    async getMyFilesRootFolder() {
-        const { volumeId, rootNodeId } = await this.shareService.getMyFilesIDs();
-        const nodeUid = makeNodeUid(volumeId, rootNodeId);
-        return this.nodesAccess.getNode(nodeUid);
-    }
-
-    // Improvement requested: keep status of loaded children and leverage cache.
-    async *iterateChildren(parentNodeUid: string, signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
-        // Ensure the parent is loaded and up-to-date.
-        const parentNode = await this.nodesAccess.getNode(parentNodeUid);
-
-        const batchLoading = new BatchNodesLoading((nodeUids) => this.nodesAccess.loadNodes(nodeUids));
-        for await (const nodeUid of this.apiService.iterateChildrenNodeUids(parentNode.uid, signal)) {
-            let node;
-            try {
-                node = await this.cache.getNode(nodeUid);
-            } catch {}
-
-            if (node && !node.isStale) {
-                yield node;
-            } else {
-                yield* batchLoading.loadNode(nodeUid, signal);
-            }
-        }
-        yield* batchLoading.loadRest(signal);
-    }
-
-    // Improvement requested: keep status of loaded trash and leverage cache.
-    async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
-        const { volumeId } = await this.shareService.getMyFilesIDs();
-        const batchLoading = new BatchNodesLoading((nodeUids) => this.nodesAccess.loadNodes(nodeUids));
-        for await (const nodeUid of this.apiService.iterateTrashedNodeUids(volumeId, signal)) {
-            let node;
-            try {
-                node = await this.cache.getNode(nodeUid);
-            } catch {}
-
-            if (node && !node.isStale) {
-                yield node;
-            } else {
-                yield* batchLoading.loadNode(nodeUid, signal);
-            }
-        }
-        yield* batchLoading.loadRest(signal);
-    }
-
-    async *iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
-        const batchLoading = new BatchNodesLoading((nodeUids) => this.nodesAccess.loadNodes(nodeUids));
-        for await (const result of this.cache.iterateNodes(nodeUids)) {
-            if (result.ok && !result.node.isStale) {
-                yield result.node;
-            } else {
-                yield* batchLoading.loadNode(result.uid, signal);
-            }
-        }
-        yield* batchLoading.loadRest(signal);
     }
 
     async renameNode(nodeUid: string, newName: string): Promise<DecryptedNode> {
@@ -198,7 +135,7 @@ export class NodesManager {
     async* trashNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         const nodesPerParent = new Map<string, DecryptedNode[]>();
 
-        for await (const node of this.iterateNodes(nodeUids, signal)) {
+        for await (const node of this.nodesAccess.iterateNodes(nodeUids, signal)) {
             if (!node.parentUid) {
                 throw new Error('Trashing root nodes is not supported');
             }
@@ -228,7 +165,7 @@ export class NodesManager {
     }
 
     async* restoreNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
-        const nodes = await Array.fromAsync(this.iterateNodes(nodeUids, signal));
+        const nodes = await Array.fromAsync(this.nodesAccess.iterateNodes(nodeUids, signal));
 
         for await (const result of this.apiService.restoreNodes(nodeUids, signal)) {
             if (result.ok) {
@@ -304,58 +241,5 @@ export class NodesManager {
         await this.cache.setNode(node);
         await this.cryptoCache.setNodeKeys(nodeUid, keys);
         return node;
-    }
-}
-
-/**
- * Helper class for batch loading nodes.
- * 
- * The class is responsible for fetching nodes in batches. Any call to
- * `loadNode` will add the node to the batch (without fetching anything),
- * and if the batch reaches the limit, it will fetch the nodes and yield
- * them transparently to the caller.
- * 
- * Example:
- * 
- * ```typescript
- * const batchLoading = new BatchNodesLoading(loadNodesCallback);
- * for (const nodeUid of nodeUids) {
- *   for await (const node of batchLoading.loadNode(nodeUid)) {
- *     console.log(node);
- *   }
- * }
- * ```
- */
-class BatchNodesLoading {
-    private nodesToFetch: string[];
-    private loadNodes: (nodeUids: string[], signal?: AbortSignal) => Promise<DecryptedNode[]>;
-
-    constructor(loadNodes: (nodeUids: string[]) => Promise<DecryptedNode[]>) {
-        this.nodesToFetch = [];
-        this.loadNodes = loadNodes;
-    }
-
-    async *loadNode(nodeUid: string, signal?: AbortSignal) {
-        this.nodesToFetch.push(nodeUid);
-
-        if (this.nodesToFetch.length >= BATCH_LOADING) {
-            const nodes = await this.loadNodes(this.nodesToFetch, signal);
-            for (const node of nodes) {
-                yield node;
-            }
-            this.nodesToFetch = [];
-        }
-    }
-
-    async *loadRest(signal?: AbortSignal) {
-        if (this.nodesToFetch.length === 0) {
-            return;
-        }
-
-        const nodes = await this.loadNodes(this.nodesToFetch, signal);
-        for (const node of nodes) {
-            yield node;
-        }
-        this.nodesToFetch = [];
     }
 }

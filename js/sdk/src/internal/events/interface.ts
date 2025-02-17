@@ -30,10 +30,14 @@ export type DriveEvent = {
     parentNodeUid: string,
     isTrashed: boolean,
     isShared: boolean,
+    isOwnVolume: boolean,
 } | {
     type: DriveEventType.NodeDeleted,
     nodeUid: string,
     parentNodeUid: string,
+    isTrashed?: boolean,
+    isShared?: boolean,
+    isOwnVolume: boolean,
 } | {
     type: DriveEventType.ShareWithMeUpdated,
 }

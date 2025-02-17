@@ -62,17 +62,27 @@ export class EventsAPIService {
             lastEventId: result.EventID,
             more: result.More === 1,
             refresh: result.Refresh === 1,
-            events: result.Events.map((event) => {
+            events: result.Events.map((event): DriveEvent => {
                 const type = VOLUME_EVENT_TYPE_MAP[event.EventType];
                 const link = event.Link as Extract<GetVokumeEventResponse['Events'][0]['Link'], { ParentLinkID: unknown }>;
                 const uids = {
                     nodeUid: makeNodeUid(volumeId, event.Link.LinkID),
                     parentNodeUid: makeNodeUid(volumeId, link.ParentLinkID as string),
                 }
+                // VOLUME_EVENT_TYPE_MAP will never return this event type.
+                // It is here to satisfy the type checker. It is safe to do.
+                if (type === DriveEventType.ShareWithMeUpdated) {
+                    return {
+                        type,
+                    };
+                }
                 if (type === DriveEventType.NodeDeleted) {
                     return {
                         type,
                         ...uids,
+                        isTrashed: !!link.Trashed,
+                        isShared: link.SharingDetails?.ShareID !== undefined,
+                        isOwnVolume: false, // TODO
                     }
                 }
                 return {
@@ -80,6 +90,7 @@ export class EventsAPIService {
                     ...uids,
                     isTrashed: !!link.Trashed,
                     isShared: link.SharingDetails?.ShareID !== undefined,
+                    isOwnVolume: false, // TODO
                 };
             }),
         };

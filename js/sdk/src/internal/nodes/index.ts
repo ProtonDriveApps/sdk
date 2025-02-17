@@ -9,7 +9,7 @@ import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
 import { SharesService, DecryptedNode } from "./interface";
 import { NodesAccess } from "./nodesAccess";
-import { NodesManager } from "./manager";
+import { NodesManagement } from "./nodesManagement";
 
 export type { DecryptedNode } from "./interface";
 
@@ -42,7 +42,7 @@ export function initNodesModule(
     // If change is done locally, it will take a time to show up if client
     // is waiting with UI update to events. Thus we need to emit events
     // right away.
-    const nodesManager = new NodesManager(api, cache, cryptoCache, cryptoService, sharesService, nodesAccess);
+    const nodesManager = new NodesManagement(api, cache, cryptoCache, cryptoService, nodesAccess);
 
     return {
         access: nodesAccess,
@@ -65,13 +65,13 @@ export function initPublicNodesModule(
     // @ts-expect-error TODO
     const cryptoService = new NodesCryptoService(driveCrypto, account, sharesService);
     const nodesAccess = new NodesAccess(api, cache, cryptoCache, cryptoService, sharesService);
-    const nodesManager = new NodesManager(api, cache, cryptoCache, cryptoService, sharesService, nodesAccess);
+    const nodesManagement = new NodesManagement(api, cache, cryptoCache, cryptoService, nodesAccess);
 
     return {
         // TODO: use public root node, not my files
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         getPublicRootNode: async (token: string, password: string, customPassword?: string): Promise<DecryptedNode> => { return {} as DecryptedNode },
         access: nodesAccess,
-        management: nodesManager,
+        management: nodesManagement,
     }
 }
