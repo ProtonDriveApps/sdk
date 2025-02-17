@@ -45,7 +45,11 @@ if (command.args) {
     }
 }
 
-Object.keys(command.options || {}).forEach((key) => {
+Object.entries(command.options || {}).forEach(([key, option]) => {
+    if (option.default !== undefined) {
+        values[key] = values[key] || option.default;
+        return;
+    }
     if (values[key] === undefined) {
         console.log(`Missing required option: ${key}`);
 

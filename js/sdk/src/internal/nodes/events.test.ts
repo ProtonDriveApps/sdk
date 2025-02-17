@@ -15,6 +15,7 @@ describe("updateCacheByEvent", () => {
             getNode: jest.fn(),
             setNode: jest.fn(),
             removeNodes: jest.fn(),
+            resetFolderChildrenLoaded: jest.fn(),
         };
     });
 
@@ -33,6 +34,12 @@ describe("updateCacheByEvent", () => {
 
             expect(cache.getNode).toHaveBeenCalledTimes(0);
             expect(cache.setNode).toHaveBeenCalledTimes(0);
+        });
+
+        it("should reset parent loaded state", async () => {
+            await updateCacheByEvent(event, cache);
+
+            expect(cache.resetFolderChildrenLoaded).toHaveBeenCalledWith('parentUid');
         });
     });
 

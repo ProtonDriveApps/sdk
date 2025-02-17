@@ -165,4 +165,14 @@ describe('nodesCache', () => {
         const nodeUids = result.map(({ uid }) => uid);
         expect(nodeUids).toStrictEqual(['node1b', 'node1c-beta', 'node2b']);
     });
+
+    it('should set and unset children loaded state', async () => {
+        expect(await cache.isFolderChildrenLoaded('node1')).toBe(false);
+
+        await cache.setFolderChildrenLoaded('node1');
+        expect(await cache.isFolderChildrenLoaded('node1')).toBe(true);
+
+        await cache.resetFolderChildrenLoaded('node1');
+        expect(await cache.isFolderChildrenLoaded('node1')).toBe(false);
+    });
 });

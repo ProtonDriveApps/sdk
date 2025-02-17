@@ -3,6 +3,7 @@ import { Api as CryptoApi } from "./crypto/lib/worker/api";
 import { HTTPClient } from "./httpClient";
 import { getLogger } from "./logger";
 import { FileSystem } from "./fileSystem";
+import { SQLiteEntititesCache } from "./cache";
 
 import { ProtonDriveClient, MemoryCache, CachedCryptoMaterial, OpenPGPCryptoWithCryptoProxy } from "../../sdk/src";
 
@@ -52,7 +53,7 @@ function initSDK(cryptoApi: CryptoApi, config: APIConfig, account: Account) {
     });
     const openPGPCryptoModule = new OpenPGPCryptoWithCryptoProxy(cryptoApi);
 
-    const entitiesCache = new MemoryCache<string>();
+    const entitiesCache = new SQLiteEntititesCache();
     const cryptoCache = new MemoryCache<CachedCryptoMaterial>();
 
     const sdk = new ProtonDriveClient({

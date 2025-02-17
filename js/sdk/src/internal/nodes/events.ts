@@ -86,7 +86,10 @@ export async function updateCacheByEvent(event: DriveEvent, cache: NodesCache, l
     // decrypt the node immediately. The node will be fetched and
     // decrypted when requested by the client.
     if (event.type === DriveEventType.NodeCreated) {
-        log?.debug(`Skipping node create event`);
+        // We do not have partial nodes in the cache, so we don't
+        // add it. If new node is not added, we need to reset the
+        // children loaded flag to force refetch when requested.
+        await cache.resetFolderChildrenLoaded(event.parentNodeUid);
     }
     if (event.type === DriveEventType.NodeUpdated || event.type === DriveEventType.NodeUpdatedMetadata) {
         let node;
