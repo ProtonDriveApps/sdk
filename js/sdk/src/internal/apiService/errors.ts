@@ -16,9 +16,17 @@ export function apiErrorFactory({ response, result }: { response: Response, resu
     }
 }
 
-export class APIError extends Error {}
+export class AbortError extends Error {
+    name = 'AbortError';
+}
+
+export class APIError extends Error {
+    name = 'APIError';
+}
 
 export class APIHTTPError extends APIError {
+    name = 'APIHTTPError';
+
     public statusCode: number;
 
     constructor(message: string, statusCode: number) {
@@ -28,6 +36,8 @@ export class APIHTTPError extends APIError {
 }
 
 export class APICodeError extends APIError {
+    name = 'APICodeError';
+
     public code: number;
 
     constructor(message: string, code: number) {
@@ -36,4 +46,6 @@ export class APICodeError extends APIError {
     }
 }
 
-export class NotFoundAPIError extends APICodeError {}
+export class NotFoundAPIError extends APICodeError {
+    name = 'NotFoundAPIError';
+}
