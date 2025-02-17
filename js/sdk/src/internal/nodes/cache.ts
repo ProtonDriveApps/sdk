@@ -162,6 +162,23 @@ export class NodesCache {
             };
         }
     }
+
+    async setFolderChildrenLoaded(nodeUid: string): Promise<void> {
+        this.driveCache.setEntity(`node-children-${nodeUid}`, 'loaded');
+    }
+
+    async resetFolderChildrenLoaded(nodeUid: string): Promise<void> {
+        await this.driveCache.removeEntities([`node-children-${nodeUid}`]);
+    }
+
+    async isFolderChildrenLoaded(nodeUid: string): Promise<boolean> {
+        try {
+            await this.driveCache.getEntity(`node-children-${nodeUid}`);
+            return true;
+        } catch {
+            return false;
+        }
+    }
 }
 
 function getCacheUid(nodeUid: string) {

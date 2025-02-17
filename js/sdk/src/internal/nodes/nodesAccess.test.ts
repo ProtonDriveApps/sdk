@@ -116,4 +116,18 @@ describe('nodesAccess', () => {
             expect(shareService.getSharePrivateKey).not.toHaveBeenCalled();
         });
     });
+
+    describe('getNodeKeys', () => {
+        it('should load node if not cached', async () => {
+            cryptoCache.getNodeKeys = jest.fn(() => Promise.reject(new Error('Entity not found')));
+            apiService.getNode = jest.fn(() => Promise.reject(new Error('API called')));
+
+            try {
+                await access.getNodeKeys('nodeId');
+                throw new Error('Expected error');
+            } catch (error: unknown) {
+                expect(`${error}`).toBe('Error: API called');
+            }
+        });
+    });
 });
