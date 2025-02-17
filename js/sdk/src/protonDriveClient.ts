@@ -3,7 +3,7 @@ import { ProtonDriveClientContructorParameters, ProtonDriveClientInterface, Node
 import { DriveCrypto } from './crypto';
 import { initSharesModule } from './internal/shares';
 import { initNodesModule } from './internal/nodes';
-import { sharing as sharingModule } from './internal/sharing';
+import { initSharingModule } from './internal/sharing';
 import { DriveEventsService } from './internal/events';
 import { upload as uploadModule } from './internal/upload';
 import { getConfig } from './config';
@@ -11,7 +11,7 @@ import { getUid, getUids, convertInternalNodePromise, convertInternalNodeIterato
 
 export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
     private nodes: ReturnType<typeof initNodesModule>;
-    private sharing: ReturnType<typeof sharingModule>;
+    private sharing: ReturnType<typeof initSharingModule>;
     private upload: ReturnType<typeof uploadModule>;
 
     constructor({
@@ -38,7 +38,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
         const events = new DriveEventsService(apiService, entitiesCache, getLogger?.('events'));
         const shares = initSharesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule);
         this.nodes = initNodesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares, getLogger?.('nodes'));
-        this.sharing = sharingModule(apiService, account, cryptoModule, this.nodes.access);
+        this.sharing = initSharingModule(apiService, entitiesCache, account, cryptoModule, events, shares, this.nodes.access, getLogger?.('sharing'));
         this.upload = uploadModule(apiService, cryptoModule, this.nodes.access);
     }
 
@@ -49,19 +49,19 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
     }
 
     async getMyFilesRootFolder() {
-        return convertInternalNodePromise(this.nodes.management.getMyFilesRootFolder());
+        return convertInternalNodePromise(this.nodes.access.getMyFilesRootFolder());
     }
 
     async* iterateChildren(parentNodeUid: NodeOrUid, signal?: AbortSignal) {
-        yield* convertInternalNodeIterator(this.nodes.management.iterateChildren(getUid(parentNodeUid), signal));
+        yield* convertInternalNodeIterator(this.nodes.access.iterateChildren(getUid(parentNodeUid), signal));
     }
 
     async* iterateTrashedNodes(signal?: AbortSignal) {
-        yield* convertInternalNodeIterator(this.nodes.management.iterateTrashedNodes(signal));
+        yield* convertInternalNodeIterator(this.nodes.access.iterateTrashedNodes(signal));
     }
 
     async* iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal) {
-        yield* convertInternalNodeIterator(this.nodes.management.iterateNodes(getUids(nodeUids), signal));
+        yield* convertInternalNodeIterator(this.nodes.access.iterateNodes(getUids(nodeUids), signal));
     }
 
     async renameNode(nodeUid: NodeOrUid, newName: string) {
@@ -86,6 +86,14 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
 
     async createFolder(parentNodeUid: NodeOrUid, name: string) {
         return convertInternalNodePromise(this.nodes.management.createFolder(getUid(parentNodeUid), name));
+    }
+
+    async* iterateSharedNodes(signal?: AbortSignal) {
+        return convertInternalNodeIterator(this.sharing.access.iterateSharedNodes(signal));
+    }
+
+    async* iterateSharedNodesWithMe(signal?: AbortSignal) {
+        return convertInternalNodeIterator(this.sharing.access.iterateSharedNodesWithMe(signal));
     }
 
     async shareNode(nodeUid: NodeOrUid, settings: ShareNodeSettings) {

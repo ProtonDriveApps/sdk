@@ -1,5 +1,5 @@
 import { PrivateKey, SessionKey } from "../../crypto";
-import { Result, InvalidNameError, AnonymousUser, UnverifiedAuthorError, MemberRole, NodeType, Revision } from "../../interface";
+import { NodeEntity, Result, InvalidNameError, AnonymousUser, UnverifiedAuthorError, MemberRole, NodeType, Revision } from "../../interface";
 
 /**
  * Internal common node interface for both encrypted or decrypted node.
@@ -63,7 +63,7 @@ export interface EncryptedNodeFolderCrypto extends EncryptedNodeCrypto {
 /**
  * Interface holding decrypted node metadata.
  */
-export interface DecryptedNode extends BaseNode {
+export interface DecryptedNode extends BaseNode, NodeEntity {
     // Internal metadata
     isStale: boolean;
 

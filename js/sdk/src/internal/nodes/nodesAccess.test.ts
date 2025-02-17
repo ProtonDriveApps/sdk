@@ -116,20 +116,4 @@ describe('nodesAccess', () => {
             expect(shareService.getSharePrivateKey).not.toHaveBeenCalled();
         });
     });
-
-    it('should load node without accessing cache first', async () => {
-        const encryptedNode = { uid: 'nodeId', parentUid: 'parentUid' } as EncryptedNode;
-        const decryptedNode = { uid: 'nodeId', parentUid: 'parentUid' } as DecryptedNode;
-        const decryptedKeys = { key: 'key' } as any as DecryptedNodeKeys;
-
-        apiService.getNodes = jest.fn(() => Promise.resolve([encryptedNode]));
-        cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
-        cryptoService.decryptNode = jest.fn(() => Promise.resolve({ node: decryptedNode, keys: decryptedKeys }));
-
-        const result = await access.loadNodes(['nodeId']);
-        expect(result).toEqual([decryptedNode]);
-        expect(cache.getNode).not.toHaveBeenCalled();
-        expect(cache.setNode).toHaveBeenCalledWith(decryptedNode);
-        expect(cryptoCache.setNodeKeys).toHaveBeenCalledWith('nodeId', decryptedKeys);
-    });
 });

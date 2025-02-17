@@ -1,6 +1,22 @@
 import { NodeOrUid, NodeEntity as PublicNode } from './interface';
 import { DecryptedNode as InternalNode } from './internal/nodes';
 
+type InternalPartialNode = Pick<
+    InternalNode,
+    'uid' |
+    'parentUid' |
+    'name' |
+    'keyAuthor' |
+    'nameAuthor' |
+    'directMemberRole' |
+    'type' |
+    'mimeType' |
+    'isShared' |
+    'createdDate' |
+    'trashedDate' |
+    'activeRevision'
+>;
+
 export function getUid(nodeUid: NodeOrUid): string {
     if (typeof nodeUid === "string") {
         return nodeUid;
@@ -12,18 +28,18 @@ export function getUids(nodeUids: NodeOrUid[]): string[] {
     return nodeUids.map(getUid);
 }
 
-export async function *convertInternalNodeIterator(nodeIterator: AsyncGenerator<InternalNode>): AsyncGenerator<PublicNode> {
+export async function *convertInternalNodeIterator(nodeIterator: AsyncGenerator<InternalPartialNode>): AsyncGenerator<PublicNode> {
     for await (const node of nodeIterator) {
         yield convertInternalNode(node);
     }
 }
 
-export async function convertInternalNodePromise(nodePromise: Promise<InternalNode>): Promise<PublicNode> {
+export async function convertInternalNodePromise(nodePromise: Promise<InternalPartialNode>): Promise<PublicNode> {
     const node = await nodePromise;
     return convertInternalNode(node);
 }
 
-export function convertInternalNode(node: InternalNode): PublicNode {
+export function convertInternalNode(node: InternalPartialNode): PublicNode {
     return {
         uid: node.uid,
         parentUid: node.parentUid,

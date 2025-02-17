@@ -44,10 +44,10 @@ export class ProtonDrivePublicClient implements ProtonDrivePublicClientInterface
     }
 
     async* iterateChildren(parentNodeUid: NodeOrUid, signal?: AbortSignal) {
-        yield* convertInternalNodeIterator(this.nodes.management.iterateChildren(getUid(parentNodeUid), signal));
+        yield* convertInternalNodeIterator(this.nodes.access.iterateChildren(getUid(parentNodeUid), signal));
     }
 
     async* iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal) {
-        yield* convertInternalNodeIterator(this.nodes.management.iterateNodes(getUids(nodeUids), signal));
+        yield* convertInternalNodeIterator(this.nodes.access.iterateNodes(getUids(nodeUids), signal));
     }
 }

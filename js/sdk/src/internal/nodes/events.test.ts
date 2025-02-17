@@ -19,12 +19,13 @@ describe("updateCacheByEvent", () => {
     });
 
     describe('NodeCreated event', () => {
-        const event = {
+        const event: DriveEvent = {
             type: DriveEventType.NodeCreated,
             nodeUid: "nodeUid",
             parentNodeUid: "parentUid",
             isTrashed: false,
             isShared: false,
+            isOwnVolume: true,
         };
 
         it("should not update cache by node create event", async () => {
@@ -36,12 +37,13 @@ describe("updateCacheByEvent", () => {
     });
 
     describe('NodeUpdated event', () => {
-        const event = {
+        const event: DriveEvent = {
             type: DriveEventType.NodeUpdated,
             nodeUid: "nodeUid",
             parentNodeUid: "parentUid",
             isTrashed: false,
             isShared: false,
+            isOwnVolume: true,
         };
 
         it("should update cache if present in cache", async () => {
@@ -87,6 +89,7 @@ describe("updateCacheByEvent", () => {
             type: DriveEventType.NodeDeleted,
             nodeUid: "nodeUid",
             parentNodeUid: "parentUid",
+            isOwnVolume: true,
         }
 
         it("should remove node from cache", async () => {
@@ -117,12 +120,13 @@ describe("notifyListenersByEvent", () => {
 
     describe('update event', () => {
         it("should notify listeners by parentNodeUid", async () => {
-            const event = {
+            const event: DriveEvent = {
                 type: DriveEventType.NodeUpdated,
                 nodeUid: "nodeUid",
                 parentNodeUid: "parentUid",
                 isTrashed: false,
                 isShared: false,
+                isOwnVolume: true,
             };
             const listener = jest.fn();
     
@@ -134,12 +138,13 @@ describe("notifyListenersByEvent", () => {
         });
 
         it("should notify listeners by isTrashed", async () => {
-            const event = {
+            const event: DriveEvent = {
                 type: DriveEventType.NodeUpdated,
                 nodeUid: "nodeUid",
                 parentNodeUid: "parentUid",
                 isTrashed: true,
                 isShared: false,
+                isOwnVolume: true,
             };
             const listener = jest.fn();
     
@@ -151,12 +156,13 @@ describe("notifyListenersByEvent", () => {
         });
 
         it("should notify listeners by isShared", async () => {
-            const event = {
+            const event: DriveEvent = {
                 type: DriveEventType.NodeUpdated,
                 nodeUid: "nodeUid",
                 parentNodeUid: "parentUid",
                 isTrashed: false,
                 isShared: true,
+                isOwnVolume: true,
             };
             const listener = jest.fn();
     
@@ -168,12 +174,13 @@ describe("notifyListenersByEvent", () => {
         });
 
         it("should not notify listeners if neither condition match", async () => {
-            const event = {
+            const event: DriveEvent = {
                 type: DriveEventType.NodeUpdated,
                 nodeUid: "nodeUid",
                 parentNodeUid: "parentUid",
                 isTrashed: false,
                 isShared: false,
+                isOwnVolume: true,
             };
             const listener = jest.fn();
     
@@ -190,6 +197,7 @@ describe("notifyListenersByEvent", () => {
                 type: DriveEventType.NodeDeleted,
                 nodeUid: "nodeUid",
                 parentNodeUid: "parentUid",
+                isOwnVolume: true,
             };
             const listener = jest.fn();
     
@@ -205,6 +213,7 @@ describe("notifyListenersByEvent", () => {
                 type: DriveEventType.NodeDeleted,
                 nodeUid: "nodeUid",
                 parentNodeUid: "parentUid",
+                isOwnVolume: true,
             };
     
             const listener = jest.fn();
@@ -221,6 +230,7 @@ describe("notifyListenersByEvent", () => {
                 type: DriveEventType.NodeDeleted,
                 nodeUid: "nodeUid",
                 parentNodeUid: "parentUid",
+                isOwnVolume: true,
             };
     
             const listener = jest.fn();
@@ -237,6 +247,7 @@ describe("notifyListenersByEvent", () => {
                 type: DriveEventType.NodeDeleted,
                 nodeUid: "nodeUid",
                 parentNodeUid: "parentUid",
+                isOwnVolume: true,
             };
             const listener = jest.fn();
     
@@ -250,6 +261,7 @@ describe("notifyListenersByEvent", () => {
                 type: DriveEventType.NodeDeleted,
                 nodeUid: "nodeUid",
                 parentNodeUid: "parentUid",
+                isOwnVolume: true,
             };
             const listener = jest.fn();
     

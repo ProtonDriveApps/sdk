@@ -1,22 +1,28 @@
-import { PrivateKey } from '../../crypto/index';
+import { DriveCrypto, PrivateKey } from '../../crypto';
+import { ProtonDriveAccount } from "../../interface";
 
-import { ProtonDriveAccount } from "../../interface/index.js";
-import { DriveCrypto } from "../../crypto/index.js";
+export class SharingCryptoService {
+    constructor(
+        private driveCrypto: DriveCrypto,
+        private account: ProtonDriveAccount,
+    ) {
+        this.driveCrypto = driveCrypto;
+        this.account = account;
+    }
 
-export function sharingCryptoService(driveCrypto: DriveCrypto, account: ProtonDriveAccount) {
     // TODO: types
-    async function generateKeys(nodeKey: PrivateKey, addressKey: PrivateKey): Promise<any> {
-        return driveCrypto.generateKey([nodeKey, addressKey], addressKey);
+    async generateKeys(nodeKey: PrivateKey, addressKey: PrivateKey): Promise<any> {
+        return this.driveCrypto.generateKey([nodeKey, addressKey], addressKey);
     };
 
     // TODO: types
-    async function decryptShareKeys(share: any, nodeKey: PrivateKey): Promise<any> {
+    async decryptShareKeys(share: any, nodeKey: PrivateKey): Promise<any> {
         // TODO: use correct address keys
-        const addressPrivateKeys = await account.getOwnPrivateKeys(share.addressId);
-        const addressPublicKeys = await account.getPublicKeys(share.creatorEmail);
+        const addressPrivateKeys = await this.account.getOwnPrivateKeys(share.addressId);
+        const addressPublicKeys = await this.account.getPublicKeys(share.creatorEmail);
 
         // TODO: use verified
-        const { key, sessionKey } = await driveCrypto.decryptKey(
+        const { key, sessionKey } = await this.driveCrypto.decryptKey(
             share.encryptedCrypto.armoredKey,
             share.encryptedCrypto.armoredPassphrase,
             share.encryptedCrypto.armoredPassphraseSignature,
@@ -30,15 +36,9 @@ export function sharingCryptoService(driveCrypto: DriveCrypto, account: ProtonDr
     }
 
     // TODO: types
-    async function encryptInvitation(email: string): Promise<any> {
+    async encryptInvitation(email: string): Promise<any> {
         // TODO
-        const publicKey = await account.getPublicKeys(email);
+        const publicKey = await this.account.getPublicKeys(email);
         return publicKey;
     };
-
-    return {
-        generateKeys,
-        decryptShareKeys,
-        encryptInvitation,
-    }
 }

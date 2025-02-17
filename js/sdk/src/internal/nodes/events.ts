@@ -54,10 +54,6 @@ export class NodesEvents {
         });
     }
 
-    subscribeToSharedNodesByMe(callback: NodeEventCallback) {
-        this.listeners.push({ condition: ({ isShared }) => isShared || false, callback });
-    }
-
     subscribeToTrashedNodes(callback: NodeEventCallback) {
         this.listeners.push({ condition: ({ isTrashed }) => isTrashed || false, callback });
     }

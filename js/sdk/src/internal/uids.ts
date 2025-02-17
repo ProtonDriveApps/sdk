@@ -11,3 +11,7 @@ export function splitNodeUid(nodeUid: string) {
         nodeId: nodeId.slice('node:'.length),
     };
 }
+
+export function makeInvitationUid(volumeId: string, invitationId: string) {
+    return `volume:${volumeId};invitation:${invitationId}`;
+}

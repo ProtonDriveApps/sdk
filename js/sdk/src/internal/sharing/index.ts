@@ -1,28 +1,37 @@
-import { ProtonDriveAccount, ShareNodeSettings, ShareRole, ShareResult, UnshareNodeSettings } from "../../interface/index.js";
-import { DriveCrypto } from '../../crypto/index.js';
-import { DriveAPIService } from "../apiService/index.js";
-import { sharingAPIService } from "./apiService.js";
-import { sharingCryptoService } from "./cryptoService.js";
-import { sharingAccess } from "./sharingAccess.js";
-import { sharingManagement } from "./sharingManagement.js";
-import { NodesService } from "./interface.js";
+import { ProtonDriveAccount, ShareNodeSettings, ShareRole, ShareResult, UnshareNodeSettings, ProtonDriveEntitiesCache, Logger } from "../../interface";
+import { DriveCrypto } from '../../crypto';
+import { DriveAPIService } from "../apiService";
+import { DriveEventsService } from "../events";
+import { SharingAPIService } from "./apiService";
+import { SharingCache } from "./cache";
+import { SharingCryptoService } from "./cryptoService";
+import { SharingEvents } from "./events";
+import { SharingAccess } from "./sharingAccess";
+import { SharingManagement } from "./sharingManagement";
+import { SharesService, NodesService } from "./interface";
 
-export function sharing(
+export function initSharingModule(
     apiService: DriveAPIService,
+    driveEntitiesCache: ProtonDriveEntitiesCache,
     account: ProtonDriveAccount,
     crypto: DriveCrypto,
+    driveEvents: DriveEventsService,
+    sharesService: SharesService,
     nodesService: NodesService,
+    log?: Logger,
 ) {
-    const api = sharingAPIService(apiService);
-    const cryptoService = sharingCryptoService(crypto, account);
-    const sharingAccessFunctions = sharingAccess(api, cryptoService, nodesService);
-    const sharingManagementFunctions = sharingManagement(api, cryptoService, account);
+    const api = new SharingAPIService(apiService);
+    const cache = new SharingCache(driveEntitiesCache);
+    const cryptoService = new SharingCryptoService(crypto, account);
+    const sharingAccess = new SharingAccess(api, cache, sharesService, nodesService);
+    const sharingEvents = new SharingEvents(driveEvents, cache, nodesService, sharingAccess, log);
+    const sharingManagement = new SharingManagement(api, cryptoService, account);
 
     // TODO: facade to convert high-level interface with object to low-level calls
     async function shareNode(nodeUid: string, settings: ShareNodeSettings) {
-        let currentSharing = await sharingManagementFunctions.getSharingInfo(nodeUid);
+        let currentSharing = await sharingManagement.getSharingInfo(nodeUid);
         if (!currentSharing) {
-            currentSharing = await sharingManagementFunctions.createShare(nodeUid);
+            currentSharing = await sharingManagement.createShare(nodeUid);
         }
 
         for (const user of settings.protonUsers || []) {
@@ -31,40 +40,40 @@ export function sharing(
                 if (currentSharing.protonInitations[email].role === role) {
                     continue;
                 }
-                sharingManagementFunctions.updateInvitationPermissions(currentSharing.shareId, currentSharing.protonUsers[email].invitationId, role);
+                sharingManagement.updateInvitationPermissions(currentSharing.shareId, currentSharing.protonUsers[email].invitationId, role);
                 continue;
             }
-            sharingManagementFunctions.inviteProtonUser(currentSharing.shareId, email, role);
+            sharingManagement.inviteProtonUser(currentSharing.shareId, email, role);
         }
         // TODO: return all the objects
         return {} as ShareResult;
     }
 
     async function unshareNode(nodeUid: string, settings?: UnshareNodeSettings) {
-        const currentSharing = await sharingManagementFunctions.getSharingInfo(nodeUid);
+        const currentSharing = await sharingManagement.getSharingInfo(nodeUid);
         if (!currentSharing) {
             return;
         }
         if (!settings) {
-            return sharingManagementFunctions.deleteShare(currentSharing.shareId);
+            return sharingManagement.deleteShare(currentSharing.shareId);
         }
         if (settings.publicLink === 'remove') {
-            await sharingManagementFunctions.removeSharedLink(currentSharing.shareId);
+            await sharingManagement.removeSharedLink(currentSharing.shareId);
         }
         for (const user of settings.users || []) {
             const invitationId = currentSharing.protonInitations[user]?.invitationId;
             if (invitationId) {
-                sharingManagementFunctions.deleteInvitation(currentSharing.shareId, invitationId);
+                sharingManagement.deleteInvitation(currentSharing.shareId, invitationId);
                 continue;
             }
             const externalInvitationId = currentSharing.nonProtonInvitations[user]?.invitationId;
             if (externalInvitationId) {
-                sharingManagementFunctions.deleteExternalInvitation(currentSharing.shareId, externalInvitationId);
+                sharingManagement.deleteExternalInvitation(currentSharing.shareId, externalInvitationId);
                 continue;
             }
             const memberId = currentSharing.members[user]?.memberId;
             if (memberId) {
-                sharingManagementFunctions.removeMember(currentSharing.shareId, memberId);
+                sharingManagement.removeMember(currentSharing.shareId, memberId);
                 continue;
             }
         }
@@ -73,8 +82,9 @@ export function sharing(
     }
 
     return {
-        ...sharingAccessFunctions,
+        access: sharingAccess,
+        events: sharingEvents,
         shareNode,
         unshareNode,
-    }
+    };
 }
