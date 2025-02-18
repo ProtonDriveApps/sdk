@@ -87,7 +87,7 @@ export class NodesManagement {
         }
     }
 
-    async moveNode(nodeUid: string, newParentUid: string): Promise<void> {
+    async moveNode(nodeUid: string, newParentUid: string): Promise<DecryptedNode> {
         const [node, newParentNode] = await Promise.all([
             this.nodesAccess.getNode(nodeUid),
             this.nodesAccess.getNode(newParentUid),
@@ -111,7 +111,7 @@ export class NodesManagement {
             { key: newParentKeys.key, hashKey: newParentKeys.hashKey },
         );
         await this.apiService.moveNode(
-            nodeUid, 
+            nodeUid,
             {
                 hash: node.hash,
             }, 
@@ -126,10 +126,15 @@ export class NodesManagement {
                 // TODO: content hash
             }
         );
-        await this.cache.setNode({
+        const newNode: DecryptedNode = {
             ...node,
             parentUid: newParentUid,
-        });
+            hash: encryptedCrypto.hash,
+            keyAuthor: resultOk(encryptedCrypto.signatureEmail),
+            nameAuthor: resultOk(encryptedCrypto.nameSignatureEmail),
+        };
+        await this.cache.setNode(newNode);
+        return newNode;
     }
 
     async* trashNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
