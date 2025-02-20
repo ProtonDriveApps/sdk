@@ -4,7 +4,7 @@ import { NodesCache } from "./cache"
 import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
 import { NodesAccess } from './nodesAccess';
-import { SharesService, DecryptedNode, EncryptedNode, DecryptedNodeKeys } from "./interface";
+import { SharesService, DecryptedNode, DecryptedUnparsedNode, EncryptedNode, DecryptedNodeKeys } from "./interface";
 
 describe('nodesAccess', () => {
     let apiService: NodeAPIService;
@@ -58,16 +58,22 @@ describe('nodesAccess', () => {
 
         it('should get node from API when cahce is stale', async () => {
             const encryptedNode = { uid: 'nodeId', parentUid: 'parentUid' } as EncryptedNode;
-            const decryptedNode = { uid: 'nodeId', parentUid: 'parentUid' } as DecryptedNode;
+            const decryptedUnparsedNode = { uid: 'nodeId', parentUid: 'parentUid' } as DecryptedUnparsedNode;
+            const decryptedNode = {
+                ...decryptedUnparsedNode,
+                isStale: false,
+                activeRevision: undefined,
+                folder: undefined,
+            } as DecryptedNode;
             const decryptedKeys = { key: 'key' } as any as DecryptedNodeKeys;
 
             cache.getNode = jest.fn(() => Promise.resolve({ uid: 'nodeId', isStale: true } as DecryptedNode));
             apiService.getNode = jest.fn(() => Promise.resolve(encryptedNode));
             cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
-            cryptoService.decryptNode = jest.fn(() => Promise.resolve({ node: decryptedNode, keys: decryptedKeys }));
+            cryptoService.decryptNode = jest.fn(() => Promise.resolve({ node: decryptedUnparsedNode, keys: decryptedKeys }));
 
             const result = await access.getNode('nodeId');
-            expect(result).toBe(decryptedNode);
+            expect(result).toEqual(decryptedNode);
             expect(apiService.getNode).toHaveBeenCalledWith('nodeId');
             expect(cryptoCache.getNodeKeys).toHaveBeenCalledWith('parentUid');
             expect(cryptoService.decryptNode).toHaveBeenCalledWith(encryptedNode, 'parentKey');
@@ -77,16 +83,22 @@ describe('nodesAccess', () => {
 
         it('should get node from API missing cache', async () => {
             const encryptedNode = { uid: 'nodeId', parentUid: 'parentUid' } as EncryptedNode;
-            const decryptedNode = { uid: 'nodeId', parentUid: 'parentUid' } as DecryptedNode;
+            const decryptedUnparsedNode = { uid: 'nodeId', parentUid: 'parentUid' } as DecryptedUnparsedNode;
+            const decryptedNode = {
+                ...decryptedUnparsedNode,
+                isStale: false,
+                activeRevision: undefined,
+                folder: undefined,
+            } as DecryptedNode;
             const decryptedKeys = { key: 'key' } as any as DecryptedNodeKeys;
 
             cache.getNode = jest.fn(() => Promise.reject(new Error('Entity not found')));
             apiService.getNode = jest.fn(() => Promise.resolve(encryptedNode));
             cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
-            cryptoService.decryptNode = jest.fn(() => Promise.resolve({ node: decryptedNode, keys: decryptedKeys }));
+            cryptoService.decryptNode = jest.fn(() => Promise.resolve({ node: decryptedUnparsedNode, keys: decryptedKeys }));
 
             const result = await access.getNode('nodeId');
-            expect(result).toBe(decryptedNode);
+            expect(result).toEqual(decryptedNode);
             expect(apiService.getNode).toHaveBeenCalledWith('nodeId');
             expect(cryptoCache.getNodeKeys).toHaveBeenCalledWith('parentUid');
             expect(cryptoService.decryptNode).toHaveBeenCalledWith(encryptedNode, 'parentKey');

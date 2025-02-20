@@ -84,12 +84,16 @@ export class DriveAPIService {
         return this.makeRequest(url, 'GET', undefined, signal);
     };
 
-    async post<RequestPayload, ResponsePayload>(url: string, data: RequestPayload, signal?: AbortSignal): Promise<ResponsePayload> {
+    async post<RequestPayload, ResponsePayload>(url: string, data?: RequestPayload, signal?: AbortSignal): Promise<ResponsePayload> {
         return this.makeRequest(url, 'POST', data, signal);
     };
 
     async put<RequestPayload, ResponsePayload>(url: string, data: RequestPayload, signal?: AbortSignal): Promise<ResponsePayload> {
         return this.makeRequest(url, 'PUT', data, signal);
+    };
+
+    async delete<Response>(url: string, signal?: AbortSignal): Promise<Response> {
+        return this.makeRequest(url, 'DELETE', undefined, signal);
     };
 
     // TODO: add priority header
@@ -126,8 +130,8 @@ export class DriveAPIService {
                     "Accept": "application/vnd.protonmail.v1+json",
                     "Content-Type": "application/json",
                     "Language": this.language,
-                }),
-                body: JSON.stringify(data),
+                }),            body: data && JSON.stringify(data),
+
             }), signal);
         } catch (error: unknown) {
             if (error instanceof Error) {

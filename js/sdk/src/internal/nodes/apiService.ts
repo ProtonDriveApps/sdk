@@ -1,7 +1,8 @@
 import { Logger, NodeType, MemberRole, NodeResult } from "../../interface";
+import { RevisionState } from "../../interface/nodes";
 import { DriveAPIService, drivePaths } from "../apiService";
-import { splitNodeUid, makeNodeUid } from "../uids";
-import { EncryptedNode } from "./interface";
+import { splitNodeUid, makeNodeUid, makeNodeRevisionUid, splitNodeRevisionUid } from "../uids";
+import { EncryptedNode, EncryptedRevision } from "./interface";
 
 type PostLoadLinksMetadataRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['requestBody'], { 'content': object }>['content']['application/json'];
 type PostLoadLinksMetadataResponse = drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['responses']['200']['content']['application/json'];
@@ -27,6 +28,17 @@ type PostDeleteNodesResponse = drivePaths['/drive/v2/volumes/{volumeID}/trash/de
 
 type PostCreateFolderRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/folders']['post']['requestBody'], { 'content': object }>['content']['application/json'];
 type PostCreateFolderResponse = drivePaths['/drive/v2/volumes/{volumeID}/folders']['post']['responses']['200']['content']['application/json'];
+
+type GetRevisionsResponse = drivePaths['/drive/v2/volumes/{volumeID}/files/{linkID}/revisions']['get']['responses']['200']['content']['application/json'];
+enum APIRevisionState {
+    Draft = 0,
+    Active = 1,
+    Obsolete = 2,
+}
+
+type PostRestoreRevisionResponse = drivePaths['/drive/v2/volumes/{volumeID}/files/{linkID}/revisions/{revisionID}/restore']['post']['responses']['202']['content']['application/json'];
+
+type DeleteRevisionResponse = drivePaths['/drive/v2/volumes/{volumeID}/files/{linkID}/revisions/{revisionID}']['delete']['responses']['200']['content']['application/json'];
 
 /**
  * Provides API communication for fetching and manipulating nodes metadata.
@@ -92,7 +104,10 @@ export class NodeAPIService {
                             armoredContentKeyPacketSignature: link.File.ContentKeyPacketSignature || undefined,
                         },
                         activeRevision: {
-                            id: link.ActiveRevision.RevisionID,
+                            uid: makeNodeRevisionUid(volumeId, link.Link.LinkID, link.ActiveRevision.RevisionID),
+                            state: RevisionState.Active,
+                            createdDate: new Date(link.ActiveRevision.CreateTime*1000),
+                            signatureEmail: link.ActiveRevision.SignatureEmail || undefined,
                             encryptedExtendedAttributes: link.ActiveRevision.XAttr || undefined,
                         },
                     },
@@ -303,6 +318,36 @@ export class NodeAPIService {
         });
 
         return response.Folder.ID;
+    }
+
+    async getRevisions(nodeUid: string, signal?: AbortSignal): Promise<EncryptedRevision[]> {
+        const { volumeId, nodeId } = splitNodeUid(nodeUid);
+
+        const response = await this.apiService.get<GetRevisionsResponse>(`drive/v2/volumes/${volumeId}/files/${nodeId}/revisions`, signal);
+        return response.Revisions
+            .filter((revision) => revision.State === APIRevisionState.Active || revision.State === APIRevisionState.Obsolete)
+            .map((revision) => ({
+                uid: makeNodeRevisionUid(volumeId, nodeId, revision.ID),
+                state: revision.State === APIRevisionState.Active ? RevisionState.Active : RevisionState.Superseded,
+                createdDate: new Date(revision.CreateTime*1000),
+                signatureEmail: revision.SignatureEmail || undefined,
+                encryptedExtendedAttributes: revision.XAttr || undefined,
+            }));
+    }
+
+    async restoreRevision(nodeRevisionUid: string): Promise<void> {
+        const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(nodeRevisionUid);
+
+        await this.apiService.post<
+            undefined,
+            PostRestoreRevisionResponse
+        >(`/drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/${revisionId}/restore`);
+    }
+
+    async deleteRevision(nodeRevisionUid: string): Promise<void> {
+        const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(nodeRevisionUid);
+
+        await this.apiService.delete<DeleteRevisionResponse>(`/drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/${revisionId}`);
     }
 }
 
