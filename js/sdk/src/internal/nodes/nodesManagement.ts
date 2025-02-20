@@ -240,7 +240,6 @@ export class NodesManagement {
             keyAuthor: resultOk(encryptedCrypto.signatureEmail),
             nameAuthor: resultOk(encryptedCrypto.signatureEmail),
             name: resultOk(folderName),
-            activeRevision: resultOk(null),
         }
 
         await this.cache.setNode(node);

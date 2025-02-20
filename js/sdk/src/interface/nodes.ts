@@ -13,7 +13,7 @@ export type NodeEntity = {
     isShared: boolean,
     createdDate: Date, // created on server date
     trashedDate?: Date,
-    activeRevision: Result<null | Revision, Error> // null for folders
+    activeRevision?: Result<Revision, Error>,
 }
 
 export type InvalidNameError = {
@@ -43,12 +43,14 @@ export enum MemberRole {
 export type Revision = {
     uid: string,
     state: RevisionState,
+    createdDate: Date, // created on server date
+    author: Result<string | AnonymousUser, UnverifiedAuthorError>,
     claimedSize?: number,
     claimedModificationTime?: Date,
-    claimedDigests: {
+    claimedDigests?: {
         sha1?: string,
     },
-    claimedAdditionalMetadata: object,
+    claimedAdditionalMetadata?: object,
 }
 
 export enum RevisionState {

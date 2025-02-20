@@ -1,10 +1,12 @@
+import { Logger, NodeType, resultOk } from "../../interface";
+import { BatchLoading } from "../batchLoading";
+import { makeNodeUid } from "../uids";
 import { NodeAPIService } from "./apiService";
 import { NodesCache } from "./cache"
 import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
-import { SharesService, EncryptedNode, DecryptedNode, DecryptedNodeKeys } from "./interface";
-import { BatchLoading } from "../batchLoading";
-import { makeNodeUid } from "../uids";
+import { parseFileExtendedAttributes, parseFolderExtendedAttributes } from "./extendedAttributes";
+import { SharesService, EncryptedNode, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys } from "./interface";
 
 /**
  * Provides access to node metadata.
@@ -19,12 +21,14 @@ export class NodesAccess {
         private cryptoCache: NodesCryptoCache,
         private cryptoService: NodesCryptoService,
         private shareService: SharesService,
+        private log?: Logger,
     ) {
         this.apiService = apiService;
         this.cache = cache;
         this.cryptoCache = cryptoCache;
         this.cryptoService = cryptoService;
         this.shareService = shareService;
+        this.log = log;
     }
 
     async getMyFilesRootFolder() {
@@ -128,12 +132,42 @@ export class NodesAccess {
 
     private async decryptNode(encryptedNode: EncryptedNode): Promise<{ node: DecryptedNode, keys?: DecryptedNodeKeys }> {
         const { key: parentKey } = await this.getParentKeys(encryptedNode);
-        const { node, keys } = await this.cryptoService.decryptNode(encryptedNode, parentKey);
+        const { node: unparsedNode, keys } = await this.cryptoService.decryptNode(encryptedNode, parentKey);
+        const node = await this.parseNode(unparsedNode);
         this.cache.setNode(node);
         if (keys) {
             this.cryptoCache.setNodeKeys(node.uid, keys);
         }
         return { node, keys };
+    }
+
+    private async parseNode(unparsedNode: DecryptedUnparsedNode): Promise<DecryptedNode> {
+        if (unparsedNode.type === NodeType.File) {
+            const extendedAttributes = unparsedNode.activeRevision?.ok ? parseFileExtendedAttributes(unparsedNode.activeRevision.value.extendedAttributes, this.log) : undefined;
+
+            return {
+                ...unparsedNode,
+                isStale: false,
+                activeRevision: !unparsedNode.activeRevision?.ok ? unparsedNode.activeRevision : resultOk({
+                    uid: unparsedNode.activeRevision.value.uid,
+                    state: unparsedNode.activeRevision.value.state,
+                    createdDate: unparsedNode.activeRevision.value.createdDate,
+                    author: unparsedNode.activeRevision.value.author,
+                    ...extendedAttributes,
+                }),
+                folder: undefined,
+            }
+        }
+
+        const extendedAttributes = unparsedNode.folder?.extendedAttributes ? parseFolderExtendedAttributes(unparsedNode.folder.extendedAttributes, this.log) : undefined;
+        return {
+            ...unparsedNode,
+            isStale: false,
+            activeRevision: undefined,
+            folder: extendedAttributes ? {
+                ...extendedAttributes,
+            } : undefined,
+        }
     }
 
     async getParentKeys(node: Pick<DecryptedNode, 'parentUid' | 'shareId'>): Promise<Pick<DecryptedNodeKeys, 'key' | 'hashKey'>> {

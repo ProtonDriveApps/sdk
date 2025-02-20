@@ -273,4 +273,24 @@ export class DriveCrypto {
             verified,
         };
     }
+
+    async decryptExtendedAttributes(
+        armoreExtendedAttributes: string,
+        decryptionKey: PrivateKey,
+        verificationKeys: PublicKey[],
+    ): Promise<{
+        extendedAttributes: string,
+        verified: VERIFICATION_STATUS,
+    }> {
+        const { data: decryptedExtendedAttributes, verified } = await this.openPGPCrypto.decryptArmoredAndVerify(
+            armoreExtendedAttributes,
+            [decryptionKey],
+            verificationKeys,
+        );
+
+        return {
+            extendedAttributes: new TextDecoder().decode(decryptedExtendedAttributes),
+            verified,
+        };
+    }
 }

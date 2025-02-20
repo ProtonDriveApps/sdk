@@ -29,6 +29,10 @@ describe("nodesCryptoService", () => {
                 hashKey: new Uint8Array(),
                 verified: VERIFICATION_STATUS.SIGNED_AND_VALID,
             })),
+            decryptExtendedAttributes: jest.fn(async () => Promise.resolve({
+                extendedAttributes: "{}",
+                verified: VERIFICATION_STATUS.SIGNED_AND_VALID,
+            })),
             encryptNodeName: jest.fn(async () => Promise.resolve({
                 armoredNodeName: "armoredName",
             })),
@@ -64,11 +68,10 @@ describe("nodesCryptoService", () => {
 
         expect(result).toEqual({
             node: {
-                isStale: false,
                 name: { ok: true, value: "name" },
                 keyAuthor: { ok: true, value: "signatureEmail" },
                 nameAuthor: { ok: true, value: "signatureEmail" },
-                activeRevision: { ok: true, value: null },
+                activeRevision: undefined,
             },
             keys: {
                 passphrase: "pass",
@@ -98,11 +101,10 @@ describe("nodesCryptoService", () => {
 
         expect(result).toEqual({
             node: {
-                isStale: false,
                 name: { ok: true, value: "name" },
                 keyAuthor: { ok: true, value: "signatureEmail" },
                 nameAuthor: { ok: true, value: "nameSignatureEmail" },
-                activeRevision: { ok: true, value: null },
+                activeRevision: undefined,
             },
             keys: {
                 passphrase: "pass",
@@ -128,6 +130,7 @@ describe("nodesCryptoService", () => {
                     armoredNodePassphraseSignature: "armoredNodePassphraseSignature",
                     folder: {
                         armoredHashKey: "armoredHashKey",
+                        encryptedExtendedAttributes: "encryptedExtendedAttributes",
                     }
                 },
             } as EncryptedNode,
@@ -136,11 +139,13 @@ describe("nodesCryptoService", () => {
 
         expect(result).toEqual({
             node: {
-                isStale: false,
                 name: { ok: true, value: "name" },
                 keyAuthor: { ok: true, value: "signatureEmail" },
                 nameAuthor: { ok: true, value: "signatureEmail" },
-                activeRevision: { ok: true, value: null },
+                activeRevision: undefined,
+                folder: {
+                    extendedAttributes: "{}",
+                },
             },
             keys: {
                 passphrase: "pass",
@@ -177,11 +182,13 @@ describe("nodesCryptoService", () => {
 
         expect(result).toEqual({
             node: {
-                isStale: false,
                 name: { ok: true, value: "name" },
                 keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Missing key signature" } },
                 nameAuthor: { ok: true, value: "nameSignatureEmail" },
-                activeRevision: { ok: true, value: null },
+                activeRevision: undefined,
+                folder: {
+                    extendedAttributes: undefined,
+                },
             },
             keys: {
                 passphrase: "pass",
@@ -216,11 +223,13 @@ describe("nodesCryptoService", () => {
 
         expect(result).toEqual({
             node: {
-                isStale: false,
                 name: { ok: true, value: "name" },
                 keyAuthor: { ok: true, value: "signatureEmail" },
                 nameAuthor: { ok: false, error: { claimedAuthor: "nameSignatureEmail", error: "Verification of name signature failed" } },
-                activeRevision: { ok: true, value: null },
+                activeRevision: undefined,
+                folder: {
+                    extendedAttributes: undefined,
+                },
             },
             keys: {
                 passphrase: "pass",
@@ -255,11 +264,13 @@ describe("nodesCryptoService", () => {
 
         expect(result).toEqual({
             node: {
-                isStale: false,
                 name: { ok: true, value: "name" },
                 keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Verification of hash key signature failed" } },
                 nameAuthor: { ok: true, value: "nameSignatureEmail" },
-                activeRevision: { ok: true, value: null },
+                activeRevision: undefined,
+                folder: {
+                    extendedAttributes: undefined,
+                },
             },
             keys: {
                 passphrase: "pass",
@@ -300,17 +311,158 @@ describe("nodesCryptoService", () => {
 
         expect(result).toEqual({
             node: {
-                isStale: false,
                 name: { ok: true, value: "name" },
                 keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Missing key signature" } },
                 nameAuthor: { ok: true, value: "nameSignatureEmail" },
-                activeRevision: { ok: true, value: null },
+                activeRevision: undefined,
+                folder: {
+                    extendedAttributes: undefined,
+                },
             },
             keys: {
                 passphrase: "pass",
                 key: "decryptedKey",
                 sessionKey: "sessionKey",
                 hashKey: new Uint8Array(),
+            },
+        });
+    });
+
+    it("should decrypt folder node with signature validation error on extended attributes", async () => {
+        driveCrypto.decryptExtendedAttributes = jest.fn(async () => Promise.resolve({
+            extendedAttributes: "{}",
+            verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+        }));
+
+        const result = await cryptoService.decryptNode(
+            {
+                encryptedCrypto: {
+                    signatureEmail: "signatureEmail",
+                    nameSignatureEmail: "nameSignatureEmail",
+                    armoredKey: "armoredKey",
+                    armoredNodePassphrase: "armoredNodePassphrase",
+                    armoredNodePassphraseSignature: "armoredNodePassphraseSignature",
+                    folder: {
+                        armoredHashKey: "armoredHashKey",
+                        encryptedExtendedAttributes: "encryptedExtendedAttributes",
+                    }
+                },
+            } as EncryptedNode,
+            "parentKey" as unknown as PrivateKey
+        );
+
+        expect(result).toEqual({
+            node: {
+                name: { ok: true, value: "name" },
+                keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Verification of extended attributes signature failed" } },
+                nameAuthor: { ok: true, value: "nameSignatureEmail" },
+                activeRevision: undefined,
+                folder: {
+                    extendedAttributes: "{}",
+                },
+            },
+            keys: {
+                passphrase: "pass",
+                key: "decryptedKey",
+                sessionKey: "sessionKey",
+                hashKey: new Uint8Array(),
+            },
+        });
+    });
+
+    it("should decrypt file node", async () => {
+        const result = await cryptoService.decryptNode(
+            {
+                encryptedCrypto: {
+                    signatureEmail: "signatureEmail",
+                    nameSignatureEmail: "signatureEmail",
+                    armoredKey: "armoredKey",
+                    armoredNodePassphrase: "armoredNodePassphrase",
+                    armoredNodePassphraseSignature: "armoredNodePassphraseSignature",
+                    file: {
+                        base64ContentKeyPacket: "base64ContentKeyPacket",
+                    },
+                    activeRevision: {
+                        uid: "revisionUid",
+                        state: "active",
+                        signatureEmail: "revisionSignatureEmail",
+                        encryptedExtendedAttributes: "encryptedExtendedAttributes",
+                    },
+                },
+            } as EncryptedNode,
+            "parentKey" as unknown as PrivateKey
+        );
+
+        expect(result).toEqual({
+            node: {
+                name: { ok: true, value: "name" },
+                keyAuthor: { ok: true, value: "signatureEmail" },
+                nameAuthor: { ok: true, value: "signatureEmail" },
+                activeRevision: { ok: true, value: {
+                    uid: "revisionUid",
+                    state: "active",
+                    createdDate: undefined,
+                    extendedAttributes: "{}",
+                    author: { ok: true, value: "revisionSignatureEmail" },
+                } },
+                folder: undefined,
+            },
+            keys: {
+                passphrase: "pass",
+                key: "decryptedKey",
+                sessionKey: "sessionKey",
+                hashKey: undefined,
+            },
+        });
+    });
+
+    it("should decrypt file node with signature validation error on extended attribute", async () => {
+        driveCrypto.decryptExtendedAttributes = jest.fn(async () => Promise.resolve({
+            extendedAttributes: "{}",
+            verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+        }));
+
+        const result = await cryptoService.decryptNode(
+            {
+                encryptedCrypto: {
+                    signatureEmail: "signatureEmail",
+                    nameSignatureEmail: "signatureEmail",
+                    armoredKey: "armoredKey",
+                    armoredNodePassphrase: "armoredNodePassphrase",
+                    armoredNodePassphraseSignature: "armoredNodePassphraseSignature",
+                    file: {
+                        base64ContentKeyPacket: "base64ContentKeyPacket",
+                    },
+                    activeRevision: {
+                        uid: "revisionUid",
+                        state: "active",
+                        signatureEmail: "revisionSignatureEmail",
+                        encryptedExtendedAttributes: "encryptedExtendedAttributes",
+                    },
+                },
+            } as EncryptedNode,
+            "parentKey" as unknown as PrivateKey
+        );
+
+        expect(result).toEqual({
+            node: {
+                name: { ok: true, value: "name" },
+                keyAuthor: { ok: true, value: "signatureEmail" },
+                nameAuthor: { ok: true, value: "signatureEmail" },
+                activeRevision: { ok: true, value: {
+                    uid: "revisionUid",
+                    state: "active",
+                    createdDate: undefined,
+                    extendedAttributes: "{}",
+                    author: { ok: false, error: { claimedAuthor: "revisionSignatureEmail", error: "Verification of extended attributes signature failed" } },
+                } },
+                folder: undefined,
+            },
+            keys: {
+                passphrase: "pass",
+                key: "decryptedKey",
+                sessionKey: "sessionKey",
+                hashKey: undefined,
             },
         });
     });
@@ -336,7 +488,6 @@ describe("nodesCryptoService", () => {
 
         expect(result).toEqual({
             node: {
-                isStale: false,
                 name: { ok: false, error: { name: "", error: "Failed to decrypt node key: Decryption error"} },
                 keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Failed to decrypt node key: Decryption error" } },
                 nameAuthor: { ok: false, error: { claimedAuthor: "nameSignatureEmail", error: "Failed to decrypt node key: Decryption error" } },
@@ -363,11 +514,10 @@ describe("nodesCryptoService", () => {
 
         expect(result).toEqual({
             node: {
-                isStale: false,
                 name: { ok: false, error: { name: "", error: "Decryption error" } },
                 keyAuthor: { ok: true, value: "signatureEmail" },
                 nameAuthor: { ok: false, error: { claimedAuthor: "nameSignatureEmail", error: "Decryption error" } },
-                activeRevision: { ok: true, value: null },
+                activeRevision: undefined,
             },
             keys: {
                 passphrase: "pass",

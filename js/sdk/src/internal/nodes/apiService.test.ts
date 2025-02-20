@@ -17,6 +17,8 @@ function generateAPIFileNode(linkOverrides = {}, overrides = {}) {
         },
         ActiveRevision: {
             RevisionID: 'revisionId',
+            CreateTime: 1234567890,
+            SignatureEmail: 'revSigEmail',
             XAttr: '{}',
         },
         ...overrides,
@@ -73,7 +75,10 @@ function generateFileNode(overrides = {}) {
                 armoredContentKeyPacketSignature: "contentKeyPacketSig",
             },
             activeRevision: {
-                id: "revisionId",
+                uid: "volume:volumeId;node:linkId;revision:revisionId",
+                state: "active",
+                createdDate: new Date(1234567890000),
+                signatureEmail: "revSigEmail",
                 encryptedExtendedAttributes: "{}",
             },
         },

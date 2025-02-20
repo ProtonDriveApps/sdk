@@ -1,5 +1,6 @@
 import { PrivateKey, SessionKey } from "../../crypto";
 import { NodeEntity, Result, InvalidNameError, AnonymousUser, UnverifiedAuthorError, MemberRole, NodeType, Revision } from "../../interface";
+import { RevisionState } from "../../interface/nodes";
 
 /**
  * Internal common node interface for both encrypted or decrypted node.
@@ -47,10 +48,7 @@ export interface EncryptedNodeFileCrypto extends EncryptedNodeCrypto {
         base64ContentKeyPacket: string;
         armoredContentKeyPacketSignature?: string;
     };
-    activeRevision: {
-        id: string;
-        encryptedExtendedAttributes?: string;
-    };
+    activeRevision: EncryptedRevision;
 }
 
 export interface EncryptedNodeFolderCrypto extends EncryptedNodeCrypto {
@@ -61,16 +59,34 @@ export interface EncryptedNodeFolderCrypto extends EncryptedNodeCrypto {
 }
 
 /**
- * Interface holding decrypted node metadata.
+ * Interface used only internally in the nodes module.
+ *
+ * Outside of the module, the decrypted node interface should be used.
+ *
+ * This interface is holding decrypted node metadata that is not yet parsed,
+ * such as extended attributes.
  */
-export interface DecryptedNode extends BaseNode, NodeEntity {
-    // Internal metadata
-    isStale: boolean;
-
+export interface DecryptedUnparsedNode extends BaseNode {
     keyAuthor: Result<string | AnonymousUser, UnverifiedAuthorError>,
     nameAuthor: Result<string | AnonymousUser, UnverifiedAuthorError>,
     name: Result<string, InvalidNameError>,
-    activeRevision: Result<null | Revision, Error>, // null for folders
+    activeRevision?: Result<DecryptedRevision, Error>,
+    folder?: {
+        extendedAttributes?: string,
+    },
+}
+
+/**
+ * Interface holding decrypted node metadata.
+ */
+export interface DecryptedNode extends Omit<DecryptedUnparsedNode, 'activeRevision' | 'folder'>, NodeEntity {
+    // Internal metadata
+    isStale: boolean;
+
+    activeRevision?: Result<Revision, Error>,
+    folder?: {
+        claimedModificationTime?: Date,
+    },
 }
 
 export interface DecryptedNodeKeys {
@@ -78,6 +94,22 @@ export interface DecryptedNodeKeys {
     key: PrivateKey;
     sessionKey: SessionKey;
     hashKey?: Uint8Array;
+}
+
+interface BaseRevision {
+    uid: string;
+    state: RevisionState;
+    createdDate: Date; // created on the server
+}
+
+export interface EncryptedRevision extends BaseRevision {
+    signatureEmail?: string;
+    encryptedExtendedAttributes?: string;
+}
+
+export interface DecryptedRevision extends BaseRevision {
+    author: Result<string | AnonymousUser, UnverifiedAuthorError>,
+    extendedAttributes?: string,
 }
 
 /**

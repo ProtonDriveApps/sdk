@@ -1,6 +1,6 @@
 import { DriveCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from "../../crypto";
 import { resultOk, resultError, Result, InvalidNameError, AnonymousUser, UnverifiedAuthorError, ProtonDriveAccount } from "../../interface";
-import { EncryptedNode, EncryptedNodeFolderCrypto, DecryptedNode, DecryptedNodeKeys, SharesService } from "./interface";
+import { EncryptedNode, EncryptedNodeFolderCrypto, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys, SharesService, EncryptedRevision, DecryptedRevision } from "./interface";
 
 // TODO: Switch to CryptoProxy module once available.
 import { importHmacKey, computeHmacSignature } from "./hmac";
@@ -26,7 +26,7 @@ export class NodesCryptoService {
         this.shareService = shareService;
     }
 
-    async decryptNode(node: EncryptedNode, parentKey: PrivateKey): Promise<{ node: DecryptedNode, keys?: DecryptedNodeKeys }> {
+    async decryptNode(node: EncryptedNode, parentKey: PrivateKey): Promise<{ node: DecryptedUnparsedNode, keys?: DecryptedNodeKeys }> {
         const commonNodeMetadata = {
             ...node,
             encryptedCrypto: undefined,
@@ -59,7 +59,6 @@ export class NodesCryptoService {
             return {
                 node: {
                     ...commonNodeMetadata,
-                    isStale: false,
                     name: resultError({
                         name: '',
                         error: errorMessage,
@@ -81,21 +80,61 @@ export class NodesCryptoService {
 
         let hashKey;
         let hashKeyAuthor;
+        let folder;
+        let folderExtendedAttributesAuthor;
         if ("folder" in node.encryptedCrypto) {
             const hashKeyResult = await this.decryptHashKey(node, key, keyVerificationKeys);
             hashKey = hashKeyResult.hashKey;
             hashKeyAuthor = hashKeyResult.author;
+
+            const extendedAttributesResult = await this.decryptExtendedAttributes(
+                node.encryptedCrypto.folder.encryptedExtendedAttributes,
+                key,
+                keyVerificationKeys,
+                node.encryptedCrypto.signatureEmail
+            );
+            folder = {
+                extendedAttributes: extendedAttributesResult.extendedAttributes,
+            };
+            folderExtendedAttributesAuthor = extendedAttributesResult.author;
+        }
+
+        let activeRevision: Result<DecryptedRevision, Error> | undefined;
+        if ("file" in node.encryptedCrypto) {
+            try {
+                activeRevision = resultOk(await this.decryptRevision(node.encryptedCrypto.activeRevision, key, parentKey));
+            } catch (error: unknown) {
+                const errorMessage = `Failed to decrypt active revision: ${error instanceof Error ? error.message : 'Unknown error'}`;
+                activeRevision = resultError(new Error(errorMessage));
+            }
+        }
+
+        // If key signature verificaiton failed, prefer returning error from
+        // the key directly. If key signature is ok but not hash or folder
+        // extended attributes, return that error instead. Only if all the
+        // signatures using the same signature email are ok, return OK.
+        let finalKeyAuthor;
+        if (!keyAuthor.ok) {
+            finalKeyAuthor = keyAuthor;
+        }
+        if (!finalKeyAuthor && hashKeyAuthor && !hashKeyAuthor.ok) {
+            finalKeyAuthor = hashKeyAuthor;
+        }
+        if (!finalKeyAuthor && folderExtendedAttributesAuthor && !folderExtendedAttributesAuthor.ok) {
+            finalKeyAuthor = folderExtendedAttributesAuthor;
+        }
+        if (!finalKeyAuthor) {
+            finalKeyAuthor = keyAuthor;
         }
 
         return {
             node: {
                 ...commonNodeMetadata,
-                isStale: false,
                 name,
-                // If key signature verificaiton failed, prefer showing error from the key directly.
-                keyAuthor: keyAuthor.ok && hashKeyAuthor && !hashKeyAuthor.ok ? hashKeyAuthor : keyAuthor,
+                keyAuthor: finalKeyAuthor,
                 nameAuthor,
-                activeRevision: resultOk(null), // TODO: Decrypt extended attributes
+                activeRevision,
+                folder,
             },
             keys: {
                 passphrase,
@@ -106,7 +145,7 @@ export class NodesCryptoService {
         };
     };
 
-    async decryptKey(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PublicKey[]): Promise<DecryptedNodeKeys & {
+    private async decryptKey(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PublicKey[]): Promise<DecryptedNodeKeys & {
         author: Result<string | AnonymousUser, UnverifiedAuthorError>,
     }> {
         const key = await this.driveCrypto.decryptKey(
@@ -125,7 +164,7 @@ export class NodesCryptoService {
         };
     };
 
-    async decryptName(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PrivateKey[]): Promise<{
+    private async decryptName(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PrivateKey[]): Promise<{
         name: Result<string, InvalidNameError>,
         author: Result<string | AnonymousUser, UnverifiedAuthorError>,
     }> {
@@ -158,7 +197,7 @@ export class NodesCryptoService {
         }
     };
 
-    async decryptHashKey(node: EncryptedNode, nodeKey: PrivateKey, addressKeys: PublicKey[]): Promise<{
+    private async decryptHashKey(node: EncryptedNode, nodeKey: PrivateKey, addressKeys: PublicKey[]): Promise<{
         hashKey: Uint8Array,
         author: Result<string | AnonymousUser, UnverifiedAuthorError>,
     }> {
@@ -175,6 +214,47 @@ export class NodesCryptoService {
         return {
             hashKey,
             author: handleClaimedAuthor('hash key', verified, node.encryptedCrypto.signatureEmail),
+        }
+    }
+
+    async decryptRevision(encryptedRevision: EncryptedRevision, nodeKey: PrivateKey, parentKey: PrivateKey): Promise<DecryptedRevision> {
+        const verificationKeys = encryptedRevision.signatureEmail
+            ? await this.account.getPublicKeys(encryptedRevision.signatureEmail)
+            : [parentKey];
+
+        const {
+            extendedAttributes,
+            author,
+        } = await this.decryptExtendedAttributes(encryptedRevision.encryptedExtendedAttributes, nodeKey, verificationKeys, encryptedRevision.signatureEmail);
+
+        return {
+            uid: encryptedRevision.uid,
+            state: encryptedRevision.state,
+            createdDate: encryptedRevision.createdDate,
+            author,
+            extendedAttributes,
+        }
+    }
+
+    private async decryptExtendedAttributes(encryptedExtendedAttributes: string | undefined, nodeKey: PrivateKey, addressKeys: PublicKey[], signatureEmail?: string): Promise<{
+        extendedAttributes?: string,
+        author: Result<string | AnonymousUser, UnverifiedAuthorError>,
+    }> {
+        if (!encryptedExtendedAttributes) {
+            return {
+                author: handleClaimedAuthor('key', VERIFICATION_STATUS.SIGNED_AND_VALID, signatureEmail),
+            }
+        }
+
+        const { extendedAttributes, verified } = await this.driveCrypto.decryptExtendedAttributes(
+            encryptedExtendedAttributes,
+            nodeKey,
+            addressKeys,
+        );
+
+        return {
+            extendedAttributes,
+            author: handleClaimedAuthor('extended attributes', verified, signatureEmail),
         }
     }
 
@@ -263,7 +343,7 @@ export class NodesCryptoService {
         };
     }
 
-    async generateLookupHash(newName: string, parentHashKey: Uint8Array): Promise<string> {
+    private async generateLookupHash(newName: string, parentHashKey: Uint8Array): Promise<string> {
         const key = await importHmacKey(parentHashKey);
 
         const signature = await computeHmacSignature(key, new TextEncoder().encode(newName));

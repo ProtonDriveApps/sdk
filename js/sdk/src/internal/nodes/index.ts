@@ -10,6 +10,7 @@ import { NodesCryptoService } from "./cryptoService";
 import { SharesService, DecryptedNode } from "./interface";
 import { NodesAccess } from "./nodesAccess";
 import { NodesManagement } from "./nodesManagement";
+import { NodesRevisons } from "./nodesRevisions";
 
 export type { DecryptedNode } from "./interface";
 
@@ -36,19 +37,21 @@ export function initNodesModule(
     const cache = new NodesCache(driveEntitiesCache, log);
     const cryptoCache = new NodesCryptoCache(driveCryptoCache);
     const cryptoService = new NodesCryptoService(driveCrypto, account, sharesService);
-    const nodesAccess = new NodesAccess(api, cache, cryptoCache, cryptoService, sharesService);
+    const nodesAccess = new NodesAccess(api, cache, cryptoCache, cryptoService, sharesService, log);
     const nodesEvents = new NodesEvents(driveEvents, cache, nodesAccess, log);
     // TODO: Events are sent to the client once event is received from API
     // If change is done locally, it will take a time to show up if client
     // is waiting with UI update to events. Thus we need to emit events
     // right away.
-    const nodesManager = new NodesManagement(api, cache, cryptoCache, cryptoService, nodesAccess);
+    const nodesManagement = new NodesManagement(api, cache, cryptoCache, cryptoService, nodesAccess);
+    const nodesRevisions = new NodesRevisons(api, cryptoService, nodesAccess, log);
 
     return {
         access: nodesAccess,
-        management: nodesManager,
+        management: nodesManagement,
+        revisions: nodesRevisions,
         events: nodesEvents,
-    }
+    };
 }
 
 export function initPublicNodesModule(
