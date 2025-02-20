@@ -1,0 +1,146 @@
+is_global = true
+
+stylecop.layout.allowConsecutiveUsings = true
+stylecop.layout.allowDoWhileOnClosingBrace = true
+
+dotnet_diagnostic.CA1032.severity = warning
+dotnet_diagnostic.CA1711.severity = suggestion
+dotnet_diagnostic.CA2000.severity = suggestion
+dotnet_diagnostic.CA2201.severity = suggestion
+dotnet_diagnostic.CA2215.severity = warning
+
+# StyleCop - Special
+# https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SpecialRules.md
+
+dotnet_diagnostic.SA0001.severity = none
+
+# StyleCop - Spacing
+# https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SpacingRules.md
+
+dotnet_diagnostic.SA1009.severity = suggestion
+
+# StyleCop - Readability
+# https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/ReadabilityRules.md
+
+dotnet_diagnostic.SA1101.severity = none
+dotnet_diagnostic.SA1200.severity = none
+dotnet_diagnostic.SA1216.severity = none
+dotnet_diagnostic.SA1217.severity = none
+dotnet_diagnostic.SA1413.severity = none
+dotnet_diagnostic.SA1502.severity = none
+dotnet_diagnostic.SA1516.severity = none
+
+# StyleCop - Documentation
+# https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/DocumentationRules.md
+
+dotnet_diagnostic.SA1600.severity = none
+dotnet_diagnostic.SA1601.severity = none
+dotnet_diagnostic.SA1602.severity = none
+dotnet_diagnostic.SA1604.severity = none
+dotnet_diagnostic.SA1605.severity = none
+dotnet_diagnostic.SA1606.severity = none
+dotnet_diagnostic.SA1607.severity = none
+dotnet_diagnostic.SA1608.severity = none
+dotnet_diagnostic.SA1610.severity = none
+dotnet_diagnostic.SA1611.severity = none
+dotnet_diagnostic.SA1612.severity = none
+dotnet_diagnostic.SA1613.severity = none
+dotnet_diagnostic.SA1614.severity = none
+dotnet_diagnostic.SA1615.severity = none
+dotnet_diagnostic.SA1616.severity = none
+dotnet_diagnostic.SA1617.severity = none
+dotnet_diagnostic.SA1618.severity = none
+dotnet_diagnostic.SA1619.severity = none
+dotnet_diagnostic.SA1620.severity = none
+dotnet_diagnostic.SA1621.severity = none
+dotnet_diagnostic.SA1622.severity = none
+dotnet_diagnostic.SA1623.severity = none
+dotnet_diagnostic.SA1624.severity = none
+dotnet_diagnostic.SA1625.severity = none
+dotnet_diagnostic.SA1626.severity = none
+dotnet_diagnostic.SA1627.severity = none
+dotnet_diagnostic.SA1629.severity = none
+dotnet_diagnostic.SA1633.severity = none
+dotnet_diagnostic.SA1634.severity = none
+dotnet_diagnostic.SA1635.severity = none
+dotnet_diagnostic.SA1636.severity = none
+dotnet_diagnostic.SA1637.severity = none
+dotnet_diagnostic.SA1638.severity = none
+dotnet_diagnostic.SA1640.severity = none
+dotnet_diagnostic.SA1641.severity = none
+dotnet_diagnostic.SA1642.severity = none
+dotnet_diagnostic.SA1643.severity = none
+dotnet_diagnostic.SA1648.severity = none
+
+# StyleCop - Alternative
+# https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/AlternativeRules.md
+
+dotnet_diagnostic.SX1101.severity = warning
+dotnet_diagnostic.SX1309.severity = warning
+dotnet_diagnostic.SA1309.severity = none
+
+# Roslynator
+dotnet_diagnostic.RCS1037.severity = none # Redundant with SA1028
+dotnet_diagnostic.RCS1194.severity = none # Redundant with CA1032
+
+# To discuss, remove to enable:
+
+# IDE0058: Expression value is never used
+dotnet_diagnostic.IDE0058.severity = none
+
+# CA1806: Do not ignore method results
+dotnet_diagnostic.CA1806.severity = none
+
+# SA1005: Single line comments should begin with single space
+dotnet_diagnostic.SA1005.severity = suggestion
+
+# SA1108: Block statements should not contain embedded comments
+dotnet_diagnostic.SA1108.severity = suggestion
+
+# SA1111: Closing parenthesis should be on line of last parameter
+dotnet_diagnostic.SA1111.severity = suggestion
+
+# SA1122: Use string.Empty for empty strings
+dotnet_diagnostic.SA1122.severity = suggestion
+
+# SA1127: Generic type constraints should be on their own line
+dotnet_diagnostic.SA1127.severity = suggestion
+
+# SA1128: Put constructor initializers on their own line
+dotnet_diagnostic.SA1128.severity = suggestion
+
+# SA1201: Elements should appear in the correct order
+dotnet_diagnostic.SA1201.severity = suggestion
+
+# SA1202: Elements should be ordered by access
+dotnet_diagnostic.SA1202.severity = suggestion
+
+# SA1204: Static elements should appear before instance elements
+dotnet_diagnostic.SA1204.severity = suggestion
+
+# SA1214: Readonly fields should appear before non-readonly fields
+dotnet_diagnostic.SA1214.severity = suggestion
+
+# SA1408: Conditional expressions should declare precedence
+dotnet_diagnostic.SA1408.severity = suggestion
+
+# SA1503: Braces should not be omitted
+dotnet_diagnostic.SA1503.severity = suggestion
+
+# SA1512: Single-line comments should not be followed by blank line
+dotnet_diagnostic.SA1512.severity = suggestion
+
+# SA1515: Single-line comment should be preceded by blank line
+dotnet_diagnostic.SA1515.severity = suggestion
+
+# SA1519: Braces should not be omitted from multi-line child statement
+dotnet_diagnostic.SA1519.severity = suggestion
+
+# RCS1139: Add summary element to documentation comment.
+dotnet_diagnostic.RCS1139.severity = suggestion
+
+# RCS1181: Convert comment to documentation comment.
+dotnet_diagnostic.RCS1181.severity = none
+
+# S1135: Complete the task associated to this 'TODO' comment
+dotnet_diagnostic.S1135.severity = suggestion
