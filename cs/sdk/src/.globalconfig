@@ -1,0 +1,2 @@
+# For library projects, ConfigureAwait(false) is strongly recommended
+dotnet_diagnostic.CA2007.severity = warning
