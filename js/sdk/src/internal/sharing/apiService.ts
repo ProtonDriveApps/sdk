@@ -19,7 +19,7 @@ export class SharingAPIService {
     async *iterateSharedNodeUids(volumeId: string, signal?: AbortSignal): AsyncGenerator<string> {
         let anchor = "";
         while (true) {
-            const response = await this.apiService.get<GetSharedNodesResponse>(`drive/v2/volumes/{volumeID}/shares?${anchor ? `AnchorID=${anchor}` : ''}`, signal);
+            const response = await this.apiService.get<GetSharedNodesResponse>(`drive/v2/volumes/${volumeId}/shares?${anchor ? `AnchorID=${anchor}` : ''}`, signal);
             for (const link of response.Links) {
                 yield makeNodeUid(volumeId, link.LinkID);
             }

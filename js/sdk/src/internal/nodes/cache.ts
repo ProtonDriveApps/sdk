@@ -115,7 +115,7 @@ export class NodesCache {
     async *iterateChildren(parentNodeUid: string): AsyncGenerator<DecryptedNodeResult> {
         for await (const result of this.driveCache.iterateEntitiesByTag(`${CACHE_TAG_KEYS.ParentUid}:${parentNodeUid}`)) {
             const node = await this.convertCacheResult(result);
-            if (node) {
+            if (node && (!node.ok || !node.node.trashedDate)) {
                 yield node;
             }
         }

@@ -139,11 +139,11 @@ describe('nodesCache', () => {
         expect(nodeUids).toStrictEqual(['node1', 'node2']);
     });
 
-    it('should iterate children', async () => {
+    it('should iterate children without trashed items', async () => {
         await generateTreeStructure(cache);
         const result = await Array.fromAsync(cache.iterateChildren('node1'));
         const nodeUids = result.map(({ uid }) => uid);
-        expect(nodeUids).toStrictEqual(['node1a', 'node1b', 'node1c']);
+        expect(nodeUids).toStrictEqual(['node1a', 'node1c']);
     });
 
     it('should iterate children and silently remove a corrupted node', async () => {
