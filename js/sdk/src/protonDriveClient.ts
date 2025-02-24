@@ -88,12 +88,24 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
         return convertInternalNodePromise(this.nodes.management.createFolder(getUid(parentNodeUid), name));
     }
 
+    async* iterateRevisions(nodeUid: NodeOrUid, signal?: AbortSignal) {
+        yield* this.nodes.revisions.iterateRevisions(getUid(nodeUid), signal);
+    }
+
+    async restoreRevision(revisionUid: string) {
+        await this.nodes.revisions.restoreRevision(revisionUid);
+    }
+
+    async deleteRevision(revisionUid: string) {
+        await this.nodes.revisions.deleteRevision(revisionUid);
+    }
+
     async* iterateSharedNodes(signal?: AbortSignal) {
-        return convertInternalNodeIterator(this.sharing.access.iterateSharedNodes(signal));
+        yield* convertInternalNodeIterator(this.sharing.access.iterateSharedNodes(signal));
     }
 
     async* iterateSharedNodesWithMe(signal?: AbortSignal) {
-        return convertInternalNodeIterator(this.sharing.access.iterateSharedNodesWithMe(signal));
+        yield* convertInternalNodeIterator(this.sharing.access.iterateSharedNodesWithMe(signal));
     }
 
     async shareNode(nodeUid: NodeOrUid, settings: ShareNodeSettings) {

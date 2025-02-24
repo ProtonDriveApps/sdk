@@ -1,5 +1,5 @@
 import { PrivateKey, SessionKey } from "../../crypto";
-import { NodeEntity, Result, InvalidNameError, AnonymousUser, UnverifiedAuthorError, MemberRole, NodeType, Revision } from "../../interface";
+import { NodeEntity, Result, InvalidNameError, Author, MemberRole, NodeType, Revision } from "../../interface";
 import { RevisionState } from "../../interface/nodes";
 
 /**
@@ -67,8 +67,8 @@ export interface EncryptedNodeFolderCrypto extends EncryptedNodeCrypto {
  * such as extended attributes.
  */
 export interface DecryptedUnparsedNode extends BaseNode {
-    keyAuthor: Result<string | AnonymousUser, UnverifiedAuthorError>,
-    nameAuthor: Result<string | AnonymousUser, UnverifiedAuthorError>,
+    keyAuthor: Author,
+    nameAuthor: Author,
     name: Result<string, InvalidNameError>,
     activeRevision?: Result<DecryptedRevision, Error>,
     folder?: {
@@ -108,7 +108,7 @@ export interface EncryptedRevision extends BaseRevision {
 }
 
 export interface DecryptedRevision extends BaseRevision {
-    author: Result<string | AnonymousUser, UnverifiedAuthorError>,
+    author: Author,
     extendedAttributes?: string,
 }
 

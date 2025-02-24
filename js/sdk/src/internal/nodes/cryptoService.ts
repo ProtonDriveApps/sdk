@@ -1,5 +1,5 @@
 import { DriveCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from "../../crypto";
-import { resultOk, resultError, Result, InvalidNameError, AnonymousUser, UnverifiedAuthorError, ProtonDriveAccount } from "../../interface";
+import { resultOk, resultError, Result, InvalidNameError, Author, ProtonDriveAccount } from "../../interface";
 import { EncryptedNode, EncryptedNodeFolderCrypto, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys, SharesService, EncryptedRevision, DecryptedRevision } from "./interface";
 
 // TODO: Switch to CryptoProxy module once available.
@@ -146,7 +146,7 @@ export class NodesCryptoService {
     };
 
     private async decryptKey(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PublicKey[]): Promise<DecryptedNodeKeys & {
-        author: Result<string | AnonymousUser, UnverifiedAuthorError>,
+        author: Author,
     }> {
         const key = await this.driveCrypto.decryptKey(
             node.encryptedCrypto.armoredKey,
@@ -166,7 +166,7 @@ export class NodesCryptoService {
 
     private async decryptName(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PrivateKey[]): Promise<{
         name: Result<string, InvalidNameError>,
-        author: Result<string | AnonymousUser, UnverifiedAuthorError>,
+        author: Author,
     }> {
         const nameSignatureEmail = node.encryptedCrypto.nameSignatureEmail || node.encryptedCrypto.signatureEmail;
 
@@ -199,7 +199,7 @@ export class NodesCryptoService {
 
     private async decryptHashKey(node: EncryptedNode, nodeKey: PrivateKey, addressKeys: PublicKey[]): Promise<{
         hashKey: Uint8Array,
-        author: Result<string | AnonymousUser, UnverifiedAuthorError>,
+        author: Author,
     }> {
         if (!("folder" in node.encryptedCrypto)) {
             throw new Error('Node is not a folder');
@@ -238,7 +238,7 @@ export class NodesCryptoService {
 
     private async decryptExtendedAttributes(encryptedExtendedAttributes: string | undefined, nodeKey: PrivateKey, addressKeys: PublicKey[], signatureEmail?: string): Promise<{
         extendedAttributes?: string,
-        author: Result<string | AnonymousUser, UnverifiedAuthorError>,
+        author: Author,
     }> {
         if (!encryptedExtendedAttributes) {
             return {
@@ -351,7 +351,7 @@ export class NodesCryptoService {
     }
 }
 
-function handleClaimedAuthor(signatureType: string, verified: VERIFICATION_STATUS, claimedAuthor?: string): Result<string | AnonymousUser, UnverifiedAuthorError> {
+function handleClaimedAuthor(signatureType: string, verified: VERIFICATION_STATUS, claimedAuthor?: string): Author {
     if (!claimedAuthor) {
         return resultOk(null); // Anonymous user
     }

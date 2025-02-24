@@ -1,12 +1,14 @@
 import { Result } from './result.js';
 
+export type Author = Result<string | AnonymousUser, UnverifiedAuthorError>;
+
 // Note: Node is reserved by JS/DOM, thus we need exception how the entity is called
 export type NodeEntity = {
     uid: string,
     parentUid?: string,
     name: Result<string, InvalidNameError>,
-    keyAuthor: Result<string | AnonymousUser, UnverifiedAuthorError>,
-    nameAuthor: Result<string | AnonymousUser, UnverifiedAuthorError>,
+    keyAuthor: Author,
+    nameAuthor: Author,
     directMemberRole: MemberRole,
     type: NodeType,
     mimeType?: string,
@@ -44,7 +46,7 @@ export type Revision = {
     uid: string,
     state: RevisionState,
     createdDate: Date, // created on server date
-    author: Result<string | AnonymousUser, UnverifiedAuthorError>,
+    author: Author,
     claimedSize?: number,
     claimedModificationTime?: Date,
     claimedDigests?: {

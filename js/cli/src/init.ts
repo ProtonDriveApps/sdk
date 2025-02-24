@@ -2,8 +2,8 @@ import { Account } from "./account/account";
 import { Api as CryptoApi } from "./crypto/lib/worker/api";
 import { HTTPClient } from "./httpClient";
 import { getLogger } from "./logger";
-import { FileSystem } from "./fileSystem";
 import { SQLiteEntititesCache } from "./cache";
+import { Paths } from "./cli/paths";
 
 import { ProtonDriveClient, MemoryCache, CachedCryptoMaterial, OpenPGPCryptoWithCryptoProxy } from "../../sdk/src";
 
@@ -19,11 +19,11 @@ export async function init() {
     const config = getAPIConfig();
     const account = await initAccount(cryptoApi, config);
     const sdk = initSDK(cryptoApi, config, account);
-    const fileSystem = new FileSystem(sdk);
+    const paths = new Paths(sdk);
     return {
         account,
         sdk,
-        fileSystem,
+        paths,
     };
 }
 

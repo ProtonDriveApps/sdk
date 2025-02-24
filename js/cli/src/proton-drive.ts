@@ -1,31 +1,14 @@
 import { parseArgs } from "util";
 
 import { init } from "./init";
-import { commands } from "./commands";
+import { getCommand, validateCommandArguments } from "./cli";
 
-const { account, sdk, fileSystem } = await init();
+const { account, sdk, paths } = await init();
 
 const commandName = Bun.argv[2];
+const command = getCommand(commandName);
 
-function printCommandUsage(name: string, command: typeof commands[keyof typeof commands]) {
-    const args = (command.args || []).map(arg => `<${arg}>`).join(' ');
-    const options = Object.entries(command.options || {}).map(([name, { type }]) => `--${name} <${type}>`).join(' ');
-    console.log(`  ${name} ${args} ${options}`);
-}
-
-const command = commands[commandName];
-if (!command) {
-    console.log(`Command not found: ${commandName}`);
-
-    console.log("Usage:");
-    Object.entries(commands).map(([name, command]) => {
-        printCommandUsage(name, command);
-    });
-
-    process.exit(1);
-}
-
-const { values, positionals } = parseArgs({
+const { values: options, positionals } = parseArgs({
     args: Bun.argv,
     options: command.options || {},
     strict: true,
@@ -33,48 +16,21 @@ const { values, positionals } = parseArgs({
 });
 
 const args = positionals.slice(3);
-
-if (command.args) {
-    if (args.length !== command.args.length) {
-        console.log(`Expected ${command.args.length} arguments, got ${args.length}`);
-
-        console.log("Usage:");
-        printCommandUsage(commandName, command);
-
-        process.exit(1);
-    }
-}
-
-Object.entries(command.options || {}).forEach(([key, option]) => {
-    if (option.default !== undefined) {
-        values[key] = values[key] || option.default;
-        return;
-    }
-    if (values[key] === undefined) {
-        console.log(`Missing required option: ${key}`);
-
-        console.log("Usage:");
-        printCommandUsage(commandName, command);
-
-        process.exit(1);
-    }
-});
+validateCommandArguments(command, args, options);
 
 if (!command.isAuthAction) {
     if (!account.session) {
-        console.log("You need to login first");
-        process.exit(1);
+        throw new Error("You need to login first");
     }
-
     await account.loadPrimaryKeys();
 }
 
 await command.action({
     account,
     sdk,
-    fileSystem,
+    paths,
     args,
-    options: values,
+    options,
 });
 
 process.exit()
