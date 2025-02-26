@@ -13,3 +13,6 @@ cache*.sqlite
 
 # Tests
 tests/storage
+
+# Test reporter
+tests/test-report.xml

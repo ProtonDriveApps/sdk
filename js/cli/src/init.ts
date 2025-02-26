@@ -60,6 +60,7 @@ function initSDK(cryptoApi: CryptoApi, config: APIConfig, account: Account) {
         httpClient,
         entitiesCache,
         cryptoCache,
+        config: { baseUrl: `https://${config.baseUrl}/api` },
         account,
         openPGPCryptoModule,
         acceptNoGuaranteeWithCustomModules: true,
