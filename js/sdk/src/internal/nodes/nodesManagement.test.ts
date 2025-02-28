@@ -14,27 +14,38 @@ describe('NodesManagement', () => {
     let nodesAccess: NodesAccess;
     let management: NodesManagement;
 
-    const nodes: { [uid: string]: DecryptedNode } = {
-        nodeUid: {
-            uid: 'nodeUid',
-            parentUid: 'parentUid',
-            name: { ok: true, value: 'old name' },
-            keyAuthor: { ok: true, value: 'keyAauthor' },
-            nameAuthor: { ok: true, value: 'nameAuthor' },
-            hash: 'hash',
-            mimeType: 'mimeType',
-        } as DecryptedNode,
-        parentUid: {
-            uid: 'parentUid',
-            name: { ok: true, value: 'parent' },
-        } as DecryptedNode,
-        newParentUid: {
-            uid: 'newParentUid',
-            name: { ok: true, value: 'new parent' },
-        } as DecryptedNode,
-    };
+    let nodes: { [uid: string]: DecryptedNode };
 
     beforeEach(() => {
+        nodes = {
+            nodeUid: {
+                uid: 'nodeUid',
+                parentUid: 'parentUid',
+                name: { ok: true, value: 'old name' },
+                keyAuthor: { ok: true, value: 'keyAauthor' },
+                nameAuthor: { ok: true, value: 'nameAuthor' },
+                hash: 'hash',
+                mimeType: 'mimeType',
+            } as DecryptedNode,
+            anonymousNodeUid: {
+                uid: 'anonymousNodeUid',
+                parentUid: 'parentUid',
+                name: { ok: true, value: 'old name' },
+                keyAuthor: { ok: true, value: null },
+                nameAuthor: { ok: true, value: 'nameAuthor' },
+                hash: 'hash',
+                mimeType: 'mimeType',
+            } as DecryptedNode,
+            parentUid: {
+                uid: 'parentUid',
+                name: { ok: true, value: 'parent' },
+            } as DecryptedNode,
+            newParentUid: {
+                uid: 'newParentUid',
+                name: { ok: true, value: 'new parent' },
+            } as DecryptedNode,
+        };
+
         // @ts-expect-error No need to implement all methods for mocking
         apiService = {
             renameNode: jest.fn(),
@@ -121,6 +132,40 @@ describe('NodesManagement', () => {
         });
         expect(apiService.moveNode).toHaveBeenCalledWith(
             'nodeUid',
+            {
+                hash: nodes.nodeUid.hash,
+            },
+            {
+                parentUid: 'newParentNodeUid',
+                ...encryptedCrypto,
+                armoredNodePassphraseSignature: undefined,
+                signatureEmail: undefined,
+            },
+        );
+        expect(cache.setNode).toHaveBeenCalledWith(newNode);
+    });
+
+    it('moveNode manages move of anonymous node', async () => {
+        const encryptedCrypto = {
+            encryptedName: 'movedArmoredNodeName',
+            hash: 'movedHash',
+            armoredNodePassphrase: 'movedArmoredNodePassphrase',
+            armoredNodePassphraseSignature: 'movedArmoredNodePassphraseSignature',
+            signatureEmail: 'movedSignatureEmail',
+            nameSignatureEmail: 'movedNameSignatureEmail',
+        }
+        cryptoService.moveNode = jest.fn().mockResolvedValue(encryptedCrypto);
+
+        const newNode = await management.moveNode('anonymousNodeUid', 'newParentNodeUid');
+        expect(newNode).toEqual({
+            ...nodes.anonymousNodeUid,
+            parentUid: 'newParentNodeUid',
+            hash: 'movedHash',
+            keyAuthor: { ok: true, value: 'movedSignatureEmail' },
+            nameAuthor: { ok: true, value: 'movedNameSignatureEmail' },
+        });
+        expect(apiService.moveNode).toHaveBeenCalledWith(
+            'anonymousNodeUid',
             {
                 hash: nodes.nodeUid.hash,
             },

@@ -9,6 +9,11 @@ export function apiErrorFactory({ response, result }: { response: Response, resu
     // error or code set which next lines should handle.
     const [code, message] = [result.Code || 0, result.Error || "Unknown error"];
     switch (code) {
+        // Backend doesn't return 404 for not found resources, this is only
+        // when the API endpoint is not found. Lets add the URL in the error
+        // message so we can debug it easier.
+        case ErrorCode.NOT_FOUND:
+            return new NotFoundAPIError(`${message}: ${response.url}`, code);
         case ErrorCode.NOT_EXISTS:
             return new NotFoundAPIError(message, code);
         default:

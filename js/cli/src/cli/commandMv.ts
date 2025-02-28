@@ -23,7 +23,7 @@ export class CommandMv implements Command {
                 return this.renameNode(sdk, sourcePath, targetPath);
             }
             if (sourcePath.name === targetPath.name) {
-                return this.moveNode(sdk, sourcePath, targetPath);
+                return this.moveNode(sdk, sourcePath, targetPath.parentPath);
             }
             throw new Error('Rename with move not supported');
         }

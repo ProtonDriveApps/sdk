@@ -5,6 +5,8 @@ export const enum HTTPErrorCode {
 }
 
 export const enum ErrorCode {
+    NOT_FOUND = 404,
     OK = 1000,
+    OK_MANY = 1001,
     NOT_EXISTS = 2501,
 }
