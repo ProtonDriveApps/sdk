@@ -6,6 +6,7 @@ import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
 import { DecryptedNode } from "./interface";
 import { NodesAccess } from "./nodesAccess";
+import { validateNodeName } from "./validations";
 
 /**
  * Provides high-level actions for managing nodes.
@@ -32,6 +33,8 @@ export class NodesManagement {
     }
 
     async renameNode(nodeUid: string, newName: string): Promise<DecryptedNode> {
+        validateNodeName(newName);
+
         const node = await this.nodesAccess.getNode(nodeUid);
         const parentKeys = await this.nodesAccess.getParentKeys(node);
 
@@ -201,6 +204,8 @@ export class NodesManagement {
     }
 
     async createFolder(parentNodeUid: string, folderName: string): Promise<DecryptedNode> {
+        validateNodeName(folderName);
+
         const parentNode = await this.nodesAccess.getNode(parentNodeUid);
         const parentKeys = await this.nodesAccess.getNodeKeys(parentNodeUid);
         if (!parentKeys.hashKey) {

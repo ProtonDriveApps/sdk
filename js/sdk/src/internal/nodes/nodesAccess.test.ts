@@ -58,9 +58,10 @@ describe('nodesAccess', () => {
 
         it('should get node from API when cahce is stale', async () => {
             const encryptedNode = { uid: 'nodeId', parentUid: 'parentUid' } as EncryptedNode;
-            const decryptedUnparsedNode = { uid: 'nodeId', parentUid: 'parentUid' } as DecryptedUnparsedNode;
+            const decryptedUnparsedNode = { uid: 'nodeId', parentUid: 'parentUid', name: { ok: true, value: 'name' } } as DecryptedUnparsedNode;
             const decryptedNode = {
                 ...decryptedUnparsedNode,
+                name: { ok: true, value: 'name' },
                 isStale: false,
                 activeRevision: undefined,
                 folder: undefined,
@@ -83,9 +84,10 @@ describe('nodesAccess', () => {
 
         it('should get node from API missing cache', async () => {
             const encryptedNode = { uid: 'nodeId', parentUid: 'parentUid' } as EncryptedNode;
-            const decryptedUnparsedNode = { uid: 'nodeId', parentUid: 'parentUid' } as DecryptedUnparsedNode;
+            const decryptedUnparsedNode = { uid: 'nodeId', parentUid: 'parentUid', name: { ok: true, value: 'name' } } as DecryptedUnparsedNode;
             const decryptedNode = {
                 ...decryptedUnparsedNode,
+                name: { ok: true, value: 'name' },
                 isStale: false,
                 activeRevision: undefined,
                 folder: undefined,
@@ -105,13 +107,31 @@ describe('nodesAccess', () => {
             expect(cache.setNode).toHaveBeenCalledWith(decryptedNode);
             expect(cryptoCache.setNodeKeys).toHaveBeenCalledWith('nodeId', decryptedKeys);
         });
+
+        it('should validate node name', async () => {
+            const encryptedNode = { uid: 'nodeId', parentUid: 'parentUid' } as EncryptedNode;
+            const decryptedUnparsedNode = { uid: 'nodeId', parentUid: 'parentUid', name: { ok: true, value: 'foo/bar' } } as DecryptedUnparsedNode;
+            const decryptedNode = {
+                ...decryptedUnparsedNode,
+                name: { ok: false, error: { name: 'foo/bar', error: "Name must not contain the character '/'" } },
+            } as DecryptedNode;
+            const decryptedKeys = { key: 'key' } as any as DecryptedNodeKeys;
+
+            cache.getNode = jest.fn(() => Promise.reject(new Error('Entity not found')));
+            apiService.getNode = jest.fn(() => Promise.resolve(encryptedNode));
+            cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
+            cryptoService.decryptNode = jest.fn(() => Promise.resolve({ node: decryptedUnparsedNode, keys: decryptedKeys }));
+
+            const result = await access.getNode('nodeId');
+            expect(result).toMatchObject(decryptedNode);
+        });
     });
 
     describe('iterate methods', () => {
         beforeEach(() => {
             cryptoCache.getNodeKeys = jest.fn().mockImplementation((uid: string) => Promise.resolve({ key: 'key' } as any as DecryptedNodeKeys));
             cryptoService.decryptNode = jest.fn().mockImplementation((encryptedNode: EncryptedNode) => Promise.resolve({
-                node: { uid: encryptedNode.uid, isStale: false } as DecryptedNode,
+                node: { uid: encryptedNode.uid, isStale: false, name: { ok: true, value: 'name' } } as DecryptedNode,
                 keys: { key: 'key' } as any as DecryptedNodeKeys,
             }));
         });
@@ -137,7 +157,7 @@ describe('nodesAccess', () => {
                 });
 
                 const result = await Array.fromAsync(access.iterateChildren('parentUid'));
-                expect(result).toEqual([node1, node2, node3, node4]);
+                expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateChildrenNodeUids).not.toHaveBeenCalled();
                 expect(apiService.getNodes).not.toHaveBeenCalled();
             });
@@ -155,7 +175,7 @@ describe('nodesAccess', () => {
                 ));
 
                 const result = await Array.fromAsync(access.iterateChildren('parentUid'));
-                expect(result).toEqual([node1, node4, node2, node3]);
+                expect(result).toMatchObject([node1, node4, node2, node3]);
                 expect(apiService.getNodes).toHaveBeenCalledWith(['node2', 'node3'], undefined);
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(2);
                 expect(cache.setNode).toHaveBeenCalledTimes(2);
@@ -172,7 +192,7 @@ describe('nodesAccess', () => {
                 cache.getNode = jest.fn().mockImplementation((uid: string) => ({ uid, isStale: false }));
 
                 const result = await Array.fromAsync(access.iterateChildren('parentUid'));
-                expect(result).toEqual([node1, node2, node3, node4]);
+                expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateChildrenNodeUids).toHaveBeenCalledWith('parentUid', undefined);
                 expect(apiService.getNodes).not.toHaveBeenCalled();
                 expect(cache.setFolderChildrenLoaded).toHaveBeenCalledWith('parentUid');
@@ -196,7 +216,7 @@ describe('nodesAccess', () => {
                 ));
 
                 const result = await Array.fromAsync(access.iterateChildren('parentUid'));
-                expect(result).toEqual([node1, node2, node3, node4]);
+                expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateChildrenNodeUids).toHaveBeenCalledWith('parentUid', undefined);
                 expect(apiService.getNodes).toHaveBeenCalledWith(['node1', 'node2', 'node3', 'node4'], undefined);
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(4);
@@ -227,7 +247,7 @@ describe('nodesAccess', () => {
                 cache.getNode = jest.fn().mockImplementation((uid: string) => ({ uid, isStale: false }));
 
                 const result = await Array.fromAsync(access.iterateTrashedNodes());
-                expect(result).toEqual([node1, node2, node3, node4]);
+                expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateTrashedNodeUids).toHaveBeenCalledWith(volumeId, undefined);
                 expect(apiService.getNodes).not.toHaveBeenCalled();
             });
@@ -241,7 +261,7 @@ describe('nodesAccess', () => {
                 ));
 
                 const result = await Array.fromAsync(access.iterateTrashedNodes());
-                expect(result).toEqual([node1, node2, node3, node4]);
+                expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateTrashedNodeUids).toHaveBeenCalledWith(volumeId, undefined);
                 expect(apiService.getNodes).toHaveBeenCalledWith(['node1', 'node2', 'node3', 'node4'], undefined);
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(4);
@@ -265,7 +285,7 @@ describe('nodesAccess', () => {
                 });
 
                 const result = await Array.fromAsync(access.iterateNodes(['node1', 'node2', 'node3', 'node4']));
-                expect(result).toEqual([node1, node2, node3, node4]);
+                expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.getNodes).not.toHaveBeenCalled();
             });
 
@@ -281,7 +301,7 @@ describe('nodesAccess', () => {
                 ));
 
                 const result = await Array.fromAsync(access.iterateNodes(['node1', 'node2', 'node3', 'node4']));
-                expect(result).toEqual([node1, node4, node2, node3]);
+                expect(result).toMatchObject([node1, node4, node2, node3]);
                 expect(apiService.getNodes).toHaveBeenCalledWith(['node2', 'node3'], undefined);
             });
         });
