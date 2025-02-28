@@ -1,4 +1,4 @@
-import { Logger, NodeType, resultOk } from "../../interface";
+import { Logger, NodeType, resultError, resultOk } from "../../interface";
 import { BatchLoading } from "../batchLoading";
 import { makeNodeUid } from "../uids";
 import { NodeAPIService } from "./apiService";
@@ -7,6 +7,7 @@ import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
 import { parseFileExtendedAttributes, parseFolderExtendedAttributes } from "./extendedAttributes";
 import { SharesService, EncryptedNode, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys } from "./interface";
+import { validateNodeName } from "./validations";
 
 /**
  * Provides access to node metadata.
@@ -142,6 +143,18 @@ export class NodesAccess {
     }
 
     private async parseNode(unparsedNode: DecryptedUnparsedNode): Promise<DecryptedNode> {
+        if (unparsedNode.name.ok) {
+            try {
+                validateNodeName(unparsedNode.name.value);
+            } catch (error: unknown) {
+                this.log?.warn('Node name validation failed', error);
+                unparsedNode.name = resultError({
+                    name: unparsedNode.name.value,
+                    error: error instanceof Error ? error.message : 'Unknown error',
+                });
+            }
+        }
+
         if (unparsedNode.type === NodeType.File) {
             const extendedAttributes = unparsedNode.activeRevision?.ok ? parseFileExtendedAttributes(unparsedNode.activeRevision.value.extendedAttributes, this.log) : undefined;
 
