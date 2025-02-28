@@ -5,7 +5,7 @@ import { ValidationError } from '../errors';
 const MAX_NODE_NAME_LENGTH = 255;
 
 /**
- * @throws {Error} if the name is empty, long, or includes slash in the name.
+ * @throws Error if the name is empty, long, or includes slash in the name.
  */
 export function validateNodeName(name: string): void {
     if (!name) {

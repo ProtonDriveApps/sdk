@@ -246,8 +246,7 @@ describe("nodeAPIService", () => {
                 ],
             }));
 
-            const parentUid = 'volume:volumeId;node:parentLinkId';
-            const result = await Array.fromAsync(api.trashNodes(parentUid, ['volume:volumeId;node:nodeId1', 'volume:volumeId;node:nodeId2']));
+            const result = await Array.fromAsync(api.trashNodes(['volume:volumeId;node:nodeId1', 'volume:volumeId;node:nodeId2']));
             expect(result).toEqual([
                 { uid: 'volume:volumeId;node:nodeId1', ok: true },
                 { uid: 'volume:volumeId;node:nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },

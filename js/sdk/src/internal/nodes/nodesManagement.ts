@@ -113,16 +113,25 @@ export class NodesManagement {
             newParentNode,
             { key: newParentKeys.key, hashKey: newParentKeys.hashKey },
         );
+
+        // Node could be uploaded or renamed by anonymous user and thus have
+        // missing signatures that must be added to the move request.
+        // Node passphrase and signature email must be passed if and only if
+        // the the signatures are missing (key author is null).
+        const anonymousKey = node.keyAuthor.ok && node.keyAuthor.value === null;
+        const keySignatureProperties = !anonymousKey ? {} : {
+            signatureEmail: encryptedCrypto.signatureEmail,
+            armoredNodePassphraseSignature: encryptedCrypto.armoredNodePassphraseSignature,
+        }
         await this.apiService.moveNode(
             nodeUid,
             {
                 hash: node.hash,
             }, 
             {
+                ...keySignatureProperties,
                 parentUid: newParentUid,
                 armoredNodePassphrase: encryptedCrypto.armoredNodePassphrase,
-                armoredNodePassphraseSignature: encryptedCrypto.armoredNodePassphraseSignature,
-                signatureEmail: encryptedCrypto.signatureEmail,
                 encryptedName: encryptedCrypto.encryptedName,
                 nameSignatureEmail: encryptedCrypto.nameSignatureEmail,
                 hash: encryptedCrypto.hash,
@@ -141,34 +150,20 @@ export class NodesManagement {
     }
 
     async* trashNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
-        const nodesPerParent = new Map<string, DecryptedNode[]>();
+        const nodes = await Array.fromAsync(this.nodesAccess.iterateNodes(nodeUids, signal));
 
-        for await (const node of this.nodesAccess.iterateNodes(nodeUids, signal)) {
-            if (!node.parentUid) {
-                throw new Error('Trashing root nodes is not supported');
-            }
-            const nodes = nodesPerParent.get(node.parentUid);
-            if (nodes) {
-                nodes.push(node);
-            } else {
-                nodesPerParent.set(node.parentUid, [node]);
-            }
-        }
-
-        for (const [parentNodeUid, nodes] of nodesPerParent) {
-            for await (const result of this.apiService.trashNodes(parentNodeUid, nodes.map(node => node.uid), signal)) {
-                if (result.ok) {
-                    const node = nodes.find(node => node.uid === result.uid);
-                    if (node) {
-                        await this.cache.setNode({
-                            ...node,
-                            trashedDate: new Date(),
-                        });
-                    }
+        for await (const result of this.apiService.trashNodes(nodeUids, signal)) {
+            if (result.ok) {
+                const node = nodes.find(node => node.uid === result.uid);
+                if (node) {
+                    await this.cache.setNode({
+                        ...node,
+                        trashedDate: new Date(),
+                    });
                 }
-
-                yield result;
             }
+
+            yield result;
         }
     }
 
@@ -221,7 +216,7 @@ export class NodesManagement {
             signatureEmail: encryptedCrypto.signatureEmail,
             encryptedName: encryptedCrypto.encryptedName,
             hash: encryptedCrypto.hash,
-            encryptedExtendedAttributes: encryptedCrypto.folder.encryptedExtendedAttributes || "", // TODO
+            encryptedExtendedAttributes: encryptedCrypto.folder.encryptedExtendedAttributes, // TODO
         });
 
         const node: DecryptedNode = {

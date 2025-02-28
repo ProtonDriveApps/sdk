@@ -1,6 +1,6 @@
 import { Logger, NodeType, MemberRole, NodeResult } from "../../interface";
 import { RevisionState } from "../../interface/nodes";
-import { DriveAPIService, drivePaths } from "../apiService";
+import { DriveAPIService, drivePaths, ErrorCode } from "../apiService";
 import { splitNodeUid, makeNodeUid, makeNodeRevisionUid, splitNodeRevisionUid } from "../uids";
 import { EncryptedNode, EncryptedRevision } from "./interface";
 
@@ -210,9 +210,9 @@ export class NodeAPIService {
             parentUid: string,
             armoredNodePassphrase: string,
             armoredNodePassphraseSignature?: string,
-            signatureEmail: string,
+            signatureEmail?: string,
             encryptedName: string,
-            nameSignatureEmail: string,
+            nameSignatureEmail?: string,
             hash: string,
             contentHash?: string,
         },
@@ -224,12 +224,15 @@ export class NodeAPIService {
         await this.apiService.put<
             Omit<PutMoveNodeRequest, "SignatureAddress" | "MIMEType">,
             PutMoveNodeResponse
-        >(`/drive/v2/volumes/${volumeId}/links/${nodeId}/move`, {
+        >(`drive/v2/volumes/${volumeId}/links/${nodeId}/move`, {
             ParentLinkID: newParentNodeId,
             NodePassphrase: newNode.armoredNodePassphrase,
-            NodePassphraseSignature: newNode.armoredNodePassphraseSignature || null,
+            // @ts-expect-error: API accepts NodePassphraseSignature as optional.
+            NodePassphraseSignature: newNode.armoredNodePassphraseSignature,
+            // @ts-expect-error: API accepts SignatureEmail as optional.
             SignatureEmail: newNode.signatureEmail,
             Name: newNode.encryptedName,
+            // @ts-expect-error: API accepts NameSignatureEmail as optional.
             NameSignatureEmail: newNode.nameSignatureEmail,
             Hash: newNode.hash,
             OriginalHash: oldNode.hash,
@@ -237,17 +240,15 @@ export class NodeAPIService {
         }, signal);
     }
 
-    // Improvement requested: API without requiring parent node (to delete any nodes).
     // Improvement requested: split into multiple calls for many nodes.
-    async* trashNodes(parentNodeUid: string, nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
-        const { volumeId, nodeId: parentNodeId } = splitNodeUid(parentNodeUid);
-
+    async* trashNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         const nodeIds = nodeUids.map(splitNodeUid);
+        const volumeId = assertAndGetSingleVolumeId("trashNodes", nodeIds);
 
         const response = await this.apiService.post<
             PostTrashNodesRequest,
             PostTrashNodesResponse
-        >(`/drive/v2/volumes/${volumeId}/folders/${parentNodeId}/trash_multiple`, {
+        >(`drive/v2/volumes/${volumeId}/trash_multiple`, {
             LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
         }, signal);
 
@@ -263,7 +264,7 @@ export class NodeAPIService {
         const response = await this.apiService.put<
             PutRestoreNodesRequest,
             PutRestoreNodesResponse
-        >(`/drive/v2/volumes/${volumeId}/trash/restore_multiple`, {
+        >(`drive/v2/volumes/${volumeId}/trash/restore_multiple`, {
             LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
         }, signal);
 
@@ -279,7 +280,7 @@ export class NodeAPIService {
         const response = await this.apiService.post<
             PostDeleteNodesRequest,
             PostDeleteNodesResponse
-        >(`/drive/v2/volumes/${volumeId}/trash/delete_multiple`, {
+        >(`drive/v2/volumes/${volumeId}/trash/delete_multiple`, {
             LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
         }, signal);
 
@@ -297,7 +298,7 @@ export class NodeAPIService {
             signatureEmail: string,
             encryptedName: string,
             hash: string,
-            encryptedExtendedAttributes: string,
+            encryptedExtendedAttributes?: string,
         },
     ): Promise<string> {
         const { volumeId, nodeId: parentId } = splitNodeUid(parentUid);
@@ -305,7 +306,7 @@ export class NodeAPIService {
         const response = await this.apiService.post<
             PostCreateFolderRequest,
             PostCreateFolderResponse
-        >(`/drive/v2/volumes/${volumeId}/folders`, {
+        >(`drive/v2/volumes/${volumeId}/folders`, {
             ParentLinkID: parentId,
             NodeKey: newNode.armoredKey,
             NodeHashKey: newNode.armoredHashKey,
@@ -314,6 +315,7 @@ export class NodeAPIService {
             SignatureEmail: newNode.signatureEmail,
             Name: newNode.encryptedName,
             Hash: newNode.hash,
+            // @ts-expect-error: API accepts XAttr as optional.
             XAttr: newNode.encryptedExtendedAttributes,
         });
 
@@ -341,13 +343,13 @@ export class NodeAPIService {
         await this.apiService.post<
             undefined,
             PostRestoreRevisionResponse
-        >(`/drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/${revisionId}/restore`);
+        >(`drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/${revisionId}/restore`);
     }
 
     async deleteRevision(nodeRevisionUid: string): Promise<void> {
         const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(nodeRevisionUid);
 
-        await this.apiService.delete<DeleteRevisionResponse>(`/drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/${revisionId}`);
+        await this.apiService.delete<DeleteRevisionResponse>(`drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/${revisionId}`);
     }
 }
 
@@ -388,7 +390,8 @@ function* handleResponseErrors(nodeUids: string[], volumeId: string, responses: 
     const errors = new Map();
 
     responses.forEach((response) => {
-        if (response.Response.Code !== 1000 || response.Response.Error) {
+        const okResponse = response.Response.Code === ErrorCode.OK || response.Response.Code === ErrorCode.OK_MANY;
+        if (!okResponse || response.Response.Error) {
             const nodeUid = makeNodeUid(volumeId, response.LinkID);
             errors.set(nodeUid, response.Response.Error || 'Unknown error');
         }

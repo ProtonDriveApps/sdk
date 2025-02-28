@@ -283,7 +283,7 @@ export class NodesCryptoService {
                 armoredNodePassphrase: nodeKeys.encrypted.armoredPassphrase,
                 armoredNodePassphraseSignature: nodeKeys.encrypted.armoredPassphraseSignature,
                 folder: {
-                    encryptedExtendedAttributes: '',
+                    encryptedExtendedAttributes: undefined,
                     armoredHashKey,
                 },
                 signatureEmail: email,
