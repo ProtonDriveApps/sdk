@@ -1,14 +1,14 @@
-import { DriveCrypto } from "../../crypto/index.js";
+import { DriveCrypto, PrivateKey } from "../../crypto";
 
-export function uploadCryptoService(driveCrypto: DriveCrypto) {
-    // TODO: types
-    async function generateKeys(parentKey: any) {
-    };
-
-    async function generateHash() {
-    };
-
-    return {
-        generateKeys,
+export class UploadCryptoService {
+    constructor(private driveCrypto: DriveCrypto) {
+        this.driveCrypto = driveCrypto;
     }
+
+    async generateKey(parentKey: PrivateKey) {
+        return this.driveCrypto.generateKey(parentKey, parentKey);
+    };
+
+    private async generateHash() {
+    };
 }

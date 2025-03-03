@@ -4,15 +4,17 @@ import { DriveCrypto } from './crypto';
 import { initSharesModule } from './internal/shares';
 import { initNodesModule } from './internal/nodes';
 import { initSharingModule } from './internal/sharing';
+import { initDownloadModule } from './internal/download';
+import { initUploadModule } from './internal/upload';
 import { DriveEventsService } from './internal/events';
-import { upload as uploadModule } from './internal/upload';
 import { getConfig } from './config';
 import { getUid, getUids, convertInternalNodePromise, convertInternalNodeIterator } from './transformers';
 
 export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
     private nodes: ReturnType<typeof initNodesModule>;
     private sharing: ReturnType<typeof initSharingModule>;
-    private upload: ReturnType<typeof uploadModule>;
+    private download: ReturnType<typeof initDownloadModule>;
+    private upload: ReturnType<typeof initUploadModule>;
 
     constructor({
         httpClient,
@@ -39,7 +41,8 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
         const shares = initSharesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule);
         this.nodes = initNodesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares, getLogger?.('nodes'));
         this.sharing = initSharingModule(apiService, entitiesCache, account, cryptoModule, events, shares, this.nodes.access, getLogger?.('sharing'));
-        this.upload = uploadModule(apiService, cryptoModule, this.nodes.access);
+        this.download = initDownloadModule(apiService, cryptoModule, this.nodes.access);
+        this.upload = initUploadModule(apiService, cryptoModule, this.nodes.access);
     }
 
     // TODO
@@ -134,6 +137,10 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
 
     async unshareNode(nodeUid: NodeOrUid, settings?: UnshareNodeSettings) {
         return this.sharing.management.unshareNode(getUid(nodeUid), settings);
+    }
+
+    async getFileDownloader(nodeUid: NodeOrUid, signal?: AbortSignal) {
+        return this.download.getFileDownloader(getUid(nodeUid), signal);
     }
 
     async getFileUploader(nodeUid: NodeOrUid, name: string, metadata: UploadMetadata, signal?: AbortSignal) {
