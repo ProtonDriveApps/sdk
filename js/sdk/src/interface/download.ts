@@ -11,9 +11,9 @@ export interface Download {
 }
 
 export interface FileDownloader {
-    getClaimedSizeInBytes(): number,
-    writeToStream(streamFactory: WritableStream, onProgress: (uploadedBytes: number) => void): DownloadController,
-    unsafeWriteToStream(streamFactory: WritableStream, onProgress: (uploadedBytes: number) => void): DownloadController,
+    getClaimedSizeInBytes(): number | undefined,
+    writeToStream(streamFactory: WritableStream, onProgress: (writtenBytes: number) => void): DownloadController,
+    unsafeWriteToStream(streamFactory: WritableStream, onProgress: (writtenBytes: number) => void): DownloadController,
 }
 
 export interface DownloadController {

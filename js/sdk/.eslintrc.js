@@ -16,7 +16,6 @@ module.exports =  {
         {
             files: [
                 "*.test.ts",
-                "**/upload/**/*",
                 "**/photos/**/*",
             ],
             rules: {
