@@ -17,8 +17,8 @@ public sealed class ProtonAccountClient
         Api = apiClients;
         Logger = configuration.LoggerFactory.CreateLogger<ProtonAccountClient>();
         SessionSecretCache = sessionSecretCache;
-        EntityCache = new AccountEntityCache(configuration.EntityCache);
-        SecretCache = new AccountSecretCache(configuration.SecretCache);
+        EntityCache = new AccountEntityCache(configuration.EntityCacheRepository);
+        SecretCache = new AccountSecretCache(configuration.SecretCacheRepository);
     }
 
     internal AccountApiClients Api { get; }
@@ -35,9 +35,9 @@ public sealed class ProtonAccountClient
         return AddressOperations.GetAsync(this, addressId, cancellationToken);
     }
 
-    public ValueTask<List<Address>> GetAddressesAsync(CancellationToken cancellationToken)
+    public ValueTask<IReadOnlyList<Address>> GetAddressesAsync(CancellationToken cancellationToken)
     {
-        return AddressOperations.GetAllAsync(this, cancellationToken);
+        return AddressOperations.GetAddressesAsync(this, cancellationToken);
     }
 
     public ValueTask<Address> GetDefaultAddressAsync(CancellationToken cancellationToken)
@@ -45,20 +45,44 @@ public sealed class ProtonAccountClient
         return AddressOperations.GetDefaultAsync(this, cancellationToken);
     }
 
-    internal async Task<IReadOnlyList<PgpPrivateKey>> GetUserKeysAsync(CancellationToken cancellationToken)
+    internal async ValueTask<IReadOnlyList<PgpPrivateKey>> GetUserKeysAsync(CancellationToken cancellationToken)
     {
         var userKeys = await SecretCache.TryGetUserKeysAsync(cancellationToken).ConfigureAwait(false);
 
         if (userKeys is null)
         {
-            await RefreshUserKeysAsync(cancellationToken).ConfigureAwait(false);
-        }
+            var response = await Api.Users.GetAuthenticatedUserAsync(cancellationToken).ConfigureAwait(false);
 
-        userKeys = await SecretCache.TryGetUserKeysAsync(cancellationToken).ConfigureAwait(false);
+            var unlockedKeys = new List<PgpPrivateKey>(response.User.Keys.Count);
 
-        if (userKeys is null)
-        {
-            throw new ProtonApiException("No active user key was found.");
+            foreach (var userKey in response.User.Keys)
+            {
+                if (!userKey.IsActive)
+                {
+                    continue;
+                }
+
+                var passphrase = await SessionSecretCache.TryGetAccountKeyPassphraseAsync(userKey.Id.Value, cancellationToken).ConfigureAwait(false);
+
+                if (passphrase is null)
+                {
+                    Logger.LogWarning("No passphrase found for user key {UserKeyId}", userKey.Id);
+                    continue;
+                }
+
+                var unlockedUserKey = PgpPrivateKey.ImportAndUnlock(userKey.PrivateKey.Bytes.Span, passphrase.Value.Span);
+
+                unlockedKeys.Add(unlockedUserKey);
+            }
+
+            if (unlockedKeys.Count == 0)
+            {
+                throw new ProtonApiException("No active user key was found.");
+            }
+
+            await SecretCache.SetUserKeysAsync(unlockedKeys, cancellationToken).ConfigureAwait(false);
+
+            userKeys = unlockedKeys;
         }
 
         return userKeys;
@@ -77,39 +101,5 @@ public sealed class ProtonAccountClient
     internal ValueTask<IReadOnlyList<PgpPublicKey>> GetAddressPublicKeysAsync(string emailAddress, CancellationToken cancellationToken)
     {
         return AddressOperations.GetPublicKeysAsync(this, emailAddress, cancellationToken);
-    }
-
-    private async ValueTask RefreshUserKeysAsync(CancellationToken cancellationToken)
-    {
-        var response = await Api.Users.GetAuthenticatedUserAsync(cancellationToken).ConfigureAwait(false);
-
-        var unlockedKeys = new List<PgpPrivateKey>(response.User.Keys.Count);
-
-        foreach (var userKey in response.User.Keys)
-        {
-            if (!userKey.IsActive)
-            {
-                continue;
-            }
-
-            var passphrase = await SessionSecretCache.TryGetPasswordDerivedKeyPassphraseAsync(userKey.Id.Value, cancellationToken).ConfigureAwait(false);
-
-            if (passphrase is null)
-            {
-                Logger.LogWarning("No passphrase found for user key {UserKeyId}", userKey.Id);
-                continue;
-            }
-
-            var unlockedUserKey = PgpPrivateKey.ImportAndUnlock(userKey.PrivateKey.Bytes.Span, passphrase.Value.Span);
-
-            unlockedKeys.Add(unlockedUserKey);
-        }
-
-        if (unlockedKeys.Count == 0)
-        {
-            throw new ProtonApiException("No active user key was found.");
-        }
-
-        await SecretCache.SetUserKeysAsync(unlockedKeys, cancellationToken).ConfigureAwait(false);
     }
 }

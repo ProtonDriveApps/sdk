@@ -6,12 +6,9 @@ using Proton.Sdk.Cryptography;
 
 namespace Proton.Sdk.Serialization;
 
-internal sealed class PgpArmoredBlockJsonConverter<T>(PgpBlockType blockType, Func<ReadOnlyMemory<byte>, T> factory) : JsonConverter<T>
+internal abstract class PgpArmoredBlockJsonConverterBase<T> : JsonConverter<T>
     where T : IPgpArmoredBlock
 {
-    private readonly PgpBlockType _blockType = blockType;
-    private readonly Func<ReadOnlyMemory<byte>, T> _factory = factory;
-
     public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.String)
@@ -27,7 +24,7 @@ internal sealed class PgpArmoredBlockJsonConverter<T>(PgpBlockType blockType, Fu
 
             var decodedBlock = PgpArmorDecoder.Decode(buffer.AsSpan()[..numberOfBytesCopied]);
 
-            return _factory.Invoke(decodedBlock);
+            return CreateValue(decodedBlock);
         }
         finally
         {
@@ -41,7 +38,7 @@ internal sealed class PgpArmoredBlockJsonConverter<T>(PgpBlockType blockType, Fu
 
         try
         {
-            var numberOfBytesWritten = PgpArmorEncoder.Encode(value.Bytes.Span, _blockType, buffer);
+            var numberOfBytesWritten = PgpArmorEncoder.Encode(value.Bytes.Span, BlockType, buffer);
 
             writer.WriteStringValue(buffer.AsSpan()[..numberOfBytesWritten]);
         }
@@ -50,4 +47,8 @@ internal sealed class PgpArmoredBlockJsonConverter<T>(PgpBlockType blockType, Fu
             ArrayPool<byte>.Shared.Return(buffer);
         }
     }
+
+    protected abstract PgpBlockType BlockType { get; }
+
+    protected abstract T CreateValue(ReadOnlyMemory<byte> bytes);
 }
