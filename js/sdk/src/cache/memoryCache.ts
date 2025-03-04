@@ -20,6 +20,14 @@ export class MemoryCache<T> implements ProtonDriveCache<T> {
 
     async setEntity(uid: string, data: T, tags?: string[]) {
         this.entities[uid] = data;
+
+        for (const tag of Object.keys(this.entitiesByTag)) {
+            const index = this.entitiesByTag[tag].indexOf(uid);
+            if (index !== -1) {
+                this.entitiesByTag[tag].splice(index, 1);
+            }
+        }
+
         if (tags) {
             for (const tag of tags) {
                 if (!this.entitiesByTag[tag]) {
