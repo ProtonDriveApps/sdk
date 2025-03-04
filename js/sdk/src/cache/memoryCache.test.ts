@@ -1,3 +1,4 @@
+import { EntityResult } from "./interface";
 import { MemoryCache } from "./memoryCache";
 
 describe('MemoryCache', () => {
@@ -19,6 +20,23 @@ describe('MemoryCache', () => {
         const result = await cache.getEntity(uid);
 
         expect(result).toBe(data);
+    });
+
+    it('should update an entity with tags - remove old and add new tags', async () => {
+        const uid = 'newuid';
+
+        await cache.setEntity(uid, 'data1', ['tag1', 'tag2']);
+        await cache.setEntity(uid, 'data2', ['tag2', 'tag3']);
+
+        const result = await cache.getEntity(uid);
+        expect(result).toBe('data2');
+
+        const tag1 = await Array.fromAsync(cache.iterateEntitiesByTag('tag1'));
+        expect(tag1).toEqual([]);
+        const tag2 = await Array.fromAsync(cache.iterateEntitiesByTag('tag2'));
+        expect(tag2).toEqual([{ uid, ok: true, data: 'data2' }]);
+        const tag3 = await Array.fromAsync(cache.iterateEntitiesByTag('tag3'));
+        expect(tag3).toEqual([{ uid, ok: true, data: 'data2' }]);
     });
 
     it('should throw an error when retrieving a non-existing entity', async () => {
