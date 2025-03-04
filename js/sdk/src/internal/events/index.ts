@@ -69,7 +69,7 @@ export class DriveEventsService {
         if (this.volumesEvents[volumeId]) {
             return;
         }
-        const volumeEvents = new VolumeEventManager(this.logger, this.apiService, this.cache, volumeId);
+        const volumeEvents = new VolumeEventManager(this.logger, this.apiService, this.cache, volumeId, isOwnVolume);
         this.volumesEvents[volumeId] = volumeEvents;
 
         // FIXME: Use dynamic algorithm to determine polling interval for non-own volumes.
@@ -83,7 +83,8 @@ export class DriveEventsService {
     private async loadSubscribedVolumeEventServices() {
         for (const volumeId of await this.cache.getSubscribedVolumeIds()) {
             if (!this.volumesEvents[volumeId]) {
-                this.volumesEvents[volumeId] = new VolumeEventManager(this.logger, this.apiService, this.cache, volumeId);
+                const isOwnVolume = await this.cache.isOwnVolume(volumeId) || false;
+                this.volumesEvents[volumeId] = new VolumeEventManager(this.logger, this.apiService, this.cache, volumeId, isOwnVolume);
             }
         }
     }

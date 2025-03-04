@@ -12,23 +12,23 @@ describe("EventsCache", () => {
 
     it("should store and retrieve last event ID", async () => {
         const key = "volume1";
-        await cache.setLastEventId(key, "eventId1", 0);
-        await cache.setLastEventId(key, "eventId2", 0);
+        await cache.setLastEventId(key, { lastEventId: "eventId1", pollingIntervalInSeconds: 0, isOwnVolume: true });
+        await cache.setLastEventId(key, { lastEventId: "eventId2", pollingIntervalInSeconds: 0, isOwnVolume: true });
         const result = await cache.getLastEventId(key);
         expect(result).toBe("eventId2");
     });
 
     it("should store and retrieve polling interval", async () => {
         const key = "volume1";
-        await cache.setLastEventId(key, "lastEventId", 10);
-        await cache.setLastEventId(key, "lastEventId", 20);
+        await cache.setLastEventId(key, { lastEventId: "lastEventId", pollingIntervalInSeconds: 10, isOwnVolume: true });
+        await cache.setLastEventId(key, { lastEventId: "lastEventId", pollingIntervalInSeconds: 20, isOwnVolume: true });
         const result = await cache.getPollingIntervalInSeconds(key);
         expect(result).toBe(20);
     });
 
     it("should store and retrieve subscribed volume IDs", async () => {
-        await cache.setLastEventId("volume1", "lastEventId", 0);
-        await cache.setLastEventId("volume2", "lastEventId", 0);
+        await cache.setLastEventId("volume1", { lastEventId: "lastEventId", pollingIntervalInSeconds: 0, isOwnVolume: true });
+        await cache.setLastEventId("volume2", { lastEventId: "lastEventId", pollingIntervalInSeconds: 0, isOwnVolume: true });
         const result = await cache.getSubscribedVolumeIds();
         expect(result).toStrictEqual(["volume1", "volume2"]);
     });

@@ -25,7 +25,11 @@ export class CoreEventManager {
             logger,
             () => this.getLastEventId(),
             (eventId) => this.apiService.getCoreEvents(eventId),
-            (lastEventId) => this.cache.setLastEventId('core', lastEventId, this.manager.pollingIntervalInSeconds),
+            (lastEventId) => this.cache.setLastEventId('core', {
+                lastEventId,
+                pollingIntervalInSeconds: this.manager.pollingIntervalInSeconds,
+                isOwnVolume: false,
+            }),
         );
     }
 
