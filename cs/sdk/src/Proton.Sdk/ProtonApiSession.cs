@@ -38,7 +38,7 @@ public sealed class ProtonApiSession
         IsWaitingForSecondFactorCode = isWaitingForSecondFactorCode;
         PasswordMode = passwordMode;
         ClientConfiguration = clientConfiguration;
-        SecretCache = new SessionSecretCache(clientConfiguration.SecretCache);
+        SecretCache = new SessionSecretCache(clientConfiguration.SecretCacheRepository);
     }
 
     public event Action? Ended
@@ -79,16 +79,16 @@ public sealed class ProtonApiSession
 
     private IKeysApiClient KeysApi => _keysApi ??= new KeysApiClient(_httpClient);
 
-    public static Task<ProtonApiSession> BeginAsync(string username, ReadOnlyMemory<byte> password, string appVersion, CancellationToken cancellationToken)
+    public static ValueTask<ProtonApiSession> BeginAsync(string username, ReadOnlyMemory<byte> password, string appVersion, CancellationToken cancellationToken)
     {
-        return BeginAsync(username, password, appVersion, new ProtonClientOptions(), cancellationToken);
+        return BeginAsync(username, password, appVersion, new ProtonSessionOptions(), cancellationToken);
     }
 
-    public static async Task<ProtonApiSession> BeginAsync(
+    public static async ValueTask<ProtonApiSession> BeginAsync(
         string username,
         ReadOnlyMemory<byte> password,
         string appVersion,
-        ProtonClientOptions options,
+        ProtonSessionOptions options,
         CancellationToken cancellationToken)
     {
         var configuration = new ProtonClientConfiguration(appVersion, options);
@@ -143,7 +143,6 @@ public sealed class ProtonApiSession
     }
 
     public static ProtonApiSession Resume(
-        string appVersion,
         SessionId sessionId,
         string username,
         UserId userId,
@@ -152,8 +151,38 @@ public sealed class ProtonApiSession
         IEnumerable<string> scopes,
         bool isWaitingForSecondFactorCode,
         PasswordMode passwordMode,
-        ProtonClientOptions? options = null)
+        string appVersion,
+        ICacheRepository secretCacheRepository)
     {
+        return Resume(
+            sessionId,
+            username,
+            userId,
+            accessToken,
+            refreshToken,
+            scopes,
+            isWaitingForSecondFactorCode,
+            passwordMode,
+            appVersion,
+            secretCacheRepository,
+            new ProtonClientOptions());
+    }
+
+    public static ProtonApiSession Resume(
+        SessionId sessionId,
+        string username,
+        UserId userId,
+        string accessToken,
+        string refreshToken,
+        IEnumerable<string> scopes,
+        bool isWaitingForSecondFactorCode,
+        PasswordMode passwordMode,
+        string appVersion,
+        ICacheRepository secretCacheRepository,
+        ProtonClientOptions options)
+    {
+        options = options with { SecretCacheRepository = secretCacheRepository };
+
         var configuration = new ProtonClientConfiguration(appVersion, options);
 
         var logger = configuration.LoggerFactory.CreateLogger<ProtonApiSession>();
@@ -210,7 +239,7 @@ public sealed class ProtonApiSession
 
             var passphrase = DeriveSecretFromPassword(password.Span, keySalt.Value.Span);
 
-            await SecretCache.SetPasswordDerivedKeyPassphraseAsync(keySalt.KeyId, passphrase, cancellationToken).ConfigureAwait(false);
+            await SecretCache.SetAccountKeyPassphraseAsync(keySalt.KeyId, passphrase, cancellationToken).ConfigureAwait(false);
         }
     }
 

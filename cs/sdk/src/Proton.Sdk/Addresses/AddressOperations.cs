@@ -10,132 +10,68 @@ namespace Proton.Sdk.Addresses;
 
 internal static class AddressOperations
 {
-    public static async ValueTask<List<Address>> GetAllAsync(ProtonAccountClient client, CancellationToken cancellationToken)
+    public static async ValueTask<IReadOnlyList<Address>> GetAddressesAsync(ProtonAccountClient client, CancellationToken cancellationToken)
     {
-        var addressListResponse = await client.Api.Addresses.GetAddressesAsync(cancellationToken).ConfigureAwait(false);
+        var result = await client.EntityCache.TryGetCurrentUserAddressesAsync(cancellationToken).ConfigureAwait(false);
 
-        var addresses = new List<Address>(addressListResponse.Addresses.Count);
-
-        var userKeys = await client.GetUserKeysAsync(cancellationToken).ConfigureAwait(false);
-
-        foreach (var dto in addressListResponse.Addresses)
+        if (result is null)
         {
-            try
-            {
-                var address = await ConvertFromDtoAsync(client, dto, userKeys, cancellationToken).ConfigureAwait(false);
+            var addressListResponse = await client.Api.Addresses.GetAddressesAsync(cancellationToken).ConfigureAwait(false);
 
-                addresses.Add(address);
-            }
-            catch (Exception e)
+            var addresses = new List<Address>(addressListResponse.Addresses.Count);
+
+            var userKeys = await client.GetUserKeysAsync(cancellationToken).ConfigureAwait(false);
+
+            foreach (var dto in addressListResponse.Addresses)
             {
-                client.Logger.LogError(e, "Failed to load address {AddressId}", dto.Id);
+                try
+                {
+                    var address = await ConvertFromDtoAsync(client, dto, userKeys, cancellationToken).ConfigureAwait(false);
+
+                    addresses.Add(address);
+                }
+                catch (Exception e)
+                {
+                    client.Logger.LogError(e, "Failed to load address {AddressId}", dto.Id);
+                }
             }
+
+            await client.EntityCache.SetCurrentUserAddressesAsync(addresses, cancellationToken).ConfigureAwait(false);
+
+            result = addresses;
         }
 
-        return addresses;
+        return result;
     }
 
     public static async ValueTask<Address> GetAsync(ProtonAccountClient client, AddressId addressId, CancellationToken cancellationToken)
     {
-        var userKeys = await client.GetUserKeysAsync(cancellationToken).ConfigureAwait(false);
+        var address = await client.EntityCache.TryGetAddressAsync(addressId, cancellationToken).ConfigureAwait(false);
 
-        var response = await client.Api.Addresses.GetAddressAsync(addressId, cancellationToken).ConfigureAwait(false);
+        if (address is null)
+        {
+            var userKeys = await client.GetUserKeysAsync(cancellationToken).ConfigureAwait(false);
 
-        var address = await ConvertFromDtoAsync(client, response.Address, userKeys, cancellationToken).ConfigureAwait(false);
+            var response = await client.Api.Addresses.GetAddressAsync(addressId, cancellationToken).ConfigureAwait(false);
+
+            address = await ConvertFromDtoAsync(client, response.Address, userKeys, cancellationToken).ConfigureAwait(false);
+
+            await client.EntityCache.SetAddressAsync(address, cancellationToken).ConfigureAwait(false);
+        }
 
         return address;
     }
 
     public static async ValueTask<Address> GetDefaultAsync(ProtonAccountClient client, CancellationToken cancellationToken)
     {
-        var addresses = await GetAllAsync(client, cancellationToken).ConfigureAwait(false);
+        var addresses = await GetAddressesAsync(client, cancellationToken).ConfigureAwait(false);
 
         if (addresses.Count == 0)
         {
             throw new ProtonApiException("User has no address");
         }
 
-        addresses.Sort((a, b) => a.Order.CompareTo(b.Order));
-
-        return addresses[0];
-    }
-
-    public static async ValueTask<Address> ConvertFromDtoAsync(
-        ProtonAccountClient client,
-        AddressDto dto,
-        IReadOnlyList<PgpPrivateKey> userKeys,
-        CancellationToken cancellationToken)
-    {
-        int? primaryKeyIndex = null;
-
-        var keys = new List<AddressKey>(dto.Keys.Count);
-        var unlockedKeys = new List<PgpPrivateKey>(dto.Keys.Count);
-        var keyIndex = 0;
-
-        foreach (var keyDto in dto.Keys)
-        {
-            if (!keyDto.IsActive)
-            {
-                continue;
-            }
-
-            try
-            {
-                PgpPrivateKey unlockedKey;
-
-                if (keyDto is { Token: not null, Signature: not null })
-                {
-                    var passphrase = GetAddressKeyTokenPassphrase(keyDto.Token.Value, keyDto.Signature.Value, userKeys);
-                    unlockedKey = PgpPrivateKey.ImportAndUnlock(keyDto.PrivateKey, passphrase.Span);
-                }
-                else
-                {
-                    var passphrase = await client.SessionSecretCache.TryGetPasswordDerivedKeyPassphraseAsync(keyDto.Id, cancellationToken)
-                        .ConfigureAwait(false);
-
-                    if (passphrase is null)
-                    {
-                        client.Logger.LogWarning("No passphrase found for address key {UserKeyId}", keyDto.Id);
-                        continue;
-                    }
-
-                    unlockedKey = PgpPrivateKey.ImportAndUnlock(keyDto.PrivateKey, passphrase.Value.Span);
-                }
-
-                unlockedKeys.Add(unlockedKey);
-            }
-            catch
-            {
-                // TODO: log that
-                continue;
-            }
-
-            var key = new AddressKey(
-                dto.Id,
-                keyDto.Id,
-                keyDto.IsPrimary,
-                keyDto.IsActive,
-                (keyDto.Capabilities & AddressKeyCapabilities.IsAllowedForEncryption) != 0,
-                (keyDto.Capabilities & AddressKeyCapabilities.IsAllowedForSignatureVerification) != 0);
-
-            keys.Add(key);
-
-            if (keyDto.IsPrimary)
-            {
-                primaryKeyIndex = keyIndex;
-            }
-
-            ++keyIndex;
-        }
-
-        if (primaryKeyIndex is null)
-        {
-            throw new ProtonApiException($"Address {dto.Id} has no primary key");
-        }
-
-        await client.SecretCache.SetAddressKeysAsync(unlockedKeys, cancellationToken).ConfigureAwait(false);
-
-        return new Address(dto.Id, dto.Order, dto.Email, dto.Status, keys.AsReadOnly(), primaryKeyIndex.Value);
+        return addresses.OrderBy(x => x.Order).First();
     }
 
     public static async ValueTask<IReadOnlyList<PgpPrivateKey>> GetKeysAsync(
@@ -151,6 +87,7 @@ internal static class AddressOperations
 
     public static async ValueTask<PgpPrivateKey> GetPrimaryKeyAsync(ProtonAccountClient client, AddressId addressId, CancellationToken cancellationToken)
     {
+        // TODO: use cache
         var address = await GetAsync(client, addressId, cancellationToken).ConfigureAwait(false);
 
         var addressKeys = await GetKeysAsync(client, addressId, cancellationToken).ConfigureAwait(false);
@@ -197,6 +134,83 @@ internal static class AddressOperations
         }
 
         return cachedPublicKeys;
+    }
+
+    private static async ValueTask<Address> ConvertFromDtoAsync(
+        ProtonAccountClient client,
+        AddressDto dto,
+        IReadOnlyList<PgpPrivateKey> userKeys,
+        CancellationToken cancellationToken)
+    {
+        int? primaryKeyIndex = null;
+
+        var keys = new List<AddressKey>(dto.Keys.Count);
+        var unlockedKeys = new List<PgpPrivateKey>(dto.Keys.Count);
+        var keyIndex = 0;
+
+        foreach (var keyDto in dto.Keys)
+        {
+            if (!keyDto.IsActive)
+            {
+                continue;
+            }
+
+            try
+            {
+                PgpPrivateKey unlockedKey;
+
+                if (keyDto is { Token: not null, Signature: not null })
+                {
+                    var passphrase = GetAddressKeyTokenPassphrase(keyDto.Token.Value, keyDto.Signature.Value, userKeys);
+                    unlockedKey = PgpPrivateKey.ImportAndUnlock(keyDto.PrivateKey, passphrase.Span);
+                }
+                else
+                {
+                    var passphrase = await client.SessionSecretCache.TryGetAccountKeyPassphraseAsync(keyDto.Id.Value, cancellationToken).ConfigureAwait(false);
+
+                    if (passphrase is null)
+                    {
+                        client.Logger.LogWarning("No passphrase found for address key {UserKeyId}", keyDto.Id);
+                        continue;
+                    }
+
+                    unlockedKey = PgpPrivateKey.ImportAndUnlock(keyDto.PrivateKey, passphrase.Value.Span);
+                }
+
+                unlockedKeys.Add(unlockedKey);
+            }
+            catch
+            {
+                // TODO: log that
+                continue;
+            }
+
+            var key = new AddressKey(
+                dto.Id,
+                keyDto.Id,
+                keyDto.IsPrimary,
+                keyDto.IsActive,
+                (keyDto.Capabilities & AddressKeyCapabilities.IsAllowedForEncryption) != 0,
+                (keyDto.Capabilities & AddressKeyCapabilities.IsAllowedForSignatureVerification) != 0);
+
+            keys.Add(key);
+
+            if (keyDto.IsPrimary)
+            {
+                primaryKeyIndex = keyIndex;
+            }
+
+            ++keyIndex;
+        }
+
+        if (primaryKeyIndex is null)
+        {
+            throw new ProtonApiException($"Address {dto.Id} has no primary key");
+        }
+
+        await client.SecretCache.SetAddressKeysAsync(dto.Id, unlockedKeys, cancellationToken).ConfigureAwait(false);
+
+        return new Address(dto.Id, dto.Order, dto.Email, dto.Status, keys.AsReadOnly(), primaryKeyIndex.Value);
     }
 
     private static ReadOnlyMemory<byte> GetAddressKeyTokenPassphrase(

@@ -7,7 +7,7 @@ namespace Proton.Sdk.Addresses.Api;
 internal sealed class AddressKeyDto
 {
     [JsonPropertyName("ID")]
-    public required string Id { get; init; }
+    public required AddressKeyId Id { get; init; }
 
     public required int Version { get; init; }
 
