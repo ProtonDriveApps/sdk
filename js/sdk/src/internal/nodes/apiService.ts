@@ -14,14 +14,14 @@ type GetChildrenResponse = drivePaths['/drive/v2/volumes/{volumeID}/folders/{lin
 
 type GetTrashedNodesResponse = drivePaths['/drive/volumes/{volumeID}/trash']['get']['responses']['200']['content']['application/json'];
 
-type PutRenameNodeRequest = Extract<drivePaths['/drive/v2/volumes/{volumeId}/links/{linkID}/rename']['put']['requestBody'], { 'content': object }>['content']['application/json'];
-type PutRenameNodeResponse = drivePaths['/drive/v2/volumes/{volumeId}/links/{linkID}/rename']['put']['responses']['200']['content']['application/json'];
+type PutRenameNodeRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/links/{linkID}/rename']['put']['requestBody'], { 'content': object }>['content']['application/json'];
+type PutRenameNodeResponse = drivePaths['/drive/v2/volumes/{volumeID}/links/{linkID}/rename']['put']['responses']['200']['content']['application/json'];
 
 type PutMoveNodeRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/links/{linkID}/move']['put']['requestBody'], { 'content': object }>['content']['application/json'];
 type PutMoveNodeResponse = drivePaths['/drive/v2/volumes/{volumeID}/links/{linkID}/move']['put']['responses']['200']['content']['application/json'];
 
-type PostTrashNodesRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/folders/{linkID}/trash_multiple']['post']['requestBody'], { 'content': object }>['content']['application/json'];
-type PostTrashNodesResponse = drivePaths['/drive/v2/volumes/{volumeID}/folders/{linkID}/trash_multiple']['post']['responses']['200']['content']['application/json'];
+type PostTrashNodesRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/trash_multiple']['post']['requestBody'], { 'content': object }>['content']['application/json'];
+type PostTrashNodesResponse = drivePaths['/drive/v2/volumes/{volumeID}/trash_multiple']['post']['responses']['200']['content']['application/json'];
 
 type PutRestoreNodesRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/trash/restore_multiple']['put']['requestBody'], { 'content': object }>['content']['application/json'];
 type PutRestoreNodesResponse = drivePaths['/drive/v2/volumes/{volumeID}/trash/restore_multiple']['put']['responses']['200']['content']['application/json'];

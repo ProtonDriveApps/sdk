@@ -2,11 +2,14 @@ import { ProtonDriveEntitiesCache } from "../../interface";
 
 type CachedEventsData = {
     // Key is either a volume ID for volume events or 'core' for core events.
-    [key: string]: {
-        lastEventId: string;
-        pollingIntervalInSeconds: number;
-    }
+    [key: string]: EventsData;
 };
+
+interface EventsData {
+    lastEventId: string;
+    pollingIntervalInSeconds: number;
+    isOwnVolume: boolean;
+}
 
 /**
  * Provides caching for events IDs.
@@ -23,12 +26,9 @@ export class EventsCache {
         this.driveCache = driveCache;
     }
 
-    async setLastEventId(volumeIdOrCore: string, lastEventId: string, pollingIntervalInSeconds: number): Promise<void> {
+    async setLastEventId(volumeIdOrCore: string, eventsData: EventsData): Promise<void> {
         const events = await this.getEvents();
-        events[volumeIdOrCore] = {
-            lastEventId,
-            pollingIntervalInSeconds,
-        }
+        events[volumeIdOrCore] = eventsData;
         await this.cacheEvents(events);
     }
 
@@ -43,6 +43,13 @@ export class EventsCache {
         const events = await this.getEvents();
         if (events[volumeIdOrCore]) {
             return events[volumeIdOrCore].pollingIntervalInSeconds;
+        }
+    }
+
+    async isOwnVolume(volumeIdOrCore: string): Promise<boolean | undefined> {
+        const events = await this.getEvents();
+        if (events[volumeIdOrCore]) {
+            return events[volumeIdOrCore].isOwnVolume;
         }
     }
 

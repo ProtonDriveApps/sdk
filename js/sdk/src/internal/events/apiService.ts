@@ -7,7 +7,7 @@ type GetCoreLatestEventResponse = corePaths['/core/{_version}/events/latest']['g
 type GetCoreEventResponse = corePaths['/core/{_version}/events/{id}']['get']['responses']['200']['content']['application/json'];
 
 type GetVolumeLatestEventResponse = drivePaths['/drive/volumes/{volumeID}/events/latest']['get']['responses']['200']['content']['application/json'];
-type GetVokumeEventResponse = drivePaths['/drive/volumes/{volumeID}/events/{eventID}']['get']['responses']['200']['content']['application/json'];
+type GetVokumeEventResponse = drivePaths['/drive/v2/volumes/{volumeID}/events/{eventID}']['get']['responses']['200']['content']['application/json'];
 
 const VOLUME_EVENT_TYPE_MAP = {
     0: DriveEventType.NodeDeleted,
@@ -34,7 +34,7 @@ export class EventsAPIService {
     }
 
     async getCoreEvents(eventId: string): Promise<DriveEvents> {
-        // TODO: Switch to v6 endpoint.
+        // TODO: Switch to v6 endpoint: DriveShareRefresh doesnt seem to be part of it.
         const result = await this.apiService.get<GetCoreEventResponse>(`/core/v5/events/${eventId}?NoMetaData=1`);
         const events: DriveEvent[] = result.DriveShareRefresh?.Action === 2 ? [
             {
@@ -55,19 +55,17 @@ export class EventsAPIService {
         return result.EventID;
     }
 
-    async getVolumeEvents(volumeId: string, eventId: string): Promise<DriveEvents> {
-        // TODO: Switch to the new API once it's available
-        const result = await this.apiService.get<GetVokumeEventResponse>(`/drive/volumes/${volumeId}/events/${eventId}`);
+    async getVolumeEvents(volumeId: string, eventId: string, isOwnVolume = false): Promise<DriveEvents> {
+        const result = await this.apiService.get<GetVokumeEventResponse>(`/drive/v2/volumes/${volumeId}/events/${eventId}`);
         return {
             lastEventId: result.EventID,
-            more: result.More === 1,
-            refresh: result.Refresh === 1,
+            more: result.More,
+            refresh: result.Refresh,
             events: result.Events.map((event): DriveEvent => {
                 const type = VOLUME_EVENT_TYPE_MAP[event.EventType];
-                const link = event.Link as Extract<GetVokumeEventResponse['Events'][0]['Link'], { ParentLinkID: unknown }>;
                 const uids = {
                     nodeUid: makeNodeUid(volumeId, event.Link.LinkID),
-                    parentNodeUid: makeNodeUid(volumeId, link.ParentLinkID as string),
+                    parentNodeUid: makeNodeUid(volumeId, event.Link.ParentLinkID as string),
                 }
                 // VOLUME_EVENT_TYPE_MAP will never return this event type.
                 // It is here to satisfy the type checker. It is safe to do.
@@ -76,21 +74,12 @@ export class EventsAPIService {
                         type,
                     };
                 }
-                if (type === DriveEventType.NodeDeleted) {
-                    return {
-                        type,
-                        ...uids,
-                        isTrashed: !!link.Trashed,
-                        isShared: link.SharingDetails?.ShareID !== undefined,
-                        isOwnVolume: false, // TODO
-                    }
-                }
                 return {
                     type,
                     ...uids,
-                    isTrashed: !!link.Trashed,
-                    isShared: link.SharingDetails?.ShareID !== undefined,
-                    isOwnVolume: false, // TODO
+                    isTrashed: event.Link.IsTrashed,
+                    isShared: event.Link.IsShared,
+                    isOwnVolume,
                 };
             }),
         };
