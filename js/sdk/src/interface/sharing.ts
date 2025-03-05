@@ -1,29 +1,5 @@
 import { Result } from './result.js';
-import { NodeEntity, NodeOrUid, MemberRole, InvalidNameError, UnverifiedAuthorError } from './nodes.js';
-
-export type ProtonInvitation = {
-    uid: string,
-    nodeName: Result<string, InvalidNameError>,
-    invitedDate: Date,
-    addedByEmail: Result<string, UnverifiedAuthorError>,
-    inviteeEmail: string,
-    role: MemberRole,
-}
-
-export type NonProtonInvitation = {
-    uid: string,
-    nodeName: Result<string, InvalidNameError>,
-    invitedDate: Date,
-    addedByEmail: Result<string, UnverifiedAuthorError>,
-    inviteeEmail: string,
-    role: MemberRole,
-    state: NonProtonInvitationState,
-}
-
-export enum NonProtonInvitationState {
-    Pending = "pending",
-    UserRegistered = "userRegistered",
-}
+import { NodeEntity, NodeOrUid, NodeType, MemberRole, InvalidNameError, UnverifiedAuthorError } from './nodes.js';
 
 export type Member = {
     uid: string,
@@ -31,6 +7,25 @@ export type Member = {
     addedByEmail: Result<string, UnverifiedAuthorError>,
     inviteeEmail: string,
     role: MemberRole,
+}
+
+export type ProtonInvitation = Member;
+
+export type ProtonInvitationWithNode = ProtonInvitation & {
+    node: {
+        name: Result<string, InvalidNameError>,
+        type: NodeType,
+        mimeType?: string,
+    },
+}
+
+export type NonProtonInvitation = ProtonInvitation & {
+    state: NonProtonInvitationState,
+}
+
+export enum NonProtonInvitationState {
+    Pending = "pending",
+    UserRegistered = "userRegistered",
 }
 
 export type PublicLink = {
@@ -55,7 +50,7 @@ export type NonProtonInvitationOrUid = NonProtonInvitation | string;
 export type BookmarkOrUid = Bookmark | string;
 
 export interface Sharing {
-    iterateInvitations(signal?: AbortSignal): Promise<ProtonInvitation | NonProtonInvitation>,
+    iterateInvitations(signal?: AbortSignal): AsyncGenerator<ProtonInvitationWithNode>,
     acceptInvitation(invitationUid: ProtonInvitationOrUid): Promise<void>,
     rejectInvitation(invitationUid: ProtonInvitationOrUid): Promise<void>,
 
@@ -68,36 +63,38 @@ export interface Sharing {
 }
 
 export interface SharingManagement {
+    getSharingInfo(nodeUid: NodeOrUid): Promise<ShareResult | undefined>,
     shareNode(nodeUid: NodeOrUid, settings: ShareNodeSettings): Promise<ShareResult>,
-    unshareNode(nodeUid: NodeOrUid, settings?: UnshareNodeSettings): Promise<ShareResult>,
+    unshareNode(nodeUid: NodeOrUid, settings?: UnshareNodeSettings): Promise<ShareResult | undefined>,
     resendInvitation(invitationUid: ProtonInvitationOrUid | NonProtonInvitationOrUid): Promise<void>,
 }
 
 export type ShareNodeSettings = {
     protonUsers?: ShareMembersSettings,
     nonProtonUsers?: ShareMembersSettings,
-    publicLink?: boolean | {
-        role: ShareRole,
-        customPassword?: string | null | undefined,
-        expiration?: Date | null | undefined,
-    }
+    publicLink?: SharePublicLinkSettings,
+    emailOptions?: {
+        message?: string,
+        includeNodeName?: boolean,
+    },
 }
 
 export type ShareMembersSettings = string[] | {
     email: string,
-    role: ShareRole,
+    role: MemberRole,
 }[];
 
-export enum ShareRole {
-    VIEW = 'view',
-    EDIT = 'edit',
+export type SharePublicLinkSettings = boolean |{
+    role: MemberRole,
+    customPassword?: string | null | undefined,
+    expiration?: Date | null | undefined,
 };
 
 export type ShareResult = {
-    protonInitations: ProtonInvitation[],
+    protonInvitations: ProtonInvitation[],
     nonProtonInvitations: NonProtonInvitation[],
     members: Member[],
-    publicLink?: PublicLink
+    publicLink?: PublicLink,
 }
 
 export type UnshareNodeSettings = {

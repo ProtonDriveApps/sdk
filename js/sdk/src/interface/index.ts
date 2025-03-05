@@ -10,14 +10,14 @@ import { Upload } from './upload';
 
 export type { Result } from './result';
 export { resultOk, resultError } from './result';
-export type { ProtonDriveAccount, ProtonDriveHTTPClient, ProtonDriveConfig, GetLogger, Logger, Metrics, MetricsShareType, MetricsUploadErrorType, MetricsDownloadErrorType } from './constructor';
+export type { ProtonDriveAccount, ProtonDriveAccountAddress, ProtonDriveHTTPClient, ProtonDriveConfig, GetLogger, Logger, Metrics, MetricsShareType, MetricsUploadErrorType, MetricsDownloadErrorType } from './constructor';
 export type { Device, DeviceOrUid } from './devices';
 export type { FileDownloader, DownloadController } from './download';
 export type { NodeEvent, DeviceEvent, SDKEvent, DeviceEventCallback, NodeEventCallback } from './events';
 export type { Author, NodeEntity, InvalidNameError, UnverifiedAuthorError, AnonymousUser, Revision, NodeOrUid, RevisionOrUid, NodeResult } from './nodes';
 export { NodeType, MemberRole } from './nodes';
-export type { ProtonInvitation, NonProtonInvitation, NonProtonInvitationState, Member, PublicLink, Bookmark, ProtonInvitationOrUid, NonProtonInvitationOrUid, BookmarkOrUid, ShareNodeSettings, UnshareNodeSettings, ShareMembersSettings, ShareResult } from './sharing';
-export { ShareRole } from './sharing';
+export type { ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Member, PublicLink, Bookmark, ProtonInvitationOrUid, NonProtonInvitationOrUid, BookmarkOrUid, ShareNodeSettings, UnshareNodeSettings, ShareMembersSettings, SharePublicLinkSettings, ShareResult } from './sharing';
+export { NonProtonInvitationState } from './sharing';
 export type { Fileuploader, UploadController, Thumbnail, ThumbnailType, UploadMetadata } from './upload';
 
 export type ProtonDriveEntitiesCache = ProtonDriveCache<string>;

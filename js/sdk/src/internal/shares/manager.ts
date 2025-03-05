@@ -5,7 +5,7 @@ import { SharesAPIService } from "./apiService";
 import { SharesCache } from "./cache";
 import { SharesCryptoCache } from "./cryptoCache";
 import { SharesCryptoService } from "./cryptoService";
-import { VolumeShareNodeIDs } from "./interface";
+import { VolumeShareNodeIDs, EncryptedShare } from "./interface";
 
 /**
  * Provides high-level actions for managing shares.
@@ -60,6 +60,7 @@ export class SharesManager {
                 shareId: myFilesShare.shareId,
                 rootNodeId: myFilesShare.rootNodeId,
                 creatorEmail: encryptedShare.creatorEmail,
+                addressId: encryptedShare.addressId,
             });
 
             this.myFilesIds = {
@@ -87,12 +88,12 @@ export class SharesManager {
      * @throws If the volume cannot be created (e.g., one already exists).
      */
     async createVolume(): Promise<VolumeShareNodeIDs> {
-        const { addressKey, addressId, addressKeyId } = await this.account.getOwnPrimaryKey();
-        const bootstrap = await this.cryptoService.generateVolumeBootstrap(addressKey);
+        const { addressId, primaryKey } = await this.account.getOwnPrimaryAddress();
+        const bootstrap = await this.cryptoService.generateVolumeBootstrap(primaryKey.key);
         const myFilesIds = await this.apiService.createVolume(
             {
                 addressId,
-                addressKeyId,
+                addressKeyId: primaryKey.id,
                 ...bootstrap.shareKey.encrypted,
             },
             {
@@ -126,28 +127,37 @@ export class SharesManager {
         return key.key;
     }
 
-    async getVolumeEmailKey(volumeId: string): Promise<{ email: string, key: PrivateKey }> {
+    async getVolumeEmailKey(volumeId: string): Promise<{ email: string, addressId: string, addressKey: PrivateKey }> {
         try {
-            const { creatorEmail } = await this.cache.getVolume(volumeId);
+            const { addressId } = await this.cache.getVolume(volumeId);
+            const address = await this.account.getOwnAddress(addressId);
             return {
-                email: creatorEmail,
-                key: await this.account.getOwnPrivateKey(creatorEmail),
+                email: address.email,
+                addressId,
+                addressKey: address.primaryKey.key,
             };
         } catch {}
 
         const { shareId } = await this.apiService.getVolume(volumeId);
-        const share = await this.apiService.getShare(shareId);
+        const share = await this.apiService.getRootShare(shareId);
 
         await this.cache.setVolume({
             volumeId: share.volumeId,
             shareId: share.shareId,
             rootNodeId: share.rootNodeId,
             creatorEmail: share.creatorEmail,
+            addressId: share.addressId,
         });
 
+        const address = await this.account.getOwnAddress(share.addressId);
         return {
-            email: share.creatorEmail,
-            key: await this.account.getOwnPrivateKey(share.creatorEmail),
+            email: address.email,
+            addressId: share.addressId,
+            addressKey: address.primaryKey.key,
         };
+    }
+
+    async loadEncryptedShare(shareId: string): Promise<EncryptedShare> {
+        return this.apiService.getShare(shareId);
     }
 }

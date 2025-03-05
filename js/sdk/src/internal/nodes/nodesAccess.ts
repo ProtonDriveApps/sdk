@@ -1,3 +1,4 @@
+import { PrivateKey, SessionKey } from "../../crypto";
 import { Logger, NodeType, resultError, resultOk } from "../../interface";
 import { BatchLoading } from "../batchLoading";
 import { makeNodeUid } from "../uids";
@@ -207,5 +208,21 @@ export class NodesAccess {
             }
             return keys;
         }
+    }
+
+    async getNodePrivateAndSessionKeys(nodeUid: string): Promise<{
+        key: PrivateKey,
+        passphraseSessionKey: SessionKey,
+        nameSessionKey: SessionKey,
+    }> {
+        const node = await this.getNode(nodeUid);
+        const { key: parentKey } = await this.getParentKeys(node);
+        const { key, sessionKey: passphraseSessionKey } = await this.getNodeKeys(nodeUid);
+        const nameSessionKey = await this.cryptoService.getNameSessionKey(node, parentKey);
+        return {
+            key,
+            passphraseSessionKey,
+            nameSessionKey,
+        };
     }
 }

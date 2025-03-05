@@ -206,8 +206,7 @@ function deserialiseNode(nodeData: string): DecryptedNode {
        (typeof node.mimeType !== 'string' && node.mimeType !== undefined) ||
        typeof node.isShared !== 'boolean' ||
        !node.createdDate || typeof node.createdDate !== 'string' ||
-       (typeof node.trashedDate !== 'string' && node.trashedDate !== undefined) ||
-       !node.volumeId || typeof node.volumeId !== 'string'
+       (typeof node.trashedDate !== 'string' && node.trashedDate !== undefined)
    ) {
        throw new Error(`Invalid node data: ${nodeData}`);
    }

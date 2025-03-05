@@ -41,14 +41,14 @@ export class SharesCryptoService {
     }
 
     async decryptRootShare(share: EncryptedRootShare): Promise<{ share: DecryptedRootShare, key: DecryptedShareKey }> {
-        const addressPrivateKeys = await this.account.getOwnPrivateKeys(share.addressId);
+        const { keys: addressKeys } = await this.account.getOwnAddress(share.addressId);
         const addressPublicKeys = await this.account.getPublicKeys(share.creatorEmail);
 
         const { key, sessionKey, verified } = await this.driveCrypto.decryptKey(
             share.encryptedCrypto.armoredKey,
             share.encryptedCrypto.armoredPassphrase,
             share.encryptedCrypto.armoredPassphraseSignature,
-            addressPrivateKeys,
+            addressKeys.map(({ key }) => key),
             addressPublicKeys,
         )
 

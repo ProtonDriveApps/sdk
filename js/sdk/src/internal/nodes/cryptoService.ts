@@ -4,6 +4,7 @@ import { EncryptedNode, EncryptedNodeFolderCrypto, DecryptedUnparsedNode, Decryp
 
 // TODO: Switch to CryptoProxy module once available.
 import { importHmacKey, computeHmacSignature } from "./hmac";
+import { splitNodeUid } from "../uids";
 
 /**
  * Provides crypto operations for nodes metadata.
@@ -172,7 +173,7 @@ export class NodesCryptoService {
 
         try {
             const { name, verified } = await this.driveCrypto.decryptNodeName(
-                node.encryptedCrypto.encryptedName,
+                node.encryptedName,
                 parentKey,
                 verificationKeys,
             );
@@ -196,6 +197,10 @@ export class NodesCryptoService {
             }
         }
     };
+
+    async getNameSessionKey(node: DecryptedNode, parentKey: PrivateKey): Promise<SessionKey> {
+        return this.driveCrypto.decryptSessionKey(node.encryptedName, parentKey);
+    }
 
     private async decryptHashKey(node: EncryptedNode, nodeKey: PrivateKey, addressKeys: PublicKey[]): Promise<{
         hashKey: Uint8Array,
@@ -259,10 +264,11 @@ export class NodesCryptoService {
     }
 
     async createFolder(parentNode: DecryptedNode, parentKeys: { key: PrivateKey, hashKey: Uint8Array }, name: string): Promise<{
-        encryptedCrypto: Required<EncryptedNodeFolderCrypto> & { hash: string },
+        encryptedCrypto: Required<EncryptedNodeFolderCrypto> & { encryptedName: string, hash: string },
         keys: DecryptedNodeKeys,
     }> {
-        const { email, key: addressKey } = await this.shareService.getVolumeEmailKey(parentNode.volumeId);
+        const { volumeId } = splitNodeUid(parentNode.uid);
+        const { email, addressKey } = await this.shareService.getVolumeEmailKey(volumeId);
         const [
             nodeKeys,
             { armoredNodeName },
@@ -303,7 +309,8 @@ export class NodesCryptoService {
         armoredNodeName: string,
         hash: string,
     }> {
-        const { email, key: addressKey } = await this.shareService.getVolumeEmailKey(node.volumeId);
+        const { volumeId } = splitNodeUid(node.uid);
+        const { email, addressKey } = await this.shareService.getVolumeEmailKey(volumeId);
         const { armoredNodeName } = await this.driveCrypto.encryptNodeName(newName, parentKeys.key, addressKey);
         const hash = await this.generateLookupHash(newName, parentKeys.hashKey);
         return {
@@ -328,7 +335,8 @@ export class NodesCryptoService {
             throw new Error('Cannot move node without a valid name, please rename the node first');
         }
 
-        const { email, key: addressKey } = await this.shareService.getVolumeEmailKey(parentNode.volumeId);
+        const { volumeId } = splitNodeUid(parentNode.uid);
+        const { email, addressKey } = await this.shareService.getVolumeEmailKey(volumeId);
         const { armoredNodeName } = await this.driveCrypto.encryptNodeName(node.name.value, parentKeys.key, addressKey);
         const hash = await this.generateLookupHash(node.name.value, parentKeys.hashKey);
         const { armoredPassphrase, armoredPassphraseSignature } = await this.driveCrypto.encryptPassphrase(keys.passphrase, keys.sessionKey, [parentKeys.key], addressKey);

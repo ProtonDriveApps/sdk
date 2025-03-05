@@ -23,8 +23,10 @@ if (!command.isAuthAction) {
         throw new Error("You need to login first");
     }
     await account.loadPrimaryKeys();
+    console.log("----------");
 }
 
+console.time("Command execution");
 await command.action({
     account,
     sdk,
@@ -32,5 +34,6 @@ await command.action({
     args,
     options,
 });
+console.timeEnd("Command execution");
 
 process.exit()

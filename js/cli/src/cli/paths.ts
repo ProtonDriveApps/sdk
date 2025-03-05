@@ -66,12 +66,35 @@ export class Path {
             const rootNode = await this.sdk.getMyFilesRootFolder();
             return this.getNodeByPath(rootNode, this.sectionPath);
         }
+        if (this.type === PathType.SharedWithMe) {
+            const rootNodeName = await this.getSharedWithMeRootFolder();
+            return this.getNodeByPath(rootNodeName, this.sectionPathWithoutRoot);
+        }
         throw new Error('Not implemented');
     }
 
     private get sectionPath() {
-        // /my-files/foo/bar -> foo/bar
+        // /my-files/foo/bar/baz -> foo/bar/baz
         return this.fullPath.split(path.sep).slice(2).join(path.sep);
+    }
+
+    private get sectionRootNodeName() {
+        // /shared-with-me/foo/bar/baz -> foo
+        return this.sectionPath.split(path.sep)[0];
+    }
+
+    private get sectionPathWithoutRoot() {
+        // /shared-with-me/foo/bar/baz -> bar/baz
+        return this.fullPath.split(path.sep).slice(3).join(path.sep);
+    }
+
+    private async getSharedWithMeRootFolder() {
+        for await (const node of this.sdk.iterateSharedNodesWithMe()) {
+            if (node.name.ok && node.name.value === this.sectionRootNodeName) {
+                return node;
+            }
+        }
+        throw new Error('Root node not found');
     }
 
     private async getNodeByPath(parentNode: NodeEntity, pathString: string) {

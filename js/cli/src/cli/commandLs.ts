@@ -50,8 +50,15 @@ export class CommandLs implements Command {
                 this.printNode(node, { long });
             }
         } else if (path.type === PathType.SharedWithMe) {
-            for await (const node of sdk.iterateSharedNodesWithMe()) {
-                this.printNode(node, { long });
+            if (path.fullPath === '/shared-with-me') {
+                for await (const node of sdk.iterateSharedNodesWithMe()) {
+                    this.printNode(node, { long });
+                }
+            } else {
+                const node = await path.getNode();
+                for await (const child of sdk.iterateChildren(node)) {
+                    this.printNode(child, { long });
+                }
             }
         } else if (path.type === PathType.Trash) {
             for await (const node of sdk.iterateTrashedNodes()) {

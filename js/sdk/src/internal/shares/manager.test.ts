@@ -41,8 +41,8 @@ describe("SharesManager", () => {
         }
         // @ts-expect-error No need to implement all methods for mocking
         account = {
-            getOwnPrimaryKey: jest.fn(),
-            getOwnPrivateKey: jest.fn(),
+            getOwnPrimaryAddress: jest.fn(),
+            getOwnAddress: jest.fn(),
         }
 
         manager = new SharesManager(apiService, cache, cryptoCache, cryptoService, account);
@@ -85,7 +85,7 @@ describe("SharesManager", () => {
 
         it("should create volume when My files section doesn't exist", async () => {
             apiService.getMyFiles = jest.fn().mockRejectedValue(new NotFoundAPIError("no active volume", 0));
-            account.getOwnPrimaryKey = jest.fn().mockResolvedValue({ addressKey: "addressKey" });
+            account.getOwnPrimaryAddress = jest.fn().mockResolvedValue({ primaryKey: { key: "addressKey" } });
             cryptoService.generateVolumeBootstrap = jest.fn().mockResolvedValue({
                 shareKey: {
                     encrypted: "encrypted share key",
@@ -139,14 +139,15 @@ describe("SharesManager", () => {
 
     describe("getVolumeEmailKey", () => {
         it("should return cached volume email key", async () => {
-            cache.getVolume = jest.fn().mockResolvedValue({ creatorEmail: "email" });
-            account.getOwnPrivateKey = jest.fn().mockResolvedValue("creatorKey");
+            cache.getVolume = jest.fn().mockResolvedValue({ addressId: "addressId" });
+            account.getOwnAddress = jest.fn().mockResolvedValue({ email: "email", primaryKey: { key: "addressKey" } });
 
             const result = await manager.getVolumeEmailKey("volumeId");
 
             expect(result).toEqual({
+                addressId: "addressId",
                 email: "email",
-                key: "creatorKey",
+                addressKey: "addressKey",
             });
         });
 
@@ -156,17 +157,19 @@ describe("SharesManager", () => {
                 shareId: "shareId",
                 rootNodeId: "rootNodeId",
                 creatorEmail: "email",
+                addressId: "addressId",
             }
             cache.getVolume = jest.fn().mockRejectedValue(new Error('not found'));
             apiService.getVolume = jest.fn().mockResolvedValue({ shareId: "shareId" });
-            apiService.getShare = jest.fn().mockResolvedValue(share);
-            account.getOwnPrivateKey = jest.fn().mockResolvedValue("creatorKey");
+            apiService.getRootShare = jest.fn().mockResolvedValue(share);
+            account.getOwnAddress = jest.fn().mockResolvedValue({ email: "email", primaryKey: { key: "addressKey" } });
 
             const result = await manager.getVolumeEmailKey("volumeId");
 
             expect(result).toEqual({
+                addressId: "addressId",
                 email: "email",
-                key: "creatorKey",
+                addressKey: "addressKey",
             });
             expect(cache.setVolume).toHaveBeenCalledWith(share);
         });

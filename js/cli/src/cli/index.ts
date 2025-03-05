@@ -5,6 +5,10 @@ import { CommandMkdir } from './commandMkdir';
 import { CommandMv } from './commandMv';
 import { CommandStat } from './commandStat';
 import { Command } from './interface';
+import { CommandInvitations } from "./commandInvitations";
+import { CommandSharing } from "./commandSharing";
+import { CommandShare } from "./commandShare";
+import { CommandUnhare } from "./commandUnshare";
 
 const COMMANDS = [
     new CommandLogin(),
@@ -12,6 +16,10 @@ const COMMANDS = [
     new CommandMkdir(),
     new CommandMv(),
     new CommandStat(),
+    new CommandInvitations(),
+    new CommandSharing(),
+    new CommandShare(),
+    new CommandUnhare(),
 ];
 
 export function getCommand(commandName: string): Command {

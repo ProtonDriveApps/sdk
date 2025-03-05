@@ -221,8 +221,8 @@ export class NodesManagement {
 
         const node: DecryptedNode = {
             // Internal metadata
-            volumeId: parentNode.volumeId,
             hash: encryptedCrypto.hash,
+            encryptedName: encryptedCrypto.encryptedName,
 
             // Basic node metadata
             uid: nodeUid,

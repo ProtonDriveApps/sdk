@@ -1,4 +1,5 @@
 import { DriveAPIService, drivePaths } from "../apiService";
+import { makeMemberUid } from "../uids";
 import { EncryptedShare, EncryptedRootShare, EncryptedShareCrypto } from "./interface";
 
 type PostCreateVolumeRequest = Extract<drivePaths['/drive/volumes']['post']['requestBody'], { 'content': object }>['content']['application/json'];
@@ -152,5 +153,8 @@ function convertSharePayload(response: GetShareResponse): EncryptedShare {
             armoredPassphrase: response.Passphrase,
             armoredPassphraseSignature: response.PassphraseSignature,
         },
+        membership: response.Memberships?.[0] ? {
+            memberUid: makeMemberUid(response.ShareID, response.Memberships[0].MemberID),
+        } : undefined,
     };
 }
