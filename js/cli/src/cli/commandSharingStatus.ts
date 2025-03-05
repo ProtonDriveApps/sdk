@@ -1,7 +1,8 @@
 import { Command, ActionArgs } from './interface';
 
-export class CommandSharing implements Command {
-    name = 'sharing';
+export class CommandSharingStatus implements Command {
+    group = 'sharing';
+    name = 'status';
     args = ['path'];
 
     async action({ sdk, paths, args: [ pathString ] }: ActionArgs) {

@@ -70,6 +70,13 @@ export class Path {
             const rootNodeName = await this.getSharedWithMeRootFolder();
             return this.getNodeByPath(rootNodeName, this.sectionPathWithoutRoot);
         }
+        if (this.type === PathType.Trash) {
+            const parts = this.sectionPath.split(path.sep);
+            if (parts.length > 1) {
+                throw new Error('Browsing trashed folders is not supported');
+            }
+            return this.getTrashedNode(parts[0]);
+        }
         throw new Error('Not implemented');
     }
 
@@ -95,6 +102,15 @@ export class Path {
             }
         }
         throw new Error('Root node not found');
+    }
+
+    private async getTrashedNode(name: string) {
+        for await (const node of this.sdk.iterateTrashedNodes()) {
+            if (node.name.ok && node.name.value === name) {
+                return node;
+            }
+        }
+        throw new Error('Trashed node not found');
     }
 
     private async getNodeByPath(parentNode: NodeEntity, pathString: string) {

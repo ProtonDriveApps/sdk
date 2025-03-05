@@ -1,7 +1,8 @@
 import { Command, ActionArgs } from './interface';
 
-export class CommandInvitations implements Command {
-    name = 'invitations';
+export class CommandInvitationList implements Command {
+    group  = 'invitation';
+    name = 'list';
 
     async action({ sdk }: ActionArgs) {
         for await (const invitation of sdk.iterateInvitations()) {

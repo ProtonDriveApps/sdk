@@ -5,8 +5,9 @@ import { getCommand, validateCommandArguments } from "./cli";
 
 const { account, sdk, paths } = await init();
 
-const commandName = Bun.argv[2];
-const command = getCommand(commandName);
+const groupName = Bun.argv[2];
+const commandName = Bun.argv[3];
+const command = getCommand(groupName, commandName);
 
 const { values: options, positionals } = parseArgs({
     args: Bun.argv,
@@ -15,7 +16,7 @@ const { values: options, positionals } = parseArgs({
     allowPositionals: true,
 });
 
-const args = positionals.slice(3);
+const args = positionals.slice(4);
 validateCommandArguments(command, args, options);
 
 if (!command.isAuthAction) {

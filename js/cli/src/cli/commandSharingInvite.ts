@@ -1,10 +1,12 @@
 import { ParseArgsConfig } from "util";
 import { Command, ActionArgs } from './interface';
 
-export class CommandShare implements Command {
-    name = 'share';
+export class CommandSharingInvite implements Command {
+    group = 'sharing';
+    name = 'invite';
     args = ['path'];
     options: ParseArgsConfig['options'] = {
+        // TODO: merge internal and external users into one option
         user: {
             type: 'string',
             short: 'u',

@@ -1,36 +1,52 @@
 import { ParseArgsConfig } from "util";
-import { CommandLogin } from './commandLogin';
-import { CommandLs } from './commandLs';
-import { CommandMkdir } from './commandMkdir';
-import { CommandMv } from './commandMv';
-import { CommandStat } from './commandStat';
+import { CommandAuthLogin } from './commandAuthLogin';
+import { CommandFileSystemCreateFolder } from './commandFileSystemCreateFolder';
+import { CommandFileSystemInfo } from './commandFileSystemInfo';
+import { CommandFileSystemList } from './commandFileSystemList';
+import { CommandFileSystemMove } from './commandFileSystemMove';
+import { CommandFileSystemRename } from './commandFileSystemRename';
+import { CommandFileSystemRestore } from './commandFileSystemRestore';
+import { CommandFileSystemTrash } from './commandFileSystemTrash';
+import { CommandInvitationList } from "./commandInvitationList";
+import { CommandRevisionDelete } from './commandRevisionDelete';
+import { CommandRevisionList } from './commandRevisionList';
+import { CommandRevisionRestore } from './commandRevisionRestore';
+import { CommandSharingStatus } from "./commandSharingStatus";
+import { CommandSharingInvite } from "./commandSharingInvite";
+import { CommandSharingRemove } from "./commandSharingRemove";
 import { Command } from './interface';
-import { CommandInvitations } from "./commandInvitations";
-import { CommandSharing } from "./commandSharing";
-import { CommandShare } from "./commandShare";
-import { CommandUnhare } from "./commandUnshare";
 
 const COMMANDS = [
-    new CommandLogin(),
-    new CommandLs(),
-    new CommandMkdir(),
-    new CommandMv(),
-    new CommandStat(),
-    new CommandInvitations(),
-    new CommandSharing(),
-    new CommandShare(),
-    new CommandUnhare(),
+    new CommandAuthLogin(),
+    new CommandFileSystemList(),
+    new CommandFileSystemInfo(),
+    new CommandFileSystemCreateFolder(),
+    new CommandFileSystemRename(),
+    new CommandFileSystemMove(),
+    new CommandFileSystemTrash(),
+    new CommandFileSystemRestore(),
+    new CommandRevisionList(),
+    new CommandRevisionRestore(),
+    new CommandRevisionDelete(),
+    new CommandSharingStatus(),
+    new CommandSharingInvite(),
+    new CommandSharingRemove(),
+    new CommandInvitationList(),
+
 ];
 
-export function getCommand(commandName: string): Command {
-    for (const command of COMMANDS) {
-        if (command.name === commandName) {
-            return command;
-        }
+export function getCommand(groupName: string, commandName: string): Command {
+    if (groupName === 'fs') {
+        groupName = 'filesystem';
+    }
+
+    const commands = COMMANDS.filter(command => command.group.startsWith(groupName) && command.name.startsWith(commandName));
+    if (commands.length === 1) {
+        return commands[0];
     }
 
     printUsage();
-    throw new Error(`Command not found: ${commandName}`);
+    throw new Error(`Command not found`);
 }
 
 export function validateCommandArguments(command: Command, args: string[], values: { [name: string]: any }) {
@@ -67,6 +83,8 @@ function printCommandUsage(command: Command) {
 
 function printCommandManual(command: Command) {
     const args = (command.args || []).map(arg => `<${arg}>`).join(' ');
-    const options = Object.entries(command.options || {}).map(([name, { type }]) => `--${name} <${type}>`).join(' ');
-    console.log(`  ${command.name} ${args} ${options}`);
+    const options = Object.entries(command.options || {})
+        .map(([name, { type }]) => type === 'boolean' ? `--${name}` : `--${name} <${type}>`)
+        .join(' ');
+    console.log(`  ${command.group} ${command.name} ${args} ${options}`);
 }

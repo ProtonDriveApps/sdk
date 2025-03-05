@@ -4,6 +4,7 @@ import { Account } from "../account/account";
 import { Paths } from "./paths";
 
 export interface Command {
+    group: string;
     name: string;
     isAuthAction?: boolean;
     args?: string[];

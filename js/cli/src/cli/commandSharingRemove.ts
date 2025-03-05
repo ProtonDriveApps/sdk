@@ -1,8 +1,9 @@
 import { ParseArgsConfig } from "util";
 import { Command, ActionArgs } from './interface';
 
-export class CommandUnhare implements Command {
-    name = 'unshare';
+export class CommandSharingRemove implements Command {
+    group = 'sharing';
+    name = 'remove';
     args = ['path'];
     options: ParseArgsConfig['options'] = {
         email: {
@@ -11,7 +12,7 @@ export class CommandUnhare implements Command {
             multiple: true,
             default: [],
         },
-        all: {
+        everyone: {
             type: 'boolean',
             short: 'a',
             default: false,
@@ -22,12 +23,13 @@ export class CommandUnhare implements Command {
         sdk,
         paths,
         args: [ pathString ],
-        options: { email: emails, all },
+        options: { email: emails, everyone },
     }: ActionArgs) {
         const path = paths.getPath(pathString);
         const node = await path.getNode();
 
-        const sharingInfo = all
+        // TODO: when supporting public links, everyone should keep it
+        const sharingInfo = everyone
             ? await sdk.unshareNode(node)
             : await sdk.unshareNode(node, {
                 users: emails,
