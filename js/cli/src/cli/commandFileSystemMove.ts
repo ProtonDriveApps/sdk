@@ -15,7 +15,7 @@ export class CommandFileSystemMove implements Command {
         const targetPath = paths.getPath(targetPathString);
 
         if (sourcePath.type === PathType.MyFiles && targetPath.type === PathType.MyFiles) {
-            return this.moveNode(sdk, sourcePath, targetPath.parentPath);
+            return this.moveNode(sdk, sourcePath, targetPath);
         }
         throw new Error(`Move from ${sourcePath.type} to ${targetPath.type} not supported`);
     }

@@ -284,7 +284,7 @@ describe("nodeAPIService", () => {
             expect(result).toEqual([
                 { uid: 'volume:volumeId;node:nodeId1', ok: true },
                 { uid: 'volume:volumeId;node:nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
-                { uid: 'volume:volumeId;node:nodeId3', ok: false, error: 'Unknown error' },
+                { uid: 'volume:volumeId;node:nodeId3', ok: false, error: 'Unknown error 2000' },
             ]);
         });
 

@@ -50,7 +50,7 @@ export class Path {
         if (this.fullPath.startsWith(`${path.sep}trash`)) {
             return PathType.Trash;
         }
-        throw new Error('Path not supported');
+        throw new Error(`Path "${this.fullPath}" not supported`);
     }
 
     get parentPath() {

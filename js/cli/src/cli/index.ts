@@ -1,5 +1,6 @@
 import { ParseArgsConfig } from "util";
 import { CommandAuthLogin } from './commandAuthLogin';
+import { CommandAuthLogout } from './commandAuthLogout';
 import { CommandFileSystemCreateFolder } from './commandFileSystemCreateFolder';
 import { CommandFileSystemInfo } from './commandFileSystemInfo';
 import { CommandFileSystemList } from './commandFileSystemList';
@@ -19,6 +20,7 @@ import { CommandFileSystemDelete } from "./commandFileSystemDelete";
 
 const COMMANDS = [
     new CommandAuthLogin(),
+    new CommandAuthLogout(),
     new CommandFileSystemList(),
     new CommandFileSystemInfo(),
     new CommandFileSystemCreateFolder(),
@@ -34,7 +36,6 @@ const COMMANDS = [
     new CommandSharingInvite(),
     new CommandSharingRemove(),
     new CommandInvitationList(),
-
 ];
 
 export function getCommand(groupName: string, commandName: string): Command {
@@ -86,7 +87,10 @@ function printCommandUsage(command: Command) {
 function printCommandManual(command: Command) {
     const args = (command.args || []).map(arg => `<${arg}>`).join(' ');
     const options = Object.entries(command.options || {})
-        .map(([name, { type }]) => type === 'boolean' ? `--${name}` : `--${name} <${type}>`)
+        .map(([name, { type, short }]) => {
+            const flag = short ? `-${short}|--${name}` : `--${name}`;
+            return type === 'boolean' ? flag : `${flag} <${type}>`
+        })
         .join(' ');
     console.log(`  ${command.group} ${command.name} ${args} ${options}`);
 }

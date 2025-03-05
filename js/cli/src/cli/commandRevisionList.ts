@@ -31,7 +31,6 @@ export class CommandRevisionList implements Command {
         const author = formatAuthor(revision.author);
         const created = formatDate(revision.createdDate, options.humanReadable);
         const size = formatSize(revision.claimedSize, options.humanReadable);
-        const id = revision.uid.split(';')[2].split(':')[1];
-        console.log(`${author} ${created} ${size} ${id}`);
+        console.log(`${author} ${created} ${size} ${revision.uid}`);
     }
 }
