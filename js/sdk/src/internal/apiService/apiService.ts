@@ -1,5 +1,5 @@
 import { ProtonDriveHTTPClient, Logger } from "../../interface/index.js";
-import { HTTPErrorCode, ErrorCode } from './errorCodes';
+import { HTTPErrorCode, isCodeOk } from './errorCodes';
 import { apiErrorFactory, AbortError, APIError } from './errors';
 import { waitSeconds } from './wait';
 
@@ -190,7 +190,7 @@ export class DriveAPIService {
         try {
             const result = await response.json();
 
-            if (!response.ok || result.Code !== ErrorCode.OK) {
+            if (!response.ok || !isCodeOk(result.Code)) {
                 throw apiErrorFactory({ response, result });
             }
             return result as ResponsePayload;

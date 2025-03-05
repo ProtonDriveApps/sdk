@@ -1,6 +1,6 @@
 import { Logger, NodeResult } from "../../interface";
 import { RevisionState } from "../../interface/nodes";
-import { DriveAPIService, drivePaths, ErrorCode, nodeTypeNumberToNodeType, permissionsToDirectMemberRole } from "../apiService";
+import { DriveAPIService, drivePaths, isCodeOk, nodeTypeNumberToNodeType, permissionsToDirectMemberRole } from "../apiService";
 import { splitNodeUid, makeNodeUid, makeNodeRevisionUid, splitNodeRevisionUid } from "../uids";
 import { EncryptedNode, EncryptedRevision } from "./interface";
 
@@ -318,7 +318,7 @@ export class NodeAPIService {
             XAttr: newNode.encryptedExtendedAttributes,
         });
 
-        return response.Folder.ID;
+        return makeNodeUid(volumeId, response.Folder.ID);
     }
 
     async getRevisions(nodeUid: string, signal?: AbortSignal): Promise<EncryptedRevision[]> {
@@ -373,10 +373,9 @@ function* handleResponseErrors(nodeUids: string[], volumeId: string, responses: 
     const errors = new Map();
 
     responses.forEach((response) => {
-        const okResponse = response.Response.Code === ErrorCode.OK || response.Response.Code === ErrorCode.OK_MANY;
-        if (!okResponse || response.Response.Error) {
+        if (!response.Response.Code || !isCodeOk(response.Response.Code) || response.Response.Error) {
             const nodeUid = makeNodeUid(volumeId, response.LinkID);
-            errors.set(nodeUid, response.Response.Error || 'Unknown error');
+            errors.set(nodeUid, response.Response.Error || `Unknown error ${response.Response.Code}`);
         }
     });
 
