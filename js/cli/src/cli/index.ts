@@ -15,6 +15,7 @@ import { CommandSharingStatus } from "./commandSharingStatus";
 import { CommandSharingInvite } from "./commandSharingInvite";
 import { CommandSharingRemove } from "./commandSharingRemove";
 import { Command } from './interface';
+import { CommandFileSystemDelete } from "./commandFileSystemDelete";
 
 const COMMANDS = [
     new CommandAuthLogin(),
@@ -24,6 +25,7 @@ const COMMANDS = [
     new CommandFileSystemRename(),
     new CommandFileSystemMove(),
     new CommandFileSystemTrash(),
+    new CommandFileSystemDelete(),
     new CommandFileSystemRestore(),
     new CommandRevisionList(),
     new CommandRevisionRestore(),
