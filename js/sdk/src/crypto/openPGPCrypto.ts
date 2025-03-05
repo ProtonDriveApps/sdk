@@ -10,6 +10,7 @@ interface OpenPGPCryptoProxy {
     exportPrivateKey: (options: { privateKey: PrivateKey, passphrase: string }) => Promise<string>,
     importPrivateKey: (options: { armoredKey: string, passphrase: string }) => Promise<PrivateKey>,
     generateSessionKey: (options: { recipientKeys: PrivateKey[] }) => Promise<SessionKey>,
+    encryptSessionKey: (options: SessionKey & { format: 'binary', encryptionKeys: PublicKey[] }) => Promise<Uint8Array>,
     decryptSessionKey: (options: { armoredMessage: string, decryptionKeys: PrivateKey[] }) => Promise<SessionKey | undefined>,
     encryptMessage: (options: {
         format?: 'armored' | 'binary',
@@ -30,11 +31,18 @@ interface OpenPGPCryptoProxy {
         binarySignature?: Uint8Array,
         sessionKeys?: SessionKey,
         decryptionKeys?: PrivateKey[],
-        verificationKeys: PublicKey[]
+        verificationKeys: PublicKey[],
     }) => Promise<{
         data: Uint8Array | string,
         verified: VERIFICATION_STATUS
     }>,
+    signMessage: (options: {
+        format: 'binary',
+        binaryData: Uint8Array,
+        signingKeys: PrivateKey[],
+        detached: boolean,
+        context: { critical: boolean, value: string },
+    }) => Promise<Uint8Array>,
 }
 
 /**
@@ -54,6 +62,17 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
     async generateSessionKey(encryptionKeys: PrivateKey[]) {
         return this.cryptoProxy.generateSessionKey({ recipientKeys: encryptionKeys });
+    }
+
+    async encryptSessionKey(sessionKey: SessionKey, encryptionKeys: PublicKey[]) {
+        const keyPacket = await this.cryptoProxy.encryptSessionKey({
+            ...sessionKey,
+            format: 'binary',
+            encryptionKeys,
+        });
+        return {
+            keyPacket
+        };
     }
 
     async generateKey(passphrase: string) {
@@ -164,12 +183,29 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         }
     }
 
+    async sign(
+        data: Uint8Array,
+        signingKeys: PrivateKey[],
+        signatureContext: string,
+    ) {
+        const signature = await this.cryptoProxy.signMessage({
+            binaryData: data,
+            signingKeys,
+            detached: true,
+            format: 'binary',
+            context: { critical: true, value: signatureContext },
+        });
+        return {
+            signature
+        };
+    }
+
     async decryptSessionKey(
-        armoredPassphrase: string,
+        armoredData: string,
         decryptionKeys: PrivateKey[],
     ) {
         const sessionKey = await this.cryptoProxy.decryptSessionKey({
-            armoredMessage: armoredPassphrase,
+            armoredMessage: armoredData,
             decryptionKeys,
         });
 

@@ -19,6 +19,7 @@ describe('sharesCache', () => {
             shareId: 'share1',
             rootNodeId: 'node1',
             creatorEmail: 'email',
+            addressId: 'address1',
         };
 
         await cache.setVolume(volume);

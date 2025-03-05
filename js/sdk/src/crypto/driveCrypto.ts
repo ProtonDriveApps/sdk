@@ -1,4 +1,11 @@
-import { OpenPGPCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from './interface.js';
+import { OpenPGPCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from './interface';
+import { uint8ArrayToBase64String } from './utils';
+
+enum SIGNING_CONTEXTS {
+    SHARING_INVITER = 'drive.share-member.inviter',
+    SHARING_INVITER_EXTERNAL_INVITATION = 'drive.share-member.external-invitation',
+    SHARING_MEMBER = 'drive.share-member.member',
+}
 
 /**
  * Drive crypto layer to provide general operations for Drive crypto.
@@ -124,10 +131,7 @@ export class DriveCrypto {
         sessionKey: SessionKey,
         verified: VERIFICATION_STATUS,
     }> {
-        const sessionKey = await this.openPGPCrypto.decryptSessionKey(
-            armoredPassphrase,
-            decryptionKeys,
-        );
+        const sessionKey = await this.decryptSessionKey(armoredPassphrase, decryptionKeys);
 
         const { data: decryptedPassphrase, verified } = await this.openPGPCrypto.decryptArmoredAndVerifyDetached(
             armoredPassphrase,
@@ -148,6 +152,62 @@ export class DriveCrypto {
             sessionKey,
             verified,
         };
+    }
+
+    /**
+     * It encrypts session key with provided encryption key.
+     */
+    async encryptSessionKey(
+        sessionKey: SessionKey,
+        encryptionKey: PublicKey,
+    ): Promise<{
+        base64KeyPacket: string,
+    }> {
+        const { keyPacket } = await this.openPGPCrypto.encryptSessionKey(sessionKey, encryptionKey);
+        return {
+            base64KeyPacket: uint8ArrayToBase64String(keyPacket),
+        }
+    }
+
+    /**
+     * It decrypts session key from armored data.
+     * 
+     * `decryptionKeys` are used to decrypt the session key from the `armoredData`.
+     */
+    async decryptSessionKey(
+        armoredData: string,
+        decryptionKeys: PrivateKey[],
+    ): Promise<SessionKey> {
+        const sessionKey = await this.openPGPCrypto.decryptSessionKey(
+            armoredData,
+            decryptionKeys,
+        );
+        return sessionKey;
+    }
+
+    /**
+     * It decrypts key similarly like `decryptKey`, but without signature
+     * verification. This is used for invitations.
+     */
+    async decryptUnsignedKey(
+        armoredKey: string,
+        armoredPassphrase: string,
+        decryptionKeys: PrivateKey[],
+    ): Promise<PrivateKey> {
+        const { data: decryptedPassphrase } = await this.openPGPCrypto.decryptArmoredAndVerify(
+            armoredPassphrase,
+            decryptionKeys,
+            [],
+        );
+
+        const passphrase = new TextDecoder().decode(decryptedPassphrase);
+
+        const key = await this.openPGPCrypto.decryptKey(
+            armoredKey,
+            passphrase,
+        );
+
+        return key;
     }
 
     /**
@@ -292,5 +352,66 @@ export class DriveCrypto {
             extendedAttributes: new TextDecoder().decode(decryptedExtendedAttributes),
             verified,
         };
+    }
+
+    async encryptInvitation(
+        shareSessionKey: SessionKey,
+        encryptionKey: PublicKey,
+        signingKey: PrivateKey,
+    ): Promise<{
+        base64KeyPacket: string,
+        base64KeyPacketSignature: string,
+    }> {
+        const { keyPacket } = await this.openPGPCrypto.encryptSessionKey(shareSessionKey, encryptionKey);
+        const { signature: keyPacketSignature } = await this.openPGPCrypto.sign(
+            keyPacket,
+            signingKey,
+            SIGNING_CONTEXTS.SHARING_INVITER,
+        )
+        return {
+            base64KeyPacket: uint8ArrayToBase64String(keyPacket),
+            base64KeyPacketSignature: uint8ArrayToBase64String(keyPacketSignature),
+        }
+    }
+
+    async acceptInvitation(
+        base64KeyPacket: string,
+        signingKey: PrivateKey,
+    ): Promise<{
+        base64SessionKeySignature: string,
+    }> {
+        const sessionKey = await this.decryptSessionKey(
+            base64KeyPacket,
+            signingKey,
+        );
+
+        const { signature } = await this.openPGPCrypto.sign(
+            sessionKey.data,
+            signingKey,
+            SIGNING_CONTEXTS.SHARING_MEMBER,
+        );
+
+        return {
+            base64SessionKeySignature: uint8ArrayToBase64String(signature),
+        }
+    }
+
+    async encryptExternalInvitation(
+        shareSessionKey: SessionKey,
+        signingKey: PrivateKey,
+        inviteeEmail: string,
+    ): Promise<{
+        base64ExternalInvitationSignature: string,
+    }> {
+        const data = inviteeEmail.concat('|').concat(uint8ArrayToBase64String(shareSessionKey.data));
+
+        const { signature: externalInviationSignature } = await this.openPGPCrypto.sign(
+            new TextEncoder().encode(data),
+            signingKey,
+            SIGNING_CONTEXTS.SHARING_INVITER_EXTERNAL_INVITATION,
+        )
+        return {
+            base64ExternalInvitationSignature: uint8ArrayToBase64String(externalInviationSignature),
+        }
     }
 }

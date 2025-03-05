@@ -45,7 +45,7 @@ describe("nodesCryptoService", () => {
         sharesService = {
             getVolumeEmailKey: jest.fn(async () => ({
                 email: "email",
-                key: "key" as unknown as PrivateKey,
+                addressKey: "key" as unknown as PrivateKey,
             })),
         };
 

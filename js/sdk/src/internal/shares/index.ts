@@ -7,6 +7,8 @@ import { SharesCache } from "./cache";
 import { SharesCryptoService } from "./cryptoService";
 import { SharesManager } from "./manager";
 
+export type { EncryptedShare } from "./interface";
+
 /**
  * Provides facade for the whole shares module.
  * 

@@ -20,13 +20,14 @@ export interface VolumeShareNodeIDs {
 
 export type Volume = {
     /**
-     * Creator email comes from the default share.
+     * Creator email and address ID come from the default share.
      * 
      * The idea is to keep this information synced, so whenever we check
-     * cached volume information, we have creator email at hand for any
-     * verification checks.
+     * cached volume information, we have creator details at hand for any
+     * verification checks or creation needs.
      */
     creatorEmail: string;
+    addressId: string;
 } & VolumeShareNodeIDs;
 
 /**
@@ -58,6 +59,11 @@ interface BaseRootShare extends BaseShare {
 export interface EncryptedShare extends BaseShare {
     creatorEmail: string;
     encryptedCrypto: EncryptedShareCrypto;
+    membership?: ShareMembership;
+}
+
+interface ShareMembership {
+    memberUid: string;
 }
 
 /**

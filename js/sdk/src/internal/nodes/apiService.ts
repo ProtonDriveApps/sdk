@@ -1,6 +1,6 @@
-import { Logger, NodeType, MemberRole, NodeResult } from "../../interface";
+import { Logger, NodeResult } from "../../interface";
 import { RevisionState } from "../../interface/nodes";
-import { DriveAPIService, drivePaths, ErrorCode } from "../apiService";
+import { DriveAPIService, drivePaths, ErrorCode, nodeTypeNumberToNodeType, permissionsToDirectMemberRole } from "../apiService";
 import { splitNodeUid, makeNodeUid, makeNodeRevisionUid, splitNodeRevisionUid } from "../uids";
 import { EncryptedNode, EncryptedRevision } from "./interface";
 
@@ -69,13 +69,13 @@ export class NodeAPIService {
         const nodes = response.Links.map((link) => {
             const baseNodeMetadata = {
                 // Internal metadata
-                volumeId,
                 hash: link.Link.NameHash || undefined,
+                encryptedName: link.Link.Name,
 
                 // Basic node metadata
                 uid: makeNodeUid(volumeId, link.Link.LinkID),
                 parentUid: link.Link.ParentLinkID ? makeNodeUid(volumeId, link.Link.ParentLinkID) : undefined,
-                type: link.Link.Type === 1 ? NodeType.Folder : NodeType.File,
+                type: nodeTypeNumberToNodeType(link.Link.Type),
                 mimeType: link.Link.MIMEType || undefined,
                 createdDate: new Date(link.Link.CreateTime*1000),
                 trashedDate: link.Link.TrashTime ? new Date(link.Link.TrashTime*1000) : undefined,
@@ -83,10 +83,9 @@ export class NodeAPIService {
                 // Sharing node metadata
                 shareId: link.SharingSummary?.ShareID || undefined,
                 isShared: !!link.SharingSummary,
-                directMemberRole: sharingSummaryToDirectMemberRole(link.SharingSummary, this.logger),
+                directMemberRole: permissionsToDirectMemberRole(link.SharingSummary?.ShareAccess.Permissions, this.logger),
             }
             const baseCryptoNodeMetadata = {
-                encryptedName: link.Link.Name,
                 signatureEmail: link.Link.SignatureEmail || undefined,
                 nameSignatureEmail: link.Link.NameSignatureEmail || undefined,
                 armoredKey: link.Link.NodeKey,
@@ -360,22 +359,6 @@ function assertAndGetSingleVolumeId(operationForErrorMessage: string, nodeIds: {
     }
     const volumeId = nodeIds[0].volumeId;
     return volumeId;
-}
-
-function sharingSummaryToDirectMemberRole(sharingSummary: PostLoadLinksMetadataResponse['Links'][0]['SharingSummary'], logger?: Logger): MemberRole {
-    switch (sharingSummary?.ShareAccess.Permissions) {
-        case undefined:
-        case 4:
-            return MemberRole.Viewer;
-        case 6:
-            return MemberRole.Editor;
-        case 22:
-            return MemberRole.Admin;
-        default:
-            // User have access to the data, thus at minimum it can view.
-            logger?.warn(`Unknown sharing permissions: ${sharingSummary?.ShareAccess.Permissions}`);
-            return MemberRole.Viewer;
-    }
 }
 
 type LinkResponse = {

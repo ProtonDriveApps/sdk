@@ -1,18 +1,28 @@
-import { NodeEntity } from "../../interface";
+import { NodeEntity, ProtonInvitationWithNode } from "../../interface";
 import { BatchLoading } from "../batchLoading";
 import { SharingAPIService } from "./apiService";
 import { SharingCache } from "./cache";
+import { SharingCryptoService } from "./cryptoService";
 import { SharesService, NodesService } from "./interface";
 
+/**
+ * Provides high-level actions for access shared nodes.
+ *
+ * The manager is responsible for listing shared by me, shared with me,
+ * invitations, bookmarks, etc., including API communication, encryption,
+ * decryption, and caching.
+ */
 export class SharingAccess {
     constructor(
         private apiService: SharingAPIService,
         private cache: SharingCache,
+        private cryptoService: SharingCryptoService,
         private sharesService: SharesService,
         private nodesService: NodesService,
     ) {
         this.apiService = apiService;
         this.cache = cache;
+        this.cryptoService = cryptoService;
         this.sharesService = sharesService;
         this.nodesService = nodesService;
     }
@@ -63,11 +73,37 @@ export class SharingAccess {
         await setCache(loadedNodeUids);
     }
 
-    // TODO: return decrypted invitations
-    async* iterateInvitations(signal?: AbortSignal): AsyncGenerator<string> {
-        for await (const invitationUid of this.apiService.iterateInvitationUids(signal)) {
-            yield invitationUid;
+    async removeSharedNodeWithMe(nodeUid: string): Promise<void> {
+        const node = await this.nodesService.getNode(nodeUid);
+        if (!node.shareId) {
+            return;
         }
+
+        const share = await this.sharesService.loadEncryptedShare(node.shareId);
+        const memberUid = share.membership?.memberUid;
+        if (!memberUid) {
+            throw new Error('Share without membership cannot be removed');
+        }
+
+        await this.apiService.removeMember(memberUid);
+    }
+
+    async* iterateInvitations(signal?: AbortSignal): AsyncGenerator<ProtonInvitationWithNode> {
+        for await (const invitationUid of this.apiService.iterateInvitationUids(signal)) {
+            const encryptedInvitation = await this.apiService.getInvitation(invitationUid);
+            const invitation = await this.cryptoService.decryptInvitationWithNode(encryptedInvitation);
+            yield invitation;
+        }
+    }
+
+    async acceptInvitation(invitationUid: string): Promise<void> {
+        const encryptedInvitation = await this.apiService.getInvitation(invitationUid);
+        const { base64SessionKeySignature } = await this.cryptoService.acceptInvitation(encryptedInvitation);
+        await this.apiService.acceptInvitation(invitationUid, base64SessionKeySignature);
+    }
+
+    async rejectInvitation(invitationUid: string): Promise<void> {
+        await this.apiService.rejectInvitation(invitationUid);
     }
 
     // TODO: return decrypted bookmarks
@@ -75,5 +111,9 @@ export class SharingAccess {
         for await (const bookmark of this.apiService.iterateBookmarks(signal)) {
             yield bookmark.tokenId;
         }
+    }
+
+    async deleteBookmark(tokenId: string): Promise<void> {
+        await this.apiService.deleteBookmark(tokenId);
     }
 }

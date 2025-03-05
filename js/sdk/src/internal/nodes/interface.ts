@@ -7,8 +7,8 @@ import { RevisionState } from "../../interface/nodes";
  */
 interface BaseNode {
     // Internal metadata
-    volumeId: string;
     hash?: string; // root node doesn't have any hash
+    encryptedName: string;
 
     // Basic node metadata
     uid: string;
@@ -34,8 +34,6 @@ export interface EncryptedNode extends BaseNode {
 }
 
 export interface EncryptedNodeCrypto {
-    encryptedName: string;
-
     signatureEmail?: string;
     nameSignatureEmail?: string;
     armoredKey: string;
@@ -118,5 +116,5 @@ export interface DecryptedRevision extends BaseRevision {
 export interface SharesService {
     getMyFilesIDs(): Promise<{ volumeId: string, rootNodeId: string }>,
     getSharePrivateKey(shareId: string): Promise<PrivateKey>,
-    getVolumeEmailKey(volumeId: string): Promise<{ email: string, key: PrivateKey }>,
+    getVolumeEmailKey(volumeId: string): Promise<{ email: string, addressKey: PrivateKey }>,
 }

@@ -2,11 +2,23 @@
 import { PrivateKey, PublicKey } from '../crypto';
 
 export interface ProtonDriveAccount {
-    getOwnPrimaryKey(): Promise<{ email: string, addressKey: PrivateKey, addressId: string, addressKeyId: string }>,
+    getOwnPrimaryAddress(): Promise<ProtonDriveAccountAddress>,
     // TODO: do we want to break it down to email vs address ID methods?
-    getOwnPrivateKey(emailOrAddressId: string): Promise<PrivateKey>,
-    getOwnPrivateKeys(emailOrAddressId: string): Promise<PrivateKey[]>,
+    getOwnAddress(emailOrAddressId: string): Promise<ProtonDriveAccountAddress>,
     getPublicKeys(email: string): Promise<PublicKey[]>,
+}
+
+export interface ProtonDriveAccountAddress {
+    email: string,
+    addressId: string,
+    primaryKey: {
+        id: string,
+        key: PrivateKey,
+    },
+    keys: {
+        id: string,
+        key: PrivateKey,
+    }[],
 }
 
 export interface ProtonDriveHTTPClient {

@@ -1,12 +1,13 @@
 import { SharingAPIService } from "./apiService";
 import { SharingCache } from "./cache";
+import { SharingCryptoService } from "./cryptoService";
 import { SharesService, NodesService } from "./interface";
-
 import { SharingAccess } from "./sharingAccess";
 
 describe("SharingAccess", () => {
     let apiService: SharingAPIService;
     let cache: SharingCache;
+    let cryptoService: SharingCryptoService;
     let sharesService: SharesService;
     let nodesService: NodesService;
 
@@ -31,6 +32,11 @@ describe("SharingAccess", () => {
             setSharedByMeNodeUids: jest.fn(),
             setSharedWithMeNodeUids: jest.fn(),
         }
+        // @ts-expect-error No need to implement all methods for mocking
+        cryptoService = {
+            decryptInvitation: jest.fn(),
+        }
+        // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
             getMyFilesIDs: jest.fn().mockResolvedValue({ volumeId: "volumeId" }),
         }
@@ -45,7 +51,7 @@ describe("SharingAccess", () => {
             }),
         }
 
-        sharingAccess = new SharingAccess(apiService, cache, sharesService, nodesService);
+        sharingAccess = new SharingAccess(apiService, cache, cryptoService, sharesService, nodesService);
     });
 
     describe("iterateSharedNodes", () => {

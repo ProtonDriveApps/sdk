@@ -1,5 +1,5 @@
 import { DriveAPIService } from './internal/apiService';
-import { ProtonDriveClientContructorParameters, ProtonDriveClientInterface, NodeOrUid, ShareNodeSettings, UploadMetadata } from './interface';
+import { ProtonDriveClientContructorParameters, ProtonDriveClientInterface, NodeOrUid, ShareNodeSettings, UnshareNodeSettings, UploadMetadata } from './interface';
 import { DriveCrypto } from './crypto';
 import { initSharesModule } from './internal/shares';
 import { initNodesModule } from './internal/nodes';
@@ -107,9 +107,33 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
     async* iterateSharedNodesWithMe(signal?: AbortSignal) {
         yield* convertInternalNodeIterator(this.sharing.access.iterateSharedNodesWithMe(signal));
     }
+    
+    async removeSharedNodeWithMe(nodeUid: NodeOrUid) {
+        await this.sharing.access.removeSharedNodeWithMe(getUid(nodeUid));
+    }
+
+    async* iterateInvitations(signal?: AbortSignal) {
+        yield* this.sharing.access.iterateInvitations(signal);
+    }
+
+    async acceptInvitation(invitationId: string) {
+        await this.sharing.access.acceptInvitation(invitationId);
+    }
+
+    async rejectInvitation(invitationId: string) {
+        await this.sharing.access.rejectInvitation(invitationId);
+    }
+
+    async getSharingInfo(nodeUid: NodeOrUid) {
+        return this.sharing.management.getSharingInfo(getUid(nodeUid));
+    }
 
     async shareNode(nodeUid: NodeOrUid, settings: ShareNodeSettings) {
-        return this.sharing.shareNode(getUid(nodeUid), settings);
+        return this.sharing.management.shareNode(getUid(nodeUid), settings);
+    }
+
+    async unshareNode(nodeUid: NodeOrUid, settings?: UnshareNodeSettings) {
+        return this.sharing.management.unshareNode(getUid(nodeUid), settings);
     }
 
     async getFileUploader(nodeUid: NodeOrUid, name: string, metadata: UploadMetadata, signal?: AbortSignal) {

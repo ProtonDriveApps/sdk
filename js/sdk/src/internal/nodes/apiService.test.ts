@@ -105,8 +105,8 @@ function generateFolderNode(overrides = {}) {
 
 function generateNode() {
     return {
-        volumeId: "volumeId",
         hash: "nameHash",
+        encryptedName: "encName",
 
         uid: "volume:volumeId;node:linkId",
         parentUid: "volume:volumeId;node:parentLinkId",
@@ -121,7 +121,6 @@ function generateNode() {
             armoredKey: "nodeKey",
             armoredNodePassphrase: "nodePass",
             armoredNodePassphraseSignature: "nodePassSig",
-            encryptedName: "encName",
             nameSignatureEmail: "nameSigEmail",
             signatureEmail: "sigEmail",
         },

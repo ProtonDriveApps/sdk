@@ -12,8 +12,32 @@ export function splitNodeUid(nodeUid: string) {
     };
 }
 
-export function makeInvitationUid(volumeId: string, invitationId: string) {
-    return `volume:${volumeId};invitation:${invitationId}`;
+export function makeInvitationUid(shareId: string, invitationId: string) {
+    // TODO: format of UID
+    return `share:${shareId};invitation:${invitationId}`;
+}
+
+export function splitInvitationUid(invitationUid: string) {
+    // TODO: validation
+    const [ shareId, invitationId ] = invitationUid.split(';');
+    return {
+        shareId: shareId.slice('share:'.length),
+        invitationId: invitationId.slice('invitation:'.length),
+    };
+}
+
+export function makeMemberUid(shareId: string, memberId: string) {
+    // TODO: format of UID
+    return `share:${shareId};member:${memberId}`;
+}
+
+export function splitMemberUid(memberUid: string) {
+    // TODO: validation
+    const [ shareId, memberId ] = memberUid.split(';');
+    return {
+        shareId: shareId.slice('share:'.length),
+        memberId: memberId.slice('member:'.length),
+    };
 }
 
 export function makeNodeRevisionUid(volumeId: string, nodeUid: string, revisionId: string) {

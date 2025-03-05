@@ -53,7 +53,8 @@ function deserializeVolume(shareData: string): Volume {
         !volume.volumeId || typeof volume.volumeId !== 'string' ||
         !volume.shareId || typeof volume.shareId !== 'string' ||
         !volume.rootNodeId || typeof volume.rootNodeId !== 'string' ||
-        !volume.creatorEmail || typeof volume.creatorEmail !== 'string'
+        !volume.creatorEmail || typeof volume.creatorEmail !== 'string' ||
+        !volume.addressId || typeof volume.addressId !== 'string'
     ) {
         throw new Error('Invalid volume data');
     }

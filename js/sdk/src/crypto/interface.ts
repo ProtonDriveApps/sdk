@@ -33,6 +33,10 @@ export interface OpenPGPCrypto {
 
     generateSessionKey: (encryptionKeys: PrivateKey[]) => Promise<SessionKey>,
 
+    encryptSessionKey: (sessionKey: SessionKey, encryptionKeys: PublicKey[]) => Promise<{
+        keyPacket: Uint8Array,
+    }>,
+
     /**
      * Generate a new key pair locked by a passphrase.
      * 
@@ -88,8 +92,16 @@ export interface OpenPGPCrypto {
         armoredSignature: string,
     }>,
 
+    sign: (
+        data: Uint8Array,
+        signingKey: PrivateKey,
+        signatureContext: string,
+    ) => Promise<{
+        signature: Uint8Array,
+    }>,
+
     decryptSessionKey: (
-        armoredPassphrase: string,
+        armoredData: string,
         decryptionKeys: PrivateKey[],
     ) => Promise<SessionKey>,
 
