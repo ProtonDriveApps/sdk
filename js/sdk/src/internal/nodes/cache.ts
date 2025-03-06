@@ -1,5 +1,6 @@
 import { EntityResult } from "../../cache";
 import { ProtonDriveEntitiesCache, Logger } from "../../interface";
+import { splitNodeUid } from "../uids";
 import { DecryptedNode } from "./interface";
 
 export enum CACHE_TAG_KEYS {
@@ -29,8 +30,9 @@ export class NodesCache {
     async setNode(node: DecryptedNode): Promise<void> {
         const key = getCacheUid(node.uid);
         const nodeData = serialiseNode(node);
-        
-        const tags = [];
+        const { volumeId } = splitNodeUid(node.uid);
+
+        const tags = [`volume:${volumeId}`];
         if (node.parentUid) {
             tags.push(`${CACHE_TAG_KEYS.ParentUid}:${node.parentUid}`)
         }
@@ -49,6 +51,26 @@ export class NodesCache {
         } catch (error: unknown) {
             this.removeCorruptedNode({ nodeUid }, error);
             throw new Error(`Failed to deserialise node: ${error instanceof Error ? error.message : error}`)
+        }
+    }
+
+    /**
+     * Set all nodes on given node as stale. This is useful when we
+     * get refresh event from the server and we thus don't know
+     * which nodes were up-to-date anymore.
+     */
+    async setNodesStaleFromVolume(volumeId: string): Promise<void> {
+        for await (const result of this.driveCache.iterateEntitiesByTag(`volume:${volumeId}`)) {
+            const node = await this.convertCacheResult(result);
+            if (node && node.ok) {
+                node.node.isStale = true;
+                await this.setNode(node.node);
+            }
+        }
+
+        // Force all calls to children UIDs to be re-fetched.
+        for await (const result of this.driveCache.iterateEntitiesByTag(`children-volume:${volumeId}`)) {
+            await this.driveCache.removeEntities([result.uid]);
         }
     }
 
@@ -164,7 +186,8 @@ export class NodesCache {
     }
 
     async setFolderChildrenLoaded(nodeUid: string): Promise<void> {
-        this.driveCache.setEntity(`node-children-${nodeUid}`, 'loaded');
+        const { volumeId } = splitNodeUid(nodeUid);
+        this.driveCache.setEntity(`node-children-${nodeUid}`, 'loaded', [`children-volume:${volumeId}`]);
     }
 
     async resetFolderChildrenLoaded(nodeUid: string): Promise<void> {
