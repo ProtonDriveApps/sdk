@@ -7,6 +7,7 @@ import { NodesCryptoService } from "./cryptoService";
 import { DecryptedNode } from "./interface";
 import { NodesAccess } from "./nodesAccess";
 import { validateNodeName } from "./validations";
+import { generateFolderExtendedAttributes } from "./extendedAttributes";
 
 /**
  * Provides high-level actions for managing nodes.
@@ -198,7 +199,7 @@ export class NodesManagement {
         await this.cache.removeNodes(deletedNodeUids);
     }
 
-    async createFolder(parentNodeUid: string, folderName: string): Promise<DecryptedNode> {
+    async createFolder(parentNodeUid: string, folderName: string, modificationTime?: Date): Promise<DecryptedNode> {
         validateNodeName(folderName);
 
         const parentNode = await this.nodesAccess.getNode(parentNodeUid);
@@ -207,7 +208,14 @@ export class NodesManagement {
             throw new Error('Creating folders in non-folders is not supported');
         }
 
-        const { encryptedCrypto, keys } = await this.cryptoService.createFolder(parentNode, { key: parentKeys.key, hashKey: parentKeys.hashKey }, folderName);
+        const extendedAttributes = generateFolderExtendedAttributes(modificationTime);
+
+        const { encryptedCrypto, keys } = await this.cryptoService.createFolder(
+            parentNode,
+            { key: parentKeys.key, hashKey: parentKeys.hashKey },
+            folderName,
+            extendedAttributes,
+        );
         const nodeUid = await this.apiService.createFolder(parentNodeUid, {
             armoredKey: encryptedCrypto.armoredKey,
             armoredHashKey: encryptedCrypto.folder.armoredHashKey,
@@ -216,7 +224,7 @@ export class NodesManagement {
             signatureEmail: encryptedCrypto.signatureEmail,
             encryptedName: encryptedCrypto.encryptedName,
             hash: encryptedCrypto.hash,
-            encryptedExtendedAttributes: encryptedCrypto.folder.encryptedExtendedAttributes, // TODO
+            armoredExtendedAttributes: encryptedCrypto.folder.armoredExtendedAttributes,
         });
 
         const node: DecryptedNode = {
@@ -233,7 +241,7 @@ export class NodesManagement {
 
             // Share node metadata
             isShared: false,
-            directMemberRole: MemberRole.Admin, // TODO
+            directMemberRole: MemberRole.Inherited,
 
             // Decrypted metadata
             isStale: false,

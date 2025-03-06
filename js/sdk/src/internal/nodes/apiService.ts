@@ -107,7 +107,7 @@ export class NodeAPIService {
                             state: RevisionState.Active,
                             createdDate: new Date(link.ActiveRevision.CreateTime*1000),
                             signatureEmail: link.ActiveRevision.SignatureEmail || undefined,
-                            encryptedExtendedAttributes: link.ActiveRevision.XAttr || undefined,
+                            armoredExtendedAttributes: link.ActiveRevision.XAttr || undefined,
                         },
                     },
                 }
@@ -118,7 +118,7 @@ export class NodeAPIService {
                     encryptedCrypto: {
                         ...baseCryptoNodeMetadata,
                         folder: {
-                            encryptedExtendedAttributes: link.Folder.XAttr || undefined,
+                            armoredExtendedAttributes: link.Folder.XAttr || undefined,
                             armoredHashKey: link.Folder.NodeHashKey as string,
                         },
                     },
@@ -297,7 +297,7 @@ export class NodeAPIService {
             signatureEmail: string,
             encryptedName: string,
             hash: string,
-            encryptedExtendedAttributes?: string,
+            armoredExtendedAttributes?: string,
         },
     ): Promise<string> {
         const { volumeId, nodeId: parentId } = splitNodeUid(parentUid);
@@ -314,8 +314,8 @@ export class NodeAPIService {
             SignatureEmail: newNode.signatureEmail,
             Name: newNode.encryptedName,
             Hash: newNode.hash,
-            // @ts-expect-error: API accepts XAttr as optional.
-            XAttr: newNode.encryptedExtendedAttributes,
+            // @ts-expect-error: XAttr is optional as undefined.
+            XAttr: newNode.armoredExtendedAttributes,
         });
 
         return makeNodeUid(volumeId, response.Folder.ID);

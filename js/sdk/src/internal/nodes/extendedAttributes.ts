@@ -50,6 +50,22 @@ export interface FileExtendedAttributesParsed {
     claimedAdditionalMetadata?: object,
 }
 
+export function generateFolderExtendedAttributes(claimedModificationTime?: Date): string | undefined {
+    if (!claimedModificationTime) {
+        return undefined;
+    }
+    return JSON.stringify({
+        Common: {
+            ModificationTime: dateToIsoString(claimedModificationTime),
+        },
+    });
+}
+
+function dateToIsoString(date: Date) {
+    const isDateValid = !Number.isNaN(date.getTime());
+    return isDateValid ? date.toISOString() : undefined;
+}
+
 export function parseFolderExtendedAttributes(extendedAttributes?: string, log?: Logger): FolderExtendedAttributes {
     if (!extendedAttributes) {
         return {};

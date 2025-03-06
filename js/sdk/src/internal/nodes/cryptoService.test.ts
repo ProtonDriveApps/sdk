@@ -130,7 +130,7 @@ describe("nodesCryptoService", () => {
                     armoredNodePassphraseSignature: "armoredNodePassphraseSignature",
                     folder: {
                         armoredHashKey: "armoredHashKey",
-                        encryptedExtendedAttributes: "encryptedExtendedAttributes",
+                        armoredExtendedAttributes: "encryptedExtendedAttributes",
                     }
                 },
             } as EncryptedNode,
@@ -344,7 +344,7 @@ describe("nodesCryptoService", () => {
                     armoredNodePassphraseSignature: "armoredNodePassphraseSignature",
                     folder: {
                         armoredHashKey: "armoredHashKey",
-                        encryptedExtendedAttributes: "encryptedExtendedAttributes",
+                        armoredExtendedAttributes: "encryptedExtendedAttributes",
                     }
                 },
             } as EncryptedNode,
@@ -386,7 +386,7 @@ describe("nodesCryptoService", () => {
                         uid: "revisionUid",
                         state: "active",
                         signatureEmail: "revisionSignatureEmail",
-                        encryptedExtendedAttributes: "encryptedExtendedAttributes",
+                        armoredExtendedAttributes: "encryptedExtendedAttributes",
                     },
                 },
             } as EncryptedNode,
@@ -437,7 +437,7 @@ describe("nodesCryptoService", () => {
                         uid: "revisionUid",
                         state: "active",
                         signatureEmail: "revisionSignatureEmail",
-                        encryptedExtendedAttributes: "encryptedExtendedAttributes",
+                        armoredExtendedAttributes: "encryptedExtendedAttributes",
                     },
                 },
             } as EncryptedNode,

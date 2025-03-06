@@ -334,6 +334,23 @@ export class DriveCrypto {
         };
     }
 
+    async encryptExtendedAttributes(
+        extendedAttributes: string,
+        encryptionKey: PrivateKey,
+        signingKey: PrivateKey,
+    ): Promise<{
+        armoredExtendedAttributes: string,
+    }> {
+        const { armoredData: armoredExtendedAttributes } = await this.openPGPCrypto.encryptAndSignArmored(
+            new TextEncoder().encode(extendedAttributes),
+            [encryptionKey],
+            signingKey,
+        );
+        return {
+            armoredExtendedAttributes,
+        };
+    }
+
     async decryptExtendedAttributes(
         armoreExtendedAttributes: string,
         decryptionKey: PrivateKey,

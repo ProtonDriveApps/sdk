@@ -16,6 +16,9 @@ export type NodeEntity = {
     createdDate: Date, // created on server date
     trashedDate?: Date,
     activeRevision?: Result<Revision, Error>,
+    folder?: {
+        claimedModificationTime?: Date,
+    },
 }
 
 export type InvalidNameError = {

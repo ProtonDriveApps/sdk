@@ -87,8 +87,8 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
         yield* this.nodes.management.deleteNodes(getUids(nodeUids), signal);
     }
 
-    async createFolder(parentNodeUid: NodeOrUid, name: string) {
-        return convertInternalNodePromise(this.nodes.management.createFolder(getUid(parentNodeUid), name));
+    async createFolder(parentNodeUid: NodeOrUid, name: string, modificationTime?: Date) {
+        return convertInternalNodePromise(this.nodes.management.createFolder(getUid(parentNodeUid), name, modificationTime));
     }
 
     async* iterateRevisions(nodeUid: NodeOrUid, signal?: AbortSignal) {

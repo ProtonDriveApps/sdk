@@ -19,7 +19,7 @@ function generateAPIFileNode(linkOverrides = {}, overrides = {}) {
             RevisionID: 'revisionId',
             CreateTime: 1234567890,
             SignatureEmail: 'revSigEmail',
-            XAttr: '{}',
+            XAttr: '{file}',
         },
         ...overrides,
     };
@@ -35,7 +35,7 @@ function generateAPIFolderNode(linkOverrides = {}, overrides = {}) {
             ...linkOverrides,
         },
         Folder: {
-            XAttr: '{}',
+            XAttr: '{folder}',
             NodeHashKey: 'nodeHashKey',
         },
         ...overrides,
@@ -79,7 +79,7 @@ function generateFileNode(overrides = {}) {
                 state: "active",
                 createdDate: new Date(1234567890000),
                 signatureEmail: "revSigEmail",
-                encryptedExtendedAttributes: "{}",
+                armoredExtendedAttributes: "{file}",
             },
         },
         ...overrides
@@ -96,7 +96,7 @@ function generateFolderNode(overrides = {}) {
             ...node.encryptedCrypto,
             folder: {
                 armoredHashKey: "nodeHashKey",
-                encryptedExtendedAttributes: "{}",
+                armoredExtendedAttributes: "{folder}",
             },
         },
         ...overrides

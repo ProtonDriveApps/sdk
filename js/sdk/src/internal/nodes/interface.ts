@@ -51,7 +51,7 @@ export interface EncryptedNodeFileCrypto extends EncryptedNodeCrypto {
 
 export interface EncryptedNodeFolderCrypto extends EncryptedNodeCrypto {
     folder: {
-        encryptedExtendedAttributes?: string;
+        armoredExtendedAttributes?: string;
         armoredHashKey: string;
     };
 }
@@ -102,7 +102,7 @@ interface BaseRevision {
 
 export interface EncryptedRevision extends BaseRevision {
     signatureEmail?: string;
-    encryptedExtendedAttributes?: string;
+    armoredExtendedAttributes?: string;
 }
 
 export interface DecryptedRevision extends BaseRevision {
