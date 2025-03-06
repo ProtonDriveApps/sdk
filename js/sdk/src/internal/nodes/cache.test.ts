@@ -3,10 +3,10 @@ import { NodeType, MemberRole } from "../../interface";
 import { CACHE_TAG_KEYS, NodesCache } from "./cache";
 import { DecryptedNode } from "./interface";
 
-function generateNode(uid: string, parentUid='root', params: Partial<DecryptedNode> = {}): DecryptedNode {
+function generateNode(uid: string, parentUid='root', params: Partial<DecryptedNode> & { volumeId?: string } = {}): DecryptedNode {
     return {
-        uid,
-        parentUid,
+        uid: `volume:${params.volumeId || "volumeId"};node:${uid}`,
+        parentUid: `volume:${params.volumeId || "volumeId"};node:${parentUid}`,
         directMemberRole: MemberRole.Admin,
         type: NodeType.File,
         mimeType: "text",
@@ -14,6 +14,7 @@ function generateNode(uid: string, parentUid='root', params: Partial<DecryptedNo
         createdDate: new Date(),
         trashedDate: undefined,
         volumeId: "volumeId",
+        isStale: false,
         ...params,
     } as DecryptedNode;
 }
@@ -32,6 +33,8 @@ async function generateTreeStructure(cache: NodesCache) {
         generateNode('node2b', 'node2', { trashedDate: new Date() }),
 
         generateNode('node3', 'root'),
+
+        generateNode('root-otherVolume', '', { volumeId: 'volume2' }),
     ]) {
         await cache.setNode(node);
     }
@@ -40,7 +43,7 @@ async function generateTreeStructure(cache: NodesCache) {
 async function verifyNodesCache(cache: NodesCache, expectedNodes: string[], expectedMissingNodes: string[]) {
     for (const nodeUid of expectedNodes) {
         try {
-            await cache.getNode(nodeUid);
+            await cache.getNode(`volume:volumeId;node:${nodeUid}`);
         } catch (error) {
             throw new Error(`${nodeUid} should be in the cache: ${error}`);
         }
@@ -48,7 +51,7 @@ async function verifyNodesCache(cache: NodesCache, expectedNodes: string[], expe
 
     for (const nodeUid of expectedMissingNodes) {
         try {
-            await cache.getNode(nodeUid);
+            await cache.getNode(`volume:volumeId;node:${nodeUid}`);
             throw new Error(`${nodeUid} should not be in the cache`);
         } catch (error) {
             expect(`${error}`).toBe('Error: Entity not found');
@@ -62,7 +65,7 @@ describe('nodesCache', () => {
 
     beforeEach(() => {
         memoryCache = new MemoryCache();
-        memoryCache.setEntity('node-root', JSON.stringify(generateNode('root', '')));
+        memoryCache.setEntity('node-volume:volumeId;node:root', JSON.stringify(generateNode('root', '')));
         memoryCache.setEntity('node-badObject', 'aaa', [`${CACHE_TAG_KEYS.ParentUid}:root`]);
 
         cache = new NodesCache(memoryCache);
@@ -104,7 +107,7 @@ describe('nodesCache', () => {
 
     it('should remove node without children', async () => {
         await generateTreeStructure(cache);
-        await cache.removeNodes(['node3']);
+        await cache.removeNodes(['volume:volumeId;node:node3']);
         await verifyNodesCache(
             cache,
             ['node1', 'node1a', 'node1b', 'node1c', 'node1c-alpha', 'node1c-beta', 'node2', 'node2a', 'node2b'],
@@ -114,7 +117,7 @@ describe('nodesCache', () => {
 
     it('should remove node and its children', async () => {
         await generateTreeStructure(cache);
-        await cache.removeNodes(['node2']);
+        await cache.removeNodes(['volume:volumeId;node:node2']);
         await verifyNodesCache(
             cache,
             ['node1', 'node1a', 'node1b', 'node1c', 'node1c-alpha', 'node1c-beta', 'node3'],
@@ -124,7 +127,7 @@ describe('nodesCache', () => {
 
     it('should remove node and its children recursively', async () => {
         await generateTreeStructure(cache);
-        await cache.removeNodes(['node1']);
+        await cache.removeNodes(['volume:volumeId;node:node1']);
         await verifyNodesCache(
             cache,
             ['node2', 'node2a', 'node2b', 'node3'],
@@ -134,24 +137,24 @@ describe('nodesCache', () => {
 
     it('should iterate requested nodes', async () => {
         await generateTreeStructure(cache);
-        const result = await Array.fromAsync(cache.iterateNodes(['node1', 'node2']));
+        const result = await Array.fromAsync(cache.iterateNodes(['volume:volumeId;node:node1', 'volume:volumeId;node:node2']));
         const nodeUids = result.map(({ uid }) => uid);
-        expect(nodeUids).toStrictEqual(['node1', 'node2']);
+        expect(nodeUids).toStrictEqual(['volume:volumeId;node:node1', 'volume:volumeId;node:node2']);
     });
 
     it('should iterate children without trashed items', async () => {
         await generateTreeStructure(cache);
-        const result = await Array.fromAsync(cache.iterateChildren('node1'));
+        const result = await Array.fromAsync(cache.iterateChildren('volume:volumeId;node:node1'));
         const nodeUids = result.map(({ uid }) => uid);
-        expect(nodeUids).toStrictEqual(['node1a', 'node1c']);
+        expect(nodeUids).toStrictEqual(['volume:volumeId;node:node1a', 'volume:volumeId;node:node1c']);
     });
 
     it('should iterate children and silently remove a corrupted node', async () => {
         await generateTreeStructure(cache);
         // badObject has root as parent.
-        const result = await Array.fromAsync(cache.iterateChildren('root'));
+        const result = await Array.fromAsync(cache.iterateChildren('volume:volumeId;node:root'));
         const nodeUids = result.map(({ uid }) => uid);
-        expect(nodeUids).toStrictEqual(['node1', 'node2', 'node3']);
+        expect(nodeUids).toStrictEqual(['volume:volumeId;node:node1', 'volume:volumeId;node:node2', 'volume:volumeId;node:node3']);
         await verifyNodesCache(
             cache,
             ['root', 'node1', 'node1a', 'node1b', 'node1c', 'node1c-alpha', 'node1c-beta', 'node2', 'node2a', 'node2b', 'node3'],
@@ -163,16 +166,31 @@ describe('nodesCache', () => {
         await generateTreeStructure(cache);
         const result = await Array.fromAsync(cache.iterateTrashedNodes());
         const nodeUids = result.map(({ uid }) => uid);
-        expect(nodeUids).toStrictEqual(['node1b', 'node1c-beta', 'node2b']);
+        expect(nodeUids).toStrictEqual(['volume:volumeId;node:node1b', 'volume:volumeId;node:node1c-beta', 'volume:volumeId;node:node2b']);
     });
 
     it('should set and unset children loaded state', async () => {
-        expect(await cache.isFolderChildrenLoaded('node1')).toBe(false);
+        expect(await cache.isFolderChildrenLoaded('volume:volumeId;node:node1')).toBe(false);
 
-        await cache.setFolderChildrenLoaded('node1');
-        expect(await cache.isFolderChildrenLoaded('node1')).toBe(true);
+        await cache.setFolderChildrenLoaded('volume:volumeId;node:node1');
+        expect(await cache.isFolderChildrenLoaded('volume:volumeId;node:node1')).toBe(true);
 
-        await cache.resetFolderChildrenLoaded('node1');
-        expect(await cache.isFolderChildrenLoaded('node1')).toBe(false);
+        await cache.resetFolderChildrenLoaded('volume:volumeId;node:node1');
+        expect(await cache.isFolderChildrenLoaded('volume:volumeId;node:node1')).toBe(false);
+    });
+
+    it('should set nodes from the volume as stale', async () => {
+        await generateTreeStructure(cache);
+        await cache.setNodesStaleFromVolume('volumeId');
+
+        const staleNodeUids = ['node1', 'node1a', 'node1b', 'node1c', 'node1c-alpha', 'node1c-beta', 'node2', 'node2a', 'node2b', 'node3']
+            .map((uid) => `volume:volumeId;node:${uid}`);
+        const result = await Array.fromAsync(cache.iterateNodes([...staleNodeUids, 'volume:volume2;node:root-otherVolume']));
+        const got = result.map((item) => ({ uid: item.uid, isStale: item.ok ? item.node.isStale : item.error }));
+        const expected = [
+            ...staleNodeUids.map((uid) => ({ uid, isStale: true })),
+            { uid: 'volume:volume2;node:root-otherVolume', isStale: false },
+        ];
+        expect(got).toEqual(expected);
     });
 });

@@ -30,7 +30,7 @@ export class SharingCache {
         return this.removeNodeUid(SharingType.SharedByMe, nodeUid);
     }
 
-    async setSharedByMeNodeUids(nodeUids: string[]): Promise<void> {
+    async setSharedByMeNodeUids(nodeUids: string[] | undefined): Promise<void> {
         return this.setNodeUids(SharingType.SharedByMe, nodeUids);
     }
 

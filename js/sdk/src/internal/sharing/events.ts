@@ -21,7 +21,20 @@ export class SharingEvents {
     private listeners: Listeners = [];
 
     constructor(events: DriveEventsService, cache: SharingCache, nodesService: NodesService, sharingAccess: SharingAccess, log?: Logger) {
-        events.addListener(async (events) => {
+        events.addListener(async (events, fullRefreshVolumeId) => {
+            // Technically we need to refresh only the shared by me nodes for
+            // own volume, and shared with me nodes only when the event comes
+            // as core refresh event is converted to it.
+            // We can optimise later, for now we refresh everything to make
+            // it simpler. The cache is smart enough to not do unnecessary
+            // requests to the API and refresh on web is rare without
+            // persistant cache for now.
+            if (fullRefreshVolumeId) {
+                await cache.setSharedByMeNodeUids(undefined);
+                await cache.setSharedWithMeNodeUids(undefined);
+                return
+            }
+
             for (const event of events) {
                 await handleSharedByMeNodes(event, cache, this.listeners, nodesService, log);
                 await handleSharedWithMeNodes(event, cache, this.listeners, sharingAccess);

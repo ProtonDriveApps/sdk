@@ -41,7 +41,12 @@ export class NodesEvents {
     private listeners: Listeners = [];
 
     constructor(events: DriveEventsService, cache: NodesCache, nodesAccess: NodesAccess, log?: Logger) {
-        events.addListener(async (events) => {
+        events.addListener(async (events, fullRefreshVolumeId) => {
+            if (fullRefreshVolumeId) {
+                await cache.setNodesStaleFromVolume(fullRefreshVolumeId);
+                return;
+            }
+
             for (const event of events) {
                 await updateCacheByEvent(event, cache, log);
             }
