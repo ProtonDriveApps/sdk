@@ -89,7 +89,7 @@ export class NodesCryptoService {
             hashKeyAuthor = hashKeyResult.author;
 
             const extendedAttributesResult = await this.decryptExtendedAttributes(
-                node.encryptedCrypto.folder.encryptedExtendedAttributes,
+                node.encryptedCrypto.folder.armoredExtendedAttributes,
                 key,
                 keyVerificationKeys,
                 node.encryptedCrypto.signatureEmail
@@ -230,7 +230,7 @@ export class NodesCryptoService {
         const {
             extendedAttributes,
             author,
-        } = await this.decryptExtendedAttributes(encryptedRevision.encryptedExtendedAttributes, nodeKey, verificationKeys, encryptedRevision.signatureEmail);
+        } = await this.decryptExtendedAttributes(encryptedRevision.armoredExtendedAttributes, nodeKey, verificationKeys, encryptedRevision.signatureEmail);
 
         return {
             uid: encryptedRevision.uid,
@@ -263,7 +263,12 @@ export class NodesCryptoService {
         }
     }
 
-    async createFolder(parentNode: DecryptedNode, parentKeys: { key: PrivateKey, hashKey: Uint8Array }, name: string): Promise<{
+    async createFolder(
+        parentNode: DecryptedNode,
+        parentKeys: { key: PrivateKey, hashKey: Uint8Array },
+        name: string,
+        extendedAttributes?: string,
+    ): Promise<{
         encryptedCrypto: Required<EncryptedNodeFolderCrypto> & { encryptedName: string, hash: string },
         keys: DecryptedNodeKeys,
     }> {
@@ -281,6 +286,10 @@ export class NodesCryptoService {
 
         const { armoredHashKey, hashKey } = await this.driveCrypto.generateHashKey(nodeKeys.decrypted.key);
 
+        const { armoredExtendedAttributes } = extendedAttributes
+            ? await this.driveCrypto.encryptExtendedAttributes(extendedAttributes, nodeKeys.decrypted.key, addressKey)
+            : { armoredExtendedAttributes: undefined };
+
         return {
             encryptedCrypto: {
                 encryptedName: armoredNodeName,
@@ -289,7 +298,7 @@ export class NodesCryptoService {
                 armoredNodePassphrase: nodeKeys.encrypted.armoredPassphrase,
                 armoredNodePassphraseSignature: nodeKeys.encrypted.armoredPassphraseSignature,
                 folder: {
-                    encryptedExtendedAttributes: undefined,
+                    armoredExtendedAttributes: armoredExtendedAttributes,
                     armoredHashKey,
                 },
                 signatureEmail: email,

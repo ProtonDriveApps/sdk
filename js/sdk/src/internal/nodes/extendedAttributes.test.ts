@@ -1,13 +1,53 @@
-import { FileExtendedAttributesParsed, FolderExtendedAttributes, parseFileExtendedAttributes, parseFolderExtendedAttributes } from './extendedAttributes';
-
-const emptyExtendedAttributes = {
-    claimedSize: undefined,
-    claimedModificationTime: undefined,
-    claimedDigests: undefined,
-    claimedAdditionalMetadata: undefined,
-};
+import { FolderExtendedAttributes, FileExtendedAttributesParsed, generateFolderExtendedAttributes, parseFolderExtendedAttributes, parseFileExtendedAttributes } from './extendedAttributes';
 
 describe('extended attrbiutes', () => {
+    describe('should generate folder attributes', () => {
+        const testCases: [Date | undefined, string | undefined][] = [
+            [undefined, undefined],
+            [new Date(1234567890000), '{"Common":{"ModificationTime":"2009-02-13T23:31:30.000Z"}}'],
+        ];
+        testCases.forEach(([input, expectedAttributes]) => {
+            it(`should generate ${input}`, () => {
+                const output = generateFolderExtendedAttributes(input);
+                expect(output).toBe(expectedAttributes);
+            })
+        });
+    });
+
+    describe('should parse folder attributes', () => {
+        const testCases: [string, FolderExtendedAttributes][] = [
+            ['', {}],
+            ['{}', {}],
+            ['a', {}],
+            [
+                '{"Common": {"ModificationTime": "2009-02-13T23:31:30+0000"}}',
+                {
+                    claimedModificationTime: new Date(1234567890000),
+                },
+            ],
+            [
+                '{"Common": {"ModificationTime": "aa"}}',
+                {},
+            ],
+            [
+                '{"Common": {"ModificationTime": "2009-02-13T23:31:30+0000", "Size": 123}}',
+                {
+                    claimedModificationTime: new Date(1234567890000),
+                },
+            ],
+            [
+                '{"Common": {"Whatever": 123}}',
+                {},
+            ],
+        ];
+        testCases.forEach(([input, expectedAttributes]) => {
+            it(`should parse ${input}`, () => {
+                const output = parseFolderExtendedAttributes(input);
+                expect(output).toMatchObject(expectedAttributes);
+            })
+        });
+    });
+
     describe('should parses file attributes', () => {
         const testCases: [string, FileExtendedAttributesParsed][] = [
             ['', {}],

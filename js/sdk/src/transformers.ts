@@ -14,7 +14,8 @@ type InternalPartialNode = Pick<
     'isShared' |
     'createdDate' |
     'trashedDate' |
-    'activeRevision'
+    'activeRevision' |
+    'folder'
 >;
 
 export function getUid(nodeUid: NodeOrUid): string {
@@ -53,5 +54,6 @@ export function convertInternalNode(node: InternalPartialNode): PublicNode {
         createdDate: node.createdDate,
         trashedDate: node.trashedDate,
         activeRevision: node.activeRevision,
+        folder: node.folder,
     };
 }
