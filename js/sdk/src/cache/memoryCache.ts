@@ -1,6 +1,6 @@
 import type { ProtonDriveCache, EntityResult } from './interface.js';
 
-type KeyValueCache<T> = { [ uid: string ]: T };
+type KeyValueCache<T> = { [ key: string ]: T };
 type TagsCache = { [ tag: string ]: string[] };
 
 /**
@@ -18,11 +18,11 @@ export class MemoryCache<T> implements ProtonDriveCache<T> {
         this.entities = {};
     }
 
-    async setEntity(uid: string, data: T, tags?: string[]) {
-        this.entities[uid] = data;
+    async setEntity(key: string, value: T, tags?: string[]) {
+        this.entities[key] = value;
 
         for (const tag of Object.keys(this.entitiesByTag)) {
-            const index = this.entitiesByTag[tag].indexOf(uid);
+            const index = this.entitiesByTag[tag].indexOf(key);
             if (index !== -1) {
                 this.entitiesByTag[tag].splice(index, 1);
             }
@@ -33,48 +33,48 @@ export class MemoryCache<T> implements ProtonDriveCache<T> {
                 if (!this.entitiesByTag[tag]) {
                     this.entitiesByTag[tag] = [];
                 }
-                this.entitiesByTag[tag].push(uid);
+                this.entitiesByTag[tag].push(key);
             }
         }
     }
 
-    async getEntity(uid: string) {
-        const data = this.entities[uid];
-        if (!data) {
+    async getEntity(key: string) {
+        const value = this.entities[key];
+        if (!value) {
             throw Error('Entity not found');
         }
-        return data;
+        return value;
     }
 
-    async *iterateEntities(uids: string[]): AsyncGenerator<EntityResult<T>> {
-        for (const uid of uids) {
+    async *iterateEntities(keys: string[]): AsyncGenerator<EntityResult<T>> {
+        for (const key of keys) {
             try {
-                const data = await this.getEntity(uid);
-                yield { uid, ok: true, data };
+                const value = await this.getEntity(key);
+                yield { key, ok: true, value };
             } catch (error) {
-                yield { uid, ok: false, error: `${error}` };
+                yield { key, ok: false, error: `${error}` };
             }
         }
     }
 
     async *iterateEntitiesByTag(tag: string): AsyncGenerator<EntityResult<T>> {
-        const uids = this.entitiesByTag[tag];
-        if (!uids) {
+        const keys = this.entitiesByTag[tag];
+        if (!keys) {
             return;
         }
 
-        // Pass copy of UIDs so concurrent changes to the cache do not affect
+        // Pass copy of keys so concurrent changes to the cache do not affect
         // results from iterating entities.
-        yield* this.iterateEntities([...uids]);
+        yield* this.iterateEntities([...keys]);
     }
 
-    async removeEntities(uids: string[]) {
-        for (const uid of uids) {
-            delete this.entities[uid];
-            Object.values(this.entitiesByTag).forEach((uids) => {
-                const index = uids.indexOf(uid);
+    async removeEntities(keys: string[]) {
+        for (const key of keys) {
+            delete this.entities[key];
+            Object.values(this.entitiesByTag).forEach((tagKeys) => {
+                const index = tagKeys.indexOf(key);
                 if (index !== -1) {
-                    uids.splice(index, 1);
+                    tagKeys.splice(index, 1);
                 }
             });
         }

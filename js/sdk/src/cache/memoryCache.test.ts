@@ -7,43 +7,43 @@ describe('MemoryCache', () => {
     beforeEach(() => {
         cache = new MemoryCache();
 
-        cache.setEntity('uid1', 'data1', ['tag1:hello', 'tag2:world']);
-        cache.setEntity('uid2', 'data2', ['tag2:world']);
-        cache.setEntity('uid3', 'data3');
+        cache.setEntity('key1', 'value1', ['tag1:hello', 'tag2:world']);
+        cache.setEntity('key2', 'value2', ['tag2:world']);
+        cache.setEntity('key3', 'value3');
     });
 
     it('should store and retrieve an entity', async () => {
-        const uid = 'newuid';
-        const data = 'newdata';
+        const key = 'newkey';
+        const value = 'newvalue';
 
-        await cache.setEntity(uid, data);
-        const result = await cache.getEntity(uid);
+        await cache.setEntity(key, value);
+        const result = await cache.getEntity(key);
 
-        expect(result).toBe(data);
+        expect(result).toBe(value);
     });
 
     it('should update an entity with tags - remove old and add new tags', async () => {
-        const uid = 'newuid';
+        const key = 'newkey';
 
-        await cache.setEntity(uid, 'data1', ['tag1', 'tag2']);
-        await cache.setEntity(uid, 'data2', ['tag2', 'tag3']);
+        await cache.setEntity(key, 'value1', ['tag1', 'tag2']);
+        await cache.setEntity(key, 'value2', ['tag2', 'tag3']);
 
-        const result = await cache.getEntity(uid);
-        expect(result).toBe('data2');
+        const result = await cache.getEntity(key);
+        expect(result).toBe('value2');
 
         const tag1 = await Array.fromAsync(cache.iterateEntitiesByTag('tag1'));
         expect(tag1).toEqual([]);
         const tag2 = await Array.fromAsync(cache.iterateEntitiesByTag('tag2'));
-        expect(tag2).toEqual([{ uid, ok: true, data: 'data2' }]);
+        expect(tag2).toEqual([{ key, ok: true, value: 'value2' }]);
         const tag3 = await Array.fromAsync(cache.iterateEntitiesByTag('tag3'));
-        expect(tag3).toEqual([{ uid, ok: true, data: 'data2' }]);
+        expect(tag3).toEqual([{ key, ok: true, value: 'value2' }]);
     });
 
     it('should throw an error when retrieving a non-existing entity', async () => {
-        const uid = 'newuid';
+        const key = 'newkey';
 
         try {
-            await cache.getEntity(uid);
+            await cache.getEntity(key);
             fail('Should have thrown an error');
         } catch (error) {
             expect(`${error}`).toBe('Error: Entity not found');
@@ -52,14 +52,14 @@ describe('MemoryCache', () => {
 
     it('should iterate over entities', async () => {
         const results = [];
-        for await (const result of cache.iterateEntities(['uid1', 'uid2', 'uid100'])) {
+        for await (const result of cache.iterateEntities(['key1', 'key2', 'key100'])) {
             results.push(result);
         }
 
         expect(results).toEqual([
-            { uid: 'uid1', ok: true, data: 'data1' },
-            { uid: 'uid2', ok: true, data: 'data2' },
-            { uid: 'uid100', ok: false, error: 'Error: Entity not found' },
+            { key: 'key1', ok: true, value: 'value1' },
+            { key: 'key2', ok: true, value: 'value2' },
+            { key: 'key100', ok: false, error: 'Error: Entity not found' },
         ]);
     });
 
@@ -70,8 +70,8 @@ describe('MemoryCache', () => {
         }
 
         expect(results).toEqual([
-            { uid: 'uid1', ok: true, data: 'data1' },
-            { uid: 'uid2', ok: true, data: 'data2' },
+            { key: 'key1', ok: true, value: 'value1' },
+            { key: 'key2', ok: true, value: 'value2' },
         ]);
     });
 
@@ -82,7 +82,7 @@ describe('MemoryCache', () => {
         }
 
         expect(results).toEqual([
-            { uid: 'uid1', ok: true, data: 'data1' },
+            { key: 'key1', ok: true, value: 'value1' },
         ]);
     });
 
@@ -96,34 +96,34 @@ describe('MemoryCache', () => {
     });
 
     it('should iterate over entities with concurrent changes to the same set', async () => {
-        const iterator = cache.iterateEntities(['uid1', 'uid2', 'uid3']);
+        const iterator = cache.iterateEntities(['key1', 'key2', 'key3']);
         
         const results: string[] = [];
-        const { value: { uid: uid1 } } = await iterator.next();
-        results.push(uid1);
-        cache.removeEntities([uid1]);
+        const { value: { key: key1 } } = await iterator.next();
+        results.push(key1);
+        cache.removeEntities([key1]);
 
-        let value = await iterator.next(); // uid2
-        results.push(value.value.uid);
+        let value = await iterator.next(); // key2
+        results.push(value.value.key);
 
-        value = await iterator.next(); // uid3
-        results.push(value.value.uid);
+        value = await iterator.next(); // key3
+        results.push(value.value.key);
 
-        expect(results).toEqual(['uid1', 'uid2', 'uid3']);
+        expect(results).toEqual(['key1', 'key2', 'key3']);
     });
 
     it('should remove entities', async () => {
-        await cache.removeEntities(['uid1', 'uid3']);
+        await cache.removeEntities(['key1', 'key3']);
 
         const results = [];
-        for await (const result of cache.iterateEntities(['uid1', 'uid2', 'uid3'])) {
+        for await (const result of cache.iterateEntities(['key1', 'key2', 'key3'])) {
             results.push(result);
         }
 
         expect(results).toEqual([
-            { uid: 'uid1', ok: false, error: 'Error: Entity not found' },
-            { uid: 'uid2', ok: true, data: 'data2' },
-            { uid: 'uid3', ok: false, error: 'Error: Entity not found' },
+            { key: 'key1', ok: false, error: 'Error: Entity not found' },
+            { key: 'key2', ok: true, value: 'value2' },
+            { key: 'key3', ok: false, error: 'Error: Entity not found' },
         ]);
 
         const results2 = [];
@@ -137,14 +137,14 @@ describe('MemoryCache', () => {
         await cache.purge();
 
         const results = [];
-        for await (const result of cache.iterateEntities(['uid1', 'uid2', 'uid3'])) {
+        for await (const result of cache.iterateEntities(['key1', 'key2', 'key3'])) {
             results.push(result);
         }
 
         expect(results).toEqual([
-            { uid: 'uid1', ok: false, error: 'Error: Entity not found' },
-            { uid: 'uid2', ok: false, error: 'Error: Entity not found' },
-            { uid: 'uid3', ok: false, error: 'Error: Entity not found' },
+            { key: 'key1', ok: false, error: 'Error: Entity not found' },
+            { key: 'key2', ok: false, error: 'Error: Entity not found' },
+            { key: 'key3', ok: false, error: 'Error: Entity not found' },
         ]);
     });
 });

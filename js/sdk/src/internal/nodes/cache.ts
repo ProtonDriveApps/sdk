@@ -70,7 +70,7 @@ export class NodesCache {
 
         // Force all calls to children UIDs to be re-fetched.
         for await (const result of this.driveCache.iterateEntitiesByTag(`children-volume:${volumeId}`)) {
-            await this.driveCache.removeEntities([result.uid]);
+            await this.driveCache.removeEntities([result.key]);
         }
     }
 
@@ -117,8 +117,8 @@ export class NodesCache {
     private async getRecursiveChildrenCacheUids(parentNodeUid: string): Promise<string[]> {
         const cacheUids = [];
         for await (const result of this.driveCache.iterateEntitiesByTag(`${CACHE_TAG_KEYS.ParentUid}:${parentNodeUid}`)) {
-            cacheUids.push(result.uid);
-            const childrenCacheUids = await this.getRecursiveChildrenCacheUids(getNodeUid(result.uid));
+            cacheUids.push(result.key);
+            const childrenCacheUids = await this.getRecursiveChildrenCacheUids(getNodeUid(result.key));
             cacheUids.push(...childrenCacheUids);
         }
         return cacheUids;
@@ -159,15 +159,15 @@ export class NodesCache {
     private async convertCacheResult(result: EntityResult<string>): Promise<DecryptedNodeResult | null> {
         let nodeUid;
         try {
-            nodeUid = getNodeUid(result.uid);
+            nodeUid = getNodeUid(result.key);
         } catch (error: unknown) {
-            await this.removeCorruptedNode({ cacheUid: result.uid }, error)
+            await this.removeCorruptedNode({ cacheUid: result.key }, error)
             return null;
         }
         if (result.ok) {
             let node;
             try {
-                node = deserialiseNode(result.data)
+                node = deserialiseNode(result.value)
             } catch (error: unknown) {
                 await this.removeCorruptedNode({ nodeUid }, error);
                 return null;
