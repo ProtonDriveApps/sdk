@@ -26,9 +26,6 @@ export interface ProtonDriveCache<T> {
     /**
      * Adds or updates entity in the local database.
      * 
-     * The `data` doesn't include any keys. It is up to the client store this
-     * information privately.
-     * 
      * The `tags` is a list of strings that should be stored properly for fast
      * look-up.
      * 
@@ -59,27 +56,27 @@ export interface ProtonDriveCache<T> {
      * }
      * ```
      * 
-     * @param uid - UID is internal ID controlled by the SDK. It combines type and ID of the entity.
-     * @param data - Serialised JSON object controlled by the SDK. It is not intended for use outside of the SDK.
+     * @param key - Key is internal ID controlled by the SDK. It combines type and ID of the entity.
+     * @param value - Serialised JSON object controlled by the SDK. It is not intended for use outside of the SDK.
      * @param tags - Clear metadata about the entity used for filtering. It is intended to store efficiently for fast look-up.
      * @throws Exception if `key` from `tags` is not one of the tag keys provided from `usedTagKeysBySDK` in constructor.
      */
-    setEntity(uid: string, data: T, tags?: string[] ): Promise<void>,
+    setEntity(key: string, value: T, tags?: string[] ): Promise<void>,
     
     /**
      * Returns the data of the entity stored locally.
      * 
      * @throws Exception if entity is not present.
      */
-    getEntity(uid: string): Promise<T>,
+    getEntity(key: string): Promise<T>,
 
     /**
      * Generator providing the data of the entities stored locally for given
-     * list of UIDs.
+     * list of keys.
      * 
      * No exception is thrown when data is missing.
      */
-    iterateEntities(uids: string[]): AsyncGenerator<EntityResult<T>>,
+    iterateEntities(keys: string[]): AsyncGenerator<EntityResult<T>>,
 
     /**
      * Generator providing the data of the entities stored locally for given
@@ -102,7 +99,7 @@ export interface ProtonDriveCache<T> {
      * 
      * It is no-op if entity is not present.
      */
-    removeEntities(uids: string[]): Promise<void>,
+    removeEntities(keys: string[]): Promise<void>,
 }
 
-export type EntityResult<T> = {uid: string, ok: true, data: T} | {uid: string, ok: false, error: string};
+export type EntityResult<T> = {key: string, ok: true, value: T} | {key: string, ok: false, error: string};
