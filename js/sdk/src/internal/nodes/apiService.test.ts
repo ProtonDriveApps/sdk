@@ -75,7 +75,7 @@ function generateFileNode(overrides = {}) {
                 armoredContentKeyPacketSignature: "contentKeyPacketSig",
             },
             activeRevision: {
-                uid: "volume:volumeId;node:linkId;revision:revisionId",
+                uid: "volumeId~linkId~revisionId",
                 state: "active",
                 createdDate: new Date(1234567890000),
                 signatureEmail: "revSigEmail",
@@ -108,8 +108,8 @@ function generateNode() {
         hash: "nameHash",
         encryptedName: "encName",
 
-        uid: "volume:volumeId;node:linkId",
-        parentUid: "volume:volumeId;node:parentLinkId",
+        uid: "volumeId~linkId",
+        parentUid: "volumeId~parentLinkId",
         createdDate: new Date(123456789000),
         trashedDate: undefined,
 
@@ -151,7 +151,7 @@ describe("nodeAPIService", () => {
                 Links: [mockedLink],
             }));
 
-            const nodes = await api.getNodes(['volume:volumeId;node:nodeId']);
+            const nodes = await api.getNodes(['volumeId~nodeId']);
             expect(nodes).toStrictEqual([expectedNode]);
         }
     
@@ -245,10 +245,10 @@ describe("nodeAPIService", () => {
                 ],
             }));
 
-            const result = await Array.fromAsync(api.trashNodes(['volume:volumeId;node:nodeId1', 'volume:volumeId;node:nodeId2']));
+            const result = await Array.fromAsync(api.trashNodes(['volumeId~nodeId1', 'volumeId~nodeId2']));
             expect(result).toEqual([
-                { uid: 'volume:volumeId;node:nodeId1', ok: true },
-                { uid: 'volume:volumeId;node:nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
+                { uid: 'volumeId~nodeId1', ok: true },
+                { uid: 'volumeId~nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
             ]);
         });
     });
@@ -280,17 +280,17 @@ describe("nodeAPIService", () => {
                 ],
             }));
 
-            const result = await Array.fromAsync(api.restoreNodes(['volume:volumeId;node:nodeId1', 'volume:volumeId;node:nodeId2', 'volume:volumeId;node:nodeId3']));
+            const result = await Array.fromAsync(api.restoreNodes(['volumeId~nodeId1', 'volumeId~nodeId2', 'volumeId~nodeId3']));
             expect(result).toEqual([
-                { uid: 'volume:volumeId;node:nodeId1', ok: true },
-                { uid: 'volume:volumeId;node:nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
-                { uid: 'volume:volumeId;node:nodeId3', ok: false, error: 'Unknown error 2000' },
+                { uid: 'volumeId~nodeId1', ok: true },
+                { uid: 'volumeId~nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
+                { uid: 'volumeId~nodeId3', ok: false, error: 'Unknown error 2000' },
             ]);
         });
 
         it('should fail restoring from multiple volumes', async () => {  
             try {
-                await Array.fromAsync(api.restoreNodes(['volume:volumeId1;node:nodeId1', 'volume:volumeId2;node:nodeId2']));
+                await Array.fromAsync(api.restoreNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2']));
                 throw new Error('Should have thrown');
             } catch (error: any) {
                 expect(error.message).toEqual('restoreNodes does not support multiple volumes');
@@ -319,16 +319,16 @@ describe("nodeAPIService", () => {
                 ],
             }));
 
-            const result = await Array.fromAsync(api.deleteNodes(['volume:volumeId;node:nodeId1', 'volume:volumeId;node:nodeId2']));
+            const result = await Array.fromAsync(api.deleteNodes(['volumeId~nodeId1', 'volumeId~nodeId2']));
             expect(result).toEqual([
-                { uid: 'volume:volumeId;node:nodeId1', ok: true },
-                { uid: 'volume:volumeId;node:nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
+                { uid: 'volumeId~nodeId1', ok: true },
+                { uid: 'volumeId~nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
             ]);
         });
 
         it('should fail deleting nodes from multiple volumes', async () => {  
             try {
-                await Array.fromAsync(api.deleteNodes(['volume:volumeId1;node:nodeId1', 'volume:volumeId2;node:nodeId2']));
+                await Array.fromAsync(api.deleteNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2']));
                 throw new Error('Should have thrown');
             } catch (error: any) {
                 expect(error.message).toEqual('deleteNodes does not support multiple volumes');

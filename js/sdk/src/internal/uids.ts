@@ -1,56 +1,51 @@
 export function makeNodeUid(volumeId: string, nodeId: string) {
-    // TODO: format of UID
-    return `volume:${volumeId};node:${nodeId}`;
+    return `${volumeId}~${nodeId}`;
 }
 
 export function splitNodeUid(nodeUid: string) {
-    // TODO: validation
-    const [ volumeId, nodeId ] = nodeUid.split(';');
-    return {
-        volumeId: volumeId.slice('volume:'.length),
-        nodeId: nodeId.slice('node:'.length),
-    };
+    const parts = nodeUid.split('~');
+    if (parts.length !== 2) {
+        throw new Error(`"${nodeUid}" is not valid node UID`);
+    }
+    const [ volumeId, nodeId ] = parts;
+    return { volumeId, nodeId };
 }
 
 export function makeInvitationUid(shareId: string, invitationId: string) {
-    // TODO: format of UID
-    return `share:${shareId};invitation:${invitationId}`;
+    return `${shareId}~${invitationId}`;
 }
 
 export function splitInvitationUid(invitationUid: string) {
-    // TODO: validation
-    const [ shareId, invitationId ] = invitationUid.split(';');
-    return {
-        shareId: shareId.slice('share:'.length),
-        invitationId: invitationId.slice('invitation:'.length),
-    };
+    const parts = invitationUid.split('~');
+    if (parts.length !== 2) {
+        throw new Error(`"${invitationUid}" is not valid invitation UID`);
+    }
+    const [ shareId, invitationId ] = parts;
+    return { shareId, invitationId };
 }
 
 export function makeMemberUid(shareId: string, memberId: string) {
-    // TODO: format of UID
-    return `share:${shareId};member:${memberId}`;
+    return `${shareId}~${memberId}`;
 }
 
 export function splitMemberUid(memberUid: string) {
-    // TODO: validation
-    const [ shareId, memberId ] = memberUid.split(';');
-    return {
-        shareId: shareId.slice('share:'.length),
-        memberId: memberId.slice('member:'.length),
-    };
+    const parts = memberUid.split('~');
+    if (parts.length !== 2) {
+        throw new Error(`"${memberUid}" is not valid member UID`);
+    }
+    const [ shareId, memberId ] = parts;
+    return { shareId, memberId };
 }
 
-export function makeNodeRevisionUid(volumeId: string, nodeUid: string, revisionId: string) {
-    // TODO: format of UID
-    return `volume:${volumeId};node:${nodeUid};revision:${revisionId}`;
+export function makeNodeRevisionUid(volumeId: string, nodeId: string, revisionId: string) {
+    return `${volumeId}~${nodeId}~${revisionId}`;
 }
 
 export function splitNodeRevisionUid(nodeRevisionUid: string) {
-    // TODO: validation
-    const [ volumeId, nodeId, revisionId ] = nodeRevisionUid.split(';');
-    return {
-        volumeId: volumeId.slice('volume:'.length),
-        nodeId: nodeId.slice('node:'.length),
-        revisionId: revisionId.slice('revision:'.length),
-    };
+    const parts = nodeRevisionUid.split('~');
+    if (parts.length !== 3) {
+        throw new Error(`"${nodeRevisionUid}" is not valid node revision UID`);
+    }
+    const [ volumeId, nodeId, revisionId ] = parts;
+    return { volumeId, nodeId, revisionId };
 }

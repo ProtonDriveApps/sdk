@@ -124,7 +124,7 @@ describe("SharingManagement", () => {
     });
 
     describe("shareNode", () => {
-        const nodeUid = "volume:volumeId;node:nodeUid";
+        const nodeUid = "volumeId~nodeUid";
 
         let invitation: ProtonInvitation;
         let externalInvitation: NonProtonInvitation;
@@ -369,7 +369,7 @@ describe("SharingManagement", () => {
     });
 
     describe("unsahreNode", () => {
-        const nodeUid = "volume:volumeId;node:nodeUid";
+        const nodeUid = "volumeId~nodeUid";
 
         let invitation: ProtonInvitation;
         let externalInvitation: NonProtonInvitation;
