@@ -54,7 +54,7 @@ export class CommandFileSystemList implements Command {
         const author = formatAuthor(node.keyAuthor);
         const created = formatDate(node.createdDate, options.humanReadable);
         const size = node.activeRevision?.ok ? formatSize(node.activeRevision.value.claimedSize, options.humanReadable) : '-';
-        const id = node.uid.split(';')[1].split(':')[1];
+        const id = node.uid.split('~')[1];
         const name = node.name.ok ? node.name.value : node.uid;
         console.log(`${type}${sharedFlag} ${author} ${created} ${size} ${id} ${name}`);
     }
