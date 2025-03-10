@@ -63,7 +63,7 @@ describe("updateCacheByEvent", () => {
 
             expect(cache.getNode).toHaveBeenCalledTimes(1);
             expect(cache.setNode).toHaveBeenCalledTimes(1);
-            expect(cache.setNode).toHaveBeenCalledWith({ uid: '123', isStale: true });
+            expect(cache.setNode).toHaveBeenCalledWith({ uid: '123', isStale: true, parentUid: "parentUid" });
         });
 
         it("should skip if missing in cache", async () => {

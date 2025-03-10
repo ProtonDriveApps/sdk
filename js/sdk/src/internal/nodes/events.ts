@@ -110,6 +110,10 @@ export async function updateCacheByEvent(logger: Logger, event: DriveEvent, cach
         }
         if (node) {
             node.isStale = true;
+            // We need to update the parentUid as the node might have
+            // been moved to another parent. This is important for
+            // children iteration.
+            node.parentUid = event.parentNodeUid;
             try {
                 await cache.setNode(node);
             } catch (setNodeError: unknown) {
