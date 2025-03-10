@@ -25,6 +25,9 @@ export class MemoryCache<T> implements ProtonDriveCache<T> {
             const index = this.entitiesByTag[tag].indexOf(key);
             if (index !== -1) {
                 this.entitiesByTag[tag].splice(index, 1);
+                if (this.entitiesByTag[tag].length === 0) {
+                    delete this.entitiesByTag[tag];
+                }
             }
         }
 
