@@ -66,7 +66,7 @@ function dateToIsoString(date: Date) {
     return isDateValid ? date.toISOString() : undefined;
 }
 
-export function parseFolderExtendedAttributes(extendedAttributes?: string, log?: Logger): FolderExtendedAttributes {
+export function parseFolderExtendedAttributes(logger: Logger, extendedAttributes?: string): FolderExtendedAttributes {
     if (!extendedAttributes) {
         return {};
     }
@@ -74,15 +74,15 @@ export function parseFolderExtendedAttributes(extendedAttributes?: string, log?:
     try {
         const parsed = JSON.parse(extendedAttributes) as FolderExtendedAttributesSchema;
         return {
-            claimedModificationTime: parseModificationTime(parsed, log),
+            claimedModificationTime: parseModificationTime(logger, parsed),
         };
     } catch (error: unknown) {
-        log?.error(`Failed to parse extended attributes: ${error instanceof Error ? error.message : error}`);
+        logger.error(`Failed to parse extended attributes`, error);
         return {};
     }
 }
 
-export function parseFileExtendedAttributes(extendedAttributes?: string, log?: Logger): FileExtendedAttributesParsed {
+export function parseFileExtendedAttributes(logger: Logger, extendedAttributes?: string): FileExtendedAttributesParsed {
     if (!extendedAttributes) {
         return {}
     }
@@ -94,30 +94,30 @@ export function parseFileExtendedAttributes(extendedAttributes?: string, log?: L
         delete claimedAdditionalMetadata.Common;
 
         return {
-            claimedSize: parseSize(parsed, log),
-            claimedModificationTime: parseModificationTime(parsed, log),
-            claimedDigests: parseDigests(parsed, log),
+            claimedSize: parseSize(logger, parsed),
+            claimedModificationTime: parseModificationTime(logger, parsed),
+            claimedDigests: parseDigests(logger, parsed),
             claimedAdditionalMetadata: Object.keys(claimedAdditionalMetadata).length ? claimedAdditionalMetadata : undefined,
         };
     } catch (error: unknown) {
-        log?.error(`Failed to parse extended attributes: ${error instanceof Error ? error.message : error}`);
+        logger.error(`Failed to parse extended attributes`, error);
         return {};
     }
 }
 
-function parseSize(xattr?: FileExtendedAttributesSchema, log?: Logger): number | undefined {
+function parseSize(logger: Logger, xattr?: FileExtendedAttributesSchema): number | undefined {
     const size = xattr?.Common?.Size;
     if (size === undefined) {
         return undefined;
     }
     if (typeof size !== 'number') {
-        log?.warn(`XAttr file size "${size}" is not valid`);
+        logger.warn(`XAttr file size "${size}" is not valid`);
         return undefined;
     }
     return size;
 }
 
-function parseModificationTime(xattr?: FolderExtendedAttributesSchema | FolderExtendedAttributesSchema, log?: Logger): Date | undefined {
+function parseModificationTime(logger: Logger, xattr?: FolderExtendedAttributesSchema | FolderExtendedAttributesSchema): Date | undefined {
     const modificationTime = xattr?.Common?.ModificationTime;
     if (modificationTime === undefined) {
         return undefined;
@@ -125,13 +125,13 @@ function parseModificationTime(xattr?: FolderExtendedAttributesSchema | FolderEx
     const modificationDate = new Date(modificationTime);
     // This is the best way to check if date is "Invalid Date". :shrug:
     if (JSON.stringify(modificationDate) === 'null') {
-        log?.warn(`XAttr modification time "${modificationTime}" is not valid`);
+        logger.warn(`XAttr modification time "${modificationTime}" is not valid`);
         return undefined;
     }
     return modificationDate;
 }
 
-function parseDigests(xattr?: FileExtendedAttributesSchema, log?: Logger): { sha1: string } | undefined {
+function parseDigests(logger: Logger, xattr?: FileExtendedAttributesSchema): { sha1: string } | undefined {
     const digests = xattr?.Common?.Digests;
     if (digests === undefined || digests.SHA1 === undefined) {
         return undefined;
@@ -139,7 +139,7 @@ function parseDigests(xattr?: FileExtendedAttributesSchema, log?: Logger): { sha
 
     const sha1 = digests.SHA1;
     if (typeof sha1 !== 'string') {
-        log?.warn(`XAttr digest SHA1 "${sha1}" is not valid`);
+        logger.warn(`XAttr digest SHA1 "${sha1}" is not valid`);
         return undefined;
     }
 

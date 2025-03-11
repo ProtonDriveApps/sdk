@@ -12,15 +12,15 @@ import { EventManager } from "./eventManager";
 export class VolumeEventManager {
     private manager: EventManager<DriveEvent>;
 
-    constructor(private apiService: EventsAPIService, private cache: EventsCache, private volumeId: string, log?: Logger) {
+    constructor(logger: Logger, private apiService: EventsAPIService, private cache: EventsCache, private volumeId: string) {
         this.apiService = apiService;
         this.volumeId = volumeId;
 
         this.manager = new EventManager(
+            logger,
             () => this.getLastEventId(),
             (eventId) => this.apiService.getVolumeEvents(volumeId, eventId),
             (lastEventId) => this.cache.setLastEventId(volumeId, lastEventId, this.manager.pollingIntervalInSeconds),
-            log,
         );
         this.cache.getPollingIntervalInSeconds(volumeId)
             .then((pollingIntervalInSeconds) => {

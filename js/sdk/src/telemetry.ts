@@ -3,7 +3,7 @@ export interface LogRecord {
     level: LogLevel;
     loggerName: string;
     message: string;
-    error?: Error;
+    error?: unknown;
 }
 
 export enum LogLevel {
@@ -27,7 +27,7 @@ export interface MetricRecord<T extends MetricEvent> {
 }
 
 type MetricEvent = {
-    name: string;
+    eventName: string;
 }
 
 export interface MetricHandler<T extends MetricEvent> {
@@ -135,7 +135,7 @@ class Logger {
         });
     }
 
-    warning(message: string) {
+    warn(message: string) {
         this.log({
             time: new Date(),
             level: LogLevel.WARNING,
@@ -144,7 +144,7 @@ class Logger {
         });
     }
 
-    error(message: string, error?: Error) {
+    error(message: string, error?: unknown) {
         this.log({
             time: new Date(),
             level: LogLevel.ERROR,
@@ -180,7 +180,7 @@ export class LogFilter {
     private globalLevel: number;
     private loggerLevels: { [loggerName: string]: number };
 
-    constructor(private options?: {
+    constructor(options?: {
         globalLevel?: LogLevel,
         loggerLevels?: { [loggerName: string]: LogLevel },
     }) {
@@ -292,12 +292,18 @@ export class JSONLogFormatter implements LogFormatter {
  */
 export class BasicLogFormatter implements LogFormatter {
     format(log: LogRecord) {
-        return `${log.time.toISOString()} ${log.level} [${log.loggerName}] ${log.message}${log.error && `\nError: ${log.error.message}\nStack:\n${log.error.stack}`}`;
+        let errorDetails = '';
+        if (log.error) {
+            errorDetails = log.error instanceof Error
+                ? `\nError: ${log.error.message}\nStack:\n${log.error.stack}`
+                : `\nError: ${log.error}`;
+        }
+        return `${log.time.toISOString()} ${log.level} [${log.loggerName}] ${log.message}${errorDetails}`;
     }
 }
 
 class ConsoleMetricHandler<T extends MetricEvent> implements MetricHandler<T> {
     onEvent(metric: MetricRecord<T>) {
-        console.info(`${metric.time.toISOString()} INFO [metric] ${metric.event.name} ${JSON.stringify({ ...metric.event, name: undefined })}`);
+        console.info(`${metric.time.toISOString()} INFO [metric] ${metric.event.eventName} ${JSON.stringify({ ...metric.event, name: undefined })}`);
     }
 }

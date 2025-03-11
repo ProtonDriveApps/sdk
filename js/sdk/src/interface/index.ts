@@ -1,16 +1,17 @@
 import { ProtonDriveCache } from '../cache';
 import { OpenPGPCrypto, PrivateKey, SessionKey } from '../crypto';
-import { ProtonDriveAccount, ProtonDriveHTTPClient, ProtonDriveConfig, GetLogger, Metrics } from './constructor';
+import { ProtonDriveAccount, ProtonDriveHTTPClient, ProtonDriveConfig } from './constructor';
 import { Devices } from './devices';
 import { Download } from './download';
 import { Events } from './events';
 import { Nodes, NodesManagement, TrashManagement, Revisions } from './nodes';
 import { Sharing, SharingManagement } from './sharing';
+import { Telemetry, MetricEvent } from './telemetry';
 import { Upload } from './upload';
 
 export type { Result } from './result';
 export { resultOk, resultError } from './result';
-export type { ProtonDriveAccount, ProtonDriveAccountAddress, ProtonDriveHTTPClient, ProtonDriveConfig, GetLogger, Logger, Metrics, MetricsShareType, MetricsUploadErrorType, MetricsDownloadErrorType } from './constructor';
+export type { ProtonDriveAccount, ProtonDriveAccountAddress, ProtonDriveHTTPClient, ProtonDriveConfig } from './constructor';
 export type { Device, DeviceOrUid } from './devices';
 export type { FileDownloader, DownloadController } from './download';
 export type { NodeEvent, DeviceEvent, SDKEvent, DeviceEventCallback, NodeEventCallback } from './events';
@@ -18,8 +19,10 @@ export type { Author, NodeEntity, InvalidNameError, UnverifiedAuthorError, Anony
 export { NodeType, MemberRole } from './nodes';
 export type { ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Member, PublicLink, Bookmark, ProtonInvitationOrUid, NonProtonInvitationOrUid, BookmarkOrUid, ShareNodeSettings, UnshareNodeSettings, ShareMembersSettings, SharePublicLinkSettings, ShareResult } from './sharing';
 export { NonProtonInvitationState } from './sharing';
+export type { Telemetry, Logger, MetricUploadEvent, MetricDownloadEvent, MetricDecryptionErrorEvent, MetricVerificationErrorEvent, MetricVolumeEventsSubscriptionsChangedEvent } from './telemetry';
 export type { Fileuploader, UploadController, Thumbnail, ThumbnailType, UploadMetadata } from './upload';
 
+export type ProtonDriveTelemetry = Telemetry<MetricEvent>;
 export type ProtonDriveEntitiesCache = ProtonDriveCache<string>;
 export type ProtonDriveCryptoCache = ProtonDriveCache<CachedCryptoMaterial>;
 export type CachedCryptoMaterial = {
@@ -34,9 +37,8 @@ export interface ProtonDriveClientContructorParameters {
     cryptoCache: ProtonDriveCryptoCache,
     account: ProtonDriveAccount,
     httpClient: ProtonDriveHTTPClient,
-    getLogger?: GetLogger,
     config?: ProtonDriveConfig,
-    metrics?: Metrics,
+    telemetry?: ProtonDriveTelemetry,
     openPGPCryptoModule: OpenPGPCrypto,
     acceptNoGuaranteeWithCustomModules?: boolean,
 };

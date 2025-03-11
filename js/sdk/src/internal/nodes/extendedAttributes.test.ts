@@ -1,3 +1,4 @@
+import { getMockLogger } from "../../tests/logger";
 import { FolderExtendedAttributes, FileExtendedAttributesParsed, generateFolderExtendedAttributes, parseFolderExtendedAttributes, parseFileExtendedAttributes } from './extendedAttributes';
 
 describe('extended attrbiutes', () => {
@@ -42,7 +43,7 @@ describe('extended attrbiutes', () => {
         ];
         testCases.forEach(([input, expectedAttributes]) => {
             it(`should parse ${input}`, () => {
-                const output = parseFolderExtendedAttributes(input);
+                const output = parseFolderExtendedAttributes(getMockLogger(), input);
                 expect(output).toMatchObject(expectedAttributes);
             })
         });
@@ -139,7 +140,7 @@ describe('extended attrbiutes', () => {
         ];
         testCases.forEach(([input, expectedAttributes]) => {
             it(`should parse ${input}`, () => {
-                const output = parseFileExtendedAttributes(input);
+                const output = parseFileExtendedAttributes(getMockLogger(), input);
                 expect(output).toMatchObject(expectedAttributes);
             })
         });

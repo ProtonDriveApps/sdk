@@ -1,3 +1,4 @@
+import { getMockLogger } from "../../tests/logger";
 import { Member, MemberRole, NonProtonInvitation, NonProtonInvitationState, ProtonInvitation, resultOk } from "../../interface";
 import { SharingAPIService } from "./apiService";
 import { SharingCryptoService } from "./cryptoService";
@@ -57,7 +58,7 @@ describe("SharingManagement", () => {
             getNodeKeys: jest.fn().mockImplementation((nodeUid) => ({ key: "node-key" })),
         }
 
-        sharingManagement = new SharingManagement(apiService, cryptoService, sharesService, nodesService);
+        sharingManagement = new SharingManagement(getMockLogger(), apiService, cryptoService, sharesService, nodesService);
     });
 
     describe("getSharingInfo", () => {

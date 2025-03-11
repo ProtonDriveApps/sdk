@@ -40,7 +40,7 @@ type NodeEventInfo = {
 export class NodesEvents {
     private listeners: Listeners = [];
 
-    constructor(events: DriveEventsService, cache: NodesCache, nodesAccess: NodesAccess, log?: Logger) {
+    constructor(logger: Logger, events: DriveEventsService, cache: NodesCache, nodesAccess: NodesAccess) {
         events.addListener(async (events, fullRefreshVolumeId) => {
             if (fullRefreshVolumeId) {
                 await cache.setNodesStaleFromVolume(fullRefreshVolumeId);
@@ -48,13 +48,13 @@ export class NodesEvents {
             }
 
             for (const event of events) {
-                await updateCacheByEvent(event, cache, log);
+                await updateCacheByEvent(logger, event, cache);
             }
         });
 
         events.addListener(async (events) => {
             for (const event of events) {
-                await notifyListenersByEvent(event, this.listeners, cache, nodesAccess, log);
+                await notifyListenersByEvent(logger, event, this.listeners, cache, nodesAccess);
             }
         });
     }
@@ -86,7 +86,7 @@ export class NodesEvents {
  * 
  * @throws Only if the node is not possible to remove from the cache.
  */
-export async function updateCacheByEvent(event: DriveEvent, cache: NodesCache, log?: Logger) {
+export async function updateCacheByEvent(logger: Logger, event: DriveEvent, cache: NodesCache) {
     // NodeCreated event is ignored as we do not want to fetch and
     // decrypt the node immediately. The node will be fetched and
     // decrypted when requested by the client.
@@ -106,14 +106,14 @@ export async function updateCacheByEvent(event: DriveEvent, cache: NodesCache, l
         try {
             node = await cache.getNode(event.nodeUid);
         } catch (error: unknown) {
-            log?.debug(`Skipping node update event (node not in the cache): ${error}`);
+            logger.debug(`Skipping node update event (node not in the cache): ${error}`);
         }
         if (node) {
             node.isStale = true;
             try {
                 await cache.setNode(node);
             } catch (setNodeError: unknown) {
-                log?.error(`Skipping node update event (failed to update): ${setNodeError}`);
+                logger.error(`Skipping node update event (failed to update)`, setNodeError);
                 // If updating node in the cache is failing, lets remove it
                 // to not block the whole client. If the node is not possible
                 // to remove, lets throw at this point as cache is in very
@@ -122,7 +122,7 @@ export async function updateCacheByEvent(event: DriveEvent, cache: NodesCache, l
                 try {
                     await cache.removeNodes([event.nodeUid]);
                 } catch (removeNodeError: unknown) {
-                    log?.error(`Skipping node update event (failed to remove after failed update): ${removeNodeError}`);
+                    logger.error(`Skipping node update event (failed to remove after failed update)`, removeNodeError);
                     // removeNodeError is automatic correction algorithm.
                     // If that fails, lets throw the original error as that
                     // is the real problem.
@@ -138,7 +138,7 @@ export async function updateCacheByEvent(event: DriveEvent, cache: NodesCache, l
         try {
             await cache.removeNodes([event.nodeUid]);
         } catch (error: unknown) {
-            log?.error(`Skipping node delete event: ${error}`);
+            logger.error(`Skipping node delete event:`, error);
         }
     }
 }
@@ -158,7 +158,7 @@ export async function updateCacheByEvent(event: DriveEvent, cache: NodesCache, l
  * 
  * @throws Only if the client's callback throws.
  */
-export async function notifyListenersByEvent(event: DriveEvent, listeners: Listeners, cache: NodesCache, nodesAccess: NodesAccess, log?: Logger) {
+export async function notifyListenersByEvent(logger: Logger, event: DriveEvent, listeners: Listeners, cache: NodesCache, nodesAccess: NodesAccess) {
     if (event.type === DriveEventType.NodeCreated || event.type === DriveEventType.NodeUpdated || event.type === DriveEventType.NodeUpdatedMetadata) {
         const subscribedListeners = listeners.filter(({ condition }) => condition(event));
         if (subscribedListeners.length) {
@@ -166,7 +166,7 @@ export async function notifyListenersByEvent(event: DriveEvent, listeners: Liste
             try {
                 node = await nodesAccess.getNode(event.nodeUid);
             } catch (error: unknown) {
-                log?.error(`Skipping node update event to listener: ${error}`);
+                logger.error(`Skipping node update event to listener`, error);
                 return;
             }
             subscribedListeners.forEach(({ callback }) => callback({ type: 'update', uid: node.uid, node }));

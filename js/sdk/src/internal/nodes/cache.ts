@@ -22,9 +22,9 @@ type DecryptedNodeResult = (
  * The cache of node metadata should not contain any crypto material.
  */
 export class NodesCache {
-    constructor(private driveCache: ProtonDriveEntitiesCache, private logger?: Logger) {
-        this.driveCache = driveCache;
+    constructor(private logger: Logger, private driveCache: ProtonDriveEntitiesCache) {
         this.logger = logger;
+        this.driveCache = driveCache;
     }
 
     async setNode(node: DecryptedNode): Promise<void> {
@@ -81,7 +81,7 @@ export class NodesCache {
      * fix issues and do not bother user with it.
      */
     private async removeCorruptedNode({ nodeUid, cacheUid }: { nodeUid?: string, cacheUid?: string }, corruptionError: unknown): Promise<void> {
-        this.logger?.error(`Removing corrupted nodes from the cache: ${corruptionError instanceof Error ? corruptionError.message : corruptionError}`);
+        this.logger.error(`Removing corrupted nodes from the cache`, corruptionError);
         try {
             if (nodeUid) {
                 await this.removeNodes([nodeUid]);
@@ -92,7 +92,7 @@ export class NodesCache {
             // The node will not be returned, thus SDK will re-fetch
             // and re-cache it. Setting it again should then fix the
             // problem.
-            this.logger?.warn(`Failed to remove corrupted node from the cache: ${removingError instanceof Error ? removingError.message : removingError}`);
+            this.logger.warn(`Failed to remove corrupted node from the cache: ${removingError instanceof Error ? removingError.message : removingError}`);
         }
     }
 
@@ -109,7 +109,7 @@ export class NodesCache {
                 await this.driveCache.removeEntities(childrenCacheUids);
             } catch (error: unknown) {
                 // TODO: Should we throw here to the client?
-                this.logger?.error(`Failed to remove children from the cache: ${error instanceof Error ? error.message : error}`);
+                this.logger.error(`Failed to remove children from the cache`, error);
             }
         }
     }

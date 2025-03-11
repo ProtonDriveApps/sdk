@@ -1,3 +1,4 @@
+import { getMockLogger } from "../../tests/logger";
 import { NotFoundAPIError } from "../apiService";
 import { EventManager } from "./eventManager";
 
@@ -23,6 +24,7 @@ describe("EventManager", () => {
         }));
 
         manager = new EventManager(
+            getMockLogger(),
             getLastEventIdMock,
             getEventsMock,
             eventsProcessedMock,

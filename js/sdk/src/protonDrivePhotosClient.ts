@@ -6,6 +6,7 @@ import { initNodesModule } from './internal/nodes';
 import { initPhotosModule } from './internal/photos';
 import { DriveEventsService } from './internal/events';
 import { getConfig } from './config';
+import { Telemetry } from './telemetry';
 
 // TODO: this is only example, on background it use drive internals, but it exposes nice interface for photos
 export class ProtonDrivePhotosClient {
@@ -17,12 +18,15 @@ export class ProtonDrivePhotosClient {
         entitiesCache,
         cryptoCache,
         account,
-        getLogger,
         config,
-        metrics, // eslint-disable-line @typescript-eslint/no-unused-vars
+        telemetry,
         openPGPCryptoModule,
         acceptNoGuaranteeWithCustomModules,
     }: ProtonDriveClientContructorParameters) {
+        if (!telemetry) {
+            telemetry = new Telemetry();
+        }
+
         if (openPGPCryptoModule && !acceptNoGuaranteeWithCustomModules) {
             // TODO: define errors and use here
             throw Error('TODO');
@@ -31,11 +35,11 @@ export class ProtonDrivePhotosClient {
     
         const fullConfig = getConfig(config);
     
-        const apiService = new DriveAPIService(httpClient, fullConfig.baseUrl, fullConfig.language, getLogger?.('api'));
+        const apiService = new DriveAPIService(telemetry, httpClient, fullConfig.baseUrl, fullConfig.language);
     
-        const events = new DriveEventsService(apiService, entitiesCache, getLogger?.('events'));
-        const shares = initSharesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule);
-        this.nodes = initNodesModule(apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares, getLogger?.('nodes'));
+        const events = new DriveEventsService(telemetry, apiService, entitiesCache);
+        const shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
+        this.nodes = initNodesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares);
         this.photos = initPhotosModule(apiService, entitiesCache, this.nodes.access);
     }
 

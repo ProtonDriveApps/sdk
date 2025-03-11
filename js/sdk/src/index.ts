@@ -1,6 +1,5 @@
-export * from './interface/index.js';
-export * from './cache/index.js';
-export { OpenPGPCryptoWithCryptoProxy, OpenPGPCrypto } from './crypto/index.js';
-export { ProtonDriveClient } from './protonDriveClient.js';
-export { ProtonDrivePhotosClient } from './protonDrivePhotosClient.js';
-export { ProtonDrivePublicClient } from './protonDrivePublicClient.js';
+export * from './interface';
+export * from './cache';
+export { OpenPGPCryptoWithCryptoProxy, OpenPGPCrypto } from './crypto';
+export { ProtonDriveClient } from './protonDriveClient';
+export { ProtonDrivePhotosClient } from './protonDrivePhotosClient';

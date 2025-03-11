@@ -1,4 +1,4 @@
-import { ProtonDriveAccount, resultOk, resultError, Result, UnverifiedAuthorError } from "../../interface";
+import { ProtonDriveAccount, resultOk, resultError, Result, UnverifiedAuthorError, ProtonDriveTelemetry, Logger } from "../../interface";
 import { DriveCrypto, PrivateKey, VERIFICATION_STATUS } from "../../crypto";
 import { EncryptedRootShare, DecryptedRootShare, EncryptedShareCrypto, DecryptedShareKey } from "./interface";
 
@@ -13,7 +13,14 @@ import { EncryptedRootShare, DecryptedRootShare, EncryptedShareCrypto, Decrypted
  * The service owns the logic to switch between old and new crypto model.
  */
 export class SharesCryptoService {
-    constructor(private driveCrypto: DriveCrypto, private account: ProtonDriveAccount) {
+    private logger: Logger;
+
+    private reportedDecryptionErrors = new Set<string>();
+    private reportedVerificationErrors = new Set<string>();
+
+    constructor(private telemetry: ProtonDriveTelemetry, private driveCrypto: DriveCrypto, private account: ProtonDriveAccount) {
+        this.telemetry = telemetry;
+        this.logger = telemetry.getLogger('shares-crypto');
         this.driveCrypto = driveCrypto;
         this.account = account;
     }
@@ -44,13 +51,22 @@ export class SharesCryptoService {
         const { keys: addressKeys } = await this.account.getOwnAddress(share.addressId);
         const addressPublicKeys = await this.account.getPublicKeys(share.creatorEmail);
 
-        const { key, sessionKey, verified } = await this.driveCrypto.decryptKey(
-            share.encryptedCrypto.armoredKey,
-            share.encryptedCrypto.armoredPassphrase,
-            share.encryptedCrypto.armoredPassphraseSignature,
-            addressKeys.map(({ key }) => key),
-            addressPublicKeys,
-        )
+        let key, sessionKey, verified;
+        try {
+            const result = await this.driveCrypto.decryptKey(
+                share.encryptedCrypto.armoredKey,
+                share.encryptedCrypto.armoredPassphrase,
+                share.encryptedCrypto.armoredPassphraseSignature,
+                addressKeys.map(({ key }) => key),
+                addressPublicKeys,
+            )
+            key = result.key;
+            sessionKey = result.sessionKey;
+            verified = result.verified;
+        } catch (error: unknown) {
+            this.reportDecryptionError(share, error);
+            throw error;
+        }
 
         const author: Result<string, UnverifiedAuthorError> = verified === VERIFICATION_STATUS.SIGNED_AND_VALID
             ? resultOk(share.creatorEmail)
@@ -60,6 +76,10 @@ export class SharesCryptoService {
                     ? `Verification signature failed`
                     : `Missing signature`,
             });
+
+        if (!author.ok) {
+            await this.reportVerificationError(share);
+        }
 
         return {
             share: {
@@ -71,5 +91,42 @@ export class SharesCryptoService {
                 sessionKey,
             },
         }
+    }
+    
+    private reportDecryptionError(share: EncryptedRootShare, error?: unknown) {
+        if (this.reportedDecryptionErrors.has(share.shareId)) {
+            return;
+        }
+
+        const fromBefore2024 = share.createdDate ? share.createdDate < new Date('2024-01-01') : undefined;
+        this.logger.error(`Failed to decrypt share ${share.shareId} (from before 2024: ${fromBefore2024})`, error);
+
+        this.telemetry.logEvent({
+            eventName: 'decryptionError',
+            context: 'own_volume', // TODO: add context to the share
+            entity: 'share',
+            fromBefore2024,
+            error,
+        });
+        this.reportedDecryptionErrors.add(share.shareId);
+    }
+
+    private async reportVerificationError(share: EncryptedRootShare) {
+        if (this.reportedVerificationErrors.has(share.shareId)) {
+            return;
+        }
+
+        const fromBefore2024 = share.createdDate ? share.createdDate < new Date('2024-01-01') : undefined;
+        const addressMatchingDefaultShare = undefined; // TODO: check if claimed author matches default share
+        this.logger.error(`Failed to verify share ${share.shareId} (from before 2024: ${fromBefore2024}, matching address: ${addressMatchingDefaultShare})`);
+
+        this.telemetry.logEvent({
+            eventName: 'verificationError',
+            context: 'own_volume', // TODO: add context to the share
+            verificationKey: 'ShareAddress',
+            addressMatchingDefaultShare,
+            fromBefore2024,
+        });
+        this.reportedVerificationErrors.add(share.shareId);
     }
 }

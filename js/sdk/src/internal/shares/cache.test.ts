@@ -1,4 +1,5 @@
 import { MemoryCache } from "../../cache";
+import { getMockLogger } from "../../tests/logger";
 import { SharesCache } from "./cache";
 
 describe('sharesCache', () => {
@@ -9,7 +10,7 @@ describe('sharesCache', () => {
         memoryCache = new MemoryCache();
         memoryCache.setEntity('volume-badObject', 'aaa');
 
-        cache = new SharesCache(memoryCache);
+        cache = new SharesCache(getMockLogger(), memoryCache);
     });
 
     it('should store and retrieve volume', async () => {

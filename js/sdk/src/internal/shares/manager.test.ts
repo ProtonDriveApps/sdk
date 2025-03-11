@@ -1,4 +1,5 @@
 import { ProtonDriveAccount } from "../../interface";
+import { getMockLogger } from "../../tests/logger";
 import { NotFoundAPIError } from "../apiService";
 import { SharesAPIService } from "./apiService";
 import { SharesCache } from "./cache";
@@ -45,7 +46,7 @@ describe("SharesManager", () => {
             getOwnAddress: jest.fn(),
         }
 
-        manager = new SharesManager(apiService, cache, cryptoCache, cryptoService, account);
+        manager = new SharesManager(getMockLogger(), apiService, cache, cryptoCache, cryptoService, account);
     });
 
     describe("getMyFilesIDs", () => {

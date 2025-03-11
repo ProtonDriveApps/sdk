@@ -1,5 +1,6 @@
+import { getMockLogger } from "../../tests/logger";
 import { DriveEvent, DriveEventType } from "../events";
-import { SharesService, NodesService, SharingType } from "./interface";
+import { NodesService, SharingType } from "./interface";
 import { SharingCache } from "./cache";
 import { handleSharedByMeNodes, handleSharedWithMeNodes } from "./events";
 import { SharingAccess } from "./sharingAccess";
@@ -161,7 +162,7 @@ describe("handleSharedByMeNodes", () => {
                 const listener = jest.fn();
                 const listeners = [{ type: SharingType.SharedByMe, callback: listener }];
 
-                await handleSharedByMeNodes(event, cache, listeners, nodesService);
+                await handleSharedByMeNodes(getMockLogger(), event, cache, listeners, nodesService);
     
                 if (added) {
                     expect(cache.addSharedByMeNodeUid).toHaveBeenCalledWith("nodeUid");
@@ -191,7 +192,7 @@ describe("handleSharedByMeNodes", () => {
                 const listener = jest.fn();
                 const listeners = [{ type: SharingType.sharedWithMe, callback: listener }];
 
-                await handleSharedByMeNodes(event, cache, listeners, nodesService);
+                await handleSharedByMeNodes(getMockLogger(), event, cache, listeners, nodesService);
     
                 if (added) {
                     expect(cache.addSharedByMeNodeUid).toHaveBeenCalledWith("nodeUid");

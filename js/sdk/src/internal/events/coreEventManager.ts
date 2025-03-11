@@ -18,14 +18,14 @@ import { EventManager } from "./eventManager";
 export class CoreEventManager {
     private manager: EventManager<DriveEvent>;
 
-    constructor(private apiService: EventsAPIService, private cache: EventsCache, log?: Logger) {
+    constructor(logger: Logger, private apiService: EventsAPIService, private cache: EventsCache) {
         this.apiService = apiService;
 
         this.manager = new EventManager(
+            logger,
             () => this.getLastEventId(),
             (eventId) => this.apiService.getCoreEvents(eventId),
             (lastEventId) => this.cache.setLastEventId('core', lastEventId, this.manager.pollingIntervalInSeconds),
-            log,
         );
     }
 

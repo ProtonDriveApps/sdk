@@ -1,4 +1,4 @@
-import { ProtonDriveEntitiesCache, Logger } from "../../interface";
+import { ProtonDriveEntitiesCache, Logger, ProtonDriveTelemetry } from "../../interface";
 import { DriveAPIService } from "../apiService";
 import { DriveListener } from "./interface";
 import { EventsAPIService } from "./apiService";
@@ -23,14 +23,16 @@ export class DriveEventsService {
     private listeners: DriveListener[] = [];
     private coreEvents: CoreEventManager;
     private volumesEvents: { [volumeId: string]: VolumeEventManager };
+    private logger: Logger;
 
-    constructor(apiService: DriveAPIService, driveEntitiesCache: ProtonDriveEntitiesCache, private log?: Logger) {
+    constructor(private telemetry: ProtonDriveTelemetry, apiService: DriveAPIService, driveEntitiesCache: ProtonDriveEntitiesCache) {
+        this.telemetry = telemetry;
+        this.logger = telemetry.getLogger('events');
         this.apiService = new EventsAPIService(apiService);
         this.cache = new EventsCache(driveEntitiesCache);
-        this.log = log;
 
         // TODO: Allow to pass own core events manager from the public interface.
-        this.coreEvents = new CoreEventManager(this.apiService, this.cache, this.log);
+        this.coreEvents = new CoreEventManager(this.logger, this.apiService, this.cache);
         this.volumesEvents = {};
     }
 
@@ -45,6 +47,7 @@ export class DriveEventsService {
         }
 
         await this.loadSubscribedVolumeEventServices();
+        this.sendNumberOfVolumSubscriptionsToTelemetry();
 
         this.subscribedToRemoteDataUpdates = true;
         this.coreEvents.startSubscription();
@@ -66,22 +69,30 @@ export class DriveEventsService {
         if (this.volumesEvents[volumeId]) {
             return;
         }
-        const volumeEvents = new VolumeEventManager(this.apiService, this.cache, volumeId, this.log);
+        const volumeEvents = new VolumeEventManager(this.logger, this.apiService, this.cache, volumeId);
         this.volumesEvents[volumeId] = volumeEvents;
 
         // TODO: Use dynamic algorithm to determine polling interval for non-own volumes.
         volumeEvents.setPollingInterval(isOwnVolume ? OWN_VOLUME_POLLING_INTERVAL : OTHER_VOLUME_POLLING_INTERVAL);
         if (this.subscribedToRemoteDataUpdates) {
             volumeEvents.startSubscription();
+            this.sendNumberOfVolumSubscriptionsToTelemetry();
         }
     }
 
     private async loadSubscribedVolumeEventServices() {
         for (const volumeId of await this.cache.getSubscribedVolumeIds()) {
             if (!this.volumesEvents[volumeId]) {
-                this.volumesEvents[volumeId] = new VolumeEventManager(this.apiService, this.cache, volumeId, this.log);
+                this.volumesEvents[volumeId] = new VolumeEventManager(this.logger, this.apiService, this.cache, volumeId);
             }
         }
+    }
+
+    private async sendNumberOfVolumSubscriptionsToTelemetry() {
+        this.telemetry.logEvent({
+            eventName: 'volumeEventsSubscriptionsChanged',
+            numberOfVolumeSubscriptions: Object.keys(this.volumesEvents).length,
+        });
     }
 
     /**

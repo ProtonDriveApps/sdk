@@ -1,9 +1,11 @@
 import { DriveCrypto, PrivateKey, SessionKey, VERIFICATION_STATUS } from "../../crypto";
-import { ProtonDriveAccount } from "../../interface";
+import { ProtonDriveAccount, ProtonDriveTelemetry } from "../../interface";
+import { getMockTelemetry } from "../../tests/telemetry";
 import { EncryptedNode, SharesService } from "./interface";
 import { NodesCryptoService } from "./cryptoService";
 
 describe("nodesCryptoService", () => {
+    let telemetry: ProtonDriveTelemetry;
     let driveCrypto: DriveCrypto;
     let account: ProtonDriveAccount;
     let sharesService: SharesService;
@@ -13,6 +15,7 @@ describe("nodesCryptoService", () => {
     beforeEach(() => {
         jest.clearAllMocks();
 
+        telemetry = getMockTelemetry();
         // @ts-expect-error No need to implement all methods for mocking
         driveCrypto = {
             decryptKey: jest.fn(async () => Promise.resolve({
@@ -49,12 +52,13 @@ describe("nodesCryptoService", () => {
             })),
         };
 
-        cryptoService = new NodesCryptoService(driveCrypto, account, sharesService);
+        cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, sharesService);
     });
 
     it("should decrypt node with same author everywhere", async () => {
         const result = await cryptoService.decryptNode(
             {
+                uid: "volumeId:nodeId",
                 encryptedCrypto: {
                     signatureEmail: "signatureEmail",
                     nameSignatureEmail: "signatureEmail",
@@ -66,7 +70,7 @@ describe("nodesCryptoService", () => {
             "parentKey" as unknown as PrivateKey
         );
 
-        expect(result).toEqual({
+        expect(result).toMatchObject({
             node: {
                 name: { ok: true, value: "name" },
                 keyAuthor: { ok: true, value: "signatureEmail" },
@@ -83,6 +87,7 @@ describe("nodesCryptoService", () => {
 
         expect(account.getPublicKeys).toHaveBeenCalledTimes(1);
         expect(account.getPublicKeys).toHaveBeenCalledWith("signatureEmail");
+        expect(telemetry.logEvent).not.toHaveBeenCalled();
     });
 
     it("should decrypt node with different authors", async () => {
@@ -117,6 +122,7 @@ describe("nodesCryptoService", () => {
         expect(account.getPublicKeys).toHaveBeenCalledTimes(2);
         expect(account.getPublicKeys).toHaveBeenCalledWith("signatureEmail");
         expect(account.getPublicKeys).toHaveBeenCalledWith("nameSignatureEmail");
+        expect(telemetry.logEvent).not.toHaveBeenCalled();
     });
 
     it("should decrypt folder node", async () => {
@@ -154,6 +160,7 @@ describe("nodesCryptoService", () => {
                 hashKey: new Uint8Array(),
             },
         });
+        expect(telemetry.logEvent).not.toHaveBeenCalled();
     });
 
     it("should decrypt folder node with signature validation error on key", async () => {
@@ -166,6 +173,7 @@ describe("nodesCryptoService", () => {
 
         const result = await cryptoService.decryptNode(
             {
+                uid: "volumeId~nodeId",
                 encryptedCrypto: {
                     signatureEmail: "signatureEmail",
                     nameSignatureEmail: "nameSignatureEmail",
@@ -180,7 +188,7 @@ describe("nodesCryptoService", () => {
             "parentKey" as unknown as PrivateKey
         );
 
-        expect(result).toEqual({
+        expect(result).toMatchObject({
             node: {
                 name: { ok: true, value: "name" },
                 keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Missing key signature" } },
@@ -197,6 +205,13 @@ describe("nodesCryptoService", () => {
                 hashKey: new Uint8Array(),
             },
         });
+        expect(telemetry.logEvent).toHaveBeenCalledWith({
+            eventName: "verificationError",
+            context: "own_volume",
+            fromBefore2024: false,
+            verificationKey: "SignatureEmail",
+            addressMatchingDefaultShare: false,
+        });
     });
 
     it("should decrypt folder node with signature validation error on name", async () => {
@@ -207,6 +222,7 @@ describe("nodesCryptoService", () => {
 
         const result = await cryptoService.decryptNode(
             {
+                uid: "volumeId~nodeId",
                 encryptedCrypto: {
                     signatureEmail: "signatureEmail",
                     nameSignatureEmail: "nameSignatureEmail",
@@ -221,7 +237,7 @@ describe("nodesCryptoService", () => {
             "parentKey" as unknown as PrivateKey
         );
 
-        expect(result).toEqual({
+        expect(result).toMatchObject({
             node: {
                 name: { ok: true, value: "name" },
                 keyAuthor: { ok: true, value: "signatureEmail" },
@@ -238,6 +254,13 @@ describe("nodesCryptoService", () => {
                 hashKey: new Uint8Array(),
             },
         });
+        expect(telemetry.logEvent).toHaveBeenCalledWith({
+            eventName: "verificationError",
+            context: "own_volume",
+            fromBefore2024: false,
+            verificationKey: "NameSignatureEmail",
+            addressMatchingDefaultShare: false,
+        });
     });
 
     it("should decrypt folder node with signature validation error on hash key", async () => {
@@ -248,6 +271,7 @@ describe("nodesCryptoService", () => {
 
         const result = await cryptoService.decryptNode(
             {
+                uid: "volumeId~nodeId",
                 encryptedCrypto: {
                     signatureEmail: "signatureEmail",
                     nameSignatureEmail: "nameSignatureEmail",
@@ -262,7 +286,7 @@ describe("nodesCryptoService", () => {
             "parentKey" as unknown as PrivateKey
         );
 
-        expect(result).toEqual({
+        expect(result).toMatchObject({
             node: {
                 name: { ok: true, value: "name" },
                 keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Verification of hash key signature failed" } },
@@ -278,6 +302,13 @@ describe("nodesCryptoService", () => {
                 sessionKey: "sessionKey",
                 hashKey: new Uint8Array(),
             },
+        });
+        expect(telemetry.logEvent).toHaveBeenCalledWith({
+            eventName: "verificationError",
+            context: "own_volume",
+            fromBefore2024: false,
+            verificationKey: "NodeKey",
+            addressMatchingDefaultShare: false,
         });
     });
 
@@ -295,6 +326,7 @@ describe("nodesCryptoService", () => {
 
         const result = await cryptoService.decryptNode(
             {
+                uid: "volumeId~nodeId",
                 encryptedCrypto: {
                     signatureEmail: "signatureEmail",
                     nameSignatureEmail: "nameSignatureEmail",
@@ -309,7 +341,7 @@ describe("nodesCryptoService", () => {
             "parentKey" as unknown as PrivateKey
         );
 
-        expect(result).toEqual({
+        expect(result).toMatchObject({
             node: {
                 name: { ok: true, value: "name" },
                 keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Missing key signature" } },
@@ -326,6 +358,14 @@ describe("nodesCryptoService", () => {
                 hashKey: new Uint8Array(),
             },
         });
+        expect(telemetry.logEvent).toHaveBeenCalledWith({
+            eventName: "verificationError",
+            context: "own_volume",
+            fromBefore2024: false,
+            verificationKey: "SignatureEmail",
+            addressMatchingDefaultShare: false,
+        });
+        expect(telemetry.logEvent).toHaveBeenCalledTimes(1);
     });
 
     it("should decrypt folder node with signature validation error on extended attributes", async () => {
@@ -336,6 +376,7 @@ describe("nodesCryptoService", () => {
 
         const result = await cryptoService.decryptNode(
             {
+                uid: "volumeId~nodeId",
                 encryptedCrypto: {
                     signatureEmail: "signatureEmail",
                     nameSignatureEmail: "nameSignatureEmail",
@@ -351,7 +392,7 @@ describe("nodesCryptoService", () => {
             "parentKey" as unknown as PrivateKey
         );
 
-        expect(result).toEqual({
+        expect(result).toMatchObject({
             node: {
                 name: { ok: true, value: "name" },
                 keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Verification of extended attributes signature failed" } },
@@ -368,6 +409,7 @@ describe("nodesCryptoService", () => {
                 hashKey: new Uint8Array(),
             },
         });
+        expect(telemetry.logEvent).not.toHaveBeenCalled();
     });
 
     it("should decrypt file node", async () => {
@@ -414,6 +456,7 @@ describe("nodesCryptoService", () => {
                 hashKey: undefined,
             },
         });
+        expect(telemetry.logEvent).not.toHaveBeenCalled();
     });
 
     it("should decrypt file node with signature validation error on extended attribute", async () => {
@@ -465,13 +508,16 @@ describe("nodesCryptoService", () => {
                 hashKey: undefined,
             },
         });
+        expect(telemetry.logEvent).not.toHaveBeenCalled();
     });
 
     it("should handle decrypt of node with key decryption issue", async () => {
-        driveCrypto.decryptKey = jest.fn(async () => Promise.reject(new Error("Decryption error")));
+        const error = new Error("Decryption error");
+        driveCrypto.decryptKey = jest.fn(async () => Promise.reject(error));
 
         const result = await cryptoService.decryptNode(
             {
+                uid: "volumeId~nodeId",
                 encryptedCrypto: {
                     signatureEmail: "signatureEmail",
                     nameSignatureEmail: "nameSignatureEmail",
@@ -486,7 +532,7 @@ describe("nodesCryptoService", () => {
             "parentKey" as unknown as PrivateKey
         );
 
-        expect(result).toEqual({
+        expect(result).toMatchObject({
             node: {
                 name: { ok: false, error: { name: "", error: "Failed to decrypt node key: Decryption error"} },
                 keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Failed to decrypt node key: Decryption error" } },
@@ -494,13 +540,22 @@ describe("nodesCryptoService", () => {
                 activeRevision: { ok: false, error: new Error("Failed to decrypt node key: Decryption error") },
             },
         });
+        expect(telemetry.logEvent).toHaveBeenCalledWith({
+            eventName: "decryptionError",
+            context: "own_volume",
+            entity: "node",
+            fromBefore2024: false,
+            error,
+        });
     });
 
     it("should handle decrypt of node with name decryption issue", async () => {
-        driveCrypto.decryptNodeName = jest.fn(async () => Promise.reject(new Error("Decryption error")));
+        const error = new Error("Decryption error");
+        driveCrypto.decryptNodeName = jest.fn(async () => Promise.reject(error));
 
         const result = await cryptoService.decryptNode(
             {
+                uid: "volumeId~nodeId",
                 encryptedCrypto: {
                     signatureEmail: "signatureEmail",
                     nameSignatureEmail: "nameSignatureEmail",
@@ -512,7 +567,7 @@ describe("nodesCryptoService", () => {
             "parentKey" as unknown as PrivateKey
         );
 
-        expect(result).toEqual({
+        expect(result).toMatchObject({
             node: {
                 name: { ok: false, error: { name: "", error: "Decryption error" } },
                 keyAuthor: { ok: true, value: "signatureEmail" },
@@ -525,6 +580,13 @@ describe("nodesCryptoService", () => {
                 sessionKey: "sessionKey",
                 hashKey: undefined,
             },
+        });
+        expect(telemetry.logEvent).toHaveBeenCalledWith({
+            eventName: "decryptionError",
+            context: "own_volume",
+            entity: "node",
+            fromBefore2024: false,
+            error,
         });
     });
 });

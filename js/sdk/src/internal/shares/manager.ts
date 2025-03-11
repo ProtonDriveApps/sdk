@@ -1,4 +1,4 @@
-import { ProtonDriveAccount } from "../../interface";
+import { Logger, ProtonDriveAccount } from "../../interface";
 import { PrivateKey } from "../../crypto";
 import { NotFoundAPIError } from "../apiService";
 import { SharesAPIService } from "./apiService";
@@ -24,12 +24,14 @@ export class SharesManager {
     private myFilesIds?: VolumeShareNodeIDs;
 
     constructor(
+        private logger: Logger,
         private apiService: SharesAPIService,
         private cache: SharesCache,
         private cryptoCache: SharesCryptoCache,
         private cryptoService: SharesCryptoService,
         private account: ProtonDriveAccount,
     ) {
+        this.logger = logger;
         this.apiService = apiService;
         this.cache = cache;
         this.cryptoCache = cryptoCache;
@@ -71,8 +73,10 @@ export class SharesManager {
             return this.myFilesIds;
         } catch (error: unknown) {
             if (error instanceof NotFoundAPIError) {
+                this.logger.warn('Active volume not found, creating a new one');
                 return this.createVolume();
             }
+            this.logger.error('Failed to get active volume', error);
             throw error;
         }
     }
@@ -87,7 +91,7 @@ export class SharesManager {
      * 
      * @throws If the volume cannot be created (e.g., one already exists).
      */
-    async createVolume(): Promise<VolumeShareNodeIDs> {
+    private async createVolume(): Promise<VolumeShareNodeIDs> {
         const { addressId, primaryKey } = await this.account.getOwnPrimaryAddress();
         const bootstrap = await this.cryptoService.generateVolumeBootstrap(primaryKey.key);
         const myFilesIds = await this.apiService.createVolume(
@@ -137,6 +141,8 @@ export class SharesManager {
                 addressKey: address.primaryKey.key,
             };
         } catch {}
+
+        this.logger.debug(`Volume key for ${volumeId} is not cached`);
 
         const { shareId } = await this.apiService.getVolume(volumeId);
         const share = await this.apiService.getRootShare(shareId);

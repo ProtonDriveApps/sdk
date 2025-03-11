@@ -47,9 +47,9 @@ type DeleteRevisionResponse = drivePaths['/drive/v2/volumes/{volumeID}/files/{li
  * and vice versa. It should not contain any business logic.
  */
 export class NodeAPIService {
-    constructor(private apiService: DriveAPIService, private logger?: Logger) {
-        this.apiService = apiService;
+    constructor(private logger: Logger, private apiService: DriveAPIService) {
         this.logger = logger;
+        this.apiService = apiService;
     }
 
     async getNode(nodeUid: string, signal?: AbortSignal): Promise<EncryptedNode> {

@@ -1,5 +1,6 @@
 import { MemoryCache } from "../../cache";
 import { NodeType, MemberRole } from "../../interface";
+import { getMockLogger } from "../../tests/logger";
 import { CACHE_TAG_KEYS, NodesCache } from "./cache";
 import { DecryptedNode } from "./interface";
 
@@ -68,7 +69,7 @@ describe('nodesCache', () => {
         memoryCache.setEntity('node-volumeId~:root', JSON.stringify(generateNode('root', '')));
         memoryCache.setEntity('node-badObject', 'aaa', [`${CACHE_TAG_KEYS.ParentUid}:root`]);
 
-        cache = new NodesCache(memoryCache);
+        cache = new NodesCache(getMockLogger(), memoryCache);
     });
 
     it('should store and retrieve node', async () => {

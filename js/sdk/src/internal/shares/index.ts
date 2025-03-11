@@ -1,4 +1,4 @@
-import { ProtonDriveEntitiesCache, ProtonDriveCryptoCache, ProtonDriveAccount } from "../../interface";
+import { ProtonDriveEntitiesCache, ProtonDriveCryptoCache, ProtonDriveAccount, ProtonDriveTelemetry } from "../../interface";
 import { DriveCrypto } from '../../crypto';
 import { DriveAPIService } from "../apiService";
 import { SharesAPIService } from "./apiService";
@@ -19,6 +19,7 @@ export type { EncryptedShare } from "./interface";
  * interact with the shares.
  */
 export function initSharesModule(
+    telemetry: ProtonDriveTelemetry,
     apiService: DriveAPIService,
     driveEntitiesCache: ProtonDriveEntitiesCache,
     driveCryptoCache: ProtonDriveCryptoCache,
@@ -26,9 +27,9 @@ export function initSharesModule(
     crypto: DriveCrypto,
 ) {
     const api = new SharesAPIService(apiService);
-    const cache = new SharesCache(driveEntitiesCache);
+    const cache = new SharesCache(telemetry.getLogger('shares-cache'), driveEntitiesCache);
     const cryptoCache = new SharesCryptoCache(driveCryptoCache);
-    const cryptoService = new SharesCryptoService(crypto, account);
-    const sharesManager = new SharesManager(api, cache, cryptoCache, cryptoService, account);
+    const cryptoService = new SharesCryptoService(telemetry, crypto, account);
+    const sharesManager = new SharesManager(telemetry.getLogger('shares'), api, cache, cryptoCache, cryptoService, account);
     return sharesManager;
 }

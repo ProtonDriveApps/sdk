@@ -1,5 +1,5 @@
 import { DriveCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from "../../crypto";
-import { resultOk, resultError, Result, InvalidNameError, Author, ProtonDriveAccount } from "../../interface";
+import { resultOk, resultError, Result, InvalidNameError, Author, ProtonDriveAccount, ProtonDriveTelemetry, Logger } from "../../interface";
 import { EncryptedNode, EncryptedNodeFolderCrypto, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys, SharesService, EncryptedRevision, DecryptedRevision } from "./interface";
 
 // TODO: Switch to CryptoProxy module once available.
@@ -17,11 +17,19 @@ import { splitNodeUid } from "../uids";
  * The service owns the logic to switch between old and new crypto model.
  */
 export class NodesCryptoService {
+    private logger: Logger;
+
+    private reportedDecryptionErrors = new Set<string>();
+    private reportedVerificationErrors = new Set<string>();
+
     constructor(
+        private telemetry: ProtonDriveTelemetry,
         private driveCrypto: DriveCrypto,
         private account: ProtonDriveAccount,
         private shareService: SharesService,
     ) {
+        this.telemetry = telemetry;
+        this.logger = telemetry.getLogger('nodes-crypto');
         this.driveCrypto = driveCrypto;
         this.account = account;
         this.shareService = shareService;
@@ -56,6 +64,7 @@ export class NodesCryptoService {
             sessionKey = keyResult.sessionKey;
             keyAuthor = keyResult.author;
         } catch (error: unknown) {
+            this.reportDecryptionError(node, error);
             const errorMessage = `Failed to decrypt node key: ${error instanceof Error ? error.message : 'Unknown error'}`;
             return {
                 node: {
@@ -161,7 +170,7 @@ export class NodesCryptoService {
             passphrase: key.passphrase,
             key: key.key,
             sessionKey: key.sessionKey,
-            author: handleClaimedAuthor('key', key.verified, node.encryptedCrypto.signatureEmail),
+            author: await this.handleClaimedAuthor(node, 'SignatureEmail', 'key', key.verified, node.encryptedCrypto.signatureEmail),
         };
     };
 
@@ -180,9 +189,10 @@ export class NodesCryptoService {
 
             return {
                 name: resultOk(name),
-                author: handleClaimedAuthor('name', verified, nameSignatureEmail),
+                author: await this.handleClaimedAuthor(node, 'NameSignatureEmail', 'name', verified, nameSignatureEmail),
             }
         } catch (error: unknown) {
+            this.reportDecryptionError(node, error);
             // TODO: Translation
             const message = error instanceof Error ? error.message : 'Unknown error';
             return {
@@ -218,7 +228,7 @@ export class NodesCryptoService {
 
         return {
             hashKey,
-            author: handleClaimedAuthor('hash key', verified, node.encryptedCrypto.signatureEmail),
+            author: await this.handleClaimedAuthor(node, 'NodeKey', 'hash key', verified, node.encryptedCrypto.signatureEmail),
         }
     }
 
@@ -365,6 +375,70 @@ export class NodesCryptoService {
 
         const signature = await computeHmacSignature(key, new TextEncoder().encode(newName));
         return arrayToHexString(signature);
+    }
+
+    private async handleClaimedAuthor(
+        node: EncryptedNode,
+        verificationKey: 'NodeKey' | 'SignatureEmail' | 'NameSignatureEmail',
+        signatureType: string,
+        verified: VERIFICATION_STATUS,
+        claimedAuthor?: string
+    ): Promise<Author> {
+        const author = handleClaimedAuthor(signatureType, verified, claimedAuthor);
+        if (!author.ok) {
+            await this.reportVerificationError(node, verificationKey, claimedAuthor);
+        }
+        return author;
+    }
+
+    private async reportVerificationError(
+        node: EncryptedNode,
+        verificationKey: 'NodeKey' | 'SignatureEmail' | 'NameSignatureEmail',
+        claimedAuthor?: string,
+    ) {
+        if (this.reportedVerificationErrors.has(node.uid)) {
+            return;
+        }
+
+        const fromBefore2024 = node.createdDate < new Date('2024-01-01');
+
+        let addressMatchingDefaultShare = undefined;
+        try {
+            const { volumeId } = splitNodeUid(node.uid);
+            const { email } = await this.shareService.getVolumeEmailKey(volumeId);
+            addressMatchingDefaultShare = claimedAuthor ? claimedAuthor === email : undefined;
+        } catch (error: unknown) {
+            this.logger.error('Failed to check if claimed author matches default share', error);
+        }
+
+        this.logger.error(`Failed to verify node ${node.uid} using ${verificationKey} (from before 2024: ${fromBefore2024}, matching address: ${addressMatchingDefaultShare})`);
+
+        this.telemetry.logEvent({
+            eventName: 'verificationError',
+            context: 'own_volume', // TODO: add context to the node
+            verificationKey,
+            addressMatchingDefaultShare,
+            fromBefore2024,
+        });
+        this.reportedVerificationErrors.add(node.uid);
+    }
+
+    private reportDecryptionError(node: EncryptedNode, error?: unknown) {
+        if (this.reportedDecryptionErrors.has(node.uid)) {
+            return;
+        }
+
+        const fromBefore2024 = node.createdDate < new Date('2024-01-01');
+        this.logger.error(`Failed to decrypt node ${node.uid} (from before 2024: ${fromBefore2024})`, error);
+
+        this.telemetry.logEvent({
+            eventName: 'decryptionError',
+            context: 'own_volume', // TODO: add context to the node
+            entity: 'node',
+            fromBefore2024,
+            error,
+        });
+        this.reportedDecryptionErrors.add(node.uid);
     }
 }
 
