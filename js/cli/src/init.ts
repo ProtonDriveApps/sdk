@@ -1,7 +1,7 @@
 import { Account } from "./account/account";
 import { Api as CryptoApi } from "./crypto/lib/worker/api";
 import { HTTPClient } from "./httpClient";
-import { getLogger } from "./logger";
+import { initTelemetry } from "./telemetry";
 import { SQLiteEntititesCache } from "./cache";
 import { Paths } from "./cli/paths";
 
@@ -61,10 +61,10 @@ function initSDK(cryptoApi: CryptoApi, config: APIConfig, account: Account) {
         entitiesCache,
         cryptoCache,
         config: { baseUrl: config.baseUrl },
+        telemetry: initTelemetry(),
         account,
         openPGPCryptoModule,
         acceptNoGuaranteeWithCustomModules: true,
-        getLogger,
     });
     return sdk;
 }

@@ -1,4 +1,4 @@
-import { ProtonDriveEntitiesCache } from "../../interface";
+import { ProtonDriveEntitiesCache, Logger } from "../../interface";
 import { Volume } from "./interface";
 
 /**
@@ -7,7 +7,8 @@ import { Volume } from "./interface";
  * The cache is responsible for serialising and deserialising volume metadata.
  */
 export class SharesCache {
-    constructor(private driveCache: ProtonDriveEntitiesCache) {
+    constructor(private logger: Logger, private driveCache: ProtonDriveEntitiesCache) {
+        this.logger = logger;
         this.driveCache = driveCache;
     }
 
@@ -27,7 +28,7 @@ export class SharesCache {
             try {
                 await this.removeVolume(volumeId);
             } catch {
-                // TODO: log error
+                this.logger.error('Failed to remove invalid volume from cache');
             }
             throw new Error(`Failed to deserialize volume: ${error instanceof Error ? error.message : error}`);
         }

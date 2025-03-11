@@ -1,13 +1,13 @@
 import { DriveAPIService } from "../apiService";
 import { DriveCrypto } from "../../crypto";
 import { DriveEventsService } from "../events";
-import { ProtonDriveEntitiesCache, ProtonDriveCryptoCache, Logger, ProtonDriveAccount } from "../../interface";
+import { ProtonDriveEntitiesCache, ProtonDriveCryptoCache, ProtonDriveAccount, ProtonDriveTelemetry } from "../../interface";
 import { NodeAPIService } from "./apiService";
 import { NodesCache } from "./cache";
 import { NodesEvents } from "./events";
 import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
-import { SharesService, DecryptedNode } from "./interface";
+import { SharesService } from "./interface";
 import { NodesAccess } from "./nodesAccess";
 import { NodesManagement } from "./nodesManagement";
 import { NodesRevisons } from "./nodesRevisions";
@@ -24,6 +24,7 @@ export type { DecryptedNode } from "./interface";
  * interact with the nodes.
  */
 export function initNodesModule(
+    telemetry: ProtonDriveTelemetry,
     apiService: DriveAPIService,
     driveEntitiesCache: ProtonDriveEntitiesCache,
     driveCryptoCache: ProtonDriveCryptoCache,
@@ -31,20 +32,19 @@ export function initNodesModule(
     driveCrypto: DriveCrypto,
     driveEvents: DriveEventsService,
     sharesService: SharesService,
-    log?: Logger,
 ) {
-    const api = new NodeAPIService(apiService, log);
-    const cache = new NodesCache(driveEntitiesCache, log);
+    const api = new NodeAPIService(telemetry.getLogger('nodes-api'), apiService);
+    const cache = new NodesCache(telemetry.getLogger('nodes-cache'), driveEntitiesCache);
     const cryptoCache = new NodesCryptoCache(driveCryptoCache);
-    const cryptoService = new NodesCryptoService(driveCrypto, account, sharesService);
-    const nodesAccess = new NodesAccess(api, cache, cryptoCache, cryptoService, sharesService, log);
-    const nodesEvents = new NodesEvents(driveEvents, cache, nodesAccess, log);
+    const cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, sharesService);
+    const nodesAccess = new NodesAccess(telemetry.getLogger('nodes'), api, cache, cryptoCache, cryptoService, sharesService);
+    const nodesEvents = new NodesEvents(telemetry.getLogger('nodes-events'), driveEvents, cache, nodesAccess);
     // TODO: Events are sent to the client once event is received from API
     // If change is done locally, it will take a time to show up if client
     // is waiting with UI update to events. Thus we need to emit events
     // right away.
     const nodesManagement = new NodesManagement(api, cache, cryptoCache, cryptoService, nodesAccess);
-    const nodesRevisions = new NodesRevisons(api, cryptoService, nodesAccess, log);
+    const nodesRevisions = new NodesRevisons(telemetry.getLogger('nodes'), api, cryptoService, nodesAccess);
 
     return {
         access: nodesAccess,
@@ -52,29 +52,4 @@ export function initNodesModule(
         revisions: nodesRevisions,
         events: nodesEvents,
     };
-}
-
-export function initPublicNodesModule(
-    apiService: DriveAPIService,
-    driveEntitiesCache: ProtonDriveEntitiesCache,
-    driveCryptoCache: ProtonDriveCryptoCache,
-    driveCrypto: DriveCrypto,
-    sharesService: SharesService,
-) {
-    // TODO: create public node API service
-    const api = new NodeAPIService(apiService);
-    const cache = new NodesCache(driveEntitiesCache);
-    const cryptoCache = new NodesCryptoCache(driveCryptoCache);
-    // @ts-expect-error TODO
-    const cryptoService = new NodesCryptoService(driveCrypto, account, sharesService);
-    const nodesAccess = new NodesAccess(api, cache, cryptoCache, cryptoService, sharesService);
-    const nodesManagement = new NodesManagement(api, cache, cryptoCache, cryptoService, nodesAccess);
-
-    return {
-        // TODO: use public root node, not my files
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        getPublicRootNode: async (token: string, password: string, customPassword?: string): Promise<DecryptedNode> => { return {} as DecryptedNode },
-        access: nodesAccess,
-        management: nodesManagement,
-    }
 }

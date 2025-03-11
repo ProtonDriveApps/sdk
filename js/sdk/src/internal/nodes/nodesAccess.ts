@@ -18,19 +18,19 @@ import { validateNodeName } from "./validations";
  */
 export class NodesAccess {
     constructor(
+        private logger: Logger,
         private apiService: NodeAPIService,
         private cache: NodesCache,
         private cryptoCache: NodesCryptoCache,
         private cryptoService: NodesCryptoService,
         private shareService: SharesService,
-        private log?: Logger,
     ) {
+        this.logger = logger;
         this.apiService = apiService;
         this.cache = cache;
         this.cryptoCache = cryptoCache;
         this.cryptoService = cryptoService;
         this.shareService = shareService;
-        this.log = log;
     }
 
     async getMyFilesRootFolder() {
@@ -48,6 +48,8 @@ export class NodesAccess {
         if (cachedNode && !cachedNode.isStale) {
             return cachedNode;
         }
+
+        this.logger.debug(`Node ${nodeUid} is ${cachedNode?.isStale ? 'stale' : 'not cached'}`);
 
         const { node } = await this.loadNode(nodeUid);
         return node;
@@ -72,6 +74,7 @@ export class NodesAccess {
             return;
         }
 
+        this.logger.debug(`Folder ${parentNodeUid} children are not cached`);
         for await (const nodeUid of this.apiService.iterateChildrenNodeUids(parentNode.uid, signal)) {
             let node;
             try {
@@ -81,6 +84,7 @@ export class NodesAccess {
             if (node && !node.isStale) {
                 yield node;
             } else {
+                this.logger.debug(`Node ${nodeUid} from ${parentNodeUid} is ${node?.isStale ? 'stale' : 'not cached'}`);
                 yield* batchLoading.load(nodeUid);
             }
         }
@@ -101,6 +105,7 @@ export class NodesAccess {
             if (node && !node.isStale) {
                 yield node;
             } else {
+                this.logger.debug(`Node ${nodeUid} trom trash is ${node?.isStale ? 'stale' : 'not cached'}`);
                 yield* batchLoading.load(nodeUid);
             }
         }
@@ -148,7 +153,7 @@ export class NodesAccess {
             try {
                 validateNodeName(unparsedNode.name.value);
             } catch (error: unknown) {
-                this.log?.warn('Node name validation failed', error);
+                this.logger.warn(`Node name validation failed: ${error instanceof Error ? error.message : error}`);
                 unparsedNode.name = resultError({
                     name: unparsedNode.name.value,
                     error: error instanceof Error ? error.message : 'Unknown error',
@@ -157,7 +162,9 @@ export class NodesAccess {
         }
 
         if (unparsedNode.type === NodeType.File) {
-            const extendedAttributes = unparsedNode.activeRevision?.ok ? parseFileExtendedAttributes(unparsedNode.activeRevision.value.extendedAttributes, this.log) : undefined;
+            const extendedAttributes = unparsedNode.activeRevision?.ok
+                ? parseFileExtendedAttributes(this.logger, unparsedNode.activeRevision.value.extendedAttributes)
+                : undefined;
 
             return {
                 ...unparsedNode,
@@ -173,7 +180,9 @@ export class NodesAccess {
             }
         }
 
-        const extendedAttributes = unparsedNode.folder?.extendedAttributes ? parseFolderExtendedAttributes(unparsedNode.folder.extendedAttributes, this.log) : undefined;
+        const extendedAttributes = unparsedNode.folder?.extendedAttributes
+            ? parseFolderExtendedAttributes(this.logger, unparsedNode.folder.extendedAttributes)
+            : undefined;
         return {
             ...unparsedNode,
             isStale: false,

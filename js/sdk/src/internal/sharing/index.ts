@@ -1,4 +1,4 @@
-import { ProtonDriveAccount, ProtonDriveEntitiesCache, Logger } from "../../interface";
+import { ProtonDriveAccount, ProtonDriveEntitiesCache, ProtonDriveTelemetry } from "../../interface";
 import { DriveCrypto } from '../../crypto';
 import { DriveAPIService } from "../apiService";
 import { DriveEventsService } from "../events";
@@ -18,6 +18,7 @@ import { SharesService, NodesService } from "./interface";
  * encryption, decryption, caching, and event handling.
  */
 export function initSharingModule(
+    telemetry: ProtonDriveTelemetry,
     apiService: DriveAPIService,
     driveEntitiesCache: ProtonDriveEntitiesCache,
     account: ProtonDriveAccount,
@@ -25,14 +26,13 @@ export function initSharingModule(
     driveEvents: DriveEventsService,
     sharesService: SharesService,
     nodesService: NodesService,
-    log?: Logger,
 ) {
     const api = new SharingAPIService(apiService);
     const cache = new SharingCache(driveEntitiesCache);
     const cryptoService = new SharingCryptoService(crypto, account);
     const sharingAccess = new SharingAccess(api, cache, cryptoService, sharesService, nodesService);
-    const sharingEvents = new SharingEvents(driveEvents, cache, nodesService, sharingAccess, log);
-    const sharingManagement = new SharingManagement(api, cryptoService, sharesService, nodesService, log);
+    const sharingEvents = new SharingEvents(telemetry.getLogger('sharing-events'), driveEvents, cache, nodesService, sharingAccess);
+    const sharingManagement = new SharingManagement(telemetry.getLogger('sharing'), api, cryptoService, sharesService, nodesService);
 
     return {
         access: sharingAccess,

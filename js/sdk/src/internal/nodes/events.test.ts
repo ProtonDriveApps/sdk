@@ -1,3 +1,4 @@
+import { getMockLogger } from "../../tests/logger";
 import { DriveEvent, DriveEventType } from "../events";
 import { updateCacheByEvent, notifyListenersByEvent } from "./events";
 import { DecryptedNode } from "./interface";
@@ -5,6 +6,8 @@ import { NodesCache } from "./cache";
 import { NodesAccess } from "./nodesAccess";
 
 describe("updateCacheByEvent", () => {
+    const logger = getMockLogger();
+
     let cache: NodesCache;
 
     beforeEach(() => {
@@ -30,14 +33,14 @@ describe("updateCacheByEvent", () => {
         };
 
         it("should not update cache by node create event", async () => {
-            await updateCacheByEvent(event, cache);
+            await updateCacheByEvent(logger, event, cache);
 
             expect(cache.getNode).toHaveBeenCalledTimes(0);
             expect(cache.setNode).toHaveBeenCalledTimes(0);
         });
 
         it("should reset parent loaded state", async () => {
-            await updateCacheByEvent(event, cache);
+            await updateCacheByEvent(logger, event, cache);
 
             expect(cache.resetFolderChildrenLoaded).toHaveBeenCalledWith('parentUid');
         });
@@ -56,7 +59,7 @@ describe("updateCacheByEvent", () => {
         it("should update cache if present in cache", async () => {
             cache.getNode = jest.fn(() => Promise.resolve({ uid: '123' } as DecryptedNode));
 
-            await updateCacheByEvent(event, cache);
+            await updateCacheByEvent(logger, event, cache);
 
             expect(cache.getNode).toHaveBeenCalledTimes(1);
             expect(cache.setNode).toHaveBeenCalledTimes(1);
@@ -66,7 +69,7 @@ describe("updateCacheByEvent", () => {
         it("should skip if missing in cache", async () => {
             cache.getNode = jest.fn(() => Promise.reject(new Error('Missing in the cache')));
 
-            await updateCacheByEvent(event, cache);
+            await updateCacheByEvent(logger, event, cache);
 
             expect(cache.getNode).toHaveBeenCalledTimes(1);
             expect(cache.setNode).toHaveBeenCalledTimes(0);
@@ -76,7 +79,7 @@ describe("updateCacheByEvent", () => {
             cache.getNode = jest.fn(() => Promise.resolve({ uid: '123' } as DecryptedNode));
             cache.setNode = jest.fn(() => Promise.reject(new Error('Cannot set node')));
 
-            await updateCacheByEvent(event, cache);
+            await updateCacheByEvent(logger, event, cache);
 
             expect(cache.getNode).toHaveBeenCalledTimes(1);
             expect(cache.removeNodes).toHaveBeenCalledTimes(1);
@@ -87,7 +90,7 @@ describe("updateCacheByEvent", () => {
             cache.setNode = jest.fn(() => Promise.reject(new Error('Cannot set node')));
             cache.removeNodes = jest.fn(() => Promise.reject(new Error('Cannot remove node')));
 
-            await expect(updateCacheByEvent(event, cache)).rejects.toThrow('Cannot set node');
+            await expect(updateCacheByEvent(logger, event, cache)).rejects.toThrow('Cannot set node');
         });
     });
 
@@ -100,7 +103,7 @@ describe("updateCacheByEvent", () => {
         }
 
         it("should remove node from cache", async () => {
-            await updateCacheByEvent(event, cache);
+            await updateCacheByEvent(logger, event, cache);
 
             expect(cache.removeNodes).toHaveBeenCalledTimes(1);
             expect(cache.removeNodes).toHaveBeenCalledWith([event.nodeUid]);
@@ -109,6 +112,8 @@ describe("updateCacheByEvent", () => {
 });
 
 describe("notifyListenersByEvent", () => {
+    const logger = getMockLogger();
+
     let cache: NodesCache;
     let nodesAccess: NodesAccess;
 
@@ -137,7 +142,7 @@ describe("notifyListenersByEvent", () => {
             };
             const listener = jest.fn();
     
-            await notifyListenersByEvent(event, [{ condition: ({ parentNodeUid }) => parentNodeUid === 'parentUid', callback: listener }], cache, nodesAccess);
+            await notifyListenersByEvent(logger, event, [{ condition: ({ parentNodeUid }) => parentNodeUid === 'parentUid', callback: listener }], cache, nodesAccess);
     
             expect(listener).toHaveBeenCalledTimes(1);
             expect(listener).toHaveBeenCalledWith({ type: 'update', uid: 'nodeUid', node: { uid: 'nodeUid'} });
@@ -155,7 +160,7 @@ describe("notifyListenersByEvent", () => {
             };
             const listener = jest.fn();
     
-            await notifyListenersByEvent(event, [{ condition: ({ isTrashed }) => !!isTrashed, callback: listener }], cache, nodesAccess);
+            await notifyListenersByEvent(logger, event, [{ condition: ({ isTrashed }) => !!isTrashed, callback: listener }], cache, nodesAccess);
     
             expect(listener).toHaveBeenCalledTimes(1);
             expect(listener).toHaveBeenCalledWith({ type: 'update', uid: 'nodeUid', node: { uid: 'nodeUid'} });
@@ -173,7 +178,7 @@ describe("notifyListenersByEvent", () => {
             };
             const listener = jest.fn();
     
-            await notifyListenersByEvent(event, [{ condition: ({ isShared }) => !!isShared, callback: listener }], cache, nodesAccess);
+            await notifyListenersByEvent(logger, event, [{ condition: ({ isShared }) => !!isShared, callback: listener }], cache, nodesAccess);
     
             expect(listener).toHaveBeenCalledTimes(1);
             expect(listener).toHaveBeenCalledWith({ type: 'update', uid: 'nodeUid', node: { uid: 'nodeUid'} });
@@ -191,7 +196,7 @@ describe("notifyListenersByEvent", () => {
             };
             const listener = jest.fn();
     
-            await notifyListenersByEvent(event, [{ condition: ({ parentNodeUid }) => parentNodeUid === 'lalalala', callback: listener }], cache, nodesAccess);
+            await notifyListenersByEvent(logger, event, [{ condition: ({ parentNodeUid }) => parentNodeUid === 'lalalala', callback: listener }], cache, nodesAccess);
     
             expect(listener).toHaveBeenCalledTimes(0);
             expect(nodesAccess.getNode).toHaveBeenCalledTimes(0);
@@ -208,7 +213,7 @@ describe("notifyListenersByEvent", () => {
             };
             const listener = jest.fn();
     
-            await notifyListenersByEvent(event, [{ condition: ({ parentNodeUid }) => parentNodeUid === 'parentUid', callback: listener }], cache, nodesAccess);
+            await notifyListenersByEvent(logger, event, [{ condition: ({ parentNodeUid }) => parentNodeUid === 'parentUid', callback: listener }], cache, nodesAccess);
     
             expect(listener).toHaveBeenCalledTimes(1);
             expect(listener).toHaveBeenCalledWith({ type: 'remove', uid: 'nodeUid' });
@@ -225,7 +230,7 @@ describe("notifyListenersByEvent", () => {
     
             const listener = jest.fn();
     
-            await notifyListenersByEvent(event, [{ condition: ({ isTrashed }) => !!isTrashed, callback: listener }], cache, nodesAccess);
+            await notifyListenersByEvent(logger, event, [{ condition: ({ isTrashed }) => !!isTrashed, callback: listener }], cache, nodesAccess);
     
             expect(listener).toHaveBeenCalledTimes(1);
             expect(listener).toHaveBeenCalledWith({ type: 'remove', uid: 'nodeUid' });
@@ -242,7 +247,7 @@ describe("notifyListenersByEvent", () => {
     
             const listener = jest.fn();
     
-            await notifyListenersByEvent(event, [{ condition: ({ isShared }) => !!isShared, callback: listener }], cache, nodesAccess);
+            await notifyListenersByEvent(logger, event, [{ condition: ({ isShared }) => !!isShared, callback: listener }], cache, nodesAccess);
     
             expect(listener).toHaveBeenCalledTimes(1);
             expect(listener).toHaveBeenCalledWith({ type: 'remove', uid: 'nodeUid' });
@@ -258,7 +263,7 @@ describe("notifyListenersByEvent", () => {
             };
             const listener = jest.fn();
     
-            await notifyListenersByEvent(event, [{ condition: ({ isTrashed }) => !!isTrashed, callback: listener }], cache, nodesAccess);
+            await notifyListenersByEvent(logger, event, [{ condition: ({ isTrashed }) => !!isTrashed, callback: listener }], cache, nodesAccess);
     
             expect(listener).toHaveBeenCalledTimes(0);
         });
@@ -272,7 +277,7 @@ describe("notifyListenersByEvent", () => {
             };
             const listener = jest.fn();
     
-            await notifyListenersByEvent(event, [{ condition: ({ parentNodeUid }) => parentNodeUid === 'lalalala', callback: listener }], cache, nodesAccess);
+            await notifyListenersByEvent(logger, event, [{ condition: ({ parentNodeUid }) => parentNodeUid === 'lalalala', callback: listener }], cache, nodesAccess);
     
             expect(listener).toHaveBeenCalledTimes(0);
         });

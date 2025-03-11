@@ -1,3 +1,4 @@
+import { getMockLogger } from "../../tests/logger";
 import { PrivateKey } from "../../crypto";
 import { NodeAPIService } from "./apiService";
 import { NodesCache } from "./cache"
@@ -43,7 +44,7 @@ describe('nodesAccess', () => {
             getSharePrivateKey: jest.fn(),
         };
 
-        access = new NodesAccess(apiService, cache, cryptoCache, cryptoService, shareService);
+        access = new NodesAccess(getMockLogger(), apiService, cache, cryptoCache, cryptoService, shareService);
     });
 
     describe('getNode', () => {

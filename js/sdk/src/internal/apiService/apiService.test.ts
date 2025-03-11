@@ -1,4 +1,5 @@
-import { ProtonDriveHTTPClient } from "../../interface/index.js";
+import { ProtonDriveHTTPClient } from "../../interface";
+import { getMockTelemetry } from "../../tests/telemetry";
 import { DriveAPIService } from './apiService';
 import { HTTPErrorCode, ErrorCode } from './errorCodes';
 
@@ -18,8 +19,8 @@ describe("DriveAPIService", () => {
         httpClient = {
             fetch: jest.fn(() => Promise.resolve(generateOkResponse())),
         };
-        api = new DriveAPIService(httpClient, 'http://drive.proton.me', 'en');
-    })
+        api = new DriveAPIService(getMockTelemetry(), httpClient, 'http://drive.proton.me', 'en');
+    });
 
     describe("should make", () => {
         it("GET request", async () => {

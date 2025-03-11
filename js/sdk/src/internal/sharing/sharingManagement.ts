@@ -29,17 +29,17 @@ interface EmailOptions {
  */
 export class SharingManagement {
     constructor(
+        private logger: Logger,
         private apiService: SharingAPIService,
         private cryptoService: SharingCryptoService,
         private sharesService: SharesService,
         private nodesService: NodesService,
-        private log?: Logger,
     ) {
+        this.logger = logger;
         this.apiService = apiService;
         this.cryptoService = cryptoService;
         this.sharesService = sharesService;
         this.nodesService = nodesService;
-        this.log = log;
     }
 
     async getSharingInfo(nodeUid: string): Promise<ShareResult | undefined> {
@@ -118,10 +118,10 @@ export class SharingManagement {
             const existingInvitation = currentSharing.protonInvitations.find((invitation) => invitation.inviteeEmail === email);
             if (existingInvitation) {
                 if (existingInvitation.role === role) {
-                    this.log?.debug(`Invitation for ${email} already exists with role ${role} to node ${nodeUid}`);
+                    this.logger.info(`Invitation for ${email} already exists with role ${role} to node ${nodeUid}`);
                     continue;
                 }
-                this.log?.debug(`Invitation for ${email} already exists, updating role to ${role} to node ${nodeUid}`);
+                this.logger.info(`Invitation for ${email} already exists, updating role to ${role} to node ${nodeUid}`);
                 await this.updateInvitation(existingInvitation.uid, role);
                 existingInvitation.role = role;
                 continue;
@@ -130,16 +130,16 @@ export class SharingManagement {
             const existingMember = currentSharing.members.find((member) => member.inviteeEmail === email);
             if (existingMember) {
                 if (existingMember.role === role) {
-                    this.log?.debug(`Member ${email} already exists with role ${role} to node ${nodeUid}`);
+                    this.logger.info(`Member ${email} already exists with role ${role} to node ${nodeUid}`);
                     continue;
                 }
-                this.log?.debug(`Member ${email} already exists, updating role to ${role} to node ${nodeUid}`);
+                this.logger.info(`Member ${email} already exists, updating role to ${role} to node ${nodeUid}`);
                 await this.updateMember(existingMember.uid, role);
                 existingMember.role = role;
                 continue;
             }
 
-            this.log?.debug(`Inviting user ${email} with role ${role} to node ${nodeUid}`);
+            this.logger.info(`Inviting user ${email} with role ${role} to node ${nodeUid}`);
             const invitation = await this.inviteProtonUser(currentSharing.share, email, role, emailOptions);
             currentSharing.protonInvitations.push(invitation);
         }
@@ -152,10 +152,10 @@ export class SharingManagement {
             const existingExternalInvitation = currentSharing.nonProtonInvitations.find((invitation) => invitation.inviteeEmail === email);
             if (existingExternalInvitation) {
                 if (existingExternalInvitation.role === role) {
-                    this.log?.debug(`External invitation for ${email} already exists with role ${role} to node ${nodeUid}`);
+                    this.logger.info(`External invitation for ${email} already exists with role ${role} to node ${nodeUid}`);
                     continue;
                 }
-                this.log?.debug(`External invitation for ${email} already exists, updating role to ${role} to node ${nodeUid}`);
+                this.logger.info(`External invitation for ${email} already exists, updating role to ${role} to node ${nodeUid}`);
                 await this.updateExternalInvitation(existingExternalInvitation.uid, role);
                 existingExternalInvitation.role = role;
                 continue;
@@ -164,16 +164,16 @@ export class SharingManagement {
             const existingMember = currentSharing.members.find((member) => member.inviteeEmail === email);
             if (existingMember) {
                 if (existingMember.role === role) {
-                    this.log?.debug(`Member ${email} already exists with role ${role} to node ${nodeUid}`);
+                    this.logger.info(`Member ${email} already exists with role ${role} to node ${nodeUid}`);
                     continue;
                 }
-                this.log?.debug(`Member ${email} already exists, updating role to ${role} to node ${nodeUid}`);
+                this.logger.info(`Member ${email} already exists, updating role to ${role} to node ${nodeUid}`);
                 await this.updateMember(existingMember.uid, role);
                 existingMember.role = role;
                 continue;
             }
 
-            this.log?.debug(`Inviting external user ${email} with role ${role} to node ${nodeUid}`);
+            this.logger.info(`Inviting external user ${email} with role ${role} to node ${nodeUid}`);
             const invitation = await this.inviteExternalUser(currentSharing.share, email, role, emailOptions);
             currentSharing.nonProtonInvitations.push(invitation);
         }
@@ -184,10 +184,10 @@ export class SharingManagement {
                 : settings.publicLink;
 
             if (currentSharing.publicLink) {
-                this.log?.debug(`Updating public link with options ${options} to node ${nodeUid}`);
+                this.logger.info(`Updating public link with options ${options} to node ${nodeUid}`);
                 await this.updateSharedLink(currentSharing.share, options);
             } else {
-                this.log?.debug(`Sharing via public link with options ${options} to node ${nodeUid}`);
+                this.logger.info(`Sharing via public link with options ${options} to node ${nodeUid}`);
                 await this.shareViaLink(currentSharing.share, options);
             }
         }
@@ -207,7 +207,7 @@ export class SharingManagement {
         }
 
         if (!settings) {
-            this.log?.debug(`Unsharing node ${nodeUid}`);
+            this.logger.info(`Unsharing node ${nodeUid}`);
             await this.deleteShare(currentSharing.share.shareId);
             return;
         }
@@ -215,7 +215,7 @@ export class SharingManagement {
         for (const userEmail of settings.users || []) {
             const existingInvitation = currentSharing.protonInvitations.find((invitation) => invitation.inviteeEmail === userEmail);
             if (existingInvitation) {
-                this.log?.debug(`Deleting invitation for ${userEmail} to node ${nodeUid}`);
+                this.logger.info(`Deleting invitation for ${userEmail} to node ${nodeUid}`);
                 await this.deleteInvitation(existingInvitation.uid);
                 currentSharing.protonInvitations = currentSharing.protonInvitations.filter((invitation) => invitation.uid !== existingInvitation.uid);
                 continue;
@@ -223,7 +223,7 @@ export class SharingManagement {
 
             const existingExternalInvitation = currentSharing.nonProtonInvitations.find((invitation) => invitation.inviteeEmail === userEmail);
             if (existingExternalInvitation) {
-                this.log?.debug(`Deleting external invitation for ${userEmail} to node ${nodeUid}`);
+                this.logger.info(`Deleting external invitation for ${userEmail} to node ${nodeUid}`);
                 await this.deleteExternalInvitation(existingExternalInvitation.uid);
                 currentSharing.nonProtonInvitations = currentSharing.nonProtonInvitations.filter((invitation) => invitation.uid !== existingExternalInvitation.uid);
                 continue;
@@ -231,17 +231,17 @@ export class SharingManagement {
 
             const existingMember = currentSharing.members.find((member) => member.inviteeEmail === userEmail);
             if (existingMember) {
-                this.log?.debug(`Removing member ${userEmail} to node ${nodeUid}`);
+                this.logger.info(`Removing member ${userEmail} to node ${nodeUid}`);
                 await this.removeMember(existingMember.uid);
                 currentSharing.members = currentSharing.members.filter((member) => member.uid !== existingMember.uid);
                 continue;
             }
 
-            this.log?.debug(`User ${userEmail} not found in sharing info for node ${nodeUid}`);
+            this.logger.info(`User ${userEmail} not found in sharing info for node ${nodeUid}`);
         }
 
         if (settings.publicLink === 'remove') {
-            this.log?.debug(`Removing public link to node ${nodeUid}`);
+            this.logger.info(`Removing public link to node ${nodeUid}`);
             await this.removeSharedLink(currentSharing.share);
             currentSharing.publicLink = undefined;
         }

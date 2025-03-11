@@ -1,4 +1,5 @@
 import { MemberRole, NodeType } from "../../interface";
+import { getMockLogger } from "../../tests/logger";
 import { DriveAPIService, ErrorCode } from "../apiService";
 import { NodeAPIService } from './apiService';
 
@@ -141,7 +142,7 @@ describe("nodeAPIService", () => {
             put: jest.fn(),
         };
 
-        api = new NodeAPIService(apiMock);
+        api = new NodeAPIService(getMockLogger(), apiMock);
     });
 
     describe('getNodes', () => {

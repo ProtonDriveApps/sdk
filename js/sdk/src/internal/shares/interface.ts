@@ -40,6 +40,7 @@ type BaseShare = {
      * might not have this field set.
      */
     addressId?: string;
+    createdDate?: Date;
 } & VolumeShareNodeIDs;
 
 interface BaseRootShare extends BaseShare {

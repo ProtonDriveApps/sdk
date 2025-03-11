@@ -20,7 +20,7 @@ type Listeners = {
 export class SharingEvents {
     private listeners: Listeners = [];
 
-    constructor(events: DriveEventsService, cache: SharingCache, nodesService: NodesService, sharingAccess: SharingAccess, log?: Logger) {
+    constructor(logger: Logger, events: DriveEventsService, cache: SharingCache, nodesService: NodesService, sharingAccess: SharingAccess) {
         events.addListener(async (events, fullRefreshVolumeId) => {
             // Technically we need to refresh only the shared by me nodes for
             // own volume, and shared with me nodes only when the event comes
@@ -36,7 +36,7 @@ export class SharingEvents {
             }
 
             for (const event of events) {
-                await handleSharedByMeNodes(event, cache, this.listeners, nodesService, log);
+                await handleSharedByMeNodes(logger, event, cache, this.listeners, nodesService);
                 await handleSharedWithMeNodes(event, cache, this.listeners, sharingAccess);
             }
         });
@@ -65,7 +65,7 @@ export class SharingEvents {
  *
  * @throws Only if the client's callback throws.
  */
-export async function handleSharedByMeNodes(event: DriveEvent, cache: SharingCache, listeners: Listeners, nodesService: NodesService, log?: Logger) {
+export async function handleSharedByMeNodes(logger: Logger, event: DriveEvent, cache: SharingCache, listeners: Listeners, nodesService: NodesService) {
     if (event.type === DriveEventType.ShareWithMeUpdated || !event.isOwnVolume) {
         return;
     }
@@ -76,13 +76,13 @@ export async function handleSharedByMeNodes(event: DriveEvent, cache: SharingCac
         try {
             await cache.addSharedByMeNodeUid(event.nodeUid);
         } catch (error: unknown) {
-            log?.error(`Skipping shared by me node cache update: ${error}`);
+            logger.error(`Skipping shared by me node cache update`, error);
         }
         let node;
         try {
             node = await nodesService.getNode(event.nodeUid);
         } catch (error: unknown) {
-            log?.error(`Skipping shared by me node update event to listener: ${error}`);
+            logger.error(`Skipping shared by me node update event to listener`, error);
             return;
         }
         subscribedListeners.forEach(({ callback }) => callback({ type: 'update', uid: node.uid, node }));
@@ -104,7 +104,7 @@ export async function handleSharedByMeNodes(event: DriveEvent, cache: SharingCac
             try {
                 await cache.removeSharedByMeNodeUid(event.nodeUid);
             } catch (error: unknown) {
-                log?.error(`Skipping shared by me node cache remove: ${error}`);
+                logger.error(`Skipping shared by me node cache remove`, error);
             }
             subscribedListeners.forEach(({ callback }) => callback({ type: 'remove', uid: event.nodeUid }));
         }

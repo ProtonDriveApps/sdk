@@ -1,4 +1,4 @@
-import { ProtonDriveHTTPClient, Logger } from "../../interface/index.js";
+import { ProtonDriveHTTPClient, ProtonDriveTelemetry, Logger } from "../../interface";
 import { HTTPErrorCode, isCodeOk } from './errorCodes';
 import { apiErrorFactory, AbortError, APIError } from './errors';
 import { waitSeconds } from './wait';
@@ -73,11 +73,14 @@ export class DriveAPIService {
     private subsequentServerErrorsCounter = 0;
     private lastServerErrorAt?: number;
 
-    constructor(private httpClient: ProtonDriveHTTPClient, private baseUrl: string, private language: string, private logger?: Logger) {
+    private logger: Logger;
+
+    constructor(private telemetry: ProtonDriveTelemetry, private httpClient: ProtonDriveHTTPClient, private baseUrl: string, private language: string) {
         this.httpClient = httpClient;
         this.baseUrl = baseUrl;
         this.language = language;
-        this.logger = logger;
+        this.telemetry = telemetry;
+        this.logger = telemetry.getLogger('api');
     }
 
     async get<ResponsePayload>(url: string, signal?: AbortSignal): Promise<ResponsePayload> {
@@ -153,9 +156,9 @@ export class DriveAPIService {
         }
 
         if (response.ok) {
-            this.logger?.info(`${method} ${url}: ${response.status}`);
+            this.logger.info(`${method} ${url}: ${response.status}`);
         } else {
-            this.logger?.warn(`${method} ${url}: ${response.status}`);
+            this.logger.warn(`${method} ${url}: ${response.status}`);
         }
 
         if (response.status === HTTPErrorCode.TOO_MANY_REQUESTS) {
@@ -174,15 +177,15 @@ export class DriveAPIService {
             this.serverErrorHappened();
 
             if (attempt > 0) {
-                this.logger?.warn(`${method} ${url}: ${response.status} - retry failed`);
+                this.logger.warn(`${method} ${url}: ${response.status} - retry failed`);
             } else {
                 await waitSeconds(SERVER_ERROR_RETRY_DELAY_SECONDS);
                 return this.makeRequest(url, method, data, signal, attempt+1);
             }
         } else {
             if (attempt > 0) {
-                // TODO: send to metrics
-                this.logger?.warn(`${method} ${url}: ${response.status} - retry helped`);
+                this.telemetry.logEvent({ eventName: 'apiRetrySucceeded', failedAttempts: attempt, url });
+                this.logger.warn(`${method} ${url}: ${response.status} - retry helped`);
             }
             this.clearSubsequentServerErrors();
         }

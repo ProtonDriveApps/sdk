@@ -50,11 +50,12 @@ export class EventManager<T> {
     pollingIntervalInSeconds = DEFAULT_POLLING_INTERVAL_IN_SECONDS;
 
     constructor(
+        private logger: Logger,
         private getLatestEventId: () => Promise<string>,
         private getEvents: (eventId: string) => Promise<Events<T>>,
         private eventsProcessed: (lastEventId: string) => Promise<void>,
-        private log?: Logger,
     ) {
+        this.logger = logger;
         this.getLatestEventId = getLatestEventId;
         this.getEvents = getEvents;
     }
@@ -102,7 +103,7 @@ export class EventManager<T> {
             }
             this.retryIndex = 0;
         } catch (error: unknown) {
-            this.log?.error(`Failed to process events: ${error instanceof Error ? error.message : error} (retry ${this.retryIndex}, last event ID: ${this.lastestEventId})`);
+            this.logger.error(`Failed to process events: ${error instanceof Error ? error.message : error} (retry ${this.retryIndex}, last event ID: ${this.lastestEventId})`);
             this.retryIndex++;
         }
 
@@ -120,7 +121,7 @@ export class EventManager<T> {
             try {
                 await listener(result.events, result.refresh);
             } catch (error: unknown) {
-                this.log?.error(`Failed to process events: ${error instanceof Error ? error.message : error} (last event ID: ${result.lastEventId}, refresh: ${result.refresh})`);
+                this.logger.error(`Failed to process events: ${error instanceof Error ? error.message : error} (last event ID: ${result.lastEventId}, refresh: ${result.refresh})`);
                 throw error;
             }
         }

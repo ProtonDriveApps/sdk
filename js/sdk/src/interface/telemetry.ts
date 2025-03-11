@@ -1,0 +1,84 @@
+export interface Telemetry<MetricEvent> {
+    getLogger: (name: string) => Logger,
+    logEvent: (event: MetricEvent) => void,
+}
+
+export interface Logger {
+    debug(msg: string): void; // eslint-disable-line @typescript-eslint/no-explicit-any
+    info(msg: string): void; // eslint-disable-line @typescript-eslint/no-explicit-any
+    warn(msg: string): void; // eslint-disable-line @typescript-eslint/no-explicit-any
+    error(msg: string, error?: unknown): void; // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
+export type MetricEvent =
+    MetricAPIRetrySucceededEvent |
+    MetricUploadEvent |
+    MetricDownloadEvent |
+    MetricDecryptionErrorEvent |
+    MetricVerificationErrorEvent |
+    MetricVolumeEventsSubscriptionsChangedEvent;
+
+export interface MetricAPIRetrySucceededEvent {
+    eventName: 'apiRetrySucceeded',
+    url: string,
+    failedAttempts: number,
+};
+
+export interface MetricUploadEvent {
+    eventName: 'upload',
+    context: MetricContext,
+    retry: boolean,
+    uploadedSize: number,
+    fileSize: number,
+    error?: MetricsUploadErrorType,
+};
+export type MetricsUploadErrorType =
+    'free_space_exceeded' |
+    'too_many_children' |
+    'network_error' |
+    'server_error' |
+    'integrity_error' |
+    'rate_limited' |
+    '4xx' |
+    '5xx' |
+    'unknown';
+
+export interface MetricDownloadEvent {
+    eventName: 'download',
+    context: MetricContext,
+    retry: boolean,
+    downloadedSize: number,
+    fileSize: number,
+    error?: MetricsDownloadErrorType,
+};
+export type MetricsDownloadErrorType =
+    'server_error' |
+    'network_error' |
+    'decryption_error' |
+    'rate_limited' |
+    '4xx' |
+    '5xx' |
+    'unknown';
+
+export interface MetricDecryptionErrorEvent {
+    eventName: 'decryptionError',
+    context: MetricContext,
+    entity: 'share' | 'node' | 'content',
+    fromBefore2024?: boolean,
+    error?: unknown,
+};
+
+export interface MetricVerificationErrorEvent {
+    eventName: 'verificationError',
+    context: MetricContext,
+    verificationKey: 'ShareAddress' | 'NodeKey' | 'SignatureEmail' | 'NameSignatureEmail' | 'other',
+    addressMatchingDefaultShare?: boolean,
+    fromBefore2024?: boolean,
+};
+
+export interface MetricVolumeEventsSubscriptionsChangedEvent {
+    eventName: 'volumeEventsSubscriptionsChanged',
+    numberOfVolumeSubscriptions: number,
+};
+
+export type MetricContext = 'own_volume' | 'shared' | 'shared_public' | 'photo';

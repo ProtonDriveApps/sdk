@@ -23,5 +23,3 @@ export function initDownloadModule(
         getFileDownloader,
     }
 }
-
-
