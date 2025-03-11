@@ -5,7 +5,7 @@ import { uint8ArrayToBase64String } from './utils';
  * Interface matching CryptoProxy interface from client's monorepo:
  * clients/packages/crypto/lib/proxy/proxy.ts.
  */
-interface OpenPGPCryptoProxy {
+export interface OpenPGPCryptoProxy {
     generateKey: (options: { userIDs: { name: string }[], type: 'ecc', curve: 'ed25519' }) => Promise<PrivateKey>,
     exportPrivateKey: (options: { privateKey: PrivateKey, passphrase: string }) => Promise<string>,
     importPrivateKey: (options: { armoredKey: string, passphrase: string }) => Promise<PrivateKey>,

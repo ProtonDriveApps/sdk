@@ -1,5 +1,6 @@
-import { Result } from './result.js';
-import { NodeEntity, NodeOrUid, NodeType, MemberRole, InvalidNameError, UnverifiedAuthorError } from './nodes.js';
+import { Result } from './result';
+import { UnverifiedAuthorError } from './author';
+import { NodeType, MemberRole, InvalidNameError } from './nodes';
 
 export type Member = {
     uid: string,
@@ -40,34 +41,17 @@ export type PublicLink = {
 
 export type Bookmark = {
     uid: string,
-    nodeName: Result<string, Error>,
     bookmarkedDate: Date,
-    rootNodeUid: string,
+    node: {
+        name: Result<string, InvalidNameError>,
+        type: NodeType,
+        mimeType?: string,
+    },
 }
 
 export type ProtonInvitationOrUid = ProtonInvitation | string;
 export type NonProtonInvitationOrUid = NonProtonInvitation | string;
 export type BookmarkOrUid = Bookmark | string;
-
-export interface Sharing {
-    iterateInvitations(signal?: AbortSignal): AsyncGenerator<ProtonInvitationWithNode>,
-    acceptInvitation(invitationUid: ProtonInvitationOrUid): Promise<void>,
-    rejectInvitation(invitationUid: ProtonInvitationOrUid): Promise<void>,
-
-    iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<NodeEntity>,
-    iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<NodeEntity>,
-    leaveSharedNode(nodeUid: NodeOrUid): void,
-
-    iterateBookmarks(signal?: AbortSignal): AsyncGenerator<Bookmark>,
-    removeBookmark(bookmarkUid: BookmarkOrUid): Promise<void>,
-}
-
-export interface SharingManagement {
-    getSharingInfo(nodeUid: NodeOrUid): Promise<ShareResult | undefined>,
-    shareNode(nodeUid: NodeOrUid, settings: ShareNodeSettings): Promise<ShareResult>,
-    unshareNode(nodeUid: NodeOrUid, settings?: UnshareNodeSettings): Promise<ShareResult | undefined>,
-    resendInvitation(invitationUid: ProtonInvitationOrUid | NonProtonInvitationOrUid): Promise<void>,
-}
 
 export type ShareNodeSettings = {
     protonUsers?: ShareMembersSettings,

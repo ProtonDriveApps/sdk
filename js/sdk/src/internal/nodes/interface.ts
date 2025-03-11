@@ -117,7 +117,7 @@ export interface EncryptedRevision extends BaseRevision {
 }
 
 export interface DecryptedRevision extends BaseRevision {
-    author: Author,
+    contentAuthor: Author,
     extendedAttributes?: string,
 }
 

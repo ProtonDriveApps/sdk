@@ -1,4 +1,4 @@
-import { NodeOrUid } from './nodes.js';
+import { NodeOrUid } from './nodes';
 
 export interface Upload {
     getFileUploader(

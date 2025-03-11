@@ -28,7 +28,7 @@ export class CommandRevisionList implements Command {
     }
 
     private printRevision(revision: Revision, options: { humanReadable: boolean }) {
-        const author = formatAuthor(revision.author);
+        const author = formatAuthor(revision.contentAuthor);
         const created = formatDate(revision.createdDate, options.humanReadable);
         const size = formatSize(revision.claimedSize, options.humanReadable);
         console.log(`${author} ${created} ${size} ${revision.uid}`);

@@ -1,5 +1,5 @@
-import { NodeOrUid } from './nodes.js';
-import { ThumbnailType } from './upload.js';
+import { NodeOrUid } from './nodes';
+import { ThumbnailType } from './upload';
 
 export interface Download {
     getFileDownloader(node: NodeOrUid, signal?: AbortSignal): Promise<FileDownloader>,

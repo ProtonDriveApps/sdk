@@ -1,19 +1,39 @@
-import { Result } from './result.js';
-
-export type Author = Result<string | AnonymousUser, UnverifiedAuthorError>;
+import { Result } from './result';
+import { Author } from './author';
 
 // Note: Node is reserved by JS/DOM, thus we need exception how the entity is called
 export type NodeEntity = {
     uid: string,
     parentUid?: string,
     name: Result<string, InvalidNameError>,
+    /**
+     * Author of the node key.
+     * 
+     * Person who created the node and keys for it. If user A uploads the file
+     * and user B renames the file and uploads new revision, name and content
+     * author is user B, while key author stays to user A who has forever
+     * option to decrypt latest versions.
+     */
     keyAuthor: Author,
+    /**
+     * Author of the name.
+     * 
+     * Person who named the file. If user A uploads the file and user B renames
+     * the file, key and content author is user A, while name author is user B.
+     */
     nameAuthor: Author,
     directMemberRole: MemberRole,
     type: NodeType,
     mimeType?: string,
+    /**
+     * Whether the node is shared. If true, the node is shared with at least
+     * one user, or via public link.
+     */
     isShared: boolean,
-    createdDate: Date, // created on server date
+    /**
+     * Created on server date.
+     */
+    createdDate: Date,
     trashedDate?: Date,
     activeRevision?: Result<Revision, Error>,
     folder?: {
@@ -22,16 +42,12 @@ export type NodeEntity = {
 }
 
 export type InvalidNameError = {
-    name: string, // placeholder instead of node name
+    /**
+     * Placeholder instead of node name that client can use to display.
+     */
+    name: string,
     error: string,
 }
-
-export type UnverifiedAuthorError = {
-    claimedAuthor?: string,
-    error: string,
-}
-
-export type AnonymousUser = null;
 
 export enum NodeType {
     File = "file",
@@ -49,7 +65,7 @@ export type Revision = {
     uid: string,
     state: RevisionState,
     createdDate: Date, // created on server date
-    author: Author,
+    contentAuthor: Author,
     claimedSize?: number,
     claimedModificationTime?: Date,
     claimedDigests?: {
@@ -66,31 +82,6 @@ export enum RevisionState {
 export type NodeOrUid = NodeEntity | string;
 export type RevisionOrUid = Revision | string;
 
-export interface Nodes {
-    getNodeUid(shareId: string, nodeId: string): Promise<string>; // deprected right away
-    getMyFilesRootFolder(): Promise<NodeEntity>,
-    iterateChildren(parentNodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<NodeEntity>,
-    iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeEntity>,
-}
-
-export interface NodesManagement {
-    createFolder(parentNodeUid: NodeOrUid, name: string): Promise<NodeEntity>,
-    renameNode(nodeUid: NodeOrUid, newName: string): Promise<NodeEntity>,
-    moveNodes(nodeUids: NodeOrUid[], newParentNodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<NodeResult>,
-    trashNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult>,
-    restoreNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult>,
-}
-
-export interface TrashManagement {
-    iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<NodeEntity>,
-    deleteNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult>,
-    emptyTrash(): Promise<void>,
-}
-
-export interface Revisions {
-    iterateRevisions(nodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<Revision>,
-    restoreRevision(revisionUid: RevisionOrUid): Promise<void>,
-    deleteRevision(revisionUid: RevisionOrUid): Promise<void>,
-}
-
-export type NodeResult = {uid: string, ok: true} | {uid: string, ok: false, error: string};
+export type NodeResult =
+    {uid: string, ok: true} |
+    {uid: string, ok: false, error: string};

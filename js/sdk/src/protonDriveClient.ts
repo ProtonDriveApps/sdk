@@ -1,4 +1,4 @@
-import { ProtonDriveClientContructorParameters, ProtonDriveClientInterface, NodeOrUid, ShareNodeSettings, UnshareNodeSettings, UploadMetadata, Logger } from './interface';
+import { ProtonDriveClientContructorParameters, ProtonDriveClientInterface, NodeOrUid, NodeEntity, ShareNodeSettings, UnshareNodeSettings, UploadMetadata, Logger, NodeResult, Revision, ProtonInvitationWithNode, ShareResult, NonProtonInvitationOrUid, ProtonInvitationOrUid } from './interface';
 import { DriveCrypto } from './crypto';
 import { DriveAPIService } from './internal/apiService';
 import { initSharesModule } from './internal/shares';
@@ -11,6 +11,13 @@ import { getConfig } from './config';
 import { getUid, getUids, convertInternalNodePromise, convertInternalNodeIterator } from './transformers';
 import { Telemetry } from './telemetry';
 
+/**
+ * ProtonDriveClient is the main interface for the ProtonDrive SDK.
+ * 
+ * The client provides high-level operations for managing nodes, sharing,
+ * and downloading/uploading files. It is the main entry point for using
+ * the ProtonDrive SDK.
+ */
 export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
     private logger: Logger;
     private nodes: ReturnType<typeof initNodesModule>;
@@ -23,26 +30,18 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
         entitiesCache,
         cryptoCache,
         account,
+        openPGPCryptoModule,
         config,
         telemetry,
-        openPGPCryptoModule,
-        acceptNoGuaranteeWithCustomModules,
     }: ProtonDriveClientContructorParameters) {
         if (!telemetry) {
             telemetry = new Telemetry();
         }
         this.logger = telemetry.getLogger('interface');
 
-        if (openPGPCryptoModule && !acceptNoGuaranteeWithCustomModules) {
-            // TODO: define errors and use here
-            throw Error('TODO');
-        }
-        const cryptoModule = new DriveCrypto(openPGPCryptoModule);
-    
         const fullConfig = getConfig(config);
-    
+        const cryptoModule = new DriveCrypto(openPGPCryptoModule);    
         const apiService = new DriveAPIService(telemetry, httpClient, fullConfig.baseUrl, fullConfig.language);
-    
         const events = new DriveEventsService(telemetry, apiService, entitiesCache);
         const shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
         this.nodes = initNodesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares);
@@ -51,125 +50,351 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
         this.upload = initUploadModule(apiService, cryptoModule, this.nodes.access);
     }
 
-    // TODO
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async getNodeUid(shareId: string, nodeId: string) {
+    /**
+     * Provides the node UID for the given raw share and node IDs.
+     * 
+     * This is required only for the internal implementation to provide
+     * backward compatibility with the old Drive web setup.
+     * 
+     * If you are having volume ID, use `generateNodeUid` instead.
+     * 
+     * @deprecated This method is not part of the public API.
+     * @param shareId - Context share of the node.
+     * @param nodeId - Node/link ID (not UID).
+     * @returns The node UID.
+     */
+    async getNodeUid(shareId: string, nodeId: string): Promise<string> {
         this.logger.info(`Getting node UID for share ${shareId} and node ${nodeId}`);
-        return Promise.resolve("")
+        throw new Error('Method not implemented');
     }
 
-    async getMyFilesRootFolder() {
+    /**
+     * @returns The root folder to My files section of the user.
+     */
+    async getMyFilesRootFolder(): Promise<NodeEntity> {
         this.logger.info('Getting my files root folder');
         return convertInternalNodePromise(this.nodes.access.getMyFilesRootFolder());
     }
 
-    async* iterateChildren(parentNodeUid: NodeOrUid, signal?: AbortSignal) {
+    /**
+     * Iterates the children of the given parent node.
+     * 
+     * The output is not sorted and the order of the children is not guaranteed.
+     *
+     * @param parentNodeUid - Node entity or its UID string.
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the children of the given parent node.
+     */
+    async* iterateChildren(parentNodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<NodeEntity> {
         this.logger.info(`Iterating children of ${getUid(parentNodeUid)}`);
         yield* convertInternalNodeIterator(this.nodes.access.iterateChildren(getUid(parentNodeUid), signal));
     }
 
-    async* iterateTrashedNodes(signal?: AbortSignal) {
+    /**
+     * Iterates the trashed nodes.
+     * 
+     * The list of trashed nodes is not cached and is fetched from the server
+     * on each call. The node data itself are served from cached if available.
+     * 
+     * The output is not sorted and the order of the trashed nodes is not guaranteed.
+     *
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the trashed nodes.
+     */
+    async* iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<NodeEntity> {
         this.logger.info('Iterating trashed nodes');
         yield* convertInternalNodeIterator(this.nodes.access.iterateTrashedNodes(signal));
     }
 
-    async* iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal) {
+    /**
+     * Iterates the nodes by their UIDs.
+     * 
+     * The output is not sorted and the order of the nodes is not guaranteed.
+     *
+     * @param nodeUids - List of node entities or their UIDs.
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the nodes.
+     */
+    async* iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeEntity> {
         this.logger.info(`Iterating ${nodeUids.length} nodes`);
         yield* convertInternalNodeIterator(this.nodes.access.iterateNodes(getUids(nodeUids), signal));
     }
 
-    async renameNode(nodeUid: NodeOrUid, newName: string) {
+    /**
+     * Rename the node.
+     *
+     * @param nodeUid - Node entity or its UID string.
+     * @returns The updated node entity.
+     * @throws {@link ValidationError} If the name is empty, too long, or contains a slash.
+     * @throws {@link Error} If another node with the same name already exists.
+     */
+    async renameNode(nodeUid: NodeOrUid, newName: string): Promise<NodeEntity> {
         this.logger.info(`Renaming node ${nodeUid} to ${newName}`);
-        return this.nodes.management.renameNode(getUid(nodeUid), newName);
+        return convertInternalNodePromise(this.nodes.management.renameNode(getUid(nodeUid), newName));
     }
 
-    async* moveNodes(nodeUids: NodeOrUid[], newParentNodeUid: NodeOrUid, signal?: AbortSignal) {
+    /**
+     * Move the nodes to a new parent node.
+     * 
+     * The operation is performed node by node and the results are yielded
+     * as they are available. Order of the results is not guaranteed.
+     * 
+     * If one of the nodes fails to move, the operation continues with the
+     * rest of the nodes. Use `NodeResult` to check the status of the action.
+     * 
+     * Only move withing the same section is supported at this moment.
+     * That means that the new parent node must be in the same section
+     * as the nodes being moved. E.g., moving from My files to Shared with
+     * me is not supported yet.
+     *
+     * @param nodeUids - List of node entities or their UIDs.
+     * @param newParentNodeUid - Node entity or its UID string.
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the results of the move operation
+     */
+    async* moveNodes(nodeUids: NodeOrUid[], newParentNodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<NodeResult> {
         this.logger.info(`Moving ${nodeUids.length} nodes to ${newParentNodeUid}`);
         yield* this.nodes.management.moveNodes(getUids(nodeUids), getUid(newParentNodeUid), signal);
     }
 
-    async* trashNodes(nodeUids: NodeOrUid[], signal?: AbortSignal) {
+    /**
+     * Trash the nodes.
+     * 
+     * The operation is performed in batches and the results are yielded
+     * as they are available. Order of the results is not guaranteed.
+     * 
+     * If one of the nodes fails to trash, the operation continues with the
+     * rest of the nodes. Use `NodeResult` to check the status of the action.
+     *
+     * @param nodeUids - List of node entities or their UIDs.
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the results of the trash operation
+     */
+    async* trashNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         this.logger.info(`Trashing ${nodeUids.length} nodes`);
         yield* this.nodes.management.trashNodes(getUids(nodeUids), signal);
     }
 
-    async* restoreNodes(nodeUids: NodeOrUid[], signal?: AbortSignal) {
+    /**
+     * Restore the nodes from the trash to their original place.
+     * 
+     * The operation is performed in batches and the results are yielded
+     * as they are available. Order of the results is not guaranteed.
+     * 
+     * If one of the nodes fails to restore, the operation continues with the
+     * rest of the nodes. Use `NodeResult` to check the status of the action.
+     *
+     * @param nodeUids - List of node entities or their UIDs.
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the results of the restore operation
+     */
+    async* restoreNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         this.logger.info(`Restoring ${nodeUids.length} nodes`);
         yield* this.nodes.management.restoreNodes(getUids(nodeUids), signal);
     }
 
-    async* deleteNodes(nodeUids: NodeOrUid[], signal?: AbortSignal) {
+    /**
+     * Delete the nodes permanently.
+     * 
+     * The operation is performed in batches and the results are yielded
+     * as they are available. Order of the results is not guaranteed.
+     * 
+     * If one of the nodes fails to delete, the operation continues with the
+     * rest of the nodes. Use `NodeResult` to check the status of the action.
+     *
+     * @param nodeUids - List of node entities or their UIDs.
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the results of the delete operation
+     */
+    async* deleteNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         this.logger.info(`Deleting ${nodeUids.length} nodes`);
         yield* this.nodes.management.deleteNodes(getUids(nodeUids), signal);
     }
 
-    async createFolder(parentNodeUid: NodeOrUid, name: string, modificationTime?: Date) {
+    async emptyTrash(): Promise<void> {
+        this.logger.info('Emptying trash');
+        throw new Error('Method not implemented');
+    }
+
+    /**
+     * Create a new folder.
+     * 
+     * The folder is created in the given parent node.
+     *
+     * @param parentNodeUid - Node entity or its UID string of the parent folder.
+     * @param name - Name of the new folder.
+     * @param modificationTime - Optional modification time of the folder.
+     * @returns The created node entity.
+     * @throws {@link Error} If the parent node is not a folder.
+     * @throws {@link ValidationError} If the name is empty, too long, or contains a slash.
+     * @throws {@link Error} If another node with the same name already exists.
+     */
+    async createFolder(parentNodeUid: NodeOrUid, name: string, modificationTime?: Date): Promise<NodeEntity> {
         this.logger.info(`Creating folder ${name} in ${getUid(parentNodeUid)}`);
         return convertInternalNodePromise(this.nodes.management.createFolder(getUid(parentNodeUid), name, modificationTime));
     }
 
-    async* iterateRevisions(nodeUid: NodeOrUid, signal?: AbortSignal) {
+    /**
+     * Iterates the revisions of given node.
+     * 
+     * The list of node revisions is not cached and is fetched and decrypted
+     * from the server on each call.
+     * 
+     * The output is sorted by the revision date in descending order (newest
+     * first).
+     *
+     * @param nodeUid - Node entity or its UID string.
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the node revisions.
+     */
+    async* iterateRevisions(nodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<Revision> {
         this.logger.info(`Iterating revisions of ${getUid(nodeUid)}`);
         yield* this.nodes.revisions.iterateRevisions(getUid(nodeUid), signal);
     }
 
-    async restoreRevision(revisionUid: string) {
+    /**
+     * Restore the node to the given revision.
+     *
+     * @param revisionUid - UID of the revision to restore.
+     */
+    async restoreRevision(revisionUid: string): Promise<void> {
         this.logger.info(`Restoring revision ${revisionUid}`);
         await this.nodes.revisions.restoreRevision(revisionUid);
     }
 
-    async deleteRevision(revisionUid: string) {
+    /**
+     * Delete the revision.
+     *
+     * @param revisionUid - UID of the revision to delete.
+     */
+    async deleteRevision(revisionUid: string): Promise<void> {
         this.logger.info(`Deleting revision ${revisionUid}`);
         await this.nodes.revisions.deleteRevision(revisionUid);
     }
 
-    async* iterateSharedNodes(signal?: AbortSignal) {
+    /**
+     * Iterates the nodes shared by the user.
+     *
+     * The output is not sorted and the order of the shared nodes is not guaranteed.
+     *
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the shared nodes.
+     */
+    async* iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<NodeEntity> {
         this.logger.info('Iterating shared nodes by me');
         yield* convertInternalNodeIterator(this.sharing.access.iterateSharedNodes(signal));
     }
 
-    async* iterateSharedNodesWithMe(signal?: AbortSignal) {
+    /**
+     * Iterates the nodes shared with the user.
+     *
+     * The output is not sorted and the order of the shared nodes is not guaranteed.
+     *
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the shared nodes.
+     */
+    async* iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<NodeEntity> {
         this.logger.info('Iterating shared nodes with me');
         yield* convertInternalNodeIterator(this.sharing.access.iterateSharedNodesWithMe(signal));
     }
     
-    async removeSharedNodeWithMe(nodeUid: NodeOrUid) {
-        this.logger.info(`Removing shared node with me ${getUid(nodeUid)}`);
+    /**
+     * Leave shared node that was previously shared with the user.
+     *
+     * @param nodeUid - Node entity or its UID string.
+     */
+    async leaveSharedNode(nodeUid: NodeOrUid): Promise<void> {
+        this.logger.info(`Leaving shared node with me ${getUid(nodeUid)}`);
         await this.sharing.access.removeSharedNodeWithMe(getUid(nodeUid));
     }
 
-    async* iterateInvitations(signal?: AbortSignal) {
+    /**
+     * Iterates the invitations to shared nodes.
+     *
+     * The output is not sorted and the order of the invitations is not guaranteed.
+     *
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the invitations.
+     */
+    async* iterateInvitations(signal?: AbortSignal): AsyncGenerator<ProtonInvitationWithNode> {
         this.logger.info('Iterating invitations');
         yield* this.sharing.access.iterateInvitations(signal);
     }
 
-    async acceptInvitation(invitationId: string) {
+    /**
+     * Accept the invitation to the shared node.
+     *
+     * @param invitationId - Invitation entity or its UID string.
+     */
+    async acceptInvitation(invitationId: string): Promise<void> {
         this.logger.info(`Accepting invitation ${invitationId}`);
         await this.sharing.access.acceptInvitation(invitationId);
     }
 
-    async rejectInvitation(invitationId: string) {
+    /**
+     * Reject the invitation to the shared node.
+     *
+     * @param invitationId - Invitation entity or its UID string.
+     */
+    async rejectInvitation(invitationId: string): Promise<void> {
         this.logger.info(`Rejecting invitation ${invitationId}`);
         await this.sharing.access.rejectInvitation(invitationId);
     }
 
-    async getSharingInfo(nodeUid: NodeOrUid) {
+    /**
+     * Get sharing info of the node.
+     * 
+     * The sharing info contains the list of invitations, members,
+     * public link and permission for each.
+     *
+     * The sharing info is not cached and is fetched from the server
+     * on each call.
+     *
+     * @param nodeUid - Node entity or its UID string.
+     * @returns The sharing info of the node. Undefined if not shared.
+     */
+    async getSharingInfo(nodeUid: NodeOrUid): Promise<ShareResult | undefined> {
         this.logger.info(`Getting sharing info for ${getUid(nodeUid)}`);
         return this.sharing.management.getSharingInfo(getUid(nodeUid));
     }
 
-    async shareNode(nodeUid: NodeOrUid, settings: ShareNodeSettings) {
+    /**
+     * Share or update sharing of the node.
+     * 
+     * If the node is already shared, the sharing settings are updated.
+     * If the member is already present but with different role, the role
+     * is updated. If the sharing settings is identical, the sharing info
+     * is returned without any change.
+     *
+     * @param nodeUid - Node entity or its UID string.
+     * @param settings - Settings for sharing the node.
+     * @returns The updated sharing info of the node.
+     */
+    async shareNode(nodeUid: NodeOrUid, settings: ShareNodeSettings): Promise<ShareResult> {
         this.logger.info(`Sharing node ${getUid(nodeUid)}`);
         return this.sharing.management.shareNode(getUid(nodeUid), settings);
     }
 
-    async unshareNode(nodeUid: NodeOrUid, settings?: UnshareNodeSettings) {
+    /**
+     * Unshare the node, completely or partially.
+     *
+     * @param nodeUid - Node entity or its UID string.
+     * @param settings - Settings for unsharing the node. If not provided, the node
+     *                   is unshared completely.
+     * @returns The updated sharing info of the node. Undefined if unshared completely.
+     */
+    async unshareNode(nodeUid: NodeOrUid, settings?: UnshareNodeSettings): Promise<ShareResult | undefined> {
         if (!settings) {
             this.logger.info(`Unsharing node ${getUid(nodeUid)}`);
         } else {
             this.logger.info(`Partially unsharing ${getUid(nodeUid)}`);
         }
         return this.sharing.management.unshareNode(getUid(nodeUid), settings);
+    }
+
+    async resendInvitation(invitationUid: ProtonInvitationOrUid | NonProtonInvitationOrUid): Promise<void> {
+        this.logger.info(`Resending invitation ${invitationUid}`);
+        throw new Error('Method not implemented');
     }
 
     async getFileDownloader(nodeUid: NodeOrUid, signal?: AbortSignal) {

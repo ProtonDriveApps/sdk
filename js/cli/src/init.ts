@@ -70,7 +70,6 @@ function initSDK(cryptoApi: CryptoApi, config: Config, account: Account) {
         telemetry,
         account,
         openPGPCryptoModule,
-        acceptNoGuaranteeWithCustomModules: true,
     });
     return sdk;
 }

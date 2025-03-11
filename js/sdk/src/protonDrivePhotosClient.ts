@@ -18,25 +18,17 @@ export class ProtonDrivePhotosClient {
         entitiesCache,
         cryptoCache,
         account,
+        openPGPCryptoModule,
         config,
         telemetry,
-        openPGPCryptoModule,
-        acceptNoGuaranteeWithCustomModules,
     }: ProtonDriveClientContructorParameters) {
         if (!telemetry) {
             telemetry = new Telemetry();
         }
 
-        if (openPGPCryptoModule && !acceptNoGuaranteeWithCustomModules) {
-            // TODO: define errors and use here
-            throw Error('TODO');
-        }
-        const cryptoModule = new DriveCrypto(openPGPCryptoModule);
-    
         const fullConfig = getConfig(config);
-    
+        const cryptoModule = new DriveCrypto(openPGPCryptoModule);
         const apiService = new DriveAPIService(telemetry, httpClient, fullConfig.baseUrl, fullConfig.language);
-    
         const events = new DriveEventsService(telemetry, apiService, entitiesCache);
         const shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
         this.nodes = initNodesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares);
