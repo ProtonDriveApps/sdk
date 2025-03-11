@@ -1,5 +1,5 @@
-import { Device } from './devices.js';
-import { NodeEntity, NodeOrUid } from './nodes.js';
+import { Device } from './devices';
+import { NodeEntity, NodeOrUid } from './nodes';
 
 export interface Events {
     subscribeToRemoteDataUpdates(): void,

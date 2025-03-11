@@ -1,4 +1,4 @@
-import { DriveAPIService } from "../apiService/index.js";
+import { DriveAPIService } from "../apiService";
 
 export class PhotosAPIService {
     constructor(private apiService: DriveAPIService) {

@@ -1,4 +1,4 @@
-import type { ProtonDriveCache, EntityResult } from './interface.js';
+import type { ProtonDriveCache, EntityResult } from './interface';
 
 type KeyValueCache<T> = { [ key: string ]: T };
 type TagsCache = { [ tag: string ]: string[] };

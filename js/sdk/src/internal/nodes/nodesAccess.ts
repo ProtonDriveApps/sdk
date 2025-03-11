@@ -173,7 +173,7 @@ export class NodesAccess {
                     uid: unparsedNode.activeRevision.value.uid,
                     state: unparsedNode.activeRevision.value.state,
                     createdDate: unparsedNode.activeRevision.value.createdDate,
-                    author: unparsedNode.activeRevision.value.author,
+                    contentAuthor: unparsedNode.activeRevision.value.contentAuthor,
                     ...extendedAttributes,
                 }),
                 folder: undefined,

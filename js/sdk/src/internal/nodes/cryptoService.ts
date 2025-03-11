@@ -239,14 +239,14 @@ export class NodesCryptoService {
 
         const {
             extendedAttributes,
-            author,
+            author: contentAuthor,
         } = await this.decryptExtendedAttributes(encryptedRevision.armoredExtendedAttributes, nodeKey, verificationKeys, encryptedRevision.signatureEmail);
 
         return {
             uid: encryptedRevision.uid,
             state: encryptedRevision.state,
             createdDate: encryptedRevision.createdDate,
-            author,
+            contentAuthor,
             extendedAttributes,
         }
     }

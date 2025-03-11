@@ -1,4 +1,4 @@
-import { ProtonDriveConfig } from './interface/index.js';
+import { ProtonDriveConfig } from './interface';
 
 export function getConfig(config?: ProtonDriveConfig) {
     return {
