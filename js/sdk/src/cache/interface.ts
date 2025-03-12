@@ -14,14 +14,13 @@ export interface ProtonDriveCacheConstructor<T> {
 }
 
 export interface ProtonDriveCache<T> {
-
     /**
      * Re-creates the whole persistent cache.
      * 
      * The SDK can call this when there is some inconsistency and it is better
      * to start from scratch rather than fix it.
      */
-    purge(): Promise<void>,
+    clear(): Promise<void>,
 
     /**
      * Adds or updates entity in the local database.
