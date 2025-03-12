@@ -133,8 +133,8 @@ describe('MemoryCache', () => {
         expect(results2).toEqual([]);
     });
 
-    it('should purge the cache', async () => {
-        await cache.purge();
+    it('should clear the cache', async () => {
+        await cache.clear();
 
         const results = [];
         for await (const result of cache.iterateEntities(['key1', 'key2', 'key3'])) {

@@ -210,7 +210,7 @@ function getCacheUid(nodeUid: string) {
 
 function getNodeUid(cacheUid: string) {
     if (!cacheUid.startsWith('node-')) {
-        throw new Error('Unexpected cached node uid');
+        throw new Error(`Unexpected cached node uid "${cacheUid}"`);
     }
     return cacheUid.substring(5);
 }

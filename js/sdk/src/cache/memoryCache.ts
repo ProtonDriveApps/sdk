@@ -14,7 +14,7 @@ export class MemoryCache<T> implements ProtonDriveCache<T> {
     private entities: KeyValueCache<T> = {};
     private entitiesByTag: TagsCache = {};
 
-    async purge() {
+    async clear() {
         this.entities = {};
     }
 
