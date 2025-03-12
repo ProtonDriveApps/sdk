@@ -1,3 +1,5 @@
+.DS_Store
+
 # Docs
 public
 
@@ -10,6 +12,7 @@ tsconfig.tsbuildinfo
 js/cli/proton-drive
 auth.txt
 cache*.sqlite
+*.log
 *.bun-build
 
 # Tests
