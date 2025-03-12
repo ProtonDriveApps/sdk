@@ -87,9 +87,20 @@ export interface DecryptedNode extends Omit<DecryptedUnparsedNode, 'activeRevisi
     },
 }
 
+/**
+ * Interface holding decrypted node key, including session key, and hash key.
+ *
+ * These keys are cached as they are needed for various actions on the node.
+ * 
+ * Passphrase, for example, might be removed at some point. It is needed as
+ * at this moment the move requires both node key passphrase and the session
+ * key.
+ */
 export interface DecryptedNodeKeys {
     passphrase: string;
     key: PrivateKey;
+    // Session key for the node key. Other session keys such as name session
+    // key must be decrypted ad-hoc.
     sessionKey: SessionKey;
     hashKey?: Uint8Array;
 }
