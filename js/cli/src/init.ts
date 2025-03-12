@@ -7,16 +7,18 @@ import { Paths } from "./cli/paths";
 
 import { ProtonDriveClient, MemoryCache, CachedCryptoMaterial, OpenPGPCryptoWithCryptoProxy } from "../../sdk/src";
 
-interface APIConfig {
+interface Config {
     appVersion: string;
     baseUrl: string;
+    cacheDir: string;
+    enableConsoleLog: boolean;
     uid?: string;
     accessToken?: string;
 }
 
 export async function init() {
     const cryptoApi = initCrypto();
-    const config = getAPIConfig();
+    const config = getConfig();
     const account = await initAccount(cryptoApi, config);
     const sdk = initSDK(cryptoApi, config, account);
     const paths = new Paths(sdk);
@@ -32,20 +34,22 @@ function initCrypto() {
     return new CryptoApi();
 }
 
-function getAPIConfig(): APIConfig {
+function getConfig(): Config {
     return {
         appVersion: 'web-drive-sdk-cli@5.0.999.999',
         baseUrl: process.env.DRIVE_SDK_BASE_URL || 'drive.proton.me',
+        cacheDir: process.env.DRIVE_SDK_CACHE_DIR || process.cwd(),
+        enableConsoleLog: process.env.DRIVE_SDK_DISABLE_CONSOLE_LOG === undefined,
     }
 }
 
-async function initAccount(cryptoApi: CryptoApi, config: APIConfig) {
+async function initAccount(cryptoApi: CryptoApi, config: Config) {
     const account = new Account(cryptoApi, config);
     await account.loadSession();
     return account;
 }
 
-function initSDK(cryptoApi: CryptoApi, config: APIConfig, account: Account) {
+function initSDK(cryptoApi: CryptoApi, config: Config, account: Account) {
     const httpClient = new HTTPClient({
         ...config,
         uid: account.session?.uid || "",
@@ -53,15 +57,17 @@ function initSDK(cryptoApi: CryptoApi, config: APIConfig, account: Account) {
     });
     const openPGPCryptoModule = new OpenPGPCryptoWithCryptoProxy(cryptoApi);
 
-    const entitiesCache = new SQLiteEntititesCache();
+    const entitiesCache = new SQLiteEntititesCache(config.cacheDir);
     const cryptoCache = new MemoryCache<CachedCryptoMaterial>();
+
+    const telemetry = initTelemetry(config.cacheDir, config.enableConsoleLog);
 
     const sdk = new ProtonDriveClient({
         httpClient,
         entitiesCache,
         cryptoCache,
         config: { baseUrl: config.baseUrl },
-        telemetry: initTelemetry(),
+        telemetry,
         account,
         openPGPCryptoModule,
         acceptNoGuaranteeWithCustomModules: true,
