@@ -1,5 +1,8 @@
+import { c } from 'ttag';
+
 import { MemberRole, NodeType, NodeResult, resultOk } from "../../interface";
-import { AbortError } from "../errors";
+import { AbortError, ValidationError } from "../../errors";
+import { getErrorMessage } from '../errors';
 import { NodeAPIService } from "./apiService";
 import { NodesCache } from "./cache";
 import { NodesCryptoCache } from "./cryptoCache";
@@ -40,7 +43,7 @@ export class NodesManagement {
         const parentKeys = await this.nodesAccess.getParentKeys(node);
 
         if (!node.hash || !parentKeys.hashKey) {
-            throw new Error('Renaming root nodes is not supported')
+            throw new ValidationError(c('Error').t`Renaming root item is not allowed`)
         }
 
         const {
@@ -73,7 +76,7 @@ export class NodesManagement {
     async* moveNodes(nodeUids: string[], newParentNodeUid: string, signal?: AbortSignal): AsyncGenerator<NodeResult> {
         for (const nodeUid of nodeUids) {
             if (signal?.aborted) {
-                throw new AbortError('Move operation aborted');
+                throw new AbortError(c('Error').t`Move operation aborted`);
             }
             try {
                 await this.moveNode(nodeUid, newParentNodeUid);
@@ -85,7 +88,7 @@ export class NodesManagement {
                 yield {
                     uid: nodeUid,
                     ok: false,
-                    error: error instanceof Error ? error.message : 'Unknown error',
+                    error: getErrorMessage(error),
                 }
             }
         }
@@ -102,10 +105,10 @@ export class NodesManagement {
         ]);
 
         if (!node.hash) {
-            throw new Error('Moving root nodes is not supported');
+            throw new ValidationError(c('Error').t`Moving root item is not allowed`);
         }
         if (!newParentKeys.hashKey) {
-            throw new Error('Moving nodes to a non-folder is not supported');
+            throw new ValidationError(c('Error').t`Moving item to a non-folder is not allowed`);
         }
 
         const encryptedCrypto = await this.cryptoService.moveNode(
@@ -205,7 +208,7 @@ export class NodesManagement {
         const parentNode = await this.nodesAccess.getNode(parentNodeUid);
         const parentKeys = await this.nodesAccess.getNodeKeys(parentNodeUid);
         if (!parentKeys.hashKey) {
-            throw new Error('Creating folders in non-folders is not supported');
+            throw new ValidationError(c('Error').t`Creating folders in non-folders is not allowed`);
         }
 
         const extendedAttributes = generateFolderExtendedAttributes(modificationTime);

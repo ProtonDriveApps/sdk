@@ -1,6 +1,7 @@
 import { PrivateKey, SessionKey } from "../../crypto";
 import { MemoryCache } from "../../cache";
 import { CachedCryptoMaterial } from "../../interface";
+import { getMockLogger } from "../../tests/logger";
 import { NodesCryptoCache } from "./cryptoCache";
 
 describe('nodesCryptoCache', () => {
@@ -22,7 +23,7 @@ describe('nodesCryptoCache', () => {
             sessionKey: 'sessionKey',
         } as any);
 
-        cache = new NodesCryptoCache(memoryCache);
+        cache = new NodesCryptoCache(getMockLogger(), memoryCache);
     });
 
     it('should store and retrieve keys', async () => {

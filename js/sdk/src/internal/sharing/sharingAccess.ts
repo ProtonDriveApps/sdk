@@ -1,4 +1,7 @@
+import { c } from 'ttag';
+
 import { NodeEntity, ProtonInvitationWithNode } from "../../interface";
+import { ValidationError } from "../../errors";
 import { BatchLoading } from "../batchLoading";
 import { SharingAPIService } from "./apiService";
 import { SharingCache } from "./cache";
@@ -82,7 +85,7 @@ export class SharingAccess {
         const share = await this.sharesService.loadEncryptedShare(node.shareId);
         const memberUid = share.membership?.memberUid;
         if (!memberUid) {
-            throw new Error('Share without membership cannot be removed');
+            throw new ValidationError(c('Error').t`You can leave only item that is shared with you`);
         }
 
         await this.apiService.removeMember(memberUid);

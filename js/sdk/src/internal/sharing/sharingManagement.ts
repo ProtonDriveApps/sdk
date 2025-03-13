@@ -1,4 +1,7 @@
+import { c } from 'ttag';
+
 import { SessionKey } from "../../crypto";
+import { ValidationError } from "../../errors";
 import { Logger, PublicLink, MemberRole, ShareNodeSettings, UnshareNodeSettings, SharePublicLinkSettings, ShareResult, ProtonInvitation, NonProtonInvitation, Member, resultOk } from "../../interface";
 import { splitNodeUid } from "../uids";
 import { SharingAPIService } from "./apiService";
@@ -284,7 +287,7 @@ export class SharingManagement {
     private async createShare(nodeUid: string): Promise<Share> {
         const node = await this.nodesService.getNode(nodeUid);
         if (!node.parentUid) {
-            throw new Error("Cannot share root node");
+            throw new ValidationError(c('Error').t`Cannot share root folder`);
         }
 
         const { volumeId } = splitNodeUid(nodeUid);

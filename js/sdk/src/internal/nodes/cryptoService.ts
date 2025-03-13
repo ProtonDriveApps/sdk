@@ -1,10 +1,13 @@
+import { c } from 'ttag';
+
 import { DriveCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from "../../crypto";
 import { resultOk, resultError, Result, InvalidNameError, Author, ProtonDriveAccount, ProtonDriveTelemetry, Logger } from "../../interface";
-import { EncryptedNode, EncryptedNodeFolderCrypto, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys, SharesService, EncryptedRevision, DecryptedRevision } from "./interface";
-
-// TODO: Switch to CryptoProxy module once available.
-import { importHmacKey, computeHmacSignature } from "./hmac";
+import { ValidationError } from '../../errors';
+import { getErrorMessage, getVerificationMessage } from "../errors";
 import { splitNodeUid } from "../uids";
+import { EncryptedNode, EncryptedNodeFolderCrypto, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys, SharesService, EncryptedRevision, DecryptedRevision } from "./interface";
+// FIXME: Switch to CryptoProxy module once available.
+import { importHmacKey, computeHmacSignature } from "./hmac";
 
 /**
  * Provides crypto operations for nodes metadata.
@@ -65,7 +68,7 @@ export class NodesCryptoService {
             keyAuthor = keyResult.author;
         } catch (error: unknown) {
             this.reportDecryptionError(node, error);
-            const errorMessage = `Failed to decrypt node key: ${error instanceof Error ? error.message : 'Unknown error'}`;
+            const errorMessage = c('Error').t`Failed to decrypt node key: ${getErrorMessage(error)}`;
             return {
                 node: {
                     ...commonNodeMetadata,
@@ -114,7 +117,7 @@ export class NodesCryptoService {
             try {
                 activeRevision = resultOk(await this.decryptRevision(node.encryptedCrypto.activeRevision, key, parentKey));
             } catch (error: unknown) {
-                const errorMessage = `Failed to decrypt active revision: ${error instanceof Error ? error.message : 'Unknown error'}`;
+                const errorMessage = c('Error').t`Failed to decrypt active revision: ${getErrorMessage(error)}`;
                 activeRevision = resultError(new Error(errorMessage));
             }
         }
@@ -170,7 +173,7 @@ export class NodesCryptoService {
             passphrase: key.passphrase,
             key: key.key,
             sessionKey: key.sessionKey,
-            author: await this.handleClaimedAuthor(node, 'SignatureEmail', 'key', key.verified, node.encryptedCrypto.signatureEmail),
+            author: await this.handleClaimedAuthor(node, 'SignatureEmail', c('Property').t`key`, key.verified, node.encryptedCrypto.signatureEmail),
         };
     };
 
@@ -189,20 +192,19 @@ export class NodesCryptoService {
 
             return {
                 name: resultOk(name),
-                author: await this.handleClaimedAuthor(node, 'NameSignatureEmail', 'name', verified, nameSignatureEmail),
+                author: await this.handleClaimedAuthor(node, 'NameSignatureEmail', c('Property').t`name`, verified, nameSignatureEmail),
             }
         } catch (error: unknown) {
             this.reportDecryptionError(node, error);
-            // TODO: Translation
-            const message = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage = getErrorMessage(error);
             return {
                 name: resultError({
                     name: '',
-                    error: message,
+                    error: errorMessage,
                 }),
                 author: resultError({
                     claimedAuthor: nameSignatureEmail,
-                    error: message,
+                    error: errorMessage,
                 }),
             }
         }
@@ -217,6 +219,7 @@ export class NodesCryptoService {
         author: Author,
     }> {
         if (!("folder" in node.encryptedCrypto)) {
+            // This is developer error.
             throw new Error('Node is not a folder');
         }
 
@@ -228,7 +231,7 @@ export class NodesCryptoService {
 
         return {
             hashKey,
-            author: await this.handleClaimedAuthor(node, 'NodeKey', 'hash key', verified, node.encryptedCrypto.signatureEmail),
+            author: await this.handleClaimedAuthor(node, 'NodeKey', c('Property').t`hash key`, verified, node.encryptedCrypto.signatureEmail),
         }
     }
 
@@ -257,7 +260,7 @@ export class NodesCryptoService {
     }> {
         if (!encryptedExtendedAttributes) {
             return {
-                author: handleClaimedAuthor('key', VERIFICATION_STATUS.SIGNED_AND_VALID, signatureEmail),
+                author: handleClaimedAuthor(c('Property').t`key`, VERIFICATION_STATUS.SIGNED_AND_VALID, signatureEmail),
             }
         }
 
@@ -269,7 +272,7 @@ export class NodesCryptoService {
 
         return {
             extendedAttributes,
-            author: handleClaimedAuthor('extended attributes', verified, signatureEmail),
+            author: handleClaimedAuthor(c('Property').t`attributes`, verified, signatureEmail),
         }
     }
 
@@ -348,10 +351,10 @@ export class NodesCryptoService {
         nameSignatureEmail: string,
     }> {
         if (!parentKeys.hashKey) {
-            throw new Error('Moving nodes to a non-folder is not supported');
+            throw new ValidationError('Moving item to a non-folder is not allowed');
         }
         if (!node.name.ok) {
-            throw new Error('Cannot move node without a valid name, please rename the node first');
+            throw new ValidationError('Cannot move item without a valid name, please rename the item first');
         }
 
         const { volumeId } = splitNodeUid(parentNode.uid);
@@ -442,22 +445,21 @@ export class NodesCryptoService {
     }
 }
 
+/**
+ * @param signatureType - Must be translated before calling this function.
+ */
 function handleClaimedAuthor(signatureType: string, verified: VERIFICATION_STATUS, claimedAuthor?: string): Author {
     if (!claimedAuthor) {
         return resultOk(null); // Anonymous user
     }
-    
+
     if (verified === VERIFICATION_STATUS.SIGNED_AND_VALID) {
         return resultOk(claimedAuthor);
     }
 
-    // TODO: Translation
-    const error = verified === VERIFICATION_STATUS.SIGNED_AND_INVALID
-        ? `Verification of ${signatureType} signature failed`
-        : `Missing ${signatureType} signature`;
     return resultError({
         claimedAuthor: claimedAuthor,
-        error,
+        error: getVerificationMessage(verified, signatureType),
     });    
 }
 

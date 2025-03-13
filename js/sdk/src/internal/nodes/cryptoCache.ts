@@ -1,4 +1,4 @@
-import { ProtonDriveCryptoCache } from "../../interface";
+import { ProtonDriveCryptoCache, Logger } from "../../interface";
 import { DecryptedNodeKeys } from "./interface";
 
 /**
@@ -8,22 +8,25 @@ import { DecryptedNodeKeys } from "./interface";
  * crypto material.
  */
 export class NodesCryptoCache {
-    constructor(private driveCache: ProtonDriveCryptoCache) {
+    constructor(private logger: Logger, private driveCache: ProtonDriveCryptoCache) {
+        this.logger = logger;
         this.driveCache = driveCache;
     }
 
     async setNodeKeys(nodeUid: string, keys: DecryptedNodeKeys): Promise<void> {
-        const cacheUid = getCacheUid(nodeUid);
+        const cacheUid = getCacheKey(nodeUid);
         this.driveCache.setEntity(cacheUid, keys);
     }
 
     async getNodeKeys(nodeUid: string): Promise<DecryptedNodeKeys> {
-        const nodeKeysData = await this.driveCache.getEntity(getCacheUid(nodeUid));
+        const nodeKeysData = await this.driveCache.getEntity(getCacheKey(nodeUid));
         if (!nodeKeysData.passphrase) {
             try {
                 await this.removeNodeKeys([nodeUid]);
-            } catch {
-                // TODO: log error
+            } catch (removingError: unknown) {
+                // The node keys will not be returned, thus SDK will re-fetch
+                // and re-cache it. Setting it again should then fix the problem.
+                this.logger.warn(`Failed to remove corrupted node keys from the cache: ${removingError instanceof Error ? removingError.message : removingError}`);
             }
             throw new Error(`Failed to deserialize node keys: missing passphrase`);
         }
@@ -34,11 +37,11 @@ export class NodesCryptoCache {
     }
 
     async removeNodeKeys(nodeUids: string[]): Promise<void> {
-        const cacheUids = nodeUids.map(getCacheUid);
+        const cacheUids = nodeUids.map(getCacheKey);
         await this.driveCache.removeEntities(cacheUids);
     }
 }
 
-function getCacheUid(nodeUid: string) {
+function getCacheKey(nodeUid: string) {
     return `nodeKeys-${nodeUid}`;
 }

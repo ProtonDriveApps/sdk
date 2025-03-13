@@ -161,7 +161,7 @@ describe("DriveAPIService", () => {
                 await api.get('test').catch(() => {});
             }
 
-            await expect(api.get('test')).rejects.toThrow("Too many requests limit reached");
+            await expect(api.get('test')).rejects.toThrow("Too many server requests, please try again later");
             expect(httpClient.fetch).toHaveBeenCalledTimes(50);
         });
 
@@ -192,7 +192,7 @@ describe("DriveAPIService", () => {
                 await api.get('test').catch(() => {});
             }
 
-            await expect(api.get('test')).rejects.toThrow("Server errors limit reached");
+            await expect(api.get('test')).rejects.toThrow("Too many server errors, please try again later");
             expect(httpClient.fetch).toHaveBeenCalledTimes(10);
         });
 

@@ -1,5 +1,8 @@
+import { c } from 'ttag';
+
 import { DriveCrypto, PrivateKey, SessionKey, VERIFICATION_STATUS } from '../../crypto';
 import { ProtonDriveAccount, ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Author, Result, Member, UnverifiedAuthorError, InvalidNameError, resultError, resultOk } from "../../interface";
+import { getErrorMessage, getVerificationMessage } from "../errors";
 import { EncryptedShare } from "../shares";
 import { EncryptedInvitation, EncryptedInvitationWithNode, EncryptedExternalInvitation, EncryptedMember } from "./interface";
 
@@ -102,9 +105,7 @@ export class SharingCryptoService {
             ? resultOk(share.creatorEmail)
             : resultError({
                 claimedAuthor: share.creatorEmail,
-                error: verified === VERIFICATION_STATUS.SIGNED_AND_INVALID
-                    ? `Verification signature failed`
-                    : `Missing signature`,
+                error: getVerificationMessage(verified),
             });
 
         return {
@@ -154,7 +155,7 @@ export class SharingCryptoService {
             );
             nodeName = resultOk(result.name);
         } catch (error: unknown) {
-            const errorMessage = `Failed to decrypt node name: ${error instanceof Error ? error.message : 'Unknown error'}`;
+            const errorMessage = c('Error').t`Failed to decrypt item name: ${getErrorMessage(error)}`;
             nodeName = resultError({ name: '', error: errorMessage });
         }
 
@@ -172,7 +173,7 @@ export class SharingCryptoService {
      * Verifies an invitation.
      */
     async decryptInvitation(encryptedInvitation: EncryptedInvitation): Promise<ProtonInvitation> {
-        // TODO: verify addedByEmail (current client doesnt do this)
+        // FIXME: verify addedByEmail (current client doesnt do this)
         const addedByEmail: Result<string, UnverifiedAuthorError> = resultOk(encryptedInvitation.addedByEmail);
 
         return {
@@ -223,7 +224,7 @@ export class SharingCryptoService {
      * Verifies an external invitation.
      */
     async decryptExternalInvitation(encryptedInvitation: EncryptedExternalInvitation): Promise<NonProtonInvitation> {
-        // TODO: verify addedByEmail (current client doesnt do this)
+        // FIXME: verify addedByEmail (current client doesnt do this)
         const addedByEmail: Result<string, UnverifiedAuthorError> = resultOk(encryptedInvitation.addedByEmail);
 
         return {
@@ -240,7 +241,7 @@ export class SharingCryptoService {
      * Verifies a member.
      */
     async decryptMember(encryptedMember: EncryptedMember): Promise<Member> {
-        // TODO: verify addedByEmail (current client doesnt do this)
+        // FIXME: verify addedByEmail (current client doesnt do this)
         const addedByEmail: Result<string, UnverifiedAuthorError> = resultOk(encryptedMember.addedByEmail);
 
         return {

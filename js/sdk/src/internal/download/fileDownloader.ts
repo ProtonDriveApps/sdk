@@ -1,5 +1,8 @@
+import { c } from 'ttag';
+
 import { PrivateKey } from "../../crypto";
-import { NodeEntity } from "../../interface";
+import { ValidationError } from "../../errors";
+import { NodeEntity, NodeType } from "../../interface";
 import { DownloadAPIService } from "./apiService";
 import { DownloadCryptoService } from "./cryptoService";
 
@@ -37,8 +40,11 @@ export class FileDownloader {
     }
 
     private async downloadToStream(controller: DownloadController, stream: WritableStream, onProgress: (writtenBytes: number) => void): Promise<void> {
+        if (this.node.type === NodeType.Folder) {
+            throw new ValidationError(c("Error").t`Cannot download a folder`);
+        }
         if (!this.node.activeRevision?.ok || !this.node.activeRevision.value) {
-            throw new Error("Node has no active revision");
+            throw new ValidationError(c("Error").t`File has no active revision`);
         }
 
         // TODO

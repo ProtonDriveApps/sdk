@@ -72,7 +72,7 @@ export class DriveEventsService {
         const volumeEvents = new VolumeEventManager(this.logger, this.apiService, this.cache, volumeId);
         this.volumesEvents[volumeId] = volumeEvents;
 
-        // TODO: Use dynamic algorithm to determine polling interval for non-own volumes.
+        // FIXME: Use dynamic algorithm to determine polling interval for non-own volumes.
         volumeEvents.setPollingInterval(isOwnVolume ? OWN_VOLUME_POLLING_INTERVAL : OTHER_VOLUME_POLLING_INTERVAL);
         if (this.subscribedToRemoteDataUpdates) {
             volumeEvents.startSubscription();

@@ -35,7 +35,7 @@ export function initNodesModule(
 ) {
     const api = new NodeAPIService(telemetry.getLogger('nodes-api'), apiService);
     const cache = new NodesCache(telemetry.getLogger('nodes-cache'), driveEntitiesCache);
-    const cryptoCache = new NodesCryptoCache(driveCryptoCache);
+    const cryptoCache = new NodesCryptoCache(telemetry.getLogger('nodes-cache'), driveCryptoCache);
     const cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, sharesService);
     const nodesAccess = new NodesAccess(telemetry.getLogger('nodes'), api, cache, cryptoCache, cryptoService, sharesService);
     const nodesEvents = new NodesEvents(telemetry.getLogger('nodes-events'), driveEvents, cache, nodesAccess);

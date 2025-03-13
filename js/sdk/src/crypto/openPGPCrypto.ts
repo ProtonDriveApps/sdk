@@ -210,7 +210,6 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         });
 
         if (!sessionKey) {
-            // TODO: error type & message
             throw new Error('Could not decrypt session key');
         }
 

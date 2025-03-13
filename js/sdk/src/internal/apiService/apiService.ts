@@ -1,6 +1,9 @@
+import { c } from 'ttag';
+
 import { ProtonDriveHTTPClient, ProtonDriveTelemetry, Logger } from "../../interface";
+import { AbortError, ServerError, RateLimitedError } from '../../errors';
 import { HTTPErrorCode, isCodeOk } from './errorCodes';
-import { apiErrorFactory, AbortError, APIError } from './errors';
+import { apiErrorFactory } from './errors';
 import { waitSeconds } from './wait';
 
 /**
@@ -112,16 +115,18 @@ export class DriveAPIService {
         attempt = 0
     ): Promise<ResponsePayload> {
         if (signal?.aborted) {
-            throw new AbortError('Request aborted');
+            throw new AbortError(c('Error').t`Request aborted`);
         }
 
-        this.logger?.debug(`${method} ${url}`);
+        this.logger.debug(`${method} ${url}`);
 
         if (this.hasReachedServerErrorLimit) {
-            throw new APIError('Server errors limit reached');
+            this.logger.warn('Server errors limit reached');
+            throw new ServerError(c('Error').t`Too many server errors, please try again later`);
         }
         if (this.hasReachedTooManyRequestsErrorLimit) {
-            throw new APIError('Too many requests limit reached');
+            this.logger.warn('Too many requests limit reached');
+            throw new RateLimitedError(c('Error').t`Too many server requests, please try again later`);
         }
 
         let response;
@@ -198,7 +203,7 @@ export class DriveAPIService {
             }
             return result as ResponsePayload;
         } catch (error: unknown) {
-            if (error instanceof APIError) {
+            if (error instanceof ServerError) {
                 throw error;
             }
             throw apiErrorFactory({ response });
