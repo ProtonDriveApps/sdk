@@ -27,7 +27,7 @@ export function initSharingModule(
     sharesService: SharesService,
     nodesService: NodesService,
 ) {
-    const api = new SharingAPIService(apiService);
+    const api = new SharingAPIService(telemetry.getLogger('sharing-api'), apiService);
     const cache = new SharingCache(driveEntitiesCache);
     const cryptoService = new SharingCryptoService(crypto, account);
     const sharingAccess = new SharingAccess(api, cache, cryptoService, sharesService, nodesService);

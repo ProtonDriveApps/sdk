@@ -45,6 +45,7 @@ export class BatchLoading<ID, ITEM> {
         } else if (options.iterateItems) {
             this.iterateItems = options.iterateItems;
         } else {
+            // This is developer error.
             throw new Error('Either loadItems or iterateItems must be provided');
         }
 

@@ -1,4 +1,5 @@
 import { ProtonDriveEntitiesCache, Logger } from "../../interface";
+import { getErrorMessage } from "../errors";
 import { Volume } from "./interface";
 
 /**
@@ -27,10 +28,10 @@ export class SharesCache {
         } catch (error: unknown) {
             try {
                 await this.removeVolume(volumeId);
-            } catch {
-                this.logger.error('Failed to remove invalid volume from cache');
+            } catch (removingError: unknown) {
+                this.logger.error('Failed to remove invalid volume from cache', removingError);
             }
-            throw new Error(`Failed to deserialize volume: ${error instanceof Error ? error.message : error}`);
+            throw new Error(`Failed to deserialize volume: ${getErrorMessage(error)}`);
         }
     }
 

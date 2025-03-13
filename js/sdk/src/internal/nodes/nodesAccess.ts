@@ -1,5 +1,8 @@
+import { c } from 'ttag';
+
 import { PrivateKey, SessionKey } from "../../crypto";
 import { Logger, NodeType, resultError, resultOk } from "../../interface";
+import { SDKError } from "../../errors";
 import { BatchLoading } from "../batchLoading";
 import { makeNodeUid } from "../uids";
 import { NodeAPIService } from "./apiService";
@@ -9,6 +12,10 @@ import { NodesCryptoService } from "./cryptoService";
 import { parseFileExtendedAttributes, parseFolderExtendedAttributes } from "./extendedAttributes";
 import { SharesService, EncryptedNode, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys } from "./interface";
 import { validateNodeName } from "./validations";
+
+class NodeKeysDecryptionError extends SDKError {
+    name = 'NodeKeysDecryptionError';
+}
 
 /**
  * Provides access to node metadata.
@@ -141,9 +148,17 @@ export class NodesAccess {
         const { key: parentKey } = await this.getParentKeys(encryptedNode);
         const { node: unparsedNode, keys } = await this.cryptoService.decryptNode(encryptedNode, parentKey);
         const node = await this.parseNode(unparsedNode);
-        this.cache.setNode(node);
+        try {
+            this.cache.setNode(node);
+        } catch (error: unknown) {
+            this.logger.error(`Failed to cache node ${node.uid}`, error);
+        }
         if (keys) {
-            this.cryptoCache.setNodeKeys(node.uid, keys);
+            try {
+                this.cryptoCache.setNodeKeys(node.uid, keys);
+            } catch (error: unknown) {
+                this.logger.error(`Failed to cache node keys ${node.uid}`, error);
+            }
         }
         return { node, keys };
     }
@@ -195,15 +210,26 @@ export class NodesAccess {
 
     async getParentKeys(node: Pick<DecryptedNode, 'parentUid' | 'shareId'>): Promise<Pick<DecryptedNodeKeys, 'key' | 'hashKey'>> {
         if (node.parentUid) {
-            return this.getNodeKeys(node.parentUid);
+            try {
+                return await this.getNodeKeys(node.parentUid);
+            } catch (error: unknown) {
+                if (error instanceof NodeKeysDecryptionError) {
+                    // Change the error message to be more specific.
+                    // Original error message is referring to node, while here
+                    // it referes to as parent to follow the method context.
+                    throw new NodeKeysDecryptionError(c('Error').t`Parent cannot be decrypted`);
+                }
+                throw error;
+            }
         }
-        if (!node.shareId) {
-            // TODO: better error message
-            throw new Error('Node tree has no parent to access the keys');
+        if (node.shareId) {
+            return {
+                key: await this.shareService.getSharePrivateKey(node.shareId),
+            }
         }
-        return {
-            key: await this.shareService.getSharePrivateKey(node.shareId),
-        }
+        // This is bug that should not happen.
+        // API cannot provide node without parent or share.
+        throw new Error('Node has neither parent node nor share');
     }
 
     async getNodeKeys(nodeUid: string): Promise<DecryptedNodeKeys> {
@@ -212,8 +238,7 @@ export class NodesAccess {
         } catch {
             const { keys } = await this.loadNode(nodeUid);
             if (!keys) {
-                // TODO: better error message
-                throw new Error('Parent node cannot be decrypted');
+                throw new NodeKeysDecryptionError(c('Error').t`Item cannot be decrypted`);
             }
             return keys;
         }

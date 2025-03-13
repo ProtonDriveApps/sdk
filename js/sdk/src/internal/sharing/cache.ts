@@ -51,6 +51,7 @@ export class SharingCache {
         try {
             nodeUids = await this.getNodeUids(type);
         } catch {
+            // This is developer error.
             throw new Error('Calling add before setting the loaded items');
         }
         const set = new Set(nodeUids);
@@ -70,6 +71,7 @@ export class SharingCache {
         try {
             nodeUids = await this.getNodeUids(type);
         } catch {
+            // This is developer error.
             throw new Error('Calling remove before setting the loaded items');
         }
         const set = new Set(nodeUids);

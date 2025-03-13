@@ -207,7 +207,7 @@ export class UploadAPIService {
             ManifestSignature: options.armoredManifestSignature,
             SignatureAddress: options.signatureEmail,
             XAttr: options.armoredEncryptedExtendedAttributes,
-            Photo: null, // TODO
+            Photo: null, // FIXME
         });
     }
 

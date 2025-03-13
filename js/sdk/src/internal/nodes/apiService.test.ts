@@ -294,7 +294,7 @@ describe("nodeAPIService", () => {
                 await Array.fromAsync(api.restoreNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2']));
                 throw new Error('Should have thrown');
             } catch (error: any) {
-                expect(error.message).toEqual('restoreNodes does not support multiple volumes');
+                expect(error.message).toEqual('Restoring items from multiple sections is not allowed');
             }
         });
     });
@@ -332,7 +332,7 @@ describe("nodeAPIService", () => {
                 await Array.fromAsync(api.deleteNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2']));
                 throw new Error('Should have thrown');
             } catch (error: any) {
-                expect(error.message).toEqual('deleteNodes does not support multiple volumes');
+                expect(error.message).toEqual('Deleting items from multiple sections is not allowed');
             }
         });
     });

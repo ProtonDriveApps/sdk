@@ -1,5 +1,6 @@
 import { ProtonDriveAccount, resultOk, resultError, Result, UnverifiedAuthorError, ProtonDriveTelemetry, Logger } from "../../interface";
 import { DriveCrypto, PrivateKey, VERIFICATION_STATUS } from "../../crypto";
+import { getVerificationMessage } from "../errors";
 import { EncryptedRootShare, DecryptedRootShare, EncryptedShareCrypto, DecryptedShareKey } from "./interface";
 
 /**
@@ -72,9 +73,7 @@ export class SharesCryptoService {
             ? resultOk(share.creatorEmail)
             : resultError({
                 claimedAuthor: share.creatorEmail,
-                error: verified === VERIFICATION_STATUS.SIGNED_AND_INVALID
-                    ? `Verification signature failed`
-                    : `Missing signature`,
+                error: getVerificationMessage(verified),
             });
 
         if (!author.ok) {

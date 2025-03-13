@@ -191,7 +191,7 @@ describe("nodesCryptoService", () => {
         expect(result).toMatchObject({
             node: {
                 name: { ok: true, value: "name" },
-                keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Missing key signature" } },
+                keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Missing signature for key" } },
                 nameAuthor: { ok: true, value: "nameSignatureEmail" },
                 activeRevision: undefined,
                 folder: {
@@ -241,7 +241,7 @@ describe("nodesCryptoService", () => {
             node: {
                 name: { ok: true, value: "name" },
                 keyAuthor: { ok: true, value: "signatureEmail" },
-                nameAuthor: { ok: false, error: { claimedAuthor: "nameSignatureEmail", error: "Verification of name signature failed" } },
+                nameAuthor: { ok: false, error: { claimedAuthor: "nameSignatureEmail", error: "Signature verification for name failed" } },
                 activeRevision: undefined,
                 folder: {
                     extendedAttributes: undefined,
@@ -289,7 +289,7 @@ describe("nodesCryptoService", () => {
         expect(result).toMatchObject({
             node: {
                 name: { ok: true, value: "name" },
-                keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Verification of hash key signature failed" } },
+                keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Signature verification for hash key failed" } },
                 nameAuthor: { ok: true, value: "nameSignatureEmail" },
                 activeRevision: undefined,
                 folder: {
@@ -344,7 +344,7 @@ describe("nodesCryptoService", () => {
         expect(result).toMatchObject({
             node: {
                 name: { ok: true, value: "name" },
-                keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Missing key signature" } },
+                keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Missing signature for key" } },
                 nameAuthor: { ok: true, value: "nameSignatureEmail" },
                 activeRevision: undefined,
                 folder: {
@@ -395,7 +395,7 @@ describe("nodesCryptoService", () => {
         expect(result).toMatchObject({
             node: {
                 name: { ok: true, value: "name" },
-                keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Verification of extended attributes signature failed" } },
+                keyAuthor: { ok: false, error: { claimedAuthor: "signatureEmail", error: "Signature verification for attributes failed" } },
                 nameAuthor: { ok: true, value: "nameSignatureEmail" },
                 activeRevision: undefined,
                 folder: {
@@ -497,7 +497,7 @@ describe("nodesCryptoService", () => {
                     state: "active",
                     createdDate: undefined,
                     extendedAttributes: "{}",
-                    contentAuthor: { ok: false, error: { claimedAuthor: "revisionSignatureEmail", error: "Verification of extended attributes signature failed" } },
+                    contentAuthor: { ok: false, error: { claimedAuthor: "revisionSignatureEmail", error: "Signature verification for attributes failed" } },
                 } },
                 folder: undefined,
             },

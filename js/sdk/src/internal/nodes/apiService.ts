@@ -1,3 +1,6 @@
+import { c } from "ttag";
+
+import { ValidationError } from "../../errors";
 import { Logger, NodeResult } from "../../interface";
 import { RevisionState } from "../../interface/nodes";
 import { DriveAPIService, drivePaths, isCodeOk, nodeTypeNumberToNodeType, permissionsToDirectMemberRole } from "../apiService";
@@ -60,7 +63,7 @@ export class NodeAPIService {
     // Improvement requested: support multiple volumes.
     async getNodes(nodeUids: string[], signal?: AbortSignal): Promise<EncryptedNode[]> {
         const nodeIds = nodeUids.map(splitNodeUid);
-        const volumeId = assertAndGetSingleVolumeId("getNodes", nodeIds);
+        const volumeId = assertAndGetSingleVolumeId(c('Operation').t`Loading items`, nodeIds);
 
         const response = await this.apiService.post<PostLoadLinksMetadataRequest, PostLoadLinksMetadataResponse>(`drive/v2/volumes/${volumeId}/links`, {
             LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
@@ -75,7 +78,7 @@ export class NodeAPIService {
                 // Basic node metadata
                 uid: makeNodeUid(volumeId, link.Link.LinkID),
                 parentUid: link.Link.ParentLinkID ? makeNodeUid(volumeId, link.Link.ParentLinkID) : undefined,
-                type: nodeTypeNumberToNodeType(link.Link.Type),
+                type: nodeTypeNumberToNodeType(this.logger, link.Link.Type),
                 mimeType: link.Link.MIMEType || undefined,
                 createdDate: new Date(link.Link.CreateTime*1000),
                 trashedDate: link.Link.TrashTime ? new Date(link.Link.TrashTime*1000) : undefined,
@@ -83,7 +86,7 @@ export class NodeAPIService {
                 // Sharing node metadata
                 shareId: link.SharingSummary?.ShareID || undefined,
                 isShared: !!link.SharingSummary,
-                directMemberRole: permissionsToDirectMemberRole(link.SharingSummary?.ShareAccess.Permissions, this.logger),
+                directMemberRole: permissionsToDirectMemberRole(this.logger, link.SharingSummary?.ShareAccess.Permissions),
             }
             const baseCryptoNodeMetadata = {
                 signatureEmail: link.Link.SignatureEmail || undefined,
@@ -124,6 +127,7 @@ export class NodeAPIService {
                     },
                 }
             }
+            // TODO: do not fail if one node is wrong
             throw new Error(`Unknown node type: ${link.Link.Type}`);
         });
         return nodes;
@@ -242,7 +246,7 @@ export class NodeAPIService {
     // Improvement requested: split into multiple calls for many nodes.
     async* trashNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         const nodeIds = nodeUids.map(splitNodeUid);
-        const volumeId = assertAndGetSingleVolumeId("trashNodes", nodeIds);
+        const volumeId = assertAndGetSingleVolumeId(c('Operation').t`Trashing items`, nodeIds);
 
         const response = await this.apiService.post<
             PostTrashNodesRequest,
@@ -251,14 +255,14 @@ export class NodeAPIService {
             LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
         }, signal);
 
-        // TODO: remove `as` when backend fixes OpenAPI schema.
+        // FIXME: remove `as` when backend fixes OpenAPI schema.
         yield* handleResponseErrors(nodeUids, volumeId, response.Responses as LinkResponse[]);
     }
 
     // Improvement requested: split into multiple calls for many nodes.
     async* restoreNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         const nodeIds = nodeUids.map(splitNodeUid);
-        const volumeId = assertAndGetSingleVolumeId("restoreNodes", nodeIds);
+        const volumeId = assertAndGetSingleVolumeId(c('Operation').t`Restoring items`, nodeIds);
 
         const response = await this.apiService.put<
             PutRestoreNodesRequest,
@@ -267,14 +271,14 @@ export class NodeAPIService {
             LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
         }, signal);
 
-        // TODO: remove `as` when backend fixes OpenAPI schema.
+        // FIXME: remove `as` when backend fixes OpenAPI schema.
         yield* handleResponseErrors(nodeUids, volumeId, response.Responses as LinkResponse[]);
     }
 
     // Improvement requested: split into multiple calls for many nodes.
     async* deleteNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         const nodeIds = nodeUids.map(splitNodeUid);
-        const volumeId = assertAndGetSingleVolumeId("deleteNodes", nodeIds);
+        const volumeId = assertAndGetSingleVolumeId(c('Operation').t`Deleting items`, nodeIds);
 
         const response = await this.apiService.post<
             PostDeleteNodesRequest,
@@ -283,7 +287,7 @@ export class NodeAPIService {
             LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
         }, signal);
 
-        // TODO: remove `as` when backend fixes OpenAPI schema.
+        // FIXME: remove `as` when backend fixes OpenAPI schema.
         yield* handleResponseErrors(nodeUids, volumeId, response.Responses as LinkResponse[]);
     }
 
@@ -355,7 +359,7 @@ export class NodeAPIService {
 function assertAndGetSingleVolumeId(operationForErrorMessage: string, nodeIds: { volumeId: string }[]): string {
     const uniqueVolumeIds = new Set(nodeIds.map(({ volumeId }) => volumeId));
     if (uniqueVolumeIds.size !== 1) {
-        throw new Error(`${operationForErrorMessage} does not support multiple volumes`);
+        throw new ValidationError(c('Error').t`${operationForErrorMessage} from multiple sections is not allowed`);
     }
     const volumeId = nodeIds[0].volumeId;
     return volumeId;

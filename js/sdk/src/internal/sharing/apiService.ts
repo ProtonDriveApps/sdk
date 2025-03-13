@@ -1,4 +1,4 @@
-import { NodeType, MemberRole, NonProtonInvitationState } from "../../interface";
+import { NodeType, MemberRole, NonProtonInvitationState, Logger } from "../../interface";
 import { DriveAPIService, drivePaths, nodeTypeNumberToNodeType, permissionsToDirectMemberRole, memberRoleToPermission } from "../apiService";
 import { makeNodeUid, splitNodeUid, makeInvitationUid, splitInvitationUid, makeMemberUid, splitMemberUid } from "../uids";
 import { EncryptedInvitationRequest, EncryptedInvitation, EncryptedInvitationWithNode, EncryptedExternalInvitation, EncryptedMember, EncryptedBookmark, EncryptedExternalInvitationRequest } from "./interface";
@@ -47,7 +47,8 @@ type PostUpdateMemberResponse = drivePaths['/drive/v2/shares/{shareID}/members/{
  * and vice versa. It should not contain any business logic.
  */
 export class SharingAPIService {
-    constructor(private apiService: DriveAPIService) {
+    constructor(private logger: Logger, private apiService: DriveAPIService) {
+        this.logger = logger;
         this.apiService = apiService;
     }
 
@@ -106,14 +107,14 @@ export class SharingAPIService {
             base64KeyPacket: response.Invitation.KeyPacket,
             base64KeyPacketSignature: response.Invitation.KeyPacketSignature,
             invitedDate: new Date(response.Invitation.CreateTime*1000),
-            role: permissionsToDirectMemberRole(response.Invitation.Permissions),
+            role: permissionsToDirectMemberRole(this.logger, response.Invitation.Permissions),
             share: {
                 armoredKey: response.Share.ShareKey,
                 armoredPassphrase: response.Share.Passphrase,
                 creatorEmail: response.Share.CreatorEmail,
             },
             node: {
-                type: nodeTypeNumberToNodeType(response.Link.Type),
+                type: nodeTypeNumberToNodeType(this.logger, response.Link.Type),
                 mimeType: response.Link.MIMEType || undefined,
                 encryptedName: response.Link.Name,
             },
@@ -170,14 +171,14 @@ export class SharingAPIService {
     async getShareInvitations(shareId: string): Promise<EncryptedInvitation[]> {
         const response = await this.apiService.get<GetShareInvitations>(`drive/v2/shares/${shareId}/invitations`);
         return response.Invitations.map((invitation) => {
-            return convertInternalInvitation(shareId, invitation);
+            return this.convertInternalInvitation(shareId, invitation);
         });
     }
 
     async getShareExternalInvitations(shareId: string): Promise<EncryptedExternalInvitation[]> {
         const response = await this.apiService.get<GetShareExternalInvitations>(`drive/v2/shares/${shareId}/external-invitations`);
         return response.ExternalInvitations.map((invitation) => {
-            return convertExternalInvitaiton(shareId, invitation);
+            return this.convertExternalInvitaiton(shareId, invitation);
         });
     }
 
@@ -191,7 +192,7 @@ export class SharingAPIService {
                 base64KeyPacket: member.KeyPacket,
                 base64KeyPacketSignature: member.KeyPacketSignature,
                 invitedDate: new Date(member.CreateTime*1000),
-                role: permissionsToDirectMemberRole(member.Permissions),
+                role: permissionsToDirectMemberRole(this.logger, member.Permissions),
             }
         });
     }
@@ -253,7 +254,7 @@ export class SharingAPIService {
                 ItemName: emailDetails.nodeName,
             },
         });
-        return convertInternalInvitation(shareId, response.Invitation);
+        return this.convertInternalInvitation(shareId, response.Invitation);
     }
 
     async updateInvitation(
@@ -299,7 +300,7 @@ export class SharingAPIService {
                 ItemName: emailDetails.nodeName,
             },
         });
-        return convertExternalInvitaiton(shareId, response.ExternalInvitation);
+        return this.convertExternalInvitaiton(shareId, response.ExternalInvitation);
     }
 
     async updateExternalInvitation(
@@ -339,29 +340,30 @@ export class SharingAPIService {
         const { shareId, memberId } = splitMemberUid(memberUid);
         await this.apiService.delete(`drive/v2/shares/${shareId}/members/${memberId}`);
     }
-}
 
-function convertInternalInvitation(shareId: string, invitation: GetShareInvitations['Invitations'][0]): EncryptedInvitation {
-    return {
-        uid: makeInvitationUid(shareId, invitation.InvitationID),
-        addedByEmail: invitation.InviterEmail,
-        inviteeEmail: invitation.InviteeEmail,
-        invitedDate: new Date(invitation.CreateTime*1000),
-        role: permissionsToDirectMemberRole(invitation.Permissions),
-        base64KeyPacket: invitation.KeyPacket,
-        base64KeyPacketSignature: invitation.KeyPacketSignature,
+    private convertInternalInvitation(shareId: string, invitation: GetShareInvitations['Invitations'][0]): EncryptedInvitation {
+        return {
+            uid: makeInvitationUid(shareId, invitation.InvitationID),
+            addedByEmail: invitation.InviterEmail,
+            inviteeEmail: invitation.InviteeEmail,
+            invitedDate: new Date(invitation.CreateTime*1000),
+            role: permissionsToDirectMemberRole(this.logger, invitation.Permissions),
+            base64KeyPacket: invitation.KeyPacket,
+            base64KeyPacketSignature: invitation.KeyPacketSignature,
+        }
     }
-}
-
-function convertExternalInvitaiton(shareId: string, invitation: GetShareExternalInvitations['ExternalInvitations'][0]): EncryptedExternalInvitation {
-    const state = invitation.State === 1 ? NonProtonInvitationState.Pending : NonProtonInvitationState.UserRegistered;
-    return {
-        uid: makeInvitationUid(shareId, invitation.ExternalInvitationID),
-        addedByEmail: invitation.InviterEmail,
-        inviteeEmail: invitation.InviteeEmail,
-        invitedDate: new Date(invitation.CreateTime*1000),
-        role: permissionsToDirectMemberRole(invitation.Permissions),
-        base64Signature: invitation.ExternalInvitationSignature,
-        state,
+    
+    private convertExternalInvitaiton(shareId: string, invitation: GetShareExternalInvitations['ExternalInvitations'][0]): EncryptedExternalInvitation {
+        const state = invitation.State === 1 ? NonProtonInvitationState.Pending : NonProtonInvitationState.UserRegistered;
+        return {
+            uid: makeInvitationUid(shareId, invitation.ExternalInvitationID),
+            addedByEmail: invitation.InviterEmail,
+            inviteeEmail: invitation.InviteeEmail,
+            invitedDate: new Date(invitation.CreateTime*1000),
+            role: permissionsToDirectMemberRole(this.logger, invitation.Permissions),
+            base64Signature: invitation.ExternalInvitationSignature,
+            state,
+        }
     }
+    
 }
