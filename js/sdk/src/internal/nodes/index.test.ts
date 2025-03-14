@@ -1,6 +1,7 @@
 import { ProtonDriveEntitiesCache, ProtonDriveCryptoCache, ProtonDriveAccount, MemberRole, NodeType } from "../../interface";
 import { DriveCrypto } from "../../crypto";
 import { MemoryCache } from "../../cache";
+import { getMockTelemetry } from "../../tests/telemetry";
 import { DriveAPIService } from "../apiService";
 import { DriveEventsService, DriveListener, DriveEvent, DriveEventType } from "../events";
 import { makeNodeUid } from "../uids";
@@ -57,6 +58,7 @@ describe('nodesModules integration tests', () => {
         sharesService = {}
 
         nodesModule = initNodesModule(
+            getMockTelemetry(),
             apiService,
             driveEntitiesCache,
             driveCryptoCache,
