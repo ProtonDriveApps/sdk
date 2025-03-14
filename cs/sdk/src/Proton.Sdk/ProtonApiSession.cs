@@ -77,7 +77,7 @@ public sealed class ProtonApiSession
     private IAuthenticationApiClient AuthenticationApi
         => _authenticationApi ??= ApiClientFactory.Instance.CreateAuthenticationApiClient(_httpClient, ClientConfiguration.RefreshRedirectUri);
 
-    private IKeysApiClient KeysApi => _keysApi ??= new KeysApiClient(_httpClient);
+    private IKeysApiClient KeysApi => _keysApi ??= ApiClientFactory.Instance.CreateKeysApiClient(_httpClient);
 
     public static ValueTask<ProtonApiSession> BeginAsync(string username, ReadOnlyMemory<byte> password, string appVersion, CancellationToken cancellationToken)
     {

@@ -102,7 +102,7 @@ internal sealed class SqliteCacheRepository : ICacheRepository, IDisposable
         }
     }
 
-    IAsyncEnumerable<string> ICacheRepository.GetByTagsAsync(IEnumerable<string> tags, CancellationToken cancellationToken)
+    IAsyncEnumerable<(string Key, string Value)> ICacheRepository.GetByTagsAsync(IEnumerable<string> tags, CancellationToken cancellationToken)
     {
         return GetByTags(tags).ToAsyncEnumerable();
     }
@@ -209,7 +209,7 @@ internal sealed class SqliteCacheRepository : ICacheRepository, IDisposable
         return reader.Read() ? reader.GetFieldValue<string>("Value") : null;
     }
 
-    public IEnumerable<string> GetByTags(IEnumerable<string> tags)
+    public IEnumerable<(string Key, string Value)> GetByTags(IEnumerable<string> tags)
     {
         using var connection = new SqliteConnection(_connection.ConnectionString);
 
@@ -229,7 +229,7 @@ internal sealed class SqliteCacheRepository : ICacheRepository, IDisposable
 
         command.CommandText =
             $"""
-             SELECT Value
+             SELECT Key, Value
              FROM Entries
              WHERE Key IN (
                SELECT t.Key
@@ -246,7 +246,7 @@ internal sealed class SqliteCacheRepository : ICacheRepository, IDisposable
 
         while (reader.Read())
         {
-            yield return reader.GetString(0);
+            yield return (reader.GetString(0), reader.GetString(1));
         }
     }
 

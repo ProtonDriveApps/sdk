@@ -1,16 +1,16 @@
 ﻿namespace Proton.Sdk.Caching;
 
-internal sealed class SessionSecretCache(ICacheRepository repository)
+internal sealed class SessionSecretCache(ICacheRepository repository) : ISessionSecretCache
 {
     private readonly ICacheRepository _repository = repository;
 
-    public async ValueTask SetAccountKeyPassphraseAsync(string keyId, ReadOnlyMemory<byte> passphrase, CancellationToken cancellationToken)
+    public ValueTask SetAccountKeyPassphraseAsync(string keyId, ReadOnlyMemory<byte> passphrase, CancellationToken cancellationToken)
     {
         var cacheKey = GetAccountPassphraseCacheKey(keyId);
 
         var serializedValue = Convert.ToBase64String(passphrase.Span);
 
-        await _repository.SetAsync(cacheKey, serializedValue, cancellationToken).ConfigureAwait(false);
+        return _repository.SetAsync(cacheKey, serializedValue, cancellationToken);
     }
 
     public async ValueTask<ReadOnlyMemory<byte>?> TryGetAccountKeyPassphraseAsync(string keyId, CancellationToken cancellationToken)

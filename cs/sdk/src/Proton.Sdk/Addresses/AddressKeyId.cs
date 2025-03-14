@@ -1,6 +1,6 @@
 ﻿using Proton.Sdk.Serialization;
 
-namespace Proton.Sdk.Addresses.Api;
+namespace Proton.Sdk.Addresses;
 
 public readonly record struct AddressKeyId(string Value) : IStrongId<AddressKeyId>
 {

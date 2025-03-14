@@ -1,0 +1,35 @@
+using Proton.Drive.Sdk.Api;
+using Proton.Drive.Sdk.Caching;
+using Proton.Sdk;
+
+namespace Proton.Drive.Sdk;
+
+public sealed class ProtonDriveClient
+{
+    private const int ApiTimeoutSeconds = 15;
+
+    /// <summary>
+    /// Creates a new instance of <see cref="ProtonDriveClient"/>.
+    /// </summary>
+    /// <param name="session">Authenticated API session.</param>
+    public ProtonDriveClient(ProtonApiSession session)
+        : this(
+            new AccountClientAdapter(session),
+            new DriveApiClients(session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ApiTimeoutSeconds))),
+            new DriveClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository))
+    {
+    }
+
+    internal ProtonDriveClient(IAccountClient accountClient, IDriveApiClients apiClients, IDriveClientCache cache)
+    {
+        Account = accountClient;
+        Api = apiClients;
+        Cache = cache;
+    }
+
+    internal IAccountClient Account { get; }
+
+    internal IDriveApiClients Api { get; }
+
+    internal IDriveClientCache Cache { get; }
+}

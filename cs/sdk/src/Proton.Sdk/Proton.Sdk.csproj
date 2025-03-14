@@ -19,11 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="$(AssemblyName).Drive" />
-    <InternalsVisibleTo Include="$(AssemblyName).Instrumentation" />
+    <InternalsVisibleTo Include="Proton.Drive.Sdk" />
+    <InternalsVisibleTo Include="Proton.Drive.Sdk.Tests" />
     <InternalsVisibleTo Include="$(AssemblyName).Tests" />
-    <InternalsVisibleTo Include="$(NativeLibPrefix)proton_sdk" />
-    <InternalsVisibleTo Include="$(NativeLibPrefix)proton_drive_sdk" />
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
 

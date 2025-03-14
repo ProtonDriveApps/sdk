@@ -5,17 +5,17 @@ using Proton.Sdk.Serialization;
 
 namespace Proton.Sdk.Caching;
 
-internal sealed class AccountSecretCache(ICacheRepository repository)
+internal sealed class AccountSecretCache(ICacheRepository repository) : IAccountSecretCache
 {
-    private const string UserKeysCacheKey = "account:user-keys";
+    private const string UserKeysCacheKey = "user:current:keys";
 
     private readonly ICacheRepository _repository = repository;
 
-    public async ValueTask SetUserKeysAsync(IEnumerable<PgpPrivateKey> unlockedKeys, CancellationToken cancellationToken)
+    public ValueTask SetUserKeysAsync(IEnumerable<PgpPrivateKey> unlockedKeys, CancellationToken cancellationToken)
     {
-        var serializedValue = JsonSerializer.Serialize(unlockedKeys, ProtonEntitySerializerContext.Default.IEnumerablePgpPrivateKey);
+        var serializedValue = JsonSerializer.Serialize(unlockedKeys, SecretsSerializerContext.Default.IEnumerablePgpPrivateKey);
 
-        await _repository.SetAsync(UserKeysCacheKey, serializedValue, cancellationToken).ConfigureAwait(false);
+        return _repository.SetAsync(UserKeysCacheKey, serializedValue, cancellationToken);
     }
 
     public async ValueTask<IReadOnlyList<PgpPrivateKey>?> TryGetUserKeysAsync(CancellationToken cancellationToken)
@@ -23,15 +23,15 @@ internal sealed class AccountSecretCache(ICacheRepository repository)
         var serializedValue = await _repository.TryGetAsync(UserKeysCacheKey, cancellationToken).ConfigureAwait(false);
 
         return serializedValue is not null
-            ? JsonSerializer.Deserialize<PgpPrivateKey[]>(serializedValue, ProtonEntitySerializerContext.Default.PgpPrivateKeyArray)
+            ? JsonSerializer.Deserialize(serializedValue, SecretsSerializerContext.Default.PgpPrivateKeyArray)
             : null;
     }
 
-    public async ValueTask SetAddressKeysAsync(AddressId addressId, IEnumerable<PgpPrivateKey> unlockedKeys, CancellationToken cancellationToken)
+    public ValueTask SetAddressKeysAsync(AddressId addressId, IEnumerable<PgpPrivateKey> unlockedKeys, CancellationToken cancellationToken)
     {
-        var serializedValue = JsonSerializer.Serialize(unlockedKeys, ProtonEntitySerializerContext.Default.IEnumerablePgpPrivateKey);
+        var serializedValue = JsonSerializer.Serialize(unlockedKeys, SecretsSerializerContext.Default.IEnumerablePgpPrivateKey);
 
-        await _repository.SetAsync(GetAddressKeysCacheKey(addressId), serializedValue, cancellationToken).ConfigureAwait(false);
+        return _repository.SetAsync(GetAddressKeysCacheKey(addressId), serializedValue, cancellationToken);
     }
 
     public async ValueTask<IReadOnlyList<PgpPrivateKey>?> TryGetAddressKeysAsync(AddressId addressId, CancellationToken cancellationToken)
@@ -39,12 +39,12 @@ internal sealed class AccountSecretCache(ICacheRepository repository)
         var serializedValue = await _repository.TryGetAsync(GetAddressKeysCacheKey(addressId), cancellationToken).ConfigureAwait(false);
 
         return serializedValue is not null
-            ? JsonSerializer.Deserialize<PgpPrivateKey[]>(serializedValue, ProtonEntitySerializerContext.Default.PgpPrivateKeyArray)
+            ? JsonSerializer.Deserialize(serializedValue, SecretsSerializerContext.Default.PgpPrivateKeyArray)
             : null;
     }
 
     private static string GetAddressKeysCacheKey(AddressId addressId)
     {
-        return $"account:address:{addressId}:keys";
+        return $"address:{addressId}:keys";
     }
 }

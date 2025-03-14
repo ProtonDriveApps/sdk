@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
 using Proton.Sdk.Addresses;
+using Proton.Sdk.Api;
 using Proton.Sdk.Caching;
 
 namespace Proton.Sdk;
@@ -8,25 +9,23 @@ namespace Proton.Sdk;
 public sealed class ProtonAccountClient
 {
     public ProtonAccountClient(ProtonApiSession session)
-        : this(new AccountApiClients(session.GetHttpClient()), session.ClientConfiguration, session.SecretCache)
+        : this(
+            new AccountApiClients(session.GetHttpClient()),
+            new AccountClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository, session.SecretCache),
+            session.ClientConfiguration.LoggerFactory.CreateLogger<ProtonAccountClient>())
     {
     }
 
-    internal ProtonAccountClient(AccountApiClients apiClients, ProtonClientConfiguration configuration, SessionSecretCache sessionSecretCache)
+    internal ProtonAccountClient(IAccountApiClients apiClients, IAccountClientCache cache, ILogger<ProtonAccountClient> logger)
     {
         Api = apiClients;
-        Logger = configuration.LoggerFactory.CreateLogger<ProtonAccountClient>();
-        SessionSecretCache = sessionSecretCache;
-        EntityCache = new AccountEntityCache(configuration.EntityCacheRepository);
-        SecretCache = new AccountSecretCache(configuration.SecretCacheRepository);
+        Cache = cache;
+        Logger = logger;
     }
 
-    internal AccountApiClients Api { get; }
+    internal IAccountApiClients Api { get; }
 
-    internal AccountEntityCache EntityCache { get; }
-    internal AccountSecretCache SecretCache { get; }
-    internal SessionSecretCache SessionSecretCache { get; }
-    internal PublicKeyCache PublicKeyCache { get; } = new();
+    internal IAccountClientCache Cache { get; }
 
     internal ILogger<ProtonAccountClient> Logger { get; }
 
@@ -47,7 +46,7 @@ public sealed class ProtonAccountClient
 
     internal async ValueTask<IReadOnlyList<PgpPrivateKey>> GetUserKeysAsync(CancellationToken cancellationToken)
     {
-        var userKeys = await SecretCache.TryGetUserKeysAsync(cancellationToken).ConfigureAwait(false);
+        var userKeys = await Cache.Secrets.TryGetUserKeysAsync(cancellationToken).ConfigureAwait(false);
 
         if (userKeys is null)
         {
@@ -62,7 +61,7 @@ public sealed class ProtonAccountClient
                     continue;
                 }
 
-                var passphrase = await SessionSecretCache.TryGetAccountKeyPassphraseAsync(userKey.Id.Value, cancellationToken).ConfigureAwait(false);
+                var passphrase = await Cache.SessionSecrets.TryGetAccountKeyPassphraseAsync(userKey.Id.Value, cancellationToken).ConfigureAwait(false);
 
                 if (passphrase is null)
                 {
@@ -80,7 +79,7 @@ public sealed class ProtonAccountClient
                 throw new ProtonApiException("No active user key was found.");
             }
 
-            await SecretCache.SetUserKeysAsync(unlockedKeys, cancellationToken).ConfigureAwait(false);
+            await Cache.Secrets.SetUserKeysAsync(unlockedKeys, cancellationToken).ConfigureAwait(false);
 
             userKeys = unlockedKeys;
         }

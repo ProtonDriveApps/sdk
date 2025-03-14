@@ -1,5 +1,4 @@
 ﻿using System.Text.Json.Serialization;
-using Proton.Cryptography.Pgp;
 using Proton.Sdk.Addresses;
 using Proton.Sdk.Addresses.Api;
 using Proton.Sdk.Authentication;
@@ -11,7 +10,6 @@ namespace Proton.Sdk.Serialization;
 [JsonSourceGenerationOptions(
     Converters =
     [
-        typeof(PgpPrivateKeyJsonConverter),
         typeof(StrongIdJsonConverter<SessionId>),
         typeof(StrongIdJsonConverter<UserId>),
         typeof(StrongIdJsonConverter<UserKeyId>),
@@ -20,6 +18,4 @@ namespace Proton.Sdk.Serialization;
         typeof(StrongIdJsonConverter<EventId>),
     ])]
 [JsonSerializable(typeof(Address))]
-[JsonSerializable(typeof(IEnumerable<PgpPrivateKey>))]
-[JsonSerializable(typeof(PgpPrivateKey[]))]
-internal sealed partial class ProtonEntitySerializerContext : JsonSerializerContext;
+internal sealed partial class AccountEntitySerializerContext : JsonSerializerContext;
