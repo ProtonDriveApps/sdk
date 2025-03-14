@@ -5,6 +5,7 @@ using Proton.Cryptography.Pgp;
 namespace Proton.Sdk.Caching;
 
 internal sealed class PublicKeyCache
+    : IPublicKeyCache
 {
     public const int NumberOfMinutesBeforeExpiration = 30;
 

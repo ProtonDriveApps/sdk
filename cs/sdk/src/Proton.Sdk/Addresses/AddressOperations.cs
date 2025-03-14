@@ -12,7 +12,7 @@ internal static class AddressOperations
 {
     public static async ValueTask<IReadOnlyList<Address>> GetAddressesAsync(ProtonAccountClient client, CancellationToken cancellationToken)
     {
-        var result = await client.EntityCache.TryGetCurrentUserAddressesAsync(cancellationToken).ConfigureAwait(false);
+        var result = await client.Cache.Entities.TryGetCurrentUserAddressesAsync(cancellationToken).ConfigureAwait(false);
 
         if (result is null)
         {
@@ -36,7 +36,7 @@ internal static class AddressOperations
                 }
             }
 
-            await client.EntityCache.SetCurrentUserAddressesAsync(addresses, cancellationToken).ConfigureAwait(false);
+            await client.Cache.Entities.SetCurrentUserAddressesAsync(addresses, cancellationToken).ConfigureAwait(false);
 
             result = addresses;
         }
@@ -46,7 +46,7 @@ internal static class AddressOperations
 
     public static async ValueTask<Address> GetAsync(ProtonAccountClient client, AddressId addressId, CancellationToken cancellationToken)
     {
-        var address = await client.EntityCache.TryGetAddressAsync(addressId, cancellationToken).ConfigureAwait(false);
+        var address = await client.Cache.Entities.TryGetAddressAsync(addressId, cancellationToken).ConfigureAwait(false);
 
         if (address is null)
         {
@@ -56,7 +56,7 @@ internal static class AddressOperations
 
             address = await ConvertFromDtoAsync(client, response.Address, userKeys, cancellationToken).ConfigureAwait(false);
 
-            await client.EntityCache.SetAddressAsync(address, cancellationToken).ConfigureAwait(false);
+            await client.Cache.Entities.SetAddressAsync(address, cancellationToken).ConfigureAwait(false);
         }
 
         return address;
@@ -79,7 +79,7 @@ internal static class AddressOperations
         AddressId addressId,
         CancellationToken cancellationToken)
     {
-        var addressKeys = await client.SecretCache.TryGetAddressKeysAsync(addressId, cancellationToken).ConfigureAwait(false)
+        var addressKeys = await client.Cache.Secrets.TryGetAddressKeysAsync(addressId, cancellationToken).ConfigureAwait(false)
             ?? await GetAddressKeysAsync(client, addressId, cancellationToken).ConfigureAwait(false);
 
         return addressKeys;
@@ -100,7 +100,7 @@ internal static class AddressOperations
         string emailAddress,
         CancellationToken cancellationToken)
     {
-        if (!client.PublicKeyCache.TryGetPublicKeys(emailAddress, out var cachedPublicKeys))
+        if (!client.Cache.PublicKeys.TryGetPublicKeys(emailAddress, out var cachedPublicKeys))
         {
             try
             {
@@ -121,7 +121,7 @@ internal static class AddressOperations
                     publicKeys.Add(publicKey);
                 }
 
-                client.PublicKeyCache.SetPublicKeys(emailAddress, publicKeys);
+                client.Cache.PublicKeys.SetPublicKeys(emailAddress, publicKeys);
 
                 cachedPublicKeys = publicKeys;
             }
@@ -166,7 +166,9 @@ internal static class AddressOperations
                 }
                 else
                 {
-                    var passphrase = await client.SessionSecretCache.TryGetAccountKeyPassphraseAsync(keyDto.Id.Value, cancellationToken).ConfigureAwait(false);
+                    var passphrase = await client.Cache.SessionSecrets.TryGetAccountKeyPassphraseAsync(
+                        keyDto.Id.Value,
+                        cancellationToken).ConfigureAwait(false);
 
                     if (passphrase is null)
                     {
@@ -208,7 +210,7 @@ internal static class AddressOperations
             throw new ProtonApiException($"Address {dto.Id} has no primary key");
         }
 
-        await client.SecretCache.SetAddressKeysAsync(dto.Id, unlockedKeys, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Secrets.SetAddressKeysAsync(dto.Id, unlockedKeys, cancellationToken).ConfigureAwait(false);
 
         return new Address(dto.Id, dto.Order, dto.Email, dto.Status, keys.AsReadOnly(), primaryKeyIndex.Value);
     }
@@ -233,13 +235,13 @@ internal static class AddressOperations
         AddressId addressId,
         CancellationToken cancellationToken)
     {
-        var addressKeys = await client.SecretCache.TryGetAddressKeysAsync(addressId, cancellationToken).ConfigureAwait(false);
+        var addressKeys = await client.Cache.Secrets.TryGetAddressKeysAsync(addressId, cancellationToken).ConfigureAwait(false);
 
         if (addressKeys is null)
         {
             await GetAsync(client, addressId, cancellationToken).ConfigureAwait(false);
 
-            addressKeys = await client.SecretCache.TryGetAddressKeysAsync(addressId, cancellationToken).ConfigureAwait(false);
+            addressKeys = await client.Cache.Secrets.TryGetAddressKeysAsync(addressId, cancellationToken).ConfigureAwait(false);
 
             if (addressKeys is null)
             {

@@ -4,69 +4,42 @@ using Proton.Sdk.Serialization;
 
 namespace Proton.Sdk.Caching;
 
-internal sealed class AccountEntityCache(ICacheRepository repository)
+internal sealed class AccountEntityCache(ICacheRepository repository) : IAccountEntityCache
 {
-    private static readonly string[] CurrentUserAddressTags = ["current-user-address"];
+    private static readonly string[] CurrentUserAddressTags = ["user:current:address"];
 
     private readonly ICacheRepository _repository = repository;
 
-    public async ValueTask SetAddressAsync(Address address, CancellationToken cancellationToken)
+    public ValueTask SetAddressAsync(Address address, CancellationToken cancellationToken)
     {
-        var value = JsonSerializer.Serialize(address, ProtonEntitySerializerContext.Default.Address);
+        var value = JsonSerializer.Serialize(address, AccountEntitySerializerContext.Default.Address);
 
-        await _repository.SetAsync(GetAddressCacheKey(address.Id), value, cancellationToken).ConfigureAwait(false);
+        return _repository.SetAsync(GetAddressCacheKey(address.Id), value, cancellationToken);
     }
 
     public async ValueTask<Address?> TryGetAddressAsync(AddressId addressId, CancellationToken cancellationToken)
     {
-        var value = await _repository.TryGetAsync(addressId.Value, cancellationToken).ConfigureAwait(false);
+        var value = await _repository.TryGetAsync(GetAddressCacheKey(addressId), cancellationToken).ConfigureAwait(false);
 
-        return value is not null ? JsonSerializer.Deserialize(value, ProtonEntitySerializerContext.Default.Address) : null;
+        return value is not null ? JsonSerializer.Deserialize(value, AccountEntitySerializerContext.Default.Address) : null;
     }
 
     public async ValueTask SetCurrentUserAddressesAsync(IEnumerable<Address> addresses, CancellationToken cancellationToken)
     {
-        foreach (var address in addresses)
-        {
-            var value = JsonSerializer.Serialize(address, ProtonEntitySerializerContext.Default.Address);
-
-            await _repository.SetAsync(GetAddressCacheKey(address.Id), value, CurrentUserAddressTags, cancellationToken).ConfigureAwait(false);
-        }
-
-        await _repository.MarkTagAsCompleteAsync(CurrentUserAddressTags[0], cancellationToken).ConfigureAwait(false);
+        await _repository.SetCompleteCollection(
+            addresses,
+            address => GetAddressCacheKey(address.Id),
+            CurrentUserAddressTags,
+            AccountEntitySerializerContext.Default.Address,
+            cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<IReadOnlyList<Address>?> TryGetCurrentUserAddressesAsync(CancellationToken cancellationToken)
     {
-        if (!await _repository.GetTagIsCompleteAsync(CurrentUserAddressTags[0], cancellationToken).ConfigureAwait(false))
-        {
-            return null;
-        }
-
-        var values = _repository.GetByTagsAsync(CurrentUserAddressTags, cancellationToken);
-
-        var addresses = new List<Address>();
-
-        await foreach (var value in values.ConfigureAwait(false))
-        {
-            try
-            {
-                var address = JsonSerializer.Deserialize(value, ProtonEntitySerializerContext.Default.Address);
-                if (address is null)
-                {
-                    return null;
-                }
-
-                addresses.Add(address);
-            }
-            catch
-            {
-                // There is something wrong with the cache, pretend that it did not have the information, to incite the caller to refresh it
-                return null;
-            }
-        }
-
-        return addresses;
+        return await _repository.TryGetCompleteCollection(
+            CurrentUserAddressTags,
+            AccountEntitySerializerContext.Default.Address,
+            cancellationToken).ConfigureAwait(false);
     }
 
     private static string GetAddressCacheKey(AddressId addressId)
