@@ -17,13 +17,18 @@ export class CommandSharingRemove implements Command {
             short: 'a',
             default: false,
         },
+        json: {
+            type: 'boolean',
+            short: 'j',
+            default: false,
+        },
     };
 
     async action({
         sdk,
         paths,
         args: [ pathString ],
-        options: { email: emails, everyone },
+        options: { email: emails, everyone, json },
     }: ActionArgs) {
         const path = paths.getPath(pathString);
         const node = await path.getNode();
@@ -34,6 +39,11 @@ export class CommandSharingRemove implements Command {
             : await sdk.unshareNode(node, {
                 users: emails,
             });
-        console.log(sharingInfo);
+
+        if (json) {
+            console.log(JSON.stringify(sharingInfo));
+        } else {
+            console.log(sharingInfo);
+        }
     }
 }

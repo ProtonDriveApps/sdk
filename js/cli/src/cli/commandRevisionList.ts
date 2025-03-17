@@ -8,14 +8,14 @@ export class CommandRevisionList implements Command {
     name = 'list';
     args = ['path'];
     options: ParseArgsConfig['options'] = {
-        humanReadable: {
+        json: {
             type: 'boolean',
-            short: 'h',
+            short: 'j',
             default: false,
         },
     };
 
-    async action({ sdk, paths, args: [ pathString ], options: { humanReadable } }: ActionArgs) {
+    async action({ sdk, paths, args: [ pathString ], options: { json } }: ActionArgs) {
         const path = paths.getPath(pathString);
         const node = await path.getNode();
 
@@ -23,14 +23,19 @@ export class CommandRevisionList implements Command {
             throw new Error('Cannot list revisions of a folder');
         }
         for await (const revision of sdk.iterateRevisions(node)) {
-            this.printRevision(revision, { humanReadable });
+            this.printRevision(revision, { json });
         }
     }
 
-    private printRevision(revision: Revision, options: { humanReadable: boolean }) {
+    private printRevision(revision: Revision, options: { json: boolean }) {
+        if (options.json) {
+            console.log(JSON.stringify(revision));
+            return;
+        }
+
         const author = formatAuthor(revision.contentAuthor);
-        const created = formatDate(revision.createdDate, options.humanReadable);
-        const size = formatSize(revision.claimedSize, options.humanReadable);
+        const created = formatDate(revision.createdDate, true);
+        const size = formatSize(revision.claimedSize, true);
         console.log(`${author} ${created} ${size} ${revision.uid}`);
     }
 }

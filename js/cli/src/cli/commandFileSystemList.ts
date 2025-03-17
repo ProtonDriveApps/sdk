@@ -9,14 +9,14 @@ export class CommandFileSystemList implements Command {
     name = 'list';
     args = ['path'];
     options: ParseArgsConfig['options'] = {
-        humanReadable: {
+        json: {
             type: 'boolean',
-            short: 'h',
+            short: 'j',
             default: false,
         },
     };
 
-    async action({ sdk, paths, args: [ pathString ], options: { humanReadable } }: ActionArgs) {
+    async action({ sdk, paths, args: [ pathString ], options: { json } }: ActionArgs) {
         const path = paths.getPath(pathString);
 
         if (path.type === PathType.Root) {
@@ -24,36 +24,41 @@ export class CommandFileSystemList implements Command {
         } else if (path.type === PathType.MyFiles) {
             const parentNode = await path.getNode();
             for await (const node of sdk.iterateChildren(parentNode)) {
-                this.printNode(node, { humanReadable });
+                this.printNode(node, { json });
             }
         } else if (path.type === PathType.SharedByMe) {
             for await (const node of sdk.iterateSharedNodes()) {
-                this.printNode(node, { humanReadable });
+                this.printNode(node, { json });
             }
         } else if (path.type === PathType.SharedWithMe) {
             if (path.fullPath === '/shared-with-me') {
                 for await (const node of sdk.iterateSharedNodesWithMe()) {
-                    this.printNode(node, { humanReadable });
+                    this.printNode(node, { json });
                 }
             } else {
                 const node = await path.getNode();
                 for await (const child of sdk.iterateChildren(node)) {
-                    this.printNode(child, { humanReadable });
+                    this.printNode(child, { json });
                 }
             }
         } else if (path.type === PathType.Trash) {
             for await (const node of sdk.iterateTrashedNodes()) {
-                this.printNode(node, { humanReadable });
+                this.printNode(node, { json });
             }
         }
     }
 
-    private printNode(node: NodeEntity, options: { humanReadable: boolean }) {
+    private printNode(node: NodeEntity, options: { json: boolean }) {
+        if (options.json) {
+            console.log(JSON.stringify(node));
+            return;
+        }
+
         const type = node.type === "file" ? "f" : "d";
         const sharedFlag = node.isShared ? 's' : ' ';
         const author = formatAuthor(node.keyAuthor);
-        const created = formatDate(node.createdDate, options.humanReadable);
-        const size = node.activeRevision?.ok ? formatSize(node.activeRevision.value.claimedSize, options.humanReadable) : '-';
+        const created = formatDate(node.createdDate, true);
+        const size = node.activeRevision?.ok ? formatSize(node.activeRevision.value.claimedSize, true) : '-';
         const id = node.uid.split('~')[1];
         const name = node.name.ok ? node.name.value : node.uid;
         console.log(`${type}${sharedFlag} ${author} ${created} ${size} ${id} ${name}`);

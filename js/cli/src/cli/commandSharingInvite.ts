@@ -34,13 +34,18 @@ export class CommandSharingInvite implements Command {
             short: 'n',
             default: false,
         },
+        json: {
+            type: 'boolean',
+            short: 'j',
+            default: false,
+        },
     };
 
     async action({
         sdk,
         paths,
         args: [ pathString ],
-        options: { user: userEmails, email: externalEmails, role, message, includeNodeName },
+        options: { user: userEmails, email: externalEmails, role, message, includeNodeName, json },
     }: ActionArgs) {
         const path = paths.getPath(pathString);
         const node = await path.getNode();
@@ -53,6 +58,11 @@ export class CommandSharingInvite implements Command {
                 includeNodeName,
             },
         });
-        console.log(sharingInfo);
+
+        if (json) {
+            console.log(JSON.stringify(sharingInfo));
+        } else {
+            console.log(sharingInfo);
+        }
     }
 }

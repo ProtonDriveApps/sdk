@@ -1,3 +1,4 @@
+import { ParseArgsConfig } from "util";
 import { Command, ActionArgs } from "./interface";
 
 export class CommandFileSystemDelete implements Command {
@@ -5,13 +6,22 @@ export class CommandFileSystemDelete implements Command {
     name = "delete";
     // TODO: support delete of multiple files
     args = ["path"];
+    options: ParseArgsConfig['options'] = {
+        json: {
+            type: 'boolean',
+            short: 'j',
+            default: false,
+        },
+    };
 
-    async action({ sdk, paths, args: [pathString] }: ActionArgs) {
+    async action({ sdk, paths, args: [pathString], options: { json } }: ActionArgs) {
         const nodePath = paths.getPath(pathString);
         const node = await nodePath.getNode();
         for await (const result of sdk.deleteNodes([node])) {
-            if (!result.ok) {
-                throw new Error(result.error);
+            if (json) {
+                console.log(JSON.stringify(result));
+            } else {
+                console.log(result.ok ? `Deleted ${result.uid}` : `Failed to delete ${result.uid}: ${result.error}`);
             }
         }
     }

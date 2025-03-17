@@ -1,4 +1,4 @@
-import { ParseArgsConfig } from "util";
+import { ParseArgsConfig, inspect } from "util";
 import { Command, ActionArgs } from './interface';
 
 export class CommandFileSystemInfo implements Command {
@@ -6,17 +6,21 @@ export class CommandFileSystemInfo implements Command {
     name = 'info';
     args = ['path'];
     options: ParseArgsConfig['options'] = {
-        humanReadable: {
+        json: {
             type: 'boolean',
-            short: 'h',
+            short: 'j',
             default: false,
         },
     };
 
-    async action({ paths, args: [ pathString ], options: { humanReadable }  }: ActionArgs) {
+    async action({ paths, args: [ pathString ], options: { json }  }: ActionArgs) {
         const path = paths.getPath(pathString);
         const node = await path.getNode();
-        // TODO: use humanReadable to format the output
-        console.log(node);
+        if (json) {
+            console.log(JSON.stringify(node));
+        } else {
+            // Use inspect to disable the depth limit.
+            console.log(inspect(node, {showHidden: false, depth: null, colors: true}));
+        }
     }
 }

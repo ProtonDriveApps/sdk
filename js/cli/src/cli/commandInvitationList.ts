@@ -1,12 +1,24 @@
+import { ParseArgsConfig } from "util";
 import { Command, ActionArgs } from './interface';
 
 export class CommandInvitationList implements Command {
     group  = 'invitation';
     name = 'list';
+    options: ParseArgsConfig['options'] = {
+        json: {
+            type: 'boolean',
+            short: 'j',
+            default: false,
+        },
+    };
 
-    async action({ sdk }: ActionArgs) {
+    async action({ sdk, options: { json } }: ActionArgs) {
         for await (const invitation of sdk.iterateInvitations()) {
-            console.log(invitation);
+            if (json) {
+                console.log(JSON.stringify(invitation));
+            } else {
+                console.log(invitation);
+            }
         }
     }
 }

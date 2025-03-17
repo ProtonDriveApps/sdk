@@ -1,15 +1,28 @@
+import { ParseArgsConfig } from "util";
 import { Command, ActionArgs } from './interface';
 
 export class CommandSharingStatus implements Command {
     group = 'sharing';
     name = 'status';
     args = ['path'];
+    options: ParseArgsConfig['options'] = {
+        json: {
+            type: 'boolean',
+            short: 'j',
+            default: false,
+        },
+    };
 
-    async action({ sdk, paths, args: [ pathString ] }: ActionArgs) {
+    async action({ sdk, paths, args: [ pathString ], options: { json } }: ActionArgs) {
         const path = paths.getPath(pathString);
 
         const node = await path.getNode();
         const sharingInfo = await sdk.getSharingInfo(node);
-        console.log(sharingInfo);
+
+        if (json) {
+            console.log(JSON.stringify(sharingInfo));
+        } else {
+            console.log(sharingInfo);
+        }
     }
 }
