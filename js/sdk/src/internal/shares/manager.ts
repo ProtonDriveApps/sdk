@@ -92,11 +92,12 @@ export class SharesManager {
      * @throws If the volume cannot be created (e.g., one already exists).
      */
     private async createVolume(): Promise<VolumeShareNodeIDs> {
-        const { addressId, primaryKey } = await this.account.getOwnPrimaryAddress();
+        const address = await this.account.getOwnPrimaryAddress();
+        const primaryKey = address.keys[address.primaryKeyIndex];
         const bootstrap = await this.cryptoService.generateVolumeBootstrap(primaryKey.key);
         const myFilesIds = await this.apiService.createVolume(
             {
-                addressId,
+                addressId: address.addressId,
                 addressKeyId: primaryKey.id,
                 ...bootstrap.shareKey.encrypted,
             },
@@ -138,7 +139,7 @@ export class SharesManager {
             return {
                 email: address.email,
                 addressId,
-                addressKey: address.primaryKey.key,
+                addressKey: address.keys[address.primaryKeyIndex].key,
             };
         } catch {}
 
@@ -159,7 +160,7 @@ export class SharesManager {
         return {
             email: address.email,
             addressId: share.addressId,
-            addressKey: address.primaryKey.key,
+            addressKey: address.keys[address.primaryKeyIndex].key,
         };
     }
 
