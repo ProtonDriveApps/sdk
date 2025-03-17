@@ -10,10 +10,7 @@ export interface ProtonDriveAccount {
 export interface ProtonDriveAccountAddress {
     email: string,
     addressId: string,
-    primaryKey: {
-        id: string,
-        key: PrivateKey,
-    },
+    primaryKeyIndex: number,
     keys: {
         id: string,
         key: PrivateKey,

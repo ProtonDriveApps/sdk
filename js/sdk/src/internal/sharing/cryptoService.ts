@@ -138,7 +138,8 @@ export class SharingCryptoService {
      * Decrypts and verifies an invitation and node's name.
      */
     async decryptInvitationWithNode(encryptedInvitation: EncryptedInvitationWithNode): Promise<ProtonInvitationWithNode> {
-        const { primaryKey: { key: inviteeKey } } = await this.account.getOwnAddress(encryptedInvitation.inviteeEmail);
+        const inviteeAddress = await this.account.getOwnAddress(encryptedInvitation.inviteeEmail);
+        const inviteeKey = inviteeAddress.keys[inviteeAddress.primaryKeyIndex].key;
 
         const shareKey = await this.driveCrypto.decryptUnsignedKey(
             encryptedInvitation.share.armoredKey,
@@ -191,7 +192,8 @@ export class SharingCryptoService {
     async acceptInvitation(encryptedInvitation: EncryptedInvitationWithNode): Promise<{
         base64SessionKeySignature: string,
     }> {
-        const { primaryKey: { key: inviteeKey } } = await this.account.getOwnAddress(encryptedInvitation.inviteeEmail);
+        const inviteeAddress = await this.account.getOwnAddress(encryptedInvitation.inviteeEmail);
+        const inviteeKey = inviteeAddress.keys[inviteeAddress.primaryKeyIndex].key;
         const result = await this.driveCrypto.acceptInvitation(
             encryptedInvitation.base64KeyPacket,
             inviteeKey,
