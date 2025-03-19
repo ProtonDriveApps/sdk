@@ -171,7 +171,7 @@ export class NodesAccess {
                 this.logger.warn(`Node name validation failed: ${error instanceof Error ? error.message : error}`);
                 unparsedNode.name = resultError({
                     name: unparsedNode.name.value,
-                    error: error instanceof Error ? error.message : 'Unknown error',
+                    error: error instanceof Error ? error.message : c('Error').t`Unknown error`,
                 });
             }
         }
