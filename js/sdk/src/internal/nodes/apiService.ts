@@ -379,7 +379,7 @@ function* handleResponseErrors(nodeUids: string[], volumeId: string, responses: 
     responses.forEach((response) => {
         if (!response.Response.Code || !isCodeOk(response.Response.Code) || response.Response.Error) {
             const nodeUid = makeNodeUid(volumeId, response.LinkID);
-            errors.set(nodeUid, response.Response.Error || `Unknown error ${response.Response.Code}`);
+            errors.set(nodeUid, response.Response.Error || c('Error').t`Unknown error ${response.Response.Code}`);
         }
     });
 
