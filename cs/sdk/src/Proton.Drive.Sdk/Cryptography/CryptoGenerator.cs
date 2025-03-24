@@ -8,9 +8,9 @@ internal static class CryptoGenerator
 {
     private const int PassphraseMaxUtf8Length = ((PassphraseRandomBytesLength + 2) / 3) * 4;
     private const int PassphraseRandomBytesLength = 32;
+    private const int FolderHashKeyLength = 32;
 
     public static int PassphraseBufferRequiredLength => PassphraseMaxUtf8Length;
-    public static int FolderHashKeyLength => 32;
 
     public static ReadOnlySpan<byte> GeneratePassphrase(Span<byte> buffer)
     {
@@ -25,8 +25,15 @@ internal static class CryptoGenerator
         return PgpPrivateKey.Generate("Drive key", "no-reply@proton.me", KeyGenerationAlgorithm.Default);
     }
 
-    public static void GenerateFolderHashKey(Span<byte> hashKeyBuffer)
+    public static byte[] GenerateFolderHashKey()
     {
+        var hashKeyBuffer = new byte[FolderHashKeyLength];
         RandomNumberGenerator.Fill(hashKeyBuffer);
+        return hashKeyBuffer;
+    }
+
+    public static PgpSessionKey GenerateSessionKey()
+    {
+        return PgpSessionKey.Generate();
     }
 }

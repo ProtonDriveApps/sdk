@@ -12,7 +12,7 @@ internal sealed class AccountEntityCache(ICacheRepository repository) : IAccount
 
     public ValueTask SetAddressAsync(Address address, CancellationToken cancellationToken)
     {
-        var value = JsonSerializer.Serialize(address, AccountEntitySerializerContext.Default.Address);
+        var value = JsonSerializer.Serialize(address, AccountEntitiesSerializerContext.Default.Address);
 
         return _repository.SetAsync(GetAddressCacheKey(address.Id), value, cancellationToken);
     }
@@ -21,7 +21,7 @@ internal sealed class AccountEntityCache(ICacheRepository repository) : IAccount
     {
         var value = await _repository.TryGetAsync(GetAddressCacheKey(addressId), cancellationToken).ConfigureAwait(false);
 
-        return value is not null ? JsonSerializer.Deserialize(value, AccountEntitySerializerContext.Default.Address) : null;
+        return value is not null ? JsonSerializer.Deserialize(value, AccountEntitiesSerializerContext.Default.Address) : null;
     }
 
     public async ValueTask SetCurrentUserAddressesAsync(IEnumerable<Address> addresses, CancellationToken cancellationToken)
@@ -30,7 +30,7 @@ internal sealed class AccountEntityCache(ICacheRepository repository) : IAccount
             addresses,
             address => GetAddressCacheKey(address.Id),
             CurrentUserAddressTags,
-            AccountEntitySerializerContext.Default.Address,
+            AccountEntitiesSerializerContext.Default.Address,
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -38,7 +38,7 @@ internal sealed class AccountEntityCache(ICacheRepository repository) : IAccount
     {
         return await _repository.TryGetCompleteCollection(
             CurrentUserAddressTags,
-            AccountEntitySerializerContext.Default.Address,
+            AccountEntitiesSerializerContext.Default.Address,
             cancellationToken).ConfigureAwait(false);
     }
 

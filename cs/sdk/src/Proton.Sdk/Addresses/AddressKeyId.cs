@@ -1,11 +1,25 @@
-﻿using Proton.Sdk.Serialization;
+﻿using System.Text.Json.Serialization;
+using Proton.Sdk.Serialization;
 
 namespace Proton.Sdk.Addresses;
 
-public readonly record struct AddressKeyId(string Value) : IStrongId<AddressKeyId>
+[JsonConverter(typeof(StrongIdJsonConverter<AddressKeyId>))]
+public readonly record struct AddressKeyId : IStrongId<AddressKeyId>
 {
-    public static implicit operator AddressKeyId(string value)
+    private readonly string? _value;
+
+    internal AddressKeyId(string? value)
+    {
+        _value = value;
+    }
+
+    public static explicit operator AddressKeyId(string? value)
     {
         return new AddressKeyId(value);
+    }
+
+    public override string ToString()
+    {
+        return _value ?? string.Empty;
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Proton.Sdk.Api;
-using Proton.Sdk.Authentication.Api;
+using Proton.Sdk.Api.Authentication;
 
 namespace Proton.Sdk.Authentication;
 

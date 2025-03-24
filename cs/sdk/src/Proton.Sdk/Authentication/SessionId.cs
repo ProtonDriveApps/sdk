@@ -1,11 +1,25 @@
-﻿using Proton.Sdk.Serialization;
+﻿using System.Text.Json.Serialization;
+using Proton.Sdk.Serialization;
 
 namespace Proton.Sdk.Authentication;
 
-public readonly record struct SessionId(string Value) : IStrongId<SessionId>
+[JsonConverter(typeof(StrongIdJsonConverter<SessionId>))]
+public readonly record struct SessionId : IStrongId<SessionId>
 {
-    public static implicit operator SessionId(string value)
+    private readonly string? _value;
+
+    internal SessionId(string? value)
+    {
+        _value = value;
+    }
+
+    public static explicit operator SessionId(string? value)
     {
         return new SessionId(value);
+    }
+
+    public override string ToString()
+    {
+        return _value ?? string.Empty;
     }
 }

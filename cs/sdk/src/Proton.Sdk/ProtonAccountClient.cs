@@ -31,17 +31,32 @@ public sealed class ProtonAccountClient
 
     public ValueTask<Address> GetAddressAsync(AddressId addressId, CancellationToken cancellationToken)
     {
-        return AddressOperations.GetAsync(this, addressId, cancellationToken);
+        return AddressOperations.GetAddressAsync(this, addressId, cancellationToken);
     }
 
-    public ValueTask<IReadOnlyList<Address>> GetAddressesAsync(CancellationToken cancellationToken)
+    public ValueTask<IReadOnlyList<Address>> GetCurrentUserAddressesAsync(CancellationToken cancellationToken)
     {
-        return AddressOperations.GetAddressesAsync(this, cancellationToken);
+        return AddressOperations.GetCurrentUserAddressesAsync(this, cancellationToken);
     }
 
-    public ValueTask<Address> GetDefaultAddressAsync(CancellationToken cancellationToken)
+    public ValueTask<Address> GetCurrentUserDefaultAddressAsync(CancellationToken cancellationToken)
     {
-        return AddressOperations.GetDefaultAsync(this, cancellationToken);
+        return AddressOperations.GetCurrentUserDefaultAddressAsync(this, cancellationToken);
+    }
+
+    internal ValueTask<IReadOnlyList<PgpPrivateKey>> GetAddressKeysAsync(AddressId addressId, CancellationToken cancellationToken)
+    {
+        return AddressOperations.GetAddressKeysAsync(this, addressId, cancellationToken);
+    }
+
+    internal ValueTask<PgpPrivateKey> GetAddressPrimaryKeyAsync(AddressId addressId, CancellationToken cancellationToken)
+    {
+        return AddressOperations.GetAddressPrimaryKeyAsync(this, addressId, cancellationToken);
+    }
+
+    internal ValueTask<IReadOnlyList<PgpPublicKey>> GetAddressPublicKeysAsync(string emailAddress, CancellationToken cancellationToken)
+    {
+        return AddressOperations.GetPublicKeysAsync(this, emailAddress, cancellationToken);
     }
 
     internal async ValueTask<IReadOnlyList<PgpPrivateKey>> GetUserKeysAsync(CancellationToken cancellationToken)
@@ -61,7 +76,7 @@ public sealed class ProtonAccountClient
                     continue;
                 }
 
-                var passphrase = await Cache.SessionSecrets.TryGetAccountKeyPassphraseAsync(userKey.Id.Value, cancellationToken).ConfigureAwait(false);
+                var passphrase = await Cache.SessionSecrets.TryGetAccountKeyPassphraseAsync(userKey.Id.ToString(), cancellationToken).ConfigureAwait(false);
 
                 if (passphrase is null)
                 {
@@ -85,20 +100,5 @@ public sealed class ProtonAccountClient
         }
 
         return userKeys;
-    }
-
-    internal ValueTask<IReadOnlyList<PgpPrivateKey>> GetAddressKeysAsync(AddressId addressId, CancellationToken cancellationToken)
-    {
-        return AddressOperations.GetKeysAsync(this, addressId, cancellationToken);
-    }
-
-    internal ValueTask<PgpPrivateKey> GetAddressPrimaryKeyAsync(AddressId addressId, CancellationToken cancellationToken)
-    {
-        return AddressOperations.GetPrimaryKeyAsync(this, addressId, cancellationToken);
-    }
-
-    internal ValueTask<IReadOnlyList<PgpPublicKey>> GetAddressPublicKeysAsync(string emailAddress, CancellationToken cancellationToken)
-    {
-        return AddressOperations.GetPublicKeysAsync(this, emailAddress, cancellationToken);
     }
 }

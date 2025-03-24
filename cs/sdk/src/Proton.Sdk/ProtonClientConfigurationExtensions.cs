@@ -58,14 +58,14 @@ internal static class ProtonClientConfigurationExtensions
                         if (attemptTimeout is not null)
                         {
                             options.AttemptTimeout.Timeout = attemptTimeout.Value;
-                            options.CircuitBreaker.SamplingDuration = options.AttemptTimeout.Timeout * 3;
+                            options.CircuitBreaker.SamplingDuration = options.AttemptTimeout.Timeout * 2;
                         }
 
                         options.Retry.ShouldRetryAfterHeader = true;
-                        options.Retry.Delay = TimeSpan.FromSeconds(2.5);
+                        options.Retry.Delay = TimeSpan.FromSeconds(2);
                         options.Retry.BackoffType = DelayBackoffType.Exponential;
                         options.Retry.UseJitter = true;
-                        options.Retry.MaxRetryAttempts = 4;
+                        options.Retry.MaxRetryAttempts = 1;
 
                         var totalTimeout = (options.AttemptTimeout.Timeout + options.Retry.Delay) * options.Retry.MaxRetryAttempts * 1.5;
                         options.TotalRequestTimeout = new HttpTimeoutStrategyOptions { Timeout = totalTimeout };

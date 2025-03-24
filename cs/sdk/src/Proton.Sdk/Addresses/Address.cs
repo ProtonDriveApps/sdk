@@ -8,6 +8,4 @@ public sealed class Address(AddressId id, int order, string emailAddress, Addres
     public AddressStatus Status { get; } = status;
     public IReadOnlyList<AddressKey> Keys { get; } = keys;
     public int PrimaryKeyIndex { get; } = primaryKeyIndex;
-
-    public AddressKey PrimaryKey => Keys[PrimaryKeyIndex];
 }

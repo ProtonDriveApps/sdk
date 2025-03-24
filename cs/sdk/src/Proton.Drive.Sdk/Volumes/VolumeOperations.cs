@@ -1,68 +1,94 @@
 ﻿using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Api.Volumes;
 using Proton.Drive.Sdk.Cryptography;
-using Proton.Drive.Sdk.Volumes.Api;
+using Proton.Drive.Sdk.Nodes;
 using Proton.Sdk.Addresses;
+using Proton.Sdk.Drive;
 
 namespace Proton.Drive.Sdk.Volumes;
 
 internal static class VolumeOperations
 {
-    internal static async ValueTask<Volume> CreateAsync(ProtonDriveClient client, CancellationToken cancellationToken)
+    private const string RootFolderName = "root";
+
+    internal static async ValueTask<(Volume Volume, FolderNode RootFolder)> CreateVolumeAsync(ProtonDriveClient client, CancellationToken cancellationToken)
     {
         var defaultAddress = await client.Account.GetDefaultAddressAsync(cancellationToken).ConfigureAwait(false);
 
         using var addressKey = await client.Account.GetAddressPrimaryKeyAsync(defaultAddress.Id, cancellationToken).ConfigureAwait(false);
 
-        Span<byte> folderHashKey = stackalloc byte[CryptoGenerator.FolderHashKeyLength];
-        CryptoGenerator.GenerateFolderHashKey(folderHashKey);
-
-        var parameters = GetCreationParameters(defaultAddress.Id, addressKey, folderHashKey, out var rootShareKey, out var rootFolderKey);
+        var parameters = GetCreationParameters(defaultAddress.Id, addressKey, out var rootShareKey, out var rootFolderSecrets);
 
         var response = await client.Api.Volumes.CreateVolumeAsync(parameters, cancellationToken).ConfigureAwait(false);
 
         var volume = new Volume(response.Volume);
 
-        await client.Cache.Entities.SetMainVolumeIdAsync(volume.Id, cancellationToken).ConfigureAwait(false);
-        await client.Cache.Secrets.SetShareKeyAsync(volume.RootShareId, rootShareKey, cancellationToken).ConfigureAwait(false);
-        await client.Cache.Secrets.SetNodeKeyAsync(new NodeUid(volume.Id, volume.RootFolderId), rootFolderKey, cancellationToken).ConfigureAwait(false);
+        var rootFolder = new FolderNode
+        {
+            Id = volume.RootFolderId,
+            Name = RootFolderName,
+            NameAuthor = new Author(defaultAddress.EmailAddress),
+            State = NodeState.Active,
+            KeyAuthor = new Author(defaultAddress.EmailAddress),
+        };
 
-        return volume;
+        await client.Cache.Entities.SetMainVolumeIdAsync(volume.Id, cancellationToken).ConfigureAwait(false);
+
+        await client.Cache.Secrets.SetShareKeyAsync(volume.RootShareId, rootShareKey, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Secrets.SetFolderSecretsAsync(volume.RootFolderId, rootFolderSecrets, cancellationToken).ConfigureAwait(false);
+
+        return (volume, rootFolder);
     }
 
     private static VolumeCreationParameters GetCreationParameters(
         AddressId addressId,
         PgpPrivateKey addressKey,
-        ReadOnlySpan<byte> folderHashKey,
         out PgpPrivateKey rootShareKey,
-        out PgpPrivateKey rootFolderKey)
+        out FolderSecrets rootFolderSecrets)
     {
-        const string folderName = "root";
-
         rootShareKey = CryptoGenerator.GeneratePrivateKey();
-        Span<byte> shareKeyPassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
-        var shareKeyPassphrase = CryptoGenerator.GeneratePassphrase(shareKeyPassphraseBuffer);
-        using var lockedShareKey = rootShareKey.Lock(shareKeyPassphrase);
 
-        var encryptedShareKeyPassphrase = rootShareKey.EncryptAndSign(shareKeyPassphrase, addressKey, out var shareKeyPassphraseSignature);
+        rootFolderSecrets = new FolderSecrets
+        {
+            Key = CryptoGenerator.GeneratePrivateKey(),
+            PassphraseSessionKey = CryptoGenerator.GenerateSessionKey(),
+            NameSessionKey = CryptoGenerator.GenerateSessionKey(),
+            HashKey = CryptoGenerator.GenerateFolderHashKey(),
+        };
 
-        rootFolderKey = CryptoGenerator.GeneratePrivateKey();
-        Span<byte> folderKeyPassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
-        var folderKeyPassphrase = CryptoGenerator.GeneratePassphrase(folderKeyPassphraseBuffer);
-        using var lockedFolderKey = rootFolderKey.Lock(folderKeyPassphrase);
+        Span<byte> sharePassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
+        var sharePassphrase = CryptoGenerator.GeneratePassphrase(sharePassphraseBuffer);
+        using var lockedShareKey = rootShareKey.Lock(sharePassphrase);
 
-        var encryptedFolderKeyPassphrase = rootFolderKey.EncryptAndSign(folderKeyPassphrase, addressKey, out var folderKeyPassphraseSignature);
+        var encryptedSharePassphrase = addressKey.EncryptAndSign(sharePassphrase, addressKey, out var sharePassphraseSignature);
+
+        Span<byte> folderPassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
+        var folderPassphrase = CryptoGenerator.GeneratePassphrase(folderPassphraseBuffer);
+        using var lockedFolderKey = rootFolderSecrets.Key.Lock(folderPassphrase);
+
+        var folderPassphraseEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderSecrets.PassphraseSessionKey);
+        var encryptedFolderPassphrase = PgpEncrypter.EncryptAndSign(
+            folderPassphrase,
+            folderPassphraseEncryptionSecrets,
+            addressKey,
+            out var folderPassphraseSignature);
+
+        var nameEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderSecrets.NameSessionKey.Value);
+        var encryptedName = PgpEncrypter.EncryptAndSignText(RootFolderName, nameEncryptionSecrets, addressKey);
+
+        var encryptedHashKey = rootFolderSecrets.Key.EncryptAndSign(rootFolderSecrets.HashKey.Span, addressKey);
 
         return new VolumeCreationParameters
         {
-            AddressId = addressId.Value,
+            AddressId = addressId,
             ShareKey = lockedShareKey.ToBytes(),
-            ShareKeyPassphrase = encryptedShareKeyPassphrase,
-            ShareKeyPassphraseSignature = shareKeyPassphraseSignature,
-            FolderName = rootShareKey.EncryptAndSignText(folderName, addressKey),
+            SharePassphrase = encryptedSharePassphrase,
+            SharePassphraseSignature = sharePassphraseSignature,
+            FolderName = encryptedName,
             FolderKey = lockedFolderKey.ToBytes(),
-            FolderKeyPassphrase = encryptedFolderKeyPassphrase,
-            FolderKeyPassphraseSignature = folderKeyPassphraseSignature,
-            FolderHashKey = rootFolderKey.EncryptAndSign(folderHashKey, addressKey),
+            FolderPassphrase = encryptedFolderPassphrase,
+            FolderPassphraseSignature = folderPassphraseSignature,
+            FolderHashKey = encryptedHashKey,
         };
     }
 }
