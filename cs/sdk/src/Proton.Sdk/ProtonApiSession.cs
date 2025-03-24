@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Srp;
 using Proton.Sdk.Api;
+using Proton.Sdk.Api.Authentication;
+using Proton.Sdk.Api.Keys;
 using Proton.Sdk.Authentication;
-using Proton.Sdk.Authentication.Api;
 using Proton.Sdk.Caching;
-using Proton.Sdk.Keys.Api;
 using Proton.Sdk.Users;
 
 namespace Proton.Sdk;

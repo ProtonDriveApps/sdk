@@ -1,7 +1,7 @@
-﻿using Proton.Sdk.Addresses.Api;
-using Proton.Sdk.Authentication.Api;
-using Proton.Sdk.Keys.Api;
-using Proton.Sdk.Users.Api;
+﻿using Proton.Sdk.Api.Addresses;
+using Proton.Sdk.Api.Authentication;
+using Proton.Sdk.Api.Keys;
+using Proton.Sdk.Api.Users;
 
 namespace Proton.Sdk.Api;
 

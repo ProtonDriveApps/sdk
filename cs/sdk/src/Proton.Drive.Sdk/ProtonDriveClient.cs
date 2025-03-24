@@ -1,5 +1,6 @@
 using Proton.Drive.Sdk.Api;
 using Proton.Drive.Sdk.Caching;
+using Proton.Drive.Sdk.Nodes;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk;
@@ -32,4 +33,9 @@ public sealed class ProtonDriveClient
     internal IDriveApiClients Api { get; }
 
     internal IDriveClientCache Cache { get; }
+
+    public ValueTask<FolderNode> GetMyFilesFolderAsync(CancellationToken cancellationToken)
+    {
+        return NodeOperations.GetMyFilesFolderAsync(this, cancellationToken);
+    }
 }

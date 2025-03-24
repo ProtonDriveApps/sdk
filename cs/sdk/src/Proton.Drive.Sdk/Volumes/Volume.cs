@@ -1,11 +1,13 @@
-﻿using Proton.Drive.Sdk.Volumes.Api;
+﻿using Proton.Drive.Sdk.Api.Shares;
+using Proton.Drive.Sdk.Api.Volumes;
+using Proton.Drive.Sdk.Nodes;
 
 namespace Proton.Drive.Sdk.Volumes;
 
-internal sealed class Volume(VolumeId id, ShareId rootShareId, LinkId rootFolderId, VolumeState state, long? maxSpace)
+internal sealed class Volume(VolumeId id, ShareId rootShareId, NodeUid rootFolderId, VolumeState state, long? maxSpace)
 {
     internal Volume(VolumeDto dto)
-        : this(dto.Id, dto.Root.ShareId, dto.Root.LinkId, dto.State, dto.MaxSpace)
+        : this(dto.Id, dto.Root.ShareId, new NodeUid(dto.Id, dto.Root.LinkId), dto.State, dto.MaxSpace)
     {
     }
 
@@ -13,7 +15,7 @@ internal sealed class Volume(VolumeId id, ShareId rootShareId, LinkId rootFolder
 
     public ShareId RootShareId { get; } = rootShareId;
 
-    public LinkId RootFolderId { get; } = rootFolderId;
+    public NodeUid RootFolderId { get; } = rootFolderId;
 
     public VolumeState State { get; } = state;
 

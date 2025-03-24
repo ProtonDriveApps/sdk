@@ -10,11 +10,21 @@ internal sealed class AccountClientAdapter(ProtonApiSession session) : IAccountC
 
     public ValueTask<Address> GetDefaultAddressAsync(CancellationToken cancellationToken)
     {
-        return _client.GetDefaultAddressAsync(cancellationToken);
+        return _client.GetCurrentUserDefaultAddressAsync(cancellationToken);
     }
 
     public ValueTask<PgpPrivateKey> GetAddressPrimaryKeyAsync(AddressId addressId, CancellationToken cancellationToken)
     {
         return _client.GetAddressPrimaryKeyAsync(addressId, cancellationToken);
+    }
+
+    public ValueTask<IReadOnlyList<PgpPrivateKey>> GetAddressKeysAsync(AddressId addressId, CancellationToken cancellationToken)
+    {
+        return _client.GetAddressKeysAsync(addressId, cancellationToken);
+    }
+
+    public ValueTask<IReadOnlyList<PgpPublicKey>> GetAddressPublicKeysAsync(string emailAddress, CancellationToken cancellationToken)
+    {
+        return _client.GetAddressPublicKeysAsync(emailAddress, cancellationToken);
     }
 }

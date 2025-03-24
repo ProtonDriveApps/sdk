@@ -1,15 +1,28 @@
 using System.Text.Json.Serialization;
-using Proton.Drive.Sdk.Volumes.Api;
+using Proton.Drive.Sdk.Api.Links;
+using Proton.Drive.Sdk.Api.Shares;
+using Proton.Drive.Sdk.Api.Volumes;
 using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Serialization;
 
+#pragma warning disable SA1114, SA1118 // Disable style analysis warnings due to attribute spanning multiple lines
+[JsonSourceGenerationOptions(
+#if DEBUG
+    WriteIndented = true,
+#endif
+    Converters =
+    [
+        typeof(PgpArmoredMessageJsonConverter),
+        typeof(PgpArmoredSignatureJsonConverter),
+        typeof(PgpArmoredPrivateKeyJsonConverter),
+        typeof(PgpArmoredPublicKeyJsonConverter),
+    ])]
+#pragma warning restore SA1114, SA1118
 [JsonSerializable(typeof(VolumeCreationParameters))]
 [JsonSerializable(typeof(VolumeCreationResponse))]
-internal partial class DriveApiSerializerContext : JsonSerializerContext
-{
-    static DriveApiSerializerContext()
-    {
-        Default = new DriveApiSerializerContext(ProtonApiSerializerContext.Default.Options);
-    }
-}
+[JsonSerializable(typeof(LinkDetailsRequest))]
+[JsonSerializable(typeof(LinkDetailsResponse))]
+[JsonSerializable(typeof(ShareResponse))]
+[JsonSerializable(typeof(ShareResponseV2))]
+internal sealed partial class DriveApiSerializerContext : JsonSerializerContext;

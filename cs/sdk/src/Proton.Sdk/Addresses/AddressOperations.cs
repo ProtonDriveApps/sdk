@@ -1,16 +1,16 @@
 ﻿using CommunityToolkit.HighPerformance;
 using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
-using Proton.Sdk.Addresses.Api;
 using Proton.Sdk.Api;
+using Proton.Sdk.Api.Addresses;
+using Proton.Sdk.Api.Keys;
 using Proton.Sdk.Cryptography;
-using Proton.Sdk.Keys.Api;
 
 namespace Proton.Sdk.Addresses;
 
 internal static class AddressOperations
 {
-    public static async ValueTask<IReadOnlyList<Address>> GetAddressesAsync(ProtonAccountClient client, CancellationToken cancellationToken)
+    public static async ValueTask<IReadOnlyList<Address>> GetCurrentUserAddressesAsync(ProtonAccountClient client, CancellationToken cancellationToken)
     {
         var result = await client.Cache.Entities.TryGetCurrentUserAddressesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -44,7 +44,7 @@ internal static class AddressOperations
         return result;
     }
 
-    public static async ValueTask<Address> GetAsync(ProtonAccountClient client, AddressId addressId, CancellationToken cancellationToken)
+    public static async ValueTask<Address> GetAddressAsync(ProtonAccountClient client, AddressId addressId, CancellationToken cancellationToken)
     {
         var address = await client.Cache.Entities.TryGetAddressAsync(addressId, cancellationToken).ConfigureAwait(false);
 
@@ -62,9 +62,9 @@ internal static class AddressOperations
         return address;
     }
 
-    public static async ValueTask<Address> GetDefaultAsync(ProtonAccountClient client, CancellationToken cancellationToken)
+    public static async ValueTask<Address> GetCurrentUserDefaultAddressAsync(ProtonAccountClient client, CancellationToken cancellationToken)
     {
-        var addresses = await GetAddressesAsync(client, cancellationToken).ConfigureAwait(false);
+        var addresses = await GetCurrentUserAddressesAsync(client, cancellationToken).ConfigureAwait(false);
 
         if (addresses.Count == 0)
         {
@@ -74,23 +74,34 @@ internal static class AddressOperations
         return addresses.OrderBy(x => x.Order).First();
     }
 
-    public static async ValueTask<IReadOnlyList<PgpPrivateKey>> GetKeysAsync(
+    public static async ValueTask<IReadOnlyList<PgpPrivateKey>> GetAddressKeysAsync(
         ProtonAccountClient client,
         AddressId addressId,
         CancellationToken cancellationToken)
     {
-        var addressKeys = await client.Cache.Secrets.TryGetAddressKeysAsync(addressId, cancellationToken).ConfigureAwait(false)
-            ?? await GetAddressKeysAsync(client, addressId, cancellationToken).ConfigureAwait(false);
+        var addressKeys = await client.Cache.Secrets.TryGetAddressKeysAsync(addressId, cancellationToken).ConfigureAwait(false);
+
+        if (addressKeys is null)
+        {
+            await GetAddressAsync(client, addressId, cancellationToken).ConfigureAwait(false);
+
+            addressKeys = await client.Cache.Secrets.TryGetAddressKeysAsync(addressId, cancellationToken).ConfigureAwait(false);
+
+            if (addressKeys is null)
+            {
+                throw new ProtonApiException($"Could not get address keys for address {addressId}");
+            }
+        }
 
         return addressKeys;
     }
 
-    public static async ValueTask<PgpPrivateKey> GetPrimaryKeyAsync(ProtonAccountClient client, AddressId addressId, CancellationToken cancellationToken)
+    public static async ValueTask<PgpPrivateKey> GetAddressPrimaryKeyAsync(ProtonAccountClient client, AddressId addressId, CancellationToken cancellationToken)
     {
         // TODO: use cache
-        var address = await GetAsync(client, addressId, cancellationToken).ConfigureAwait(false);
+        var address = await GetAddressAsync(client, addressId, cancellationToken).ConfigureAwait(false);
 
-        var addressKeys = await GetKeysAsync(client, addressId, cancellationToken).ConfigureAwait(false);
+        var addressKeys = await GetAddressKeysAsync(client, addressId, cancellationToken).ConfigureAwait(false);
 
         return addressKeys[address.PrimaryKeyIndex];
     }
@@ -167,7 +178,7 @@ internal static class AddressOperations
                 else
                 {
                     var passphrase = await client.Cache.SessionSecrets.TryGetAccountKeyPassphraseAsync(
-                        keyDto.Id.Value,
+                        keyDto.Id.ToString(),
                         cancellationToken).ConfigureAwait(false);
 
                     if (passphrase is null)
@@ -228,27 +239,5 @@ internal static class AddressOperations
 
         // TODO: avoid another allocation
         return passphraseStream.ToArray();
-    }
-
-    private static async ValueTask<IReadOnlyList<PgpPrivateKey>> GetAddressKeysAsync(
-        ProtonAccountClient client,
-        AddressId addressId,
-        CancellationToken cancellationToken)
-    {
-        var addressKeys = await client.Cache.Secrets.TryGetAddressKeysAsync(addressId, cancellationToken).ConfigureAwait(false);
-
-        if (addressKeys is null)
-        {
-            await GetAsync(client, addressId, cancellationToken).ConfigureAwait(false);
-
-            addressKeys = await client.Cache.Secrets.TryGetAddressKeysAsync(addressId, cancellationToken).ConfigureAwait(false);
-
-            if (addressKeys is null)
-            {
-                throw new ProtonApiException($"Could not get address keys for address {addressId}");
-            }
-        }
-
-        return addressKeys;
     }
 }

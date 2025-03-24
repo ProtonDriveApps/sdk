@@ -1,11 +1,25 @@
-﻿using Proton.Sdk.Serialization;
+﻿using System.Text.Json.Serialization;
+using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Volumes;
 
-public readonly record struct VolumeId(string Value) : IStrongId<VolumeId>
+[JsonConverter(typeof(StrongIdJsonConverter<VolumeId>))]
+public readonly record struct VolumeId : IStrongId<VolumeId>
 {
-    public static implicit operator VolumeId(string value)
+    private readonly string? _value;
+
+    internal VolumeId(string? value)
+    {
+        _value = value;
+    }
+
+    public static explicit operator VolumeId(string? value)
     {
         return new VolumeId(value);
+    }
+
+    public override string ToString()
+    {
+        return _value ?? string.Empty;
     }
 }

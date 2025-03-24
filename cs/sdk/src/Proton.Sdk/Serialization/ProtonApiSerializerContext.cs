@@ -1,18 +1,18 @@
 ﻿using System.Text.Json.Serialization;
 using Proton.Sdk.Addresses;
-using Proton.Sdk.Addresses.Api;
 using Proton.Sdk.Api;
+using Proton.Sdk.Api.Addresses;
+using Proton.Sdk.Api.Authentication;
+using Proton.Sdk.Api.Events;
+using Proton.Sdk.Api.Keys;
+using Proton.Sdk.Api.Users;
 using Proton.Sdk.Authentication;
-using Proton.Sdk.Authentication.Api;
 using Proton.Sdk.Events;
-using Proton.Sdk.Events.Api;
-using Proton.Sdk.Keys.Api;
 using Proton.Sdk.Users;
-using Proton.Sdk.Users.Api;
 
 namespace Proton.Sdk.Serialization;
 
-#pragma warning disable SA1114, SA1118 // Disable style analysis warnings due to pre-processor directive
+#pragma warning disable SA1114, SA1118 // Disable style analysis warnings due to attribute spanning multiple lines
 [JsonSourceGenerationOptions(
 #if DEBUG
     WriteIndented = true,

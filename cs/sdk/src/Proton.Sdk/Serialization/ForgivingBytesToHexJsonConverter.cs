@@ -8,7 +8,7 @@ internal sealed class ForgivingBytesToHexJsonConverter : JsonConverter<ReadOnlyM
 {
     public override ReadOnlyMemory<byte> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        if (reader.ValueSpan.Length == 0)
+        if (reader.ValueSpan.Length == 0 || reader.TokenType == JsonTokenType.Null)
         {
             return ReadOnlyMemory<byte>.Empty;
         }
