@@ -9,18 +9,18 @@ function generateAPIFileNode(linkOverrides = {}, overrides = {}) {
         Link: {
             ...node.Link,
             Type: 2,
-            MIMEType: 'text',
             ...linkOverrides,
         },
         File: {
+            MediaType: 'text',
             ContentKeyPacket: 'contentKeyPacket',
             ContentKeyPacketSignature: 'contentKeyPacketSig',
-        },
-        ActiveRevision: {
-            RevisionID: 'revisionId',
-            CreateTime: 1234567890,
-            SignatureEmail: 'revSigEmail',
-            XAttr: '{file}',
+            ActiveRevision: {
+                RevisionID: 'revisionId',
+                CreateTime: 1234567890,
+                SignatureEmail: 'revSigEmail',
+                XAttr: '{file}',
+            },
         },
         ...overrides,
     };
@@ -32,7 +32,6 @@ function generateAPIFolderNode(linkOverrides = {}, overrides = {}) {
         Link: {
             ...node.Link,
             Type: 1,
-            MIMEType: 'Folder',
             ...linkOverrides,
         },
         Folder: {
@@ -92,7 +91,6 @@ function generateFolderNode(overrides = {}) {
     return {
         ...node,
         type: NodeType.Folder,
-        mimeType: "Folder",
         encryptedCrypto: {
             ...node.encryptedCrypto,
             folder: {
@@ -180,12 +178,12 @@ describe("nodeAPIService", () => {
         it('should get shared node', async () => {
             await testGetNodes(
                 generateAPIFolderNode({}, {
-                    SharingSummary: {
+                    Sharing: {
                         ShareID: 'shareId',
-                        ShareAccess: {
-                            Permissions: 22,
-                        },
-                    }
+                    },
+                    Membership: {
+                        Permissions: 22,
+                    },
                 }),
                 generateFolderNode({
                     isShared: true,
@@ -198,12 +196,12 @@ describe("nodeAPIService", () => {
         it('should get shared node with unknown permissions', async () => {
             await testGetNodes(
                 generateAPIFolderNode({}, {
-                    SharingSummary: {
+                    Sharing: {
                         ShareID: 'shareId',
-                        ShareAccess: {
-                            Permissions: 42,
-                        },
-                    }
+                    },
+                    Membership: {
+                        Permissions: 42,
+                    },
                 }),
                 generateFolderNode({
                     isShared: true,
