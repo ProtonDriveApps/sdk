@@ -95,8 +95,9 @@ describe('nodesModules integration tests', () => {
                         NameHash: 'hash',
                         Type: 2,
                     },
-                    File: {},
-                    ActiveRevision: {},
+                    File: {
+                        ActiveRevision: {},
+                    },
                 }],
             };
         });

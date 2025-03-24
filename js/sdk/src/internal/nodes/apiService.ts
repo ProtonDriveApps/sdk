@@ -79,14 +79,13 @@ export class NodeAPIService {
                 uid: makeNodeUid(volumeId, link.Link.LinkID),
                 parentUid: link.Link.ParentLinkID ? makeNodeUid(volumeId, link.Link.ParentLinkID) : undefined,
                 type: nodeTypeNumberToNodeType(this.logger, link.Link.Type),
-                mimeType: link.Link.MIMEType || undefined,
                 createdDate: new Date(link.Link.CreateTime*1000),
                 trashedDate: link.Link.TrashTime ? new Date(link.Link.TrashTime*1000) : undefined,
 
                 // Sharing node metadata
-                shareId: link.SharingSummary?.ShareID || undefined,
-                isShared: !!link.SharingSummary,
-                directMemberRole: permissionsToDirectMemberRole(this.logger, link.SharingSummary?.ShareAccess.Permissions),
+                shareId: link.Sharing?.ShareID || undefined,
+                isShared: !!link.Sharing,
+                directMemberRole: permissionsToDirectMemberRole(this.logger, link.Membership?.Permissions),
             }
             const baseCryptoNodeMetadata = {
                 signatureEmail: link.Link.SignatureEmail || undefined,
@@ -96,9 +95,10 @@ export class NodeAPIService {
                 armoredNodePassphraseSignature: link.Link.NodePassphraseSignature,
             }
 
-            if (link.Link.Type === 2 && link.File && link.ActiveRevision) {
+            if (link.Link.Type === 2 && link.File && link.File.ActiveRevision) {
                 return {
                     ...baseNodeMetadata,
+                    mimeType: link.File.MediaType || undefined,
                     encryptedCrypto: {
                         ...baseCryptoNodeMetadata,
                         file: {
@@ -106,11 +106,11 @@ export class NodeAPIService {
                             armoredContentKeyPacketSignature: link.File.ContentKeyPacketSignature || undefined,
                         },
                         activeRevision: {
-                            uid: makeNodeRevisionUid(volumeId, link.Link.LinkID, link.ActiveRevision.RevisionID),
+                            uid: makeNodeRevisionUid(volumeId, link.Link.LinkID, link.File.ActiveRevision.RevisionID),
                             state: RevisionState.Active,
-                            createdDate: new Date(link.ActiveRevision.CreateTime*1000),
-                            signatureEmail: link.ActiveRevision.SignatureEmail || undefined,
-                            armoredExtendedAttributes: link.ActiveRevision.XAttr || undefined,
+                            createdDate: new Date(link.File.ActiveRevision.CreateTime*1000),
+                            signatureEmail: link.File.ActiveRevision.SignatureEmail || undefined,
+                            armoredExtendedAttributes: link.File.ActiveRevision.XAttr || undefined,
                         },
                     },
                 }

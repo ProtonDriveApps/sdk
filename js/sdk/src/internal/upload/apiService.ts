@@ -156,12 +156,12 @@ export class UploadAPIService {
         const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(draftNodeRevisionUid);
         const result = await this.apiService.post<
             // FIXME: Deprected fields but not properly marked in the types.
-            Omit<PostRequestBlockUploadRequest, 'Thumbnail' | 'ThumbnailHash' | 'ThumbnailSize'>,
+            Omit<PostRequestBlockUploadRequest, 'ShareID' | 'Thumbnail' | 'ThumbnailHash' | 'ThumbnailSize'>,
             PostRequestBlockUploadResponse
         >('drive/blocks', {
             AddressID: addressId,
+            VolumeID: volumeId,
             LinkID: nodeId,
-            ShareID: volumeId, // TODO!!!
             RevisionID: revisionId,
             BlockList: blocks.content.map((block) => ({
                 Index: block.index,

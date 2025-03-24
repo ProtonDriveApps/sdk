@@ -28,7 +28,7 @@ export class SharesAPIService {
         return {
             volumeId: response.Volume.VolumeID,
             shareId: response.Share.ShareID,
-            rootNodeId: response.Link.LinkID,
+            rootNodeId: response.Link.Link.LinkID,
             creatorEmail: response.Share.CreatorEmail,
             encryptedCrypto: {
                 armoredKey: response.Share.Key,
