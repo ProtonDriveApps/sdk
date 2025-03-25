@@ -19,4 +19,4 @@ cache*.sqlite
 tests/storage
 
 # Test reporter
-tests/test-report.xml
+tests/test-results
