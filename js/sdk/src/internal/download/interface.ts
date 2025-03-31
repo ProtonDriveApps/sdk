@@ -1,7 +1,22 @@
-import { PrivateKey, SessionKey } from "../../crypto";
+import { PrivateKey, PublicKey, SessionKey } from "../../crypto";
 import { NodeEntity } from "../../interface";
+
+export type BlockMetadata = {
+    index: number,
+    bareUrl: string,
+    token: string,
+    base64sha256Hash: string,
+    signatureEmail?: string,
+    armoredSignature?: string,
+};
+
+export type RevisionKeys = {
+    key: PrivateKey,
+    contentKeyPacketSessionKey: SessionKey,
+    verificationKeys?: PublicKey[],
+}
 
 export interface NodesService {
     getNode(nodeUid: string): Promise<NodeEntity>,
-    getNodeKeys(nodeUid: string): Promise<{ key: PrivateKey, sessionKey: SessionKey }>,
+    getNodeKeys(nodeUid: string): Promise<{ key: PrivateKey, contentKeyPacketSessionKey?: SessionKey; }>,
 }

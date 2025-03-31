@@ -43,7 +43,7 @@ export class SharingCryptoService {
             },
             decrypted: {
                 key: PrivateKey,
-                sessionKey: SessionKey,
+                passphraseSessionKey: SessionKey,
             },
         },
         base64PpassphraseKeyPacket: string,
@@ -79,7 +79,7 @@ export class SharingCryptoService {
     async decryptShare(share: EncryptedShare, nodeKey: PrivateKey): Promise<{
         author: Author,
         key: PrivateKey,
-        sessionKey: SessionKey,
+        passphraseSessionKey: SessionKey,
     }> {
         // All standard shares should be encrypted with node key.
         // Using node key is essential so any admin can manage the share.
@@ -93,7 +93,7 @@ export class SharingCryptoService {
         }
         const addressPublicKeys = await this.account.getPublicKeys(share.creatorEmail);
 
-        const { key, sessionKey, verified } = await this.driveCrypto.decryptKey(
+        const { key, passphraseSessionKey, verified } = await this.driveCrypto.decryptKey(
             share.encryptedCrypto.armoredKey,
             share.encryptedCrypto.armoredPassphrase,
             share.encryptedCrypto.armoredPassphraseSignature,
@@ -111,7 +111,7 @@ export class SharingCryptoService {
         return {
             author,
             key,
-            sessionKey,
+            passphraseSessionKey,
         }
     }
 

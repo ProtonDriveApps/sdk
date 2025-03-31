@@ -2,6 +2,8 @@ import { ParseArgsConfig } from "util";
 import { CommandAuthLogin } from './commandAuthLogin';
 import { CommandAuthLogout } from './commandAuthLogout';
 import { CommandFileSystemCreateFolder } from './commandFileSystemCreateFolder';
+import { CommandFileSystemDelete } from "./commandFileSystemDelete";
+import { CommandFileSystemDownload } from './commandFileSystemDownload';
 import { CommandFileSystemInfo } from './commandFileSystemInfo';
 import { CommandFileSystemList } from './commandFileSystemList';
 import { CommandFileSystemMove } from './commandFileSystemMove';
@@ -12,11 +14,10 @@ import { CommandInvitationList } from "./commandInvitationList";
 import { CommandRevisionDelete } from './commandRevisionDelete';
 import { CommandRevisionList } from './commandRevisionList';
 import { CommandRevisionRestore } from './commandRevisionRestore';
-import { CommandSharingStatus } from "./commandSharingStatus";
 import { CommandSharingInvite } from "./commandSharingInvite";
 import { CommandSharingRemove } from "./commandSharingRemove";
+import { CommandSharingStatus } from "./commandSharingStatus";
 import { Command } from './interface';
-import { CommandFileSystemDelete } from "./commandFileSystemDelete";
 
 const COMMANDS = [
     new CommandAuthLogin(),
@@ -29,6 +30,7 @@ const COMMANDS = [
     new CommandFileSystemTrash(),
     new CommandFileSystemDelete(),
     new CommandFileSystemRestore(),
+    new CommandFileSystemDownload(),
     new CommandRevisionList(),
     new CommandRevisionRestore(),
     new CommandRevisionDelete(),

@@ -1,4 +1,4 @@
-import { ProtonDriveClientContructorParameters, ProtonDriveClientInterface, NodeOrUid, NodeEntity, ShareNodeSettings, UnshareNodeSettings, UploadMetadata, Logger, NodeResult, Revision, ProtonInvitationWithNode, ShareResult, NonProtonInvitationOrUid, ProtonInvitationOrUid } from './interface';
+import { ProtonDriveClientContructorParameters, ProtonDriveClientInterface, NodeOrUid, NodeEntity, ShareNodeSettings, UnshareNodeSettings, UploadMetadata, Logger, NodeResult, Revision, ProtonInvitationWithNode, ShareResult, NonProtonInvitationOrUid, ProtonInvitationOrUid, FileDownloader } from './interface';
 import { DriveCrypto } from './crypto';
 import { DriveAPIService } from './internal/apiService';
 import { initSharesModule } from './internal/shares';
@@ -46,7 +46,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
         const shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
         this.nodes = initNodesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares);
         this.sharing = initSharingModule(telemetry, apiService, entitiesCache, account, cryptoModule, events, shares, this.nodes.access);
-        this.download = initDownloadModule(apiService, cryptoModule, this.nodes.access);
+        this.download = initDownloadModule(telemetry, apiService, cryptoModule, account, this.nodes.access);
         this.upload = initUploadModule(apiService, cryptoModule, this.nodes.access);
     }
 
@@ -397,7 +397,46 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
         throw new Error('Method not implemented');
     }
 
-    async getFileDownloader(nodeUid: NodeOrUid, signal?: AbortSignal) {
+    /**
+     * Get the file downloader to download the node content.
+     * 
+     * The number of ongoing downloads is limited. If the limit is reached,
+     * the download is queued and started when the slot is available. It is
+     * recommended to not start too many downloads at once to avoid having
+     * many open promises.
+     * 
+     * The file downloader is not reusable. If the download is interrupted,
+     * a new file downloader must be created.
+     * 
+     * Before download, the authorship of the node should be checked and
+     * reported to the user if there is any signature issue, notably on the
+     * content author on the revision.
+     * 
+     * Client should not automatically retry the download if it fails. The
+     * download should be initiated by the user again. The downloader does
+     * automatically retry the download if it fails due to network issues,
+     * or if the server is temporarily unavailable. 
+     * 
+     * Once download is initiated, the download can fail, besides network
+     * issues etc., only when there is integrity error. It should be considered
+     * a bug and reported to the Drive developers. The SDK provides option
+     * to bypass integrity checks, but that should be used only for debugging
+     * purposes, not available to the end users.
+     * 
+     * Example usage:
+     * 
+     * ```typescript
+     * const downloader = await client.getFileDownloader(nodeUid, signal);
+     * const claimedSize = fileDownloader.getClaimedSizeInBytes();
+     * const downloadController = fileDownloader.writeToStream(stream, (downloadedBytes) => { ... });
+     * 
+     * signalController.abort(); // to cancel
+     * downloadController.pause(); // to pause
+     * downloadController.resume(); // to resume
+     * await downloadController.completion(); // to await completion
+     * ```
+     */
+    async getFileDownloader(nodeUid: NodeOrUid, signal?: AbortSignal): Promise<FileDownloader> {
         this.logger.info(`Getting file downloader for ${getUid(nodeUid)}`);
         return this.download.getFileDownloader(getUid(nodeUid), signal);
     }

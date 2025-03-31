@@ -121,7 +121,7 @@ export interface SharesService {
  */
 export interface NodesService {
     getNode(nodeUid: string): Promise<NodeEntity & { shareId?: string }>,
-    getNodeKeys(nodeUid: string): Promise<{ key: PrivateKey, sessionKey: SessionKey }>,
+    getNodeKeys(nodeUid: string): Promise<{ key: PrivateKey }>,
     getNodePrivateAndSessionKeys(nodeUid: string): Promise<{
         key: PrivateKey,
         passphraseSessionKey: SessionKey,

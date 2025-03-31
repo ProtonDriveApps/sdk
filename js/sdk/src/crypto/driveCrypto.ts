@@ -1,5 +1,5 @@
 import { OpenPGPCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from './interface';
-import { uint8ArrayToBase64String } from './utils';
+import { uint8ArrayToBase64String, base64StringToUint8Array } from './utils';
 
 enum SIGNING_CONTEXTS {
     SHARING_INVITER = 'drive.share-member.inviter',
@@ -47,18 +47,18 @@ export class DriveCrypto {
         decrypted: {
             passphrase: string,
             key: PrivateKey,
-            sessionKey: SessionKey,
+            passphraseSessionKey: SessionKey,
         },
     }> {
         const passphrase = this.openPGPCrypto.generatePassphrase();
-        const [{ privateKey, armoredKey }, sessionKey] = await Promise.all([
+        const [{ privateKey, armoredKey }, passphraseSessionKey] = await Promise.all([
             this.openPGPCrypto.generateKey(passphrase),
             this.openPGPCrypto.generateSessionKey(encryptionKeys),
         ]);
 
         const { armoredPassphrase, armoredPassphraseSignature } = await this.encryptPassphrase(
             passphrase,
-            sessionKey,
+            passphraseSessionKey,
             encryptionKeys,
             signingKey,
         );
@@ -72,7 +72,7 @@ export class DriveCrypto {
             decrypted: {
                 passphrase,
                 key: privateKey,
-                sessionKey,
+                passphraseSessionKey,
             },
         };
     };
@@ -128,15 +128,15 @@ export class DriveCrypto {
     ): Promise<{
         passphrase: string,
         key: PrivateKey,
-        sessionKey: SessionKey,
+        passphraseSessionKey: SessionKey,
         verified: VERIFICATION_STATUS,
     }> {
-        const sessionKey = await this.decryptSessionKey(armoredPassphrase, decryptionKeys);
+        const passphraseSessionKey = await this.decryptSessionKey(armoredPassphrase, decryptionKeys);
 
         const { data: decryptedPassphrase, verified } = await this.openPGPCrypto.decryptArmoredAndVerifyDetached(
             armoredPassphrase,
             armoredPassphraseSignature,
-            sessionKey,
+            passphraseSessionKey,
             verificationKeys,
         );
 
@@ -149,7 +149,7 @@ export class DriveCrypto {
         return {
             passphrase,
             key,
-            sessionKey,
+            passphraseSessionKey,
             verified,
         };
     }
@@ -178,11 +178,40 @@ export class DriveCrypto {
         armoredData: string,
         decryptionKeys: PrivateKey[],
     ): Promise<SessionKey> {
-        const sessionKey = await this.openPGPCrypto.decryptSessionKey(
+        const sessionKey = await this.openPGPCrypto.decryptArmoredSessionKey(
             armoredData,
             decryptionKeys,
         );
         return sessionKey;
+    }
+
+    async decryptAndVerifySessionKey(
+        base64data: string,
+        armoredSignature: string | undefined,
+        decryptionKeys: PrivateKey[],
+        verificationKeys: PublicKey[],
+    ): Promise<{
+        sessionKey: SessionKey,
+        verified?: VERIFICATION_STATUS,
+    }> {
+        
+        const data = base64StringToUint8Array(base64data);
+
+        const sessionKey = await this.openPGPCrypto.decryptSessionKey(
+            data,
+            decryptionKeys,
+        );
+
+        let verified;
+        if (armoredSignature) {
+            const result = await this.openPGPCrypto.verify(sessionKey.data, armoredSignature, verificationKeys);
+            verified = result.verified;
+        }
+
+        return {
+            sessionKey,
+            verified,
+        }
     }
 
     /**
@@ -429,6 +458,51 @@ export class DriveCrypto {
         )
         return {
             base64ExternalInvitationSignature: uint8ArrayToBase64String(externalInviationSignature),
+        }
+    }
+
+    async decryptBlock(
+        encryptedBlock: Uint8Array,
+        armoredSignature: string | undefined,
+        decryptionKey: PrivateKey,
+        sessionKey: SessionKey,
+        verificationKeys?: PublicKey[],
+    ): Promise<{    
+        decryptedBlock: Uint8Array,
+        verified: VERIFICATION_STATUS,
+    }> {
+        const signature = armoredSignature ? await this.openPGPCrypto.decryptArmored(
+            armoredSignature,
+            [decryptionKey],
+        ) : undefined;
+
+        const { data: decryptedBlock, verified } = await this.openPGPCrypto.decryptAndVerifyDetached(
+            encryptedBlock,
+            signature,
+            sessionKey,
+            verificationKeys,
+        );
+
+        return {
+            decryptedBlock,
+            verified,
+        };
+    }
+
+    async verifyManifest(
+        manifest: Uint8Array,
+        armoredSignature: string,
+        verificationKeys: PublicKey[],
+    ): Promise<{
+        verified: VERIFICATION_STATUS,
+    }> {
+        const { verified } = await this.openPGPCrypto.verify(
+            manifest,
+            armoredSignature,
+            verificationKeys,
+        );
+        return {
+            verified,
         }
     }
 }

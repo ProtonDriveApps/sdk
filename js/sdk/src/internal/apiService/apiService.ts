@@ -102,98 +102,24 @@ export class DriveAPIService {
         return this.makeRequest(url, 'DELETE', undefined, signal);
     };
 
-    // TODO: add priority header
-    // u=2 for interactive (user doing action, e.g., create folder),
-    // u=4 for normal (user secondary action, e.g., refresh children listing),
-    // u=5 for background (e.g., upload, download)
-    // u=7 for optional (e.g., metrics, telemetry)
-    private async makeRequest<ResponsePayload, RequestPayload>(
+    private async makeRequest<RequestPayload, ResponsePayload>(
         url: string,
         method = 'GET',
         data?: RequestPayload,
         signal?: AbortSignal,
-        attempt = 0
     ): Promise<ResponsePayload> {
-        if (signal?.aborted) {
-            throw new AbortError(c('Error').t`Request aborted`);
-        }
+        const request = new Request(`${this.baseUrl}/${url}`, {
+            method: method || 'GET',
+            // TODO: set SDK version (or set via http client at init?)
+            headers: new Headers({
+                "Accept": "application/vnd.protonmail.v1+json",
+                "Content-Type": "application/json",
+                "Language": this.language,
+            }),
+            body: data && JSON.stringify(data),
+        });
 
-        this.logger.debug(`${method} ${url}`);
-
-        if (this.hasReachedServerErrorLimit) {
-            this.logger.warn('Server errors limit reached');
-            throw new ServerError(c('Error').t`Too many server errors, please try again later`);
-        }
-        if (this.hasReachedTooManyRequestsErrorLimit) {
-            this.logger.warn('Too many requests limit reached');
-            throw new RateLimitedError(c('Error').t`Too many server requests, please try again later`);
-        }
-
-        let response;
-        try {
-            response = await this.httpClient.fetch(new Request(`${this.baseUrl}/${url}`, {
-                method: method || 'GET',
-                // TODO: set SDK version (or set via http client at init?)
-                headers: new Headers({
-                    "Accept": "application/vnd.protonmail.v1+json",
-                    "Content-Type": "application/json",
-                    "Language": this.language,
-                }),            body: data && JSON.stringify(data),
-
-            }), signal);
-        } catch (error: unknown) {
-            if (error instanceof Error) {
-                if (error.name === 'OfflineError') {
-                    await waitSeconds(OFFLINE_RETRY_DELAY_SECONDS);
-                    return this.makeRequest(url, method, data, signal, attempt+1);
-                }
-
-                if (error.name === 'TimeoutError') {
-                    await waitSeconds(SERVER_ERROR_RETRY_DELAY_SECONDS);
-                    return this.makeRequest(url, method, data, signal, attempt+1);
-                }
-            }
-            if (attempt === 0) {
-                await waitSeconds(GENERAL_RETRY_DELAY_SECONDS);
-                return this.makeRequest(url, method, data, signal, attempt+1);
-            }
-            throw error;
-        }
-
-        if (response.ok) {
-            this.logger.info(`${method} ${url}: ${response.status}`);
-        } else {
-            this.logger.warn(`${method} ${url}: ${response.status}`);
-        }
-
-        if (response.status === HTTPErrorCode.TOO_MANY_REQUESTS) {
-            // TODO: emit event to the client
-            this.tooManyRequestsErrorHappened();
-            const timeout = parseInt(response.headers.get('retry-after') || '0', DEFAULT_429_RETRY_DELAY_SECONDS);
-            await waitSeconds(timeout);
-            return this.makeRequest(url, method, data, signal, attempt+1);
-        } else {
-            this.clearSubsequentTooManyRequestsError();
-        }
-
-        // Automatically re-try 5xx glitches on the server, but only once
-        // and report the incident so it can be followed up.
-        if (response.status >= 500) {
-            this.serverErrorHappened();
-
-            if (attempt > 0) {
-                this.logger.warn(`${method} ${url}: ${response.status} - retry failed`);
-            } else {
-                await waitSeconds(SERVER_ERROR_RETRY_DELAY_SECONDS);
-                return this.makeRequest(url, method, data, signal, attempt+1);
-            }
-        } else {
-            if (attempt > 0) {
-                this.telemetry.logEvent({ eventName: 'apiRetrySucceeded', failedAttempts: attempt, url });
-                this.logger.warn(`${method} ${url}: ${response.status} - retry helped`);
-            }
-            this.clearSubsequentServerErrors();
-        }
+        const response = await this.fetch(request, signal);
 
         try {
             const result = await response.json();
@@ -208,6 +134,124 @@ export class DriveAPIService {
             }
             throw apiErrorFactory({ response });
         }
+    }
+
+    async getBlockStream(baseUrl: string, token: string, signal?: AbortSignal): Promise<ReadableStream<Uint8Array>> {
+        const response = await this.makeStorageRequest('GET', baseUrl, token, signal);
+        if (!response.body) {
+            throw new Error(c('Error').t`File download failed due to empty response`);
+        }
+        return response.body;
+    }
+
+    private async makeStorageRequest(method: 'GET' | 'POST', url: string, token: string, signal?: AbortSignal): Promise<Response> {
+        const request = new Request(`${url}`, {
+            method,
+            credentials: 'omit',
+            headers: new Headers({
+                "pm-storage-token": token,
+            }),
+        });
+
+        const response = await this.fetch(request, signal);
+
+        if (response.status >= 400) {
+            throw apiErrorFactory({ response });
+        }
+        return response;
+    }
+
+    // TODO: add priority header
+    // u=2 for interactive (user doing action, e.g., create folder),
+    // u=4 for normal (user secondary action, e.g., refresh children listing),
+    // u=5 for background (e.g., upload, download)
+    // u=7 for optional (e.g., metrics, telemetry)
+    private async fetch(
+        request: Request,
+        signal?: AbortSignal,
+        attempt = 0
+    ): Promise<Response> {
+        if (signal?.aborted) {
+            throw new AbortError(c('Error').t`Request aborted`);
+        }
+
+        this.logger.debug(`${request.method} ${request.url}`);
+
+        if (this.hasReachedServerErrorLimit) {
+            this.logger.warn('Server errors limit reached');
+            throw new ServerError(c('Error').t`Too many server errors, please try again later`);
+        }
+        if (this.hasReachedTooManyRequestsErrorLimit) {
+            this.logger.warn('Too many requests limit reached');
+            throw new RateLimitedError(c('Error').t`Too many server requests, please try again later`);
+        }
+
+        let response;
+        try {
+            response = await this.httpClient.fetch(request, signal);
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                if (error.name === 'OfflineError') {
+                    this.logger.info(`${request.method} ${request.url}: Offline error, retrying`);
+                    await waitSeconds(OFFLINE_RETRY_DELAY_SECONDS);
+                    return this.fetch(request, signal, attempt+1);
+                }
+
+                if (error.name === 'TimeoutError') {
+                    this.logger.warn(`${request.method} ${request.url}: Timeout error, retrying`);
+                    await waitSeconds(SERVER_ERROR_RETRY_DELAY_SECONDS);
+                    return this.fetch(request, signal, attempt+1);
+                }
+            }
+            if (attempt === 0) {
+                this.logger.error(`${request.method} ${request.url}: failed, retrying once`, error);
+                await waitSeconds(GENERAL_RETRY_DELAY_SECONDS);
+                return this.fetch(request, signal, attempt+1);
+            }
+            this.logger.error(`${request.method} ${request.url}: failed`, error);
+            throw error;
+        }
+
+        if (response.ok) {
+            this.logger.info(`${request.method} ${request.url}: ${response.status}`);
+        } else {
+            this.logger.warn(`${request.method} ${request.url}: ${response.status}`);
+        }
+
+        if (response.status === HTTPErrorCode.TOO_MANY_REQUESTS) {
+            // TODO: emit event to the client
+            this.tooManyRequestsErrorHappened();
+            const timeout = parseInt(response.headers.get('retry-after') || '0', DEFAULT_429_RETRY_DELAY_SECONDS);
+            await waitSeconds(timeout);
+            return this.fetch(request, signal, attempt+1);
+        } else {
+            this.clearSubsequentTooManyRequestsError();
+        }
+
+        // Automatically re-try 5xx glitches on the server, but only once
+        // and report the incident so it can be followed up.
+        if (response.status >= 500) {
+            this.serverErrorHappened();
+
+            if (attempt > 0) {
+                this.logger.warn(`${request.method} ${request.url}: ${response.status} - retry failed`);
+            } else {
+                await waitSeconds(SERVER_ERROR_RETRY_DELAY_SECONDS);
+                return this.fetch(request, signal, attempt+1);
+            }
+        } else {
+            if (attempt > 0) {
+                this.telemetry.logEvent({
+                    eventName: 'apiRetrySucceeded',
+                    failedAttempts: attempt,
+                    url: request.url,
+                });
+                this.logger.warn(`${request.method} ${request.url}: ${response.status} - retry helped`);
+            }
+            this.clearSubsequentServerErrors();
+        }
+
+        return response;
     }
 
     private get hasReachedTooManyRequestsErrorLimit(): boolean {

@@ -17,7 +17,7 @@ describe("SharesCryptoService", () => {
             decryptKey: jest.fn(async () => Promise.resolve({
                 passphrase: "pass",
                 key: "decryptedKey" as unknown as PrivateKey,
-                sessionKey: "sessionKey" as unknown as SessionKey,
+                passphraseSessionKey: "sessionKey" as unknown as SessionKey,
                 verified: VERIFICATION_STATUS.SIGNED_AND_VALID,
             })),
         };
@@ -52,7 +52,7 @@ describe("SharesCryptoService", () => {
             },
             key: {
                 key: "decryptedKey",
-                sessionKey: "sessionKey",
+                passphraseSessionKey: "sessionKey",
             },
         });
 
@@ -65,7 +65,7 @@ describe("SharesCryptoService", () => {
         driveCrypto.decryptKey = jest.fn(async () => Promise.resolve({
             passphrase: "pass",
             key: "decryptedKey" as unknown as PrivateKey,
-            sessionKey: "sessionKey" as unknown as SessionKey,
+            passphraseSessionKey: "sessionKey" as unknown as SessionKey,
             verified: VERIFICATION_STATUS.NOT_SIGNED,
         }));
 
@@ -89,7 +89,7 @@ describe("SharesCryptoService", () => {
             },
             key: {
                 key: "decryptedKey",
-                sessionKey: "sessionKey",
+                passphraseSessionKey: "sessionKey",
             },
         });
 
