@@ -46,15 +46,15 @@ export type MetricsUploadErrorType =
 export interface MetricDownloadEvent {
     eventName: 'download',
     context: MetricContext,
-    retry: boolean,
     downloadedSize: number,
-    fileSize: number,
+    claimedFileSize?: number,
     error?: MetricsDownloadErrorType,
 };
 export type MetricsDownloadErrorType =
     'server_error' |
     'network_error' |
     'decryption_error' |
+    'integrity_error' |
     'rate_limited' |
     '4xx' |
     '5xx' |

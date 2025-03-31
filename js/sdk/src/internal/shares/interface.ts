@@ -92,5 +92,5 @@ export interface EncryptedShareCrypto {
 
 export interface DecryptedShareKey {
     key: PrivateKey;
-    sessionKey: SessionKey;
+    passphraseSessionKey: SessionKey;
 }

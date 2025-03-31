@@ -52,7 +52,7 @@ export class SharesCryptoService {
         const { keys: addressKeys } = await this.account.getOwnAddress(share.addressId);
         const addressPublicKeys = await this.account.getPublicKeys(share.creatorEmail);
 
-        let key, sessionKey, verified;
+        let key, passphraseSessionKey, verified;
         try {
             const result = await this.driveCrypto.decryptKey(
                 share.encryptedCrypto.armoredKey,
@@ -62,7 +62,7 @@ export class SharesCryptoService {
                 addressPublicKeys,
             )
             key = result.key;
-            sessionKey = result.sessionKey;
+            passphraseSessionKey = result.passphraseSessionKey;
             verified = result.verified;
         } catch (error: unknown) {
             this.reportDecryptionError(share, error);
@@ -87,7 +87,7 @@ export class SharesCryptoService {
             },
             key: {
                 key,
-                sessionKey,
+                passphraseSessionKey,
             },
         }
     }

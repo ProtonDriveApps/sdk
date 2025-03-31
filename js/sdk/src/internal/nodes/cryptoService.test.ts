@@ -21,7 +21,7 @@ describe("nodesCryptoService", () => {
             decryptKey: jest.fn(async () => Promise.resolve({
                 passphrase: "pass",
                 key: "decryptedKey" as unknown as PrivateKey,
-                sessionKey: "sessionKey" as unknown as SessionKey,
+                passphraseSessionKey: "passphraseSessionKey" as unknown as SessionKey,
                 verified: VERIFICATION_STATUS.SIGNED_AND_VALID,
             })),
             decryptNodeName: jest.fn(async () => Promise.resolve({
@@ -38,6 +38,10 @@ describe("nodesCryptoService", () => {
             })),
             encryptNodeName: jest.fn(async () => Promise.resolve({
                 armoredNodeName: "armoredName",
+            })),
+            decryptAndVerifySessionKey: jest.fn(async () => Promise.resolve({
+                sessionKey: "contentKeyPacketSessionKey",
+                verified: VERIFICATION_STATUS.SIGNED_AND_VALID,
             })),
         };
         // @ts-expect-error No need to implement all methods for mocking
@@ -80,7 +84,7 @@ describe("nodesCryptoService", () => {
             keys: {
                 passphrase: "pass",
                 key: "decryptedKey",
-                sessionKey: "sessionKey",
+                passphraseSessionKey: "passphraseSessionKey",
                 hashKey: undefined,
             },
         });
@@ -114,7 +118,7 @@ describe("nodesCryptoService", () => {
             keys: {
                 passphrase: "pass",
                 key: "decryptedKey",
-                sessionKey: "sessionKey",
+                passphraseSessionKey: "passphraseSessionKey",
                 hashKey: undefined,
             },
         });
@@ -156,7 +160,7 @@ describe("nodesCryptoService", () => {
             keys: {
                 passphrase: "pass",
                 key: "decryptedKey",
-                sessionKey: "sessionKey",
+                passphraseSessionKey: "passphraseSessionKey",
                 hashKey: new Uint8Array(),
             },
         });
@@ -167,7 +171,7 @@ describe("nodesCryptoService", () => {
         driveCrypto.decryptKey = jest.fn(async () => Promise.resolve({
             passphrase: "pass",
             key: "decryptedKey" as unknown as PrivateKey,
-            sessionKey: "sessionKey" as unknown as SessionKey,
+            passphraseSessionKey: "passphraseSessionKey" as unknown as SessionKey,
             verified: VERIFICATION_STATUS.NOT_SIGNED,
         }));
 
@@ -201,7 +205,7 @@ describe("nodesCryptoService", () => {
             keys: {
                 passphrase: "pass",
                 key: "decryptedKey",
-                sessionKey: "sessionKey",
+                passphraseSessionKey: "passphraseSessionKey",
                 hashKey: new Uint8Array(),
             },
         });
@@ -250,7 +254,7 @@ describe("nodesCryptoService", () => {
             keys: {
                 passphrase: "pass",
                 key: "decryptedKey",
-                sessionKey: "sessionKey",
+                passphraseSessionKey: "passphraseSessionKey",
                 hashKey: new Uint8Array(),
             },
         });
@@ -299,7 +303,7 @@ describe("nodesCryptoService", () => {
             keys: {
                 passphrase: "pass",
                 key: "decryptedKey",
-                sessionKey: "sessionKey",
+                passphraseSessionKey: "passphraseSessionKey",
                 hashKey: new Uint8Array(),
             },
         });
@@ -316,7 +320,7 @@ describe("nodesCryptoService", () => {
         driveCrypto.decryptKey = jest.fn(async () => Promise.resolve({
             passphrase: "pass",
             key: "decryptedKey" as unknown as PrivateKey,
-            sessionKey: "sessionKey" as unknown as SessionKey,
+            passphraseSessionKey: "passphraseSessionKey" as unknown as SessionKey,
             verified: VERIFICATION_STATUS.NOT_SIGNED,
         }));
         driveCrypto.decryptNodeHashKey = jest.fn(async () => Promise.resolve({
@@ -354,7 +358,7 @@ describe("nodesCryptoService", () => {
             keys: {
                 passphrase: "pass",
                 key: "decryptedKey",
-                sessionKey: "sessionKey",
+                passphraseSessionKey: "passphraseSessionKey",
                 hashKey: new Uint8Array(),
             },
         });
@@ -405,7 +409,7 @@ describe("nodesCryptoService", () => {
             keys: {
                 passphrase: "pass",
                 key: "decryptedKey",
-                sessionKey: "sessionKey",
+                passphraseSessionKey: "passphraseSessionKey",
                 hashKey: new Uint8Array(),
             },
         });
@@ -452,7 +456,8 @@ describe("nodesCryptoService", () => {
             keys: {
                 passphrase: "pass",
                 key: "decryptedKey",
-                sessionKey: "sessionKey",
+                passphraseSessionKey: "passphraseSessionKey",
+                contentKeyPacketSessionKey: "contentKeyPacketSessionKey",
                 hashKey: undefined,
             },
         });
@@ -504,7 +509,8 @@ describe("nodesCryptoService", () => {
             keys: {
                 passphrase: "pass",
                 key: "decryptedKey",
-                sessionKey: "sessionKey",
+                passphraseSessionKey: "passphraseSessionKey",
+                contentKeyPacketSessionKey: "contentKeyPacketSessionKey",
                 hashKey: undefined,
             },
         });
@@ -577,7 +583,7 @@ describe("nodesCryptoService", () => {
             keys: {
                 passphrase: "pass",
                 key: "decryptedKey",
-                sessionKey: "sessionKey",
+                passphraseSessionKey: "passphraseSessionKey",
                 hashKey: undefined,
             },
         });

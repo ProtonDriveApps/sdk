@@ -1,3 +1,5 @@
+import { Logger as LoggerInterface } from './interface';
+
 export interface LogRecord {
     time: Date,
     level: LogLevel;
@@ -26,7 +28,7 @@ export interface MetricRecord<T extends MetricEvent> {
     event: T;
 }
 
-type MetricEvent = {
+export type MetricEvent = {
     eventName: string;
 }
 
@@ -159,6 +161,40 @@ class Logger {
             return;
         }
         this.handlers.forEach(handler => handler.log(log));
+    }
+}
+
+/**
+ * Logger class that logs messages with a prefix.
+ * 
+ * Example:
+ * 
+ * ```typescript
+ * const logger = new Logger('myLogger', new LogFilter(), [new ConsoleLogHandler()]);
+ * const loggerWithPrefix = new LoggerWithPrefix(logger, 'prefix');
+ * loggerWithPrefix.info('Info message');
+ * ```
+ */
+export class LoggerWithPrefix {
+    constructor(private logger: LoggerInterface, private prefix: string) {
+        this.logger = logger;
+        this.prefix = prefix;
+    }
+
+    info(message: string) {
+        this.logger.info(`${this.prefix}: ${message}`);
+    }
+
+    debug(message: string) {
+        this.logger.debug(`${this.prefix}: ${message}`);
+    }
+
+    warn(message: string) {
+        this.logger.warn(`${this.prefix}: ${message}`);
+    }
+
+    error(message: string, error?: unknown) {
+        this.logger.error(`${this.prefix}: ${message}`, error);
     }
 }
 

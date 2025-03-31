@@ -29,7 +29,7 @@ export type ProtonDriveCryptoCache = ProtonDriveCache<CachedCryptoMaterial>;
 export type CachedCryptoMaterial = {
     passphrase?: string,
     key: PrivateKey,
-    sessionKey: SessionKey,
+    passphraseSessionKey: SessionKey,
     hashKey?: Uint8Array,
 };
 

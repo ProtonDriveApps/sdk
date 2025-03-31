@@ -99,9 +99,8 @@ export interface DecryptedNode extends Omit<DecryptedUnparsedNode, 'activeRevisi
 export interface DecryptedNodeKeys {
     passphrase: string;
     key: PrivateKey;
-    // Session key for the node key. Other session keys such as name session
-    // key must be decrypted ad-hoc.
-    sessionKey: SessionKey;
+    passphraseSessionKey: SessionKey;
+    contentKeyPacketSessionKey?: SessionKey;
     hashKey?: Uint8Array;
 }
 

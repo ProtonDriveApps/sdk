@@ -59,12 +59,12 @@ export class NodesCryptoService {
                 : [parentKey];
         }
 
-        let passphrase, key, sessionKey, keyAuthor;
+        let passphrase, key, passphraseSessionKey, keyAuthor;
         try {
             const keyResult = await this.decryptKey(node, parentKey, keyVerificationKeys);
             passphrase = keyResult.passphrase;
             key = keyResult.key;
-            sessionKey = keyResult.sessionKey;
+            passphraseSessionKey = keyResult.passphraseSessionKey;
             keyAuthor = keyResult.author;
         } catch (error: unknown) {
             this.reportDecryptionError(node, error);
@@ -113,6 +113,8 @@ export class NodesCryptoService {
         }
 
         let activeRevision: Result<DecryptedRevision, Error> | undefined;
+        let contentKeyPacketSessionKey;
+        let contentKeyPacketAuthor;
         if ("file" in node.encryptedCrypto) {
             try {
                 activeRevision = resultOk(await this.decryptRevision(node.encryptedCrypto.activeRevision, key, parentKey));
@@ -120,6 +122,21 @@ export class NodesCryptoService {
                 const errorMessage = c('Error').t`Failed to decrypt active revision: ${getErrorMessage(error)}`;
                 activeRevision = resultError(new Error(errorMessage));
             }
+
+            const keySessionKeyResult = await this.driveCrypto.decryptAndVerifySessionKey(
+                node.encryptedCrypto.file.base64ContentKeyPacket,
+                node.encryptedCrypto.file.armoredContentKeyPacketSignature,
+                key,
+                keyVerificationKeys
+            );
+            contentKeyPacketSessionKey = keySessionKeyResult.sessionKey;
+            contentKeyPacketAuthor = keySessionKeyResult.verified && await this.handleClaimedAuthor(
+                node,
+                'SignatureEmail',
+                c('Property').t`content key`,
+                keySessionKeyResult.verified,
+                node.encryptedCrypto.signatureEmail,
+            );
         }
 
         // If key signature verificaiton failed, prefer returning error from
@@ -129,6 +146,9 @@ export class NodesCryptoService {
         let finalKeyAuthor;
         if (!keyAuthor.ok) {
             finalKeyAuthor = keyAuthor;
+        }
+        if (!finalKeyAuthor && contentKeyPacketAuthor && !contentKeyPacketAuthor.ok) {
+            finalKeyAuthor = contentKeyPacketAuthor;
         }
         if (!finalKeyAuthor && hashKeyAuthor && !hashKeyAuthor.ok) {
             finalKeyAuthor = hashKeyAuthor;
@@ -152,7 +172,8 @@ export class NodesCryptoService {
             keys: {
                 passphrase,
                 key,
-                sessionKey,
+                passphraseSessionKey,
+                contentKeyPacketSessionKey,
                 hashKey,
             },
         };
@@ -172,7 +193,7 @@ export class NodesCryptoService {
         return {
             passphrase: key.passphrase,
             key: key.key,
-            sessionKey: key.sessionKey,
+            passphraseSessionKey: key.passphraseSessionKey,
             author: await this.handleClaimedAuthor(node, 'SignatureEmail', c('Property').t`key`, key.verified, node.encryptedCrypto.signatureEmail),
         };
     };
@@ -320,7 +341,7 @@ export class NodesCryptoService {
             keys: {
                 passphrase: nodeKeys.decrypted.passphrase,
                 key: nodeKeys.decrypted.key,
-                sessionKey: nodeKeys.decrypted.sessionKey,
+                passphraseSessionKey: nodeKeys.decrypted.passphraseSessionKey,
                 hashKey,
             },
         };
@@ -342,7 +363,7 @@ export class NodesCryptoService {
         };
     };
 
-    async moveNode(node: DecryptedNode, keys: { passphrase: string, sessionKey: SessionKey }, parentNode: DecryptedNode, parentKeys: { key: PrivateKey, hashKey: Uint8Array }): Promise<{
+    async moveNode(node: DecryptedNode, keys: { passphrase: string, passphraseSessionKey: SessionKey }, parentNode: DecryptedNode, parentKeys: { key: PrivateKey, hashKey: Uint8Array }): Promise<{
         encryptedName: string,
         hash: string,
         armoredNodePassphrase: string,
@@ -361,7 +382,7 @@ export class NodesCryptoService {
         const { email, addressKey } = await this.shareService.getVolumeEmailKey(volumeId);
         const { armoredNodeName } = await this.driveCrypto.encryptNodeName(node.name.value, parentKeys.key, addressKey);
         const hash = await this.generateLookupHash(node.name.value, parentKeys.hashKey);
-        const { armoredPassphrase, armoredPassphraseSignature } = await this.driveCrypto.encryptPassphrase(keys.passphrase, keys.sessionKey, [parentKeys.key], addressKey);
+        const { armoredPassphrase, armoredPassphraseSignature } = await this.driveCrypto.encryptPassphrase(keys.passphrase, keys.passphraseSessionKey, [parentKeys.key], addressKey);
 
         return {
             encryptedName: armoredNodeName,

@@ -1,3 +1,5 @@
+import { c } from 'ttag';
+
 /**
  * Base class for all SDK errors.
  * 
@@ -22,6 +24,10 @@ export class SDKError extends Error {
  */
 export class AbortError extends SDKError {
     name = 'AbortError';
+
+    constructor(message?: string) {
+        super(message || c('Error').t`Operation aborted`);
+    }
 }
 
 /**
@@ -107,4 +113,30 @@ export class RateLimitedError extends ServerError {
  */
 export class ConnectionError extends SDKError {
     name = 'ConnectionError';
+}
+
+/**
+ * Error thrown when the decryption fails.
+ * 
+ * Client should report this error to the user and report bug report.
+ * 
+ * In most cases, there is no decryption error. Every decryption error should
+ * be not exposed but set as empty value on the node, for example. But in the
+ * case of the file content, if block cannot be decrypted, decryption error
+ * is thrown.
+ */
+export class DecryptionError extends SDKError {
+    name = 'DecryptionError';
+}
+
+/**
+ * Error thrown when the data integrity check fails.
+ * 
+ * Client should report this error to the user and report bug report.
+ * 
+ * For example, it can happen when hashes don't match, etc. In some cases,
+ * SDK allows to run command without verification checks for debug purposes.
+ */
+export class IntegrityError extends SDKError {
+    name = 'IntegrityError';
 }

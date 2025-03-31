@@ -22,7 +22,7 @@ describe('sharesCryptoCache', () => {
 
     it('should store and retrieve keys', async () => {
         const shareId = 'newShareId';
-        const keys = { key: generatePrivateKey('privateKey'), sessionKey: generateSessionKey('sessionKey') };
+        const keys = { key: generatePrivateKey('privateKey'), passphraseSessionKey: generateSessionKey('sessionKey') };
 
         await cache.setShareKey(shareId, keys);
         const result = await cache.getShareKey(shareId);
@@ -32,8 +32,8 @@ describe('sharesCryptoCache', () => {
 
     it('should replace and retrieve new keys', async () => {
         const shareId = 'newShareId';
-        const keys1 = { key: generatePrivateKey('privateKey1'), sessionKey: generateSessionKey('sessionKey1') };
-        const keys2 = { key: generatePrivateKey('privateKey2'), sessionKey: generateSessionKey('sessionKey2') };
+        const keys1 = { key: generatePrivateKey('privateKey1'), passphraseSessionKey: generateSessionKey('sessionKey1') };
+        const keys2 = { key: generatePrivateKey('privateKey2'), passphraseSessionKey: generateSessionKey('sessionKey2') };
 
         await cache.setShareKey(shareId, keys1);
         await cache.setShareKey(shareId, keys2);
@@ -44,7 +44,7 @@ describe('sharesCryptoCache', () => {
 
     it('should remove keys', async () => {
         const shareId = 'newShareId';
-        const keys = { key: generatePrivateKey('privateKey'), sessionKey: generateSessionKey('sessionKey') };
+        const keys = { key: generatePrivateKey('privateKey'), passphraseSessionKey: generateSessionKey('sessionKey') };
 
         await cache.setShareKey(shareId, keys);
         await cache.removeShareKey([shareId]);

@@ -100,7 +100,20 @@ export interface OpenPGPCrypto {
         signature: Uint8Array,
     }>,
 
+    verify: (
+        data: Uint8Array,
+        armoredSignature: string,
+        verificationKeys: PublicKey[],
+    ) => Promise<{
+        verified: VERIFICATION_STATUS,
+    }>,
+
     decryptSessionKey: (
+        data: Uint8Array,
+        decryptionKeys: PrivateKey[],
+    ) => Promise<SessionKey>,
+
+    decryptArmoredSessionKey: (
         armoredData: string,
         decryptionKeys: PrivateKey[],
     ) => Promise<SessionKey>,
@@ -109,6 +122,30 @@ export interface OpenPGPCrypto {
         armoredKey: string,
         passphrase: string,
     ) => Promise<PrivateKey>,
+
+    decryptAndVerify(
+        data: Uint8Array,
+        sessionKey: SessionKey,
+        verificationKeys: PublicKey[],
+    ): Promise<{
+        data: Uint8Array,
+        verified: VERIFICATION_STATUS,
+    }>,
+
+    decryptAndVerifyDetached(
+        data: Uint8Array,
+        signature: Uint8Array | undefined,
+        sessionKey: SessionKey,
+        verificationKeys?: PublicKey[],
+    ): Promise<{
+        data: Uint8Array,
+        verified: VERIFICATION_STATUS,
+    }>,
+
+    decryptArmored(
+        armoredData: string,
+        decryptionKeys: PrivateKey[],
+    ): Promise<Uint8Array>,
 
     decryptArmoredAndVerify: (
         armoredData: string,

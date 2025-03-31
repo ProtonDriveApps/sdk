@@ -16,7 +16,7 @@ interface InternalShareResult extends ShareResult {
 interface Share {
     volumeId: string;
     shareId: string;
-    sessionKey: SessionKey;
+    passphraseSessionKey: SessionKey;
 }
 
 interface EmailOptions {
@@ -270,14 +270,14 @@ export class SharingManagement {
         const { volumeId } = splitNodeUid(nodeUid);
         const { key: nodeKey } = await this.nodesService.getNodeKeys(nodeUid);
         const encryptedShare = await this.sharesService.loadEncryptedShare(node.shareId);
-        const { sessionKey } = await this.cryptoService.decryptShare(encryptedShare, nodeKey);
+        const { passphraseSessionKey } = await this.cryptoService.decryptShare(encryptedShare, nodeKey);
 
         return {
             ...sharingInfo,
             share: {
                 volumeId,
                 shareId: node.shareId,
-                sessionKey: sessionKey,
+                passphraseSessionKey: passphraseSessionKey,
             },
             nodeName: node.name.ok ? node.name.value : node.name.error.name,
         }
@@ -308,7 +308,7 @@ export class SharingManagement {
         return {
             volumeId,
             shareId,
-            sessionKey: keys.shareKey.decrypted.sessionKey,
+            passphraseSessionKey: keys.shareKey.decrypted.passphraseSessionKey,
         }
     }
 
@@ -319,7 +319,7 @@ export class SharingManagement {
 
     private async inviteProtonUser(share: Share, inviteeEmail: string, role: MemberRole, emailOptions: EmailOptions): Promise<ProtonInvitation> {
         const inviter = await this.sharesService.getVolumeEmailKey(share.volumeId);
-        const invitationCrypto = await this.cryptoService.encryptInvitation(share.sessionKey, inviter.addressKey, inviteeEmail);
+        const invitationCrypto = await this.cryptoService.encryptInvitation(share.passphraseSessionKey, inviter.addressKey, inviteeEmail);
 
         const encryptedInvitation = await this.apiService.inviteProtonUser(share.shareId, {
             addedByEmail: inviter.email,
@@ -348,7 +348,7 @@ export class SharingManagement {
 
     private async inviteExternalUser(share: Share, inviteeEmail: string, role: MemberRole, emailOptions: EmailOptions): Promise<NonProtonInvitation> {
         const inviter = await this.sharesService.getVolumeEmailKey(share.volumeId);
-        const invitationCrypto = await this.cryptoService.encryptExternalInvitation(share.sessionKey, inviter.addressKey, inviteeEmail);
+        const invitationCrypto = await this.cryptoService.encryptExternalInvitation(share.passphraseSessionKey, inviter.addressKey, inviteeEmail);
 
         const encryptedInvitation = await this.apiService.inviteExternalUser(share.shareId, {
             inviterAddressId: inviter.addressId,
