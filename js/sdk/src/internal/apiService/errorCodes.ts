@@ -10,7 +10,6 @@ export function isCodeOk(code: number): boolean {
 }
 
 export const enum ErrorCode {
-    NOT_FOUND = 404,
     OK = 1000,
     OK_MANY = 1001,
     OK_ASYNC = 1002,

@@ -30,6 +30,13 @@ describe("apiErrorFactory should return", () => {
         expect((error as errors.APIHTTPError).statusCode).toBe(404);
     });
 
+    it("generic APIHTTPError when there 404 both in status code and body code", () => {
+        const error = apiErrorFactory(mockAPIResponseAndResult({ httpStatusCode: 404, httpStatusText: 'Path not found', code: 404, message: 'Not found' }));
+        expect(error).toBeInstanceOf(errors.APIHTTPError);
+        expect(error.message).toBe("Path not found");
+        expect((error as errors.APIHTTPError).statusCode).toBe(404);
+    });
+
     it("generic APICodeError when there is body even if wrong", () => {
         const result = {};
         const response = new Response('', { status: 422 });
