@@ -1,10 +1,13 @@
 import { c } from 'ttag';
 
 import { ServerError, ValidationError } from '../../errors';
-import { ErrorCode } from './errorCodes';
+import { ErrorCode, HTTPErrorCode } from './errorCodes';
 
 export function apiErrorFactory({ response, result }: { response: Response, result?: unknown }): ServerError {
-    if (!result) {
+    // Backend responses with 404 both in the response and body code.
+    // In such a case we want to stick to APIHTTPError to be very clear
+    // it is not NotFoundAPIError.
+    if (response.status === HTTPErrorCode.NOT_FOUND || !result) {
         return new APIHTTPError(response.statusText, response.status);
     }
 
@@ -12,11 +15,6 @@ export function apiErrorFactory({ response, result }: { response: Response, resu
     // error or code set which next lines should handle.
     const [code, message] = [result.Code || 0, result.Error || c('Error').t`Unknown error`];
     switch (code) {
-        // Backend doesn't return 404 for not found resources, this is only
-        // when the API endpoint is not found. Lets add the URL in the error
-        // message so we can debug it easier.
-        case ErrorCode.NOT_FOUND:
-            return new NotFoundAPIError(`${message}: ${response.url}`, code);
         case ErrorCode.NOT_EXISTS:
             return new NotFoundAPIError(message, code);
         // ValidationError should be only when it is clearly user input error,
