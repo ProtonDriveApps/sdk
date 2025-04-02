@@ -54,8 +54,7 @@ export type NonProtonInvitationOrUid = NonProtonInvitation | string;
 export type BookmarkOrUid = Bookmark | string;
 
 export type ShareNodeSettings = {
-    protonUsers?: ShareMembersSettings,
-    nonProtonUsers?: ShareMembersSettings,
+    users?: ShareMembersSettings,
     publicLink?: SharePublicLinkSettings,
     emailOptions?: {
         message?: string,
