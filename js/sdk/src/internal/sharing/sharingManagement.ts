@@ -2,7 +2,7 @@ import { c } from 'ttag';
 
 import { SessionKey } from "../../crypto";
 import { ValidationError } from "../../errors";
-import { Logger, PublicLink, MemberRole, ShareNodeSettings, UnshareNodeSettings, SharePublicLinkSettings, ShareResult, ProtonInvitation, NonProtonInvitation, Member, resultOk } from "../../interface";
+import { Logger, PublicLink, MemberRole, ShareNodeSettings, UnshareNodeSettings, SharePublicLinkSettings, ShareResult, ProtonInvitation, NonProtonInvitation, Member, resultOk, ProtonDriveAccount } from "../../interface";
 import { splitNodeUid } from "../uids";
 import { SharingAPIService } from "./apiService";
 import { SharingCryptoService } from "./cryptoService";
@@ -35,12 +35,14 @@ export class SharingManagement {
         private logger: Logger,
         private apiService: SharingAPIService,
         private cryptoService: SharingCryptoService,
+        private account: ProtonDriveAccount,
         private sharesService: SharesService,
         private nodesService: NodesService,
     ) {
         this.logger = logger;
         this.apiService = apiService;
         this.cryptoService = cryptoService;
+        this.account = account;
         this.sharesService = sharesService;
         this.nodesService = nodesService;
     }
@@ -94,6 +96,24 @@ export class SharingManagement {
     }
 
     async shareNode(nodeUid: string, settings: ShareNodeSettings): Promise<ShareResult> {
+        // Check what users are Proton users before creating share
+        // so if this fails, we don't create empty share.
+        const protonUsers = [];
+        const nonProtonUsers = [];
+        if (settings.users) {
+            for (const user of settings.users) {
+                const { email, role } = typeof user === "string"
+                    ? { email: user, role: MemberRole.Viewer }
+                    : user;
+                const isProtonUser = await this.account.hasProtonAccount(email);
+                if (isProtonUser) {
+                    protonUsers.push({ email, role });
+                } else {
+                    nonProtonUsers.push({ email, role });
+                }
+            }
+        }
+
         let currentSharing = await this.getInternalSharingInfo(nodeUid);
         if (!currentSharing) {
             const node = await this.nodesService.getNode(nodeUid);
@@ -113,10 +133,8 @@ export class SharingManagement {
             nodeName: settings.emailOptions?.includeNodeName ? currentSharing.nodeName : undefined,
         }
 
-        for (const user of settings.protonUsers || []) {
-            const { email, role } = typeof user === "string"
-                ? { email: user, role: MemberRole.Viewer }
-                : user;
+        for (const user of protonUsers) {
+            const { email, role } = user;
 
             const existingInvitation = currentSharing.protonInvitations.find((invitation) => invitation.inviteeEmail === email);
             if (existingInvitation) {
@@ -147,10 +165,8 @@ export class SharingManagement {
             currentSharing.protonInvitations.push(invitation);
         }
 
-        for (const user of settings.nonProtonUsers || []) {
-            const { email, role } = typeof user === "string"
-                ? { email: user, role: MemberRole.Viewer }
-                : user;
+        for (const user of nonProtonUsers) {
+            const { email, role } = user;
 
             const existingExternalInvitation = currentSharing.nonProtonInvitations.find((invitation) => invitation.inviteeEmail === email);
             if (existingExternalInvitation) {

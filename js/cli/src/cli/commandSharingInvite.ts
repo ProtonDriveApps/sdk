@@ -6,16 +6,9 @@ export class CommandSharingInvite implements Command {
     name = 'invite';
     args = ['path'];
     options: ParseArgsConfig['options'] = {
-        // TODO: merge internal and external users into one option
         user: {
             type: 'string',
             short: 'u',
-            multiple: true,
-            default: [],
-        },
-        email: {
-            type: 'string',
-            short: 'e',
             multiple: true,
             default: [],
         },
@@ -45,14 +38,13 @@ export class CommandSharingInvite implements Command {
         sdk,
         paths,
         args: [ pathString ],
-        options: { user: userEmails, email: externalEmails, role, message, includeNodeName, json },
+        options: { user: userEmails, role, message, includeNodeName, json },
     }: ActionArgs) {
         const path = paths.getPath(pathString);
         const node = await path.getNode();
 
         const sharingInfo = await sdk.shareNode(node, {
-            protonUsers: userEmails.map((email: string) => ({ email, role })),
-            nonProtonUsers: externalEmails.map((email: string) => ({ email, role })),
+            users: userEmails.map((email: string) => ({ email, role })),
             emailOptions: {
                 message: message || undefined,
                 includeNodeName,
