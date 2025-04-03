@@ -114,7 +114,7 @@ function generateNode() {
 
         shareId: undefined,
         isShared: false,
-        directMemberRole: MemberRole.Viewer,
+        directMemberRole: MemberRole.Inherited,
 
         encryptedCrypto: {
             armoredKey: "nodeKey",

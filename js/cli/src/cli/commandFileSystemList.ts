@@ -1,5 +1,5 @@
 import { ParseArgsConfig } from "util";
-import { NodeEntity } from "../../../sdk/src";
+import { MemberRole, NodeEntity } from "../../../sdk/src";
 import { Command, ActionArgs } from './interface';
 import { PathType } from './paths';
 import { formatAuthor, formatDate, formatSize } from './formatters';
@@ -54,13 +54,29 @@ export class CommandFileSystemList implements Command {
             return;
         }
 
-        const type = node.type === "file" ? "f" : "d";
-        const sharedFlag = node.isShared ? 's' : ' ';
+        const type = node.type === "file" ? "📄" : "🗂️";
+        const sharedFlag = node.isShared
+            ? '🔗'
+            : '  '; // Two spaces to align with the shared icon.
+        const permissionFlag = getPermissionFlag(node.directMemberRole);
         const author = formatAuthor(node.keyAuthor);
         const created = formatDate(node.createdDate, true);
         const size = node.activeRevision?.ok ? formatSize(node.activeRevision.value.claimedSize, true) : '-';
         const id = node.uid.split('~')[1];
         const name = node.name.ok ? node.name.value : node.uid;
-        console.log(`${type}${sharedFlag} ${author} ${created} ${size} ${id} ${name}`);
+        console.log(`${type}${sharedFlag}${permissionFlag} ${author} ${created} ${size} ${id} ${name}`);
+    }
+}
+
+function getPermissionFlag(memberRole: MemberRole): string {
+    switch (memberRole) {
+        case MemberRole.Inherited:
+            return '  '; // Two spaces to align with icon.
+        case MemberRole.Viewer:
+            return '👁 '; // Extra space due to how terminal render this.
+        case MemberRole.Editor:
+            return '📝';
+        case MemberRole.Admin:
+            return '👑';
     }
 }
