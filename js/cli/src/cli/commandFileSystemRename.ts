@@ -19,7 +19,7 @@ export class CommandFileSystemRename implements Command {
         const renamedNode = await sdk.renameNode(node, newName);
 
         if (json) {
-            console.log(JSON.stringify(node));
+            console.log(JSON.stringify(renamedNode));
         } else {
             // Use inspect to disable the depth limit.
             console.log(inspect(node, {showHidden: false, depth: null, colors: true}));
