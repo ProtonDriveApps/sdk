@@ -1,10 +1,9 @@
 import { ProtonDriveConfig } from './interface';
 
-export function getConfig(config?: ProtonDriveConfig) {
+export function getConfig(config?: ProtonDriveConfig): Required<ProtonDriveConfig> {
     return {
-        // TODO: add defaults for all fields
         ...config,
-        baseUrl: config?.baseUrl ? `https://${config.baseUrl}/api` : 'https://drive.proton.me/api',
+        baseUrl: config?.baseUrl ? `https://${config.baseUrl}` : 'https://drive-api.proton.me',
         language: config?.language || 'en',
     };
 }
