@@ -3,10 +3,17 @@ export interface ProtonDriveHTTPClient {
 }
 
 export type ProtonDriveConfig = {
+    /**
+     * The base URL for the Proton Drive (without schema).
+     *
+     * If not provided, defaults to 'drive-api.proton.me'.
+     */
     baseUrl?: string,
+
+    /**
+     * The language to use for error messages.
+     *
+     * If not provided, defaults to 'en'.
+     */
     language?: string,
-    uploadTimeout?: number,
-    uploadQueueLimitItems?: number,
-    downloadTimeout?: number,
-    downloadQueueLimitItems?: number,
 }

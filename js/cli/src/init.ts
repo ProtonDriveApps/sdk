@@ -37,7 +37,7 @@ function initCrypto() {
 function getConfig(): Config {
     return {
         appVersion: 'web-drive-sdk-cli@5.0.999.999',
-        baseUrl: process.env.DRIVE_SDK_BASE_URL || 'drive.proton.me',
+        baseUrl: process.env.DRIVE_SDK_BASE_URL || 'drive-api.proton.me',
         cacheDir: process.env.DRIVE_SDK_CACHE_DIR || process.cwd(),
         enableConsoleLog: process.env.DRIVE_SDK_DISABLE_CONSOLE_LOG === undefined,
     }
