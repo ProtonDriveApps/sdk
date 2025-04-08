@@ -1,4 +1,4 @@
-import { ProtonDriveClientContructorParameters, ProtonDriveClientInterface, NodeOrUid, MaybeNode, ShareNodeSettings, UnshareNodeSettings, UploadMetadata, Logger, NodeResult, Revision, ProtonInvitationWithNode, ShareResult, NonProtonInvitationOrUid, ProtonInvitationOrUid, FileDownloader } from './interface';
+import { ProtonDriveClientContructorParameters, ProtonDriveClientInterface, NodeOrUid, MaybeNode, ShareNodeSettings, UnshareNodeSettings, UploadMetadata, Logger, NodeResult, Revision, ProtonInvitationWithNode, ShareResult, NonProtonInvitationOrUid, ProtonInvitationOrUid, FileDownloader, MaybeMissingNode } from './interface';
 import { DriveCrypto } from './crypto';
 import { DriveAPIService } from './internal/apiService';
 import { initSharesModule } from './internal/shares';
@@ -8,7 +8,7 @@ import { initDownloadModule } from './internal/download';
 import { initUploadModule } from './internal/upload';
 import { DriveEventsService } from './internal/events';
 import { getConfig } from './config';
-import { getUid, getUids, convertInternalNodePromise, convertInternalNodeIterator } from './transformers';
+import { getUid, getUids, convertInternalNodePromise, convertInternalNodeIterator, convertInternalMissingNodeIterator } from './transformers';
 import { Telemetry } from './telemetry';
 
 /**
@@ -115,9 +115,9 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the nodes.
      */
-    async* iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+    async* iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<MaybeMissingNode> {
         this.logger.info(`Iterating ${nodeUids.length} nodes`);
-        yield* convertInternalNodeIterator(this.nodes.access.iterateNodes(getUids(nodeUids), signal));
+        yield* convertInternalMissingNodeIterator(this.nodes.access.iterateNodes(getUids(nodeUids), signal));
     }
 
     /**

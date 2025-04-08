@@ -52,8 +52,8 @@ export class SharingAccess {
         }
     }
 
-    private async* iterateSharedNodesFromCache(nodeUids: string[], signal?: AbortSignal) {
-        const batchLoading = new BatchLoading<string, DecryptedNode>({ iterateItems: (nodeUids) => this.nodesService.iterateNodes(nodeUids, signal) });
+    private async* iterateSharedNodesFromCache(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
+        const batchLoading = new BatchLoading<string, DecryptedNode>({ iterateItems: (nodeUids) => this.iterateNodesAndIgnoreMissingOnes(nodeUids, signal) });
         for (const nodeUid of nodeUids) {
             yield* batchLoading.load(nodeUid);
         }
@@ -66,7 +66,7 @@ export class SharingAccess {
         signal?: AbortSignal,
     ): AsyncGenerator<DecryptedNode> {
         const loadedNodeUids = [];
-        const batchLoading = new BatchLoading<string, DecryptedNode>({ iterateItems: (nodeUids) => this.nodesService.iterateNodes(nodeUids, signal) });
+        const batchLoading = new BatchLoading<string, DecryptedNode>({ iterateItems: (nodeUids) => this.iterateNodesAndIgnoreMissingOnes(nodeUids, signal) });
         for await (const nodeUid of nodeUidsIterator) {
             loadedNodeUids.push(nodeUid);
             yield* batchLoading.load(nodeUid);
@@ -75,6 +75,16 @@ export class SharingAccess {
         // Set cache only at the end. Once there is anything in the cache,
         // it will be used instead of requesting the data from the API.
         await setCache(loadedNodeUids);
+    }
+
+    private async* iterateNodesAndIgnoreMissingOnes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
+        const nodeGenerator = this.nodesService.iterateNodes(nodeUids, signal);
+        for await (const node of nodeGenerator) {
+            if ('missingUid' in node) {
+                continue;
+            }
+            yield node;
+        }
     }
 
     async removeSharedNodeWithMe(nodeUid: string): Promise<void> {

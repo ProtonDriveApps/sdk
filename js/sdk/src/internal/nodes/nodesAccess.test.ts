@@ -29,6 +29,7 @@ describe('nodesAccess', () => {
             iterateChildren: jest.fn().mockImplementation(async function* () {}),
             isFolderChildrenLoaded: jest.fn().mockResolvedValue(false),
             setFolderChildrenLoaded: jest.fn(),
+            removeNodes: jest.fn(),
         }
         // @ts-expect-error No need to implement all methods for mocking
         cryptoCache = {
@@ -225,6 +226,28 @@ describe('nodesAccess', () => {
                 expect(cryptoCache.setNodeKeys).toHaveBeenCalledTimes(4);
                 expect(cache.setFolderChildrenLoaded).toHaveBeenCalledWith('parentUid');
             });
+
+            it('should remove from cache if missing on API', async () => {
+                apiService.iterateChildrenNodeUids = jest.fn().mockImplementation(async function* () {
+                    yield 'node1';
+                    yield 'node2';
+                    yield 'node3';
+                });
+                cache.getNode = jest.fn().mockImplementation((uid: string) => {
+                    if (uid === parentNode.uid) {
+                        return parentNode;
+                    }
+                    throw new Error('Entity not found');
+                });
+                apiService.getNodes = jest.fn().mockImplementation((uids: string[]) => Promise.resolve(
+                    // Skip first node - make it missing.
+                    uids.slice(1).map((uid) => ({ uid, parentUid: parentNode.uid } as EncryptedNode))
+                ));
+
+                const result = await Array.fromAsync(access.iterateChildren('parentUid'));
+                expect(result).toMatchObject([node2, node3]);
+                expect(cache.removeNodes).toHaveBeenCalledWith(['node1']);
+            });
         });
 
         describe('iterateTrashedNodes', () => {
@@ -269,6 +292,20 @@ describe('nodesAccess', () => {
                 expect(cache.setNode).toHaveBeenCalledTimes(4);
                 expect(cryptoCache.setNodeKeys).toHaveBeenCalledTimes(4);
             });
+
+            it('should remove from cache if missing on API', async () => {
+                cache.getNode = jest.fn().mockImplementation((uid: string) => {
+                    throw new Error('Entity not found');
+                });
+                apiService.getNodes = jest.fn().mockImplementation((uids: string[]) => Promise.resolve(
+                    // Skip first node - make it missing.
+                    uids.slice(1).map((uid) => ({ uid, parentUid: 'parentUid' } as EncryptedNode))
+                ));
+
+                const result = await Array.fromAsync(access.iterateTrashedNodes());
+                expect(result).toMatchObject([node2, node3, node4]);
+                expect(cache.removeNodes).toHaveBeenCalledWith(['node1']);
+            });
         });
 
         describe('iterateNodes', () => {
@@ -304,6 +341,22 @@ describe('nodesAccess', () => {
                 const result = await Array.fromAsync(access.iterateNodes(['node1', 'node2', 'node3', 'node4']));
                 expect(result).toMatchObject([node1, node4, node2, node3]);
                 expect(apiService.getNodes).toHaveBeenCalledWith(['node2', 'node3'], undefined);
+            });
+
+            it('should remove from cache if missing on API and return back to caller', async () => {
+                cache.iterateNodes = jest.fn().mockImplementation(async function* () {
+                    yield { ok: false, uid: 'node1' };
+                    yield { ok: false, uid: 'node2' };
+                    yield { ok: false, uid: 'node3' };
+                });
+                apiService.getNodes = jest.fn().mockImplementation((uids: string[]) => Promise.resolve(
+                    // Skip first node - make it missing.
+                    uids.slice(1).map((uid) => ({ uid, parentUid: 'parentUid' } as EncryptedNode))
+                ));
+
+                const result = await Array.fromAsync(access.iterateNodes(['node1', 'node2', 'node3']));
+                expect(result).toMatchObject([node2, node3, {missingUid: 'node1'}]);
+                expect(cache.removeNodes).toHaveBeenCalledWith(['node1']);
             });
         });
     });

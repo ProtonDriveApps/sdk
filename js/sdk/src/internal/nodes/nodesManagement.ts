@@ -154,7 +154,8 @@ export class NodesManagement {
     }
 
     async* trashNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
-        const nodes = await Array.fromAsync(this.nodesAccess.iterateNodes(nodeUids, signal));
+        const nodesOrMissing = await Array.fromAsync(this.nodesAccess.iterateNodes(nodeUids, signal));
+        const nodes = nodesOrMissing.filter(node => !('missingUid' in node)) as DecryptedNode[];
 
         for await (const result of this.apiService.trashNodes(nodeUids, signal)) {
             if (result.ok) {
@@ -172,7 +173,8 @@ export class NodesManagement {
     }
 
     async* restoreNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
-        const nodes = await Array.fromAsync(this.nodesAccess.iterateNodes(nodeUids, signal));
+        const nodesOrMissing = await Array.fromAsync(this.nodesAccess.iterateNodes(nodeUids, signal));
+        const nodes = nodesOrMissing.filter(node => !('missingUid' in node)) as DecryptedNode[];
 
         for await (const result of this.apiService.restoreNodes(nodeUids, signal)) {
             if (result.ok) {
