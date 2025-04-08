@@ -32,6 +32,7 @@ type PostDeleteNodesResponse = drivePaths['/drive/v2/volumes/{volumeID}/trash/de
 type PostCreateFolderRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/folders']['post']['requestBody'], { 'content': object }>['content']['application/json'];
 type PostCreateFolderResponse = drivePaths['/drive/v2/volumes/{volumeID}/folders']['post']['responses']['200']['content']['application/json'];
 
+type GetRevisionResponse = drivePaths['/drive/v2/volumes/{volumeID}/files/{linkID}/revisions/{revisionID}']['get']['responses']['200']['content']['application/json'];
 type GetRevisionsResponse = drivePaths['/drive/v2/volumes/{volumeID}/files/{linkID}/revisions']['get']['responses']['200']['content']['application/json'];
 enum APIRevisionState {
     Draft = 0,
@@ -325,19 +326,20 @@ export class NodeAPIService {
         return makeNodeUid(volumeId, response.Folder.ID);
     }
 
+    async getRevision(nodeRevisionUid: string, signal?: AbortSignal): Promise<EncryptedRevision> {
+        const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(nodeRevisionUid);
+
+        const response = await this.apiService.get<GetRevisionResponse>(`drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/${revisionId}?NoBlockUrls=true`, signal);
+        return transformRevisionResponse(volumeId, nodeId, response.Revision);
+    }
+
     async getRevisions(nodeUid: string, signal?: AbortSignal): Promise<EncryptedRevision[]> {
         const { volumeId, nodeId } = splitNodeUid(nodeUid);
 
         const response = await this.apiService.get<GetRevisionsResponse>(`drive/v2/volumes/${volumeId}/files/${nodeId}/revisions`, signal);
         return response.Revisions
             .filter((revision) => revision.State === APIRevisionState.Active || revision.State === APIRevisionState.Obsolete)
-            .map((revision) => ({
-                uid: makeNodeRevisionUid(volumeId, nodeId, revision.ID),
-                state: revision.State === APIRevisionState.Active ? RevisionState.Active : RevisionState.Superseded,
-                createdDate: new Date(revision.CreateTime*1000),
-                signatureEmail: revision.SignatureEmail || undefined,
-                encryptedExtendedAttributes: revision.XAttr || undefined,
-            }));
+            .map((revision) => transformRevisionResponse(volumeId, nodeId, revision));
     }
 
     async restoreRevision(nodeRevisionUid: string): Promise<void> {
@@ -390,5 +392,19 @@ function* handleResponseErrors(nodeUids: string[], volumeId: string, responses: 
         } else {
             yield { uid, ok: true };
         }
+    }
+}
+
+function transformRevisionResponse(
+    volumeId: string,
+    nodeId: string,
+    revision: GetRevisionResponse['Revision'] | GetRevisionsResponse['Revisions'][0],
+): EncryptedRevision {
+    return {
+        uid: makeNodeRevisionUid(volumeId, nodeId, revision.ID),
+        state: revision.State === APIRevisionState.Active ? RevisionState.Active : RevisionState.Superseded,
+        createdDate: new Date(revision.CreateTime*1000),
+        signatureEmail: revision.SignatureEmail || undefined,
+        armoredExtendedAttributes: revision.XAttr || undefined,
     }
 }

@@ -23,14 +23,13 @@ describe('FileDownloader', () => {
     let apiService: DownloadAPIService;
     let cryptoService: DownloadCryptoService;
     let controller: DownloadController;
-    let node: NodeEntity;
-    let nodeKey: { key: string; contentKeyPacketSessionKey?: string };
+    let nodeKey: { key: string; contentKeyPacketSessionKey: string };
     let revision: Revision;
 
     beforeEach(() => {
         // @ts-expect-error No need to implement all methods for mocking
         telemetry = {
-            getLoggerForNode: jest.fn().mockReturnValue({
+            getLoggerForRevision: jest.fn().mockReturnValue({
                 debug: jest.fn(),
                 info: jest.fn(),
                 warn: jest.fn(),
@@ -71,18 +70,6 @@ describe('FileDownloader', () => {
         };
         controller = new DownloadController();
 
-        node = {
-            uid: 'nodeUid',
-            type: NodeType.File,
-            activeRevision: {
-                ok: true,
-                value: {
-                    uid: 'revisionUid',
-                    claimedSize: 1024,
-                },
-            },
-        } as NodeEntity;
-
         nodeKey = {
             key: 'privateKey',
             contentKeyPacketSessionKey: 'sessionKey',
@@ -93,39 +80,7 @@ describe('FileDownloader', () => {
             claimedSize: 1024,
         } as Revision;
     });
-
-    describe('constructor', () => {
-        it('should throw an error if the node is a folder', () => {
-            node.type = NodeType.Folder;
     
-            expect(() => {
-                new FileDownloader(telemetry, apiService, cryptoService, nodeKey, node);
-            }).toThrow(ValidationError);
-        });
-    
-        it('should throw an error if the node has no active revision', () => {
-            node.activeRevision = undefined;
-    
-            expect(() => {
-                new FileDownloader(telemetry, apiService, cryptoService, nodeKey, node);
-            }).toThrow(ValidationError);
-        });
-    
-        it('should throw an error if the node key has no content key', () => {
-            nodeKey.contentKeyPacketSessionKey = undefined;
-    
-            expect(() => {
-                new FileDownloader(telemetry, apiService, cryptoService, nodeKey, node);
-            }).toThrow(ValidationError);
-        });
-
-        it('should initialize correctly', () => {
-            const downloader = new FileDownloader(telemetry, apiService, cryptoService, nodeKey, node);
-    
-            expect(downloader.getClaimedSizeInBytes()).toBe(revision.claimedSize);
-        });
-    });
-
     describe('writeToStream', () => {
         let onProgress: (downloadedBytes: number) => void;
         let onFinish: () => void;
@@ -187,7 +142,7 @@ describe('FileDownloader', () => {
             stream = {
                 getWriter: () => writer,
             }
-            downloader = new FileDownloader(telemetry, apiService, cryptoService, nodeKey, node, undefined, onFinish);
+            downloader = new FileDownloader(telemetry, apiService, cryptoService, nodeKey, revision, undefined, onFinish);
         });
 
         it('should reject two download starts', async () => {
@@ -361,7 +316,7 @@ describe('FileDownloader', () => {
             stream = {
                 getWriter: () => writer,
             }
-            downloader = new FileDownloader(telemetry, apiService, cryptoService, nodeKey, node, undefined, onFinish);
+            downloader = new FileDownloader(telemetry, apiService, cryptoService, nodeKey, revision, undefined, onFinish);
         });
 
         it('should skip verification steps', async () => {

@@ -1,4 +1,5 @@
 import { Logger, Revision } from "../../interface";
+import { makeNodeUidFromRevisionUid } from "../uids";
 import { NodeAPIService } from "./apiService";
 import { NodesCryptoService } from "./cryptoService";
 import { NodesAccess } from "./nodesAccess";
@@ -18,6 +19,21 @@ export class NodesRevisons {
         this.apiService = apiService;
         this.cryptoService = cryptoService;
         this.nodesAccess = nodesAccess;
+    }
+
+    async getRevision(nodeRevisionUid: string): Promise<Revision> {
+        const nodeUid = makeNodeUidFromRevisionUid(nodeRevisionUid);
+        const node = await this.nodesAccess.getNode(nodeUid);
+        const { key: parentKey } = await this.nodesAccess.getParentKeys(node);
+        const { key } = await this.nodesAccess.getNodeKeys(nodeUid);
+
+        const encryptedRevision = await this.apiService.getRevision(nodeRevisionUid);
+        const revision = await this.cryptoService.decryptRevision(encryptedRevision, key, parentKey);
+        const extendedAttributes = parseFileExtendedAttributes(this.logger, revision.extendedAttributes);
+        return {
+            ...revision,
+            ...extendedAttributes,
+        };
     }
 
     async* iterateRevisions(nodeUid: string, signal?: AbortSignal): AsyncGenerator<Revision> {

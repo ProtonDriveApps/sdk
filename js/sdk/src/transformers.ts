@@ -1,4 +1,4 @@
-import { NodeOrUid, NodeEntity as PublicNode } from './interface';
+import { NodeEntity as PublicNode } from './interface';
 import { DecryptedNode as InternalNode } from './internal/nodes';
 
 type InternalPartialNode = Pick<
@@ -18,14 +18,14 @@ type InternalPartialNode = Pick<
     'folder'
 >;
 
-export function getUid(nodeUid: NodeOrUid): string {
+export function getUid(nodeUid: string | { uid: string }): string {
     if (typeof nodeUid === "string") {
         return nodeUid;
     }
     return nodeUid.uid;
 }
 
-export function getUids(nodeUids: NodeOrUid[]): string[] {
+export function getUids(nodeUids: (string | { uid: string })[]): string[] {
     return nodeUids.map(getUid);
 }
 

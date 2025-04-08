@@ -1,12 +1,16 @@
+import { c } from 'ttag';
+
 import { DriveCrypto } from "../../crypto";
-import { ProtonDriveAccount, ProtonDriveTelemetry } from "../../interface";
+import { ValidationError } from "../../errors";
+import { ProtonDriveAccount, ProtonDriveTelemetry, NodeType } from "../../interface";
 import { DriveAPIService } from "../apiService";
 import { DownloadAPIService } from "./apiService";
 import { DownloadCryptoService } from "./cryptoService";
-import { NodesService } from "./interface";
+import { NodesService, RevisionsService } from "./interface";
 import { FileDownloader } from "./fileDownloader";
 import { DownloadQueue } from "./queue";
 import { DownloadTelemetry } from "./telemetry";
+import { makeNodeUidFromRevisionUid } from "../uids";
 
 export function initDownloadModule(
     telemetry: ProtonDriveTelemetry,
@@ -14,6 +18,7 @@ export function initDownloadModule(
     driveCrypto: DriveCrypto,
     account: ProtonDriveAccount,
     nodesService: NodesService,
+    revisionsService: RevisionsService,
 ) {
     const queue = new DownloadQueue();
     const api = new DownloadAPIService(apiService);
@@ -27,6 +32,16 @@ export function initDownloadModule(
         try {
             node = await nodesService.getNode(nodeUid);
             nodeKey = await nodesService.getNodeKeys(nodeUid);
+
+            if (node.type === NodeType.Folder) {
+                throw new ValidationError(c("Error").t`Cannot download a folder`);
+            }
+            if (!nodeKey.contentKeyPacketSessionKey) {
+                throw new ValidationError(c("Error").t`File has no content key`);
+            }
+            if (!node.activeRevision?.ok || !node.activeRevision.value) {
+                throw new ValidationError(c("Error").t`File has no active revision`);
+            }
         } catch (error: unknown) {
             queue.releaseCapacity();
             downloadTelemetry.downloadInitFailed(error);
@@ -39,8 +54,50 @@ export function initDownloadModule(
             downloadTelemetry,
             api,
             cryptoService,
-            nodeKey,
-            node,
+            {
+                key: nodeKey.key,
+                contentKeyPacketSessionKey: nodeKey.contentKeyPacketSessionKey,
+            },
+            node.activeRevision.value,
+            signal,
+            onFinish,
+        );
+    }
+
+    async function getFileRevisionDownloader(nodeRevisionUid: string, signal?: AbortSignal) {
+        await queue.waitForCapacity(signal);
+
+        const nodeUid = makeNodeUidFromRevisionUid(nodeRevisionUid);
+
+        let node, nodeKey, revision;
+        try {
+            node = await nodesService.getNode(nodeUid);
+            nodeKey = await nodesService.getNodeKeys(nodeUid);
+            revision = await revisionsService.getRevision(nodeRevisionUid);
+            
+            if (node.type === NodeType.Folder) {
+                throw new ValidationError(c("Error").t`Cannot download a folder`);
+            }
+            if (!nodeKey.contentKeyPacketSessionKey) {
+                throw new ValidationError(c("Error").t`File has no content key`);
+            }
+        } catch (error: unknown) {
+            queue.releaseCapacity();
+            downloadTelemetry.downloadInitFailed(error);
+            throw error;
+        }
+
+        const onFinish = () => queue.releaseCapacity();
+
+        return new FileDownloader(
+            downloadTelemetry,
+            api,
+            cryptoService,
+            {
+                key: nodeKey.key,
+                contentKeyPacketSessionKey: nodeKey.contentKeyPacketSessionKey,
+            },
+            revision,
             signal,
             onFinish,
         );
@@ -48,5 +105,6 @@ export function initDownloadModule(
 
     return {
         getFileDownloader,
+        getFileRevisionDownloader,
     }
 }

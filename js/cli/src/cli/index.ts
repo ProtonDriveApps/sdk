@@ -12,6 +12,7 @@ import { CommandFileSystemRestore } from './commandFileSystemRestore';
 import { CommandFileSystemTrash } from './commandFileSystemTrash';
 import { CommandInvitationList } from "./commandInvitationList";
 import { CommandRevisionDelete } from './commandRevisionDelete';
+import { CommandRevisionDownload } from './commandRevisionDownload';
 import { CommandRevisionList } from './commandRevisionList';
 import { CommandRevisionRestore } from './commandRevisionRestore';
 import { CommandSharingInvite } from "./commandSharingInvite";
@@ -32,6 +33,7 @@ const COMMANDS = [
     new CommandFileSystemRestore(),
     new CommandFileSystemDownload(),
     new CommandRevisionList(),
+    new CommandRevisionDownload(),
     new CommandRevisionRestore(),
     new CommandRevisionDelete(),
     new CommandSharingStatus(),

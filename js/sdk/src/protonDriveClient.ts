@@ -46,7 +46,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
         const shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
         this.nodes = initNodesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares);
         this.sharing = initSharingModule(telemetry, apiService, entitiesCache, account, cryptoModule, events, shares, this.nodes.access);
-        this.download = initDownloadModule(telemetry, apiService, cryptoModule, account, this.nodes.access);
+        this.download = initDownloadModule(telemetry, apiService, cryptoModule, account, this.nodes.access, this.nodes.revisions);
         this.upload = initUploadModule(apiService, cryptoModule, this.nodes.access);
     }
 
@@ -398,7 +398,9 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
     }
 
     /**
-     * Get the file downloader to download the node content.
+     * Get the file downloader to download the node content of the active
+     * revision. For downloading specific revision of the file, use
+     * `getFileRevisionDownloader`.
      * 
      * The number of ongoing downloads is limited. If the limit is reached,
      * the download is queued and started when the slot is available. It is
@@ -439,6 +441,14 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
     async getFileDownloader(nodeUid: NodeOrUid, signal?: AbortSignal): Promise<FileDownloader> {
         this.logger.info(`Getting file downloader for ${getUid(nodeUid)}`);
         return this.download.getFileDownloader(getUid(nodeUid), signal);
+    }
+
+    /**
+     * Same as `getFileDownloader`, but for a specific revision of the file.
+     */
+    async getFileRevisionDownloader(nodeRevisionUid: string, signal?: AbortSignal): Promise<FileDownloader> {
+        this.logger.info(`Getting file revision downloader for ${getUid(nodeRevisionUid)}`);
+        return this.download.getFileRevisionDownloader(nodeRevisionUid, signal);
     }
 
     async getFileUploader(parentFolderUid: NodeOrUid, name: string, metadata: UploadMetadata, signal?: AbortSignal) {
