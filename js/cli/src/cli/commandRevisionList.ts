@@ -2,6 +2,7 @@ import { ParseArgsConfig } from "util";
 import { NodeType, Revision } from "../../../sdk/src";
 import { Command, ActionArgs } from './interface';
 import { formatAuthor, formatDate, formatSize } from './formatters';
+import { getNode } from "./node";
 
 export class CommandRevisionList implements Command {
     group = 'revision';
@@ -17,12 +18,12 @@ export class CommandRevisionList implements Command {
 
     async action({ sdk, paths, args: [ pathString ], options: { json } }: ActionArgs) {
         const path = paths.getPath(pathString);
-        const node = await path.getNode();
+        const maybeNode = await path.getNode();
 
-        if (node.type === NodeType.Folder) {
+        if (getNode(maybeNode).type === NodeType.Folder) {
             throw new Error('Cannot list revisions of a folder');
         }
-        for await (const revision of sdk.iterateRevisions(node)) {
+        for await (const revision of sdk.iterateRevisions(maybeNode)) {
             this.printRevision(revision, { json });
         }
     }

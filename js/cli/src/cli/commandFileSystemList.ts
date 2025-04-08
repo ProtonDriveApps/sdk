@@ -1,8 +1,10 @@
 import { ParseArgsConfig } from "util";
-import { MemberRole, NodeEntity } from "../../../sdk/src";
+
+import { MaybeNode, MemberRole } from "../../../sdk/src";
 import { Command, ActionArgs } from './interface';
 import { PathType } from './paths';
 import { formatAuthor, formatDate, formatSize } from './formatters';
+import { getName, getClaimedSize, getNode } from "./node";
 
 export class CommandFileSystemList implements Command {
     group = 'filesystem';
@@ -48,11 +50,12 @@ export class CommandFileSystemList implements Command {
         }
     }
 
-    private printNode(node: NodeEntity, options: { json: boolean }) {
+    private printNode(maybeNode: MaybeNode, options: { json: boolean }) {
         if (options.json) {
-            console.log(JSON.stringify(node));
+            console.log(JSON.stringify(maybeNode));
             return;
         }
+        const node = getNode(maybeNode);
 
         const type = node.type === "file" ? "📄" : "🗂️";
         const sharedFlag = node.isShared
@@ -61,9 +64,10 @@ export class CommandFileSystemList implements Command {
         const permissionFlag = getPermissionFlag(node.directMemberRole);
         const author = formatAuthor(node.keyAuthor);
         const created = formatDate(node.createdDate, true);
-        const size = node.activeRevision?.ok ? formatSize(node.activeRevision.value.claimedSize, true) : '-';
+        const claimedSize = getClaimedSize(maybeNode)
+        const size = claimedSize ? formatSize(claimedSize) : '-';
         const id = node.uid.split('~')[1];
-        const name = node.name.ok ? node.name.value : node.uid;
+        const name = getName(maybeNode);
         console.log(`${type}${sharedFlag}${permissionFlag} ${author} ${created} ${size} ${id} ${name}`);
     }
 }

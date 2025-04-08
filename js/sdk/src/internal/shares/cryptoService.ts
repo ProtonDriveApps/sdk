@@ -103,7 +103,7 @@ export class SharesCryptoService {
         this.telemetry.logEvent({
             eventName: 'decryptionError',
             context: 'own_volume', // TODO: add context to the share
-            entity: 'share',
+            field: 'shareKey',
             fromBefore2024,
             error,
         });
@@ -122,7 +122,7 @@ export class SharesCryptoService {
         this.telemetry.logEvent({
             eventName: 'verificationError',
             context: 'own_volume', // TODO: add context to the share
-            verificationKey: 'ShareAddress',
+            field: 'shareKey',
             addressMatchingDefaultShare,
             fromBefore2024,
         });

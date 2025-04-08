@@ -1,4 +1,4 @@
-import { ProtonDriveClientContructorParameters, ProtonDriveClientInterface, NodeOrUid, NodeEntity, ShareNodeSettings, UnshareNodeSettings, UploadMetadata, Logger, NodeResult, Revision, ProtonInvitationWithNode, ShareResult, NonProtonInvitationOrUid, ProtonInvitationOrUid, FileDownloader } from './interface';
+import { ProtonDriveClientContructorParameters, ProtonDriveClientInterface, NodeOrUid, MaybeNode, ShareNodeSettings, UnshareNodeSettings, UploadMetadata, Logger, NodeResult, Revision, ProtonInvitationWithNode, ShareResult, NonProtonInvitationOrUid, ProtonInvitationOrUid, FileDownloader } from './interface';
 import { DriveCrypto } from './crypto';
 import { DriveAPIService } from './internal/apiService';
 import { initSharesModule } from './internal/shares';
@@ -71,7 +71,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
     /**
      * @returns The root folder to My files section of the user.
      */
-    async getMyFilesRootFolder(): Promise<NodeEntity> {
+    async getMyFilesRootFolder(): Promise<MaybeNode> {
         this.logger.info('Getting my files root folder');
         return convertInternalNodePromise(this.nodes.access.getMyFilesRootFolder());
     }
@@ -85,7 +85,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the children of the given parent node.
      */
-    async* iterateChildren(parentNodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<NodeEntity> {
+    async* iterateChildren(parentNodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<MaybeNode> {
         this.logger.info(`Iterating children of ${getUid(parentNodeUid)}`);
         yield* convertInternalNodeIterator(this.nodes.access.iterateChildren(getUid(parentNodeUid), signal));
     }
@@ -101,7 +101,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the trashed nodes.
      */
-    async* iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<NodeEntity> {
+    async* iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
         this.logger.info('Iterating trashed nodes');
         yield* convertInternalNodeIterator(this.nodes.access.iterateTrashedNodes(signal));
     }
@@ -115,7 +115,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the nodes.
      */
-    async* iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeEntity> {
+    async* iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<MaybeNode> {
         this.logger.info(`Iterating ${nodeUids.length} nodes`);
         yield* convertInternalNodeIterator(this.nodes.access.iterateNodes(getUids(nodeUids), signal));
     }
@@ -128,7 +128,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
      * @throws {@link ValidationError} If the name is empty, too long, or contains a slash.
      * @throws {@link Error} If another node with the same name already exists.
      */
-    async renameNode(nodeUid: NodeOrUid, newName: string): Promise<NodeEntity> {
+    async renameNode(nodeUid: NodeOrUid, newName: string): Promise<MaybeNode> {
         this.logger.info(`Renaming node ${nodeUid} to ${newName}`);
         return convertInternalNodePromise(this.nodes.management.renameNode(getUid(nodeUid), newName));
     }
@@ -229,7 +229,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
      * @throws {@link ValidationError} If the name is empty, too long, or contains a slash.
      * @throws {@link Error} If another node with the same name already exists.
      */
-    async createFolder(parentNodeUid: NodeOrUid, name: string, modificationTime?: Date): Promise<NodeEntity> {
+    async createFolder(parentNodeUid: NodeOrUid, name: string, modificationTime?: Date): Promise<MaybeNode> {
         this.logger.info(`Creating folder ${name} in ${getUid(parentNodeUid)}`);
         return convertInternalNodePromise(this.nodes.management.createFolder(getUid(parentNodeUid), name, modificationTime));
     }
@@ -280,7 +280,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the shared nodes.
      */
-    async* iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<NodeEntity> {
+    async* iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
         this.logger.info('Iterating shared nodes by me');
         yield* convertInternalNodeIterator(this.sharing.access.iterateSharedNodes(signal));
     }
@@ -293,7 +293,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the shared nodes.
      */
-    async* iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<NodeEntity> {
+    async* iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
         this.logger.info('Iterating shared nodes with me');
         yield* convertInternalNodeIterator(this.sharing.access.iterateSharedNodesWithMe(signal));
     }

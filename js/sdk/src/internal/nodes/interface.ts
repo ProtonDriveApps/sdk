@@ -72,12 +72,13 @@ export interface DecryptedUnparsedNode extends BaseNode {
     folder?: {
         extendedAttributes?: string,
     },
+    errors?: unknown[],
 }
 
 /**
  * Interface holding decrypted node metadata.
  */
-export interface DecryptedNode extends Omit<DecryptedUnparsedNode, 'activeRevision' | 'folder'>, NodeEntity {
+export interface DecryptedNode extends Omit<DecryptedUnparsedNode, 'activeRevision' | 'folder'>, Omit<NodeEntity, 'name' | 'activeRevision'> {
     // Internal metadata
     isStale: boolean;
 

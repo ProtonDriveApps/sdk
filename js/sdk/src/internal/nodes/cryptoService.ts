@@ -1,7 +1,7 @@
 import { c } from 'ttag';
 
 import { DriveCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from "../../crypto";
-import { resultOk, resultError, Result, InvalidNameError, Author, ProtonDriveAccount, ProtonDriveTelemetry, Logger } from "../../interface";
+import { resultOk, resultError, Result, InvalidNameError, Author, ProtonDriveAccount, ProtonDriveTelemetry, Logger, MetricsDecryptionErrorField, MetricVerificationErrorField } from "../../interface";
 import { ValidationError } from '../../errors';
 import { getErrorMessage, getVerificationMessage } from "../errors";
 import { splitNodeUid } from "../uids";
@@ -44,9 +44,13 @@ export class NodesCryptoService {
             encryptedCrypto: undefined,
         }
 
+        const signatureEmailKeys = node.encryptedCrypto.signatureEmail
+            ? await this.account.getPublicKeys(node.encryptedCrypto.signatureEmail)
+            : [];
+
         // Anonymous uploads (without signature email set) use parent key instead.
         const keyVerificationKeys = node.encryptedCrypto.signatureEmail
-            ? await this.account.getPublicKeys(node.encryptedCrypto.signatureEmail)
+            ? signatureEmailKeys
             : [parentKey];
 
         let nameVerificationKeys;
@@ -59,57 +63,71 @@ export class NodesCryptoService {
                 : [parentKey];
         }
 
+        const { name, author: nameAuthor } = await this.decryptName(node, parentKey, nameVerificationKeys);
+
         let passphrase, key, passphraseSessionKey, keyAuthor;
         try {
-            const keyResult = await this.decryptKey(node, parentKey, keyVerificationKeys);
+            const keyResult = await this.decryptKey(node, parentKey, signatureEmailKeys);
             passphrase = keyResult.passphrase;
             key = keyResult.key;
             passphraseSessionKey = keyResult.passphraseSessionKey;
             keyAuthor = keyResult.author;
         } catch (error: unknown) {
-            this.reportDecryptionError(node, error);
+            this.reportDecryptionError(node, 'nodeKey', error);
             const errorMessage = c('Error').t`Failed to decrypt node key: ${getErrorMessage(error)}`;
             return {
                 node: {
                     ...commonNodeMetadata,
-                    name: resultError({
-                        name: '',
-                        error: errorMessage,
-                    }),
+                    name,
                     keyAuthor: resultError({
                         claimedAuthor: node.encryptedCrypto.signatureEmail,
                         error: errorMessage,
                     }),
-                    nameAuthor: resultError({
-                        claimedAuthor: nameSignatureEmail,
-                        error: errorMessage,
-                    }),
-                    activeRevision: resultError(new Error(errorMessage)),
-                }
+                    nameAuthor,
+                    activeRevision: "file" in node.encryptedCrypto
+                        ? resultError(new Error(errorMessage))
+                        : undefined,
+                    folder: undefined,
+                    errors: [error],
+                },
             }
         }
 
-        const { name, author: nameAuthor } = await this.decryptName(node, parentKey, nameVerificationKeys);
+        const errors = [];
 
         let hashKey;
         let hashKeyAuthor;
         let folder;
         let folderExtendedAttributesAuthor;
         if ("folder" in node.encryptedCrypto) {
-            const hashKeyResult = await this.decryptHashKey(node, key, keyVerificationKeys);
-            hashKey = hashKeyResult.hashKey;
-            hashKeyAuthor = hashKeyResult.author;
+            try {
+                const hashKeyResult = await this.decryptHashKey(node, key, signatureEmailKeys);
+                hashKey = hashKeyResult.hashKey;
+                hashKeyAuthor = hashKeyResult.author;
+            } catch (error: unknown) {
+                this.reportDecryptionError(node, 'nodeHashKey', error);
+                errors.push(error);
+            }
 
-            const extendedAttributesResult = await this.decryptExtendedAttributes(
-                node.encryptedCrypto.folder.armoredExtendedAttributes,
-                key,
-                keyVerificationKeys,
-                node.encryptedCrypto.signatureEmail
-            );
-            folder = {
-                extendedAttributes: extendedAttributesResult.extendedAttributes,
-            };
-            folderExtendedAttributesAuthor = extendedAttributesResult.author;
+            try {
+                const folderExtendedAttributesVerificationKeys = node.encryptedCrypto.signatureEmail
+                    ? signatureEmailKeys
+                    : [key];
+                const extendedAttributesResult = await this.decryptExtendedAttributes(
+                    node,
+                    node.encryptedCrypto.folder.armoredExtendedAttributes,
+                    key,
+                    folderExtendedAttributesVerificationKeys,
+                    node.encryptedCrypto.signatureEmail
+                );
+                folder = {
+                    extendedAttributes: extendedAttributesResult.extendedAttributes,
+                };
+                folderExtendedAttributesAuthor = extendedAttributesResult.author;
+            } catch (error: unknown) {
+                this.reportDecryptionError(node, 'nodeFolderExtendedAttributes', error);
+                errors.push(error);
+            }
         }
 
         let activeRevision: Result<DecryptedRevision, Error> | undefined;
@@ -117,26 +135,40 @@ export class NodesCryptoService {
         let contentKeyPacketAuthor;
         if ("file" in node.encryptedCrypto) {
             try {
-                activeRevision = resultOk(await this.decryptRevision(node.encryptedCrypto.activeRevision, key, parentKey));
+                activeRevision = resultOk(await this.decryptRevision(node.uid, node.encryptedCrypto.activeRevision, key));
             } catch (error: unknown) {
+                this.reportDecryptionError(node, 'nodeActiveRevision', error);
                 const errorMessage = c('Error').t`Failed to decrypt active revision: ${getErrorMessage(error)}`;
                 activeRevision = resultError(new Error(errorMessage));
             }
 
-            const keySessionKeyResult = await this.driveCrypto.decryptAndVerifySessionKey(
-                node.encryptedCrypto.file.base64ContentKeyPacket,
-                node.encryptedCrypto.file.armoredContentKeyPacketSignature,
-                key,
-                keyVerificationKeys
-            );
-            contentKeyPacketSessionKey = keySessionKeyResult.sessionKey;
-            contentKeyPacketAuthor = keySessionKeyResult.verified && await this.handleClaimedAuthor(
-                node,
-                'SignatureEmail',
-                c('Property').t`content key`,
-                keySessionKeyResult.verified,
-                node.encryptedCrypto.signatureEmail,
-            );
+            try {
+                const keySessionKeyResult = await this.driveCrypto.decryptAndVerifySessionKey(
+                    node.encryptedCrypto.file.base64ContentKeyPacket,
+                    node.encryptedCrypto.file.armoredContentKeyPacketSignature,
+                    key,
+                    // Content key packet is signed with the node key, but
+                    // in the past some clients signed with the address key.
+                    [key, ...keyVerificationKeys],
+                );
+
+                contentKeyPacketSessionKey = keySessionKeyResult.sessionKey;
+                contentKeyPacketAuthor = keySessionKeyResult.verified && await this.handleClaimedAuthor(
+                    node,
+                    'nodeContentKey',
+                    c('Property').t`content key`,
+                    keySessionKeyResult.verified,
+                    node.encryptedCrypto.signatureEmail,
+                );
+            } catch (error: unknown) {
+                this.reportDecryptionError(node, 'nodeContentKey', error);
+                const errorMessage = c('Error').t`Failed to decrypt content key: ${getErrorMessage(error)}`;
+                contentKeyPacketAuthor = resultError({
+                    claimedAuthor: node.encryptedCrypto.signatureEmail,
+                    error: errorMessage,
+                });
+                errors.push(error);
+            }
         }
 
         // If key signature verificaiton failed, prefer returning error from
@@ -168,6 +200,7 @@ export class NodesCryptoService {
                 nameAuthor,
                 activeRevision,
                 folder,
+                errors: errors.length ? errors : undefined,
             },
             keys: {
                 passphrase,
@@ -194,7 +227,7 @@ export class NodesCryptoService {
             passphrase: key.passphrase,
             key: key.key,
             passphraseSessionKey: key.passphraseSessionKey,
-            author: await this.handleClaimedAuthor(node, 'SignatureEmail', c('Property').t`key`, key.verified, node.encryptedCrypto.signatureEmail),
+            author: await this.handleClaimedAuthor(node, 'nodeKey', c('Property').t`key`, key.verified, node.encryptedCrypto.signatureEmail),
         };
     };
 
@@ -213,10 +246,10 @@ export class NodesCryptoService {
 
             return {
                 name: resultOk(name),
-                author: await this.handleClaimedAuthor(node, 'NameSignatureEmail', c('Property').t`name`, verified, nameSignatureEmail),
+                author: await this.handleClaimedAuthor(node, 'nodeName', c('Property').t`name`, verified, nameSignatureEmail),
             }
         } catch (error: unknown) {
-            this.reportDecryptionError(node, error);
+            this.reportDecryptionError(node, 'nodeName', error);
             const errorMessage = getErrorMessage(error);
             return {
                 name: resultError({
@@ -252,19 +285,25 @@ export class NodesCryptoService {
 
         return {
             hashKey,
-            author: await this.handleClaimedAuthor(node, 'NodeKey', c('Property').t`hash key`, verified, node.encryptedCrypto.signatureEmail),
+            author: await this.handleClaimedAuthor(node, 'nodeHashKey', c('Property').t`hash key`, verified, node.encryptedCrypto.signatureEmail),
         }
     }
 
-    async decryptRevision(encryptedRevision: EncryptedRevision, nodeKey: PrivateKey, parentKey: PrivateKey): Promise<DecryptedRevision> {
+    async decryptRevision(nodeUid: string, encryptedRevision: EncryptedRevision, nodeKey: PrivateKey): Promise<DecryptedRevision> {
         const verificationKeys = encryptedRevision.signatureEmail
             ? await this.account.getPublicKeys(encryptedRevision.signatureEmail)
-            : [parentKey];
+            : [nodeKey];
 
         const {
             extendedAttributes,
             author: contentAuthor,
-        } = await this.decryptExtendedAttributes(encryptedRevision.armoredExtendedAttributes, nodeKey, verificationKeys, encryptedRevision.signatureEmail);
+        } = await this.decryptExtendedAttributes(
+            {uid: nodeUid, createdDate: encryptedRevision.createdDate},
+            encryptedRevision.armoredExtendedAttributes,
+            nodeKey,
+            verificationKeys,
+            encryptedRevision.signatureEmail,
+        );
 
         return {
             uid: encryptedRevision.uid,
@@ -275,13 +314,19 @@ export class NodesCryptoService {
         }
     }
 
-    private async decryptExtendedAttributes(encryptedExtendedAttributes: string | undefined, nodeKey: PrivateKey, addressKeys: PublicKey[], signatureEmail?: string): Promise<{
+    private async decryptExtendedAttributes(
+        node: {uid: string, createdDate: Date},
+        encryptedExtendedAttributes: string | undefined,
+        nodeKey: PrivateKey,
+        addressKeys: PublicKey[],
+        signatureEmail?: string,
+    ): Promise<{
         extendedAttributes?: string,
         author: Author,
     }> {
         if (!encryptedExtendedAttributes) {
             return {
-                author: handleClaimedAuthor(c('Property').t`key`, VERIFICATION_STATUS.SIGNED_AND_VALID, signatureEmail),
+                author: resultOk(signatureEmail) as Author,
             }
         }
 
@@ -293,7 +338,7 @@ export class NodesCryptoService {
 
         return {
             extendedAttributes,
-            author: handleClaimedAuthor(c('Property').t`attributes`, verified, signatureEmail),
+            author: await this.handleClaimedAuthor(node, "nodeExtendedAttributes", c('Property').t`attributes`, verified, signatureEmail),
         }
     }
 
@@ -402,22 +447,22 @@ export class NodesCryptoService {
     }
 
     private async handleClaimedAuthor(
-        node: EncryptedNode,
-        verificationKey: 'NodeKey' | 'SignatureEmail' | 'NameSignatureEmail',
+        node: { uid: string, createdDate: Date },
+        field: MetricVerificationErrorField,
         signatureType: string,
         verified: VERIFICATION_STATUS,
         claimedAuthor?: string
     ): Promise<Author> {
         const author = handleClaimedAuthor(signatureType, verified, claimedAuthor);
         if (!author.ok) {
-            await this.reportVerificationError(node, verificationKey, claimedAuthor);
+            await this.reportVerificationError(node, field, claimedAuthor);
         }
         return author;
     }
 
     private async reportVerificationError(
-        node: EncryptedNode,
-        verificationKey: 'NodeKey' | 'SignatureEmail' | 'NameSignatureEmail',
+        node: { uid: string, createdDate: Date },
+        field: MetricVerificationErrorField,
         claimedAuthor?: string,
     ) {
         if (this.reportedVerificationErrors.has(node.uid)) {
@@ -435,19 +480,19 @@ export class NodesCryptoService {
             this.logger.error('Failed to check if claimed author matches default share', error);
         }
 
-        this.logger.error(`Failed to verify node ${node.uid} using ${verificationKey} (from before 2024: ${fromBefore2024}, matching address: ${addressMatchingDefaultShare})`);
+        this.logger.error(`Failed to verify ${field} for node ${node.uid} (from before 2024: ${fromBefore2024}, matching address: ${addressMatchingDefaultShare})`);
 
         this.telemetry.logEvent({
             eventName: 'verificationError',
             context: 'own_volume', // TODO: add context to the node
-            verificationKey,
+            field,
             addressMatchingDefaultShare,
             fromBefore2024,
         });
         this.reportedVerificationErrors.add(node.uid);
     }
 
-    private reportDecryptionError(node: EncryptedNode, error?: unknown) {
+    private reportDecryptionError(node: EncryptedNode, field: MetricsDecryptionErrorField, error: unknown) {
         if (this.reportedDecryptionErrors.has(node.uid)) {
             return;
         }
@@ -458,7 +503,7 @@ export class NodesCryptoService {
         this.telemetry.logEvent({
             eventName: 'decryptionError',
             context: 'own_volume', // TODO: add context to the node
-            entity: 'node',
+            field,
             fromBefore2024,
             error,
         });

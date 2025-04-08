@@ -1,4 +1,5 @@
 import { Command, ActionArgs } from './interface';
+import { getName } from './node';
 
 export class CommandFileSystemDownload implements Command {
     group = 'filesystem';
@@ -11,7 +12,7 @@ export class CommandFileSystemDownload implements Command {
         const node = await nodePath.getNode();
         const downloader = await sdk.getFileDownloader(node);
         const claimedSize = downloader.getClaimedSizeInBytes();
-        console.log(`Downloading ${node.name.ok ? node.name.value : node.name.error.name} (${claimedSize || 'N/A'} bytes) to ${localPath}`);
+        console.log(`Downloading ${getName(node)} (${claimedSize || 'N/A'} bytes) to ${localPath}`);
 
         const file = Bun.file(localPath);
         const writer = file.writer();

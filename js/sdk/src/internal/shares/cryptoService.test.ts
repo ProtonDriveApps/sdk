@@ -98,7 +98,7 @@ describe("SharesCryptoService", () => {
         expect(telemetry.logEvent).toHaveBeenCalledWith({
             eventName: 'verificationError',
             context: 'own_volume',
-            verificationKey: 'ShareAddress',
+            field: 'shareKey',
             addressMatchingDefaultShare: undefined,
             fromBefore2024: undefined,
         });
@@ -126,7 +126,7 @@ describe("SharesCryptoService", () => {
         expect(telemetry.logEvent).toHaveBeenCalledWith({
             eventName: 'decryptionError',
             context: 'own_volume',
-            entity: 'share',
+            field: 'shareKey',
             fromBefore2024: undefined,
             error,
         });

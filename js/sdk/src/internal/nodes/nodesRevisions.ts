@@ -23,12 +23,10 @@ export class NodesRevisons {
 
     async getRevision(nodeRevisionUid: string): Promise<Revision> {
         const nodeUid = makeNodeUidFromRevisionUid(nodeRevisionUid);
-        const node = await this.nodesAccess.getNode(nodeUid);
-        const { key: parentKey } = await this.nodesAccess.getParentKeys(node);
         const { key } = await this.nodesAccess.getNodeKeys(nodeUid);
 
         const encryptedRevision = await this.apiService.getRevision(nodeRevisionUid);
-        const revision = await this.cryptoService.decryptRevision(encryptedRevision, key, parentKey);
+        const revision = await this.cryptoService.decryptRevision(nodeUid, encryptedRevision, key);
         const extendedAttributes = parseFileExtendedAttributes(this.logger, revision.extendedAttributes);
         return {
             ...revision,
@@ -37,13 +35,11 @@ export class NodesRevisons {
     }
 
     async* iterateRevisions(nodeUid: string, signal?: AbortSignal): AsyncGenerator<Revision> {
-        const node = await this.nodesAccess.getNode(nodeUid);
-        const { key: parentKey } = await this.nodesAccess.getParentKeys(node);
         const { key } = await this.nodesAccess.getNodeKeys(nodeUid);
 
         const encryptedRevisions = await this.apiService.getRevisions(nodeUid, signal);
         for (const encryptedRevision of encryptedRevisions) {
-            const revision = await this.cryptoService.decryptRevision(encryptedRevision, key, parentKey);
+            const revision = await this.cryptoService.decryptRevision(nodeUid, encryptedRevision, key);
             const extendedAttributes = parseFileExtendedAttributes(this.logger, revision.extendedAttributes);
             yield {
                 ...revision,

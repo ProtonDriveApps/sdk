@@ -1,11 +1,31 @@
 import { Result } from './result';
 import { Author } from './author';
 
-// Note: Node is reserved by JS/DOM, thus we need exception how the entity is called
+/**
+ * Node representing a file or folder in the system.
+ * 
+ * This covers both happy path and degraded path. It is used in the SDK to
+ * represent the node in a way that is easy to work with. Whenever any field
+ * cannot be decrypted, it is returned as `DegradedNode` type.
+ */
+export type MaybeNode = Result<NodeEntity, DegradedNode>;
+
+/**
+ * Node representing a file or folder in the system.
+ * 
+ * This is a happy path representation of the node. It is used in the SDK to
+ * represent the node in a way that is easy to work with. Whenever any field
+ * cannot be decrypted, it is returned as `DegradedNode` type.
+ * 
+ * SDK never returns this entity directly but wrapped in `MaybeNode`.
+ *
+ * Note on naming: Node is reserved by JS/DOM, thus we need exception how the
+ * entity is called.
+ */
 export type NodeEntity = {
     uid: string,
     parentUid?: string,
-    name: Result<string, InvalidNameError>,
+    name: string,
     /**
      * Author of the node key.
      * 
@@ -35,10 +55,43 @@ export type NodeEntity = {
      */
     createdDate: Date,
     trashedDate?: Date,
-    activeRevision?: Result<Revision, Error>,
+    activeRevision?: Revision,
     folder?: {
         claimedModificationTime?: Date,
     },
+}
+
+/**
+ * Degraded node representing a file or folder in the system.
+ * 
+ * This is a degraded path representation of the node. It is used in the SDK to
+ * represent the node in a way that is easy to work with. Whenever any field
+ * cannot be decrypted, it is returned as `DegradedNode` type.
+ * 
+ * SDK never returns this entity directly but wrapped in `MaybeNode`.
+ * 
+ * The node can be still used around, but it is not guaranteed that all
+ * properties are decrypted, or that all actions can be performed on it.
+ * 
+ * For example, if the node has issue decrypting the name, the name will be
+ * set es `InvalidNameError` and potentially rename or move actions will not be
+ * possible, but download and upload new revision will still work.
+ */
+export type DegradedNode = Omit<NodeEntity, 'name' | 'activeRevision'> & {
+    name: Result<string, InvalidNameError>,
+    activeRevision?: Result<Revision, Error>,
+    /**
+     * If the error is not related to any specific field, it is set here.
+     * 
+     * For example, if the node has issue decrypting the name, the name will be
+     * set es `InvalidNameError` that includes the error, while this will be
+     * empty.
+     * 
+     * On the other hand, if the node has issue decrypting the node key, but
+     * the name is still working, this will include the node key error, while
+     * the name will be set to the decrypted value.
+     */
+    errors?: unknown[],
 }
 
 export type InvalidNameError = {
@@ -79,7 +132,7 @@ export enum RevisionState {
     Superseded = "superseded",
 }
 
-export type NodeOrUid = NodeEntity | string;
+export type NodeOrUid = MaybeNode | NodeEntity | DegradedNode | string;
 export type RevisionOrUid = Revision | string;
 
 export type NodeResult =

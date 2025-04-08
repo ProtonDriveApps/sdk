@@ -1,6 +1,6 @@
-import { NodeEntity } from "../../interface";
+import { DecryptedNode } from "../nodes";
 
 export interface NodesService {
-    getNode(nodeUid: string): Promise<NodeEntity>;
-    iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeEntity>;
+    getNode(nodeUid: string): Promise<DecryptedNode>;
+    iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode>;
 }

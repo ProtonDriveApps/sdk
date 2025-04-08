@@ -1,5 +1,6 @@
 import path from 'node:path';
-import { ProtonDriveClient, NodeEntity, MemberRole } from "../../../sdk/src";
+import { ProtonDriveClient, MaybeNode } from "../../../sdk/src";
+import { getName } from './node';
 
 export enum PathType {
     Root = 'root',
@@ -96,24 +97,24 @@ export class Path {
     }
 
     private async getSharedWithMeRootFolder() {
-        for await (const node of this.sdk.iterateSharedNodesWithMe()) {
-            if (node.name.ok && node.name.value === this.sectionRootNodeName) {
-                return node;
+        for await (const maybeNode of this.sdk.iterateSharedNodesWithMe()) {
+            if (getName(maybeNode) === this.sectionRootNodeName) {
+                return maybeNode;
             }
         }
         throw new Error('Root node not found');
     }
 
     private async getTrashedNode(name: string) {
-        for await (const node of this.sdk.iterateTrashedNodes()) {
-            if (node.name.ok && node.name.value === name) {
-                return node;
+        for await (const maybeNode of this.sdk.iterateTrashedNodes()) {
+            if (getName(maybeNode) === name) {
+                return maybeNode;
             }
         }
         throw new Error('Trashed node not found');
     }
 
-    private async getNodeByPath(parentNode: NodeEntity, pathString: string) {
+    private async getNodeByPath(parentNode: MaybeNode, pathString: string) {
         let node = parentNode;
         const pathParts = pathString.split(path.sep);
         for (const part of pathParts) {
@@ -125,10 +126,10 @@ export class Path {
         return node;
     }
 
-    private async getNodeByName(parentNode: NodeEntity, name: string) {
-        for await (const child of this.sdk.iterateChildren(parentNode)) {
-            if (child.name.ok && child.name.value === name) {
-                return child;
+    private async getNodeByName(parentNode: MaybeNode, name: string) {
+        for await (const maybeChild of this.sdk.iterateChildren(parentNode)) {
+            if (getName(maybeChild) === name) {
+                return maybeChild;
             }
         }
         throw new Error(`Node not found: ${name}`);

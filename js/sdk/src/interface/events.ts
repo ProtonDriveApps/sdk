@@ -1,5 +1,5 @@
 import { Device } from './devices';
-import { NodeEntity, NodeOrUid } from './nodes';
+import { MaybeNode, NodeOrUid } from './nodes';
 
 export interface Events {
     subscribeToRemoteDataUpdates(): void,
@@ -19,7 +19,7 @@ export type NodeEventCallback = (nodeEvent: NodeEvent) => void;
 export type NodeEvent = {
     type: 'update',
     uid: string,
-    node: NodeEntity,
+    node: MaybeNode,
 } | {
     type: 'remove',
     uid: string,
