@@ -16,7 +16,7 @@ export type { Device, DeviceOrUid } from './devices';
 export type { FileDownloader, DownloadController } from './download';
 export type { NodeEvent, DeviceEvent, SDKEvent, DeviceEventCallback, NodeEventCallback } from './events';
 export type { ProtonDriveHTTPClient, ProtonDriveConfig } from './httpClient';
-export type { MaybeNode, NodeEntity, DegradedNode, InvalidNameError, Revision, NodeOrUid, RevisionOrUid, NodeResult } from './nodes';
+export type { MaybeNode, NodeEntity, DegradedNode, MaybeMissingNode, MissingNode, InvalidNameError, Revision, NodeOrUid, RevisionOrUid, NodeResult } from './nodes';
 export { NodeType, MemberRole, RevisionState } from './nodes';
 export type { ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Member, PublicLink, Bookmark, ProtonInvitationOrUid, NonProtonInvitationOrUid, BookmarkOrUid, ShareNodeSettings, UnshareNodeSettings, ShareMembersSettings, SharePublicLinkSettings, ShareResult } from './sharing';
 export { NonProtonInvitationState } from './sharing';

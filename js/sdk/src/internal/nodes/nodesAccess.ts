@@ -1,7 +1,7 @@
 import { c } from 'ttag';
 
 import { PrivateKey, SessionKey } from "../../crypto";
-import { Logger, NodeType, resultError, resultOk } from "../../interface";
+import { Logger, MissingNode, NodeType, resultError, resultOk } from "../../interface";
 import { SDKError } from "../../errors";
 import { BatchLoading } from "../batchLoading";
 import { makeNodeUid } from "../uids";
@@ -119,8 +119,8 @@ export class NodesAccess {
         yield* batchLoading.loadRest();
     }
 
-    async *iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
-        const batchLoading = new BatchLoading<string, DecryptedNode>({ iterateItems: (nodeUids) => this.loadNodes(nodeUids, signal) });
+    async *iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode | MissingNode> {
+        const batchLoading = new BatchLoading<string, DecryptedNode | MissingNode>({ iterateItems: (nodeUids) => this.loadNodesWithMissingReport(nodeUids, signal) });
         for await (const result of this.cache.iterateNodes(nodeUids)) {
             if (result.ok && !result.node.isStale) {
                 yield result.node;
@@ -137,10 +137,30 @@ export class NodesAccess {
     }
 
     private async* loadNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
+        for await (const result of this.loadNodesWithMissingReport(nodeUids, signal)) {
+            if ('missingUid' in result) {
+                continue;
+            }
+            yield result;
+        }
+    }
+
+    private async* loadNodesWithMissingReport(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode | MissingNode> {
         const encryptedNodes = await this.apiService.getNodes(nodeUids, signal);
         for (const encryptedNode of encryptedNodes) {
             const { node } = await this.decryptNode(encryptedNode);
             yield node;
+        }
+
+        const returnedNodeUids = encryptedNodes.map(({ uid }) => uid);
+        const missingNodeUids = nodeUids.filter((nodeUid) => !returnedNodeUids.includes(nodeUid));
+
+        if (missingNodeUids.length) {
+            this.logger.debug(`Removing ${missingNodeUids.length} nodes from cache not existing on the API anymore`);
+            await this.cache.removeNodes(missingNodeUids);
+            for (const missingNodeUid of missingNodeUids) {
+                yield { missingUid: missingNodeUid };
+            }
         }
     }
 

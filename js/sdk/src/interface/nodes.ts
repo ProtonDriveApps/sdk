@@ -11,6 +11,21 @@ import { Author } from './author';
 export type MaybeNode = Result<NodeEntity, DegradedNode>;
 
 /**
+ * Node representing a file or folder in the system, or missing node.
+ * 
+ * In most cases, SDK returns `MaybeNode`, but in some specific cases, when
+ * client is requesting specific nodes, SDK must return `MissingNode` type
+ * to indicate the case when the node is not available. That can be when
+ * the node does not exist, or when the node is not available for the user
+ * (e.g. unshared with the user).
+ */
+export type MaybeMissingNode = Result<NodeEntity, DegradedNode | MissingNode>;
+
+export type MissingNode = {
+    missingUid: string,
+};
+
+/**
  * Node representing a file or folder in the system.
  * 
  * This is a happy path representation of the node. It is used in the SDK to

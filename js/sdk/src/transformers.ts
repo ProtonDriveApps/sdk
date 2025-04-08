@@ -1,4 +1,4 @@
-import { MaybeNode as PublicMaybeNode, NodeEntity as PublicNodeEntity, DegradedNode as PublicDegradedNode, Result, resultOk, resultError } from './interface';
+import { MaybeNode as PublicMaybeNode, MaybeMissingNode as PublicMaybeMissingNode, NodeEntity as PublicNodeEntity, DegradedNode as PublicDegradedNode, Result, resultOk, resultError, MissingNode } from './interface';
 import { DecryptedNode as InternalNode } from './internal/nodes';
 
 type InternalPartialNode = Pick<
@@ -43,6 +43,16 @@ export function getUids(nodeUids: NodeUid[]): string[] {
 export async function *convertInternalNodeIterator(nodeIterator: AsyncGenerator<InternalPartialNode>): AsyncGenerator<PublicMaybeNode> {
     for await (const node of nodeIterator) {
         yield convertInternalNode(node);
+    }
+}
+
+export async function *convertInternalMissingNodeIterator(nodeIterator: AsyncGenerator<InternalPartialNode | MissingNode>): AsyncGenerator<PublicMaybeMissingNode> {
+    for await (const node of nodeIterator) {
+        if ('missingUid' in node) {
+            yield resultError(node);
+        } else {
+            yield convertInternalNode(node);
+        }
     }
 }
 

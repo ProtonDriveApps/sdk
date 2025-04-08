@@ -1,4 +1,4 @@
-import { NodeType, MemberRole, NonProtonInvitationState } from "../../interface";
+import { NodeType, MemberRole, NonProtonInvitationState, MissingNode } from "../../interface";
 import { PrivateKey, SessionKey } from "../../crypto";
 import { EncryptedShare } from "../shares";
 import { DecryptedNode } from "../nodes";
@@ -142,5 +142,5 @@ export interface NodesService {
         passphraseSessionKey: SessionKey,
         nameSessionKey: SessionKey,
     }>,
-    iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode>;
+    iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode | MissingNode>;
 }
