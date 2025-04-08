@@ -1,5 +1,5 @@
 import { PrivateKey, PublicKey, SessionKey } from "../../crypto";
-import { NodeEntity, Revision } from "../../interface";
+import { NodeType, Result, Revision } from "../../interface";
 
 export type BlockMetadata = {
     index: number,
@@ -17,8 +17,14 @@ export type RevisionKeys = {
 }
 
 export interface NodesService {
-    getNode(nodeUid: string): Promise<NodeEntity>,
+    getNode(nodeUid: string): Promise<NodesServiceNode>,
     getNodeKeys(nodeUid: string): Promise<{ key: PrivateKey, contentKeyPacketSessionKey?: SessionKey; }>,
+}
+
+export interface NodesServiceNode {
+    uid: string,
+    type: NodeType,
+    activeRevision?: Result<Revision, Error>,
 }
 
 export interface RevisionsService {

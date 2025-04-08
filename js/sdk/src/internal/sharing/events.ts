@@ -1,4 +1,5 @@
 import { NodeEventCallback, Logger } from "../../interface";
+import { convertInternalNode } from "../../transformers";
 import { DriveEventsService, DriveEvent, DriveEventType } from "../events";
 import { SharingCache } from "./cache";
 import { SharingType, NodesService } from "./interface";
@@ -85,7 +86,7 @@ export async function handleSharedByMeNodes(logger: Logger, event: DriveEvent, c
             logger.error(`Skipping shared by me node update event to listener`, error);
             return;
         }
-        subscribedListeners.forEach(({ callback }) => callback({ type: 'update', uid: node.uid, node }));
+        subscribedListeners.forEach(({ callback }) => callback({ type: 'update', uid: node.uid, node: convertInternalNode(node) }));
     }
 
     if (
@@ -146,7 +147,7 @@ export async function handleSharedWithMeNodes(event: DriveEvent, cache: SharingC
         const nodeUids = [];
         for await (const node of sharingAccess.iterateSharedNodesWithMe()) {
             nodeUids.push(node.uid);
-            subscribedListeners.forEach(({ callback }) => callback({ type: 'update', uid: node.uid, node }));
+            subscribedListeners.forEach(({ callback }) => callback({ type: 'update', uid: node.uid, node: convertInternalNode(node) }));
         }
         for (const nodeUid of cachedNodeUids) {
             if (!nodeUids.includes(nodeUid)) {

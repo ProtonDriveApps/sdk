@@ -20,7 +20,7 @@ describe("handleSharedByMeNodes", () => {
         };
         // @ts-expect-error No need to implement all methods for mocking
         nodesService = {
-            getNode: jest.fn().mockResolvedValue({ uid: 'nodeUid' }),
+            getNode: jest.fn().mockResolvedValue({ uid: 'nodeUid', name: { ok: true, value: 'name' } }),
         };
     });
 
@@ -166,7 +166,7 @@ describe("handleSharedByMeNodes", () => {
     
                 if (added) {
                     expect(cache.addSharedByMeNodeUid).toHaveBeenCalledWith("nodeUid");
-                    expect(listener).toHaveBeenCalledWith({ type: 'update', uid: 'nodeUid', node: { uid: 'nodeUid'} });
+                    expect(listener).toHaveBeenCalledWith(expect.objectContaining({ type: 'update', uid: 'nodeUid' }));
                 } else {
                     expect(cache.addSharedByMeNodeUid).not.toHaveBeenCalled();
                 }
@@ -245,9 +245,9 @@ describe("handleSharedWithMeNodes", () => {
     it("should update cache and notify listener", async () => {
         cache.getSharedWithMeNodeUids = jest.fn().mockResolvedValue(["nodeUid1", "nodeUid4"]);
         sharingAccess.iterateSharedNodesWithMe = jest.fn().mockImplementation(async function* () {
-            yield { uid: "nodeUid1" };
-            yield { uid: "nodeUid2" };
-            yield { uid: "nodeUid3" };
+            yield { uid: "nodeUid1", name: { ok: true, value: "name1" } };
+            yield { uid: "nodeUid2", name: { ok: true, value: "name2" } };
+            yield { uid: "nodeUid3", name: { ok: true, value: "name3" } };
         });
         const listener = jest.fn();
         const event: DriveEvent = {
@@ -260,9 +260,9 @@ describe("handleSharedWithMeNodes", () => {
         expect(cache.getSharedWithMeNodeUids).toHaveBeenCalled();
         expect(sharingAccess.iterateSharedNodesWithMe).toHaveBeenCalled();
         expect(listener).toHaveBeenCalledTimes(4);
-        expect(listener).toHaveBeenCalledWith({ type: 'update', uid: 'nodeUid1', node: { uid: 'nodeUid1'} });
-        expect(listener).toHaveBeenCalledWith({ type: 'update', uid: 'nodeUid2', node: { uid: 'nodeUid2'} });
-        expect(listener).toHaveBeenCalledWith({ type: 'update', uid: 'nodeUid3', node: { uid: 'nodeUid3'} });
+        expect(listener).toHaveBeenCalledWith(expect.objectContaining({ type: 'update', uid: 'nodeUid1' }));
+        expect(listener).toHaveBeenCalledWith(expect.objectContaining({ type: 'update', uid: 'nodeUid2' }));
+        expect(listener).toHaveBeenCalledWith(expect.objectContaining({ type: 'update', uid: 'nodeUid3' }));
         expect(listener).toHaveBeenCalledWith({ type: 'remove', uid: 'nodeUid4' });
     });
 });

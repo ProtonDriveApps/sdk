@@ -1,6 +1,7 @@
-import { NodeEntity, NodeType, MemberRole, NonProtonInvitationState } from "../../interface";
+import { NodeType, MemberRole, NonProtonInvitationState } from "../../interface";
 import { PrivateKey, SessionKey } from "../../crypto";
 import { EncryptedShare } from "../shares";
+import { DecryptedNode } from "../nodes";
 
 export enum SharingType {
     SharedByMe = 'sharedByMe',
@@ -134,12 +135,12 @@ export interface SharesService {
  * Interface describing the dependencies to the nodes module.
  */
 export interface NodesService {
-    getNode(nodeUid: string): Promise<NodeEntity & { shareId?: string }>,
+    getNode(nodeUid: string): Promise<DecryptedNode>,
     getNodeKeys(nodeUid: string): Promise<{ key: PrivateKey }>,
     getNodePrivateAndSessionKeys(nodeUid: string): Promise<{
         key: PrivateKey,
         passphraseSessionKey: SessionKey,
         nameSessionKey: SessionKey,
     }>,
-    iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeEntity>;
+    iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode>;
 }

@@ -1,7 +1,8 @@
 import { c } from 'ttag';
 
-import { NodeEntity, ProtonInvitationWithNode } from "../../interface";
+import { ProtonInvitationWithNode } from "../../interface";
 import { ValidationError } from "../../errors";
+import { DecryptedNode } from "../nodes";
 import { BatchLoading } from "../batchLoading";
 import { SharingAPIService } from "./apiService";
 import { SharingCache } from "./cache";
@@ -30,7 +31,7 @@ export class SharingAccess {
         this.nodesService = nodesService;
     }
 
-    async* iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<NodeEntity> {
+    async* iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
         try {
             const nodeUids = await this.cache.getSharedByMeNodeUids();
             yield* this.iterateSharedNodesFromCache(nodeUids, signal);
@@ -41,7 +42,7 @@ export class SharingAccess {
         }
     }
 
-    async* iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<NodeEntity> {
+    async* iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
         try {
             const nodeUids = await this.cache.getSharedWithMeNodeUids();
             yield* this.iterateSharedNodesFromCache(nodeUids, signal);
@@ -52,7 +53,7 @@ export class SharingAccess {
     }
 
     private async* iterateSharedNodesFromCache(nodeUids: string[], signal?: AbortSignal) {
-        const batchLoading = new BatchLoading<string, NodeEntity>({ iterateItems: (nodeUids) => this.nodesService.iterateNodes(nodeUids, signal) });
+        const batchLoading = new BatchLoading<string, DecryptedNode>({ iterateItems: (nodeUids) => this.nodesService.iterateNodes(nodeUids, signal) });
         for (const nodeUid of nodeUids) {
             yield* batchLoading.load(nodeUid);
         }
@@ -63,9 +64,9 @@ export class SharingAccess {
         nodeUidsIterator: AsyncGenerator<string>,
         setCache: (nodeUids: string[]) => Promise<void>,
         signal?: AbortSignal,
-    ): AsyncGenerator<NodeEntity> {
+    ): AsyncGenerator<DecryptedNode> {
         const loadedNodeUids = [];
-        const batchLoading = new BatchLoading<string, NodeEntity>({ iterateItems: (nodeUids) => this.nodesService.iterateNodes(nodeUids, signal) });
+        const batchLoading = new BatchLoading<string, DecryptedNode>({ iterateItems: (nodeUids) => this.nodesService.iterateNodes(nodeUids, signal) });
         for await (const nodeUid of nodeUidsIterator) {
             loadedNodeUids.push(nodeUid);
             yield* batchLoading.load(nodeUid);

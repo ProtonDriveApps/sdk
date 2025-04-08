@@ -1,5 +1,4 @@
-import { ValidationError } from '../../errors';
-import { NodeEntity, NodeType, Revision } from '../../interface';
+import { Revision } from '../../interface';
 import { FileDownloader } from './fileDownloader';
 import { DownloadTelemetry } from './telemetry';
 import { DownloadAPIService } from './apiService';

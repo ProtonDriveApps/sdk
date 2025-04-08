@@ -1,4 +1,5 @@
 import { Logger, NodeEventCallback } from "../../interface";
+import { convertInternalNode } from "../../transformers";
 import { DriveEventsService, DriveEvent, DriveEventType } from "../events";
 import { DecryptedNode } from "./interface";
 import { NodesCache } from "./cache";
@@ -173,7 +174,7 @@ export async function notifyListenersByEvent(logger: Logger, event: DriveEvent, 
                 logger.error(`Skipping node update event to listener`, error);
                 return;
             }
-            subscribedListeners.forEach(({ callback }) => callback({ type: 'update', uid: node.uid, node }));
+            subscribedListeners.forEach(({ callback }) => callback({ type: 'update', uid: node.uid, node: convertInternalNode(node) }));
         }
     }
 

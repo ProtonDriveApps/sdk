@@ -63,18 +63,35 @@ export type MetricsDownloadErrorType =
 export interface MetricDecryptionErrorEvent {
     eventName: 'decryptionError',
     context: MetricContext,
-    entity: 'share' | 'node' | 'content',
+    field: MetricsDecryptionErrorField,
     fromBefore2024?: boolean,
     error?: unknown,
 };
+export type MetricsDecryptionErrorField =
+    'shareKey' |
+    'nodeKey' |
+    'nodeName' |
+    'nodeHashKey' |
+    'nodeFolderExtendedAttributes' |
+    'nodeActiveRevision' |
+    'nodeContentKey' |
+    'content';
 
 export interface MetricVerificationErrorEvent {
     eventName: 'verificationError',
     context: MetricContext,
-    verificationKey: 'ShareAddress' | 'NodeKey' | 'SignatureEmail' | 'NameSignatureEmail' | 'other',
+    field: MetricVerificationErrorField,
     addressMatchingDefaultShare?: boolean,
     fromBefore2024?: boolean,
 };
+export type MetricVerificationErrorField =
+    'shareKey' |
+    'nodeKey' |
+    'nodeName' |
+    'nodeHashKey' |
+    'nodeExtendedAttributes' |
+    'nodeContentKey' |
+    'content';
 
 export interface MetricVolumeEventsSubscriptionsChangedEvent {
     eventName: 'volumeEventsSubscriptionsChanged',

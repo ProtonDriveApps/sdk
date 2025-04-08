@@ -15,7 +15,7 @@ describe("updateCacheByEvent", () => {
 
         // @ts-expect-error No need to implement all methods for mocking
         cache = {
-            getNode: jest.fn(),
+            getNode: jest.fn(() => Promise.resolve({ uid: '123', name: { ok: true, value: 'name' } } as DecryptedNode)),
             setNode: jest.fn(),
             removeNodes: jest.fn(),
             resetFolderChildrenLoaded: jest.fn(),
@@ -57,13 +57,11 @@ describe("updateCacheByEvent", () => {
         };
 
         it("should update cache if present in cache", async () => {
-            cache.getNode = jest.fn(() => Promise.resolve({ uid: '123' } as DecryptedNode));
-
             await updateCacheByEvent(logger, event, cache);
 
             expect(cache.getNode).toHaveBeenCalledTimes(1);
             expect(cache.setNode).toHaveBeenCalledTimes(1);
-            expect(cache.setNode).toHaveBeenCalledWith({ uid: '123', isStale: true, parentUid: "parentUid" });
+            expect(cache.setNode).toHaveBeenCalledWith(expect.objectContaining({ uid: '123', isStale: true, parentUid: "parentUid" }));
         });
 
         it("should skip if missing in cache", async () => {
@@ -76,7 +74,6 @@ describe("updateCacheByEvent", () => {
         });
 
         it("should remove from cache if not possible to set", async () => {
-            cache.getNode = jest.fn(() => Promise.resolve({ uid: '123' } as DecryptedNode));
             cache.setNode = jest.fn(() => Promise.reject(new Error('Cannot set node')));
 
             await updateCacheByEvent(logger, event, cache);
@@ -86,7 +83,6 @@ describe("updateCacheByEvent", () => {
         });
 
         it("should throw if remove fails", async () => {
-            cache.getNode = jest.fn(() => Promise.resolve({ uid: '123' } as DecryptedNode));
             cache.setNode = jest.fn(() => Promise.reject(new Error('Cannot set node')));
             cache.removeNodes = jest.fn(() => Promise.reject(new Error('Cannot remove node')));
 
@@ -126,7 +122,7 @@ describe("notifyListenersByEvent", () => {
         };
         // @ts-expect-error No need to implement all methods for mocking
         nodesAccess = {
-            getNode: jest.fn(() => Promise.resolve({ uid: 'nodeUid' } as DecryptedNode)),
+            getNode: jest.fn(() => Promise.resolve({ uid: 'nodeUid', name: { ok: true, value: 'name' } } as DecryptedNode)),
         };
     });
 
@@ -145,7 +141,7 @@ describe("notifyListenersByEvent", () => {
             await notifyListenersByEvent(logger, event, [{ condition: ({ parentNodeUid }) => parentNodeUid === 'parentUid', callback: listener }], cache, nodesAccess);
     
             expect(listener).toHaveBeenCalledTimes(1);
-            expect(listener).toHaveBeenCalledWith({ type: 'update', uid: 'nodeUid', node: { uid: 'nodeUid'} });
+            expect(listener).toHaveBeenCalledWith(expect.objectContaining({ type: 'update', uid: 'nodeUid' }));
             expect(nodesAccess.getNode).toHaveBeenCalledTimes(1);
         });
 
@@ -163,7 +159,7 @@ describe("notifyListenersByEvent", () => {
             await notifyListenersByEvent(logger, event, [{ condition: ({ isTrashed }) => !!isTrashed, callback: listener }], cache, nodesAccess);
     
             expect(listener).toHaveBeenCalledTimes(1);
-            expect(listener).toHaveBeenCalledWith({ type: 'update', uid: 'nodeUid', node: { uid: 'nodeUid'} });
+            expect(listener).toHaveBeenCalledWith(expect.objectContaining({ type: 'update', uid: 'nodeUid' }));
             expect(nodesAccess.getNode).toHaveBeenCalledTimes(1);
         });
 
@@ -181,7 +177,7 @@ describe("notifyListenersByEvent", () => {
             await notifyListenersByEvent(logger, event, [{ condition: ({ isShared }) => !!isShared, callback: listener }], cache, nodesAccess);
     
             expect(listener).toHaveBeenCalledTimes(1);
-            expect(listener).toHaveBeenCalledWith({ type: 'update', uid: 'nodeUid', node: { uid: 'nodeUid'} });
+            expect(listener).toHaveBeenCalledWith(expect.objectContaining({ type: 'update', uid: 'nodeUid' }));
             expect(nodesAccess.getNode).toHaveBeenCalledTimes(1);
         });
 

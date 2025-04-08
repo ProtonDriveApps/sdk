@@ -1,4 +1,4 @@
-import { NodeEntity as PublicNode } from './interface';
+import { MaybeNode as PublicMaybeNode, NodeEntity as PublicNodeEntity, DegradedNode as PublicDegradedNode, Result, resultOk, resultError } from './interface';
 import { DecryptedNode as InternalNode } from './internal/nodes';
 
 type InternalPartialNode = Pick<
@@ -15,36 +15,46 @@ type InternalPartialNode = Pick<
     'createdDate' |
     'trashedDate' |
     'activeRevision' |
-    'folder'
+    'folder' |
+    'errors'
 >;
 
-export function getUid(nodeUid: string | { uid: string }): string {
+type NodeUid = string | { uid: string } | Result<{ uid: string }, { uid: string }>;
+
+export function getUid(nodeUid: NodeUid): string {
     if (typeof nodeUid === "string") {
         return nodeUid;
     }
-    return nodeUid.uid;
+    // Directly passed NodeEntity or DegradedNode that has UID directly.
+    if ('uid' in nodeUid) {
+        return nodeUid.uid;
+    }
+    // MaybeNode that can be either NodeEntity or DegradedNode.
+    if (nodeUid.ok) {
+        return nodeUid.value.uid;
+    }
+    return nodeUid.error.uid;
 }
 
-export function getUids(nodeUids: (string | { uid: string })[]): string[] {
+export function getUids(nodeUids: NodeUid[]): string[] {
     return nodeUids.map(getUid);
 }
 
-export async function *convertInternalNodeIterator(nodeIterator: AsyncGenerator<InternalPartialNode>): AsyncGenerator<PublicNode> {
+export async function *convertInternalNodeIterator(nodeIterator: AsyncGenerator<InternalPartialNode>): AsyncGenerator<PublicMaybeNode> {
     for await (const node of nodeIterator) {
         yield convertInternalNode(node);
     }
 }
 
-export async function convertInternalNodePromise(nodePromise: Promise<InternalPartialNode>): Promise<PublicNode> {
+export async function convertInternalNodePromise(nodePromise: Promise<InternalPartialNode>): Promise<PublicMaybeNode> {
     const node = await nodePromise;
     return convertInternalNode(node);
 }
 
-export function convertInternalNode(node: InternalPartialNode): PublicNode {
-    return {
+export function convertInternalNode(node: InternalPartialNode): PublicMaybeNode {
+    const baseNodeMetadata = {
         uid: node.uid,
         parentUid: node.parentUid,
-        name: node.name,
         keyAuthor: node.keyAuthor,
         nameAuthor: node.nameAuthor,
         directMemberRole: node.directMemberRole,
@@ -53,7 +63,24 @@ export function convertInternalNode(node: InternalPartialNode): PublicNode {
         isShared: node.isShared,
         createdDate: node.createdDate,
         trashedDate: node.trashedDate,
-        activeRevision: node.activeRevision,
         folder: node.folder,
     };
+
+    const name = node.name;
+    const activeRevision = node.activeRevision;
+
+    if (node.errors?.length || !name.ok || (activeRevision && !activeRevision.ok)) {
+        return resultError({
+            ...baseNodeMetadata,
+            name,
+            activeRevision,
+            errors: node.errors,
+        } as PublicDegradedNode);
+    }
+
+    return resultOk({
+        ...baseNodeMetadata,
+        name: name.value,
+        activeRevision: activeRevision?.value,
+    } as PublicNodeEntity);
 }
