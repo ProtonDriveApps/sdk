@@ -1,10 +1,27 @@
+import bcrypt from 'bcryptjs';
 import { c } from 'ttag';
 
-import { DriveCrypto, PrivateKey, SessionKey, VERIFICATION_STATUS } from '../../crypto';
-import { ProtonDriveAccount, ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Author, Result, Member, UnverifiedAuthorError, InvalidNameError, resultError, resultOk } from "../../interface";
+import { DriveCrypto, PrivateKey, SessionKey, uint8ArrayToBase64String, VERIFICATION_STATUS } from '../../crypto';
+import { ProtonDriveAccount, ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Author, Result, Member, UnverifiedAuthorError, InvalidNameError, resultError, resultOk, PublicLink } from "../../interface";
 import { getErrorMessage, getVerificationMessage } from "../errors";
 import { EncryptedShare } from "../shares";
-import { EncryptedInvitation, EncryptedInvitationWithNode, EncryptedExternalInvitation, EncryptedMember } from "./interface";
+import { EncryptedInvitation, EncryptedInvitationWithNode, EncryptedExternalInvitation, EncryptedMember, EncryptedPublicLink } from "./interface";
+
+// Version 2 of bcrypt with 2**10 rounds.
+// https://en.wikipedia.org/wiki/Bcrypt#Description
+const BCRYPT_PREFIX = '$2y$10$';
+
+const PUBLIC_LINK_GENERATED_PASSWORD_LENGTH = 12;
+
+// We do not support management of legacy public links anymore (that is no
+// flag or bit 1). But we still need to support to read the legacy public
+// link.
+enum PublicLinkFlags {
+    Legacy = 0,
+    CustomPassword = 1,
+    GeneratedPasswordIncluded = 2,
+    GeneratedPasswordWithCustomPassword = 3,
+}
 
 /**
  * Provides crypto operations for sharing.
@@ -253,5 +270,89 @@ export class SharingCryptoService {
             inviteeEmail: encryptedMember.inviteeEmail,
             role: encryptedMember.role,
         };
+    }
+
+    async encryptPublicLink(): Promise<void> {
+        const password = await this.generatePassword();
+        await this.computeKeySaltAndPassphrase(password);
+        // TODO: finish creation of public links
+    }
+
+    private async generatePassword(): Promise<string> {
+        const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const values = crypto.getRandomValues(new Uint32Array(length));
+
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += charset[values[i] % charset.length];
+        }
+
+        return result;
+    }
+
+    private async computeKeySaltAndPassphrase(password: string) {
+        if (!password) {
+            throw new Error('Password required.');
+        }
+
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const hash: string = await bcrypt.hash(password, BCRYPT_PREFIX + bcrypt.encodeBase64(salt, 16));
+        // Remove bcrypt prefix and salt (first 29 characters)
+        const passphrase = hash.slice(29);
+
+        return {
+            base64Salt: uint8ArrayToBase64String(salt),
+            passphrase,
+        }
+    };
+
+    async decryptPublicLink(shareAddressId: string, encryptedPublicLink: EncryptedPublicLink): Promise<PublicLink> {
+        const address = await this.account.getOwnAddress(shareAddressId);
+        const addressKeys = address.keys.map(({ key }) => key);
+
+        const { password, customPassword } = await this.decryptShareUrlPassword(
+            encryptedPublicLink,
+            addressKeys,
+        );
+
+        return {
+            uid: encryptedPublicLink.uid,
+            createDate: encryptedPublicLink.createDate,
+            expireDate: encryptedPublicLink.expireDate,
+            role: encryptedPublicLink.role,
+            url: `${encryptedPublicLink.publicUrl}#${password}`,
+            customPassword,
+        }
+    }
+
+    private async decryptShareUrlPassword(
+        encryptedPublicLink: EncryptedPublicLink,
+        addressKeys: PrivateKey[],
+    ): Promise<{
+        password: string,
+        customPassword?: string,
+    }> {
+        const password = await this.driveCrypto.decryptShareUrlPassword(
+            encryptedPublicLink.armoredUrlPassword,
+            addressKeys,
+        );
+
+        switch (encryptedPublicLink.flags) {
+            // This is legacy that is not supported anymore.
+            // Availalbe only for reading.
+            case PublicLinkFlags.Legacy:
+            case PublicLinkFlags.CustomPassword:
+                return {
+                    password,
+                }
+            case PublicLinkFlags.GeneratedPasswordIncluded:
+            case PublicLinkFlags.GeneratedPasswordWithCustomPassword:
+                return {
+                    password: password.substring(0, PUBLIC_LINK_GENERATED_PASSWORD_LENGTH),
+                    customPassword: password.substring(PUBLIC_LINK_GENERATED_PASSWORD_LENGTH) || undefined,
+                }
+            default:
+                throw new Error(`Unsupported public link with flags: ${encryptedPublicLink.flags}`);
+        }
     }
 }

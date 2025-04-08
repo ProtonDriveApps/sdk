@@ -31,12 +31,11 @@ export enum NonProtonInvitationState {
 
 export type PublicLink = {
     uid: string,
-    createDate: string,
+    createDate: Date,
     role: MemberRole,
     url: string,
-    password: string,
-    customPassword: string,
-    expirationDate: Date,
+    customPassword?: string,
+    expireDate?: Date,
 }
 
 export type Bookmark = {

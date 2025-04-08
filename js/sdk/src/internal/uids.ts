@@ -37,6 +37,19 @@ export function splitMemberUid(memberUid: string) {
     return { shareId, memberId };
 }
 
+export function makePublicLinkUid(shareId: string, publicLinkId: string) {
+    return `${shareId}~${publicLinkId}`;
+}
+
+export function splitPublicLinkUid(publicLinkUid: string) {
+    const parts = publicLinkUid.split('~');
+    if (parts.length !== 2) {
+        throw new Error(`"${publicLinkUid}" is not valid public link UID`);
+    }
+    const [ shareId, publicLinkId ] = parts;
+    return { shareId, publicLinkId };
+}
+
 export function makeNodeRevisionUid(volumeId: string, nodeId: string, revisionId: string) {
     return `${volumeId}~${nodeId}~${revisionId}`;
 }

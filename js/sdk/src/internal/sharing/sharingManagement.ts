@@ -4,6 +4,7 @@ import { SessionKey } from "../../crypto";
 import { ValidationError } from "../../errors";
 import { Logger, PublicLink, MemberRole, ShareNodeSettings, UnshareNodeSettings, SharePublicLinkSettings, ShareResult, ProtonInvitation, NonProtonInvitation, Member, resultOk, ProtonDriveAccount } from "../../interface";
 import { splitNodeUid } from "../uids";
+import { getErrorMessage } from '../errors';
 import { SharingAPIService } from "./apiService";
 import { SharingCryptoService } from "./cryptoService";
 import { SharesService, NodesService } from "./interface";
@@ -89,10 +90,26 @@ export class SharingManagement {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private async getPublicLink(shareId: string): Promise<PublicLink | undefined> {
-        // TODO
-        return undefined;
+        // FIXME: address ID is not set when user is not member of the share.
+        // Users cannot manage other shares yet (admin role is not supported
+        // yet). But owners will stop being members and we need to keep this
+        // working. Simple solution is to use the volume email key address ID
+        // as that should be used for public links, but some older links that
+        // did not follow this logic might not be able to decrypt once the
+        // owner is not member by default.
+        const encryptedShare = await this.sharesService.loadEncryptedShare(shareId);
+        let addressId = encryptedShare.addressId;
+        if (!addressId) {
+            const volumeEmailKey = await this.sharesService.getVolumeEmailKey(encryptedShare.volumeId);
+            addressId = volumeEmailKey.addressId;
+        }
+
+        const encryptedPublicLink = await this.apiService.getPublicLink(shareId);
+        if (!encryptedPublicLink) {
+            return;
+        }
+        return this.cryptoService.decryptPublicLink(addressId, encryptedPublicLink);
     }
 
     async shareNode(nodeUid: string, settings: ShareNodeSettings): Promise<ShareResult> {
@@ -260,9 +277,36 @@ export class SharingManagement {
         }
 
         if (settings.publicLink === 'remove') {
-            this.logger.info(`Removing public link to node ${nodeUid}`);
-            await this.removeSharedLink(currentSharing.share);
+            if (currentSharing.publicLink) {
+                this.logger.info(`Removing public link to node ${nodeUid}`);
+                await this.removeSharedLink(currentSharing.publicLink.uid);
+            } else {
+                this.logger.info(`Public link not found for node ${nodeUid}`);
+            }
             currentSharing.publicLink = undefined;
+        }
+
+        if (
+            currentSharing.protonInvitations.length === 0 &&
+            currentSharing.nonProtonInvitations.length === 0 &&
+            currentSharing.members.length === 0 &&
+            !currentSharing.publicLink
+        ) {
+            // Technically it is not needed to delete the share explicitly
+            // as it will be deleted when the last member is removed by the
+            // backend, but that might take a while and it is better to
+            // update local state immediately.
+            this.logger.info(`Deleting share ${currentSharing.share.shareId} for node ${nodeUid}`);
+            try {
+                await this.deleteShare(currentSharing.share.shareId);
+            } catch (error: unknown) {
+                // If deleting the share fails, we don't want to throw an error
+                // as it might be a race condition that other client updated
+                // the share and it is not empty.
+                // If share is truly empty, backend will delete it eventually.
+                this.logger.warn(`Failed to delete share ${currentSharing.share.shareId} for node ${nodeUid}: ${getErrorMessage(error)}`);
+            }
+            return;
         }
 
         return {
@@ -417,8 +461,7 @@ export class SharingManagement {
         // TODO
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private async removeSharedLink(share: Share): Promise<void> {
-        // TODO
+    private async removeSharedLink(publicLinkUid: string): Promise<void> {
+        await this.apiService.removePublicLink(publicLinkUid);
     }
 }

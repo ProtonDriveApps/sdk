@@ -17,6 +17,7 @@ import { CommandRevisionList } from './commandRevisionList';
 import { CommandRevisionRestore } from './commandRevisionRestore';
 import { CommandSharingInvite } from "./commandSharingInvite";
 import { CommandSharingRemove } from "./commandSharingRemove";
+import { CommandSharingRemoveUrl } from "./commandSharingRemoveUrl";
 import { CommandSharingStatus } from "./commandSharingStatus";
 import { Command } from './interface';
 
@@ -39,6 +40,7 @@ const COMMANDS = [
     new CommandSharingStatus(),
     new CommandSharingInvite(),
     new CommandSharingRemove(),
+    new CommandSharingRemoveUrl(),
     new CommandInvitationList(),
 ];
 

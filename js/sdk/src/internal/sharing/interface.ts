@@ -107,6 +107,20 @@ export interface EncryptedBookmark {
     };
 }
 
+export interface EncryptedPublicLink {
+    uid: string,
+    createDate: Date,
+    expireDate?: Date,
+    role: MemberRole,
+    flags: number,
+    creatorEmail: string,
+    publicUrl: string,
+    armoredUrlPassword: string,
+    urlPasswordSalt: string,
+    base64SharePassphraseKeyPacket: string,
+    sharePassphraseSalt: string,
+}
+
 /**
  * Interface describing the dependencies to the shares module.
  */
