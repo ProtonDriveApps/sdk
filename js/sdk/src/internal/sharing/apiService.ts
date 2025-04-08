@@ -1,7 +1,7 @@
 import { NodeType, MemberRole, NonProtonInvitationState, Logger } from "../../interface";
 import { DriveAPIService, drivePaths, nodeTypeNumberToNodeType, permissionsToDirectMemberRole, memberRoleToPermission } from "../apiService";
-import { makeNodeUid, splitNodeUid, makeInvitationUid, splitInvitationUid, makeMemberUid, splitMemberUid } from "../uids";
-import { EncryptedInvitationRequest, EncryptedInvitation, EncryptedInvitationWithNode, EncryptedExternalInvitation, EncryptedMember, EncryptedBookmark, EncryptedExternalInvitationRequest } from "./interface";
+import { makeNodeUid, splitNodeUid, makeInvitationUid, splitInvitationUid, makeMemberUid, splitMemberUid, makePublicLinkUid, splitPublicLinkUid } from "../uids";
+import { EncryptedInvitationRequest, EncryptedInvitation, EncryptedInvitationWithNode, EncryptedExternalInvitation, EncryptedMember, EncryptedBookmark, EncryptedExternalInvitationRequest, EncryptedPublicLink } from "./interface";
 
 type GetSharedNodesResponse = drivePaths['/drive/v2/volumes/{volumeID}/shares']['get']['responses']['200']['content']['application/json'];
 
@@ -39,6 +39,8 @@ type PutUpdateExternalInvitationResponse = drivePaths['/drive/v2/shares/{shareID
 
 type PostUpdateMemberRequest = Extract<drivePaths['/drive/v2/shares/{shareID}/members/{memberID}']['put']['requestBody'], { 'content': object }>['content']['application/json'];
 type PostUpdateMemberResponse = drivePaths['/drive/v2/shares/{shareID}/members/{memberID}']['put']['responses']['200']['content']['application/json'];
+
+type GetShareUrlsResponse = drivePaths['/drive/shares/{shareID}/urls']['get']['responses']['200']['content']['application/json'];
 
 /**
  * Provides API communication for fetching and managing sharing.
@@ -341,6 +343,37 @@ export class SharingAPIService {
         await this.apiService.delete(`drive/v2/shares/${shareId}/members/${memberId}`);
     }
 
+    async getPublicLink(shareId: string): Promise<EncryptedPublicLink | undefined> {
+        const response = await this.apiService.get<GetShareUrlsResponse>(`drive/shares/${shareId}/urls`);
+
+        if (!response.ShareURLs || response.ShareURLs.length === 0) {
+            return undefined;
+        }
+        if (response.ShareURLs.length > 1) {
+            this.logger.warn('Multiple share URLs found, using the first one');
+        }
+        const shareUrl = response.ShareURLs[0];
+
+        return {
+            uid: makePublicLinkUid(shareUrl.ShareID, shareUrl.ShareURLID),
+            createDate: new Date(shareUrl.CreateTime*1000),
+            expireDate: shareUrl.ExpirationTime ? new Date(shareUrl.ExpirationTime*1000) : undefined,
+            role: permissionsToDirectMemberRole(this.logger, shareUrl.Permissions),
+            flags: shareUrl.Flags,
+            creatorEmail: shareUrl.CreatorEmail,
+            publicUrl: shareUrl.PublicUrl,
+            armoredUrlPassword: shareUrl.Password,
+            urlPasswordSalt: shareUrl.UrlPasswordSalt,
+            base64SharePassphraseKeyPacket: shareUrl.SharePassphraseKeyPacket,
+            sharePassphraseSalt: shareUrl.SharePasswordSalt,
+        };
+    }
+
+    async removePublicLink(publicLinkUid: string): Promise<void> {
+        const { shareId, publicLinkId } = splitPublicLinkUid(publicLinkUid);
+        await this.apiService.delete(`drive/shares/${shareId}/urls/${publicLinkId}`);
+    }
+
     private convertInternalInvitation(shareId: string, invitation: GetShareInvitations['Invitations'][0]): EncryptedInvitation {
         return {
             uid: makeInvitationUid(shareId, invitation.InvitationID),
@@ -365,5 +398,4 @@ export class SharingAPIService {
             state,
         }
     }
-    
 }

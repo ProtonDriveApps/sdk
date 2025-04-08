@@ -505,4 +505,15 @@ export class DriveCrypto {
             verified,
         }
     }
+
+    async decryptShareUrlPassword(
+        armoredPassword: string,
+        decryptionKeys: PrivateKey[],
+    ): Promise<string> {
+        const password = await this.openPGPCrypto.decryptArmored(
+            armoredPassword,
+            decryptionKeys,
+        );
+        return new TextDecoder().decode(password);
+    }
 }
