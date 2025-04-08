@@ -1,8 +1,5 @@
-import { c } from 'ttag';
-
 import { PrivateKey, SessionKey, base64StringToUint8Array } from "../../crypto";
-import { ValidationError } from "../../errors";
-import { Logger, NodeEntity, NodeType, Revision } from "../../interface";
+import { Logger, Revision } from "../../interface";
 import { LoggerWithPrefix } from "../../telemetry";
 import { APIHTTPError, HTTPErrorCode } from '../apiService';
 import { DownloadAPIService } from "./apiService";
@@ -21,9 +18,6 @@ const MAX_DOWNLOAD_BLOCK_SIZE = 10;
 export class FileDownloader {
     private logger: Logger;
 
-    private nodeKey: { key: PrivateKey, contentKeyPacketSessionKey: SessionKey }
-    private revision: Revision;
-
     private controller: DownloadController;
     private nextBlockIndex = 1;
     private ongoingDownloads = new Map<number, {
@@ -35,34 +29,19 @@ export class FileDownloader {
         private telemetry: DownloadTelemetry,
         private apiService: DownloadAPIService,
         private cryptoService: DownloadCryptoService,
-        nodeKey: { key: PrivateKey, contentKeyPacketSessionKey?: SessionKey },
-        node: NodeEntity,
+        private nodeKey: { key: PrivateKey, contentKeyPacketSessionKey: SessionKey },
+        private revision: Revision,
         private signal?: AbortSignal,
         private onFinish?: () => void,
     ) {
         this.telemetry = telemetry;
-        this.logger = telemetry.getLoggerForNode(node.uid);
+        this.logger = telemetry.getLoggerForRevision(revision.uid);
         this.apiService = apiService;
         this.cryptoService = cryptoService;
+        this.nodeKey = nodeKey;
+        this.revision = revision;
         this.signal = signal;
         this.onFinish = onFinish;
-
-        if (node.type === NodeType.Folder) {
-            throw new ValidationError(c("Error").t`Cannot download a folder`);
-        }
-        if (!node.activeRevision?.ok || !node.activeRevision.value) {
-            throw new ValidationError(c("Error").t`File has no active revision`);
-        }
-        if (!nodeKey.contentKeyPacketSessionKey) {
-            throw new ValidationError(c("Error").t`File has no content key`);
-        }
-
-        this.nodeKey = {
-            key: nodeKey.key,
-            contentKeyPacketSessionKey: nodeKey.contentKeyPacketSessionKey,
-        };
-        this.revision = node.activeRevision.value;
-
         this.controller = new DownloadController();
     }
 

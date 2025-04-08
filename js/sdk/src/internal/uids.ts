@@ -49,3 +49,8 @@ export function splitNodeRevisionUid(nodeRevisionUid: string) {
     const [ volumeId, nodeId, revisionId ] = parts;
     return { volumeId, nodeId, revisionId };
 }
+
+export function makeNodeUidFromRevisionUid(nodeRevisionUid: string) {
+    const { volumeId, nodeId } = splitNodeRevisionUid(nodeRevisionUid);
+    return makeNodeUid(volumeId, nodeId);
+}

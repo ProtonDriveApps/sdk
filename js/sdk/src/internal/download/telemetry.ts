@@ -8,9 +8,9 @@ export class DownloadTelemetry {
         this.telemetry = telemetry;
     }
 
-    getLoggerForNode(nodeUid: string) {
+    getLoggerForRevision(revisionUid: string) {
         const logger = this.telemetry.getLogger("download");
-        return new LoggerWithPrefix(logger, `node ${nodeUid}`);
+        return new LoggerWithPrefix(logger, `revision ${revisionUid}`);
     }
 
     downloadInitFailed(error: unknown) {
