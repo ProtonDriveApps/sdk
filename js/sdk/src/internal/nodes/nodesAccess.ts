@@ -146,13 +146,14 @@ export class NodesAccess {
     }
 
     private async* loadNodesWithMissingReport(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode | MissingNode> {
-        const encryptedNodes = await this.apiService.getNodes(nodeUids, signal);
-        for (const encryptedNode of encryptedNodes) {
+        const returnedNodeUids: string[] = [];
+
+        for await (const encryptedNode of this.apiService.iterateNodes(nodeUids, signal)) {
+            returnedNodeUids.push(encryptedNode.uid);
             const { node } = await this.decryptNode(encryptedNode);
             yield node;
         }
 
-        const returnedNodeUids = encryptedNodes.map(({ uid }) => uid);
         const missingNodeUids = nodeUids.filter((nodeUid) => !returnedNodeUids.includes(nodeUid));
 
         if (missingNodeUids.length) {

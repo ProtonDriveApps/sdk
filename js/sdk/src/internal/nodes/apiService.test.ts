@@ -143,40 +143,40 @@ describe("nodeAPIService", () => {
         api = new NodeAPIService(getMockLogger(), apiMock);
     });
 
-    describe('getNodes', () => {
-        async function testGetNodes(mockedLink: any, expectedNode: any) {
+    describe('iterateNodes', () => {
+        async function testIterateNodes(mockedLink: any, expectedNode: any) {
             // @ts-expect-error Mocking for testing purposes
             apiMock.post = jest.fn(async () => Promise.resolve({
                 Links: [mockedLink],
             }));
 
-            const nodes = await api.getNodes(['volumeId~nodeId']);
+            const nodes = await Array.fromAsync(api.iterateNodes(['volumeId~nodeId']));
             expect(nodes).toStrictEqual([expectedNode]);
         }
     
         it('should get folder node', async () => {
-            await testGetNodes(
+            await testIterateNodes(
                 generateAPIFolderNode(),
                 generateFolderNode(),
             );
         });
 
         it('should get root folder node', async () => {
-            await testGetNodes(
+            await testIterateNodes(
                 generateAPIFolderNode({ ParentLinkID: null }),
                 generateFolderNode({ parentUid: undefined }),
             );
         });
     
         it('should get file node', async () => {
-            await testGetNodes(
+            await testIterateNodes(
                 generateAPIFileNode(),
                 generateFileNode(),
             );
         });
 
         it('should get shared node', async () => {
-            await testGetNodes(
+            await testIterateNodes(
                 generateAPIFolderNode({}, {
                     Sharing: {
                         ShareID: 'shareId',
@@ -194,7 +194,7 @@ describe("nodeAPIService", () => {
         });
 
         it('should get shared node with unknown permissions', async () => {
-            await testGetNodes(
+            await testIterateNodes(
                 generateAPIFolderNode({}, {
                     Sharing: {
                         ShareID: 'shareId',
@@ -212,7 +212,7 @@ describe("nodeAPIService", () => {
         });
 
         it('should get trashed file node', async () => {
-            await testGetNodes(
+            await testIterateNodes(
                 generateAPIFileNode({
                     TrashTime: 123456,
                 }),
@@ -220,6 +220,40 @@ describe("nodeAPIService", () => {
                     trashedDate: new Date(123456000)
                 }),
             );
+        });
+
+        it('should get all recognised nodes before throwing error', async () => {
+            // @ts-expect-error Mocking for testing purposes
+            apiMock.post = jest.fn(async () => Promise.resolve({
+                Links: [
+                    generateAPIFolderNode(),
+                    // Type 42 is not recognised - should throw error.
+                    generateAPIFolderNode({ Type: 42 }),
+                    // Type 43 is not recognised - should throw error.
+                    generateAPIFileNode({ Type: 43 }),
+                    generateAPIFileNode(),
+                ],
+            }));
+
+            const generator = api.iterateNodes(['volumeId~nodeId']);
+
+            const node1 = await generator.next();
+            expect(node1.value).toStrictEqual(generateFolderNode());
+
+            // Second node is actually third, second is skipped and throwed at the end.
+            const node2 = await generator.next();
+            expect(node2.value).toStrictEqual(generateFileNode());
+
+            const node3 = generator.next();
+            expect(node3).rejects.toThrow('Failed to load some nodes');
+            try {
+                await node3;
+            } catch (error: any) {
+                expect(error.cause).toEqual([
+                    new Error('Unknown node type: 42'),
+                    new Error('Unknown node type: 43'),
+                ]);
+            }
         });
     });
 
