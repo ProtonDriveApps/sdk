@@ -1,6 +1,6 @@
 import { c } from "ttag";
 
-import { ValidationError } from "../../errors";
+import { SDKError, ValidationError } from "../../errors";
 import { Logger, NodeResult } from "../../interface";
 import { RevisionState } from "../../interface/nodes";
 import { DriveAPIService, drivePaths, isCodeOk, nodeTypeNumberToNodeType, permissionsToDirectMemberRole } from "../apiService";
@@ -57,12 +57,15 @@ export class NodeAPIService {
     }
 
     async getNode(nodeUid: string, signal?: AbortSignal): Promise<EncryptedNode> {
-        const nodes = await this.getNodes([nodeUid], signal);
-        return nodes[0];
+        const nodesGenerator = this.iterateNodes([nodeUid], signal);
+        const result = await nodesGenerator.next();
+        nodesGenerator.return("finish");
+        return result.value;
     }
 
     // Improvement requested: support multiple volumes.
-    async getNodes(nodeUids: string[], signal?: AbortSignal): Promise<EncryptedNode[]> {
+    // Improvement requested: split into multiple calls for many nodes.
+    async* iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<EncryptedNode> {
         const nodeIds = nodeUids.map(splitNodeUid);
         const volumeId = assertAndGetSingleVolumeId(c('Operation').t`Loading items`, nodeIds);
 
@@ -70,68 +73,24 @@ export class NodeAPIService {
             LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
         }, signal);
 
-        const nodes = response.Links.map((link) => {
-            const baseNodeMetadata = {
-                // Internal metadata
-                hash: link.Link.NameHash || undefined,
-                encryptedName: link.Link.Name,
+        // If the API returns node that is not recognised, it is returned as
+        // an error, but first all nodes that are recognised are yielded.
+        // Thus we capture all errors and throw them at the end of iteration.
+        const errors = [];
 
-                // Basic node metadata
-                uid: makeNodeUid(volumeId, link.Link.LinkID),
-                parentUid: link.Link.ParentLinkID ? makeNodeUid(volumeId, link.Link.ParentLinkID) : undefined,
-                type: nodeTypeNumberToNodeType(this.logger, link.Link.Type),
-                createdDate: new Date(link.Link.CreateTime*1000),
-                trashedDate: link.Link.TrashTime ? new Date(link.Link.TrashTime*1000) : undefined,
+        for (const link of response.Links) {
+            try {
+                yield linkToEncryptedNode(this.logger, volumeId, link);
+            } catch (error: unknown) {
+                this.logger.error(`Failed to transform node ${link.Link.LinkID}`, error);
+                errors.push(error);
+            }
+        }
 
-                // Sharing node metadata
-                shareId: link.Sharing?.ShareID || undefined,
-                isShared: !!link.Sharing,
-                directMemberRole: permissionsToDirectMemberRole(this.logger, link.Membership?.Permissions),
-            }
-            const baseCryptoNodeMetadata = {
-                signatureEmail: link.Link.SignatureEmail || undefined,
-                nameSignatureEmail: link.Link.NameSignatureEmail || undefined,
-                armoredKey: link.Link.NodeKey,
-                armoredNodePassphrase: link.Link.NodePassphrase,
-                armoredNodePassphraseSignature: link.Link.NodePassphraseSignature,
-            }
-
-            if (link.Link.Type === 2 && link.File && link.File.ActiveRevision) {
-                return {
-                    ...baseNodeMetadata,
-                    mimeType: link.File.MediaType || undefined,
-                    encryptedCrypto: {
-                        ...baseCryptoNodeMetadata,
-                        file: {
-                            base64ContentKeyPacket: link.File.ContentKeyPacket,
-                            armoredContentKeyPacketSignature: link.File.ContentKeyPacketSignature || undefined,
-                        },
-                        activeRevision: {
-                            uid: makeNodeRevisionUid(volumeId, link.Link.LinkID, link.File.ActiveRevision.RevisionID),
-                            state: RevisionState.Active,
-                            createdDate: new Date(link.File.ActiveRevision.CreateTime*1000),
-                            signatureEmail: link.File.ActiveRevision.SignatureEmail || undefined,
-                            armoredExtendedAttributes: link.File.ActiveRevision.XAttr || undefined,
-                        },
-                    },
-                }
-            }
-            if (link.Link.Type === 1 && link.Folder) {
-                return {
-                    ...baseNodeMetadata,
-                    encryptedCrypto: {
-                        ...baseCryptoNodeMetadata,
-                        folder: {
-                            armoredExtendedAttributes: link.Folder.XAttr || undefined,
-                            armoredHashKey: link.Folder.NodeHashKey as string,
-                        },
-                    },
-                }
-            }
-            // TODO: do not fail if one node is wrong
-            throw new Error(`Unknown node type: ${link.Link.Type}`);
-        });
-        return nodes;
+        if (errors.length) {
+            this.logger.warn(`Failed to load ${errors.length} nodes`);
+            throw new SDKError(c('Error').t`Failed to load some nodes`, { cause: errors });
+        }
     }
 
     // Improvement requested: load next page sooner before all IDs are yielded.
@@ -393,6 +352,69 @@ function* handleResponseErrors(nodeUids: string[], volumeId: string, responses: 
             yield { uid, ok: true };
         }
     }
+}
+
+function linkToEncryptedNode(logger: Logger, volumeId: string, link: PostLoadLinksMetadataResponse['Links'][0]): EncryptedNode {
+    const baseNodeMetadata = {
+        // Internal metadata
+        hash: link.Link.NameHash || undefined,
+        encryptedName: link.Link.Name,
+
+        // Basic node metadata
+        uid: makeNodeUid(volumeId, link.Link.LinkID),
+        parentUid: link.Link.ParentLinkID ? makeNodeUid(volumeId, link.Link.ParentLinkID) : undefined,
+        type: nodeTypeNumberToNodeType(logger, link.Link.Type),
+        createdDate: new Date(link.Link.CreateTime*1000),
+        trashedDate: link.Link.TrashTime ? new Date(link.Link.TrashTime*1000) : undefined,
+
+        // Sharing node metadata
+        shareId: link.Sharing?.ShareID || undefined,
+        isShared: !!link.Sharing,
+        directMemberRole: permissionsToDirectMemberRole(logger, link.Membership?.Permissions),
+    }
+    const baseCryptoNodeMetadata = {
+        signatureEmail: link.Link.SignatureEmail || undefined,
+        nameSignatureEmail: link.Link.NameSignatureEmail || undefined,
+        armoredKey: link.Link.NodeKey,
+        armoredNodePassphrase: link.Link.NodePassphrase,
+        armoredNodePassphraseSignature: link.Link.NodePassphraseSignature,
+    }
+
+    if (link.Link.Type === 1 && link.Folder) {
+        return {
+            ...baseNodeMetadata,
+            encryptedCrypto: {
+                ...baseCryptoNodeMetadata,
+                folder: {
+                    armoredExtendedAttributes: link.Folder.XAttr || undefined,
+                    armoredHashKey: link.Folder.NodeHashKey as string,
+                },
+            },
+        }
+    }
+
+    if (link.Link.Type === 2 && link.File && link.File.ActiveRevision) {
+        return {
+            ...baseNodeMetadata,
+            mimeType: link.File.MediaType || undefined,
+            encryptedCrypto: {
+                ...baseCryptoNodeMetadata,
+                file: {
+                    base64ContentKeyPacket: link.File.ContentKeyPacket,
+                    armoredContentKeyPacketSignature: link.File.ContentKeyPacketSignature || undefined,
+                },
+                activeRevision: {
+                    uid: makeNodeRevisionUid(volumeId, link.Link.LinkID, link.File.ActiveRevision.RevisionID),
+                    state: RevisionState.Active,
+                    createdDate: new Date(link.File.ActiveRevision.CreateTime*1000),
+                    signatureEmail: link.File.ActiveRevision.SignatureEmail || undefined,
+                    armoredExtendedAttributes: link.File.ActiveRevision.XAttr || undefined,
+                },
+            },
+        }
+    }
+
+    throw new Error(`Unknown node type: ${link.Link.Type}`);
 }
 
 function transformRevisionResponse(
