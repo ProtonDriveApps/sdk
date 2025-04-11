@@ -25,7 +25,7 @@ export class UploadCryptoService {
             hash,
         ] = await Promise.all([
             this.driveCrypto.generateKey([parentKeys.key], signatureAddress.addressKey),
-            this.driveCrypto.encryptNodeName(name, parentKeys.key, signatureAddress.addressKey),
+            this.driveCrypto.encryptNodeName(name, undefined, parentKeys.key, signatureAddress.addressKey),
             this.driveCrypto.generateLookupHash(name, parentKeys.hashKey),
         ]);
 

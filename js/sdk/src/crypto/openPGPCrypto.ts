@@ -137,12 +137,14 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
     async encryptAndSignArmored(
         data: Uint8Array,
+        sessionKey: SessionKey,
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
     ) {
         const { message: armoredData } = await this.cryptoProxy.encryptMessage({
             binaryData: data,
             encryptionKeys,
+            sessionKey,
             signingKeys: signingKey,
             detached: false,
         });

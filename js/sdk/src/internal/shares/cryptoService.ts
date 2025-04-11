@@ -36,7 +36,7 @@ export class SharesCryptoService {
     }> {
         const shareKey = await this.driveCrypto.generateKey([addressKey], addressKey);
         const rootNodeKey = await this.driveCrypto.generateKey([shareKey.decrypted.key], addressKey);
-        const { armoredNodeName } = await this.driveCrypto.encryptNodeName('root', shareKey.decrypted.key, addressKey);
+        const { armoredNodeName } = await this.driveCrypto.encryptNodeName('root', undefined, shareKey.decrypted.key, addressKey);
         const { armoredHashKey } = await this.driveCrypto.generateHashKey(rootNodeKey.decrypted.key);
         return {
             shareKey,

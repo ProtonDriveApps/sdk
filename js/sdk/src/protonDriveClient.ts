@@ -13,6 +13,9 @@ import {
     NonProtonInvitationOrUid,
     ProtonInvitationWithNode,
     ShareResult,
+    Device,
+    DeviceType,
+    DeviceOrUid,
     UploadMetadata,
     FileDownloader,
     Fileuploader,
@@ -28,6 +31,7 @@ import { DriveEventsService } from './internal/events';
 import { getConfig } from './config';
 import { getUid, getUids, convertInternalNodePromise, convertInternalNodeIterator, convertInternalMissingNodeIterator } from './transformers';
 import { Telemetry } from './telemetry';
+import { initDevicesModule } from './internal/devices';
 
 /**
  * ProtonDriveClient is the main interface for the ProtonDrive SDK.
@@ -42,6 +46,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
     private sharing: ReturnType<typeof initSharingModule>;
     private download: ReturnType<typeof initDownloadModule>;
     private upload: ReturnType<typeof initUploadModule>;
+    private devices: ReturnType<typeof initDevicesModule>;
 
     constructor({
         httpClient,
@@ -66,6 +71,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
         this.sharing = initSharingModule(telemetry, apiService, entitiesCache, account, cryptoModule, events, shares, this.nodes.access);
         this.download = initDownloadModule(telemetry, apiService, cryptoModule, account, this.nodes.access, this.nodes.revisions);
         this.upload = initUploadModule(telemetry, apiService, cryptoModule, shares, this.nodes.access);
+        this.devices = initDevicesModule(telemetry, apiService, cryptoModule, shares, this.nodes.access, this.nodes.management);
     }
 
     /**
@@ -501,5 +507,51 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
     async getFileUploader(parentFolderUid: NodeOrUid, name: string, metadata: UploadMetadata, signal?: AbortSignal): Promise<Fileuploader> {
         this.logger.info(`Getting file uploader for parent ${getUid(parentFolderUid)}`);
         return this.upload.getFileUploader(getUid(parentFolderUid), name, metadata, signal);
+    }
+
+    /**
+     * Iterates the devices of the user.
+     * 
+     * The output is not sorted and the order of the devices is not guaranteed.
+     * 
+     * @returns An async generator of devices.
+     */
+    async* iterateDevices(signal?: AbortSignal): AsyncGenerator<Device> {
+        this.logger.info('Iterating devices');
+        yield* this.devices.iterateDevices(signal);
+    }
+
+    /**
+     * Creates a new device.
+     * 
+     * @param nodeUid - Device entity or its UID string.
+     * @returns The created device entity.
+     * @throws {@link ValidationError} If the name is empty, too long, or contains a slash.
+     */
+    async createDevice(name: string, deviceType: DeviceType): Promise<Device> {
+        this.logger.info(`Creating device of type ${deviceType}`);
+        return this.devices.createDevice(name, deviceType);
+    }
+
+    /**
+     * Renames a device.
+     * 
+     * @param deviceOrUid - Device entity or its UID string.
+     * @returns The updated device entity.
+     * @throws {@link ValidationError} If the name is empty, too long, or contains a slash.
+     */
+    async renameDevice(deviceOrUid: DeviceOrUid, name: string): Promise<Device> {
+        this.logger.info(`Renaming device ${getUid(deviceOrUid)}`);
+        return this.devices.renameDevice(getUid(deviceOrUid), name);
+    }
+
+    /**
+     * Deletes a device.
+     * 
+     * @param deviceOrUid - Device entity or its UID string.
+     */
+    async deleteDevice(deviceOrUid: DeviceOrUid): Promise<void> {
+        this.logger.info(`Deleting device ${getUid(deviceOrUid)}`);
+        await this.devices.deleteDevice(getUid(deviceOrUid));
     }
 }

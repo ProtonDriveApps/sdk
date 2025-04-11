@@ -36,13 +36,14 @@ export class NodesManagement {
         this.nodesAccess = nodesAccess;
     }
 
-    async renameNode(nodeUid: string, newName: string): Promise<DecryptedNode> {
+    async renameNode(nodeUid: string, newName: string, options = { allowRenameRootNode: false }): Promise<DecryptedNode> {
         validateNodeName(newName);
 
         const node = await this.nodesAccess.getNode(nodeUid);
+        const { nameSessionKey: nodeNameSessionKey } = await this.nodesAccess.getNodePrivateAndSessionKeys(nodeUid);
         const parentKeys = await this.nodesAccess.getParentKeys(node);
 
-        if (!node.hash || !parentKeys.hashKey) {
+        if (!options.allowRenameRootNode && (!node.hash || !parentKeys.hashKey)) {
             throw new ValidationError(c('Error').t`Renaming root item is not allowed`)
         }
 
@@ -50,7 +51,14 @@ export class NodesManagement {
             signatureEmail,
             armoredNodeName,
             hash,
-        } = await this.cryptoService.encryptNewName(node, { key: parentKeys.key, hashKey: parentKeys.hashKey }, newName);
+        } = await this.cryptoService.encryptNewName(node, nodeNameSessionKey, parentKeys.hashKey, newName);
+
+        // Because hash is optional, lets ensure we have it unless explicitely
+        // allowed to rename root node.
+        if (!options.allowRenameRootNode && !hash) {
+            throw new Error("Node hash not generated");
+        }
+
         await this.apiService.renameNode(
             nodeUid,
             {
