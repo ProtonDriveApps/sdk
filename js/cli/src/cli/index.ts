@@ -9,6 +9,7 @@ import { CommandFileSystemList } from './commandFileSystemList';
 import { CommandFileSystemMove } from './commandFileSystemMove';
 import { CommandFileSystemRename } from './commandFileSystemRename';
 import { CommandFileSystemRestore } from './commandFileSystemRestore';
+import { CommandFileSystemUpload } from './commandFileSystemUpload';
 import { CommandFileSystemTrash } from './commandFileSystemTrash';
 import { CommandInvitationList } from "./commandInvitationList";
 import { CommandRevisionDelete } from './commandRevisionDelete';
@@ -33,6 +34,7 @@ const COMMANDS = [
     new CommandFileSystemDelete(),
     new CommandFileSystemRestore(),
     new CommandFileSystemDownload(),
+    new CommandFileSystemUpload(),
     new CommandRevisionList(),
     new CommandRevisionDownload(),
     new CommandRevisionRestore(),

@@ -37,12 +37,12 @@ export interface OpenPGPCryptoProxy {
         verified: VERIFICATION_STATUS
     }>,
     signMessage: (options: {
-        format: 'binary',
+        format: 'binary' | 'armored',
         binaryData: Uint8Array,
         signingKeys: PrivateKey[],
         detached: boolean,
-        context: { critical: boolean, value: string },
-    }) => Promise<Uint8Array>,
+        context?: { critical: boolean, value: string },
+    }) => Promise<Uint8Array | string>,
     verifyMessage: (options: {
         binaryData: Uint8Array,
         armoredSignature: string,
@@ -203,7 +203,22 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             context: { critical: true, value: signatureContext },
         });
         return {
-            signature
+            signature: signature as Uint8Array,
+        };
+    }
+
+    async signArmored(
+        data: Uint8Array,
+        signingKeys: PrivateKey[],
+    ) {
+        const signature = await this.cryptoProxy.signMessage({
+            binaryData: data,
+            signingKeys,
+            detached: true,
+            format: 'armored',
+        });
+        return {
+            signature: signature as string,
         };
     }
 

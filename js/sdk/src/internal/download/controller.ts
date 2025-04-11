@@ -1,4 +1,4 @@
-import { waitForCondition } from './wait';
+import { waitForCondition } from '../wait';
 
 export class DownloadController {
     private paused = false;

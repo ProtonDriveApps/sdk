@@ -21,7 +21,8 @@ export { NodeType, MemberRole, RevisionState } from './nodes';
 export type { ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Member, PublicLink, Bookmark, ProtonInvitationOrUid, NonProtonInvitationOrUid, BookmarkOrUid, ShareNodeSettings, UnshareNodeSettings, ShareMembersSettings, SharePublicLinkSettings, ShareResult } from './sharing';
 export { NonProtonInvitationState } from './sharing';
 export type { Telemetry, Logger, MetricAPIRetrySucceededEvent, MetricUploadEvent, MetricsUploadErrorType, MetricDownloadEvent, MetricsDownloadErrorType, MetricDecryptionErrorEvent, MetricsDecryptionErrorField, MetricVerificationErrorEvent, MetricVerificationErrorField, MetricVolumeEventsSubscriptionsChangedEvent, MetricEvent, MetricContext } from './telemetry';
-export type { Fileuploader, UploadController, Thumbnail, ThumbnailType, UploadMetadata } from './upload';
+export type { Fileuploader, UploadController, Thumbnail, UploadMetadata } from './upload';
+export { ThumbnailType } from './upload';
 
 export type ProtonDriveTelemetry = Telemetry<MetricEvent>;
 export type ProtonDriveEntitiesCache = ProtonDriveCache<string>;

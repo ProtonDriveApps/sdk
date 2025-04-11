@@ -11,9 +11,26 @@ export function apiErrorFactory({ response, result }: { response: Response, resu
         return new APIHTTPError(response.statusText, response.status);
     }
 
-    // @ts-expect-error: Result from API can be any JSON that might not have
-    // error or code set which next lines should handle.
-    const [code, message] = [result.Code || 0, result.Error || c('Error').t`Unknown error`];
+    const typedResult = result as {
+        Code?: number;
+        Error?: string;
+        exception?: string;
+        message?: string;
+        file?: string;
+        line?: number;
+        trace?: object;
+    };
+
+    const [code, message] = [typedResult.Code || 0, typedResult.Error || c('Error').t`Unknown error`];
+
+    const debug = typedResult.exception ? {
+        exception: typedResult.exception,
+        message: typedResult.message,
+        file: typedResult.file,
+        line: typedResult.line,
+        trace: typedResult.trace,
+    } : undefined;
+
     switch (code) {
         case ErrorCode.NOT_EXISTS:
             return new NotFoundAPIError(message, code);
@@ -40,7 +57,7 @@ export function apiErrorFactory({ response, result }: { response: Response, resu
         case ErrorCode.INSUFFICIENT_BOOKMARKS_QUOTA:
             return new ValidationError(message, code);
         default:
-            return new APICodeError(message, code);
+            return new APICodeError(message, code, debug);
     }
 }
 
@@ -60,9 +77,12 @@ export class APICodeError extends ServerError {
 
     public readonly code: number;
 
-    constructor(message: string, code: number) {
+    public readonly debug?: object;
+
+    constructor(message: string, code: number, debug?: object) {
         super(message);
         this.code = code;
+        this.debug = debug;
     }
 }
 

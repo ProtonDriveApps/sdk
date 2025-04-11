@@ -4,6 +4,7 @@ import { DriveCrypto, PrivateKey, PublicKey, SessionKey, uint8ArrayToBase64Strin
 import { ProtonDriveAccount, Revision } from "../../interface";
 import { DecryptionError, IntegrityError } from "../../errors";
 import { getErrorMessage } from "../errors";
+import { mergeUint8Arrays } from "../utils";
 import { RevisionKeys } from "./interface";
 
 export class DownloadCryptoService {
@@ -49,7 +50,10 @@ export class DownloadCryptoService {
         const expectedHash = uint8ArrayToBase64String(new Uint8Array(digest));
 
         if (expectedHash !== base64sha256Hash) {
-            throw new IntegrityError(c('Error').t`Data integrity check of one part failed`);
+            throw new IntegrityError(c('Error').t`Data integrity check of one part failed`, {
+                expectedHash,
+                actualHash: base64sha256Hash,
+            });
         }
     }
 
@@ -72,14 +76,3 @@ export class DownloadCryptoService {
         return signatureEmail ? await this.account.getPublicKeys(signatureEmail) : undefined;
     }
 }
-
-function mergeUint8Arrays(arrays: Uint8Array[]) {
-    const length = arrays.reduce((sum, arr) => sum + arr.length, 0);
-    const chunksAll = new Uint8Array(length);
-    arrays.reduce((position, arr) => {
-        chunksAll.set(arr, position);
-        return position + arr.length;
-    }, 0);
-    return chunksAll;
-}
-

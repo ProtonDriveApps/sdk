@@ -1,4 +1,22 @@
-import { ProtonDriveClientContructorParameters, ProtonDriveClientInterface, NodeOrUid, MaybeNode, ShareNodeSettings, UnshareNodeSettings, UploadMetadata, Logger, NodeResult, Revision, ProtonInvitationWithNode, ShareResult, NonProtonInvitationOrUid, ProtonInvitationOrUid, FileDownloader, MaybeMissingNode } from './interface';
+import {
+    Logger,
+    ProtonDriveClientContructorParameters,
+    ProtonDriveClientInterface,
+    NodeOrUid,
+    MaybeNode,
+    MaybeMissingNode,
+    NodeResult,
+    Revision,
+    ShareNodeSettings,
+    UnshareNodeSettings,
+    ProtonInvitationOrUid,
+    NonProtonInvitationOrUid,
+    ProtonInvitationWithNode,
+    ShareResult,
+    UploadMetadata,
+    FileDownloader,
+    Fileuploader,
+} from './interface';
 import { DriveCrypto } from './crypto';
 import { DriveAPIService } from './internal/apiService';
 import { initSharesModule } from './internal/shares';
@@ -47,7 +65,7 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
         this.nodes = initNodesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares);
         this.sharing = initSharingModule(telemetry, apiService, entitiesCache, account, cryptoModule, events, shares, this.nodes.access);
         this.download = initDownloadModule(telemetry, apiService, cryptoModule, account, this.nodes.access, this.nodes.revisions);
-        this.upload = initUploadModule(apiService, cryptoModule, this.nodes.access);
+        this.upload = initUploadModule(telemetry, apiService, cryptoModule, shares, this.nodes.access);
     }
 
     /**
@@ -451,7 +469,36 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
         return this.download.getFileRevisionDownloader(nodeRevisionUid, signal);
     }
 
-    async getFileUploader(parentFolderUid: NodeOrUid, name: string, metadata: UploadMetadata, signal?: AbortSignal) {
+    /**
+     * Get the file uploader to upload a new file. For uploading a new
+     * revision, use `getFileRevisionUploader` instead.
+     * 
+     * The number of ongoing uploads is limited. If the limit is reached,
+     * the upload is queued and started when the slot is available. It is
+     * recommended to not start too many uploads at once to avoid having
+     * many open promises.
+     * 
+     * The file uploader is not reusable. If the upload is interrupted,
+     * a new file uploader must be created.
+     * 
+     * Client should not automatically retry the upload if it fails. The
+     * upload should be initiated by the user again. The uploader does
+     * automatically retry the upload if it fails due to network issues,
+     * or if the server is temporarily unavailable.
+     * 
+     * Example usage:
+     * 
+     * ```typescript
+     * const uploader = await client.getFileUploader(parentFolderUid, name, metadata, signal);
+     * const uploadController = uploader.writeStream(stream, thumbnails, (uploadedBytes) => { ... });
+     * 
+     * signalController.abort(); // to cancel
+     * uploadController.pause(); // to pause
+     * uploadController.resume(); // to resume
+     * const nodeUid = await uploadController.completion(); // to await completion
+     * ```
+     */
+    async getFileUploader(parentFolderUid: NodeOrUid, name: string, metadata: UploadMetadata, signal?: AbortSignal): Promise<Fileuploader> {
         this.logger.info(`Getting file uploader for parent ${getUid(parentFolderUid)}`);
         return this.upload.getFileUploader(getUid(parentFolderUid), name, metadata, signal);
     }

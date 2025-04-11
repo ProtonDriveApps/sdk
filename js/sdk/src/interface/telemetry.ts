@@ -27,16 +27,13 @@ export interface MetricAPIRetrySucceededEvent {
 export interface MetricUploadEvent {
     eventName: 'upload',
     context: MetricContext,
-    retry: boolean,
     uploadedSize: number,
-    fileSize: number,
+    expectedSize: number,
     error?: MetricsUploadErrorType,
 };
 export type MetricsUploadErrorType =
-    'free_space_exceeded' |
-    'too_many_children' |
-    'network_error' |
     'server_error' |
+    'network_error' |
     'integrity_error' |
     'rate_limited' |
     '4xx' |
