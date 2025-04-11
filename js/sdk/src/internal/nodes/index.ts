@@ -13,6 +13,7 @@ import { NodesManagement } from "./nodesManagement";
 import { NodesRevisons } from "./nodesRevisions";
 
 export type { DecryptedNode } from "./interface";
+export { generateFileExtendedAttributes } from "./extendedAttributes";
 
 /**
  * Provides facade for the whole nodes module.

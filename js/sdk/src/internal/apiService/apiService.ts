@@ -1,10 +1,10 @@
 import { c } from 'ttag';
 
 import { ProtonDriveHTTPClient, ProtonDriveTelemetry, Logger } from "../../interface";
-import { AbortError, ServerError, RateLimitedError } from '../../errors';
+import { AbortError, ServerError, RateLimitedError, SDKError } from '../../errors';
+import { waitSeconds } from '../wait';
 import { HTTPErrorCode, isCodeOk } from './errorCodes';
 import { apiErrorFactory } from './errors';
-import { waitSeconds } from './wait';
 
 /**
  * How many subsequent 429 errors are allowed before we stop further requests.
@@ -129,7 +129,7 @@ export class DriveAPIService {
             }
             return result as ResponsePayload;
         } catch (error: unknown) {
-            if (error instanceof ServerError) {
+            if (error instanceof SDKError) {
                 throw error;
             }
             throw apiErrorFactory({ response });
@@ -137,26 +137,39 @@ export class DriveAPIService {
     }
 
     async getBlockStream(baseUrl: string, token: string, signal?: AbortSignal): Promise<ReadableStream<Uint8Array>> {
-        const response = await this.makeStorageRequest('GET', baseUrl, token, signal);
+        const response = await this.makeStorageRequest('GET', baseUrl, token, undefined, signal);
         if (!response.body) {
             throw new Error(c('Error').t`File download failed due to empty response`);
         }
         return response.body;
     }
 
-    private async makeStorageRequest(method: 'GET' | 'POST', url: string, token: string, signal?: AbortSignal): Promise<Response> {
+    async postBlockStream(baseUrl: string, token: string, data: BodyInit, signal?: AbortSignal): Promise<void> {
+        await this.makeStorageRequest('POST', baseUrl, token, data, signal);
+    }
+
+    private async makeStorageRequest(method: 'GET' | 'POST', url: string, token: string, body?: BodyInit, signal?: AbortSignal): Promise<Response> {
         const request = new Request(`${url}`, {
             method,
             credentials: 'omit',
             headers: new Headers({
                 "pm-storage-token": token,
             }),
+            body,
         });
 
         const response = await this.fetch(request, signal);
 
         if (response.status >= 400) {
-            throw apiErrorFactory({ response });
+            try {
+                const result = await response.json();
+                throw apiErrorFactory({ response, result });
+            } catch (error: unknown) {
+                if (error instanceof SDKError) {
+                    throw error;
+                }
+                throw apiErrorFactory({ response });
+            }
         }
         return response;
     }

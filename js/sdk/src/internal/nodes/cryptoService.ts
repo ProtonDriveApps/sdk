@@ -6,8 +6,6 @@ import { ValidationError } from '../../errors';
 import { getErrorMessage, getVerificationMessage } from "../errors";
 import { splitNodeUid } from "../uids";
 import { EncryptedNode, EncryptedNodeFolderCrypto, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys, SharesService, EncryptedRevision, DecryptedRevision } from "./interface";
-// FIXME: Switch to CryptoProxy module once available.
-import { importHmacKey, computeHmacSignature } from "./hmac";
 
 /**
  * Provides crypto operations for nodes metadata.
@@ -360,7 +358,7 @@ export class NodesCryptoService {
         ] = await Promise.all([
             this.driveCrypto.generateKey([parentKeys.key], addressKey),
             this.driveCrypto.encryptNodeName(name, parentKeys.key, addressKey),
-            this.generateLookupHash(name, parentKeys.hashKey),
+            this.driveCrypto.generateLookupHash(name, parentKeys.hashKey),
         ]);
 
         const { armoredHashKey, hashKey } = await this.driveCrypto.generateHashKey(nodeKeys.decrypted.key);
@@ -400,7 +398,7 @@ export class NodesCryptoService {
         const { volumeId } = splitNodeUid(node.uid);
         const { email, addressKey } = await this.shareService.getVolumeEmailKey(volumeId);
         const { armoredNodeName } = await this.driveCrypto.encryptNodeName(newName, parentKeys.key, addressKey);
-        const hash = await this.generateLookupHash(newName, parentKeys.hashKey);
+        const hash = await this.driveCrypto.generateLookupHash(newName, parentKeys.hashKey);
         return {
             signatureEmail: email,
             armoredNodeName,
@@ -426,7 +424,7 @@ export class NodesCryptoService {
         const { volumeId } = splitNodeUid(parentNode.uid);
         const { email, addressKey } = await this.shareService.getVolumeEmailKey(volumeId);
         const { armoredNodeName } = await this.driveCrypto.encryptNodeName(node.name.value, parentKeys.key, addressKey);
-        const hash = await this.generateLookupHash(node.name.value, parentKeys.hashKey);
+        const hash = await this.driveCrypto.generateLookupHash(node.name.value, parentKeys.hashKey);
         const { armoredPassphrase, armoredPassphraseSignature } = await this.driveCrypto.encryptPassphrase(keys.passphrase, keys.passphraseSessionKey, [parentKeys.key], addressKey);
 
         return {
@@ -437,13 +435,6 @@ export class NodesCryptoService {
             signatureEmail: email,
             nameSignatureEmail: email,
         };
-    }
-
-    private async generateLookupHash(newName: string, parentHashKey: Uint8Array): Promise<string> {
-        const key = await importHmacKey(parentHashKey);
-
-        const signature = await computeHmacSignature(key, new TextEncoder().encode(newName));
-        return arrayToHexString(signature);
     }
 
     private async handleClaimedAuthor(
@@ -528,17 +519,3 @@ function handleClaimedAuthor(signatureType: string, verified: VERIFICATION_STATU
         error: getVerificationMessage(verified, signatureType),
     });    
 }
-
-/**
- * Convert an array of 8-bit integers to a hex string
- * @param bytes - Array of 8-bit integers to convert
- * @returns Hexadecimal representation of the array
- */
-export const arrayToHexString = (bytes: Uint8Array) => {
-    const hexAlphabet = '0123456789abcdef';
-    let s = '';
-    bytes.forEach((v) => {
-        s += hexAlphabet[v >> 4] + hexAlphabet[v & 15];
-    });
-    return s;
-};

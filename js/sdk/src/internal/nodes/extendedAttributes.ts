@@ -82,6 +82,18 @@ export function parseFolderExtendedAttributes(logger: Logger, extendedAttributes
     }
 }
 
+export function generateFileExtendedAttributes(claimedModificationTime?: Date): string | undefined {
+    if (!claimedModificationTime) {
+        return undefined;
+    }
+    // TODO: Add support for other attributes
+    return JSON.stringify({
+        Common: {
+            ModificationTime: dateToIsoString(claimedModificationTime),
+        },
+    });
+}
+
 export function parseFileExtendedAttributes(logger: Logger, extendedAttributes?: string): FileExtendedAttributesParsed {
     if (!extendedAttributes) {
         return {}

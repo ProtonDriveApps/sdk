@@ -18,12 +18,13 @@ export interface Upload {
 export type UploadMetadata = {
     mimeType: string,
     expectedSize: number,
+    modificationTime?: Date,
     additionalMetadata?: object,
 };
 
 export interface Fileuploader {
-    writeStream(stream: ReadableStream, thumnbails: Thumbnail[], onProgress: (uploadedBytes: number) => void): UploadController,
-    writeFile(fileObject: File, thumnbails: Thumbnail[], onProgress: (uploadedBytes: number) => void): UploadController,
+    writeStream(stream: ReadableStream, thumnbails: Thumbnail[], onProgress?: (uploadedBytes: number) => void): UploadController,
+    writeFile(fileObject: File, thumnbails: Thumbnail[], onProgress?: (uploadedBytes: number) => void): UploadController,
 }
 
 export interface UploadController {
@@ -38,6 +39,6 @@ export type Thumbnail = {
 }
 
 export enum ThumbnailType {
-    THUMBNAIL_TYPE_1 = 1,
-    THUMBNAIL_TYPE_2 = 2,
+    Type1 = 1,
+    Type2 = 2,
 }

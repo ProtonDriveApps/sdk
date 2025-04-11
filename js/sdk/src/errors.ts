@@ -57,6 +57,25 @@ export class ValidationError extends SDKError {
 }
 
 /**
+ * Error thrown when the node already exists.
+ * 
+ * This error is thrown when the node with the same name already exists in the
+ * parent folder. The client should ask the user to replace the existing node
+ * or choose another name. The available name is provided in the `availableName`
+ * property (that will contain original name with the index that can be used).
+ */
+export class NodeAlreadyExistsValidationError extends ValidationError {
+    name = 'NodeAlreadyExistsValidationError';
+
+    public readonly availableName: string;
+
+    constructor(message: string, code: number, availableName: string) {
+        super(message, code);
+        this.availableName = availableName;
+    }
+}
+
+/**
  * Error thrown when the API call fails.
  * 
  * This error covers both HTTP errors and API errors. SDK automatically
@@ -139,4 +158,11 @@ export class DecryptionError extends SDKError {
  */
 export class IntegrityError extends SDKError {
     name = 'IntegrityError';
+
+    public readonly debug?: object;
+
+    constructor(message: string, debug?: object) {
+        super(message);
+        this.debug = debug;
+    }
 }

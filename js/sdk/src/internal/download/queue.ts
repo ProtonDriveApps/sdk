@@ -1,4 +1,4 @@
-import { waitForCondition } from './wait';
+import { waitForCondition } from '../wait';
 
 /**
  * A queue that limits the number of concurrent downloads.

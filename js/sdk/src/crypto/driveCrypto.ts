@@ -1,5 +1,7 @@
 import { OpenPGPCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from './interface';
 import { uint8ArrayToBase64String, base64StringToUint8Array } from './utils';
+// FIXME: Switch to CryptoProxy module once available.
+import { importHmacKey, computeHmacSignature } from "./hmac";
 
 enum SIGNING_CONTEXTS {
     SHARING_INVITER = 'drive.share-member.inviter',
@@ -76,6 +78,38 @@ export class DriveCrypto {
             },
         };
     };
+
+    /**
+     * It generates content key from node key for encrypting file blocks.
+     *
+     * @param encryptionKey - Its own node key.
+     * @returns Object with serialised key packet and decrypted session key.
+     */
+    async generateContentKey(
+        encryptionKey: PrivateKey,
+    ): Promise<{
+        encrypted: {
+            base64ContentKeyPacket: string,
+            armoredContentKeyPacketSignature: string,
+        },
+        decrypted: {
+            contentKeyPacketSessionKey: SessionKey,
+        },
+    }> {
+        const contentKeyPacketSessionKey = await this.openPGPCrypto.generateSessionKey([encryptionKey]);
+        const { signature: armoredContentKeyPacketSignature } = await this.openPGPCrypto.signArmored(contentKeyPacketSessionKey.data, [encryptionKey]);
+        const { keyPacket } = await this.openPGPCrypto.encryptSessionKey(contentKeyPacketSessionKey, [encryptionKey]);
+
+        return {
+            encrypted: {
+                base64ContentKeyPacket: uint8ArrayToBase64String(keyPacket),
+                armoredContentKeyPacketSignature,
+            },
+            decrypted: {
+                contentKeyPacketSessionKey,
+            }
+        };
+    }
 
     /**
      * It encrypts passphrase with provided session and encryption keys.
@@ -163,7 +197,7 @@ export class DriveCrypto {
     ): Promise<{
         base64KeyPacket: string,
     }> {
-        const { keyPacket } = await this.openPGPCrypto.encryptSessionKey(sessionKey, encryptionKey);
+        const { keyPacket } = await this.openPGPCrypto.encryptSessionKey(sessionKey, [encryptionKey]);
         return {
             base64KeyPacket: uint8ArrayToBase64String(keyPacket),
         }
@@ -284,6 +318,13 @@ export class DriveCrypto {
             armoredHashKey,
             hashKey, 
         }
+    }
+
+    async generateLookupHash(newName: string, parentHashKey: Uint8Array): Promise<string> {
+        const key = await importHmacKey(parentHashKey);
+
+        const signature = await computeHmacSignature(key, new TextEncoder().encode(newName));
+        return arrayToHexString(signature);
     }
 
     /**
@@ -408,7 +449,7 @@ export class DriveCrypto {
         base64KeyPacket: string,
         base64KeyPacketSignature: string,
     }> {
-        const { keyPacket } = await this.openPGPCrypto.encryptSessionKey(shareSessionKey, encryptionKey);
+        const { keyPacket } = await this.openPGPCrypto.encryptSessionKey(shareSessionKey, [encryptionKey]);
         const { signature: keyPacketSignature } = await this.openPGPCrypto.sign(
             keyPacket,
             signingKey,
@@ -461,6 +502,49 @@ export class DriveCrypto {
         }
     }
 
+    async encryptThumbnailBlock(
+        thumbnailData: Uint8Array,
+        sessionKey: SessionKey,
+        signingKey: PrivateKey,
+    ): Promise<{
+        encryptedData: Uint8Array,
+    }> {
+        const { encryptedData } = await this.openPGPCrypto.encryptAndSign(
+            thumbnailData,
+            sessionKey,
+            [], // Thumbnails use the session key so we do not send encryption key.
+            signingKey,
+        );
+
+        return {
+            encryptedData,
+        };
+    }
+
+    async encryptBlock(
+        blockData: Uint8Array,
+        encryptionKey: PrivateKey,
+        sessionKey: SessionKey,
+        signingKey: PrivateKey,
+    ): Promise<{
+        encryptedData: Uint8Array,
+        armoredSignature: string,
+    }> {
+        const { encryptedData, signature } = await this.openPGPCrypto.encryptAndSignDetached(
+            blockData,
+            sessionKey,
+            [], // Blocks use the session key so we do not send encryption key.
+            signingKey,
+        );
+
+        const { armoredSignature } = await this.encryptSignature(signature, encryptionKey, sessionKey);
+
+        return {
+            encryptedData,
+            armoredSignature,
+        };
+    }
+
     async decryptBlock(
         encryptedBlock: Uint8Array,
         armoredSignature: string | undefined,
@@ -487,6 +571,21 @@ export class DriveCrypto {
             decryptedBlock,
             verified,
         };
+    }
+
+    async signManifest(
+        manifest: Uint8Array,
+        signingKey: PrivateKey,
+    ): Promise<{
+        armoredManifestSignature: string,
+    }> {
+        const { signature: armoredManifestSignature } = await this.openPGPCrypto.signArmored(
+            manifest,
+            signingKey,
+        );
+        return {
+            armoredManifestSignature,
+        }
     }
 
     async verifyManifest(
@@ -517,3 +616,17 @@ export class DriveCrypto {
         return new TextDecoder().decode(password);
     }
 }
+
+/**
+ * Convert an array of 8-bit integers to a hex string
+ * @param bytes - Array of 8-bit integers to convert
+ * @returns Hexadecimal representation of the array
+ */
+export const arrayToHexString = (bytes: Uint8Array) => {
+    const hexAlphabet = '0123456789abcdef';
+    let s = '';
+    bytes.forEach((v) => {
+        s += hexAlphabet[v >> 4] + hexAlphabet[v & 15];
+    });
+    return s;
+};

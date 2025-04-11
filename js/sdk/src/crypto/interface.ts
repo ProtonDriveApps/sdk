@@ -100,6 +100,13 @@ export interface OpenPGPCrypto {
         signature: Uint8Array,
     }>,
 
+    signArmored: (
+        data: Uint8Array,
+        signingKey: PrivateKey,
+    ) => Promise<{
+        signature: string,
+    }>,
+
     verify: (
         data: Uint8Array,
         armoredSignature: string,
