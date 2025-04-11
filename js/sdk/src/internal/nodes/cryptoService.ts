@@ -357,7 +357,8 @@ export class NodesCryptoService {
             hash,
         ] = await Promise.all([
             this.driveCrypto.generateKey([parentKeys.key], addressKey),
-            this.driveCrypto.encryptNodeName(name, parentKeys.key, addressKey),
+
+            this.driveCrypto.encryptNodeName(name, undefined, parentKeys.key, addressKey),
             this.driveCrypto.generateLookupHash(name, parentKeys.hashKey),
         ]);
 
@@ -390,15 +391,17 @@ export class NodesCryptoService {
         };
     }
 
-    async encryptNewName(node: DecryptedNode, parentKeys: { key: PrivateKey, hashKey: Uint8Array }, newName: string): Promise<{
+    async encryptNewName(node: DecryptedNode, nodeNameSessionKey: SessionKey, parentHashKey: Uint8Array | undefined, newName: string): Promise<{
         signatureEmail: string,
         armoredNodeName: string,
-        hash: string,
+        hash?: string,
     }> {
         const { volumeId } = splitNodeUid(node.uid);
         const { email, addressKey } = await this.shareService.getVolumeEmailKey(volumeId);
-        const { armoredNodeName } = await this.driveCrypto.encryptNodeName(newName, parentKeys.key, addressKey);
-        const hash = await this.driveCrypto.generateLookupHash(newName, parentKeys.hashKey);
+        const { armoredNodeName } = await this.driveCrypto.encryptNodeName(newName, nodeNameSessionKey, undefined, addressKey);
+        const hash = parentHashKey
+            ? await this.driveCrypto.generateLookupHash(newName, parentHashKey)
+            : undefined;
         return {
             signatureEmail: email,
             armoredNodeName,
@@ -423,7 +426,7 @@ export class NodesCryptoService {
 
         const { volumeId } = splitNodeUid(parentNode.uid);
         const { email, addressKey } = await this.shareService.getVolumeEmailKey(volumeId);
-        const { armoredNodeName } = await this.driveCrypto.encryptNodeName(node.name.value, parentKeys.key, addressKey);
+        const { armoredNodeName } = await this.driveCrypto.encryptNodeName(node.name.value, undefined, parentKeys.key, addressKey);
         const hash = await this.driveCrypto.generateLookupHash(node.name.value, parentKeys.hashKey);
         const { armoredPassphrase, armoredPassphraseSignature } = await this.driveCrypto.encryptPassphrase(keys.passphrase, keys.passphraseSessionKey, [parentKeys.key], addressKey);
 

@@ -1,7 +1,6 @@
 import { ProtonDriveCache } from '../cache';
 import { OpenPGPCrypto, PrivateKey, SessionKey } from '../crypto';
 import { ProtonDriveAccount } from './account';
-import { Devices } from './devices';
 import { Download } from './download';
 import { Events } from './events';
 import { ProtonDriveHTTPClient, ProtonDriveConfig } from './httpClient';
@@ -13,6 +12,7 @@ export { resultOk, resultError } from './result';
 export type { ProtonDriveAccount, ProtonDriveAccountAddress } from './account';
 export type { Author,UnverifiedAuthorError, AnonymousUser } from './author';
 export type { Device, DeviceOrUid } from './devices';
+export { DeviceType } from './devices';
 export type { FileDownloader, DownloadController } from './download';
 export type { NodeEvent, DeviceEvent, SDKEvent, DeviceEventCallback, NodeEventCallback } from './events';
 export type { ProtonDriveHTTPClient, ProtonDriveConfig } from './httpClient';
@@ -46,4 +46,4 @@ export interface ProtonDriveClientContructorParameters {
 
 // Helper interface to make sure that all methods are correctly implemented eventually.
 // In the end this will be deleted and the ProtonDriveClient will implement all methods directly.
-export interface ProtonDriveClientInterface extends Devices, Download, Events, Upload {};
+export interface ProtonDriveClientInterface extends Download, Events, Upload {};

@@ -86,6 +86,9 @@ describe('NodesManagement', () => {
                 hashKey: `${nodes[uid].parentUid}-hashKey`,
             })),
             iterateNodes: jest.fn(),
+            getNodePrivateAndSessionKeys: jest.fn().mockResolvedValue({
+                nameSessionKey: 'nameSessionKey',
+            }),
         }
 
         management = new NodesManagement(apiService, cache, cryptoCache, cryptoService, nodesAccess);
@@ -99,10 +102,12 @@ describe('NodesManagement', () => {
             nameAuthor: { ok: true, value: 'newSignatureEmail' },
             hash: 'newHash',
         });
-        expect(cryptoService.encryptNewName).toHaveBeenCalledWith(nodes.nodeUid, {
-            key: 'parentUid-key',
-            hashKey: 'parentUid-hashKey',
-        }, 'new name');
+        expect(cryptoService.encryptNewName).toHaveBeenCalledWith(
+            nodes.nodeUid,
+            'nameSessionKey',
+            'parentUid-hashKey',
+            'new name',
+        );
         expect(apiService.renameNode).toHaveBeenCalledWith(
             nodes.nodeUid.uid,
             { hash: nodes.nodeUid.hash },

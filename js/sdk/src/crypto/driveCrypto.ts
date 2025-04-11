@@ -311,6 +311,7 @@ export class DriveCrypto {
 
         const { armoredData: armoredHashKey } = await this.openPGPCrypto.encryptAndSignArmored(
             hashKey,
+            undefined,
             [encryptionAndSigningKey],
             encryptionAndSigningKey,
         );
@@ -330,17 +331,27 @@ export class DriveCrypto {
     /**
      * It converts node name into bytes array and encrypts and signs
      * with provided keys.
+     *
+     * The function accepts either encryption or session key. Use encryption
+     * key if you want to encrypt the name for the new node. Use session key
+     * if you want to encrypt the new name for the existing node.
      */
     async encryptNodeName(
         nodeName: string,
-        encryptionKey: PrivateKey,
+        sessionKey: SessionKey | undefined,
+        encryptionKey: PrivateKey | undefined,
         signingKey: PrivateKey,
     ): Promise<{
         armoredNodeName: string,
     }> {
+        if (!sessionKey && !encryptionKey) {
+            throw new Error('Neither session nor encryption key provided for encrypting node name');
+        }
+
         const { armoredData: armoredNodeName } = await this.openPGPCrypto.encryptAndSignArmored(
             new TextEncoder().encode(nodeName),
-            [encryptionKey],
+            sessionKey,
+            encryptionKey ? [encryptionKey] : [],
             signingKey,
         );
         return {
@@ -413,6 +424,7 @@ export class DriveCrypto {
     }> {
         const { armoredData: armoredExtendedAttributes } = await this.openPGPCrypto.encryptAndSignArmored(
             new TextEncoder().encode(extendedAttributes),
+            undefined,
             [encryptionKey],
             signingKey,
         );

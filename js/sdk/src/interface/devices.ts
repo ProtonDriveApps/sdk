@@ -1,16 +1,19 @@
 import { Result } from './result';
+import { InvalidNameError } from './nodes';
 
 export type Device = {
     uid: string,
-    name: Result<string, Error>,
+    type: DeviceType,
+    name: Result<string, InvalidNameError>,
     rootFolderUid: string,
+    createdDate: Date,
+    lastSyncDate?: Date;
+}
+
+export enum DeviceType {
+    Windows = 'Windows',
+    MacOS = 'MacOS',
+    Linux = 'Linux',
 }
 
 export type DeviceOrUid = Device | string;
-
-export interface Devices {
-    iterateDevices(signal?: AbortSignal): AsyncGenerator<Device>,
-    createDevice(name: string): Promise<Device>,
-    renameDevice(deviceOrUid: DeviceOrUid, name: string): Promise<Device>,
-    deleteDevice(deviceOrUid: DeviceOrUid): Promise<void>,
-}

@@ -66,6 +66,7 @@ export interface OpenPGPCrypto {
 
     encryptAndSignArmored: (
         data: Uint8Array,
+        sessionKey: SessionKey,
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
     ) => Promise<{

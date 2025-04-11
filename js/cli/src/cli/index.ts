@@ -1,6 +1,10 @@
 import { ParseArgsConfig } from "util";
 import { CommandAuthLogin } from './commandAuthLogin';
 import { CommandAuthLogout } from './commandAuthLogout';
+import { CommandDeviceCreate } from './commandDeviceCreate';
+import { CommandDeviceDelete } from './commandDeviceDelete';
+import { CommandDeviceList } from './commandDeviceList';
+import { CommandDeviceRename } from './commandDeviceRename';
 import { CommandFileSystemCreateFolder } from './commandFileSystemCreateFolder';
 import { CommandFileSystemDelete } from "./commandFileSystemDelete";
 import { CommandFileSystemDownload } from './commandFileSystemDownload';
@@ -44,6 +48,10 @@ const COMMANDS = [
     new CommandSharingRemove(),
     new CommandSharingRemoveUrl(),
     new CommandInvitationList(),
+    new CommandDeviceList(),
+    new CommandDeviceCreate(),
+    new CommandDeviceRename(),
+    new CommandDeviceDelete(),
 ];
 
 export function getCommand(groupName: string, commandName: string): Command {

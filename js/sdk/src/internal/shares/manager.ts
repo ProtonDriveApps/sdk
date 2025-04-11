@@ -132,7 +132,12 @@ export class SharesManager {
         return key.key;
     }
 
-    async getVolumeEmailKey(volumeId: string): Promise<{ email: string, addressId: string, addressKey: PrivateKey }> {
+    async getVolumeEmailKey(volumeId: string): Promise<{
+        email: string,
+        addressId: string,
+        addressKey: PrivateKey,
+        addressKeyId: string,
+    }> {
         try {
             const { addressId } = await this.cache.getVolume(volumeId);
             const address = await this.account.getOwnAddress(addressId);
@@ -140,6 +145,7 @@ export class SharesManager {
                 email: address.email,
                 addressId,
                 addressKey: address.keys[address.primaryKeyIndex].key,
+                addressKeyId: address.keys[address.primaryKeyIndex].id,
             };
         } catch {}
 
@@ -161,6 +167,7 @@ export class SharesManager {
             email: address.email,
             addressId: share.addressId,
             addressKey: address.keys[address.primaryKeyIndex].key,
+            addressKeyId: address.keys[address.primaryKeyIndex].id,
         };
     }
 

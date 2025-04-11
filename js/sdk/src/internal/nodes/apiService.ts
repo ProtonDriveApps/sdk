@@ -142,12 +142,12 @@ export class NodeAPIService {
     async renameNode(
         nodeUid: string,
         originalNode: {
-            hash: string,
+            hash?: string,
         },
         newNode: {
             encryptedName: string,
             nameSignatureEmail: string,
-            hash: string,
+            hash?: string,
         },
         signal?: AbortSignal,
     ): Promise<void> {
@@ -160,7 +160,7 @@ export class NodeAPIService {
             Name: newNode.encryptedName,
             NameSignatureEmail: newNode.nameSignatureEmail,
             Hash: newNode.hash,
-            OriginalHash: originalNode.hash,
+            OriginalHash: originalNode.hash || null,
         }, signal);
     }
 
