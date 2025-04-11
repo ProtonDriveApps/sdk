@@ -2,7 +2,8 @@ import { c } from 'ttag';
 
 import { PrivateKey, SessionKey } from "../../crypto";
 import { Logger, MissingNode, NodeType, resultError, resultOk } from "../../interface";
-import { SDKError } from "../../errors";
+import { DecryptionError } from "../../errors";
+import { getErrorMessage } from '../errors';
 import { BatchLoading } from "../batchLoading";
 import { makeNodeUid } from "../uids";
 import { NodeAPIService } from "./apiService";
@@ -12,10 +13,6 @@ import { NodesCryptoService } from "./cryptoService";
 import { parseFileExtendedAttributes, parseFolderExtendedAttributes } from "./extendedAttributes";
 import { SharesService, EncryptedNode, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys } from "./interface";
 import { validateNodeName } from "./validations";
-
-class NodeKeysDecryptionError extends SDKError {
-    name = 'NodeKeysDecryptionError';
-}
 
 /**
  * Provides access to node metadata.
@@ -166,7 +163,35 @@ export class NodesAccess {
     }
 
     private async decryptNode(encryptedNode: EncryptedNode): Promise<{ node: DecryptedNode, keys?: DecryptedNodeKeys }> {
-        const { key: parentKey } = await this.getParentKeys(encryptedNode);
+        let parentKey;
+        try {
+            const parentKeys = await this.getParentKeys(encryptedNode);
+            parentKey = parentKeys.key;
+        } catch (error: unknown) {
+            if (error instanceof DecryptionError) {
+                return {
+                    node: {
+                        ...encryptedNode,
+                        isStale: false,
+                        name: resultError({
+                            name: '',
+                            error: getErrorMessage(error),
+                        }),
+                        keyAuthor: resultError({
+                            claimedAuthor: encryptedNode.encryptedCrypto.signatureEmail,
+                            error: getErrorMessage(error),
+                        }),
+                        nameAuthor: resultError({
+                            claimedAuthor: encryptedNode.encryptedCrypto.nameSignatureEmail,
+                            error: getErrorMessage(error),
+                        }),
+                        errors: [error],
+                    },
+                };
+            }
+            throw error;
+        }
+
         const { node: unparsedNode, keys } = await this.cryptoService.decryptNode(encryptedNode, parentKey);
         const node = await this.parseNode(unparsedNode);
         try {
@@ -234,11 +259,11 @@ export class NodesAccess {
             try {
                 return await this.getNodeKeys(node.parentUid);
             } catch (error: unknown) {
-                if (error instanceof NodeKeysDecryptionError) {
+                if (error instanceof DecryptionError) {
                     // Change the error message to be more specific.
                     // Original error message is referring to node, while here
                     // it referes to as parent to follow the method context.
-                    throw new NodeKeysDecryptionError(c('Error').t`Parent cannot be decrypted`);
+                    throw new DecryptionError(c('Error').t`Parent cannot be decrypted`);
                 }
                 throw error;
             }
@@ -259,7 +284,7 @@ export class NodesAccess {
         } catch {
             const { keys } = await this.loadNode(nodeUid);
             if (!keys) {
-                throw new NodeKeysDecryptionError(c('Error').t`Item cannot be decrypted`);
+                throw new DecryptionError(c('Error').t`Item cannot be decrypted`);
             }
             return keys;
         }

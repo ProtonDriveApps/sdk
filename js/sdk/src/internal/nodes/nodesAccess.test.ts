@@ -1,5 +1,6 @@
 import { getMockLogger } from "../../tests/logger";
 import { PrivateKey } from "../../crypto";
+import { DecryptionError } from "../../errors";
 import { NodeAPIService } from "./apiService";
 import { NodesCache } from "./cache"
 import { NodesCryptoCache } from "./cryptoCache";
@@ -347,6 +348,59 @@ describe('nodesAccess', () => {
                 const result = await Array.fromAsync(access.iterateNodes(['node1', 'node2', 'node3']));
                 expect(result).toMatchObject([node2, node3, {missingUid: 'node1'}]);
                 expect(cache.removeNodes).toHaveBeenCalledWith(['node1']);
+            });
+
+            it('should return degraded node if parent cannot be decrypted', async () => {
+                cache.iterateNodes = jest.fn().mockImplementation(async function* () {
+                    yield { ok: false, uid: 'node1' };
+                    yield { ok: false, uid: 'node2' };
+                    yield { ok: false, uid: 'node3' };
+                });
+                const encryptedCrypto = {
+                    signatureEmail: 'signatureEmail',
+                    nameSignatureEmail: 'nameSignatureEmail',
+                };
+                apiService.iterateNodes = jest.fn().mockImplementation(async function* (uids: string[]) {
+                    yield* uids.map((uid) => ({
+                        uid,
+                        parentUid: `parentUidFor:${uid}`,
+                        encryptedCrypto,
+                    } as EncryptedNode));
+                });
+                const decryptionError = new DecryptionError('Parent cannot be decrypted');
+                jest.spyOn(access, 'getParentKeys').mockImplementation(async ({ parentUid }) => {
+                    if (parentUid === 'parentUidFor:node1') {
+                        throw decryptionError;
+                    }
+                    return {
+                        key: 'parentKey',
+                    };
+                });
+
+                const result = await Array.fromAsync(access.iterateNodes(['node1', 'node2', 'node3']));
+                expect(result).toEqual([
+                    {
+                        ...node1,
+                        encryptedCrypto,
+                        parentUid: 'parentUidFor:node1',
+                        name: { ok: false, error: { name: '', error: decryptionError.message } },
+                        keyAuthor: { ok: false, error: { claimedAuthor: 'signatureEmail', error: decryptionError.message } },
+                        nameAuthor: { ok: false, error: { claimedAuthor: 'nameSignatureEmail', error: decryptionError.message } },
+                        errors: [decryptionError],
+                    },
+                    {
+                        ...node2,
+                        name: { ok: true, value: 'name' },
+                        folder: undefined,
+                        activeRevision: undefined,
+                    },
+                    {
+                        ...node3,
+                        name: { ok: true, value: 'name' },
+                        folder: undefined,
+                        activeRevision: undefined,
+                    },
+                ]);
             });
         });
     });
