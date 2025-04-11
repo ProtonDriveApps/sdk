@@ -9,11 +9,11 @@ import { c } from 'ttag';
  * 
  * No retries should be done as that is already handled by the SDK.
  * 
- * When SDK throws an error and it is not `SDKError`, it is unhandled error
+ * When SDK throws an error and it is not `ProtonDriveError`, it is unhandled error
  * by the SDK and usually indicates bug in the SDK. Please, report it.
  */
-export class SDKError extends Error {
-    name = 'SDKError';
+export class ProtonDriveError extends Error {
+    name = 'ProtonDriveError';
 }
 
 /**
@@ -22,7 +22,7 @@ export class SDKError extends Error {
  * This error is thrown when the operation is aborted by the user.
  * For example, by calling `abort()` on the `AbortSignal`.
  */
-export class AbortError extends SDKError {
+export class AbortError extends ProtonDriveError {
     name = 'AbortError';
 
     constructor(message?: string) {
@@ -40,7 +40,7 @@ export class AbortError extends SDKError {
  * follow the required format, etc., while on the server side, it can be thrown
  * when there is not enough permissions, etc.
  */
-export class ValidationError extends SDKError {
+export class ValidationError extends ProtonDriveError {
     name = 'ValidationError';
 
     /**
@@ -84,7 +84,7 @@ export class NodeAlreadyExistsValidationError extends ValidationError {
  * 
  * Client should not retry the request when this error is thrown.
  */
-export class ServerError extends SDKError {
+export class ServerError extends ProtonDriveError {
     name = 'ServerError';
 
     /**
@@ -130,7 +130,7 @@ export class RateLimitedError extends ServerError {
  * You can also be notified about the connection status by the `offline` event
  * See `onMessage` method on the SDK class for more details.
  */
-export class ConnectionError extends SDKError {
+export class ConnectionError extends ProtonDriveError {
     name = 'ConnectionError';
 }
 
@@ -144,7 +144,7 @@ export class ConnectionError extends SDKError {
  * case of the file content, if block cannot be decrypted, decryption error
  * is thrown.
  */
-export class DecryptionError extends SDKError {
+export class DecryptionError extends ProtonDriveError {
     name = 'DecryptionError';
 }
 
@@ -156,7 +156,7 @@ export class DecryptionError extends SDKError {
  * For example, it can happen when hashes don't match, etc. In some cases,
  * SDK allows to run command without verification checks for debug purposes.
  */
-export class IntegrityError extends SDKError {
+export class IntegrityError extends ProtonDriveError {
     name = 'IntegrityError';
 
     public readonly debug?: object;
