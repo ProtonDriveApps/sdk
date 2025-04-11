@@ -5,7 +5,7 @@ import { initTelemetry } from "./telemetry";
 import { SQLiteEntititesCache } from "./cache";
 import { Paths } from "./cli/paths";
 
-import { ProtonDriveClient, MemoryCache, CachedCryptoMaterial, OpenPGPCryptoWithCryptoProxy } from "../../sdk/src";
+import { ProtonDriveClient, MemoryCache, CachedCryptoMaterial, OpenPGPCryptoWithCryptoProxy, VERSION } from "../../sdk/src";
 
 interface Config {
     appVersion: string;
@@ -17,6 +17,7 @@ interface Config {
 }
 
 export async function init() {
+    console.log(`Proton Drive SDK for web v${VERSION}`);
     const cryptoApi = initCrypto();
     const config = getConfig();
     const account = await initAccount(cryptoApi, config);

@@ -49,6 +49,7 @@ describe("DriveAPIService", () => {
                 "Accept": "application/vnd.protonmail.v1+json",
                 "Content-Type": "application/json",
                 "Language": 'en',
+                "x-pm-drive-sdk-version": `js@${process.env.npm_package_version}`,
             }).entries()));
             expect(await request.text()).toEqual(data ? JSON.stringify(data) : "");
         }

@@ -9,6 +9,7 @@ export * from './cache';
 export * from './errors';
 export { OpenPGPCrypto, OpenPGPCryptoWithCryptoProxy, OpenPGPCryptoProxy } from './crypto';
 export { ProtonDriveClient } from './protonDriveClient';
+export { VERSION } from './version';
 
 /**
  * Provides the node UID for the given raw volume and node IDs.
