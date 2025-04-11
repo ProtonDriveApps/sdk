@@ -1,5 +1,6 @@
 import { c } from 'ttag';
 
+import { VERSION } from "../../version";
 import { ProtonDriveHTTPClient, ProtonDriveTelemetry, Logger } from "../../interface";
 import { AbortError, ServerError, RateLimitedError, SDKError } from '../../errors';
 import { waitSeconds } from '../wait';
@@ -110,11 +111,11 @@ export class DriveAPIService {
     ): Promise<ResponsePayload> {
         const request = new Request(`${this.baseUrl}/${url}`, {
             method: method || 'GET',
-            // TODO: set SDK version (or set via http client at init?)
             headers: new Headers({
                 "Accept": "application/vnd.protonmail.v1+json",
                 "Content-Type": "application/json",
                 "Language": this.language,
+                "x-pm-drive-sdk-version": `js@${VERSION}`,
             }),
             body: data && JSON.stringify(data),
         });
