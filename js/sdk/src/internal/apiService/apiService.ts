@@ -2,7 +2,7 @@ import { c } from 'ttag';
 
 import { VERSION } from "../../version";
 import { ProtonDriveHTTPClient, ProtonDriveTelemetry, Logger } from "../../interface";
-import { AbortError, ServerError, RateLimitedError, SDKError } from '../../errors';
+import { AbortError, ServerError, RateLimitedError, ProtonDriveError } from '../../errors';
 import { waitSeconds } from '../wait';
 import { HTTPErrorCode, isCodeOk } from './errorCodes';
 import { apiErrorFactory } from './errors';
@@ -130,7 +130,7 @@ export class DriveAPIService {
             }
             return result as ResponsePayload;
         } catch (error: unknown) {
-            if (error instanceof SDKError) {
+            if (error instanceof ProtonDriveError) {
                 throw error;
             }
             throw apiErrorFactory({ response });
@@ -166,7 +166,7 @@ export class DriveAPIService {
                 const result = await response.json();
                 throw apiErrorFactory({ response, result });
             } catch (error: unknown) {
-                if (error instanceof SDKError) {
+                if (error instanceof ProtonDriveError) {
                     throw error;
                 }
                 throw apiErrorFactory({ response });

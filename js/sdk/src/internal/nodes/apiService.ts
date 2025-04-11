@@ -1,6 +1,6 @@
 import { c } from "ttag";
 
-import { SDKError, ValidationError } from "../../errors";
+import { ProtonDriveError, ValidationError } from "../../errors";
 import { Logger, NodeResult } from "../../interface";
 import { RevisionState } from "../../interface/nodes";
 import { DriveAPIService, drivePaths, isCodeOk, nodeTypeNumberToNodeType, permissionsToDirectMemberRole } from "../apiService";
@@ -89,7 +89,7 @@ export class NodeAPIService {
 
         if (errors.length) {
             this.logger.warn(`Failed to load ${errors.length} nodes`);
-            throw new SDKError(c('Error').t`Failed to load some nodes`, { cause: errors });
+            throw new ProtonDriveError(c('Error').t`Failed to load some nodes`, { cause: errors });
         }
     }
 
