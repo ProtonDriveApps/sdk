@@ -81,6 +81,11 @@ export class Path {
         throw new Error('Not implemented');
     }
 
+    async getChild(name: string) {
+        const node = await this.getNode();
+        return this.getNodeByName(node, name);
+    }
+
     private get sectionPath() {
         // /my-files/foo/bar/baz -> foo/bar/baz
         return this.fullPath.split(path.sep).slice(2).join(path.sep);

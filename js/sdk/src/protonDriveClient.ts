@@ -525,6 +525,14 @@ export class ProtonDriveClient {
     }
 
     /**
+     * Same as `getFileUploader`, but for a uploading new revision of the file.
+     */
+    async getFileRevisionUploader(nodeUid: NodeOrUid, metadata: UploadMetadata, signal?: AbortSignal): Promise<Fileuploader> {
+        this.logger.info(`Getting file revision uploader for ${getUid(nodeUid)}`);
+        return this.upload.getFileRevisionUploader(getUid(nodeUid), metadata, signal);
+    }
+
+    /**
      * Iterates the devices of the user.
      * 
      * The output is not sorted and the order of the devices is not guaranteed.

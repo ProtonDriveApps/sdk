@@ -14,9 +14,14 @@ export class CommandFileSystemUpload implements Command {
             short: 'n',
             default: '',
         },
+        newRevision: {
+            type: 'boolean',
+            short: 'r',
+            default: false,
+        },
     };
 
-    async action({ sdk, paths, args: [ localPath, parentPath ], options: { name } }: ActionArgs) {
+    async action({ sdk, paths, args: [ localPath, parentPath ], options: { name, newRevision } }: ActionArgs) {
         name = name || path.basename(localPath);
 
         const file = Bun.file(localPath);
@@ -25,10 +30,17 @@ export class CommandFileSystemUpload implements Command {
             expectedSize: file.size,
         }
 
-        const parentNodePath = paths.getPath(parentPath);
-        const parentNode = await parentNodePath.getNode();
+        let uploader;
+        if (newRevision) {
+            const parentNodePath = paths.getPath(parentPath);
+            const node = await parentNodePath.getChild(name);
+            uploader = await sdk.getFileRevisionUploader(node, metadata);
+        } else {
+            const parentNodePath = paths.getPath(parentPath);
+            const parentNode = await parentNodePath.getNode();
+            uploader = await sdk.getFileUploader(parentNode, name, metadata);
+        }
 
-        const uploader = await sdk.getFileUploader(parentNode, name, metadata);
         console.log(`Uploading ${name} (${metadata.expectedSize || 'N/A'} bytes)`);
 
         const thumbnails = []; // TODO
