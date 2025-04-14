@@ -35,7 +35,7 @@ export class CommandFileSystemMove implements Command {
             if (json) {
                 console.log(JSON.stringify(result));
             } else {
-                console.log(result.ok ? `Moved ${result.uid}` : `Failed to move ${result.uid}: ${result.error}`);
+                console.log(result.ok ? `✅ ${result.uid}` : `❌ ${result.uid}: ${result.error}`);
             }
         }
     }
