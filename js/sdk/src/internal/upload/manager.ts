@@ -2,10 +2,11 @@ import { c } from "ttag";
 
 import { Logger, ProtonDriveTelemetry, UploadMetadata } from "../../interface";
 import { ValidationError, NodeAlreadyExistsValidationError } from "../../errors";
+import { ErrorCode } from "../apiService";
+import { splitNodeUid } from "../uids";
 import { UploadAPIService } from "./apiService";
 import { UploadCryptoService } from "./cryptoService";
-import { NodeRevisionDraft, NodesService, NodeCrypto } from "./interface";
-import { ErrorCode } from "../apiService";
+import { NodeRevisionDraft, NodesService, NodeCrypto, SharesService } from "./interface";
 
 /**
  * UploadManager is responsible for creating and deleting draft nodes
@@ -19,18 +20,20 @@ export class UploadManager {
         telemetry: ProtonDriveTelemetry,
         private apiService: UploadAPIService,
         private cryptoService: UploadCryptoService,
+        private sharesService: SharesService,
         private nodesService: NodesService,
     ) {
         this.logger = telemetry.getLogger('upload');
         this.apiService = apiService;
         this.cryptoService = cryptoService;
+        this.sharesService = sharesService;
         this.nodesService = nodesService;
     }
 
     async createDraftNode(parentFolderUid: string, name: string, metadata: UploadMetadata): Promise<NodeRevisionDraft> {
         const parentKeys = await this.nodesService.getNodeKeys(parentFolderUid);
         if (!parentKeys.hashKey) {
-            throw new ValidationError(c('Error').t`Creating folders in non-folders is not allowed`);
+            throw new ValidationError(c('Error').t`Creating files in non-folders is not allowed`);
         }
 
         const generatedNodeCrypto = await this.cryptoService.generateFileCrypto(
@@ -178,6 +181,44 @@ export class UploadManager {
             // deleting draft only when somethign fails and original error
             // will bubble up.
             this.logger.error('Failed to delete draft node', error);
+        }
+    }
+
+    async createDraftRevision(nodeUid: string, metadata: UploadMetadata): Promise<NodeRevisionDraft> {
+        const node = await this.nodesService.getNode(nodeUid);
+        const nodeKeys = await this.nodesService.getNodeKeys(nodeUid);
+
+        if (!node.activeRevision?.ok || !nodeKeys.contentKeyPacketSessionKey) {
+            throw new ValidationError(c('Error').t`Creating revisions in non-files is not allowed`);
+        }
+
+        const { volumeId } = splitNodeUid(nodeUid);
+        const signatureAddress = await this.sharesService.getVolumeEmailKey(volumeId);
+
+        const { nodeRevisionUid } = await this.apiService.createDraftRevision(nodeUid, {
+            currentRevisionUid: node.activeRevision.value.uid,
+            intendedUploadSize: metadata.expectedSize,
+        });
+
+        return {
+            nodeUid,
+            nodeRevisionUid,
+            nodeKeys: {
+                key: nodeKeys.key,
+                contentKeyPacketSessionKey: nodeKeys.contentKeyPacketSessionKey,
+                signatureAddress: signatureAddress,
+            },
+        }
+    }
+
+    async deleteDraftRevision(nodeRevisionUid: string): Promise<void> {
+        try {
+            await this.apiService.deleteDraftRevision(nodeRevisionUid);
+        } catch (error: unknown) {
+            // Only log the error but do not fail the operation as we are
+            // deleting draft only when somethign fails and original error
+            // will bubble up.
+            this.logger.error('Failed to delete draft node revision', error);
         }
     }
 }

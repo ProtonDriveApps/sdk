@@ -1,5 +1,6 @@
 import { PrivateKey, SessionKey } from "../../crypto";
-import { MetricContext, ThumbnailType } from "../../interface";
+
+import { MetricContext, ThumbnailType, Result, Revision } from "../../interface";
 
 export type NodeRevisionDraft = {
     nodeUid: string,
@@ -83,7 +84,18 @@ export type UploadTokens = {
  * Interface describing the dependencies to the nodes module.
  */
 export interface NodesService {
-    getNodeKeys(nodeUid: string): Promise<{ key: PrivateKey, passphraseSessionKey: SessionKey, hashKey?: Uint8Array }>,
+    getNode(nodeUid: string): Promise<NodesServiceNode>,
+    getNodeKeys(nodeUid: string): Promise<{
+        key: PrivateKey,
+        passphraseSessionKey: SessionKey,
+        contentKeyPacketSessionKey?: SessionKey,
+        hashKey?: Uint8Array,
+    }>,
+}
+
+export interface NodesServiceNode {
+    uid: string,
+    activeRevision?: Result<Revision, Error>,
 }
 
 /**

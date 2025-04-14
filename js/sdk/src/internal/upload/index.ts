@@ -26,8 +26,9 @@ export function initUploadModule(
 ) {
     const api = new UploadAPIService(apiService);
     const cryptoService = new UploadCryptoService(driveCrypto, sharesService);
+
     const uploadTelemetry = new UploadTelemetry(telemetry, sharesService);
-    const manager = new UploadManager(telemetry, api, cryptoService, nodesService);
+    const manager = new UploadManager(telemetry, api, cryptoService, sharesService, nodesService);
 
     const queue = new UploadQueue();
 
@@ -36,7 +37,7 @@ export function initUploadModule(
         name: string,
         metadata: UploadMetadata,
         signal?: AbortSignal,
-    ) {
+    ): Promise<Fileuploader> {
         await queue.waitForCapacity(signal);
 
         let revisionDraft, blockVerifier;
@@ -73,7 +74,50 @@ export function initUploadModule(
         );
     }
 
+    async function getFileRevisionUploader(
+        nodeUid: string,
+        metadata: UploadMetadata,
+        signal?: AbortSignal,
+    ): Promise<Fileuploader> {
+        await queue.waitForCapacity(signal);
+
+        let revisionDraft, blockVerifier;
+        try {
+            revisionDraft = await manager.createDraftRevision(nodeUid, metadata);
+
+            blockVerifier = new BlockVerifier(api, cryptoService, revisionDraft.nodeKeys.key, revisionDraft.nodeRevisionUid);
+            await blockVerifier.loadVerificationData();
+        } catch (error: unknown) {
+            queue.releaseCapacity();
+            if (revisionDraft) {
+                await manager.deleteDraftRevision(revisionDraft.nodeRevisionUid);
+            }
+            void uploadTelemetry.uploadInitFailed(nodeUid, error, metadata.expectedSize);
+            throw error;
+        }
+
+        const onFinish = async (failure: boolean) => {
+            queue.releaseCapacity();
+            if (failure) {
+                await manager.deleteDraftNode(revisionDraft.nodeUid);
+            }
+        }
+
+        return new Fileuploader(
+            uploadTelemetry,
+            api,
+            cryptoService,
+            blockVerifier,
+            revisionDraft,
+            metadata,
+            onFinish,
+            signal,
+        );
+
+    }
+
     return {
         getFileUploader,
+        getFileRevisionUploader,
     }
 }

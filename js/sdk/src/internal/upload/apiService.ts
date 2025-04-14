@@ -106,7 +106,7 @@ export class UploadAPIService {
         clientUID?: string,
         intendedUploadSize?: number,
     }): Promise<{
-        nodeRevisionsUid: string,
+        nodeRevisionUid: string,
     }> {
         const { volumeId, nodeId } = splitNodeUid(nodeUid);
         const { revisionId: currentRevisionId } = splitNodeRevisionUid(revision.currentRevisionUid);
@@ -121,7 +121,7 @@ export class UploadAPIService {
         });
 
         return {
-            nodeRevisionsUid: makeNodeRevisionUid(volumeId, nodeId, result.Revision.ID),
+            nodeRevisionUid: makeNodeRevisionUid(volumeId, nodeId, result.Revision.ID),
         }
     }
 

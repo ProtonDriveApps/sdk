@@ -4,13 +4,14 @@ import { getMockTelemetry } from "../../tests/telemetry";
 import { ErrorCode } from "../apiService";
 import { UploadAPIService } from "./apiService";
 import { UploadCryptoService } from "./cryptoService";
-import { NodesService } from "./interface";
+import { SharesService, NodesService } from "./interface";
 import { UploadManager } from './manager';
 
 describe("UploadManager", () => {
     let telemetry: ProtonDriveTelemetry;
     let apiService: UploadAPIService;
     let cryptoService: UploadCryptoService;
+    let sharesService: SharesService;
     let nodesService: NodesService;
 
     let manager: UploadManager;
@@ -66,6 +67,14 @@ describe("UploadManager", () => {
                 hash: "name3Hash",
             }]),
         }
+        // @ts-expect-error No need to implement all methods for mocking
+        sharesService = {
+            getVolumeEmailKey: jest.fn().mockResolvedValue({
+                email: "signatureEmail",
+                addressId: "addressId",
+            }),
+        }
+        // @ts-expect-error No need to implement all methods for mocking
         nodesService = {
             getNodeKeys: jest.fn().mockResolvedValue({
                 hashKey: 'parentNode:hashKey',
@@ -73,7 +82,7 @@ describe("UploadManager", () => {
             }),
         }
 
-        manager = new UploadManager(telemetry, apiService, cryptoService, nodesService);
+        manager = new UploadManager(telemetry, apiService, cryptoService, sharesService, nodesService);
     });
 
     describe("createDraftNode", () => {
@@ -81,7 +90,7 @@ describe("UploadManager", () => {
             nodesService.getNodeKeys = jest.fn().mockResolvedValue({ hashKey: undefined });
 
             const result = manager.createDraftNode("parentUid", "name", {} as UploadMetadata);
-            await expect(result).rejects.toThrow("Creating folders in non-folders is not allowed");
+            await expect(result).rejects.toThrow("Creating files in non-folders is not allowed");
         });
 
         it("should create draft node", async () => {
