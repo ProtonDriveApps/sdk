@@ -1,11 +1,8 @@
 import { ProtonDriveCache } from '../cache';
 import { OpenPGPCrypto, PrivateKey, SessionKey } from '../crypto';
 import { ProtonDriveAccount } from './account';
-import { Download } from './download';
-import { Events } from './events';
 import { ProtonDriveHTTPClient, ProtonDriveConfig } from './httpClient';
 import { Telemetry, MetricEvent } from './telemetry';
-import { Upload } from './upload';
 
 export type { Result } from './result';
 export { resultOk, resultError } from './result';
@@ -21,8 +18,9 @@ export { NodeType, MemberRole, RevisionState } from './nodes';
 export type { ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Member, PublicLink, Bookmark, ProtonInvitationOrUid, NonProtonInvitationOrUid, BookmarkOrUid, ShareNodeSettings, UnshareNodeSettings, ShareMembersSettings, SharePublicLinkSettings, ShareResult } from './sharing';
 export { NonProtonInvitationState } from './sharing';
 export type { Telemetry, Logger, MetricAPIRetrySucceededEvent, MetricUploadEvent, MetricsUploadErrorType, MetricDownloadEvent, MetricsDownloadErrorType, MetricDecryptionErrorEvent, MetricsDecryptionErrorField, MetricVerificationErrorEvent, MetricVerificationErrorField, MetricVolumeEventsSubscriptionsChangedEvent, MetricEvent, MetricContext } from './telemetry';
-export type { Fileuploader, UploadController, Thumbnail, UploadMetadata } from './upload';
-export { ThumbnailType } from './upload';
+export type { Fileuploader, UploadController, UploadMetadata } from './upload';
+export type { Thumbnail, ThumbnailResult } from './thumbnail';
+export { ThumbnailType } from './thumbnail';
 
 export type ProtonDriveTelemetry = Telemetry<MetricEvent>;
 export type ProtonDriveEntitiesCache = ProtonDriveCache<string>;
@@ -43,7 +41,3 @@ export interface ProtonDriveClientContructorParameters {
     config?: ProtonDriveConfig,
     telemetry?: ProtonDriveTelemetry,
 };
-
-// Helper interface to make sure that all methods are correctly implemented eventually.
-// In the end this will be deleted and the ProtonDriveClient will implement all methods directly.
-export interface ProtonDriveClientInterface extends Download, Events, Upload {};

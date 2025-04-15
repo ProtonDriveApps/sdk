@@ -45,6 +45,22 @@ export class DownloadCryptoService {
         return decryptedBlock;
     }
 
+    async decryptThumbnail(thumbnail: Uint8Array, contentKeyPacketSessionKey: SessionKey): Promise<Uint8Array> {
+        let decryptedBlock;
+        try {
+            const result = await this.driveCrypto.decryptThumbnailBlock(
+                thumbnail,
+                contentKeyPacketSessionKey,
+                [], // We ignore verification for thumbnails.
+            );
+            decryptedBlock = result.decryptedThumbnail;
+        } catch (error: unknown) {
+            throw new DecryptionError(c('Error').t`Failed to decrypt thumbnail: ${getErrorMessage(error)}`);
+        }
+
+        return decryptedBlock;
+    }
+
     async verifyBlockIntegrity(encryptedBlock: Uint8Array, base64sha256Hash: string): Promise<void> {
         const digest = await crypto.subtle.digest('SHA-256', encryptedBlock);
         const expectedHash = uint8ArrayToBase64String(new Uint8Array(digest));

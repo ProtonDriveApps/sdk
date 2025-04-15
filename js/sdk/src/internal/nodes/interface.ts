@@ -1,5 +1,5 @@
 import { PrivateKey, SessionKey } from "../../crypto";
-import { NodeEntity, Result, InvalidNameError, Author, MemberRole, NodeType, Revision } from "../../interface";
+import { NodeEntity, Result, InvalidNameError, Author, MemberRole, NodeType, ThumbnailType } from "../../interface";
 import { RevisionState } from "../../interface/nodes";
 
 /**
@@ -82,7 +82,7 @@ export interface DecryptedNode extends Omit<DecryptedUnparsedNode, 'activeRevisi
     // Internal metadata
     isStale: boolean;
 
-    activeRevision?: Result<Revision, Error>,
+    activeRevision?: Result<DecryptedRevision, Error>,
     folder?: {
         claimedModificationTime?: Date,
     },
@@ -109,6 +109,12 @@ interface BaseRevision {
     uid: string;
     state: RevisionState;
     createdDate: Date; // created on the server
+    thumbnails: Thumbnail[];
+}
+
+export type Thumbnail = {
+    uid: string;
+    type: ThumbnailType;
 }
 
 export interface EncryptedRevision extends BaseRevision {

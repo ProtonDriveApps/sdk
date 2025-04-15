@@ -2,7 +2,7 @@ import { c } from 'ttag';
 
 import { DriveCrypto } from "../../crypto";
 import { ValidationError } from "../../errors";
-import { ProtonDriveAccount, ProtonDriveTelemetry, NodeType } from "../../interface";
+import { ProtonDriveAccount, ProtonDriveTelemetry, NodeType, ThumbnailType, ThumbnailResult } from "../../interface";
 import { DriveAPIService } from "../apiService";
 import { DownloadAPIService } from "./apiService";
 import { DownloadCryptoService } from "./cryptoService";
@@ -11,6 +11,7 @@ import { FileDownloader } from "./fileDownloader";
 import { DownloadQueue } from "./queue";
 import { DownloadTelemetry } from "./telemetry";
 import { makeNodeUidFromRevisionUid } from "../uids";
+import { ThumbnailDownloader } from './thumbnailDownloader';
 
 export function initDownloadModule(
     telemetry: ProtonDriveTelemetry,
@@ -25,7 +26,7 @@ export function initDownloadModule(
     const cryptoService = new DownloadCryptoService(driveCrypto, account);
     const downloadTelemetry = new DownloadTelemetry(telemetry);
 
-    async function getFileDownloader(nodeUid: string, signal?: AbortSignal) {
+    async function getFileDownloader(nodeUid: string, signal?: AbortSignal): Promise<FileDownloader> {
         await queue.waitForCapacity(signal);
 
         let node, nodeKey;
@@ -64,7 +65,7 @@ export function initDownloadModule(
         );
     }
 
-    async function getFileRevisionDownloader(nodeRevisionUid: string, signal?: AbortSignal) {
+    async function getFileRevisionDownloader(nodeRevisionUid: string, signal?: AbortSignal): Promise<FileDownloader> {
         await queue.waitForCapacity(signal);
 
         const nodeUid = makeNodeUidFromRevisionUid(nodeRevisionUid);
@@ -103,8 +104,18 @@ export function initDownloadModule(
         );
     }
 
+    async function *iterateThumbnails(
+        nodeUids: string[],
+        thumbnailType?: ThumbnailType,
+        signal?: AbortSignal,
+    ): AsyncGenerator<ThumbnailResult> {
+        const thumbnailDownloader = new ThumbnailDownloader(telemetry, nodesService, api, cryptoService);
+        yield* thumbnailDownloader.iterateThumbnails(nodeUids, thumbnailType, signal);
+    }
+
     return {
         getFileDownloader,
         getFileRevisionDownloader,
+        iterateThumbnails,
     }
 }

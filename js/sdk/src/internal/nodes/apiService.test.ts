@@ -80,6 +80,7 @@ function generateFileNode(overrides = {}) {
                 createdDate: new Date(1234567890000),
                 signatureEmail: "revSigEmail",
                 armoredExtendedAttributes: "{file}",
+                thumbnails: [],
             },
         },
         ...overrides

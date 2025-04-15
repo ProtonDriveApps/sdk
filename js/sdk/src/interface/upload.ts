@@ -1,19 +1,4 @@
-import { NodeOrUid } from './nodes';
-
-export interface Upload {
-    getFileUploader(
-        parentFolder: NodeOrUid,
-        name: string,
-        metadata: UploadMetadata,
-        signal?: AbortSignal
-    ): Promise<Fileuploader>,
-
-    getFileRevisionUploader(
-        node: NodeOrUid,
-        metadata: UploadMetadata,
-        signal?: AbortSignal
-    ): Promise<Fileuploader>,
-}
+import { Thumbnail } from "./thumbnail";
 
 export type UploadMetadata = {
     mimeType: string,
@@ -31,14 +16,4 @@ export interface UploadController {
     pause(): void,
     resume(): void,
     completion(): Promise<string>,
-}
-
-export type Thumbnail = {
-    type: ThumbnailType,
-    thumbnail: Uint8Array,
-}
-
-export enum ThumbnailType {
-    Type1 = 1,
-    Type2 = 2,
 }

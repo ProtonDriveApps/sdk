@@ -1,15 +1,3 @@
-import { NodeOrUid } from './nodes';
-import { ThumbnailType } from './upload';
-
-export interface Download {
-    getFileDownloader(node: NodeOrUid, signal?: AbortSignal): Promise<FileDownloader>,
-
-    iterateThumbnails(nodeUids: NodeOrUid[], thumbnailType: ThumbnailType, signal?: AbortSignal): AsyncGenerator<{
-        nodeUid: string,
-        thumbnail: Uint8Array,
-    }>,
-}
-
 export interface FileDownloader {
     /**
      * Get the claimed size of the file in bytes.

@@ -235,6 +235,7 @@ export class NodesAccess {
                     state: unparsedNode.activeRevision.value.state,
                     createdDate: unparsedNode.activeRevision.value.createdDate,
                     contentAuthor: unparsedNode.activeRevision.value.contentAuthor,
+                    thumbnails: unparsedNode.activeRevision.value.thumbnails,
                     ...extendedAttributes,
                 }),
                 folder: undefined,

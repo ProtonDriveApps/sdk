@@ -309,6 +309,7 @@ export class NodesCryptoService {
             createdDate: encryptedRevision.createdDate,
             contentAuthor,
             extendedAttributes,
+            thumbnails: encryptedRevision.thumbnails,
         }
     }
 

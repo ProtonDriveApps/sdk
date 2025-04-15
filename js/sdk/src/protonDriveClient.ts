@@ -1,7 +1,6 @@
 import {
     Logger,
     ProtonDriveClientContructorParameters,
-    ProtonDriveClientInterface,
     NodeOrUid,
     MaybeNode,
     MaybeMissingNode,
@@ -19,6 +18,8 @@ import {
     UploadMetadata,
     FileDownloader,
     Fileuploader,
+    ThumbnailType,
+    ThumbnailResult,
 } from './interface';
 import { DriveCrypto } from './crypto';
 import { DriveAPIService } from './internal/apiService';
@@ -40,7 +41,7 @@ import { initDevicesModule } from './internal/devices';
  * and downloading/uploading files. It is the main entry point for using
  * the ProtonDrive SDK.
  */
-export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
+export class ProtonDriveClient {
     private logger: Logger;
     private nodes: ReturnType<typeof initNodesModule>;
     private sharing: ReturnType<typeof initSharingModule>;
@@ -473,6 +474,20 @@ export class ProtonDriveClient implements Partial<ProtonDriveClientInterface> {
     async getFileRevisionDownloader(nodeRevisionUid: string, signal?: AbortSignal): Promise<FileDownloader> {
         this.logger.info(`Getting file revision downloader for ${getUid(nodeRevisionUid)}`);
         return this.download.getFileRevisionDownloader(nodeRevisionUid, signal);
+    }
+
+    /**
+    * Iterates the thumbnails of the given nodes.
+    *
+    * The output is not sorted and the order of the nodes is not guaranteed.
+    *
+    * @param nodeUids - List of node entities or their UIDs.
+    * @param thumbnailType - Type of the thumbnail to download.
+    * @returns An async generator of the results of the restore operation
+    */
+    async *iterateThumbnails(nodeUids: NodeOrUid[], thumbnailType?: ThumbnailType, signal?: AbortSignal): AsyncGenerator<ThumbnailResult> {
+        this.logger.info(`Iterating ${nodeUids.length} thumbnails`);
+        yield* this.download.iterateThumbnails(getUids(nodeUids), thumbnailType, signal);
     }
 
     /**
