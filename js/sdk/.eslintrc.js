@@ -11,6 +11,7 @@ module.exports =  {
     },
     rules: {
         "tsdoc/syntax": "warn",
+        "@typescript-eslint/no-floating-promises": "error",
     },
     overrides: [
         {

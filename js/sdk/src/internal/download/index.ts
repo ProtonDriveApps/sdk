@@ -6,7 +6,7 @@ import { ProtonDriveAccount, ProtonDriveTelemetry, NodeType, ThumbnailType, Thum
 import { DriveAPIService } from "../apiService";
 import { DownloadAPIService } from "./apiService";
 import { DownloadCryptoService } from "./cryptoService";
-import { NodesService, RevisionsService } from "./interface";
+import { NodesService, RevisionsService, SharesService } from "./interface";
 import { FileDownloader } from "./fileDownloader";
 import { DownloadQueue } from "./queue";
 import { DownloadTelemetry } from "./telemetry";
@@ -18,13 +18,14 @@ export function initDownloadModule(
     apiService: DriveAPIService,
     driveCrypto: DriveCrypto,
     account: ProtonDriveAccount,
+    sharesService: SharesService,
     nodesService: NodesService,
     revisionsService: RevisionsService,
 ) {
     const queue = new DownloadQueue();
     const api = new DownloadAPIService(apiService);
     const cryptoService = new DownloadCryptoService(driveCrypto, account);
-    const downloadTelemetry = new DownloadTelemetry(telemetry);
+    const downloadTelemetry = new DownloadTelemetry(telemetry, sharesService);
 
     async function getFileDownloader(nodeUid: string, signal?: AbortSignal): Promise<FileDownloader> {
         await queue.waitForCapacity(signal);
@@ -45,7 +46,7 @@ export function initDownloadModule(
             }
         } catch (error: unknown) {
             queue.releaseCapacity();
-            downloadTelemetry.downloadInitFailed(error);
+            void downloadTelemetry.downloadInitFailed(nodeUid, error);
             throw error;
         }
 
@@ -84,7 +85,7 @@ export function initDownloadModule(
             }
         } catch (error: unknown) {
             queue.releaseCapacity();
-            downloadTelemetry.downloadInitFailed(error);
+            void downloadTelemetry.downloadInitFailed(nodeUid, error);
             throw error;
         }
 

@@ -49,7 +49,7 @@ export class NodesCache {
         try {
             return deserialiseNode(nodeData);
         } catch (error: unknown) {
-            this.removeCorruptedNode({ nodeUid }, error);
+            await this.removeCorruptedNode({ nodeUid }, error);
             throw new Error(`Failed to deserialise node: ${error instanceof Error ? error.message : error}`)
         }
     }
@@ -187,7 +187,7 @@ export class NodesCache {
 
     async setFolderChildrenLoaded(nodeUid: string): Promise<void> {
         const { volumeId } = splitNodeUid(nodeUid);
-        this.driveCache.setEntity(`node-children-${nodeUid}`, 'loaded', [`children-volume:${volumeId}`]);
+        await this.driveCache.setEntity(`node-children-${nodeUid}`, 'loaded', [`children-volume:${volumeId}`]);
     }
 
     async resetFolderChildrenLoaded(nodeUid: string): Promise<void> {

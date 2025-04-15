@@ -141,12 +141,12 @@ export class Fileuploader {
             this.logger.debug(`All blocks uploaded, committing`);
             await this.commitFile(thumbnails);
 
-            this.telemetry.uploadFinished(fileProgress);
+            void this.telemetry.uploadFinished(this.revisionDraft.nodeRevisionUid, fileProgress);
             this.logger.info(`Upload succeeded`);
         } catch (error: unknown) {
             failure = true;
             this.logger.error(`Upload failed`, error);
-            this.telemetry.uploadFailed(error, fileProgress, this.metadata.expectedSize);
+            void this.telemetry.uploadFailed(this.revisionDraft.nodeRevisionUid, error, fileProgress, this.metadata.expectedSize);
             throw error;
         } finally {
             this.logger.debug(`Upload cleanup`);
@@ -170,7 +170,7 @@ export class Fileuploader {
         let encryptionError;
         const encryptBlocksPromise = this.encryptBlocks(stream).catch((error) => {
             encryptionError = error;
-            this.abortUpload(error);
+            void this.abortUpload(error);
         });
 
         while (!encryptionError) {
@@ -377,7 +377,7 @@ export class Fileuploader {
                 }
 
                 logger.error(`Upload failed`, error);
-                this.abortUpload(error);
+                await this.abortUpload(error);
                 throw error;
             }
         }
@@ -455,7 +455,7 @@ export class Fileuploader {
                 }
 
                 logger.error(`Upload failed`, error);
-                this.abortUpload(error);
+                await this.abortUpload(error);
                 throw error;
             }
         }

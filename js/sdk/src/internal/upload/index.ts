@@ -26,7 +26,7 @@ export function initUploadModule(
 ) {
     const api = new UploadAPIService(apiService);
     const cryptoService = new UploadCryptoService(driveCrypto, sharesService);
-    const uploadTelemetry = new UploadTelemetry(telemetry);
+    const uploadTelemetry = new UploadTelemetry(telemetry, sharesService);
     const manager = new UploadManager(telemetry, api, cryptoService, nodesService);
 
     const queue = new UploadQueue();
@@ -50,7 +50,7 @@ export function initUploadModule(
             if (revisionDraft) {
                 await manager.deleteDraftNode(revisionDraft.nodeUid);
             }
-            uploadTelemetry.uploadInitFailed(error, metadata.expectedSize);
+            void uploadTelemetry.uploadInitFailed(parentFolderUid, error, metadata.expectedSize);
             throw error;
         }
 

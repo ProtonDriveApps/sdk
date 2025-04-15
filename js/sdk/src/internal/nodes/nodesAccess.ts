@@ -195,13 +195,13 @@ export class NodesAccess {
         const { node: unparsedNode, keys } = await this.cryptoService.decryptNode(encryptedNode, parentKey);
         const node = await this.parseNode(unparsedNode);
         try {
-            this.cache.setNode(node);
+            await this.cache.setNode(node);
         } catch (error: unknown) {
             this.logger.error(`Failed to cache node ${node.uid}`, error);
         }
         if (keys) {
             try {
-                this.cryptoCache.setNodeKeys(node.uid, keys);
+                await this.cryptoCache.setNodeKeys(node.uid, keys);
             } catch (error: unknown) {
                 this.logger.error(`Failed to cache node keys ${node.uid}`, error);
             }

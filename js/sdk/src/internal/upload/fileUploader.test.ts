@@ -173,7 +173,7 @@ describe('FileUploader', () => {
             expect(apiService.commitDraftRevision).toHaveBeenCalledTimes(1);
             expect(apiService.commitDraftRevision).toHaveBeenCalledWith(revisionDraft.nodeRevisionUid, 'commitCrypto');
             expect(telemetry.uploadFinished).toHaveBeenCalledTimes(1);
-            expect(telemetry.uploadFinished).toHaveBeenCalledWith(metadata.expectedSize + thumbnailSize);
+            expect(telemetry.uploadFinished).toHaveBeenCalledWith('revisionUid', metadata.expectedSize + thumbnailSize);
             expect(telemetry.uploadFailed).not.toHaveBeenCalled();
             expect(onFinish).toHaveBeenCalledTimes(1);
             expect(onFinish).toHaveBeenCalledWith(false);
@@ -186,6 +186,7 @@ describe('FileUploader', () => {
             expect(telemetry.uploadFinished).not.toHaveBeenCalled();
             expect(telemetry.uploadFailed).toHaveBeenCalledTimes(1);
             expect(telemetry.uploadFailed).toHaveBeenCalledWith(
+                'revisionUid',
                 new Error(error),
                 uploadedBytes === undefined ? expect.anything() : uploadedBytes,
                 expectedSize,

@@ -15,7 +15,7 @@ export class NodesCryptoCache {
 
     async setNodeKeys(nodeUid: string, keys: DecryptedNodeKeys): Promise<void> {
         const cacheUid = getCacheKey(nodeUid);
-        this.driveCache.setEntity(cacheUid, keys);
+        await this.driveCache.setEntity(cacheUid, keys);
     }
 
     async getNodeKeys(nodeUid: string): Promise<DecryptedNodeKeys> {

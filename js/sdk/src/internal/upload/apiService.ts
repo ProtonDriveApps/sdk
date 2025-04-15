@@ -231,7 +231,7 @@ export class UploadAPIService {
 
     async deleteDraftRevision(draftNodeRevisionUid: string): Promise<void> {
         const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(draftNodeRevisionUid);
-        this.apiService.delete(`/drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/${revisionId}`);
+        await this.apiService.delete(`/drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/${revisionId}`);
     }
 
     async uploadBlock(url: string, token: string, block: Uint8Array, onProgress?: (uploadedBytes: number) => void, signal?: AbortSignal): Promise<void> {

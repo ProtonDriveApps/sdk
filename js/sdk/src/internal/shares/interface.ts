@@ -41,7 +41,15 @@ type BaseShare = {
      */
     addressId?: string;
     createdDate?: Date;
+    type: ShareType;
 } & VolumeShareNodeIDs;
+
+export enum ShareType {
+    Main = 'main',
+    Standard = 'standard',
+    Device = 'device',
+    Photo = 'photo',
+}
 
 interface BaseRootShare extends BaseShare {
     /**

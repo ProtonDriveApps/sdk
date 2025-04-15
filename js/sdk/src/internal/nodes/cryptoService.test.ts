@@ -54,6 +54,7 @@ describe("nodesCryptoService", () => {
                 email: "email",
                 addressKey: "key" as unknown as PrivateKey,
             })),
+            getVolumeMetricContext: jest.fn().mockResolvedValue('own_volume'),
         };
 
         cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, sharesService);

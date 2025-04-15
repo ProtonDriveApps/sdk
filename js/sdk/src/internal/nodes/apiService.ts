@@ -59,7 +59,7 @@ export class NodeAPIService {
     async getNode(nodeUid: string, signal?: AbortSignal): Promise<EncryptedNode> {
         const nodesGenerator = this.iterateNodes([nodeUid], signal);
         const result = await nodesGenerator.next();
-        nodesGenerator.return("finish");
+        await nodesGenerator.return("finish");
         return result.value;
     }
 

@@ -1,7 +1,7 @@
-import { ProtonDriveAccount, resultOk, resultError, Result, UnverifiedAuthorError, ProtonDriveTelemetry, Logger } from "../../interface";
+import { ProtonDriveAccount, resultOk, resultError, Result, UnverifiedAuthorError, ProtonDriveTelemetry, Logger, MetricContext } from "../../interface";
 import { DriveCrypto, PrivateKey, VERIFICATION_STATUS } from "../../crypto";
 import { getVerificationMessage } from "../errors";
-import { EncryptedRootShare, DecryptedRootShare, EncryptedShareCrypto, DecryptedShareKey } from "./interface";
+import { EncryptedRootShare, DecryptedRootShare, EncryptedShareCrypto, DecryptedShareKey, ShareType } from "./interface";
 
 /**
  * Provides crypto operations for share keys.
@@ -102,7 +102,7 @@ export class SharesCryptoService {
 
         this.telemetry.logEvent({
             eventName: 'decryptionError',
-            context: 'own_volume', // TODO: add context to the share
+            context: shareTypeToMetricContext(share.type),
             field: 'shareKey',
             fromBefore2024,
             error,
@@ -121,11 +121,25 @@ export class SharesCryptoService {
 
         this.telemetry.logEvent({
             eventName: 'verificationError',
-            context: 'own_volume', // TODO: add context to the share
+            context: shareTypeToMetricContext(share.type),
             field: 'shareKey',
             addressMatchingDefaultShare,
             fromBefore2024,
         });
         this.reportedVerificationErrors.add(share.shareId);
+    }
+}
+
+function shareTypeToMetricContext(shareType: ShareType): MetricContext {
+    // SDK doesn't support public sharing yet, also public sharing
+    // doesn't use a share but shareURL, thus we can simplify and
+    // ignore this case for now.
+    switch (shareType) {
+        case ShareType.Main:
+        case ShareType.Device:
+        case ShareType.Photo:
+            return MetricContext.OwnVolume;
+        case ShareType.Standard:
+            return MetricContext.Shared;
     }
 }

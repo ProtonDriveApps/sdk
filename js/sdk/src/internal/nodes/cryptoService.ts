@@ -71,7 +71,7 @@ export class NodesCryptoService {
             passphraseSessionKey = keyResult.passphraseSessionKey;
             keyAuthor = keyResult.author;
         } catch (error: unknown) {
-            this.reportDecryptionError(node, 'nodeKey', error);
+            void this.reportDecryptionError(node, 'nodeKey', error);
             const errorMessage = c('Error').t`Failed to decrypt node key: ${getErrorMessage(error)}`;
             return {
                 node: {
@@ -103,7 +103,7 @@ export class NodesCryptoService {
                 hashKey = hashKeyResult.hashKey;
                 hashKeyAuthor = hashKeyResult.author;
             } catch (error: unknown) {
-                this.reportDecryptionError(node, 'nodeHashKey', error);
+                void this.reportDecryptionError(node, 'nodeHashKey', error);
                 errors.push(error);
             }
 
@@ -123,7 +123,7 @@ export class NodesCryptoService {
                 };
                 folderExtendedAttributesAuthor = extendedAttributesResult.author;
             } catch (error: unknown) {
-                this.reportDecryptionError(node, 'nodeFolderExtendedAttributes', error);
+                void this.reportDecryptionError(node, 'nodeFolderExtendedAttributes', error);
                 errors.push(error);
             }
         }
@@ -135,7 +135,7 @@ export class NodesCryptoService {
             try {
                 activeRevision = resultOk(await this.decryptRevision(node.uid, node.encryptedCrypto.activeRevision, key));
             } catch (error: unknown) {
-                this.reportDecryptionError(node, 'nodeActiveRevision', error);
+                void this.reportDecryptionError(node, 'nodeActiveRevision', error);
                 const errorMessage = c('Error').t`Failed to decrypt active revision: ${getErrorMessage(error)}`;
                 activeRevision = resultError(new Error(errorMessage));
             }
@@ -159,7 +159,7 @@ export class NodesCryptoService {
                     node.encryptedCrypto.signatureEmail,
                 );
             } catch (error: unknown) {
-                this.reportDecryptionError(node, 'nodeContentKey', error);
+                void this.reportDecryptionError(node, 'nodeContentKey', error);
                 const errorMessage = c('Error').t`Failed to decrypt content key: ${getErrorMessage(error)}`;
                 contentKeyPacketAuthor = resultError({
                     claimedAuthor: node.encryptedCrypto.signatureEmail,
@@ -247,7 +247,7 @@ export class NodesCryptoService {
                 author: await this.handleClaimedAuthor(node, 'nodeName', c('Property').t`name`, verified, nameSignatureEmail),
             }
         } catch (error: unknown) {
-            this.reportDecryptionError(node, 'nodeName', error);
+            void this.reportDecryptionError(node, 'nodeName', error);
             const errorMessage = getErrorMessage(error);
             return {
                 name: resultError({
@@ -450,7 +450,7 @@ export class NodesCryptoService {
     ): Promise<Author> {
         const author = handleClaimedAuthor(signatureType, verified, claimedAuthor);
         if (!author.ok) {
-            await this.reportVerificationError(node, field, claimedAuthor);
+            void this.reportVerificationError(node, field, claimedAuthor);
         }
         return author;
     }
@@ -466,11 +466,12 @@ export class NodesCryptoService {
 
         const fromBefore2024 = node.createdDate < new Date('2024-01-01');
 
-        let addressMatchingDefaultShare = undefined;
+        let addressMatchingDefaultShare, context;
         try {
             const { volumeId } = splitNodeUid(node.uid);
             const { email } = await this.shareService.getVolumeEmailKey(volumeId);
             addressMatchingDefaultShare = claimedAuthor ? claimedAuthor === email : undefined;
+            context = await this.shareService.getVolumeMetricContext(volumeId);
         } catch (error: unknown) {
             this.logger.error('Failed to check if claimed author matches default share', error);
         }
@@ -479,7 +480,7 @@ export class NodesCryptoService {
 
         this.telemetry.logEvent({
             eventName: 'verificationError',
-            context: 'own_volume', // TODO: add context to the node
+            context,
             field,
             addressMatchingDefaultShare,
             fromBefore2024,
@@ -487,17 +488,26 @@ export class NodesCryptoService {
         this.reportedVerificationErrors.add(node.uid);
     }
 
-    private reportDecryptionError(node: EncryptedNode, field: MetricsDecryptionErrorField, error: unknown) {
+    private async reportDecryptionError(node: EncryptedNode, field: MetricsDecryptionErrorField, error: unknown) {
         if (this.reportedDecryptionErrors.has(node.uid)) {
             return;
         }
 
         const fromBefore2024 = node.createdDate < new Date('2024-01-01');
+
+        let context;
+        try {
+            const { volumeId } = splitNodeUid(node.uid);
+            context = await this.shareService.getVolumeMetricContext(volumeId);
+        } catch (error: unknown) {
+            this.logger.error('Failed to get metric context', error);
+        }
+
         this.logger.error(`Failed to decrypt node ${node.uid} (from before 2024: ${fromBefore2024})`, error);
 
         this.telemetry.logEvent({
             eventName: 'decryptionError',
-            context: 'own_volume', // TODO: add context to the node
+            context,
             field,
             fromBefore2024,
             error,

@@ -24,6 +24,6 @@ export class Albums {
 
     async createAlbum(albumName: string) {
         const albumdUid = this.apiService.createAlbum(albumName);
-        this.cache.setAlbum(albumdUid);
+        await this.cache.setAlbum(albumdUid);
     }
 }

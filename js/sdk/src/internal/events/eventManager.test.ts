@@ -37,7 +37,7 @@ describe("EventManager", () => {
     });
 
     it("should get latest event ID on first run only", async () => {
-        manager.start();
+        await manager.start();
         expect(getLastEventIdMock).toHaveBeenCalledTimes(1);
         expect(getEventsMock).toHaveBeenCalledTimes(0);
         expect(listenerMock).toHaveBeenCalledTimes(0);
@@ -45,7 +45,7 @@ describe("EventManager", () => {
     });
 
     it("should notify about events in the next run", async () => {
-        manager.start();
+        await manager.start();
         expect(getLastEventIdMock).toHaveBeenCalledTimes(1);
         expect(getEventsMock).toHaveBeenCalledTimes(0);
         expect(listenerMock).toHaveBeenCalledTimes(0);
@@ -64,7 +64,7 @@ describe("EventManager", () => {
             refresh: false,
             events: lastEventId === "eventId1" ? ["event1", "event2"] : ["event3"],
         }));
-        manager.start();
+        await manager.start();
         await jest.runOnlyPendingTimersAsync();
         expect(getEventsMock).toHaveBeenCalledTimes(2);
         expect(listenerMock).toHaveBeenCalledTimes(2);
@@ -77,7 +77,7 @@ describe("EventManager", () => {
 
     it("should refresh if event does not exist", async () => {
         getEventsMock.mockImplementation(() => Promise.reject(new NotFoundAPIError('Event not found', 2501)));
-        manager.start();
+        await manager.start();
         await jest.runOnlyPendingTimersAsync();
         expect(getLastEventIdMock).toHaveBeenCalledTimes(2);
         expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -100,7 +100,7 @@ describe("EventManager", () => {
                 events: ["event1", "event2"],
             });
         });
-        manager.start();
+        await manager.start();
 
         // First failure.
         await jest.runOnlyPendingTimersAsync();
@@ -126,7 +126,7 @@ describe("EventManager", () => {
     });
 
     it("should stop polling", async () => {
-        manager.start();
+        await manager.start();
         await manager.stop();
         await jest.runOnlyPendingTimersAsync();
         expect(getEventsMock).toHaveBeenCalledTimes(0);

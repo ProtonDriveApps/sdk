@@ -1,11 +1,17 @@
 import { RateLimitedError, ValidationError, IntegrityError } from "../../errors";
-import { ProtonDriveTelemetry, MetricsUploadErrorType } from "../../interface";
+import { ProtonDriveTelemetry, MetricsUploadErrorType, Logger } from "../../interface";
 import { LoggerWithPrefix } from "../../telemetry";
 import { APIHTTPError } from '../apiService';
+import { splitNodeUid, splitNodeRevisionUid } from "../uids";
+import { SharesService } from "./interface";
 
 export class UploadTelemetry {
-    constructor(private telemetry: ProtonDriveTelemetry) {
+    private logger: Logger;
+
+    constructor(private telemetry: ProtonDriveTelemetry, private sharesService: SharesService) {
         this.telemetry = telemetry;
+        this.logger = this.telemetry.getLogger("download");
+        this.sharesService = sharesService;
     }
 
     getLoggerForRevision(revisionUid: string) {
@@ -13,7 +19,8 @@ export class UploadTelemetry {
         return new LoggerWithPrefix(logger, `revision ${revisionUid}`);
     }
 
-    uploadInitFailed(error: unknown, expectedSize: number) {
+    async uploadInitFailed(parentFolderUid: string, error: unknown, expectedSize: number) {
+        const { volumeId } = splitNodeUid(parentFolderUid);
         const errorCategory = getErrorCategory(error);
 
         // No error category means ignored error from telemetry.
@@ -22,14 +29,15 @@ export class UploadTelemetry {
             return;
         }
 
-        this.sendTelemetry({
+        await this.sendTelemetry(volumeId, {
             uploadedSize: 0,
             expectedSize,
             error: errorCategory,
         });
     }
 
-    uploadFailed(error: unknown, uploadedSize: number, expectedSize: number) {
+    async uploadFailed(revisionUid: string, error: unknown, uploadedSize: number, expectedSize: number) {
+        const { volumeId } = splitNodeRevisionUid(revisionUid);
         const errorCategory = getErrorCategory(error);
 
         // No error category means ignored error from telemetry.
@@ -38,28 +46,36 @@ export class UploadTelemetry {
             return;
         }
 
-        this.sendTelemetry({
+        await this.sendTelemetry(volumeId, {
             uploadedSize,
             expectedSize,
             error: errorCategory,
         });
     }
 
-    uploadFinished(uploadedSize: number) {
-        this.sendTelemetry({
+    async uploadFinished(revisionUid: string, uploadedSize: number) {
+        const { volumeId } = splitNodeRevisionUid(revisionUid);
+        await this.sendTelemetry(volumeId, {
             uploadedSize,
             expectedSize: uploadedSize,
         });
     }
 
-    private sendTelemetry(options: {
+    private async sendTelemetry(volumeId: string, options: {
         uploadedSize: number,
         expectedSize: number,
         error?: MetricsUploadErrorType,
     }) {
+        let context;
+        try {
+            context = await this.sharesService.getVolumeMetricContext(volumeId);
+        } catch (error: unknown) {
+            this.logger.error('Failed to get metric context', error);
+        }
+
         this.telemetry.logEvent({
             eventName: 'upload',
-            context: 'own_volume', // TODO: pass context
+            context,
             ...options,
         });
     }
