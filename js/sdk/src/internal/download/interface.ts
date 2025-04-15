@@ -1,5 +1,6 @@
 import { PrivateKey, PublicKey, SessionKey } from "../../crypto";
-import { NodeType, Result, Revision } from "../../interface";
+import { NodeType, Result, Revision, MissingNode } from "../../interface";
+import { DecryptedNode } from "../nodes";
 
 export type BlockMetadata = {
     index: number,
@@ -19,6 +20,7 @@ export type RevisionKeys = {
 export interface NodesService {
     getNode(nodeUid: string): Promise<NodesServiceNode>,
     getNodeKeys(nodeUid: string): Promise<{ key: PrivateKey, contentKeyPacketSessionKey?: SessionKey; }>,
+    iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode | MissingNode>;
 }
 
 export interface NodesServiceNode {

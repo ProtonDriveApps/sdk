@@ -8,6 +8,7 @@ import { CommandDeviceRename } from './commandDeviceRename';
 import { CommandFileSystemCreateFolder } from './commandFileSystemCreateFolder';
 import { CommandFileSystemDelete } from "./commandFileSystemDelete";
 import { CommandFileSystemDownload } from './commandFileSystemDownload';
+import { CommandFileSystemDownloadThumbnails } from './commandFileSystemDownloadThumbnails';
 import { CommandFileSystemInfo } from './commandFileSystemInfo';
 import { CommandFileSystemList } from './commandFileSystemList';
 import { CommandFileSystemMove } from './commandFileSystemMove';
@@ -38,6 +39,7 @@ const COMMANDS = [
     new CommandFileSystemDelete(),
     new CommandFileSystemRestore(),
     new CommandFileSystemDownload(),
+    new CommandFileSystemDownloadThumbnails(),
     new CommandFileSystemUpload(),
     new CommandRevisionList(),
     new CommandRevisionDownload(),

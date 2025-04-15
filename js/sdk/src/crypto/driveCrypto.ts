@@ -533,6 +533,25 @@ export class DriveCrypto {
         };
     }
 
+    async decryptThumbnailBlock(
+        encryptedThumbnail: Uint8Array,
+        sessionKey: SessionKey,
+        verificationKeys: PublicKey[],
+    ): Promise<{
+        decryptedThumbnail: Uint8Array,
+        verified: VERIFICATION_STATUS,
+    }> {
+        const { data: decryptedThumbnail, verified } = await this.openPGPCrypto.decryptAndVerify(
+            encryptedThumbnail,
+            sessionKey,
+            verificationKeys,
+        );
+        return {
+            decryptedThumbnail,
+            verified,
+        };
+    }
+
     async encryptBlock(
         blockData: Uint8Array,
         encryptionKey: PrivateKey,

@@ -4,8 +4,8 @@ import { ProtonDriveError, ValidationError } from "../../errors";
 import { Logger, NodeResult } from "../../interface";
 import { RevisionState } from "../../interface/nodes";
 import { DriveAPIService, drivePaths, isCodeOk, nodeTypeNumberToNodeType, permissionsToDirectMemberRole } from "../apiService";
-import { splitNodeUid, makeNodeUid, makeNodeRevisionUid, splitNodeRevisionUid } from "../uids";
-import { EncryptedNode, EncryptedRevision } from "./interface";
+import { splitNodeUid, makeNodeUid, makeNodeRevisionUid, splitNodeRevisionUid, makeNodeThumbnailUid } from "../uids";
+import { EncryptedNode, EncryptedRevision, Thumbnail } from "./interface";
 
 type PostLoadLinksMetadataRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['requestBody'], { 'content': object }>['content']['application/json'];
 type PostLoadLinksMetadataResponse = drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['responses']['200']['content']['application/json'];
@@ -409,6 +409,7 @@ function linkToEncryptedNode(logger: Logger, volumeId: string, link: PostLoadLin
                     createdDate: new Date(link.File.ActiveRevision.CreateTime*1000),
                     signatureEmail: link.File.ActiveRevision.SignatureEmail || undefined,
                     armoredExtendedAttributes: link.File.ActiveRevision.XAttr || undefined,
+                    thumbnails: link.File.ActiveRevision.Thumbnails?.map((thumbnail) => transformThumbnail(volumeId, link.Link.LinkID, thumbnail)) || [],
                 },
             },
         }
@@ -428,5 +429,15 @@ function transformRevisionResponse(
         createdDate: new Date(revision.CreateTime*1000),
         signatureEmail: revision.SignatureEmail || undefined,
         armoredExtendedAttributes: revision.XAttr || undefined,
+        thumbnails: revision.Thumbnails?.map((thumbnail) => transformThumbnail(volumeId, nodeId, thumbnail)) || [],
+    }
+}
+
+function transformThumbnail(volumeId: string, nodeId: string, thumbnail: { ThumbnailID: string | null, Type: 1 | 2 | 3}): Thumbnail {
+    return {
+        // FIXME: Legacy thumbnails didn't have ID but we don't have them anymore. Remove typing once API doc is updated.
+        uid: makeNodeThumbnailUid(volumeId, nodeId, thumbnail.ThumbnailID as string),
+        // FIXME: We don't support any other thumbnail type yet.
+        type: thumbnail.Type as 1 | 2,
     }
 }
