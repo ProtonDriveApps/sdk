@@ -53,12 +53,12 @@ export class VolumeEventManager {
         this.manager.pollingIntervalInSeconds = pollingIntervalInSeconds;
     }
 
-    startSubscription(): void {
-        this.manager.start();
+    async startSubscription(): Promise<void> {
+        await this.manager.start();
     }
 
-    stopSubscription(): void {
-        this.manager.stop();
+    async stopSubscription(): Promise<void> {
+        await this.manager.stop();
     }
 
     addListener(callback: DriveListener): void {

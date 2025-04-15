@@ -31,7 +31,7 @@ describe("SharingCache", () => {
         });
 
         it("should add node uid", async () => {
-            cache.setSharedByMeNodeUids(["nodeUid"]);
+            await cache.setSharedByMeNodeUids(["nodeUid"]);
             const spy = jest.spyOn(memoryCache, 'setEntity');
 
             await cache.addSharedByMeNodeUid("newNodeUid");
@@ -42,7 +42,7 @@ describe("SharingCache", () => {
         });
 
         it("should not add duplicate node uid", async () => {
-            cache.setSharedByMeNodeUids(["nodeUid"]);
+            await cache.setSharedByMeNodeUids(["nodeUid"]);
             const spy = jest.spyOn(memoryCache, 'setEntity');
 
             await cache.addSharedByMeNodeUid("nodeUid");
@@ -65,7 +65,7 @@ describe("SharingCache", () => {
         });
 
         it("should remove node uid", async () => {
-            cache.setSharedByMeNodeUids(["nodeUid"]);
+            await cache.setSharedByMeNodeUids(["nodeUid"]);
             const spy = jest.spyOn(memoryCache, 'setEntity');
 
             await cache.removeSharedByMeNodeUid("nodeUid");
@@ -76,7 +76,7 @@ describe("SharingCache", () => {
         });
 
         it("should handle removing of missing node uid", async () => {
-            cache.setSharedByMeNodeUids([]);
+            await cache.setSharedByMeNodeUids([]);
             const spy = jest.spyOn(memoryCache, 'setEntity');
 
             await cache.removeSharedByMeNodeUid("nodeUid");

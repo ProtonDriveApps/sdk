@@ -41,12 +41,12 @@ export class CoreEventManager {
         return this.apiService.getCoreLatestEventId();
     }
 
-    startSubscription(): void {
-        this.manager.start();
+    async startSubscription(): Promise<void> {
+        await this.manager.start();
     }
 
-    stopSubscription(): void {
-        this.manager.stop();
+    async stopSubscription(): Promise<void> {
+        await this.manager.stop();
     }
 
     addListener(callback: (events: DriveEvent[]) => Promise<void>): void {

@@ -14,7 +14,7 @@ describe("DriveAPIService", () => {
     let api: DriveAPIService;
 
     beforeEach(() => {
-        jest.runAllTimersAsync();
+        void jest.runAllTimersAsync();
 
         httpClient = {
             fetch: jest.fn(() => Promise.resolve(generateOkResponse())),

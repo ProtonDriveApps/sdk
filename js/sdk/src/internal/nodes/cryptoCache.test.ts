@@ -16,9 +16,9 @@ describe('nodesCryptoCache', () => {
         return name as unknown as SessionKey
     }
 
-    beforeEach(() => {
+    beforeEach(async () => {
         memoryCache = new MemoryCache();
-        memoryCache.setEntity('nodeKeys-missingPassphrase', {
+        await memoryCache.setEntity('nodeKeys-missingPassphrase', {
             key: 'privateKey',
             sessionKey: 'sessionKey',
         } as any);

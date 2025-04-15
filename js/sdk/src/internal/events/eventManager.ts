@@ -64,8 +64,8 @@ export class EventManager<T> {
         this.listeners.push(callback);
     }
 
-    start(): void {
-        this.stop();
+    async start(): Promise<void> {
+        await this.stop();
         this.processPromise = this.processEvents();
     }
 

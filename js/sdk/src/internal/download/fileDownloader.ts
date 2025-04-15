@@ -131,11 +131,11 @@ export class FileDownloader {
             }
 
             await writer.close();
-            this.telemetry.downloadFinished(fileProgress);
+            void this.telemetry.downloadFinished(this.revision.uid, fileProgress);
             this.logger.info(`Download succeeded`);
         } catch (error: unknown) {
             this.logger.error(`Download failed`, error);
-            this.telemetry.downloadFailed(error, fileProgress, this.getClaimedSizeInBytes());
+            void this.telemetry.downloadFailed(this.revision.uid, error, fileProgress, this.getClaimedSizeInBytes());
             await writer.abort();
             throw error;
         } finally {

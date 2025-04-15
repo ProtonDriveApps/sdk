@@ -64,10 +64,10 @@ describe('nodesCache', () => {
     let memoryCache: MemoryCache<string>;
     let cache: NodesCache;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         memoryCache = new MemoryCache();
-        memoryCache.setEntity('node-volumeId~:root', JSON.stringify(generateNode('root', '')));
-        memoryCache.setEntity('node-badObject', 'aaa', [`${CACHE_TAG_KEYS.ParentUid}:root`]);
+        await memoryCache.setEntity('node-volumeId~:root', JSON.stringify(generateNode('root', '')));
+        await memoryCache.setEntity('node-badObject', 'aaa', [`${CACHE_TAG_KEYS.ParentUid}:root`]);
 
         cache = new NodesCache(getMockLogger(), memoryCache);
     });

@@ -1,5 +1,5 @@
 import { PrivateKey, SessionKey } from "../../crypto";
-import { NodeEntity, Result, InvalidNameError, Author, MemberRole, NodeType, ThumbnailType } from "../../interface";
+import { NodeEntity, Result, InvalidNameError, Author, MemberRole, NodeType, ThumbnailType, MetricContext } from "../../interface";
 import { RevisionState } from "../../interface/nodes";
 
 /**
@@ -134,4 +134,5 @@ export interface SharesService {
     getMyFilesIDs(): Promise<{ volumeId: string, rootNodeId: string }>,
     getSharePrivateKey(shareId: string): Promise<PrivateKey>,
     getVolumeEmailKey(volumeId: string): Promise<{ email: string, addressKey: PrivateKey }>,
+    getVolumeMetricContext(volumeId: string): Promise<MetricContext>,
 }

@@ -4,12 +4,12 @@ import { MemoryCache } from "./memoryCache";
 describe('MemoryCache', () => {
     let cache: MemoryCache<string>;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         cache = new MemoryCache();
 
-        cache.setEntity('key1', 'value1', ['tag1:hello', 'tag2:world']);
-        cache.setEntity('key2', 'value2', ['tag2:world']);
-        cache.setEntity('key3', 'value3');
+        await cache.setEntity('key1', 'value1', ['tag1:hello', 'tag2:world']);
+        await cache.setEntity('key2', 'value2', ['tag2:world']);
+        await cache.setEntity('key3', 'value3');
     });
 
     it('should store and retrieve an entity', async () => {
@@ -101,7 +101,7 @@ describe('MemoryCache', () => {
         const results: string[] = [];
         const { value: { key: key1 } } = await iterator.next();
         results.push(key1);
-        cache.removeEntities([key1]);
+        await cache.removeEntities([key1]);
 
         let value = await iterator.next(); // key2
         results.push(value.value.key);

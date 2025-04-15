@@ -1,5 +1,5 @@
 import { PrivateKey, SessionKey } from "../../crypto";
-import { ThumbnailType } from "../../interface";
+import { MetricContext, ThumbnailType } from "../../interface";
 
 export type NodeRevisionDraft = {
     nodeUid: string,
@@ -91,4 +91,5 @@ export interface NodesService {
  */
 export interface SharesService {
     getVolumeEmailKey(volumeId: string): Promise<{ email: string, addressId: string, addressKey: PrivateKey }>,
+    getVolumeMetricContext(volumeId: string): Promise<MetricContext>,
 }

@@ -1,6 +1,6 @@
 import { DriveAPIService, drivePaths } from "../apiService";
 import { makeMemberUid } from "../uids";
-import { EncryptedShare, EncryptedRootShare, EncryptedShareCrypto } from "./interface";
+import { EncryptedShare, EncryptedRootShare, EncryptedShareCrypto, ShareType } from "./interface";
 
 type PostCreateVolumeRequest = Extract<drivePaths['/drive/volumes']['post']['requestBody'], { 'content': object }>['content']['application/json'];
 type PostCreateVolumeResponse = drivePaths['/drive/volumes']['post']['responses']['200']['content']['application/json'];
@@ -36,6 +36,7 @@ export class SharesAPIService {
                 armoredPassphraseSignature: response.Share.PassphraseSignature,
             },
             addressId: response.Share.AddressID,
+            type: ShareType.Main,
         };
     }
 
@@ -157,5 +158,19 @@ function convertSharePayload(response: GetShareResponse): EncryptedShare {
         membership: response.Memberships?.[0] ? {
             memberUid: makeMemberUid(response.ShareID, response.Memberships[0].MemberID),
         } : undefined,
+        type: convertShareTypeNumberToEnum(response.Type),
     };
+}
+
+function convertShareTypeNumberToEnum(type: 1 | 2 | 3 | 4): ShareType {
+    switch (type) {
+        case 1:
+            return ShareType.Main;
+        case 2:
+            return ShareType.Standard;
+        case 3:
+            return ShareType.Device;
+        case 4:
+            return ShareType.Photo;
+    }
 }

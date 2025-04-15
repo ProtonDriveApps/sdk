@@ -97,7 +97,7 @@ describe('FileDownloader', () => {
             expect(writer.close).toHaveBeenCalledTimes(1);
             expect(writer.abort).not.toHaveBeenCalled();
             expect(telemetry.downloadFinished).toHaveBeenCalledTimes(1);
-            expect(telemetry.downloadFinished).toHaveBeenCalledWith(6); // 3 blocks of length 1, 2, 3.
+            expect(telemetry.downloadFinished).toHaveBeenCalledWith('revisionUid', 6); // 3 blocks of length 1, 2, 3.
             expect(telemetry.downloadFailed).not.toHaveBeenCalled();
             expect(onFinish).toHaveBeenCalledTimes(1);
         }
@@ -113,6 +113,7 @@ describe('FileDownloader', () => {
             expect(telemetry.downloadFinished).not.toHaveBeenCalled();
             expect(telemetry.downloadFailed).toHaveBeenCalledTimes(1);
             expect(telemetry.downloadFailed).toHaveBeenCalledWith(
+                'revisionUid',
                 new Error(error),
                 downloadedBytes === undefined ? expect.anything() : downloadedBytes,
                 revision.claimedSize,
@@ -330,7 +331,7 @@ describe('FileDownloader', () => {
             expect(writer.close).toHaveBeenCalledTimes(1);
             expect(writer.abort).not.toHaveBeenCalled();
             expect(telemetry.downloadFinished).toHaveBeenCalledTimes(1);
-            expect(telemetry.downloadFinished).toHaveBeenCalledWith(6); // 3 blocks of length 1, 2, 3.
+            expect(telemetry.downloadFinished).toHaveBeenCalledWith('revisionUid', 6); // 3 blocks of length 1, 2, 3.
             expect(telemetry.downloadFailed).not.toHaveBeenCalled();
             expect(onFinish).toHaveBeenCalledTimes(1);
         });

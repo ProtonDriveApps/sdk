@@ -26,7 +26,7 @@ export interface MetricAPIRetrySucceededEvent {
 
 export interface MetricUploadEvent {
     eventName: 'upload',
-    context: MetricContext,
+    context?: MetricContext,
     uploadedSize: number,
     expectedSize: number,
     error?: MetricsUploadErrorType,
@@ -42,7 +42,7 @@ export type MetricsUploadErrorType =
 
 export interface MetricDownloadEvent {
     eventName: 'download',
-    context: MetricContext,
+    context?: MetricContext,
     downloadedSize: number,
     claimedFileSize?: number,
     error?: MetricsDownloadErrorType,
@@ -59,7 +59,7 @@ export type MetricsDownloadErrorType =
 
 export interface MetricDecryptionErrorEvent {
     eventName: 'decryptionError',
-    context: MetricContext,
+    context?: MetricContext,
     field: MetricsDecryptionErrorField,
     fromBefore2024?: boolean,
     error?: unknown,
@@ -76,7 +76,7 @@ export type MetricsDecryptionErrorField =
 
 export interface MetricVerificationErrorEvent {
     eventName: 'verificationError',
-    context: MetricContext,
+    context?: MetricContext,
     field: MetricVerificationErrorField,
     addressMatchingDefaultShare?: boolean,
     fromBefore2024?: boolean,
@@ -95,4 +95,8 @@ export interface MetricVolumeEventsSubscriptionsChangedEvent {
     numberOfVolumeSubscriptions: number,
 };
 
-export type MetricContext = 'own_volume' | 'shared' | 'shared_public' | 'photo';
+export enum MetricContext {
+    OwnVolume = 'own_volume',
+    Shared = 'shared',
+    SharedPublic = 'shared_public',
+};

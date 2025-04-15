@@ -70,7 +70,7 @@ export class ProtonDriveClient {
         const shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
         this.nodes = initNodesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares);
         this.sharing = initSharingModule(telemetry, apiService, entitiesCache, account, cryptoModule, events, shares, this.nodes.access);
-        this.download = initDownloadModule(telemetry, apiService, cryptoModule, account, this.nodes.access, this.nodes.revisions);
+        this.download = initDownloadModule(telemetry, apiService, cryptoModule, account, shares, this.nodes.access, this.nodes.revisions);
         this.upload = initUploadModule(telemetry, apiService, cryptoModule, shares, this.nodes.access);
         this.devices = initDevicesModule(telemetry, apiService, cryptoModule, shares, this.nodes.access, this.nodes.management);
     }

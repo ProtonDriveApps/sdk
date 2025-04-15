@@ -16,7 +16,7 @@ export class SharesCache {
     async setVolume(volume: Volume): Promise<void> {
         const key = getCacheUid(volume.volumeId);
         const shareData = serializeVolume(volume);
-        this.driveCache.setEntity(key, shareData);
+        await this.driveCache.setEntity(key, shareData);
     }
 
     async getVolume(volumeId: string): Promise<Volume> {

@@ -246,7 +246,7 @@ describe("nodeAPIService", () => {
             expect(node2.value).toStrictEqual(generateFileNode());
 
             const node3 = generator.next();
-            expect(node3).rejects.toThrow('Failed to load some nodes');
+            await expect(node3).rejects.toThrow('Failed to load some nodes');
             try {
                 await node3;
             } catch (error: any) {

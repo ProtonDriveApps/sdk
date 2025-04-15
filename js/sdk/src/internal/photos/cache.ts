@@ -5,7 +5,7 @@ export class PhotosCache {
         this.driveCache = driveCache;
     }
 
-    setAlbum(album: any) {
-        this.driveCache.setEntity(album.uid, album);
+    async setAlbum(album: any) {
+        await this.driveCache.setEntity(album.uid, album);
     }
 }

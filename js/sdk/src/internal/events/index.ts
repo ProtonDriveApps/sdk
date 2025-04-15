@@ -50,8 +50,11 @@ export class DriveEventsService {
         this.sendNumberOfVolumSubscriptionsToTelemetry();
 
         this.subscribedToRemoteDataUpdates = true;
-        this.coreEvents.startSubscription();
-        Object.values(this.volumesEvents).forEach((volumeEvents) => volumeEvents.startSubscription());
+        await this.coreEvents.startSubscription();
+        await Promise.all(
+            Object.values(this.volumesEvents)
+                .map((volumeEvents) => volumeEvents.startSubscription())
+        );
     }
 
     /**
@@ -75,7 +78,7 @@ export class DriveEventsService {
         // FIXME: Use dynamic algorithm to determine polling interval for non-own volumes.
         volumeEvents.setPollingInterval(isOwnVolume ? OWN_VOLUME_POLLING_INTERVAL : OTHER_VOLUME_POLLING_INTERVAL);
         if (this.subscribedToRemoteDataUpdates) {
-            volumeEvents.startSubscription();
+            await volumeEvents.startSubscription();
             this.sendNumberOfVolumSubscriptionsToTelemetry();
         }
     }
@@ -89,7 +92,7 @@ export class DriveEventsService {
         }
     }
 
-    private async sendNumberOfVolumSubscriptionsToTelemetry() {
+    private sendNumberOfVolumSubscriptionsToTelemetry() {
         this.telemetry.logEvent({
             eventName: 'volumeEventsSubscriptionsChanged',
             numberOfVolumeSubscriptions: Object.keys(this.volumesEvents).length,

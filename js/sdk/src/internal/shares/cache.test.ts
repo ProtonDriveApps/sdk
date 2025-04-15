@@ -6,9 +6,9 @@ describe('sharesCache', () => {
     let memoryCache: MemoryCache<string>;
     let cache: SharesCache;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         memoryCache = new MemoryCache();
-        memoryCache.setEntity('volume-badObject', 'aaa');
+        await memoryCache.setEntity('volume-badObject', 'aaa');
 
         cache = new SharesCache(getMockLogger(), memoryCache);
     });

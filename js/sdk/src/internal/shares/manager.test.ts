@@ -110,10 +110,9 @@ describe("SharesManager", () => {
         it("should throw on unknown error", async () => {
             apiService.getMyFiles = jest.fn().mockRejectedValue(new Error("Some error"));
 
-            expect(manager.getMyFilesIDs()).rejects.toThrow("Some error");
+            await expect(manager.getMyFilesIDs()).rejects.toThrow("Some error");
             expect(cryptoService.decryptRootShare).not.toHaveBeenCalled();
             expect(apiService.createVolume).not.toHaveBeenCalled();
-
         });
     });
 
