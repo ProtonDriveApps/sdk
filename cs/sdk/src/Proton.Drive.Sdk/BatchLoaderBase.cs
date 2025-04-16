@@ -2,27 +2,24 @@
 
 namespace Proton.Drive.Sdk;
 
-internal sealed class BatchLoader<TId, TValue>
+internal abstract class BatchLoaderBase<TId, TValue>
 {
     private const int DefaultBatchSize = 50;
 
     private readonly ArrayBufferWriter<TId> _queueWriter;
 
-    private readonly Func<ReadOnlyMemory<TId>, ValueTask<IEnumerable<TValue>>> _loadFunction;
-
-    public BatchLoader(Func<ReadOnlyMemory<TId>, ValueTask<IEnumerable<TValue>>> loadFunction, int batchSize = DefaultBatchSize)
+    protected BatchLoaderBase(int batchSize = DefaultBatchSize)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(batchSize);
 
         _queueWriter = new ArrayBufferWriter<TId>(batchSize);
-        _loadFunction = loadFunction;
     }
 
     /// <summary>
     /// Queues an item for loading. If the queue size reaches the batch size, calls the load function, clears the queue, and returns the loaded items.
     /// Otherwise, returns an empty enumerable.
     /// </summary>
-    public async ValueTask<IEnumerable<TValue>> QueueAndTryLoadBatchAsync(TId id)
+    public async ValueTask<IEnumerable<TValue>> QueueAndTryLoadBatchAsync(TId id, CancellationToken cancellationToken)
     {
         _queueWriter.Write(new ReadOnlySpan<TId>(ref id));
 
@@ -31,7 +28,7 @@ internal sealed class BatchLoader<TId, TValue>
             return [];
         }
 
-        return await LoadBatchAsync().ConfigureAwait(false);
+        return await LoadQueuedBatchAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -41,19 +38,21 @@ internal sealed class BatchLoader<TId, TValue>
     /// <remarks>
     /// Call this after no more items are expected to be queued.
     /// </remarks>
-    public async ValueTask<IEnumerable<TValue>> LoadRemainingAsync()
+    public async ValueTask<IEnumerable<TValue>> LoadRemainingAsync(CancellationToken cancellationToken)
     {
         if (_queueWriter.WrittenCount == 0)
         {
             return [];
         }
 
-        return await LoadBatchAsync().ConfigureAwait(false);
+        return await LoadQueuedBatchAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<IEnumerable<TValue>> LoadBatchAsync()
+    protected abstract ValueTask<IReadOnlyList<TValue>> LoadBatchAsync(ReadOnlyMemory<TId> ids, CancellationToken cancellationToken);
+
+    private async ValueTask<IReadOnlyList<TValue>> LoadQueuedBatchAsync(CancellationToken cancellationToken)
     {
-        var result = await _loadFunction.Invoke(_queueWriter.WrittenMemory).ConfigureAwait(false);
+        var result = await LoadBatchAsync(_queueWriter.WrittenMemory, cancellationToken).ConfigureAwait(false);
 
         _queueWriter.Clear();
 

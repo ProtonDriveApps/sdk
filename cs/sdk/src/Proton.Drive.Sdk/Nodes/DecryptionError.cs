@@ -1,12 +1,7 @@
 ﻿namespace Proton.Drive.Sdk.Nodes;
 
-internal class DecryptionError(string message, Author claimedAuthor)
-    : Error(message)
+internal sealed class DecryptionError(string message, Author claimedAuthor, ProtonDriveError? innerError = null)
+    : ProtonDriveError(message, innerError)
 {
     public Author ClaimedAuthor { get; } = claimedAuthor;
-
-    public DecryptionException ToException()
-    {
-        return new DecryptionException(ClaimedAuthor, Message);
-    }
 }

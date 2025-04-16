@@ -7,7 +7,7 @@ namespace Proton.Drive.Sdk;
 
 public sealed class ProtonDriveClient
 {
-    private const int ApiTimeoutSeconds = 15;
+    private const int ApiTimeoutSeconds = 20;
 
     /// <summary>
     /// Creates a new instance of <see cref="ProtonDriveClient"/>.
@@ -37,5 +37,10 @@ public sealed class ProtonDriveClient
     public ValueTask<FolderNode> GetMyFilesFolderAsync(CancellationToken cancellationToken)
     {
         return NodeOperations.GetMyFilesFolderAsync(this, cancellationToken);
+    }
+
+    public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateFolderChildrenAsync(NodeUid folderId, CancellationToken cancellationToken = default)
+    {
+        return NodeOperations.EnumerateFolderChildrenAsync(this, folderId, cancellationToken);
     }
 }

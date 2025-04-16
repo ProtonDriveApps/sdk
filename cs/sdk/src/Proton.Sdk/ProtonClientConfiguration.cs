@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Proton.Sdk.Caching;
+using Proton.Sdk.Http;
 
 namespace Proton.Sdk;
 
@@ -9,8 +10,12 @@ internal sealed class ProtonClientConfiguration(string appVersion, ProtonClientO
     public Uri BaseUrl { get; } = options?.BaseUrl ?? ProtonApiDefaults.BaseUrl;
     public string AppVersion { get; } = appVersion;
     public string UserAgent { get; } = options?.UserAgent ?? string.Empty;
-    public bool DisableTlsCertificatePinning { get; } = options?.DisableTlsCertificatePinning ?? false;
-    public bool IgnoreSslCertificateErrors { get; } = options?.IgnoreSslCertificateErrors ?? false;
+
+    public ProtonClientTlsPolicy TlsPolicy { get; } =
+        options?.TlsPolicy is { } tlsPolicy && Enum.IsDefined(tlsPolicy)
+            ? tlsPolicy
+            : ProtonClientTlsPolicy.Strict;
+
     public Func<DelegatingHandler>? CustomHttpMessageHandlerFactory { get; } = options?.CustomHttpMessageHandlerFactory;
     public ICacheRepository SecretCacheRepository { get; } = options?.SecretCacheRepository ?? SqliteCacheRepository.OpenInMemory();
     public ICacheRepository EntityCacheRepository { get; } = options?.EntityCacheRepository ?? SqliteCacheRepository.OpenInMemory();

@@ -8,5 +8,5 @@ internal sealed class ShareVolumeDto
     [JsonPropertyName("VolumeID")]
     public required VolumeId Id { get; init; }
 
-    public required int UsedSpace { get; init; }
+    public required long UsedSpace { get; init; }
 }

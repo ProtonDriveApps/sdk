@@ -13,10 +13,7 @@ internal readonly record struct ShareId : IStrongId<ShareId>
         _value = value;
     }
 
-    public static explicit operator ShareId(string? value)
-    {
-        return new ShareId(value);
-    }
+    public static explicit operator ShareId(string? value) => new(value);
 
     public override string ToString()
     {

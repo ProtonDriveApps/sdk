@@ -3,7 +3,6 @@ using Proton.Drive.Sdk.Api.Volumes;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Sdk.Addresses;
-using Proton.Sdk.Drive;
 
 namespace Proton.Drive.Sdk.Volumes;
 
@@ -11,7 +10,9 @@ internal static class VolumeOperations
 {
     private const string RootFolderName = "root";
 
-    internal static async ValueTask<(Volume Volume, FolderNode RootFolder)> CreateVolumeAsync(ProtonDriveClient client, CancellationToken cancellationToken)
+    internal static async ValueTask<(Volume Volume, FolderNode RootFolder)> CreateVolumeAsync(
+        ProtonDriveClient client,
+        CancellationToken cancellationToken)
     {
         var defaultAddress = await client.Account.GetDefaultAddressAsync(cancellationToken).ConfigureAwait(false);
 
@@ -26,10 +27,11 @@ internal static class VolumeOperations
         var rootFolder = new FolderNode
         {
             Id = volume.RootFolderId,
+            ParentId = null,
             Name = RootFolderName,
-            NameAuthor = new Author(defaultAddress.EmailAddress),
-            State = NodeState.Active,
-            KeyAuthor = new Author(defaultAddress.EmailAddress),
+            NameAuthor = new Author { EmailAddress = defaultAddress.EmailAddress },
+            Author = new Author { EmailAddress = defaultAddress.EmailAddress },
+            IsTrashed = false,
         };
 
         await client.Cache.Entities.SetMainVolumeIdAsync(volume.Id, cancellationToken).ConfigureAwait(false);
@@ -73,7 +75,7 @@ internal static class VolumeOperations
             addressKey,
             out var folderPassphraseSignature);
 
-        var nameEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderSecrets.NameSessionKey.Value);
+        var nameEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderSecrets.NameSessionKey);
         var encryptedName = PgpEncrypter.EncryptAndSignText(RootFolderName, nameEncryptionSecrets, addressKey);
 
         var encryptedHashKey = rootFolderSecrets.Key.EncryptAndSign(rootFolderSecrets.HashKey.Span, addressKey);

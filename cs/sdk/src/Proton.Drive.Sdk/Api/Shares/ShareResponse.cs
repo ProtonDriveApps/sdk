@@ -51,5 +51,5 @@ internal sealed class ShareResponse : ApiResponse
     [JsonPropertyName("AddressID")]
     public required AddressId AddressId { get; init; }
 
-    public required IReadOnlyList<ShareMembership> Memberships { get; init; }
+    public required IReadOnlyList<ShareMembershipDto> Memberships { get; init; }
 }

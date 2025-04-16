@@ -5,7 +5,7 @@ using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Api.Links;
 
-internal class RevisionDto
+internal sealed class RevisionDto
 {
     [JsonPropertyName("ID")]
     public required string Id { get; init; }
