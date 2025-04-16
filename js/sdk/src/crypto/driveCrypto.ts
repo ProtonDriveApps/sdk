@@ -174,7 +174,7 @@ export class DriveCrypto {
             verificationKeys,
         );
 
-        const passphrase = new TextDecoder().decode(decryptedPassphrase);
+        const passphrase = uint8ArrayToUtf8(decryptedPassphrase);
 
         const key = await this.openPGPCrypto.decryptKey(
             armoredKey,
@@ -263,7 +263,7 @@ export class DriveCrypto {
             [],
         );
 
-        const passphrase = new TextDecoder().decode(decryptedPassphrase);
+        const passphrase = uint8ArrayToUtf8(decryptedPassphrase);
 
         const key = await this.openPGPCrypto.decryptKey(
             armoredKey,
@@ -379,7 +379,7 @@ export class DriveCrypto {
             verificationKeys,
         );
         return {
-            name: new TextDecoder().decode(name),
+            name: uint8ArrayToUtf8(name),
             verified,
         }
     }
@@ -448,7 +448,7 @@ export class DriveCrypto {
         );
 
         return {
-            extendedAttributes: new TextDecoder().decode(decryptedExtendedAttributes),
+            extendedAttributes: uint8ArrayToUtf8(decryptedExtendedAttributes),
             verified,
         };
     }
@@ -644,8 +644,12 @@ export class DriveCrypto {
             armoredPassword,
             decryptionKeys,
         );
-        return new TextDecoder().decode(password);
+        return uint8ArrayToUtf8(password);
     }
+}
+
+export function uint8ArrayToUtf8(input: Uint8Array): string {
+    return new TextDecoder('utf-8', { fatal: true }).decode(input);
 }
 
 /**
