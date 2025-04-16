@@ -19,7 +19,7 @@ internal sealed class SessionSecretCache(ICacheRepository repository) : ISession
 
         var serializedValue = await _repository.TryGetAsync(cacheKey, cancellationToken).ConfigureAwait(false);
 
-        return serializedValue is not null ? Convert.FromBase64String(serializedValue) : null;
+        return serializedValue is not null ? (ReadOnlyMemory<byte>?)Convert.FromBase64String(serializedValue) : null;
     }
 
     private static string GetAccountPassphraseCacheKey(string keyId)

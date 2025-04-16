@@ -4,6 +4,7 @@ using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Serialization;
 using Proton.Drive.Sdk.Shares;
 using Proton.Drive.Sdk.Volumes;
+using Proton.Sdk;
 using Proton.Sdk.Caching;
 
 namespace Proton.Drive.Sdk.Caching;
@@ -55,19 +56,26 @@ internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEnti
             : null;
     }
 
-    public ValueTask SetNodeAsync(Node node, CancellationToken cancellationToken)
+    public ValueTask SetNodeAsync(
+        NodeUid nodeId,
+        Result<Node, DegradedNode> nodeProvisionResult,
+        ShareId? membershipShareId,
+        ReadOnlyMemory<byte> nameHashDigest,
+        CancellationToken cancellationToken)
     {
-        var serializedValue = JsonSerializer.Serialize(node, DriveEntitiesSerializerContext.Default.Node);
+        var serializedValue = JsonSerializer.Serialize(
+            new CachedNodeInfo(nodeProvisionResult, membershipShareId, nameHashDigest),
+            DriveEntitiesSerializerContext.Default.CachedNodeInfo);
 
-        return _repository.SetAsync(GetNodeCacheKey(node.Id), serializedValue, cancellationToken);
+        return _repository.SetAsync(GetNodeCacheKey(nodeId), serializedValue, cancellationToken);
     }
 
-    public async ValueTask<Node?> TryGetNodeAsync(NodeUid nodeId, CancellationToken cancellationToken)
+    public async ValueTask<CachedNodeInfo?> TryGetNodeAsync(NodeUid nodeId, CancellationToken cancellationToken)
     {
         var serializedValue = await _repository.TryGetAsync(GetNodeCacheKey(nodeId), cancellationToken).ConfigureAwait(false);
 
         return serializedValue is not null
-            ? JsonSerializer.Deserialize(serializedValue, DriveEntitiesSerializerContext.Default.Node)
+            ? JsonSerializer.Deserialize(serializedValue, DriveEntitiesSerializerContext.Default.CachedNodeInfo)
             : null;
     }
 

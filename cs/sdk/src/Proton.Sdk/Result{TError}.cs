@@ -2,32 +2,32 @@
 
 namespace Proton.Sdk;
 
-public class Result<TError>
+public readonly struct Result<TError>
 {
     public static readonly Result<TError> Success = new();
+
+    private readonly TError? _error;
 
     public Result(TError error)
     {
         IsSuccess = false;
-        Error = error;
+        _error = error;
     }
 
-    protected Result()
+    public Result()
     {
         IsSuccess = true;
-        Error = default;
+        _error = default;
     }
 
     public bool IsSuccess { get; }
     public bool IsFailure => !IsSuccess;
 
-    protected TError? Error { get; }
-
     public static implicit operator Result<TError>(TError error) => new(error);
 
     public bool TryGetError([MaybeNullWhen(true)] out TError error)
     {
-        error = Error;
+        error = _error;
         return IsFailure;
     }
 }

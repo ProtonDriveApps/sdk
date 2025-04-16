@@ -1,7 +1,9 @@
 using System.Text.Json.Serialization;
+using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Api.Volumes;
+using Proton.Drive.Sdk.Nodes;
 using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Serialization;
@@ -23,6 +25,8 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(VolumeCreationResponse))]
 [JsonSerializable(typeof(LinkDetailsRequest))]
 [JsonSerializable(typeof(LinkDetailsResponse))]
+[JsonSerializable(typeof(ExtendedAttributes))]
 [JsonSerializable(typeof(ShareResponse))]
 [JsonSerializable(typeof(ShareResponseV2))]
+[JsonSerializable(typeof(FolderChildrenResponse))]
 internal sealed partial class DriveApiSerializerContext : JsonSerializerContext;

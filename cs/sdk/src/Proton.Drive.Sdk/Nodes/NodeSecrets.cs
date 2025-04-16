@@ -6,5 +6,5 @@ internal class NodeSecrets
 {
     public required PgpPrivateKey Key { get; init; }
     public required PgpSessionKey PassphraseSessionKey { get; init; }
-    public required PgpSessionKey? NameSessionKey { get; init; }
+    public required PgpSessionKey NameSessionKey { get; init; }
 }

@@ -2,6 +2,7 @@
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Shares;
 using Proton.Drive.Sdk.Volumes;
+using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Caching;
 
@@ -16,6 +17,12 @@ internal interface IDriveEntityCache
     ValueTask SetShareAsync(Share share, CancellationToken cancellationToken);
     ValueTask<Share?> TryGetShareAsync(ShareId shareId, CancellationToken cancellationToken);
 
-    ValueTask SetNodeAsync(Node node, CancellationToken cancellationToken);
-    ValueTask<Node?> TryGetNodeAsync(NodeUid nodeId, CancellationToken cancellationToken);
+    ValueTask SetNodeAsync(
+        NodeUid nodeId,
+        Result<Node, DegradedNode> nodeProvisionResult,
+        ShareId? membershipShareId,
+        ReadOnlyMemory<byte> nameHashDigest,
+        CancellationToken cancellationToken);
+
+    ValueTask<CachedNodeInfo?> TryGetNodeAsync(NodeUid nodeId, CancellationToken cancellationToken);
 }

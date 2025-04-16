@@ -22,8 +22,6 @@ internal static class ProtonClientConfigurationExtensions
 
         var services = new ServiceCollection();
 
-        services.AddSingleton(config.LoggerFactory);
-
         services.ConfigureHttpClientDefaults(
             builder =>
             {
@@ -33,15 +31,17 @@ internal static class ProtonClientConfigurationExtensions
                         handler.AddAutomaticDecompression();
                         handler.ConfigureCookies(CookieContainer);
 
-                        if (config.IgnoreSslCertificateErrors)
+                        switch (config.TlsPolicy)
                         {
+                            case ProtonClientTlsPolicy.Strict:
+                                handler.AddTlsPinning();
+                                break;
+
+                            case ProtonClientTlsPolicy.NoCertificateValidation:
 #pragma warning disable S4830 // Certificates are intentionally not verified
-                            handler.SslOptions.RemoteCertificateValidationCallback += (_, _, _, _) => true;
+                                handler.SslOptions.RemoteCertificateValidationCallback += (_, _, _, _) => true;
 #pragma warning restore S4830
-                        }
-                        else if (!config.DisableTlsCertificatePinning)
-                        {
-                            handler.AddTlsPinning();
+                                break;
                         }
                     });
 

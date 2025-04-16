@@ -69,12 +69,16 @@ public sealed class ProtonAccountClient
 
             var unlockedKeys = new List<PgpPrivateKey>(response.User.Keys.Count);
 
+            var activeKeyFound = false;
+
             foreach (var userKey in response.User.Keys)
             {
                 if (!userKey.IsActive)
                 {
                     continue;
                 }
+
+                activeKeyFound = true;
 
                 var passphrase = await Cache.SessionSecrets.TryGetAccountKeyPassphraseAsync(userKey.Id.ToString(), cancellationToken).ConfigureAwait(false);
 
@@ -91,7 +95,7 @@ public sealed class ProtonAccountClient
 
             if (unlockedKeys.Count == 0)
             {
-                throw new ProtonApiException("No active user key was found.");
+                throw new ProtonApiException(activeKeyFound ? "At least one active user key exists, but none could be unlocked." : "No active user key found");
             }
 
             await Cache.Secrets.SetUserKeysAsync(unlockedKeys, cancellationToken).ConfigureAwait(false);

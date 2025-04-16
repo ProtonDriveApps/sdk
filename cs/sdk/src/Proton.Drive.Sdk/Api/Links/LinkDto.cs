@@ -34,9 +34,6 @@ internal sealed class LinkDto
     [JsonConverter(typeof(ForgivingBytesToHexJsonConverter))]
     public required ReadOnlyMemory<byte> NameHashDigest { get; init; }
 
-    [JsonPropertyName("MIMEType")]
-    public string? MediaType { get; init; }
-
     [JsonPropertyName("NodeKey")]
     public required PgpArmoredPrivateKey Key { get; init; }
 

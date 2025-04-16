@@ -30,7 +30,7 @@ internal sealed class DriveSecretCache(ICacheRepository repository) : IDriveSecr
 
     public ValueTask SetFileSecretsAsync(NodeUid nodeId, FileSecrets fileSecrets, CancellationToken cancellationToken)
     {
-        var serializedValue = JsonSerializer.Serialize(fileSecrets, SecretsSerializerContext.Default.PgpPrivateKey);
+        var serializedValue = JsonSerializer.Serialize(fileSecrets, DriveSecretsSerializerContext.Default.FileSecrets);
 
         return _repository.SetAsync(GetFileSecretsCacheKey(nodeId), serializedValue, cancellationToken);
     }

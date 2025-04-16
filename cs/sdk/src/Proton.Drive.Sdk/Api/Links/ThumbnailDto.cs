@@ -12,5 +12,6 @@ internal sealed class ThumbnailDto
     [JsonPropertyName("Hash")]
     public required ReadOnlyMemory<byte> HashDigest { get; init; }
 
-    public required int Size { get; init; }
+    [JsonPropertyName("EncryptedSize")]
+    public required int StorageQuotaUsage { get; init; }
 }

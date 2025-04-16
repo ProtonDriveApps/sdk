@@ -4,7 +4,7 @@ using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Api.Shares;
 
-internal sealed class ShareMembership
+internal sealed class ShareMembershipDto
 {
     [JsonPropertyName("MemberID")]
     public required string MemberId { get; init; }
@@ -21,7 +21,7 @@ internal sealed class ShareMembership
     [JsonPropertyName("Inviter")]
     public required string InviterEmailAddress { get; init; }
 
-    public required MemberPermissions Permissions { get; init; }
+    public required ShareMemberPermissions Permissions { get; init; }
 
     public required ReadOnlyMemory<byte> KeyPacket { get; init; }
 

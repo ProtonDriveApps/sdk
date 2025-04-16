@@ -3,7 +3,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Proton.Sdk.Caching;
 
-internal sealed class SqliteCacheRepository : ICacheRepository, IDisposable
+public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
 {
     private readonly SqliteConnection _connection;
 

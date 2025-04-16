@@ -1,4 +1,5 @@
-﻿using Proton.Drive.Sdk.Api.Links;
+﻿using Proton.Drive.Sdk.Api.Folders;
+using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Api.Volumes;
 
@@ -9,4 +10,5 @@ internal interface IDriveApiClients
     IVolumesApiClient Volumes { get; }
     ISharesApiClient Shares { get; }
     ILinksApiClient Links { get; }
+    IFoldersApiClient Folders { get; }
 }
