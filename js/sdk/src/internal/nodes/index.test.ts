@@ -104,10 +104,10 @@ describe('nodesModules integration tests', () => {
         jest.spyOn(nodesModule.access, 'getParentKeys').mockResolvedValue({key: 'privateKey'});
 
         // Verify the inital state before move event is sent.
-        const originalBeforeMove = await Array.fromAsync(nodesModule.access.iterateChildren(originalFolderUid));
+        const originalBeforeMove = await Array.fromAsync(nodesModule.access.iterateFolderChildren(originalFolderUid));
         expect(originalBeforeMove).toMatchObject([{ uid: nodeUid, parentUid: originalFolderUid }]);
 
-        const targetBeforeMove = await Array.fromAsync(nodesModule.access.iterateChildren(targetFolderUid));
+        const targetBeforeMove = await Array.fromAsync(nodesModule.access.iterateFolderChildren(targetFolderUid));
         expect(targetBeforeMove).toMatchObject([]);
 
         // Send the move event that updates the cache.
@@ -124,11 +124,11 @@ describe('nodesModules integration tests', () => {
         await Promise.all(eventCallbacks.map((callback) => callback(events)));
 
         // Verify the state after the move event, including when API service is called.
-        const originalAfterMove = await Array.fromAsync(nodesModule.access.iterateChildren(originalFolderUid));
+        const originalAfterMove = await Array.fromAsync(nodesModule.access.iterateFolderChildren(originalFolderUid));
         expect(originalAfterMove).toMatchObject([]);
         expect(apiService.post).not.toHaveBeenCalled();
 
-        const targetAfterMove = await Array.fromAsync(nodesModule.access.iterateChildren(targetFolderUid));
+        const targetAfterMove = await Array.fromAsync(nodesModule.access.iterateFolderChildren(targetFolderUid));
         expect(targetAfterMove).toMatchObject([{ uid: nodeUid, parentUid: targetFolderUid }]);
         expect(apiService.post).toHaveBeenCalledTimes(1);
     });

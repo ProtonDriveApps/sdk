@@ -25,7 +25,7 @@ export class CommandFileSystemList implements Command {
             paths.rootPaths.forEach((path) => console.log(path));
         } else if (path.type === PathType.MyFiles) {
             const parentNode = await path.getNode();
-            for await (const node of sdk.iterateChildren(parentNode)) {
+            for await (const node of sdk.iterateFolderChildren(parentNode)) {
                 this.printNode(node, { json });
             }
         } else if (path.type === PathType.SharedByMe) {
@@ -39,7 +39,7 @@ export class CommandFileSystemList implements Command {
                 }
             } else {
                 const node = await path.getNode();
-                for await (const child of sdk.iterateChildren(node)) {
+                for await (const child of sdk.iterateFolderChildren(node)) {
                     this.printNode(child, { json });
                 }
             }

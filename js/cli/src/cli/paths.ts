@@ -127,7 +127,7 @@ export class Path {
     }
 
     private async getNodeByName(parentNode: MaybeNode, name: string) {
-        for await (const maybeChild of this.sdk.iterateChildren(parentNode)) {
+        for await (const maybeChild of this.sdk.iterateFolderChildren(parentNode)) {
             if (getName(maybeChild) === name) {
                 return maybeChild;
             }
