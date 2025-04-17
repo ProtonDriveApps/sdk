@@ -161,7 +161,7 @@ describe('nodesAccess', () => {
                     yield { ok: true, node: node4 };
                 });
 
-                const result = await Array.fromAsync(access.iterateChildren('parentUid'));
+                const result = await Array.fromAsync(access.iterateFolderChildren('parentUid'));
                 expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateChildrenNodeUids).not.toHaveBeenCalled();
                 expect(apiService.iterateNodes).not.toHaveBeenCalled();
@@ -176,7 +176,7 @@ describe('nodesAccess', () => {
                     yield { ok: true, uid: node4.uid, node: node4 };
                 });
 
-                const result = await Array.fromAsync(access.iterateChildren('parentUid'));
+                const result = await Array.fromAsync(access.iterateFolderChildren('parentUid'));
                 expect(result).toMatchObject([node1, node4, node2, node3]);
                 expect(apiService.iterateNodes).toHaveBeenCalledWith(['node2', 'node3'], undefined);
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(2);
@@ -193,7 +193,7 @@ describe('nodesAccess', () => {
                 });
                 cache.getNode = jest.fn().mockImplementation((uid: string) => ({ uid, isStale: false }));
 
-                const result = await Array.fromAsync(access.iterateChildren('parentUid'));
+                const result = await Array.fromAsync(access.iterateFolderChildren('parentUid'));
                 expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateChildrenNodeUids).toHaveBeenCalledWith('parentUid', undefined);
                 expect(apiService.iterateNodes).not.toHaveBeenCalled();
@@ -214,7 +214,7 @@ describe('nodesAccess', () => {
                     throw new Error('Entity not found');
                 });
 
-                const result = await Array.fromAsync(access.iterateChildren('parentUid'));
+                const result = await Array.fromAsync(access.iterateFolderChildren('parentUid'));
                 expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateChildrenNodeUids).toHaveBeenCalledWith('parentUid', undefined);
                 expect(apiService.iterateNodes).toHaveBeenCalledWith(['node1', 'node2', 'node3', 'node4'], undefined);
@@ -241,7 +241,7 @@ describe('nodesAccess', () => {
                     yield* uids.slice(1).map((uid) => ({ uid, parentUid: parentNode.uid } as EncryptedNode));
                 });
 
-                const result = await Array.fromAsync(access.iterateChildren('parentUid'));
+                const result = await Array.fromAsync(access.iterateFolderChildren('parentUid'));
                 expect(result).toMatchObject([node2, node3]);
                 expect(cache.removeNodes).toHaveBeenCalledWith(['node1']);
             });

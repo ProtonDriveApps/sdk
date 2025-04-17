@@ -59,7 +59,7 @@ export class NodesAccess {
         return node;
     }
 
-    async *iterateChildren(parentNodeUid: string, signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
+    async *iterateFolderChildren(parentNodeUid: string, signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
         // Ensure the parent is loaded and up-to-date.
         const parentNode = await this.getNode(parentNodeUid);
 
