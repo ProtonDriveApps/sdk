@@ -74,7 +74,7 @@ internal static class AddressOperations
         return addresses.OrderBy(x => x.Order).First();
     }
 
-    public static async ValueTask<IReadOnlyList<PgpPrivateKey>> GetAddressKeysAsync(
+    public static async ValueTask<IReadOnlyList<PgpPrivateKey>> GetAddressPrivateKeysAsync(
         ProtonAccountClient client,
         AddressId addressId,
         CancellationToken cancellationToken)
@@ -96,14 +96,27 @@ internal static class AddressOperations
         return addressKeys;
     }
 
-    public static async ValueTask<PgpPrivateKey> GetAddressPrimaryKeyAsync(ProtonAccountClient client, AddressId addressId, CancellationToken cancellationToken)
+    public static async ValueTask<PgpPrivateKey> GetAddressPrimaryPrivateKeyAsync(
+        ProtonAccountClient client,
+        AddressId addressId,
+        CancellationToken cancellationToken)
     {
-        // TODO: use cache
         var address = await GetAddressAsync(client, addressId, cancellationToken).ConfigureAwait(false);
 
-        var addressKeys = await GetAddressKeysAsync(client, addressId, cancellationToken).ConfigureAwait(false);
+        var addressKeys = await GetAddressPrivateKeysAsync(client, addressId, cancellationToken).ConfigureAwait(false);
 
         return addressKeys[address.PrimaryKeyIndex];
+    }
+
+    public static async ValueTask<PgpPrivateKey> GetAddressPrivateKeyAsync(
+        ProtonAccountClient client,
+        AddressId addressId,
+        int index,
+        CancellationToken cancellationToken)
+    {
+        var addressKeys = await GetAddressPrivateKeysAsync(client, addressId, cancellationToken).ConfigureAwait(false);
+
+        return addressKeys[index];
     }
 
     public static async ValueTask<IReadOnlyList<PgpPublicKey>> GetPublicKeysAsync(

@@ -1,8 +1,9 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Security.Cryptography;
+using System.Text;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Shares;
-using Proton.Drive.Sdk.Caching;
+using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Shares;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk;
@@ -27,63 +28,56 @@ internal static class NodeOperations
         return (FolderNode)node;
     }
 
-    public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateFolderChildrenAsync(
-        ProtonDriveClient client,
-        NodeUid folderId,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public static void GetCommonCreationParameters(
+        string name,
+        PgpPrivateKey parentFolderKey,
+        ReadOnlySpan<byte> parentFolderHashKey,
+        PgpPrivateKey signingKey,
+        out PgpPrivateKey key,
+        out PgpSessionKey nameSessionKey,
+        out PgpSessionKey passphraseSessionKey,
+        out ArraySegment<byte> encryptedName,
+        out ArraySegment<byte> nameHashDigest,
+        out ArraySegment<byte> encryptedKeyPassphrase,
+        out ArraySegment<byte> passphraseSignature,
+        out ArraySegment<byte> lockedKeyBytes)
     {
-        var anchorId = default(LinkId?);
-        var mustTryMoreResults = true;
+        key = PgpPrivateKey.Generate("Drive key", "no-reply@proton.me", KeyGenerationAlgorithm.Default);
+        nameSessionKey = PgpSessionKey.Generate();
 
-        var folderSecrets = await GetFolderSecretsAsync(client, folderId, cancellationToken).ConfigureAwait(false);
+        Span<byte> passphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
+        var passphrase = CryptoGenerator.GeneratePassphrase(passphraseBuffer);
 
-        var batchLoader = new FolderChildrenBatchLoader(client, folderId.VolumeId, folderSecrets.Key);
+        passphraseSessionKey = PgpSessionKey.Generate();
+        var passphraseEncryptionSecrets = new EncryptionSecrets(parentFolderKey, passphraseSessionKey);
 
-        while (mustTryMoreResults)
-        {
-            var response = await client.Api.Folders.GetChildrenAsync(folderId.VolumeId, folderId.LinkId, anchorId, cancellationToken).ConfigureAwait(false);
+        encryptedKeyPassphrase = PgpEncrypter.EncryptAndSign(passphrase, passphraseEncryptionSecrets, signingKey, out passphraseSignature);
 
-            mustTryMoreResults = response.MoreResultsExist;
-            anchorId = response.AnchorId;
+        using var lockedKey = key.Lock(passphrase);
+        lockedKeyBytes = lockedKey.ToBytes();
 
-            foreach (var childLinkId in response.LinkIds)
-            {
-                var childId = new NodeUid(folderId.VolumeId, childLinkId);
-
-                var cachedChildNodeInfo = await client.Cache.Entities.TryGetNodeAsync(childId, cancellationToken).ConfigureAwait(false);
-
-                if (cachedChildNodeInfo is null)
-                {
-                    foreach (var nodeResult in await batchLoader.QueueAndTryLoadBatchAsync(childLinkId, cancellationToken).ConfigureAwait(false))
-                    {
-                        yield return nodeResult;
-                    }
-                }
-                else
-                {
-                    yield return cachedChildNodeInfo.Value.NodeProvisionResult;
-                }
-            }
-        }
-
-        foreach (var node in await batchLoader.LoadRemainingAsync(cancellationToken).ConfigureAwait(false))
-        {
-            yield return node;
-        }
+        GetNameParameters(name, parentFolderKey, parentFolderHashKey, nameSessionKey, signingKey, out encryptedName, out nameHashDigest);
     }
 
-    private static async ValueTask<FolderSecrets> GetFolderSecretsAsync(ProtonDriveClient client, NodeUid folderId, CancellationToken cancellationToken)
+    public static async ValueTask<Result<NodeAndSecrets, DegradedNodeAndSecrets>> GetFreshNodeAndSecretsAsync(
+        ProtonDriveClient client,
+        NodeUid nodeId,
+        ShareAndKey? knownShareAndKey,
+        CancellationToken cancellationToken)
     {
-        var folderSecrets = await client.Cache.Secrets.TryGetFolderSecretsAsync(folderId, cancellationToken).ConfigureAwait(false);
+        var response = await client.Api.Links.GetLinkDetailsAsync(nodeId.VolumeId, [nodeId.LinkId], cancellationToken).ConfigureAwait(false);
 
-        if (folderSecrets is null)
-        {
-            var nodeProvisionResult = await GetFreshNodeAndSecretsAsync(client, folderId, knownShareAndKey: null, cancellationToken).ConfigureAwait(false);
+        var linkDetails = response.Links[0];
 
-            folderSecrets = nodeProvisionResult.GetFolderSecretsOrThrow();
-        }
+        var parentKeyResult = await GetParentKeyAsync(
+            client,
+            nodeId.VolumeId,
+            linkDetails.Link.ParentId,
+            knownShareAndKey,
+            linkDetails.Membership?.ShareId,
+            cancellationToken).ConfigureAwait(false);
 
-        return folderSecrets;
+        return await NodeCrypto.DecryptNodeAsync(client, nodeId, linkDetails, parentKeyResult, cancellationToken).ConfigureAwait(false);
     }
 
     private static async ValueTask<Node> GetNodeAsync(
@@ -104,57 +98,39 @@ internal static class NodeOperations
         return nodeResult.GetValueOrThrow();
     }
 
-    private static async ValueTask<FolderNode> GetFreshMyFilesFolderAsync(
-        ProtonDriveClient client,
-        CancellationToken cancellationToken)
+    private static async ValueTask<FolderNode> GetFreshMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
     {
-        PgpPrivateKey shareKey;
-        ShareVolumeDto volume;
-        ShareDto share;
-        LinkDetailsDto linkDetails;
+        ShareVolumeDto volumeDto;
+        ShareDto shareDto;
+        LinkDetailsDto linkDetailsDto;
 
         try
         {
-            (volume, share, linkDetails) = await client.Api.Shares.GetMyFilesShareAsync(cancellationToken).ConfigureAwait(false);
+            (volumeDto, shareDto, linkDetailsDto) = await client.Api.Shares.GetMyFilesShareAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (ProtonApiException e) when (e.Code == ResponseCode.DoesNotExist)
         {
             return await CreateMyFilesFolderAsync(client, cancellationToken).ConfigureAwait(false);
         }
 
-        shareKey = await ShareCrypto.DecryptShareKeyAsync(client, share.Id, share.Key, share.Passphrase, share.AddressId, cancellationToken)
-            .ConfigureAwait(false);
+        var nodeId = new NodeUid(volumeDto.Id, linkDetailsDto.Link.Id);
 
-        var nodeId = new NodeUid(volume.Id, linkDetails.Link.Id);
+        var (share, shareKey) = await ShareCrypto.DecryptShareAsync(
+            client,
+            shareDto.Id,
+            shareDto.Key,
+            shareDto.Passphrase,
+            shareDto.AddressId,
+            nodeId,
+            cancellationToken).ConfigureAwait(false);
 
-        var nodeProvisionResult = await NodeCrypto.DecryptNodeAsync(client, nodeId, linkDetails, shareKey, cancellationToken).ConfigureAwait(false);
+        var nodeProvisionResult = await NodeCrypto.DecryptNodeAsync(client, nodeId, linkDetailsDto, shareKey, cancellationToken).ConfigureAwait(false);
 
         var folderNode = nodeProvisionResult.GetFolderNodeOrThrow();
 
-        await SetMyFilesInCacheAsync(client.Cache.Entities, new Share(share.Id, folderNode.Id), folderNode, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Entities.SetMyFilesShareIdAsync(share.Id, cancellationToken).ConfigureAwait(false);
 
         return folderNode;
-    }
-
-    private static async ValueTask<Result<NodeAndSecrets, DegradedNodeAndSecrets>> GetFreshNodeAndSecretsAsync(
-        ProtonDriveClient client,
-        NodeUid nodeId,
-        ShareAndKey? knownShareAndKey,
-        CancellationToken cancellationToken)
-    {
-        var response = await client.Api.Links.GetLinkDetailsAsync(nodeId.VolumeId, [nodeId.LinkId], cancellationToken).ConfigureAwait(false);
-
-        var linkDetails = response.Links[0];
-
-        var parentKeyResult = await GetParentKeyAsync(
-            client,
-            nodeId.VolumeId,
-            linkDetails.Link.ParentId,
-            knownShareAndKey,
-            linkDetails.Membership?.ShareId,
-            cancellationToken).ConfigureAwait(false);
-
-        return await NodeCrypto.DecryptNodeAsync(client, nodeId, linkDetails, parentKeyResult, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task<Result<PgpPrivateKey, ProtonDriveError>> GetParentKeyAsync(
@@ -252,28 +228,35 @@ internal static class NodeOperations
         return currentParentKey;
     }
 
-    private static async ValueTask<FolderNode> CreateMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
+    private static void GetNameParameters(
+        string name,
+        PgpPrivateKey parentFolderKey,
+        ReadOnlySpan<byte> parentFolderHashKey,
+        PgpSessionKey nameSessionKey,
+        PgpPrivateKey signingKey,
+        out ArraySegment<byte> encryptedName,
+        out ArraySegment<byte> nameHashDigest)
     {
-        var (volume, folderNode) = await VolumeOperations.CreateVolumeAsync(client, cancellationToken).ConfigureAwait(false);
+        var maxNameByteLength = Encoding.UTF8.GetByteCount(name);
+        var nameBytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack<byte>(maxNameByteLength, out var nameHeapMemoryOwner)
+            ? nameHeapMemoryOwner.Memory.Span
+            : stackalloc byte[maxNameByteLength];
 
-        var share = new Share(volume.RootShareId, volume.RootFolderId);
+        using (nameHeapMemoryOwner)
+        {
+            var nameByteLength = Encoding.UTF8.GetBytes(name, nameBytes);
+            nameBytes = nameBytes[..nameByteLength];
 
-        await SetMyFilesInCacheAsync(client.Cache.Entities, share, folderNode, cancellationToken).ConfigureAwait(false);
+            encryptedName = PgpEncrypter.EncryptAndSignText(name, new EncryptionSecrets(parentFolderKey, nameSessionKey), signingKey);
 
-        return folderNode;
+            nameHashDigest = HMACSHA256.HashData(parentFolderHashKey, nameBytes);
+        }
     }
 
-    private static async ValueTask SetMyFilesInCacheAsync(
-        IDriveEntityCache cache,
-        Share share,
-        FolderNode folderNode,
-        CancellationToken cancellationToken)
+    private static async ValueTask<FolderNode> CreateMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
     {
-        // The My Files root folder never has siblings and does not need a name hash digest
-        var nameHashDigest = ReadOnlyMemory<byte>.Empty;
+        var (_, _, folderNode) = await VolumeOperations.CreateVolumeAsync(client, cancellationToken).ConfigureAwait(false);
 
-        await cache.SetNodeAsync(folderNode.Id, folderNode, share.Id, nameHashDigest, cancellationToken).ConfigureAwait(false);
-        await cache.SetMyFilesShareIdAsync(share.Id, cancellationToken).ConfigureAwait(false);
-        await cache.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
+        return folderNode;
     }
 }

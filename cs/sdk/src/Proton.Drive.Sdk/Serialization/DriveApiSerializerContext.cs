@@ -28,5 +28,8 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(ExtendedAttributes))]
 [JsonSerializable(typeof(ShareResponse))]
 [JsonSerializable(typeof(ShareResponseV2))]
+[JsonSerializable(typeof(ContextShareResponse))]
 [JsonSerializable(typeof(FolderChildrenResponse))]
+[JsonSerializable(typeof(FolderCreationParameters))]
+[JsonSerializable(typeof(FolderCreationResponse))]
 internal sealed partial class DriveApiSerializerContext : JsonSerializerContext;

@@ -8,19 +8,29 @@ internal sealed class AccountClientAdapter(ProtonApiSession session) : IAccountC
 {
     private readonly ProtonAccountClient _client = new(session);
 
+    public ValueTask<Address> GetAddressAsync(ProtonDriveClient client, AddressId addressId, CancellationToken cancellationToken)
+    {
+        return _client.GetAddressAsync(addressId, cancellationToken);
+    }
+
     public ValueTask<Address> GetDefaultAddressAsync(CancellationToken cancellationToken)
     {
         return _client.GetCurrentUserDefaultAddressAsync(cancellationToken);
     }
 
-    public ValueTask<PgpPrivateKey> GetAddressPrimaryKeyAsync(AddressId addressId, CancellationToken cancellationToken)
+    public ValueTask<PgpPrivateKey> GetAddressPrimaryPrivateKeyAsync(AddressId addressId, CancellationToken cancellationToken)
     {
-        return _client.GetAddressPrimaryKeyAsync(addressId, cancellationToken);
+        return _client.GetAddressPrimaryPrivateKeyAsync(addressId, cancellationToken);
     }
 
-    public ValueTask<IReadOnlyList<PgpPrivateKey>> GetAddressKeysAsync(AddressId addressId, CancellationToken cancellationToken)
+    public ValueTask<PgpPrivateKey> GetAddressPrivateKeyAsync(AddressId addressId, int index, CancellationToken cancellationToken)
     {
-        return _client.GetAddressKeysAsync(addressId, cancellationToken);
+        return _client.GetAddressPrivateKeyAsync(addressId, index, cancellationToken);
+    }
+
+    public ValueTask<IReadOnlyList<PgpPrivateKey>> GetAddressPrivateKeysAsync(AddressId addressId, CancellationToken cancellationToken)
+    {
+        return _client.GetAddressPrivateKeysAsync(addressId, cancellationToken);
     }
 
     public ValueTask<IReadOnlyList<PgpPublicKey>> GetAddressPublicKeysAsync(string emailAddress, CancellationToken cancellationToken)

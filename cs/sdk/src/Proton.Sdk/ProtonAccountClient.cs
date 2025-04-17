@@ -44,14 +44,19 @@ public sealed class ProtonAccountClient
         return AddressOperations.GetCurrentUserDefaultAddressAsync(this, cancellationToken);
     }
 
-    internal ValueTask<IReadOnlyList<PgpPrivateKey>> GetAddressKeysAsync(AddressId addressId, CancellationToken cancellationToken)
+    internal ValueTask<IReadOnlyList<PgpPrivateKey>> GetAddressPrivateKeysAsync(AddressId addressId, CancellationToken cancellationToken)
     {
-        return AddressOperations.GetAddressKeysAsync(this, addressId, cancellationToken);
+        return AddressOperations.GetAddressPrivateKeysAsync(this, addressId, cancellationToken);
     }
 
-    internal ValueTask<PgpPrivateKey> GetAddressPrimaryKeyAsync(AddressId addressId, CancellationToken cancellationToken)
+    internal ValueTask<PgpPrivateKey> GetAddressPrimaryPrivateKeyAsync(AddressId addressId, CancellationToken cancellationToken)
     {
-        return AddressOperations.GetAddressPrimaryKeyAsync(this, addressId, cancellationToken);
+        return AddressOperations.GetAddressPrimaryPrivateKeyAsync(this, addressId, cancellationToken);
+    }
+
+    public ValueTask<PgpPrivateKey> GetAddressPrivateKeyAsync(AddressId addressId, int index, CancellationToken cancellationToken)
+    {
+        return AddressOperations.GetAddressPrivateKeyAsync(this, addressId, index, cancellationToken);
     }
 
     internal ValueTask<IReadOnlyList<PgpPublicKey>> GetAddressPublicKeysAsync(string emailAddress, CancellationToken cancellationToken)

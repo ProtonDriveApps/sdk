@@ -15,4 +15,11 @@ internal sealed class LinksApiClient(HttpClient httpClient) : ILinksApiClient
             .PostAsync($"v2/volumes/{volumeId}/links", new LinkDetailsRequest(linkIds), DriveApiSerializerContext.Default.LinkDetailsRequest, cancellationToken)
             .ConfigureAwait(false);
     }
+
+    public async ValueTask<ContextShareResponse> GetContextShareAsync(VolumeId volumeId, LinkId linkId, CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(DriveApiSerializerContext.Default.ContextShareResponse)
+            .GetAsync($"volumes/{volumeId}/links/{linkId}/context", cancellationToken).ConfigureAwait(false);
+    }
 }

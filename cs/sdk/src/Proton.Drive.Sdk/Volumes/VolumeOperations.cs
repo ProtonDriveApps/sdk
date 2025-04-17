@@ -2,6 +2,7 @@
 using Proton.Drive.Sdk.Api.Volumes;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Nodes;
+using Proton.Drive.Sdk.Shares;
 using Proton.Sdk.Addresses;
 
 namespace Proton.Drive.Sdk.Volumes;
@@ -10,19 +11,21 @@ internal static class VolumeOperations
 {
     private const string RootFolderName = "root";
 
-    internal static async ValueTask<(Volume Volume, FolderNode RootFolder)> CreateVolumeAsync(
+    internal static async ValueTask<(Volume Volume, Share Share, FolderNode RootFolder)> CreateVolumeAsync(
         ProtonDriveClient client,
         CancellationToken cancellationToken)
     {
         var defaultAddress = await client.Account.GetDefaultAddressAsync(cancellationToken).ConfigureAwait(false);
 
-        using var addressKey = await client.Account.GetAddressPrimaryKeyAsync(defaultAddress.Id, cancellationToken).ConfigureAwait(false);
+        var addressKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(defaultAddress.Id, cancellationToken).ConfigureAwait(false);
 
         var parameters = GetCreationParameters(defaultAddress.Id, addressKey, out var rootShareKey, out var rootFolderSecrets);
 
         var response = await client.Api.Volumes.CreateVolumeAsync(parameters, cancellationToken).ConfigureAwait(false);
 
         var volume = new Volume(response.Volume);
+
+        var share = new Share(volume.RootShareId, volume.RootFolderId, defaultAddress.Id);
 
         var rootFolder = new FolderNode
         {
@@ -34,12 +37,18 @@ internal static class VolumeOperations
             IsTrashed = false,
         };
 
+        // The volume root folder never has siblings and does not need a name hash digest
+        var nameHashDigest = ReadOnlyMemory<byte>.Empty;
+
         await client.Cache.Entities.SetMainVolumeIdAsync(volume.Id, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Entities.SetNodeAsync(volume.RootFolderId, rootFolder, share.Id, nameHashDigest, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Entities.SetMyFilesShareIdAsync(share.Id, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
 
         await client.Cache.Secrets.SetShareKeyAsync(volume.RootShareId, rootShareKey, cancellationToken).ConfigureAwait(false);
         await client.Cache.Secrets.SetFolderSecretsAsync(volume.RootFolderId, rootFolderSecrets, cancellationToken).ConfigureAwait(false);
 
-        return (volume, rootFolder);
+        return (volume, share, rootFolder);
     }
 
     private static VolumeCreationParameters GetCreationParameters(
