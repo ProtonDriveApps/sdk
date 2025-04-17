@@ -17,10 +17,18 @@ internal static class ShareOperations
         {
             var response = await client.Api.Shares.GetShareAsync(shareId, cancellationToken).ConfigureAwait(false);
 
-            shareKey = await ShareCrypto.DecryptShareKeyAsync(client, shareId, response.Key, response.Passphrase, response.AddressId, cancellationToken)
-                .ConfigureAwait(false);
+            var rootFolderId = new NodeUid(response.VolumeId, response.RootLinkId);
 
-            share = new Share(shareId, new NodeUid(response.VolumeId, response.RootLinkId));
+            (_, shareKey) = await ShareCrypto.DecryptShareAsync(
+                client,
+                shareId,
+                response.Key,
+                response.Passphrase,
+                response.AddressId,
+                rootFolderId,
+                cancellationToken).ConfigureAwait(false);
+
+            share = new Share(shareId, new NodeUid(response.VolumeId, response.RootLinkId), response.AddressId);
         }
 
         return new ShareAndKey(share, shareKey.Value);

@@ -5,9 +5,7 @@ namespace Proton.Drive.Sdk.Api.Folders;
 
 internal interface IFoldersApiClient
 {
-    Task<FolderChildrenResponse> GetChildrenAsync(
-        VolumeId volumeId,
-        LinkId linkId,
-        LinkId? anchorId,
-        CancellationToken cancellationToken);
+    ValueTask<FolderChildrenResponse> GetChildrenAsync(VolumeId volumeId, LinkId linkId, LinkId? anchorId, CancellationToken cancellationToken);
+
+    ValueTask<FolderCreationResponse> CreateFolderAsync(VolumeId volumeId, FolderCreationParameters parameters, CancellationToken cancellationToken);
 }

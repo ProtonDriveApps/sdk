@@ -39,8 +39,13 @@ public sealed class ProtonDriveClient
         return NodeOperations.GetMyFilesFolderAsync(this, cancellationToken);
     }
 
+    public ValueTask<FolderNode> CreateFolderAsync(NodeUid parentId, string name, CancellationToken cancellationToken)
+    {
+        return FolderOperations.CreateFolderAsync(this, parentId, name, cancellationToken);
+    }
+
     public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateFolderChildrenAsync(NodeUid folderId, CancellationToken cancellationToken = default)
     {
-        return NodeOperations.EnumerateFolderChildrenAsync(this, folderId, cancellationToken);
+        return FolderOperations.EnumerateFolderChildrenAsync(this, folderId, cancellationToken);
     }
 }
