@@ -5,6 +5,7 @@ import { getName } from './node';
 export enum PathType {
     Root = 'root',
     MyFiles = 'my-files',
+    Devices = 'devices',
     SharedByMe = 'shared-by-me',
     SharedWithMe = 'shared-with-me',
     Trash = 'trash',
@@ -18,6 +19,7 @@ export class Paths {
     get rootPaths(): string[] {
         return [
             PathType.MyFiles,
+            PathType.Devices,
             PathType.SharedByMe,
             PathType.SharedWithMe,
             PathType.Trash,
@@ -41,6 +43,9 @@ export class Path {
         }
         if (this.fullPath.startsWith(`${path.sep}my-files`)) {
             return PathType.MyFiles;
+        }
+        if (this.fullPath.startsWith(`${path.sep}devices`)) {
+            return PathType.Devices;
         }
         if (this.fullPath.startsWith(`${path.sep}shared-by-me`)) {
             return PathType.SharedByMe;
@@ -77,6 +82,10 @@ export class Path {
                 throw new Error('Browsing trashed folders is not supported');
             }
             return this.getTrashedNode(parts[0]);
+        }
+        if (this.type === PathType.Devices) {
+            const rootNodeName = await this.getDevicesRootFolder();
+            return this.getNodeByPath(rootNodeName, this.sectionPathWithoutRoot);
         }
         throw new Error('Not implemented');
     }
@@ -117,6 +126,17 @@ export class Path {
             }
         }
         throw new Error('Trashed node not found');
+    }
+
+    private async getDevicesRootFolder() {
+        for await (const device of this.sdk.iterateDevices()) {
+            const name = device.name.ok ? device.name.value : device.name.error.name;
+            if (name === this.sectionRootNodeName) {
+                const [maybeNode] = await Array.fromAsync(this.sdk.iterateNodes([device.rootFolderUid]));
+                return maybeNode;
+            }
+        }
+        throw new Error('Device not found');
     }
 
     private async getNodeByPath(parentNode: MaybeNode, pathString: string) {
