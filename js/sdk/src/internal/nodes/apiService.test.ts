@@ -67,7 +67,7 @@ function generateFileNode(overrides = {}) {
     return {
         ...node,
         type: NodeType.File,
-        mimeType: "text",
+        mediaType: "text",
         encryptedCrypto: {
             ...node.encryptedCrypto,
             file: {
@@ -77,7 +77,7 @@ function generateFileNode(overrides = {}) {
             activeRevision: {
                 uid: "volumeId~linkId~revisionId",
                 state: "active",
-                createdDate: new Date(1234567890000),
+                creationTime: new Date(1234567890000),
                 signatureEmail: "revSigEmail",
                 armoredExtendedAttributes: "{file}",
                 thumbnails: [],
@@ -110,8 +110,8 @@ function generateNode() {
 
         uid: "volumeId~linkId",
         parentUid: "volumeId~parentLinkId",
-        createdDate: new Date(123456789000),
-        trashedDate: undefined,
+        creationTime: new Date(123456789000),
+        trashTime: undefined,
 
         shareId: undefined,
         isShared: false,
@@ -218,7 +218,7 @@ describe("nodeAPIService", () => {
                     TrashTime: 123456,
                 }),
                 generateFileNode({
-                    trashedDate: new Date(123456000)
+                    trashTime: new Date(123456000)
                 }),
             );
         });

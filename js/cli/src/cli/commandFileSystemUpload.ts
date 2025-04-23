@@ -26,7 +26,7 @@ export class CommandFileSystemUpload implements Command {
 
         const file = Bun.file(localPath);
         const metadata = {
-            mimeType: file.type,
+            mediaType: file.type,
             expectedSize: file.size,
         }
 

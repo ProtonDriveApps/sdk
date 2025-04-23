@@ -439,7 +439,7 @@ describe('FileUploader', () => {
                     {
                         // Fake expected size to break verification
                         expectedSize: 1 * 1024 * 1024 + 1024,
-                        mimeType: '',
+                        mediaType: '',
                     },
                     onFinish,
                 );

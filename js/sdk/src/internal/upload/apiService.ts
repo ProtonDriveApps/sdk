@@ -63,7 +63,7 @@ export class UploadAPIService {
     async createDraft(parentNodeUid: string, node: {
         armoredEncryptedName: string,
         hash: string,
-        mimeType: string,
+        mediaType: string,
         clientUID?: string,
         intendedUploadSize?: number,
         armoredNodeKey: string,
@@ -84,7 +84,7 @@ export class UploadAPIService {
             ParentLinkID: parentNodeId,
             Name: node.armoredEncryptedName,
             Hash: node.hash,
-            MIMEType: node.mimeType,
+            MIMEType: node.mediaType,
             ClientUID: node.clientUID || null,
             IntendedUploadSize: node.intendedUploadSize || null,
             NodeKey: node.armoredNodeKey,

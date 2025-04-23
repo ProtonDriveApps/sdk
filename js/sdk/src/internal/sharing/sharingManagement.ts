@@ -419,7 +419,7 @@ export class SharingManagement {
 
         return {
             uid: encryptedInvitation.uid,
-            invitedDate: encryptedInvitation.invitedDate,
+            invitationTime: encryptedInvitation.invitationTime,
             addedByEmail: resultOk(inviter.email),
             inviteeEmail,
             role,

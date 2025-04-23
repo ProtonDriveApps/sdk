@@ -28,8 +28,8 @@ export class DevicesAPIService {
             uid: makeDeviceUid(device.Device.VolumeID, device.Device.DeviceID),
             type: deviceTypeNumberToEnum(device.Device.Type),
             rootFolderUid: makeNodeUid(device.Device.VolumeID, device.Share.LinkID),
-            createdDate: new Date(device.Device.CreateTime*1000),
-            lastSyncDate: device.Device.LastSyncTime ? new Date(device.Device.LastSyncTime*1000) : undefined,
+            creationTime: new Date(device.Device.CreateTime*1000),
+            lastSyncTime: device.Device.LastSyncTime ? new Date(device.Device.LastSyncTime*1000) : undefined,
             hasDeprecatedName: !!device.Share.Name,
         }));
     }
@@ -101,7 +101,7 @@ export class DevicesAPIService {
             uid: makeDeviceUid(device.volumeId, response.Device.DeviceID),
             type: device.type,
             rootFolderUid: makeNodeUid(device.volumeId, response.Device.LinkID),
-            createdDate: new Date(),
+            creationTime: new Date(),
             hasDeprecatedName: false,
         }
     }

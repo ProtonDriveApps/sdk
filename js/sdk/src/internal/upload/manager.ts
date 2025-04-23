@@ -75,7 +75,7 @@ export class UploadManager {
             const result = await this.apiService.createDraft(parentFolderUid, {
                 armoredEncryptedName: generatedNodeCrypto.encryptedNode.encryptedName,
                 hash: generatedNodeCrypto.encryptedNode.hash,
-                mimeType: metadata.mimeType,
+                mediaType: metadata.mediaType,
                 intendedUploadSize: metadata.expectedSize,
                 armoredNodeKey: generatedNodeCrypto.nodeKeys.encrypted.armoredKey,
                 armoredNodePassphrase: generatedNodeCrypto.nodeKeys.encrypted.armoredPassphrase,

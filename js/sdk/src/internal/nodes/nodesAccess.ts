@@ -233,7 +233,7 @@ export class NodesAccess {
                 activeRevision: !unparsedNode.activeRevision?.ok ? unparsedNode.activeRevision : resultOk({
                     uid: unparsedNode.activeRevision.value.uid,
                     state: unparsedNode.activeRevision.value.state,
-                    createdDate: unparsedNode.activeRevision.value.createdDate,
+                    creationTime: unparsedNode.activeRevision.value.creationTime,
                     contentAuthor: unparsedNode.activeRevision.value.contentAuthor,
                     thumbnails: unparsedNode.activeRevision.value.thumbnails,
                     ...extendedAttributes,

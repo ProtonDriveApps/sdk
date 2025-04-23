@@ -10,10 +10,10 @@ type InternalPartialNode = Pick<
     'nameAuthor' |
     'directMemberRole' |
     'type' |
-    'mimeType' |
+    'mediaType' |
     'isShared' |
-    'createdDate' |
-    'trashedDate' |
+    'creationTime' |
+    'trashTime' |
     'activeRevision' |
     'folder' |
     'errors'
@@ -69,10 +69,10 @@ export function convertInternalNode(node: InternalPartialNode): PublicMaybeNode 
         nameAuthor: node.nameAuthor,
         directMemberRole: node.directMemberRole,
         type: node.type,
-        mimeType: node.mimeType,
+        mediaType: node.mediaType,
         isShared: node.isShared,
-        createdDate: node.createdDate,
-        trashedDate: node.trashedDate,
+        creationTime: node.creationTime,
+        trashTime: node.trashTime,
         folder: node.folder,
     };
 

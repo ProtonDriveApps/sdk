@@ -364,8 +364,8 @@ function linkToEncryptedNode(logger: Logger, volumeId: string, link: PostLoadLin
         uid: makeNodeUid(volumeId, link.Link.LinkID),
         parentUid: link.Link.ParentLinkID ? makeNodeUid(volumeId, link.Link.ParentLinkID) : undefined,
         type: nodeTypeNumberToNodeType(logger, link.Link.Type),
-        createdDate: new Date(link.Link.CreateTime*1000),
-        trashedDate: link.Link.TrashTime ? new Date(link.Link.TrashTime*1000) : undefined,
+        creationTime: new Date(link.Link.CreateTime*1000),
+        trashTime: link.Link.TrashTime ? new Date(link.Link.TrashTime*1000) : undefined,
 
         // Sharing node metadata
         shareId: link.Sharing?.ShareID || undefined,
@@ -396,7 +396,7 @@ function linkToEncryptedNode(logger: Logger, volumeId: string, link: PostLoadLin
     if (link.Link.Type === 2 && link.File && link.File.ActiveRevision) {
         return {
             ...baseNodeMetadata,
-            mimeType: link.File.MediaType || undefined,
+            mediaType: link.File.MediaType || undefined,
             encryptedCrypto: {
                 ...baseCryptoNodeMetadata,
                 file: {
@@ -406,7 +406,7 @@ function linkToEncryptedNode(logger: Logger, volumeId: string, link: PostLoadLin
                 activeRevision: {
                     uid: makeNodeRevisionUid(volumeId, link.Link.LinkID, link.File.ActiveRevision.RevisionID),
                     state: RevisionState.Active,
-                    createdDate: new Date(link.File.ActiveRevision.CreateTime*1000),
+                    creationTime: new Date(link.File.ActiveRevision.CreateTime*1000),
                     signatureEmail: link.File.ActiveRevision.SignatureEmail || undefined,
                     armoredExtendedAttributes: link.File.ActiveRevision.XAttr || undefined,
                     thumbnails: link.File.ActiveRevision.Thumbnails?.map((thumbnail) => transformThumbnail(volumeId, link.Link.LinkID, thumbnail)) || [],
@@ -426,7 +426,7 @@ function transformRevisionResponse(
     return {
         uid: makeNodeRevisionUid(volumeId, nodeId, revision.ID),
         state: revision.State === APIRevisionState.Active ? RevisionState.Active : RevisionState.Superseded,
-        createdDate: new Date(revision.CreateTime*1000),
+        creationTime: new Date(revision.CreateTime*1000),
         signatureEmail: revision.SignatureEmail || undefined,
         armoredExtendedAttributes: revision.XAttr || undefined,
         thumbnails: revision.Thumbnails?.map((thumbnail) => transformThumbnail(volumeId, nodeId, thumbnail)) || [],

@@ -95,7 +95,7 @@ describe("UploadManager", () => {
 
         it("should create draft node", async () => {
             const result = await manager.createDraftNode("parentUid", "name", {
-                mimeType: "myMimeType",
+                mediaType: "myMimeType",
                 expectedSize: 123456,
             } as UploadMetadata);
 
@@ -113,7 +113,7 @@ describe("UploadManager", () => {
             expect(apiService.createDraft).toHaveBeenCalledWith("parentUid", {
                 armoredEncryptedName: "newNode:encryptedName",
                 hash: "newNode:hash",
-                mimeType: "myMimeType",
+                mediaType: "myMimeType",
                 intendedUploadSize: 123456,
                 armoredNodeKey: "newNode:armoredKey",
                 armoredNodePassphrase: "newNode:armoredPassphrase",

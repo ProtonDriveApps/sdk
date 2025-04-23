@@ -10,10 +10,10 @@ function generateNode(uid: string, parentUid='root', params: Partial<DecryptedNo
         parentUid: `${params.volumeId || "volumeId"}~:${parentUid}`,
         directMemberRole: MemberRole.Admin,
         type: NodeType.File,
-        mimeType: "text",
+        mediaType: "text",
         isShared: false,
-        createdDate: new Date(),
-        trashedDate: undefined,
+        creationTime: new Date(),
+        trashTime: undefined,
         volumeId: "volumeId",
         isStale: false,
         ...params,
@@ -24,14 +24,14 @@ async function generateTreeStructure(cache: NodesCache) {
     for (const node of [
         generateNode('node1', 'root'),
         generateNode('node1a', 'node1'),
-        generateNode('node1b', 'node1', { trashedDate: new Date() }),
+        generateNode('node1b', 'node1', { trashTime: new Date() }),
         generateNode('node1c', 'node1'),
         generateNode('node1c-alpha', 'node1c'),
-        generateNode('node1c-beta', 'node1c', { trashedDate: new Date() }),
+        generateNode('node1c-beta', 'node1c', { trashTime: new Date() }),
 
         generateNode('node2', 'root'),
         generateNode('node2a', 'node2'),
-        generateNode('node2b', 'node2', { trashedDate: new Date() }),
+        generateNode('node2b', 'node2', { trashTime: new Date() }),
 
         generateNode('node3', 'root'),
 

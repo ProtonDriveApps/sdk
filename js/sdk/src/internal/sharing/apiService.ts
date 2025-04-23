@@ -108,7 +108,7 @@ export class SharingAPIService {
             inviteeEmail: response.Invitation.InviteeEmail,
             base64KeyPacket: response.Invitation.KeyPacket,
             base64KeyPacketSignature: response.Invitation.KeyPacketSignature,
-            invitedDate: new Date(response.Invitation.CreateTime*1000),
+            invitationTime: new Date(response.Invitation.CreateTime*1000),
             role: permissionsToDirectMemberRole(this.logger, response.Invitation.Permissions),
             share: {
                 armoredKey: response.Share.ShareKey,
@@ -117,7 +117,7 @@ export class SharingAPIService {
             },
             node: {
                 type: nodeTypeNumberToNodeType(this.logger, response.Link.Type),
-                mimeType: response.Link.MIMEType || undefined,
+                mediaType: response.Link.MIMEType || undefined,
                 encryptedName: response.Link.Name,
             },
         }
@@ -143,7 +143,7 @@ export class SharingAPIService {
         for (const bookmark of response.Bookmarks) {
             yield {
                 tokenId: bookmark.Token.Token,
-                createdDate: new Date(bookmark.CreateTime*1000),
+                creationTime: new Date(bookmark.CreateTime*1000),
                 share: {
                     armoredKey: bookmark.Token.ShareKey,
                     armoredPassphrase: bookmark.Token.SharePassphrase,
@@ -154,7 +154,7 @@ export class SharingAPIService {
                 },
                 node: {
                     type: bookmark.Token.LinkType === 1 ? NodeType.Folder : NodeType.File,
-                    mimeType: bookmark.Token.MIMEType,
+                    mediaType: bookmark.Token.MIMEType,
                     encryptedName: bookmark.Token.Name,
                     armoredKey: bookmark.Token.NodeKey,
                     armoredNodePassphrase: bookmark.Token.NodePassphrase,
@@ -193,7 +193,7 @@ export class SharingAPIService {
                 inviteeEmail: member.Email,
                 base64KeyPacket: member.KeyPacket,
                 base64KeyPacketSignature: member.KeyPacketSignature,
-                invitedDate: new Date(member.CreateTime*1000),
+                invitationTime: new Date(member.CreateTime*1000),
                 role: permissionsToDirectMemberRole(this.logger, member.Permissions),
             }
         });
@@ -356,8 +356,8 @@ export class SharingAPIService {
 
         return {
             uid: makePublicLinkUid(shareUrl.ShareID, shareUrl.ShareURLID),
-            createDate: new Date(shareUrl.CreateTime*1000),
-            expireDate: shareUrl.ExpirationTime ? new Date(shareUrl.ExpirationTime*1000) : undefined,
+            creationTime: new Date(shareUrl.CreateTime*1000),
+            expirationTime: shareUrl.ExpirationTime ? new Date(shareUrl.ExpirationTime*1000) : undefined,
             role: permissionsToDirectMemberRole(this.logger, shareUrl.Permissions),
             flags: shareUrl.Flags,
             creatorEmail: shareUrl.CreatorEmail,
@@ -379,7 +379,7 @@ export class SharingAPIService {
             uid: makeInvitationUid(shareId, invitation.InvitationID),
             addedByEmail: invitation.InviterEmail,
             inviteeEmail: invitation.InviteeEmail,
-            invitedDate: new Date(invitation.CreateTime*1000),
+            invitationTime: new Date(invitation.CreateTime*1000),
             role: permissionsToDirectMemberRole(this.logger, invitation.Permissions),
             base64KeyPacket: invitation.KeyPacket,
             base64KeyPacketSignature: invitation.KeyPacketSignature,
@@ -392,7 +392,7 @@ export class SharingAPIService {
             uid: makeInvitationUid(shareId, invitation.ExternalInvitationID),
             addedByEmail: invitation.InviterEmail,
             inviteeEmail: invitation.InviteeEmail,
-            invitedDate: new Date(invitation.CreateTime*1000),
+            invitationTime: new Date(invitation.CreateTime*1000),
             role: permissionsToDirectMemberRole(this.logger, invitation.Permissions),
             base64Signature: invitation.ExternalInvitationSignature,
             state,

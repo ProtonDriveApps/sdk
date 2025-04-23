@@ -40,7 +40,7 @@ type BaseShare = {
      * might not have this field set.
      */
     addressId?: string;
-    createdDate?: Date;
+    creationTime?: Date;
     type: ShareType;
 } & VolumeShareNodeIDs;
 

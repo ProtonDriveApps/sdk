@@ -1,7 +1,7 @@
 import { Thumbnail } from "./thumbnail";
 
 export type UploadMetadata = {
-    mimeType: string,
+    mediaType: string,
     expectedSize: number,
     modificationTime?: Date,
     additionalMetadata?: object,
