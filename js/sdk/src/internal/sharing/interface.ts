@@ -27,7 +27,7 @@ export interface EncryptedInvitationRequest {
  */
 export interface EncryptedInvitation extends EncryptedInvitationRequest {
     uid: string;
-    invitedDate: Date;
+    invitationTime: Date;
 }
 
 /**
@@ -44,7 +44,7 @@ export interface EncryptedInvitationWithNode extends EncryptedInvitation {
     };
     node: {
         type: NodeType;
-        mimeType?: string;
+        mediaType?: string;
         encryptedName: string;
     }
 }
@@ -64,7 +64,7 @@ export interface EncryptedExternalInvitationRequest {
  */
 export interface EncryptedExternalInvitation extends Omit<EncryptedExternalInvitationRequest, 'inviterAddressId'> {
     uid: string;
-    invitedDate: Date;
+    invitationTime: Date;
     addedByEmail: string;
     state: NonProtonInvitationState;
 }
@@ -74,7 +74,7 @@ export interface EncryptedExternalInvitation extends Omit<EncryptedExternalInvit
  */
 export interface EncryptedMember {
     uid: string;
-    invitedDate: Date;
+    invitationTime: Date;
     addedByEmail: string;
     inviteeEmail: string;
     role: MemberRole;
@@ -87,7 +87,7 @@ export interface EncryptedMember {
  */
 export interface EncryptedBookmark {
     tokenId: string;
-    createdDate: Date;
+    creationTime: Date;
     share: {
         armoredKey: string;
         armoredPassphrase: string;
@@ -98,7 +98,7 @@ export interface EncryptedBookmark {
     };
     node: {
         type: NodeType;
-        mimeType?: string;
+        mediaType?: string;
         encryptedName: string;
         armoredKey: string;
         armoredNodePassphrase: string;
@@ -110,8 +110,8 @@ export interface EncryptedBookmark {
 
 export interface EncryptedPublicLink {
     uid: string,
-    createDate: Date,
-    expireDate?: Date,
+    creationTime: Date,
+    expirationTime?: Date,
     role: MemberRole,
     flags: number,
     creatorEmail: string,

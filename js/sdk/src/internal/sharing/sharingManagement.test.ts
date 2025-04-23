@@ -163,14 +163,14 @@ describe("SharingManagement", () => {
                 addedByEmail: resultOk("added-email"),
                 inviteeEmail: "internal-email",
                 role: MemberRole.Viewer,
-                invitedDate: new Date(),
+                invitationTime: new Date(),
             };
             externalInvitation = {
                 uid: "external-invitation",
                 addedByEmail: resultOk("added-email"),
                 inviteeEmail: "external-email",
                 role: MemberRole.Viewer,
-                invitedDate: new Date(),
+                invitationTime: new Date(),
                 state: NonProtonInvitationState.Pending,
             };
             member = {
@@ -178,7 +178,7 @@ describe("SharingManagement", () => {
                 addedByEmail: resultOk("added-email"),
                 inviteeEmail: "member-email",
                 role: MemberRole.Viewer,
-                invitedDate: new Date(),
+                invitationTime: new Date(),
             };
 
             apiService.getShareInvitations = jest.fn().mockResolvedValue([
@@ -454,14 +454,14 @@ describe("SharingManagement", () => {
                 addedByEmail: resultOk("added-email"),
                 inviteeEmail: "internal-email",
                 role: MemberRole.Viewer,
-                invitedDate: new Date(),
+                invitationTime: new Date(),
             };
             externalInvitation = {
                 uid: "external-invitation",
                 addedByEmail: resultOk("added-email"),
                 inviteeEmail: "external-email",
                 role: MemberRole.Viewer,
-                invitedDate: new Date(),
+                invitationTime: new Date(),
                 state: NonProtonInvitationState.Pending,
             };
             member = {
@@ -469,11 +469,11 @@ describe("SharingManagement", () => {
                 addedByEmail: resultOk("added-email"),
                 inviteeEmail: "member-email",
                 role: MemberRole.Viewer,
-                invitedDate: new Date(),
+                invitationTime: new Date(),
             };
             publicLink = {
                 uid: "publicLink",
-                createDate: new Date(),
+                creationTime: new Date(),
                 role: MemberRole.Viewer,
                 url: "url",
             }

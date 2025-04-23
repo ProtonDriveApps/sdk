@@ -6,7 +6,7 @@ export type Device = {
     type: DeviceType,
     name: Result<string, InvalidNameError>,
     rootFolderUid: string,
-    createdDate: Date,
+    creationTime: Date,
     lastSyncDate?: Date;
 }
 

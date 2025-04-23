@@ -59,7 +59,7 @@ export type NodeEntity = {
     nameAuthor: Author,
     directMemberRole: MemberRole,
     type: NodeType,
-    mimeType?: string,
+    mediaType?: string,
     /**
      * Whether the node is shared. If true, the node is shared with at least
      * one user, or via public link.
@@ -68,8 +68,8 @@ export type NodeEntity = {
     /**
      * Created on server date.
      */
-    createdDate: Date,
-    trashedDate?: Date,
+    creationTime: Date,
+    trashTime?: Date,
     activeRevision?: Revision,
     folder?: {
         claimedModificationTime?: Date,
@@ -132,7 +132,7 @@ export enum MemberRole {
 export type Revision = {
     uid: string,
     state: RevisionState,
-    createdDate: Date, // created on server date
+    creationTime: Date, // created on server date
     contentAuthor: Author,
     claimedSize?: number,
     claimedModificationTime?: Date,

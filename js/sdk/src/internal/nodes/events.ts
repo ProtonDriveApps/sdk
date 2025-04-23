@@ -186,7 +186,7 @@ export async function notifyListenersByEvent(logger: Logger, event: DriveEvent, 
 
         const subscribedListeners = listeners.filter(({ condition }) => condition({
             isShared: node?.isShared || false,
-            isTrashed: !!node?.trashedDate || false,
+            isTrashed: !!node?.trashTime || false,
             ...event,
         }));
         if (subscribedListeners.length) {

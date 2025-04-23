@@ -97,7 +97,7 @@ export class SharesCryptoService {
             return;
         }
 
-        const fromBefore2024 = share.createdDate ? share.createdDate < new Date('2024-01-01') : undefined;
+        const fromBefore2024 = share.creationTime ? share.creationTime < new Date('2024-01-01') : undefined;
         this.logger.error(`Failed to decrypt share ${share.shareId} (from before 2024: ${fromBefore2024})`, error);
 
         this.telemetry.logEvent({
@@ -115,7 +115,7 @@ export class SharesCryptoService {
             return;
         }
 
-        const fromBefore2024 = share.createdDate ? share.createdDate < new Date('2024-01-01') : undefined;
+        const fromBefore2024 = share.creationTime ? share.creationTime < new Date('2024-01-01') : undefined;
         const addressMatchingDefaultShare = undefined; // TODO: check if claimed author matches default share
         this.logger.error(`Failed to verify share ${share.shareId} (from before 2024: ${fromBefore2024}, matching address: ${addressMatchingDefaultShare})`);
 

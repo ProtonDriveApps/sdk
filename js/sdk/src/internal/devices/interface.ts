@@ -6,8 +6,8 @@ export type DeviceMetadata = {
     uid: string,
     type: DeviceType
     rootFolderUid: string,
-    createdDate: Date,
-    lastSyncDate?: Date;
+    creationTime: Date,
+    lastSyncTime?: Date;
     hasDeprecatedName: boolean;
 }
 

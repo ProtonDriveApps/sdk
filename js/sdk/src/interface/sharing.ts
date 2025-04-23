@@ -4,7 +4,7 @@ import { NodeType, MemberRole, InvalidNameError } from './nodes';
 
 export type Member = {
     uid: string,
-    invitedDate: Date,
+    invitationTime: Date,
     addedByEmail: Result<string, UnverifiedAuthorError>,
     inviteeEmail: string,
     role: MemberRole,
@@ -16,7 +16,7 @@ export type ProtonInvitationWithNode = ProtonInvitation & {
     node: {
         name: Result<string, InvalidNameError>,
         type: NodeType,
-        mimeType?: string,
+        mediaType?: string,
     },
 }
 
@@ -31,20 +31,20 @@ export enum NonProtonInvitationState {
 
 export type PublicLink = {
     uid: string,
-    createDate: Date,
+    creationTime: Date,
     role: MemberRole,
     url: string,
     customPassword?: string,
-    expireDate?: Date,
+    expirationTime?: Date,
 }
 
 export type Bookmark = {
     uid: string,
-    bookmarkedDate: Date,
+    bookmarkTime: Date,
     node: {
         name: Result<string, InvalidNameError>,
         type: NodeType,
-        mimeType?: string,
+        mediaType?: string,
     },
 }
 

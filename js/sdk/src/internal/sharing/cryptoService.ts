@@ -182,7 +182,7 @@ export class SharingCryptoService {
             node: {
                 name: nodeName,
                 type: encryptedInvitation.node.type,
-                mimeType: encryptedInvitation.node.mimeType,
+                mediaType: encryptedInvitation.node.mediaType,
             },
         }
     }
@@ -196,7 +196,7 @@ export class SharingCryptoService {
 
         return {
             uid: encryptedInvitation.uid,
-            invitedDate: encryptedInvitation.invitedDate,
+            invitationTime: encryptedInvitation.invitationTime,
             addedByEmail: addedByEmail,
             inviteeEmail: encryptedInvitation.inviteeEmail,
             role: encryptedInvitation.role,
@@ -248,7 +248,7 @@ export class SharingCryptoService {
 
         return {
             uid: encryptedInvitation.uid,
-            invitedDate: encryptedInvitation.invitedDate,
+            invitationTime: encryptedInvitation.invitationTime,
             addedByEmail: addedByEmail,
             inviteeEmail: encryptedInvitation.inviteeEmail,
             role: encryptedInvitation.role,
@@ -265,7 +265,7 @@ export class SharingCryptoService {
 
         return {
             uid: encryptedMember.uid,
-            invitedDate: encryptedMember.invitedDate,
+            invitationTime: encryptedMember.invitationTime,
             addedByEmail: addedByEmail,
             inviteeEmail: encryptedMember.inviteeEmail,
             role: encryptedMember.role,
@@ -317,8 +317,8 @@ export class SharingCryptoService {
 
         return {
             uid: encryptedPublicLink.uid,
-            createDate: encryptedPublicLink.createDate,
-            expireDate: encryptedPublicLink.expireDate,
+            creationTime: encryptedPublicLink.creationTime,
+            expirationTime: encryptedPublicLink.expirationTime,
             role: encryptedPublicLink.role,
             url: `${encryptedPublicLink.publicUrl}#${password}`,
             customPassword,

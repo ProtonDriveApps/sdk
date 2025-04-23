@@ -149,7 +149,7 @@ function convertSharePayload(response: GetShareResponse): EncryptedShare {
         shareId: response.ShareID,
         rootNodeId: response.LinkID,
         creatorEmail: response.Creator,
-        createdDate: response.CreateTime ? new Date(response.CreateTime*1000) : undefined,
+        creationTime: response.CreateTime ? new Date(response.CreateTime*1000) : undefined,
         encryptedCrypto: {
             armoredKey: response.Key,
             armoredPassphrase: response.Passphrase,

@@ -36,7 +36,7 @@ export class NodesCache {
         if (node.parentUid) {
             tags.push(`${CACHE_TAG_KEYS.ParentUid}:${node.parentUid}`)
         }
-        if (node.trashedDate) {
+        if (node.trashTime) {
             tags.push(`${CACHE_TAG_KEYS.Trashed}`)
         }
 
@@ -137,7 +137,7 @@ export class NodesCache {
     async *iterateChildren(parentNodeUid: string): AsyncGenerator<DecryptedNodeResult> {
         for await (const result of this.driveCache.iterateEntitiesByTag(`${CACHE_TAG_KEYS.ParentUid}:${parentNodeUid}`)) {
             const node = await this.convertCacheResult(result);
-            if (node && (!node.ok || !node.node.trashedDate)) {
+            if (node && (!node.ok || !node.node.trashTime)) {
                 yield node;
             }
         }
@@ -226,16 +226,16 @@ function deserialiseNode(nodeData: string): DecryptedNode {
        !node.uid || typeof node.uid !== 'string' ||
        !node.directMemberRole || typeof node.directMemberRole !== 'string' ||
        !node.type || typeof node.type !== 'string' ||
-       (typeof node.mimeType !== 'string' && node.mimeType !== undefined) ||
+       (typeof node.mediaType !== 'string' && node.mediaType !== undefined) ||
        typeof node.isShared !== 'boolean' ||
-       !node.createdDate || typeof node.createdDate !== 'string' ||
-       (typeof node.trashedDate !== 'string' && node.trashedDate !== undefined)
+       !node.creationTime || typeof node.creationTime !== 'string' ||
+       (typeof node.trashTime !== 'string' && node.trashTime !== undefined)
    ) {
        throw new Error(`Invalid node data: ${nodeData}`);
    }
    return {
        ...node,
-       createdDate: new Date(node.createdDate),
-       trashedDate: node.trashedDate ? new Date(node.trashedDate) : undefined,
+       creationTime: new Date(node.creationTime),
+       trashTime: node.trashTime ? new Date(node.trashTime) : undefined,
    };
 }

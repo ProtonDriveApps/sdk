@@ -14,9 +14,9 @@ interface BaseNode {
     uid: string;
     parentUid?: string;
     type: NodeType;
-    mimeType?: string;
-    createdDate: Date; // created on the server
-    trashedDate?: Date;
+    mediaType?: string;
+    creationTime: Date; // created on the server
+    trashTime?: Date;
 
     // Share node metadata
     shareId?: string;
@@ -108,7 +108,7 @@ export interface DecryptedNodeKeys {
 interface BaseRevision {
     uid: string;
     state: RevisionState;
-    createdDate: Date; // created on the server
+    creationTime: Date; // created on the server
     thumbnails: Thumbnail[];
 }
 

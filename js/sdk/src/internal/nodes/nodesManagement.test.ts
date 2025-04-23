@@ -25,7 +25,7 @@ describe('NodesManagement', () => {
                 keyAuthor: { ok: true, value: 'keyAauthor' },
                 nameAuthor: { ok: true, value: 'nameAuthor' },
                 hash: 'hash',
-                mimeType: 'mimeType',
+                mediaType: 'mediaType',
             } as DecryptedNode,
             anonymousNodeUid: {
                 uid: 'anonymousNodeUid',
@@ -34,7 +34,7 @@ describe('NodesManagement', () => {
                 keyAuthor: { ok: true, value: null },
                 nameAuthor: { ok: true, value: 'nameAuthor' },
                 hash: 'hash',
-                mimeType: 'mimeType',
+                mediaType: 'mediaType',
             } as DecryptedNode,
             parentUid: {
                 uid: 'parentUid',

@@ -296,7 +296,7 @@ export class NodesCryptoService {
             extendedAttributes,
             author: contentAuthor,
         } = await this.decryptExtendedAttributes(
-            {uid: nodeUid, createdDate: encryptedRevision.createdDate},
+            {uid: nodeUid, creationTime: encryptedRevision.creationTime},
             encryptedRevision.armoredExtendedAttributes,
             nodeKey,
             verificationKeys,
@@ -306,7 +306,7 @@ export class NodesCryptoService {
         return {
             uid: encryptedRevision.uid,
             state: encryptedRevision.state,
-            createdDate: encryptedRevision.createdDate,
+            creationTime: encryptedRevision.creationTime,
             contentAuthor,
             extendedAttributes,
             thumbnails: encryptedRevision.thumbnails,
@@ -314,7 +314,7 @@ export class NodesCryptoService {
     }
 
     private async decryptExtendedAttributes(
-        node: {uid: string, createdDate: Date},
+        node: {uid: string, creationTime: Date},
         encryptedExtendedAttributes: string | undefined,
         nodeKey: PrivateKey,
         addressKeys: PublicKey[],
@@ -442,7 +442,7 @@ export class NodesCryptoService {
     }
 
     private async handleClaimedAuthor(
-        node: { uid: string, createdDate: Date },
+        node: { uid: string, creationTime: Date },
         field: MetricVerificationErrorField,
         signatureType: string,
         verified: VERIFICATION_STATUS,
@@ -456,7 +456,7 @@ export class NodesCryptoService {
     }
 
     private async reportVerificationError(
-        node: { uid: string, createdDate: Date },
+        node: { uid: string, creationTime: Date },
         field: MetricVerificationErrorField,
         claimedAuthor?: string,
     ) {
@@ -464,7 +464,7 @@ export class NodesCryptoService {
             return;
         }
 
-        const fromBefore2024 = node.createdDate < new Date('2024-01-01');
+        const fromBefore2024 = node.creationTime < new Date('2024-01-01');
 
         let addressMatchingDefaultShare, context;
         try {
@@ -493,7 +493,7 @@ export class NodesCryptoService {
             return;
         }
 
-        const fromBefore2024 = node.createdDate < new Date('2024-01-01');
+        const fromBefore2024 = node.creationTime < new Date('2024-01-01');
 
         let context;
         try {

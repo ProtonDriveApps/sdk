@@ -348,7 +348,7 @@ describe("nodesCryptoService", () => {
                     activeRevision: { ok: true, value: {
                         uid: "revisionUid",
                         state: RevisionState.Active,
-                        createdDate: undefined,
+                        creationTime: undefined,
                         extendedAttributes: "{}",
                         contentAuthor: { ok: true, value: "revisionSignatureEmail" },
                     } },
@@ -397,7 +397,7 @@ describe("nodesCryptoService", () => {
                         uid: "revisionUid",
                         state: RevisionState.Active,
                         // @ts-expect-error Ignore mocked data.
-                        createdDate: undefined,
+                        creationTime: undefined,
                         extendedAttributes: "{}",
                         contentAuthor: { ok: true, value: "signatureEmail" },
                     } },
@@ -465,7 +465,7 @@ describe("nodesCryptoService", () => {
                         extendedAttributes: "{}",
                         state: RevisionState.Active,
                         // @ts-expect-error Ignore mocked data.
-                        createdDate: undefined,
+                        creationTime: undefined,
                         contentAuthor: { ok: false, error: { claimedAuthor: "revisionSignatureEmail", error: "Signature verification for attributes failed" } },
                     } },
                 });

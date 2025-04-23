@@ -216,7 +216,7 @@ describe("notifyListenersByEvent", () => {
         });
 
         it("should notify listeners by isTrashed from cache", async () => {
-            cache.getNode = jest.fn(() => Promise.resolve({ uid: 'nodeUid', trashedDate: new Date() } as DecryptedNode));
+            cache.getNode = jest.fn(() => Promise.resolve({ uid: 'nodeUid', trashTime: new Date() } as DecryptedNode));
             const event: DriveEvent = {
                 type: DriveEventType.NodeDeleted,
                 nodeUid: "nodeUid",

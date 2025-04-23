@@ -104,8 +104,8 @@ export class Fileuploader {
         if (this.controller.promise) {
             throw new Error(`Upload already started`);
         }
-        if (!this.metadata.mimeType) {
-            this.metadata.mimeType = fileObject.type;
+        if (!this.metadata.mediaType) {
+            this.metadata.mediaType = fileObject.type;
         }
         if (!this.metadata.expectedSize) {
             this.metadata.expectedSize = fileObject.size;

@@ -171,7 +171,7 @@ export class NodesManagement {
                 if (node) {
                     await this.cache.setNode({
                         ...node,
-                        trashedDate: new Date(),
+                        trashTime: new Date(),
                     });
                 }
             }
@@ -190,7 +190,7 @@ export class NodesManagement {
                 if (node) {
                     await this.cache.setNode({
                         ...node,
-                        trashedDate: undefined,
+                        trashTime: undefined,
                     });
                 }
             }
@@ -249,8 +249,8 @@ export class NodesManagement {
             uid: nodeUid,
             parentUid: parentNodeUid,
             type: NodeType.Folder,
-            mimeType: "Folder",
-            createdDate: new Date(),
+            mediaType: "Folder",
+            creationTime: new Date(),
 
             // Share node metadata
             isShared: false,

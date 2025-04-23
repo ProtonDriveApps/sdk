@@ -18,10 +18,10 @@ function generateNode(uid: string, parentUid = 'volumeId~root', params: Partial<
         parentUid,
         directMemberRole: MemberRole.Admin,
         type: NodeType.File,
-        mimeType: "text",
+        mediaType: "text",
         isShared: false,
-        createdDate: new Date(),
-        trashedDate: undefined,
+        creationTime: new Date(),
+        trashTime: undefined,
         isStale: false,
         ...params,
     } as DecryptedNode;
