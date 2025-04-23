@@ -6,7 +6,8 @@ import { EventsCache } from "./cache";
 import { CoreEventManager } from "./coreEventManager";
 import { VolumeEventManager } from "./volumeEventManager";
 
-export { DriveEvent, DriveEventType, DriveListener } from "./interface";
+export type { DriveEvent, DriveListener } from "./interface";
+export { DriveEventType } from "./interface";
 
 const OWN_VOLUME_POLLING_INTERVAL = 30;
 const OTHER_VOLUME_POLLING_INTERVAL = 60;
