@@ -2,7 +2,7 @@ import { c } from 'ttag';
 
 import { PrivateKey, SessionKey } from "../../crypto";
 import { Logger, MissingNode, NodeType, resultError, resultOk } from "../../interface";
-import { DecryptionError } from "../../errors";
+import { DecryptionError, ProtonDriveError } from "../../errors";
 import { getErrorMessage } from '../errors';
 import { BatchLoading } from "../batchLoading";
 import { makeNodeUid } from "../uids";
@@ -144,11 +144,21 @@ export class NodesAccess {
 
     private async* loadNodesWithMissingReport(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode | MissingNode> {
         const returnedNodeUids: string[] = [];
+        const errors = [];
 
         for await (const encryptedNode of this.apiService.iterateNodes(nodeUids, signal)) {
             returnedNodeUids.push(encryptedNode.uid);
-            const { node } = await this.decryptNode(encryptedNode);
-            yield node;
+            try {
+                const { node } = await this.decryptNode(encryptedNode);
+                yield node;
+            } catch (error: unknown) {
+                errors.push(error);
+            }
+        }
+
+        if (errors.length > 0) {
+            this.logger.error(`Failed to decrypt ${errors.length} nodes`, errors);
+            throw new ProtonDriveError(c('Error').t`Failed to decrypt some nodes`, { cause: errors });
         }
 
         const missingNodeUids = nodeUids.filter((nodeUid) => !returnedNodeUids.includes(nodeUid));
