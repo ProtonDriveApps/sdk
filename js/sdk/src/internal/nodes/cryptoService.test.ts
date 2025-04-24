@@ -311,6 +311,13 @@ describe("nodesCryptoService", () => {
                 });
             });
         });
+
+        it("should fail when keys cannot be loaded", async () => {
+            account.getPublicKeys = jest.fn().mockRejectedValue(new Error("Failed to load keys"));
+
+            const result = cryptoService.decryptNode(encryptedNode, parentKey);
+            await expect(result).rejects.toThrow("Failed to load keys");
+        });
     });
 
     describe("file node", () => {
@@ -553,6 +560,13 @@ describe("nodesCryptoService", () => {
                     error,
                 });
             });
+        });
+
+        it("should fail when keys cannot be loaded", async () => {
+            account.getPublicKeys = jest.fn().mockRejectedValue(new Error("Failed to load keys"));
+
+            const result = cryptoService.decryptNode(encryptedNode, parentKey);
+            await expect(result).rejects.toThrow("Failed to load keys");
         });
     });
 });

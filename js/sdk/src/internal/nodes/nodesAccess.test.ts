@@ -245,6 +245,44 @@ describe('nodesAccess', () => {
                 expect(result).toMatchObject([node2, node3]);
                 expect(cache.removeNodes).toHaveBeenCalledWith(['node1']);
             });
+
+            it('should yield all decryptable children before throwing error', async () => {
+                apiService.iterateChildrenNodeUids = jest.fn().mockImplementation(async function* () {
+                    yield 'node1';
+                    yield 'node2';
+                    yield 'node3';
+                });
+                cache.getNode = jest.fn().mockImplementation((uid: string) => {
+                    if (uid === parentNode.uid) {
+                        return parentNode;
+                    }
+                    throw new Error('Entity not found');
+                });
+                cryptoService.decryptNode = jest.fn().mockImplementation((encryptedNode: EncryptedNode) => {
+                    if (encryptedNode.uid === 'node2') {
+                        throw new DecryptionError('Decryption failed');
+                    }
+                    return Promise.resolve({
+                        node: { uid: encryptedNode.uid, isStale: false, name: { ok: true, value: 'name' } } as DecryptedNode,
+                        keys: { key: 'key' } as any as DecryptedNodeKeys,
+                    });
+                });
+
+                const generator = access.iterateChildren('parentUid');
+                const node1 = await generator.next();
+                expect(node1.value).toMatchObject({ uid: 'node1' });
+                const node2 = await generator.next();
+                expect(node2.value).toMatchObject({ uid: 'node3' });
+                const node3 = generator.next();
+                await expect(node3).rejects.toThrow('Failed to decrypt some nodes');
+                try {
+                    await node3;
+                } catch (error: any) {
+                    expect(error.cause).toEqual([
+                        new DecryptionError('Decryption failed'),
+                    ]);
+                }
+            })
         });
 
         describe('iterateTrashedNodes', () => {
