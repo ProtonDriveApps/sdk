@@ -268,7 +268,7 @@ describe('nodesAccess', () => {
                     });
                 });
 
-                const generator = access.iterateChildren('parentUid');
+                const generator = access.iterateFolderChildren('parentUid');
                 const node1 = await generator.next();
                 expect(node1.value).toMatchObject({ uid: 'node1' });
                 const node2 = await generator.next();
