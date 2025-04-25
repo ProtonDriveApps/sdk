@@ -8,7 +8,7 @@ internal static class HttpRequestHeadersExtensions
 
     public static void AddApiRequestHeaders(this HttpRequestHeaders headerCollection)
     {
-        // TODO: Add Accept-Language header
+        // FIXME: Add Accept-Language header
         headerCollection.Accept.Add(new MediaTypeWithQualityHeaderValue(ContentType));
     }
 }

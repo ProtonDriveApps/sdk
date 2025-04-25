@@ -135,7 +135,7 @@ public sealed class ProtonApiSession
             catch
             {
                 // Ignore
-                // TODO: log that
+                // FIXME: log that
             }
         }
 

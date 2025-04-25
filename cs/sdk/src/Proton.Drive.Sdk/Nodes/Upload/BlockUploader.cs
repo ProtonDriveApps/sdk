@@ -86,7 +86,7 @@ internal sealed class BlockUploader
                         // leading to a garbage signature.
                         var signature = signatureStream.GetBuffer().AsMemory()[..(int)signatureStream.Length];
 
-                        // TODO: retry upon verification failure
+                        // FIXME: retry upon verification failure
                         var verificationToken = verifier.VerifyBlock(dataPacketStream.GetFirstBytes(128), plainDataPrefix.AsSpan()[..plainDataPrefixLength]);
 
                         var parameters = new BlockUploadRequestParameters
@@ -209,7 +209,7 @@ internal sealed class BlockUploader
         {
             try
             {
-                // TODO: request multiple blocks at once
+                // FIXME: request multiple blocks at once
                 var uploadRequestResponse = await _client.Api.Files.RequestBlockUploadAsync(parameters, cancellationToken).ConfigureAwait(false);
 
                 var uploadTarget = parameters.Thumbnails.Count == 0 ? uploadRequestResponse.UploadTargets[0] : uploadRequestResponse.ThumbnailUploadTargets[0];

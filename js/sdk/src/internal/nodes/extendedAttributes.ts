@@ -86,7 +86,7 @@ export function generateFileExtendedAttributes(claimedModificationTime?: Date): 
     if (!claimedModificationTime) {
         return undefined;
     }
-    // TODO: Add support for other attributes
+    // FIXME: Add support for other attributes
     return JSON.stringify({
         Common: {
             ModificationTime: dateToIsoString(claimedModificationTime),

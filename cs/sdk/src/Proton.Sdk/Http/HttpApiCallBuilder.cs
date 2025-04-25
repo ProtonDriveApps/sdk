@@ -6,7 +6,7 @@ using Proton.Sdk.Authentication;
 
 namespace Proton.Sdk.Http;
 
-// TODO: add unit tests
+// FIXME: add unit tests
 internal readonly struct HttpApiCallBuilder<TSuccess, TFailure>
     where TFailure : ApiResponse
 {

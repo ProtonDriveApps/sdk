@@ -175,7 +175,7 @@ export class DriveAPIService {
         return response;
     }
 
-    // TODO: add priority header
+    // FIXME: add priority header
     // u=2 for interactive (user doing action, e.g., create folder),
     // u=4 for normal (user secondary action, e.g., refresh children listing),
     // u=5 for background (e.g., upload, download)
@@ -233,7 +233,7 @@ export class DriveAPIService {
         }
 
         if (response.status === HTTPErrorCode.TOO_MANY_REQUESTS) {
-            // TODO: emit event to the client
+            // FIXME: emit event to the client
             this.tooManyRequestsErrorHappened();
             const timeout = parseInt(response.headers.get('retry-after') || '0', DEFAULT_429_RETRY_DELAY_SECONDS);
             await waitSeconds(timeout);

@@ -4,7 +4,7 @@ using Proton.Sdk.Serialization;
 
 namespace Proton.Sdk.Api.Events;
 
-// TODO: make sure that we don't listen to core events twice when Drive will need them to listen to "shared with me" events
+// FIXME: make sure that we don't listen to core events twice when Drive will need them to listen to "shared with me" events
 internal readonly struct EventsApiClient(HttpClient httpClient)
 {
     private readonly HttpClient _httpClient = httpClient;
