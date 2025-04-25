@@ -34,7 +34,7 @@ export class EventsAPIService {
     }
 
     async getCoreEvents(eventId: string): Promise<DriveEvents> {
-        // TODO: Switch to v6 endpoint: DriveShareRefresh doesnt seem to be part of it.
+        // FIXME: Switch to v6 endpoint: DriveShareRefresh doesnt seem to be part of it.
         const result = await this.apiService.get<GetCoreEventResponse>(`/core/v5/events/${eventId}?NoMetaData=1`);
         const events: DriveEvent[] = result.DriveShareRefresh?.Action === 2 ? [
             {

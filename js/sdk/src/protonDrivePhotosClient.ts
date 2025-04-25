@@ -8,7 +8,7 @@ import { DriveEventsService } from './internal/events';
 import { getConfig } from './config';
 import { Telemetry } from './telemetry';
 
-// TODO: this is only example, on background it use drive internals, but it exposes nice interface for photos
+// FIXME: this is only example, on background it use drive internals, but it exposes nice interface for photos
 export class ProtonDrivePhotosClient {
     private nodes: ReturnType<typeof initNodesModule>;
     private photos: ReturnType<typeof initPhotosModule>;

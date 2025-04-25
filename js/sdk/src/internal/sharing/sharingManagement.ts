@@ -91,7 +91,7 @@ export class SharingManagement {
     }
 
     private async getPublicLink(shareId: string): Promise<PublicLink | undefined> {
-        // FIXME: address ID is not set when user is not member of the share.
+        // TODO: address ID is not set when user is not member of the share.
         // Users cannot manage other shares yet (admin role is not supported
         // yet). But owners will stop being members and we need to keep this
         // working. Simple solution is to use the volume email key address ID
@@ -343,7 +343,7 @@ export class SharingManagement {
         }
     }
 
-    // TODO: update nodes cache with new shareId
+    // FIXME: update nodes cache with new shareId
     private async createShare(nodeUid: string): Promise<Share> {
         const node = await this.nodesService.getNode(nodeUid);
         if (!node.parentUid) {
@@ -372,7 +372,7 @@ export class SharingManagement {
         }
     }
 
-    // TODO: update nodes cache with deleted shareId
+    // FIXME: update nodes cache with deleted shareId
     private async deleteShare(shareId: string): Promise<void> {
         await this.apiService.deleteShare(shareId);
     }
@@ -440,7 +440,7 @@ export class SharingManagement {
     }
 
     private async convertExternalInvitationsToInternal(): Promise<void> {
-        // TODO
+        // FIXME
     }
 
     private async removeMember(memberUid: string): Promise<void> {
@@ -453,12 +453,12 @@ export class SharingManagement {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private async shareViaLink(share: Share, options: SharePublicLinkSettings): Promise<void> {
-        // TODO
+        // FIXME
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private async updateSharedLink(share: Share, options: SharePublicLinkSettings): Promise<void> {
-        // TODO
+        // FIXME
     }
 
     private async removeSharedLink(publicLinkUid: string): Promise<void> {

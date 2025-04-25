@@ -78,7 +78,7 @@ internal static class NodeCrypto
                     PassphraseSessionKey = passphraseOutput?.SessionKey,
                 };
 
-                // TODO: cache secrets
+                // FIXME: cache secrets
                 throw new NotImplementedException();
             }
 
@@ -98,7 +98,7 @@ internal static class NodeCrypto
                 ParentUid = parentId,
                 Name = nameOutput.Value.Data,
                 NameAuthor = nameOutput.Value.Author,
-                Author = passphraseOutput.Value.Author, // TODO: combine with signature error from name hash key
+                Author = passphraseOutput.Value.Author, // FIXME: combine with signature error from name hash key
                 IsTrashed = link.State is LinkState.Trashed,
             };
 
@@ -109,7 +109,7 @@ internal static class NodeCrypto
 
         if (file is null)
         {
-            // TODO: handle missing file information with degraded node
+            // FIXME: handle missing file information with degraded node
             throw new NotImplementedException();
         }
 
@@ -121,13 +121,13 @@ internal static class NodeCrypto
 
         if (file.ActiveRevision is null)
         {
-            // TODO: handle missing revision information with degraded node
+            // FIXME: handle missing revision information with degraded node
             throw new NotImplementedException();
         }
 
         var contentKey = nodeKey?.DecryptSessionKey(file.ContentKeyPacket.Span);
 
-        // TODO: verify content key packet signature
+        // FIXME: verify content key packet signature
 
         var (extendedAttributesOutput, extendedAttributesError) =
             DecryptExtendedAttributes(file.ActiveRevision.ExtendedAttributes, nodeKey, nodeAuthorshipClaim);
@@ -156,7 +156,7 @@ internal static class NodeCrypto
                 ContentKey = contentKey,
             };
 
-            // TODO: cache secrets
+            // FIXME: cache secrets
             throw new NotImplementedException();
         }
 
@@ -179,7 +179,7 @@ internal static class NodeCrypto
             Name = nameOutput.Value.Data,
             IsTrashed = link.State is LinkState.Trashed,
             NameAuthor = nameOutput.Value.Author,
-            Author = passphraseOutput.Value.Author, // TODO: combine with signature error from content key
+            Author = passphraseOutput.Value.Author, // FIXME: combine with signature error from content key
             MediaType = file.MediaType,
             ActiveRevision = new Revision
             {
@@ -188,7 +188,7 @@ internal static class NodeCrypto
                 StorageQuotaConsumption = file.ActiveRevision.StorageQuotaConsumption,
                 ClaimedSize = extendedAttributes?.Common?.Size,
                 ClaimedModificationTime = extendedAttributes?.Common?.ModificationTime,
-                Thumbnails = [], // TODO: thumbnails
+                Thumbnails = [], // FIXME: thumbnails
                 ContentAuthor = extendedAttributesOutput?.Author,
             },
             TotalStorageQuotaUsage = file.TotalStorageQuotaUsage,

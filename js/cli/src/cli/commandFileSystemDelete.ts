@@ -4,7 +4,7 @@ import { Command, ActionArgs } from "./interface";
 export class CommandFileSystemDelete implements Command {
     group = "filesystem";
     name = "delete";
-    // TODO: support delete of multiple files
+    // FIXME: support delete of multiple files
     args = ["path"];
     options: ParseArgsConfig['options'] = {
         json: {

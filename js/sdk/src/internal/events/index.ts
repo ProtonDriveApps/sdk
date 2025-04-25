@@ -32,7 +32,7 @@ export class DriveEventsService {
         this.apiService = new EventsAPIService(apiService);
         this.cache = new EventsCache(driveEntitiesCache);
 
-        // TODO: Allow to pass own core events manager from the public interface.
+        // FIXME: Allow to pass own core events manager from the public interface.
         this.coreEvents = new CoreEventManager(this.logger, this.apiService, this.cache);
         this.volumesEvents = {};
     }
@@ -76,7 +76,7 @@ export class DriveEventsService {
         const volumeEvents = new VolumeEventManager(this.logger, this.apiService, this.cache, volumeId, isOwnVolume);
         this.volumesEvents[volumeId] = volumeEvents;
 
-        // FIXME: Use dynamic algorithm to determine polling interval for non-own volumes.
+        // TODO: Use dynamic algorithm to determine polling interval for non-own volumes.
         volumeEvents.setPollingInterval(isOwnVolume ? OWN_VOLUME_POLLING_INTERVAL : OTHER_VOLUME_POLLING_INTERVAL);
         if (this.subscribedToRemoteDataUpdates) {
             await volumeEvents.startSubscription();

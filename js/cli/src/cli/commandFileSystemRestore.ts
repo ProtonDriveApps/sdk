@@ -4,7 +4,7 @@ import { Command, ActionArgs } from './interface';
 export class CommandFileSystemRestore implements Command {
     group = 'filesystem';
     name = 'restore';
-    // TODO: support restore of multiple files
+    // FIXME: support restore of multiple files
     args = ['path'];
     options: ParseArgsConfig['options'] = {
         json: {

@@ -1,6 +1,6 @@
 import { OpenPGPCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from './interface';
 import { uint8ArrayToBase64String, base64StringToUint8Array } from './utils';
-// FIXME: Switch to CryptoProxy module once available.
+// TODO: Switch to CryptoProxy module once available.
 import { importHmacKey, computeHmacSignature } from "./hmac";
 
 enum SIGNING_CONTEXTS {

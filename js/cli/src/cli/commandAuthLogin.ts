@@ -16,7 +16,7 @@ export class CommandAuthLogin implements Command {
     async action({ account, args: [ username ], options: { password } }: ActionArgs) {
         if (!password) {
             console.log("Password:");
-            // TODO hide password when typing
+            // FIXME hide password when typing
             for await (const line of console) {
                 password = line.trim();
                 break;

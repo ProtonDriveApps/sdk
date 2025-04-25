@@ -156,7 +156,7 @@ export class UploadAPIService {
     }): Promise<UploadTokens> {
         const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(draftNodeRevisionUid);
         const result = await this.apiService.post<
-            // FIXME: Deprected fields but not properly marked in the types.
+            // TODO: Deprected fields but not properly marked in the types.
             Omit<PostRequestBlockUploadRequest, 'ShareID' | 'Thumbnail' | 'ThumbnailHash' | 'ThumbnailSize'>,
             PostRequestBlockUploadResponse
         >('drive/blocks', {
@@ -202,14 +202,14 @@ export class UploadAPIService {
     }): Promise<void> {
         const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(draftNodeRevisionUid);
         await this.apiService.put<
-            // FIXME: Deprected fields but not properly marked in the types.
+            // TODO: Deprected fields but not properly marked in the types.
             Omit<PostCommitRevisionRequest, 'BlockNumber' | 'BlockList' | 'ThumbnailToken' | 'State'>,
             PostCommitRevisionResponse
         >(`drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/${revisionId}`, {
             ManifestSignature: options.armoredManifestSignature,
             SignatureAddress: options.signatureEmail,
             XAttr: options.armoredExtendedAttributes || null,
-            Photo: null, // FIXME
+            Photo: null, // TODO
         });
     }
 
@@ -240,7 +240,7 @@ export class UploadAPIService {
 
         await this.apiService.postBlockStream(url, token, formData, signal);
 
-        // FIXME: implement onProgress properly
+        // TODO: implement onProgress properly
         // One option is to use ObserverStream, same as for download.
         // That requires ReadableStream. FormData can be converted
         // to text via `new Response(formData).text()` and that can

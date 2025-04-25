@@ -1,4 +1,4 @@
-// TODO: Use CryptoProxy once available.
+// FIXME: Use CryptoProxy once available.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type PublicKey = any;
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

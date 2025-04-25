@@ -120,7 +120,7 @@ export class SharingAccess {
         await this.apiService.rejectInvitation(invitationUid);
     }
 
-    // TODO: return decrypted bookmarks
+    // FIXME: return decrypted bookmarks
     async* iterateSharedBookmarks(signal?: AbortSignal): AsyncGenerator<string> {
         for await (const bookmark of this.apiService.iterateBookmarks(signal)) {
             yield bookmark.tokenId;

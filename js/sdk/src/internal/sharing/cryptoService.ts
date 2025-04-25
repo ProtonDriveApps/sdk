@@ -191,7 +191,7 @@ export class SharingCryptoService {
      * Verifies an invitation.
      */
     async decryptInvitation(encryptedInvitation: EncryptedInvitation): Promise<ProtonInvitation> {
-        // FIXME: verify addedByEmail (current client doesnt do this)
+        // TODO: verify addedByEmail (current client doesnt do this)
         const addedByEmail: Result<string, UnverifiedAuthorError> = resultOk(encryptedInvitation.addedByEmail);
 
         return {
@@ -243,7 +243,7 @@ export class SharingCryptoService {
      * Verifies an external invitation.
      */
     async decryptExternalInvitation(encryptedInvitation: EncryptedExternalInvitation): Promise<NonProtonInvitation> {
-        // FIXME: verify addedByEmail (current client doesnt do this)
+        // TODO: verify addedByEmail (current client doesnt do this)
         const addedByEmail: Result<string, UnverifiedAuthorError> = resultOk(encryptedInvitation.addedByEmail);
 
         return {
@@ -260,7 +260,7 @@ export class SharingCryptoService {
      * Verifies a member.
      */
     async decryptMember(encryptedMember: EncryptedMember): Promise<Member> {
-        // FIXME: verify addedByEmail (current client doesnt do this)
+        // TODO: verify addedByEmail (current client doesnt do this)
         const addedByEmail: Result<string, UnverifiedAuthorError> = resultOk(encryptedMember.addedByEmail);
 
         return {
@@ -275,7 +275,7 @@ export class SharingCryptoService {
     async encryptPublicLink(): Promise<void> {
         const password = await this.generatePassword();
         await this.computeKeySaltAndPassphrase(password);
-        // TODO: finish creation of public links
+        // FIXME: finish creation of public links
     }
 
     private async generatePassword(): Promise<string> {

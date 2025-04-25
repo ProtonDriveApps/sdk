@@ -4,7 +4,7 @@ import { Command, ActionArgs } from './interface';
 export class CommandFileSystemTrash implements Command {
     group = 'filesystem';
     name = 'trash';
-    // TODO: support trahs of multiple files
+    // FIXME: support trahs of multiple files
     args = ['path'];
     options: ParseArgsConfig['options'] = {
         json: {

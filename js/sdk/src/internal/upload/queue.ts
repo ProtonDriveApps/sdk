@@ -19,7 +19,7 @@ const MAX_CONCURRENT_UPLOADS = 5;
 export class UploadQueue {
     private capacity = 0;
 
-    // FIXME: use expected size to control the size of the queue
+    // TODO: use expected size to control the size of the queue
     async waitForCapacity(signal?: AbortSignal) {
         await waitForCondition(() => this.capacity < MAX_CONCURRENT_UPLOADS, signal);
         this.capacity++;

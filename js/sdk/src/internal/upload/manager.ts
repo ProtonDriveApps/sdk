@@ -83,7 +83,7 @@ export class UploadManager {
                 base64ContentKeyPacket: generatedNodeCrypto.contentKey.encrypted.base64ContentKeyPacket,
                 armoredContentKeyPacketSignature: generatedNodeCrypto.contentKey.encrypted.armoredContentKeyPacketSignature,
                 signatureEmail: generatedNodeCrypto.signatureAddress.email,
-                // TODO: client UID
+                // FIXME: client UID
             });
             return result;
         } catch (error: unknown) {
@@ -164,7 +164,7 @@ export class UploadManager {
                 throw Error('Backend returned unexpected hash');
             }
 
-            // TODO: use client UID to ensure its own pending draft
+            // FIXME: use client UID to ensure its own pending draft
             const ownPendingHash = pendingHashes.find(({ hash }) => hash === nameHash);
             return {
                 availableName: availableHash.name,

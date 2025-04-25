@@ -4,7 +4,7 @@ import { getName } from './node';
 export class CommandFileSystemDownload implements Command {
     group = 'filesystem';
     name = 'download';
-    // TODO: support download of multiple files
+    // FIXME: support download of multiple files
     args = ['path', 'localPath'];
 
     async action({ sdk, paths, args: [ pathString, localPath ] }: ActionArgs) {

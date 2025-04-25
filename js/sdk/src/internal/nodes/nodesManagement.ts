@@ -147,7 +147,7 @@ export class NodesManagement {
                 encryptedName: encryptedCrypto.encryptedName,
                 nameSignatureEmail: encryptedCrypto.nameSignatureEmail,
                 hash: encryptedCrypto.hash,
-                // TODO: content hash
+                // FIXME: content hash
             }
         );
         const newNode: DecryptedNode = {

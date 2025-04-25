@@ -33,7 +33,7 @@ export class CommandSharingRemove implements Command {
         const path = paths.getPath(pathString);
         const node = await path.getNode();
 
-        // TODO: when supporting public links, everyone should keep it
+        // FIXME: when supporting public links, everyone should keep it
         const sharingInfo = everyone
             ? await sdk.unshareNode(node)
             : await sdk.unshareNode(node, {

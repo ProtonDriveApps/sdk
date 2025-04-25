@@ -6,7 +6,7 @@ import { Path, PathType } from './paths';
 export class CommandFileSystemMove implements Command {
     group = 'filesystem';
     name = 'move';
-    // TODO: support move of multiple files
+    // FIXME: support move of multiple files
     args = ['sourcePath', 'targetPath'];
     options: ParseArgsConfig['options'] = {
         json: {

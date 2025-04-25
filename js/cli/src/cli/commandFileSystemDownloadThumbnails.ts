@@ -5,7 +5,7 @@ import { Command, ActionArgs } from './interface';
 export class CommandFileSystemDownloadThumbnails implements Command {
     group = 'filesystem';
     name = 'download-thumbnails';
-    // TODO: support download of multiple thumbnails
+    // FIXME: support download of multiple thumbnails
     args = ['path', 'parentLocalPath'];
         options: ParseArgsConfig['options'] = {
             json: {

@@ -6,7 +6,7 @@ import { Command, ActionArgs } from './interface';
 export class CommandFileSystemUpload implements Command {
     group = 'filesystem';
     name = 'upload';
-    // TODO: support upload of multiple files
+    // FIXME: support upload of multiple files
     args = ['localPath', 'parentPath'];
     options: ParseArgsConfig['options'] = {
         name: {

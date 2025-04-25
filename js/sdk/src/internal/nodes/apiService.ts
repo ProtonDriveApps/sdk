@@ -215,7 +215,7 @@ export class NodeAPIService {
             LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
         }, signal);
 
-        // FIXME: remove `as` when backend fixes OpenAPI schema.
+        // TODO: remove `as` when backend fixes OpenAPI schema.
         yield* handleResponseErrors(nodeUids, volumeId, response.Responses as LinkResponse[]);
     }
 
@@ -231,7 +231,7 @@ export class NodeAPIService {
             LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
         }, signal);
 
-        // FIXME: remove `as` when backend fixes OpenAPI schema.
+        // TODO: remove `as` when backend fixes OpenAPI schema.
         yield* handleResponseErrors(nodeUids, volumeId, response.Responses as LinkResponse[]);
     }
 
@@ -247,7 +247,7 @@ export class NodeAPIService {
             LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
         }, signal);
 
-        // FIXME: remove `as` when backend fixes OpenAPI schema.
+        // TODO: remove `as` when backend fixes OpenAPI schema.
         yield* handleResponseErrors(nodeUids, volumeId, response.Responses as LinkResponse[]);
     }
 
@@ -435,9 +435,9 @@ function transformRevisionResponse(
 
 function transformThumbnail(volumeId: string, nodeId: string, thumbnail: { ThumbnailID: string | null, Type: 1 | 2 | 3}): Thumbnail {
     return {
-        // FIXME: Legacy thumbnails didn't have ID but we don't have them anymore. Remove typing once API doc is updated.
+        // TODO: Legacy thumbnails didn't have ID but we don't have them anymore. Remove typing once API doc is updated.
         uid: makeNodeThumbnailUid(volumeId, nodeId, thumbnail.ThumbnailID as string),
-        // FIXME: We don't support any other thumbnail type yet.
+        // TODO: We don't support any other thumbnail type yet.
         type: thumbnail.Type as 1 | 2,
     }
 }
