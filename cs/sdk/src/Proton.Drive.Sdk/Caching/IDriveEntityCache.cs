@@ -8,6 +8,9 @@ namespace Proton.Drive.Sdk.Caching;
 
 internal interface IDriveEntityCache
 {
+    ValueTask SetClientUidAsync(string clientUid, CancellationToken cancellationToken);
+    ValueTask<string?> TryGetClientUidAsync(CancellationToken cancellationToken);
+
     ValueTask SetMainVolumeIdAsync(VolumeId volumeId, CancellationToken cancellationToken);
     ValueTask<VolumeId?> TryGetMainVolumeIdAsync(CancellationToken cancellationToken);
 

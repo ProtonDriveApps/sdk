@@ -8,8 +8,8 @@ public sealed class DegradedFolderNode : DegradedNode
     {
         return new FolderNode
         {
-            Id = Id,
-            ParentId = ParentId,
+            Uid = Id,
+            ParentUid = ParentId,
             Name = Name.TryGetValue(out var name) ? name : substituteName,
             NameAuthor = NameAuthor,
             IsTrashed = IsTrashed,

@@ -57,12 +57,6 @@ internal readonly struct HttpApiCallBuilder<TSuccess, TFailure>
         return await SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
     }
 
-    public async ValueTask<TSuccess> PostAsync(string requestUri, HttpContent content, CancellationToken cancellationToken)
-    {
-        using var requestMessage = HttpRequestMessageFactory.Create(HttpMethod.Post, requestUri, content);
-        return await SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
-    }
-
     public async ValueTask<TSuccess> PutAsync<TRequestBody>(
         string requestUri,
         TRequestBody body,
@@ -86,7 +80,7 @@ internal readonly struct HttpApiCallBuilder<TSuccess, TFailure>
         return await SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<TSuccess> SendAsync(HttpRequestMessage requestMessage, CancellationToken cancellationToken)
+    public async ValueTask<TSuccess> SendAsync(HttpRequestMessage requestMessage, CancellationToken cancellationToken)
     {
         var responseMessage = await _httpClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
 

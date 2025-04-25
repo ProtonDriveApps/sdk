@@ -3,15 +3,13 @@ using System.Security.Cryptography;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
-using Proton.Drive.Sdk.Shares;
 using Proton.Sdk;
-using Proton.Sdk.Addresses;
 
 namespace Proton.Drive.Sdk.Nodes;
 
 internal static class FolderOperations
 {
-    public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateFolderChildrenAsync(
+    public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateChildrenAsync(
         ProtonDriveClient client,
         NodeUid folderId,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -56,11 +54,11 @@ internal static class FolderOperations
         }
     }
 
-    public static async ValueTask<FolderNode> CreateFolderAsync(ProtonDriveClient client, NodeUid parentId, string name, CancellationToken cancellationToken)
+    public static async ValueTask<FolderNode> CreateAsync(ProtonDriveClient client, NodeUid parentId, string name, CancellationToken cancellationToken)
     {
         var parentSecrets = await GetSecretsAsync(client, parentId, cancellationToken).ConfigureAwait(false);
 
-        var membershipAddress = await GetMembershipAddressAsync(client, parentId, cancellationToken).ConfigureAwait(false);
+        var membershipAddress = await NodeOperations.GetMembershipAddressAsync(client, parentId, cancellationToken).ConfigureAwait(false);
 
         var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
 
@@ -110,8 +108,8 @@ internal static class FolderOperations
 
         var folderNode = new FolderNode
         {
-            Id = folderId,
-            ParentId = parentId,
+            Uid = folderId,
+            ParentUid = parentId,
             Name = name,
             IsTrashed = false,
             NameAuthor = author,
@@ -135,15 +133,5 @@ internal static class FolderOperations
         }
 
         return folderSecrets;
-    }
-
-    private static async ValueTask<Address> GetMembershipAddressAsync(ProtonDriveClient client, NodeUid parentId, CancellationToken cancellationToken)
-    {
-        // TODO: try to get the information from cache first
-        var response = await client.Api.Links.GetContextShareAsync(parentId.VolumeId, parentId.LinkId, cancellationToken).ConfigureAwait(false);
-
-        var (share, _) = await ShareOperations.GetShareAsync(client, response.ContextShareId, cancellationToken).ConfigureAwait(false);
-
-        return await client.Account.GetAddressAsync(client, share.MembershipAddressId, cancellationToken).ConfigureAwait(false);
     }
 }

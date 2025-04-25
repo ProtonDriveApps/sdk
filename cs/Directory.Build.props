@@ -20,7 +20,7 @@
     <Deterministic>true</Deterministic>
     <!--<TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>-->
 
-    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+    <JsonSerializerIsReflectionEnabledByDefault Condition="!$(MSBuildProjectName.EndsWith('.Tests'))">false</JsonSerializerIsReflectionEnabledByDefault>
 
     <NativeLibPrefix Condition="$(RuntimeIdentifier.StartsWith('linux')) or $(RuntimeIdentifier.StartsWith('android'))">lib</NativeLibPrefix>
   </PropertyGroup>
@@ -42,7 +42,7 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup Condition="$(AssemblyName.EndsWith('.Tests'))">
+  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
     <PackageReference Include="coverlet.collector">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -52,7 +52,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Shouldly" />
+    <PackageReference Include="AwesomeAssertions" />
     <PackageReference Include="xunit.v3" />
 
     <Using Include="Xunit" />

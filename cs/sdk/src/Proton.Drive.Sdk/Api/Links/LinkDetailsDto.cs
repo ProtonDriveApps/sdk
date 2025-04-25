@@ -1,4 +1,7 @@
-﻿namespace Proton.Drive.Sdk.Api.Links;
+﻿using Proton.Drive.Sdk.Api.Files;
+using Proton.Drive.Sdk.Api.Folders;
+
+namespace Proton.Drive.Sdk.Api.Links;
 
 internal sealed class LinkDetailsDto
 {
