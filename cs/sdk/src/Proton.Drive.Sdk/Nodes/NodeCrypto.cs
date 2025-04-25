@@ -94,8 +94,8 @@ internal static class NodeCrypto
 
             var folderNode = new FolderNode
             {
-                Id = id,
-                ParentId = parentId,
+                Uid = id,
+                ParentUid = parentId,
                 Name = nameOutput.Value.Data,
                 NameAuthor = nameOutput.Value.Author,
                 Author = passphraseOutput.Value.Author, // TODO: combine with signature error from name hash key
@@ -174,8 +174,8 @@ internal static class NodeCrypto
 
         var fileNode = new FileNode
         {
-            Id = id,
-            ParentId = parentId,
+            Uid = id,
+            ParentUid = parentId,
             Name = nameOutput.Value.Data,
             IsTrashed = link.State is LinkState.Trashed,
             NameAuthor = nameOutput.Value.Author,
@@ -189,7 +189,7 @@ internal static class NodeCrypto
                 ClaimedSize = extendedAttributes?.Common?.Size,
                 ClaimedModificationTime = extendedAttributes?.Common?.ModificationTime,
                 Thumbnails = [], // TODO: thumbnails
-                MetadataAuthor = extendedAttributesOutput?.Author,
+                ContentAuthor = extendedAttributesOutput?.Author,
             },
             TotalStorageQuotaUsage = file.TotalStorageQuotaUsage,
         };

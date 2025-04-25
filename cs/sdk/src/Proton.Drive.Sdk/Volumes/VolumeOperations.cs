@@ -29,8 +29,8 @@ internal static class VolumeOperations
 
         var rootFolder = new FolderNode
         {
-            Id = volume.RootFolderId,
-            ParentId = null,
+            Uid = volume.RootFolderId,
+            ParentUid = null,
             Name = RootFolderName,
             NameAuthor = new Author { EmailAddress = defaultAddress.EmailAddress },
             Author = new Author { EmailAddress = defaultAddress.EmailAddress },

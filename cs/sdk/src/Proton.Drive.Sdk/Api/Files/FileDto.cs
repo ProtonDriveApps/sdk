@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using Proton.Sdk.Cryptography;
 
-namespace Proton.Drive.Sdk.Api.Links;
+namespace Proton.Drive.Sdk.Api.Files;
 
 internal sealed class FileDto
 {

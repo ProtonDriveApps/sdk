@@ -9,9 +9,9 @@ namespace Proton.Drive.Sdk.Nodes;
 [JsonDerivedType(typeof(FileDraftNode), typeDiscriminator: "fileDraft")]
 public abstract class Node
 {
-    public required NodeUid Id { get; init; }
+    public required NodeUid Uid { get; init; }
 
-    public required NodeUid? ParentId { get; init; }
+    public required NodeUid? ParentUid { get; init; }
 
     public required string Name { get; init; }
 

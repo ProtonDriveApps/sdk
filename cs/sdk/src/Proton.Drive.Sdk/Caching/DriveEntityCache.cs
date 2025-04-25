@@ -11,10 +11,21 @@ namespace Proton.Drive.Sdk.Caching;
 
 internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEntityCache
 {
+    private const string ClientUidKey = "client:id";
     private const string MainVolumeIdCacheKey = "volume:main:id";
     private const string MyFilesShareIdCacheKey = "share:my-files:id";
 
     private readonly ICacheRepository _repository = repository;
+
+    public ValueTask SetClientUidAsync(string clientUid, CancellationToken cancellationToken)
+    {
+        return _repository.SetAsync(ClientUidKey, clientUid, cancellationToken);
+    }
+
+    public ValueTask<string?> TryGetClientUidAsync(CancellationToken cancellationToken)
+    {
+        return _repository.TryGetAsync(ClientUidKey, cancellationToken);
+    }
 
     public ValueTask SetMainVolumeIdAsync(VolumeId volumeId, CancellationToken cancellationToken)
     {

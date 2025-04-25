@@ -7,6 +7,7 @@ using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Shares;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk;
+using Proton.Sdk.Addresses;
 using Proton.Sdk.Api;
 
 namespace Proton.Drive.Sdk.Nodes;
@@ -26,6 +27,24 @@ internal static class NodeOperations
         var node = await GetNodeAsync(client, shareAndKey.Share.RootFolderId, shareAndKey, cancellationToken).ConfigureAwait(false);
 
         return (FolderNode)node;
+    }
+
+    public static async ValueTask<Node> GetNodeAsync(
+        ProtonDriveClient client,
+        NodeUid nodeId,
+        ShareAndKey? knownShareAndKey,
+        CancellationToken cancellationToken)
+    {
+        var cachedNodeInfo = await client.Cache.Entities.TryGetNodeAsync(nodeId, cancellationToken).ConfigureAwait(false);
+
+        if (cachedNodeInfo is not var (nodeResult, _, _))
+        {
+            var nodeAndSecretsResult = await GetFreshNodeAndSecretsAsync(client, nodeId, knownShareAndKey, cancellationToken).ConfigureAwait(false);
+
+            nodeResult = nodeAndSecretsResult.ToNodeResult();
+        }
+
+        return nodeResult.GetValueOrThrow();
     }
 
     public static void GetCommonCreationParameters(
@@ -80,22 +99,14 @@ internal static class NodeOperations
         return await NodeCrypto.DecryptNodeAsync(client, nodeId, linkDetails, parentKeyResult, cancellationToken).ConfigureAwait(false);
     }
 
-    private static async ValueTask<Node> GetNodeAsync(
-        ProtonDriveClient client,
-        NodeUid nodeId,
-        ShareAndKey? knownShareAndKey,
-        CancellationToken cancellationToken)
+    public static async ValueTask<Address> GetMembershipAddressAsync(ProtonDriveClient client, NodeUid nodeUid, CancellationToken cancellationToken)
     {
-        var cachedNodeInfo = await client.Cache.Entities.TryGetNodeAsync(nodeId, cancellationToken).ConfigureAwait(false);
+        // TODO: try to get the information from cache first
+        var response = await client.Api.Links.GetContextShareAsync(nodeUid.VolumeId, nodeUid.LinkId, cancellationToken).ConfigureAwait(false);
 
-        if (cachedNodeInfo is not var (nodeResult, _, _))
-        {
-            var nodeAndSecretsResult = await GetFreshNodeAndSecretsAsync(client, nodeId, knownShareAndKey, cancellationToken).ConfigureAwait(false);
+        var (share, _) = await ShareOperations.GetShareAsync(client, response.ContextShareId, cancellationToken).ConfigureAwait(false);
 
-            nodeResult = nodeAndSecretsResult.ToNodeResult();
-        }
-
-        return nodeResult.GetValueOrThrow();
+        return await client.Account.GetAddressAsync(client, share.MembershipAddressId, cancellationToken).ConfigureAwait(false);
     }
 
     private static async ValueTask<FolderNode> GetFreshMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)

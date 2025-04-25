@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Shares;
@@ -32,4 +33,11 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(FolderChildrenResponse))]
 [JsonSerializable(typeof(FolderCreationParameters))]
 [JsonSerializable(typeof(FolderCreationResponse))]
+[JsonSerializable(typeof(FileCreationParameters))]
+[JsonSerializable(typeof(FileCreationResponse))]
+[JsonSerializable(typeof(RevisionConflictResponse))]
+[JsonSerializable(typeof(BlockUploadRequestParameters))]
+[JsonSerializable(typeof(BlockRequestResponse))]
+[JsonSerializable(typeof(RevisionUpdateParameters))]
+[JsonSerializable(typeof(BlockVerificationInputResponse))]
 internal sealed partial class DriveApiSerializerContext : JsonSerializerContext;

@@ -22,7 +22,7 @@ internal static class NodeAndSecretsProvisionResultExtensions
 
         if (nodeAndSecrets.TryGetFileElseFolder(out var fileNode, out _, out var folderNode, out _))
         {
-            throw new InvalidNodeTypeException(fileNode.Id, LinkType.File);
+            throw new InvalidNodeTypeException(fileNode.Uid, LinkType.File);
         }
 
         return folderNode;
@@ -34,10 +34,22 @@ internal static class NodeAndSecretsProvisionResultExtensions
 
         if (nodeAndSecrets.TryGetFileElseFolder(out var fileNode, out _, out _, out var folderSecrets))
         {
-            throw new InvalidNodeTypeException(fileNode.Id, LinkType.File);
+            throw new InvalidNodeTypeException(fileNode.Uid, LinkType.File);
         }
 
         return folderSecrets;
+    }
+
+    public static FileSecrets GetFileSecretsOrThrow(this Result<NodeAndSecrets, DegradedNodeAndSecrets> provisionResult)
+    {
+        var nodeAndSecrets = provisionResult.GetValueOrThrow();
+
+        if (!nodeAndSecrets.TryGetFileElseFolder(out _, out var fileSecrets, out var folderNode, out _))
+        {
+            throw new InvalidNodeTypeException(folderNode.Uid, LinkType.Folder);
+        }
+
+        return fileSecrets;
     }
 
     public static bool TryGetFolderKeyElseError(
@@ -69,7 +81,7 @@ internal static class NodeAndSecretsProvisionResultExtensions
         if (nodeAndSecrets.TryGetFileElseFolder(out var fileNode, out _, out _, out var folderSecrets))
         {
             folderKey = null;
-            error = new ProtonDriveError(InvalidNodeTypeException.GetMessage(fileNode.Id, LinkType.File));
+            error = new ProtonDriveError(InvalidNodeTypeException.GetMessage(fileNode.Uid, LinkType.File));
             return false;
         }
 

@@ -10,5 +10,5 @@ public sealed class Revision
     public required long? ClaimedSize { get; init; }
     public required DateTime? ClaimedModificationTime { get; init; }
     public required IReadOnlyList<ReadOnlyMemory<byte>> Thumbnails { get; init; }
-    public required Result<Author, SignatureVerificationError>? MetadataAuthor { get; init; }
+    public required Result<Author, SignatureVerificationError>? ContentAuthor { get; init; }
 }

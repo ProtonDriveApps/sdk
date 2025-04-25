@@ -14,8 +14,8 @@ public sealed class DegradedFileNode : DegradedNode
     {
         return new FileNode
         {
-            Id = Id,
-            ParentId = ParentId,
+            Uid = Id,
+            ParentUid = ParentId,
             MediaType = MediaType,
             Name = Name.TryGetValue(out var name)
                 ? name

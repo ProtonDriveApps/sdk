@@ -6,8 +6,8 @@ using Proton.Drive.Sdk.Volumes;
 
 namespace Proton.Drive.Sdk.Nodes;
 
-[JsonConverter(typeof(NodeUidConverter))]
-public readonly record struct NodeUid
+[JsonConverter(typeof(UidJsonConverter<NodeUid>))]
+public readonly record struct NodeUid : ICompositeUid<NodeUid>
 {
     internal NodeUid(VolumeId volumeId, LinkId linkId)
     {
@@ -23,26 +23,15 @@ public readonly record struct NodeUid
         return $"{VolumeId}~{LinkId}";
     }
 
-    public static bool TryParse([NotNullWhen(true)] string? value, out NodeUid result)
+    static bool ICompositeUid<NodeUid>.TryCreate(string baseUidString, string relativeIdString, [NotNullWhen(true)] out NodeUid? uid)
     {
-        if (string.IsNullOrEmpty(value))
-        {
-            result = default;
-            return false;
-        }
-
-        var separatorIndex = value.IndexOf('~');
-
-        if (separatorIndex < 0 || separatorIndex >= value.Length - 1)
-        {
-            result = default;
-            return false;
-        }
-
-        var volumeId = value[..separatorIndex];
-        var linkId = value[(separatorIndex + 1)..];
-
-        result = new NodeUid(new VolumeId(volumeId), new LinkId(linkId));
+        uid = new NodeUid(new VolumeId(baseUidString), new LinkId(relativeIdString));
         return true;
+    }
+
+    internal void Deconstruct(out VolumeId volumeId, out LinkId linkId)
+    {
+        volumeId = VolumeId;
+        linkId = LinkId;
     }
 }
