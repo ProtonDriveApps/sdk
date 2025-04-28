@@ -1,17 +1,5 @@
 import { Device } from './devices';
-import { MaybeNode, NodeOrUid } from './nodes';
-
-export interface Events {
-    subscribeToRemoteDataUpdates(): void,
-
-    subscribeToDevices(callback: DeviceEventCallback): () => void,
-    subscribeToSharedNodesByMe(callback: NodeEventCallback): () => void,
-    subscribeToSharedNodesWithMe(callback: NodeEventCallback): () => void,
-    subscribeToTrashedNodes(callback: NodeEventCallback): () => void,
-    subscribeToChildren(parentNodeUid: NodeOrUid, callback: NodeEventCallback): () => void,
-
-    onMessage(eventName: SDKEvent, callback: () => void): () => void,
-}
+import { MaybeNode } from './nodes';
 
 export type DeviceEventCallback = (deviceEvent: DeviceEvent) => void;
 export type NodeEventCallback = (nodeEvent: NodeEvent) => void;
@@ -37,6 +25,6 @@ export type DeviceEvent = {
 export enum SDKEvent {
     TransfersPaused = "transfersPaused",
     TransfersResumed = "transfersResumed",
-    SpeedLimited = "speedLimited",
-    SpeedResumed = "speedResumed",
+    RequestsThrottled = "requestsThrottled",
+    RequestsUnthrottled = "requestsUnthrottled",
 }

@@ -48,7 +48,7 @@ export class DriveEventsService {
         }
 
         await this.loadSubscribedVolumeEventServices();
-        this.sendNumberOfVolumSubscriptionsToTelemetry();
+        this.sendNumberOfVolumeSubscriptionsToTelemetry();
 
         this.subscribedToRemoteDataUpdates = true;
         await this.coreEvents.startSubscription();
@@ -63,7 +63,7 @@ export class DriveEventsService {
      * with the polling interval depending on the type of the volume.
      * Own volumes are polled with highest frequency, while others are
      * polled with lower frequency depending on the total number of
-     * subsciptions.
+     * subscriptions.
      * 
      * @param isOwnVolume - Owned volumes are polled with higher frequency.
      */
@@ -73,14 +73,14 @@ export class DriveEventsService {
         if (this.volumesEvents[volumeId]) {
             return;
         }
-        const volumeEvents = new VolumeEventManager(this.logger, this.apiService, this.cache, volumeId, isOwnVolume);
-        this.volumesEvents[volumeId] = volumeEvents;
+        this.logger.debug(`Creating volume event manager for volume ${volumeId}`);
+        const manager = this.createVolumeEventManager(volumeId, isOwnVolume);
 
-        // TODO: Use dynamic algorithm to determine polling interval for non-own volumes.
-        volumeEvents.setPollingInterval(isOwnVolume ? OWN_VOLUME_POLLING_INTERVAL : OTHER_VOLUME_POLLING_INTERVAL);
+        // FIXME: Use dynamic algorithm to determine polling interval for non-own volumes.
+        manager.setPollingInterval(isOwnVolume ? OWN_VOLUME_POLLING_INTERVAL : OTHER_VOLUME_POLLING_INTERVAL);
         if (this.subscribedToRemoteDataUpdates) {
-            await volumeEvents.startSubscription();
-            this.sendNumberOfVolumSubscriptionsToTelemetry();
+            await manager.startSubscription();
+            this.sendNumberOfVolumeSubscriptionsToTelemetry();
         }
     }
 
@@ -88,16 +88,25 @@ export class DriveEventsService {
         for (const volumeId of await this.cache.getSubscribedVolumeIds()) {
             if (!this.volumesEvents[volumeId]) {
                 const isOwnVolume = await this.cache.isOwnVolume(volumeId) || false;
-                this.volumesEvents[volumeId] = new VolumeEventManager(this.logger, this.apiService, this.cache, volumeId, isOwnVolume);
+                this.createVolumeEventManager(volumeId, isOwnVolume);
             }
         }
     }
 
-    private sendNumberOfVolumSubscriptionsToTelemetry() {
+    private sendNumberOfVolumeSubscriptionsToTelemetry() {
         this.telemetry.logEvent({
             eventName: 'volumeEventsSubscriptionsChanged',
             numberOfVolumeSubscriptions: Object.keys(this.volumesEvents).length,
         });
+    }
+
+    private createVolumeEventManager(volumeId: string, isOwnVolume: boolean): VolumeEventManager {
+        const manager = new VolumeEventManager(this.logger, this.apiService, this.cache, volumeId, isOwnVolume);
+        for (const listener of this.listeners) {
+            manager.addListener(listener);
+        }
+        this.volumesEvents[volumeId] = manager;
+        return manager;
     }
 
     /**
@@ -110,6 +119,13 @@ export class DriveEventsService {
      * receive multiple calls.
      */
     addListener(callback: DriveListener): void {
+        // Add new listener to the list for any new event manager.
         this.listeners.push(callback);
+
+        // Add new listener to all existings managers.
+        this.coreEvents.addListener(callback);
+        for (const volumeEvents of Object.values(this.volumesEvents)) {
+            volumeEvents.addListener(callback);
+        }
     }
 }

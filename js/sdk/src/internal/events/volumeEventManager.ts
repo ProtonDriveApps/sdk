@@ -1,4 +1,5 @@
 import { Logger } from "../../interface";
+import { LoggerWithPrefix } from "../../telemetry";
 import { EventsAPIService } from "./apiService";
 import { EventsCache } from "./cache";
 import { DriveEvent, DriveListener } from "./interface";
@@ -17,7 +18,7 @@ export class VolumeEventManager {
         this.volumeId = volumeId;
 
         this.manager = new EventManager(
-            logger,
+            new LoggerWithPrefix(logger, `volume ${volumeId}`),
             () => this.getLastEventId(),
             (eventId) => this.apiService.getVolumeEvents(volumeId, eventId, isOwnVolume),
             (lastEventId) => this.cache.setLastEventId(volumeId, {

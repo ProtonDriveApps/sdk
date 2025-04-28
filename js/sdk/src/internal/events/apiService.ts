@@ -29,13 +29,13 @@ export class EventsAPIService {
     }
 
     async getCoreLatestEventId(): Promise<string> {
-        const result = await this.apiService.get<GetCoreLatestEventResponse>(`/core/v5/events/latest`);
+        const result = await this.apiService.get<GetCoreLatestEventResponse>(`core/v4/events/latest`);
         return result.EventID as string;
     }
 
     async getCoreEvents(eventId: string): Promise<DriveEvents> {
-        // FIXME: Switch to v6 endpoint: DriveShareRefresh doesnt seem to be part of it.
-        const result = await this.apiService.get<GetCoreEventResponse>(`/core/v5/events/${eventId}?NoMetaData=1`);
+        // TODO: Switch to v6 endpoint: DriveShareRefresh doesnt seem to be part of it.
+        const result = await this.apiService.get<GetCoreEventResponse>(`core/v5/events/${eventId}`);
         const events: DriveEvent[] = result.DriveShareRefresh?.Action === 2 ? [
             {
                 type: DriveEventType.ShareWithMeUpdated,
@@ -51,12 +51,12 @@ export class EventsAPIService {
     }
 
     async getVolumeLatestEventId(volumeId: string): Promise<string> {
-        const result = await this.apiService.get<GetVolumeLatestEventResponse>(`/drive/volumes/${volumeId}/events/latest`);
+        const result = await this.apiService.get<GetVolumeLatestEventResponse>(`drive/volumes/${volumeId}/events/latest`);
         return result.EventID;
     }
 
     async getVolumeEvents(volumeId: string, eventId: string, isOwnVolume = false): Promise<DriveEvents> {
-        const result = await this.apiService.get<GetVokumeEventResponse>(`/drive/v2/volumes/${volumeId}/events/${eventId}`);
+        const result = await this.apiService.get<GetVokumeEventResponse>(`drive/v2/volumes/${volumeId}/events/${eventId}`);
         return {
             lastEventId: result.EventID,
             more: result.More,

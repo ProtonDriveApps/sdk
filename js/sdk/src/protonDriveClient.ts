@@ -20,6 +20,9 @@ import {
     Fileuploader,
     ThumbnailType,
     ThumbnailResult,
+    SDKEvent,
+    DeviceEventCallback,
+    NodeEventCallback,
 } from './interface';
 import { DriveCrypto } from './crypto';
 import { DriveAPIService } from './internal/apiService';
@@ -29,10 +32,12 @@ import { initSharingModule } from './internal/sharing';
 import { initDownloadModule } from './internal/download';
 import { initUploadModule } from './internal/upload';
 import { DriveEventsService } from './internal/events';
+import { SDKEvents } from './internal/sdkEvents';
 import { getConfig } from './config';
-import { getUid, getUids, convertInternalNodePromise, convertInternalNodeIterator, convertInternalMissingNodeIterator } from './transformers';
+import { getUid, getUids, convertInternalNodePromise, convertInternalNodeIterator, convertInternalMissingNodeIterator, convertInternalNode } from './transformers';
 import { Telemetry } from './telemetry';
 import { initDevicesModule } from './internal/devices';
+import { splitNodeUid } from './internal/uids';
 
 /**
  * ProtonDriveClient is the main interface for the ProtonDrive SDK.
@@ -43,6 +48,9 @@ import { initDevicesModule } from './internal/devices';
  */
 export class ProtonDriveClient {
     private logger: Logger;
+    private sdkEvents: SDKEvents;
+    private events: DriveEventsService;
+    private shares: ReturnType<typeof initSharesModule>;
     private nodes: ReturnType<typeof initNodesModule>;
     private sharing: ReturnType<typeof initSharingModule>;
     private download: ReturnType<typeof initDownloadModule>;
@@ -64,15 +72,215 @@ export class ProtonDriveClient {
         this.logger = telemetry.getLogger('interface');
 
         const fullConfig = getConfig(config);
+        this.sdkEvents = new SDKEvents(telemetry);
         const cryptoModule = new DriveCrypto(openPGPCryptoModule);    
-        const apiService = new DriveAPIService(telemetry, httpClient, fullConfig.baseUrl, fullConfig.language);
-        const events = new DriveEventsService(telemetry, apiService, entitiesCache);
-        const shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
-        this.nodes = initNodesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares);
-        this.sharing = initSharingModule(telemetry, apiService, entitiesCache, account, cryptoModule, events, shares, this.nodes.access);
-        this.download = initDownloadModule(telemetry, apiService, cryptoModule, account, shares, this.nodes.access, this.nodes.revisions);
-        this.upload = initUploadModule(telemetry, apiService, cryptoModule, shares, this.nodes.access);
-        this.devices = initDevicesModule(telemetry, apiService, cryptoModule, shares, this.nodes.access, this.nodes.management);
+        const apiService = new DriveAPIService(telemetry, this.sdkEvents, httpClient, fullConfig.baseUrl, fullConfig.language);
+        this.events = new DriveEventsService(telemetry, apiService, entitiesCache);
+        this.shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
+        this.nodes = initNodesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule, this.events, this.shares);
+        this.sharing = initSharingModule(telemetry, apiService, entitiesCache, account, cryptoModule, this.events, this.shares, this.nodes.access);
+        this.download = initDownloadModule(telemetry, apiService, cryptoModule, account, this.shares, this.nodes.access, this.nodes.revisions);
+        this.upload = initUploadModule(telemetry, apiService, cryptoModule, this.shares, this.nodes.access);
+        this.devices = initDevicesModule(telemetry, apiService, cryptoModule, this.shares, this.nodes.access, this.nodes.management);
+    }
+
+    /**
+     * Subscribes to the general SDK events.
+     * 
+     * This is not connected to the remote data updates. For that, use
+     * and see `subscribeToRemoteDataUpdates`.
+     *
+     * @param eventName - SDK event name.
+     * @param callback - Callback to be called when the event is emitted.
+     * @returns Callback to unsubscribe from the event.
+     */
+    onMessage(eventName: SDKEvent, callback: () => void): () => void {
+        this.logger.debug(`Subscribing to event ${eventName}`);
+        return this.sdkEvents.addListener(eventName, callback);
+    }
+
+    /**
+     * Subscribes to the remote data updates.
+     * 
+     * By default, SDK doesn't subscribe to remote data updates. If you
+     * cache the data locally, you need to call this method so the SDK
+     * keeps the local cache in sync with the remote data.
+     * 
+     * Only one instance of the SDK should subscribe to remote data updates.
+     *
+     * Once subscribed, the SDK will poll for events for core user events and
+     * for own data at minimum. Updates to nodes from other users are polled
+     * with lower frequency depending on the number of subscriptions, and only
+     * after accessing them for the first time via `iterateSharedNodesWithMe`.
+     */
+    async subscribeToRemoteDataUpdates(): Promise<void> {
+        this.logger.debug('Subscribing to remote data updates');
+        await this.events.subscribeToRemoteDataUpdates();
+
+        const { volumeId } = await this.shares.getMyFilesIDs();
+        await this.events.listenToVolume(volumeId, true);
+    }
+
+    /**
+     * Subscribe to updates of the devices.
+     * 
+     * Clients should subscribe to this before beginning to list devices
+     * to ensure that updates are reflected once a device is in the cache.
+     * Subscribing before listing is also required to ensure that devices
+     * that are created during the listing will be recognized.
+     * 
+     * ```typescript
+     * const unsubscribe = sdk.subscribeToDevices((event) => {
+     *     if (event.type === 'update') {
+     *         // Update the device in the UI
+     *     } else if (event.type === 'remove') {
+     *         // Remove the device from the UI
+     *     }
+     * });
+     *
+     * const devices = await Array.fromAsync(sdk.iterateDevices());
+     * // Render the devices in the UI
+     * 
+     * // Unsubscribe from the updates when the component is unmounted
+     * unsubscribe();
+     * ```
+     *
+     * @param callback - Callback to be called when the event is emitted.
+     * @returns Callback to unsubscribe from the event.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    subscribeToDevices(callback: DeviceEventCallback): () => void {
+        this.logger.debug('Subscribing to devices');
+        throw new Error('Method not implemented');
+    }
+
+    /**
+     * Subscribe to updates of the children of the given parent node.
+     * 
+     * Clients should subscribe to this before beginning to list children
+     * to ensure that updates are reflected once a node is in the cache.
+     * Subscribing before listing is also required to ensure that nodes 
+     * that are created during the listing will be recognized.
+     * 
+     * ```typescript
+     * const unsubscribe = sdk.subscribeToChildren(parentNodeUid, (event) => {
+     *     if (event.type === 'update') {
+     *         // Update the node in the UI
+     *     } else if (event.type === 'remove') {
+     *         // Remove the node from the UI
+     *     }
+     * });
+     *
+     * const nodes = await Array.fromAsync(sdk.iterateChildren(parentNodeUid));
+     * // Render the nodes in the UI
+     * 
+     * // Unsubscribe from the updates when the component is unmounted
+     * unsubscribe();
+     * ```
+     *
+     * @param parentNodeUid - Node entity or its UID string.
+     * @param callback - Callback to be called when the event is emitted.
+     * @returns Callback to unsubscribe from the event.
+     */
+    subscribeToFolder(parentNodeUid: NodeOrUid, callback: NodeEventCallback): () => void {
+        this.logger.debug(`Subscribing to children of ${getUid(parentNodeUid)}`);
+        return this.nodes.events.subscribeToChildren(getUid(parentNodeUid), callback);
+    }
+
+    /**
+     * Subscribe to updates of the trashed nodes.
+     * 
+     * Clients should subscribe to this before beginning to list trashed
+     * nodes to ensure that updates are reflected once a node is in the cache.
+     * Subscribing before listing is also required to ensure that nodes
+     * that are trashed during the listing will be recognized.
+     * 
+     * ```typescript
+     * const unsubscribe = sdk.subscribeToTrashedNodes((event) => {
+     *     if (event.type === 'update') {
+     *         // Update the node in the UI
+     *     } else if (event.type === 'remove') {
+     *         // Remove the node from the UI
+     *     }
+     * });
+     *
+     * const nodes = await Array.fromAsync(sdk.iterateTrashedNodes());
+     * // Render the nodes in the UI
+     * 
+     * // Unsubscribe from the updates when the component is unmounted
+     * unsubscribe();
+     * ```
+     *
+     * @param callback - Callback to be called when the event is emitted.
+     * @returns Callback to unsubscribe from the event.
+     */
+    subscribeToTrashedNodes(callback: NodeEventCallback): () => void {
+        this.logger.debug('Subscribing to trashed nodes');
+        return this.nodes.events.subscribeToTrashedNodes(callback);
+    }
+
+    /**
+     * Subscribe to updates of the nodes shared by the user.
+     * 
+     * Clients should subscribe to this before beginning to list shared
+     * nodes to ensure that updates are reflected once a node is in the cache.
+     * Subscribing before listing is also required to ensure that nodes
+     * that are shared during the listing will be recognized.
+     * 
+     * ```typescript
+     * const unsubscribe = sdk.subscribeToSharedNodesByMe((event) => {
+     *     if (event.type === 'update') {
+     *         // Update the node in the UI
+     *     } else if (event.type === 'remove') {
+     *         // Remove the node from the UI
+     *     }
+     * });
+     * 
+     * const nodes = await Array.fromAsync(sdk.iterateSharedNodes());
+     * // Render the nodes in the UI
+     * 
+     * // Unsubscribe from the updates when the component is unmounted
+     * unsubscribe();
+     * ```
+     * 
+     * @param callback - Callback to be called when the event is emitted.
+     * @returns Callback to unsubscribe from the event.
+     */
+    subscribeToSharedNodesByMe(callback: NodeEventCallback): () => void {
+        this.logger.debug('Subscribing to shared nodes by me');
+        return this.sharing.events.subscribeToSharedNodesByMe(callback);
+    }
+
+    /**
+     * Subscribe to updates of the nodes shared with the user.
+     * 
+     * Clients should subscribe to this before beginning to list shared
+     * nodes to ensure that updates are reflected once a node is in the cache.
+     * Subscribing before listing is also required to ensure that nodes
+     * that are shared during the listing will be recognized.
+     * 
+     * ```typescript
+     * const unsubscribe = sdk.subscribeToSharedNodesWithMe((event) => {
+     *     if (event.type === 'update') {
+     *         // Update the node in the UI
+     *     } else if (event.type === 'remove') {
+     *         // Remove the node from the UI
+     *     }
+     * });
+     * 
+     * const nodes = await Array.fromAsync(sdk.iterateSharedNodesWithMe());
+     * // Render the nodes in the UI
+     * 
+     * // Unsubscribe from the updates when the component is unmounted
+     * unsubscribe();
+     * ```
+     * 
+     * @param callback - Callback to be called when the event is emitted.
+     * @returns Callback to unsubscribe from the event.
+     */
+    subscribeToSharedNodesWithMe(callback: NodeEventCallback): () => void {
+        this.logger.debug('Subscribing to shared nodes with me');
+        return this.sharing.events.subscribeToSharedNodesWithMe(callback);
     }
 
     /**
@@ -106,6 +314,8 @@ export class ProtonDriveClient {
      * 
      * The output is not sorted and the order of the children is not guaranteed.
      *
+     * You can listen to updates via `subscribeToChildren`.
+     *
      * @param parentNodeUid - Node entity or its UID string.
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the children of the given parent node.
@@ -122,6 +332,8 @@ export class ProtonDriveClient {
      * on each call. The node data itself are served from cached if available.
      * 
      * The output is not sorted and the order of the trashed nodes is not guaranteed.
+     *
+     * You can listen to updates via `subscribeToTrashedNodes`.
      *
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the trashed nodes.
@@ -301,6 +513,8 @@ export class ProtonDriveClient {
      * Iterates the nodes shared by the user.
      *
      * The output is not sorted and the order of the shared nodes is not guaranteed.
+     * 
+     * You can listen to updates via `subscribeToSharedNodesByMe`.
      *
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the shared nodes.
@@ -314,15 +528,31 @@ export class ProtonDriveClient {
      * Iterates the nodes shared with the user.
      *
      * The output is not sorted and the order of the shared nodes is not guaranteed.
+     * 
+     * At the end of the iteration, if `subscribeToRemoteDataUpdates` was called,
+     * the SDK will listen to updates for the shared nodes to keep the local cache
+     * in sync with the remote data.
+     * 
+     * You can listen to updates via `subscribeToSharedNodesWithMe`.
      *
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the shared nodes.
      */
     async* iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
         this.logger.info('Iterating shared nodes with me');
-        yield* convertInternalNodeIterator(this.sharing.access.iterateSharedNodesWithMe(signal));
+
+        const uniqueVolumeIds = new Set<string>();
+        for await (const node of this.sharing.access.iterateSharedNodesWithMe(signal)) {
+            yield convertInternalNode(node);
+            const { volumeId } = splitNodeUid(node.uid);
+            uniqueVolumeIds.add(volumeId);
+        }
+
+        for (const volumeId of uniqueVolumeIds) {
+            await this.events.listenToVolume(volumeId, false);
+        }
     }
-    
+
     /**
      * Leave shared node that was previously shared with the user.
      *
@@ -536,7 +766,9 @@ export class ProtonDriveClient {
      * Iterates the devices of the user.
      * 
      * The output is not sorted and the order of the devices is not guaranteed.
-     * 
+     *
+     * You can listen to updates via `subscribeToDevices`.
+     *
      * @returns An async generator of devices.
      */
     async* iterateDevices(signal?: AbortSignal): AsyncGenerator<Device> {

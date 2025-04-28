@@ -1,4 +1,5 @@
 import { Logger } from "../../interface";
+import { LoggerWithPrefix } from "../../telemetry";
 import { EventsAPIService } from "./apiService";
 import { EventsCache } from "./cache";
 import { DriveEvent, DriveEventType } from "./interface";
@@ -22,7 +23,7 @@ export class CoreEventManager {
         this.apiService = apiService;
 
         this.manager = new EventManager(
-            logger,
+            new LoggerWithPrefix(logger, `core`),
             () => this.getLastEventId(),
             (eventId) => this.apiService.getCoreEvents(eventId),
             (lastEventId) => this.cache.setLastEventId('core', {

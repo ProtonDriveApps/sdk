@@ -1,5 +1,6 @@
-import { ProtonDriveHTTPClient } from "../../interface";
+import { ProtonDriveHTTPClient, SDKEvent } from "../../interface";
 import { getMockTelemetry } from "../../tests/telemetry";
+import { SDKEvents } from "../sdkEvents";
 import { DriveAPIService } from './apiService';
 import { HTTPErrorCode, ErrorCode } from './errorCodes';
 
@@ -10,17 +11,32 @@ function generateOkResponse() {
 }
 
 describe("DriveAPIService", () => {
+    let sdkEvents: SDKEvents;
     let httpClient: ProtonDriveHTTPClient;
     let api: DriveAPIService;
 
     beforeEach(() => {
         void jest.runAllTimersAsync();
 
+        // @ts-expect-error: No need to implement all methods for mocking
+        sdkEvents = {
+            transfersPaused: jest.fn(),
+            transfersResumed: jest.fn(),
+            requestsThrottled: jest.fn(),
+            requestsUnthrottled: jest.fn(),
+        }
         httpClient = {
             fetch: jest.fn(() => Promise.resolve(generateOkResponse())),
         };
-        api = new DriveAPIService(getMockTelemetry(), httpClient, 'http://drive.proton.me', 'en');
+        api = new DriveAPIService(getMockTelemetry(), sdkEvents, httpClient, 'http://drive.proton.me', 'en');
     });
+
+    function expectSDKEvents(...events: SDKEvent[]) {
+        expect(sdkEvents.transfersPaused).toHaveBeenCalledTimes(events.includes(SDKEvent.TransfersPaused) ? 1 : 0);
+        expect(sdkEvents.transfersResumed).toHaveBeenCalledTimes(events.includes(SDKEvent.TransfersResumed) ? 1 : 0);
+        expect(sdkEvents.requestsThrottled).toHaveBeenCalledTimes(events.includes(SDKEvent.RequestsThrottled) ? 1 : 0);
+        expect(sdkEvents.requestsUnthrottled).toHaveBeenCalledTimes(events.includes(SDKEvent.RequestsUnthrottled) ? 1 : 0);
+    }
 
     describe("should make", () => {
         it("GET request", async () => {
@@ -52,6 +68,7 @@ describe("DriveAPIService", () => {
                 "x-pm-drive-sdk-version": `js@${process.env.npm_package_version}`,
             }).entries()));
             expect(await request.text()).toEqual(data ? JSON.stringify(data) : "");
+            expectSDKEvents();
         }
     });
 
@@ -59,11 +76,13 @@ describe("DriveAPIService", () => {
         it("APIHTTPError on 4xx response without JSON body", async () => {
             httpClient.fetch = jest.fn(() => Promise.resolve(new Response('Not found', { status: 404, statusText: 'Not found' })));
             await expect(api.get('test')).rejects.toThrow(new Error('Not found'));
+            expectSDKEvents();
         });
 
         it("APIError on 4xx response with JSON body", async () => {
             httpClient.fetch = jest.fn(() => Promise.resolve(new Response(JSON.stringify({ Code: 42, Error: 'General error' }), { status: 422 })));
             await expect(api.get('test')).rejects.toThrow('General error');
+            expectSDKEvents();
         });
     });
 
@@ -80,6 +99,7 @@ describe("DriveAPIService", () => {
 
             await expect(result).resolves.toEqual({ Code: ErrorCode.OK });
             expect(httpClient.fetch).toHaveBeenCalledTimes(3);
+            expectSDKEvents();
         });
 
         it("on timeout error", async () => {
@@ -94,6 +114,7 @@ describe("DriveAPIService", () => {
 
             await expect(result).resolves.toEqual({ Code: ErrorCode.OK });
             expect(httpClient.fetch).toHaveBeenCalledTimes(3);
+            expectSDKEvents();
         });
 
         it("on general error", async () => {
@@ -105,6 +126,7 @@ describe("DriveAPIService", () => {
 
             await expect(result).resolves.toEqual({ Code: ErrorCode.OK });
             expect(httpClient.fetch).toHaveBeenCalledTimes(2);
+            expectSDKEvents();
         });
 
         it("only once on general error", async () => {
@@ -117,6 +139,7 @@ describe("DriveAPIService", () => {
 
             await expect(result).rejects.toThrow("Second error");
             expect(httpClient.fetch).toHaveBeenCalledTimes(2);
+            expectSDKEvents();
         });
 
         it("on 429 response", async () => {
@@ -129,6 +152,8 @@ describe("DriveAPIService", () => {
 
             await expect(result).resolves.toEqual({ Code: ErrorCode.OK });
             expect(httpClient.fetch).toHaveBeenCalledTimes(3);
+            // No event is sent on random 429, only if limit of too many subsequent 429s is reached.
+            expectSDKEvents();
         });
 
         it("on 5xx response", async () => {
@@ -140,6 +165,7 @@ describe("DriveAPIService", () => {
 
             await expect(result).resolves.toEqual({ Code: ErrorCode.OK });
             expect(httpClient.fetch).toHaveBeenCalledTimes(2);
+            expectSDKEvents();
         });
 
         it("only once on 5xx response", async () => {
@@ -150,6 +176,7 @@ describe("DriveAPIService", () => {
 
             await expect(result).rejects.toThrow("Some error");
             expect(httpClient.fetch).toHaveBeenCalledTimes(2);
+            expectSDKEvents();
         });
     });
 
@@ -164,6 +191,13 @@ describe("DriveAPIService", () => {
 
             await expect(api.get('test')).rejects.toThrow("Too many server requests, please try again later");
             expect(httpClient.fetch).toHaveBeenCalledTimes(50);
+            expectSDKEvents(SDKEvent.RequestsThrottled);
+
+            // SDK will not send any requests for 60 seconds.
+            jest.advanceTimersByTime(90 * 1000);
+            httpClient.fetch = jest.fn().mockResolvedValue(generateOkResponse());
+            await api.get('test');
+            expect(sdkEvents.requestsThrottled).toHaveBeenCalledTimes(1);
         });
 
         it("do not limit 429s when some pass", async () => {
@@ -183,6 +217,7 @@ describe("DriveAPIService", () => {
             await expect(api.get('test')).resolves.toEqual({ Code: ErrorCode.OK });
             // 20 calls * 5 retries till OK response + 1 last successful call
             expect(httpClient.fetch).toHaveBeenCalledTimes(101);
+            expectSDKEvents();
         });
 
         it("limit server errors", async () => {
@@ -195,6 +230,7 @@ describe("DriveAPIService", () => {
 
             await expect(api.get('test')).rejects.toThrow("Too many server errors, please try again later");
             expect(httpClient.fetch).toHaveBeenCalledTimes(10);
+            expectSDKEvents();
         });
 
         it("do not limit server errors when some pass", async () => {
@@ -214,6 +250,7 @@ describe("DriveAPIService", () => {
             await expect(api.get('test')).rejects.toThrow("Some error");
             // 15 erroring calls * 2 attempts + 5 successful calls
             expect(httpClient.fetch).toHaveBeenCalledTimes(35);
+            expectSDKEvents();
         });
     });
 });

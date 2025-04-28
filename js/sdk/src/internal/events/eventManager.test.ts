@@ -9,7 +9,7 @@ describe("EventManager", () => {
     
     const getLastEventIdMock = jest.fn();
     const getEventsMock = jest.fn();
-    const eventsProcessedMock = jest.fn();
+    const updateLatestEventIdMock = jest.fn();
     const listenerMock = jest.fn();
 
     beforeEach(() => {
@@ -27,7 +27,7 @@ describe("EventManager", () => {
             getMockLogger(),
             getLastEventIdMock,
             getEventsMock,
-            eventsProcessedMock,
+            updateLatestEventIdMock,
         );
         manager.addListener(listenerMock);
     });
@@ -41,7 +41,8 @@ describe("EventManager", () => {
         expect(getLastEventIdMock).toHaveBeenCalledTimes(1);
         expect(getEventsMock).toHaveBeenCalledTimes(0);
         expect(listenerMock).toHaveBeenCalledTimes(0);
-        expect(eventsProcessedMock).toHaveBeenCalledTimes(0);
+        expect(updateLatestEventIdMock).toHaveBeenCalledTimes(1);
+        expect(updateLatestEventIdMock).toHaveBeenCalledWith('eventId1');
     });
 
     it("should notify about events in the next run", async () => {
@@ -49,12 +50,14 @@ describe("EventManager", () => {
         expect(getLastEventIdMock).toHaveBeenCalledTimes(1);
         expect(getEventsMock).toHaveBeenCalledTimes(0);
         expect(listenerMock).toHaveBeenCalledTimes(0);
-        expect(eventsProcessedMock).toHaveBeenCalledTimes(0);
+        expect(updateLatestEventIdMock).toHaveBeenCalledTimes(1);
+        expect(updateLatestEventIdMock).toHaveBeenCalledWith('eventId1');
+        updateLatestEventIdMock.mockClear();
         await jest.runOnlyPendingTimersAsync();
         expect(getEventsMock).toHaveBeenCalledTimes(1);
         expect(listenerMock).toHaveBeenCalledTimes(1);
-        expect(eventsProcessedMock).toHaveBeenCalledTimes(1);
-        expect(eventsProcessedMock).toHaveBeenCalledWith('eventId2');
+        expect(updateLatestEventIdMock).toHaveBeenCalledTimes(1);
+        expect(updateLatestEventIdMock).toHaveBeenCalledWith('eventId2');
     });
 
     it("should continue with more events", async () => {
@@ -70,9 +73,10 @@ describe("EventManager", () => {
         expect(listenerMock).toHaveBeenCalledTimes(2);
         expect(listenerMock).toHaveBeenCalledWith(["event1", "event2"], false);
         expect(listenerMock).toHaveBeenCalledWith(["event3"], false);
-        expect(eventsProcessedMock).toHaveBeenCalledTimes(2);
-        expect(eventsProcessedMock).toHaveBeenCalledWith('eventId2');
-        expect(eventsProcessedMock).toHaveBeenCalledWith('eventId3');
+        expect(updateLatestEventIdMock).toHaveBeenCalledTimes(3);
+        expect(updateLatestEventIdMock).toHaveBeenCalledWith('eventId1');
+        expect(updateLatestEventIdMock).toHaveBeenCalledWith('eventId2');
+        expect(updateLatestEventIdMock).toHaveBeenCalledWith('eventId3');
     });
 
     it("should refresh if event does not exist", async () => {
@@ -82,8 +86,8 @@ describe("EventManager", () => {
         expect(getLastEventIdMock).toHaveBeenCalledTimes(2);
         expect(listenerMock).toHaveBeenCalledTimes(1);
         expect(listenerMock).toHaveBeenCalledWith([], true);
-        expect(eventsProcessedMock).toHaveBeenCalledTimes(1);
-        expect(eventsProcessedMock).toHaveBeenCalledWith('eventId1');
+        expect(updateLatestEventIdMock).toHaveBeenCalledTimes(1);
+        expect(updateLatestEventIdMock).toHaveBeenCalledWith('eventId1');
     });
 
     it("should retry on error", async () => {
@@ -101,6 +105,7 @@ describe("EventManager", () => {
             });
         });
         await manager.start();
+        updateLatestEventIdMock.mockClear();
 
         // First failure.
         await jest.runOnlyPendingTimersAsync();
@@ -121,8 +126,8 @@ describe("EventManager", () => {
         await jest.runOnlyPendingTimersAsync();
         expect(listenerMock).toHaveBeenCalledTimes(1);
         expect(listenerMock).toHaveBeenCalledWith(["event1", "event2"], false);
-        expect(eventsProcessedMock).toHaveBeenCalledTimes(1);
-        expect(eventsProcessedMock).toHaveBeenCalledWith('eventId2');
+        expect(updateLatestEventIdMock).toHaveBeenCalledTimes(1);
+        expect(updateLatestEventIdMock).toHaveBeenCalledWith('eventId2');
     });
 
     it("should stop polling", async () => {

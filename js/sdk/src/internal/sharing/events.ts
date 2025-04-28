@@ -45,10 +45,16 @@ export class SharingEvents {
 
     subscribeToSharedNodesByMe(callback: NodeEventCallback) {
         this.listeners.push({ type: SharingType.SharedByMe, callback });
+        return () => {
+            this.listeners = this.listeners.filter(listener => listener.callback !== callback);
+        }
     }
 
     subscribeToSharedNodesWithMe(callback: NodeEventCallback) {
         this.listeners.push({ type: SharingType.sharedWithMe, callback });
+        return () => {
+            this.listeners = this.listeners.filter(listener => listener.callback !== callback);
+        }
     }
 }
 
@@ -79,14 +85,16 @@ export async function handleSharedByMeNodes(logger: Logger, event: DriveEvent, c
         } catch (error: unknown) {
             logger.error(`Skipping shared by me node cache update`, error);
         }
-        let node;
-        try {
-            node = await nodesService.getNode(event.nodeUid);
-        } catch (error: unknown) {
-            logger.error(`Skipping shared by me node update event to listener`, error);
-            return;
+        if (subscribedListeners.length) {
+            let node;
+            try {
+                node = await nodesService.getNode(event.nodeUid);
+            } catch (error: unknown) {
+                logger.error(`Skipping shared by me node update event to listener`, error);
+                return;
+            }
+            subscribedListeners.forEach(({ callback }) => callback({ type: 'update', uid: node.uid, node: convertInternalNode(node) }));
         }
-        subscribedListeners.forEach(({ callback }) => callback({ type: 'update', uid: node.uid, node: convertInternalNode(node) }));
     }
 
     if (

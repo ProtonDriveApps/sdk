@@ -25,9 +25,8 @@ type Listeners = {
  * This must come from the API response to volume events.
  */
 type NodeEventInfo = {
-    parentNodeUid: string,
+    parentNodeUid?: string,
     isTrashed?: boolean,
-    isShared?: boolean,
 }
 
 /**
@@ -49,23 +48,36 @@ export class NodesEvents {
             }
 
             for (const event of events) {
-                await updateCacheByEvent(logger, event, cache);
-            }
-        });
-
-        events.addListener(async (events) => {
-            for (const event of events) {
-                await notifyListenersByEvent(logger, event, this.listeners, cache, nodesAccess);
+                try {
+                    await updateCacheByEvent(logger, event, cache);
+                } catch (error: unknown) {
+                    logger.error(`Failed to update cache`, error);
+                }
+                try {
+                    await notifyListenersByEvent(logger, event, this.listeners, cache, nodesAccess);
+                } catch (error: unknown) {
+                    logger.error(`Failed to notifiy listeners`, error);
+                }
+                // Delete must come last as it will remove the node from the cache
+                // and we need to first know local status of the node to properly
+                // notify the listeners.
+                await deleteFromCacheByEvent(logger, event, cache);
             }
         });
     }
 
     subscribeToTrashedNodes(callback: NodeEventCallback) {
         this.listeners.push({ condition: ({ isTrashed }) => isTrashed || false, callback });
+        return () => {
+            this.listeners = this.listeners.filter(listener => listener.callback !== callback);
+        }
     }
 
     subscribeToChildren(parentNodeUid: string, callback: NodeEventCallback) {
         this.listeners.push({ condition: ({ parentNodeUid: parent }) => parent === parentNodeUid, callback });
+        return () => {
+            this.listeners = this.listeners.filter(listener => listener.callback !== callback);
+        }
     }
 }
 
@@ -136,6 +148,13 @@ export async function updateCacheByEvent(logger: Logger, event: DriveEvent, cach
             }
         }
     }
+}
+
+/**
+ * For given event, delete the node from the cache if it is
+ * deleted.
+ */
+export async function deleteFromCacheByEvent(logger: Logger, event: DriveEvent, cache: NodesCache) {
     if (event.type === DriveEventType.NodeDeleted) {
         // removeNodes can fail removing children.
         // We do not want to stop processing other events in such
@@ -164,8 +183,14 @@ export async function updateCacheByEvent(logger: Logger, event: DriveEvent, cach
  * @throws Only if the client's callback throws.
  */
 export async function notifyListenersByEvent(logger: Logger, event: DriveEvent, listeners: Listeners, cache: NodesCache, nodesAccess: NodesAccess) {
-    if (event.type === DriveEventType.NodeCreated || event.type === DriveEventType.NodeUpdated || event.type === DriveEventType.NodeUpdatedMetadata) {
-        const subscribedListeners = listeners.filter(({ condition }) => condition(event));
+    if (event.type === DriveEventType.ShareWithMeUpdated) {
+        return;
+    }
+
+    const subscribedListeners = listeners.filter(({ condition }) => condition(event));
+    const eventMatchingCondition = subscribedListeners.length > 0;
+
+    if ([DriveEventType.NodeCreated, DriveEventType.NodeUpdated, DriveEventType.NodeUpdatedMetadata].includes(event.type) && eventMatchingCondition) {
         if (subscribedListeners.length) {
             let node;
             try {
@@ -178,17 +203,20 @@ export async function notifyListenersByEvent(logger: Logger, event: DriveEvent, 
         }
     }
 
-    if (event.type === DriveEventType.NodeDeleted) {
+    if (
+        ((event.type === DriveEventType.NodeUpdated || event.type === DriveEventType.NodeUpdatedMetadata) && !eventMatchingCondition)
+        || event.type === DriveEventType.NodeDeleted
+    ) {
         let node: DecryptedNode;
         try {
             node = await cache.getNode(event.nodeUid);
         } catch {}
 
         const subscribedListeners = listeners.filter(({ condition }) => condition({
-            isShared: node?.isShared || false,
+            parentNodeUid: node?.parentUid,
             isTrashed: !!node?.trashTime || false,
-            ...event,
         }));
+
         if (subscribedListeners.length) {
             subscribedListeners.forEach(({ callback }) => callback({ type: 'remove', uid: event.nodeUid }));
         }

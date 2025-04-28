@@ -5,6 +5,11 @@ import { CommandDeviceCreate } from './commandDeviceCreate';
 import { CommandDeviceDelete } from './commandDeviceDelete';
 import { CommandDeviceList } from './commandDeviceList';
 import { CommandDeviceRename } from './commandDeviceRename';
+import { CommandEventFolder } from './commandEventFolder';
+import { CommandEventSharedByMe } from './commandEventSharedByMe';
+import { CommandEventSharedWithMe } from './commandEventSharedWithMe';
+import { CommandEventSync } from "./commandEventSync";
+import { CommandEventTrash } from './commandEventTrash';
 import { CommandFileSystemCreateFolder } from './commandFileSystemCreateFolder';
 import { CommandFileSystemDelete } from "./commandFileSystemDelete";
 import { CommandFileSystemDownload } from './commandFileSystemDownload';
@@ -30,6 +35,11 @@ import { Command } from './interface';
 const COMMANDS = [
     new CommandAuthLogin(),
     new CommandAuthLogout(),
+    new CommandEventSync(),
+    new CommandEventFolder(),
+    new CommandEventTrash(),
+    new CommandEventSharedByMe(),
+    new CommandEventSharedWithMe(),
     new CommandFileSystemList(),
     new CommandFileSystemInfo(),
     new CommandFileSystemCreateFolder(),
