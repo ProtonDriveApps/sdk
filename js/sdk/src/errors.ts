@@ -113,8 +113,8 @@ export class ServerError extends ProtonDriveError {
  * 
  * Client should slow down calling SDK when this error is thrown.
  * 
- * You can be also notified about the rate limits by the `speedLimited` event.
- * See `onMessage` method on the SDK class for more details.
+ * You can be also notified about the rate limits by the `requestsThrottled`
+ * event. See `onMessage` method on the SDK class for more details.
  */
 export class RateLimitedError extends ServerError {
     name = 'RateLimitedError';

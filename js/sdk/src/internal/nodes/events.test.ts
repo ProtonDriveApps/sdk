@@ -1,6 +1,6 @@
 import { getMockLogger } from "../../tests/logger";
-import { DriveEvent, DriveEventType } from "../events";
-import { updateCacheByEvent, notifyListenersByEvent } from "./events";
+import { DriveEventsService, DriveEvent, DriveEventType } from "../events";
+import { NodesEvents, updateCacheByEvent, deleteFromCacheByEvent, notifyListenersByEvent } from "./events";
 import { DecryptedNode } from "./interface";
 import { NodesCache } from "./cache";
 import { NodesAccess } from "./nodesAccess";
@@ -15,7 +15,11 @@ describe("updateCacheByEvent", () => {
 
         // @ts-expect-error No need to implement all methods for mocking
         cache = {
-            getNode: jest.fn(() => Promise.resolve({ uid: '123', name: { ok: true, value: 'name' } } as DecryptedNode)),
+            getNode: jest.fn(() => Promise.resolve({
+                uid: '123',
+                parentUid: 'parentUid',
+                name: { ok: true, value: 'name' },
+            } as DecryptedNode)),
             setNode: jest.fn(),
             removeNodes: jest.fn(),
             resetFolderChildrenLoaded: jest.fn(),
@@ -99,7 +103,7 @@ describe("updateCacheByEvent", () => {
         }
 
         it("should remove node from cache", async () => {
-            await updateCacheByEvent(logger, event, cache);
+            await deleteFromCacheByEvent(logger, event, cache);
 
             expect(cache.removeNodes).toHaveBeenCalledTimes(1);
             expect(cache.removeNodes).toHaveBeenCalledWith([event.nodeUid]);
@@ -118,7 +122,11 @@ describe("notifyListenersByEvent", () => {
 
         // @ts-expect-error No need to implement all methods for mocking
         cache = {
-            getNode: jest.fn(),
+            getNode: jest.fn(() => Promise.resolve({
+                uid: '123',
+                parentUid: 'parentUid',
+                name: { ok: true, value: 'name' },
+            } as DecryptedNode)),
         };
         // @ts-expect-error No need to implement all methods for mocking
         nodesAccess = {
@@ -127,7 +135,7 @@ describe("notifyListenersByEvent", () => {
     });
 
     describe('update event', () => {
-        it("should notify listeners by parentNodeUid", async () => {
+        it("should notify listeners by parentNodeUid when there is update", async () => {
             const event: DriveEvent = {
                 type: DriveEventType.NodeUpdated,
                 nodeUid: "nodeUid",
@@ -143,9 +151,29 @@ describe("notifyListenersByEvent", () => {
             expect(listener).toHaveBeenCalledTimes(1);
             expect(listener).toHaveBeenCalledWith(expect.objectContaining({ type: 'update', uid: 'nodeUid' }));
             expect(nodesAccess.getNode).toHaveBeenCalledTimes(1);
+            expect(cache.getNode).toHaveBeenCalledTimes(0);
         });
 
-        it("should notify listeners by isTrashed", async () => {
+        it("should notify listeners by parentNodeUid when it is moved to another parent", async () => {
+            const event: DriveEvent = {
+                type: DriveEventType.NodeUpdated,
+                nodeUid: "nodeUid",
+                parentNodeUid: "newParentUid",
+                isTrashed: false,
+                isShared: false,
+                isOwnVolume: true,
+            };
+            const listener = jest.fn();
+    
+            await notifyListenersByEvent(logger, event, [{ condition: ({ parentNodeUid }) => parentNodeUid === 'parentUid', callback: listener }], cache, nodesAccess);
+    
+            expect(listener).toHaveBeenCalledTimes(1);
+            expect(listener).toHaveBeenCalledWith(expect.objectContaining({ type: 'remove', uid: 'nodeUid' }));
+            expect(nodesAccess.getNode).toHaveBeenCalledTimes(0);
+            expect(cache.getNode).toHaveBeenCalledTimes(1);
+        });
+
+        it("should notify listeners by isTrashed when there is update", async () => {
             const event: DriveEvent = {
                 type: DriveEventType.NodeUpdated,
                 nodeUid: "nodeUid",
@@ -161,24 +189,32 @@ describe("notifyListenersByEvent", () => {
             expect(listener).toHaveBeenCalledTimes(1);
             expect(listener).toHaveBeenCalledWith(expect.objectContaining({ type: 'update', uid: 'nodeUid' }));
             expect(nodesAccess.getNode).toHaveBeenCalledTimes(1);
+            expect(cache.getNode).toHaveBeenCalledTimes(0);
         });
 
-        it("should notify listeners by isShared", async () => {
+        it("should notify listeners by isTrashed when it is moved out of trash", async () => {
+            cache.getNode = jest.fn(() => Promise.resolve({
+                uid: '123',
+                parentUid: 'parentUid',
+                name: { ok: true, value: 'name' },
+                trashTime: new Date(),
+            } as DecryptedNode));
             const event: DriveEvent = {
                 type: DriveEventType.NodeUpdated,
                 nodeUid: "nodeUid",
                 parentNodeUid: "parentUid",
                 isTrashed: false,
-                isShared: true,
+                isShared: false,
                 isOwnVolume: true,
             };
             const listener = jest.fn();
     
-            await notifyListenersByEvent(logger, event, [{ condition: ({ isShared }) => !!isShared, callback: listener }], cache, nodesAccess);
+            await notifyListenersByEvent(logger, event, [{ condition: ({ isTrashed }) => !!isTrashed, callback: listener }], cache, nodesAccess);
     
             expect(listener).toHaveBeenCalledTimes(1);
-            expect(listener).toHaveBeenCalledWith(expect.objectContaining({ type: 'update', uid: 'nodeUid' }));
-            expect(nodesAccess.getNode).toHaveBeenCalledTimes(1);
+            expect(listener).toHaveBeenCalledWith(expect.objectContaining({ type: 'remove', uid: 'nodeUid' }));
+            expect(nodesAccess.getNode).toHaveBeenCalledTimes(0);
+            expect(cache.getNode).toHaveBeenCalledTimes(1);
         });
 
         it("should not notify listeners if neither condition match", async () => {
@@ -232,23 +268,6 @@ describe("notifyListenersByEvent", () => {
             expect(listener).toHaveBeenCalledWith({ type: 'remove', uid: 'nodeUid' });
         });
 
-        it("should notify listeners by isShared from cache", async () => {
-            cache.getNode = jest.fn(() => Promise.resolve({ uid: 'nodeUid', isShared: true } as DecryptedNode));
-            const event: DriveEvent = {
-                type: DriveEventType.NodeDeleted,
-                nodeUid: "nodeUid",
-                parentNodeUid: "parentUid",
-                isOwnVolume: true,
-            };
-    
-            const listener = jest.fn();
-    
-            await notifyListenersByEvent(logger, event, [{ condition: ({ isShared }) => !!isShared, callback: listener }], cache, nodesAccess);
-    
-            expect(listener).toHaveBeenCalledTimes(1);
-            expect(listener).toHaveBeenCalledWith({ type: 'remove', uid: 'nodeUid' });
-        });
-
         it("should not notify listeners if cache is missing node", async () => {
             cache.getNode = jest.fn(() => Promise.reject(new Error('Missing in the cache')));
             const event: DriveEvent = {
@@ -278,5 +297,81 @@ describe("notifyListenersByEvent", () => {
             expect(listener).toHaveBeenCalledTimes(0);
         });
     });
+});
 
+describe("NodesEvents integration", () => {
+    const logger = getMockLogger();
+
+    let eventsService: DriveEventsService;
+    let eventsServiceCallback;
+    let cache: NodesCache;
+    let nodesAccess: NodesAccess;
+    let listener: jest.Mock;
+    let events: NodesEvents;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+
+        // @ts-expect-error No need to implement all methods for mocking
+        eventsService = {
+            addListener: jest.fn((callback) => {
+                eventsServiceCallback = callback;
+            }),
+        }
+        // @ts-expect-error No need to implement all methods for mocking
+        cache = {
+            getNode: jest.fn(() => Promise.resolve({
+                uid: 'nodeUid',
+                parentUid: 'parentUid',
+                name: { ok: true, value: 'name' },
+                trashTime: new Date(),
+            } as DecryptedNode)),
+            setNode: jest.fn(),
+            removeNodes: jest.fn(),
+        };
+        // @ts-expect-error No need to implement all methods for mocking
+        nodesAccess = {
+            getNode: jest.fn(() => Promise.resolve({
+                uid: 'nodeUid',
+                parentUid: 'parentUid',
+                name: { ok: true, value: 'name' },
+            } as DecryptedNode)),
+        };
+        listener = jest.fn();
+        events = new NodesEvents(logger, eventsService, cache, nodesAccess);
+        events.subscribeToTrashedNodes(listener);
+    });
+
+    it("should send remove to trash listener when node is restored from trash", async () => {
+        await eventsServiceCallback!([{
+            type: DriveEventType.NodeUpdated,
+            nodeUid: "nodeUid",
+            parentNodeUid: "parentUid",
+            isTrashed: false,
+            isShared: false,
+            isOwnVolume: true,
+        } as DriveEvent]);
+
+        expect(listener).toHaveBeenCalledTimes(1);
+        expect(listener).toHaveBeenCalledWith({ type: 'remove', uid: 'nodeUid' });
+        expect(cache.setNode).toHaveBeenCalledTimes(1);
+        expect(cache.setNode).toHaveBeenCalledWith(expect.objectContaining({ uid: 'nodeUid', isStale: true }));
+    });
+
+    it("should send remove to trash listener when node is deleted", async () => {
+        await eventsServiceCallback!([{
+            type: DriveEventType.NodeDeleted,
+            nodeUid: "nodeUid",
+            parentNodeUid: "parentUid",
+            isTrashed: false,
+            isShared: false,
+            isOwnVolume: true,
+        } as DriveEvent]);
+
+        expect(listener).toHaveBeenCalledTimes(1);
+        expect(listener).toHaveBeenCalledWith({ type: 'remove', uid: 'nodeUid' });
+        expect(cache.setNode).toHaveBeenCalledTimes(0);
+        expect(cache.removeNodes).toHaveBeenCalledTimes(1);
+        expect(cache.removeNodes).toHaveBeenCalledWith(['nodeUid']);
+    });
 });

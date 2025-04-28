@@ -4,6 +4,7 @@ import { VERSION } from "../../version";
 import { ProtonDriveHTTPClient, ProtonDriveTelemetry, Logger } from "../../interface";
 import { AbortError, ServerError, RateLimitedError, ProtonDriveError } from '../../errors';
 import { waitSeconds } from '../wait';
+import { SDKEvents } from '../sdkEvents';
 import { HTTPErrorCode, isCodeOk } from './errorCodes';
 import { apiErrorFactory } from './errors';
 
@@ -79,12 +80,19 @@ export class DriveAPIService {
 
     private logger: Logger;
 
-    constructor(private telemetry: ProtonDriveTelemetry, private httpClient: ProtonDriveHTTPClient, private baseUrl: string, private language: string) {
+    constructor(
+        private telemetry: ProtonDriveTelemetry,
+        private sdkEvents: SDKEvents,
+        private httpClient: ProtonDriveHTTPClient,
+        private baseUrl: string,
+        private language: string,
+    ) {
+        this.logger = telemetry.getLogger('api');
+        this.sdkEvents = sdkEvents;
         this.httpClient = httpClient;
         this.baseUrl = baseUrl;
         this.language = language;
         this.telemetry = telemetry;
-        this.logger = telemetry.getLogger('api');
     }
 
     async get<ResponsePayload>(url: string, signal?: AbortSignal): Promise<ResponsePayload> {
@@ -233,7 +241,6 @@ export class DriveAPIService {
         }
 
         if (response.status === HTTPErrorCode.TOO_MANY_REQUESTS) {
-            // FIXME: emit event to the client
             this.tooManyRequestsErrorHappened();
             const timeout = parseInt(response.headers.get('retry-after') || '0', DEFAULT_429_RETRY_DELAY_SECONDS);
             await waitSeconds(timeout);
@@ -279,9 +286,21 @@ export class DriveAPIService {
     private tooManyRequestsErrorHappened() {
         this.subsequentTooManyRequestsCounter++;
         this.lastTooManyRequestsErrorAt = Date.now();
+
+        // Do not emit event if there is first few 429 errors, only when
+        // the client is very limited. This is generic event and it doesn't
+        // take into account that various endpoints can be rate limited
+        // independently.
+        if (this.subsequentTooManyRequestsCounter >= TOO_MANY_SUBSEQUENT_429_ERRORS) {
+            this.sdkEvents.requestsThrottled();
+        }
     }
 
     private clearSubsequentTooManyRequestsError() {
+        if (this.subsequentTooManyRequestsCounter >= TOO_MANY_SUBSEQUENT_429_ERRORS) {
+            this.sdkEvents.requestsUnthrottled();
+        }
+
         this.subsequentTooManyRequestsCounter = 0;
         this.lastTooManyRequestsErrorAt = undefined;
     }

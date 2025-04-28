@@ -29,6 +29,7 @@ type Listener<T> = (events: T[], fullRefresh: boolean) => Promise<void>;
  * 
  * ```typescript
  * const manager = new EventManager(
+ *    logger,
  *    () => apiService.getLatestEventId(),
  *    (eventId) => apiService.getEvents(eventId),
  * );
@@ -41,7 +42,7 @@ type Listener<T> = (events: T[], fullRefresh: boolean) => Promise<void>;
  * ```
  */
 export class EventManager<T> {
-    private lastestEventId?: string;
+    private latestEventId?: string;
     private timeoutHandle?: ReturnType<typeof setTimeout>;
     private processPromise?: Promise<void>;
     private listeners: Listener<T>[] = [];
@@ -53,11 +54,12 @@ export class EventManager<T> {
         private logger: Logger,
         private getLatestEventId: () => Promise<string>,
         private getEvents: (eventId: string) => Promise<Events<T>>,
-        private eventsProcessed: (lastEventId: string) => Promise<void>,
+        private updateLatestEventId: (lastEventId: string) => Promise<void>,
     ) {
         this.logger = logger;
         this.getLatestEventId = getLatestEventId;
         this.getEvents = getEvents;
+        this.updateLatestEventId = updateLatestEventId;
     }
 
     addListener(callback: Listener<T>): void {
@@ -65,23 +67,26 @@ export class EventManager<T> {
     }
 
     async start(): Promise<void> {
+        this.logger.info(`Starting event manager with polling interval ${this.pollingIntervalInSeconds} seconds`);
         await this.stop();
         this.processPromise = this.processEvents();
     }
 
     private async processEvents() {
         try {
-            if (!this.lastestEventId) {
-                this.lastestEventId = await this.getLatestEventId();
+            if (!this.latestEventId) {
+                this.latestEventId = await this.getLatestEventId();
+                await this.updateLatestEventId(this.latestEventId);
             } else {
                 while (true) {
                     let result;
                     try {
-                        result = await this.getEvents(this.lastestEventId);
+                        result = await this.getEvents(this.latestEventId);
                     } catch (error: unknown) {
                         // If last event ID is not found, we need to refresh the data.
                         // Caller is notified via standard event update with refresh flag.
                         if (error instanceof NotFoundAPIError) {
+                            this.logger.warn(`Last event ID not found, refreshing data`);
                             result = {
                                 lastEventId: await this.getLatestEventId(), 
                                 more: false, 
@@ -95,7 +100,10 @@ export class EventManager<T> {
                         }
                     }
                     await this.notifyListeners(result);
-                    this.lastestEventId = result.lastEventId;
+                    if (result.lastEventId !== this.latestEventId) {
+                        await this.updateLatestEventId(result.lastEventId);
+                        this.latestEventId = result.lastEventId;
+                    }
                     if (!result.more) {
                         break;
                     }
@@ -103,7 +111,7 @@ export class EventManager<T> {
             }
             this.retryIndex = 0;
         } catch (error: unknown) {
-            this.logger.error(`Failed to process events: ${error instanceof Error ? error.message : error} (retry ${this.retryIndex}, last event ID: ${this.lastestEventId})`);
+            this.logger.error(`Failed to process events: ${error instanceof Error ? error.message : error} (retry ${this.retryIndex}, last event ID: ${this.latestEventId})`);
             this.retryIndex++;
         }
 
@@ -116,6 +124,11 @@ export class EventManager<T> {
         if (result.events.length === 0 && !result.refresh) {
             return;
         }
+        if (!this.listeners.length) {
+            return;
+        }
+
+        this.logger.debug(`Notifying listeners about ${result.events.length} events`);
 
         for (const listener of this.listeners) {
             try {
@@ -125,8 +138,6 @@ export class EventManager<T> {
                 throw error;
             }
         }
-
-        await this.eventsProcessed(result.lastEventId);
     }
 
     /**
@@ -141,6 +152,7 @@ export class EventManager<T> {
 
     async stop(): Promise<void> {
         if (this.processPromise) {
+            this.logger.info(`Stopping event manager`);
             try {
                 await this.processPromise;
             } catch {}
