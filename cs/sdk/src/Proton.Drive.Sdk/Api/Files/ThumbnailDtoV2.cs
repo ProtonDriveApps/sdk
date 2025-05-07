@@ -2,7 +2,7 @@
 
 namespace Proton.Drive.Sdk.Api.Files;
 
-internal sealed class ThumbnailDto
+internal sealed class ThumbnailDtoV2
 {
     [JsonPropertyName("ThumbnailID")]
     public string? Id { get; init; }
@@ -12,6 +12,6 @@ internal sealed class ThumbnailDto
     [JsonPropertyName("Hash")]
     public required ReadOnlyMemory<byte> HashDigest { get; init; }
 
-    [JsonPropertyName("Size")]
+    [JsonPropertyName("EncryptedSize")]
     public required int StorageQuotaUsage { get; init; }
 }

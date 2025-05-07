@@ -40,4 +40,5 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(BlockRequestResponse))]
 [JsonSerializable(typeof(RevisionUpdateParameters))]
 [JsonSerializable(typeof(BlockVerificationInputResponse))]
+[JsonSerializable(typeof(RevisionResponse))]
 internal sealed partial class DriveApiSerializerContext : JsonSerializerContext;

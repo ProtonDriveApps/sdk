@@ -5,7 +5,7 @@ using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Api.Files;
 
-internal sealed class RevisionDto
+internal class RevisionDto
 {
     [JsonPropertyName("ID")]
     public required string Id { get; init; }

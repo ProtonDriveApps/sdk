@@ -4,7 +4,7 @@ namespace Proton.Drive.Sdk.Nodes;
 
 public sealed class Revision
 {
-    public required RevisionId Id { get; init; }
+    public required RevisionUid Uid { get; init; }
     public required DateTime CreationTime { get; init; }
     public required long StorageQuotaConsumption { get; init; }
     public required long? ClaimedSize { get; init; }

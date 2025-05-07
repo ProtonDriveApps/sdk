@@ -1,6 +1,5 @@
 ﻿using System.Text.Json.Serialization;
 using Proton.Drive.Sdk.Api.Links;
-using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk.Addresses;
 

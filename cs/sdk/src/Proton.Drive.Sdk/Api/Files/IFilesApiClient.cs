@@ -1,5 +1,4 @@
 using Proton.Drive.Sdk.Api.Links;
-using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk.Api;
 
@@ -16,5 +15,14 @@ internal interface IFilesApiClient : IRevisionVerificationApiClient
         LinkId linkId,
         RevisionId revisionId,
         RevisionUpdateParameters parameters,
+        CancellationToken cancellationToken);
+
+    public ValueTask<RevisionResponse> GetRevisionAsync(
+        VolumeId volumeId,
+        LinkId linkId,
+        RevisionId revisionId,
+        int fromBlockIndex,
+        int pageSize,
+        bool withoutBlockUrls,
         CancellationToken cancellationToken);
 }

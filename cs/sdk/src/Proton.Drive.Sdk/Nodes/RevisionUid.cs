@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
+using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Nodes;
@@ -18,7 +19,7 @@ public readonly record struct RevisionUid : ICompositeUid<RevisionUid>
 
     public override string ToString()
     {
-        return $"{NodeUid.VolumeId}-{NodeUid.LinkId}~{RevisionId}";
+        return $"{NodeUid}~{RevisionId}";
     }
 
     static bool ICompositeUid<RevisionUid>.TryCreate(string baseUidString, string relativeIdString, [NotNullWhen(true)] out RevisionUid? uid)
