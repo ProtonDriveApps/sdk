@@ -1,4 +1,5 @@
-﻿using Proton.Drive.Sdk.Nodes.Upload;
+﻿using Proton.Drive.Sdk.Nodes.Download;
+using Proton.Drive.Sdk.Nodes.Upload;
 
 namespace Proton.Drive.Sdk.Nodes;
 
@@ -28,5 +29,29 @@ internal static class RevisionOperations
             releaseBlocksAction,
             targetBlockSize,
             targetBlockSize * 3 / 2);
+    }
+
+    internal static async ValueTask<RevisionReader> OpenForReadingAsync(
+        ProtonDriveClient client,
+        RevisionUid revisionUid,
+        Action<int> releaseBlockListingAction,
+        CancellationToken cancellationToken)
+    {
+        var fileSecrets = await FileOperations.GetSecretsAsync(client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
+
+        var (fileUid, revisionId) = revisionUid;
+
+        var revisionResponse = await client.Api.Files.GetRevisionAsync(
+            fileUid.VolumeId,
+            fileUid.LinkId,
+            revisionId,
+            RevisionReader.MinBlockIndex,
+            RevisionReader.BlockPageSize,
+            false,
+            cancellationToken).ConfigureAwait(false);
+
+        await client.BlockDownloader.FileSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        return new RevisionReader(client, revisionUid, fileSecrets.Key, fileSecrets.ContentKey, revisionResponse.Revision, releaseBlockListingAction);
     }
 }

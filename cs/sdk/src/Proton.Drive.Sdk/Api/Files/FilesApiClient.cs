@@ -1,5 +1,4 @@
 using Proton.Drive.Sdk.Api.Links;
-using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Serialization;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk.Api;
@@ -52,5 +51,21 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
         return await _httpClient
             .Expecting(DriveApiSerializerContext.Default.BlockVerificationInputResponse)
             .GetAsync($"v2/volumes/{volumeId}/links/{linkId}/revisions/{revisionId}/verification", cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask<RevisionResponse> GetRevisionAsync(
+        VolumeId volumeId,
+        LinkId linkId,
+        RevisionId revisionId,
+        int fromBlockIndex,
+        int pageSize,
+        bool withoutBlockUrls,
+        CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(DriveApiSerializerContext.Default.RevisionResponse)
+            .GetAsync(
+                $"v2/volumes/{volumeId}/files/{linkId}/revisions/{revisionId}?FromBlockIndex={fromBlockIndex}&PageSize={pageSize}&NoBlockUrls={(withoutBlockUrls ? 1 : 0)}",
+                cancellationToken).ConfigureAwait(false);
     }
 }

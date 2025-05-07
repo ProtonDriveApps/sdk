@@ -132,18 +132,11 @@ internal static class AddressOperations
 
                 var publicKeys = new List<PgpPublicKey>(publicKeysResponse.Address.Keys.Count);
 
-                for (var keyIndex = 0; keyIndex < publicKeys.Count; ++keyIndex)
-                {
-                    var keyEntry = publicKeysResponse.Address.Keys[keyIndex];
-                    if (!keyEntry.Status.HasFlag(PublicKeyStatus.IsNotCompromised))
-                    {
-                        continue;
-                    }
+                var publicKeyQuery = publicKeysResponse.Address.Keys
+                    .Where(x => x.Status.HasFlag(PublicKeyStatus.IsNotCompromised))
+                    .Select(x => PgpPublicKey.Import(x.PublicKey));
 
-                    var publicKey = PgpPublicKey.Import(keyEntry.PublicKey);
-
-                    publicKeys.Add(publicKey);
-                }
+                publicKeys.AddRange(publicKeyQuery);
 
                 client.Cache.PublicKeys.SetPublicKeys(emailAddress, publicKeys);
 

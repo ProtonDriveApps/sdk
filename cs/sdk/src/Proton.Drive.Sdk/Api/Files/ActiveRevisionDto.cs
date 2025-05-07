@@ -1,5 +1,4 @@
 ﻿using System.Text.Json.Serialization;
-using Proton.Drive.Sdk.Nodes;
 using Proton.Sdk.Cryptography;
 using Proton.Sdk.Serialization;
 
@@ -22,7 +21,7 @@ internal sealed class ActiveRevisionDto
     [JsonPropertyName("XAttr")]
     public PgpArmoredMessage? ExtendedAttributes { get; init; }
 
-    public IReadOnlyList<ThumbnailDto>? Thumbnails { get; init; }
+    public IReadOnlyList<ThumbnailDtoV2>? Thumbnails { get; init; }
 
     [JsonPropertyName("SignatureEmail")]
     public string? SignatureEmailAddress { get; init; }

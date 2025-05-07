@@ -1,6 +1,6 @@
 ﻿namespace Proton.Drive.Sdk.Nodes.Upload.Verification;
 
-public sealed class SessionKeyAndDataPacketMismatchException : Exception
+public sealed class SessionKeyAndDataPacketMismatchException : ProtonDriveException
 {
     public SessionKeyAndDataPacketMismatchException(string message)
         : base(message)

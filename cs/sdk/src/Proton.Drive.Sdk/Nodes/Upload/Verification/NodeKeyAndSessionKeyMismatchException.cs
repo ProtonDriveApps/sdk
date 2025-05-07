@@ -1,6 +1,6 @@
 ﻿namespace Proton.Drive.Sdk.Nodes.Upload.Verification;
 
-public sealed class NodeKeyAndSessionKeyMismatchException : Exception
+public sealed class NodeKeyAndSessionKeyMismatchException : ProtonDriveException
 {
     public NodeKeyAndSessionKeyMismatchException(string message)
         : base(message)

@@ -2,7 +2,7 @@
 
 namespace Proton.Drive.Sdk.Nodes;
 
-public sealed class InvalidNodeTypeException : Exception
+public sealed class InvalidNodeTypeException : ProtonDriveException
 {
     public InvalidNodeTypeException(string message)
         : base(message)

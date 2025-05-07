@@ -183,7 +183,7 @@ internal static class NodeCrypto
             MediaType = file.MediaType,
             ActiveRevision = new Revision
             {
-                Id = file.ActiveRevision.Id,
+                Uid = new RevisionUid(id, file.ActiveRevision.Id),
                 CreationTime = file.ActiveRevision.CreationTime,
                 StorageQuotaConsumption = file.ActiveRevision.StorageQuotaConsumption,
                 ClaimedSize = extendedAttributes?.Common?.Size,
