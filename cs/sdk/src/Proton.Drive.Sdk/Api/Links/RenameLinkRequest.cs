@@ -16,7 +16,7 @@ internal sealed class RenameLinkRequest
     public required string NameSignatureEmailAddress { get; init; }
 
     [JsonPropertyName("MIMEType")]
-    public required string MediaType { get; set; }
+    public required string? MediaType { get; set; }
 
     [JsonPropertyName("OriginalHash")]
     [JsonConverter(typeof(ForgivingBytesToHexJsonConverter))]
