@@ -129,7 +129,8 @@ internal static class FolderOperations
 
         if (folderSecrets is null)
         {
-            var nodeProvisionResult = await NodeOperations.GetFreshNodeMetadataAsync(client, folderId, knownShareAndKey: null, cancellationToken).ConfigureAwait(false);
+            var nodeProvisionResult = await NodeOperations.GetFreshNodeMetadataAsync(client, folderId, knownShareAndKey: null, cancellationToken)
+                .ConfigureAwait(false);
 
             folderSecrets = nodeProvisionResult.GetFolderSecretsOrThrow();
         }

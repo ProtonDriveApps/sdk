@@ -12,7 +12,7 @@ public enum ResponseCode
 
     Success = 1000,
     MultipleResponses = 1001,
-    ParentDoesNotExist = 2000,
+    InvalidRequirements = 2000,
     InvalidValue = 2001,
     InvalidEncryptedIdFormat = 2061,
     AlreadyExists = 2500,

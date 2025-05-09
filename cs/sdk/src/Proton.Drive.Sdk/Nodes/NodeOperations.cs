@@ -31,6 +31,11 @@ internal static class NodeOperations
         return (FolderNode)metadata.Node;
     }
 
+    public static ValueTask<NodeMetadata> GetNodeMetadataAsync(ProtonDriveClient client, NodeUid uid, CancellationToken cancellationToken)
+    {
+        return GetNodeMetadataAsync(client, uid, knownShareAndKey: null, cancellationToken);
+    }
+
     public static async ValueTask<NodeMetadata> GetNodeMetadataAsync(
         ProtonDriveClient client,
         NodeUid uid,
@@ -91,7 +96,7 @@ internal static class NodeOperations
             .ConfigureAwait(false);
     }
 
-    public static async Task MoveSingleAsync(
+    public static async ValueTask MoveSingleAsync(
         ProtonDriveClient client,
         NodeUid uid,
         NodeUid newParentUid,
@@ -219,6 +224,50 @@ internal static class NodeOperations
         await client.Api.Links.MoveMultipleAsync(newParentUid.VolumeId, batchRequest, cancellationToken).ConfigureAwait(false);
 
         // FIXME: update cache
+    }
+
+    public static async ValueTask RenameAsync(
+        ProtonDriveClient client,
+        NodeUid uid,
+        string newName,
+        string? newMediaType,
+        CancellationToken cancellationToken)
+    {
+        // TODO: support renaming degraded nodes
+        var (node, secrets, membershipShareId, originalNameHashDigest) = await GetNodeMetadataAsync(client, uid, cancellationToken).ConfigureAwait(false);
+
+        if (node.ParentUid is not { } parentUid)
+        {
+            throw new InvalidOperationException("Cannot rename root node");
+        }
+
+        var membershipAddress = await GetMembershipAddressAsync(client, uid, cancellationToken).ConfigureAwait(false);
+
+        var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
+
+        var parentFolderSecrets = await FolderOperations.GetSecretsAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
+
+        GetNameParameters(
+            newName, // FIXME: validate name
+            parentFolderSecrets.Key,
+            parentFolderSecrets.HashKey.Span,
+            secrets.NameSessionKey,
+            signingKey,
+            out var encryptedName,
+            out var nameHashDigest);
+
+        var parameters = new RenameLinkRequest
+        {
+            Name = encryptedName,
+            NameHashDigest = nameHashDigest,
+            NameSignatureEmailAddress = membershipAddress.EmailAddress,
+            MediaType = newMediaType,
+            OriginalNameHashDigest = originalNameHashDigest,
+        };
+
+        await client.Api.Links.RenameAsync(uid.VolumeId, uid.LinkId, parameters, cancellationToken).ConfigureAwait(false);
+
+        await client.Cache.Entities.SetNodeAsync(uid, node with { Name = newName }, membershipShareId, nameHashDigest, cancellationToken).ConfigureAwait(false);
     }
 
     public static async ValueTask<Address> GetMembershipAddressAsync(ProtonDriveClient client, NodeUid nodeUid, CancellationToken cancellationToken)

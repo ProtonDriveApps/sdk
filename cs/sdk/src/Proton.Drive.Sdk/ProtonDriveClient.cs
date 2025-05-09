@@ -90,7 +90,7 @@ public sealed class ProtonDriveClient
         return new FileUploader(this, name, mediaType, lastModificationTime, expectedNumberOfBlocks);
     }
 
-    public async Task<FileDownloader> GetFileDownloaderAsync(RevisionUid revisionUid, CancellationToken cancellationToken)
+    public async ValueTask<FileDownloader> GetFileDownloaderAsync(RevisionUid revisionUid, CancellationToken cancellationToken)
     {
         await BlockListingSemaphore.EnterAsync(1, cancellationToken).ConfigureAwait(false);
 
@@ -103,7 +103,12 @@ public sealed class ProtonDriveClient
         foreach (var uid in uids)
         {
             await NodeOperations.MoveSingleAsync(this, uid, newParentFolderUid, newName: null, cancellationToken).ConfigureAwait(false);
-        }
+    }
+    }
+
+    public ValueTask RenameNodeAsync(NodeUid uid, string newName, string? newMediaType, CancellationToken cancellationToken)
+    {
+        return NodeOperations.RenameAsync(this, uid, newName, newMediaType, cancellationToken);
     }
 
     internal async ValueTask<string> GetClientUidAsync(CancellationToken cancellationToken)
