@@ -1,4 +1,3 @@
-import { ParseArgsConfig } from "util";
 import { ProtonDriveClient } from '../../../sdk/src';
 import { Command, ActionArgs } from './interface';
 import { Path, PathType } from './paths';
@@ -8,13 +7,6 @@ export class CommandFileSystemMove implements Command {
     name = 'move';
     // FIXME: support move of multiple files
     args = ['sourcePath', 'targetPath'];
-    options: ParseArgsConfig['options'] = {
-        json: {
-            type: 'boolean',
-            short: 'j',
-            default: false,
-        },
-    };
 
     async action({ sdk, paths, args, options: { json } }: ActionArgs) {
         const [sourcePathString, targetPathString] = args;

@@ -27,11 +27,6 @@ export class CommandSharingInvite implements Command {
             short: 'n',
             default: false,
         },
-        json: {
-            type: 'boolean',
-            short: 'j',
-            default: false,
-        },
     };
 
     async action({

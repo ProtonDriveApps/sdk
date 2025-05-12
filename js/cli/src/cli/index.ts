@@ -64,7 +64,19 @@ const COMMANDS = [
     new CommandDeviceCreate(),
     new CommandDeviceRename(),
     new CommandDeviceDelete(),
-];
+].map((command: Command) => {
+    command.options = command.options || {};
+    command.options['help'] = {
+        type: 'boolean',
+        default: false,
+    };
+    command.options['json'] = {
+        type: 'boolean',
+        short: 'j',
+        default: false,
+    };
+    return command;
+});
 
 export function getCommand(groupName: string, commandName: string): Command {
     if (groupName === 'fs') {
@@ -105,6 +117,9 @@ function printUsage() {
     COMMANDS.map((command) => {
         printCommandManual(command);
     });
+    console.log("General options:");
+    console.log("  --help: Show this help");
+    console.log("  -j, --json: Output in JSON format");
 }
 
 function printCommandUsage(command: Command) {
@@ -115,6 +130,7 @@ function printCommandUsage(command: Command) {
 function printCommandManual(command: Command) {
     const args = (command.args || []).map(arg => `<${arg}>`).join(' ');
     const options = Object.entries(command.options || {})
+        .filter(([name]) => name !== 'help' && name !== 'json')
         .map(([name, { type, short }]) => {
             const flag = short ? `-${short}|--${name}` : `--${name}`;
             return type === 'boolean' ? flag : `${flag} <${type}>`

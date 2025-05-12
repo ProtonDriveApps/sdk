@@ -17,11 +17,6 @@ export class CommandSharingRemove implements Command {
             short: 'a',
             default: false,
         },
-        json: {
-            type: 'boolean',
-            short: 'j',
-            default: false,
-        },
     };
 
     async action({

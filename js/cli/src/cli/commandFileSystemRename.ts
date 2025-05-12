@@ -1,17 +1,10 @@
-import { ParseArgsConfig, inspect } from "util";
+import { inspect } from "util";
 import { Command, ActionArgs } from './interface';
 
 export class CommandFileSystemRename implements Command {
     group = 'filesystem';
     name = 'rename';
     args = ['path', 'newName'];
-    options: ParseArgsConfig['options'] = {
-        json: {
-            type: 'boolean',
-            short: 'j',
-            default: false,
-        },
-    };
 
     async action({ sdk, paths, args: [ pathString, newName ], options: { json } }: ActionArgs) {
         const nodePath = paths.getPath(pathString);

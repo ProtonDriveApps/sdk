@@ -1,4 +1,3 @@
-import { ParseArgsConfig } from "util";
 import path from 'node:path';
 import { Command, ActionArgs } from './interface';
 
@@ -7,13 +6,6 @@ export class CommandFileSystemDownloadThumbnails implements Command {
     name = 'download-thumbnails';
     // FIXME: support download of multiple thumbnails
     args = ['path', 'parentLocalPath'];
-        options: ParseArgsConfig['options'] = {
-            json: {
-                type: 'boolean',
-                short: 'j',
-                default: false,
-            },
-        };
 
     async action({ sdk, paths, args: [ pathString, parentLocalPath ], options: { json } }: ActionArgs) {
         const nodePath = paths.getPath(pathString);

@@ -10,11 +10,6 @@ export class CommandDeviceCreate implements Command {
             type: 'string',
             short: 't',
         },
-        json: {
-            type: 'boolean',
-            short: 'j',
-            default: false,
-        },
     };
 
     async action({ sdk, args: [name], options: { type, json } }: ActionArgs) {

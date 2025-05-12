@@ -1,5 +1,3 @@
-import { ParseArgsConfig } from "util";
-
 import { ProtonDriveClient, MaybeNode, MemberRole, Device } from "../../../sdk/src";
 import { Command, ActionArgs } from './interface';
 import { PathType, Path } from './paths';
@@ -10,13 +8,6 @@ export class CommandFileSystemList implements Command {
     group = 'filesystem';
     name = 'list';
     args = ['path'];
-    options: ParseArgsConfig['options'] = {
-        json: {
-            type: 'boolean',
-            short: 'j',
-            default: false,
-        },
-    };
 
     async action({ sdk, paths, args: [ pathString ], options: { json } }: ActionArgs) {
         const path = paths.getPath(pathString);

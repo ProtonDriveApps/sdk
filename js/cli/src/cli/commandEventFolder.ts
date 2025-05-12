@@ -1,4 +1,3 @@
-import { ParseArgsConfig } from "util";
 import { Command, ActionArgs } from "./interface";
 import { runForever, eventsCallback } from "./events";
 
@@ -6,13 +5,6 @@ export class CommandEventFolder implements Command {
     group = "event";
     name = "folder";
     args = ["path"];
-    options: ParseArgsConfig['options'] = {
-        json: {
-            type: 'boolean',
-            short: 'j',
-            default: false,
-        },
-    };
 
     async action({ sdk, paths, args: [pathString], options: { json } }: ActionArgs) {
         const nodePath = paths.getPath(pathString);

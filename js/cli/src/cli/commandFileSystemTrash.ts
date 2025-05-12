@@ -1,4 +1,3 @@
-import { ParseArgsConfig } from "util";
 import { Command, ActionArgs } from './interface';
 
 export class CommandFileSystemTrash implements Command {
@@ -6,13 +5,6 @@ export class CommandFileSystemTrash implements Command {
     name = 'trash';
     // FIXME: support trahs of multiple files
     args = ['path'];
-    options: ParseArgsConfig['options'] = {
-        json: {
-            type: 'boolean',
-            short: 'j',
-            default: false,
-        },
-    };
 
     async action({ sdk, paths, args: [ pathString ], options: { json } }: ActionArgs) {
         const nodePath = paths.getPath(pathString);

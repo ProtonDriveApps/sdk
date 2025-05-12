@@ -1,17 +1,10 @@
-import { ParseArgsConfig, inspect } from "util";
+import { inspect } from "util";
 import { Command, ActionArgs } from './interface';
 
 export class CommandFileSystemInfo implements Command {
     group = 'filesystem';
     name = 'info';
     args = ['path'];
-    options: ParseArgsConfig['options'] = {
-        json: {
-            type: 'boolean',
-            short: 'j',
-            default: false,
-        },
-    };
 
     async action({ paths, args: [ pathString ], options: { json }  }: ActionArgs) {
         const path = paths.getPath(pathString);

@@ -1,17 +1,9 @@
-import { ParseArgsConfig } from "util";
 import { Command, ActionArgs } from './interface';
 
 export class CommandSharingRemoveUrl implements Command {
     group = 'sharing';
     name = 'remove-url';
     args = ['path'];
-    options: ParseArgsConfig['options'] = {
-        json: {
-            type: 'boolean',
-            short: 'j',
-            default: false,
-        },
-    };
 
     async action({
         sdk,
