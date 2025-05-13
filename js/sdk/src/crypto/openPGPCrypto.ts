@@ -34,7 +34,10 @@ export interface OpenPGPCryptoProxy {
         verificationKeys?: PublicKey[],
     }) => Promise<{
         data: Uint8Array | string,
-        verified: VERIFICATION_STATUS
+        // pmcrypto 8.3.0 changes `verified` to `verificationStatus`.
+        // Web clients are using newer pmcrypto, but CLI is using older version due to build issues with Bun.
+        verified?: VERIFICATION_STATUS,
+        verificationStatus?: VERIFICATION_STATUS,
     }>,
     signMessage: (options: {
         format: 'binary' | 'armored',
@@ -48,7 +51,10 @@ export interface OpenPGPCryptoProxy {
         armoredSignature: string,
         verificationKeys: PublicKey[],     
     }) => Promise<{
-        verified: VERIFICATION_STATUS,
+        // pmcrypto 8.3.0 changes `verified` to `verificationStatus`.
+        // Web clients are using newer pmcrypto, but CLI is using older version due to build issues with Bun.
+        verified?: VERIFICATION_STATUS,
+        verificationStatus?: VERIFICATION_STATUS,
     }>,
 }
 
@@ -229,13 +235,15 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         armoredSignature: string,
         verificationKeys: PublicKey[],
     ) {
-        const { verified } = await this.cryptoProxy.verifyMessage({
+        const { verified, verificationStatus } = await this.cryptoProxy.verifyMessage({
             binaryData: data,
             armoredSignature,
             verificationKeys,
         });
         return {
-            verified
+            // pmcrypto 8.3.0 changes `verified` to `verificationStatus`.
+            // Proper typing is too complex, it will be removed to support only newer pmcrypto.
+            verified: verified || verificationStatus!,
         };
     }
 
@@ -287,7 +295,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         sessionKey: SessionKey,
         verificationKeys: PublicKey[],
     ) {
-        const { data: decryptedData, verified } = await this.cryptoProxy.decryptMessage({
+        const { data: decryptedData, verified, verificationStatus } = await this.cryptoProxy.decryptMessage({
             binaryMessage: data,
             sessionKeys: sessionKey,
             verificationKeys,
@@ -296,7 +304,9 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
         return {
             data: decryptedData as Uint8Array,
-            verified,
+            // pmcrypto 8.3.0 changes `verified` to `verificationStatus`.
+            // Proper typing is too complex, it will be removed to support only newer pmcrypto.
+            verified: verified || verificationStatus!,
         }
     }
 
@@ -306,7 +316,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         sessionKey: SessionKey,
         verificationKeys?: PublicKey[],
     ) {
-        const { data: decryptedData, verified } = await this.cryptoProxy.decryptMessage({
+        const { data: decryptedData, verified, verificationStatus } = await this.cryptoProxy.decryptMessage({
             binaryMessage: data,
             binarySignature: signature,
             sessionKeys: sessionKey,
@@ -316,7 +326,9 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
         return {
             data: decryptedData as Uint8Array,
-            verified,
+            // pmcrypto 8.3.0 changes `verified` to `verificationStatus`.
+            // Proper typing is too complex, it will be removed to support only newer pmcrypto.
+            verified: verified || verificationStatus!,
         }
     }
 
@@ -337,7 +349,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         decryptionKeys: PrivateKey[],
         verificationKeys: PublicKey[],
     ) {
-        const { data, verified } = await this.cryptoProxy.decryptMessage({
+        const { data, verified, verificationStatus } = await this.cryptoProxy.decryptMessage({
             armoredMessage: armoredData,
             decryptionKeys,
             verificationKeys,
@@ -346,7 +358,9 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
         return {
             data: data as Uint8Array,
-            verified,
+            // pmcrypto 8.3.0 changes `verified` to `verificationStatus`.
+            // Proper typing is too complex, it will be removed to support only newer pmcrypto.
+            verified: verified || verificationStatus!,
         }
     }
 
@@ -356,7 +370,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         sessionKey: SessionKey,
         verificationKeys: PublicKey[],
     ) {
-        const { data, verified } = await this.cryptoProxy.decryptMessage({
+        const { data, verified, verificationStatus } = await this.cryptoProxy.decryptMessage({
             armoredMessage: armoredData,
             armoredSignature,
             sessionKeys: sessionKey,
@@ -366,7 +380,9 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
         return {
             data: data as Uint8Array,
-            verified,
+            // pmcrypto 8.3.0 changes `verified` to `verificationStatus`.
+            // Proper typing is too complex, it will be removed to support only newer pmcrypto.
+            verified: verified || verificationStatus!,
         }
     }
 }
