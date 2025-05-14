@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Nodes;
+using Proton.Sdk;
 using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Serialization;
@@ -12,9 +13,13 @@ namespace Proton.Drive.Sdk.Serialization;
     [
         typeof(PgpPrivateKeyJsonConverter),
         typeof(PgpSessionKeyJsonConverter),
+        typeof(RefResultJsonConverter<FolderSecrets, DegradedFolderSecrets>),
+        typeof(RefResultJsonConverter<FileSecrets, DegradedFileSecrets>),
     ])]
 #pragma warning restore SA1114, SA1118
 [JsonSerializable(typeof(IEnumerable<PgpPrivateKey>))]
-[JsonSerializable(typeof(FolderSecrets))]
-[JsonSerializable(typeof(FileSecrets))]
+[JsonSerializable(typeof(RefResult<FolderSecrets, DegradedFolderSecrets>?))]
+[JsonSerializable(typeof(RefResult<FileSecrets, DegradedFileSecrets>?))]
+[JsonSerializable(typeof(SerializableRefResult<FolderSecrets, DegradedFolderSecrets>))]
+[JsonSerializable(typeof(SerializableRefResult<FileSecrets, DegradedFileSecrets>))]
 internal sealed partial class DriveSecretsSerializerContext : JsonSerializerContext;

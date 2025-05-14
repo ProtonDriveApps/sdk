@@ -6,15 +6,15 @@ namespace Proton.Drive.Sdk.Api.Files;
 
 internal interface IFilesApiClient : IRevisionVerificationApiClient
 {
-    ValueTask<FileCreationResponse> CreateFileAsync(VolumeId volumeId, FileCreationParameters parameters, CancellationToken cancellationToken);
+    ValueTask<FileCreationResponse> CreateFileAsync(VolumeId volumeId, FileCreationRequest request, CancellationToken cancellationToken);
 
-    ValueTask<BlockRequestResponse> RequestBlockUploadAsync(BlockUploadRequestParameters parameters, CancellationToken cancellationToken);
+    ValueTask<BlockUploadPreparationResponse> PrepareBlockUploadAsync(BlockUploadPreparationRequest request, CancellationToken cancellationToken);
 
     ValueTask<ApiResponse> UpdateRevisionAsync(
         VolumeId volumeId,
         LinkId linkId,
         RevisionId revisionId,
-        RevisionUpdateParameters parameters,
+        RevisionUpdateRequest request,
         CancellationToken cancellationToken);
 
     public ValueTask<RevisionResponse> GetRevisionAsync(

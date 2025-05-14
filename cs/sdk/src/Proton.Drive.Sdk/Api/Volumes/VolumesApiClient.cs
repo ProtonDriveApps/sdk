@@ -7,10 +7,10 @@ internal sealed class VolumesApiClient(HttpClient httpClient) : IVolumesApiClien
 {
     private readonly HttpClient _httpClient = httpClient;
 
-    public async ValueTask<VolumeCreationResponse> CreateVolumeAsync(VolumeCreationParameters parameters, CancellationToken cancellationToken)
+    public async ValueTask<VolumeCreationResponse> CreateVolumeAsync(VolumeCreationRequest request, CancellationToken cancellationToken)
     {
         return await _httpClient
             .Expecting(DriveApiSerializerContext.Default.VolumeCreationResponse)
-            .PostAsync("volumes", parameters, DriveApiSerializerContext.Default.VolumeCreationParameters, cancellationToken).ConfigureAwait(false);
+            .PostAsync("volumes", request, DriveApiSerializerContext.Default.VolumeCreationRequest, cancellationToken).ConfigureAwait(false);
     }
 }

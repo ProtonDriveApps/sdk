@@ -4,7 +4,7 @@ using Proton.Sdk.Cryptography;
 
 namespace Proton.Drive.Sdk.Api.Files;
 
-internal sealed class FileCreationParameters : NodeCreationParameters
+internal sealed class FileCreationRequest : NodeCreationRequest
 {
     [JsonPropertyName("MIMEType")]
     public required string MediaType { get; init; }

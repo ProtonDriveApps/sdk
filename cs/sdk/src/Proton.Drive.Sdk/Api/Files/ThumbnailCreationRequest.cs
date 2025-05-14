@@ -2,7 +2,7 @@
 
 namespace Proton.Drive.Sdk.Api.Files;
 
-internal sealed class ThumbnailCreationParameters
+internal sealed class ThumbnailCreationRequest
 {
     public required int Size { get; init; }
 

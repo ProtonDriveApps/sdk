@@ -9,7 +9,7 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal static class FolderOperations
 {
-    public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateChildrenAsync(
+    public static async IAsyncEnumerable<RefResult<Node, DegradedNode>> EnumerateChildrenAsync(
         ProtonDriveClient client,
         NodeUid folderId,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -78,7 +78,7 @@ internal static class FolderOperations
             out var keyPassphraseSignature,
             out var armoredKey);
 
-        var parameters = new FolderCreationParameters
+        var request = new FolderCreationRequest
         {
             Name = encryptedName,
             NameHashDigest = nameHashDigest,
@@ -90,7 +90,7 @@ internal static class FolderOperations
             HashKey = key.EncryptAndSign(hashKey, key),
         };
 
-        var response = await client.Api.Folders.CreateFolderAsync(parentId.VolumeId, parameters, cancellationToken).ConfigureAwait(false);
+        var response = await client.Api.Folders.CreateFolderAsync(parentId.VolumeId, request, cancellationToken).ConfigureAwait(false);
 
         var folderId = new NodeUid(parentId.VolumeId, response.FolderId.Value);
 
@@ -121,13 +121,15 @@ internal static class FolderOperations
         return folderNode;
     }
 
-    internal static async ValueTask<FolderSecrets> GetSecretsAsync(ProtonDriveClient client, NodeUid folderId, CancellationToken cancellationToken)
+    public static async ValueTask<FolderSecrets> GetSecretsAsync(ProtonDriveClient client, NodeUid folderId, CancellationToken cancellationToken)
     {
-        var folderSecrets = await client.Cache.Secrets.TryGetFolderSecretsAsync(folderId, cancellationToken).ConfigureAwait(false);
+        var folderSecretsResult = await client.Cache.Secrets.TryGetFolderSecretsAsync(folderId, cancellationToken).ConfigureAwait(false);
+
+        var folderSecrets = folderSecretsResult?.GetValueOrDefault();
 
         if (folderSecrets is null)
         {
-            var nodeProvisionResult = await NodeOperations.GetFreshNodeAndSecretsAsync(client, folderId, knownShareAndKey: null, cancellationToken).ConfigureAwait(false);
+            var nodeProvisionResult = await NodeOperations.GetFreshNodeMetadataAsync(client, folderId, knownShareAndKey: null, cancellationToken).ConfigureAwait(false);
 
             folderSecrets = nodeProvisionResult.GetFolderSecretsOrThrow();
         }

@@ -1,6 +1,8 @@
 ﻿using Proton.Drive.Sdk.Serialization;
 using Proton.Drive.Sdk.Volumes;
+using Proton.Sdk.Api;
 using Proton.Sdk.Http;
+using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Api.Links;
 
@@ -8,7 +10,7 @@ internal sealed class LinksApiClient(HttpClient httpClient) : ILinksApiClient
 {
     private readonly HttpClient _httpClient = httpClient;
 
-    public async ValueTask<LinkDetailsResponse> GetLinkDetailsAsync(VolumeId volumeId, IEnumerable<LinkId> linkIds, CancellationToken cancellationToken)
+    public async ValueTask<LinkDetailsResponse> GetDetailsAsync(VolumeId volumeId, IEnumerable<LinkId> linkIds, CancellationToken cancellationToken)
     {
         return await _httpClient
             .Expecting(DriveApiSerializerContext.Default.LinkDetailsResponse)
@@ -21,5 +23,29 @@ internal sealed class LinksApiClient(HttpClient httpClient) : ILinksApiClient
         return await _httpClient
             .Expecting(DriveApiSerializerContext.Default.ContextShareResponse)
             .GetAsync($"volumes/{volumeId}/links/{linkId}/context", cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask<ApiResponse> MoveAsync(VolumeId volumeId, LinkId linkId, MoveSingleLinkRequest request, CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(ProtonApiSerializerContext.Default.ApiResponse)
+            .PutAsync($"v2/volumes/{volumeId}/links/{linkId}/move", request, DriveApiSerializerContext.Default.MoveSingleLinkRequest, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async ValueTask<ApiResponse> MoveMultipleAsync(VolumeId volumeId, MoveMultipleLinksRequest request, CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(ProtonApiSerializerContext.Default.ApiResponse)
+            .PutAsync($"volumes/{volumeId}/links/move-multiple", request, DriveApiSerializerContext.Default.MoveMultipleLinksRequest, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async ValueTask<ApiResponse> RenameAsync(VolumeId volumeId, LinkId linkId, RenameLinkRequest request, CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(ProtonApiSerializerContext.Default.ApiResponse)
+            .PutAsync($"v2/volumes/{volumeId}/links/{linkId}/rename", request, DriveApiSerializerContext.Default.RenameLinkRequest, cancellationToken)
+            .ConfigureAwait(false);
     }
 }

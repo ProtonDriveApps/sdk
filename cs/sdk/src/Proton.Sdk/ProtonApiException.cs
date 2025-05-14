@@ -9,18 +9,18 @@ public class ProtonApiException : Exception
     {
     }
 
-    public ProtonApiException(string message)
+    public ProtonApiException(string? message)
         : base(message)
     {
     }
 
-    public ProtonApiException(string message, Exception innerException)
+    public ProtonApiException(string? message, Exception? innerException)
         : base(message, innerException)
     {
     }
 
     internal ProtonApiException(HttpStatusCode statusCode, ApiResponse response)
-        : this($"{response.Code}: {response.ErrorMessage}")
+        : this(response.ErrorMessage)
     {
         Code = response.Code;
         TransportCode = (int)statusCode;

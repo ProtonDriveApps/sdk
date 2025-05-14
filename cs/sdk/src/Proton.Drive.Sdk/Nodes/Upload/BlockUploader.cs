@@ -89,7 +89,7 @@ internal sealed class BlockUploader
                         // FIXME: retry upon verification failure
                         var verificationToken = verifier.VerifyBlock(dataPacketStream.GetFirstBytes(128), plainDataPrefix.AsSpan()[..plainDataPrefixLength]);
 
-                        var parameters = new BlockUploadRequestParameters
+                        var request = new BlockUploadPreparationRequest
                         {
                             VolumeId = fileUid.VolumeId,
                             LinkId = fileUid.LinkId,
@@ -97,7 +97,7 @@ internal sealed class BlockUploader
                             AddressId = membershipAddressId,
                             Blocks =
                             [
-                                new BlockCreationParameters
+                                new BlockCreationRequest
                             {
                                 Index = index,
                                 Size = (int)dataPacketStream.Length,
@@ -109,7 +109,7 @@ internal sealed class BlockUploader
                             Thumbnails = [],
                         };
 
-                        await UploadBlobAsync(parameters, dataPacketStream, onBlockProgress, cancellationToken).ConfigureAwait(false);
+                        await UploadBlobAsync(request, dataPacketStream, onBlockProgress, cancellationToken).ConfigureAwait(false);
 
                         return sha256Digest;
                     }
@@ -164,7 +164,7 @@ internal sealed class BlockUploader
 
                 var sha256Digest = sha256.Hash ?? [];
 
-                var parameters = new BlockUploadRequestParameters
+                var request = new BlockUploadPreparationRequest
                 {
                     VolumeId = fileUid.VolumeId,
                     LinkId = fileUid.LinkId,
@@ -173,7 +173,7 @@ internal sealed class BlockUploader
                     Blocks = [],
                     Thumbnails =
                     [
-                        new ThumbnailCreationParameters
+                        new ThumbnailCreationRequest
                         {
                             Size = (int)dataPacketStream.Length,
                             Type = (ThumbnailType)sample.Purpose,
@@ -182,7 +182,7 @@ internal sealed class BlockUploader
                     ],
                 };
 
-                await UploadBlobAsync(parameters, dataPacketStream, onProgress, cancellationToken).ConfigureAwait(false);
+                await UploadBlobAsync(request, dataPacketStream, onProgress, cancellationToken).ConfigureAwait(false);
 
                 return sha256Digest;
             }
@@ -194,13 +194,13 @@ internal sealed class BlockUploader
     }
 
     private async ValueTask UploadBlobAsync(
-        BlockUploadRequestParameters parameters,
+        BlockUploadPreparationRequest request,
         RecyclableMemoryStream dataPacketStream,
         Action<long>? onProgress,
         CancellationToken cancellationToken)
     {
 #pragma warning disable S3236 // FP: https://community.sonarsource.com/t/false-positive-on-s3236-when-calling-debug-assert-with-message/138761/6
-        Debug.Assert(parameters.Thumbnails.Count + parameters.Blocks.Count == 1, "Block upload request should be for only one block, content or thumbnail");
+        Debug.Assert(request.Thumbnails.Count + request.Blocks.Count == 1, "Block upload request should be for only one block, content or thumbnail");
 #pragma warning restore S3236 // Caller information arguments should not be provided explicitly
 
         var remainingNumberOfAttempts = 2;
@@ -210,9 +210,9 @@ internal sealed class BlockUploader
             try
             {
                 // FIXME: request multiple blocks at once
-                var uploadRequestResponse = await _client.Api.Files.RequestBlockUploadAsync(parameters, cancellationToken).ConfigureAwait(false);
+                var uploadRequestResponse = await _client.Api.Files.PrepareBlockUploadAsync(request, cancellationToken).ConfigureAwait(false);
 
-                var uploadTarget = parameters.Thumbnails.Count == 0 ? uploadRequestResponse.UploadTargets[0] : uploadRequestResponse.ThumbnailUploadTargets[0];
+                var uploadTarget = request.Thumbnails.Count == 0 ? uploadRequestResponse.UploadTargets[0] : uploadRequestResponse.ThumbnailUploadTargets[0];
 
                 dataPacketStream.Seek(0, SeekOrigin.Begin);
 

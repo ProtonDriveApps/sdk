@@ -2,5 +2,5 @@
 
 internal interface IVolumesApiClient
 {
-    ValueTask<VolumeCreationResponse> CreateVolumeAsync(VolumeCreationParameters parameters, CancellationToken cancellationToken);
+    ValueTask<VolumeCreationResponse> CreateVolumeAsync(VolumeCreationRequest request, CancellationToken cancellationToken);
 }

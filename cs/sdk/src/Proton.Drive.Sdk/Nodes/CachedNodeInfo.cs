@@ -3,4 +3,7 @@ using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
 
-internal readonly record struct CachedNodeInfo(Result<Node, DegradedNode> NodeProvisionResult, ShareId? MembershipShareId, ReadOnlyMemory<byte> NameHashDigest);
+internal readonly record struct CachedNodeInfo(
+    RefResult<Node, DegradedNode> NodeProvisionResult,
+    ShareId? MembershipShareId,
+    ReadOnlyMemory<byte> NameHashDigest);

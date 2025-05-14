@@ -11,34 +11,34 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
 {
     private readonly HttpClient _httpClient = httpClient;
 
-    public async ValueTask<FileCreationResponse> CreateFileAsync(VolumeId volumeId, FileCreationParameters parameters, CancellationToken cancellationToken)
+    public async ValueTask<FileCreationResponse> CreateFileAsync(VolumeId volumeId, FileCreationRequest request, CancellationToken cancellationToken)
     {
         return await _httpClient
             .Expecting(DriveApiSerializerContext.Default.FileCreationResponse, DriveApiSerializerContext.Default.RevisionConflictResponse)
-            .PostAsync($"v2/volumes/{volumeId}/files", parameters, DriveApiSerializerContext.Default.FileCreationParameters, cancellationToken)
+            .PostAsync($"v2/volumes/{volumeId}/files", request, DriveApiSerializerContext.Default.FileCreationRequest, cancellationToken)
             .ConfigureAwait(false);
     }
 
-    public async ValueTask<BlockRequestResponse> RequestBlockUploadAsync(BlockUploadRequestParameters parameters, CancellationToken cancellationToken)
+    public async ValueTask<BlockUploadPreparationResponse> PrepareBlockUploadAsync(BlockUploadPreparationRequest request, CancellationToken cancellationToken)
     {
         return await _httpClient
-            .Expecting(DriveApiSerializerContext.Default.BlockRequestResponse)
-            .PostAsync("blocks", parameters, DriveApiSerializerContext.Default.BlockUploadRequestParameters, cancellationToken).ConfigureAwait(false);
+            .Expecting(DriveApiSerializerContext.Default.BlockUploadPreparationResponse)
+            .PostAsync("blocks", request, DriveApiSerializerContext.Default.BlockUploadPreparationRequest, cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<ApiResponse> UpdateRevisionAsync(
         VolumeId volumeId,
         LinkId linkId,
         RevisionId revisionId,
-        RevisionUpdateParameters parameters,
+        RevisionUpdateRequest request,
         CancellationToken cancellationToken)
     {
         return await _httpClient
             .Expecting(ProtonApiSerializerContext.Default.ApiResponse)
             .PutAsync(
                 $"v2/volumes/{volumeId}/files/{linkId}/revisions/{revisionId}",
-                parameters,
-                DriveApiSerializerContext.Default.RevisionUpdateParameters,
+                request,
+                DriveApiSerializerContext.Default.RevisionUpdateRequest,
                 cancellationToken).ConfigureAwait(false);
     }
 

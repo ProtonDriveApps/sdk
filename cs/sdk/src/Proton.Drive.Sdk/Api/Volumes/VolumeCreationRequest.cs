@@ -4,7 +4,7 @@ using Proton.Sdk.Cryptography;
 
 namespace Proton.Drive.Sdk.Api.Volumes;
 
-internal sealed class VolumeCreationParameters
+internal sealed class VolumeCreationRequest
 {
     [JsonPropertyName("AddressID")]
     public required AddressId AddressId { get; init; }

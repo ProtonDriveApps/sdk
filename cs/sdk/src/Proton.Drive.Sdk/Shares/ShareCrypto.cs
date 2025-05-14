@@ -25,9 +25,6 @@ internal static class ShareCrypto
 
         var share = new Share(shareId, rootFolderId, addressId);
 
-        await client.Cache.Secrets.SetShareKeyAsync(shareId, key, cancellationToken).ConfigureAwait(false);
-        await client.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
-
         return (share, key);
     }
 }

@@ -176,9 +176,9 @@ public sealed class RevisionWriter : IDisposable
             manifestSignature = await _signingKey.SignAsync(manifestStream, cancellationTokenSource.Token).ConfigureAwait(false);
         }
 
-        var parameters = GetRevisionUpdateParameters(contentInputStream, lastModificationTime, blockSizes, manifestSignature, signingEmailAddress);
+        var request = GetRevisionUpdateRequest(contentInputStream, lastModificationTime, blockSizes, manifestSignature, signingEmailAddress);
 
-        await _client.Api.Files.UpdateRevisionAsync(_fileUid.VolumeId, _fileUid.LinkId, _revisionId, parameters, cancellationToken).ConfigureAwait(false);
+        await _client.Api.Files.UpdateRevisionAsync(_fileUid.VolumeId, _fileUid.LinkId, _revisionId, request, cancellationToken).ConfigureAwait(false);
     }
 
     public void Dispose()
@@ -209,7 +209,7 @@ public sealed class RevisionWriter : IDisposable
         }
     }
 
-    private RevisionUpdateParameters GetRevisionUpdateParameters(
+    private RevisionUpdateRequest GetRevisionUpdateRequest(
         Stream contentInputStream,
         DateTimeOffset? lastModificationTime,
         IReadOnlyList<int> blockSizes,
@@ -230,7 +230,7 @@ public sealed class RevisionWriter : IDisposable
 
         var encryptedExtendedAttributes = _fileKey.EncryptAndSign(extendedAttributesUtf8Bytes, _signingKey, outputCompression: PgpCompression.Default);
 
-        return new RevisionUpdateParameters
+        return new RevisionUpdateRequest
         {
             ManifestSignature = manifestSignature,
             SignatureEmailAddress = signinEmailAddress,

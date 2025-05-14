@@ -3,7 +3,7 @@ using Proton.Sdk.Api;
 
 namespace Proton.Drive.Sdk.Api.Files;
 
-internal sealed class BlockRequestResponse : ApiResponse
+internal sealed class BlockUploadPreparationResponse : ApiResponse
 {
     [JsonPropertyName("UploadLinks")]
     public required IReadOnlyList<BlockUploadTarget> UploadTargets { get; set; }

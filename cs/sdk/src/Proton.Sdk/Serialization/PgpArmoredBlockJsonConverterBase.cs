@@ -7,8 +7,10 @@ using Proton.Sdk.Cryptography;
 namespace Proton.Sdk.Serialization;
 
 internal abstract class PgpArmoredBlockJsonConverterBase<T> : JsonConverter<T>
-    where T : IPgpArmoredBlock
+    where T : IPgpArmoredBlock<T>
 {
+    protected abstract PgpBlockType BlockType { get; }
+
     public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.String)
@@ -38,7 +40,7 @@ internal abstract class PgpArmoredBlockJsonConverterBase<T> : JsonConverter<T>
 
         try
         {
-            var numberOfBytesWritten = PgpArmorEncoder.Encode(value.Bytes.Span, BlockType, buffer);
+            var numberOfBytesWritten = PgpArmorEncoder.Encode(value, BlockType, buffer);
 
             writer.WriteStringValue(buffer.AsSpan()[..numberOfBytesWritten]);
         }
@@ -47,8 +49,6 @@ internal abstract class PgpArmoredBlockJsonConverterBase<T> : JsonConverter<T>
             ArrayPool<byte>.Shared.Return(buffer);
         }
     }
-
-    protected abstract PgpBlockType BlockType { get; }
 
     protected abstract T CreateValue(ReadOnlyMemory<byte> bytes);
 }

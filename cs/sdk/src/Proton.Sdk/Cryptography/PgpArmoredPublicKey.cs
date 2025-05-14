@@ -2,7 +2,7 @@
 
 namespace Proton.Sdk.Cryptography;
 
-internal readonly struct PgpArmoredPublicKey(ReadOnlyMemory<byte> bytes) : IPgpArmoredBlock
+internal readonly struct PgpArmoredPublicKey(ReadOnlyMemory<byte> bytes) : IPgpArmoredBlock<PgpArmoredPublicKey>
 {
     public ReadOnlyMemory<byte> Bytes { get; } = bytes;
 
@@ -10,7 +10,7 @@ internal readonly struct PgpArmoredPublicKey(ReadOnlyMemory<byte> bytes) : IPgpA
     public static implicit operator PgpArmoredPublicKey(ReadOnlyMemory<byte> bytes) => new(bytes);
     public static implicit operator PgpArmoredPublicKey(ArraySegment<byte> bytes) => new(bytes);
 
-    public static implicit operator Stream(PgpArmoredPublicKey key) => key.Bytes.AsStream();
-    public static implicit operator ReadOnlyMemory<byte>(PgpArmoredPublicKey key) => key.Bytes;
-    public static implicit operator ReadOnlySpan<byte>(PgpArmoredPublicKey key) => key.Bytes.Span;
+    public static implicit operator Stream(PgpArmoredPublicKey block) => block.Bytes.AsStream();
+    public static implicit operator ReadOnlyMemory<byte>(PgpArmoredPublicKey block) => block.Bytes;
+    public static implicit operator ReadOnlySpan<byte>(PgpArmoredPublicKey block) => block.Bytes.Span;
 }

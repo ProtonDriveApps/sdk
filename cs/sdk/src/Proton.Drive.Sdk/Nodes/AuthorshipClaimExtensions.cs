@@ -1,16 +1,21 @@
-﻿using Proton.Cryptography.Pgp;
+﻿using Proton.Drive.Sdk.Nodes.Cryptography;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
 
 internal static class AuthorshipClaimExtensions
 {
-    public static Result<Author, SignatureVerificationError> ToAuthorshipResult(
+    public static ValResult<Author, SignatureVerificationError> ToAuthorshipResult(
         this AuthorshipClaim authorshipClaim,
-        PgpVerificationResult verificationResult)
+        AuthorshipVerificationFailure? verificationFailure)
     {
-        return verificationResult.Status is PgpVerificationStatus.Ok
-            ? authorshipClaim.Author
-            : new SignatureVerificationError(authorshipClaim.Author, verificationResult.Status, authorshipClaim.KeyRetrievalErrorMessage);
+        if (verificationFailure is not null)
+        {
+            var errorMessage = authorshipClaim.KeyRetrievalErrorMessage ?? verificationFailure.Value.Message;
+
+            return new SignatureVerificationError(authorshipClaim.Author, verificationFailure.Value.Status, errorMessage);
+        }
+
+        return authorshipClaim.Author;
     }
 }

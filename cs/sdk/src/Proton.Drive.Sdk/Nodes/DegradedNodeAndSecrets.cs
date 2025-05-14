@@ -2,7 +2,7 @@
 
 namespace Proton.Drive.Sdk.Nodes;
 
-internal readonly struct DegradedNodeAndSecrets
+internal sealed class DegradedNodeAndSecrets
 {
     private readonly (DegradedFileNode Node, DegradedFileSecrets Secrets)? _fileAndSecrets;
     private readonly (DegradedFolderNode Node, DegradedFolderSecrets Secrets)? _folderAndSecrets;
