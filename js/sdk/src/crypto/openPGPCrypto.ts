@@ -6,7 +6,7 @@ import { uint8ArrayToBase64String } from './utils';
  * clients/packages/crypto/lib/proxy/proxy.ts.
  */
 export interface OpenPGPCryptoProxy {
-    generateKey: (options: { userIDs: { name: string }[], type: 'ecc', curve: 'ed25519' }) => Promise<PrivateKey>,
+    generateKey: (options: { userIDs: { name: string }[], type: 'ecc', curve: 'ed25519Legacy' }) => Promise<PrivateKey>,
     exportPrivateKey: (options: { privateKey: PrivateKey, passphrase: string }) => Promise<string>,
     importPrivateKey: (options: { armoredKey: string, passphrase: string }) => Promise<PrivateKey>,
     generateSessionKey: (options: { recipientKeys: PrivateKey[] }) => Promise<SessionKey>,
@@ -92,7 +92,6 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         const privateKey = await this.cryptoProxy.generateKey({
             userIDs: [{ name: 'Drive key' }],
             type: 'ecc',
-            // @ts-expect-error The interface doesnt officially accept it anymore, but legacy is still supported.
             curve: 'ed25519Legacy',
         });
 
