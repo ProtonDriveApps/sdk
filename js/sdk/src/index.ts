@@ -7,7 +7,8 @@ import { makeNodeUid } from './internal/uids';
 export * from './interface';
 export * from './cache';
 export * from './errors';
-export { OpenPGPCrypto, OpenPGPCryptoWithCryptoProxy, OpenPGPCryptoProxy } from './crypto';
+export type { OpenPGPCrypto, OpenPGPCryptoProxy } from './crypto';
+export { OpenPGPCryptoWithCryptoProxy } from './crypto';
 export { ProtonDriveClient } from './protonDriveClient';
 export { VERSION } from './version';
 
