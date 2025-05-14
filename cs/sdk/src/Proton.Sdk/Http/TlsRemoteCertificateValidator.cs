@@ -38,9 +38,7 @@ internal static class TlsRemoteCertificateValidator
         }
 
         var validHashFound = false;
-#pragma warning disable S3267 // False positive: https://github.com/SonarSource/sonar-dotnet/issues/8430
         foreach (var knownPublicKeyHashDigest in KnownPublicKeySha256Digests)
-#pragma warning restore S3267
         {
             if (knownPublicKeyHashDigest.AsSpan().SequenceEqual(hashDigestBuffer))
             {

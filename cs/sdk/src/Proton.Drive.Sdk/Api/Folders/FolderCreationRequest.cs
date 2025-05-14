@@ -4,7 +4,7 @@ using Proton.Sdk.Cryptography;
 
 namespace Proton.Drive.Sdk.Api.Folders;
 
-internal sealed class FolderCreationParameters : NodeCreationParameters
+internal sealed class FolderCreationRequest : NodeCreationRequest
 {
     [JsonPropertyName("NodeHashKey")]
     public required PgpArmoredMessage HashKey { get; init; }

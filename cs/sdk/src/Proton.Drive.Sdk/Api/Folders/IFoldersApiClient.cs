@@ -7,5 +7,5 @@ internal interface IFoldersApiClient
 {
     ValueTask<FolderChildrenResponse> GetChildrenAsync(VolumeId volumeId, LinkId linkId, LinkId? anchorId, CancellationToken cancellationToken);
 
-    ValueTask<FolderCreationResponse> CreateFolderAsync(VolumeId volumeId, FolderCreationParameters parameters, CancellationToken cancellationToken);
+    ValueTask<FolderCreationResponse> CreateFolderAsync(VolumeId volumeId, FolderCreationRequest request, CancellationToken cancellationToken);
 }

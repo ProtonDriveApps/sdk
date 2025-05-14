@@ -2,30 +2,32 @@
 
 namespace Proton.Sdk;
 
-public readonly struct Result<T, TError>
+public readonly struct RefResult<T, TError>
+    where T : class?
+    where TError : class?
 {
     private readonly T? _value;
     private readonly TError? _error;
 
-    public Result(T value)
+    public RefResult(T value)
     {
         IsSuccess = true;
         _value = value;
-        _error = default;
+        _error = null;
     }
 
-    public Result(TError error)
+    public RefResult(TError error)
     {
         IsSuccess = false;
         _error = error;
-        _value = default;
+        _value = null;
     }
 
     public bool IsSuccess { get; }
     public bool IsFailure => !IsSuccess;
 
-    public static implicit operator Result<T, TError>(T value) => new(value);
-    public static implicit operator Result<T, TError>(TError error) => new(error);
+    public static implicit operator RefResult<T, TError>(T value) => new(value);
+    public static implicit operator RefResult<T, TError>(TError error) => new(error);
 
     public bool TryGetValueElseError([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out TError error)
     {

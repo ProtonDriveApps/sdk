@@ -69,7 +69,7 @@ internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEnti
 
     public ValueTask SetNodeAsync(
         NodeUid nodeId,
-        Result<Node, DegradedNode> nodeProvisionResult,
+        RefResult<Node, DegradedNode> nodeProvisionResult,
         ShareId? membershipShareId,
         ReadOnlyMemory<byte> nameHashDigest,
         CancellationToken cancellationToken)

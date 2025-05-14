@@ -38,7 +38,7 @@ internal static class FileOperations
 
         var clientUid = await client.GetClientUidAsync(cancellationToken).ConfigureAwait(false);
 
-        var parameters = new FileCreationParameters
+        var request = new FileCreationRequest
         {
             ClientUid = clientUid,
             Name = encryptedName,
@@ -57,7 +57,7 @@ internal static class FileOperations
         RevisionUid draftRevisionUid;
         try
         {
-            var response = await client.Api.Files.CreateFileAsync(parentUid.VolumeId, parameters, cancellationToken).ConfigureAwait(false);
+            var response = await client.Api.Files.CreateFileAsync(parentUid.VolumeId, request, cancellationToken).ConfigureAwait(false);
 
             var draftNodeUid = new NodeUid(parentUid.VolumeId, response.Identifiers.LinkId);
             draftRevisionUid = new RevisionUid(draftNodeUid, response.Identifiers.RevisionId);
@@ -91,14 +91,16 @@ internal static class FileOperations
 
     public static async ValueTask<FileSecrets> GetSecretsAsync(ProtonDriveClient client, NodeUid fileUid, CancellationToken cancellationToken)
     {
-        var fileSecrets = await client.Cache.Secrets.TryGetFileSecretsAsync(fileUid, cancellationToken).ConfigureAwait(false);
+        var fileSecretsResult = await client.Cache.Secrets.TryGetFileSecretsAsync(fileUid, cancellationToken).ConfigureAwait(false);
+
+        var fileSecrets = fileSecretsResult?.GetValueOrDefault();
 
         if (fileSecrets is null)
         {
-            var nodeProvisionResult = await NodeOperations.GetFreshNodeAndSecretsAsync(client, fileUid, knownShareAndKey: null, cancellationToken)
+            var metadataResult = await NodeOperations.GetFreshNodeMetadataAsync(client, fileUid, knownShareAndKey: null, cancellationToken)
                 .ConfigureAwait(false);
 
-            fileSecrets = nodeProvisionResult.GetFileSecretsOrThrow();
+            fileSecrets = metadataResult.GetFileSecretsOrThrow();
         }
 
         return fileSecrets;

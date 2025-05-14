@@ -4,7 +4,7 @@ using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Api.Links;
 
-internal abstract class NodeCreationParameters
+internal abstract class NodeCreationRequest
 {
     public required PgpArmoredMessage Name { get; init; }
 

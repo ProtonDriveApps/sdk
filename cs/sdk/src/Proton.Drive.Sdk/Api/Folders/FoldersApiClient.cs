@@ -20,12 +20,12 @@ internal sealed class FoldersApiClient(HttpClient httpClient) : IFoldersApiClien
 
     public async ValueTask<FolderCreationResponse> CreateFolderAsync(
         VolumeId volumeId,
-        FolderCreationParameters parameters,
+        FolderCreationRequest request,
         CancellationToken cancellationToken)
     {
         return await _httpClient
             .Expecting(DriveApiSerializerContext.Default.FolderCreationResponse)
-            .PostAsync($"v2/volumes/{volumeId}/folders", parameters, DriveApiSerializerContext.Default.FolderCreationParameters, cancellationToken)
+            .PostAsync($"v2/volumes/{volumeId}/folders", request, DriveApiSerializerContext.Default.FolderCreationRequest, cancellationToken)
             .ConfigureAwait(false);
     }
 }

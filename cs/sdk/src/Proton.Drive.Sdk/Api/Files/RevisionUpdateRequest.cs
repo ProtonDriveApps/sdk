@@ -3,7 +3,7 @@ using Proton.Sdk.Cryptography;
 
 namespace Proton.Drive.Sdk.Api.Files;
 
-internal sealed class RevisionUpdateParameters
+internal sealed class RevisionUpdateRequest
 {
     public required PgpArmoredSignature ManifestSignature { get; init; }
 

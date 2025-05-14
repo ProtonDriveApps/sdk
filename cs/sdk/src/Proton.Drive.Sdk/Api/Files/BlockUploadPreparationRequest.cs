@@ -5,7 +5,7 @@ using Proton.Sdk.Addresses;
 
 namespace Proton.Drive.Sdk.Api.Files;
 
-internal sealed class BlockUploadRequestParameters
+internal sealed class BlockUploadPreparationRequest
 {
     [JsonPropertyName("AddressID")]
     public required AddressId AddressId { get; init; }
@@ -20,8 +20,8 @@ internal sealed class BlockUploadRequestParameters
     public required RevisionId RevisionId { get; init; }
 
     [JsonPropertyName("BlockList")]
-    public required IReadOnlyList<BlockCreationParameters> Blocks { get; init; }
+    public required IReadOnlyList<BlockCreationRequest> Blocks { get; init; }
 
     [JsonPropertyName("ThumbnailList")]
-    public required IReadOnlyList<ThumbnailCreationParameters> Thumbnails { get; init; }
+    public required IReadOnlyList<ThumbnailCreationRequest> Thumbnails { get; init; }
 }

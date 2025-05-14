@@ -1,5 +1,4 @@
-﻿using CommunityToolkit.HighPerformance;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
 using Proton.Sdk.Api;
 using Proton.Sdk.Api.Addresses;
@@ -238,7 +237,7 @@ internal static class AddressOperations
         IReadOnlyList<PgpPrivateKey> userKeys)
     {
         var userKeyRing = new PgpPrivateKeyRing(userKeys);
-        using var decryptingStream = PgpDecryptingStream.Open(token.Bytes.AsStream(), userKeyRing, signature, userKeyRing);
+        using var decryptingStream = PgpDecryptingStream.Open(token, userKeyRing, signature, userKeyRing);
 
         using var passphraseStream = new MemoryStream();
         decryptingStream.CopyTo(passphraseStream);

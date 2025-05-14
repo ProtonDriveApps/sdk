@@ -22,7 +22,7 @@ internal interface IDriveEntityCache
 
     ValueTask SetNodeAsync(
         NodeUid nodeId,
-        Result<Node, DegradedNode> nodeProvisionResult,
+        RefResult<Node, DegradedNode> nodeProvisionResult,
         ShareId? membershipShareId,
         ReadOnlyMemory<byte> nameHashDigest,
         CancellationToken cancellationToken);

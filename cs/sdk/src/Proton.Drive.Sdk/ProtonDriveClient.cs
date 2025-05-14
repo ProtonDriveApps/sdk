@@ -71,7 +71,7 @@ public sealed class ProtonDriveClient
         return FolderOperations.CreateAsync(this, parentId, name, cancellationToken);
     }
 
-    public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateFolderChildrenAsync(NodeUid folderId, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<RefResult<Node, DegradedNode>> EnumerateFolderChildrenAsync(NodeUid folderId, CancellationToken cancellationToken = default)
     {
         return FolderOperations.EnumerateChildrenAsync(this, folderId, cancellationToken);
     }
@@ -95,6 +95,15 @@ public sealed class ProtonDriveClient
         await BlockListingSemaphore.EnterAsync(1, cancellationToken).ConfigureAwait(false);
 
         return new FileDownloader(this, revisionUid);
+    }
+
+    public async ValueTask MoveNodesAsync(IEnumerable<NodeUid> uids, NodeUid newParentFolderUid, CancellationToken cancellationToken)
+    {
+        // FIXME: finalize the implementation that uses the batch move endpoint, and use it instead of this naïve code
+        foreach (var uid in uids)
+        {
+            await NodeOperations.MoveSingleAsync(this, uid, newParentFolderUid, newName: null, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     internal async ValueTask<string> GetClientUidAsync(CancellationToken cancellationToken)

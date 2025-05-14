@@ -3,7 +3,7 @@ using Proton.Sdk.Cryptography;
 
 namespace Proton.Drive.Sdk.Api.Files;
 
-internal sealed class BlockCreationParameters
+internal sealed class BlockCreationRequest
 {
     public required int Index { get; init; }
     public required int Size { get; init; }

@@ -1,5 +1,5 @@
 ﻿namespace Proton.Drive.Sdk.Nodes;
 
-public sealed class FolderNode : Node
+public sealed record FolderNode : Node
 {
 }

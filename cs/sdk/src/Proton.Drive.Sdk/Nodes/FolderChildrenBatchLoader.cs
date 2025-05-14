@@ -7,27 +7,26 @@ using Proton.Sdk;
 namespace Proton.Drive.Sdk.Nodes;
 
 internal sealed class FolderChildrenBatchLoader(ProtonDriveClient client, VolumeId volumeId, PgpPrivateKey parentKey)
-    : BatchLoaderBase<LinkId, Result<Node, DegradedNode>>
+    : BatchLoaderBase<LinkId, RefResult<Node, DegradedNode>>
 {
     private readonly ProtonDriveClient _client = client;
     private readonly VolumeId _volumeId = volumeId;
     private readonly PgpPrivateKey _parentKey = parentKey;
 
-    protected override async ValueTask<IReadOnlyList<Result<Node, DegradedNode>>> LoadBatchAsync(
+    protected override async ValueTask<IReadOnlyList<RefResult<Node, DegradedNode>>> LoadBatchAsync(
         ReadOnlyMemory<LinkId> ids,
         CancellationToken cancellationToken)
     {
-        var response = await _client.Api.Links.GetLinkDetailsAsync(_volumeId, MemoryMarshal.ToEnumerable(ids), cancellationToken).ConfigureAwait(false);
+        var response = await _client.Api.Links.GetDetailsAsync(_volumeId, MemoryMarshal.ToEnumerable(ids), cancellationToken).ConfigureAwait(false);
 
-        var nodeResults = new List<Result<Node, DegradedNode>>(ids.Length);
+        var nodeResults = new List<RefResult<Node, DegradedNode>>(ids.Length);
 
         foreach (var linkDetails in response.Links)
         {
-            var nodeId = new NodeUid(_volumeId, linkDetails.Link.Id);
+            var nodeMetadataResult = await DtoToMetadataConverter.ConvertDtoToNodeMetadataAsync(_client, _volumeId, linkDetails, _parentKey, cancellationToken)
+                .ConfigureAwait(false);
 
-            var nodeAndSecretsResult = await NodeCrypto.DecryptNodeAsync(_client, nodeId, linkDetails, _parentKey, cancellationToken).ConfigureAwait(false);
-
-            var nodeResult = nodeAndSecretsResult.ToNodeResult();
+            var nodeResult = nodeMetadataResult.ToNodeResult();
 
             nodeResults.Add(nodeResult);
         }
