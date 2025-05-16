@@ -5,7 +5,7 @@ import { ProtonDriveHTTPClient, ProtonDriveTelemetry, Logger } from "../../inter
 import { AbortError, ServerError, RateLimitedError, ProtonDriveError } from '../../errors';
 import { waitSeconds } from '../wait';
 import { SDKEvents } from '../sdkEvents';
-import { HTTPErrorCode, isCodeOk } from './errorCodes';
+import { HTTPErrorCode, isCodeOk, isCodeOkAsync } from './errorCodes';
 import { apiErrorFactory } from './errors';
 
 /**
@@ -135,6 +135,9 @@ export class DriveAPIService {
 
             if (!response.ok || !isCodeOk(result.Code)) {
                 throw apiErrorFactory({ response, result });
+            }
+            if (isCodeOkAsync(result.Code)) {
+                this.logger.info(`${request.method} ${request.url}: deferred action`);
             }
             return result as ResponsePayload;
         } catch (error: unknown) {

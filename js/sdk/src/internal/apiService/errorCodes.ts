@@ -9,6 +9,10 @@ export function isCodeOk(code: number): boolean {
     return code === ErrorCode.OK || code === ErrorCode.OK_MANY || code === ErrorCode.OK_ASYNC;
 }
 
+export function isCodeOkAsync(code: number): boolean {
+    return code === ErrorCode.OK_ASYNC;
+}
+
 export const enum ErrorCode {
     OK = 1000,
     OK_MANY = 1001,
