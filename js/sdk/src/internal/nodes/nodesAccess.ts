@@ -5,7 +5,7 @@ import { Logger, MissingNode, NodeType, resultError, resultOk } from "../../inte
 import { DecryptionError, ProtonDriveError } from "../../errors";
 import { getErrorMessage } from '../errors';
 import { BatchLoading } from "../batchLoading";
-import { makeNodeUid } from "../uids";
+import { makeNodeUid, splitNodeUid } from "../uids";
 import { NodeAPIService } from "./apiService";
 import { NodesCache } from "./cache"
 import { NodesCryptoCache } from "./cryptoCache";
@@ -13,6 +13,7 @@ import { NodesCryptoService } from "./cryptoService";
 import { parseFileExtendedAttributes, parseFolderExtendedAttributes } from "./extendedAttributes";
 import { SharesService, EncryptedNode, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys } from "./interface";
 import { validateNodeName } from "./validations";
+import { isProtonDocument, isProtonSheet } from './mediaTypes';
 
 /**
  * Provides access to node metadata.
@@ -318,4 +319,27 @@ export class NodesAccess {
             nameSessionKey,
         };
     }
+
+    async getNodeUrl(nodeUid: string): Promise<string> {
+        const node = await this.getNode(nodeUid);
+        if (isProtonDocument(node.mediaType) || isProtonSheet(node.mediaType)) {
+            const { volumeId, nodeId } = splitNodeUid(nodeUid);
+            const type = isProtonDocument(node.mediaType) ? 'doc' : 'sheet';
+            return `https://docs.proton.me/doc?type=${type}&mode=open&volumeId=${volumeId}&linkId=${nodeId}`;
+        }
+
+        const rootNode = await this.getRootNode(nodeUid);
+        if (!rootNode.shareId) {
+            throw new ProtonDriveError(c('Error').t`Node is not accessible`);
+        }
+        const { nodeId } = splitNodeUid(nodeUid);
+        const type = node.type === NodeType.File ? 'file' : 'folder';
+
+        return `https://drive.proton.me/${rootNode.shareId}/${type}/${nodeId}`;
+    }
+
+    private async getRootNode(nodeUid: string): Promise<DecryptedNode> {
+        const node = await this.getNode(nodeUid);
+        return node.parentUid ? this.getRootNode(node.parentUid) : node;
+    };
 }

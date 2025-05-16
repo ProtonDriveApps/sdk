@@ -57,6 +57,17 @@ export class ProtonDriveClient {
     private upload: ReturnType<typeof initUploadModule>;
     private devices: ReturnType<typeof initDevicesModule>;
 
+    public experimental: {
+        /**
+         * Experimental feature to return the URL of the node.
+         * 
+         * Use it when you want to open the node in the ProtonDrive web app.
+         * 
+         * It has hardcoded URLs to open in production client only.
+         */
+        getNodeUrl: (nodeUid: NodeOrUid) => Promise<string>;
+    };
+
     constructor({
         httpClient,
         entitiesCache,
@@ -82,6 +93,12 @@ export class ProtonDriveClient {
         this.download = initDownloadModule(telemetry, apiService, cryptoModule, account, this.shares, this.nodes.access, this.nodes.revisions);
         this.upload = initUploadModule(telemetry, apiService, cryptoModule, this.shares, this.nodes.access);
         this.devices = initDevicesModule(telemetry, apiService, cryptoModule, this.shares, this.nodes.access, this.nodes.management);
+        this.experimental = {
+            getNodeUrl: async (nodeUid: NodeOrUid) => {
+                this.logger.debug(`Getting node URL for ${getUid(nodeUid)}`);
+                return this.nodes.access.getNodeUrl(getUid(nodeUid));
+            },
+        }
     }
 
     /**

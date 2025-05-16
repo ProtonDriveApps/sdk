@@ -7,6 +7,7 @@ import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
 import { NodesAccess } from './nodesAccess';
 import { SharesService, DecryptedNode, DecryptedUnparsedNode, EncryptedNode, DecryptedNodeKeys } from "./interface";
+import { NodeType } from "../../interface";
 
 describe('nodesAccess', () => {
     let apiService: NodeAPIService;
@@ -480,6 +481,40 @@ describe('nodesAccess', () => {
             } catch (error: unknown) {
                 expect(`${error}`).toBe('Error: API called');
             }
+        });
+    });
+
+    describe('getNodeUrl', () => {
+        const nodeUid = 'volumeId~nodeId';
+
+        it('should return node URL of document', async () => {
+            jest.spyOn(access, 'getNode').mockReturnValue(Promise.resolve({ mediaType: 'application/vnd.proton.doc' } as any as DecryptedNode));
+
+            const result = await access.getNodeUrl(nodeUid);
+            expect(result).toBe('https://docs.proton.me/doc?type=doc&mode=open&volumeId=volumeId&linkId=nodeId');
+        });
+
+        it('should return node URL of sheet', async () => {
+            jest.spyOn(access, 'getNode').mockReturnValue(Promise.resolve({ mediaType: 'application/vnd.proton.sheet' } as any as DecryptedNode));
+
+            const result = await access.getNodeUrl(nodeUid);
+            expect(result).toBe('https://docs.proton.me/doc?type=sheet&mode=open&volumeId=volumeId&linkId=nodeId');
+        });
+
+        it('should return node URL of image', async () => {
+            jest.spyOn(access, 'getNode').mockReturnValue(Promise.resolve({ type: NodeType.File } as any as DecryptedNode));
+            jest.spyOn(access as any, 'getRootNode').mockReturnValue(Promise.resolve({ shareId: 'shareId', type: NodeType.Folder } as any as DecryptedNode));
+
+            const result = await access.getNodeUrl(nodeUid);
+            expect(result).toBe('https://drive.proton.me/shareId/file/nodeId');
+        });
+
+        it('should return node URL of folder', async () => {
+            jest.spyOn(access, 'getNode').mockReturnValue(Promise.resolve({ type: NodeType.Folder } as any as DecryptedNode));
+            jest.spyOn(access as any, 'getRootNode').mockReturnValue(Promise.resolve({ shareId: 'shareId', type: NodeType.Folder } as any as DecryptedNode));
+
+            const result = await access.getNodeUrl(nodeUid);
+            expect(result).toBe('https://drive.proton.me/shareId/folder/nodeId');
         });
     });
 });
