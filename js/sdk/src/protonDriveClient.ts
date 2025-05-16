@@ -492,6 +492,11 @@ export class ProtonDriveClient {
     /**
      * Restore the node to the given revision.
      *
+     * Warning: Restoring revisions might be accepted by the server but not
+     * applied. If the client re-loads list of revisions quickly after the
+     * restore, the change might not be visible. Update the UI optimistically to
+     * reflect the change.
+     *
      * @param revisionUid - UID of the revision to restore.
      */
     async restoreRevision(revisionUid: string): Promise<void> {
