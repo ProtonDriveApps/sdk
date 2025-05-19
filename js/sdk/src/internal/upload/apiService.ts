@@ -238,21 +238,6 @@ export class UploadAPIService {
         const formData = new FormData();
         formData.append("Block", new Blob([block]), "blob");
 
-        await this.apiService.postBlockStream(url, token, formData, signal);
-
-        // TODO: implement onProgress properly
-        // One option is to use ObserverStream, same as for download.
-        // That requires ReadableStream. FormData can be converted
-        // to text via `new Response(formData).text()` and that can
-        // be converted to stream. But there are more details to handle.
-        // For example, validation on backend is very sensitive and
-        // we must ensure to implement correctly what fetch does by
-        // default, or that re-trying streams needs to re-create the
-        // stream first.
-        // Other option is to use XMLHttpRequest, but that is not
-        // supported in all environments (Bun for example) and that
-        // would require additional requirement on the HTTP client
-        // interface.
-        onProgress?.(block.length);
+        await this.apiService.postBlockStream(url, token, formData, onProgress, signal);
     }
 }

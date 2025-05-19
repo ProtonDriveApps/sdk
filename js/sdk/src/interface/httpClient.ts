@@ -1,5 +1,22 @@
 export interface ProtonDriveHTTPClient {
-    fetch(request: Request, signal?: AbortSignal): Promise<Response>,
+    fetchJson(options: ProtonDriveHTTPClientJsonOptions): Promise<Response>;
+    fetchBlob(options: ProtonDriveHTTPClientBlobOptions): Promise<Response>;
+}
+
+export type ProtonDriveHTTPClientJsonOptions = ProtonDriveHTTPClientBaseOptions & {
+    json?: object,
+}
+
+export type ProtonDriveHTTPClientBlobOptions = ProtonDriveHTTPClientBaseOptions & {
+    body?: XMLHttpRequestBodyInit,
+    onProgress?: (progress: number) => void,
+}
+
+type ProtonDriveHTTPClientBaseOptions = {
+    url: string,
+    method: string,
+    headers: Headers,
+    signal?: AbortSignal,
 }
 
 export type ProtonDriveConfig = {

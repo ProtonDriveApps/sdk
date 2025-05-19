@@ -117,18 +117,20 @@ export class DriveAPIService {
         data?: RequestPayload,
         signal?: AbortSignal,
     ): Promise<ResponsePayload> {
-        const request = new Request(`${this.baseUrl}/${url}`, {
-            method: method || 'GET',
+        const request = {
+            url: `${this.baseUrl}/${url}`,
+            method,
             headers: new Headers({
                 "Accept": "application/vnd.protonmail.v1+json",
                 "Content-Type": "application/json",
                 "Language": this.language,
                 "x-pm-drive-sdk-version": `js@${VERSION}`,
             }),
-            body: data && JSON.stringify(data),
-        });
+            json: data || undefined,
+            signal,
+        }
 
-        const response = await this.fetch(request, signal);
+        const response = await this.fetch(request, () => this.httpClient.fetchJson(request));
 
         try {
             const result = await response.json();
@@ -149,28 +151,39 @@ export class DriveAPIService {
     }
 
     async getBlockStream(baseUrl: string, token: string, signal?: AbortSignal): Promise<ReadableStream<Uint8Array>> {
-        const response = await this.makeStorageRequest('GET', baseUrl, token, undefined, signal);
+        const response = await this.makeStorageRequest('GET', baseUrl, token, undefined, undefined, signal);
         if (!response.body) {
             throw new Error(c('Error').t`File download failed due to empty response`);
         }
         return response.body;
     }
 
-    async postBlockStream(baseUrl: string, token: string, data: BodyInit, signal?: AbortSignal): Promise<void> {
-        await this.makeStorageRequest('POST', baseUrl, token, data, signal);
+    async postBlockStream(baseUrl: string, token: string, data: XMLHttpRequestBodyInit, onProgress?: (uploadedBytes: number) => void, signal?: AbortSignal): Promise<void> {
+        await this.makeStorageRequest('POST', baseUrl, token, data, onProgress, signal);
     }
 
-    private async makeStorageRequest(method: 'GET' | 'POST', url: string, token: string, body?: BodyInit, signal?: AbortSignal): Promise<Response> {
-        const request = new Request(`${url}`, {
+    private async makeStorageRequest(
+        method: 'GET' | 'POST',
+        url: string,
+        token: string,
+        body?: XMLHttpRequestBodyInit,
+        onProgress?: (uploadedBytes: number) => void,
+        signal?: AbortSignal,
+    ): Promise<Response> {
+        const request = {
+            url,
             method,
-            credentials: 'omit',
             headers: new Headers({
                 "pm-storage-token": token,
+                "Language": this.language,
+                "x-pm-drive-sdk-version": `js@${VERSION}`,
             }),
             body,
-        });
+            onProgress,
+            signal,
+        };
 
-        const response = await this.fetch(request, signal);
+        const response = await this.fetch(request, () => this.httpClient.fetchBlob(request));
 
         if (response.status >= 400) {
             try {
@@ -192,11 +205,11 @@ export class DriveAPIService {
     // u=5 for background (e.g., upload, download)
     // u=7 for optional (e.g., metrics, telemetry)
     private async fetch(
-        request: Request,
-        signal?: AbortSignal,
+        request: { method: string, url: string, signal?: AbortSignal },
+        callback: () => Promise<Response>,
         attempt = 0
     ): Promise<Response> {
-        if (signal?.aborted) {
+        if (request.signal?.aborted) {
             throw new AbortError(c('Error').t`Request aborted`);
         }
 
@@ -213,25 +226,25 @@ export class DriveAPIService {
 
         let response;
         try {
-            response = await this.httpClient.fetch(request, signal);
+            response = await callback();
         } catch (error: unknown) {
             if (error instanceof Error) {
                 if (error.name === 'OfflineError') {
                     this.logger.info(`${request.method} ${request.url}: Offline error, retrying`);
                     await waitSeconds(OFFLINE_RETRY_DELAY_SECONDS);
-                    return this.fetch(request, signal, attempt+1);
+                    return this.fetch(request, callback, attempt+1);
                 }
 
                 if (error.name === 'TimeoutError') {
                     this.logger.warn(`${request.method} ${request.url}: Timeout error, retrying`);
                     await waitSeconds(SERVER_ERROR_RETRY_DELAY_SECONDS);
-                    return this.fetch(request, signal, attempt+1);
+                    return this.fetch(request, callback, attempt+1);
                 }
             }
             if (attempt === 0) {
                 this.logger.error(`${request.method} ${request.url}: failed, retrying once`, error);
                 await waitSeconds(GENERAL_RETRY_DELAY_SECONDS);
-                return this.fetch(request, signal, attempt+1);
+                return this.fetch(request, callback, attempt+1);
             }
             this.logger.error(`${request.method} ${request.url}: failed`, error);
             throw error;
@@ -247,7 +260,7 @@ export class DriveAPIService {
             this.tooManyRequestsErrorHappened();
             const timeout = parseInt(response.headers.get('retry-after') || '0', DEFAULT_429_RETRY_DELAY_SECONDS);
             await waitSeconds(timeout);
-            return this.fetch(request, signal, attempt+1);
+            return this.fetch(request, callback, attempt+1);
         } else {
             this.clearSubsequentTooManyRequestsError();
         }
@@ -261,7 +274,7 @@ export class DriveAPIService {
                 this.logger.warn(`${request.method} ${request.url}: ${response.status} - retry failed`);
             } else {
                 await waitSeconds(SERVER_ERROR_RETRY_DELAY_SECONDS);
-                return this.fetch(request, signal, attempt+1);
+                return this.fetch(request, callback, attempt+1);
             }
         } else {
             if (attempt > 0) {

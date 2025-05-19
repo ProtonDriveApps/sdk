@@ -83,7 +83,12 @@ export function getCommand(groupName: string, commandName: string): Command {
         groupName = 'filesystem';
     }
 
-    const commands = COMMANDS.filter(command => command.group.startsWith(groupName) && command.name.startsWith(commandName));
+    let commands = COMMANDS.filter(command => command.group.startsWith(groupName) && command.name === commandName);
+    if (commands.length === 1) {
+        return commands[0];
+    }
+
+    commands = COMMANDS.filter(command => command.group.startsWith(groupName) && command.name.startsWith(commandName));
     if (commands.length === 1) {
         return commands[0];
     }
