@@ -256,6 +256,24 @@ describe("nodeAPIService", () => {
                 ]);
             }
         });
+
+        it('should get nodes across various volumes', async () => {
+            // @ts-expect-error Mocking for testing purposes
+            apiMock.post = jest.fn(async (url) => Promise.resolve({
+                Links: [
+                    generateAPIFolderNode({
+                        LinkID: url.includes('volumeId1') ? 'nodeId1' : 'nodeId2',
+                        ParentLinkID: url.includes('volumeId1') ? 'parentNodeId1' : 'parentNodeId2',
+                    }),
+                ],
+            }));
+
+            const nodes = await Array.fromAsync(api.iterateNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2']));
+            expect(nodes).toStrictEqual([
+                generateFolderNode({ uid: 'volumeId1~nodeId1', parentUid: 'volumeId1~parentNodeId1' }),
+                generateFolderNode({ uid: 'volumeId2~nodeId2', parentUid: 'volumeId2~parentNodeId2' }),
+            ]);
+        });
     });
 
     describe('trashNodes', () => {

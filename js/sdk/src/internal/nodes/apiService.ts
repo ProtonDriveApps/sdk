@@ -63,29 +63,38 @@ export class NodeAPIService {
         return result.value;
     }
 
-    // Improvement requested: support multiple volumes.
     // Improvement requested: split into multiple calls for many nodes.
     async* iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<EncryptedNode> {
-        const nodeIds = nodeUids.map(splitNodeUid);
-        const volumeId = assertAndGetSingleVolumeId(c('Operation').t`Loading items`, nodeIds);
+        const allNodeIds = nodeUids.map(splitNodeUid);
 
-        const response = await this.apiService.post<PostLoadLinksMetadataRequest, PostLoadLinksMetadataResponse>(`drive/v2/volumes/${volumeId}/links`, {
-            LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
-        }, signal);
+        const nodeIdsByVolumeId = new Map<string, string[]>();
+        for (const { volumeId, nodeId } of allNodeIds) {
+            if (!nodeIdsByVolumeId.has(volumeId)) {
+                nodeIdsByVolumeId.set(volumeId, []);
+            }
+            nodeIdsByVolumeId.get(volumeId)?.push(nodeId);
+        }
 
         // If the API returns node that is not recognised, it is returned as
         // an error, but first all nodes that are recognised are yielded.
         // Thus we capture all errors and throw them at the end of iteration.
         const errors = [];
 
-        for (const link of response.Links) {
-            try {
-                yield linkToEncryptedNode(this.logger, volumeId, link);
-            } catch (error: unknown) {
-                this.logger.error(`Failed to transform node ${link.Link.LinkID}`, error);
-                errors.push(error);
+        for (const [volumeId, nodeIds] of nodeIdsByVolumeId.entries()) {
+            const response = await this.apiService.post<PostLoadLinksMetadataRequest, PostLoadLinksMetadataResponse>(`drive/v2/volumes/${volumeId}/links`, {
+                LinkIDs: nodeIds,
+            }, signal);
+
+            for (const link of response.Links) {
+                try {
+                    yield linkToEncryptedNode(this.logger, volumeId, link);
+                } catch (error: unknown) {
+                    this.logger.error(`Failed to transform node ${link.Link.LinkID}`, error);
+                    errors.push(error);
+                }
             }
         }
+
 
         if (errors.length) {
             this.logger.warn(`Failed to load ${errors.length} nodes`);
