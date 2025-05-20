@@ -86,6 +86,7 @@ describe("nodesCryptoService", () => {
     describe("folder node", () => {
         const encryptedNode = {
             uid: "volumeId~nodeId",
+            parentUid: "volumeId~parentId",
             encryptedCrypto: {
                 signatureEmail: "signatureEmail",
                 nameSignatureEmail: "nameSignatureEmail",
@@ -323,6 +324,7 @@ describe("nodesCryptoService", () => {
     describe("file node", () => {
         const encryptedNode = {
             uid: "volumeId~nodeId",
+            parentUid: "volumeId~parentId",
             encryptedCrypto: {
                 signatureEmail: "signatureEmail",
                 nameSignatureEmail: "nameSignatureEmail",
@@ -567,6 +569,137 @@ describe("nodesCryptoService", () => {
 
             const result = cryptoService.decryptNode(encryptedNode, parentKey);
             await expect(result).rejects.toThrow("Failed to load keys");
+        });
+    });
+    
+    describe("anonymous node", () => {
+        const encryptedNode = {
+            uid: "volumeId~nodeId",
+            parentUid: "volumeId~parentId",
+            encryptedCrypto: {
+                signatureEmail: undefined,
+                nameSignatureEmail: undefined,
+                armoredKey: "armoredKey",
+                armoredNodePassphrase: "armoredNodePassphrase",
+                armoredNodePassphraseSignature: "armoredNodePassphraseSignature",
+                file: {
+                    base64ContentKeyPacket: "base64ContentKeyPacket",
+                },
+                activeRevision: {
+                    uid: "revisionUid",
+                    state: "active",
+                    signatureEmail: "revisionSignatureEmail",
+                    armoredExtendedAttributes: "encryptedExtendedAttributes",
+                },
+            },
+        } as EncryptedNode;
+
+        const encryptedNodeWithoutParent = {
+            ...encryptedNode,
+            parentUid: undefined,
+        }
+
+        function verifyResult(
+            result: { node: DecryptedUnparsedNode, keys?: DecryptedNodeKeys },
+            expectedNode: Partial<DecryptedUnparsedNode> = {},
+            expectedKeys: Partial<DecryptedNodeKeys> | 'noKeys' = {},
+        ) {
+            expect(result).toMatchObject({
+                node: {
+                    name: { ok: true, value: "name" },
+                    keyAuthor: { ok: true, value: "signatureEmail" },
+                    nameAuthor: { ok: true, value: "nameSignatureEmail" },
+                    folder: undefined,
+                    activeRevision: { ok: true, value: {
+                        uid: "revisionUid",
+                        state: RevisionState.Active,
+                        creationTime: undefined,
+                        extendedAttributes: "{}",
+                        contentAuthor: { ok: true, value: "revisionSignatureEmail" },
+                    } },
+                    errors: undefined,
+                    ...expectedNode,
+                },
+                ...expectedKeys === 'noKeys' ? {} : {
+                    keys: {
+                        passphrase: "pass",
+                        key: "decryptedKey",
+                        passphraseSessionKey: "passphraseSessionKey",
+                        hashKey: undefined,
+                        contentKeyPacketSessionKey: "contentKeyPacketSessionKey",
+                        ...expectedKeys,
+                    },
+                },
+            });
+        }
+
+        describe("should decrypt with verification issues", () => {
+            it("on node key and name with access to parent node", async () => {
+                driveCrypto.decryptKey = jest.fn(async () => Promise.resolve({
+                    passphrase: "pass",
+                    key: "decryptedKey" as unknown as PrivateKey,
+                    passphraseSessionKey: "passphraseSessionKey" as unknown as SessionKey,
+                    verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                }));
+                driveCrypto.decryptNodeName = jest.fn(async () => Promise.resolve({
+                    name: "name",
+                    verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                }));
+
+                const result = await cryptoService.decryptNode(encryptedNode, parentKey);
+                verifyResult(result, {
+                    keyAuthor: { ok: false, error: { claimedAuthor: undefined, error: "Signature verification for key failed" } },
+                    nameAuthor: { ok: false, error: { claimedAuthor: undefined, error: "Signature verification for name failed" } },
+                });
+                verifyLogEventVerificationError({
+                    field: 'nodeName',
+                    addressMatchingDefaultShare: undefined,
+                });
+                expect(driveCrypto.decryptKey).toHaveBeenCalledWith(
+                    encryptedNode.encryptedCrypto.armoredKey,
+                    encryptedNode.encryptedCrypto.armoredNodePassphrase,
+                    encryptedNode.encryptedCrypto.armoredNodePassphraseSignature,
+                    [parentKey],
+                    [parentKey],
+                );
+                expect(driveCrypto.decryptNodeName).toHaveBeenCalledWith(
+                    encryptedNode.encryptedName,
+                    parentKey,
+                    [parentKey],
+                );
+            });
+
+            it("on anonymous node key and name without access to parent node", async () => {
+                driveCrypto.decryptKey = jest.fn(async () => Promise.resolve({
+                    passphrase: "pass",
+                    key: "decryptedKey" as unknown as PrivateKey,
+                    passphraseSessionKey: "passphraseSessionKey" as unknown as SessionKey,
+                    verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                }));
+                driveCrypto.decryptNodeName = jest.fn(async () => Promise.resolve({
+                    name: "name",
+                    verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                }));
+
+                const result = await cryptoService.decryptNode(encryptedNodeWithoutParent, parentKey);
+                verifyResult(result, {
+                    keyAuthor: { ok: true, value: null },
+                    nameAuthor: { ok: true, value: null },
+                });
+                expect(telemetry.logEvent).not.toHaveBeenCalled();
+                expect(driveCrypto.decryptKey).toHaveBeenCalledWith(
+                    encryptedNode.encryptedCrypto.armoredKey,
+                    encryptedNode.encryptedCrypto.armoredNodePassphrase,
+                    encryptedNode.encryptedCrypto.armoredNodePassphraseSignature,
+                    [parentKey],
+                    [],
+                );
+                expect(driveCrypto.decryptNodeName).toHaveBeenCalledWith(
+                    encryptedNode.encryptedName,
+                    parentKey,
+                    [],
+                );
+            });
         });
     });
 });
