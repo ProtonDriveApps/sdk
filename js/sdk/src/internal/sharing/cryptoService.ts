@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import { c } from 'ttag';
 
 import { DriveCrypto, PrivateKey, SessionKey, uint8ArrayToBase64String, VERIFICATION_STATUS } from '../../crypto';
-import { ProtonDriveAccount, ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Author, Result, Member, UnverifiedAuthorError, InvalidNameError, resultError, resultOk, PublicLink } from "../../interface";
+import { ProtonDriveAccount, ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Author, Result, Member, UnverifiedAuthorError, resultError, resultOk, PublicLink } from "../../interface";
 import { getErrorMessage, getVerificationMessage } from "../errors";
 import { EncryptedShare } from "../shares";
 import { EncryptedInvitation, EncryptedInvitationWithNode, EncryptedExternalInvitation, EncryptedMember, EncryptedPublicLink } from "./interface";
@@ -164,7 +164,7 @@ export class SharingCryptoService {
             inviteeKey,
         );
 
-        let nodeName: Result<string, InvalidNameError>;
+        let nodeName: Result<string, Error>;
         try {
             const result = await this.driveCrypto.decryptNodeName(
                 encryptedInvitation.node.encryptedName,
@@ -174,7 +174,7 @@ export class SharingCryptoService {
             nodeName = resultOk(result.name);
         } catch (error: unknown) {
             const errorMessage = c('Error').t`Failed to decrypt item name: ${getErrorMessage(error)}`;
-            nodeName = resultError({ name: '', error: errorMessage });
+            nodeName = resultError(new Error(errorMessage));
         }
 
         return {

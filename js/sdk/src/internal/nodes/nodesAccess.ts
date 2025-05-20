@@ -1,7 +1,7 @@
 import { c } from 'ttag';
 
 import { PrivateKey, SessionKey } from "../../crypto";
-import { Logger, MissingNode, NodeType, resultError, resultOk } from "../../interface";
+import { InvalidNameError, Logger, MissingNode, NodeType, Result, resultError, resultOk } from "../../interface";
 import { DecryptionError, ProtonDriveError } from "../../errors";
 import { getErrorMessage } from '../errors';
 import { BatchLoading } from "../batchLoading";
@@ -184,10 +184,7 @@ export class NodesAccess {
                     node: {
                         ...encryptedNode,
                         isStale: false,
-                        name: resultError({
-                            name: '',
-                            error: getErrorMessage(error),
-                        }),
+                        name: resultError(error),
                         keyAuthor: resultError({
                             claimedAuthor: encryptedNode.encryptedCrypto.signatureEmail,
                             error: getErrorMessage(error),
@@ -221,12 +218,13 @@ export class NodesAccess {
     }
 
     private async parseNode(unparsedNode: DecryptedUnparsedNode): Promise<DecryptedNode> {
+        let nodeName: Result<string, Error | InvalidNameError> = unparsedNode.name;
         if (unparsedNode.name.ok) {
             try {
                 validateNodeName(unparsedNode.name.value);
             } catch (error: unknown) {
                 this.logger.warn(`Node name validation failed: ${error instanceof Error ? error.message : error}`);
-                unparsedNode.name = resultError({
+                nodeName = resultError({
                     name: unparsedNode.name.value,
                     error: error instanceof Error ? error.message : c('Error').t`Unknown error`,
                 });
@@ -258,6 +256,7 @@ export class NodesAccess {
             : undefined;
         return {
             ...unparsedNode,
+            name: nodeName,
             isStale: false,
             activeRevision: undefined,
             folder: extendedAttributes ? {

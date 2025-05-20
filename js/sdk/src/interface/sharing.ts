@@ -14,7 +14,7 @@ export type ProtonInvitation = Member;
 
 export type ProtonInvitationWithNode = ProtonInvitation & {
     node: {
-        name: Result<string, InvalidNameError>,
+        name: Result<string, Error | InvalidNameError>,
         type: NodeType,
         mediaType?: string,
     },
@@ -42,7 +42,7 @@ export type Bookmark = {
     uid: string,
     bookmarkTime: Date,
     node: {
-        name: Result<string, InvalidNameError>,
+        name: Result<string, Error | InvalidNameError>,
         type: NodeType,
         mediaType?: string,
     },

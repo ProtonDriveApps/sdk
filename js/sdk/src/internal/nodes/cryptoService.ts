@@ -1,7 +1,7 @@
 import { c } from 'ttag';
 
 import { DriveCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from "../../crypto";
-import { resultOk, resultError, Result, InvalidNameError, Author, ProtonDriveAccount, ProtonDriveTelemetry, Logger, MetricsDecryptionErrorField, MetricVerificationErrorField } from "../../interface";
+import { resultOk, resultError, Result, Author, ProtonDriveAccount, ProtonDriveTelemetry, Logger, MetricsDecryptionErrorField, MetricVerificationErrorField } from "../../interface";
 import { ValidationError } from '../../errors';
 import { getErrorMessage, getVerificationMessage } from "../errors";
 import { splitNodeUid } from "../uids";
@@ -230,7 +230,7 @@ export class NodesCryptoService {
     };
 
     private async decryptName(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PrivateKey[]): Promise<{
-        name: Result<string, InvalidNameError>,
+        name: Result<string, Error>,
         author: Author,
     }> {
         const nameSignatureEmail = node.encryptedCrypto.nameSignatureEmail || node.encryptedCrypto.signatureEmail;
@@ -250,10 +250,7 @@ export class NodesCryptoService {
             void this.reportDecryptionError(node, 'nodeName', error);
             const errorMessage = getErrorMessage(error);
             return {
-                name: resultError({
-                    name: '',
-                    error: errorMessage,
-                }),
+                name: resultError(new Error(errorMessage)),
                 author: resultError({
                     claimedAuthor: nameSignatureEmail,
                     error: errorMessage,

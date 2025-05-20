@@ -422,7 +422,7 @@ describe('nodesAccess', () => {
                         ...node1,
                         encryptedCrypto,
                         parentUid: 'parentUidFor:node1',
-                        name: { ok: false, error: { name: '', error: decryptionError.message } },
+                        name: { ok: false, error: decryptionError },
                         keyAuthor: { ok: false, error: { claimedAuthor: 'signatureEmail', error: decryptionError.message } },
                         nameAuthor: { ok: false, error: { claimedAuthor: 'nameSignatureEmail', error: decryptionError.message } },
                         errors: [decryptionError],
