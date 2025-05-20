@@ -1,7 +1,7 @@
 import { c } from 'ttag';
 
 import { DriveCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from "../../crypto";
-import { resultOk, resultError, Result, Author, ProtonDriveAccount, ProtonDriveTelemetry, Logger, MetricsDecryptionErrorField, MetricVerificationErrorField } from "../../interface";
+import { resultOk, resultError, Result, Author, AnonymousUser, ProtonDriveAccount, ProtonDriveTelemetry, Logger, MetricsDecryptionErrorField, MetricVerificationErrorField } from "../../interface";
 import { ValidationError } from '../../errors';
 import { getErrorMessage, getVerificationMessage } from "../errors";
 import { splitNodeUid } from "../uids";
@@ -46,10 +46,16 @@ export class NodesCryptoService {
             ? await this.account.getPublicKeys(node.encryptedCrypto.signatureEmail)
             : [];
 
+        // Parent key is node or share key. Anonymous files are signed with
+        // the node parent key. If the anonymous file is shared directly,
+        // there is no access to the parent key. In that case, the verification
+        // is skipped.
+        const nodeParentKeys = node.parentUid ? [parentKey] : [];
+
         // Anonymous uploads (without signature email set) use parent key instead.
         const keyVerificationKeys = node.encryptedCrypto.signatureEmail
             ? signatureEmailKeys
-            : [parentKey];
+            : nodeParentKeys;
 
         let nameVerificationKeys;
         const nameSignatureEmail = node.encryptedCrypto.nameSignatureEmail || node.encryptedCrypto.signatureEmail;
@@ -58,14 +64,14 @@ export class NodesCryptoService {
         } else {
             nameVerificationKeys = nameSignatureEmail
                 ? await this.account.getPublicKeys(nameSignatureEmail)
-                : [parentKey];
+                : nodeParentKeys;
         }
 
         const { name, author: nameAuthor } = await this.decryptName(node, parentKey, nameVerificationKeys);
 
         let passphrase, key, passphraseSessionKey, keyAuthor;
         try {
-            const keyResult = await this.decryptKey(node, parentKey, signatureEmailKeys);
+            const keyResult = await this.decryptKey(node, parentKey, keyVerificationKeys);
             passphrase = keyResult.passphrase;
             key = keyResult.key;
             passphraseSessionKey = keyResult.passphraseSessionKey;
@@ -225,7 +231,7 @@ export class NodesCryptoService {
             passphrase: key.passphrase,
             key: key.key,
             passphraseSessionKey: key.passphraseSessionKey,
-            author: await this.handleClaimedAuthor(node, 'nodeKey', c('Property').t`key`, key.verified, node.encryptedCrypto.signatureEmail),
+            author: await this.handleClaimedAuthor(node, 'nodeKey', c('Property').t`key`, key.verified, node.encryptedCrypto.signatureEmail, verificationKeys.length === 0),
         };
     };
 
@@ -244,7 +250,7 @@ export class NodesCryptoService {
 
             return {
                 name: resultOk(name),
-                author: await this.handleClaimedAuthor(node, 'nodeName', c('Property').t`name`, verified, nameSignatureEmail),
+                author: await this.handleClaimedAuthor(node, 'nodeName', c('Property').t`name`, verified, nameSignatureEmail, verificationKeys.length === 0),
             }
         } catch (error: unknown) {
             void this.reportDecryptionError(node, 'nodeName', error);
@@ -443,9 +449,10 @@ export class NodesCryptoService {
         field: MetricVerificationErrorField,
         signatureType: string,
         verified: VERIFICATION_STATUS,
-        claimedAuthor?: string
+        claimedAuthor?: string,
+        notAvailableVerificationKeys = false,
     ): Promise<Author> {
-        const author = handleClaimedAuthor(signatureType, verified, claimedAuthor);
+        const author = handleClaimedAuthor(signatureType, verified, claimedAuthor, notAvailableVerificationKeys);
         if (!author.ok) {
             void this.reportVerificationError(node, field, claimedAuthor);
         }
@@ -516,13 +523,13 @@ export class NodesCryptoService {
 /**
  * @param signatureType - Must be translated before calling this function.
  */
-function handleClaimedAuthor(signatureType: string, verified: VERIFICATION_STATUS, claimedAuthor?: string): Author {
-    if (!claimedAuthor) {
-        return resultOk(null); // Anonymous user
+function handleClaimedAuthor(signatureType: string, verified: VERIFICATION_STATUS, claimedAuthor?: string, notAvailableVerificationKeys = false): Author {
+    if (!claimedAuthor && notAvailableVerificationKeys) {
+        return resultOk(null as AnonymousUser);
     }
 
     if (verified === VERIFICATION_STATUS.SIGNED_AND_VALID) {
-        return resultOk(claimedAuthor);
+        return resultOk(claimedAuthor || (null as AnonymousUser));
     }
 
     return resultError({
