@@ -273,7 +273,7 @@ describe("nodesCryptoService", () => {
 
                 const result = await cryptoService.decryptNode(encryptedNode, parentKey);
                 verifyResult(result, {
-                    name: { ok: false, error: { name: "", error: "Decryption error" } },
+                    name: { ok: false, error },
                     nameAuthor: { ok: false, error: { claimedAuthor: "nameSignatureEmail", error: "Decryption error" } },
                 }, 'noKeys');
                 verifyLogEventDecryptionError({
@@ -521,7 +521,7 @@ describe("nodesCryptoService", () => {
 
                 const result = await cryptoService.decryptNode(encryptedNode, parentKey);
                 verifyResult(result, {
-                    name: { ok: false, error: { name: "", error: "Decryption error" } },
+                    name: { ok: false, error },
                     nameAuthor: { ok: false, error: { claimedAuthor: "nameSignatureEmail", error: "Decryption error" } },
                 }, 'noKeys');
                 verifyLogEventDecryptionError({

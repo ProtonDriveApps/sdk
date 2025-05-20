@@ -89,18 +89,17 @@ export type NodeEntity = {
  * properties are decrypted, or that all actions can be performed on it.
  * 
  * For example, if the node has issue decrypting the name, the name will be
- * set es `InvalidNameError` and potentially rename or move actions will not be
+ * set as `Error` and potentially rename or move actions will not be
  * possible, but download and upload new revision will still work.
  */
 export type DegradedNode = Omit<NodeEntity, 'name' | 'activeRevision'> & {
-    name: Result<string, InvalidNameError>,
+    name: Result<string, Error | InvalidNameError>,
     activeRevision?: Result<Revision, Error>,
     /**
      * If the error is not related to any specific field, it is set here.
      * 
      * For example, if the node has issue decrypting the name, the name will be
-     * set es `InvalidNameError` that includes the error, while this will be
-     * empty.
+     * set as `Error` while this will be empty.
      * 
      * On the other hand, if the node has issue decrypting the node key, but
      * the name is still working, this will include the node key error, while
@@ -109,6 +108,9 @@ export type DegradedNode = Omit<NodeEntity, 'name' | 'activeRevision'> & {
     errors?: unknown[],
 }
 
+/**
+ * Invalid name error represents node name that includes invalid characters.
+ */
 export type InvalidNameError = {
     /**
      * Placeholder instead of node name that client can use to display.

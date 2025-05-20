@@ -67,7 +67,7 @@ export interface EncryptedNodeFolderCrypto extends EncryptedNodeCrypto {
 export interface DecryptedUnparsedNode extends BaseNode {
     keyAuthor: Author,
     nameAuthor: Author,
-    name: Result<string, InvalidNameError>,
+    name: Result<string, Error>,
     activeRevision?: Result<DecryptedRevision, Error>,
     folder?: {
         extendedAttributes?: string,
@@ -78,9 +78,10 @@ export interface DecryptedUnparsedNode extends BaseNode {
 /**
  * Interface holding decrypted node metadata.
  */
-export interface DecryptedNode extends Omit<DecryptedUnparsedNode, 'activeRevision' | 'folder'>, Omit<NodeEntity, 'name' | 'activeRevision'> {
+export interface DecryptedNode extends Omit<DecryptedUnparsedNode, 'name' | 'activeRevision' | 'folder'>, Omit<NodeEntity, 'name' | 'activeRevision'> {
     // Internal metadata
     isStale: boolean;
+    name: Result<string, Error | InvalidNameError>,
 
     activeRevision?: Result<DecryptedRevision, Error>,
     folder?: {

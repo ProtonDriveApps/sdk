@@ -4,7 +4,7 @@ import { InvalidNameError } from './nodes';
 export type Device = {
     uid: string,
     type: DeviceType,
-    name: Result<string, InvalidNameError>,
+    name: Result<string, Error | InvalidNameError>,
     rootFolderUid: string,
     creationTime: Date,
     lastSyncDate?: Date;
