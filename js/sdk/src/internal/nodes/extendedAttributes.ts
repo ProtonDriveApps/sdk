@@ -82,15 +82,34 @@ export function parseFolderExtendedAttributes(logger: Logger, extendedAttributes
     }
 }
 
-export function generateFileExtendedAttributes(claimedModificationTime?: Date): string | undefined {
-    if (!claimedModificationTime) {
+export function generateFileExtendedAttributes(options: {
+    modificationTime?: Date,
+    size?: number,
+    blockSizes?: number[],
+    digests?: {
+        sha1?: string,
+    },
+}): string | undefined {
+    const commonAttributes: FileExtendedAttributesSchema['Common'] = {};
+    if (options.modificationTime) {
+        commonAttributes.ModificationTime = dateToIsoString(options.modificationTime);
+    }
+    if (options.size) {
+        commonAttributes.Size = options.size;
+    }
+    if (options.blockSizes) {
+        commonAttributes.BlockSizes = options.blockSizes;
+    }
+    if (options.digests?.sha1) {
+        commonAttributes.Digests = {
+            SHA1: options.digests.sha1,
+        };
+    }
+    if (!Object.keys(commonAttributes).length) {
         return undefined;
     }
-    // FIXME: Add support for other attributes
     return JSON.stringify({
-        Common: {
-            ModificationTime: dateToIsoString(claimedModificationTime),
-        },
+        Common: commonAttributes,
     });
 }
 

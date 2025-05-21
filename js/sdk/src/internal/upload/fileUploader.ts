@@ -12,6 +12,7 @@ import { UploadAPIService } from "./apiService";
 import { BlockVerifier } from "./blockVerifier";
 import { UploadController } from './controller';
 import { UploadCryptoService } from "./cryptoService";
+import { UploadDigests } from "./digests";
 import { NodeRevisionDraft, EncryptedBlock, EncryptedThumbnail, EncryptedBlockMetadata } from "./interface";
 import { UploadTelemetry } from './telemetry';
 import { ChunkStreamReader } from './chunkStreamReader';
@@ -56,6 +57,7 @@ const MAX_BLOCK_UPLOAD_RETRIES = 3;
 export class Fileuploader {
     private logger: Logger;
 
+    private digests: UploadDigests;
     private controller: UploadController;
     private abortController: AbortController;
 
@@ -97,6 +99,7 @@ export class Fileuploader {
             });
         }
 
+        this.digests = new UploadDigests();
         this.controller = new UploadController();
     }
 
@@ -202,7 +205,12 @@ export class Fileuploader {
 
     private async commitFile(thumbnails: Thumbnail[]) {
         this.verifyIntegrity(thumbnails);
-        const extendedAttributes = generateFileExtendedAttributes(this.metadata.modificationTime);
+        const extendedAttributes = generateFileExtendedAttributes({
+            modificationTime: this.metadata.modificationTime,
+            size: this.metadata.expectedSize,
+            blockSizes: Array.from(this.uploadedBlocks.values().map(block => block.originalSize)),
+            digests: this.digests.digests(),
+        });
         const nodeCommitCrypto = await this.cryptoService.commitFile(this.revisionDraft.nodeKeys, this.manifest, extendedAttributes);
         await this.apiService.commitDraftRevision(this.revisionDraft.nodeRevisionUid, nodeCommitCrypto);
     }
@@ -225,6 +233,8 @@ export class Fileuploader {
             const reader = new ChunkStreamReader(stream, FILE_CHUNK_SIZE);
             for await (const block of reader.iterateChunks()) {
                 index++;
+
+                this.digests.update(block);
 
                 await this.controller.waitIfPaused();
                 await this.waitForBufferCapacity();
