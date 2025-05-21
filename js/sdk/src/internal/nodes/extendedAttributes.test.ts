@@ -1,5 +1,5 @@
 import { getMockLogger } from "../../tests/logger";
-import { FolderExtendedAttributes, FileExtendedAttributesParsed, generateFolderExtendedAttributes, parseFolderExtendedAttributes, parseFileExtendedAttributes } from './extendedAttributes';
+import { FolderExtendedAttributes, FileExtendedAttributesParsed, generateFolderExtendedAttributes, generateFileExtendedAttributes, parseFolderExtendedAttributes, parseFileExtendedAttributes } from './extendedAttributes';
 
 describe('extended attrbiutes', () => {
     describe('should generate folder attributes', () => {
@@ -45,6 +45,31 @@ describe('extended attrbiutes', () => {
             it(`should parse ${input}`, () => {
                 const output = parseFolderExtendedAttributes(getMockLogger(), input);
                 expect(output).toMatchObject(expectedAttributes);
+            })
+        });
+    });
+
+    describe('should generate file attributes', () => {
+        const testCases: [object, string | undefined][] = [
+            [{}, undefined],
+            [{modificationTime: new Date(1234567890000)}, '{"Common":{"ModificationTime":"2009-02-13T23:31:30.000Z"}}'],
+            [{size: 1234}, '{"Common":{"Size":1234}}'],
+            [{blockSizes: [4,4,4,2]}, '{"Common":{"BlockSizes":[4,4,4,2]}}'],
+            [{digests: {sha1: 'abcdef'}}, '{"Common":{"Digests":{"SHA1":"abcdef"}}}'],
+            [
+                {
+                    modificationTime: new Date(1234567890000),
+                    size: 1234,
+                    blockSizes: [4, 4, 4, 2],
+                    digests: {sha1: 'abcdef'},
+                },
+                '{"Common":{"ModificationTime":"2009-02-13T23:31:30.000Z","Size":1234,"BlockSizes":[4,4,4,2],"Digests":{"SHA1":"abcdef"}}}',
+            ],
+        ];
+        testCases.forEach(([input, expectedAttributes]) => {
+            it(`should generate ${input}`, () => {
+                const output = generateFileExtendedAttributes(input);
+                expect(output).toBe(expectedAttributes);
             })
         });
     });

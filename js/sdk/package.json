@@ -15,6 +15,7 @@
         "test:watch": "jest --watch --coverage=false"
     },
     "dependencies": {
+        "@noble/hashes": "^1.8.0",
         "bcryptjs": "^2.4.3",
         "ttag": "^1.8.7"
     },
