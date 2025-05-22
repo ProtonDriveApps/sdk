@@ -94,10 +94,10 @@ export function generateFileExtendedAttributes(options: {
     if (options.modificationTime) {
         commonAttributes.ModificationTime = dateToIsoString(options.modificationTime);
     }
-    if (options.size) {
+    if (options.size !== undefined) {
         commonAttributes.Size = options.size;
     }
-    if (options.blockSizes) {
+    if (options.blockSizes?.length) {
         commonAttributes.BlockSizes = options.blockSizes;
     }
     if (options.digests?.sha1) {
