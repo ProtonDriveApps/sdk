@@ -53,8 +53,12 @@ describe('extended attrbiutes', () => {
         const testCases: [object, string | undefined][] = [
             [{}, undefined],
             [{modificationTime: new Date(1234567890000)}, '{"Common":{"ModificationTime":"2009-02-13T23:31:30.000Z"}}'],
+            [{size: undefined}, undefined],
+            [{size: 0}, '{"Common":{"Size":0}}'],
             [{size: 1234}, '{"Common":{"Size":1234}}'],
+            [{blockSizes: []}, undefined],
             [{blockSizes: [4,4,4,2]}, '{"Common":{"BlockSizes":[4,4,4,2]}}'],
+            [{digests: {}}, undefined],
             [{digests: {sha1: 'abcdef'}}, '{"Common":{"Digests":{"SHA1":"abcdef"}}}'],
             [
                 {
