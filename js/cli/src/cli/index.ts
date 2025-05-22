@@ -3,7 +3,6 @@ import { CommandAuthLogin } from './commandAuthLogin';
 import { CommandAuthLogout } from './commandAuthLogout';
 import { CommandDeviceCreate } from './commandDeviceCreate';
 import { CommandDeviceDelete } from './commandDeviceDelete';
-import { CommandDeviceList } from './commandDeviceList';
 import { CommandDeviceRename } from './commandDeviceRename';
 import { CommandEventFolder } from './commandEventFolder';
 import { CommandEventSharedByMe } from './commandEventSharedByMe';
@@ -60,7 +59,6 @@ const COMMANDS = [
     new CommandSharingRemove(),
     new CommandSharingRemoveUrl(),
     new CommandInvitationList(),
-    new CommandDeviceList(),
     new CommandDeviceCreate(),
     new CommandDeviceRename(),
     new CommandDeviceDelete(),
