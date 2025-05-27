@@ -5,7 +5,6 @@ import { IntegrityError } from "../../errors";
 import { LoggerWithPrefix } from "../../telemetry";
 import { APIHTTPError, HTTPErrorCode, NotFoundAPIError } from "../apiService";
 import { getErrorMessage } from "../errors";
-import { generateFileExtendedAttributes } from "../nodes";
 import { mergeUint8Arrays } from "../utils";
 import { waitForCondition } from '../wait';
 import { UploadAPIService } from "./apiService";
@@ -16,11 +15,12 @@ import { UploadDigests } from "./digests";
 import { NodeRevisionDraft, EncryptedBlock, EncryptedThumbnail, EncryptedBlockMetadata } from "./interface";
 import { UploadTelemetry } from './telemetry';
 import { ChunkStreamReader } from './chunkStreamReader';
+import { UploadManager } from "./manager";
 
 /**
  * File chunk size in bytes representing the size of each block.
  */
-const FILE_CHUNK_SIZE = 4 * 1024 * 1024;
+export const FILE_CHUNK_SIZE = 4 * 1024 * 1024;
 
 /**
  * Maximum number of blocks that can be buffered before upload.
@@ -76,6 +76,7 @@ export class Fileuploader {
         private telemetry: UploadTelemetry,
         private apiService: UploadAPIService,
         private cryptoService: UploadCryptoService,
+        private uploadManager: UploadManager,
         private blockVerifier: BlockVerifier,
         private revisionDraft: NodeRevisionDraft,
         private metadata: UploadMetadata,
@@ -205,14 +206,22 @@ export class Fileuploader {
 
     private async commitFile(thumbnails: Thumbnail[]) {
         this.verifyIntegrity(thumbnails);
-        const extendedAttributes = generateFileExtendedAttributes({
+
+        const uploadedBlocks = Array.from(this.uploadedBlocks.values());
+        uploadedBlocks.sort((a, b) => a.index - b.index);
+
+        const extendedAttributes = {
             modificationTime: this.metadata.modificationTime,
             size: this.metadata.expectedSize,
-            blockSizes: Array.from(this.uploadedBlocks.values().map(block => block.originalSize)),
+            blockSizes: uploadedBlocks.map(block => block.originalSize),
             digests: this.digests.digests(),
-        });
-        const nodeCommitCrypto = await this.cryptoService.commitFile(this.revisionDraft.nodeKeys, this.manifest, extendedAttributes);
-        await this.apiService.commitDraftRevision(this.revisionDraft.nodeRevisionUid, nodeCommitCrypto);
+        };
+        await this.uploadManager.commitDraft(
+            this.revisionDraft,
+            this.manifest,
+            this.metadata,
+            extendedAttributes,
+        );
     }
 
     private async encryptThumbnails(thumbnails: Thumbnail[]) {

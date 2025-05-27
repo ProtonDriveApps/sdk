@@ -4,7 +4,7 @@ import { DriveCrypto } from "../../crypto";
 import { UploadAPIService } from "./apiService";
 import { UploadCryptoService } from "./cryptoService";
 import { UploadQueue } from "./queue";
-import { NodesService, SharesService } from "./interface";
+import { NodesService, NodesEvents, SharesService } from "./interface";
 import { Fileuploader } from "./fileUploader";
 import { UploadTelemetry } from "./telemetry";
 import { UploadManager } from "./manager";
@@ -23,12 +23,13 @@ export function initUploadModule(
     driveCrypto: DriveCrypto,
     sharesService: SharesService,
     nodesService: NodesService,
+    nodesEvents: NodesEvents,
 ) {
     const api = new UploadAPIService(apiService);
     const cryptoService = new UploadCryptoService(driveCrypto, sharesService);
 
     const uploadTelemetry = new UploadTelemetry(telemetry, sharesService);
-    const manager = new UploadManager(telemetry, api, cryptoService, sharesService, nodesService);
+    const manager = new UploadManager(telemetry, api, cryptoService, sharesService, nodesService, nodesEvents);
 
     const queue = new UploadQueue();
 
@@ -66,6 +67,7 @@ export function initUploadModule(
             uploadTelemetry,
             api,
             cryptoService,
+            manager,
             blockVerifier,
             revisionDraft,
             metadata,
@@ -107,6 +109,7 @@ export function initUploadModule(
             uploadTelemetry,
             api,
             cryptoService,
+            manager,
             blockVerifier,
             revisionDraft,
             metadata,

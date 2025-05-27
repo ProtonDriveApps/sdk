@@ -144,3 +144,10 @@ export interface NodesService {
     }>,
     iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode | MissingNode>;
 }
+
+/**
+ * Interface describing the dependencies to the nodes module.
+ */
+export interface NodesEvents {
+    nodeUpdated(partialNode: { uid: string, shareId: string | undefined, isShared: boolean }): Promise<void>,
+}

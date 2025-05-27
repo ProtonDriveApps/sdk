@@ -5,7 +5,7 @@ import { resultOk, resultError, Result, Author, AnonymousUser, ProtonDriveAccoun
 import { ValidationError } from '../../errors';
 import { getErrorMessage, getVerificationMessage } from "../errors";
 import { splitNodeUid } from "../uids";
-import { EncryptedNode, EncryptedNodeFolderCrypto, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys, SharesService, EncryptedRevision, DecryptedRevision } from "./interface";
+import { EncryptedNode, EncryptedNodeFolderCrypto, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys, SharesService, EncryptedRevision, DecryptedUnparsedRevision } from "./interface";
 
 /**
  * Provides crypto operations for nodes metadata.
@@ -58,7 +58,7 @@ export class NodesCryptoService {
             : nodeParentKeys;
 
         let nameVerificationKeys;
-        const nameSignatureEmail = node.encryptedCrypto.nameSignatureEmail || node.encryptedCrypto.signatureEmail;
+        const nameSignatureEmail = node.encryptedCrypto.nameSignatureEmail;
         if (nameSignatureEmail === node.encryptedCrypto.signatureEmail) {
             nameVerificationKeys = keyVerificationKeys;
         } else {
@@ -134,7 +134,7 @@ export class NodesCryptoService {
             }
         }
 
-        let activeRevision: Result<DecryptedRevision, Error> | undefined;
+        let activeRevision: Result<DecryptedUnparsedRevision, Error> | undefined;
         let contentKeyPacketSessionKey;
         let contentKeyPacketAuthor;
         if ("file" in node.encryptedCrypto) {
@@ -239,7 +239,7 @@ export class NodesCryptoService {
         name: Result<string, Error>,
         author: Author,
     }> {
-        const nameSignatureEmail = node.encryptedCrypto.nameSignatureEmail || node.encryptedCrypto.signatureEmail;
+        const nameSignatureEmail = node.encryptedCrypto.nameSignatureEmail;
 
         try {
             const { name, verified } = await this.driveCrypto.decryptNodeName(
@@ -290,7 +290,7 @@ export class NodesCryptoService {
         }
     }
 
-    async decryptRevision(nodeUid: string, encryptedRevision: EncryptedRevision, nodeKey: PrivateKey): Promise<DecryptedRevision> {
+    async decryptRevision(nodeUid: string, encryptedRevision: EncryptedRevision, nodeKey: PrivateKey): Promise<DecryptedUnparsedRevision> {
         const verificationKeys = encryptedRevision.signatureEmail
             ? await this.account.getPublicKeys(encryptedRevision.signatureEmail)
             : [nodeKey];

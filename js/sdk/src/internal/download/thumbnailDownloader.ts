@@ -103,7 +103,7 @@ export class ThumbnailDownloader {
 
             let thumbnail;
             if (node.activeRevision?.ok) {
-                thumbnail = node.activeRevision.value.thumbnails.find(
+                thumbnail = node.activeRevision.value.thumbnails?.find(
                     (t) => t.type === thumbnailType,
                 );
             }

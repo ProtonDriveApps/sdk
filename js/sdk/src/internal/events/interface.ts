@@ -27,14 +27,14 @@ export type DriveEvents = Events<DriveEvent>;
 export type DriveEvent = {
     type: DriveEventType.NodeCreated | DriveEventType.NodeUpdated | DriveEventType.NodeUpdatedMetadata,
     nodeUid: string,
-    parentNodeUid: string,
+    parentNodeUid?: string,
     isTrashed: boolean,
     isShared: boolean,
     isOwnVolume: boolean,
 } | {
     type: DriveEventType.NodeDeleted,
     nodeUid: string,
-    parentNodeUid: string,
+    parentNodeUid?: string,
     isTrashed?: boolean,
     isShared?: boolean,
     isOwnVolume: boolean,

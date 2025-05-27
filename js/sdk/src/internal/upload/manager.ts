@@ -1,12 +1,13 @@
 import { c } from "ttag";
 
-import { Logger, ProtonDriveTelemetry, UploadMetadata } from "../../interface";
+import { Logger, MemberRole, NodeType, ProtonDriveTelemetry, resultOk, Revision, RevisionState, UploadMetadata } from "../../interface";
 import { ValidationError, NodeAlreadyExistsValidationError } from "../../errors";
 import { ErrorCode } from "../apiService";
+import { DecryptedNode, generateFileExtendedAttributes } from "../nodes";
 import { splitNodeUid } from "../uids";
 import { UploadAPIService } from "./apiService";
 import { UploadCryptoService } from "./cryptoService";
-import { NodeRevisionDraft, NodesService, NodeCrypto, SharesService } from "./interface";
+import { NodeRevisionDraft, NodesService, NodesEvents, NodeCrypto, SharesService } from "./interface";
 
 /**
  * UploadManager is responsible for creating and deleting draft nodes
@@ -22,6 +23,7 @@ export class UploadManager {
         private cryptoService: UploadCryptoService,
         private sharesService: SharesService,
         private nodesService: NodesService,
+        private nodesEvents: NodesEvents,
     ) {
         this.logger = telemetry.getLogger('upload');
         this.apiService = apiService;
@@ -57,6 +59,12 @@ export class UploadManager {
                 key: generatedNodeCrypto.nodeKeys.decrypted.key,
                 contentKeyPacketSessionKey: generatedNodeCrypto.contentKey.decrypted.contentKeyPacketSessionKey,
                 signatureAddress: generatedNodeCrypto.signatureAddress,
+            },
+            newNodeInfo: {
+                parentUid: parentFolderUid,
+                name,
+                encryptedName: generatedNodeCrypto.encryptedNode.encryptedName,
+                hash: generatedNodeCrypto.encryptedNode.hash,
             },
         };
     }
@@ -219,6 +227,66 @@ export class UploadManager {
             // deleting draft only when somethign fails and original error
             // will bubble up.
             this.logger.error('Failed to delete draft node revision', error);
+        }
+    }
+
+    async commitDraft(
+        nodeRevisionDraft: NodeRevisionDraft,
+        manifest: Uint8Array,
+        metadata: UploadMetadata,
+        extendedAttributes: {
+            modificationTime?: Date,
+            size?: number,
+            blockSizes?: number[],
+            digests?: {
+                sha1?: string,
+            },
+        },
+    ): Promise<void> {
+        const generatedExtendedAttributes = generateFileExtendedAttributes(extendedAttributes);
+        const nodeCommitCrypto = await this.cryptoService.commitFile(nodeRevisionDraft.nodeKeys, manifest, generatedExtendedAttributes);
+        await this.apiService.commitDraftRevision(nodeRevisionDraft.nodeRevisionUid, nodeCommitCrypto);
+
+        const activeRevision = resultOk<Revision, Error>({
+            uid: nodeRevisionDraft.nodeRevisionUid,
+            state: RevisionState.Active,
+            creationTime: new Date(),
+            contentAuthor: resultOk(nodeCommitCrypto.signatureEmail),
+            claimedSize: metadata.expectedSize,
+            claimedModificationTime: extendedAttributes.modificationTime,
+            claimedDigests: {
+                sha1: extendedAttributes.digests?.sha1,
+            },
+        });
+        if (nodeRevisionDraft.newNodeInfo) {
+            const node: DecryptedNode = {
+                // Internal metadata
+                hash: nodeRevisionDraft.newNodeInfo.hash,
+                encryptedName: nodeRevisionDraft.newNodeInfo.encryptedName,
+    
+                // Basic node metadata
+                uid: nodeRevisionDraft.nodeUid,
+                parentUid: nodeRevisionDraft.newNodeInfo.parentUid,
+                type: NodeType.File,
+                mediaType: metadata.mediaType,
+                creationTime: new Date(),
+    
+                // Share node metadata
+                isShared: false,
+                directMemberRole: MemberRole.Inherited,
+    
+                // Decrypted metadata
+                isStale: false,
+                keyAuthor: resultOk(nodeRevisionDraft.nodeKeys.signatureAddress.email),
+                nameAuthor: resultOk(nodeRevisionDraft.nodeKeys.signatureAddress.email),
+                name: resultOk(nodeRevisionDraft.newNodeInfo.name),
+            }
+            await this.nodesEvents.nodeCreated(node);
+        } else {
+            await this.nodesEvents.nodeUpdated({
+                uid: nodeRevisionDraft.nodeUid,
+                activeRevision,
+            });
         }
     }
 }

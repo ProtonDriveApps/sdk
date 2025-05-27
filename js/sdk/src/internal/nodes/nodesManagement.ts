@@ -4,9 +4,9 @@ import { MemberRole, NodeType, NodeResult, resultOk } from "../../interface";
 import { AbortError, ValidationError } from "../../errors";
 import { getErrorMessage } from '../errors';
 import { NodeAPIService } from "./apiService";
-import { NodesCache } from "./cache";
 import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
+import { NodesEvents } from './events';
 import { DecryptedNode } from "./interface";
 import { NodesAccess } from "./nodesAccess";
 import { validateNodeName } from "./validations";
@@ -24,16 +24,16 @@ import { generateFolderExtendedAttributes } from "./extendedAttributes";
 export class NodesManagement {
     constructor(
         private apiService: NodeAPIService,
-        private cache: NodesCache,
         private cryptoCache: NodesCryptoCache,
         private cryptoService: NodesCryptoService,
         private nodesAccess: NodesAccess,
+        private nodesEvents: NodesEvents,
     ) {
         this.apiService = apiService;
-        this.cache = cache;
         this.cryptoCache = cryptoCache;
         this.cryptoService = cryptoService;
         this.nodesAccess = nodesAccess;
+        this.nodesEvents = nodesEvents;
     }
 
     async renameNode(nodeUid: string, newName: string, options = { allowRenameRootNode: false }): Promise<DecryptedNode> {
@@ -76,7 +76,7 @@ export class NodesManagement {
             nameAuthor: resultOk(signatureEmail),
             hash,
         }
-        await this.cache.setNode(newNode);
+        await this.nodesEvents.nodeUpdated(newNode);
         return newNode;
     }
 
@@ -157,7 +157,7 @@ export class NodesManagement {
             keyAuthor: resultOk(encryptedCrypto.signatureEmail),
             nameAuthor: resultOk(encryptedCrypto.nameSignatureEmail),
         };
-        await this.cache.setNode(newNode);
+        await this.nodesEvents.nodeUpdated(newNode);
         return newNode;
     }
 
@@ -169,7 +169,7 @@ export class NodesManagement {
             if (result.ok) {
                 const node = nodes.find(node => node.uid === result.uid);
                 if (node) {
-                    await this.cache.setNode({
+                    await this.nodesEvents.nodeUpdated({
                         ...node,
                         trashTime: new Date(),
                     });
@@ -188,7 +188,7 @@ export class NodesManagement {
             if (result.ok) {
                 const node = nodes.find(node => node.uid === result.uid);
                 if (node) {
-                    await this.cache.setNode({
+                    await this.nodesEvents.nodeUpdated({
                         ...node,
                         trashTime: undefined,
                     });
@@ -209,7 +209,7 @@ export class NodesManagement {
             yield result;
         }
 
-        await this.cache.removeNodes(deletedNodeUids);
+        await this.nodesEvents.nodesDeleted(deletedNodeUids);
     }
 
     async createFolder(parentNodeUid: string, folderName: string, modificationTime?: Date): Promise<DecryptedNode> {
@@ -263,7 +263,7 @@ export class NodesManagement {
             name: resultOk(folderName),
         }
 
-        await this.cache.setNode(node);
+        await this.nodesEvents.nodeCreated(node);
         await this.cryptoCache.setNodeKeys(nodeUid, keys);
         return node;
     }

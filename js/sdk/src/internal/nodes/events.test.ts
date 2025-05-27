@@ -48,6 +48,12 @@ describe("updateCacheByEvent", () => {
 
             expect(cache.resetFolderChildrenLoaded).toHaveBeenCalledWith('parentUid');
         });
+
+        it("should skip reset parent loaded state if parent missing", async () => {
+            await updateCacheByEvent(logger, { ...event, parentNodeUid: undefined }, cache);
+
+            expect(cache.resetFolderChildrenLoaded).not.toHaveBeenCalled();
+        });
     });
 
     describe('NodeUpdated event', () => {

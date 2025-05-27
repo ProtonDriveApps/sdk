@@ -7,7 +7,7 @@ import { splitNodeUid } from "../uids";
 import { getErrorMessage } from '../errors';
 import { SharingAPIService } from "./apiService";
 import { SharingCryptoService } from "./cryptoService";
-import { SharesService, NodesService } from "./interface";
+import { SharesService, NodesService, NodesEvents } from "./interface";
 
 interface InternalShareResult extends ShareResult {
     share: Share;
@@ -39,6 +39,7 @@ export class SharingManagement {
         private account: ProtonDriveAccount,
         private sharesService: SharesService,
         private nodesService: NodesService,
+        private nodesEvents: NodesEvents,
     ) {
         this.logger = logger;
         this.apiService = apiService;
@@ -46,6 +47,7 @@ export class SharingManagement {
         this.account = account;
         this.sharesService = sharesService;
         this.nodesService = nodesService;
+        this.nodesEvents = nodesEvents;
     }
 
     async getSharingInfo(nodeUid: string): Promise<ShareResult | undefined> {
@@ -244,7 +246,7 @@ export class SharingManagement {
 
         if (!settings) {
             this.logger.info(`Unsharing node ${nodeUid}`);
-            await this.deleteShare(currentSharing.share.shareId);
+            await this.deleteShare(nodeUid, currentSharing.share.shareId);
             return;
         }
 
@@ -298,7 +300,7 @@ export class SharingManagement {
             // update local state immediately.
             this.logger.info(`Deleting share ${currentSharing.share.shareId} for node ${nodeUid}`);
             try {
-                await this.deleteShare(currentSharing.share.shareId);
+                await this.deleteShare(nodeUid, currentSharing.share.shareId);
             } catch (error: unknown) {
                 // If deleting the share fails, we don't want to throw an error
                 // as it might be a race condition that other client updated
@@ -343,7 +345,6 @@ export class SharingManagement {
         }
     }
 
-    // FIXME: update nodes cache with new shareId
     private async createShare(nodeUid: string): Promise<Share> {
         const node = await this.nodesService.getNode(nodeUid);
         if (!node.parentUid) {
@@ -365,6 +366,8 @@ export class SharingManagement {
             },
         );
 
+        await this.nodesEvents.nodeUpdated({ uid: nodeUid, shareId, isShared: true });
+
         return {
             volumeId,
             shareId,
@@ -372,9 +375,10 @@ export class SharingManagement {
         }
     }
 
-    // FIXME: update nodes cache with deleted shareId
-    private async deleteShare(shareId: string): Promise<void> {
+    private async deleteShare(nodeUid: string, shareId: string): Promise<void> {
         await this.apiService.deleteShare(shareId);
+
+        await this.nodesEvents.nodeUpdated({ uid: nodeUid, shareId: undefined, isShared: false });
     }
 
     private async inviteProtonUser(share: Share, inviteeEmail: string, role: MemberRole, emailOptions: EmailOptions): Promise<ProtonInvitation> {

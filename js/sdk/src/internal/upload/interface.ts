@@ -1,11 +1,19 @@
 import { PrivateKey, SessionKey } from "../../crypto";
 
 import { MetricContext, ThumbnailType, Result, Revision } from "../../interface";
+import { DecryptedNode } from "../nodes";
 
 export type NodeRevisionDraft = {
     nodeUid: string,
     nodeRevisionUid: string,
     nodeKeys: NodeRevisionDraftKeys,
+    // newNodeInfo is set only when revision is created with the new node.
+    newNodeInfo?: {
+        parentUid: string,
+        name: string,
+        encryptedName: string,
+        hash: string,
+    }
 }
 
 export type NodeRevisionDraftKeys = {
@@ -91,6 +99,14 @@ export interface NodesService {
         contentKeyPacketSessionKey?: SessionKey,
         hashKey?: Uint8Array,
     }>,
+}
+
+/**
+ * Interface describing the dependencies to the nodes module.
+ */
+export interface NodesEvents {
+    nodeCreated(node: DecryptedNode): Promise<void>,
+    nodeUpdated(partialNode: { uid: string, activeRevision: Result<Revision, Error> }): Promise<void>,
 }
 
 export interface NodesServiceNode {
