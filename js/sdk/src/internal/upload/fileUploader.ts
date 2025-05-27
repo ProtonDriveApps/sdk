@@ -300,7 +300,7 @@ export class Fileuploader {
         );
     
         for (const thumbnailToken of uploadTokens.thumbnailTokens) {
-            const encryptedThumbnail = this.encryptedThumbnails.get(thumbnailToken.type);
+            let encryptedThumbnail = this.encryptedThumbnails.get(thumbnailToken.type);
             if (!encryptedThumbnail) {
                 throw new Error(`Thumbnail ${thumbnailToken.type} not found`);
             }
@@ -315,13 +315,16 @@ export class Fileuploader {
                     onProgress,
                 ).finally(() => {
                     this.ongoingUploads.delete(uploadKey);
+
+                    // Help the garbage collector to clean up the memory.
+                    encryptedThumbnail = undefined;
                 }),
                 encryptedBlock: encryptedThumbnail,
             });
         }
 
         for (const blockToken of uploadTokens.blockTokens) {
-            const encryptedBlock = this.encryptedBlocks.get(blockToken.index);
+            let encryptedBlock = this.encryptedBlocks.get(blockToken.index);
             if (!encryptedBlock) {
                 throw new Error(`Block ${blockToken.index} not found`);
             }
@@ -336,6 +339,9 @@ export class Fileuploader {
                     onProgress,
                 ).finally(() => {
                     this.ongoingUploads.delete(uploadKey);
+
+                    // Help the garbage collector to clean up the memory.
+                    encryptedBlock = undefined;
                 }),
                 encryptedBlock,
             });
