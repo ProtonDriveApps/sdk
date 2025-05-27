@@ -108,7 +108,6 @@ export class NodesCache {
                 childrenCacheUids.reverse();
                 await this.driveCache.removeEntities(childrenCacheUids);
             } catch (error: unknown) {
-                // FIXME: Should we throw here to the client?
                 this.logger.error(`Failed to remove children from the cache`, error);
             }
         }

@@ -199,7 +199,7 @@ export class DriveAPIService {
         return response;
     }
 
-    // FIXME: add priority header
+    // TODO: add priority header
     // u=2 for interactive (user doing action, e.g., create folder),
     // u=4 for normal (user secondary action, e.g., refresh children listing),
     // u=5 for background (e.g., upload, download)

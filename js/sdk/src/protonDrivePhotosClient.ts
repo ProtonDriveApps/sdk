@@ -9,7 +9,7 @@ import { SDKEvents } from './internal/sdkEvents';
 import { getConfig } from './config';
 import { Telemetry } from './telemetry';
 
-// FIXME: this is only example, on background it use drive internals, but it exposes nice interface for photos
+// TODO: this is only example, on background it use drive internals, but it exposes nice interface for photos
 export class ProtonDrivePhotosClient {
     private nodes: ReturnType<typeof initNodesModule>;
     private photos: ReturnType<typeof initPhotosModule>;
