@@ -40,7 +40,11 @@ type NodeEventInfo = {
 export class NodesEvents {
     private listeners: Listeners = [];
 
-    constructor(logger: Logger, events: DriveEventsService, cache: NodesCache, nodesAccess: NodesAccess) {
+    constructor(private logger: Logger, events: DriveEventsService, private cache: NodesCache, private nodesAccess: NodesAccess) {
+        this.logger = logger;
+        this.cache = cache;
+        this.nodesAccess = nodesAccess;
+
         events.addListener(async (events, fullRefreshVolumeId) => {
             if (fullRefreshVolumeId) {
                 await cache.setNodesStaleFromVolume(fullRefreshVolumeId);
@@ -79,6 +83,47 @@ export class NodesEvents {
             this.listeners = this.listeners.filter(listener => listener.callback !== callback);
         }
     }
+
+    async nodeCreated(node: DecryptedNode): Promise<void> {
+        await this.cache.setNode(node);
+        void this.notifyListenersByNode(node, DriveEventType.NodeCreated);
+    }
+
+    async nodeUpdated(partialNode: { uid: string } & Partial<DecryptedNode>): Promise<void> {
+        const originalNode = await this.cache.getNode(partialNode.uid);
+        const updatedNode = {
+            ...originalNode,
+            ...partialNode,
+        }
+
+        await this.cache.setNode(updatedNode);
+        void this.notifyListenersByNode(updatedNode, DriveEventType.NodeUpdated);
+    }
+
+    async nodesDeleted(nodeUids: string[]): Promise<void> {
+        try {
+            for await (const originalNode of this.cache.iterateNodes(nodeUids)) {
+                if (originalNode.ok) {
+                    void this.notifyListenersByNode(originalNode.node, DriveEventType.NodeDeleted);
+                }
+            }
+        } catch {}
+
+        await this.cache.removeNodes(nodeUids);
+    }
+
+    private async notifyListenersByNode(node: DecryptedNode, eventType: DriveEventType.NodeCreated | DriveEventType.NodeUpdated | DriveEventType.NodeDeleted) {
+        const event: DriveEvent = {
+            type: eventType,
+            nodeUid: node.uid,
+            parentNodeUid: node.parentUid,
+            isOwnVolume: true,
+            isTrashed: !!node.trashTime,
+            isShared: node.isShared,
+        };
+        await notifyListenersByEvent(this.logger, event, this.listeners, this.cache, this.nodesAccess);
+
+    }
 }
 
 /**
@@ -107,7 +152,9 @@ export async function updateCacheByEvent(logger: Logger, event: DriveEvent, cach
         // We do not have partial nodes in the cache, so we don't
         // add it. If new node is not added, we need to reset the
         // children loaded flag to force refetch when requested.
-        await cache.resetFolderChildrenLoaded(event.parentNodeUid);
+        if (event.parentNodeUid) {
+            await cache.resetFolderChildrenLoaded(event.parentNodeUid);
+        }
     }
     if (event.type === DriveEventType.NodeUpdated || event.type === DriveEventType.NodeUpdatedMetadata) {
         let node;

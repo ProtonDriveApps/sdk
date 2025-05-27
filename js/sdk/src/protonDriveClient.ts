@@ -89,9 +89,9 @@ export class ProtonDriveClient {
         this.events = new DriveEventsService(telemetry, apiService, entitiesCache);
         this.shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
         this.nodes = initNodesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule, this.events, this.shares);
-        this.sharing = initSharingModule(telemetry, apiService, entitiesCache, account, cryptoModule, this.events, this.shares, this.nodes.access);
+        this.sharing = initSharingModule(telemetry, apiService, entitiesCache, account, cryptoModule, this.events, this.shares, this.nodes.access, this.nodes.events);
         this.download = initDownloadModule(telemetry, apiService, cryptoModule, account, this.shares, this.nodes.access, this.nodes.revisions);
-        this.upload = initUploadModule(telemetry, apiService, cryptoModule, this.shares, this.nodes.access);
+        this.upload = initUploadModule(telemetry, apiService, cryptoModule, this.shares, this.nodes.access, this.nodes.events);
         this.devices = initDevicesModule(telemetry, apiService, cryptoModule, this.shares, this.nodes.access, this.nodes.management);
         this.experimental = {
             getNodeUrl: async (nodeUid: NodeOrUid) => {

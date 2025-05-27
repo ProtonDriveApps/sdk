@@ -8,7 +8,7 @@ import { SharingCryptoService } from "./cryptoService";
 import { SharingEvents } from "./events";
 import { SharingAccess } from "./sharingAccess";
 import { SharingManagement } from "./sharingManagement";
-import { SharesService, NodesService } from "./interface";
+import { SharesService, NodesService, NodesEvents } from "./interface";
 
 /**
  * Provides facade for the whole sharing module.
@@ -26,13 +26,14 @@ export function initSharingModule(
     driveEvents: DriveEventsService,
     sharesService: SharesService,
     nodesService: NodesService,
+    nodesEvents: NodesEvents,
 ) {
     const api = new SharingAPIService(telemetry.getLogger('sharing-api'), apiService);
     const cache = new SharingCache(driveEntitiesCache);
     const cryptoService = new SharingCryptoService(crypto, account);
     const sharingAccess = new SharingAccess(api, cache, cryptoService, sharesService, nodesService);
     const sharingEvents = new SharingEvents(telemetry.getLogger('sharing-events'), driveEvents, cache, nodesService, sharingAccess);
-    const sharingManagement = new SharingManagement(telemetry.getLogger('sharing'), api, cryptoService, account, sharesService, nodesService);
+    const sharingManagement = new SharingManagement(telemetry.getLogger('sharing'), api, cryptoService, account, sharesService, nodesService, nodesEvents);
 
     return {
         access: sharingAccess,

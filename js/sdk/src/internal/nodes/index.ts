@@ -40,11 +40,7 @@ export function initNodesModule(
     const cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, sharesService);
     const nodesAccess = new NodesAccess(telemetry.getLogger('nodes'), api, cache, cryptoCache, cryptoService, sharesService);
     const nodesEvents = new NodesEvents(telemetry.getLogger('nodes-events'), driveEvents, cache, nodesAccess);
-    // FIXME: Events are sent to the client once event is received from API
-    // If change is done locally, it will take a time to show up if client
-    // is waiting with UI update to events. Thus we need to emit events
-    // right away.
-    const nodesManagement = new NodesManagement(api, cache, cryptoCache, cryptoService, nodesAccess);
+    const nodesManagement = new NodesManagement(api, cryptoCache, cryptoService, nodesAccess, nodesEvents);
     const nodesRevisions = new NodesRevisons(telemetry.getLogger('nodes'), api, cryptoService, nodesAccess);
 
     return {

@@ -1,17 +1,17 @@
 import { NodeAPIService } from "./apiService";
-import { NodesCache } from "./cache"
 import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
 import { NodesAccess } from './nodesAccess';
+import { NodesEvents } from './events';
 import { DecryptedNode } from './interface';
 import { NodesManagement } from './nodesManagement';
 
 describe('NodesManagement', () => {
     let apiService: NodeAPIService;
-    let cache: NodesCache;
     let cryptoCache: NodesCryptoCache;
     let cryptoService: NodesCryptoService;
     let nodesAccess: NodesAccess;
+    let nodesEvents: NodesEvents;
     let management: NodesManagement;
 
     let nodes: { [uid: string]: DecryptedNode };
@@ -56,11 +56,6 @@ describe('NodesManagement', () => {
             createFolder: jest.fn(),
         }
         // @ts-expect-error No need to implement all methods for mocking
-        cache = {
-            setNode: jest.fn(),
-            removeNodes: jest.fn(),
-        }
-        // @ts-expect-error No need to implement all methods for mocking
         cryptoCache = {
             setNodeKeys: jest.fn(),
         }
@@ -90,8 +85,14 @@ describe('NodesManagement', () => {
                 nameSessionKey: 'nameSessionKey',
             }),
         }
+        // @ts-expect-error No need to implement all methods for mocking
+        nodesEvents = {
+            nodeCreated: jest.fn(),
+            nodeUpdated: jest.fn(),
+            nodesDeleted: jest.fn(),
+        }
 
-        management = new NodesManagement(apiService, cache, cryptoCache, cryptoService, nodesAccess);
+        management = new NodesManagement(apiService, cryptoCache, cryptoService, nodesAccess, nodesEvents);
     });
 
     it('renameNode manages rename and updates cache', async () => {
@@ -113,7 +114,7 @@ describe('NodesManagement', () => {
             { hash: nodes.nodeUid.hash },
             { encryptedName: 'newArmoredNodeName', nameSignatureEmail: 'newSignatureEmail', hash: 'newHash' }
         );
-        expect(cache.setNode).toHaveBeenCalledWith(newNode);
+        expect(nodesEvents.nodeUpdated).toHaveBeenCalledWith(newNode);
     });
 
     it('moveNode manages move and updates cache', async () => {
@@ -147,7 +148,7 @@ describe('NodesManagement', () => {
                 signatureEmail: undefined,
             },
         );
-        expect(cache.setNode).toHaveBeenCalledWith(newNode);
+        expect(nodesEvents.nodeUpdated).toHaveBeenCalledWith(newNode);
     });
 
     it('moveNode manages move of anonymous node', async () => {
@@ -179,6 +180,6 @@ describe('NodesManagement', () => {
                 ...encryptedCrypto
             },
         );
-        expect(cache.setNode).toHaveBeenCalledWith(newNode);
+        expect(nodesEvents.nodeUpdated).toHaveBeenCalledWith(newNode);
     });
 });

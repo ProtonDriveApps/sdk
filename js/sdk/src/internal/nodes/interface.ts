@@ -1,6 +1,5 @@
 import { PrivateKey, SessionKey } from "../../crypto";
-import { NodeEntity, Result, InvalidNameError, Author, MemberRole, NodeType, ThumbnailType, MetricContext } from "../../interface";
-import { RevisionState } from "../../interface/nodes";
+import { NodeEntity, Result, InvalidNameError, Author, MemberRole, NodeType, ThumbnailType, MetricContext, Revision, RevisionState } from "../../interface";
 
 /**
  * Internal common node interface for both encrypted or decrypted node.
@@ -68,7 +67,7 @@ export interface DecryptedUnparsedNode extends BaseNode {
     keyAuthor: Author,
     nameAuthor: Author,
     name: Result<string, Error>,
-    activeRevision?: Result<DecryptedRevision, Error>,
+    activeRevision?: Result<DecryptedUnparsedRevision, Error>,
     folder?: {
         extendedAttributes?: string,
     },
@@ -123,9 +122,13 @@ export interface EncryptedRevision extends BaseRevision {
     armoredExtendedAttributes?: string;
 }
 
-export interface DecryptedRevision extends BaseRevision {
+export interface DecryptedUnparsedRevision extends BaseRevision {
     contentAuthor: Author,
     extendedAttributes?: string,
+}
+
+export interface DecryptedRevision extends Revision {
+    thumbnails?: Thumbnail[];
 }
 
 /**

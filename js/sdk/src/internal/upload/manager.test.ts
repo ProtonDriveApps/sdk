@@ -4,7 +4,7 @@ import { getMockTelemetry } from "../../tests/telemetry";
 import { ErrorCode } from "../apiService";
 import { UploadAPIService } from "./apiService";
 import { UploadCryptoService } from "./cryptoService";
-import { SharesService, NodesService } from "./interface";
+import { SharesService, NodesService, NodesEvents } from "./interface";
 import { UploadManager } from './manager';
 
 describe("UploadManager", () => {
@@ -13,6 +13,7 @@ describe("UploadManager", () => {
     let cryptoService: UploadCryptoService;
     let sharesService: SharesService;
     let nodesService: NodesService;
+    let nodesEvents: NodesEvents;
 
     let manager: UploadManager;
 
@@ -81,8 +82,12 @@ describe("UploadManager", () => {
                 key: 'parentNode:nodekey',
             }),
         }
+        nodesEvents = {
+            nodeCreated: jest.fn(),
+            nodeUpdated: jest.fn(),
+        }
 
-        manager = new UploadManager(telemetry, apiService, cryptoService, sharesService, nodesService);
+        manager = new UploadManager(telemetry, apiService, cryptoService, sharesService, nodesService, nodesEvents);
     });
 
     describe("createDraftNode", () => {
@@ -108,6 +113,12 @@ describe("UploadManager", () => {
                     signatureAddress: {
                         email: "signatureEmail",
                     },
+                },
+                newNodeInfo: {
+                    parentUid: "parentUid",
+                    name: "name",
+                    encryptedName: "newNode:encryptedName",
+                    hash: "newNode:hash",
                 },
             });
             expect(apiService.createDraft).toHaveBeenCalledWith("parentUid", {
@@ -167,6 +178,12 @@ describe("UploadManager", () => {
                     signatureAddress: {
                         email: "signatureEmail",
                     },
+                },
+                newNodeInfo: {
+                    parentUid: "parentUid",
+                    name: "name",
+                    encryptedName: "newNode:encryptedName",
+                    hash: "newNode:hash",
                 },
             });
             expect(apiService.deleteDraft).toHaveBeenCalledWith("nodeUidToDelete");

@@ -1,12 +1,13 @@
 import { Thumbnail, ThumbnailType, UploadMetadata } from '../../interface';
 import { APIHTTPError, HTTPErrorCode } from '../apiService';
-import { Fileuploader } from './fileUploader';
+import { FILE_CHUNK_SIZE, Fileuploader } from './fileUploader';
 import { UploadTelemetry } from './telemetry';
 import { UploadAPIService } from './apiService';
 import { UploadCryptoService } from './cryptoService';
 import { UploadController } from './controller';
 import { BlockVerifier } from './blockVerifier';
 import { NodeRevisionDraft } from './interface';
+import { UploadManager } from './manager';
 
 async function mockEncryptBlock(verifyBlock: (block: Uint8Array) => Promise<void>, _: any, block: Uint8Array, index: number) {
     await verifyBlock(block);
@@ -29,6 +30,7 @@ describe('FileUploader', () => {
     let telemetry: UploadTelemetry;
     let apiService: jest.Mocked<UploadAPIService>;
     let cryptoService: UploadCryptoService;
+    let uploadManager: UploadManager;
     let blockVerifier: BlockVerifier;
     let revisionDraft: NodeRevisionDraft;
     let metadata: UploadMetadata;
@@ -55,9 +57,9 @@ describe('FileUploader', () => {
         apiService = {
             requestBlockUpload: jest.fn().mockImplementation((_, __, blocks) => ({
                 blockTokens: blocks.contentBlocks.map((block: { index: number }) => ({
-                        index: block.index,
-                        bareUrl: `bareUrl/block:${block.index}`,
-                        token: `token/block:${block.index}`,
+                    index: block.index,
+                    bareUrl: `bareUrl/block:${block.index}`,
+                    token: `token/block:${block.index}`,
                 })),
                 thumbnailTokens: (blocks.thumbnails || []).map((thumbnail: { type: number }) => ({
                     type: thumbnail.type,
@@ -65,7 +67,6 @@ describe('FileUploader', () => {
                     token: `token/thumbnail:${thumbnail.type}`,
                 })),
             })),
-            commitDraftRevision: jest.fn().mockResolvedValue(undefined),
             uploadBlock: jest.fn().mockImplementation(mockUploadBlock),
         };
 
@@ -79,7 +80,11 @@ describe('FileUploader', () => {
                 hash: 'thumbnailHash',
             })),
             encryptBlock: jest.fn().mockImplementation(mockEncryptBlock),
-            commitFile: jest.fn().mockResolvedValue('commitCrypto'),
+        };
+
+        // @ts-expect-error No need to implement all methods for mocking
+        uploadManager = {
+            commitDraft: jest.fn().mockResolvedValue(undefined),
         };
 
         // @ts-expect-error No need to implement all methods for mocking
@@ -107,6 +112,7 @@ describe('FileUploader', () => {
             telemetry,
             apiService,
             cryptoService,
+            uploadManager,
             blockVerifier,
             revisionDraft,
             metadata,
@@ -169,9 +175,23 @@ describe('FileUploader', () => {
             const controller = uploader.writeStream(stream, thumbnails, onProgress);
             await controller.completion();
 
-            expect(cryptoService.commitFile).toHaveBeenCalledTimes(1);
-            expect(apiService.commitDraftRevision).toHaveBeenCalledTimes(1);
-            expect(apiService.commitDraftRevision).toHaveBeenCalledWith(revisionDraft.nodeRevisionUid, 'commitCrypto');
+            expect(uploadManager.commitDraft).toHaveBeenCalledTimes(1);
+            expect(uploadManager.commitDraft).toHaveBeenCalledWith(
+                revisionDraft,
+                expect.anything(),
+                metadata,
+                {
+                    size: metadata.expectedSize,
+                    blockSizes: metadata.expectedSize ? [
+                        ...Array(Math.floor(metadata.expectedSize / FILE_CHUNK_SIZE)).fill(FILE_CHUNK_SIZE),
+                        metadata.expectedSize % FILE_CHUNK_SIZE
+                    ] : [],
+                    modificationTime: undefined,
+                    digests: {
+                        sha1: expect.anything(),
+                    }
+                }
+            );
             expect(telemetry.uploadFinished).toHaveBeenCalledTimes(1);
             expect(telemetry.uploadFinished).toHaveBeenCalledWith('revisionUid', metadata.expectedSize + thumbnailSize);
             expect(telemetry.uploadFailed).not.toHaveBeenCalled();
@@ -246,6 +266,7 @@ describe('FileUploader', () => {
                 telemetry,
                 apiService,
                 cryptoService,
+                uploadManager,
                 blockVerifier,
                 revisionDraft,
                 metadata,
@@ -272,6 +293,7 @@ describe('FileUploader', () => {
                 telemetry,
                 apiService,
                 cryptoService,
+                uploadManager,
                 blockVerifier,
                 revisionDraft,
                 metadata,
@@ -434,6 +456,7 @@ describe('FileUploader', () => {
                     telemetry,
                     apiService,
                     cryptoService,
+                    uploadManager,
                     blockVerifier,
                     revisionDraft,
                     {
