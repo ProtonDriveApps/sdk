@@ -9,14 +9,20 @@ export function getErrorMessage(error: unknown): string {
 /**
  * @param signatureType - Must be translated before calling this function.
  */
-export function getVerificationMessage(verified: VERIFICATION_STATUS, signatureType?: string): string {
-    if (signatureType) {
-        return verified === VERIFICATION_STATUS.SIGNED_AND_INVALID
-            ? c('Error').t`Signature verification for ${signatureType} failed`
-            : c('Error').t`Missing signature for ${signatureType}`;
+export function getVerificationMessage(verified: VERIFICATION_STATUS, signatureType?: string, notAvailableVerificationKeys = false): string {
+    if (verified === VERIFICATION_STATUS.NOT_SIGNED) {
+        return signatureType
+            ? c('Error').t`Missing signature for ${signatureType}`
+            : c('Error').t`Missing signature`;
     }
 
-    return verified === VERIFICATION_STATUS.SIGNED_AND_INVALID
-        ? c('Error').t`Signature verification failed`
-        : c('Error').t`Missing signature`;
+    if (notAvailableVerificationKeys) {
+        return signatureType
+            ? c('Error').t`Verification keys for ${signatureType} are not available`
+            : c('Error').t`Verification keys are not available`;
+    }
+
+    return signatureType
+        ? c('Error').t`Signature verification for ${signatureType} failed`
+        : c('Error').t`Signature verification failed`;
 }
