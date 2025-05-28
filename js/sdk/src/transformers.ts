@@ -16,6 +16,7 @@ type InternalPartialNode = Pick<
     'trashTime' |
     'activeRevision' |
     'folder' |
+    'totalStorageSize' |
     'errors'
 >;
 
@@ -73,6 +74,7 @@ export function convertInternalNode(node: InternalPartialNode): PublicMaybeNode 
         isShared: node.isShared,
         creationTime: node.creationTime,
         trashTime: node.trashTime,
+        totalStorageSize: node.totalStorageSize,
         folder: node.folder,
     };
 

@@ -9,6 +9,8 @@ import { BlockVerifier } from './blockVerifier';
 import { NodeRevisionDraft } from './interface';
 import { UploadManager } from './manager';
 
+const BLOCK_ENCRYPTION_OVERHEAD = 10000;
+
 async function mockEncryptBlock(verifyBlock: (block: Uint8Array) => Promise<void>, _: any, block: Uint8Array, index: number) {
     await verifyBlock(block);
     return {
@@ -17,7 +19,7 @@ async function mockEncryptBlock(verifyBlock: (block: Uint8Array) => Promise<void
         armoredSignature: 'signature',
         verificationToken: 'verificationToken',
         originalSize: block.length,
-        encryptedSize: block.length + 10000,
+        encryptedSize: block.length + BLOCK_ENCRYPTION_OVERHEAD,
         hash: 'blockHash',
     };
 }
@@ -175,6 +177,7 @@ describe('FileUploader', () => {
             const controller = uploader.writeStream(stream, thumbnails, onProgress);
             await controller.completion();
 
+            const numberOfExpectedBlocks = Math.ceil(metadata.expectedSize / FILE_CHUNK_SIZE);
             expect(uploadManager.commitDraft).toHaveBeenCalledTimes(1);
             expect(uploadManager.commitDraft).toHaveBeenCalledWith(
                 revisionDraft,
@@ -183,14 +186,15 @@ describe('FileUploader', () => {
                 {
                     size: metadata.expectedSize,
                     blockSizes: metadata.expectedSize ? [
-                        ...Array(Math.floor(metadata.expectedSize / FILE_CHUNK_SIZE)).fill(FILE_CHUNK_SIZE),
+                        ...Array(numberOfExpectedBlocks - 1).fill(FILE_CHUNK_SIZE),
                         metadata.expectedSize % FILE_CHUNK_SIZE
                     ] : [],
                     modificationTime: undefined,
                     digests: {
                         sha1: expect.anything(),
                     }
-                }
+                },
+                metadata.expectedSize + numberOfExpectedBlocks * BLOCK_ENCRYPTION_OVERHEAD,
             );
             expect(telemetry.uploadFinished).toHaveBeenCalledTimes(1);
             expect(telemetry.uploadFinished).toHaveBeenCalledWith('revisionUid', metadata.expectedSize + thumbnailSize);

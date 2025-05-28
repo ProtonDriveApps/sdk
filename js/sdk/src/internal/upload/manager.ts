@@ -242,6 +242,7 @@ export class UploadManager {
                 sha1?: string,
             },
         },
+        encryptedSize: number,
     ): Promise<void> {
         const generatedExtendedAttributes = generateFileExtendedAttributes(extendedAttributes);
         const nodeCommitCrypto = await this.cryptoService.commitFile(nodeRevisionDraft.nodeKeys, manifest, generatedExtendedAttributes);
@@ -251,6 +252,7 @@ export class UploadManager {
             uid: nodeRevisionDraft.nodeRevisionUid,
             state: RevisionState.Active,
             creationTime: new Date(),
+            storageSize: encryptedSize,
             contentAuthor: resultOk(nodeCommitCrypto.signatureEmail),
             claimedSize: metadata.expectedSize,
             claimedModificationTime: extendedAttributes.modificationTime,
@@ -270,6 +272,7 @@ export class UploadManager {
                 type: NodeType.File,
                 mediaType: metadata.mediaType,
                 creationTime: new Date(),
+                totalStorageSize: encryptedSize,
     
                 // Share node metadata
                 isShared: false,

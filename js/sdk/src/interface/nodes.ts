@@ -70,6 +70,10 @@ export type NodeEntity = {
      */
     creationTime: Date,
     trashTime?: Date,
+    /**
+     * Total size of all revisions, encrypted size on the server.
+     */
+    totalStorageSize?: number,
     activeRevision?: Revision,
     folder?: {
         claimedModificationTime?: Date,
@@ -136,6 +140,13 @@ export type Revision = {
     state: RevisionState,
     creationTime: Date, // created on server date
     contentAuthor: Author,
+    /**
+     * Encrypted size of the revision, as stored on the server.
+     */
+    storageSize: number,
+    /**
+     * Raw size of the revision, as stored in extended attributes.
+     */
     claimedSize?: number,
     claimedModificationTime?: Date,
     claimedDigests?: {
