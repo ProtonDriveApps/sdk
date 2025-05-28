@@ -535,6 +535,6 @@ function handleClaimedAuthor(signatureType: string, verified: VERIFICATION_STATU
 
     return resultError({
         claimedAuthor: claimedAuthor,
-        error: getVerificationMessage(verified, signatureType),
+        error: getVerificationMessage(verified, signatureType, notAvailableVerificationKeys),
     });    
 }
