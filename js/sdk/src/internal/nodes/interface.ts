@@ -16,6 +16,7 @@ interface BaseNode {
     mediaType?: string;
     creationTime: Date; // created on the server
     trashTime?: Date;
+    totalStorageSize?: number;
 
     // Share node metadata
     shareId?: string;
@@ -109,6 +110,7 @@ interface BaseRevision {
     uid: string;
     state: RevisionState;
     creationTime: Date; // created on the server
+    storageSize: number;
     thumbnails: Thumbnail[];
 }
 

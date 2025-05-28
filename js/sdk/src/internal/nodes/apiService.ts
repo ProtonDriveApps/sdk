@@ -405,6 +405,7 @@ function linkToEncryptedNode(logger: Logger, volumeId: string, link: PostLoadLin
     if (link.Link.Type === 2 && link.File && link.File.ActiveRevision) {
         return {
             ...baseNodeMetadata,
+            totalStorageSize: link.File.TotalEncryptedSize,
             mediaType: link.File.MediaType || undefined,
             encryptedCrypto: {
                 ...baseCryptoNodeMetadata,
@@ -416,6 +417,7 @@ function linkToEncryptedNode(logger: Logger, volumeId: string, link: PostLoadLin
                     uid: makeNodeRevisionUid(volumeId, link.Link.LinkID, link.File.ActiveRevision.RevisionID),
                     state: RevisionState.Active,
                     creationTime: new Date(link.File.ActiveRevision.CreateTime*1000),
+                    storageSize: link.File.ActiveRevision.EncryptedSize,
                     signatureEmail: link.File.ActiveRevision.SignatureEmail || undefined,
                     armoredExtendedAttributes: link.File.ActiveRevision.XAttr || undefined,
                     thumbnails: link.File.ActiveRevision.Thumbnails?.map((thumbnail) => transformThumbnail(volumeId, link.Link.LinkID, thumbnail)) || [],
@@ -436,6 +438,7 @@ function transformRevisionResponse(
         uid: makeNodeRevisionUid(volumeId, nodeId, revision.ID),
         state: revision.State === APIRevisionState.Active ? RevisionState.Active : RevisionState.Superseded,
         creationTime: new Date(revision.CreateTime*1000),
+        storageSize: revision.Size,
         signatureEmail: revision.SignatureEmail || undefined,
         armoredExtendedAttributes: revision.XAttr || undefined,
         thumbnails: revision.Thumbnails?.map((thumbnail) => transformThumbnail(volumeId, nodeId, thumbnail)) || [],

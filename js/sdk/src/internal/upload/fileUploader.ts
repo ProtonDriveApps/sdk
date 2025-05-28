@@ -216,11 +216,13 @@ export class Fileuploader {
             blockSizes: uploadedBlocks.map(block => block.originalSize),
             digests: this.digests.digests(),
         };
+        const encryptedSize = uploadedBlocks.reduce((sum, block) => sum + block.encryptedSize, 0);
         await this.uploadManager.commitDraft(
             this.revisionDraft,
             this.manifest,
             this.metadata,
             extendedAttributes,
+            encryptedSize,
         );
     }
 

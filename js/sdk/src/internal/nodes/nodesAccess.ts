@@ -243,6 +243,7 @@ export class NodesAccess {
                     uid: unparsedNode.activeRevision.value.uid,
                     state: unparsedNode.activeRevision.value.state,
                     creationTime: unparsedNode.activeRevision.value.creationTime,
+                    storageSize: unparsedNode.activeRevision.value.storageSize,
                     contentAuthor: unparsedNode.activeRevision.value.contentAuthor,
                     thumbnails: unparsedNode.activeRevision.value.thumbnails,
                     ...extendedAttributes,

@@ -310,6 +310,7 @@ export class NodesCryptoService {
             uid: encryptedRevision.uid,
             state: encryptedRevision.state,
             creationTime: encryptedRevision.creationTime,
+            storageSize: encryptedRevision.storageSize,
             contentAuthor,
             extendedAttributes,
             thumbnails: encryptedRevision.thumbnails,

@@ -15,11 +15,13 @@ function generateAPIFileNode(linkOverrides = {}, overrides = {}) {
             MediaType: 'text',
             ContentKeyPacket: 'contentKeyPacket',
             ContentKeyPacketSignature: 'contentKeyPacketSig',
+            TotalEncryptedSize: 42,
             ActiveRevision: {
                 RevisionID: 'revisionId',
                 CreateTime: 1234567890,
                 SignatureEmail: 'revSigEmail',
                 XAttr: '{file}',
+                EncryptedSize: 12,
             },
         },
         ...overrides,
@@ -68,6 +70,7 @@ function generateFileNode(overrides = {}) {
         ...node,
         type: NodeType.File,
         mediaType: "text",
+        totalStorageSize: 42,
         encryptedCrypto: {
             ...node.encryptedCrypto,
             file: {
@@ -78,6 +81,7 @@ function generateFileNode(overrides = {}) {
                 uid: "volumeId~linkId~revisionId",
                 state: "active",
                 creationTime: new Date(1234567890000),
+                storageSize: 12,
                 signatureEmail: "revSigEmail",
                 armoredExtendedAttributes: "{file}",
                 thumbnails: [],
