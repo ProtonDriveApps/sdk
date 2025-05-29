@@ -106,8 +106,6 @@ export class DownloadAPIService {
             signal,
         );
 
-        console.log("result", result)
-
         for (const thumbnail of result.Thumbnails) {
             const id = thumbnailIds.find(({ thumbnailId }) => thumbnailId === thumbnail.ThumbnailID);
             if (!id) {

@@ -248,10 +248,10 @@ export class LogFilter {
  */
 export class ConsoleLogHandler implements LogHandler {
     private logLevelMap = {
-        'DEBUG': console.debug,
-        'INFO': console.info,
-        'WARNING': console.warn,
-        'ERROR': console.error,
+        'DEBUG': console.debug, // eslint-disable-line no-console
+        'INFO': console.info, // eslint-disable-line no-console
+        'WARNING': console.warn, // eslint-disable-line no-console
+        'ERROR': console.error, // eslint-disable-line no-console
     }
 
     private formatter: LogFormatter;
@@ -340,6 +340,7 @@ export class BasicLogFormatter implements LogFormatter {
 
 class ConsoleMetricHandler<T extends MetricEvent> implements MetricHandler<T> {
     onEvent(metric: MetricRecord<T>) {
+        // eslint-disable-next-line no-console
         console.info(`${metric.time.toISOString()} INFO [metric] ${metric.event.eventName} ${JSON.stringify({ ...metric.event, name: undefined })}`);
     }
 }
