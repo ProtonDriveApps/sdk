@@ -147,7 +147,7 @@ export class NodesManagement {
                 encryptedName: encryptedCrypto.encryptedName,
                 nameSignatureEmail: encryptedCrypto.nameSignatureEmail,
                 hash: encryptedCrypto.hash,
-                // FIXME: content hash
+                // TODO: When moving photos, we need to pass content hash.
             }
         );
         const newNode: DecryptedNode = {
