@@ -9,6 +9,16 @@ import { HTTPErrorCode, isCodeOk, isCodeOkAsync } from './errorCodes';
 import { apiErrorFactory } from './errors';
 
 /**
+ * The default timeout in milliseconds for all API requests (metadata).
+ */
+const DEFAULT_TIMEOUT_MS = 30000;
+
+/**
+ * The default timeout in milliseconds for all storage requests (file content).
+ */
+const DEFAULT_STORAGE_TIMEOUT_MS = 90000;
+
+/**
  * How many subsequent 429 errors are allowed before we stop further requests.
  */
 const TOO_MANY_SUBSEQUENT_429_ERRORS = 50;
@@ -127,6 +137,7 @@ export class DriveAPIService {
                 "x-pm-drive-sdk-version": `js@${VERSION}`,
             }),
             json: data || undefined,
+            timeoutMs: DEFAULT_TIMEOUT_MS,
             signal,
         }
 
@@ -180,6 +191,7 @@ export class DriveAPIService {
             }),
             body,
             onProgress,
+            timeoutMs: DEFAULT_STORAGE_TIMEOUT_MS,
             signal,
         };
 
