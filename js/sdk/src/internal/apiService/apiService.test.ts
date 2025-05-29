@@ -27,7 +27,7 @@ describe("DriveAPIService", () => {
         }
         httpClient = {
             fetchJson: jest.fn(() => Promise.resolve(generateOkResponse())),
-            fetchBlob: jest.fn(() => Promise.resolve(generateOkResponse())),
+            fetchBlob: jest.fn(() => Promise.resolve(new Response(new Uint8Array([1, 2, 3])))),
         };
         api = new DriveAPIService(getMockTelemetry(), sdkEvents, httpClient, 'http://drive.proton.me', 'en');
     });
@@ -43,25 +43,26 @@ describe("DriveAPIService", () => {
         it("GET request", async () => {
             const result = await api.get('test');
             expect(result).toEqual({ Code: ErrorCode.OK });
-            await expectToBeCalledWith('GET');
+            await expectFetchJsonToBeCalledWith('GET');
         });
 
         it("POST request", async () => {
             const result = await api.post('test', { data: 'test' });
             expect(result).toEqual({ Code: ErrorCode.OK });
-            await expectToBeCalledWith('POST', { data: 'test' });
+            await expectFetchJsonToBeCalledWith('POST', { data: 'test' });
         });
 
         it("PUT request", async () => {
             const result = await api.put('test', { data: 'test' });
             expect(result).toEqual({ Code: ErrorCode.OK });
-            await expectToBeCalledWith('PUT', { data: 'test' });
+            await expectFetchJsonToBeCalledWith('PUT', { data: 'test' });
         });
 
-        async function expectToBeCalledWith(method: string, data?: object) {
+        async function expectFetchJsonToBeCalledWith(method: string, data?: object) {
             // @ts-expect-error: Fetch is mock.
             const request = httpClient.fetchJson.mock.calls[0][0];
             expect(request.method).toEqual(method);
+            expect(request.timeoutMs).toEqual(30000);
             expect(Array.from(request.headers.entries())).toEqual(Array.from(new Headers({
                 "Accept": "application/vnd.protonmail.v1+json",
                 "Content-Type": "application/json",
@@ -69,6 +70,33 @@ describe("DriveAPIService", () => {
                 "x-pm-drive-sdk-version": `js@${process.env.npm_package_version}`,
             }).entries()));
             expect(await request.json).toEqual(data);
+            expectSDKEvents();
+        }
+
+        it("storage GET request", async () => {
+            const stream = await api.getBlockStream('test', 'token');
+            const result = await Array.fromAsync(stream);
+            expect(result).toEqual([new Uint8Array([1, 2, 3])]);
+            await expectFetchBlobToBeCalledWith('GET');
+        });
+
+        it("storage POST request", async () => {
+            const data = new Blob();
+            await api.postBlockStream('test', 'token', data);
+            await expectFetchBlobToBeCalledWith('POST', data);
+        });
+
+        async function expectFetchBlobToBeCalledWith(method: string, data?: object) {
+            // @ts-expect-error: Fetch is mock.
+            const request = httpClient.fetchBlob.mock.calls[0][0];
+            expect(request.method).toEqual(method);
+            expect(request.timeoutMs).toEqual(90000);
+            expect(Array.from(request.headers.entries())).toEqual(Array.from(new Headers({
+                "pm-storage-token": 'token',
+                "Language": 'en',
+                "x-pm-drive-sdk-version": `js@${process.env.npm_package_version}`,
+            }).entries()));
+            expect(request.body).toEqual(data);
             expectSDKEvents();
         }
     });

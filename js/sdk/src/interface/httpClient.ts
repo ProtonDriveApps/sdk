@@ -16,6 +16,12 @@ type ProtonDriveHTTPClientBaseOptions = {
     url: string,
     method: string,
     headers: Headers,
+    /**
+     * The timeout in milliseconds.
+     *
+     * When timeout is reached, the request will be aborted with TimeoutError.
+     */
+    timeoutMs: number,
     signal?: AbortSignal,
 }
 
