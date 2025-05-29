@@ -280,6 +280,8 @@ export class UploadManager {
                 keyAuthor: resultOk(nodeRevisionDraft.nodeKeys.signatureAddress.email),
                 nameAuthor: resultOk(nodeRevisionDraft.nodeKeys.signatureAddress.email),
                 name: resultOk(nodeRevisionDraft.newNodeInfo.name),
+
+                activeRevision,
             }
             await this.nodesEvents.nodeCreated(node);
         } else {

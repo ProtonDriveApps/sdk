@@ -1,5 +1,5 @@
 import { ValidationError } from "../../errors";
-import { ProtonDriveTelemetry, UploadMetadata } from "../../interface";
+import { NodeType, ProtonDriveTelemetry, RevisionState, UploadMetadata } from "../../interface";
 import { getMockTelemetry } from "../../tests/telemetry";
 import { ErrorCode } from "../apiService";
 import { UploadAPIService } from "./apiService";
@@ -30,6 +30,7 @@ describe("UploadManager", () => {
                 availalbleHashes: ["name1Hash"],
                 pendingHashes: [],
             }),
+            commitDraftRevision: jest.fn(),
         }
         // @ts-expect-error No need to implement all methods for mocking
         cryptoService = {
@@ -67,6 +68,11 @@ describe("UploadManager", () => {
                 name: "name3",
                 hash: "name3Hash",
             }]),
+            commitFile: jest.fn().mockResolvedValue({
+                armoredManifestSignature: "newNode:armoredManifestSignature",
+                signatureEmail: "signatureEmail",
+                armoredExtendedAttributes: "newNode:armoredExtendedAttributes",
+            }),
         }
         // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
@@ -290,6 +296,94 @@ describe("UploadManager", () => {
             } catch (error: any) {
                 expect(error.availableName).toBe("name3");
             }
+        });
+    });
+
+    describe("commit draft", () => {
+        const nodeRevisionDraft = {
+            nodeUid: "newNode:nodeUid",
+            nodeRevisionUid: "newNode:nodeRevisionUid",
+            nodeKeys: {
+                key: "newNode:key",
+                contentKeyPacketSessionKey: "newNode:contentKeyPacketSessionKey",
+                signatureAddress: {
+                    email: "signatureEmail",
+                    addressId: "addressId",
+                    addressKey: "addressKey",
+                },
+            },
+        };
+        const manifest = new Uint8Array([1, 2, 3]);
+        const metadata = {
+            mediaType: "myMimeType",
+            expectedSize: 123456,
+        };
+        const extendedAttributes = {
+            modificationTime: new Date(),
+            digests: {
+                sha1: "sha1",
+            }
+        };
+
+        it("should commit revision draft", async () => {
+            await manager.commitDraft(
+                nodeRevisionDraft,
+                manifest,
+                metadata,
+                extendedAttributes,
+            );
+
+            expect(cryptoService.commitFile).toHaveBeenCalledWith(nodeRevisionDraft.nodeKeys, manifest, expect.anything());
+            expect(apiService.commitDraftRevision).toHaveBeenCalledWith(nodeRevisionDraft.nodeRevisionUid, expect.anything());
+            expect(nodesEvents.nodeUpdated).toHaveBeenCalledWith({
+                uid: "newNode:nodeUid",
+                activeRevision: {
+                    ok: true,
+                    value: {
+                        uid: "newNode:nodeRevisionUid",
+                        state: RevisionState.Active,
+                        creationTime: expect.any(Date),
+                        contentAuthor: { ok: true, value: "signatureEmail" },
+                        claimedSize: 123456,
+                        claimedModificationTime: extendedAttributes.modificationTime,
+                        claimedDigests: {
+                            sha1: "sha1",
+                        },
+                    },
+                },
+            });
+        })
+
+        it("should commit node draft", async () => {
+            const nodeRevisionDraftWithNewNodeInfo = {
+                ...nodeRevisionDraft,
+                newNodeInfo: {
+                    parentUid: "parentUid",
+                    name: "newNode:name",
+                    encryptedName: "newNode:encryptedName",
+                    hash: "newNode:hash",
+                }
+            }
+            await manager.commitDraft(
+                nodeRevisionDraftWithNewNodeInfo,
+                manifest,
+                metadata,
+                extendedAttributes,
+            );
+
+            expect(cryptoService.commitFile).toHaveBeenCalledWith(nodeRevisionDraft.nodeKeys, manifest, expect.anything());
+            expect(apiService.commitDraftRevision).toHaveBeenCalledWith(nodeRevisionDraft.nodeRevisionUid, expect.anything());
+            expect(nodesEvents.nodeCreated).toHaveBeenCalledWith(expect.objectContaining({
+                uid: "newNode:nodeUid",
+                parentUid: "parentUid",
+                type: NodeType.File,
+                activeRevision: {
+                    ok: true,
+                    value: expect.objectContaining({
+                        uid: "newNode:nodeRevisionUid",
+                    }),
+                },
+            }));
         });
     });
 });
