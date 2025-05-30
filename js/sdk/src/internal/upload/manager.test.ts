@@ -331,6 +331,7 @@ describe("UploadManager", () => {
                 manifest,
                 metadata,
                 extendedAttributes,
+                1234567,
             );
 
             expect(cryptoService.commitFile).toHaveBeenCalledWith(nodeRevisionDraft.nodeKeys, manifest, expect.anything());
@@ -344,6 +345,7 @@ describe("UploadManager", () => {
                         state: RevisionState.Active,
                         creationTime: expect.any(Date),
                         contentAuthor: { ok: true, value: "signatureEmail" },
+                        storageSize: 1234567,
                         claimedSize: 123456,
                         claimedModificationTime: extendedAttributes.modificationTime,
                         claimedDigests: {
@@ -369,6 +371,7 @@ describe("UploadManager", () => {
                 manifest,
                 metadata,
                 extendedAttributes,
+                1234567,
             );
 
             expect(cryptoService.commitFile).toHaveBeenCalledWith(nodeRevisionDraft.nodeKeys, manifest, expect.anything());
@@ -377,10 +380,12 @@ describe("UploadManager", () => {
                 uid: "newNode:nodeUid",
                 parentUid: "parentUid",
                 type: NodeType.File,
+                totalStorageSize: 1234567,
                 activeRevision: {
                     ok: true,
                     value: expect.objectContaining({
                         uid: "newNode:nodeRevisionUid",
+                        storageSize: 1234567,
                     }),
                 },
             }));
