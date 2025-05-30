@@ -1,3 +1,10 @@
+/**
+ * This class is used to read a stream in chunks.
+ *
+ * WARNING: The chunks are reused to avoid allocating new memory for each chunk.
+ * Ensure that the previous chunk is fully read before reading the next chunk.
+ * If you need to keep previous chunks, copy them to a new array.
+ */
 export class ChunkStreamReader {
     private reader: ReadableStreamDefaultReader<Uint8Array>;
 
@@ -8,8 +15,8 @@ export class ChunkStreamReader {
         this.chunkSize = chunkSize;
     }
 
-    async *iterateChunks() {
-        let buffer = new Uint8Array(this.chunkSize);
+    async *iterateChunks(): AsyncGenerator<Uint8Array> {
+        const buffer = new Uint8Array(this.chunkSize);
 
         let position = 0;
         while (true) {
@@ -30,7 +37,6 @@ export class ChunkStreamReader {
                 buffer.set(remainingValue.slice(0, remainingToFillBuffer), position);
                 yield buffer;
 
-                buffer = new Uint8Array(this.chunkSize);
                 position = 0;
                 remainingValue = remainingValue.slice(remainingToFillBuffer);
             }

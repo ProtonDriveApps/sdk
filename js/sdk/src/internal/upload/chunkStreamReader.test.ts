@@ -20,7 +20,7 @@ describe("ChunkStreamReader", () => {
 
         const chunks: Uint8Array[] = [];
         for await (const chunk of reader.iterateChunks()) {
-            chunks.push(chunk);
+            chunks.push(new Uint8Array(chunk));
         }
 
         expect(chunks.length).toBe(4);
@@ -35,7 +35,7 @@ describe("ChunkStreamReader", () => {
 
         const chunks: Uint8Array[] = [];
         for await (const chunk of reader.iterateChunks()) {
-            chunks.push(chunk);
+            chunks.push(new Uint8Array(chunk));
         }
 
         expect(chunks.length).toBe(6);
@@ -52,7 +52,7 @@ describe("ChunkStreamReader", () => {
 
         const chunks: Uint8Array[] = [];
         for await (const chunk of reader.iterateChunks()) {
-            chunks.push(chunk);
+            chunks.push(new Uint8Array(chunk));
         }
 
         expect(chunks.length).toBe(3);
@@ -66,7 +66,7 @@ describe("ChunkStreamReader", () => {
 
         const chunks: Uint8Array[] = [];
         for await (const chunk of reader.iterateChunks()) {
-            chunks.push(chunk);
+            chunks.push(new Uint8Array(chunk));
         }
 
         expect(chunks.length).toBe(3);
@@ -80,7 +80,7 @@ describe("ChunkStreamReader", () => {
 
         const chunks: Uint8Array[] = [];
         for await (const chunk of reader.iterateChunks()) {
-            chunks.push(chunk);
+            chunks.push(new Uint8Array(chunk));
         }
 
         expect(chunks.length).toBe(1);

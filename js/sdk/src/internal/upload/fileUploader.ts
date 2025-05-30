@@ -154,6 +154,15 @@ export class Fileuploader {
             throw error;
         } finally {
             this.logger.debug(`Upload cleanup`);
+
+            // Help the garbage collector to clean up the memory.
+            this.encryptedBlocks.clear();
+            this.encryptedThumbnails.clear();
+            this.ongoingUploads.clear();
+            this.uploadedBlocks = [];
+            this.uploadedThumbnails = [];
+            this.encryptionFinished = false;
+
             await this.onFinish(failure);
         }
 
@@ -300,7 +309,7 @@ export class Fileuploader {
                 }))),
             },
         );
-    
+
         for (const thumbnailToken of uploadTokens.thumbnailTokens) {
             let encryptedThumbnail = this.encryptedThumbnails.get(thumbnailToken.type);
             if (!encryptedThumbnail) {
