@@ -2,7 +2,7 @@
 
 namespace Proton.Drive.Sdk.Nodes;
 
-public abstract class DegradedNode
+public abstract record DegradedNode
 {
     public required NodeUid Uid { get; init; }
 
@@ -12,7 +12,7 @@ public abstract class DegradedNode
 
     public required ValResult<Author, SignatureVerificationError> NameAuthor { get; init; }
 
-    public required bool IsTrashed { get; init; }
+    public DateTime? TrashTime { get; init; }
 
     public required ValResult<Author, SignatureVerificationError> Author { get; init; }
 

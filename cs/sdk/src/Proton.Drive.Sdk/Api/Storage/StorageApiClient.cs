@@ -27,6 +27,7 @@ internal sealed class StorageApiClient(HttpClient httpClient) : IStorageApiClien
         using var requestMessage = HttpRequestMessageFactory.Create(HttpMethod.Post, baseUrl, multipartContent);
         requestMessage.Headers.Add("pm-storage-token", token);
 
+        // TODO: investigate what happens with the stream in case of a retry after a failure, is there a seek back to its beginning?
         var response = await _httpClient
             .Expecting(ProtonApiSerializerContext.Default.ApiResponse)
             .SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);

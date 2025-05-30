@@ -5,6 +5,7 @@ using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;
+using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk;
@@ -103,12 +104,37 @@ public sealed class ProtonDriveClient
         foreach (var uid in uids)
         {
             await NodeOperations.MoveSingleAsync(this, uid, newParentFolderUid, newName: null, cancellationToken).ConfigureAwait(false);
-    }
+        }
     }
 
     public ValueTask RenameNodeAsync(NodeUid uid, string newName, string? newMediaType, CancellationToken cancellationToken)
     {
         return NodeOperations.RenameAsync(this, uid, newName, newMediaType, cancellationToken);
+    }
+
+    public ValueTask<IReadOnlyDictionary<NodeUid, Result<string?>>> TrashNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
+    {
+        return NodeOperations.TrashAsync(this, uids, cancellationToken);
+    }
+
+    public ValueTask<IReadOnlyDictionary<NodeUid, Result<string?>>> DeleteNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
+    {
+        return NodeOperations.DeleteAsync(this, uids, cancellationToken);
+    }
+
+    public ValueTask<IReadOnlyDictionary<NodeUid, Result<string?>>> RestoreNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
+    {
+        return NodeOperations.RestoreAsync(this, uids, cancellationToken);
+    }
+
+    public IAsyncEnumerable<RefResult<Node, DegradedNode>> EnumerateTrashAsync(CancellationToken cancellationToken)
+    {
+        return VolumeOperations.EnumerateTrashAsync(this, cancellationToken);
+    }
+
+    public ValueTask EmptyTrashAsync(CancellationToken cancellationToken)
+    {
+        return VolumeOperations.EmptyTrashAsync(this, cancellationToken);
     }
 
     internal async ValueTask<string> GetClientUidAsync(CancellationToken cancellationToken)

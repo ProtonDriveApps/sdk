@@ -15,7 +15,7 @@ public abstract record Node
 
     public required string Name { get; init; }
 
-    public required bool IsTrashed { get; init; }
+    public DateTime? TrashTime { get; init; }
 
     public required ValResult<Author, SignatureVerificationError> NameAuthor { get; init; }
 

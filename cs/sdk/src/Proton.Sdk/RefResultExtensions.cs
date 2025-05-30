@@ -6,7 +6,15 @@ namespace Proton.Sdk;
 public static class RefResultExtensions
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T? GetValueOrDefault<T, TError>(this RefResult<T, TError> result, T? defaultValue = null)
+    public static T? GetValueOrDefault<T, TError>(this RefResult<T, TError> result)
+        where T : class?
+        where TError : class?
+    {
+        return result.TryGetValueElseError(out var value, out _) ? value : null;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T GetValueOrDefault<T, TError>(this RefResult<T, TError> result, T defaultValue)
         where T : class?
         where TError : class?
     {

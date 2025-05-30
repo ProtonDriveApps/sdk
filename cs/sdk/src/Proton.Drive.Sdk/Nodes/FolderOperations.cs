@@ -11,28 +11,29 @@ internal static class FolderOperations
 {
     public static async IAsyncEnumerable<RefResult<Node, DegradedNode>> EnumerateChildrenAsync(
         ProtonDriveClient client,
-        NodeUid folderId,
+        NodeUid folderUid,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var anchorId = default(LinkId?);
+        var anchorLinkId = default(LinkId?);
         var mustTryMoreResults = true;
 
-        var folderSecrets = await GetSecretsAsync(client, folderId, cancellationToken).ConfigureAwait(false);
+        var folderSecrets = await GetSecretsAsync(client, folderUid, cancellationToken).ConfigureAwait(false);
 
-        var batchLoader = new FolderChildrenBatchLoader(client, folderId.VolumeId, folderSecrets.Key);
+        var batchLoader = new FolderChildrenBatchLoader(client, folderUid.VolumeId, folderSecrets.Key);
 
         while (mustTryMoreResults)
         {
-            var response = await client.Api.Folders.GetChildrenAsync(folderId.VolumeId, folderId.LinkId, anchorId, cancellationToken).ConfigureAwait(false);
+            var response = await client.Api.Folders.GetChildrenAsync(folderUid.VolumeId, folderUid.LinkId, anchorLinkId, cancellationToken)
+                .ConfigureAwait(false);
 
             mustTryMoreResults = response.MoreResultsExist;
-            anchorId = response.AnchorId;
+            anchorLinkId = response.AnchorId;
 
             foreach (var childLinkId in response.LinkIds)
             {
-                var childId = new NodeUid(folderId.VolumeId, childLinkId);
+                var childUid = new NodeUid(folderUid.VolumeId, childLinkId);
 
-                var cachedChildNodeInfo = await client.Cache.Entities.TryGetNodeAsync(childId, cancellationToken).ConfigureAwait(false);
+                var cachedChildNodeInfo = await client.Cache.Entities.TryGetNodeAsync(childUid, cancellationToken).ConfigureAwait(false);
 
                 if (cachedChildNodeInfo is null)
                 {
@@ -54,11 +55,11 @@ internal static class FolderOperations
         }
     }
 
-    public static async ValueTask<FolderNode> CreateAsync(ProtonDriveClient client, NodeUid parentId, string name, CancellationToken cancellationToken)
+    public static async ValueTask<FolderNode> CreateAsync(ProtonDriveClient client, NodeUid parentUid, string name, CancellationToken cancellationToken)
     {
-        var parentSecrets = await GetSecretsAsync(client, parentId, cancellationToken).ConfigureAwait(false);
+        var parentSecrets = await GetSecretsAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
 
-        var membershipAddress = await NodeOperations.GetMembershipAddressAsync(client, parentId, cancellationToken).ConfigureAwait(false);
+        var membershipAddress = await NodeOperations.GetMembershipAddressAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
 
         var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
 
@@ -82,7 +83,7 @@ internal static class FolderOperations
         {
             Name = encryptedName,
             NameHashDigest = nameHashDigest,
-            ParentLinkId = parentId.LinkId,
+            ParentLinkId = parentUid.LinkId,
             Passphrase = encryptedKeyPassphrase,
             PassphraseSignature = keyPassphraseSignature,
             SignatureEmailAddress = membershipAddress.EmailAddress,
@@ -90,9 +91,9 @@ internal static class FolderOperations
             HashKey = key.EncryptAndSign(hashKey, key),
         };
 
-        var response = await client.Api.Folders.CreateFolderAsync(parentId.VolumeId, request, cancellationToken).ConfigureAwait(false);
+        var response = await client.Api.Folders.CreateFolderAsync(parentUid.VolumeId, request, cancellationToken).ConfigureAwait(false);
 
-        var folderId = new NodeUid(parentId.VolumeId, response.FolderId.Value);
+        var folderUid = new NodeUid(parentUid.VolumeId, response.FolderId.Value);
 
         var folderSecrets = new FolderSecrets
         {
@@ -102,34 +103,33 @@ internal static class FolderOperations
             HashKey = hashKey,
         };
 
-        await client.Cache.Secrets.SetFolderSecretsAsync(folderId, folderSecrets, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Secrets.SetFolderSecretsAsync(folderUid, folderSecrets, cancellationToken).ConfigureAwait(false);
 
         var author = new Author { EmailAddress = membershipAddress.EmailAddress };
 
         var folderNode = new FolderNode
         {
-            Uid = folderId,
-            ParentUid = parentId,
+            Uid = folderUid,
+            ParentUid = parentUid,
             Name = name,
-            IsTrashed = false,
             NameAuthor = author,
             Author = author,
         };
 
-        await client.Cache.Entities.SetNodeAsync(folderId, folderNode, membershipShareId: null, nameHashDigest, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Entities.SetNodeAsync(folderUid, folderNode, membershipShareId: null, nameHashDigest, cancellationToken).ConfigureAwait(false);
 
         return folderNode;
     }
 
-    public static async ValueTask<FolderSecrets> GetSecretsAsync(ProtonDriveClient client, NodeUid folderId, CancellationToken cancellationToken)
+    public static async ValueTask<FolderSecrets> GetSecretsAsync(ProtonDriveClient client, NodeUid folderUid, CancellationToken cancellationToken)
     {
-        var folderSecretsResult = await client.Cache.Secrets.TryGetFolderSecretsAsync(folderId, cancellationToken).ConfigureAwait(false);
+        var folderSecretsResult = await client.Cache.Secrets.TryGetFolderSecretsAsync(folderUid, cancellationToken).ConfigureAwait(false);
 
         var folderSecrets = folderSecretsResult?.GetValueOrDefault();
 
         if (folderSecrets is null)
         {
-            var nodeProvisionResult = await NodeOperations.GetFreshNodeMetadataAsync(client, folderId, knownShareAndKey: null, cancellationToken)
+            var nodeProvisionResult = await NodeOperations.GetFreshNodeMetadataAsync(client, folderUid, knownShareAndKey: null, cancellationToken)
                 .ConfigureAwait(false);
 
             folderSecrets = nodeProvisionResult.GetFolderSecretsOrThrow();
