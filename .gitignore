@@ -8,6 +8,7 @@ public
 node_modules
 .eslintcache
 tsconfig.tsbuildinfo
+dist
 
 # JS CLI
 js/cli/proton-drive

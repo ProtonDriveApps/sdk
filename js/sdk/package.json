@@ -1,10 +1,17 @@
 {
-    "name": "proton-drive-sdk",
-    "version": "0.0.1",
+    "name": "@proton/drive-sdk",
+    "version": "0.0.4",
     "description": "Proton Drive SDK",
     "license": "GPL-3.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist",
+        "src"
+    ],
     "scripts": {
-        "check-types": "tsc",
+        "build": "rm -rf dist && tsc",
+        "check-types": "tsc --noEmit",
         "generate-doc:interface": "typedoc src/index.ts --out ${OUTPUT_PATH}",
         "generate-doc:internal": "typedoc src/**/*.ts --out ${OUTPUT_PATH}",
         "generate-types": "openapi-typescript ../../api/openapi-drive.json -o ./src/internal/apiService/driveTypes.ts && openapi-typescript ../../api/openapi-core.json -o ./src/internal/apiService/coreTypes.ts",
@@ -33,5 +40,8 @@
         "prettier": "^3.4.2",
         "typedoc": "^0.26.11",
         "typescript": "^5.6.3"
+    },
+    "publishConfig": {
+        "registry": "https://nexus.protontech.ch/repository/drive-npm/"
     }
 }
