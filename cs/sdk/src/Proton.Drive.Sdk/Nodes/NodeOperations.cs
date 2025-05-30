@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 using Proton.Cryptography.Pgp;
@@ -16,6 +17,8 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal static class NodeOperations
 {
+    private const int MaximumBatchCount = 150;
+
     public static async ValueTask<FolderNode> GetMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
     {
         var shareId = await client.Cache.Entities.TryGetMyFilesShareIdAsync(cancellationToken).ConfigureAwait(false);
@@ -268,6 +271,120 @@ internal static class NodeOperations
         await client.Api.Links.RenameAsync(uid.VolumeId, uid.LinkId, parameters, cancellationToken).ConfigureAwait(false);
 
         await client.Cache.Entities.SetNodeAsync(uid, node with { Name = newName }, membershipShareId, nameHashDigest, cancellationToken).ConfigureAwait(false);
+    }
+
+    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<string?>>> TrashAsync(
+        ProtonDriveClient client,
+        IEnumerable<NodeUid> uids,
+        CancellationToken cancellationToken)
+    {
+        var uidsByVolumeId = uids.GroupBy(x => x.VolumeId);
+
+        var results = new ConcurrentDictionary<NodeUid, Result<string?>>();
+
+        var tasks = uidsByVolumeId.Select(async uidGroup =>
+        {
+            foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchCount))
+            {
+                var request = new MultipleLinksNullaryRequest { LinkIds = batch };
+
+                var aggregateResponse = await client.Api.Links.TrashMultipleAsync(uidGroup.Key, request, cancellationToken).ConfigureAwait(false);
+
+                foreach (var (linkId, response) in aggregateResponse.Responses)
+                {
+                    var uid = new NodeUid(uidGroup.Key, linkId);
+
+                    var cachedNodeInfo = await client.Cache.Entities.TryGetNodeAsync(uid, cancellationToken).ConfigureAwait(false);
+
+                    if (cachedNodeInfo is var (nodeProvisionResult, membershipShareId, nameHashDigest))
+                    {
+                        // TODO: have the back-end return the trash time so that the cached value be exactly the same
+                        var newNodeProvisionResult = nodeProvisionResult.ConvertRef(
+                            node => node with { TrashTime = DateTime.UtcNow },
+                            degradedNode => degradedNode with { TrashTime = DateTime.UtcNow });
+
+                        await client.Cache.Entities.SetNodeAsync(uid, newNodeProvisionResult, membershipShareId, nameHashDigest, cancellationToken)
+                            .ConfigureAwait(false);
+                    }
+
+                    var result = response.IsSuccess ? Result<string?>.Success : response.ErrorMessage;
+
+                    results.TryAdd(uid, result);
+                }
+            }
+        });
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        return results;
+    }
+
+    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<string?>>> DeleteAsync(
+        ProtonDriveClient client,
+        IEnumerable<NodeUid> uids,
+        CancellationToken cancellationToken)
+    {
+        var uidsByVolumeId = uids.GroupBy(x => x.VolumeId);
+
+        var results = new ConcurrentDictionary<NodeUid, Result<string?>>();
+
+        var tasks = uidsByVolumeId.Select(async uidGroup =>
+        {
+            foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchCount))
+            {
+                var request = new MultipleLinksNullaryRequest { LinkIds = batch };
+
+                var aggregateResponse = await client.Api.Links.DeleteMultipleAsync(uidGroup.Key, request, cancellationToken).ConfigureAwait(false);
+
+                foreach (var (linkId, response) in aggregateResponse.Responses)
+                {
+                    var uid = new NodeUid(uidGroup.Key, linkId);
+
+                    var result = response.IsSuccess ? Result<string?>.Success : response.ErrorMessage;
+
+                    results.TryAdd(uid, result);
+                }
+            }
+        });
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        return results;
+    }
+
+    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<string?>>> RestoreAsync(
+        ProtonDriveClient client,
+        IEnumerable<NodeUid> uids,
+        CancellationToken cancellationToken)
+    {
+        var uidsByVolumeId = uids.GroupBy(x => x.VolumeId);
+
+        var results = new ConcurrentDictionary<NodeUid, Result<string?>>();
+
+        var tasks = uidsByVolumeId.Select(async uidGroup =>
+        {
+            foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchCount))
+            {
+                var request = new MultipleLinksNullaryRequest { LinkIds = batch };
+
+                var aggregateResponse = await client.Api.Links.RestoreMultipleAsync(uidGroup.Key, request, cancellationToken).ConfigureAwait(false);
+
+                foreach (var (linkId, response) in aggregateResponse.Responses)
+                {
+                    var uid = new NodeUid(uidGroup.Key, linkId);
+
+                    var result = response.IsSuccess ? Result<string?>.Success : response.ErrorMessage;
+
+                    results.TryAdd(uid, result);
+                }
+            }
+        });
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        // FIXME: remove trash time from cache
+
+        return results;
     }
 
     public static async ValueTask<Address> GetMembershipAddressAsync(ProtonDriveClient client, NodeUid nodeUid, CancellationToken cancellationToken)

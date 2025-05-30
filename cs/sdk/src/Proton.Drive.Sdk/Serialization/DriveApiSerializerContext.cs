@@ -5,6 +5,7 @@ using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Api.Volumes;
 using Proton.Drive.Sdk.Nodes;
+using Proton.Sdk.Api;
 using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Serialization;
@@ -44,4 +45,7 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(MoveSingleLinkRequest))]
 [JsonSerializable(typeof(MoveMultipleLinksRequest))]
 [JsonSerializable(typeof(RenameLinkRequest))]
+[JsonSerializable(typeof(MultipleLinksNullaryRequest))]
+[JsonSerializable(typeof(AggregateApiResponse<LinkIdResponsePair>))]
+[JsonSerializable(typeof(VolumeTrashResponse))]
 internal sealed partial class DriveApiSerializerContext : JsonSerializerContext;

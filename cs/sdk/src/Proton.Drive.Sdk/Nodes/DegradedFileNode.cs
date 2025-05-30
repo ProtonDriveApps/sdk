@@ -2,7 +2,7 @@
 
 namespace Proton.Drive.Sdk.Nodes;
 
-public sealed class DegradedFileNode : DegradedNode
+public sealed record DegradedFileNode : DegradedNode
 {
     public required string MediaType { get; init; }
 
@@ -23,7 +23,6 @@ public sealed class DegradedFileNode : DegradedNode
             NameAuthor = NameAuthor,
             Author = Author,
             ActiveRevision = ActiveRevision ?? substituteRevision,
-            IsTrashed = false,
             TotalStorageQuotaUsage = TotalStorageQuotaUsage,
         };
     }

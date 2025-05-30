@@ -2,7 +2,7 @@
 
 namespace Proton.Drive.Sdk.Nodes;
 
-public sealed class DegradedFolderNode : DegradedNode
+public sealed record DegradedFolderNode : DegradedNode
 {
     public FolderNode ToNode(string substituteName)
     {
@@ -12,7 +12,7 @@ public sealed class DegradedFolderNode : DegradedNode
             ParentUid = ParentUid,
             Name = Name.TryGetValue(out var name) ? name : substituteName,
             NameAuthor = NameAuthor,
-            IsTrashed = IsTrashed,
+            TrashTime = TrashTime,
             Author = Author,
         };
     }

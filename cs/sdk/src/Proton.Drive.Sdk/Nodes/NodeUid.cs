@@ -23,6 +23,11 @@ public readonly record struct NodeUid : ICompositeUid<NodeUid>
         return $"{VolumeId}~{LinkId}";
     }
 
+    public static bool TryParse(string s, [NotNullWhen(true)] out NodeUid? result)
+    {
+        return ICompositeUid<NodeUid>.TryParse(s, out result);
+    }
+
     static bool ICompositeUid<NodeUid>.TryCreate(string baseUidString, string relativeIdString, [NotNullWhen(true)] out NodeUid? uid)
     {
         uid = new NodeUid(new VolumeId(baseUidString), new LinkId(relativeIdString));

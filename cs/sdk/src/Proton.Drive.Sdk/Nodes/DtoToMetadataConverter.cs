@@ -84,7 +84,7 @@ internal static class DtoToMetadataConverter
                 ParentUid = parentUid,
                 Name = nameResult,
                 NameAuthor = default,
-                IsTrashed = linkDto.State is LinkState.Trashed,
+                TrashTime = linkDto.TrashTime,
                 Author = default,
                 Errors = null!, // FIXME
             };
@@ -121,7 +121,7 @@ internal static class DtoToMetadataConverter
 
             // FIXME: combine with verification failure from name hash key
             Author = decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.Value.AuthorshipVerificationFailure),
-            IsTrashed = linkDto.State is LinkState.Trashed,
+            TrashTime = linkDto.TrashTime,
         };
 
         await client.Cache.Entities.SetNodeAsync(uid, node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken).ConfigureAwait(false);
@@ -175,7 +175,7 @@ internal static class DtoToMetadataConverter
                 ParentUid = parentUid,
                 Name = nameResult,
                 NameAuthor = default,
-                IsTrashed = linkDto.State is LinkState.Trashed,
+                TrashTime = linkDto.TrashTime,
                 Author = default,
                 MediaType = fileDto.MediaType,
                 ActiveRevision = null,
@@ -219,7 +219,7 @@ internal static class DtoToMetadataConverter
 
             // FIXME: combine with verification failure from name hash key
             Author = decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.Value.AuthorshipVerificationFailure),
-            IsTrashed = linkDto.State is LinkState.Trashed,
+            TrashTime = linkDto.TrashTime,
             MediaType = fileDto.MediaType,
             ActiveRevision = new Revision
             {
