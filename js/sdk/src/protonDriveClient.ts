@@ -24,7 +24,7 @@ import {
     DeviceEventCallback,
     NodeEventCallback,
 } from './interface';
-import { DriveCrypto } from './crypto';
+import { DriveCrypto, SessionKey } from './crypto';
 import { DriveAPIService } from './internal/apiService';
 import { initSharesModule } from './internal/shares';
 import { initNodesModule } from './internal/nodes';
@@ -66,6 +66,12 @@ export class ProtonDriveClient {
          * It has hardcoded URLs to open in production client only.
          */
         getNodeUrl: (nodeUid: NodeOrUid) => Promise<string>;
+        /**
+         * Experimental feature to get the docs key for a node.
+         *
+         * This is used by Docs app to encrypt and decrypt document updates.
+         */
+        getDocsKey: (nodeUid: NodeOrUid) => Promise<SessionKey>;
     };
 
     constructor({
@@ -84,7 +90,7 @@ export class ProtonDriveClient {
 
         const fullConfig = getConfig(config);
         this.sdkEvents = new SDKEvents(telemetry);
-        const cryptoModule = new DriveCrypto(openPGPCryptoModule);    
+        const cryptoModule = new DriveCrypto(openPGPCryptoModule);
         const apiService = new DriveAPIService(telemetry, this.sdkEvents, httpClient, fullConfig.baseUrl, fullConfig.language);
         this.events = new DriveEventsService(telemetry, apiService, entitiesCache);
         this.shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
@@ -97,6 +103,14 @@ export class ProtonDriveClient {
             getNodeUrl: async (nodeUid: NodeOrUid) => {
                 this.logger.debug(`Getting node URL for ${getUid(nodeUid)}`);
                 return this.nodes.access.getNodeUrl(getUid(nodeUid));
+            },
+            getDocsKey: async (nodeUid: NodeOrUid) => {
+                this.logger.debug(`Getting docs keys for ${getUid(nodeUid)}`);
+                const keys = await this.nodes.access.getNodeKeys(getUid(nodeUid));
+                if (!keys.contentKeyPacketSessionKey) {
+                    throw new Error('Node does not have a content key packet session key');
+                }
+                return keys.contentKeyPacketSessionKey;
             },
         }
     }
