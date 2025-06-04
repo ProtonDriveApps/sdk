@@ -16,6 +16,7 @@ export type MetricEvent =
     MetricDownloadEvent |
     MetricDecryptionErrorEvent |
     MetricVerificationErrorEvent |
+    MetricBlockVerificationErrorEvent |
     MetricVolumeEventsSubscriptionsChangedEvent;
 
 export interface MetricAPIRetrySucceededEvent {
@@ -89,6 +90,11 @@ export type MetricVerificationErrorField =
     'nodeExtendedAttributes' |
     'nodeContentKey' |
     'content';
+
+export interface MetricBlockVerificationErrorEvent {
+    eventName: 'blockVerificationError',
+    retryHelped: boolean,
+};
 
 export interface MetricVolumeEventsSubscriptionsChangedEvent {
     eventName: 'volumeEventsSubscriptionsChanged',

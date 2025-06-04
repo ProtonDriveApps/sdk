@@ -1,5 +1,8 @@
-import { Thumbnail } from "../../interface";
+import { c } from "ttag";
+
 import { DriveCrypto, PrivateKey, SessionKey } from "../../crypto";
+import { IntegrityError } from "../../errors";
+import { Thumbnail } from "../../interface";
 import { EncryptedBlock, EncryptedThumbnail, NodeCrypto, NodeRevisionDraftKeys, NodesService } from "./interface";
 
 export class UploadCryptoService {
@@ -136,12 +139,18 @@ export class UploadCryptoService {
         //
         // Additionally, we use the key provided by the verification endpoint, to
         // ensure the correct key was used to encrypt the data
-        await this.driveCrypto.decryptBlock(
-            encryptedData,
-            undefined,
-            nodeKey,
-            contentKeyPacketSessionKey,
-        );
+        try {
+            await this.driveCrypto.decryptBlock(
+                encryptedData,
+                undefined,
+                nodeKey,
+                contentKeyPacketSessionKey,
+            );
+        } catch (error) {
+            throw new IntegrityError(c('Error').t`Data integrity check of one part failed`, {
+                error,
+            });
+        }
 
         // The verifier requires a 0-padded data packet, so we can
         // access the array directly and fall back to 0.

@@ -261,6 +261,7 @@ export class Fileuploader {
 
                 this.logger.debug(`Encrypting block ${index}`);
                 let attempt = 0;
+                let integrityError = false;
                 let encryptedBlock;
                 while (!encryptedBlock) {
                     attempt++;
@@ -272,13 +273,23 @@ export class Fileuploader {
                             block,
                             index,
                         );
+                        if (integrityError) {
+                            void this.telemetry.logBlockVerificationError(true);
+                        }
                     } catch (error: unknown) {
+                        if (error instanceof IntegrityError) {
+                            integrityError = true;
+                        }
+
                         if (attempt <= MAX_BLOCK_ENCRYPTION_RETRIES) {
                             this.logger.warn(`Block encryption failed #${attempt}, retrying: ${getErrorMessage(error)}`);
                             continue;
                         }
 
                         this.logger.error(`Failed to encrypt block ${index}`, error);
+                        if (integrityError) {
+                            void this.telemetry.logBlockVerificationError(false);
+                        }
                         throw error;
                     }
                 }
