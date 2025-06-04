@@ -19,6 +19,13 @@ export class UploadTelemetry {
         return new LoggerWithPrefix(logger, `revision ${revisionUid}`);
     }
 
+    logBlockVerificationError(retryHelped: boolean) {
+        this.telemetry.logEvent({
+            eventName: 'blockVerificationError',
+            retryHelped,
+        });
+    }
+
     async uploadInitFailed(parentFolderUid: string, error: unknown, expectedSize: number) {
         const { volumeId } = splitNodeUid(parentFolderUid);
         const errorCategory = getErrorCategory(error);
