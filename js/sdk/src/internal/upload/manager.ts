@@ -4,10 +4,9 @@ import { Logger, MemberRole, NodeType, ProtonDriveTelemetry, resultOk, Revision,
 import { ValidationError, NodeAlreadyExistsValidationError } from "../../errors";
 import { ErrorCode } from "../apiService";
 import { DecryptedNode, generateFileExtendedAttributes } from "../nodes";
-import { splitNodeUid } from "../uids";
 import { UploadAPIService } from "./apiService";
 import { UploadCryptoService } from "./cryptoService";
-import { NodeRevisionDraft, NodesService, NodesEvents, NodeCrypto, SharesService } from "./interface";
+import { NodeRevisionDraft, NodesService, NodesEvents, NodeCrypto } from "./interface";
 
 /**
  * UploadManager is responsible for creating and deleting draft nodes
@@ -21,14 +20,12 @@ export class UploadManager {
         telemetry: ProtonDriveTelemetry,
         private apiService: UploadAPIService,
         private cryptoService: UploadCryptoService,
-        private sharesService: SharesService,
         private nodesService: NodesService,
         private nodesEvents: NodesEvents,
     ) {
         this.logger = telemetry.getLogger('upload');
         this.apiService = apiService;
         this.cryptoService = cryptoService;
-        this.sharesService = sharesService;
         this.nodesService = nodesService;
     }
 
@@ -200,8 +197,7 @@ export class UploadManager {
             throw new ValidationError(c('Error').t`Creating revisions in non-files is not allowed`);
         }
 
-        const { volumeId } = splitNodeUid(nodeUid);
-        const signatureAddress = await this.sharesService.getVolumeEmailKey(volumeId);
+        const signatureAddress = await this.nodesService.getRootNodeEmailKey(nodeUid);
 
         const { nodeRevisionUid } = await this.apiService.createDraftRevision(nodeUid, {
             currentRevisionUid: node.activeRevision.value.uid,

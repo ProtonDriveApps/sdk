@@ -42,6 +42,7 @@ export class NodesManagement {
         const node = await this.nodesAccess.getNode(nodeUid);
         const { nameSessionKey: nodeNameSessionKey } = await this.nodesAccess.getNodePrivateAndSessionKeys(nodeUid);
         const parentKeys = await this.nodesAccess.getParentKeys(node);
+        const address = await this.nodesAccess.getRootNodeEmailKey(nodeUid);
 
         if (!options.allowRenameRootNode && (!node.hash || !parentKeys.hashKey)) {
             throw new ValidationError(c('Error').t`Renaming root item is not allowed`)
@@ -51,7 +52,7 @@ export class NodesManagement {
             signatureEmail,
             armoredNodeName,
             hash,
-        } = await this.cryptoService.encryptNewName(node, nodeNameSessionKey, parentKeys.hashKey, newName);
+        } = await this.cryptoService.encryptNewName(nodeNameSessionKey, address, parentKeys.hashKey, newName);
 
         // Because hash is optional, lets ensure we have it unless explicitely
         // allowed to rename root node.
@@ -103,9 +104,9 @@ export class NodesManagement {
     }
 
     async moveNode(nodeUid: string, newParentUid: string): Promise<DecryptedNode> {
-        const [node, newParentNode] = await Promise.all([
+        const [node, address] = await Promise.all([
             this.nodesAccess.getNode(nodeUid),
-            this.nodesAccess.getNode(newParentUid),
+            this.nodesAccess.getRootNodeEmailKey(newParentUid),
         ]);
         const [keys, newParentKeys] = await Promise.all([
             this.nodesAccess.getNodeKeys(nodeUid),
@@ -122,8 +123,8 @@ export class NodesManagement {
         const encryptedCrypto = await this.cryptoService.moveNode(
             node,
             keys,
-            newParentNode,
             { key: newParentKeys.key, hashKey: newParentKeys.hashKey },
+            address,
         );
 
         // Node could be uploaded or renamed by anonymous user and thus have
@@ -215,17 +216,17 @@ export class NodesManagement {
     async createFolder(parentNodeUid: string, folderName: string, modificationTime?: Date): Promise<DecryptedNode> {
         validateNodeName(folderName);
 
-        const parentNode = await this.nodesAccess.getNode(parentNodeUid);
         const parentKeys = await this.nodesAccess.getNodeKeys(parentNodeUid);
         if (!parentKeys.hashKey) {
             throw new ValidationError(c('Error').t`Creating folders in non-folders is not allowed`);
         }
 
+        const address = await this.nodesAccess.getRootNodeEmailKey(parentNodeUid);
         const extendedAttributes = generateFolderExtendedAttributes(modificationTime);
 
         const { encryptedCrypto, keys } = await this.cryptoService.createFolder(
-            parentNode,
             { key: parentKeys.key, hashKey: parentKeys.hashKey },
+            address,
             folderName,
             extendedAttributes,
         );

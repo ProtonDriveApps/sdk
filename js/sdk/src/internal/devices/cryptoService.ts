@@ -13,7 +13,7 @@ export class DevicesCryptoService {
         this.sharesService = sharesService;
     }
 
-    async createDevice(volumeId: string, deviceName: string): Promise<{
+    async createDevice(deviceName: string): Promise<{
         address: {
             addressId: string,
             addressKeyId: string,
@@ -33,7 +33,7 @@ export class DevicesCryptoService {
             armoredHashKey: string,
         }
     }> {
-        const address = await this.sharesService.getVolumeEmailKey(volumeId);
+        const address = await this.sharesService.getMyFilesShareMemberEmailKey();
         const addressKey = address.addressKey;
 
         const shareKey = await this.driveCrypto.generateKey([addressKey], addressKey);

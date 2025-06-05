@@ -116,14 +116,12 @@ export class SharesCryptoService {
         }
 
         const fromBefore2024 = share.creationTime ? share.creationTime < new Date('2024-01-01') : undefined;
-        const addressMatchingDefaultShare = undefined; // FIXME: check if claimed author matches default share
-        this.logger.error(`Failed to verify share ${share.shareId} (from before 2024: ${fromBefore2024}, matching address: ${addressMatchingDefaultShare})`);
+        this.logger.error(`Failed to verify share ${share.shareId} (from before 2024: ${fromBefore2024})`);
 
         this.telemetry.logEvent({
             eventName: 'verificationError',
             context: shareTypeToMetricContext(share.type),
             field: 'shareKey',
-            addressMatchingDefaultShare,
             fromBefore2024,
         });
         this.reportedVerificationErrors.add(share.shareId);

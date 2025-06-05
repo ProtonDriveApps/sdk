@@ -306,8 +306,8 @@ export class SharingCryptoService {
         }
     };
 
-    async decryptPublicLink(shareAddressId: string, encryptedPublicLink: EncryptedPublicLink): Promise<PublicLink> {
-        const address = await this.account.getOwnAddress(shareAddressId);
+    async decryptPublicLink(encryptedPublicLink: EncryptedPublicLink): Promise<PublicLink> {
+        const address = await this.account.getOwnAddress(encryptedPublicLink.creatorEmail);
         const addressKeys = address.keys.map(({ key }) => key);
 
         const { password, customPassword } = await this.decryptShareUrlPassword(

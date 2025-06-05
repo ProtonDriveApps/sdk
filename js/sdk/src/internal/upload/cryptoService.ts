@@ -1,15 +1,14 @@
 import { Thumbnail } from "../../interface";
 import { DriveCrypto, PrivateKey, SessionKey } from "../../crypto";
-import { splitNodeUid } from "../uids";
-import { EncryptedBlock, EncryptedThumbnail, NodeCrypto, NodeRevisionDraftKeys, SharesService } from "./interface";
+import { EncryptedBlock, EncryptedThumbnail, NodeCrypto, NodeRevisionDraftKeys, NodesService } from "./interface";
 
 export class UploadCryptoService {
     constructor(
         private driveCrypto: DriveCrypto,
-        private shareService: SharesService,
+        private nodesService: NodesService,
     ) {
         this.driveCrypto = driveCrypto;
-        this.shareService = shareService;
+        this.nodesService = nodesService;
     }
 
     async generateFileCrypto(
@@ -17,8 +16,8 @@ export class UploadCryptoService {
         parentKeys: { key: PrivateKey, hashKey: Uint8Array },
         name: string,
     ): Promise<NodeCrypto> {
-        const { volumeId } = splitNodeUid(parentUid);
-        const signatureAddress = await this.shareService.getVolumeEmailKey(volumeId);
+        const signatureAddress = await this.nodesService.getRootNodeEmailKey(parentUid);
+
         const [
             nodeKeys,
             { armoredNodeName },

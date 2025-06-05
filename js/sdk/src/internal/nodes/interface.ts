@@ -139,6 +139,14 @@ export interface DecryptedRevision extends Revision {
 export interface SharesService {
     getMyFilesIDs(): Promise<{ volumeId: string, rootNodeId: string }>,
     getSharePrivateKey(shareId: string): Promise<PrivateKey>,
-    getVolumeEmailKey(volumeId: string): Promise<{ email: string, addressKey: PrivateKey }>,
+    getMyFilesShareMemberEmailKey(): Promise<{
+        email: string,
+    }>,
+    getContextShareMemberEmailKey(shareId: string): Promise<{
+        email: string,
+        addressId: string,
+        addressKey: PrivateKey,
+        addressKeyId: string,
+    }>,
     getVolumeMetricContext(volumeId: string): Promise<MetricContext>,
 }

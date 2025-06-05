@@ -56,7 +56,7 @@ export class SharingManagement {
             return;
         }
 
-        const [ protonInvitations, nonProtonInvitations, members, publicLink ] = await Promise.all([
+        const [protonInvitations, nonProtonInvitations, members, publicLink] = await Promise.all([
             Array.fromAsync(this.iterateShareInvitations(node.shareId)),
             Array.fromAsync(this.iterateShareExternalInvitations(node.shareId)),
             Array.fromAsync(this.iterateShareMembers(node.shareId)),
@@ -93,25 +93,11 @@ export class SharingManagement {
     }
 
     private async getPublicLink(shareId: string): Promise<PublicLink | undefined> {
-        // TODO: address ID is not set when user is not member of the share.
-        // Users cannot manage other shares yet (admin role is not supported
-        // yet). But owners will stop being members and we need to keep this
-        // working. Simple solution is to use the volume email key address ID
-        // as that should be used for public links, but some older links that
-        // did not follow this logic might not be able to decrypt once the
-        // owner is not member by default.
-        const encryptedShare = await this.sharesService.loadEncryptedShare(shareId);
-        let addressId = encryptedShare.addressId;
-        if (!addressId) {
-            const volumeEmailKey = await this.sharesService.getVolumeEmailKey(encryptedShare.volumeId);
-            addressId = volumeEmailKey.addressId;
-        }
-
         const encryptedPublicLink = await this.apiService.getPublicLink(shareId);
         if (!encryptedPublicLink) {
             return;
         }
-        return this.cryptoService.decryptPublicLink(addressId, encryptedPublicLink);
+        return this.cryptoService.decryptPublicLink(encryptedPublicLink);
     }
 
     async shareNode(nodeUid: string, settings: ShareNodeSettings): Promise<ShareResult> {
@@ -352,7 +338,7 @@ export class SharingManagement {
         }
 
         const { volumeId } = splitNodeUid(nodeUid);
-        const { addressId, addressKey } = await this.sharesService.getVolumeEmailKey(volumeId);
+        const { addressId, addressKey } = await this.nodesService.getRootNodeEmailKey(nodeUid);
 
         const nodeKeys = await this.nodesService.getNodePrivateAndSessionKeys(nodeUid);
         const keys = await this.cryptoService.generateShareKeys(nodeKeys, addressKey);
@@ -382,7 +368,7 @@ export class SharingManagement {
     }
 
     private async inviteProtonUser(share: Share, inviteeEmail: string, role: MemberRole, emailOptions: EmailOptions): Promise<ProtonInvitation> {
-        const inviter = await this.sharesService.getVolumeEmailKey(share.volumeId);
+        const inviter = await this.nodesService.getRootNodeEmailKey(share.volumeId);
         const invitationCrypto = await this.cryptoService.encryptInvitation(share.passphraseSessionKey, inviter.addressKey, inviteeEmail);
 
         const encryptedInvitation = await this.apiService.inviteProtonUser(share.shareId, {
@@ -411,7 +397,7 @@ export class SharingManagement {
     }
 
     private async inviteExternalUser(share: Share, inviteeEmail: string, role: MemberRole, emailOptions: EmailOptions): Promise<NonProtonInvitation> {
-        const inviter = await this.sharesService.getVolumeEmailKey(share.volumeId);
+        const inviter = await this.nodesService.getRootNodeEmailKey(share.volumeId);
         const invitationCrypto = await this.cryptoService.encryptExternalInvitation(share.passphraseSessionKey, inviter.addressKey, inviteeEmail);
 
         const encryptedInvitation = await this.apiService.inviteExternalUser(share.shareId, {

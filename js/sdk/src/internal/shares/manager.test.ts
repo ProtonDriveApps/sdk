@@ -5,6 +5,7 @@ import { SharesAPIService } from "./apiService";
 import { SharesCache } from "./cache";
 import { SharesCryptoCache } from "./cryptoCache";
 import { SharesCryptoService } from "./cryptoService";
+import { VolumeShareNodeIDs } from "./interface";
 import { SharesManager } from "./manager";
 
 describe("SharesManager", () => {
@@ -65,14 +66,14 @@ describe("SharesManager", () => {
                 key: "privateKey",
                 sessionKey: "sessionKey",
             };
-        
+
             apiService.getMyFiles = jest.fn().mockResolvedValue(encryptedShare);
             cryptoService.decryptRootShare = jest.fn().mockResolvedValue({ share: myFilesShare, key });
-    
+
             // Calling twice to check if it loads only once.
             await manager.getMyFilesIDs();
             const result = await manager.getMyFilesIDs();
-    
+
             expect(result).toStrictEqual(myFilesShare);
             expect(apiService.getMyFiles).toHaveBeenCalledTimes(1);
             expect(cryptoService.decryptRootShare).toHaveBeenCalledTimes(1);
@@ -137,12 +138,13 @@ describe("SharesManager", () => {
         });
     });
 
-    describe("getVolumeEmailKey", () => {
+    describe("getMyFilesShareMemberEmailKey", () => {
         it("should return cached volume email key", async () => {
+            jest.spyOn(manager, 'getMyFilesIDs').mockResolvedValue({ volumeId: "volumeId" } as VolumeShareNodeIDs);
             cache.getVolume = jest.fn().mockResolvedValue({ addressId: "addressId" });
             account.getOwnAddress = jest.fn().mockResolvedValue({ email: "email", primaryKeyIndex: 0, keys: [{ key: "addressKey" }] });
 
-            const result = await manager.getVolumeEmailKey("volumeId");
+            const result = await manager.getMyFilesShareMemberEmailKey();
 
             expect(result).toEqual({
                 addressId: "addressId",
@@ -152,6 +154,7 @@ describe("SharesManager", () => {
         });
 
         it("should load volume email key if not in cache", async () => {
+            jest.spyOn(manager, 'getMyFilesIDs').mockResolvedValue({ volumeId: "volumeId" } as VolumeShareNodeIDs);
             const share = {
                 volumeId: "volumeId",
                 shareId: "shareId",
@@ -164,7 +167,7 @@ describe("SharesManager", () => {
             apiService.getRootShare = jest.fn().mockResolvedValue(share);
             account.getOwnAddress = jest.fn().mockResolvedValue({ email: "email", primaryKeyIndex: 0, keys: [{ key: "addressKey" }] });
 
-            const result = await manager.getVolumeEmailKey("volumeId");
+            const result = await manager.getMyFilesShareMemberEmailKey();
 
             expect(result).toEqual({
                 addressId: "addressId",
@@ -172,6 +175,36 @@ describe("SharesManager", () => {
                 addressKey: "addressKey",
             });
             expect(cache.setVolume).toHaveBeenCalledWith(share);
+        });
+    });
+
+    describe("getContextShareMemberEmailKey", () => {
+        it("should load share email key only once", async () => {
+            const share = {
+                volumeId: "volumeId",
+                shareId: "shareId",
+                rootNodeId: "rootNodeId",
+                creatorEmail: "creatorEmail",
+                addressId: "addressId",
+            }
+            apiService.getRootShare = jest.fn().mockResolvedValue(share);
+            account.getOwnAddress = jest.fn().mockResolvedValue({ email: "email", primaryKeyIndex: 0, keys: [{ key: "addressKey" }] });
+
+            const result = await manager.getContextShareMemberEmailKey("shareId");
+
+            expect(result).toEqual({
+                addressId: "addressId",
+                email: "email",
+                addressKey: "addressKey",
+            });
+            expect(apiService.getRootShare).toHaveBeenCalledTimes(1);
+            expect(account.getOwnAddress).toHaveBeenCalledTimes(1);
+
+            const result2 = await manager.getContextShareMemberEmailKey("shareId");
+
+            expect(result2).toEqual(result);
+            expect(apiService.getRootShare).toHaveBeenCalledTimes(1);
+            expect(account.getOwnAddress).toHaveBeenCalledTimes(2);
         });
     });
 });

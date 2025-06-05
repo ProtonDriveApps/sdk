@@ -299,7 +299,7 @@ export class NodesCryptoService {
             extendedAttributes,
             author: contentAuthor,
         } = await this.decryptExtendedAttributes(
-            {uid: nodeUid, creationTime: encryptedRevision.creationTime},
+            { uid: nodeUid, creationTime: encryptedRevision.creationTime },
             encryptedRevision.armoredExtendedAttributes,
             nodeKey,
             verificationKeys,
@@ -318,7 +318,7 @@ export class NodesCryptoService {
     }
 
     private async decryptExtendedAttributes(
-        node: {uid: string, creationTime: Date},
+        node: { uid: string, creationTime: Date },
         encryptedExtendedAttributes: string | undefined,
         nodeKey: PrivateKey,
         addressKeys: PublicKey[],
@@ -346,16 +346,15 @@ export class NodesCryptoService {
     }
 
     async createFolder(
-        parentNode: DecryptedNode,
         parentKeys: { key: PrivateKey, hashKey: Uint8Array },
+        address: { email: string, addressKey: PrivateKey },
         name: string,
         extendedAttributes?: string,
     ): Promise<{
         encryptedCrypto: Required<EncryptedNodeFolderCrypto> & { encryptedName: string, hash: string },
         keys: DecryptedNodeKeys,
     }> {
-        const { volumeId } = splitNodeUid(parentNode.uid);
-        const { email, addressKey } = await this.shareService.getVolumeEmailKey(volumeId);
+        const { email, addressKey } = address;
         const [
             nodeKeys,
             { armoredNodeName },
@@ -396,13 +395,17 @@ export class NodesCryptoService {
         };
     }
 
-    async encryptNewName(node: DecryptedNode, nodeNameSessionKey: SessionKey, parentHashKey: Uint8Array | undefined, newName: string): Promise<{
+    async encryptNewName(
+        nodeNameSessionKey: SessionKey,
+        address: { email: string, addressKey: PrivateKey },
+        parentHashKey: Uint8Array | undefined,
+        newName: string,
+    ): Promise<{
         signatureEmail: string,
         armoredNodeName: string,
         hash?: string,
     }> {
-        const { volumeId } = splitNodeUid(node.uid);
-        const { email, addressKey } = await this.shareService.getVolumeEmailKey(volumeId);
+        const { email, addressKey } = address;
         const { armoredNodeName } = await this.driveCrypto.encryptNodeName(newName, nodeNameSessionKey, undefined, addressKey);
         const hash = parentHashKey
             ? await this.driveCrypto.generateLookupHash(newName, parentHashKey)
@@ -414,7 +417,12 @@ export class NodesCryptoService {
         };
     };
 
-    async moveNode(node: DecryptedNode, keys: { passphrase: string, passphraseSessionKey: SessionKey }, parentNode: DecryptedNode, parentKeys: { key: PrivateKey, hashKey: Uint8Array }): Promise<{
+    async moveNode(
+        node: DecryptedNode,
+        keys: { passphrase: string, passphraseSessionKey: SessionKey },
+        parentKeys: { key: PrivateKey, hashKey: Uint8Array },
+        address: { email: string, addressKey: PrivateKey },
+    ): Promise<{
         encryptedName: string,
         hash: string,
         armoredNodePassphrase: string,
@@ -429,8 +437,7 @@ export class NodesCryptoService {
             throw new ValidationError('Cannot move item without a valid name, please rename the item first');
         }
 
-        const { volumeId } = splitNodeUid(parentNode.uid);
-        const { email, addressKey } = await this.shareService.getVolumeEmailKey(volumeId);
+        const { email, addressKey } = address;
         const { armoredNodeName } = await this.driveCrypto.encryptNodeName(node.name.value, undefined, parentKeys.key, addressKey);
         const hash = await this.driveCrypto.generateLookupHash(node.name.value, parentKeys.hashKey);
         const { armoredPassphrase, armoredPassphraseSignature } = await this.driveCrypto.encryptPassphrase(keys.passphrase, keys.passphraseSessionKey, [parentKeys.key], addressKey);
@@ -474,7 +481,7 @@ export class NodesCryptoService {
         let addressMatchingDefaultShare, context;
         try {
             const { volumeId } = splitNodeUid(node.uid);
-            const { email } = await this.shareService.getVolumeEmailKey(volumeId);
+            const { email } = await this.shareService.getMyFilesShareMemberEmailKey();
             addressMatchingDefaultShare = claimedAuthor ? claimedAuthor === email : undefined;
             context = await this.shareService.getVolumeMetricContext(volumeId);
         } catch (error: unknown) {
@@ -536,5 +543,5 @@ function handleClaimedAuthor(signatureType: string, verified: VERIFICATION_STATU
     return resultError({
         claimedAuthor: claimedAuthor,
         error: getVerificationMessage(verified, signatureType, notAvailableVerificationKeys),
-    });    
+    });
 }

@@ -50,7 +50,7 @@ describe("nodesCryptoService", () => {
         };
         // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
-            getVolumeEmailKey: jest.fn(async () => ({
+            getMyFilesShareMemberEmailKey: jest.fn(async () => ({
                 email: "email",
                 addressKey: "key" as unknown as PrivateKey,
             })),
@@ -354,13 +354,15 @@ describe("nodesCryptoService", () => {
                     keyAuthor: { ok: true, value: "signatureEmail" },
                     nameAuthor: { ok: true, value: "nameSignatureEmail" },
                     folder: undefined,
-                    activeRevision: { ok: true, value: {
-                        uid: "revisionUid",
-                        state: RevisionState.Active,
-                        creationTime: undefined,
-                        extendedAttributes: "{}",
-                        contentAuthor: { ok: true, value: "revisionSignatureEmail" },
-                    } },
+                    activeRevision: {
+                        ok: true, value: {
+                            uid: "revisionUid",
+                            state: RevisionState.Active,
+                            creationTime: undefined,
+                            extendedAttributes: "{}",
+                            contentAuthor: { ok: true, value: "revisionSignatureEmail" },
+                        }
+                    },
                     errors: undefined,
                     ...expectedNode,
                 },
@@ -402,14 +404,16 @@ describe("nodesCryptoService", () => {
                 verifyResult(result, {
                     keyAuthor: { ok: true, value: "signatureEmail" },
                     nameAuthor: { ok: true, value: "signatureEmail" },
-                    activeRevision: { ok: true, value: {
-                        uid: "revisionUid",
-                        state: RevisionState.Active,
-                        // @ts-expect-error Ignore mocked data.
-                        creationTime: undefined,
-                        extendedAttributes: "{}",
-                        contentAuthor: { ok: true, value: "signatureEmail" },
-                    } },
+                    activeRevision: {
+                        ok: true, value: {
+                            uid: "revisionUid",
+                            state: RevisionState.Active,
+                            // @ts-expect-error Ignore mocked data.
+                            creationTime: undefined,
+                            extendedAttributes: "{}",
+                            contentAuthor: { ok: true, value: "signatureEmail" },
+                        }
+                    },
                 });
 
                 expect(account.getPublicKeys).toHaveBeenCalledTimes(2); // node + revision
@@ -469,14 +473,16 @@ describe("nodesCryptoService", () => {
 
                 const result = await cryptoService.decryptNode(encryptedNode, parentKey);
                 verifyResult(result, {
-                    activeRevision: { ok: true, value: {
-                        uid: "revisionUid",
-                        extendedAttributes: "{}",
-                        state: RevisionState.Active,
-                        // @ts-expect-error Ignore mocked data.
-                        creationTime: undefined,
-                        contentAuthor: { ok: false, error: { claimedAuthor: "revisionSignatureEmail", error: "Signature verification for attributes failed" } },
-                    } },
+                    activeRevision: {
+                        ok: true, value: {
+                            uid: "revisionUid",
+                            extendedAttributes: "{}",
+                            state: RevisionState.Active,
+                            // @ts-expect-error Ignore mocked data.
+                            creationTime: undefined,
+                            contentAuthor: { ok: false, error: { claimedAuthor: "revisionSignatureEmail", error: "Signature verification for attributes failed" } },
+                        }
+                    },
                 });
                 verifyLogEventVerificationError({
                     field: 'nodeExtendedAttributes',
@@ -571,7 +577,7 @@ describe("nodesCryptoService", () => {
             await expect(result).rejects.toThrow("Failed to load keys");
         });
     });
-    
+
     describe("anonymous node", () => {
         const encryptedNode = {
             uid: "volumeId~nodeId",
@@ -610,13 +616,15 @@ describe("nodesCryptoService", () => {
                     keyAuthor: { ok: true, value: "signatureEmail" },
                     nameAuthor: { ok: true, value: "nameSignatureEmail" },
                     folder: undefined,
-                    activeRevision: { ok: true, value: {
-                        uid: "revisionUid",
-                        state: RevisionState.Active,
-                        creationTime: undefined,
-                        extendedAttributes: "{}",
-                        contentAuthor: { ok: true, value: "revisionSignatureEmail" },
-                    } },
+                    activeRevision: {
+                        ok: true, value: {
+                            uid: "revisionUid",
+                            state: RevisionState.Active,
+                            creationTime: undefined,
+                            extendedAttributes: "{}",
+                            contentAuthor: { ok: true, value: "revisionSignatureEmail" },
+                        }
+                    },
                     errors: undefined,
                     ...expectedNode,
                 },

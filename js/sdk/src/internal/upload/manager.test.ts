@@ -4,14 +4,13 @@ import { getMockTelemetry } from "../../tests/telemetry";
 import { ErrorCode } from "../apiService";
 import { UploadAPIService } from "./apiService";
 import { UploadCryptoService } from "./cryptoService";
-import { SharesService, NodesService, NodesEvents } from "./interface";
+import { NodesService, NodesEvents } from "./interface";
 import { UploadManager } from './manager';
 
 describe("UploadManager", () => {
     let telemetry: ProtonDriveTelemetry;
     let apiService: UploadAPIService;
     let cryptoService: UploadCryptoService;
-    let sharesService: SharesService;
     let nodesService: NodesService;
     let nodesEvents: NodesEvents;
 
@@ -75,17 +74,14 @@ describe("UploadManager", () => {
             }),
         }
         // @ts-expect-error No need to implement all methods for mocking
-        sharesService = {
-            getVolumeEmailKey: jest.fn().mockResolvedValue({
-                email: "signatureEmail",
-                addressId: "addressId",
-            }),
-        }
-        // @ts-expect-error No need to implement all methods for mocking
         nodesService = {
             getNodeKeys: jest.fn().mockResolvedValue({
                 hashKey: 'parentNode:hashKey',
                 key: 'parentNode:nodekey',
+            }),
+            getRootNodeEmailKey: jest.fn().mockResolvedValue({
+                email: "signatureEmail",
+                addressId: "addressId",
             }),
         }
         nodesEvents = {
@@ -93,7 +89,7 @@ describe("UploadManager", () => {
             nodeUpdated: jest.fn(),
         }
 
-        manager = new UploadManager(telemetry, apiService, cryptoService, sharesService, nodesService, nodesEvents);
+        manager = new UploadManager(telemetry, apiService, cryptoService, nodesService, nodesEvents);
     });
 
     describe("createDraftNode", () => {

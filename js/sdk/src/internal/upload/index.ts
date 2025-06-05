@@ -26,10 +26,10 @@ export function initUploadModule(
     nodesEvents: NodesEvents,
 ) {
     const api = new UploadAPIService(apiService);
-    const cryptoService = new UploadCryptoService(driveCrypto, sharesService);
+    const cryptoService = new UploadCryptoService(driveCrypto, nodesService);
 
     const uploadTelemetry = new UploadTelemetry(telemetry, sharesService);
-    const manager = new UploadManager(telemetry, api, cryptoService, sharesService, nodesService, nodesEvents);
+    const manager = new UploadManager(telemetry, api, cryptoService, nodesService, nodesEvents);
 
     const queue = new UploadQueue();
 
