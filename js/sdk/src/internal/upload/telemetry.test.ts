@@ -23,7 +23,6 @@ describe('UploadTelemetry', () => {
             }),
         } as unknown as jest.Mocked<ProtonDriveTelemetry>;
 
-        // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
             getVolumeMetricContext: jest.fn().mockResolvedValue('own_volume'),
         }

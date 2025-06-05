@@ -64,7 +64,7 @@ describe('DevicesManager', () => {
         const result = await manager.createDevice(name, deviceType);
 
         expect(sharesService.getMyFilesIDs).toHaveBeenCalled();
-        expect(cryptoService.createDevice).toHaveBeenCalledWith(volumeId, name);
+        expect(cryptoService.createDevice).toHaveBeenCalledWith(name);
         expect(apiService.createDevice).toHaveBeenCalledWith(
             { volumeId, type: deviceType },
             {

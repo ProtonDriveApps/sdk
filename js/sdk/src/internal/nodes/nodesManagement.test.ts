@@ -75,6 +75,8 @@ describe('NodesManagement', () => {
             getNodeKeys: jest.fn().mockImplementation((uid) => ({
                 key: `${uid}-key`,
                 hashKey: `${uid}-hashKey`,
+                passphrase: `${uid}-passphrase`,
+                passphraseSessionKey: `${uid}-passphraseSessionKey`,
             })),
             getParentKeys: jest.fn().mockImplementation(({ uid }) => ({
                 key: `${nodes[uid].parentUid}-key`,
@@ -84,6 +86,7 @@ describe('NodesManagement', () => {
             getNodePrivateAndSessionKeys: jest.fn().mockResolvedValue({
                 nameSessionKey: 'nameSessionKey',
             }),
+            getRootNodeEmailKey: jest.fn().mockResolvedValue({ email: "root-email", addressKey: "root-key" }),
         }
         // @ts-expect-error No need to implement all methods for mocking
         nodesEvents = {
@@ -97,15 +100,17 @@ describe('NodesManagement', () => {
 
     it('renameNode manages rename and updates cache', async () => {
         const newNode = await management.renameNode('nodeUid', 'new name');
+
         expect(newNode).toEqual({
             ...nodes.nodeUid,
             name: { ok: true, value: 'new name' },
             nameAuthor: { ok: true, value: 'newSignatureEmail' },
             hash: 'newHash',
         });
+        expect(nodesAccess.getRootNodeEmailKey).toHaveBeenCalledWith('nodeUid');
         expect(cryptoService.encryptNewName).toHaveBeenCalledWith(
-            nodes.nodeUid,
             'nameSessionKey',
+            { email: "root-email", addressKey: "root-key" },
             'parentUid-hashKey',
             'new name',
         );
@@ -129,6 +134,7 @@ describe('NodesManagement', () => {
         cryptoService.moveNode = jest.fn().mockResolvedValue(encryptedCrypto);
 
         const newNode = await management.moveNode('nodeUid', 'newParentNodeUid');
+
         expect(newNode).toEqual({
             ...nodes.nodeUid,
             parentUid: 'newParentNodeUid',
@@ -136,6 +142,13 @@ describe('NodesManagement', () => {
             keyAuthor: { ok: true, value: 'movedSignatureEmail' },
             nameAuthor: { ok: true, value: 'movedNameSignatureEmail' },
         });
+        expect(nodesAccess.getRootNodeEmailKey).toHaveBeenCalledWith('newParentNodeUid');
+        expect(cryptoService.moveNode).toHaveBeenCalledWith(
+            nodes.nodeUid,
+            expect.objectContaining({ passphrase: 'nodeUid-passphrase', passphraseSessionKey: 'nodeUid-passphraseSessionKey' }),
+            expect.objectContaining({ key: 'newParentNodeUid-key', hashKey: 'newParentNodeUid-hashKey' }),
+            { email: "root-email", addressKey: "root-key" },
+        );
         expect(apiService.moveNode).toHaveBeenCalledWith(
             'nodeUid',
             {

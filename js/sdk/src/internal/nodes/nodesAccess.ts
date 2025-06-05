@@ -48,7 +48,7 @@ export class NodesAccess {
         let cachedNode;
         try {
             cachedNode = await this.cache.getNode(nodeUid);
-        } catch {}
+        } catch { }
 
         if (cachedNode && !cachedNode.isStale) {
             return cachedNode;
@@ -84,7 +84,7 @@ export class NodesAccess {
             let node;
             try {
                 node = await this.cache.getNode(nodeUid);
-            } catch {}
+            } catch { }
 
             if (node && !node.isStale) {
                 yield node;
@@ -105,7 +105,7 @@ export class NodesAccess {
             let node;
             try {
                 node = await this.cache.getNode(nodeUid);
-            } catch {}
+            } catch { }
 
             if (node && !node.isStale) {
                 yield node;
@@ -318,6 +318,19 @@ export class NodesAccess {
             contentKeyPacketSessionKey,
             nameSessionKey,
         };
+    }
+
+    async getRootNodeEmailKey(nodeUid: string): Promise<{
+        email: string,
+        addressId: string,
+        addressKey: PrivateKey,
+        addressKeyId: string,
+    }> {
+        const rootNode = await this.getRootNode(nodeUid);
+        if (!rootNode.shareId) {
+            throw new Error(`Node "${nodeUid}" is not accessible - missing root shareId`);
+        }
+        return this.shareService.getContextShareMemberEmailKey(rootNode.shareId);
     }
 
     async getNodeUrl(nodeUid: string): Promise<string> {

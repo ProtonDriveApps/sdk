@@ -99,6 +99,12 @@ export interface NodesService {
         contentKeyPacketSessionKey?: SessionKey,
         hashKey?: Uint8Array,
     }>,
+    getRootNodeEmailKey(nodeUid: string): Promise<{
+        email: string,
+        addressId: string,
+        addressKey: PrivateKey,
+        addressKeyId: string,
+    }>,
 }
 
 /**
@@ -118,6 +124,5 @@ export interface NodesServiceNode {
  * Interface describing the dependencies to the shares module.
  */
 export interface SharesService {
-    getVolumeEmailKey(volumeId: string): Promise<{ email: string, addressId: string, addressKey: PrivateKey }>,
     getVolumeMetricContext(volumeId: string): Promise<MetricContext>,
 }

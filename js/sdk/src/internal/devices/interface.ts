@@ -13,7 +13,7 @@ export type DeviceMetadata = {
 
 export interface SharesService {
     getMyFilesIDs(): Promise<{ volumeId: string }>;
-    getVolumeEmailKey(volumeId: string): Promise<{ addressId: string, email: string, addressKey: PrivateKey, addressKeyId: string }>,
+    getMyFilesShareMemberEmailKey(): Promise<{ addressId: string, email: string, addressKey: PrivateKey, addressKeyId: string }>,
 }
 
 export interface NodesService {

@@ -48,12 +48,12 @@ describe("SharingManagement", () => {
             decryptInvitation: jest.fn().mockImplementation((invitation) => invitation),
             decryptExternalInvitation: jest.fn().mockImplementation((invitation) => invitation),
             decryptMember: jest.fn().mockImplementation((member) => member),
-            encryptInvitation: jest.fn().mockImplementation(() => {}),
+            encryptInvitation: jest.fn().mockImplementation(() => { }),
             encryptExternalInvitation: jest.fn().mockImplementation((invitation) => ({
                 ...invitation,
                 base64ExternalInvitationSignature: "extenral-signature",
             })),
-            decryptPublicLink: jest.fn().mockImplementation((_, publicLink) => publicLink),
+            decryptPublicLink: jest.fn().mockImplementation((publicLink) => publicLink),
         }
         // @ts-expect-error No need to implement all methods for mocking
         accountService = {
@@ -61,7 +61,6 @@ describe("SharingManagement", () => {
         }
         // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
-            getVolumeEmailKey: jest.fn().mockResolvedValue({ email: "volume-email", addressKey: "volume-key" }),
             loadEncryptedShare: jest.fn().mockResolvedValue({ id: "shareId", addressId: "addressId" }),
         }
         // @ts-expect-error No need to implement all methods for mocking
@@ -69,6 +68,7 @@ describe("SharingManagement", () => {
             getNode: jest.fn().mockImplementation((nodeUid) => ({ nodeUid, shareId: "shareId", name: { ok: true, value: "name" } })),
             getNodeKeys: jest.fn().mockImplementation((nodeUid) => ({ key: "node-key" })),
             getNodePrivateAndSessionKeys: jest.fn().mockImplementation((nodeUid) => ({})),
+            getRootNodeEmailKey: jest.fn().mockResolvedValue({ email: "volume-email", addressKey: "volume-key" }),
         }
         nodesEvents = {
             nodeUpdated: jest.fn(),
@@ -153,7 +153,7 @@ describe("SharingManagement", () => {
                 members: [],
                 publicLink: publicLink,
             });
-            expect(cryptoService.decryptPublicLink).toHaveBeenCalledWith("addressId", publicLink);
+            expect(cryptoService.decryptPublicLink).toHaveBeenCalledWith(publicLink);
         });
     });
 

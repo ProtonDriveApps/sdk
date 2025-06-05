@@ -48,7 +48,7 @@ export class DevicesManager {
 
     async createDevice(name: string, deviceType: DeviceType): Promise<Device> {
         const { volumeId } = await this.sharesService.getMyFilesIDs();
-        const { address, shareKey, node } = await this.cryptoService.createDevice(volumeId, name);
+        const { address, shareKey, node } = await this.cryptoService.createDevice(name);
 
         const device = await this.apiService.createDevice(
             {

@@ -127,7 +127,6 @@ export interface EncryptedPublicLink {
  */
 export interface SharesService {
     getMyFilesIDs(): Promise<{ volumeId: string }>,
-    getVolumeEmailKey(volumeId: string): Promise<{ addressId: string, email: string, addressKey: PrivateKey }>,
     loadEncryptedShare(shareId: string): Promise<EncryptedShare>,
 }
 
@@ -141,6 +140,12 @@ export interface NodesService {
         key: PrivateKey,
         passphraseSessionKey: SessionKey,
         nameSessionKey: SessionKey,
+    }>,
+    getRootNodeEmailKey(nodeUid: string): Promise<{
+        email: string,
+        addressId: string,
+        addressKey: PrivateKey,
+        addressKeyId: string,
     }>,
     iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode | MissingNode>;
 }
