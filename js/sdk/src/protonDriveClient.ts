@@ -389,6 +389,17 @@ export class ProtonDriveClient {
     }
 
     /**
+     * Get the node by its UID.
+     *
+     * @param nodeUid - Node entity or its UID string.
+     * @returns The node entity.
+     */
+    async getNode(nodeUid: NodeOrUid): Promise<MaybeNode> {
+        this.logger.info(`Getting node ${getUid(nodeUid)}`);
+        return convertInternalNodePromise(this.nodes.access.getNode(getUid(nodeUid)));
+    }
+
+    /**
      * Rename the node.
      *
      * @param nodeUid - Node entity or its UID string.
