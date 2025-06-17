@@ -300,13 +300,13 @@ describe("UploadManager", () => {
             nodeUid: "newNode:nodeUid",
             nodeRevisionUid: "newNode:nodeRevisionUid",
             nodeKeys: {
-                key: "newNode:key",
+                key: {_idx: 32321},
                 contentKeyPacketSessionKey: "newNode:contentKeyPacketSessionKey",
                 signatureAddress: {
                     email: "signatureEmail",
                     addressId: "addressId",
                     addressKey: "addressKey",
-                },
+                } as any,
             },
         };
         const manifest = new Uint8Array([1, 2, 3]);

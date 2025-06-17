@@ -11,7 +11,7 @@ export interface OpenPGPCryptoProxy {
     importPrivateKey: (options: { armoredKey: string, passphrase: string }) => Promise<PrivateKey>,
     generateSessionKey: (options: { recipientKeys: PrivateKey[] }) => Promise<SessionKey>,
     encryptSessionKey: (options: SessionKey & { format: 'binary', encryptionKeys: PublicKey[] }) => Promise<Uint8Array>,
-    decryptSessionKey: (options: { armoredMessage?: string, binaryMessage?: Uint8Array, decryptionKeys: PrivateKey[] }) => Promise<SessionKey | undefined>,
+    decryptSessionKey: (options: { armoredMessage?: string, binaryMessage?: Uint8Array, decryptionKeys: PrivateKey | PrivateKey[] }) => Promise<SessionKey | undefined>,
     encryptMessage: (options: {
         format?: 'armored' | 'binary',
         binaryData: Uint8Array,
@@ -30,8 +30,8 @@ export interface OpenPGPCryptoProxy {
         armoredSignature?: string,
         binarySignature?: Uint8Array,
         sessionKeys?: SessionKey,
-        decryptionKeys?: PrivateKey[],
-        verificationKeys?: PublicKey[],
+        decryptionKeys?:PrivateKey | PrivateKey[],
+        verificationKeys?: PublicKey | PublicKey[],
     }) => Promise<{
         data: Uint8Array | string,
         // pmcrypto 8.3.0 changes `verified` to `verificationStatus`.
@@ -42,14 +42,14 @@ export interface OpenPGPCryptoProxy {
     signMessage: (options: {
         format: 'binary' | 'armored',
         binaryData: Uint8Array,
-        signingKeys: PrivateKey[],
+        signingKeys: PrivateKey | PrivateKey[],
         detached: boolean,
         context?: { critical: boolean, value: string },
     }) => Promise<Uint8Array | string>,
     verifyMessage: (options: {
         binaryData: Uint8Array,
         armoredSignature: string,
-        verificationKeys: PublicKey[],     
+        verificationKeys: PublicKey | PublicKey[],
     }) => Promise<{
         // pmcrypto 8.3.0 changes `verified` to `verificationStatus`.
         // Web clients are using newer pmcrypto, but CLI is using older version due to build issues with Bun.
@@ -77,7 +77,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         return this.cryptoProxy.generateSessionKey({ recipientKeys: encryptionKeys });
     }
 
-    async encryptSessionKey(sessionKey: SessionKey, encryptionKeys: PublicKey[]) {
+    async encryptSessionKey(sessionKey: SessionKey, encryptionKeys: PublicKey | PublicKey[]) {
         const keyPacket = await this.cryptoProxy.encryptSessionKey({
             ...sessionKey,
             format: 'binary',
@@ -199,7 +199,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
     async sign(
         data: Uint8Array,
-        signingKeys: PrivateKey[],
+        signingKeys: PrivateKey | PrivateKey[],
         signatureContext: string,
     ) {
         const signature = await this.cryptoProxy.signMessage({
@@ -216,7 +216,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
     async signArmored(
         data: Uint8Array,
-        signingKeys: PrivateKey[],
+        signingKeys: PrivateKey | PrivateKey[],
     ) {
         const signature = await this.cryptoProxy.signMessage({
             binaryData: data,
@@ -232,7 +232,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
     async verify(
         data: Uint8Array,
         armoredSignature: string,
-        verificationKeys: PublicKey[],
+        verificationKeys: PublicKey | PublicKey[],
     ) {
         const { verified, verificationStatus } = await this.cryptoProxy.verifyMessage({
             binaryData: data,
@@ -248,7 +248,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
     async decryptSessionKey(
         data: Uint8Array,
-        decryptionKeys: PrivateKey[],
+        decryptionKeys: PrivateKey | PrivateKey[],
     ) {
         const sessionKey = await this.cryptoProxy.decryptSessionKey({
             binaryMessage: data,
@@ -264,7 +264,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
     async decryptArmoredSessionKey(
         armoredData: string,
-        decryptionKeys: PrivateKey[],
+        decryptionKeys: PrivateKey | PrivateKey[],
     ) {
         const sessionKey = await this.cryptoProxy.decryptSessionKey({
             armoredMessage: armoredData,
@@ -333,7 +333,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
     async decryptArmored(
         armoredData: string,
-        decryptionKeys: PrivateKey[],
+        decryptionKeys: PrivateKey | PrivateKey[],
     ) {
         const { data } = await this.cryptoProxy.decryptMessage({
             armoredMessage: armoredData,
@@ -345,8 +345,8 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
     async decryptArmoredAndVerify(
         armoredData: string,
-        decryptionKeys: PrivateKey[],
-        verificationKeys: PublicKey[],
+        decryptionKeys: PrivateKey | PrivateKey[],
+        verificationKeys: PublicKey| PublicKey[],
     ) {
         const { data, verified, verificationStatus } = await this.cryptoProxy.decryptMessage({
             armoredMessage: armoredData,
@@ -367,7 +367,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         armoredData: string,
         armoredSignature: string,
         sessionKey: SessionKey,
-        verificationKeys: PublicKey[],
+        verificationKeys: PublicKey| PublicKey[],
     ) {
         const { data, verified, verificationStatus } = await this.cryptoProxy.decryptMessage({
             armoredMessage: armoredData,

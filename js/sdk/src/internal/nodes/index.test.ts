@@ -101,7 +101,7 @@ describe('nodesModules integration tests', () => {
                 }],
             };
         });
-        jest.spyOn(nodesModule.access, 'getParentKeys').mockResolvedValue({key: 'privateKey'});
+        jest.spyOn(nodesModule.access, 'getParentKeys').mockResolvedValue({key: {_idx: 32131}});
 
         // Verify the inital state before move event is sent.
         const originalBeforeMove = await Array.fromAsync(nodesModule.access.iterateFolderChildren(originalFolderUid));

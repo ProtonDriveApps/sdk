@@ -1,6 +1,6 @@
 // TODO: Use CryptoProxy once available.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PublicKey = any;
+export type PublicKey = object;
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PrivateKey extends PublicKey {};
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,7 +33,7 @@ export interface OpenPGPCrypto {
 
     generateSessionKey: (encryptionKeys: PrivateKey[]) => Promise<SessionKey>,
 
-    encryptSessionKey: (sessionKey: SessionKey, encryptionKeys: PublicKey[]) => Promise<{
+    encryptSessionKey: (sessionKey: SessionKey, encryptionKeys: PublicKey | PublicKey[]) => Promise<{
         keyPacket: Uint8Array,
     }>,
 
@@ -111,19 +111,19 @@ export interface OpenPGPCrypto {
     verify: (
         data: Uint8Array,
         armoredSignature: string,
-        verificationKeys: PublicKey[],
+        verificationKeys: PublicKey | PublicKey[],
     ) => Promise<{
         verified: VERIFICATION_STATUS,
     }>,
 
     decryptSessionKey: (
         data: Uint8Array,
-        decryptionKeys: PrivateKey[],
+        decryptionKeys: PrivateKey | PrivateKey[],
     ) => Promise<SessionKey>,
 
     decryptArmoredSessionKey: (
         armoredData: string,
-        decryptionKeys: PrivateKey[],
+        decryptionKeys: PrivateKey | PrivateKey[],
     ) => Promise<SessionKey>,
 
     decryptKey: (
@@ -134,7 +134,7 @@ export interface OpenPGPCrypto {
     decryptAndVerify(
         data: Uint8Array,
         sessionKey: SessionKey,
-        verificationKeys: PublicKey[],
+        verificationKeys: PublicKey | PublicKey[],
     ): Promise<{
         data: Uint8Array,
         verified: VERIFICATION_STATUS,
@@ -144,7 +144,7 @@ export interface OpenPGPCrypto {
         data: Uint8Array,
         signature: Uint8Array | undefined,
         sessionKey: SessionKey,
-        verificationKeys?: PublicKey[],
+        verificationKeys?: PublicKey | PublicKey[],
     ): Promise<{
         data: Uint8Array,
         verified: VERIFICATION_STATUS,
@@ -152,13 +152,13 @@ export interface OpenPGPCrypto {
 
     decryptArmored(
         armoredData: string,
-        decryptionKeys: PrivateKey[],
+        decryptionKeys: PrivateKey | PrivateKey[],
     ): Promise<Uint8Array>,
 
     decryptArmoredAndVerify: (
         armoredData: string,
-        decryptionKeys: PrivateKey[],
-        verificationKeys: PublicKey[],
+        decryptionKeys: PrivateKey | PrivateKey[],
+        verificationKeys: PublicKey | PublicKey[],
     ) => Promise<{
         data: Uint8Array,
         verified: VERIFICATION_STATUS,
@@ -168,7 +168,7 @@ export interface OpenPGPCrypto {
         armoredData: string,
         armoredSignature: string,
         sessionKey: SessionKey,
-        verificationKeys: PublicKey[],
+        verificationKeys: PublicKey | PublicKey[],
     ) => Promise<{
         data: Uint8Array,
         verified: VERIFICATION_STATUS,

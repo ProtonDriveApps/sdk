@@ -412,7 +412,7 @@ describe('nodesAccess', () => {
                         throw decryptionError;
                     }
                     return {
-                        key: 'parentKey',
+                        key: {_idx: 32132},
                     };
                 });
 

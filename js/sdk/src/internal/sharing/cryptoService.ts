@@ -146,8 +146,8 @@ export class SharingCryptoService {
         base64KeyPacket: string,
         base64KeyPacketSignature: string,
     }> {
-        const inviteePublicKey = await this.account.getPublicKeys(inviteeEmail);
-        const result = await this.driveCrypto.encryptInvitation(shareSessionKey, inviteePublicKey, inviterKey)
+        const inviteePublicKeys = await this.account.getPublicKeys(inviteeEmail);
+        const result = await this.driveCrypto.encryptInvitation(shareSessionKey, inviteePublicKeys[0], inviterKey)
         return result;
     };
 
