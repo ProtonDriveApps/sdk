@@ -166,7 +166,7 @@ export class SharingManagement {
             }
 
             this.logger.info(`Inviting user ${email} with role ${role} to node ${nodeUid}`);
-            const invitation = await this.inviteProtonUser(currentSharing.share, email, role, emailOptions);
+            const invitation = await this.inviteProtonUser(nodeUid, currentSharing.share, email, role, emailOptions);
             currentSharing.protonInvitations.push(invitation);
         }
 
@@ -367,8 +367,8 @@ export class SharingManagement {
         await this.nodesEvents.nodeUpdated({ uid: nodeUid, shareId: undefined, isShared: false });
     }
 
-    private async inviteProtonUser(share: Share, inviteeEmail: string, role: MemberRole, emailOptions: EmailOptions): Promise<ProtonInvitation> {
-        const inviter = await this.nodesService.getRootNodeEmailKey(share.volumeId);
+    private async inviteProtonUser(nodeUid: string, share: Share, inviteeEmail: string, role: MemberRole, emailOptions: EmailOptions): Promise<ProtonInvitation> {
+        const inviter = await this.nodesService.getRootNodeEmailKey(nodeUid);
         const invitationCrypto = await this.cryptoService.encryptInvitation(share.passphraseSessionKey, inviter.addressKey, inviteeEmail);
 
         const encryptedInvitation = await this.apiService.inviteProtonUser(share.shareId, {

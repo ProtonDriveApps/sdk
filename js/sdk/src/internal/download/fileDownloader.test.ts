@@ -22,7 +22,7 @@ describe('FileDownloader', () => {
     let apiService: DownloadAPIService;
     let cryptoService: DownloadCryptoService;
     let controller: DownloadController;
-    let nodeKey: { key: string; contentKeyPacketSessionKey: string };
+    let nodeKey: { key: object; contentKeyPacketSessionKey: string };
     let revision: Revision;
 
     beforeEach(() => {
@@ -70,7 +70,7 @@ describe('FileDownloader', () => {
         controller = new DownloadController();
 
         nodeKey = {
-            key: 'privateKey',
+            key: {_idx: 32131},
             contentKeyPacketSessionKey: 'sessionKey',
         };
 
