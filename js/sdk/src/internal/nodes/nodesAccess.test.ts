@@ -447,7 +447,7 @@ describe('nodesAccess', () => {
     describe('getParentKeys', () => {
         it('should get share parent keys', async () => {
             shareService.getSharePrivateKey = jest.fn(() => Promise.resolve('shareKey' as any as PrivateKey));
-            
+
             const result = await access.getParentKeys({ shareId: 'shareId', parentUid: undefined });
             expect(result).toEqual({ key: 'shareKey' });
             expect(cryptoCache.getNodeKeys).not.toHaveBeenCalled();
@@ -455,7 +455,7 @@ describe('nodesAccess', () => {
 
         it('should get node parent keys', async () => {
             cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
-            
+
             const result = await access.getParentKeys({ shareId: undefined, parentUid: 'parentUid' });
             expect(result).toEqual({ key: 'parentKey' });
             expect(shareService.getSharePrivateKey).not.toHaveBeenCalled();
@@ -463,7 +463,7 @@ describe('nodesAccess', () => {
 
         it('should get node parent keys even if share is set', async () => {
             cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
-            
+
             const result = await access.getParentKeys({ shareId: 'shareId', parentUid: 'parentUid' });
             expect(result).toEqual({ key: 'parentKey' });
             expect(shareService.getSharePrivateKey).not.toHaveBeenCalled();
@@ -481,6 +481,41 @@ describe('nodesAccess', () => {
             } catch (error: unknown) {
                 expect(`${error}`).toBe('Error: API called');
             }
+        });
+    });
+
+    describe('getNodePrivateAndSessionKeys', () => {
+        it('should return all node keys and session keys', async () => {
+            const nodeUid = 'nodeUid';
+            const node = {
+                uid: nodeUid,
+                parentUid: 'parentUid',
+                encryptedName: 'encryptedName',
+            } as DecryptedNode;
+
+            jest.spyOn(access, 'getNode').mockResolvedValue(node);
+            jest.spyOn(access, 'getParentKeys').mockResolvedValue({ key: 'parentKey' } as any);
+            jest.spyOn(access, 'getNodeKeys').mockResolvedValue({
+                key: 'nodeKey',
+                passphrase: 'nodePassphrase',
+                passphraseSessionKey: 'nodePassphraseSessionKey',
+                contentKeyPacketSessionKey: 'nodeContentKeyPacketSessionKey',
+            } as any);
+            cryptoService.getNameSessionKey = jest.fn().mockResolvedValue('nameSessionKey');
+
+            const result = await access.getNodePrivateAndSessionKeys(nodeUid);
+
+            expect(result).toEqual({
+                key: 'nodeKey',
+                passphrase: 'nodePassphrase',
+                passphraseSessionKey: 'nodePassphraseSessionKey',
+                contentKeyPacketSessionKey: 'nodeContentKeyPacketSessionKey',
+                nameSessionKey: 'nameSessionKey',
+            });
+            expect(access.getNode).toHaveBeenCalledWith(nodeUid);
+            expect(access.getParentKeys).toHaveBeenCalledWith(node);
+            expect(access.getNodeKeys).toHaveBeenCalledWith(nodeUid);
+            expect(cryptoService.getNameSessionKey).toHaveBeenCalledWith(node, 'parentKey');
         });
     });
 

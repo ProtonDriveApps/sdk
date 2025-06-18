@@ -108,8 +108,9 @@ export class NodesManagement {
             this.nodesAccess.getNode(nodeUid),
             this.nodesAccess.getRootNodeEmailKey(newParentUid),
         ]);
+
         const [keys, newParentKeys] = await Promise.all([
-            this.nodesAccess.getNodeKeys(nodeUid),
+            this.nodesAccess.getNodePrivateAndSessionKeys(nodeUid),
             this.nodesAccess.getNodeKeys(newParentUid),
         ]);
 

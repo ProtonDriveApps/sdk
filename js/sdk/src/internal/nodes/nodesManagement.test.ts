@@ -83,9 +83,13 @@ describe('NodesManagement', () => {
                 hashKey: `${nodes[uid].parentUid}-hashKey`,
             })),
             iterateNodes: jest.fn(),
-            getNodePrivateAndSessionKeys: jest.fn().mockResolvedValue({
-                nameSessionKey: 'nameSessionKey',
-            }),
+            getNodePrivateAndSessionKeys: jest.fn().mockImplementation((uid) => Promise.resolve({
+                key: `${uid}-key`,
+                passphrase: `${uid}-passphrase`,
+                passphraseSessionKey: `${uid}-passphraseSessionKey`,
+                contentKeyPacketSessionKey: `${uid}-contentKeyPacketSessionKey`,
+                nameSessionKey: `${uid}-nameSessionKey`,
+            })),
             getRootNodeEmailKey: jest.fn().mockResolvedValue({ email: "root-email", addressKey: "root-key" }),
         }
         // @ts-expect-error No need to implement all methods for mocking
@@ -109,7 +113,7 @@ describe('NodesManagement', () => {
         });
         expect(nodesAccess.getRootNodeEmailKey).toHaveBeenCalledWith('nodeUid');
         expect(cryptoService.encryptNewName).toHaveBeenCalledWith(
-            'nameSessionKey',
+            'nodeUid-nameSessionKey',
             { email: "root-email", addressKey: "root-key" },
             'parentUid-hashKey',
             'new name',
@@ -145,7 +149,13 @@ describe('NodesManagement', () => {
         expect(nodesAccess.getRootNodeEmailKey).toHaveBeenCalledWith('newParentNodeUid');
         expect(cryptoService.moveNode).toHaveBeenCalledWith(
             nodes.nodeUid,
-            expect.objectContaining({ passphrase: 'nodeUid-passphrase', passphraseSessionKey: 'nodeUid-passphraseSessionKey' }),
+            expect.objectContaining({ 
+                key: 'nodeUid-key',
+                passphrase: 'nodeUid-passphrase', 
+                passphraseSessionKey: 'nodeUid-passphraseSessionKey',
+                contentKeyPacketSessionKey: 'nodeUid-contentKeyPacketSessionKey',
+                nameSessionKey: 'nodeUid-nameSessionKey'
+            }),
             expect.objectContaining({ key: 'newParentNodeUid-key', hashKey: 'newParentNodeUid-hashKey' }),
             { email: "root-email", addressKey: "root-key" },
         );
@@ -176,6 +186,19 @@ describe('NodesManagement', () => {
         cryptoService.moveNode = jest.fn().mockResolvedValue(encryptedCrypto);
 
         const newNode = await management.moveNode('anonymousNodeUid', 'newParentNodeUid');
+        
+        expect(cryptoService.moveNode).toHaveBeenCalledWith(
+            nodes.anonymousNodeUid,
+            expect.objectContaining({ 
+                key: 'anonymousNodeUid-key',
+                passphrase: 'anonymousNodeUid-passphrase', 
+                passphraseSessionKey: 'anonymousNodeUid-passphraseSessionKey',
+                contentKeyPacketSessionKey: 'anonymousNodeUid-contentKeyPacketSessionKey',
+                nameSessionKey: 'anonymousNodeUid-nameSessionKey'
+            }),
+            expect.objectContaining({ key: 'newParentNodeUid-key', hashKey: 'newParentNodeUid-hashKey' }),
+            { email: "root-email", addressKey: "root-key" },
+        );
         expect(newNode).toEqual({
             ...nodes.anonymousNodeUid,
             parentUid: 'newParentNodeUid',
