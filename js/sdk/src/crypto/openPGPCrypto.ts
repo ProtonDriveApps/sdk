@@ -44,7 +44,7 @@ export interface OpenPGPCryptoProxy {
         binaryData: Uint8Array,
         signingKeys: PrivateKey | PrivateKey[],
         detached: boolean,
-        context?: { critical: boolean, value: string },
+        signatureContext?: { critical: boolean, value: string },
     }) => Promise<Uint8Array | string>,
     verifyMessage: (options: {
         binaryData: Uint8Array,
@@ -207,7 +207,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             signingKeys,
             detached: true,
             format: 'binary',
-            context: { critical: true, value: signatureContext },
+            signatureContext: { critical: true, value: signatureContext },
         });
         return {
             signature: signature as Uint8Array,
