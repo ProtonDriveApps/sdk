@@ -198,7 +198,7 @@ export class SharingManagement {
             }
 
             this.logger.info(`Inviting external user ${email} with role ${role} to node ${nodeUid}`);
-            const invitation = await this.inviteExternalUser(currentSharing.share, email, role, emailOptions);
+            const invitation = await this.inviteExternalUser(nodeUid, currentSharing.share, email, role, emailOptions);
             currentSharing.nonProtonInvitations.push(invitation);
         }
 
@@ -396,8 +396,8 @@ export class SharingManagement {
         await this.apiService.deleteInvitation(invitationUid);
     }
 
-    private async inviteExternalUser(share: Share, inviteeEmail: string, role: MemberRole, emailOptions: EmailOptions): Promise<NonProtonInvitation> {
-        const inviter = await this.nodesService.getRootNodeEmailKey(share.volumeId);
+    private async inviteExternalUser(nodeUid: string, share: Share, inviteeEmail: string, role: MemberRole, emailOptions: EmailOptions): Promise<NonProtonInvitation> {
+      const inviter = await this.nodesService.getRootNodeEmailKey(nodeUid);
         const invitationCrypto = await this.cryptoService.encryptExternalInvitation(share.passphraseSessionKey, inviter.addressKey, inviteeEmail);
 
         const encryptedInvitation = await this.apiService.inviteExternalUser(share.shareId, {
