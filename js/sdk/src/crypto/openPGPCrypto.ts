@@ -7,8 +7,8 @@ import { uint8ArrayToBase64String } from './utils';
  */
 export interface OpenPGPCryptoProxy {
     generateKey: (options: { userIDs: { name: string }[], type: 'ecc', curve: 'ed25519Legacy' }) => Promise<PrivateKey>,
-    exportPrivateKey: (options: { privateKey: PrivateKey, passphrase: string }) => Promise<string>,
-    importPrivateKey: (options: { armoredKey: string, passphrase: string }) => Promise<PrivateKey>,
+    exportPrivateKey: (options: { privateKey: PrivateKey, passphrase: string | null  }) => Promise<string>,
+    importPrivateKey: (options: { armoredKey: string, passphrase: string | null }) => Promise<PrivateKey>,
     generateSessionKey: (options: { recipientKeys: PrivateKey[] }) => Promise<SessionKey>,
     encryptSessionKey: (options: SessionKey & { format: 'binary', encryptionKeys: PublicKey[] }) => Promise<Uint8Array>,
     decryptSessionKey: (options: { armoredMessage?: string, binaryMessage?: Uint8Array, decryptionKeys: PrivateKey | PrivateKey[] }) => Promise<SessionKey | undefined>,
