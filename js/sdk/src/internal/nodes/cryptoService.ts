@@ -419,7 +419,7 @@ export class NodesCryptoService {
 
     async moveNode(
         node: DecryptedNode,
-        keys: { passphrase: string, passphraseSessionKey: SessionKey },
+        keys: { passphrase: string, passphraseSessionKey: SessionKey, nameSessionKey: SessionKey },
         parentKeys: { key: PrivateKey, hashKey: Uint8Array },
         address: { email: string, addressKey: PrivateKey },
     ): Promise<{
@@ -438,7 +438,7 @@ export class NodesCryptoService {
         }
 
         const { email, addressKey } = address;
-        const { armoredNodeName } = await this.driveCrypto.encryptNodeName(node.name.value, undefined, parentKeys.key, addressKey);
+        const { armoredNodeName } = await this.driveCrypto.encryptNodeName(node.name.value, keys.nameSessionKey, parentKeys.key, addressKey);
         const hash = await this.driveCrypto.generateLookupHash(node.name.value, parentKeys.hashKey);
         const { armoredPassphrase, armoredPassphraseSignature } = await this.driveCrypto.encryptPassphrase(keys.passphrase, keys.passphraseSessionKey, [parentKeys.key], addressKey);
 

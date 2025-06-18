@@ -304,16 +304,18 @@ export class NodesAccess {
 
     async getNodePrivateAndSessionKeys(nodeUid: string): Promise<{
         key: PrivateKey,
+        passphrase: string,
         passphraseSessionKey: SessionKey,
         contentKeyPacketSessionKey: SessionKey,
         nameSessionKey: SessionKey,
     }> {
         const node = await this.getNode(nodeUid);
         const { key: parentKey } = await this.getParentKeys(node);
-        const { key, passphraseSessionKey, contentKeyPacketSessionKey } = await this.getNodeKeys(nodeUid);
+        const { key, passphrase, passphraseSessionKey, contentKeyPacketSessionKey } = await this.getNodeKeys(nodeUid);
         const nameSessionKey = await this.cryptoService.getNameSessionKey(node, parentKey);
         return {
             key,
+            passphrase,
             passphraseSessionKey,
             contentKeyPacketSessionKey,
             nameSessionKey,

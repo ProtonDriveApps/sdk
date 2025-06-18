@@ -1,7 +1,7 @@
 import { DriveCrypto, PrivateKey, SessionKey, VERIFICATION_STATUS } from "../../crypto";
-import { ProtonDriveAccount, ProtonDriveTelemetry, RevisionState } from "../../interface";
+import { DegradedNode, MaybeNode, ProtonDriveAccount, ProtonDriveTelemetry, RevisionState } from "../../interface";
 import { getMockTelemetry } from "../../tests/telemetry";
-import { DecryptedNodeKeys, DecryptedUnparsedNode, EncryptedNode, SharesService } from "./interface";
+import { DecryptedNode, DecryptedNodeKeys, DecryptedUnparsedNode, EncryptedNode, SharesService } from "./interface";
 import { NodesCryptoService } from "./cryptoService";
 
 describe("nodesCryptoService", () => {
@@ -708,6 +708,107 @@ describe("nodesCryptoService", () => {
                     [],
                 );
             });
+        });
+    });
+
+    describe('moveNode', () => {
+        it('should encrypt node data for move operation', async () => {
+            const node = {
+                name: { ok: true, value: 'testFile.txt' },
+            } as DecryptedNode;
+            const keys = {
+                passphrase: 'nodePassphrase',
+                passphraseSessionKey: 'nodePassphraseSessionKey',
+                nameSessionKey: 'nameSessionKey' as any,
+            };
+            const parentKeys = {
+                key: 'newParentKey' as any,
+                hashKey: new Uint8Array([1, 2, 3]),
+            };
+            const address = {
+                email: 'test@example.com',
+                addressKey: 'addressKey' as any,
+            };
+            driveCrypto.encryptNodeName = jest.fn().mockResolvedValue({
+                armoredNodeName: 'encryptedNodeName',
+            });
+            driveCrypto.generateLookupHash = jest.fn().mockResolvedValue('newHash');
+            driveCrypto.encryptPassphrase = jest.fn().mockResolvedValue({
+                armoredPassphrase: 'encryptedPassphrase',
+                armoredPassphraseSignature: 'passphraseSignature',
+            });
+
+            const result = await cryptoService.moveNode(node, keys, parentKeys, address);
+
+            expect(result).toEqual({
+                encryptedName: 'encryptedNodeName',
+                hash: 'newHash',
+                armoredNodePassphrase: 'encryptedPassphrase',
+                armoredNodePassphraseSignature: 'passphraseSignature',
+                signatureEmail: 'test@example.com',
+                nameSignatureEmail: 'test@example.com',
+            });
+
+            expect(driveCrypto.encryptNodeName).toHaveBeenCalledWith(
+                'testFile.txt',
+                keys.nameSessionKey,
+                parentKeys.key,
+                address.addressKey
+            );
+            expect(driveCrypto.generateLookupHash).toHaveBeenCalledWith(
+                'testFile.txt',
+                parentKeys.hashKey
+            );
+            expect(driveCrypto.encryptPassphrase).toHaveBeenCalledWith(
+                keys.passphrase,
+                keys.passphraseSessionKey,
+                [parentKeys.key],
+                address.addressKey
+            );
+        });
+
+        it('should throw error when moving to non-folder', async () => {
+            const node = {
+                name: { ok: true, value: 'testFile.txt' },
+            } as DecryptedNode;
+            const keys = {
+                passphrase: 'nodePassphrase',
+                passphraseSessionKey: 'nodePassphraseSessionKey',
+                nameSessionKey: 'nameSessionKey' as any,
+            };
+            const parentKeys = {
+                key: 'newParentKey' as any,
+                hashKey: undefined,
+            } as any;
+            const address = {
+                email: 'test@example.com',
+                addressKey: 'addressKey' as any,
+            };
+
+            await expect(cryptoService.moveNode(node, keys, parentKeys, address))
+                .rejects.toThrow('Moving item to a non-folder is not allowed');
+        });
+
+        it('should throw error when node has invalid name', async () => {
+            const node = {
+                name: { ok: false, error: 'Invalid name' },
+            } as any;
+            const keys = {
+                passphrase: 'nodePassphrase',
+                passphraseSessionKey: 'nodePassphraseSessionKey',
+                nameSessionKey: 'nameSessionKey' as any,
+            };
+            const parentKeys = {
+                key: 'newParentKey' as any,
+                hashKey: new Uint8Array([1, 2, 3]),
+            };
+            const address = {
+                email: 'test@example.com',
+                addressKey: 'addressKey' as any,
+            };
+
+            await expect(cryptoService.moveNode(node, keys, parentKeys, address))
+                .rejects.toThrow('Cannot move item without a valid name, please rename the item first');
         });
     });
 });
