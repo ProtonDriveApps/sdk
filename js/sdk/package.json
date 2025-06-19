@@ -1,6 +1,6 @@
 {
     "name": "@proton/drive-sdk",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "description": "Proton Drive SDK",
     "license": "GPL-3.0",
     "main": "dist/index.js",
