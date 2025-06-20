@@ -323,7 +323,7 @@ describe("UploadManager", () => {
 
         it("should commit revision draft", async () => {
             await manager.commitDraft(
-                nodeRevisionDraft,
+                nodeRevisionDraft as any,
                 manifest,
                 metadata,
                 extendedAttributes,
@@ -363,7 +363,7 @@ describe("UploadManager", () => {
                 }
             }
             await manager.commitDraft(
-                nodeRevisionDraftWithNewNodeInfo,
+                nodeRevisionDraftWithNewNodeInfo as any,
                 manifest,
                 metadata,
                 extendedAttributes,

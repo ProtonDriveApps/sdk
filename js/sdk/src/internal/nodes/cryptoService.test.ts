@@ -16,7 +16,6 @@ describe("nodesCryptoService", () => {
         jest.clearAllMocks();
 
         telemetry = getMockTelemetry();
-        // @ts-expect-error No need to implement all methods for mocking
         driveCrypto = {
             decryptKey: jest.fn(async () => Promise.resolve({
                 passphrase: "pass",
@@ -39,13 +38,14 @@ describe("nodesCryptoService", () => {
             encryptNodeName: jest.fn(async () => Promise.resolve({
                 armoredNodeName: "armoredName",
             })),
+            // @ts-expect-error No need to implement all methods for mocking
             decryptAndVerifySessionKey: jest.fn(async () => Promise.resolve({
                 sessionKey: "contentKeyPacketSessionKey",
                 verified: VERIFICATION_STATUS.SIGNED_AND_VALID,
             })),
         };
-        // @ts-expect-error No need to implement all methods for mocking
         account = {
+            // @ts-expect-error No need to implement all methods for mocking
             getPublicKeys: jest.fn(async () => [{_idx: 21312}]),
         };
         // @ts-expect-error No need to implement all methods for mocking
@@ -493,7 +493,7 @@ describe("nodesCryptoService", () => {
                 driveCrypto.decryptAndVerifySessionKey = jest.fn(async () => Promise.resolve({
                     sessionKey: "contentKeyPacketSessionKey",
                     verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
-                }));
+                }) as any);
 
                 const result = await cryptoService.decryptNode(encryptedNode, parentKey);
                 verifyResult(result, {
@@ -738,7 +738,7 @@ describe("nodesCryptoService", () => {
                 armoredPassphraseSignature: 'passphraseSignature',
             });
 
-            const result = await cryptoService.moveNode(node, keys, parentKeys, address);
+            const result = await cryptoService.moveNode(node, keys as any, parentKeys, address);
 
             expect(result).toEqual({
                 encryptedName: 'encryptedNodeName',
@@ -785,7 +785,7 @@ describe("nodesCryptoService", () => {
                 addressKey: 'addressKey' as any,
             };
 
-            await expect(cryptoService.moveNode(node, keys, parentKeys, address))
+            await expect(cryptoService.moveNode(node, keys as any, parentKeys, address))
                 .rejects.toThrow('Moving item to a non-folder is not allowed');
         });
 
@@ -807,7 +807,7 @@ describe("nodesCryptoService", () => {
                 addressKey: 'addressKey' as any,
             };
 
-            await expect(cryptoService.moveNode(node, keys, parentKeys, address))
+            await expect(cryptoService.moveNode(node, keys as any, parentKeys, address))
                 .rejects.toThrow('Cannot move item without a valid name, please rename the item first');
         });
     });

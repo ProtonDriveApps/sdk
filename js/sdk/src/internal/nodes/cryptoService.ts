@@ -14,7 +14,7 @@ import { EncryptedNode, EncryptedNodeFolderCrypto, DecryptedUnparsedNode, Decryp
  * metadata. It should export high-level actions only, such as "decrypt node"
  * instead of low-level operations like "decrypt node key". Low-level operations
  * should be kept private to the module.
- * 
+ *
  * The service owns the logic to switch between old and new crypto model.
  */
 export class NodesCryptoService {
@@ -235,7 +235,7 @@ export class NodesCryptoService {
         };
     };
 
-    private async decryptName(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PrivateKey[]): Promise<{
+    private async decryptName(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PublicKey[]): Promise<{
         name: Result<string, Error>,
         author: Author,
     }> {

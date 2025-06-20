@@ -1,10 +1,48 @@
 // TODO: Use CryptoProxy once available.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PublicKey = object;
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface PrivateKey extends PublicKey {};
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type SessionKey = any;
+export interface PublicKey {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    readonly _idx: any;
+    readonly _keyContentHash: [string, string];
+
+    getVersion(): number;
+    getFingerprint(): string;
+    getSHA256Fingerprints(): string[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getKeyID(): any;
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getKeyIDs(): any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getAlgorithmInfo(): any;
+    getCreationTime(): Date;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    isPrivate: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    isPrivateKeyV4: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    isPrivateKeyV6: any;
+    getExpirationTime(): Date | number | null;
+    getUserIDs(): string[];
+    isWeak(): boolean;
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    equals(otherKey: any, ignoreOtherCerts?: boolean): boolean;
+    subkeys: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        getAlgorithmInfo(): any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        getKeyID(): any;
+    }[];
+}
+
+export interface PrivateKey extends PublicKey {
+    readonly _dummyType: 'private';
+}
+export interface SessionKey {
+  data: Uint8Array;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  algorithm: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  aeadAlgorithm?: any;
+}
 
 export enum VERIFICATION_STATUS {
     NOT_SIGNED = 0,
@@ -66,7 +104,7 @@ export interface OpenPGPCrypto {
 
     encryptAndSignArmored: (
         data: Uint8Array,
-        sessionKey: SessionKey,
+        sessionKey: SessionKey | undefined,
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
     ) => Promise<{
@@ -103,7 +141,7 @@ export interface OpenPGPCrypto {
 
     signArmored: (
         data: Uint8Array,
-        signingKey: PrivateKey,
+        signingKey: PrivateKey | PrivateKey[],
     ) => Promise<{
         signature: string,
     }>,

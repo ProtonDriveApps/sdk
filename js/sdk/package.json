@@ -28,8 +28,8 @@
         "ttag": "^1.8.7"
     },
     "devDependencies": {
-        "@babel/preset-env": "^7.26.0",
-        "@babel/preset-typescript": "^7.26.0",
+        "@swc/core": "^1.12.3",
+        "@swc/jest": "^0.2.38",
         "@types/jest": "^29.5.14",
         "@types/mocha": "^10.0.10",
         "@typescript-eslint/eslint-plugin": "^8.19.1",

@@ -306,7 +306,7 @@ export class NodesAccess {
         key: PrivateKey,
         passphrase: string,
         passphraseSessionKey: SessionKey,
-        contentKeyPacketSessionKey: SessionKey,
+        contentKeyPacketSessionKey?: SessionKey,
         nameSessionKey: SessionKey,
     }> {
         const node = await this.getNode(nodeUid);

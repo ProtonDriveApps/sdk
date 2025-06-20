@@ -4,7 +4,7 @@ module.exports = {
     collectCoverage: false,
     transformIgnorePatterns: [],
     transform: {
-        '^.+\\.(m?js|tsx?)$': '<rootDir>/jest.transform.js',
+      '^.+\\.(t|j)sx?$': '@swc/jest',
     },
     moduleNameMapper: {},
     reporters: ['default'],

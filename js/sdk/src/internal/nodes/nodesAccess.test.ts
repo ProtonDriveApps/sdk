@@ -413,8 +413,8 @@ describe('nodesAccess', () => {
                     }
                     return {
                         key: {_idx: 32132},
-                    };
-                });
+                    } as any;
+                } );
 
                 const result = await Array.fromAsync(access.iterateNodes(['node1', 'node2', 'node3']));
                 expect(result).toEqual([
