@@ -142,7 +142,7 @@ describe('FileDownloader', () => {
             stream = {
                 getWriter: () => writer,
             }
-            downloader = new FileDownloader(telemetry, apiService, cryptoService, nodeKey, revision, undefined, onFinish);
+            downloader = new FileDownloader(telemetry, apiService, cryptoService, nodeKey as any, revision, undefined, onFinish);
         });
 
         it('should reject two download starts', async () => {
@@ -316,7 +316,7 @@ describe('FileDownloader', () => {
             stream = {
                 getWriter: () => writer,
             }
-            downloader = new FileDownloader(telemetry, apiService, cryptoService, nodeKey, revision, undefined, onFinish);
+            downloader = new FileDownloader(telemetry, apiService, cryptoService, nodeKey as any, revision, undefined, onFinish);
         });
 
         it('should skip verification steps', async () => {

@@ -10,7 +10,7 @@ export interface OpenPGPCryptoProxy {
     exportPrivateKey: (options: { privateKey: PrivateKey, passphrase: string | null  }) => Promise<string>,
     importPrivateKey: (options: { armoredKey: string, passphrase: string | null }) => Promise<PrivateKey>,
     generateSessionKey: (options: { recipientKeys: PrivateKey[] }) => Promise<SessionKey>,
-    encryptSessionKey: (options: SessionKey & { format: 'binary', encryptionKeys: PublicKey[] }) => Promise<Uint8Array>,
+    encryptSessionKey: (options: SessionKey & { format: 'binary', encryptionKeys: PublicKey | PublicKey[] }) => Promise<Uint8Array>,
     decryptSessionKey: (options: { armoredMessage?: string, binaryMessage?: Uint8Array, decryptionKeys: PrivateKey | PrivateKey[] }) => Promise<SessionKey | undefined>,
     encryptMessage: (options: {
         format?: 'armored' | 'binary',
@@ -142,7 +142,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
     async encryptAndSignArmored(
         data: Uint8Array,
-        sessionKey: SessionKey,
+        sessionKey: SessionKey | undefined,
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
     ) {
