@@ -173,7 +173,8 @@ export class SharingCryptoService {
             );
             nodeName = resultOk(result.name);
         } catch (error: unknown) {
-            const errorMessage = c('Error').t`Failed to decrypt item name: ${getErrorMessage(error)}`;
+            const message = getErrorMessage(error);
+            const errorMessage = c('Error').t`Failed to decrypt item name: ${message}`;
             nodeName = resultError(new Error(errorMessage));
         }
 

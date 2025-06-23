@@ -20,7 +20,9 @@
         "pretty": "prettier --write  $(find src -type f -name '*.ts')",
         "test": "jest",
         "test:ci": "jest --runInBand --no-cache",
-        "test:watch": "jest --watch --coverage=false"
+        "test:watch": "jest --watch --coverage=false",
+        "lint:ttag": "node tasks/linter.mjs src --verbose",
+        "extract:ttag": "ttag extract src --output po/template.pot"
     },
     "dependencies": {
         "@noble/hashes": "^1.8.0",
@@ -36,9 +38,11 @@
         "@web/dev-server-esbuild": "^1.0.3",
         "eslint": "^8.57.1",
         "eslint-plugin-tsdoc": "^0.3.0",
+        "glob": "^11.0.3",
         "jest": "^29.7.0",
         "openapi-typescript": "^7.4.1",
         "prettier": "^3.4.2",
+        "ttag-cli": "^1.10.18",
         "typedoc": "^0.26.11",
         "typescript": "^5.6.3"
     },

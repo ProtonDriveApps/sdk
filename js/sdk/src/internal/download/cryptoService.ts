@@ -39,7 +39,8 @@ export class DownloadCryptoService {
             );
             decryptedBlock = result.decryptedBlock;
         } catch (error: unknown) {
-            throw new DecryptionError(c('Error').t`Failed to decrypt block: ${getErrorMessage(error)}`);
+            const message = getErrorMessage(error);
+            throw new DecryptionError(c('Error').t`Failed to decrypt block: ${message}`);
         }
 
         return decryptedBlock;
@@ -55,7 +56,8 @@ export class DownloadCryptoService {
             );
             decryptedBlock = result.decryptedThumbnail;
         } catch (error: unknown) {
-            throw new DecryptionError(c('Error').t`Failed to decrypt thumbnail: ${getErrorMessage(error)}`);
+            const message = getErrorMessage(error);
+            throw new DecryptionError(c('Error').t`Failed to decrypt thumbnail: ${message}`);
         }
 
         return decryptedBlock;
