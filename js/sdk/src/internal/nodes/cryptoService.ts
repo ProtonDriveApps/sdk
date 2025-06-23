@@ -130,7 +130,7 @@ export class NodesCryptoService {
                 };
                 folderExtendedAttributesAuthor = extendedAttributesResult.author;
             } catch (error: unknown) {
-                void this.reportDecryptionError(node, 'nodeFolderExtendedAttributes', error);
+                void this.reportDecryptionError(node, 'nodeExtendedAttributes', error);
                 errors.push(error);
             }
         }
@@ -142,8 +142,8 @@ export class NodesCryptoService {
             try {
                 activeRevision = resultOk(await this.decryptRevision(node.uid, node.encryptedCrypto.activeRevision, key));
             } catch (error: unknown) {
-                void this.reportDecryptionError(node, 'nodeActiveRevision', error);
-            const message = getErrorMessage(error);
+                void this.reportDecryptionError(node, 'nodeExtendedAttributes', error);
+                const message = getErrorMessage(error);
                 const errorMessage = c('Error').t`Failed to decrypt active revision: ${message}`;
                 activeRevision = resultError(new Error(errorMessage));
             }
