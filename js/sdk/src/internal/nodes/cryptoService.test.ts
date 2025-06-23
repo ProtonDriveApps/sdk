@@ -46,7 +46,7 @@ describe("nodesCryptoService", () => {
         };
         account = {
             // @ts-expect-error No need to implement all methods for mocking
-            getPublicKeys: jest.fn(async () => [{_idx: 21312}]),
+            getPublicKeys: jest.fn(async () => [{ _idx: 21312 }]),
         };
         // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
@@ -307,7 +307,7 @@ describe("nodesCryptoService", () => {
                     errors: [error],
                 }, 'noKeys');
                 verifyLogEventDecryptionError({
-                    field: 'nodeFolderExtendedAttributes',
+                    field: 'nodeExtendedAttributes',
                     error,
                 });
             });
@@ -547,7 +547,7 @@ describe("nodesCryptoService", () => {
                     activeRevision: { ok: false, error: new Error('Failed to decrypt active revision: Decryption error') },
                 });
                 verifyLogEventDecryptionError({
-                    field: 'nodeActiveRevision',
+                    field: 'nodeExtendedAttributes',
                     error,
                 });
             });

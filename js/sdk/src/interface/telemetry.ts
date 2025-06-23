@@ -70,8 +70,7 @@ export type MetricsDecryptionErrorField =
     'nodeKey' |
     'nodeName' |
     'nodeHashKey' |
-    'nodeFolderExtendedAttributes' |
-    'nodeActiveRevision' |
+    'nodeExtendedAttributes' |
     'nodeContentKey' |
     'content';
 
