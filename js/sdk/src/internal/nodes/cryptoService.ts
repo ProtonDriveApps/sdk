@@ -78,7 +78,8 @@ export class NodesCryptoService {
             keyAuthor = keyResult.author;
         } catch (error: unknown) {
             void this.reportDecryptionError(node, 'nodeKey', error);
-            const errorMessage = c('Error').t`Failed to decrypt node key: ${getErrorMessage(error)}`;
+            const message = getErrorMessage(error);
+            const errorMessage = c('Error').t`Failed to decrypt node key: ${message}`;
             return {
                 node: {
                     ...commonNodeMetadata,
@@ -142,7 +143,8 @@ export class NodesCryptoService {
                 activeRevision = resultOk(await this.decryptRevision(node.uid, node.encryptedCrypto.activeRevision, key));
             } catch (error: unknown) {
                 void this.reportDecryptionError(node, 'nodeActiveRevision', error);
-                const errorMessage = c('Error').t`Failed to decrypt active revision: ${getErrorMessage(error)}`;
+            const message = getErrorMessage(error);
+                const errorMessage = c('Error').t`Failed to decrypt active revision: ${message}`;
                 activeRevision = resultError(new Error(errorMessage));
             }
 
@@ -166,7 +168,8 @@ export class NodesCryptoService {
                 );
             } catch (error: unknown) {
                 void this.reportDecryptionError(node, 'nodeContentKey', error);
-                const errorMessage = c('Error').t`Failed to decrypt content key: ${getErrorMessage(error)}`;
+                const message = getErrorMessage(error);
+                const errorMessage = c('Error').t`Failed to decrypt content key: ${message}`;
                 contentKeyPacketAuthor = resultError({
                     claimedAuthor: node.encryptedCrypto.signatureEmail,
                     error: errorMessage,
