@@ -235,7 +235,7 @@ describe("UploadManager", () => {
             apiService.createDraft = jest.fn().mockImplementation(() => {
                 if (count === 0) {
                     count++;
-                    throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS);
+                    throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS, { ConflictLinkID: "existingLinkId" });
                 }
                 return {
                     nodeUid: "newNode:nodeUid",
@@ -243,7 +243,7 @@ describe("UploadManager", () => {
                 };
             });
 
-            const result = manager.createDraftNode("parentUid", "name", {} as UploadMetadata);
+            const result = manager.createDraftNode("volumeId~parentUid", "name", {} as UploadMetadata);
 
             await expect(result).rejects.toThrow("Draft already exists");
             expect(apiService.checkAvailableHashes).toHaveBeenCalledTimes(1);
@@ -252,6 +252,7 @@ describe("UploadManager", () => {
                 await result;
             } catch (error: any) {
                 expect(error.availableName).toBe("name1");
+                expect(error.existingNodeUid).toBe("volumeId~existingLinkId");
             }
         });
 
@@ -300,7 +301,7 @@ describe("UploadManager", () => {
             nodeUid: "newNode:nodeUid",
             nodeRevisionUid: "newNode:nodeRevisionUid",
             nodeKeys: {
-                key: {_idx: 32321},
+                key: { _idx: 32321 },
                 contentKeyPacketSessionKey: "newNode:contentKeyPacketSessionKey",
                 signatureAddress: {
                     email: "signatureEmail",

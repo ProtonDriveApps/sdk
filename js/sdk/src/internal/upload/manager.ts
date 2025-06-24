@@ -7,6 +7,7 @@ import { DecryptedNode, generateFileExtendedAttributes } from "../nodes";
 import { UploadAPIService } from "./apiService";
 import { UploadCryptoService } from "./cryptoService";
 import { NodeRevisionDraft, NodesService, NodesEvents, NodeCrypto } from "./interface";
+import { makeNodeUid, splitNodeUid } from "../uids";
 
 /**
  * UploadManager is responsible for creating and deleting draft nodes
@@ -120,12 +121,16 @@ export class UploadManager {
                         }
                     }
 
+                    const typedDetails = error.details as { ConflictLinkID: string } | undefined;
+                    const existingNodeUid = typedDetails ? makeNodeUid(splitNodeUid(parentFolderUid).volumeId, typedDetails.ConflictLinkID) : undefined;
+
                     // If there is existing node, return special error
                     // that includes the available name the client can use.
                     throw new NodeAlreadyExistsValidationError(
                         error.message,
                         error.code,
                         availableName.availableName,
+                        existingNodeUid,
                     );
                 }
             }
@@ -261,7 +266,7 @@ export class UploadManager {
                 // Internal metadata
                 hash: nodeRevisionDraft.newNodeInfo.hash,
                 encryptedName: nodeRevisionDraft.newNodeInfo.encryptedName,
-    
+
                 // Basic node metadata
                 uid: nodeRevisionDraft.nodeUid,
                 parentUid: nodeRevisionDraft.newNodeInfo.parentUid,
@@ -269,11 +274,11 @@ export class UploadManager {
                 mediaType: metadata.mediaType,
                 creationTime: new Date(),
                 totalStorageSize: encryptedSize,
-    
+
                 // Share node metadata
                 isShared: false,
                 directMemberRole: MemberRole.Inherited,
-    
+
                 // Decrypted metadata
                 isStale: false,
                 keyAuthor: resultOk(nodeRevisionDraft.nodeKeys.signatureAddress.email),
@@ -297,7 +302,7 @@ export class UploadManager {
  */
 function splitExtension(filename = ''): [string, string] {
     const endIdx = filename.lastIndexOf('.');
-    if (endIdx === -1 || endIdx === filename.length-1) {
+    if (endIdx === -1 || endIdx === filename.length - 1) {
         return [filename, ''];
     }
     return [filename.slice(0, endIdx), filename.slice(endIdx + 1)];
