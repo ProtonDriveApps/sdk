@@ -50,9 +50,15 @@ export class ValidationError extends ProtonDriveError {
      */
     public readonly code?: number;
 
-    constructor(message: string, code?: number) {
+    /**
+     * Additional details about the error provided by the server.
+     */
+    public readonly details?: object;
+
+    constructor(message: string, code?: number, details?: object) {
         super(message);
         this.code = code;
+        this.details = details;
     }
 }
 
@@ -68,10 +74,12 @@ export class NodeAlreadyExistsValidationError extends ValidationError {
     name = 'NodeAlreadyExistsValidationError';
 
     public readonly availableName: string;
+    public readonly existingNodeUid?: string;
 
-    constructor(message: string, code: number, availableName: string) {
+    constructor(message: string, code: number, availableName: string, existingNodeUid?: string) {
         super(message, code);
         this.availableName = availableName;
+        this.existingNodeUid = existingNodeUid;
     }
 }
 
