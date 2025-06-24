@@ -37,7 +37,7 @@ import { getConfig } from './config';
 import { getUid, getUids, convertInternalNodePromise, convertInternalNodeIterator, convertInternalMissingNodeIterator, convertInternalNode } from './transformers';
 import { Telemetry } from './telemetry';
 import { initDevicesModule } from './internal/devices';
-import { splitNodeUid } from './internal/uids';
+import { makeNodeUid, splitNodeUid } from './internal/uids';
 
 /**
  * ProtonDriveClient is the main interface for the ProtonDrive SDK.
@@ -329,7 +329,8 @@ export class ProtonDriveClient {
      */
     async getNodeUid(shareId: string, nodeId: string): Promise<string> {
         this.logger.info(`Getting node UID for share ${shareId} and node ${nodeId}`);
-        throw new Error('Method not implemented');
+        const share = await this.shares.loadEncryptedShare(shareId);
+        return makeNodeUid(share.volumeId, nodeId);
     }
 
     /**
