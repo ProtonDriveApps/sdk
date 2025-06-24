@@ -695,9 +695,9 @@ export class ProtonDriveClient {
         return this.sharing.management.unshareNode(getUid(nodeUid), settings);
     }
 
-    async resendInvitation(invitationUid: ProtonInvitationOrUid | NonProtonInvitationOrUid): Promise<void> {
-        this.logger.info(`Resending invitation ${invitationUid}`);
-        throw new Error('Method not implemented');
+    async resendInvitation(nodeUid: NodeOrUid, invitationUid: ProtonInvitationOrUid | NonProtonInvitationOrUid): Promise<void> {
+        this.logger.info(`Resending invitation ${getUid(invitationUid)}`);
+        return this.sharing.management.resendInvitationEmail(getUid(nodeUid), getUid(invitationUid))
     }
 
     /**

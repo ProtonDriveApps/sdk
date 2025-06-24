@@ -40,6 +40,8 @@ describe("SharingManagement", () => {
             getPublicLink: jest.fn().mockResolvedValue(undefined),
             removePublicLink: jest.fn(),
             deleteShare: jest.fn(),
+            resendInvitationEmail: jest.fn(),
+            resendExternalInvitationEmail: jest.fn(),
         }
         // @ts-expect-error No need to implement all methods for mocking
         cryptoService = {
@@ -657,6 +659,67 @@ describe("SharingManagement", () => {
                 shareId: undefined,
                 isShared: false,
             });
+        });
+    });
+
+    describe("resendInvitationEmail", () => {
+        const nodeUid = "volumeId~nodeUid";
+
+        const invitation: ProtonInvitation = {
+          uid: "invitation",
+          addedByEmail: resultOk("added-email"),
+          inviteeEmail: "internal-email",
+          role: MemberRole.Viewer,
+          invitationTime: new Date(),
+        };
+        const externalInvitation: NonProtonInvitation = {
+          uid: "external-invitation",
+          addedByEmail: resultOk("added-email"),
+          inviteeEmail: "external-email",
+          role: MemberRole.Viewer,
+          invitationTime: new Date(),
+          state: NonProtonInvitationState.Pending,
+        };
+
+        beforeEach(() => {
+            apiService.getShareInvitations = jest.fn().mockResolvedValue([invitation]);
+            apiService.getShareExternalInvitations = jest.fn().mockResolvedValue([externalInvitation]);
+            apiService.getShareMembers = jest.fn().mockResolvedValue([]);
+            apiService.getPublicLink = jest.fn().mockResolvedValue(undefined);
+        });
+
+        it("should resend email for proton invitation", async () => {
+            await sharingManagement.resendInvitationEmail(nodeUid, invitation.uid);
+
+            expect(apiService.resendInvitationEmail).toHaveBeenCalledWith(invitation.uid);
+            expect(apiService.resendExternalInvitationEmail).not.toHaveBeenCalled();
+        });
+
+        it("should resend email for external invitation", async () => {
+            await sharingManagement.resendInvitationEmail(nodeUid, externalInvitation.uid);
+
+            expect(apiService.resendExternalInvitationEmail).toHaveBeenCalledWith(externalInvitation.uid);
+            expect(apiService.resendInvitationEmail).not.toHaveBeenCalled();
+        });
+
+        it("should throw error when no sharing found for node", async () => {
+            nodesService.getNode = jest.fn().mockResolvedValue({ nodeUid, shareId: undefined });
+
+            await expect(
+                sharingManagement.resendInvitationEmail(nodeUid, invitation.uid)
+            ).rejects.toThrow("Node is not shared");
+
+            expect(apiService.resendInvitationEmail).not.toHaveBeenCalled();
+            expect(apiService.resendExternalInvitationEmail).not.toHaveBeenCalled();
+        });
+
+        it("should log when no invitation found", async () => {
+            await expect(
+                sharingManagement.resendInvitationEmail(nodeUid, "non-existent-uid")
+            ).rejects.toThrow("Invitation not found");
+
+            expect(apiService.resendInvitationEmail).not.toHaveBeenCalled();
+            expect(apiService.resendExternalInvitationEmail).not.toHaveBeenCalled();
         });
     });
 });

@@ -388,8 +388,24 @@ export class SharingManagement {
         await this.apiService.updateInvitation(invitationUid, { role });
     }
 
-    async resendInvitationEmail(invitationUid: string): Promise<void> {
-        await this.apiService.resendInvitationEmail(invitationUid);
+    async resendInvitationEmail(nodeUid: string, invitationUid: string): Promise<void> {
+        const currentSharing = await this.getInternalSharingInfo(nodeUid);
+
+        if(!currentSharing) {
+          throw new ValidationError(c('Error').t`Node is not shared`);
+        }
+
+        const protonInvite = currentSharing.protonInvitations.find((invitation) => invitation.uid === invitationUid);
+        if(protonInvite) {
+          return await this.apiService.resendInvitationEmail(protonInvite.uid);
+        }
+
+        const nonProtonInvite = currentSharing.nonProtonInvitations.find((invitation) => invitation.uid === invitationUid);
+        if(nonProtonInvite) {
+          return await this.apiService.resendExternalInvitationEmail(nonProtonInvite.uid);
+        }
+
+        throw new ValidationError(c('Error').t`Invitation not found`);
     }
 
     private async deleteInvitation(invitationUid: string): Promise<void> {
@@ -421,9 +437,6 @@ export class SharingManagement {
         await this.apiService.updateExternalInvitation(invitationUid, { role });
     }
 
-    async resendExternalInvitationEmail(invitationUid: string): Promise<void> {
-        await this.apiService.resendExternalInvitationEmail(invitationUid);
-    }
 
     private async deleteExternalInvitation(invitationUid: string): Promise<void> {
         await this.apiService.deleteExternalInvitation(invitationUid);
