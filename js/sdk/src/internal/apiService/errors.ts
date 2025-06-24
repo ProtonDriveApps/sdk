@@ -14,6 +14,7 @@ export function apiErrorFactory({ response, result }: { response: Response, resu
     const typedResult = result as {
         Code?: number;
         Error?: string;
+        Details?: object;
         exception?: string;
         message?: string;
         file?: string;
@@ -21,7 +22,7 @@ export function apiErrorFactory({ response, result }: { response: Response, resu
         trace?: object;
     };
 
-    const [code, message] = [typedResult.Code || 0, typedResult.Error || c('Error').t`Unknown error`];
+    const [code, message, details] = [typedResult.Code || 0, typedResult.Error || c('Error').t`Unknown error`, typedResult.Details];
 
     const debug = typedResult.exception ? {
         exception: typedResult.exception,
@@ -55,7 +56,7 @@ export function apiErrorFactory({ response, result }: { response: Response, resu
         case ErrorCode.INSUFFICIENT_SHARE_QUOTA:
         case ErrorCode.INSUFFICIENT_SHARE_JOINED_QUOTA:
         case ErrorCode.INSUFFICIENT_BOOKMARKS_QUOTA:
-            return new ValidationError(message, code);
+            return new ValidationError(message, code, details);
         default:
             return new APICodeError(message, code, debug);
     }
