@@ -3,7 +3,6 @@ import { FileDownloader } from './fileDownloader';
 import { DownloadTelemetry } from './telemetry';
 import { DownloadAPIService } from './apiService';
 import { DownloadCryptoService } from './cryptoService';
-import { DownloadController } from './controller';
 import { APIHTTPError, HTTPErrorCode } from '../apiService';
 
 function mockBlockDownload(_: string, token: string, onProgress: (downloadedBytes: number) => void) {
@@ -21,7 +20,6 @@ describe('FileDownloader', () => {
     let telemetry: DownloadTelemetry;
     let apiService: DownloadAPIService;
     let cryptoService: DownloadCryptoService;
-    let controller: DownloadController;
     let nodeKey: { key: object; contentKeyPacketSessionKey: string };
     let revision: Revision;
 
@@ -67,10 +65,9 @@ describe('FileDownloader', () => {
             verifyBlockIntegrity: jest.fn().mockResolvedValue(undefined),
             verifyManifest: jest.fn().mockResolvedValue(undefined),
         };
-        controller = new DownloadController();
 
         nodeKey = {
-            key: {_idx: 32131},
+            key: { _idx: 32131 },
             contentKeyPacketSessionKey: 'sessionKey',
         };
 
@@ -79,7 +76,7 @@ describe('FileDownloader', () => {
             claimedSize: 1024,
         } as Revision;
     });
-    
+
     describe('writeToStream', () => {
         let onProgress: (downloadedBytes: number) => void;
         let onFinish: () => void;
@@ -88,7 +85,9 @@ describe('FileDownloader', () => {
         let writer: WritableStreamDefaultWriter<Uint8Array>;
         let stream: WritableStream<Uint8Array>;
 
-        const verifySuccess = async () => {
+        const verifySuccess = async (
+            fileProgress: number = 6, // 3 blocks of length 1, 2, 3
+        ) => {
             const controller = downloader.writeToStream(stream, onProgress);
             await controller.completion();
 
@@ -97,14 +96,14 @@ describe('FileDownloader', () => {
             expect(writer.close).toHaveBeenCalledTimes(1);
             expect(writer.abort).not.toHaveBeenCalled();
             expect(telemetry.downloadFinished).toHaveBeenCalledTimes(1);
-            expect(telemetry.downloadFinished).toHaveBeenCalledWith('revisionUid', 6); // 3 blocks of length 1, 2, 3.
+            expect(telemetry.downloadFinished).toHaveBeenCalledWith('revisionUid', fileProgress);
             expect(telemetry.downloadFailed).not.toHaveBeenCalled();
             expect(onFinish).toHaveBeenCalledTimes(1);
         }
 
         const verifyFailure = async (error: string, downloadedBytes: number | undefined) => {
             const controller = downloader.writeToStream(stream, onProgress);
-            
+
             await expect(controller.completion()).rejects.toThrow(error);
 
             expect(apiService.iterateRevisionBlocks).toHaveBeenCalledWith('revisionUid', undefined);
@@ -127,7 +126,7 @@ describe('FileDownloader', () => {
                 expect(onProgress).toHaveBeenNthCalledWith(i + 1, downloadedBytes[i]);
             }
         };
-        
+
         beforeEach(() => {
             onProgress = jest.fn();
             onFinish = jest.fn();
@@ -158,7 +157,50 @@ describe('FileDownloader', () => {
             expect(cryptoService.decryptBlock).toHaveBeenCalledTimes(3);
             await verifyOnProgress([1, 2, 3]);
         });
-    
+
+        // Use over MAX_DOWNLOAD_BLOCK_SIZE blocks to test that the downloader is not stuck in a loop.
+        it('should start a download and write to the stream with random order', async () => {
+            let count = 0;
+            // Keep first block with high timeout to make sure it is not finished first.
+            const timeouts = [90, 50, 40, 80, 70, 60, 30, 20, 10, 90, 10];
+
+            apiService.iterateRevisionBlocks = jest.fn().mockImplementation(async function* () {
+                yield { type: 'manifestSignature', armoredManifestSignature: 'manifestSignature' };
+                yield { type: 'thumbnail', base64sha256Hash: 'aGFzaDA=' };
+                yield { type: 'block', index: 1, bareUrl: 'url', token: 'token1', base64sha256Hash: 'aGFzaDE=' };
+                yield { type: 'block', index: 2, bareUrl: 'url', token: 'token2', base64sha256Hash: 'aGFzaDI=' };
+                yield { type: 'block', index: 3, bareUrl: 'url', token: 'token3', base64sha256Hash: 'aGFzaDM=' };
+                yield { type: 'block', index: 4, bareUrl: 'url', token: 'token1', base64sha256Hash: 'aGFzaDE=' };
+                yield { type: 'block', index: 5, bareUrl: 'url', token: 'token2', base64sha256Hash: 'aGFzaDI=' };
+                yield { type: 'block', index: 6, bareUrl: 'url', token: 'token3', base64sha256Hash: 'aGFzaDM=' };
+                yield { type: 'block', index: 7, bareUrl: 'url', token: 'token1', base64sha256Hash: 'aGFzaDE=' };
+                yield { type: 'block', index: 8, bareUrl: 'url', token: 'token2', base64sha256Hash: 'aGFzaDI=' };
+                yield { type: 'block', index: 9, bareUrl: 'url', token: 'token3', base64sha256Hash: 'aGFzaDM=' };
+                yield { type: 'block', index: 10, bareUrl: 'url', token: 'token1', base64sha256Hash: 'aGFzaDE=' };
+                yield { type: 'block', index: 11, bareUrl: 'url', token: 'token2', base64sha256Hash: 'aGFzaDI=' };
+            })
+            apiService.downloadBlock = jest.fn().mockImplementation(async function (bareUrl, token, onProgress) {
+                await new Promise(resolve => setTimeout(resolve, timeouts[count++]));
+                return mockBlockDownload(bareUrl, token, onProgress);
+            });
+
+            await verifySuccess(21); // Progress is 1 + 2 + 3 + 1 + 2 + 3 + 1 + 2 + 3 + 1 + 2 = 21
+            expect(apiService.downloadBlock).toHaveBeenCalledTimes(11);
+            expect(cryptoService.verifyBlockIntegrity).toHaveBeenCalledTimes(11);
+            expect(cryptoService.decryptBlock).toHaveBeenCalledTimes(11);
+            expect(writer.write).toHaveBeenNthCalledWith(1, new Uint8Array([0]));
+            expect(writer.write).toHaveBeenNthCalledWith(2, new Uint8Array([0, 1]));
+            expect(writer.write).toHaveBeenNthCalledWith(3, new Uint8Array([0, 1, 2]));
+            expect(writer.write).toHaveBeenNthCalledWith(4, new Uint8Array([0]));
+            expect(writer.write).toHaveBeenNthCalledWith(5, new Uint8Array([0, 1]));
+            expect(writer.write).toHaveBeenNthCalledWith(6, new Uint8Array([0, 1, 2]));
+            expect(writer.write).toHaveBeenNthCalledWith(7, new Uint8Array([0]));
+            expect(writer.write).toHaveBeenNthCalledWith(8, new Uint8Array([0, 1]));
+            expect(writer.write).toHaveBeenNthCalledWith(9, new Uint8Array([0, 1, 2]));
+            expect(writer.write).toHaveBeenNthCalledWith(10, new Uint8Array([0]));
+            expect(writer.write).toHaveBeenNthCalledWith(11, new Uint8Array([0, 1]));
+        });
+
         it('should handle failure when iterating blocks', async () => {
             apiService.iterateRevisionBlocks = jest.fn().mockImplementation(async function* () {
                 throw new Error('Failed to iterate blocks');
@@ -166,7 +208,7 @@ describe('FileDownloader', () => {
 
             await verifyFailure('Failed to iterate blocks', 0);
         });
-    
+
         it('should handle failure when downloading block', async () => {
             apiService.downloadBlock = jest.fn().mockImplementation(async function () {
                 throw new Error('Failed to download block');
@@ -174,7 +216,7 @@ describe('FileDownloader', () => {
 
             await verifyFailure('Failed to download block', 0);
         });
-    
+
         it('should handle one time-off failure when downloading block', async () => {
             let count = 0;
             apiService.downloadBlock = jest.fn().mockImplementation(async function (bareUrl, token, onProgress) {
@@ -192,7 +234,7 @@ describe('FileDownloader', () => {
             expect(cryptoService.decryptBlock).toHaveBeenCalledTimes(3);
             await verifyOnProgress([1, -1, 1, 2, 3]);
         });
-    
+
         it('should handle expired token when downloading block', async () => {
             let count = 0;
             apiService.downloadBlock = jest.fn().mockImplementation(async function (bareUrl, token, onProgress) {
@@ -211,7 +253,7 @@ describe('FileDownloader', () => {
             expect(cryptoService.decryptBlock).toHaveBeenCalledTimes(3);
             await verifyOnProgress([1, 2, 3]);
         });
-    
+
         it('should handle failure when veryfing block', async () => {
             cryptoService.verifyBlockIntegrity = jest.fn().mockImplementation(async function () {
                 throw new Error('Failed to verify block');
@@ -219,7 +261,7 @@ describe('FileDownloader', () => {
 
             await verifyFailure('Failed to verify block', undefined);
         });
-    
+
         it('should handle one time-off failure when veryfing block', async () => {
             let count = 0;
             cryptoService.verifyBlockIntegrity = jest.fn().mockImplementation(async function () {
@@ -235,7 +277,7 @@ describe('FileDownloader', () => {
             expect(cryptoService.decryptBlock).toHaveBeenCalledTimes(3);
             await verifyOnProgress([1, -1, 1, 2, 3]);
         });
-    
+
         it('should handle failure when decrypting block', async () => {
             cryptoService.decryptBlock = jest.fn().mockImplementation(async function () {
                 throw new Error('Failed to decrypt block');
@@ -243,7 +285,7 @@ describe('FileDownloader', () => {
 
             await verifyFailure('Failed to decrypt block', undefined);
         });
-    
+
         it('should handle one time-off failure when decrypting block', async () => {
             let count = 0;
             cryptoService.decryptBlock = jest.fn().mockImplementation(async function (encryptedBlock) {
@@ -260,7 +302,7 @@ describe('FileDownloader', () => {
             expect(cryptoService.decryptBlock).toHaveBeenCalledTimes(4);
             await verifyOnProgress([1, -1, 1, 2, 3]);
         });
-    
+
         it('should handle failure when writing to the stream', async () => {
             writer.write = jest.fn().mockImplementation(async function () {
                 throw new Error('Failed to write data');
@@ -268,7 +310,7 @@ describe('FileDownloader', () => {
 
             await verifyFailure('Failed to write data', undefined);
         });
-    
+
         it('should handle one time-off failure when writing to the stream', async () => {
             let count = 0;
             writer.write = jest.fn().mockImplementation(async function () {
@@ -284,7 +326,7 @@ describe('FileDownloader', () => {
             expect(cryptoService.decryptBlock).toHaveBeenCalledTimes(3);
             await verifyOnProgress([1, 2, 3]);
         });
-    
+
         it('should handle failure when veryfing manifest', async () => {
             cryptoService.verifyManifest = jest.fn().mockImplementation(async function () {
                 throw new Error('Failed to verify manifest');
