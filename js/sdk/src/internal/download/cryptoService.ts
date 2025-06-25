@@ -85,7 +85,7 @@ export class DownloadCryptoService {
 
         const { verified } = await this.driveCrypto.verifyManifest(hash, armoredManifestSignature, verificationKeys);
         if (verified !== VERIFICATION_STATUS.SIGNED_AND_VALID) {
-            throw new IntegrityError(c('Error').t`Date integrity check failed`);
+            throw new IntegrityError(c('Error').t`Data integrity check failed`);
         }
     }
 
