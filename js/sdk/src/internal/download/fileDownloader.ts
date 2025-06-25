@@ -213,10 +213,23 @@ export class FileDownloader {
             // We need to ensure the next block is downloaded, otherwise the
             // buffer will still be full.
             while (!this.isNextBlockDownloaded) {
+                // Promise.race never finishes if the passed array is empty.
+                // It shouldn't happen if at least next block is still not downloaded,
+                // also JS is single threaded, so it should be impossible to change
+                // the ongoing downloads in the middle of the loop. It is handled
+                // just in case something is changed that would affect this part
+                // without noticing.
+                const ongoingDownloadPromises = Array.from(this.ongoingDownloadPromises);
+                if (ongoingDownloadPromises.length === 0) {
+                    break;
+                }
+
                 // Promise.race is used to ensure if any block fails, the error is
                 // thrown up the chain and we dont end up in stuck loop here waiting
                 // for the next block to be ready.
-                await Promise.race(this.downloadPromises);
+                // We wait only for the ongoing downloads as if we use all promises,
+                // some block can be finished and it would result in inifinite loop.
+                await Promise.race(ongoingDownloadPromises);
             }
         }
     }
@@ -239,6 +252,12 @@ export class FileDownloader {
 
     private get downloadPromises() {
         return this.ongoingDownloads.values().map(({ downloadPromise }) => downloadPromise);
+    }
+
+    private get ongoingDownloadPromises() {
+        return this.ongoingDownloads.values()
+            .filter((value) => value.decryptedBufferedBlock === undefined)
+            .map((value) => value.downloadPromise);
     }
 
     private get isNextBlockDownloaded() {
