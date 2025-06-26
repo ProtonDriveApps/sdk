@@ -1,5 +1,5 @@
 import { ProtonDriveCache } from '../cache';
-import { OpenPGPCrypto, PrivateKey, SessionKey } from '../crypto';
+import { OpenPGPCrypto, PrivateKey, SessionKey, SRPModule } from '../crypto';
 import { ProtonDriveAccount } from './account';
 import { ProtonDriveHTTPClient, ProtonDriveConfig } from './httpClient';
 import { Telemetry, MetricEvent } from './telemetry';
@@ -7,7 +7,7 @@ import { Telemetry, MetricEvent } from './telemetry';
 export type { Result } from './result';
 export { resultOk, resultError } from './result';
 export type { ProtonDriveAccount, ProtonDriveAccountAddress } from './account';
-export type { Author,UnverifiedAuthorError, AnonymousUser } from './author';
+export type { Author, UnverifiedAuthorError, AnonymousUser } from './author';
 export type { Device, DeviceOrUid } from './devices';
 export { DeviceType } from './devices';
 export type { FileDownloader, DownloadController } from './download';
@@ -16,7 +16,7 @@ export { SDKEvent } from './events';
 export type { ProtonDriveHTTPClient, ProtonDriveHTTPClientJsonOptions, ProtonDriveHTTPClientBlobOptions, ProtonDriveConfig } from './httpClient';
 export type { MaybeNode, NodeEntity, DegradedNode, MaybeMissingNode, MissingNode, InvalidNameError, Revision, NodeOrUid, RevisionOrUid, NodeResult } from './nodes';
 export { NodeType, MemberRole, RevisionState } from './nodes';
-export type { ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Member, PublicLink, Bookmark, ProtonInvitationOrUid, NonProtonInvitationOrUid, BookmarkOrUid, ShareNodeSettings, UnshareNodeSettings, ShareMembersSettings, SharePublicLinkSettings, ShareResult } from './sharing';
+export type { ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Member, PublicLink, Bookmark, ProtonInvitationOrUid, NonProtonInvitationOrUid, BookmarkOrUid, ShareNodeSettings, UnshareNodeSettings, ShareMembersSettings, SharePublicLinkSettings, SharePublicLinkSettingsObject, ShareResult } from './sharing';
 export { NonProtonInvitationState } from './sharing';
 export type { Telemetry, Logger, MetricAPIRetrySucceededEvent, MetricUploadEvent, MetricsUploadErrorType, MetricDownloadEvent, MetricsDownloadErrorType, MetricDecryptionErrorEvent, MetricsDecryptionErrorField, MetricVerificationErrorEvent, MetricVerificationErrorField, MetricVolumeEventsSubscriptionsChangedEvent, MetricEvent } from './telemetry';
 export { MetricContext } from './telemetry';
@@ -40,6 +40,7 @@ export interface ProtonDriveClientContructorParameters {
     cryptoCache: ProtonDriveCryptoCache,
     account: ProtonDriveAccount,
     openPGPCryptoModule: OpenPGPCrypto,
+    srpModule: SRPModule,
     config?: ProtonDriveConfig,
     telemetry?: ProtonDriveTelemetry,
 };

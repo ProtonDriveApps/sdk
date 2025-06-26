@@ -1,4 +1,4 @@
-import { NodeType, MemberRole, NonProtonInvitationState, MissingNode } from "../../interface";
+import { NodeType, MemberRole, NonProtonInvitationState, MissingNode, ShareResult, PublicLink } from "../../interface";
 import { PrivateKey, SessionKey } from "../../crypto";
 import { EncryptedShare } from "../shares";
 import { DecryptedNode } from "../nodes";
@@ -122,12 +122,32 @@ export interface EncryptedPublicLink {
     sharePassphraseSalt: string,
 }
 
+export interface EncryptedPublicLinkCrypto {
+    base64SharePasswordSalt: string,
+    base64SharePassphraseKeyPacket: string,
+    armoredPassword: string,
+}
+
+export interface ShareResultWithCreatorEmail extends ShareResult {
+    publicLink?: PublicLinkWithCreatorEmail;
+}
+
+export interface PublicLinkWithCreatorEmail extends PublicLink {
+    creatorEmail: string;
+}
+
+
 /**
  * Interface describing the dependencies to the shares module.
  */
 export interface SharesService {
     getMyFilesIDs(): Promise<{ volumeId: string }>,
     loadEncryptedShare(shareId: string): Promise<EncryptedShare>,
+    getContextShareMemberEmailKey(shareId: string): Promise<{
+        email: string,
+        addressId: string,
+        addressKey: PrivateKey,
+    }>,
 }
 
 /**
@@ -145,7 +165,6 @@ export interface NodesService {
         email: string,
         addressId: string,
         addressKey: PrivateKey,
-        addressKeyId: string,
     }>,
     iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode | MissingNode>;
 }

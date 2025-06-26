@@ -1,17 +1,17 @@
 import bcrypt from 'bcryptjs';
 import { c } from 'ttag';
 
-import { DriveCrypto, PrivateKey, SessionKey, uint8ArrayToBase64String, VERIFICATION_STATUS } from '../../crypto';
-import { ProtonDriveAccount, ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Author, Result, Member, UnverifiedAuthorError, resultError, resultOk, PublicLink } from "../../interface";
+import { DriveCrypto, PrivateKey, SessionKey, SRPVerifier, uint8ArrayToBase64String, VERIFICATION_STATUS } from '../../crypto';
+import { ProtonDriveAccount, ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Author, Result, Member, UnverifiedAuthorError, resultError, resultOk } from "../../interface";
 import { getErrorMessage, getVerificationMessage } from "../errors";
 import { EncryptedShare } from "../shares";
-import { EncryptedInvitation, EncryptedInvitationWithNode, EncryptedExternalInvitation, EncryptedMember, EncryptedPublicLink } from "./interface";
+import { EncryptedInvitation, EncryptedInvitationWithNode, EncryptedExternalInvitation, EncryptedMember, EncryptedPublicLink, PublicLinkWithCreatorEmail } from "./interface";
 
 // Version 2 of bcrypt with 2**10 rounds.
 // https://en.wikipedia.org/wiki/Bcrypt#Description
 const BCRYPT_PREFIX = '$2y$10$';
 
-const PUBLIC_LINK_GENERATED_PASSWORD_LENGTH = 12;
+export const PUBLIC_LINK_GENERATED_PASSWORD_LENGTH = 12;
 
 // We do not support management of legacy public links anymore (that is no
 // flag or bit 1). But we still need to support to read the legacy public
@@ -273,18 +273,36 @@ export class SharingCryptoService {
         };
     }
 
-    async encryptPublicLink(): Promise<void> {
-        const password = await this.generatePassword();
-        await this.computeKeySaltAndPassphrase(password);
-        // FIXME: finish creation of public links
+    async encryptPublicLink(creatorEmail: string, shareSessionKey: SessionKey, password: string): Promise<{
+        crypto: {
+            base64SharePasswordSalt: string,
+            base64SharePassphraseKeyPacket: string,
+            armoredPassword: string,
+        },
+        srp: SRPVerifier,
+    }> {
+        const address = await this.account.getOwnAddress(creatorEmail);
+        const addressKey = address.keys[address.primaryKeyIndex].key;
+
+        const { base64Salt: base64SharePasswordSalt, bcryptPassphrase } = await this.computeKeySaltAndPassphrase(password);
+        const { base64SharePassphraseKeyPacket, armoredPassword, srp } = await this.driveCrypto.encryptPublicLinkPasswordAndSessionKey(password, addressKey, bcryptPassphrase, shareSessionKey);
+
+        return {
+            crypto: {
+                base64SharePasswordSalt,
+                base64SharePassphraseKeyPacket,
+                armoredPassword,
+            },
+            srp,
+        }
     }
 
-    private async generatePassword(): Promise<string> {
+    async generatePublicLinkPassword(): Promise<string> {
         const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        const values = crypto.getRandomValues(new Uint32Array(length));
+        const values = crypto.getRandomValues(new Uint32Array(PUBLIC_LINK_GENERATED_PASSWORD_LENGTH));
 
         let result = '';
-        for (let i = 0; i < length; i++) {
+        for (let i = 0; i < PUBLIC_LINK_GENERATED_PASSWORD_LENGTH; i++) {
             result += charset[values[i] % charset.length];
         }
 
@@ -299,15 +317,15 @@ export class SharingCryptoService {
         const salt = crypto.getRandomValues(new Uint8Array(16));
         const hash: string = await bcrypt.hash(password, BCRYPT_PREFIX + bcrypt.encodeBase64(salt, 16));
         // Remove bcrypt prefix and salt (first 29 characters)
-        const passphrase = hash.slice(29);
+        const bcryptPassphrase = hash.slice(29);
 
         return {
             base64Salt: uint8ArrayToBase64String(salt),
-            passphrase,
+            bcryptPassphrase,
         }
     };
 
-    async decryptPublicLink(encryptedPublicLink: EncryptedPublicLink): Promise<PublicLink> {
+    async decryptPublicLink(encryptedPublicLink: EncryptedPublicLink): Promise<PublicLinkWithCreatorEmail> {
         const address = await this.account.getOwnAddress(encryptedPublicLink.creatorEmail);
         const addressKeys = address.keys.map(({ key }) => key);
 
@@ -323,6 +341,7 @@ export class SharingCryptoService {
             role: encryptedPublicLink.role,
             url: `${encryptedPublicLink.publicUrl}#${password}`,
             customPassword,
+            creatorEmail: encryptedPublicLink.creatorEmail,
         }
     }
 

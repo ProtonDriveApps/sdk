@@ -28,6 +28,7 @@ import { CommandRevisionRestore } from './commandRevisionRestore';
 import { CommandSharingInvite } from "./commandSharingInvite";
 import { CommandSharingRemove } from "./commandSharingRemove";
 import { CommandSharingRemoveUrl } from "./commandSharingRemoveUrl";
+import { CommandSharingSetUrl } from "./commandSharingSetUrl";
 import { CommandSharingStatus } from "./commandSharingStatus";
 import { Command } from './interface';
 
@@ -57,6 +58,7 @@ const COMMANDS = [
     new CommandSharingStatus(),
     new CommandSharingInvite(),
     new CommandSharingRemove(),
+    new CommandSharingSetUrl(),
     new CommandSharingRemoveUrl(),
     new CommandInvitationList(),
     new CommandDeviceCreate(),

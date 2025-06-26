@@ -9,7 +9,7 @@ export interface PublicKey {
     getSHA256Fingerprints(): string[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getKeyID(): any;
-     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getKeyIDs(): any[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getAlgorithmInfo(): any;
@@ -23,10 +23,10 @@ export interface PublicKey {
     getExpirationTime(): Date | number | null;
     getUserIDs(): string[];
     isWeak(): boolean;
-     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     equals(otherKey: any, ignoreOtherCerts?: boolean): boolean;
     subkeys: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         getAlgorithmInfo(): any;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         getKeyID(): any;
@@ -36,18 +36,30 @@ export interface PublicKey {
 export interface PrivateKey extends PublicKey {
     readonly _dummyType: 'private';
 }
+
 export interface SessionKey {
-  data: Uint8Array;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  algorithm: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  aeadAlgorithm?: any;
+    data: Uint8Array;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    algorithm: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    aeadAlgorithm?: any;
 }
 
 export enum VERIFICATION_STATUS {
     NOT_SIGNED = 0,
     SIGNED_AND_VALID = 1,
     SIGNED_AND_INVALID = 2
+}
+
+export interface SRPModule {
+    getSrpVerifier: (password: string) => Promise<SRPVerifier>,
+}
+
+export type SRPVerifier = {
+    modulusId: string,
+    version: number,
+    salt: string,
+    verifier: string,
 }
 
 /**
@@ -75,6 +87,10 @@ export interface OpenPGPCrypto {
         keyPacket: Uint8Array,
     }>,
 
+    encryptSessionKeyWithPassword: (sessionKey: SessionKey, password: string) => Promise<{
+        keyPacket: Uint8Array,
+    }>,
+
     /**
      * Generate a new key pair locked by a passphrase.
      * 
@@ -87,8 +103,8 @@ export interface OpenPGPCrypto {
 
     encryptArmored: (
         data: Uint8Array,
-        sessionKey: SessionKey,
         encryptionKeys: PrivateKey[],
+        sessionKey?: SessionKey,
     ) => Promise<{
         armoredData: string,
     }>,

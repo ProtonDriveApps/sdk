@@ -6,6 +6,7 @@ import { SQLiteEntititesCache } from "./cache";
 import { Paths } from "./cli/paths";
 
 import { ProtonDriveClient, MemoryCache, CachedCryptoMaterial, OpenPGPCryptoWithCryptoProxy, VERSION } from "../../sdk/src";
+import { Srp } from "./account/srp";
 
 interface Config {
     appVersion: string;
@@ -21,7 +22,8 @@ export async function init() {
     const cryptoApi = initCrypto();
     const config = getConfig();
     const account = await initAccount(cryptoApi, config);
-    const sdk = initSDK(cryptoApi, config, account);
+    const srp = await initSrp(cryptoApi, config);
+    const sdk = initSDK(cryptoApi, config, account, srp);
     const paths = new Paths(sdk);
     return {
         account,
@@ -50,7 +52,11 @@ async function initAccount(cryptoApi: CryptoApi, config: Config) {
     return account;
 }
 
-function initSDK(cryptoApi: CryptoApi, config: Config, account: Account) {
+async function initSrp(cryptoApi: CryptoApi, config: Config) {
+    return new Srp(cryptoApi, config);
+}
+
+function initSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Srp) {
     const httpClient = new HTTPClient({
         ...config,
         uid: account.session?.uid || "",
@@ -71,6 +77,7 @@ function initSDK(cryptoApi: CryptoApi, config: Config, account: Account) {
         telemetry,
         account,
         openPGPCryptoModule,
+        srpModule: srp,
     });
     return sdk;
 }
