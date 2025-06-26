@@ -31,6 +31,8 @@ export class DevicesAPIService {
             creationTime: new Date(device.Device.CreateTime*1000),
             lastSyncTime: device.Device.LastSyncTime ? new Date(device.Device.LastSyncTime*1000) : undefined,
             hasDeprecatedName: !!device.Share.Name,
+            /** @deprecated to be removed once Volume-based navigation is implemented in web */
+            shareId: device.Share.ShareID,
         }));
     }
 
@@ -103,6 +105,7 @@ export class DevicesAPIService {
             rootFolderUid: makeNodeUid(device.volumeId, response.Device.LinkID),
             creationTime: new Date(),
             hasDeprecatedName: false,
+            shareId: response.Device.ShareID,
         }
     }
 

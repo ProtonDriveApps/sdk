@@ -8,6 +8,8 @@ export type Device = {
     rootFolderUid: string,
     creationTime: Date,
     lastSyncDate?: Date;
+    /** @deprecated to be removed once Volume-based navigation is implemented in web */
+    shareId: string;
 }
 
 export enum DeviceType {

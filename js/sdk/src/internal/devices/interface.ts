@@ -9,6 +9,7 @@ export type DeviceMetadata = {
     creationTime: Date,
     lastSyncTime?: Date;
     hasDeprecatedName: boolean;
+    shareId: string;
 }
 
 export interface SharesService {
