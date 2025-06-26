@@ -55,7 +55,7 @@ describe('DevicesManager', () => {
         const address = { addressId: 'address123', addressKeyId: 'key123' };
         const shareKey = { armoredKey: 'armoredKey', armoredPassphrase: 'passphrase', armoredPassphraseSignature: 'signature' };
         const node = { encryptedName: 'encryptedName', key: { armoredKey: 'nodeKey', armoredPassphrase: 'nodePassphrase', armoredPassphraseSignature: 'nodeSignature' }, armoredHashKey: 'hashKey' };
-        const createdDevice = { uid: 'device123', rootFolderUid: 'rootFolder123', type: deviceType } as DeviceMetadata;
+        const createdDevice = { uid: 'device123', rootFolderUid: 'rootFolder123', type: deviceType, shareId: 'shareid' } as DeviceMetadata;
 
         sharesService.getMyFilesIDs.mockResolvedValue({ volumeId });
         cryptoService.createDevice.mockResolvedValue({ address, shareKey, node });
@@ -88,7 +88,7 @@ describe('DevicesManager', () => {
     it('renames device with deprecated name', async () => {
         const deviceUid = 'device123';
         const name = 'New Device Name';
-        const device = { uid: deviceUid, rootFolderUid: 'rootFolder123', hasDeprecatedName: true } as DeviceMetadata;
+        const device = { uid: deviceUid, rootFolderUid: 'rootFolder123', hasDeprecatedName: true, shareId: 'shareid' } as DeviceMetadata;
 
         apiService.getDevices.mockResolvedValue([device]);
 
@@ -103,7 +103,7 @@ describe('DevicesManager', () => {
     it('renames device without deprecated name', async () => {
         const deviceUid = 'device123';
         const name = 'New Device Name';
-        const device = { uid: deviceUid, rootFolderUid: 'rootFolder123', hasDeprecatedName: false } as DeviceMetadata;
+        const device = { uid: deviceUid, rootFolderUid: 'rootFolder123', hasDeprecatedName: false, shareId: 'shareid' } as DeviceMetadata;
 
         apiService.getDevices.mockResolvedValue([device]);
 
