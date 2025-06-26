@@ -1,7 +1,8 @@
+import { SRPVerifier } from "../../crypto";
 import { NodeType, MemberRole, NonProtonInvitationState, Logger } from "../../interface";
 import { DriveAPIService, drivePaths, nodeTypeNumberToNodeType, permissionsToDirectMemberRole, memberRoleToPermission } from "../apiService";
 import { makeNodeUid, splitNodeUid, makeInvitationUid, splitInvitationUid, makeMemberUid, splitMemberUid, makePublicLinkUid, splitPublicLinkUid } from "../uids";
-import { EncryptedInvitationRequest, EncryptedInvitation, EncryptedInvitationWithNode, EncryptedExternalInvitation, EncryptedMember, EncryptedBookmark, EncryptedExternalInvitationRequest, EncryptedPublicLink } from "./interface";
+import { EncryptedInvitationRequest, EncryptedInvitation, EncryptedInvitationWithNode, EncryptedExternalInvitation, EncryptedMember, EncryptedBookmark, EncryptedExternalInvitationRequest, EncryptedPublicLink, EncryptedPublicLinkCrypto } from "./interface";
 
 type GetSharedNodesResponse = drivePaths['/drive/v2/volumes/{volumeID}/shares']['get']['responses']['200']['content']['application/json'];
 
@@ -42,6 +43,12 @@ type PostUpdateMemberResponse = drivePaths['/drive/v2/shares/{shareID}/members/{
 
 type GetShareUrlsResponse = drivePaths['/drive/shares/{shareID}/urls']['get']['responses']['200']['content']['application/json'];
 
+type PostShareUrlRequest = Extract<drivePaths['/drive/shares/{shareID}/urls']['post']['requestBody'], { 'content': object }>['content']['application/json'];
+type PostShareUrlResponse = drivePaths['/drive/shares/{shareID}/urls']['post']['responses']['200']['content']['application/json'];
+
+type PutShareUrlRequest = Extract<drivePaths['/drive/shares/{shareID}/urls/{urlID}']['put']['requestBody'], { 'content': object }>['content']['application/json'];
+type PutShareUrlResponse = drivePaths['/drive/shares/{shareID}/urls/{urlID}']['put']['responses']['200']['content']['application/json'];
+
 /**
  * Provides API communication for fetching and managing sharing.
  * 
@@ -61,7 +68,7 @@ export class SharingAPIService {
             for (const link of response.Links) {
                 yield makeNodeUid(volumeId, link.LinkID);
             }
-    
+
             if (!response.More || !response.AnchorID) {
                 break;
             }
@@ -76,7 +83,7 @@ export class SharingAPIService {
             for (const link of response.Links) {
                 yield makeNodeUid(link.VolumeID, link.LinkID);
             }
-    
+
             if (!response.More || !response.AnchorID) {
                 break;
             }
@@ -91,7 +98,7 @@ export class SharingAPIService {
             for (const invitation of response.Invitations) {
                 yield makeInvitationUid(invitation.ShareID, invitation.InvitationID);
             }
-    
+
             if (!response.More || !response.AnchorID) {
                 break;
             }
@@ -108,7 +115,7 @@ export class SharingAPIService {
             inviteeEmail: response.Invitation.InviteeEmail,
             base64KeyPacket: response.Invitation.KeyPacket,
             base64KeyPacketSignature: response.Invitation.KeyPacketSignature,
-            invitationTime: new Date(response.Invitation.CreateTime*1000),
+            invitationTime: new Date(response.Invitation.CreateTime * 1000),
             role: permissionsToDirectMemberRole(this.logger, response.Invitation.Permissions),
             share: {
                 armoredKey: response.Share.ShareKey,
@@ -143,7 +150,7 @@ export class SharingAPIService {
         for (const bookmark of response.Bookmarks) {
             yield {
                 tokenId: bookmark.Token.Token,
-                creationTime: new Date(bookmark.CreateTime*1000),
+                creationTime: new Date(bookmark.CreateTime * 1000),
                 share: {
                     armoredKey: bookmark.Token.ShareKey,
                     armoredPassphrase: bookmark.Token.SharePassphrase,
@@ -193,7 +200,7 @@ export class SharingAPIService {
                 inviteeEmail: member.Email,
                 base64KeyPacket: member.KeyPacket,
                 base64KeyPacketSignature: member.KeyPacketSignature,
-                invitationTime: new Date(member.CreateTime*1000),
+                invitationTime: new Date(member.CreateTime * 1000),
                 role: permissionsToDirectMemberRole(this.logger, member.Permissions),
             }
         });
@@ -356,8 +363,8 @@ export class SharingAPIService {
 
         return {
             uid: makePublicLinkUid(shareUrl.ShareID, shareUrl.ShareURLID),
-            creationTime: new Date(shareUrl.CreateTime*1000),
-            expirationTime: shareUrl.ExpirationTime ? new Date(shareUrl.ExpirationTime*1000) : undefined,
+            creationTime: new Date(shareUrl.CreateTime * 1000),
+            expirationTime: shareUrl.ExpirationTime ? new Date(shareUrl.ExpirationTime * 1000) : undefined,
             role: permissionsToDirectMemberRole(this.logger, shareUrl.Permissions),
             flags: shareUrl.Flags,
             creatorEmail: shareUrl.CreatorEmail,
@@ -367,6 +374,81 @@ export class SharingAPIService {
             base64SharePassphraseKeyPacket: shareUrl.SharePassphraseKeyPacket,
             sharePassphraseSalt: shareUrl.SharePasswordSalt,
         };
+    }
+
+    async createPublicLink(shareId: string, publicLink: {
+        creatorEmail: string,
+        role: MemberRole,
+        includesCustomPassword: boolean,
+        expirationDuration?: number,
+        crypto: EncryptedPublicLinkCrypto,
+        srp: SRPVerifier,
+    }): Promise<{
+        uid: string,
+        publicUrl: string,
+    }> {
+        if (publicLink.role === MemberRole.Admin) {
+            throw new Error('Cannot set admin role for public link.');
+        }
+
+        const result = await this.apiService.post<
+            // TODO: Backend type wrongly requires ExpirationTime and Name.
+            Omit<PostShareUrlRequest, 'ExpirationTime' | 'Name'>,
+            PostShareUrlResponse
+        >(`drive/shares/${shareId}/urls`, {
+            CreatorEmail: publicLink.creatorEmail,
+            ...this.generatePublicLinkRequestPayload(publicLink),
+        });
+        return {
+            uid: makePublicLinkUid(shareId, result.ShareURL.ShareURLID),
+            publicUrl: result.ShareURL.PublicUrl,
+        };
+    }
+
+    async updatePublicLink(publicLinkUid: string, publicLink: {
+        role: MemberRole,
+        includesCustomPassword: boolean,
+        expirationDuration?: number,
+        crypto: EncryptedPublicLinkCrypto,
+        srp: SRPVerifier,
+    }): Promise<void> {
+        if (publicLink.role === MemberRole.Admin) {
+            throw new Error('Cannot set admin role for public link.');
+        }
+
+        const { shareId, publicLinkId } = splitPublicLinkUid(publicLinkUid);
+
+        await this.apiService.put<
+            // TODO: Backend type wrongly requires ExpirationTime and Name.
+            Omit<PutShareUrlRequest, 'ExpirationTime' | 'Name'>,
+            PutShareUrlResponse
+        >(`drive/shares/${shareId}/urls/${publicLinkId}`, this.generatePublicLinkRequestPayload(publicLink));
+    }
+
+    private generatePublicLinkRequestPayload(publicLink: {
+        role: MemberRole,
+        includesCustomPassword: boolean,
+        expirationDuration?: number,
+        crypto: EncryptedPublicLinkCrypto,
+        srp: SRPVerifier,
+    }): Pick<PostShareUrlRequest, 'Permissions' | 'Flags' | 'ExpirationDuration' | 'SharePasswordSalt' | 'SharePassphraseKeyPacket' | 'Password' | 'UrlPasswordSalt' | 'SRPVerifier' | 'SRPModulusID' | 'MaxAccesses'> {
+        return {
+            Permissions: memberRoleToPermission(publicLink.role) as 4 | 6,
+            Flags: publicLink.includesCustomPassword
+                ? 3 // Random + custom password set.
+                : 2, // Random password set.
+            ExpirationDuration: publicLink.expirationDuration || null,
+
+            SharePasswordSalt: publicLink.crypto.base64SharePasswordSalt,
+            SharePassphraseKeyPacket: publicLink.crypto.base64SharePassphraseKeyPacket,
+            Password: publicLink.crypto.armoredPassword,
+
+            UrlPasswordSalt: publicLink.srp.salt,
+            SRPVerifier: publicLink.srp.verifier,
+            SRPModulusID: publicLink.srp.modulusId,
+
+            MaxAccesses: 0, // We don't support setting limit.
+        }
     }
 
     async removePublicLink(publicLinkUid: string): Promise<void> {
@@ -379,20 +461,20 @@ export class SharingAPIService {
             uid: makeInvitationUid(shareId, invitation.InvitationID),
             addedByEmail: invitation.InviterEmail,
             inviteeEmail: invitation.InviteeEmail,
-            invitationTime: new Date(invitation.CreateTime*1000),
+            invitationTime: new Date(invitation.CreateTime * 1000),
             role: permissionsToDirectMemberRole(this.logger, invitation.Permissions),
             base64KeyPacket: invitation.KeyPacket,
             base64KeyPacketSignature: invitation.KeyPacketSignature,
         }
     }
-    
+
     private convertExternalInvitaiton(shareId: string, invitation: GetShareExternalInvitations['ExternalInvitations'][0]): EncryptedExternalInvitation {
         const state = invitation.State === 1 ? NonProtonInvitationState.Pending : NonProtonInvitationState.UserRegistered;
         return {
             uid: makeInvitationUid(shareId, invitation.ExternalInvitationID),
             addedByEmail: invitation.InviterEmail,
             inviteeEmail: invitation.InviteeEmail,
-            invitationTime: new Date(invitation.CreateTime*1000),
+            invitationTime: new Date(invitation.CreateTime * 1000),
             role: permissionsToDirectMemberRole(this.logger, invitation.Permissions),
             base64Signature: invitation.ExternalInvitationSignature,
             state,

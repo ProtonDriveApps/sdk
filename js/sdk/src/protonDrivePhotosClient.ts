@@ -20,6 +20,7 @@ export class ProtonDrivePhotosClient {
         cryptoCache,
         account,
         openPGPCryptoModule,
+        srpModule,
         config,
         telemetry,
     }: ProtonDriveClientContructorParameters) {
@@ -29,7 +30,7 @@ export class ProtonDrivePhotosClient {
 
         const fullConfig = getConfig(config);
         const sdkEvents = new SDKEvents(telemetry);
-        const cryptoModule = new DriveCrypto(openPGPCryptoModule);
+        const cryptoModule = new DriveCrypto(openPGPCryptoModule, srpModule);
         const apiService = new DriveAPIService(telemetry, sdkEvents, httpClient, fullConfig.baseUrl, fullConfig.language);
         const events = new DriveEventsService(telemetry, apiService, entitiesCache);
         const shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
@@ -38,18 +39,18 @@ export class ProtonDrivePhotosClient {
     }
 
     // Timeline or album view
-    iterateTimelinePhotos() {} // returns only UIDs and dates - used to show grid and scrolling
-    iterateAlbumPhotos() {} // same as above but for album
-    iterateThumbnails() {} // returns thumbnails for passed photos that are visible in the UI
-    getPhoto() {} // returns full photo details
+    iterateTimelinePhotos() { } // returns only UIDs and dates - used to show grid and scrolling
+    iterateAlbumPhotos() { } // same as above but for album
+    iterateThumbnails() { } // returns thumbnails for passed photos that are visible in the UI
+    getPhoto() { } // returns full photo details
 
     // Album management
     createAlbum(albumName: string) {
         return this.photos.albums.createAlbum(albumName);
     }
-    renameAlbum() {}
-    shareAlbum() {}
-    deleteAlbum() {}
-    iterateAlbums() {}
-    addPhotosToAlbum() {}
+    renameAlbum() { }
+    shareAlbum() { }
+    deleteAlbum() { }
+    iterateAlbums() { }
+    addPhotosToAlbum() { }
 }

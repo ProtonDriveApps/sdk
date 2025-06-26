@@ -42,6 +42,11 @@ describe("SharingManagement", () => {
             deleteShare: jest.fn(),
             resendInvitationEmail: jest.fn(),
             resendExternalInvitationEmail: jest.fn(),
+            createPublicLink: jest.fn().mockResolvedValue({
+                uid: "publicLinkUid",
+                publicUrl: "publicLinkUrl",
+            }),
+            updatePublicLink: jest.fn(),
         }
         // @ts-expect-error No need to implement all methods for mocking
         cryptoService = {
@@ -56,6 +61,11 @@ describe("SharingManagement", () => {
                 base64ExternalInvitationSignature: "extenral-signature",
             })),
             decryptPublicLink: jest.fn().mockImplementation((publicLink) => publicLink),
+            generatePublicLinkPassword: jest.fn().mockResolvedValue("generatedPassword"),
+            encryptPublicLink: jest.fn().mockImplementation(() => ({
+                crypto: "publicLinkCrypto",
+                srp: "publicLinkSrp",
+            })),
         }
         // @ts-expect-error No need to implement all methods for mocking
         accountService = {
@@ -63,7 +73,8 @@ describe("SharingManagement", () => {
         }
         // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
-            loadEncryptedShare: jest.fn().mockResolvedValue({ id: "shareId", addressId: "addressId" }),
+            loadEncryptedShare: jest.fn().mockResolvedValue({ id: "shareId", addressId: "addressId", creatorEmail: "address@example.com", passphraseSessionKey: "sharePassphraseSessionKey" }),
+            getContextShareMemberEmailKey: jest.fn().mockResolvedValue({ email: "volume-email", addressId: "addressId", addressKey: "volume-key" }),
         }
         // @ts-expect-error No need to implement all methods for mocking
         nodesService = {
@@ -489,6 +500,165 @@ describe("SharingManagement", () => {
                 expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
             });
         });
+
+        describe("public link", () => {
+            it("should share node with public link", async () => {
+                jest.useFakeTimers();
+                jest.setSystemTime(new Date('2025-01-01'));
+
+                const sharingInfo = await sharingManagement.shareNode(nodeUid, {
+                    publicLink: {
+                        role: MemberRole.Viewer,
+                        customPassword: undefined,
+                        expiration: undefined,
+                    },
+                });
+
+                expect(sharingInfo).toEqual({
+                    protonInvitations: [invitation],
+                    nonProtonInvitations: [externalInvitation],
+                    members: [member],
+                    publicLink: {
+                        uid: "publicLinkUid",
+                        role: MemberRole.Viewer,
+                        url: "publicLinkUrl#generatedPassword",
+                        creationTime: new Date(),
+                        expirationTime: undefined,
+                        customPassword: undefined,
+                        creatorEmail: "volume-email",
+                    },
+                });
+                expect(cryptoService.generatePublicLinkPassword).toHaveBeenCalled();
+                expect(cryptoService.encryptPublicLink).toHaveBeenCalledWith("volume-email", "sharePassphraseSessionKey", "generatedPassword");
+                expect(apiService.createPublicLink).toHaveBeenCalledWith("shareId", expect.objectContaining({
+                    role: MemberRole.Viewer,
+                    includesCustomPassword: false,
+                    expirationDuration: undefined,
+                    crypto: "publicLinkCrypto",
+                    srp: "publicLinkSrp",
+                }));
+            });
+
+            it("should share node with custom password and expiration", async () => {
+                jest.useFakeTimers();
+                jest.setSystemTime(new Date('2025-01-01'));
+
+                const sharingInfo = await sharingManagement.shareNode(nodeUid, {
+                    publicLink: {
+                        role: MemberRole.Viewer,
+                        customPassword: "customPassword",
+                        expiration: new Date('2025-01-02'),
+                    },
+                });
+
+                expect(sharingInfo).toEqual({
+                    protonInvitations: [invitation],
+                    nonProtonInvitations: [externalInvitation],
+                    members: [member],
+                    publicLink: {
+                        uid: "publicLinkUid",
+                        role: MemberRole.Viewer,
+                        url: "publicLinkUrl#generatedPassword",
+                        creationTime: new Date(),
+                        expirationTime: new Date('2025-01-02'),
+                        customPassword: "customPassword",
+                        creatorEmail: "volume-email",
+                    },
+                });
+                expect(cryptoService.generatePublicLinkPassword).toHaveBeenCalled();
+                expect(cryptoService.encryptPublicLink).toHaveBeenCalledWith("volume-email", "sharePassphraseSessionKey", "generatedPasswordcustomPassword");
+                expect(apiService.createPublicLink).toHaveBeenCalledWith("shareId", expect.objectContaining({
+                    role: MemberRole.Viewer,
+                    includesCustomPassword: true,
+                    expirationDuration: 86400,
+                    crypto: "publicLinkCrypto",
+                    srp: "publicLinkSrp",
+                }));
+            });
+
+            it("should update public link with custom password and expiration", async () => {
+                jest.useFakeTimers();
+                jest.setSystemTime(new Date('2025-01-01'));
+
+                const publicLink = {
+                    uid: 'publicLinkUid',
+                    url: "publicLinkUrl#generatedpas", // Generated password must be 12 chararacters long.
+                    creationTime: new Date('2025-01-01'),
+                    role: MemberRole.Viewer,
+                    customPassword: undefined,
+                    expirationTime: undefined,
+                    creatorEmail: "publicLinkCreatorEmail",
+                }
+                apiService.getPublicLink = jest.fn().mockResolvedValue(publicLink);
+
+                const sharingInfo = await sharingManagement.shareNode(nodeUid, {
+                    publicLink: {
+                        role: MemberRole.Editor,
+                        customPassword: "customPassword",
+                        expiration: new Date('2025-01-02'),
+                    },
+                });
+
+                expect(sharingInfo).toEqual({
+                    protonInvitations: [invitation],
+                    nonProtonInvitations: [externalInvitation],
+                    members: [member],
+                    publicLink: {
+                        uid: "publicLinkUid",
+                        role: MemberRole.Editor,
+                        url: "publicLinkUrl#generatedpas",
+                        creationTime: new Date('2025-01-01'),
+                        expirationTime: new Date('2025-01-02'),
+                        customPassword: "customPassword",
+                        creatorEmail: "publicLinkCreatorEmail",
+                    },
+                });
+                expect(cryptoService.encryptPublicLink).toHaveBeenCalledWith("publicLinkCreatorEmail", "sharePassphraseSessionKey", "generatedpascustomPassword");
+                expect(apiService.updatePublicLink).toHaveBeenCalledWith("publicLinkUid", expect.objectContaining({
+                    role: MemberRole.Editor,
+                    includesCustomPassword: true,
+                    expirationDuration: 86400,
+                    crypto: "publicLinkCrypto",
+                    srp: "publicLinkSrp",
+                }));
+            });
+
+            it("should not allow updating legacy public link", async () => {
+                apiService.getPublicLink = jest.fn().mockResolvedValue({
+                    uid: 'publicLinkUid',
+                    url: "publicLinkUrl#aaa", // Legacy public links doesn't have 12 chars.
+                });
+
+                await expect(sharingManagement.shareNode(nodeUid, {
+                    publicLink: true,
+                })).rejects.toThrow("Legacy public link cannot be updated. Please re-create a new public link.");
+            });
+
+            it("should not allow updating legacy public link without generated password", async () => {
+                apiService.getPublicLink = jest.fn().mockResolvedValue({
+                    uid: 'publicLinkUid',
+                    url: "publicLinkUrl",
+                });
+
+                await expect(sharingManagement.shareNode(nodeUid, {
+                    publicLink: true,
+                })).rejects.toThrow("Legacy public link cannot be updated. Please re-create a new public link.");
+            });
+
+            it("should not allow creating public link with expiration in the past", async () => {
+                jest.useFakeTimers();
+                jest.setSystemTime(new Date('2025-01-01'));
+
+                await expect(sharingManagement.shareNode(nodeUid, {
+                    publicLink: {
+                        role: MemberRole.Viewer,
+                        expiration: new Date('2024-01-01'),
+                    },
+                })).rejects.toThrow("Expiration date cannot be in the past");
+                expect(apiService.createStandardShare).not.toHaveBeenCalled();
+                expect(apiService.createPublicLink).not.toHaveBeenCalled();
+            });
+        });
     });
 
     describe("unsahreNode", () => {
@@ -666,19 +836,19 @@ describe("SharingManagement", () => {
         const nodeUid = "volumeId~nodeUid";
 
         const invitation: ProtonInvitation = {
-          uid: "invitation",
-          addedByEmail: resultOk("added-email"),
-          inviteeEmail: "internal-email",
-          role: MemberRole.Viewer,
-          invitationTime: new Date(),
+            uid: "invitation",
+            addedByEmail: resultOk("added-email"),
+            inviteeEmail: "internal-email",
+            role: MemberRole.Viewer,
+            invitationTime: new Date(),
         };
         const externalInvitation: NonProtonInvitation = {
-          uid: "external-invitation",
-          addedByEmail: resultOk("added-email"),
-          inviteeEmail: "external-email",
-          role: MemberRole.Viewer,
-          invitationTime: new Date(),
-          state: NonProtonInvitationState.Pending,
+            uid: "external-invitation",
+            addedByEmail: resultOk("added-email"),
+            inviteeEmail: "external-email",
+            role: MemberRole.Viewer,
+            invitationTime: new Date(),
+            state: NonProtonInvitationState.Pending,
         };
 
         beforeEach(() => {

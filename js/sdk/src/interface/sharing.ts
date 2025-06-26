@@ -66,10 +66,12 @@ export type ShareMembersSettings = string[] | {
     role: MemberRole,
 }[];
 
-export type SharePublicLinkSettings = boolean |{
+export type SharePublicLinkSettings = boolean | SharePublicLinkSettingsObject;
+
+export type SharePublicLinkSettingsObject = {
     role: MemberRole,
-    customPassword?: string | null | undefined,
-    expiration?: Date | null | undefined,
+    customPassword?: string | undefined,
+    expiration?: Date | undefined,
 };
 
 export type ShareResult = {

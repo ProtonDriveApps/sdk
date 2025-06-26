@@ -1,4 +1,4 @@
-import { OpenPGPCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from './interface';
+import { OpenPGPCrypto, PrivateKey, PublicKey, SessionKey, SRPModule, SRPVerifier, VERIFICATION_STATUS } from './interface';
 import { uint8ArrayToBase64String, base64StringToUint8Array } from './utils';
 // TODO: Switch to CryptoProxy module once available.
 import { importHmacKey, computeHmacSignature } from "./hmac";
@@ -20,8 +20,9 @@ enum SIGNING_CONTEXTS {
  * call with specific arguments.
  */
 export class DriveCrypto {
-    constructor(private openPGPCrypto: OpenPGPCrypto) {
+    constructor(private openPGPCrypto: OpenPGPCrypto, private srpModule: SRPModule) {
         this.openPGPCrypto = openPGPCrypto;
+        this.srpModule = srpModule;
     }
 
     /**
@@ -204,6 +205,34 @@ export class DriveCrypto {
     }
 
     /**
+     * It encrypts password with provided address key that can be used to
+     * manage the public link, encrypts share passphrase session key using
+     * provided bcrypt passphrase and generates SRP verifier.
+     */
+    async encryptPublicLinkPasswordAndSessionKey(
+        password: string,
+        addressKey: PrivateKey,
+        bcryptPassphrase: string,
+        sharePassphraseSessionKey: SessionKey,
+    ): Promise<{
+        armoredPassword: string,
+        base64SharePassphraseKeyPacket: string,
+        srp: SRPVerifier,
+    }> {
+        const [{ armoredData: armoredPassword }, { keyPacket }, srp] = await Promise.all([
+            this.openPGPCrypto.encryptArmored(new TextEncoder().encode(password), [addressKey]),
+            this.openPGPCrypto.encryptSessionKeyWithPassword(sharePassphraseSessionKey, bcryptPassphrase),
+            this.srpModule.getSrpVerifier(password),
+        ]);
+
+        return {
+            armoredPassword,
+            base64SharePassphraseKeyPacket: uint8ArrayToBase64String(keyPacket),
+            srp,
+        };
+    }
+
+    /**
      * It decrypts session key from armored data.
      * 
      * `decryptionKeys` are used to decrypt the session key from the `armoredData`.
@@ -228,7 +257,7 @@ export class DriveCrypto {
         sessionKey: SessionKey,
         verified?: VERIFICATION_STATUS,
     }> {
-        
+
         const data = base64StringToUint8Array(base64data);
 
         const sessionKey = await this.openPGPCrypto.decryptSessionKey(
@@ -285,8 +314,8 @@ export class DriveCrypto {
     }> {
         const { armoredData: armoredSignature } = await this.openPGPCrypto.encryptArmored(
             signature,
-            sessionKey,
             [encryptionKey],
+            sessionKey,
         );
         return {
             armoredSignature,
@@ -317,7 +346,7 @@ export class DriveCrypto {
         );
         return {
             armoredHashKey,
-            hashKey, 
+            hashKey,
         }
     }
 
@@ -582,7 +611,7 @@ export class DriveCrypto {
         decryptionKey: PrivateKey,
         sessionKey: SessionKey,
         verificationKeys?: PublicKey[],
-    ): Promise<{    
+    ): Promise<{
         decryptedBlock: Uint8Array,
         verified: VERIFICATION_STATUS,
     }> {

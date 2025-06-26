@@ -80,6 +80,7 @@ export class ProtonDriveClient {
         cryptoCache,
         account,
         openPGPCryptoModule,
+        srpModule,
         config,
         telemetry,
     }: ProtonDriveClientContructorParameters) {
@@ -90,7 +91,7 @@ export class ProtonDriveClient {
 
         const fullConfig = getConfig(config);
         this.sdkEvents = new SDKEvents(telemetry);
-        const cryptoModule = new DriveCrypto(openPGPCryptoModule);
+        const cryptoModule = new DriveCrypto(openPGPCryptoModule, srpModule);
         const apiService = new DriveAPIService(telemetry, this.sdkEvents, httpClient, fullConfig.baseUrl, fullConfig.language);
         this.events = new DriveEventsService(telemetry, apiService, entitiesCache);
         this.shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
