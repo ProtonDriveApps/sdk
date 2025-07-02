@@ -18,7 +18,7 @@ export type { MaybeNode, NodeEntity, DegradedNode, MaybeMissingNode, MissingNode
 export { NodeType, MemberRole, RevisionState } from './nodes';
 export type { ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Member, PublicLink, Bookmark, ProtonInvitationOrUid, NonProtonInvitationOrUid, BookmarkOrUid, ShareNodeSettings, UnshareNodeSettings, ShareMembersSettings, SharePublicLinkSettings, SharePublicLinkSettingsObject, ShareResult } from './sharing';
 export { NonProtonInvitationState } from './sharing';
-export type { Telemetry, Logger, MetricAPIRetrySucceededEvent, MetricUploadEvent, MetricsUploadErrorType, MetricDownloadEvent, MetricsDownloadErrorType, MetricDecryptionErrorEvent, MetricsDecryptionErrorField, MetricVerificationErrorEvent, MetricVerificationErrorField, MetricVolumeEventsSubscriptionsChangedEvent, MetricEvent } from './telemetry';
+export type { Telemetry, Logger, MetricAPIRetrySucceededEvent, MetricUploadEvent, MetricsUploadErrorType, MetricDownloadEvent, MetricsDownloadErrorType, MetricDecryptionErrorEvent, MetricsDecryptionErrorField, MetricVerificationErrorEvent, MetricVerificationErrorField, MetricBlockVerificationErrorEvent, MetricVolumeEventsSubscriptionsChangedEvent, MetricEvent } from './telemetry';
 export { MetricContext } from './telemetry';
 export type { Fileuploader, UploadController, UploadMetadata } from './upload';
 export type { Thumbnail, ThumbnailResult } from './thumbnail';
