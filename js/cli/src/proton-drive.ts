@@ -27,7 +27,10 @@ if (!command.isAuthAction) {
     console.log("----------");
 }
 
-console.time("Command execution");
+if (!options.json) {
+    console.time("Command execution");
+}
+
 await command.action({
     account,
     sdk,
@@ -35,6 +38,9 @@ await command.action({
     args,
     options,
 });
-console.timeEnd("Command execution");
+
+if (!options.json) {
+    console.timeEnd("Command execution");
+}
 
 process.exit()
