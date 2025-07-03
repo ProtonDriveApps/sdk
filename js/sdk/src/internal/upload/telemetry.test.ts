@@ -31,26 +31,30 @@ describe('UploadTelemetry', () => {
     });
 
     it('should log failure during init (excludes uploaded size)', async () => {
-        await uploadTelemetry.uploadInitFailed(parentNodeUid, new Error('Failed'), 1000);
+        const error = new Error('Failed');
+        await uploadTelemetry.uploadInitFailed(parentNodeUid, error, 1000);
 
         expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
             eventName: "upload",
-            context: "own_volume",
+            volumeType: "own_volume",
             uploadedSize: 0,
             expectedSize: 1000,
             error: "unknown",
+            originalError: error,
         });
     });
 
     it('should log failure upload', async () => {
-        await uploadTelemetry.uploadFailed(revisionUid, new Error('Failed'), 500, 1000);
+        const error = new Error('Failed');
+        await uploadTelemetry.uploadFailed(revisionUid, error, 500, 1000);
 
         expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
             eventName: "upload",
-            context: "own_volume",
+            volumeType: "own_volume",
             uploadedSize: 500,
             expectedSize: 1000,
             error: "unknown",
+            originalError: error,
         });
     });
 
@@ -59,7 +63,7 @@ describe('UploadTelemetry', () => {
 
         expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
             eventName: "upload",
-            context: "own_volume",
+            volumeType: "own_volume",
             uploadedSize: 1000,
             expectedSize: 1000,
         });
@@ -109,7 +113,7 @@ describe('UploadTelemetry', () => {
         it('should detect "5xx" error for APIHTTPError with 5xx status code', async () => {
             const error = new APIHTTPError('Server error', 500);
             await uploadTelemetry.uploadFailed(revisionUid, error, 500, 1000);
-            verifyErrorCategory('5xx');
+            verifyErrorCategory('server_error');
         });
 
         it('should detect "server_error" for TimeoutError', async () => {

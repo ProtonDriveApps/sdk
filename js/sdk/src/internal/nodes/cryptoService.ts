@@ -481,12 +481,12 @@ export class NodesCryptoService {
 
         const fromBefore2024 = node.creationTime < new Date('2024-01-01');
 
-        let addressMatchingDefaultShare, context;
+        let addressMatchingDefaultShare, volumeType;
         try {
             const { volumeId } = splitNodeUid(node.uid);
             const { email } = await this.shareService.getMyFilesShareMemberEmailKey();
             addressMatchingDefaultShare = claimedAuthor ? claimedAuthor === email : undefined;
-            context = await this.shareService.getVolumeMetricContext(volumeId);
+            volumeType = await this.shareService.getVolumeMetricContext(volumeId);
         } catch (error: unknown) {
             this.logger.error('Failed to check if claimed author matches default share', error);
         }
@@ -495,7 +495,7 @@ export class NodesCryptoService {
 
         this.telemetry.logEvent({
             eventName: 'verificationError',
-            context,
+            volumeType,
             field,
             addressMatchingDefaultShare,
             fromBefore2024,
@@ -510,10 +510,10 @@ export class NodesCryptoService {
 
         const fromBefore2024 = node.creationTime < new Date('2024-01-01');
 
-        let context;
+        let volumeType;
         try {
             const { volumeId } = splitNodeUid(node.uid);
-            context = await this.shareService.getVolumeMetricContext(volumeId);
+            volumeType = await this.shareService.getVolumeMetricContext(volumeId);
         } catch (error: unknown) {
             this.logger.error('Failed to get metric context', error);
         }
@@ -522,7 +522,7 @@ export class NodesCryptoService {
 
         this.telemetry.logEvent({
             eventName: 'decryptionError',
-            context,
+            volumeType,
             field,
             fromBefore2024,
             error,

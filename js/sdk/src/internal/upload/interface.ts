@@ -1,6 +1,6 @@
 import { PrivateKey, SessionKey } from "../../crypto";
 
-import { MetricContext, ThumbnailType, Result, Revision } from "../../interface";
+import { MetricVolumeType, ThumbnailType, Result, Revision } from "../../interface";
 import { DecryptedNode } from "../nodes";
 
 export type NodeRevisionDraft = {
@@ -124,5 +124,5 @@ export interface NodesServiceNode {
  * Interface describing the dependencies to the shares module.
  */
 export interface SharesService {
-    getVolumeMetricContext(volumeId: string): Promise<MetricContext>,
+    getVolumeMetricContext(volumeId: string): Promise<MetricVolumeType>,
 }

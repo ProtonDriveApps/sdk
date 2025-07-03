@@ -31,6 +31,7 @@ export class DownloadTelemetry {
         await this.sendTelemetry(volumeId, {
             downloadedSize: 0,
             error: errorCategory,
+            originalError: error,
         });
     }
 
@@ -48,6 +49,7 @@ export class DownloadTelemetry {
             downloadedSize,
             claimedFileSize,
             error: errorCategory,
+            originalError: error,
         });
     }
 
@@ -63,17 +65,18 @@ export class DownloadTelemetry {
         downloadedSize: number,
         claimedFileSize?: number,
         error?: MetricsDownloadErrorType,
+        originalError?: unknown,
     }) {
-        let context;
+        let volumeType;
         try {
-            context = await this.sharesService.getVolumeMetricContext(volumeId);
+            volumeType = await this.sharesService.getVolumeMetricContext(volumeId);
         } catch (error: unknown) {
-            this.logger.error('Failed to get metric context', error);
+            this.logger.error('Failed to get metric volume type', error);
         }
 
         this.telemetry.logEvent({
             eventName: 'download',
-            context,
+            volumeType,
             ...options,
         });
     }
@@ -97,7 +100,7 @@ function getErrorCategory(error: unknown): MetricsDownloadErrorType | undefined 
             return '4xx';
         }
         if (error.statusCode >= 500) {
-            return '5xx';
+            return 'server_error';
         }
     }
     if (error instanceof Error) {
