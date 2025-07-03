@@ -31,25 +31,29 @@ describe('DownloadTelemetry', () => {
     });
 
     it('should log failure during init (excludes file size)', async () => {
-        await downloadTelemetry.downloadInitFailed(nodeUid, new Error('Failed'));
+        const error = new Error('Failed');
+        await downloadTelemetry.downloadInitFailed(nodeUid, error);
 
         expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
             eventName: "download",
-            context: "own_volume",
+            volumeType: "own_volume",
             downloadedSize: 0,
             error: "unknown",
+            originalError: error,
         });
     });
 
     it('should log failure download', async () => {
-        await downloadTelemetry.downloadFailed(revisionUid, new Error('Failed'), 123, 456);
+        const error = new Error('Failed');
+        await downloadTelemetry.downloadFailed(revisionUid, error, 123, 456);
 
         expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
             eventName: "download",
-            context: "own_volume",
+            volumeType: "own_volume",
             downloadedSize: 123,
             claimedFileSize: 456,
             error: "unknown",
+            originalError: error,
         });
     });
 
@@ -58,7 +62,7 @@ describe('DownloadTelemetry', () => {
 
         expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
             eventName: "download",
-            context: "own_volume",
+            volumeType: "own_volume",
             downloadedSize: 500,
             claimedFileSize: 500,
         });
@@ -78,12 +82,12 @@ describe('DownloadTelemetry', () => {
             await downloadTelemetry.downloadFailed(revisionUid, error, 100, 200);
             expect(mockTelemetry.logEvent).not.toHaveBeenCalled();
         });
-    
+
         it('should ignore AbortError', async () => {
             const error = new Error('Aborted');
             error.name = 'AbortError';
             await downloadTelemetry.downloadFailed(revisionUid, error, 100, 200);
-    
+
             expect(mockTelemetry.logEvent).not.toHaveBeenCalled();
         });
 
@@ -92,38 +96,38 @@ describe('DownloadTelemetry', () => {
             await downloadTelemetry.downloadFailed(revisionUid, error, 100, 200);
             verifyErrorCategory('rate_limited');
         });
-    
+
         it('should detect "decryption_error" for DecryptionError', async () => {
             const error = new DecryptionError('Decryption failed');
             await downloadTelemetry.downloadFailed(revisionUid, error, 100, 200);
             verifyErrorCategory('decryption_error');
         });
-    
+
         it('should detect "integrity_error" for IntegrityError', async () => {
             const error = new IntegrityError('Integrity check failed');
             await downloadTelemetry.downloadFailed(revisionUid, error, 100, 200);
             verifyErrorCategory('integrity_error');
         });
-    
+
         it('should detect "4xx" error for APIHTTPError with 4xx status code', async () => {
             const error = new APIHTTPError('Client error', 404);
             await downloadTelemetry.downloadFailed(revisionUid, error, 100, 200);
             verifyErrorCategory('4xx');
         });
-    
+
         it('should detect "5xx" error for APIHTTPError with 5xx status code', async () => {
             const error = new APIHTTPError('Server error', 500);
             await downloadTelemetry.downloadFailed(revisionUid, error, 100, 200);
-            verifyErrorCategory('5xx');
+            verifyErrorCategory('server_error');
         });
-    
+
         it('should detect "server_error" for TimeoutError', async () => {
             const error = new Error('Timeout');
             error.name = 'TimeoutError';
             await downloadTelemetry.downloadFailed(revisionUid, error, 100, 200);
             verifyErrorCategory('server_error');
         });
-    
+
         it('should detect "network_error" for NetworkError', async () => {
             const error = new Error('Network error');
             error.name = 'NetworkError';

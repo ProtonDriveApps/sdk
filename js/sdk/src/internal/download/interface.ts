@@ -1,5 +1,5 @@
 import { PrivateKey, PublicKey, SessionKey } from "../../crypto";
-import { NodeType, Result, Revision, MissingNode, MetricContext } from "../../interface";
+import { NodeType, Result, Revision, MissingNode, MetricVolumeType } from "../../interface";
 import { DecryptedNode } from "../nodes";
 
 export type BlockMetadata = {
@@ -18,7 +18,7 @@ export type RevisionKeys = {
 }
 
 export interface SharesService {
-    getVolumeMetricContext(volumeId: string): Promise<MetricContext>,
+    getVolumeMetricContext(volumeId: string): Promise<MetricVolumeType>,
 }
 
 export interface NodesService {

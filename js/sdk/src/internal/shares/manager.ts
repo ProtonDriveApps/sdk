@@ -1,4 +1,4 @@
-import { Logger, MetricContext, ProtonDriveAccount } from "../../interface";
+import { Logger, MetricVolumeType, ProtonDriveAccount } from "../../interface";
 import { PrivateKey } from "../../crypto";
 import { NotFoundAPIError } from "../apiService";
 import { SharesAPIService } from "./apiService";
@@ -195,16 +195,16 @@ export class SharesManager {
         };
     }
 
-    async getVolumeMetricContext(volumeId: string): Promise<MetricContext> {
+    async getVolumeMetricContext(volumeId: string): Promise<MetricVolumeType> {
         const { volumeId: myVolumeId } = await this.getMyFilesIDs();
 
         // SDK doesn't support public sharing yet, also public sharing
         // doesn't use a volume but shareURL, thus we can simplify and
         // ignore this case for now.
         if (volumeId === myVolumeId) {
-            return MetricContext.OwnVolume;
+            return MetricVolumeType.OwnVolume;
         }
-        return MetricContext.Shared;
+        return MetricVolumeType.Shared;
     }
 
     async loadEncryptedShare(shareId: string): Promise<EncryptedShare> {

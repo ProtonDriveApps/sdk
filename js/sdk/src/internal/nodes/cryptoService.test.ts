@@ -66,7 +66,7 @@ describe("nodesCryptoService", () => {
         expect(telemetry.logEvent).toHaveBeenCalledTimes(1);
         expect(telemetry.logEvent).toHaveBeenCalledWith({
             eventName: "verificationError",
-            context: "own_volume",
+            volumeType: "own_volume",
             fromBefore2024: false,
             addressMatchingDefaultShare: false,
             ...options,
@@ -77,7 +77,7 @@ describe("nodesCryptoService", () => {
         expect(telemetry.logEvent).toHaveBeenCalledTimes(1);
         expect(telemetry.logEvent).toHaveBeenCalledWith({
             eventName: "decryptionError",
-            context: "own_volume",
+            volumeType: "own_volume",
             fromBefore2024: false,
             ...options,
         });

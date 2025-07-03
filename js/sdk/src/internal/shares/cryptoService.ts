@@ -1,4 +1,4 @@
-import { ProtonDriveAccount, resultOk, resultError, Result, UnverifiedAuthorError, ProtonDriveTelemetry, Logger, MetricContext } from "../../interface";
+import { ProtonDriveAccount, resultOk, resultError, Result, UnverifiedAuthorError, ProtonDriveTelemetry, Logger, MetricVolumeType } from "../../interface";
 import { DriveCrypto, PrivateKey, VERIFICATION_STATUS } from "../../crypto";
 import { getVerificationMessage } from "../errors";
 import { EncryptedRootShare, DecryptedRootShare, EncryptedShareCrypto, DecryptedShareKey, ShareType } from "./interface";
@@ -91,7 +91,7 @@ export class SharesCryptoService {
             },
         }
     }
-    
+
     private reportDecryptionError(share: EncryptedRootShare, error?: unknown) {
         if (this.reportedDecryptionErrors.has(share.shareId)) {
             return;
@@ -102,7 +102,7 @@ export class SharesCryptoService {
 
         this.telemetry.logEvent({
             eventName: 'decryptionError',
-            context: shareTypeToMetricContext(share.type),
+            volumeType: shareTypeToMetricContext(share.type),
             field: 'shareKey',
             fromBefore2024,
             error,
@@ -120,7 +120,7 @@ export class SharesCryptoService {
 
         this.telemetry.logEvent({
             eventName: 'verificationError',
-            context: shareTypeToMetricContext(share.type),
+            volumeType: shareTypeToMetricContext(share.type),
             field: 'shareKey',
             fromBefore2024,
         });
@@ -128,7 +128,7 @@ export class SharesCryptoService {
     }
 }
 
-function shareTypeToMetricContext(shareType: ShareType): MetricContext {
+function shareTypeToMetricContext(shareType: ShareType): MetricVolumeType {
     // SDK doesn't support public sharing yet, also public sharing
     // doesn't use a share but shareURL, thus we can simplify and
     // ignore this case for now.
@@ -136,8 +136,8 @@ function shareTypeToMetricContext(shareType: ShareType): MetricContext {
         case ShareType.Main:
         case ShareType.Device:
         case ShareType.Photo:
-            return MetricContext.OwnVolume;
+            return MetricVolumeType.OwnVolume;
         case ShareType.Standard:
-            return MetricContext.Shared;
+            return MetricVolumeType.Shared;
     }
 }

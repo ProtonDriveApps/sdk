@@ -1,5 +1,5 @@
 import { PrivateKey, SessionKey } from "../../crypto";
-import { NodeEntity, Result, InvalidNameError, Author, MemberRole, NodeType, ThumbnailType, MetricContext, Revision, RevisionState } from "../../interface";
+import { NodeEntity, Result, InvalidNameError, Author, MemberRole, NodeType, ThumbnailType, MetricVolumeType, Revision, RevisionState } from "../../interface";
 
 /**
  * Internal common node interface for both encrypted or decrypted node.
@@ -148,5 +148,5 @@ export interface SharesService {
         addressKey: PrivateKey,
         addressKeyId: string,
     }>,
-    getVolumeMetricContext(volumeId: string): Promise<MetricContext>,
+    getVolumeMetricContext(volumeId: string): Promise<MetricVolumeType>,
 }

@@ -99,7 +99,7 @@ describe("SharesCryptoService", () => {
         expect(account.getPublicKeys).toHaveBeenCalledWith("signatureEmail");
         expect(telemetry.logEvent).toHaveBeenCalledWith({
             eventName: 'verificationError',
-            context: 'own_volume',
+            volumeType: 'own_volume',
             field: 'shareKey',
             addressMatchingDefaultShare: undefined,
             fromBefore2024: undefined,
@@ -128,7 +128,7 @@ describe("SharesCryptoService", () => {
 
         expect(telemetry.logEvent).toHaveBeenCalledWith({
             eventName: 'decryptionError',
-            context: 'own_volume',
+            volumeType: 'own_volume',
             field: 'shareKey',
             fromBefore2024: undefined,
             error,

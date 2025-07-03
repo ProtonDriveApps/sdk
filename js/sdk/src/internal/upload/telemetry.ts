@@ -40,6 +40,7 @@ export class UploadTelemetry {
             uploadedSize: 0,
             expectedSize,
             error: errorCategory,
+            originalError: error,
         });
     }
 
@@ -57,6 +58,7 @@ export class UploadTelemetry {
             uploadedSize,
             expectedSize,
             error: errorCategory,
+            originalError: error,
         });
     }
 
@@ -72,17 +74,18 @@ export class UploadTelemetry {
         uploadedSize: number,
         expectedSize: number,
         error?: MetricsUploadErrorType,
+        originalError?: unknown,
     }) {
-        let context;
+        let volumeType;
         try {
-            context = await this.sharesService.getVolumeMetricContext(volumeId);
+            volumeType = await this.sharesService.getVolumeMetricContext(volumeId);
         } catch (error: unknown) {
-            this.logger.error('Failed to get metric context', error);
+            this.logger.error('Failed to get metric volume type', error);
         }
 
         this.telemetry.logEvent({
             eventName: 'upload',
-            context,
+            volumeType,
             ...options,
         });
     }
@@ -103,7 +106,7 @@ function getErrorCategory(error: unknown): MetricsUploadErrorType | undefined {
             return '4xx';
         }
         if (error.statusCode >= 500) {
-            return '5xx';
+            return 'server_error';
         }
     }
     if (error instanceof Error) {
