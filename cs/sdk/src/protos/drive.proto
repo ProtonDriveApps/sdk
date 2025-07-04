@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option csharp_namespace = "Proton.Sdk.Drive.CExports";
+
+import "account.proto";
+
+message NodeUid {
+    string value = 1;
+}
+
+message RevisionUid {
+    string value = 1;
+}

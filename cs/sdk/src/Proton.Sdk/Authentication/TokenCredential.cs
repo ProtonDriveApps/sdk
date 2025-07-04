@@ -21,7 +21,7 @@ public sealed class TokenCredential
         _tokensTask = new Lazy<Task<(string AccessToken, string RefreshToken)>>(Task.FromResult((accessToken, refreshToken)));
     }
 
-    public event Action? TokensRefreshed;
+    public event Action<string, string>? TokensRefreshed;
     public event Action? RefreshTokenExpired;
 
     public Task<(string AccessToken, string RefreshToken)> GetTokensAsync(CancellationToken cancellationToken)
@@ -29,10 +29,9 @@ public sealed class TokenCredential
         return _tokensTask.Value.WaitAsync(cancellationToken);
     }
 
-    public async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken)
+    public async Task<(string AccessToken, string RefreshToken)> GetAccessTokenAsync(CancellationToken cancellationToken)
     {
-        var (accessToken, _) = await _tokensTask.Value.WaitAsync(cancellationToken).ConfigureAwait(false);
-        return accessToken;
+        return await _tokensTask.Value.WaitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<string> GetRefreshedAccessTokenAsync(string rejectedAccessToken, CancellationToken cancellationToken)
@@ -73,14 +72,14 @@ public sealed class TokenCredential
 
         try
         {
-            var result = await GetAccessTokenAsync(cancellationToken).ConfigureAwait(false);
+            var (accessToken, refreshToken) = await GetAccessTokenAsync(cancellationToken).ConfigureAwait(false);
 
             if (tokensTaskReplaced)
             {
-                OnTokensRefreshed();
+                OnTokensRefreshed(accessToken, refreshToken);
             }
 
-            return result;
+            return accessToken;
         }
         catch (ProtonApiException ex) when (ex.Code == ResponseCode.InvalidRefreshToken)
         {
@@ -93,9 +92,9 @@ public sealed class TokenCredential
         }
     }
 
-    private void OnTokensRefreshed()
+    private void OnTokensRefreshed(string accessToken, string refreshToken)
     {
-        TokensRefreshed?.Invoke();
+        TokensRefreshed?.Invoke(accessToken, refreshToken);
     }
 
     private void OnRefreshTokenExpired()

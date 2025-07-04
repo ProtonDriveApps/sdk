@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+option csharp_namespace = "Proton.Sdk.CExports";
+
+message LogEvent {
+    int32 level = 1;
+    string message = 2;
+    string category_name = 3;
+}
+
+enum ProtonClientTlsPolicy {
+    PROTON_CLIENT_TLS_POLICY_STRICT = 0;
+    PROTON_CLIENT_TLS_POLICY_NO_CERTIFICATE_PINNING = 1;
+    PROTON_CLIENT_TLS_POLICY_NO_CERTIFICATE_VALIDATION = 2;
+}
+
+enum AddressStatus {
+    ADDRESS_STATUS_DISABLED = 0;
+    ADDRESS_STATUS_ENABLED = 1;
+    ADDRESS_STATUS_DELETING = 2;
+}
+
+enum DelinquentState {
+    DELINQUENT_STATE_PAID = 0;
+    DELINQUENT_STATE_AVAILABLE = 1;
+    DELINQUENT_STATE_OVERDUE = 2;
+    DELINQUENT_STATE_DELINQUENT = 3;
+    DELINQUENT_STATE_NOT_RECEIVED = 4;
+}
+
+enum UserType {
+    USER_TYPE_UNKNOWN = 0;
+    USER_TYPE_PROTON = 1;
+    USER_TYPE_MANAGED = 2;
+    USER_TYPE_EXTERNAL = 3;
+}
+
+message ProtonClientOptions {
+    optional string base_url = 1;
+    optional string user_agent = 2;
+    optional string bindings_language = 3;
+    optional ProtonClientTlsPolicy tls_policy = 4;
+    optional int64 logger_provider_handle = 5;
+    optional string entity_cache_path = 6;
+}
+
+message SessionBeginRequest {
+    string username = 1;
+    string password = 2;
+    string app_version = 3;
+    optional string secret_cache_path = 5;
+    optional ProtonClientOptions options = 4;
+}
+
+message SessionResumeRequest {
+    string username = 1;
+    string app_version = 2;
+    SessionId session_id = 3;
+    UserId user_id = 4;
+    string access_token = 5;
+    string refresh_token = 6;
+    repeated string scopes = 7;
+    bool is_waiting_for_second_factor_code = 8;
+    bool is_waiting_for_data_password = 9;
+    string secret_cache_path = 10;
+    ProtonClientOptions options = 11;
+}
+
+message SessionRenewRequest {
+    SessionId session_id = 1;
+    string access_token = 2;
+    string refresh_token = 3;
+    repeated string scopes = 4;
+    bool is_waiting_for_second_factor_code = 5;
+    bool is_waiting_for_data_password = 6;
+}
+
+message SessionEndRequest {
+    int64 session_handle = 1;
+}
+
+message SessionTokens {
+    string access_token = 1;
+    string refresh_token = 2;
+}
+
+enum ErrorDomain {
+    Undefined = 0;
+    SuccessfulCancellation = 1;
+    Api = 2;
+    Network = 3;
+    Transport = 4;
+    Serialization = 5;
+    Cryptography = 6;
+    DataIntegrity = 7;
+}
+
+message Error {
+    string type = 1;
+    string message = 2;
+    ErrorDomain domain = 3;
+    optional int64 primary_code = 4;
+    optional int64 secondary_code = 5;
+    optional string context = 6;
+    optional Error inner_error = 7;
+}
+
+message StringResponse {
+    string value = 1;
+}
+
+message IntResponse {
+    int64 value = 1;
+}
+
+message SessionId {
+    string value = 1;
+}
+
+message UserId {
+    string value = 1;
+}
+
+message UserKeyId {
+    string value = 1;
+}
+
+message AddressId {
+    string value = 1;
+}
+
+message AddressKeyId {
+    string value = 1;
+}
+
+message AddressKey {
+    AddressId address_id = 1;
+    AddressKeyId address_key_id = 2;
+    bool is_allowed_for_encryption = 3;
+}
