@@ -474,7 +474,7 @@ export class SharingManagement {
             creatorEmail,
             role: options.role,
             includesCustomPassword: !!options.customPassword,
-            expirationDuration: options.expiration ? Math.floor((options.expiration.getTime() - Date.now()) / 1000) : undefined,
+            expirationTime: options.expiration ? Math.floor(options.expiration.getTime() / 1000) : undefined,
             crypto,
             srp,
         });
@@ -502,7 +502,7 @@ export class SharingManagement {
         await this.apiService.updatePublicLink(publicLink.uid, {
             role: options.role,
             includesCustomPassword: !!options.customPassword,
-            expirationDuration: options.expiration ? Math.floor((options.expiration.getTime() - Date.now()) / 1000) : undefined,
+            expirationTime: options.expiration ? Math.floor(options.expiration.getTime() / 1000) : undefined,
             crypto,
             srp,
         });

@@ -533,7 +533,7 @@ describe("SharingManagement", () => {
                 expect(apiService.createPublicLink).toHaveBeenCalledWith("shareId", expect.objectContaining({
                     role: MemberRole.Viewer,
                     includesCustomPassword: false,
-                    expirationDuration: undefined,
+                    expirationTime: undefined,
                     crypto: "publicLinkCrypto",
                     srp: "publicLinkSrp",
                 }));
@@ -570,7 +570,7 @@ describe("SharingManagement", () => {
                 expect(apiService.createPublicLink).toHaveBeenCalledWith("shareId", expect.objectContaining({
                     role: MemberRole.Viewer,
                     includesCustomPassword: true,
-                    expirationDuration: 86400,
+                    expirationTime: 1735776000,
                     crypto: "publicLinkCrypto",
                     srp: "publicLinkSrp",
                 }));
@@ -617,7 +617,7 @@ describe("SharingManagement", () => {
                 expect(apiService.updatePublicLink).toHaveBeenCalledWith("publicLinkUid", expect.objectContaining({
                     role: MemberRole.Editor,
                     includesCustomPassword: true,
-                    expirationDuration: 86400,
+                    expirationTime: 1735776000,
                     crypto: "publicLinkCrypto",
                     srp: "publicLinkSrp",
                 }));
