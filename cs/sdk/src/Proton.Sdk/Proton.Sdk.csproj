@@ -19,25 +19,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Proton.Drive.Sdk" />
-    <InternalsVisibleTo Include="Proton.Drive.Sdk.Tests" />
     <InternalsVisibleTo Include="$(AssemblyName).Tests" />
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Roslynator.Analyzers">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Update="SonarAnalyzer.CSharp">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Update="StyleCop.Analyzers">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <InternalsVisibleTo Include="Proton.Drive.Sdk" />
+    <InternalsVisibleTo Include="Proton.Drive.Sdk.Tests" />
+    <InternalsVisibleTo Include="$(NativeLibPrefix)proton_sdk" />
+    <InternalsVisibleTo Include="$(NativeLibPrefix)proton_drive_sdk" />
   </ItemGroup>
 
 </Project>
