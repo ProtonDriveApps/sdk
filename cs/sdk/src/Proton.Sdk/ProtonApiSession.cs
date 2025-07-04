@@ -209,6 +209,33 @@ public sealed class ProtonApiSession
         return session;
     }
 
+    public static ProtonApiSession Renew(
+        ProtonApiSession expiredSession,
+        SessionId sessionId,
+        string accessToken,
+        string refreshToken,
+        IEnumerable<string> scopes,
+        bool isWaitingForSecondFactorCode,
+        PasswordMode passwordMode)
+    {
+        var tokenCredential = new TokenCredential(
+            new AuthenticationApiClient(expiredSession.ClientConfiguration.GetHttpClient(), expiredSession.ClientConfiguration.RefreshRedirectUri),
+            sessionId,
+            accessToken,
+            refreshToken,
+            expiredSession.ClientConfiguration.LoggerFactory.CreateLogger<TokenCredential>());
+
+        return new ProtonApiSession(
+            sessionId,
+            expiredSession.Username,
+            expiredSession.UserId,
+            tokenCredential,
+            scopes,
+            isWaitingForSecondFactorCode,
+            passwordMode,
+            expiredSession.ClientConfiguration);
+    }
+
     public static async Task EndAsync(string id, string accessToken, string appVersion, ProtonClientOptions? options = null)
     {
         var configuration = new ProtonClientConfiguration(appVersion, options);
