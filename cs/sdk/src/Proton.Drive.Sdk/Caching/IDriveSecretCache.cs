@@ -12,11 +12,11 @@ internal interface IDriveSecretCache
 
     ValueTask SetFolderSecretsAsync(
         NodeUid nodeId,
-        RefResult<FolderSecrets, DegradedFolderSecrets> secretsProvisionResult,
+        Result<FolderSecrets, DegradedFolderSecrets> secretsProvisionResult,
         CancellationToken cancellationToken);
 
-    ValueTask<RefResult<FolderSecrets, DegradedFolderSecrets>?> TryGetFolderSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken);
+    ValueTask<Result<FolderSecrets, DegradedFolderSecrets>?> TryGetFolderSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken);
 
-    ValueTask SetFileSecretsAsync(NodeUid nodeId, RefResult<FileSecrets, DegradedFileSecrets> secretsProvisionResult, CancellationToken cancellationToken);
-    ValueTask<RefResult<FileSecrets, DegradedFileSecrets>?> TryGetFileSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken);
+    ValueTask SetFileSecretsAsync(NodeUid nodeId, Result<FileSecrets, DegradedFileSecrets> secretsProvisionResult, CancellationToken cancellationToken);
+    ValueTask<Result<FileSecrets, DegradedFileSecrets>?> TryGetFileSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken);
 }

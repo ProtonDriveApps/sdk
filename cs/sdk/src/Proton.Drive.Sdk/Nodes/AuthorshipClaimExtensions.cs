@@ -5,7 +5,7 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal static class AuthorshipClaimExtensions
 {
-    public static ValResult<Author, SignatureVerificationError> ToAuthorshipResult(
+    public static Result<Author, SignatureVerificationError> ToAuthorshipResult(
         this AuthorshipClaim authorshipClaim,
         AuthorshipVerificationFailure? verificationFailure)
     {

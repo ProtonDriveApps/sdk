@@ -17,7 +17,7 @@ public abstract record Node
 
     public DateTime? TrashTime { get; init; }
 
-    public required ValResult<Author, SignatureVerificationError> NameAuthor { get; init; }
+    public required Result<Author, SignatureVerificationError> NameAuthor { get; init; }
 
-    public required ValResult<Author, SignatureVerificationError> Author { get; init; }
+    public required Result<Author, SignatureVerificationError> Author { get; init; }
 }

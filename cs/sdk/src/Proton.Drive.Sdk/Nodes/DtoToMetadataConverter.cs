@@ -10,7 +10,7 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal static class DtoToMetadataConverter
 {
-    public static async Task<ValResult<NodeMetadata, DegradedNodeMetadata>> ConvertDtoToNodeMetadataAsync(
+    public static async Task<Result<NodeMetadata, DegradedNodeMetadata>> ConvertDtoToNodeMetadataAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
@@ -28,11 +28,11 @@ internal static class DtoToMetadataConverter
         return await ConvertDtoToNodeMetadataAsync(client, volumeId, linkDetailsDto, parentKeyResult, cancellationToken).ConfigureAwait(false);
     }
 
-    public static async Task<ValResult<NodeMetadata, DegradedNodeMetadata>> ConvertDtoToNodeMetadataAsync(
+    public static async Task<Result<NodeMetadata, DegradedNodeMetadata>> ConvertDtoToNodeMetadataAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
-        ValResult<PgpPrivateKey, ProtonDriveError> parentKeyResult,
+        Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
         CancellationToken cancellationToken)
     {
         var linkType = linkDetailsDto.Link.Type;
@@ -41,22 +41,22 @@ internal static class DtoToMetadataConverter
         {
             LinkType.Folder =>
                 (await ConvertDtoToFolderMetadataAsync(client, volumeId, linkDetailsDto, parentKeyResult, cancellationToken).ConfigureAwait(false))
-                .ConvertVal(NodeMetadata.FromFolder, DegradedNodeMetadata.FromFolder),
+                .Convert(NodeMetadata.FromFolder, DegradedNodeMetadata.FromFolder),
 
             LinkType.File =>
                 (await ConvertDtoToFileMetadataAsync(client, volumeId, linkDetailsDto, parentKeyResult, cancellationToken).ConfigureAwait(false))
-                .ConvertVal(NodeMetadata.FromFile, DegradedNodeMetadata.FromFile),
+                .Convert(NodeMetadata.FromFile, DegradedNodeMetadata.FromFile),
 
             // FIXME: handle other existing node types, and determine a way for forward compatibility or degraded result in case a new node type is introduced
             _ => throw new NotSupportedException($"Link type {linkType} is not supported."),
         };
     }
 
-    public static async ValueTask<ValResult<FolderMetadata, DegradedFolderMetadata>> ConvertDtoToFolderMetadataAsync(
+    public static async ValueTask<Result<FolderMetadata, DegradedFolderMetadata>> ConvertDtoToFolderMetadataAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
-        ValResult<PgpPrivateKey, ProtonDriveError> parentKeyResult,
+        Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
         CancellationToken cancellationToken)
     {
         var (linkDto, folderDto, _, membershipDto) = linkDetailsDto;
@@ -93,9 +93,9 @@ internal static class DtoToMetadataConverter
             var degradedSecrets = new DegradedFolderSecrets
             {
                 Key = decryptionResult.Link.NodeKey.GetValueOrDefault(),
-                PassphraseSessionKey = decryptionResult.Link.Passphrase.GetValueOrDefault()?.SessionKey,
+                PassphraseSessionKey = decryptionResult.Link.Passphrase.Merge(x => (PgpSessionKey?)x.SessionKey, _ => null),
                 NameSessionKey = nameSessionKey,
-                HashKey = decryptionResult.HashKey.GetValueOrDefault()?.Data,
+                HashKey = decryptionResult.HashKey.Merge(x => (ReadOnlyMemory<byte>?)x.Data, _ => null),
             };
 
             throw new NotImplementedException();
@@ -103,11 +103,11 @@ internal static class DtoToMetadataConverter
 
         var secrets = new FolderSecrets
         {
-            Key = nodeKey.Value,
-            PassphraseSessionKey = passphraseOutput.Value.SessionKey,
+            Key = nodeKey,
+            PassphraseSessionKey = passphraseOutput.SessionKey,
             NameSessionKey = nameSessionKey.Value,
-            HashKey = hashKeyOutput.Value.Data,
-            PassphraseForAnonymousMove = decryptionResult.Link.NodeAuthorshipClaim.Author == Author.Anonymous ? passphraseOutput.Value.Data : null,
+            HashKey = hashKeyOutput.Data,
+            PassphraseForAnonymousMove = decryptionResult.Link.NodeAuthorshipClaim.Author == Author.Anonymous ? passphraseOutput.Data : null,
         };
 
         await client.Cache.Secrets.SetFolderSecretsAsync(uid, secrets, cancellationToken).ConfigureAwait(false);
@@ -120,7 +120,7 @@ internal static class DtoToMetadataConverter
             NameAuthor = decryptionResult.Link.NameAuthorshipClaim.ToAuthorshipResult(nameOutput.Value.AuthorshipVerificationFailure),
 
             // FIXME: combine with verification failure from name hash key
-            Author = decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.Value.AuthorshipVerificationFailure),
+            Author = decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.AuthorshipVerificationFailure),
             TrashTime = linkDto.TrashTime,
         };
 
@@ -129,11 +129,11 @@ internal static class DtoToMetadataConverter
         return new FolderMetadata(node, secrets, membershipDto?.ShareId, linkDto.NameHashDigest);
     }
 
-    public static async Task<ValResult<FileMetadata, DegradedFileMetadata>> ConvertDtoToFileMetadataAsync(
+    public static async Task<Result<FileMetadata, DegradedFileMetadata>> ConvertDtoToFileMetadataAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
-        ValResult<PgpPrivateKey, ProtonDriveError> parentKeyResult,
+        Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
         CancellationToken cancellationToken)
     {
         var (linkDto, _, fileDto, membershipDto) = linkDetailsDto;
@@ -187,9 +187,9 @@ internal static class DtoToMetadataConverter
             var degradedSecrets = new DegradedFileSecrets
             {
                 Key = decryptionResult.Link.NodeKey.GetValueOrDefault(),
-                PassphraseSessionKey = decryptionResult.Link.Passphrase.GetValueOrDefault()?.SessionKey,
+                PassphraseSessionKey = decryptionResult.Link.Passphrase.Merge(x => (PgpSessionKey?)x.SessionKey, _ => null),
                 NameSessionKey = nameSessionKey,
-                ContentKey = decryptionResult.ContentKey.GetValueOrDefault()?.Data,
+                ContentKey = decryptionResult.ContentKey.Merge(x => (PgpSessionKey?)x.Data, _ => null),
             };
 
             throw new NotImplementedException();
@@ -197,18 +197,18 @@ internal static class DtoToMetadataConverter
 
         var secrets = new FileSecrets
         {
-            Key = nodeKey.Value,
-            PassphraseSessionKey = passphraseOutput.Value.SessionKey,
+            Key = nodeKey,
+            PassphraseSessionKey = passphraseOutput.SessionKey,
             NameSessionKey = nameSessionKey.Value,
-            ContentKey = contentKeyOutput.Value.Data,
+            ContentKey = contentKeyOutput.Data,
             PassphraseForAnonymousMove = decryptionResult.Link.NodeAuthorshipClaim.Author == Author.Anonymous
-                ? passphraseOutput.Value.Data
+                ? passphraseOutput.Data
                 : (ReadOnlyMemory<byte>?)null,
         };
 
         await client.Cache.Secrets.SetFileSecretsAsync(uid, secrets, cancellationToken).ConfigureAwait(false);
 
-        var extendedAttributes = extendedAttributesOutput.Value.Data;
+        var extendedAttributes = extendedAttributesOutput.Data;
 
         var node = new FileNode
         {
@@ -218,7 +218,7 @@ internal static class DtoToMetadataConverter
             NameAuthor = decryptionResult.Link.NameAuthorshipClaim.ToAuthorshipResult(nameOutput.Value.AuthorshipVerificationFailure),
 
             // FIXME: combine with verification failure from name hash key
-            Author = decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.Value.AuthorshipVerificationFailure),
+            Author = decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.AuthorshipVerificationFailure),
             TrashTime = linkDto.TrashTime,
             MediaType = fileDto.MediaType,
             ActiveRevision = new Revision
@@ -229,7 +229,7 @@ internal static class DtoToMetadataConverter
                 ClaimedSize = extendedAttributes?.Common?.Size,
                 ClaimedModificationTime = extendedAttributes?.Common?.ModificationTime,
                 Thumbnails = [], // FIXME: thumbnails
-                ContentAuthor = decryptionResult.ContentAuthorshipClaim.ToAuthorshipResult(extendedAttributesOutput.Value.AuthorshipVerificationFailure),
+                ContentAuthor = decryptionResult.ContentAuthorshipClaim.ToAuthorshipResult(extendedAttributesOutput.AuthorshipVerificationFailure),
             },
             TotalStorageQuotaUsage = fileDto.TotalStorageQuotaUsage,
         };
@@ -239,7 +239,7 @@ internal static class DtoToMetadataConverter
         return new FileMetadata(node, secrets, membershipDto?.ShareId, linkDto.NameHashDigest);
     }
 
-    private static async ValueTask<ValResult<PgpPrivateKey, ProtonDriveError>> GetParentKeyAsync(
+    private static async ValueTask<Result<PgpPrivateKey, ProtonDriveError>> GetParentKeyAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         LinkId? parentId,

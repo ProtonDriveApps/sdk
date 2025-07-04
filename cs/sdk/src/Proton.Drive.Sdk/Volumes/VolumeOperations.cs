@@ -53,7 +53,7 @@ internal static class VolumeOperations
         return (volume, share, rootFolder);
     }
 
-    public static async IAsyncEnumerable<RefResult<Node, DegradedNode>> EnumerateTrashAsync(
+    public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateTrashAsync(
         ProtonDriveClient client,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {

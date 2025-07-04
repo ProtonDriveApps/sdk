@@ -7,7 +7,7 @@ using Proton.Sdk;
 namespace Proton.Drive.Sdk.Volumes;
 
 internal sealed class VolumeTrashBatchLoader(ProtonDriveClient client, VolumeId volumeId, PgpPrivateKey shareKey)
-    : BatchLoaderBase<LinkId, RefResult<Node, DegradedNode>>
+    : BatchLoaderBase<LinkId, Result<Node, DegradedNode>>
 {
     private readonly ProtonDriveClient _client = client;
     private readonly VolumeId _volumeId = volumeId;
@@ -15,13 +15,13 @@ internal sealed class VolumeTrashBatchLoader(ProtonDriveClient client, VolumeId 
 
     private readonly Dictionary<LinkId, PgpPrivateKey> _parentKeys = new();
 
-    protected override async ValueTask<IReadOnlyList<RefResult<Node, DegradedNode>>> LoadBatchAsync(
+    protected override async ValueTask<IReadOnlyList<Result<Node, DegradedNode>>> LoadBatchAsync(
         ReadOnlyMemory<LinkId> ids,
         CancellationToken cancellationToken)
     {
         var response = await _client.Api.Links.GetDetailsAsync(_volumeId, MemoryMarshal.ToEnumerable(ids), cancellationToken).ConfigureAwait(false);
 
-        var nodeResults = new List<RefResult<Node, DegradedNode>>(ids.Length);
+        var nodeResults = new List<Result<Node, DegradedNode>>(ids.Length);
 
         foreach (var linkDetails in response.Links)
         {
