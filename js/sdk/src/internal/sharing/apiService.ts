@@ -51,7 +51,7 @@ type PutShareUrlResponse = drivePaths['/drive/shares/{shareID}/urls/{urlID}']['p
 
 /**
  * Provides API communication for fetching and managing sharing.
- * 
+ *
  * The service is responsible for transforming local objects to API payloads
  * and vice versa. It should not contain any business logic.
  */
@@ -380,7 +380,7 @@ export class SharingAPIService {
         creatorEmail: string,
         role: MemberRole,
         includesCustomPassword: boolean,
-        expirationDuration?: number,
+        expirationTime?: number,
         crypto: EncryptedPublicLinkCrypto,
         srp: SRPVerifier,
     }): Promise<{
@@ -392,8 +392,8 @@ export class SharingAPIService {
         }
 
         const result = await this.apiService.post<
-            // TODO: Backend type wrongly requires ExpirationTime and Name.
-            Omit<PostShareUrlRequest, 'ExpirationTime' | 'Name'>,
+            // TODO: Backend type wrongly requires ExpirationDuration (it should be optional) and Name (it is not used).
+            Omit<PostShareUrlRequest, 'ExpirationDuration' | 'Name'>,
             PostShareUrlResponse
         >(`drive/shares/${shareId}/urls`, {
             CreatorEmail: publicLink.creatorEmail,
@@ -408,7 +408,7 @@ export class SharingAPIService {
     async updatePublicLink(publicLinkUid: string, publicLink: {
         role: MemberRole,
         includesCustomPassword: boolean,
-        expirationDuration?: number,
+        expirationTime?: number,
         crypto: EncryptedPublicLinkCrypto,
         srp: SRPVerifier,
     }): Promise<void> {
@@ -419,8 +419,8 @@ export class SharingAPIService {
         const { shareId, publicLinkId } = splitPublicLinkUid(publicLinkUid);
 
         await this.apiService.put<
-            // TODO: Backend type wrongly requires ExpirationTime and Name.
-            Omit<PutShareUrlRequest, 'ExpirationTime' | 'Name'>,
+            // TODO: Backend type wrongly requires ExpirationTime (it should be optional) and Name (it is not used).
+            Omit<PutShareUrlRequest, 'ExpirationTime' | 'Name'> & { ExpirationTime: number | null },
             PutShareUrlResponse
         >(`drive/shares/${shareId}/urls/${publicLinkId}`, this.generatePublicLinkRequestPayload(publicLink));
     }
@@ -428,16 +428,16 @@ export class SharingAPIService {
     private generatePublicLinkRequestPayload(publicLink: {
         role: MemberRole,
         includesCustomPassword: boolean,
-        expirationDuration?: number,
+        expirationTime?: number,
         crypto: EncryptedPublicLinkCrypto,
         srp: SRPVerifier,
-    }): Pick<PostShareUrlRequest, 'Permissions' | 'Flags' | 'ExpirationDuration' | 'SharePasswordSalt' | 'SharePassphraseKeyPacket' | 'Password' | 'UrlPasswordSalt' | 'SRPVerifier' | 'SRPModulusID' | 'MaxAccesses'> {
+    }): Pick<PostShareUrlRequest, 'Permissions' | 'Flags' | 'ExpirationTime' | 'SharePasswordSalt' | 'SharePassphraseKeyPacket' | 'Password' | 'UrlPasswordSalt' | 'SRPVerifier' | 'SRPModulusID' | 'MaxAccesses'> {
         return {
             Permissions: memberRoleToPermission(publicLink.role) as 4 | 6,
             Flags: publicLink.includesCustomPassword
                 ? 3 // Random + custom password set.
                 : 2, // Random password set.
-            ExpirationDuration: publicLink.expirationDuration || null,
+            ExpirationTime: publicLink.expirationTime || null,
 
             SharePasswordSalt: publicLink.crypto.base64SharePasswordSalt,
             SharePassphraseKeyPacket: publicLink.crypto.base64SharePassphraseKeyPacket,
