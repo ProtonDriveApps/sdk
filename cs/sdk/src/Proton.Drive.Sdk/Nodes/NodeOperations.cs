@@ -87,7 +87,7 @@ internal static class NodeOperations
         GetNameParameters(name, parentFolderKey, parentFolderHashKey, nameSessionKey, signingKey, out encryptedName, out nameHashDigest);
     }
 
-    public static async ValueTask<ValResult<NodeMetadata, DegradedNodeMetadata>> GetFreshNodeMetadataAsync(
+    public static async ValueTask<Result<NodeMetadata, DegradedNodeMetadata>> GetFreshNodeMetadataAsync(
         ProtonDriveClient client,
         NodeUid uid,
         ShareAndKey? knownShareAndKey,
@@ -299,7 +299,7 @@ internal static class NodeOperations
                     if (cachedNodeInfo is var (nodeProvisionResult, membershipShareId, nameHashDigest))
                     {
                         // TODO: have the back-end return the trash time so that the cached value be exactly the same
-                        var newNodeProvisionResult = nodeProvisionResult.ConvertRef(
+                        var newNodeProvisionResult = nodeProvisionResult.Convert(
                             node => node with { TrashTime = DateTime.UtcNow },
                             degradedNode => degradedNode with { TrashTime = DateTime.UtcNow });
 
@@ -398,12 +398,12 @@ internal static class NodeOperations
     }
 
     public static bool ValidateName(
-        ValResult<PhasedDecryptionOutput<string>, string> decryptionResult,
+        Result<PhasedDecryptionOutput<string>, string> decryptionResult,
         [NotNullWhen(true)] out PhasedDecryptionOutput<string>? nameOutput,
-        out RefResult<string, ProtonDriveError> nameResult,
+        out Result<string, ProtonDriveError> nameResult,
         [NotNullWhen(true)] out PgpSessionKey? sessionKey)
     {
-        if (!decryptionResult.TryGetValueElseError(out nameOutput, out var decryptionErrorMessage))
+        if (!decryptionResult.TryGetValueElseError(out var nameOutputValue, out var decryptionErrorMessage))
         {
             nameOutput = null;
             nameResult = new DecryptionError(decryptionErrorMessage);
@@ -411,9 +411,10 @@ internal static class NodeOperations
             return false;
         }
 
-        sessionKey = nameOutput.Value.SessionKey;
+        nameOutput = nameOutputValue;
+        sessionKey = nameOutputValue.SessionKey;
 
-        var name = nameOutput.Value.Data;
+        var name = nameOutputValue.Data;
 
         if (string.IsNullOrEmpty(name))
         {
@@ -493,7 +494,7 @@ internal static class NodeOperations
         }
     }
 
-    private static async ValueTask<ValResult<NodeMetadata, DegradedNodeMetadata>?> GetNodeMetadataAsync(
+    private static async ValueTask<Result<NodeMetadata, DegradedNodeMetadata>?> GetNodeMetadataAsync(
         ProtonDriveClient client,
         NodeUid uid,
         CachedNodeInfo cachedNodeInfo,
@@ -508,14 +509,14 @@ internal static class NodeOperations
 
                     return folderSecretsResult is not null && folderSecretsResult.Value.TryGetError(out var degradedFolderSecrets)
                         ? new DegradedNodeMetadata(degradedFolderNode, degradedFolderSecrets, cachedNodeInfo.MembershipShareId, cachedNodeInfo.NameHashDigest)
-                        : (ValResult<NodeMetadata, DegradedNodeMetadata>?)null;
+                        : (Result<NodeMetadata, DegradedNodeMetadata>?)null;
 
                 case DegradedFileNode degradedFileNode:
                     var fileSecretsResult = await client.Cache.Secrets.TryGetFileSecretsAsync(uid, cancellationToken).ConfigureAwait(false);
 
                     return fileSecretsResult is not null && fileSecretsResult.Value.TryGetError(out var degradedFileSecrets)
                         ? new DegradedNodeMetadata(degradedFileNode, degradedFileSecrets, cachedNodeInfo.MembershipShareId, cachedNodeInfo.NameHashDigest)
-                        : (ValResult<NodeMetadata, DegradedNodeMetadata>?)null;
+                        : (Result<NodeMetadata, DegradedNodeMetadata>?)null;
 
                 default:
                     throw new InvalidOperationException($"Degraded node type \"{node?.GetType().Name}\" is not supported");

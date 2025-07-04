@@ -9,7 +9,7 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal static class FolderOperations
 {
-    public static async IAsyncEnumerable<RefResult<Node, DegradedNode>> EnumerateChildrenAsync(
+    public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateChildrenAsync(
         ProtonDriveClient client,
         NodeUid folderUid,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

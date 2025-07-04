@@ -31,43 +31,39 @@ internal sealed class DriveSecretCache(ICacheRepository repository) : IDriveSecr
 
     public ValueTask SetFolderSecretsAsync(
         NodeUid nodeId,
-        RefResult<FolderSecrets, DegradedFolderSecrets> secretsProvisionResult,
+        Result<FolderSecrets, DegradedFolderSecrets> secretsProvisionResult,
         CancellationToken cancellationToken)
     {
-        var serializedValue = JsonSerializer.Serialize(
-            secretsProvisionResult,
-            DriveSecretsSerializerContext.Default.NullableRefResultFolderSecretsDegradedFolderSecrets);
+        var serializedValue = JsonSerializer.Serialize(secretsProvisionResult, DriveSecretsSerializerContext.Default.ResultFolderSecretsDegradedFolderSecrets);
 
         return _repository.SetAsync(GetFolderSecretsCacheKey(nodeId), serializedValue, cancellationToken);
     }
 
-    public async ValueTask<RefResult<FolderSecrets, DegradedFolderSecrets>?> TryGetFolderSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken)
+    public async ValueTask<Result<FolderSecrets, DegradedFolderSecrets>?> TryGetFolderSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken)
     {
         var serializedValue = await _repository.TryGetAsync(GetFolderSecretsCacheKey(nodeId), cancellationToken).ConfigureAwait(false);
 
         return serializedValue is not null
-            ? JsonSerializer.Deserialize(serializedValue, DriveSecretsSerializerContext.Default.NullableRefResultFolderSecretsDegradedFolderSecrets)
+            ? JsonSerializer.Deserialize(serializedValue, DriveSecretsSerializerContext.Default.NullableResultFolderSecretsDegradedFolderSecrets)
             : null;
     }
 
     public ValueTask SetFileSecretsAsync(
         NodeUid nodeId,
-        RefResult<FileSecrets, DegradedFileSecrets> secretsProvisionResult,
+        Result<FileSecrets, DegradedFileSecrets> secretsProvisionResult,
         CancellationToken cancellationToken)
     {
-        var serializedValue = JsonSerializer.Serialize(
-            secretsProvisionResult,
-            DriveSecretsSerializerContext.Default.NullableRefResultFileSecretsDegradedFileSecrets);
+        var serializedValue = JsonSerializer.Serialize(secretsProvisionResult, DriveSecretsSerializerContext.Default.ResultFileSecretsDegradedFileSecrets);
 
         return _repository.SetAsync(GetFileSecretsCacheKey(nodeId), serializedValue, cancellationToken);
     }
 
-    public async ValueTask<RefResult<FileSecrets, DegradedFileSecrets>?> TryGetFileSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken)
+    public async ValueTask<Result<FileSecrets, DegradedFileSecrets>?> TryGetFileSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken)
     {
         var serializedValue = await _repository.TryGetAsync(GetFileSecretsCacheKey(nodeId), cancellationToken).ConfigureAwait(false);
 
         return serializedValue is not null
-            ? JsonSerializer.Deserialize(serializedValue, DriveSecretsSerializerContext.Default.NullableRefResultFileSecretsDegradedFileSecrets)
+            ? JsonSerializer.Deserialize(serializedValue, DriveSecretsSerializerContext.Default.NullableResultFileSecretsDegradedFileSecrets)
             : null;
     }
 

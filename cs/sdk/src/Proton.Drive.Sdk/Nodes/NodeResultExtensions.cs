@@ -6,9 +6,9 @@ namespace Proton.Drive.Sdk.Nodes;
 public static class NodeResultExtensions
 {
     public static bool TryGetFileElseFolder(
-        this RefResult<Node, DegradedNode> nodeResult,
-        [NotNullWhen(true)] out RefResult<FileNode, DegradedFileNode>? fileResult,
-        [NotNullWhen(false)] out RefResult<FolderNode, DegradedFolderNode>? folderResult)
+        this Result<Node, DegradedNode> nodeResult,
+        [NotNullWhen(true)] out Result<FileNode, DegradedFileNode>? fileResult,
+        [NotNullWhen(false)] out Result<FolderNode, DegradedFolderNode>? folderResult)
     {
         if (!nodeResult.TryGetValueElseError(out var node, out var degradedNode))
         {

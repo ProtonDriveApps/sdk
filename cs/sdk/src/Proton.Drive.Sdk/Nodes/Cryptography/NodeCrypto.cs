@@ -17,7 +17,7 @@ internal static class NodeCrypto
         ProtonDriveClient client,
         LinkDto link,
         FolderDto folder,
-        ValResult<PgpPrivateKey, ProtonDriveError> parentKeyResult,
+        Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
         CancellationToken cancellationToken)
     {
         var linkDecryptionResult = await DecryptLinkAsync(client, link, parentKeyResult, cancellationToken).ConfigureAwait(false);
@@ -36,7 +36,7 @@ internal static class NodeCrypto
         LinkDto linkDto,
         FileDto fileDto,
         ActiveRevisionDto activeRevisionDto,
-        ValResult<PgpPrivateKey, ProtonDriveError> parentKeyResult,
+        Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
         CancellationToken cancellationToken)
     {
         var contentAuthorshipClaim =
@@ -82,7 +82,7 @@ internal static class NodeCrypto
     private static async ValueTask<LinkDecryptionResult> DecryptLinkAsync(
         ProtonDriveClient client,
         LinkDto link,
-        ValResult<PgpPrivateKey, ProtonDriveError> parentKeyResult,
+        Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
         CancellationToken cancellationToken)
     {
         var nodeAuthorshipClaim = await AuthorshipClaim.CreateAsync(client, link.SignatureEmailAddress, cancellationToken).ConfigureAwait(false);
@@ -91,13 +91,13 @@ internal static class NodeCrypto
             ? await AuthorshipClaim.CreateAsync(client, link.NameSignatureEmailAddress, cancellationToken).ConfigureAwait(false)
             : nodeAuthorshipClaim;
 
-        ValResult<PhasedDecryptionOutput<string>, string> nameResult;
-        ValResult<PhasedDecryptionOutput<ReadOnlyMemory<byte>>, string> passphraseResult;
+        Result<PhasedDecryptionOutput<string>, string> nameResult;
+        Result<PhasedDecryptionOutput<ReadOnlyMemory<byte>>, string> passphraseResult;
 
         if (parentKeyResult.TryGetValueElseError(out var parentKey, out var parentNodeKeyInnerError))
         {
-            nameResult = DecryptName(link.Name, parentKey.Value, nameAuthorshipClaim);
-            passphraseResult = DecryptPassphrase(parentKey.Value, link.Passphrase, link.PassphraseSignature, nodeAuthorshipClaim);
+            nameResult = DecryptName(link.Name, parentKey, nameAuthorshipClaim);
+            passphraseResult = DecryptPassphrase(parentKey, link.Passphrase, link.PassphraseSignature, nodeAuthorshipClaim);
         }
         else
         {
@@ -106,7 +106,7 @@ internal static class NodeCrypto
             passphraseResult = errorMessage;
         }
 
-        var nodeKeyResult = UnlockNodeKey(link.Key, passphraseResult.GetValueOrDefault()?.Data);
+        var nodeKeyResult = UnlockNodeKey(link.Key, passphraseResult.Merge(x => (ReadOnlyMemory<byte>?)x.Data, _ => null));
 
         return new LinkDecryptionResult
         {
@@ -118,7 +118,7 @@ internal static class NodeCrypto
         };
     }
 
-    private static ValResult<PhasedDecryptionOutput<ReadOnlyMemory<byte>>, string> DecryptPassphrase(
+    private static Result<PhasedDecryptionOutput<ReadOnlyMemory<byte>>, string> DecryptPassphrase(
         PgpPrivateKey parentNodeKey,
         PgpArmoredMessage encryptedPassphrase,
         PgpArmoredSignature? signature,
@@ -136,7 +136,7 @@ internal static class NodeCrypto
         }
     }
 
-    private static ValResult<PgpPrivateKey, string?> UnlockNodeKey(PgpArmoredPrivateKey lockedKey, ReadOnlyMemory<byte>? passphrase)
+    private static Result<PgpPrivateKey, string?> UnlockNodeKey(PgpArmoredPrivateKey lockedKey, ReadOnlyMemory<byte>? passphrase)
     {
         if (passphrase is null)
         {
@@ -153,7 +153,7 @@ internal static class NodeCrypto
         }
     }
 
-    private static ValResult<PhasedDecryptionOutput<string>, string> DecryptName(
+    private static Result<PhasedDecryptionOutput<string>, string> DecryptName(
         PgpArmoredMessage encryptedName,
         PgpPrivateKey parentNodeKey,
         AuthorshipClaim authorshipClaim)
@@ -172,7 +172,7 @@ internal static class NodeCrypto
         }
     }
 
-    private static ValResult<DecryptionOutput<ReadOnlyMemory<byte>>, string?> DecryptHashKey(
+    private static Result<DecryptionOutput<ReadOnlyMemory<byte>>, string?> DecryptHashKey(
         PgpArmoredMessage? encryptedHashKey,
         PgpPrivateKey? nodeKey,
         AuthorshipClaim authorshipClaim)
@@ -199,7 +199,7 @@ internal static class NodeCrypto
         }
     }
 
-    private static ValResult<DecryptionOutput<PgpSessionKey>, string?> DecryptContentKey(
+    private static Result<DecryptionOutput<PgpSessionKey>, string?> DecryptContentKey(
         PgpPrivateKey? nodeKey,
         ReadOnlyMemory<byte> contentKeyPacket,
         PgpArmoredSignature contentKeySignature,
@@ -239,7 +239,7 @@ internal static class NodeCrypto
         return new DecryptionOutput<PgpSessionKey>(contentKey, verificationFailure);
     }
 
-    private static ValResult<DecryptionOutput<ExtendedAttributes?>, string?> DecryptExtendedAttributes(
+    private static Result<DecryptionOutput<ExtendedAttributes?>, string?> DecryptExtendedAttributes(
         PgpArmoredMessage? encryptedExtendedAttributes,
         PgpPrivateKey? nodeKey,
         AuthorshipClaim authorshipClaim)

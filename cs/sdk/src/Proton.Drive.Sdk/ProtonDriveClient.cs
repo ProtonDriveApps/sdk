@@ -72,7 +72,7 @@ public sealed class ProtonDriveClient
         return FolderOperations.CreateAsync(this, parentId, name, cancellationToken);
     }
 
-    public IAsyncEnumerable<RefResult<Node, DegradedNode>> EnumerateFolderChildrenAsync(NodeUid folderId, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateFolderChildrenAsync(NodeUid folderId, CancellationToken cancellationToken = default)
     {
         return FolderOperations.EnumerateChildrenAsync(this, folderId, cancellationToken);
     }
@@ -127,7 +127,7 @@ public sealed class ProtonDriveClient
         return NodeOperations.RestoreAsync(this, uids, cancellationToken);
     }
 
-    public IAsyncEnumerable<RefResult<Node, DegradedNode>> EnumerateTrashAsync(CancellationToken cancellationToken)
+    public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateTrashAsync(CancellationToken cancellationToken)
     {
         return VolumeOperations.EnumerateTrashAsync(this, cancellationToken);
     }
