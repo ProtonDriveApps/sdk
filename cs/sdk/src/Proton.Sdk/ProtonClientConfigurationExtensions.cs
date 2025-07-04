@@ -22,12 +22,18 @@ internal static class ProtonClientConfigurationExtensions
 
         var services = new ServiceCollection();
 
+        services.AddSingleton(config.LoggerFactory);
+
         services.ConfigureHttpClientDefaults(
             builder =>
             {
+                builder.RedactLoggedHeaders(header => header.StartsWith("Auth"));
+
                 builder.UseSocketsHttpHandler(
                     (handler, _) =>
                     {
+                        handler.PooledConnectionLifetime = TimeSpan.FromMinutes(2);
+
                         handler.AddAutomaticDecompression();
                         handler.ConfigureCookies(CookieContainer);
 
@@ -44,6 +50,8 @@ internal static class ProtonClientConfigurationExtensions
                                 break;
                         }
                     });
+
+                builder.SetHandlerLifetime(Timeout.InfiniteTimeSpan);
 
                 if (config.CustomHttpMessageHandlerFactory is not null)
                 {

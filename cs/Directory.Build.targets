@@ -1,0 +1,9 @@
+<Project>
+
+  <!-- This needs to be in the .targets file, because NETCoreSdkRuntimeIdentifier is not yet defined when the .props file is processed -->
+  <PropertyGroup>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
+    <DefineConstants Condition="$(RuntimeIdentifier.StartsWith('win'))">$(DefineConstants);WINDOWS</DefineConstants>
+  </PropertyGroup>
+
+</Project>

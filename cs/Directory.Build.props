@@ -4,9 +4,6 @@
     <TargetFramework>net9.0</TargetFramework>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 
-    <!-- It is necessary to specify a runtime identifier that will be overriden for dependencies, otherwise the property will be empty for dependencies -->
-    <RuntimeIdentifier Condition="'$(Configuration)' == 'Release'">linux-x64</RuntimeIdentifier>
-
     <Product>Proton Drive</Product>
     <Authors>Proton AG</Authors>
     <Company>Proton AG</Company>
