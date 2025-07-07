@@ -410,7 +410,7 @@ export class ProtonDriveClient {
      * @throws {@link Error} If another node with the same name already exists.
      */
     async renameNode(nodeUid: NodeOrUid, newName: string): Promise<MaybeNode> {
-        this.logger.info(`Renaming node ${nodeUid} to ${newName}`);
+        this.logger.info(`Renaming node ${getUid(nodeUid)} to ${newName}`);
         return convertInternalNodePromise(this.nodes.management.renameNode(getUid(nodeUid), newName));
     }
 

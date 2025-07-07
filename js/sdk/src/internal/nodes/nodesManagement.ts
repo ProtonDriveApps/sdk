@@ -52,7 +52,7 @@ export class NodesManagement {
             signatureEmail,
             armoredNodeName,
             hash,
-        } = await this.cryptoService.encryptNewName(nodeNameSessionKey, address, parentKeys.hashKey, newName);
+        } = await this.cryptoService.encryptNewName(parentKeys, nodeNameSessionKey, address, newName);
 
         // Because hash is optional, lets ensure we have it unless explicitely
         // allowed to rename root node.
@@ -141,7 +141,7 @@ export class NodesManagement {
             nodeUid,
             {
                 hash: node.hash,
-            }, 
+            },
             {
                 ...keySignatureProperties,
                 parentUid: newParentUid,

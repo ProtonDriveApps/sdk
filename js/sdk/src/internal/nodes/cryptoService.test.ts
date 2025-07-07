@@ -1,5 +1,5 @@
 import { DriveCrypto, PrivateKey, SessionKey, VERIFICATION_STATUS } from "../../crypto";
-import { DegradedNode, MaybeNode, ProtonDriveAccount, ProtonDriveTelemetry, RevisionState } from "../../interface";
+import { ProtonDriveAccount, ProtonDriveTelemetry, RevisionState } from "../../interface";
 import { getMockTelemetry } from "../../tests/telemetry";
 import { DecryptedNode, DecryptedNodeKeys, DecryptedUnparsedNode, EncryptedNode, SharesService } from "./interface";
 import { NodesCryptoService } from "./cryptoService";
