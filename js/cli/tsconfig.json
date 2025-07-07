@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "allowJs": false,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "incremental": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noEmit": false,
+        "noImplicitAny": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "target": "esnext",
+        "declaration": true,
+        "sourceMap": true,
+        "outDir": "dist",
+        "resolveJsonModule": true,
+        "types": [
+            "bun",
+            "jest"
+        ]
+    },
+    "include": [
+        "src/**/*.ts",
+        "integration-tests/**/*.ts"
+    ],
+    "exclude": [
+        "**/node_modules/*",
+        "dist/**/*"
+    ]
+}

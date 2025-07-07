@@ -1,4 +1,3 @@
-import { ParseArgsConfig } from "util";
 import { Command, ActionArgs } from './interface';
 
 export class CommandAuthLogout implements Command {

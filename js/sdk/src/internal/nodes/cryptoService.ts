@@ -268,7 +268,7 @@ export class NodesCryptoService {
         }
     };
 
-    async getNameSessionKey(node: DecryptedNode, parentKey: PrivateKey): Promise<SessionKey> {
+    async getNameSessionKey(node: { encryptedName: string }, parentKey: PrivateKey): Promise<SessionKey> {
         return this.driveCrypto.decryptSessionKey(node.encryptedName, parentKey);
     }
 
@@ -364,7 +364,6 @@ export class NodesCryptoService {
             hash,
         ] = await Promise.all([
             this.driveCrypto.generateKey([parentKeys.key], addressKey),
-
             this.driveCrypto.encryptNodeName(name, undefined, parentKeys.key, addressKey),
             this.driveCrypto.generateLookupHash(name, parentKeys.hashKey),
         ]);
@@ -399,9 +398,9 @@ export class NodesCryptoService {
     }
 
     async encryptNewName(
+        parentKeys: { key: PrivateKey, hashKey?: Uint8Array },
         nodeNameSessionKey: SessionKey,
         address: { email: string, addressKey: PrivateKey },
-        parentHashKey: Uint8Array | undefined,
         newName: string,
     ): Promise<{
         signatureEmail: string,
@@ -409,9 +408,11 @@ export class NodesCryptoService {
         hash?: string,
     }> {
         const { email, addressKey } = address;
-        const { armoredNodeName } = await this.driveCrypto.encryptNodeName(newName, nodeNameSessionKey, undefined, addressKey);
-        const hash = parentHashKey
-            ? await this.driveCrypto.generateLookupHash(newName, parentHashKey)
+
+        const { armoredNodeName } = await this.driveCrypto.encryptNodeName(newName, nodeNameSessionKey, parentKeys.key, addressKey);
+
+        const hash = parentKeys.hashKey
+            ? await this.driveCrypto.generateLookupHash(newName, parentKeys.hashKey)
             : undefined;
         return {
             signatureEmail: email,

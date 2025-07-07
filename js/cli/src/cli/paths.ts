@@ -67,7 +67,7 @@ export class Path {
         return path.basename(this.fullPath);
     }
 
-    async getNode() {
+    async getNode(): Promise<MaybeNode> {
         if (this.type === PathType.MyFiles) {
             const rootNode = await this.sdk.getMyFilesRootFolder();
             return this.getNodeByPath(rootNode, this.sectionPath);
@@ -128,12 +128,15 @@ export class Path {
         throw new Error('Trashed node not found');
     }
 
-    private async getDevicesRootFolder() {
+    private async getDevicesRootFolder(): Promise<MaybeNode> {
         for await (const device of this.sdk.iterateDevices()) {
             const name = device.name.ok ? device.name.value : device.name.error.name;
             if (name === this.sectionRootNodeName) {
                 const [maybeNode] = await Array.fromAsync(this.sdk.iterateNodes([device.rootFolderUid]));
-                return maybeNode;
+                if (!maybeNode.ok && 'missingUid' in maybeNode.error) {
+                    throw new Error(`Node not found`);
+                }
+                return maybeNode as MaybeNode;
             }
         }
         throw new Error('Device not found');
