@@ -11,7 +11,7 @@ export class CommandEventFolder implements Command {
         const node = await nodePath.getNode();
 
         // Consume the initial data to trigger the subscription.
-        await Array.fromAsync(sdk.iterateChildren(node));
+        await Array.fromAsync(sdk.iterateFolderChildren(node));
 
         await sdk.subscribeToRemoteDataUpdates();
         sdk.subscribeToFolder(node, (event) => eventsCallback(json, event));

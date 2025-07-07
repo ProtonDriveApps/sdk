@@ -113,9 +113,9 @@ describe('NodesManagement', () => {
         });
         expect(nodesAccess.getRootNodeEmailKey).toHaveBeenCalledWith('nodeUid');
         expect(cryptoService.encryptNewName).toHaveBeenCalledWith(
+            { key: 'parentUid-key', hashKey: 'parentUid-hashKey' },
             'nodeUid-nameSessionKey',
             { email: "root-email", addressKey: "root-key" },
-            'parentUid-hashKey',
             'new name',
         );
         expect(apiService.renameNode).toHaveBeenCalledWith(
@@ -149,9 +149,9 @@ describe('NodesManagement', () => {
         expect(nodesAccess.getRootNodeEmailKey).toHaveBeenCalledWith('newParentNodeUid');
         expect(cryptoService.moveNode).toHaveBeenCalledWith(
             nodes.nodeUid,
-            expect.objectContaining({ 
+            expect.objectContaining({
                 key: 'nodeUid-key',
-                passphrase: 'nodeUid-passphrase', 
+                passphrase: 'nodeUid-passphrase',
                 passphraseSessionKey: 'nodeUid-passphraseSessionKey',
                 contentKeyPacketSessionKey: 'nodeUid-contentKeyPacketSessionKey',
                 nameSessionKey: 'nodeUid-nameSessionKey'
@@ -186,12 +186,12 @@ describe('NodesManagement', () => {
         cryptoService.moveNode = jest.fn().mockResolvedValue(encryptedCrypto);
 
         const newNode = await management.moveNode('anonymousNodeUid', 'newParentNodeUid');
-        
+
         expect(cryptoService.moveNode).toHaveBeenCalledWith(
             nodes.anonymousNodeUid,
-            expect.objectContaining({ 
+            expect.objectContaining({
                 key: 'anonymousNodeUid-key',
-                passphrase: 'anonymousNodeUid-passphrase', 
+                passphrase: 'anonymousNodeUid-passphrase',
                 passphraseSessionKey: 'anonymousNodeUid-passphraseSessionKey',
                 contentKeyPacketSessionKey: 'anonymousNodeUid-contentKeyPacketSessionKey',
                 nameSessionKey: 'anonymousNodeUid-nameSessionKey'

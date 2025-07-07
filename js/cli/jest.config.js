@@ -1,0 +1,18 @@
+module.exports = {
+  moduleDirectories: ['<rootDir>/node_modules', '<rootDir>/../sdk/node_modules', 'node_modules'],
+  testPathIgnorePatterns: [],
+  collectCoverage: false,
+  transformIgnorePatterns: [
+    'node_modules/(?!(@openpgp|@protontech|openpgp|jsmimeparser)/)'
+  ],
+  transform: {
+    '^.+\\.(t|j)sx?$': '@swc/jest',
+    '^.+\\.mjs$': '@swc/jest',
+  },
+  moduleNameMapper: {
+    '^@openpgp/noble-hashes/esm/(.*)$': '<rootDir>/node_modules/@openpgp/noble-hashes/esm/$1.js',
+  },
+  reporters: ['default'],
+  testEnvironment: 'node',
+  setupFilesAfterEnv: [],
+};
