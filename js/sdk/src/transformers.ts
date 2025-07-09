@@ -27,7 +27,8 @@ type InternalPartialNode = Pick<
     'activeRevision' |
     'folder' |
     'totalStorageSize' |
-    'errors'
+    'errors' |
+    'shareId'
 >;
 
 type NodeUid = string | { uid: string } | Result<{ uid: string }, { uid: string }>;
@@ -86,6 +87,7 @@ export function convertInternalNode(node: InternalPartialNode): PublicMaybeNode 
         trashTime: node.trashTime,
         totalStorageSize: node.totalStorageSize,
         folder: node.folder,
+        deprecatedShareId: node.shareId,
     };
 
     const name = node.name;
