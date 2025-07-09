@@ -1,0 +1,208 @@
+{
+  "headers": {
+    "plural-forms": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < 20)) ? 1 : 2);",
+    "language": "ro_RO"
+  },
+  "contexts": {
+    "Error": {
+      "${ operationForErrorMessage } from multiple sections is not allowed": [
+        "${ operationForErrorMessage } din secțiuni multiple nu este permisă."
+      ],
+      "Cannot download a folder": [
+        "Nu se poate descărca un folder."
+      ],
+      "Cannot share root folder": [
+        "Nu se poate partaja folderul rădăcină."
+      ],
+      "Creating files in non-folders is not allowed": [
+        "Crearea fișierelor în non-foldere nu este permisă."
+      ],
+      "Creating folders in non-folders is not allowed": [
+        "Crearea folderelor în non-foldere nu este permisă."
+      ],
+      "Creating revisions in non-files is not allowed": [
+        "Crearea reviziilor în non-fișiere nu este permisă."
+      ],
+      "Data integrity check failed": [
+        "Verificarea integrității datelor a eșuat."
+      ],
+      "Data integrity check of one part failed": [
+        "Verificarea integrității datelor pentru o parte a eșuat."
+      ],
+      "Device not found": [
+        "Dispozitivul nu a fost găsit."
+      ],
+      "Expiration date cannot be in the past": [
+        "Data de expirare nu poate fi în trecut."
+      ],
+      "Failed to decrypt active revision: ${ message }": [
+        "Nu s-a reușit decriptarea reviziei active: ${ message }"
+      ],
+      "Failed to decrypt block: ${ message }": [
+        "Nu s-a reușit decriptarea blocului: ${ message }"
+      ],
+      "Failed to decrypt content key: ${ message }": [
+        "Nu s-a reușit decriptarea cheii de conținut: ${ message }"
+      ],
+      "Failed to decrypt item name: ${ message }": [
+        "Nu s-a reușit decriptarea numelui elementului: ${ message }"
+      ],
+      "Failed to decrypt node key: ${ message }": [
+        "Nu s-a reușit decriptarea cheii nodului: ${ message }"
+      ],
+      "Failed to decrypt some nodes": [
+        "Nu s-a reușit decriptarea unor noduri."
+      ],
+      "Failed to decrypt thumbnail: ${ message }": [
+        "Nu s-a reușit decriptarea miniaturii: ${ message }"
+      ],
+      "Failed to load some nodes": [
+        "Nu s-a reușit încărcarea unor noduri."
+      ],
+      "File download failed due to empty response": [
+        "Descărcarea fișierului a eșuat din cauza unui răspuns gol."
+      ],
+      "File has no active revision": [
+        "Fișierul nu are nicio revizie activă."
+      ],
+      "File has no content key": [
+        "Fișierul nu are nicio cheie de conținut."
+      ],
+      "Invitation not found": [
+        "Invitația nu a fost găsită."
+      ],
+      "Item cannot be decrypted": [
+        "Articolul nu poate fi decriptat."
+      ],
+      "Legacy public link cannot be updated. Please re-create a new public link.": [
+        "Vechea legătură web publică nu poate fi actualizată. Recreați o nouă legătură web publică."
+      ],
+      "Loading thumbnails from multiple sections is not allowed": [
+        "Încărcarea miniaturilor din secțiuni multiple nu este permisă."
+      ],
+      "Missing integrity signature": [
+        "Lipsește semnătura de integritate"
+      ],
+      "Missing signature": [
+        "Semnătură lipsă."
+      ],
+      "Missing signature for ${ signatureType }": [
+        "Semnătură lipsă pentru ${ signatureType }"
+      ],
+      "Move operation aborted": [
+        "Mutarea a fost anulată."
+      ],
+      "Moving item to a non-folder is not allowed": [
+        "Mutarea elementului într-un non-folder nu este permisă."
+      ],
+      "Moving root item is not allowed": [
+        "Mutarea rădăcinii nu este permisă."
+      ],
+      "Name must be ${ MAX_NODE_NAME_LENGTH } character long at most": [
+        "Numele trebuie să aibă cel mult ${ MAX_NODE_NAME_LENGTH } caracter.",
+        "Numele trebuie să aibă cel mult ${ MAX_NODE_NAME_LENGTH } caractere.",
+        "Numele trebuie să aibă cel mult ${ MAX_NODE_NAME_LENGTH } de caractere."
+      ],
+      "Name must not be empty": [
+        "Numele nu poate fi gol."
+      ],
+      "Name must not contain the character '/'": [
+        "Numele nu trebuie să conțină caracterul „/”."
+      ],
+      "Node has no thumbnail": [
+        "Nodul nu are miniatură."
+      ],
+      "Node is not a file": [
+        "Nodul nu este un fișier."
+      ],
+      "Node is not accessible": [
+        "Nodul nu este accesibil."
+      ],
+      "Node is not shared": [
+        "Nodul nu este partajat."
+      ],
+      "Node not found": [
+        "Nod negăsit."
+      ],
+      "Operation aborted": [
+        "Operație anulată"
+      ],
+      "Parent cannot be decrypted": [
+        "Părintele nu poate fi decriptat."
+      ],
+      "Renaming root item is not allowed": [
+        "Redenumirea rădăcinii nu este permisă."
+      ],
+      "Request aborted": [
+        "Solicitare anulată."
+      ],
+      "Signature verification failed": [
+        "Eșuare verificare semnătură."
+      ],
+      "Signature verification for ${ signatureType } failed": [
+        "Verificarea semnăturii pentru ${ signatureType } a eșuat."
+      ],
+      "Some file bytes failed to upload": [
+        "Unii octeți ai fișierului nu s-au încărcat."
+      ],
+      "Some file parts failed to upload": [
+        "Unele părți ale fișierului nu s-au încărcat."
+      ],
+      "Thumbnail not found": [
+        "Miniatură negăsită"
+      ],
+      "Too many server errors, please try again later": [
+        "Prea multe erori de server. Reîncercați mai târziu."
+      ],
+      "Too many server requests, please try again later": [
+        "Prea multe solicitări de server. Reîncercați mai târziu."
+      ],
+      "Unknown error": [
+        "Eroare necunoscută."
+      ],
+      "Unknown error ${ code }": [
+        "Eroare necunoscută ${ code }"
+      ],
+      "Unknown error ${ response.Response.Code }": [
+        "Eroare necunoscută ${ response.Response.Code }"
+      ],
+      "Verification keys are not available": [
+        "Cheile de verificare nu sunt disponibile"
+      ],
+      "Verification keys for ${ signatureType } are not available": [
+        "Cheile de verificare pentru ${ signatureType } nu sunt disponibile."
+      ],
+      "You can leave only item that is shared with you": [
+        "Puteți părăsi doar articolul care vi s-a partajat."
+      ]
+    },
+    "Operation": {
+      "Deleting items": [
+        "Ștergerea articolelor"
+      ],
+      "Restoring items": [
+        "Restaurare elemente"
+      ],
+      "Trashing items": [
+        "Se pun în gunoi articolele"
+      ]
+    },
+    "Property": {
+      "attributes": [
+        "atribute"
+      ],
+      "content key": [
+        "cheie de conținut"
+      ],
+      "hash key": [
+        "cheie criptată"
+      ],
+      "key": [
+        "cheie"
+      ],
+      "name": [
+        "nume"
+      ]
+    }
+  }
+}

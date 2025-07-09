@@ -1,0 +1,209 @@
+{
+  "headers": {
+    "plural-forms": "nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;",
+    "language": "sk_SK"
+  },
+  "contexts": {
+    "Error": {
+      "${ operationForErrorMessage } from multiple sections is not allowed": [
+        "${ operationForErrorMessage } z viacerých sekcií nie je povolené"
+      ],
+      "Cannot download a folder": [
+        "Nie je možné stiahnuť priečinok"
+      ],
+      "Cannot share root folder": [
+        "Nie je možné zdieľať koreňový priečinok"
+      ],
+      "Creating files in non-folders is not allowed": [
+        "Vytváranie súborov mimo priečinkov nie je povolené."
+      ],
+      "Creating folders in non-folders is not allowed": [
+        "Vytváranie priečinkov mimo priečinkov nie je povolené."
+      ],
+      "Creating revisions in non-files is not allowed": [
+        "Vytváranie revízií v nesúborových položkách nie je povolené."
+      ],
+      "Data integrity check failed": [
+        "Kontrola integrity dát zlyhala"
+      ],
+      "Data integrity check of one part failed": [
+        "Kontrola integrity dát jednej časti zlyhala"
+      ],
+      "Device not found": [
+        "Zariadenie nebolo nájdené"
+      ],
+      "Expiration date cannot be in the past": [
+        "Dátum expirácie nemôže byť v minulosti"
+      ],
+      "Failed to decrypt active revision: ${ message }": [
+        "Nepodarilo sa dešifrovať aktívnu revíziu: ${ message }"
+      ],
+      "Failed to decrypt block: ${ message }": [
+        "Nepodarilo sa dešifrovať blok: ${ message }"
+      ],
+      "Failed to decrypt content key: ${ message }": [
+        "Nepodarilo sa dešifrovať kľúč obsahu: ${ message }"
+      ],
+      "Failed to decrypt item name: ${ message }": [
+        "Nepodarilo sa dešifrovať názov položky: ${ message }"
+      ],
+      "Failed to decrypt node key: ${ message }": [
+        "Nepodarilo sa dešifrovať kľúč uzla: ${ message }"
+      ],
+      "Failed to decrypt some nodes": [
+        "Nepodarilo sa dešifrovať niektoré uzly"
+      ],
+      "Failed to decrypt thumbnail: ${ message }": [
+        "Nepodarilo sa dešifrovať miniatúru: ${ message }"
+      ],
+      "Failed to load some nodes": [
+        "Nepodarilo sa načítať niektoré uzly"
+      ],
+      "File download failed due to empty response": [
+        "Stiahnutie súboru zlyhalo z dôvodu prázdnej odpovede."
+      ],
+      "File has no active revision": [
+        "Súbor nemá aktívnu revíziu"
+      ],
+      "File has no content key": [
+        "Súbor nemá kľúč obsahu"
+      ],
+      "Invitation not found": [
+        "Pozvánka nenájdená"
+      ],
+      "Item cannot be decrypted": [
+        "Položku nemožno dešifrovať"
+      ],
+      "Legacy public link cannot be updated. Please re-create a new public link.": [
+        "Starý verejný odkaz sa nedá aktualizovať. Vytvorte nový verejný odkaz, prosím."
+      ],
+      "Loading thumbnails from multiple sections is not allowed": [
+        "Načítavanie miniatúr z viacerých sekcií nie je povolené"
+      ],
+      "Missing integrity signature": [
+        "Chýbajúci podpis integrity"
+      ],
+      "Missing signature": [
+        "Chýbajúci podpis"
+      ],
+      "Missing signature for ${ signatureType }": [
+        "Chýba podpis pre ${ signatureType }"
+      ],
+      "Move operation aborted": [
+        "Presun bol prerušený"
+      ],
+      "Moving item to a non-folder is not allowed": [
+        "Presúvanie položky mimo priečinka nie je povolené."
+      ],
+      "Moving root item is not allowed": [
+        "Presúvanie koreňovej položky nie je povolené"
+      ],
+      "Name must be ${ MAX_NODE_NAME_LENGTH } character long at most": [
+        "Názov musí mať najviac ${ MAX_NODE_NAME_LENGTH } znak",
+        "Názov musí mať najviac ${ MAX_NODE_NAME_LENGTH } znaky",
+        "Názov musí mať najviac ${ MAX_NODE_NAME_LENGTH } znakov",
+        "Názov musí mať najviac ${ MAX_NODE_NAME_LENGTH } znakov"
+      ],
+      "Name must not be empty": [
+        "Názov nesmie byť prázdny"
+      ],
+      "Name must not contain the character '/'": [
+        "Názov nesmie obsahovať znak '/'"
+      ],
+      "Node has no thumbnail": [
+        "Uzol nemá miniatúru"
+      ],
+      "Node is not a file": [
+        "Uzol nie je súbor"
+      ],
+      "Node is not accessible": [
+        "Uzol nie je dostupný"
+      ],
+      "Node is not shared": [
+        "Uzol nie je zdieľaný"
+      ],
+      "Node not found": [
+        "Uzol nebol nájdený"
+      ],
+      "Operation aborted": [
+        "Operácia prerušená"
+      ],
+      "Parent cannot be decrypted": [
+        "Nadradenú položku nemožno dešifrovať"
+      ],
+      "Renaming root item is not allowed": [
+        "Premenovanie koreňovej položky nie je povolené"
+      ],
+      "Request aborted": [
+        "Požiadavka prerušená"
+      ],
+      "Signature verification failed": [
+        "Overenie podpisu zlyhalo"
+      ],
+      "Signature verification for ${ signatureType } failed": [
+        "Overenie podpisu pre ${ signatureType } zlyhalo"
+      ],
+      "Some file bytes failed to upload": [
+        "Niektoré bajty súboru sa nepodarilo nahrať"
+      ],
+      "Some file parts failed to upload": [
+        "Niektoré časti súboru sa nepodarilo nahrať"
+      ],
+      "Thumbnail not found": [
+        "Miniatúra nenájdená"
+      ],
+      "Too many server errors, please try again later": [
+        "Príliš veľa serverových chýb, skúste to neskôr, prosím"
+      ],
+      "Too many server requests, please try again later": [
+        "Príliš veľa serverových požiadaviek, skúste to neskôr, prosím"
+      ],
+      "Unknown error": [
+        "Neznáma chyba"
+      ],
+      "Unknown error ${ code }": [
+        "Neznáma chyba ${ code }"
+      ],
+      "Unknown error ${ response.Response.Code }": [
+        "Neznáma chyba ${ response.Response.Code }"
+      ],
+      "Verification keys are not available": [
+        "Overovacie kľúče nie sú k dispozícii"
+      ],
+      "Verification keys for ${ signatureType } are not available": [
+        "Overovacie kľúče pre ${ signatureType } nie sú k dispozícii"
+      ],
+      "You can leave only item that is shared with you": [
+        "Môžete opustiť iba položku, ktorá je s vami zdieľaná."
+      ]
+    },
+    "Operation": {
+      "Deleting items": [
+        "Vymazávanie položiek"
+      ],
+      "Restoring items": [
+        "Obnovovanie položiek"
+      ],
+      "Trashing items": [
+        "Presúvanie položiek do koša"
+      ]
+    },
+    "Property": {
+      "attributes": [
+        "atribúty"
+      ],
+      "content key": [
+        "kľúč obsahu"
+      ],
+      "hash key": [
+        "hash kľúč"
+      ],
+      "key": [
+        "kľúč"
+      ],
+      "name": [
+        "názov"
+      ]
+    }
+  }
+}

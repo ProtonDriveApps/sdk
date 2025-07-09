@@ -1,0 +1,207 @@
+{
+  "headers": {
+    "plural-forms": "nplurals=2; plural=(n != 1);",
+    "language": "ca_ES"
+  },
+  "contexts": {
+    "Error": {
+      "${ operationForErrorMessage } from multiple sections is not allowed": [
+        "No es permet ${ operationForErrorMessage } des de diverses seccions"
+      ],
+      "Cannot download a folder": [
+        "No es pot descarregar una carpeta"
+      ],
+      "Cannot share root folder": [
+        "No es pot compartir la carpeta arrel"
+      ],
+      "Creating files in non-folders is not allowed": [
+        "No es permet crear carpetes en llocs que no són carpetes"
+      ],
+      "Creating folders in non-folders is not allowed": [
+        "No es permet crear carpetes en llocs que no són carpetes"
+      ],
+      "Creating revisions in non-files is not allowed": [
+        "No es permet crear revisions en elements que no són fitxers"
+      ],
+      "Data integrity check failed": [
+        "Ha fallat la comprovació d'integritat de les dades"
+      ],
+      "Data integrity check of one part failed": [
+        "Error amb la comprovació d'integritat de les dades d'una part"
+      ],
+      "Device not found": [
+        "No s'ha trobat el dispositiu"
+      ],
+      "Expiration date cannot be in the past": [
+        "La data de caducitat no pot haver passat"
+      ],
+      "Failed to decrypt active revision: ${ message }": [
+        "No s'ha pogut desxifrar la revisió activa: ${ message }"
+      ],
+      "Failed to decrypt block: ${ message }": [
+        "No s'ha pogut desxifrar el bloc: ${ message }"
+      ],
+      "Failed to decrypt content key: ${ message }": [
+        "No s'ha pogut desxifrar la clau de contingut: ${ message }"
+      ],
+      "Failed to decrypt item name: ${ message }": [
+        "No s'ha pogut desxifrar el nom de l'element: ${ message }"
+      ],
+      "Failed to decrypt node key: ${ message }": [
+        "No s'ha pogut desxifrar la clau del node: ${ message }"
+      ],
+      "Failed to decrypt some nodes": [
+        "No s'han pogut desxifrar alguns nodes"
+      ],
+      "Failed to decrypt thumbnail: ${ message }": [
+        "No s'ha pogut desxifrar la miniatura: ${ message }"
+      ],
+      "Failed to load some nodes": [
+        "No s'han pogut carregar alguns nodes"
+      ],
+      "File download failed due to empty response": [
+        "La descàrrega del fitxer ha fallat a causa d'una resposta buida."
+      ],
+      "File has no active revision": [
+        "Aquest fitxer no té cap revisió activa."
+      ],
+      "File has no content key": [
+        "El fitxer no té clau de contingut"
+      ],
+      "Invitation not found": [
+        "No s'ha pogut trobar la invitació"
+      ],
+      "Item cannot be decrypted": [
+        "No s'ha pogut desxifrar l'element"
+      ],
+      "Legacy public link cannot be updated. Please re-create a new public link.": [
+        "L'enllaç públic heretat no es pot actualitzar. Torneu a crear-ne un de nou."
+      ],
+      "Loading thumbnails from multiple sections is not allowed": [
+        "No està permès carregar miniatures de diverses seccions"
+      ],
+      "Missing integrity signature": [
+        "No s'ha trobat la signatura d'integritat"
+      ],
+      "Missing signature": [
+        "No s'ha pogut trobar la signatura"
+      ],
+      "Missing signature for ${ signatureType }": [
+        "Falta la signatura per a ${ signatureType }"
+      ],
+      "Move operation aborted": [
+        "S'ha cancel·lat l'operació de moviment"
+      ],
+      "Moving item to a non-folder is not allowed": [
+        "No està permès moure un element a un lloc que no és una carpeta"
+      ],
+      "Moving root item is not allowed": [
+        "No està permès moure un element arrel"
+      ],
+      "Name must be ${ MAX_NODE_NAME_LENGTH } character long at most": [
+        "El nom ha de tenir com a màxim ${ MAX_NODE_NAME_LENGTH } caràcter",
+        "El nom ha de tenir com a màxim ${ MAX_NODE_NAME_LENGTH } caràcters"
+      ],
+      "Name must not be empty": [
+        "El nom no pot estar buit."
+      ],
+      "Name must not contain the character '/'": [
+        "El nom no pot contenir el caràcter '/'"
+      ],
+      "Node has no thumbnail": [
+        "Aquest node no té miniatura"
+      ],
+      "Node is not a file": [
+        "Aquest node no és un fitxer"
+      ],
+      "Node is not accessible": [
+        "Aquest node no és accessible"
+      ],
+      "Node is not shared": [
+        "Aquest node no ha estat compartit"
+      ],
+      "Node not found": [
+        "No s'ha pogut trobar el node"
+      ],
+      "Operation aborted": [
+        "L'operació s'ha cancel·lat"
+      ],
+      "Parent cannot be decrypted": [
+        "L'element principal no es pot desxifrar"
+      ],
+      "Renaming root item is not allowed": [
+        "No està permès canviar el nom d'un element arrel"
+      ],
+      "Request aborted": [
+        "S'ha cancel·lat la sol·licitud"
+      ],
+      "Signature verification failed": [
+        "No s'ha pogut verificar la signatura."
+      ],
+      "Signature verification for ${ signatureType } failed": [
+        "No s'ha pogut verificar la signatura per a ${ signatureType }"
+      ],
+      "Some file bytes failed to upload": [
+        "Alguns bytes del fitxer no s'han pogut carregar"
+      ],
+      "Some file parts failed to upload": [
+        "Algunes parts del fitxer no s'han pogut carregar"
+      ],
+      "Thumbnail not found": [
+        "No s'ha trobat la miniatura"
+      ],
+      "Too many server errors, please try again later": [
+        "Hi ha hagut massa errors del servidor. Torneu-ho a provar més tard."
+      ],
+      "Too many server requests, please try again later": [
+        "Hi ha hagut massa peticions del servidor. Torneu-ho a provar més tard."
+      ],
+      "Unknown error": [
+        "Error desconegut"
+      ],
+      "Unknown error ${ code }": [
+        "Error desconegut ${ code }"
+      ],
+      "Unknown error ${ response.Response.Code }": [
+        "Error desconegut ${ response.Response.Code }"
+      ],
+      "Verification keys are not available": [
+        "Les claus de verificació no estan disponibles"
+      ],
+      "Verification keys for ${ signatureType } are not available": [
+        "Les claus de verificació per a ${ signatureType } no estan disponibles"
+      ],
+      "You can leave only item that is shared with you": [
+        "Només podeu abandonar un element que us hagi estat compartit."
+      ]
+    },
+    "Operation": {
+      "Deleting items": [
+        "S'estan eliminant els elements"
+      ],
+      "Restoring items": [
+        "S'estan restaurant els elements"
+      ],
+      "Trashing items": [
+        "S'estan movent els elements a la paperera"
+      ]
+    },
+    "Property": {
+      "attributes": [
+        "atributs"
+      ],
+      "content key": [
+        "clau de contingut"
+      ],
+      "hash key": [
+        "clau d'empremta electrònica"
+      ],
+      "key": [
+        "clau"
+      ],
+      "name": [
+        "nom"
+      ]
+    }
+  }
+}

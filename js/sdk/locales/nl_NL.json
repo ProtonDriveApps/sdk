@@ -1,0 +1,207 @@
+{
+  "headers": {
+    "plural-forms": "nplurals=2; plural=(n != 1);",
+    "language": "nl_NL"
+  },
+  "contexts": {
+    "Error": {
+      "${ operationForErrorMessage } from multiple sections is not allowed": [
+        "${ operationForErrorMessage } uit meerdere secties is niet toegestaan"
+      ],
+      "Cannot download a folder": [
+        "Kan geen map downloaden"
+      ],
+      "Cannot share root folder": [
+        "Kan hoofdmap niet delen"
+      ],
+      "Creating files in non-folders is not allowed": [
+        "Het aanmaken van bestanden in niet-mappen is niet toegestaan"
+      ],
+      "Creating folders in non-folders is not allowed": [
+        "Het aanmaken van mappen in niet-mappen is niet toegestaan"
+      ],
+      "Creating revisions in non-files is not allowed": [
+        "Het aanmaken van revisies in niet-mappen is niet toegestaan"
+      ],
+      "Data integrity check failed": [
+        "Integriteitscontrole van gegevens mislukt"
+      ],
+      "Data integrity check of one part failed": [
+        "Integriteitscontrole van één onderdeel is mislukt"
+      ],
+      "Device not found": [
+        "Apparaat niet gevonden"
+      ],
+      "Expiration date cannot be in the past": [
+        "De vervaldatum kan niet in het verleden liggen"
+      ],
+      "Failed to decrypt active revision: ${ message }": [
+        "Fout bij het ontsleutelen van actieve revisie: ${ message }"
+      ],
+      "Failed to decrypt block: ${ message }": [
+        "Fout bij het ontsleutelen van blok: ${ message }"
+      ],
+      "Failed to decrypt content key: ${ message }": [
+        "Fout bij het ontsleutelen van de inhoudssleutel: ${ message }"
+      ],
+      "Failed to decrypt item name: ${ message }": [
+        "Fout bij het ontsleutelen van de itemnaam: ${ message }"
+      ],
+      "Failed to decrypt node key: ${ message }": [
+        "Fout bij het ontsleutelen van de nodesleutel: ${ message }"
+      ],
+      "Failed to decrypt some nodes": [
+        "Fout bij het ontsleutelen van sommige nodes"
+      ],
+      "Failed to decrypt thumbnail: ${ message }": [
+        "Fout bij het ontsleutelen van de miniatuur: ${ message }"
+      ],
+      "Failed to load some nodes": [
+        "Fout bij het laden van sommige nodes"
+      ],
+      "File download failed due to empty response": [
+        "Het downloaden van het bestand is mislukt door een leeg antwoord"
+      ],
+      "File has no active revision": [
+        "Bestand heeft geen actieve revisie"
+      ],
+      "File has no content key": [
+        "Bestand heeft geen inhoudssleutel"
+      ],
+      "Invitation not found": [
+        "Uitnodiging niet gevonden"
+      ],
+      "Item cannot be decrypted": [
+        "Item kan niet worden ontsleuteld"
+      ],
+      "Legacy public link cannot be updated. Please re-create a new public link.": [
+        "De verouderde openbare koppeling kan niet worden bijgewerkt. Maak opnieuw een openbare koppeling aan."
+      ],
+      "Loading thumbnails from multiple sections is not allowed": [
+        "Laden van miniaturen uit meerdere secties is niet toegestaan"
+      ],
+      "Missing integrity signature": [
+        "Integriteitshandtekening ontbreekt"
+      ],
+      "Missing signature": [
+        "Handtekening ontbreekt"
+      ],
+      "Missing signature for ${ signatureType }": [
+        "Ontbrekende handtekening voor ${ signatureType }"
+      ],
+      "Move operation aborted": [
+        "Verplaatsactie afgebroken"
+      ],
+      "Moving item to a non-folder is not allowed": [
+        "Het verplaatsen van een item naar een niet-map is niet toegestaan"
+      ],
+      "Moving root item is not allowed": [
+        "Het verplaatsen van het hoofditem is niet toegelaten"
+      ],
+      "Name must be ${ MAX_NODE_NAME_LENGTH } character long at most": [
+        "Naam mag maximaal ${ MAX_NODE_NAME_LENGTH } teken lang zijn",
+        "Naam mag maximaal ${ MAX_NODE_NAME_LENGTH } tekens lang zijn"
+      ],
+      "Name must not be empty": [
+        "Naam mag niet leeg zijn"
+      ],
+      "Name must not contain the character '/'": [
+        "Naam mag het teken '/' niet bevatten"
+      ],
+      "Node has no thumbnail": [
+        "Node heeft geen miniatuur"
+      ],
+      "Node is not a file": [
+        "Node is geen bestand"
+      ],
+      "Node is not accessible": [
+        "Node is niet toegankelijk"
+      ],
+      "Node is not shared": [
+        "Node is niet gedeeld"
+      ],
+      "Node not found": [
+        "Node niet gevonden"
+      ],
+      "Operation aborted": [
+        "Handeling afgebroken"
+      ],
+      "Parent cannot be decrypted": [
+        "Bovenliggend onderdeel kan niet worden ontsleuteld"
+      ],
+      "Renaming root item is not allowed": [
+        "Het hernoemen van het hoofditem is niet toegelaten"
+      ],
+      "Request aborted": [
+        "Verzoek afgebroken"
+      ],
+      "Signature verification failed": [
+        "Controle van handtekening mislukt"
+      ],
+      "Signature verification for ${ signatureType } failed": [
+        "Verificatie van de handtekening voor ${ signatureType } is mislukt"
+      ],
+      "Some file bytes failed to upload": [
+        "Sommige bestandsbytes konden niet worden geüpload"
+      ],
+      "Some file parts failed to upload": [
+        "Sommige bestandsonderdelen konden niet worden geüpload"
+      ],
+      "Thumbnail not found": [
+        "Miniatuur niet gevonden"
+      ],
+      "Too many server errors, please try again later": [
+        "Te veel serverfouten, probeer het later opnieuw"
+      ],
+      "Too many server requests, please try again later": [
+        "Te veel serveraanvragen, probeer het later opnieuw"
+      ],
+      "Unknown error": [
+        "Onbekende fout"
+      ],
+      "Unknown error ${ code }": [
+        "Onbekende fout ${ code }"
+      ],
+      "Unknown error ${ response.Response.Code }": [
+        "Onbekende fout ${ response.Response.Code }"
+      ],
+      "Verification keys are not available": [
+        "Verificatiesleutels zijn niet beschikbaar"
+      ],
+      "Verification keys for ${ signatureType } are not available": [
+        "Verificatiesleutels voor ${ signatureType } zijn niet beschikbaar"
+      ],
+      "You can leave only item that is shared with you": [
+        "U kunt alleen een item verlaten dat met u wordt gedeeld"
+      ]
+    },
+    "Operation": {
+      "Deleting items": [
+        "Items verwijderen"
+      ],
+      "Restoring items": [
+        "Herstellen van items"
+      ],
+      "Trashing items": [
+        "Items verwijderen"
+      ]
+    },
+    "Property": {
+      "attributes": [
+        "attributen"
+      ],
+      "content key": [
+        "inhoudssleutel"
+      ],
+      "hash key": [
+        "hash sleutel"
+      ],
+      "key": [
+        "sleutel"
+      ],
+      "name": [
+        "naam"
+      ]
+    }
+  }
+}
