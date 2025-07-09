@@ -66,6 +66,15 @@ export type NodeEntity = {
      */
     isShared: boolean,
     /**
+     * Provides the ID of the share that the node is shared with.
+     *
+     * This is required only for the internal implementation to provide
+     * backward compatibility with the old Drive web setup.
+     *
+     * @deprecated This field is not part of the public API.
+     */
+    deprecatedShareId?: string,
+    /**
      * Created on server date.
      */
     creationTime: Date,
