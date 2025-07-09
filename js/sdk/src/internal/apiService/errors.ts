@@ -8,7 +8,7 @@ export function apiErrorFactory({ response, result }: { response: Response, resu
     // In such a case we want to stick to APIHTTPError to be very clear
     // it is not NotFoundAPIError.
     if (response.status === HTTPErrorCode.NOT_FOUND || !result) {
-        return new APIHTTPError(response.statusText, response.status);
+        return new APIHTTPError(response.statusText || c('Error').t`Unknown error`, response.status);
     }
 
     const typedResult = result as {
