@@ -12,7 +12,7 @@ import { NodesAccess } from "./nodesAccess";
 import { NodesManagement } from "./nodesManagement";
 import { NodesRevisons } from "./nodesRevisions";
 
-export type { DecryptedNode } from "./interface";
+export type { DecryptedNode, DecryptedRevision } from "./interface";
 export { generateFileExtendedAttributes } from "./extendedAttributes";
 
 /**

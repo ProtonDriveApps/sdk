@@ -1,5 +1,15 @@
-import { MaybeNode as PublicMaybeNode, MaybeMissingNode as PublicMaybeMissingNode, NodeEntity as PublicNodeEntity, DegradedNode as PublicDegradedNode, Result, resultOk, resultError, MissingNode } from './interface';
-import { DecryptedNode as InternalNode } from './internal/nodes';
+import {
+    MaybeNode as PublicMaybeNode,
+    MaybeMissingNode as PublicMaybeMissingNode,
+    NodeEntity as PublicNodeEntity,
+    DegradedNode as PublicDegradedNode,
+    Revision as PublicRevision,
+    Result,
+    resultOk,
+    resultError,
+    MissingNode,
+} from './interface';
+import { DecryptedNode as InternalNode, DecryptedRevision as InternalRevision } from './internal/nodes';
 
 type InternalPartialNode = Pick<
     InternalNode,
@@ -85,7 +95,7 @@ export function convertInternalNode(node: InternalPartialNode): PublicMaybeNode 
         return resultError({
             ...baseNodeMetadata,
             name,
-            activeRevision,
+            activeRevision: activeRevision?.ok ? resultOk(convertInternalRevision(activeRevision.value)) : activeRevision,
             errors: node.errors,
         } as PublicDegradedNode);
     }
@@ -93,6 +103,20 @@ export function convertInternalNode(node: InternalPartialNode): PublicMaybeNode 
     return resultOk({
         ...baseNodeMetadata,
         name: name.value,
-        activeRevision: activeRevision?.value,
+        activeRevision: activeRevision?.ok ? convertInternalRevision(activeRevision.value) : undefined,
     } as PublicNodeEntity);
+}
+
+function convertInternalRevision(revision: InternalRevision): PublicRevision {
+    return {
+        uid: revision.uid,
+        state: revision.state,
+        creationTime: revision.creationTime,
+        contentAuthor: revision.contentAuthor,
+        storageSize: revision.storageSize,
+        claimedSize: revision.claimedSize,
+        claimedModificationTime: revision.claimedModificationTime,
+        claimedDigests: revision.claimedDigests,
+        claimedAdditionalMetadata: revision.claimedAdditionalMetadata,
+    }
 }
