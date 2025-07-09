@@ -1,0 +1,207 @@
+{
+  "headers": {
+    "plural-forms": "nplurals=2; plural=(n > 1);",
+    "language": "tr_TR"
+  },
+  "contexts": {
+    "Error": {
+      "${ operationForErrorMessage } from multiple sections is not allowed": [
+        "Birden fazla bölümden ${ operationForErrorMessage } işlemine izin verilmiyor"
+      ],
+      "Cannot download a folder": [
+        "Klasör indirilemez"
+      ],
+      "Cannot share root folder": [
+        "Kök klasör paylaşılamıyor"
+      ],
+      "Creating files in non-folders is not allowed": [
+        "Klasör olmayan yerlerde dosya oluşturulmasına izin verilmemektedir."
+      ],
+      "Creating folders in non-folders is not allowed": [
+        "Klasör olmayan yerlerde klasör oluşturulmasına izin verilmemektedir."
+      ],
+      "Creating revisions in non-files is not allowed": [
+        "Dosya olmayanlarda revizyon oluşturulmasına izin verilmemektedir."
+      ],
+      "Data integrity check failed": [
+        "Veri bütünlüğü kontrolü başarısız oldu"
+      ],
+      "Data integrity check of one part failed": [
+        "Bir parçanın veri bütünlüğü kontrolü başarısız oldu"
+      ],
+      "Device not found": [
+        "Aygıt bulunamadı"
+      ],
+      "Expiration date cannot be in the past": [
+        "Geçerlilik süresi geçmiş bir tarih olamaz"
+      ],
+      "Failed to decrypt active revision: ${ message }": [
+        "Etkin düzeltmenin şifresi çözülemedi: ${ message }"
+      ],
+      "Failed to decrypt block: ${ message }": [
+        "Blok şifresi çözülemedi: ${ message }"
+      ],
+      "Failed to decrypt content key: ${ message }": [
+        "İçerik anahtarının şifresi çözülemedi: ${ message }"
+      ],
+      "Failed to decrypt item name: ${ message }": [
+        "Öğe adının şifresi çözülemedi: ${ message }"
+      ],
+      "Failed to decrypt node key: ${ message }": [
+        "Düğüm anahtarının şifresi çözülemedi: ${ message }"
+      ],
+      "Failed to decrypt some nodes": [
+        "Bazı düğümlerin şifresi çözülemedi."
+      ],
+      "Failed to decrypt thumbnail: ${ message }": [
+        "Küçük görselin şifresi çözülemedi: ${ message }"
+      ],
+      "Failed to load some nodes": [
+        "Bazı düğümler yüklenemedi"
+      ],
+      "File download failed due to empty response": [
+        "Boş yanıt nedeniyle dosya indirme başarısız oldu."
+      ],
+      "File has no active revision": [
+        "Dosyanın aktif revizyonu bulunmamaktadır."
+      ],
+      "File has no content key": [
+        "Dosyanın içerik anahtarı yok."
+      ],
+      "Invitation not found": [
+        "Davet bulunamadı"
+      ],
+      "Item cannot be decrypted": [
+        "Öğenin şifresi çözülemez"
+      ],
+      "Legacy public link cannot be updated. Please re-create a new public link.": [
+        "Eski herkese açık bağlantı güncellenemez. Lütfen yeni bir herkese açık bağlantı oluşturun."
+      ],
+      "Loading thumbnails from multiple sections is not allowed": [
+        "Birden fazla bölümden küçük görsellerin yüklenmesine izin verilmemektedir."
+      ],
+      "Missing integrity signature": [
+        "Bütünlük imzası eksik"
+      ],
+      "Missing signature": [
+        "İmza eksik"
+      ],
+      "Missing signature for ${ signatureType }": [
+        "${ signatureType } için imza eksik"
+      ],
+      "Move operation aborted": [
+        "Taşıma işlemi iptal edildi"
+      ],
+      "Moving item to a non-folder is not allowed": [
+        "Öğenin klasör olmayan bir yere taşınmasına izin verilmemektedir."
+      ],
+      "Moving root item is not allowed": [
+        "Kök öğenin taşınmasına izin verilmiyor"
+      ],
+      "Name must be ${ MAX_NODE_NAME_LENGTH } character long at most": [
+        "Ad en fazla ${ MAX_NODE_NAME_LENGTH } karakter uzunluğunda olmalıdır.",
+        "Ad en fazla ${ MAX_NODE_NAME_LENGTH } karakter uzunluğunda olmalıdır."
+      ],
+      "Name must not be empty": [
+        "Ad boş olamaz"
+      ],
+      "Name must not contain the character '/'": [
+        "Ad \"/\" karakterini içermemelidir."
+      ],
+      "Node has no thumbnail": [
+        "Düğümün küçük resmi yok"
+      ],
+      "Node is not a file": [
+        "Düğüm bir dosya değil"
+      ],
+      "Node is not accessible": [
+        "Düğüme erişilemiyor"
+      ],
+      "Node is not shared": [
+        "Düğüm paylaşılmamış"
+      ],
+      "Node not found": [
+        "Düğüm bulunamadı"
+      ],
+      "Operation aborted": [
+        "İşlem iptal edildi"
+      ],
+      "Parent cannot be decrypted": [
+        "Üst öğenin şifresi çözülemez"
+      ],
+      "Renaming root item is not allowed": [
+        "Kök öğenin yeniden adlandırılmasına izin verilmiyor."
+      ],
+      "Request aborted": [
+        "İstek iptal edildi"
+      ],
+      "Signature verification failed": [
+        "İmza doğrulaması başarısız oldu"
+      ],
+      "Signature verification for ${ signatureType } failed": [
+        "${ signatureType } için imza doğrulama başarısız oldu."
+      ],
+      "Some file bytes failed to upload": [
+        "Bazı dosya baytları yüklenemedi."
+      ],
+      "Some file parts failed to upload": [
+        "Bazı dosya parçaları yüklenemedi."
+      ],
+      "Thumbnail not found": [
+        "Küçük resim bulunamadı"
+      ],
+      "Too many server errors, please try again later": [
+        "Çok fazla sunucu hatası oluştu, lütfen daha sonra yeniden deneyin"
+      ],
+      "Too many server requests, please try again later": [
+        "Çok fazla sayıda sunucu isteği yapıldı. Lütfen bir süre sonra yeniden deneyin."
+      ],
+      "Unknown error": [
+        "Bilinmeyen sorun"
+      ],
+      "Unknown error ${ code }": [
+        "Bilinmeyen hata ${ code }"
+      ],
+      "Unknown error ${ response.Response.Code }": [
+        "Bilinmeyen hata ${ response.Response.Code }"
+      ],
+      "Verification keys are not available": [
+        "Doğrulama anahtarları mevcut değil"
+      ],
+      "Verification keys for ${ signatureType } are not available": [
+        "${ signatureType } için doğrulama anahtarları mevcut değil"
+      ],
+      "You can leave only item that is shared with you": [
+        "Sadece sizinle paylaşılan öğeyi bırakabilirsiniz"
+      ]
+    },
+    "Operation": {
+      "Deleting items": [
+        "Öğeler siliniyor"
+      ],
+      "Restoring items": [
+        "Öğeler geri yükleniyor"
+      ],
+      "Trashing items": [
+        "Öğeler çöpe atılıyor"
+      ]
+    },
+    "Property": {
+      "attributes": [
+        "özellikler"
+      ],
+      "content key": [
+        "içerik anahtarı"
+      ],
+      "hash key": [
+        "karma anahtarı"
+      ],
+      "key": [
+        "anahtar"
+      ],
+      "name": [
+        "ad"
+      ]
+    }
+  }
+}

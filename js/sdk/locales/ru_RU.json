@@ -1,0 +1,209 @@
+{
+  "headers": {
+    "plural-forms": "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);",
+    "language": "ru_RU"
+  },
+  "contexts": {
+    "Error": {
+      "${ operationForErrorMessage } from multiple sections is not allowed": [
+        "${ operationForErrorMessage } из нескольких разделов не допускается"
+      ],
+      "Cannot download a folder": [
+        "Невозможно скачать папку"
+      ],
+      "Cannot share root folder": [
+        "Невозможно поделиться корневой папкой"
+      ],
+      "Creating files in non-folders is not allowed": [
+        "Создание файлов в элементах, не являющихся папками, не допускается"
+      ],
+      "Creating folders in non-folders is not allowed": [
+        "Создание папок в элементах, не являющихся папками, не допускается"
+      ],
+      "Creating revisions in non-files is not allowed": [
+        "Создание версий в элементах, не являющихся файлами, не допускается"
+      ],
+      "Data integrity check failed": [
+        "Проверка целостности данных не пройдена"
+      ],
+      "Data integrity check of one part failed": [
+        "Проверка целостности данных одной из частей не пройдена"
+      ],
+      "Device not found": [
+        "Устройство не найдено"
+      ],
+      "Expiration date cannot be in the past": [
+        "Дата окончания срока действия не может быть в прошлом"
+      ],
+      "Failed to decrypt active revision: ${ message }": [
+        "Не удалось расшифровать активную версию: ${ message }"
+      ],
+      "Failed to decrypt block: ${ message }": [
+        "Не удалось расшифровать блок: ${ message }"
+      ],
+      "Failed to decrypt content key: ${ message }": [
+        "Не удалось расшифровать ключ содержимого: ${ message }"
+      ],
+      "Failed to decrypt item name: ${ message }": [
+        "Не удалось расшифровать имя элемента: ${ message }"
+      ],
+      "Failed to decrypt node key: ${ message }": [
+        "Не удалось расшифровать ключ узла: ${ message }"
+      ],
+      "Failed to decrypt some nodes": [
+        "Не удалось расшифровать некоторые узлы"
+      ],
+      "Failed to decrypt thumbnail: ${ message }": [
+        "Не удалось расшифровать значок: ${ message }"
+      ],
+      "Failed to load some nodes": [
+        "Не удалось загрузить некоторые узлы"
+      ],
+      "File download failed due to empty response": [
+        "Не удалось скачать файл из-за пустого ответа"
+      ],
+      "File has no active revision": [
+        "Файл не имеет активной версии"
+      ],
+      "File has no content key": [
+        "У файла нет ключа содержимого"
+      ],
+      "Invitation not found": [
+        "Приглашение не найдено"
+      ],
+      "Item cannot be decrypted": [
+        "Элемент не может быть расшифрован"
+      ],
+      "Legacy public link cannot be updated. Please re-create a new public link.": [
+        "Устаревшую публичную ссылку невозможно обновить. Создайте новую публичную ссылку."
+      ],
+      "Loading thumbnails from multiple sections is not allowed": [
+        "Загрузка значков из нескольких разделов не допускается"
+      ],
+      "Missing integrity signature": [
+        "Отсутствует подпись целостности"
+      ],
+      "Missing signature": [
+        "Подпись отсутствует"
+      ],
+      "Missing signature for ${ signatureType }": [
+        "Отсутствует подпись для ${ signatureType }"
+      ],
+      "Move operation aborted": [
+        "Операция перемещения прервана"
+      ],
+      "Moving item to a non-folder is not allowed": [
+        "Перемещение элемента в элемент, не являющийся папкой, не допускается"
+      ],
+      "Moving root item is not allowed": [
+        "Перемещение корневого элемента не допускается"
+      ],
+      "Name must be ${ MAX_NODE_NAME_LENGTH } character long at most": [
+        "Имя должно состоять не более чем из ${ MAX_NODE_NAME_LENGTH } символа",
+        "Имя должно состоять не более чем из ${ MAX_NODE_NAME_LENGTH } символов",
+        "Имя должно состоять не более чем из ${ MAX_NODE_NAME_LENGTH } символов",
+        "Имя должно состоять не более чем из ${ MAX_NODE_NAME_LENGTH } символов"
+      ],
+      "Name must not be empty": [
+        "Название не может быть пустым"
+      ],
+      "Name must not contain the character '/'": [
+        "Имя не должно содержать символ «/»"
+      ],
+      "Node has no thumbnail": [
+        "У узла нет значка"
+      ],
+      "Node is not a file": [
+        "Узел не является файлом"
+      ],
+      "Node is not accessible": [
+        "Узел недоступен"
+      ],
+      "Node is not shared": [
+        "Узел не является общим"
+      ],
+      "Node not found": [
+        "Узел не найден"
+      ],
+      "Operation aborted": [
+        "Операция прервана"
+      ],
+      "Parent cannot be decrypted": [
+        "Родительский элемент не может быть расшифрован"
+      ],
+      "Renaming root item is not allowed": [
+        "Переименование корневого элемента не допускается"
+      ],
+      "Request aborted": [
+        "Запрос прерван"
+      ],
+      "Signature verification failed": [
+        "Проверка подписи не удалась"
+      ],
+      "Signature verification for ${ signatureType } failed": [
+        "Проверка подписи для ${ signatureType } не удалась"
+      ],
+      "Some file bytes failed to upload": [
+        "Не удалось загрузить некоторые байты файла"
+      ],
+      "Some file parts failed to upload": [
+        "Не удалось загрузить некоторые части файла"
+      ],
+      "Thumbnail not found": [
+        "Значок не найден"
+      ],
+      "Too many server errors, please try again later": [
+        "Слишком много ошибок сервера, повторите попытку позже"
+      ],
+      "Too many server requests, please try again later": [
+        "Слишком много запросов к серверу, повторите попытку позже"
+      ],
+      "Unknown error": [
+        "Неизвестная ошибка"
+      ],
+      "Unknown error ${ code }": [
+        "Неизвестная ошибка ${ code }"
+      ],
+      "Unknown error ${ response.Response.Code }": [
+        "Неизвестная ошибка ${ response.Response.Code }"
+      ],
+      "Verification keys are not available": [
+        "Ключи проверки недоступны"
+      ],
+      "Verification keys for ${ signatureType } are not available": [
+        "Ключи проверки для ${ signatureType } недоступны"
+      ],
+      "You can leave only item that is shared with you": [
+        "Вы можете покинуть только тот элемент, к которому вам предоставили доступ"
+      ]
+    },
+    "Operation": {
+      "Deleting items": [
+        "Удаление элементов"
+      ],
+      "Restoring items": [
+        "Восстановление элементов"
+      ],
+      "Trashing items": [
+        "Перемещение элементов в корзину"
+      ]
+    },
+    "Property": {
+      "attributes": [
+        "атрибуты"
+      ],
+      "content key": [
+        "ключ содержимого"
+      ],
+      "hash key": [
+        "хеш-ключ"
+      ],
+      "key": [
+        "ключ"
+      ],
+      "name": [
+        "название"
+      ]
+    }
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "headers": {
+    "plural-forms": "nplurals=2; plural=(n != 1);",
+    "language": "it_IT"
+  },
+  "contexts": {
+    "Error": {
+      "${ operationForErrorMessage } from multiple sections is not allowed": [
+        "Non è consentito ${ operationForErrorMessage } da più sezioni"
+      ],
+      "Cannot download a folder": [
+        "Impossibile scaricare una cartella"
+      ],
+      "Cannot share root folder": [
+        "Impossibile condividere la cartella principale"
+      ],
+      "Creating files in non-folders is not allowed": [
+        "Non è consentito creare file in elementi che non sono cartelle."
+      ],
+      "Creating folders in non-folders is not allowed": [
+        "Non è consentito creare cartelle in elementi che non sono cartelle."
+      ],
+      "Creating revisions in non-files is not allowed": [
+        "Non è consentito creare revisioni in elementi non-file"
+      ],
+      "Data integrity check failed": [
+        "Il controllo di integrità dei dati non è riuscito"
+      ],
+      "Data integrity check of one part failed": [
+        "Il controllo di integrità dei dati di una parte non è riuscito"
+      ],
+      "Device not found": [
+        "Dispositivo non trovato"
+      ],
+      "Expiration date cannot be in the past": [
+        "La data di scadenza non può essere nel passato"
+      ],
+      "Failed to decrypt active revision: ${ message }": [
+        "Impossibile decriptare la revisione attiva: ${ message }"
+      ],
+      "Failed to decrypt block: ${ message }": [
+        "Impossibile decriptare il blocco: ${ message }"
+      ],
+      "Failed to decrypt content key: ${ message }": [
+        "Impossibile decriptare la chiave di contenuto: ${ message }"
+      ],
+      "Failed to decrypt item name: ${ message }": [
+        "Impossibile decriptare il nome dell'elemento: ${ message }"
+      ],
+      "Failed to decrypt node key: ${ message }": [
+        "Impossibile decriptare la chiave del nodo: ${ message }"
+      ],
+      "Failed to decrypt some nodes": [
+        "Impossibile decriptare alcuni nodi"
+      ],
+      "Failed to decrypt thumbnail: ${ message }": [
+        "Impossibile decriptare la miniatura: ${ message }"
+      ],
+      "Failed to load some nodes": [
+        "Impossibile caricare alcuni nodi"
+      ],
+      "File download failed due to empty response": [
+        "Scaricamento del file fallito a causa di una risposta vuota."
+      ],
+      "File has no active revision": [
+        "Il file non ha una revisione attiva"
+      ],
+      "File has no content key": [
+        "Il file non ha una chiave di contenuto"
+      ],
+      "Invitation not found": [
+        "Invito non trovato"
+      ],
+      "Item cannot be decrypted": [
+        "Impossibile decriptare l'elemento"
+      ],
+      "Legacy public link cannot be updated. Please re-create a new public link.": [
+        "Il link pubblico obsoleto non può essere aggiornato. Per favore, ricrea un nuovo link pubblico."
+      ],
+      "Loading thumbnails from multiple sections is not allowed": [
+        "Non è consentito caricare miniature da più sezioni"
+      ],
+      "Missing integrity signature": [
+        "Firma di integrità mancante"
+      ],
+      "Missing signature": [
+        "Firma mancante"
+      ],
+      "Missing signature for ${ signatureType }": [
+        "Firma mancante per ${ signatureType }"
+      ],
+      "Move operation aborted": [
+        "Spostamento interrotto"
+      ],
+      "Moving item to a non-folder is not allowed": [
+        "Non è consentito spostare l'elemento in un elemento che non è una cartella."
+      ],
+      "Moving root item is not allowed": [
+        "Non è consentito spostare l'elemento radice"
+      ],
+      "Name must be ${ MAX_NODE_NAME_LENGTH } character long at most": [
+        "Il nome deve essere lungo al massimo ${ MAX_NODE_NAME_LENGTH } carattere",
+        "Il nome deve essere lungo al massimo ${ MAX_NODE_NAME_LENGTH } caratteri"
+      ],
+      "Name must not be empty": [
+        "Nome necessario"
+      ],
+      "Name must not contain the character '/'": [
+        "Il nome non deve contenere il carattere '/'"
+      ],
+      "Node has no thumbnail": [
+        "Il nodo non ha alcuna miniatura"
+      ],
+      "Node is not a file": [
+        "Il nodo non è un file"
+      ],
+      "Node is not accessible": [
+        "Il nodo non è accessibile"
+      ],
+      "Node is not shared": [
+        "Il nodo non è condiviso"
+      ],
+      "Node not found": [
+        "Nodo non trovato"
+      ],
+      "Operation aborted": [
+        "Operazione annullata"
+      ],
+      "Parent cannot be decrypted": [
+        "Impossibile decriptare il genitore"
+      ],
+      "Renaming root item is not allowed": [
+        "Non è consentito rinominare l'elemento radice"
+      ],
+      "Request aborted": [
+        "Richiesta interrotta"
+      ],
+      "Signature verification failed": [
+        "Verifica della firma non riuscita"
+      ],
+      "Signature verification for ${ signatureType } failed": [
+        "Verifica della firma per ${ signatureType } non riuscita"
+      ],
+      "Some file bytes failed to upload": [
+        "Alcuni byte del file non sono stati caricati"
+      ],
+      "Some file parts failed to upload": [
+        "Alcune parti di file non sono state caricate"
+      ],
+      "Thumbnail not found": [
+        "Miniatura non trovata"
+      ],
+      "Too many server errors, please try again later": [
+        "Troppi errori del server, riprova più tardi"
+      ],
+      "Too many server requests, please try again later": [
+        "Troppe richieste del server, riprova più tardi"
+      ],
+      "Unknown error": [
+        "Errore sconosciuto"
+      ],
+      "Unknown error ${ code }": [
+        "Errore sconosciuto ${ code }"
+      ],
+      "Unknown error ${ response.Response.Code }": [
+        "Errore sconosciuto ${ response.Response.Code }"
+      ],
+      "Verification keys are not available": [
+        "Le chiavi di verifica non sono disponibili"
+      ],
+      "Verification keys for ${ signatureType } are not available": [
+        "Le chiavi di verifica per ${ signatureType } non sono disponibili"
+      ],
+      "You can leave only item that is shared with you": [
+        "Puoi lasciare solo l'elemento che è condiviso con te"
+      ]
+    },
+    "Operation": {
+      "Deleting items": [
+        "Eliminazione elementi"
+      ],
+      "Restoring items": [
+        "Ripristino elementi"
+      ],
+      "Trashing items": [
+        "Cancellazione elementi"
+      ]
+    },
+    "Property": {
+      "attributes": [
+        "attributi"
+      ],
+      "content key": [
+        "chiave contenuto"
+      ],
+      "hash key": [
+        "chiave hash"
+      ],
+      "key": [
+        "chiave"
+      ],
+      "name": [
+        "nome"
+      ]
+    }
+  }
+}

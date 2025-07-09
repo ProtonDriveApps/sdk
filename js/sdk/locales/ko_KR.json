@@ -1,0 +1,203 @@
+{
+  "headers": {
+    "plural-forms": "nplurals=1; plural=0;",
+    "language": "ko_KR"
+  },
+  "contexts": {
+    "Error": {
+      "${ operationForErrorMessage } from multiple sections is not allowed": [
+        "다중 섹션으로 부터의 ${ operationForErrorMessage }은(는) 허락되지 않습니다."
+      ],
+      "Cannot download a folder": [
+        "폴더를 다운로드할 수 없음"
+      ],
+      "Cannot share root folder": [
+        "상위 폴더를 공유할 수 없습니다"
+      ],
+      "Creating files in non-folders is not allowed": [
+        "폴더가 아닌 곳에 폴더를 생성할 수 없습니다"
+      ],
+      "Creating folders in non-folders is not allowed": [
+        "폴더가 아닌 곳에 폴더를 생성할 수 없습니다."
+      ],
+      "Creating revisions in non-files is not allowed": [
+        "파일이 아닌 곳에서는 개정본 생성이 허용되지 않습니다."
+      ],
+      "Data integrity check failed": [
+        "데이터 무결성 검사 실패"
+      ],
+      "Data integrity check of one part failed": [
+        "일부 데이터 무결성 검사에 실패했습니다"
+      ],
+      "Device not found": [
+        "기기를 찾을 수 없음"
+      ],
+      "Expiration date cannot be in the past": [
+        "만료 일자는 과거일 수 없습니다"
+      ],
+      "Failed to decrypt active revision: ${ message }": [
+        "활성 개정본 복호화 실패: ${ message }"
+      ],
+      "Failed to decrypt block: ${ message }": [
+        "블록을 복호화할 수 없음: ${ message }"
+      ],
+      "Failed to decrypt content key: ${ message }": [
+        "콘텐츠 키 복호화 실패: ${ message }"
+      ],
+      "Failed to decrypt item name: ${ message }": [
+        "항목 이름을 복호화할 수 없음: ${ message }"
+      ],
+      "Failed to decrypt node key: ${ message }": [
+        "노드 키 복호화 실패: ${ message }"
+      ],
+      "Failed to decrypt some nodes": [
+        "일부 노드를 복호화할 수 없음"
+      ],
+      "Failed to decrypt thumbnail: ${ message }": [
+        "섬내일 복호화 실패: ${ message }"
+      ],
+      "Failed to load some nodes": [
+        "일부 로드 불러오기 실패"
+      ],
+      "File download failed due to empty response": [
+        "빈 응답으로 인하여 다운로드에 실패했습니다"
+      ],
+      "File has no active revision": [
+        "파일에 활성 수정 버전이 없습니다"
+      ],
+      "File has no content key": [
+        "파일에 콘텐츠 키가 없습니다"
+      ],
+      "Invitation not found": [
+        "초대를 찾을 수 없음"
+      ],
+      "Item cannot be decrypted": [
+        "항목을 복호화할 수 없습니다"
+      ],
+      "Legacy public link cannot be updated. Please re-create a new public link.": [
+        "레거시 공개 링크는 업데이트가 불가능합니다. 새로운 공개 링크를 다시 생성해 주세요."
+      ],
+      "Loading thumbnails from multiple sections is not allowed": [
+        "여러 섹션에서 섬네일 로드는 허용되지 않습니다."
+      ],
+      "Missing integrity signature": [
+        "무결성 서명 없음"
+      ],
+      "Missing signature": [
+        "서명 누락"
+      ],
+      "Missing signature for ${ signatureType }": [
+        "${ signatureType }에 대한 서명 누락"
+      ],
+      "Move operation aborted": [
+        "이동 작업 중단됨"
+      ],
+      "Moving item to a non-folder is not allowed": [
+        "폴더가 아닌 곳에 항목 이동이 불가능합니다."
+      ],
+      "Moving root item is not allowed": [
+        "상위 항목으로 이동은 허용되지 않습니다"
+      ],
+      "Name must be ${ MAX_NODE_NAME_LENGTH } character long at most": [
+        "이름은 최대 ${ MAX_NODE_NAME_LENGTH }글자까지입니다."
+      ],
+      "Name must not be empty": [
+        "이름은 비워둘 수 없습니다"
+      ],
+      "Name must not contain the character '/'": [
+        "이름에 문자 '/'을 포함할 수 없습니다"
+      ],
+      "Node has no thumbnail": [
+        "노드에 섬내일이 없습니다"
+      ],
+      "Node is not a file": [
+        "노드가 파일이 아닙니다"
+      ],
+      "Node is not accessible": [
+        "노드에 접근할 수 없습니다"
+      ],
+      "Node is not shared": [
+        "노드가 공유되지 않습니다"
+      ],
+      "Node not found": [
+        "노드를 찾을 수 없음"
+      ],
+      "Operation aborted": [
+        "작업 중단됨"
+      ],
+      "Parent cannot be decrypted": [
+        "상위 항목을 복호화할 수 없습니다"
+      ],
+      "Renaming root item is not allowed": [
+        "상위 항목의 이름 변경이 허용되지 않습니다"
+      ],
+      "Request aborted": [
+        "요청 중단됨"
+      ],
+      "Signature verification failed": [
+        "서명 인증 실패"
+      ],
+      "Signature verification for ${ signatureType } failed": [
+        "${ signatureType }의 서명 확인에 실패했습니다"
+      ],
+      "Some file bytes failed to upload": [
+        "일부 파일 바이트 업로드에 실패했습니다"
+      ],
+      "Some file parts failed to upload": [
+        "일부 파일 부분 업로드에 실패했습니다"
+      ],
+      "Thumbnail not found": [
+        "섬내일을 찾을 수 없음"
+      ],
+      "Too many server errors, please try again later": [
+        "너무 많은 서버 오류 발생, 나중에 다시 시도하세요"
+      ],
+      "Too many server requests, please try again later": [
+        "서버 요청이 너무 많습니다. 나중에 다시 시도해 주세요."
+      ],
+      "Unknown error": [
+        "알 수 없는 오류"
+      ],
+      "Unknown error ${ code }": [
+        "알 수 없는 오류 ${ code }"
+      ],
+      "Unknown error ${ response.Response.Code }": [
+        "알 수 없는 오류 ${ response.Response.Code }"
+      ],
+      "Verification keys are not available": [
+        "인증 키를 사용할 수 없습니다"
+      ],
+      "Verification keys for ${ signatureType } are not available": [
+        "${ signatureType }에 대한 인증 키를 사용할 수 없습니다"
+      ],
+      "You can leave only item that is shared with you": [
+        "나와 공유된 항목에서만 나갈 수 있습니다."
+      ]
+    },
+    "Operation": {
+      "Deleting items": [
+        "항목 삭제 중"
+      ],
+      "Restoring items": [
+        "항목 복원 중"
+      ],
+      "Trashing items": [
+        "항목을 휴지통에 이동 중"
+      ]
+    },
+    "Property": {
+      "content key": [
+        "콘텐츠 키"
+      ],
+      "hash key": [
+        "해시 키"
+      ],
+      "key": [
+        "키"
+      ],
+      "name": [
+        "이름"
+      ]
+    }
+  }
+}

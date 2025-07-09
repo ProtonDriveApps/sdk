@@ -1,0 +1,209 @@
+{
+  "headers": {
+    "plural-forms": "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);",
+    "language": "pl_PL"
+  },
+  "contexts": {
+    "Error": {
+      "${ operationForErrorMessage } from multiple sections is not allowed": [
+        "${ operationForErrorMessage } z wielu sekcji nie jest dozwolone"
+      ],
+      "Cannot download a folder": [
+        "Nie można pobrać folderu"
+      ],
+      "Cannot share root folder": [
+        "Nie można udostępnić folderu głównego"
+      ],
+      "Creating files in non-folders is not allowed": [
+        "Tworzenie plików poza folderami nie jest dozwolone"
+      ],
+      "Creating folders in non-folders is not allowed": [
+        "Tworzenie folderów poza folderami nie jest dozwolone"
+      ],
+      "Creating revisions in non-files is not allowed": [
+        "Tworzenie rewizji poza folderami nie jest dozwolone"
+      ],
+      "Data integrity check failed": [
+        "Sprawdzanie integralności danych nie powiodło się"
+      ],
+      "Data integrity check of one part failed": [
+        "Sprawdzanie integralności danych jednej części nie powiodło się"
+      ],
+      "Device not found": [
+        "Urządzenie nie zostało znalezione"
+      ],
+      "Expiration date cannot be in the past": [
+        "Data wygaśnięcia nie może być wcześniejsza"
+      ],
+      "Failed to decrypt active revision: ${ message }": [
+        "Nie udało się odszyfrować aktywnej rewizji: ${ message }"
+      ],
+      "Failed to decrypt block: ${ message }": [
+        "Nie udało się odszyfrować bloku: ${ message }"
+      ],
+      "Failed to decrypt content key: ${ message }": [
+        "Nie udało się odszyfrować klucza zawartości: ${ message }"
+      ],
+      "Failed to decrypt item name: ${ message }": [
+        "Nie udało się odszyfrować nazwy elementu: ${ message }"
+      ],
+      "Failed to decrypt node key: ${ message }": [
+        "Nie udało się odszyfrować klucza węzła: ${ message }"
+      ],
+      "Failed to decrypt some nodes": [
+        "Nie udało się odszyfrować niektórych węzłów"
+      ],
+      "Failed to decrypt thumbnail: ${ message }": [
+        "Nie udało się odszyfrować podglądu: ${ message }"
+      ],
+      "Failed to load some nodes": [
+        "Nie udało się załadować niektórych węzłów"
+      ],
+      "File download failed due to empty response": [
+        "Pobieranie pliku nie powiodło się z powodu pustej odpowiedzi"
+      ],
+      "File has no active revision": [
+        "Plik nie ma aktywnej rewizji"
+      ],
+      "File has no content key": [
+        "Plik nie ma klucza zawartości"
+      ],
+      "Invitation not found": [
+        "Zaproszenie nie zostało znalezione"
+      ],
+      "Item cannot be decrypted": [
+        "Nie można odszyfrować elementu"
+      ],
+      "Legacy public link cannot be updated. Please re-create a new public link.": [
+        "Starszy typ linku nie może zostać zaktualizowany. Utwórz ponownie nowy link."
+      ],
+      "Loading thumbnails from multiple sections is not allowed": [
+        "Ładowanie podglądów z wielu sekcji nie jest dozwolone"
+      ],
+      "Missing integrity signature": [
+        "Brak podpisu integralności"
+      ],
+      "Missing signature": [
+        "Brak podpisu"
+      ],
+      "Missing signature for ${ signatureType }": [
+        "Brak podpisu dla ${ signatureType }"
+      ],
+      "Move operation aborted": [
+        "Operacja przeniesienia została przerwana"
+      ],
+      "Moving item to a non-folder is not allowed": [
+        "Przenoszenie elementów poza folderami nie jest dozwolone"
+      ],
+      "Moving root item is not allowed": [
+        "Przenoszenie folderu głównego nie jest dozwolone"
+      ],
+      "Name must be ${ MAX_NODE_NAME_LENGTH } character long at most": [
+        "Maksymalna długość nazwy to ${ MAX_NODE_NAME_LENGTH } znak",
+        "Maksymalna długość nazwy to ${ MAX_NODE_NAME_LENGTH } znaki",
+        "Maksymalna długość nazwy to ${ MAX_NODE_NAME_LENGTH } znaków",
+        "Maksymalna długość nazwy to ${ MAX_NODE_NAME_LENGTH } znaków"
+      ],
+      "Name must not be empty": [
+        "Nazwa nie może być pusta"
+      ],
+      "Name must not contain the character '/'": [
+        "Nazwa nie może zawierać znaku '/'"
+      ],
+      "Node has no thumbnail": [
+        "Węzeł nie ma podglądu"
+      ],
+      "Node is not a file": [
+        "Węzeł nie jest plikiem"
+      ],
+      "Node is not accessible": [
+        "Węzeł nie jest dostępny"
+      ],
+      "Node is not shared": [
+        "Węzeł nie jest udostępniony"
+      ],
+      "Node not found": [
+        "Węzeł nie został znaleziony"
+      ],
+      "Operation aborted": [
+        "Operacja została przerwana"
+      ],
+      "Parent cannot be decrypted": [
+        "Błąd odszyfrowywania"
+      ],
+      "Renaming root item is not allowed": [
+        "Zmiana nazwy folderu głównego nie jest dozwolona"
+      ],
+      "Request aborted": [
+        "Żądanie zostało anulowane"
+      ],
+      "Signature verification failed": [
+        "Weryfikacja podpisu nie powiodła się"
+      ],
+      "Signature verification for ${ signatureType } failed": [
+        "Weryfikacja podpisu dla ${ signatureType } nie powiodła się"
+      ],
+      "Some file bytes failed to upload": [
+        "Nie udało się przesłać niektórych bajtów pliku"
+      ],
+      "Some file parts failed to upload": [
+        "Niektóre części pliku nie zostały przesłane"
+      ],
+      "Thumbnail not found": [
+        "Nie znaleziono podglądu"
+      ],
+      "Too many server errors, please try again later": [
+        "Zbyt wiele błędów serwera. Spróbuj ponownie później"
+      ],
+      "Too many server requests, please try again later": [
+        "Zbyt wiele żądań serwera. Spróbuj ponownie później"
+      ],
+      "Unknown error": [
+        "Wystąpił nieznany błąd"
+      ],
+      "Unknown error ${ code }": [
+        "Wystąpił nieznany błąd ${ code }"
+      ],
+      "Unknown error ${ response.Response.Code }": [
+        "Wystąpił nieznany błąd ${ response.Response.Code }"
+      ],
+      "Verification keys are not available": [
+        "Klucze weryfikacyjne nie są dostępne"
+      ],
+      "Verification keys for ${ signatureType } are not available": [
+        "Klucze weryfikacyjne dla ${ signatureType } nie są dostępne"
+      ],
+      "You can leave only item that is shared with you": [
+        "Możesz opuścić tylko element, który został Ci udostępniony"
+      ]
+    },
+    "Operation": {
+      "Deleting items": [
+        "Usuwanie elementów"
+      ],
+      "Restoring items": [
+        "Przywracanie elementów"
+      ],
+      "Trashing items": [
+        "Przenoszenie elementów do kosza"
+      ]
+    },
+    "Property": {
+      "attributes": [
+        "atrybuty"
+      ],
+      "content key": [
+        "klucz zawartości"
+      ],
+      "hash key": [
+        "kryptograficzny skrót klucza"
+      ],
+      "key": [
+        "klucz"
+      ],
+      "name": [
+        "nazwa"
+      ]
+    }
+  }
+}

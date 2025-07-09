@@ -1,0 +1,207 @@
+{
+  "headers": {
+    "plural-forms": "nplurals=2; plural=(n != 1);",
+    "language": "el_GR"
+  },
+  "contexts": {
+    "Error": {
+      "${ operationForErrorMessage } from multiple sections is not allowed": [
+        "${ operationForErrorMessage } από πολλαπλές ενότητες δεν επιτρέπεται"
+      ],
+      "Cannot download a folder": [
+        "Δεν είναι δυνατή η λήψη ενός φακέλου"
+      ],
+      "Cannot share root folder": [
+        "Δεν είναι δυνατή η κοινοποίηση του κεντρικού φακέλου"
+      ],
+      "Creating files in non-folders is not allowed": [
+        "Δεν επιτρέπεται η δημιουργία αρχείων σε μη-φακέλους."
+      ],
+      "Creating folders in non-folders is not allowed": [
+        "Δεν επιτρέπεται η δημιουργία φακέλων σε μη-φακέλους."
+      ],
+      "Creating revisions in non-files is not allowed": [
+        "Η δημιουργία αναθεωρήσεων σε μη αρχεία δεν επιτρέπεται"
+      ],
+      "Data integrity check failed": [
+        "Ο έλεγχος ακεραιότητας δεδομένων απέτυχε"
+      ],
+      "Data integrity check of one part failed": [
+        "Ο έλεγχος ακεραιότητας δεδομένων ενός μέρους απέτυχε"
+      ],
+      "Device not found": [
+        "Η συσκευή δεν βρέθηκε"
+      ],
+      "Expiration date cannot be in the past": [
+        "Ημερομηνία λήξης δεν μπορεί να είναι στο παρελθόν"
+      ],
+      "Failed to decrypt active revision: ${ message }": [
+        "Αποτυχία αποκρυπτογράφησης ενεργής αναθεώρησης: ${ message }"
+      ],
+      "Failed to decrypt block: ${ message }": [
+        "Αποτυχία αποκρυπτογράφησης μπλοκ: ${ message }"
+      ],
+      "Failed to decrypt content key: ${ message }": [
+        "Αποτυχία αποκρυπτογράφησης κλειδιού περιεχομένου: ${ message }"
+      ],
+      "Failed to decrypt item name: ${ message }": [
+        "Αποτυχία αποκρυπτογράφησης ονόματος στοιχείου: ${ message }"
+      ],
+      "Failed to decrypt node key: ${ message }": [
+        "Αποτυχία αποκρυπτογράφησης κλειδιού κόμβου: ${ message }"
+      ],
+      "Failed to decrypt some nodes": [
+        "Αποτυχία αποκρυπτογράφησης κάποιων κόμβων"
+      ],
+      "Failed to decrypt thumbnail: ${ message }": [
+        "Αποτυχία αποκρυπτογράφησης μικρογραφίας: ${ message }"
+      ],
+      "Failed to load some nodes": [
+        "Αποτυχία φόρτωσης κάποιων κόμβων"
+      ],
+      "File download failed due to empty response": [
+        "Η λήψη αρχείου απέτυχε λόγω κενής απόκρισης"
+      ],
+      "File has no active revision": [
+        "Το αρχείο δεν έχει ενεργή αναθεώρηση"
+      ],
+      "File has no content key": [
+        "Το αρχείο δεν έχει κλειδί περιεχομένου"
+      ],
+      "Invitation not found": [
+        "Η πρόσκληση δεν βρέθηκε"
+      ],
+      "Item cannot be decrypted": [
+        "Το αντικείμενο δεν μπορεί να αποκρυπτογραφηθεί"
+      ],
+      "Legacy public link cannot be updated. Please re-create a new public link.": [
+        "Ο παλαιού τύπου δημόσιος σύνδεσμος δεν μπορεί να ενημερωθεί. Παρακαλούμε δημιουργήστε εκ νέου έναν νέο δημόσιο σύνδεσμο."
+      ],
+      "Loading thumbnails from multiple sections is not allowed": [
+        "Δεν επιτρέπεται η φόρτωση μικρογραφιών από πολλαπλές ενότητες."
+      ],
+      "Missing integrity signature": [
+        "Λείπει η υπογραφή ακεραιότητας"
+      ],
+      "Missing signature": [
+        "Λείπει η υπογραφή"
+      ],
+      "Missing signature for ${ signatureType }": [
+        "Λείπει υπογραφή για ${ signatureType }"
+      ],
+      "Move operation aborted": [
+        "Η μετακίνηση ακυρώθηκε"
+      ],
+      "Moving item to a non-folder is not allowed": [
+        "Δεν επιτρέπεται η μετακίνηση στοιχείου σε μη-φάκελο"
+      ],
+      "Moving root item is not allowed": [
+        "Η μετακίνηση του στοιχείου ρίζας δεν επιτρέπεται"
+      ],
+      "Name must be ${ MAX_NODE_NAME_LENGTH } character long at most": [
+        "Το όνομα δεν πρέπει να υπερβαίνει τον ${ MAX_NODE_NAME_LENGTH } χαρακτήρα",
+        "Το όνομα δεν πρέπει να υπερβαίνει τους ${ MAX_NODE_NAME_LENGTH } χαρακτήρες"
+      ],
+      "Name must not be empty": [
+        "Το όνομα δεν πρέπει να είναι κενό"
+      ],
+      "Name must not contain the character '/'": [
+        "Το όνομα δεν πρέπει να περιέχει τον χαρακτήρα '/'"
+      ],
+      "Node has no thumbnail": [
+        "Ο κόμβος δεν έχει μικρογραφία"
+      ],
+      "Node is not a file": [
+        "Ο κόμβος δεν είναι αρχείο"
+      ],
+      "Node is not accessible": [
+        "Ο κόμβος δεν είναι προσβάσιμος"
+      ],
+      "Node is not shared": [
+        "Ο κόμβος δεν έχει κοινοποιηθεί"
+      ],
+      "Node not found": [
+        "Ο κόμβος δεν βρέθηκε"
+      ],
+      "Operation aborted": [
+        "Η λειτουργία ακυρώθηκε"
+      ],
+      "Parent cannot be decrypted": [
+        "Το γονικό αντικείμενο δεν μπορεί να αποκρυπτογραφηθεί"
+      ],
+      "Renaming root item is not allowed": [
+        "Δεν επιτρέπεται η μετονομασία του ριζικού στοιχείου"
+      ],
+      "Request aborted": [
+        "Το αίτημα ακυρώθηκε"
+      ],
+      "Signature verification failed": [
+        "Η επαλήθευση υπογραφής απέτυχε"
+      ],
+      "Signature verification for ${ signatureType } failed": [
+        "Αποτυχία επαλήθευσης υπογραφής για ${ signatureType }"
+      ],
+      "Some file bytes failed to upload": [
+        "Κάποια byte αρχείου απέτυχαν να μεταφορτωθούν"
+      ],
+      "Some file parts failed to upload": [
+        "Κάποια μέρη αρχείων απέτυχαν να μεταφορτωθούν"
+      ],
+      "Thumbnail not found": [
+        "Η μικρογραφία δεν βρέθηκε"
+      ],
+      "Too many server errors, please try again later": [
+        "Υπερβολικός αριθμός σφαλμάτων διακομιστή, παρακαλούμε δοκιμάστε ξανά αργότερα"
+      ],
+      "Too many server requests, please try again later": [
+        "Υπερβολικός αριθμός αιτημάτων διακομιστή, παρακαλούμε δοκιμάστε ξανά αργότερα"
+      ],
+      "Unknown error": [
+        "Άγνωστο σφάλμα"
+      ],
+      "Unknown error ${ code }": [
+        "Άγνωστο σφάλμα ${ code }"
+      ],
+      "Unknown error ${ response.Response.Code }": [
+        "Άγνωστο σφάλμα ${ response.Response.Code }"
+      ],
+      "Verification keys are not available": [
+        "Τα κλειδιά επαλήθευσης δεν είναι διαθέσιμα"
+      ],
+      "Verification keys for ${ signatureType } are not available": [
+        "Τα κλειδιά επαλήθευσης για ${ signatureType } δεν είναι διαθέσιμα"
+      ],
+      "You can leave only item that is shared with you": [
+        "Μπορείτε να αποχωρήσετε μόνο από το στοιχείο που έχει κοινοποιηθεί σε εσάς."
+      ]
+    },
+    "Operation": {
+      "Deleting items": [
+        "Διαγραφή στοιχείων"
+      ],
+      "Restoring items": [
+        "Επαναφορά στοιχείων"
+      ],
+      "Trashing items": [
+        "Μετακίνηση στοιχείων στα Διαγραμμένα"
+      ]
+    },
+    "Property": {
+      "attributes": [
+        "ιδιότητες"
+      ],
+      "content key": [
+        "κλειδί περιεχομένου"
+      ],
+      "hash key": [
+        "κλειδί hash"
+      ],
+      "key": [
+        "κλειδί"
+      ],
+      "name": [
+        "ονομα"
+      ]
+    }
+  }
+}

@@ -1,0 +1,209 @@
+{
+  "headers": {
+    "plural-forms": "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);",
+    "language": "be_BY"
+  },
+  "contexts": {
+    "Error": {
+      "${ operationForErrorMessage } from multiple sections is not allowed": [
+        "${ operationForErrorMessage } з некалькіх раздзелаў забаронена"
+      ],
+      "Cannot download a folder": [
+        "Немагчыма спампаваць папку"
+      ],
+      "Cannot share root folder": [
+        "Немагчыма абагуліць каранёвую папку"
+      ],
+      "Creating files in non-folders is not allowed": [
+        "Забаронена ствараць файлы ў папках, якія не з'яўляюцца папкамі"
+      ],
+      "Creating folders in non-folders is not allowed": [
+        "Забаронена ствараць папкі у элементах, якія не з'яўляюцца папкамі"
+      ],
+      "Creating revisions in non-files is not allowed": [
+        "Забаронена ствараць рэдакцыі ў файлах, якія не з'яўляюцца файламі"
+      ],
+      "Data integrity check failed": [
+        "Збой праверкі цэласнасці даных"
+      ],
+      "Data integrity check of one part failed": [
+        "Збой праверкі цэласнасці даных адной часткі"
+      ],
+      "Device not found": [
+        "Прылада не знойдзена"
+      ],
+      "Expiration date cannot be in the past": [
+        "Тэрмін дзеяння не можа быць у мінулым"
+      ],
+      "Failed to decrypt active revision: ${ message }": [
+        "Не ўдалося расшыфраваць актыўную рэдакцыю: ${ message }"
+      ],
+      "Failed to decrypt block: ${ message }": [
+        "Не ўдалося расшыфраваць блок: ${ message }"
+      ],
+      "Failed to decrypt content key: ${ message }": [
+        "Не ўдалося расшыфраваць ключ змесціва: ${ message }"
+      ],
+      "Failed to decrypt item name: ${ message }": [
+        "Не ўдалося расшыфраваць назву элемента: ${ message }"
+      ],
+      "Failed to decrypt node key: ${ message }": [
+        "Не ўдалося расшыфраваць ключ вузла: ${ message }"
+      ],
+      "Failed to decrypt some nodes": [
+        "Не ўдалося расшыфраваць некаторыя вузлы"
+      ],
+      "Failed to decrypt thumbnail: ${ message }": [
+        "Не ўдалося расшыфраваць мініяцюру: ${ message }"
+      ],
+      "Failed to load some nodes": [
+        "Не ўдалося загрузіць некаторыя вузлы"
+      ],
+      "File download failed due to empty response": [
+        "Спампоўка файла не атрымалася па прычыне пустога адказу"
+      ],
+      "File has no active revision": [
+        "У файла адсутнічае актыўная рэдакцыя"
+      ],
+      "File has no content key": [
+        "Файл не мае ключа змесціва"
+      ],
+      "Invitation not found": [
+        "Запрашэнне не знойдзена"
+      ],
+      "Item cannot be decrypted": [
+        "Немагчыма расшыфраваць элемент"
+      ],
+      "Legacy public link cannot be updated. Please re-create a new public link.": [
+        "Немагчыма абнавіць старую публічную спасылку. Калі ласка, стварыце новую публічную спасылку."
+      ],
+      "Loading thumbnails from multiple sections is not allowed": [
+        "Загрузка мініяцюр з некалькіх раздзелаў забаронена"
+      ],
+      "Missing integrity signature": [
+        "Адсутнічае подпіс цэласнасці"
+      ],
+      "Missing signature": [
+        "Адсутнічае подпіс"
+      ],
+      "Missing signature for ${ signatureType }": [
+        "Адсутнічае подпіс для ${ signatureType }"
+      ],
+      "Move operation aborted": [
+        "Аперацыя перамяшчэння перарвана"
+      ],
+      "Moving item to a non-folder is not allowed": [
+        "Забаронена перамяшчаць элементы ў папкі, якія не з'яўляюцца папкамі"
+      ],
+      "Moving root item is not allowed": [
+        "Перамяшчаць каранёвы элемент забаронена"
+      ],
+      "Name must be ${ MAX_NODE_NAME_LENGTH } character long at most": [
+        "Назва не павінна перавышаць даўжыню ў ${ MAX_NODE_NAME_LENGTH } сімвал",
+        "Назва не павінна перавышаць даўжыню ў ${ MAX_NODE_NAME_LENGTH } сімвалы",
+        "Назва не павінна перавышаць даўжыню ў ${ MAX_NODE_NAME_LENGTH } сімвалаў",
+        "Назва не павінна перавышаць даўжыню ў ${ MAX_NODE_NAME_LENGTH } сімвалаў"
+      ],
+      "Name must not be empty": [
+        "Назва не можа быць пустой"
+      ],
+      "Name must not contain the character '/'": [
+        "Назва не павінна змяшчаць сімвал '/'"
+      ],
+      "Node has no thumbnail": [
+        "У вузла адсутнічае мініяцюра"
+      ],
+      "Node is not a file": [
+        "Вузел не з'яўляецца файлам"
+      ],
+      "Node is not accessible": [
+        "Вузел недаступны"
+      ],
+      "Node is not shared": [
+        "Вузел не абагулены"
+      ],
+      "Node not found": [
+        "Вузел не знойдзены"
+      ],
+      "Operation aborted": [
+        "Аперацыя перарвана"
+      ],
+      "Parent cannot be decrypted": [
+        "Немагчыма расшыфраваць бацькоўскі вузел"
+      ],
+      "Renaming root item is not allowed": [
+        "Перайменаванне каранёвага элемента забаронена"
+      ],
+      "Request aborted": [
+        "Запыт перарваны"
+      ],
+      "Signature verification failed": [
+        "Не ўдалося праверыць подпіс"
+      ],
+      "Signature verification for ${ signatureType } failed": [
+        "Збой праверкі подпісу для ${ signatureType }"
+      ],
+      "Some file bytes failed to upload": [
+        "Збой запампоўвання некаторых байтаў файла"
+      ],
+      "Some file parts failed to upload": [
+        "Збой запампоўвання некаторых частак файла"
+      ],
+      "Thumbnail not found": [
+        "Мініяцюра не знойдзена"
+      ],
+      "Too many server errors, please try again later": [
+        "Занадта шмат памылак на серверы. Паўтарыце спробу пазней"
+      ],
+      "Too many server requests, please try again later": [
+        "Занадта шмат запытаў да сервера. Паўтарыце спробу пазней"
+      ],
+      "Unknown error": [
+        "Невядомая памылка"
+      ],
+      "Unknown error ${ code }": [
+        "Невядомая памылка ${ code }"
+      ],
+      "Unknown error ${ response.Response.Code }": [
+        "Невядомая памылка ${ response.Response.Code }"
+      ],
+      "Verification keys are not available": [
+        "Ключы праверкі недаступны"
+      ],
+      "Verification keys for ${ signatureType } are not available": [
+        "Ключы праверкі для ${ signatureType } недаступны"
+      ],
+      "You can leave only item that is shared with you": [
+        "Вы можаце пакінуць толькі элемент, які абагулены з вамі"
+      ]
+    },
+    "Operation": {
+      "Deleting items": [
+        "Выдаленне элементаў"
+      ],
+      "Restoring items": [
+        "Аднаўленне элементаў"
+      ],
+      "Trashing items": [
+        "Выдаленыя элементы"
+      ]
+    },
+    "Property": {
+      "attributes": [
+        "атрыбуты"
+      ],
+      "content key": [
+        "ключ змесціва"
+      ],
+      "hash key": [
+        "хэш-ключ"
+      ],
+      "key": [
+        "ключ"
+      ],
+      "name": [
+        "назва"
+      ]
+    }
+  }
+}
