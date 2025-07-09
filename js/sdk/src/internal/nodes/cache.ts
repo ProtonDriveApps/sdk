@@ -1,7 +1,7 @@
 import { EntityResult } from "../../cache";
-import { ProtonDriveEntitiesCache, Logger } from "../../interface";
+import { ProtonDriveEntitiesCache, Logger, resultOk, Result } from "../../interface";
 import { splitNodeUid } from "../uids";
-import { DecryptedNode } from "./interface";
+import { DecryptedNode, DecryptedRevision } from "./interface";
 
 export enum CACHE_TAG_KEYS {
     ParentUid = 'nodeParentUid',
@@ -228,7 +228,9 @@ function deserialiseNode(nodeData: string): DecryptedNode {
        (typeof node.mediaType !== 'string' && node.mediaType !== undefined) ||
        typeof node.isShared !== 'boolean' ||
        !node.creationTime || typeof node.creationTime !== 'string' ||
-       (typeof node.trashTime !== 'string' && node.trashTime !== undefined)
+       (typeof node.trashTime !== 'string' && node.trashTime !== undefined) ||
+       (typeof node.folder !== 'object' && node.folder !== undefined) ||
+       (typeof node.folder?.claimedModificationTime !== 'string' && node.folder?.claimedModificationTime !== undefined)
    ) {
        throw new Error(`Invalid node data: ${nodeData}`);
    }
@@ -236,5 +238,31 @@ function deserialiseNode(nodeData: string): DecryptedNode {
        ...node,
        creationTime: new Date(node.creationTime),
        trashTime: node.trashTime ? new Date(node.trashTime) : undefined,
+       activeRevision: node.activeRevision ? deserialiseRevision(node.activeRevision) : undefined,
+       folder: node.folder
+            ? {
+                ...node.folder,
+                claimedModificationTime: node.folder.claimedModificationTime ? new Date(node.folder.claimedModificationTime) : undefined,
+            }
+            : undefined,
    };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function deserialiseRevision(revision: any): Result<DecryptedRevision, Error> {
+    if (
+        (typeof revision !== 'object' && revision !== undefined) ||
+        (typeof revision?.creationTime !== 'string' && revision?.creationTime !== undefined)
+    ) {
+        throw new Error(`Invalid revision data: ${revision}`);
+    }
+
+    if (revision.ok) {
+        return resultOk({
+            ...revision.value,
+            creationTime: new Date(revision.value.creationTime),
+        });
+    }
+
+    return revision;
 }

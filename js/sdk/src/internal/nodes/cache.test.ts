@@ -1,8 +1,8 @@
 import { MemoryCache } from "../../cache";
-import { NodeType, MemberRole } from "../../interface";
+import { NodeType, MemberRole, RevisionState, resultOk, Result } from "../../interface";
 import { getMockLogger } from "../../tests/logger";
 import { CACHE_TAG_KEYS, NodesCache } from "./cache";
-import { DecryptedNode } from "./interface";
+import { DecryptedNode, DecryptedRevision } from "./interface";
 
 function generateNode(uid: string, parentUid='root', params: Partial<DecryptedNode> & { volumeId?: string } = {}): DecryptedNode {
     return {
@@ -16,6 +16,8 @@ function generateNode(uid: string, parentUid='root', params: Partial<DecryptedNo
         trashTime: undefined,
         volumeId: "volumeId",
         isStale: false,
+        activeRevision: undefined,
+        folder: undefined,
         ...params,
     } as DecryptedNode;
 }
@@ -79,6 +81,43 @@ describe('nodesCache', () => {
         const result = await cache.getNode(node.uid);
 
         expect(result).toStrictEqual(node);
+    });
+
+    it('should store and retrieve folder node', async () => {
+        const node = generateNode('node1', '', {
+            folder: {
+                claimedModificationTime: new Date('2021-01-01'),
+            },
+        });
+
+        await cache.setNode(node);
+        const result = await cache.getNode(node.uid);
+
+        expect(result).toStrictEqual({
+            ...node,
+            folder: {
+                claimedModificationTime: new Date('2021-01-01'),
+            },
+        });
+    });
+
+    it('should store and retrieve node with active revision', async () => {
+        const activeRevision: Result<DecryptedRevision, Error> = resultOk({
+            uid: 'revision1',
+            state: RevisionState.Active,
+            creationTime: new Date('2021-01-01'),
+            storageSize: 100,
+            contentAuthor: resultOk('test@test.com'),
+        });
+        const node = generateNode('node1', '', { activeRevision });
+
+        await cache.setNode(node);
+        const result = await cache.getNode(node.uid);
+
+        expect(result).toStrictEqual({
+            ...node,
+            activeRevision,
+        });
     });
 
     it('should throw an error when retrieving a non-existing entity', async () => {
