@@ -11,7 +11,7 @@
     ],
     "scripts": {
         "build": "tsc",
-        "build:ci": "rm -rf dist && tsc",
+        "build:ci": "rm -rf dist tsconfig.tsbuildinfo && tsc",
         "check-types": "tsc --noEmit",
         "generate-doc:interface": "typedoc src/index.ts --out ${OUTPUT_PATH}",
         "generate-doc:internal": "typedoc src/**/*.ts --out ${OUTPUT_PATH}",
