@@ -30,6 +30,7 @@ export interface OpenPGPCryptoProxy {
         armoredSignature?: string,
         binarySignature?: Uint8Array,
         sessionKeys?: SessionKey,
+        passwords?: string[],
         decryptionKeys?: PrivateKey | PrivateKey[],
         verificationKeys?: PublicKey | PublicKey[],
     }) => Promise<{
@@ -394,5 +395,17 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             // Proper typing is too complex, it will be removed to support only newer pmcrypto.
             verified: verified || verificationStatus!,
         }
+    }
+
+    async decryptArmoredWithPassword(
+        armoredData: string,
+        password: string,
+    ) {
+        const { data } = await this.cryptoProxy.decryptMessage({
+            armoredMessage: armoredData,
+            passwords: [password],
+            format: 'binary',
+        });
+        return data as Uint8Array;
     }
 }

@@ -1,6 +1,6 @@
 import { c } from 'ttag';
 
-import { ProtonInvitationWithNode } from "../../interface";
+import { MaybeBookmark, ProtonInvitationWithNode, resultError, resultOk } from "../../interface";
 import { ValidationError } from "../../errors";
 import { DecryptedNode } from "../nodes";
 import { BatchLoading } from "../batchLoading";
@@ -120,14 +120,38 @@ export class SharingAccess {
         await this.apiService.rejectInvitation(invitationUid);
     }
 
-    // FIXME: return decrypted bookmarks
-    async* iterateSharedBookmarks(signal?: AbortSignal): AsyncGenerator<string> {
+    async* iterateBookmarks(signal?: AbortSignal): AsyncGenerator<MaybeBookmark> {
         for await (const bookmark of this.apiService.iterateBookmarks(signal)) {
-            yield bookmark.tokenId;
+            const { url, nodeName } = await this.cryptoService.decryptBookmark(bookmark);
+
+            if (!url.ok || !nodeName.ok) {
+                yield resultError({
+                    uid: bookmark.tokenId,
+                    creationTime: bookmark.creationTime,
+                    url: url,
+                    node: {
+                        name: nodeName,
+                        type: bookmark.node.type,
+                        mediaType: bookmark.node.mediaType,
+                    }
+                });
+            } else {
+                yield resultOk({
+                    uid: bookmark.tokenId,
+                    creationTime: bookmark.creationTime,
+                    url: url.value,
+                    node: {
+                        name: nodeName.value,
+                        type: bookmark.node.type,
+                        mediaType: bookmark.node.mediaType,
+                    }
+                });
+            }
         }
     }
 
-    async deleteBookmark(tokenId: string): Promise<void> {
+    async deleteBookmark(bookmarkUid: string): Promise<void> {
+        const tokenId = bookmarkUid;
         await this.apiService.deleteBookmark(tokenId);
     }
 }
