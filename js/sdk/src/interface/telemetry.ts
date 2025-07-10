@@ -67,6 +67,7 @@ export interface MetricDecryptionErrorEvent {
 };
 export type MetricsDecryptionErrorField =
     'shareKey' |
+    'shareUrlPassword' |
     'nodeKey' |
     'nodeName' |
     'nodeHashKey' |

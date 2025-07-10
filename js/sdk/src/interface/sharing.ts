@@ -38,13 +38,35 @@ export type PublicLink = {
     expirationTime?: Date,
 }
 
+/**
+ * Bookmark representing a saved link to publicly shared node.
+ * 
+ * This covers both happy path and degraded path.
+ */
+export type MaybeBookmark = Result<Bookmark, DegradedBookmark>;
+
 export type Bookmark = {
     uid: string,
-    bookmarkTime: Date,
+    creationTime: Date,
+    url: string,
     node: {
-        name: Result<string, Error | InvalidNameError>,
+        name: string,
         type: NodeType,
         mediaType?: string,
+    },
+}
+
+/**
+ * Degraded bookmark representing a saved link to publicly shared node.
+ * 
+ * This is a degraded path representation of the bookmark. It is used in the
+ * SDK to represent the bookmark in a way that is easy to work with. Whenever
+ * any field cannot be decrypted, it is returned as `DegradedBookmark` type.
+ */
+export type DegradedBookmark = Omit<Bookmark, 'url' | 'node'> & {
+    url: Result<string, Error>,
+    node: Omit<Bookmark['node'], 'name'> & {
+        name: Result<string, Error | InvalidNameError>,
     },
 }
 
