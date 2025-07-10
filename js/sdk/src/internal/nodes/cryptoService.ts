@@ -492,7 +492,7 @@ export class NodesCryptoService {
             this.logger.error('Failed to check if claimed author matches default share', error);
         }
 
-        this.logger.error(`Failed to verify ${field} for node ${node.uid} (from before 2024: ${fromBefore2024}, matching address: ${addressMatchingDefaultShare})`);
+        this.logger.warn(`Failed to verify ${field} for node ${node.uid} (from before 2024: ${fromBefore2024}, matching address: ${addressMatchingDefaultShare})`);
 
         this.telemetry.logEvent({
             eventName: 'verificationError',

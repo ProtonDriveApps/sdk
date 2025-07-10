@@ -412,7 +412,7 @@ export class ProtonDriveClient {
      * @throws {@link Error} If another node with the same name already exists.
      */
     async renameNode(nodeUid: NodeOrUid, newName: string): Promise<MaybeNode> {
-        this.logger.info(`Renaming node ${getUid(nodeUid)} to ${newName}`);
+        this.logger.info(`Renaming node ${getUid(nodeUid)}`);
         return convertInternalNodePromise(this.nodes.management.renameNode(getUid(nodeUid), newName));
     }
 
@@ -513,7 +513,7 @@ export class ProtonDriveClient {
      * @throws {@link Error} If another node with the same name already exists.
      */
     async createFolder(parentNodeUid: NodeOrUid, name: string, modificationTime?: Date): Promise<MaybeNode> {
-        this.logger.info(`Creating folder ${name} in ${getUid(parentNodeUid)}`);
+        this.logger.info(`Creating folder in ${getUid(parentNodeUid)}`);
         return convertInternalNodePromise(this.nodes.management.createFolder(getUid(parentNodeUid), name, modificationTime));
     }
 
