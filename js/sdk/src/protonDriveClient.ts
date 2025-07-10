@@ -11,6 +11,8 @@ import {
     ProtonInvitationOrUid,
     NonProtonInvitationOrUid,
     ProtonInvitationWithNode,
+    MaybeBookmark,
+    BookmarkOrUid,
     ShareResult,
     Device,
     DeviceType,
@@ -643,6 +645,29 @@ export class ProtonDriveClient {
     async rejectInvitation(invitationId: string): Promise<void> {
         this.logger.info(`Rejecting invitation ${invitationId}`);
         await this.sharing.access.rejectInvitation(invitationId);
+    }
+
+    /**
+     * Iterates the shared bookmarks.
+     *
+     * The output is not sorted and the order of the bookmarks is not guaranteed.
+     *
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the shared bookmarks.
+     */
+    async* iterateBookmarks(signal?: AbortSignal): AsyncGenerator<MaybeBookmark> {
+        this.logger.info('Iterating shared bookmarks');
+        yield* this.sharing.access.iterateBookmarks(signal);
+    }
+
+    /**
+     * Remove the shared bookmark.
+     *
+     * @param bookmarkOrUid - Bookmark entity or its UID string.
+     */
+    async removeBookmark(bookmarkOrUid: BookmarkOrUid): Promise<void> {
+        this.logger.info(`Removing bookmark ${getUid(bookmarkOrUid)}`);
+        await this.sharing.access.deleteBookmark(getUid(bookmarkOrUid));
     }
 
     /**

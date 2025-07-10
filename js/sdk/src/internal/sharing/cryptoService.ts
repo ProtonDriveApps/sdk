@@ -2,10 +2,11 @@ import bcrypt from 'bcryptjs';
 import { c } from 'ttag';
 
 import { DriveCrypto, PrivateKey, SessionKey, SRPVerifier, uint8ArrayToBase64String, VERIFICATION_STATUS } from '../../crypto';
-import { ProtonDriveAccount, ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Author, Result, Member, UnverifiedAuthorError, resultError, resultOk } from "../../interface";
+import { ProtonDriveAccount, ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Author, Result, Member, UnverifiedAuthorError, resultError, resultOk, InvalidNameError, ProtonDriveTelemetry, MetricVolumeType } from "../../interface";
+import { validateNodeName } from '../nodes/validations';
 import { getErrorMessage, getVerificationMessage } from "../errors";
 import { EncryptedShare } from "../shares";
-import { EncryptedInvitation, EncryptedInvitationWithNode, EncryptedExternalInvitation, EncryptedMember, EncryptedPublicLink, PublicLinkWithCreatorEmail } from "./interface";
+import { EncryptedInvitation, EncryptedInvitationWithNode, EncryptedExternalInvitation, EncryptedMember, EncryptedPublicLink, PublicLinkWithCreatorEmail, EncryptedBookmark, SharesService } from "./interface";
 
 // Version 2 of bcrypt with 2**10 rounds.
 // https://en.wikipedia.org/wiki/Bcrypt#Description
@@ -31,11 +32,15 @@ enum PublicLinkFlags {
  */
 export class SharingCryptoService {
     constructor(
+        private telemetry: ProtonDriveTelemetry,
         private driveCrypto: DriveCrypto,
         private account: ProtonDriveAccount,
+        private sharesService: SharesService,
     ) {
+        this.telemetry = telemetry;
         this.driveCrypto = driveCrypto;
         this.account = account;
+        this.sharesService = sharesService;
     }
 
     /**
@@ -346,7 +351,7 @@ export class SharingCryptoService {
     }
 
     private async decryptShareUrlPassword(
-        encryptedPublicLink: EncryptedPublicLink,
+        encryptedPublicLink: Pick<EncryptedPublicLink, 'armoredUrlPassword' | 'flags'>,
         addressKeys: PrivateKey[],
     ): Promise<{
         password: string,
@@ -373,6 +378,135 @@ export class SharingCryptoService {
                 }
             default:
                 throw new Error(`Unsupported public link with flags: ${encryptedPublicLink.flags}`);
+        }
+    }
+
+    async decryptBookmark(encryptedBookmark: EncryptedBookmark): Promise<{
+        url: Result<string, Error>,
+        nodeName: Result<string, Error | InvalidNameError>,
+    }> {
+        // TODO: Signatures are not checked and not specified in the interface.
+        // In the future, we will need to add authorship verification.
+
+        let urlPassword: string;
+        try {
+            urlPassword = await this.decryptBookmarkUrlPassword(encryptedBookmark);
+        } catch (originalError: unknown) {
+            const error = originalError instanceof Error ? originalError : new Error(c('Error').t`Unknown error`);
+            return {
+                url: resultError(error),
+                nodeName: resultError(error),
+            };
+        }
+
+        // TODO: API should provide the full URL.
+        const url = resultOk<string, Error>(`https://drive.proton.me/urls/${encryptedBookmark.tokenId}#${urlPassword}`);
+
+        let shareKey: PrivateKey;
+        try {
+            shareKey = await this.decryptBookmarkKey(encryptedBookmark, urlPassword);
+        } catch (originalError: unknown) {
+            const error = originalError instanceof Error ? originalError : new Error(c('Error').t`Unknown error`);
+            return {
+                url,
+                nodeName: resultError(error),
+            };
+        }
+
+        const nodeName = await this.decryptBookmarkName(encryptedBookmark, shareKey);
+
+        return {
+            url,
+            nodeName,
+        };
+    }
+
+    private async decryptBookmarkUrlPassword(encryptedBookmark: EncryptedBookmark): Promise<string> {
+        if (!encryptedBookmark.url.encryptedUrlPassword) {
+            throw new Error(c('Error').t`Bookmark password is not available`);
+        }
+
+        const { addressId } = await this.sharesService.getMyFilesShareMemberEmailKey();
+        const address = await this.account.getOwnAddress(addressId);
+        const addressKeys = address.keys.map(({ key }) => key);
+
+        try {
+            // Decrypt the password for the share URL.
+            const urlPassword = await this.driveCrypto.decryptShareUrlPassword(
+                encryptedBookmark.url.encryptedUrlPassword,
+                addressKeys,
+            );
+
+            return urlPassword;
+        } catch (error: unknown) {
+            this.telemetry.logEvent({
+                eventName: 'decryptionError',
+                volumeType: MetricVolumeType.SharedPublic,
+                field: 'shareUrlPassword',
+                error,
+            });
+
+            const message = getErrorMessage(error);
+            const errorMessage = c('Error').t`Failed to decrypt bookmark password: ${message}`;
+            throw new Error(errorMessage);
+        }
+    }
+
+    private async decryptBookmarkKey(encryptedBookmark: EncryptedBookmark, urlPassword: string): Promise<PrivateKey> {
+        try {
+            // Use the password to decrypt the share key.
+            const { key: shareKey } = await this.driveCrypto.decryptKeyWithSrpPassword(
+                urlPassword,
+                encryptedBookmark.url.base64SharePasswordSalt,
+                encryptedBookmark.share.armoredKey,
+                encryptedBookmark.share.armoredPassphrase,
+            );
+
+            return shareKey;
+        } catch (error: unknown) {
+            this.telemetry.logEvent({
+                eventName: 'decryptionError',
+                volumeType: MetricVolumeType.SharedPublic,
+                field: 'shareKey',
+                error,
+            });
+
+            const message = getErrorMessage(error);
+            const errorMessage = c('Error').t`Failed to decrypt bookmark key: ${message}`;
+            throw new Error(errorMessage);
+        }
+    }
+
+    private async decryptBookmarkName(encryptedBookmark: EncryptedBookmark, shareKey: PrivateKey): Promise<Result<string, Error | InvalidNameError>> {
+        try {
+            // Use the share key to decrypt the node name of the bookmark.
+            const { name } = await this.driveCrypto.decryptNodeName(
+                encryptedBookmark.node.encryptedName,
+                shareKey,
+                [],
+            );
+
+            try {
+                validateNodeName(name);
+            } catch (error: unknown) {
+                return resultError({
+                    name,
+                    error: error instanceof Error ? error.message : c('Error').t`Unknown error`,
+                });
+            }
+
+            return resultOk(name);
+        } catch (error: unknown) {
+            this.telemetry.logEvent({
+                eventName: 'decryptionError',
+                volumeType: MetricVolumeType.SharedPublic,
+                field: 'nodeName',
+                error,
+            });
+
+            const message = getErrorMessage(error);
+            const errorMessage = c('Error').t`Failed to decrypt bookmark name: ${message}`;
+            return resultError(new Error(errorMessage));
         }
     }
 }

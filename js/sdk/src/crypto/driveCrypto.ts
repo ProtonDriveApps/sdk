@@ -233,6 +233,36 @@ export class DriveCrypto {
     }
 
     /**
+     * It decrypts the key using the password via SRP protocol.
+     * 
+     * The function follows the same functionality as `decryptKey` but uses SRP
+     * protocol to decrypt the passphrase of the key. It is used for saved
+     * public links where user saved the link with password and is not direct
+     * member of the share. 
+    */
+    async decryptKeyWithSrpPassword(
+        password: string,
+        salt: string,
+        armoredKey: string,
+        armoredPassphrase: string,
+    ): Promise<{
+        key: PrivateKey,
+    }> {
+        const keyPassword = await this.srpModule.computeKeyPassword(password, salt);
+
+        const passphrase = await this.openPGPCrypto.decryptArmoredWithPassword(armoredPassphrase, keyPassword);
+
+        const key = await this.openPGPCrypto.decryptKey(
+            armoredKey,
+            new TextDecoder().decode(passphrase),
+        );
+
+        return {
+            key,
+        };
+    }
+
+    /**
      * It decrypts session key from armored data.
      * 
      * `decryptionKeys` are used to decrypt the session key from the `armoredData`.

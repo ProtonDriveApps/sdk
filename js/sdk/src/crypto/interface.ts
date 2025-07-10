@@ -53,6 +53,7 @@ export enum VERIFICATION_STATUS {
 
 export interface SRPModule {
     getSrpVerifier: (password: string) => Promise<SRPVerifier>,
+    computeKeyPassword: (password: string, salt: string) => Promise<string>,
 }
 
 export type SRPVerifier = {
@@ -227,4 +228,9 @@ export interface OpenPGPCrypto {
         data: Uint8Array,
         verified: VERIFICATION_STATUS,
     }>,
+
+    decryptArmoredWithPassword(
+        armoredData: string,
+        password: string,
+    ): Promise<Uint8Array>,
 }

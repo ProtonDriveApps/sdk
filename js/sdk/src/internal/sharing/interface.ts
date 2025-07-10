@@ -143,6 +143,10 @@ export interface PublicLinkWithCreatorEmail extends PublicLink {
 export interface SharesService {
     getMyFilesIDs(): Promise<{ volumeId: string }>,
     loadEncryptedShare(shareId: string): Promise<EncryptedShare>,
+    getMyFilesShareMemberEmailKey(): Promise<{
+        addressId: string,
+        addressKey: PrivateKey,
+    }>,
     getContextShareMemberEmailKey(shareId: string): Promise<{
         email: string,
         addressId: string,

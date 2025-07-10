@@ -31,6 +31,8 @@ import { CommandSharingRemoveUrl } from "./commandSharingRemoveUrl";
 import { CommandSharingSetUrl } from "./commandSharingSetUrl";
 import { CommandSharingStatus } from "./commandSharingStatus";
 import { Command } from './interface';
+import { CommandBookmarkRemove } from "./commandBookmarkRemove";
+import { CommandBookmarkList } from "./commandBookmarkList";
 
 const COMMANDS = [
     new CommandAuthLogin(),
@@ -61,6 +63,8 @@ const COMMANDS = [
     new CommandSharingSetUrl(),
     new CommandSharingRemoveUrl(),
     new CommandInvitationList(),
+    new CommandBookmarkList(),
+    new CommandBookmarkRemove(),
     new CommandDeviceCreate(),
     new CommandDeviceRename(),
     new CommandDeviceDelete(),
