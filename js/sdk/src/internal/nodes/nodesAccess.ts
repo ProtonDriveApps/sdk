@@ -130,7 +130,8 @@ export class NodesAccess {
     }
 
     private async loadNode(nodeUid: string): Promise<{ node: DecryptedNode, keys?: DecryptedNodeKeys }> {
-        const encryptedNode = await this.apiService.getNode(nodeUid);
+        const { volumeId: ownVolumeId } = await this.shareService.getMyFilesIDs();
+        const encryptedNode = await this.apiService.getNode(nodeUid, ownVolumeId);
         return this.decryptNode(encryptedNode);
     }
 
@@ -147,7 +148,9 @@ export class NodesAccess {
         const returnedNodeUids: string[] = [];
         const errors = [];
 
-        for await (const encryptedNode of this.apiService.iterateNodes(nodeUids, signal)) {
+        const { volumeId: ownVolumeId } = await this.shareService.getMyFilesIDs();
+
+        for await (const encryptedNode of this.apiService.iterateNodes(nodeUids, ownVolumeId, signal)) {
             returnedNodeUids.push(encryptedNode.uid);
             try {
                 const { node } = await this.decryptNode(encryptedNode);

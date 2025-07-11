@@ -46,6 +46,7 @@ describe('nodesAccess', () => {
         }
         // @ts-expect-error No need to implement all methods for mocking
         shareService = {
+            getMyFilesIDs: jest.fn().mockResolvedValue({ volumeId: 'volumeId' }),
             getSharePrivateKey: jest.fn(),
         };
 
@@ -81,7 +82,7 @@ describe('nodesAccess', () => {
 
             const result = await access.getNode('nodeId');
             expect(result).toEqual(decryptedNode);
-            expect(apiService.getNode).toHaveBeenCalledWith('nodeId');
+            expect(apiService.getNode).toHaveBeenCalledWith('nodeId', 'volumeId');
             expect(cryptoCache.getNodeKeys).toHaveBeenCalledWith('parentUid');
             expect(cryptoService.decryptNode).toHaveBeenCalledWith(encryptedNode, 'parentKey');
             expect(cache.setNode).toHaveBeenCalledWith(decryptedNode);
@@ -107,7 +108,7 @@ describe('nodesAccess', () => {
 
             const result = await access.getNode('nodeId');
             expect(result).toEqual(decryptedNode);
-            expect(apiService.getNode).toHaveBeenCalledWith('nodeId');
+            expect(apiService.getNode).toHaveBeenCalledWith('nodeId', 'volumeId');
             expect(cryptoCache.getNodeKeys).toHaveBeenCalledWith('parentUid');
             expect(cryptoService.decryptNode).toHaveBeenCalledWith(encryptedNode, 'parentKey');
             expect(cache.setNode).toHaveBeenCalledWith(decryptedNode);
@@ -179,7 +180,7 @@ describe('nodesAccess', () => {
 
                 const result = await Array.fromAsync(access.iterateFolderChildren('parentUid'));
                 expect(result).toMatchObject([node1, node4, node2, node3]);
-                expect(apiService.iterateNodes).toHaveBeenCalledWith(['node2', 'node3'], undefined);
+                expect(apiService.iterateNodes).toHaveBeenCalledWith(['node2', 'node3'], 'volumeId', undefined);
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(2);
                 expect(cache.setNode).toHaveBeenCalledTimes(2);
                 expect(cryptoCache.setNodeKeys).toHaveBeenCalledTimes(2);
@@ -218,7 +219,7 @@ describe('nodesAccess', () => {
                 const result = await Array.fromAsync(access.iterateFolderChildren('parentUid'));
                 expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateChildrenNodeUids).toHaveBeenCalledWith('parentUid', undefined);
-                expect(apiService.iterateNodes).toHaveBeenCalledWith(['node1', 'node2', 'node3', 'node4'], undefined);
+                expect(apiService.iterateNodes).toHaveBeenCalledWith(['node1', 'node2', 'node3', 'node4'], 'volumeId', undefined);
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(4);
                 expect(cache.setNode).toHaveBeenCalledTimes(4);
                 expect(cryptoCache.setNodeKeys).toHaveBeenCalledTimes(4);
@@ -320,7 +321,7 @@ describe('nodesAccess', () => {
                 const result = await Array.fromAsync(access.iterateTrashedNodes());
                 expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateTrashedNodeUids).toHaveBeenCalledWith(volumeId, undefined);
-                expect(apiService.iterateNodes).toHaveBeenCalledWith(['node1', 'node2', 'node3', 'node4'], undefined);
+                expect(apiService.iterateNodes).toHaveBeenCalledWith(['node1', 'node2', 'node3', 'node4'], volumeId, undefined);
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(4);
                 expect(cache.setNode).toHaveBeenCalledTimes(4);
                 expect(cryptoCache.setNodeKeys).toHaveBeenCalledTimes(4);
@@ -370,7 +371,7 @@ describe('nodesAccess', () => {
 
                 const result = await Array.fromAsync(access.iterateNodes(['node1', 'node2', 'node3', 'node4']));
                 expect(result).toMatchObject([node1, node4, node2, node3]);
-                expect(apiService.iterateNodes).toHaveBeenCalledWith(['node2', 'node3'], undefined);
+                expect(apiService.iterateNodes).toHaveBeenCalledWith(['node2', 'node3'], 'volumeId', undefined);
             });
 
             it('should remove from cache if missing on API and return back to caller', async () => {
