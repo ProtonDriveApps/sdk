@@ -108,6 +108,7 @@ describe('nodesCache', () => {
             creationTime: new Date('2021-01-01'),
             storageSize: 100,
             contentAuthor: resultOk('test@test.com'),
+            claimedModificationTime: new Date('2021-02-01')
         });
         const node = generateNode('node1', '', { activeRevision });
 
