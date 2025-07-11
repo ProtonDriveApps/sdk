@@ -80,18 +80,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/drive/photos/migrate-legacy": {
+    "/drive/photos/volumes/{volumeID}/albums/{linkID}/duplicates": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get status of migration from legacy photo share on a regular volume into a new Photo Volume */
-        get: operations["get_drive-photos-migrate-legacy"];
+        get?: never;
         put?: never;
-        /** Start migration from legacy photo share on a regular volume into a new Photo Volume */
-        post: operations["post_drive-photos-migrate-legacy"];
+        /** Find duplicates in album */
+        post: operations["post_drive-photos-volumes-{volumeID}-albums-{linkID}-duplicates"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/photos/volumes/{volumeID}/tags-migration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get photo tag migration status */
+        get: operations["get_drive-photos-volumes-{volumeID}-tags-migration"];
+        put?: never;
+        /** Update tag migration status */
+        post: operations["post_drive-photos-volumes-{volumeID}-tags-migration"];
         delete?: never;
         options?: never;
         head?: never;
@@ -108,6 +125,23 @@ export interface paths {
         /** List photos in album */
         get: operations["get_drive-photos-volumes-{volumeID}-albums-{linkID}-children"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/photos/volumes/{volumeID}/recover-multiple": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Recover photos from your photo volume */
+        put: operations["put_drive-photos-volumes-{volumeID}-recover-multiple"];
         post?: never;
         delete?: never;
         options?: never;
@@ -140,6 +174,43 @@ export interface paths {
         };
         get: operations["get_drive-photos-albums-shared-with-me"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/volumes/{volumeID}/links/transfer-multiple": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Transfer photos from and to albums
+         * @deprecated
+         */
+        put: operations["put_drive-volumes-{volumeID}-links-transfer-multiple"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/photos/volumes/{volumeID}/links/transfer-multiple": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Transfer photos from and to albums */
+        put: operations["put_drive-photos-volumes-{volumeID}-links-transfer-multiple"];
         post?: never;
         delete?: never;
         options?: never;
@@ -370,26 +441,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/drive/volumes/{volumeID}/links/{linkID}/copy": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Copy a node to a volume
-         * @description Copy a single file to a volume, providing the new parent link ID.
-         */
-        post: operations["post_drive-volumes-{volumeID}-links-{linkID}-copy"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/drive/shares/{shareID}/folders": {
         parameters: {
             query?: never;
@@ -571,6 +622,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drive/volumes/{volumeID}/links/{linkID}/copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Copy a node to a volume
+         * @description Copy a single file to a volume, providing the new parent link ID.
+         */
+        post: operations["post_drive-volumes-{volumeID}-links-{linkID}-copy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drive/v2/volumes/{volumeID}/delete_multiple": {
         parameters: {
             query?: never;
@@ -711,8 +782,7 @@ export interface paths {
          *
          *     Clients moving a file or folder MUST reuse the existing session keys
          *     for the name and passphrase as these are also used by shares pointing
-         *     to the link. The passphrase should NOT be changed, only the KeyPacket
-         *     is used.
+         *     to the link. The passphrase should NOT be changed, reusing same session key as previously.
          */
         put: operations["put_drive-shares-{shareID}-links-{linkID}-move"];
         post?: never;
@@ -781,8 +851,7 @@ export interface paths {
          * @description Move a file or folder. Client must provide new values for fields encrypted with parent NodeKey.
          *     Clients moving a file or folder MUST reuse the existing session keys
          *     for the name and passphrase as these are also used by shares pointing
-         *     to the link. The passphrase should NOT be changed, only the KeyPacket
-         *     is used.
+         *     to the link. The passphrase should NOT be changed,reusing same session key as previously
          */
         put: operations["put_drive-v2-volumes-{volumeID}-links-{linkID}-move"];
         post?: never;
@@ -1099,6 +1168,8 @@ export interface paths {
          * @deprecated
          * @description List all trashed items of a given share.
          *     Only used by clients that don’t show photos and devices. Going forward, the volume-based route should be used instead.
+         *
+         *     CANNOT be used on Photo-Volume -> use volume-trash
          */
         get: operations["get_drive-shares-{shareID}-trash"];
         put?: never;
@@ -1108,6 +1179,8 @@ export interface paths {
          * @deprecated
          * @description Permanently delete all links from trash of a given share.
          *     Only used by clients that don’t show photos and devices. Going forward, the volume-based route should be used instead.
+         *
+         *     CANNOT be used on Photo-Volume -> use volume-trash
          */
         delete: operations["delete_drive-shares-{shareID}-trash"];
         options?: never;
@@ -1126,7 +1199,11 @@ export interface paths {
         get: operations["get_drive-volumes-{volumeID}-trash"];
         put?: never;
         post?: never;
-        /** Empty volume trash */
+        /**
+         * Empty volume trash
+         * @description When there are fewer items in trash than a certain threshold, trash will be deleted synchronously returning a 200 HTTP code.
+         *     Otherwise, it will happen async returning a 202 HTTP code.
+         */
         delete: operations["delete_drive-volumes-{volumeID}-trash"];
         options?: never;
         head?: never;
@@ -1144,6 +1221,8 @@ export interface paths {
         /**
          * Restore items from trash
          * @description Restore list of links from trash to original location.
+         *
+         *     /shares endpoint should NOT be used on Photo-Volume -> use volume-trash
          */
         put: operations["put_drive-v2-volumes-{volumeID}-trash-restore_multiple"];
         post?: never;
@@ -1164,6 +1243,8 @@ export interface paths {
         /**
          * Restore items from trash
          * @description Restore list of links from trash to original location.
+         *
+         *     /shares endpoint should NOT be used on Photo-Volume -> use volume-trash
          */
         put: operations["put_drive-shares-{shareID}-trash-restore_multiple"];
         post?: never;
@@ -1387,7 +1468,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Create photo share */
+        /**
+         * DEPRECATED: Create photo share
+         * @deprecated
+         */
         post: operations["post_drive-volumes-{volumeID}-photos-share"];
         delete?: never;
         options?: never;
@@ -1415,6 +1499,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drive/photos/volumes/{volumeID}/links/{linkID}/favorite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Favorite existing photo */
+        post: operations["post_drive-photos-volumes-{volumeID}-links-{linkID}-favorite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drive/volumes/{volumeID}/photos/duplicates": {
         parameters: {
             query?: never;
@@ -1426,6 +1527,24 @@ export interface paths {
         put?: never;
         /** Find duplicates */
         post: operations["post_drive-volumes-{volumeID}-photos-duplicates"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/photos/migrate-legacy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get status of migration from legacy photo share on a regular volume into a new Photo Volume */
+        get: operations["get_drive-photos-migrate-legacy"];
+        put?: never;
+        /** Start migration from legacy photo share on a regular volume into a new Photo Volume */
+        post: operations["post_drive-photos-migrate-legacy"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1445,6 +1564,26 @@ export interface paths {
          */
         get: operations["get_drive-volumes-{volumeID}-photos"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/photos/volumes/{volumeID}/links/{linkID}/revisions/{revisionID}/xattr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update xAttr Photo-Link
+         * @description ONLY for use by iOS, due to a bug in the iOS client, xAttr were not populated for photos, the client can use this endpoint to fix this.
+         */
+        put: operations["put_drive-photos-volumes-{volumeID}-links-{linkID}-revisions-{revisionID}-xattr"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2525,7 +2664,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Delete locked volume */
+        /**
+         * Delete the whole volume if is locked or the locked root shares in the volume.
+         * @description Web client calls this endpoint when the user decides to delete their locked data and not recover it.
+         */
         put: operations["put_drive-volumes-{volumeID}-delete_locked"];
         post?: never;
         delete?: never;
@@ -2562,7 +2704,13 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Restore locked volume */
+        /**
+         * Restore locked data in volume.
+         * @description There are two modes:
+         *     1. When the user has a locked volume and a different active one, you need to restore the locked volume data into the active
+         *        one of the same type (e.g., locked regular into active regular). This is processed async.
+         *     2. When the user has locked root shares in an active volume, the data is restored within the same volume. This is done synchronous.
+         */
         put: operations["put_drive-volumes-{volumeID}-restore"];
         post?: never;
         delete?: never;
@@ -2642,9 +2790,12 @@ export interface components {
              */
             Code: 1000;
         };
-        GetMigrationStatusResponseDto: {
-            OldVolumeID: components["schemas"]["Id2"];
-            NewVolumeID?: components["schemas"]["Id2"] | null;
+        FindDuplicatesInput: {
+            /** @description List of Name HMACs to check */
+            NameHashes: string[];
+        };
+        FindDuplicatesOutputCollection: {
+            DuplicateHashes: components["schemas"]["FoundDuplicate"][];
             /**
              * ProtonResponseCode
              * @example 1000
@@ -2652,13 +2803,15 @@ export interface components {
              */
             Code: 1000;
         };
-        AcceptedResponse: {
+        PhotoTagMigrationStatusResponseDto: {
+            Finished: boolean;
+            Anchor?: components["schemas"]["PhotoTagMigrationDataDto"] | null;
             /**
              * ProtonResponseCode
-             * @example 1002
+             * @example 1000
              * @enum {integer}
              */
-            Code: 1002;
+            Code: 1000;
         };
         ListAlbumsResponseDto: {
             Albums: components["schemas"]["AlbumResponseDto"][];
@@ -2685,6 +2838,8 @@ export interface components {
             Tag: components["schemas"]["TagType"] | null;
             /** @default false */
             OnlyChildren: boolean;
+            /** @default false */
+            IncludeTrashed: boolean;
         };
         /**
          * @description <details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>0</td><td>Favorites</td></tr><tr><td>1</td><td>Screenshots</td></tr><tr><td>2</td><td>Videos</td></tr><tr><td>3</td><td>LivePhotos</td></tr><tr><td>4</td><td>MotionPhotos</td></tr><tr><td>5</td><td>Selfies</td></tr><tr><td>6</td><td>Portraits</td></tr><tr><td>7</td><td>Bursts</td></tr><tr><td>8</td><td>Panoramas</td></tr><tr><td>9</td><td>Raw</td></tr></table></details></details>
@@ -2702,8 +2857,27 @@ export interface components {
              */
             Code: 1000;
         };
+        TransferPhotoLinksRequestDto: {
+            ParentLinkID: components["schemas"]["Id"];
+            Links: components["schemas"]["TransferPhotoLinkInBatchRequestDto"][];
+            /**
+             * Format: email
+             * @description Signature email address used for signing name
+             */
+            NameSignatureEmail: string;
+            /**
+             * Format: email
+             * @description Signature email address used for the NodePassphraseSignature.
+             * @default null
+             */
+            SignatureEmail: string | null;
+        };
         RemovePhotosFromAlbumRequestDto: {
             LinkIDs: components["schemas"]["Id"][];
+        };
+        UpdatePhotoTagMigrationStatusRequestDto: {
+            Finished: boolean;
+            Anchor: components["schemas"]["PhotoTagMigrationUpdateDto"];
         };
         /** @description An encrypted ID */
         Id: string;
@@ -2792,6 +2966,7 @@ export interface components {
              * @default null
              */
             ContentKeyPacketSignature: components["schemas"]["PGPSignature"] | null;
+            DocumentType?: components["schemas"]["DocumentType"];
             Name: components["schemas"]["PGPMessage"];
             /** @description File/folder name Hash */
             Hash: string;
@@ -2852,48 +3027,6 @@ export interface components {
             More: boolean;
             /** @description true if client needs to refresh from scratch as their provided event does not exist anymore, i.e. too much time passed since the last event sync */
             Refresh: boolean;
-            /**
-             * ProtonResponseCode
-             * @example 1000
-             * @enum {integer}
-             */
-            Code: 1000;
-        };
-        CopyLinkRequestDto: {
-            /** @description Name, reusing same session key as previously. */
-            Name: string;
-            /** @description Node passphrase, passphrase should be unchanged, only key packet is used. */
-            NodePassphrase: string;
-            /** @description Name hash */
-            Hash: string;
-            /** @description Volume ID to copy to. */
-            TargetVolumeID: string;
-            /** @description New parent link ID to copy to. */
-            TargetParentLinkID: string;
-            /**
-             * Format: email
-             * @description Signature email address used for signing name.
-             */
-            NameSignatureEmail: string;
-            /**
-             * @description Optional, except when moving a Photo-Link. Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ]
-             * @default null
-             */
-            ContentHash: string | null;
-            /**
-             * @description Node Passphrase Signature. Required when moving an anonymous Link. It must be signed by the SignatureEmail address.
-             * @default null
-             */
-            NodePassphraseSignature: components["schemas"]["PGPSignature"] | null;
-            /**
-             * Format: email
-             * @description Signature email address used for the NodePassphrase.
-             * @default null
-             */
-            SignatureEmail: string | null;
-        };
-        CopyLinkResponseDto: {
-            LinkID: components["schemas"]["Id2"];
             /**
              * ProtonResponseCode
              * @example 1000
@@ -3000,6 +3133,58 @@ export interface components {
              */
             Code: 1000;
         };
+        CopyLinkRequestDto: {
+            /** @description Name, reusing same session key as previously. */
+            Name: string;
+            /** @description Node passphrase, reusing same session key as previously. */
+            NodePassphrase: string;
+            /** @description Name hash */
+            Hash: string;
+            /** @description Volume ID to copy to. */
+            TargetVolumeID: string;
+            /** @description New parent link ID to copy to. */
+            TargetParentLinkID: string;
+            /**
+             * Format: email
+             * @description Signature email address used for signing name.
+             */
+            NameSignatureEmail: string;
+            /**
+             * @description Node Passphrase Signature. Required when moving an anonymous Link. It must be signed by the SignatureEmail address.
+             * @default null
+             */
+            NodePassphraseSignature: components["schemas"]["PGPSignature"] | null;
+            /**
+             * Format: email
+             * @description Signature email address used for the NodePassphraseSignature.
+             * @default null
+             */
+            SignatureEmail: string | null;
+            /**
+             * @description Optional, except when moving a Photo-Link.
+             * @default null
+             */
+            Photos: components["schemas"]["PhotosDto"] | null;
+            /**
+             * @description Only for legacy files (signed by the user). Unencrypted signature of the content session key (plain text of the ContentKeyPacket), signed with the NodeKey.
+             * @default null
+             */
+            ContentKeyPacketSignature: components["schemas"]["PGPSignature"] | null;
+            /**
+             * @description Only for legacy folders (signed by the user). Node hash key should be unchanged, just re-signed with the NodeKey.
+             * @default null
+             */
+            NodeHashKey: string | null;
+        };
+        CopyLinkResponseDto: {
+            LinkID: components["schemas"]["Id2"];
+            /**
+             * ProtonResponseCode
+             * @example 1000
+             * @enum {integer}
+             */
+            Code: 1000;
+        };
         FetchLinksMetadataRequestDto: {
             /**
              * @deprecated
@@ -3029,7 +3214,7 @@ export interface components {
             Code: 1000;
         };
         LoadLinkDetailsResponseDto: {
-            Links: (components["schemas"]["FileDetailsDto"] | components["schemas"]["FolderDetailsDto"])[];
+            Links: (components["schemas"]["FileDetailsDto"] | components["schemas"]["FolderDetailsDto"] | components["schemas"]["AlbumDetailsDto"])[];
             /**
              * ProtonResponseCode
              * @example 1000
@@ -3048,17 +3233,15 @@ export interface components {
             NameSignatureEmail: string | null;
             /**
              * Format: email
-             * @description Signature email address used for the NodePassphrase.
+             * @description Signature email address used for the NodePassphraseSignature.
              * @default null
              */
             SignatureEmail: string | null;
-            /** @default null */
-            NewShareID: components["schemas"]["Id"] | null;
         };
         MoveLinkRequestDto: {
             /** @description Name, reusing same session key as previously. */
             Name: string;
-            /** @description Node passphrase, passphrase should be unchanged, only key packet is used. */
+            /** @description Node passphrase, reusing same session key as previously. */
             NodePassphrase: string;
             /** @description Name hash */
             Hash: string;
@@ -3099,7 +3282,7 @@ export interface components {
             NodePassphraseSignature: components["schemas"]["PGPSignature"] | null;
             /**
              * Format: email
-             * @description Signature email address used for the NodePassphrase.
+             * @description Signature email address used for the NodePassphraseSignature.
              * @default null
              */
             SignatureEmail: string | null;
@@ -3140,7 +3323,7 @@ export interface components {
         MoveLinkRequestDto2: {
             /** @description Name, reusing same session key as previously. */
             Name: string;
-            /** @description Node passphrase, passphrase should be unchanged, only key packet is used. */
+            /** @description Node passphrase, reusing same session key as previously. */
             NodePassphrase: string;
             /** @description Name hash */
             Hash: string;
@@ -3164,7 +3347,7 @@ export interface components {
             NodePassphraseSignature: components["schemas"]["PGPSignature"] | null;
             /**
              * Format: email
-             * @description Signature email address used for the NodePassphrase.
+             * @description Signature email address used for the NodePassphraseSignature.
              * @default null
              */
             SignatureEmail: string | null;
@@ -3269,6 +3452,15 @@ export interface components {
              * @default false
              */
             NoBlockUrls: boolean;
+        };
+        ListRevisionsResponseDto: {
+            Revisions: components["schemas"]["RevisionResponseDto"][];
+            /**
+             * ProtonResponseCode
+             * @example 1000
+             * @enum {integer}
+             */
+            Code: 1000;
         };
         RestoreRevisionAcceptedResponse: {
             /**
@@ -3444,8 +3636,13 @@ export interface components {
         AddTagsRequestDto: {
             Tags: components["schemas"]["TagType"][];
         };
-        CreatePhotoShareResponseDto: {
-            Share: components["schemas"]["ShareResponseDto"];
+        FavoritePhotoRequestDto: {
+            PhotoData?: components["schemas"]["FavoritePhotoDataDto"] | null;
+        };
+        FavoritePhotoResponseDto: {
+            LinkID: components["schemas"]["Id2"];
+            VolumeID: components["schemas"]["Id2"];
+            RelatedPhotos: components["schemas"]["FavoriteRelatedPhotoResponseDto"][];
             /**
              * ProtonResponseCode
              * @example 1000
@@ -3453,18 +3650,23 @@ export interface components {
              */
             Code: 1000;
         };
-        FindDuplicatesInput: {
-            /** @description List of Name HMACs to check */
-            NameHashes: string[];
-        };
-        FindDuplicatesOutputCollection: {
-            DuplicateHashes: components["schemas"]["FoundDuplicate"][];
+        GetMigrationStatusResponseDto: {
+            OldVolumeID: components["schemas"]["Id2"];
+            NewVolumeID?: components["schemas"]["Id2"] | null;
             /**
              * ProtonResponseCode
              * @example 1000
              * @enum {integer}
              */
             Code: 1000;
+        };
+        AcceptedResponse: {
+            /**
+             * ProtonResponseCode
+             * @example 1002
+             * @enum {integer}
+             */
+            Code: 1002;
         };
         ListPhotosParameters: {
             /** @default true */
@@ -3493,8 +3695,18 @@ export interface components {
              */
             Code: 1000;
         };
+        MigrateFromLegacyRequest: Record<string, never>;
         RemoveTagsRequestDto: {
             Tags: components["schemas"]["TagType"][];
+        };
+        UpdateXAttrRequest: {
+            /**
+             * Format: email
+             * @description Signature email address used to sign XAttributes; must be the same as the current revision signatureEmail, cannot be updated
+             */
+            SignatureEmail: string;
+            /** @description Extended attributes encrypted with link key */
+            XAttr: string;
         };
         CommitAnonymousRevisionDto: {
             ManifestSignature: components["schemas"]["PGPSignature"];
@@ -3701,17 +3913,18 @@ export interface components {
             VolumeID: components["schemas"]["Id2"];
             Type: components["schemas"]["ShareType"];
             State: components["schemas"]["ShareState"];
+            VolumeType: components["schemas"]["VolumeType"];
             /** Format: email */
             Creator: string;
             Locked?: boolean | null;
-            CreateTime?: number | null;
-            ModifyTime?: number | null;
+            CreateTime: number;
+            ModifyTime: number;
             LinkID: components["schemas"]["Id2"];
             /**
              * @deprecated
              * @description Deprecated: Use `CreateTime`
              */
-            CreationTime?: number | null;
+            CreationTime: number;
             /** @deprecated */
             PermissionsMask: number;
             LinkType: components["schemas"]["NodeType"];
@@ -3771,7 +3984,7 @@ export interface components {
             Code: 1000;
         };
         ListSharesResponseDto: {
-            Shares: components["schemas"]["ShareResponseDto2"][];
+            Shares: components["schemas"]["ShareResponseDto"][];
             /**
              * ProtonResponseCode
              * @example 1000
@@ -3833,7 +4046,9 @@ export interface components {
             SRPSession: components["schemas"]["BinaryString2"];
             Version: number;
             Flags: number;
+            /** @deprecated */
             IsDoc: boolean;
+            VendorType: components["schemas"]["VendorType"];
             /**
              * ProtonResponseCode
              * @example 1000
@@ -3848,6 +4063,15 @@ export interface components {
         };
         BootstrapShareTokenResponseDto: {
             Token: components["schemas"]["TokenResponseDto"];
+            /**
+             * ProtonResponseCode
+             * @example 1000
+             * @enum {integer}
+             */
+            Code: 1000;
+        };
+        GetRevisionResponseDto: {
+            Revision: components["schemas"]["DetailedRevisionResponseDto"];
             /**
              * ProtonResponseCode
              * @example 1000
@@ -4086,6 +4310,18 @@ export interface components {
              */
             Code: 1000;
         };
+        ListPendingInvitationQueryParameters: {
+            AnchorID?: components["schemas"]["Id"] | null;
+            /** @default 150 */
+            PageSize: number;
+            /** @default null */
+            ShareTargetTypes: components["schemas"]["TargetType"][] | null;
+        };
+        /**
+         * @description <details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Name</th><th>Description</th></tr><tr><td>0</td><td>Root</td><td>main, device or photo root share</td></tr><tr><td>1</td><td>Folder</td><td></td></tr><tr><td>2</td><td>File</td><td></td></tr><tr><td>3</td><td>Album</td><td></td></tr><tr><td>4</td><td>Photo</td><td></td></tr><tr><td>5</td><td>ProtonVendor</td><td>documents and sheets</td></tr></table></details></details>
+         * @enum {integer}
+         */
+        TargetType: 0 | 1 | 2 | 3 | 4 | 5;
         ListPendingInvitationResponseDto: {
             Invitations: components["schemas"]["PendingInvitationItemDto"][];
             /** @description Used for pagination, pass to the next call to get the next page of results */
@@ -4101,7 +4337,7 @@ export interface components {
         };
         PendingInvitationResponseDto: {
             Invitation: components["schemas"]["InvitationResponseDto"];
-            Share: components["schemas"]["ShareResponseDto3"];
+            Share: components["schemas"]["ShareResponseDto2"];
             Link: components["schemas"]["LinkResponseDto"];
             /**
              * ProtonResponseCode
@@ -4202,6 +4438,10 @@ export interface components {
             DocsCommentsNotificationsEnabled?: boolean | null;
             /** @description Indicates if email notifications for comment activity in Proton Docs should include the document name. If null, the default value to 0 = false will be used by backend. */
             DocsCommentsNotificationsIncludeDocumentName?: boolean | null;
+            /** @description Indicates user-preferred font in Proton Docs. */
+            DocsFontPreference?: string | null;
+            /** @description Order and visibility of Photo Tags, tags not in the list should not be shown; Use defaults when NULL; Show no tags if empty array. */
+            PhotoTags?: components["schemas"]["TagType"][] | null;
         };
         CreateVolumeRequestDto: {
             /** @description User's Address encrypted ID */
@@ -4245,25 +4485,47 @@ export interface components {
              */
             Code: 1000;
         };
+        /** @description Name, Hash, NodePassphrase and NodePassphraseSignature are required when restoring a regular volume but should not be passed when restoring a photo volume. Please pass them as part of MainShares array to support multiple locked main shares. */
         RestoreVolumeDto: {
-            /** @description Folder name as armored PGP message */
-            Name: string;
             /** Format: email */
             SignatureAddress: string;
-            /** @description Hash of the name */
-            Hash: string;
-            NodePassphrase: components["schemas"]["PGPMessage"];
-            NodePassphraseSignature: components["schemas"]["PGPSignature"];
-            TargetVolumeID: components["schemas"]["Id"];
+            /**
+             * @deprecated
+             * @default null
+             */
+            TargetVolumeID: components["schemas"]["Id"] | null;
+            /**
+             * @deprecated
+             * @description Folder name as armored PGP message
+             * @default null
+             */
+            Name: string | null;
+            /**
+             * @deprecated
+             * @description Hash of the name
+             */
+            Hash?: string | null;
+            /**
+             * @deprecated
+             * @default null
+             */
+            NodePassphrase: components["schemas"]["PGPMessage"] | null;
+            /**
+             * @deprecated
+             * @default null
+             */
+            NodePassphraseSignature: components["schemas"]["PGPSignature"] | null;
+            /** @default [] */
+            MainShares: components["schemas"]["RestoreMainShareDto"][];
             /** @default [] */
             Devices: components["schemas"]["RestoreDeviceDto"][];
             /** @default [] */
             PhotoShares: components["schemas"]["RestorePhotoShareDto"][];
             /**
-             * @description Node Hash Key should be provided if it needs to be signed because it was unsigned or signed  with the address key (legacy). It should be signed with the new parent's node key. If it was properly signed with the parent node key, it should not be updated. Armored PGP message.
+             * @deprecated
              * @default null
              */
-            NodeHashKey: string | null;
+            NodeHashKey: components["schemas"]["PGPMessage"] | null;
             /** @description User's encrypted AddressKeyID. Must be the primary key from the signatureAddress */
             AddressKeyID: string;
         };
@@ -4469,100 +4731,20 @@ export interface components {
                 Tags?: number[];
             } | null;
         } & components["schemas"]["LinkTransformer"];
-        /** Revision */
-        DetailedRevisionTransformer: {
-            /** @description Block list */
-            Blocks: {
-                /** @description Block index */
-                Index: number;
-                /** @description Encrypted block's sha256 hash, in base64 */
-                Hash: string;
-                /** @description Token for download url */
-                Token: string | null;
-                /**
-                 * @deprecated
-                 * @description Block download url
-                 * @example https://block.example.com/abcd/
-                 */
-                URL?: string | null;
-                /**
-                 * @description Bare Block download url
-                 * @example https://block.example.com/abcd/
-                 */
-                BareURL: string | null;
-                /**
-                 * @description Encrypted block signature
-                 * @example -----BEGIN PGP MESSAGE-----...
-                 */
-                EncSignature: string | null;
-                /**
-                 * Format: email
-                 * @description Email used to sign block
-                 */
-                SignatureEmail?: string | null;
-            }[];
-            Photo: components["schemas"]["PhotoTransformer2"] | null;
-        } & components["schemas"]["RevisionTransformer"];
+        GetRevisionResponseDto2: {
+            Revision: components["schemas"]["DetailedRevisionResponseDto2"];
+            /**
+             * ProtonResponseCode
+             * @example 1000
+             * @enum {integer}
+             */
+            Code: 1000;
+        };
         /** @description Conflict, a share already exists for the file or folder. */
         ShareConflictErrorResponseDto: {
             Details: components["schemas"]["ShareConflictErrorDetailsDto"];
             Error: string;
             Code: number;
-        };
-        /** Revision */
-        RevisionTransformer: {
-            /** @description Encrypted revision ID */
-            ID: string;
-            /** @description Client managed unique ID */
-            ClientUID: string | null;
-            /** @description Creation time (UNIX timestamp) */
-            CreateTime: number;
-            /** @description Size of revision (in bytes) */
-            Size: number;
-            /**
-             * @description Manifest signature, signed with the user's address associated with the share, `SignatureEmail`
-             * @example -----BEGIN PGP SIGNATURE-----...
-             */
-            ManifestSignature: string | null;
-            /**
-             * Format: email
-             * @description User's email associated with the share and used to sign the manifest and block contents.
-             */
-            SignatureEmail: string;
-            /**
-             * Format: email
-             * @deprecated
-             * @description [DEPRECATED] use `SignatureEmail` Email address corresponding to the signature
-             */
-            SignatureAddress: string;
-            /**
-             * @description State (0=Draft, 1=Active, 2=Obsolete)
-             * @enum {integer}
-             */
-            State: 0 | 1 | 2;
-            /**
-             * @description Extended attributes.
-             * @example -----BEGIN PGP MESSAGE
-             */
-            XAttr: string | null;
-            /**
-             * @deprecated
-             * @description Flag stating if revision has a thumbnail
-             * @enum {integer}
-             */
-            Thumbnail: 0 | 1;
-            /**
-             * @deprecated
-             * @description Hash for thumbnail
-             */
-            ThumbnailHash?: string | null;
-            /**
-             * @deprecated
-             * @description Size thumbnail in bytes; 0 if no thumbnail present
-             * @example 512
-             */
-            ThumbnailSize: number;
-            Thumbnails: components["schemas"]["ThumbnailTransformer"][];
         };
         SmallFileUploadMetadataRequestDto: {
             Name: components["schemas"]["PGPMessage"];
@@ -4701,27 +4883,41 @@ export interface components {
         };
         PhotoVolumeResponseDto: {
             VolumeID: components["schemas"]["Id2"];
-            CreateTime?: number | null;
-            ModifyTime?: number | null;
+            CreateTime: number;
+            ModifyTime: number;
             /** @description Used space in bytes */
             UsedSpace: number;
             DownloadedBytes: number;
             UploadedBytes: number;
             State: components["schemas"]["VolumeState"];
             Share: components["schemas"]["ShareReferenceResponseDto"];
-            Type: components["schemas"]["VolumeType"];
-            /**
-             * @description Status of restore task if applicable:
-             *      - 0 => done
-             *      - 1 => in progress
-             *      - -1 => failed
-             * @default null
-             * @enum {integer|null}
-             */
-            RestoreStatus: 0 | 1 | -1 | null;
+            Type: components["schemas"]["VolumeType2"];
         };
-        /** @description An encrypted ID */
-        Id2: string;
+        FoundDuplicate: {
+            /** @description NameHash of the found duplicate */
+            Hash?: string | null;
+            /** @description ContentHash of the found duplicate */
+            ContentHash?: string | null;
+            /**
+             * @description Can be null if the Link was deleted
+             * @enum {unknown|null}
+             */
+            LinkState?: 0 | 1 | 2 | null;
+            /** @description Client defined UID for the draft. Null if no ClientUID passed, or Revision was already committed. */
+            ClientUID?: string | null;
+            /** @description LinkID, null if deleted */
+            LinkID: string;
+            /** @description RevisionID, null if deleted */
+            RevisionID: string;
+        };
+        PhotoTagMigrationDataDto: {
+            LastProcessedLinkID: components["schemas"]["Id2"];
+            LastProcessedCaptureTime: number;
+            LastMigrationTimestamp: number;
+            /** @description Client unique ID. Indicates which client started migration, and thus can/should continue.
+             *     if null, client side migration is expired (client has not checked in for > 1h), any eligible client can continue migration */
+            LastClientUID?: string | null;
+        };
         AlbumResponseDto: {
             Locked: boolean;
             LastActivityTime: number;
@@ -4746,6 +4942,34 @@ export interface components {
              * @default []
              */
             Tags: number[];
+        };
+        TransferPhotoLinkInBatchRequestDto: {
+            LinkID: components["schemas"]["Id"];
+            /** @description Name, reusing same session key as previously. */
+            Name: string;
+            /** @description Node passphrase, reusing same session key as previously. */
+            NodePassphrase: string;
+            /** @description Name hash */
+            Hash: string;
+            /** @description Current name hash before move operation. Used to prevent race conditions. */
+            OriginalHash: string;
+            /**
+             * @description Optional, when transferring an Album-Link, required when transferring photos. Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ]
+             * @default null
+             */
+            ContentHash: string | null;
+            /**
+             * @description Node Passphrase Signature. Required when moving an anonymous Link. It must be signed by the SignatureEmail address.
+             * @default null
+             */
+            NodePassphraseSignature: components["schemas"]["PGPSignature"] | null;
+        };
+        PhotoTagMigrationUpdateDto: {
+            LastProcessedLinkID: components["schemas"]["Id"];
+            LastProcessedCaptureTime: number;
+            CurrentTimestamp: number;
+            /** @description Client unique ID. Indicates which client started migration, and thus can/should continue. */
+            ClientUID: string;
         };
         AlbumLinkUpdateDto: {
             Name?: components["schemas"]["PGPMessage"] | null;
@@ -4834,6 +5058,11 @@ export interface components {
         BinaryString: string;
         /** @description An armored PGP Signature */
         PGPSignature: string;
+        /**
+         * @description <p>Document=1, Sheet=2</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Document</td></tr><tr><td>2</td><td>Sheet</td></tr></table></details></details>
+         * @enum {integer}
+         */
+        DocumentType: 1 | 2;
         /** @description An armored PGP Message */
         PGPMessage: string;
         /** @description An armored PGP Private Key */
@@ -4843,6 +5072,8 @@ export interface components {
             LinkID: components["schemas"]["Id2"];
             RevisionID: components["schemas"]["Id2"];
         };
+        /** @description An encrypted ID */
+        Id2: string;
         EventResponseDto: {
             EventID: components["schemas"]["Id2"];
             EventType: components["schemas"]["EventType"];
@@ -4877,7 +5108,10 @@ export interface components {
                 FLAG_RESTORE_COMPLETE?: string;
                 /** @description Restoration has failed for corresponding locked volume */
                 FLAG_RESTORE_FAILED?: string;
-                /** @description Revision has been restored for this LinkID */
+                /**
+                 * @deprecated
+                 * @description Revision has been restored for this LinkID
+                 */
                 FLAG_RESTORE_REVISION_COMPLETE?: string;
                 /** @description Parent before the move */
                 FromParentLinkID?: string;
@@ -4899,6 +5133,12 @@ export interface components {
             LinkID: components["schemas"]["Id2"];
             ClientUID?: string | null;
         };
+        PhotosDto: {
+            /** @description Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ] */
+            ContentHash: string;
+            /** @default [] */
+            RelatedPhotos: components["schemas"]["RelatedPhotoDto"][];
+        };
         ListMissingHashKeyItemDto: {
             LinkID: components["schemas"]["Id2"];
             VolumeID: components["schemas"]["Id2"];
@@ -4913,6 +5153,8 @@ export interface components {
             Membership: components["schemas"]["MembershipDto"] | null;
             /** @default null */
             Folder: null | null;
+            /** @default null */
+            Album: null | null;
         };
         FolderDetailsDto: {
             Link: components["schemas"]["LinkDto"];
@@ -4923,12 +5165,26 @@ export interface components {
             Membership: components["schemas"]["MembershipDto"] | null;
             /** @default null */
             File: null | null;
+            /** @default null */
+            Album: null | null;
+        };
+        AlbumDetailsDto: {
+            Link: components["schemas"]["LinkDto"];
+            Album: components["schemas"]["AlbumDto"];
+            /** @default null */
+            Sharing: components["schemas"]["SharingDto"] | null;
+            /** @default null */
+            Membership: components["schemas"]["MembershipDto"] | null;
+            /** @default null */
+            File: null | null;
+            /** @default null */
+            Folder: null | null;
         };
         MoveLinkInBatchRequestDto: {
             LinkID: components["schemas"]["Id"];
             /** @description Name, reusing same session key as previously. */
             Name: string;
-            /** @description Node passphrase, passphrase should be unchanged, only key packet is used. */
+            /** @description Node passphrase, reusing same session key as previously. */
             NodePassphrase: string;
             /** @description Name hash */
             Hash: string;
@@ -4978,6 +5234,44 @@ export interface components {
         BlockTokenDto: {
             Index: number;
             Token: string;
+        };
+        RevisionResponseDto: {
+            ID: components["schemas"]["Id2"];
+            ManifestSignature?: components["schemas"]["PGPSignature2"] | null;
+            /** @description Size of revision (in bytes) */
+            Size: number;
+            State: components["schemas"]["RevisionState"];
+            XAttr?: components["schemas"]["PGPMessage2"] | null;
+            /**
+             * @deprecated
+             * @description Flag stating if revision has a thumbnail
+             * @enum {integer}
+             */
+            Thumbnail: 0 | 1;
+            /** @deprecated */
+            ThumbnailHash?: components["schemas"]["BinaryString2"] | null;
+            /**
+             * @deprecated
+             * @description Size thumbnail in bytes; 0 if no thumbnail present
+             */
+            ThumbnailSize: number;
+            Thumbnails: components["schemas"]["ThumbnailResponseDto"][];
+            ClientUID?: string | null;
+            /** @default null */
+            CreateTime: number | null;
+            /**
+             * Format: email
+             * @description User's email associated with the share and used to sign the manifest and block contents.
+             * @default null
+             */
+            SignatureEmail: string | null;
+            /**
+             * Format: email
+             * @deprecated
+             * @description [DEPRECATED] use `SignatureEmail` Email address corresponding to the signature
+             * @default null
+             */
+            SignatureAddress: string | null;
         };
         /** @description Base64 encoded binary data */
         BinaryString2: string;
@@ -5029,33 +5323,37 @@ export interface components {
             /** @description Allow or not the user to create writable ShareURLs */
             PublicCollaboration: boolean;
         };
-        ShareResponseDto: {
-            ShareID: components["schemas"]["Id2"];
-            LinkID: components["schemas"]["Id2"];
-        };
-        FoundDuplicate: {
-            /** @description NameHash of the found duplicate */
-            Hash?: string | null;
-            /** @description ContentHash of the found duplicate */
-            ContentHash?: string | null;
+        FavoritePhotoDataDto: {
+            /** @description Name Hash */
+            Hash: string;
+            Name: string;
             /**
-             * @description Can be null if the Link was deleted
-             * @enum {unknown|null}
+             * Format: email
+             * @description Email address used for signing name
              */
-            LinkState?: 0 | 1 | 2 | null;
-            /** @description Client defined UID for the draft. Null if no ClientUID passed, or Revision was already committed. */
-            ClientUID?: string | null;
-            /** @description LinkID, null if deleted */
-            LinkID: string;
-            /** @description RevisionID, null if deleted */
-            RevisionID: string;
+            NameSignatureEmail: string;
+            NodePassphrase: components["schemas"]["PGPMessage"];
+            /** @description Photo content hash */
+            ContentHash: string;
+            /** @description Nullable; Node Passphrase Signature. Required when moving an anonymous Link. It must be signed by the SignatureEmail address. */
+            NodePassphraseSignature?: components["schemas"]["PGPSignature"] | null;
+            /**
+             * Format: email
+             * @description Nullable: Required when moving an anonymous link. Email address used for the NodePassphraseSignature
+             */
+            SignatureEmail?: string | null;
+            /** @default [] */
+            RelatedPhotos: components["schemas"]["AlbumPhotoLinkDataDto"][];
+        };
+        FavoriteRelatedPhotoResponseDto: {
+            LinkID: components["schemas"]["Id2"];
         };
         PhotoListingItemResponse: {
             LinkID: components["schemas"]["Id2"];
             /** @description Unix timestamp of when the photo was taken as extracted by client from exif */
             CaptureTime: number;
             /** @description File name hash */
-            Hash?: string | null;
+            Hash: string;
             /** @description Photo content hash, Hashmac of content using parent folder's hash key */
             ContentHash?: string | null;
             /**
@@ -5137,6 +5435,8 @@ export interface components {
             Membership: components["schemas"]["MembershipDto2"] | null;
             /** @default null */
             File: null | null;
+            /** @default null */
+            Album: null | null;
         };
         /**
          * @description <p>1=Main, 2=Standard, 3=Device, 4=Photo</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Name</th><th>Description</th></tr><tr><td>1</td><td>Main</td><td>* Root share for my files</td></tr><tr><td>2</td><td>Standard</td><td>* Collaborative share anywhere in the link tree (but not at the root folder as it cannot be shared)</td></tr><tr><td>3</td><td>Device</td><td>* Root share of devices</td></tr><tr><td>4</td><td>Photo</td><td>* Root share for photos</td></tr></table></details></details>
@@ -5144,10 +5444,15 @@ export interface components {
          */
         ShareType: 1 | 2 | 3 | 4;
         /**
-         * @description <p>1=Active, 3=Restored</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Active</td></tr><tr><td>2</td><td>Deleted</td></tr><tr><td>3</td><td>Restored</td></tr><tr><td>4</td><td>Migrating</td></tr><tr><td>33</td><td>HiddenRestoreVolumeIncident2025</td></tr></table></details></details>
+         * @description <p>1=Active, 3=Restored</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Active</td></tr><tr><td>2</td><td>Deleted</td></tr><tr><td>3</td><td>Restored</td></tr><tr><td>4</td><td>Migrating</td></tr><tr><td>5</td><td>Migrated</td></tr><tr><td>6</td><td>Locked</td></tr></table></details></details>
          * @enum {integer}
          */
-        ShareState: 1 | 2 | 3 | 4 | 33;
+        ShareState: 1 | 2 | 3 | 4 | 5 | 6;
+        /**
+         * @description <p>1=Regular, 2=Photo</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Regular</td></tr><tr><td>2</td><td>Photo</td></tr></table></details></details>
+         * @enum {integer}
+         */
+        VolumeType: 1 | 2;
         /**
          * @description <p>1=folder, 2=file</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Folder</td></tr><tr><td>2</td><td>File</td></tr><tr><td>3</td><td>Album</td></tr></table></details></details>
          * @enum {integer}
@@ -5205,22 +5510,23 @@ export interface components {
              */
             Unlockable: boolean | null;
         };
-        ShareResponseDto2: {
+        ShareResponseDto: {
             ShareID: components["schemas"]["Id2"];
             VolumeID: components["schemas"]["Id2"];
             Type: components["schemas"]["ShareType"];
             State: components["schemas"]["ShareState"];
+            VolumeType: components["schemas"]["VolumeType"];
             /** Format: email */
             Creator: string;
             Locked?: boolean | null;
-            CreateTime?: number | null;
-            ModifyTime?: number | null;
+            CreateTime: number;
+            ModifyTime: number;
             LinkID: components["schemas"]["Id2"];
             /**
              * @deprecated
              * @description Deprecated: Use `CreateTime`
              */
-            CreationTime?: number | null;
+            CreationTime: number;
             /** @deprecated */
             PermissionsMask: number;
             /** @deprecated */
@@ -5248,6 +5554,11 @@ export interface components {
             Error: string;
             Code: number;
         };
+        /**
+         * @description <details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>0</td><td>ProtonDrive</td></tr><tr><td>1</td><td>ProtonDoc</td></tr><tr><td>2</td><td>ProtonSheet</td></tr></table></details></details>
+         * @enum {integer}
+         */
+        VendorType: 0 | 1 | 2;
         TokenResponseDto: {
             /**
              * @description Url Token
@@ -5290,6 +5601,46 @@ export interface components {
              * @default null
              */
             NodePassphraseSignature: components["schemas"]["PGPSignature2"] | null;
+        };
+        DetailedRevisionResponseDto: {
+            Blocks: components["schemas"]["BlockResponseDto"][];
+            Photo?: components["schemas"]["PhotoResponseDto"] | null;
+            ID: components["schemas"]["Id2"];
+            ManifestSignature?: components["schemas"]["PGPSignature2"] | null;
+            /** @description Size of revision (in bytes) */
+            Size: number;
+            State: components["schemas"]["RevisionState"];
+            XAttr?: components["schemas"]["PGPMessage2"] | null;
+            /**
+             * @deprecated
+             * @description Flag stating if revision has a thumbnail
+             * @enum {integer}
+             */
+            Thumbnail: 0 | 1;
+            /** @deprecated */
+            ThumbnailHash?: components["schemas"]["BinaryString2"] | null;
+            /**
+             * @deprecated
+             * @description Size thumbnail in bytes; 0 if no thumbnail present
+             */
+            ThumbnailSize: number;
+            Thumbnails: components["schemas"]["ThumbnailResponseDto"][];
+            ClientUID?: string | null;
+            /** @default null */
+            CreateTime: number | null;
+            /**
+             * Format: email
+             * @description User's email associated with the share and used to sign the manifest and block contents.
+             * @default null
+             */
+            SignatureEmail: string | null;
+            /**
+             * Format: email
+             * @deprecated
+             * @description [DEPRECATED] use `SignatureEmail` Email address corresponding to the signature
+             * @default null
+             */
+            SignatureAddress: string | null;
         };
         GetSharedFileInfoPayloadDto: {
             SharePasswordSalt: components["schemas"]["BinaryString2"];
@@ -5542,6 +5893,7 @@ export interface components {
             VolumeID: components["schemas"]["Id2"];
             ShareID: components["schemas"]["Id2"];
             LinkID: components["schemas"]["Id2"];
+            ShareTargetType: components["schemas"]["TargetType2"];
         };
         ExternalInvitationRequestDto: {
             InviterAddressID: components["schemas"]["Id"];
@@ -5634,8 +5986,9 @@ export interface components {
             VolumeID: components["schemas"]["Id2"];
             ShareID: components["schemas"]["Id2"];
             InvitationID: components["schemas"]["Id2"];
+            ShareTargetType: components["schemas"]["TargetType2"];
         };
-        ShareResponseDto3: {
+        ShareResponseDto2: {
             ShareID: components["schemas"]["Id2"];
             VolumeID: components["schemas"]["Id2"];
             Passphrase: components["schemas"]["PGPMessage2"];
@@ -5711,7 +6064,9 @@ export interface components {
             DocsCommentsNotificationsEnabled?: boolean | null;
             /** @description Indicates if email notifications for comment activity in Proton Docs should include the document name. If null, the default value to 0 = false will be used by backend. */
             DocsCommentsNotificationsIncludeDocumentName?: boolean | null;
-            /** @description Default order and visibility of Photo Tags. */
+            /** @description Indicates user-preferred font in Proton Docs. */
+            DocsFontPreference?: string | null;
+            /** @description Order and visibility of Photo Tags, tags not in the list should not be shown; Use defaults when NULL; Show no tags if empty array. */
             PhotoTags?: number[] | null;
         };
         Defaults: {
@@ -5746,31 +6101,37 @@ export interface components {
              * @deprecated
              * @description Deprecated, use `CreateTime` instead
              */
-            CreationTime?: number | null;
+            CreationTime: number;
             /**
              * @deprecated
              * @default null
              */
             MaxSpace: number | null;
             VolumeID: components["schemas"]["Id2"];
-            CreateTime?: number | null;
-            ModifyTime?: number | null;
+            CreateTime: number;
+            ModifyTime: number;
             /** @description Used space in bytes */
             UsedSpace: number;
             DownloadedBytes: number;
             UploadedBytes: number;
             State: components["schemas"]["VolumeState"];
             Share: components["schemas"]["ShareReferenceResponseDto"];
-            Type: components["schemas"]["VolumeType"];
+            Type: components["schemas"]["VolumeType2"];
+        };
+        RestoreMainShareDto: {
+            /** @description ShareID of the existing, locked main share */
+            LockedShareID: string;
+            /** @description Folder name as armored PGP message */
+            Name: string;
+            /** @description Hash of the name */
+            Hash: string;
+            NodePassphrase: components["schemas"]["PGPMessage"];
+            NodePassphraseSignature: components["schemas"]["PGPSignature"];
             /**
-             * @description Status of restore task if applicable:
-             *      - 0 => done
-             *      - 1 => in progress
-             *      - -1 => failed
+             * @description Node Hash Key should be provided if it needs to be signed because it was unsigned or signed  with the address key (legacy). It should be signed with the new parent's node key. If it was properly signed with the parent node key, it should not be updated. Armored PGP message.
              * @default null
-             * @enum {integer|null}
              */
-            RestoreStatus: 0 | 1 | -1 | null;
+            NodeHashKey: string | null;
         };
         RestoreDeviceDto: {
             /** @description ShareID of the existing share on the old volume */
@@ -5814,8 +6175,7 @@ export interface components {
         };
         /** Thumbnail */
         ThumbnailTransformer: {
-            /** @description Encrypted Thumbnail ID. Will be null for legacy Thumbnails. */
-            ThumbnailID: string | null;
+            ThumbnailID: string;
             /** @enum {integer} */
             Type: 1 | 2 | 3;
             /** @description Base64 encoded thumbnail-content-hash */
@@ -5888,10 +6248,11 @@ export interface components {
              */
             MIMEType: string;
             /**
-             * @description Attributes
-             * @example 1
+             * @deprecated
+             * @description Always returns 1
+             * @enum {integer}
              */
-            Attributes: number;
+            Attributes: 1;
             /**
              * @deprecated
              * @description Always returns 7, read+write+execute
@@ -5930,23 +6291,45 @@ export interface components {
             /** @description Timestamp, time at which the file was trashed, null if file is not trashed. */
             Trashed: number | null;
         };
-        /** Photo */
-        PhotoTransformer2: {
-            LinkID: string;
-            /** @description Unix timestamp of when the photo was taken as extracted by client from exif */
-            CaptureTime: number;
-            MainPhotoLinkID: string | null;
-            /** @description File name hash */
-            Hash: string;
+        DetailedRevisionResponseDto2: {
+            Blocks: components["schemas"]["BlockResponseDto2"][];
+            Photo?: components["schemas"]["PhotoResponseDto2"] | null;
+            ID: components["schemas"]["Id"];
+            ManifestSignature?: components["schemas"]["PGPSignature"] | null;
+            /** @description Size of revision (in bytes) */
+            Size: number;
+            State: components["schemas"]["RevisionState2"];
+            XAttr?: components["schemas"]["PGPMessage"] | null;
             /**
              * @deprecated
-             * @description Deprecated: Clients persist exif information in xAttr instead
+             * @description Flag stating if revision has a thumbnail
+             * @enum {integer}
              */
-            Exif?: string | null;
-            /** @description Photo content hash, Hashmac of content using parent folder's hash key */
-            ContentHash: string | null;
-            /** @description LinkIDs of related Photos if there are any */
-            RelatedPhotosLinkIDs: string[];
+            Thumbnail: 0 | 1;
+            /** @deprecated */
+            ThumbnailHash?: components["schemas"]["BinaryString"] | null;
+            /**
+             * @deprecated
+             * @description Size thumbnail in bytes; 0 if no thumbnail present
+             */
+            ThumbnailSize: number;
+            Thumbnails: components["schemas"]["ThumbnailResponseDto2"][];
+            ClientUID?: string | null;
+            /** @default null */
+            CreateTime: number | null;
+            /**
+             * Format: email
+             * @description User's email associated with the share and used to sign the manifest and block contents.
+             * @default null
+             */
+            SignatureEmail: string | null;
+            /**
+             * Format: email
+             * @deprecated
+             * @description [DEPRECATED] use `SignatureEmail` Email address corresponding to the signature
+             * @default null
+             */
+            SignatureAddress: string | null;
         };
         ShareConflictErrorDetailsDto: {
             ConflictLinkID: components["schemas"]["Id"];
@@ -5970,7 +6353,12 @@ export interface components {
          * @description <details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Regular</td></tr><tr><td>2</td><td>Photo</td></tr></table></details></details>
          * @enum {integer}
          */
-        VolumeType: 1 | 2;
+        VolumeType2: 1 | 2;
+        /**
+         * @description <p>Can be null if the Link was deleted</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>0</td><td>Draft</td></tr><tr><td>1</td><td>Active</td></tr><tr><td>2</td><td>Trashed</td></tr></table></details></details>
+         * @enum {integer}
+         */
+        LinkState: 0 | 1 | 2;
         ListPhotosAlbumRelatedPhotoItemResponseDto: {
             LinkID: components["schemas"]["Id2"];
             CaptureTime: number;
@@ -6000,7 +6388,7 @@ export interface components {
             /** @description UNIX timestamp when the Device got last synced */
             LastSyncTime?: number | null;
             CreateTime: number;
-            ModifyTime?: number | null;
+            ModifyTime: number;
             /**
              * @deprecated
              * @description Deprecated: use `CreateTime`
@@ -6016,7 +6404,7 @@ export interface components {
         DeviceDto: {
             DeviceID: components["schemas"]["Id2"];
             CreateTime: number;
-            ModifyTime?: number | null;
+            ModifyTime: number;
             Type: components["schemas"]["DeviceType2"];
         };
         /**
@@ -6029,6 +6417,17 @@ export interface components {
             ParentLinkID?: components["schemas"]["Id2"] | null;
             IsShared: boolean;
             IsTrashed: boolean;
+        };
+        RelatedPhotoDto: {
+            LinkID: components["schemas"]["Id"];
+            /** @description Name, reusing same session key as previously. */
+            Name: string;
+            /** @description Node passphrase, reusing same session key as previously. */
+            NodePassphrase: string;
+            /** @description Name hash */
+            Hash: string;
+            /** @description Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ] */
+            ContentHash: string;
         };
         LinkDto: {
             LinkID: components["schemas"]["Id"];
@@ -6076,6 +6475,21 @@ export interface components {
             NodeHashKey?: components["schemas"]["PGPMessage"] | null;
             XAttr?: components["schemas"]["PGPMessage"] | null;
         };
+        AlbumDto: {
+            NodeHashKey?: components["schemas"]["PGPMessage"] | null;
+            XAttr?: components["schemas"]["PGPMessage"] | null;
+        };
+        /**
+         * @description <details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>0</td><td>Draft</td></tr><tr><td>1</td><td>Active</td></tr><tr><td>2</td><td>Obsolete</td></tr></table></details></details>
+         * @enum {integer}
+         */
+        RevisionState: 0 | 1 | 2;
+        ThumbnailResponseDto: {
+            ThumbnailID: components["schemas"]["Id2"];
+            Type: components["schemas"]["ThumbnailType2"];
+            Hash: components["schemas"]["BinaryString2"];
+            Size: number;
+        };
         Verifier: {
             Token: components["schemas"]["BinaryString"];
         };
@@ -6089,17 +6503,12 @@ export interface components {
          * @enum {integer}
          */
         ThumbnailType2: 1 | 2 | 3;
-        /**
-         * @description <p>Can be null if the Link was deleted</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>0</td><td>Draft</td></tr><tr><td>1</td><td>Active</td></tr><tr><td>2</td><td>Trashed</td></tr></table></details></details>
-         * @enum {integer}
-         */
-        LinkState: 0 | 1 | 2;
         PhotoListingRelatedItemResponse: {
             LinkID: components["schemas"]["Id2"];
             /** @description Unix timestamp of when the photo was taken as extracted by client from exif */
             CaptureTime: number;
             /** @description File name hash */
-            Hash?: string | null;
+            Hash: string;
             /** @description Photo content hash, Hashmac of content using parent folder's hash key */
             ContentHash?: string | null;
         };
@@ -6177,6 +6586,44 @@ export interface components {
             /** @description Token for the thumbnail URL */
             Token?: string | null;
         };
+        BlockResponseDto: {
+            Index: number;
+            Hash: components["schemas"]["BinaryString2"];
+            Token?: string | null;
+            /** @deprecated */
+            URL?: string | null;
+            BareURL?: string | null;
+            EncSignature?: components["schemas"]["PGPMessage2"] | null;
+            /**
+             * Format: email
+             * @description Email used to sign block
+             */
+            SignatureEmail?: string | null;
+        };
+        PhotoResponseDto: {
+            LinkID: components["schemas"]["Id2"];
+            /** @description Unix timestamp of when the photo was taken as extracted by client from exif */
+            CaptureTime: number;
+            MainPhotoLinkID?: components["schemas"]["Id2"] | null;
+            /** @description File name hash */
+            Hash?: string | null;
+            /** @description Photo content hash, Hashmac of content using parent folder's hash key */
+            ContentHash?: string | null;
+            /** @description LinkIDs of related Photos if there are any */
+            RelatedPhotosLinkIDs: components["schemas"]["Id2"][];
+            /**
+             * @deprecated
+             * @description Deprecated: Clients persist exif information in xAttr instead
+             * @default null
+             */
+            Exif: string | null;
+        };
+        /**
+         * @description <p>The target type of the Share that is corresponding to this invitation.<br />
+         *                 This should not be used as source of information to know what NodeType or MIMEType the targeted Share is.</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Name</th><th>Description</th></tr><tr><td>0</td><td>Root</td><td>main, device or photo root share</td></tr><tr><td>1</td><td>Folder</td><td></td></tr><tr><td>2</td><td>File</td><td></td></tr><tr><td>3</td><td>Album</td><td></td></tr><tr><td>4</td><td>Photo</td><td></td></tr><tr><td>5</td><td>ProtonVendor</td><td>documents and sheets</td></tr></table></details></details>
+         * @enum {integer}
+         */
+        TargetType2: 0 | 1 | 2 | 3 | 4 | 5;
         /**
          * @description <details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Pending</td></tr><tr><td>2</td><td>UserRegistered</td></tr><tr><td>4</td><td>Deleted</td></tr></table></details></details>
          * @enum {integer}
@@ -6202,6 +6649,49 @@ export interface components {
          * @enum {integer}
          */
         RevisionRetentionDays3: 0 | 7 | 30 | 180 | 365 | 3650;
+        BlockResponseDto2: {
+            Index: number;
+            Hash: components["schemas"]["BinaryString"];
+            Token?: string | null;
+            /** @deprecated */
+            URL?: string | null;
+            BareURL?: string | null;
+            EncSignature?: components["schemas"]["PGPMessage"] | null;
+            /**
+             * Format: email
+             * @description Email used to sign block
+             */
+            SignatureEmail?: string | null;
+        };
+        PhotoResponseDto2: {
+            LinkID: components["schemas"]["Id"];
+            /** @description Unix timestamp of when the photo was taken as extracted by client from exif */
+            CaptureTime: number;
+            MainPhotoLinkID?: components["schemas"]["Id"] | null;
+            /** @description File name hash */
+            Hash?: string | null;
+            /** @description Photo content hash, Hashmac of content using parent folder's hash key */
+            ContentHash?: string | null;
+            /** @description LinkIDs of related Photos if there are any */
+            RelatedPhotosLinkIDs: components["schemas"]["Id"][];
+            /**
+             * @deprecated
+             * @description Deprecated: Clients persist exif information in xAttr instead
+             * @default null
+             */
+            Exif: string | null;
+        };
+        /**
+         * @description <details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>0</td><td>Draft</td></tr><tr><td>1</td><td>Active</td></tr><tr><td>2</td><td>Obsolete</td></tr></table></details></details>
+         * @enum {integer}
+         */
+        RevisionState2: 0 | 1 | 2;
+        ThumbnailResponseDto2: {
+            ThumbnailID: components["schemas"]["Id"];
+            Type: components["schemas"]["ThumbnailType"];
+            Hash: components["schemas"]["BinaryString"];
+            Size: number;
+        };
         /**
          * @description <details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>0</td><td>Disabled</td></tr><tr><td>1</td><td>Enabled</td></tr></table></details></details>
          * @enum {integer}
@@ -6236,7 +6726,7 @@ export interface components {
         ThumbnailDto: {
             ThumbnailID: components["schemas"]["Id"];
             Type: components["schemas"]["ThumbnailType"];
-            Hash: string;
+            Hash: components["schemas"]["BinaryString"];
             EncryptedSize: number;
         };
         PhotoDto: {
@@ -6587,11 +7077,41 @@ export interface operations {
             };
         };
     };
-    "get_drive-photos-migrate-legacy": {
+    "post_drive-photos-volumes-{volumeID}-albums-{linkID}-duplicates": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                volumeID: string;
+                linkID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["FindDuplicatesInput"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FindDuplicatesOutputCollection"];
+                };
+            };
+        };
+    };
+    "get_drive-photos-volumes-{volumeID}-tags-migration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -6603,55 +7123,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetMigrationStatusResponseDto"];
-                };
-            };
-            /** @description Accepted */
-            202: {
-                headers: {
-                    "x-pm-code": 1002;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AcceptedResponse"];
-                };
-            };
-            /** @description Failed dependency */
-            424: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Potential codes:
-                         *      - 2032
-                         *
-                         * @enum {integer}
-                         */
-                        Code: 2032;
-                    };
-                };
-            };
-        };
-    };
-    "post_drive-photos-migrate-legacy": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Accepted */
-            202: {
-                headers: {
-                    "x-pm-code": 1002;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AcceptedResponse"];
+                    "application/json": components["schemas"]["PhotoTagMigrationStatusResponseDto"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -6662,27 +7134,52 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @description Potential codes and their meaning:
-                         *      - 2500: Migration in progress
-                         *      - 2501: Share not found
+                         *      - 2501: volume does not exist, or is not photo volume
+                         *      - 2011: Insufficient permissions, not volume owner
                          *      */
                         Code: number;
                     };
                 };
             };
-            /** @description Failed dependency */
-            424: {
+        };
+    };
+    "post_drive-photos-volumes-{volumeID}-tags-migration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdatePhotoTagMigrationStatusRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessfulResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /**
-                         * @description Potential codes:
-                         *      - 2032
-                         *
-                         * @enum {integer}
-                         */
-                        Code: 2032;
+                        /** @description Potential codes and their meaning:
+                         *      - 2501: volume does not exist, or is not photo volume
+                         *      - 2011: Insufficient permissions, not volume owner
+                         *      */
+                        Code: number;
                     };
                 };
             };
@@ -6696,6 +7193,7 @@ export interface operations {
                 Desc?: components["schemas"]["ListPhotosAlbumQueryParameters"]["Desc"];
                 Tag?: components["schemas"]["ListPhotosAlbumQueryParameters"]["Tag"];
                 OnlyChildren?: components["schemas"]["ListPhotosAlbumQueryParameters"]["OnlyChildren"];
+                IncludeTrashed?: components["schemas"]["ListPhotosAlbumQueryParameters"]["IncludeTrashed"];
             };
             header?: never;
             path: {
@@ -6727,6 +7225,57 @@ export interface operations {
                          *      - 2501: Volume not found
                          *      - 2501: File or folder not found
                          *      - 2011: Insufficient permissions
+                         *      */
+                        Code: number;
+                    };
+                };
+            };
+        };
+    };
+    "put_drive-photos-volumes-{volumeID}-recover-multiple": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["TransferPhotoLinksRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Ok */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {integer} */
+                        Code?: 1001;
+                        Responses?: {
+                            /** @description Encrypted link ID */
+                            LinkID?: string;
+                            Response?: components["schemas"]["ProtonSuccess"] | components["schemas"]["ProtonError"];
+                        }[];
+                    };
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 2501: The volume does not exist.
+                         *      - 2511: cannot recover photos from a share
+                         *      - 2011: cannot move favorite photos from a share
+                         *      - 2000: All main photos have to be sent with related photos.
                          *      */
                         Code: number;
                     };
@@ -6809,6 +7358,106 @@ export interface operations {
                     "application/json": {
                         /** @description Potential codes and their meaning:
                          *      - 2011: Insufficient permissions
+                         *      */
+                        Code: number;
+                    };
+                };
+            };
+        };
+    };
+    "put_drive-volumes-{volumeID}-links-transfer-multiple": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["TransferPhotoLinksRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Ok */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {integer} */
+                        Code?: 1001;
+                        Responses?: {
+                            /** @description Encrypted link ID */
+                            LinkID?: string;
+                            Response?: components["schemas"]["ProtonSuccess"] | components["schemas"]["ProtonError"];
+                        }[];
+                    };
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 2501: The volume does not exist.
+                         *      - 2511: cannot move favorite photos from a share
+                         *      - 2000: All main photos have to be sent with related photos.
+                         *      */
+                        Code: number;
+                    };
+                };
+            };
+        };
+    };
+    "put_drive-photos-volumes-{volumeID}-links-transfer-multiple": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["TransferPhotoLinksRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Ok */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {integer} */
+                        Code?: 1001;
+                        Responses?: {
+                            /** @description Encrypted link ID */
+                            LinkID?: string;
+                            Response?: components["schemas"]["ProtonSuccess"] | components["schemas"]["ProtonError"];
+                        }[];
+                    };
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 2501: The volume does not exist.
+                         *      - 2511: cannot move favorite photos from a share
+                         *      - 2000: All main photos have to be sent with related photos.
                          *      */
                         Code: number;
                     };
@@ -7264,59 +7913,6 @@ export interface operations {
             };
         };
     };
-    "post_drive-volumes-{volumeID}-links-{linkID}-copy": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                volumeID: string;
-                linkID: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CopyLinkRequestDto"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    "x-pm-code": 1000;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CopyLinkResponseDto"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Potential codes and their meaning:
-                         *      - 2011: Copying Proton Docs to another account is not possible yet.
-                         *      - 2501: Volume not found
-                         *      - 2501: File or folder not found
-                         *      - 2501: parent folder was not found
-                         *      - 200300: max folder size reached
-                         *      - 2011: the user does not have permissions to create a file in this share
-                         *      - 2000: the user cannot move or rename root folder
-                         *      - 200002: Storage quota exceeded
-                         *      - 200301: target parent exceeded max folder depth
-                         *
-                         * @enum {integer}
-                         */
-                        Code: 200300 | 2501 | 2011 | 2000 | 200002 | 200301;
-                    };
-                };
-            };
-        };
-    };
     "post_drive-shares-{shareID}-folders": {
         parameters: {
             query?: never;
@@ -7643,6 +8239,59 @@ export interface operations {
             };
         };
     };
+    "post_drive-volumes-{volumeID}-links-{linkID}-copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+                linkID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CopyLinkRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopyLinkResponseDto"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Potential codes and their meaning:
+                         *      - 2011: Copying Proton Docs to another account is not possible yet.
+                         *      - 2501: Volume not found
+                         *      - 2501: File or folder not found
+                         *      - 2501: parent folder was not found
+                         *      - 200300: max folder size reached
+                         *      - 2011: the user does not have permissions to create a file in this share
+                         *      - 2000: the user cannot move or rename root folder
+                         *      - 200002: Storage quota exceeded
+                         *      - 200301: target parent exceeded max folder depth
+                         *
+                         * @enum {integer}
+                         */
+                        Code: 200300 | 2501 | 2011 | 2000 | 200002 | 200301;
+                    };
+                };
+            };
+        };
+    };
     "post_drive-v2-volumes-{volumeID}-delete_multiple": {
         parameters: {
             query?: never;
@@ -7853,7 +8502,11 @@ export interface operations {
                     "application/json": {
                         /** @enum {integer} */
                         Code?: 1001;
-                        Responses?: components["responses"]["ProtonSuccessResponse"][];
+                        Responses?: {
+                            /** @description Encrypted link ID */
+                            LinkID?: string;
+                            Response?: components["schemas"]["ProtonSuccess"] | components["schemas"]["ProtonError"];
+                        }[];
                     };
                 };
             };
@@ -7866,6 +8519,7 @@ export interface operations {
                     "application/json": {
                         /** @description Potential codes and their meaning:
                          *      - 2501: The volume does not exist.
+                         *      - 2511: cannot move favorite photos from a share
                          *      - 2000: All main photos have to be sent with related photos.
                          *      */
                         Code: number;
@@ -7902,6 +8556,7 @@ export interface operations {
                          *      - 200300: max folder size reached
                          *      - 200301: max folder depth reached
                          *      - 2500: file or folder with same name already exists
+                         *      - 2511: cannot move favorite photos from a share
                          *      - 2501: parent folder was not found
                          *      */
                         Code?: number;
@@ -7996,6 +8651,7 @@ export interface operations {
                          *      - 200300: max folder size reached
                          *      - 200301: max folder depth reached
                          *      - 2500: file or folder with same name already exists
+                         *      - 2511: cannot move favorite photos from a share
                          *      - 2501: parent folder was not found
                          *      */
                         Code?: number;
@@ -8032,10 +8688,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code: components["schemas"]["ResponseCodeSuccess"];
-                        Revision: components["schemas"]["DetailedRevisionTransformer"];
-                    };
+                    "application/json": components["schemas"]["GetRevisionResponseDto2"];
                 };
             };
         };
@@ -8151,10 +8804,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code: components["schemas"]["ResponseCodeSuccess"];
-                        Revision: components["schemas"]["DetailedRevisionTransformer"];
-                    };
+                    "application/json": components["schemas"]["GetRevisionResponseDto2"];
                 };
             };
         };
@@ -8366,16 +9016,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Revisions */
+            /** @description Success */
             200: {
                 headers: {
+                    "x-pm-code": 1000;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code: components["schemas"]["ResponseCodeSuccess"];
-                        Revisions: components["schemas"]["RevisionTransformer"][];
-                    };
+                    "application/json": components["schemas"]["ListRevisionsResponseDto"];
                 };
             };
         };
@@ -8449,16 +9097,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Revisions */
+            /** @description Success */
             200: {
                 headers: {
+                    "x-pm-code": 1000;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code: components["schemas"]["ResponseCodeSuccess"];
-                        Revisions: components["schemas"]["RevisionTransformer"][];
-                    };
+                    "application/json": components["schemas"]["ListRevisionsResponseDto"];
                 };
             };
         };
@@ -8778,6 +9424,16 @@ export interface operations {
                     "application/json": components["schemas"]["SuccessfulResponse"];
                 };
             };
+            /** @description Empty trash queued for async processing */
+            202: {
+                headers: {
+                    "x-pm-code": 1002;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyTrashAcceptedResponse"];
+                };
+            };
         };
     };
     "get_drive-volumes-{volumeID}-trash": {
@@ -8817,7 +9473,17 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Empty volume trash queued for async processing */
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessfulResponse"];
+                };
+            };
+            /** @description Empty trash queued for async processing */
             202: {
                 headers: {
                     "x-pm-code": 1002;
@@ -9427,21 +10093,14 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CreatePhotoShareRequestDto"];
-            };
-        };
+        requestBody?: never;
         responses: {
-            /** @description Success */
-            200: {
+            /** @description Invalid request; update app */
+            422: {
                 headers: {
-                    "x-pm-code": 1000;
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["CreatePhotoShareResponseDto"];
-                };
+                content?: never;
             };
         };
     };
@@ -9470,6 +10129,48 @@ export interface operations {
             422: components["responses"]["ProtonErrorResponse"];
         };
     };
+    "post_drive-photos-volumes-{volumeID}-links-{linkID}-favorite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+                linkID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["FavoritePhotoRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FavoritePhotoResponseDto"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 2501: The link or volume does not exist.
+                         *      */
+                        Code: number;
+                    };
+                };
+            };
+        };
+    };
     "post_drive-volumes-{volumeID}-photos-duplicates": {
         parameters: {
             query?: never;
@@ -9493,6 +10194,110 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FindDuplicatesOutputCollection"];
+                };
+            };
+        };
+    };
+    "get_drive-photos-migrate-legacy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetMigrationStatusResponseDto"];
+                };
+            };
+            /** @description Accepted */
+            202: {
+                headers: {
+                    "x-pm-code": 1002;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptedResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 2501: The link or volume does not exist.
+                         *      */
+                        Code: number;
+                    };
+                };
+            };
+        };
+    };
+    "post_drive-photos-migrate-legacy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["MigrateFromLegacyRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    "x-pm-code": 1002;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptedResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 2500: Migration in progress
+                         *      - 2501: Share not found
+                         *      - 2501: Volume not found
+                         *      - 2501: Address not found
+                         *      */
+                        Code: number;
+                    };
+                };
+            };
+            /** @description Failed dependency */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Potential codes:
+                         *      - 2032
+                         *
+                         * @enum {integer}
+                         */
+                        Code: 2032;
+                    };
                 };
             };
         };
@@ -9524,6 +10329,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PhotoListingResponse"];
+                };
+            };
+        };
+    };
+    "put_drive-photos-volumes-{volumeID}-links-{linkID}-revisions-{revisionID}-xattr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+                linkID: string;
+                revisionID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateXAttrRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessfulResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 2001: Wrong signature email passed
+                         *      - 2001: Invalid PGP message
+                         *      - 200501: Invalid Key Packet
+                         *      */
+                        Code: number;
+                    };
+                };
+            };
+            /** @description Failed dependency */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Potential codes:
+                         *      - 2032
+                         *
+                         * @enum {integer}
+                         */
+                        Code: 2032;
+                    };
                 };
             };
         };
@@ -10526,16 +11393,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Revision */
+            /** @description Success */
             200: {
                 headers: {
+                    "x-pm-code": 1000;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code: components["schemas"]["ResponseCodeSuccess"];
-                        Revision: components["schemas"]["DetailedRevisionTransformer"];
-                    };
+                    "application/json": components["schemas"]["GetRevisionResponseDto"];
                 };
             };
             422: components["responses"]["ProtonErrorResponse"];
@@ -11268,8 +12133,9 @@ export interface operations {
     "get_drive-v2-shares-invitations": {
         parameters: {
             query?: {
-                AnchorID?: components["schemas"]["Id"] | null;
-                PageSize?: number;
+                AnchorID?: components["schemas"]["ListPendingInvitationQueryParameters"]["AnchorID"];
+                PageSize?: components["schemas"]["ListPendingInvitationQueryParameters"]["PageSize"];
+                ShareTargetTypes?: components["schemas"]["ListPendingInvitationQueryParameters"]["ShareTargetTypes"];
             };
             header?: never;
             path?: never;
@@ -11833,6 +12699,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SuccessfulResponse"];
+                };
+            };
+            /** @description Accepted */
+            202: {
+                headers: {
+                    "x-pm-code": 1002;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptedResponse"];
                 };
             };
             422: components["responses"]["ProtonErrorResponse"];
