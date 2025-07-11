@@ -49,6 +49,14 @@ type PostShareUrlResponse = drivePaths['/drive/shares/{shareID}/urls']['post']['
 type PutShareUrlRequest = Extract<drivePaths['/drive/shares/{shareID}/urls/{urlID}']['put']['requestBody'], { 'content': object }>['content']['application/json'];
 type PutShareUrlResponse = drivePaths['/drive/shares/{shareID}/urls/{urlID}']['put']['responses']['200']['content']['application/json'];
 
+// We do not support photos and albums yet.
+const SUPPORTED_SHARE_TARGET_TYPES = [
+    0, // Root
+    1, // Folder
+    2, // File
+    5, // Proton vendor (documents and sheets)
+];
+
 /**
  * Provides API communication for fetching and managing sharing.
  *
@@ -81,7 +89,14 @@ export class SharingAPIService {
         while (true) {
             const response = await this.apiService.get<GetSharedWithMeNodesResponse>(`drive/v2/sharedwithme?${anchor ? `AnchorID=${anchor}` : ''}`, signal);
             for (const link of response.Links) {
-                yield makeNodeUid(link.VolumeID, link.LinkID);
+                const nodeUid = makeNodeUid(link.VolumeID, link.LinkID);
+
+                if (!SUPPORTED_SHARE_TARGET_TYPES.includes(link.ShareTargetType)) {
+                    this.logger.warn(`Unsupported share target type ${link.ShareTargetType} for node ${nodeUid}`);
+                    continue;
+                }
+
+                yield nodeUid;
             }
 
             if (!response.More || !response.AnchorID) {
@@ -96,7 +111,14 @@ export class SharingAPIService {
         while (true) {
             const response = await this.apiService.get<GetInvitationsResponse>(`drive/v2/shares/invitations?${anchor ? `AnchorID=${anchor}` : ''}`, signal);
             for (const invitation of response.Invitations) {
-                yield makeInvitationUid(invitation.ShareID, invitation.InvitationID);
+                const invitationUid = makeInvitationUid(invitation.ShareID, invitation.InvitationID);
+
+                if (!SUPPORTED_SHARE_TARGET_TYPES.includes(invitation.ShareTargetType)) {
+                    this.logger.warn(`Unsupported share target type ${invitation.ShareTargetType} for invitation ${invitationUid}`);
+                    continue;
+                }
+
+                yield invitationUid;
             }
 
             if (!response.More || !response.AnchorID) {
