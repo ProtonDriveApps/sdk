@@ -2,7 +2,7 @@ import { c } from "ttag";
 
 import { ProtonDriveError, ValidationError } from "../../errors";
 import { Logger, NodeResult } from "../../interface";
-import { RevisionState } from "../../interface/nodes";
+import { MemberRole, RevisionState } from "../../interface/nodes";
 import { DriveAPIService, drivePaths, isCodeOk, nodeTypeNumberToNodeType, permissionsToDirectMemberRole } from "../apiService";
 import { splitNodeUid, makeNodeUid, makeNodeRevisionUid, splitNodeRevisionUid, makeNodeThumbnailUid } from "../uids";
 import { EncryptedNode, EncryptedRevision, Thumbnail } from "./interface";
@@ -56,15 +56,15 @@ export class NodeAPIService {
         this.apiService = apiService;
     }
 
-    async getNode(nodeUid: string, signal?: AbortSignal): Promise<EncryptedNode> {
-        const nodesGenerator = this.iterateNodes([nodeUid], signal);
+    async getNode(nodeUid: string, ownVolumeId: string, signal?: AbortSignal): Promise<EncryptedNode> {
+        const nodesGenerator = this.iterateNodes([nodeUid], ownVolumeId, signal);
         const result = await nodesGenerator.next();
         await nodesGenerator.return("finish");
         return result.value;
     }
 
     // Improvement requested: split into multiple calls for many nodes.
-    async* iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<EncryptedNode> {
+    async* iterateNodes(nodeUids: string[], ownVolumeId: string, signal?: AbortSignal): AsyncGenerator<EncryptedNode> {
         const allNodeIds = nodeUids.map(splitNodeUid);
 
         const nodeIdsByVolumeId = new Map<string, string[]>();
@@ -81,13 +81,15 @@ export class NodeAPIService {
         const errors = [];
 
         for (const [volumeId, nodeIds] of nodeIdsByVolumeId.entries()) {
+            const isAdmin = volumeId === ownVolumeId;
+
             const response = await this.apiService.post<PostLoadLinksMetadataRequest, PostLoadLinksMetadataResponse>(`drive/v2/volumes/${volumeId}/links`, {
                 LinkIDs: nodeIds,
             }, signal);
 
             for (const link of response.Links) {
                 try {
-                    yield linkToEncryptedNode(this.logger, volumeId, link);
+                    yield linkToEncryptedNode(this.logger, volumeId, link, isAdmin);
                 } catch (error: unknown) {
                     this.logger.error(`Failed to transform node ${link.Link.LinkID}`, error);
                     errors.push(error);
@@ -363,7 +365,7 @@ function* handleResponseErrors(nodeUids: string[], volumeId: string, responses: 
     }
 }
 
-function linkToEncryptedNode(logger: Logger, volumeId: string, link: PostLoadLinksMetadataResponse['Links'][0]): EncryptedNode {
+function linkToEncryptedNode(logger: Logger, volumeId: string, link: PostLoadLinksMetadataResponse['Links'][0], isAdmin: boolean): EncryptedNode {
     const baseNodeMetadata = {
         // Internal metadata
         hash: link.Link.NameHash || undefined,
@@ -379,7 +381,7 @@ function linkToEncryptedNode(logger: Logger, volumeId: string, link: PostLoadLin
         // Sharing node metadata
         shareId: link.Sharing?.ShareID || undefined,
         isShared: !!link.Sharing,
-        directMemberRole: permissionsToDirectMemberRole(logger, link.Membership?.Permissions),
+        directMemberRole: isAdmin ? MemberRole.Admin : permissionsToDirectMemberRole(logger, link.Membership?.Permissions),
     }
     const baseCryptoNodeMetadata = {
         signatureEmail: link.Link.SignatureEmail || undefined,
