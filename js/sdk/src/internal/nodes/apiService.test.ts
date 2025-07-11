@@ -119,7 +119,7 @@ function generateNode() {
 
         shareId: undefined,
         isShared: false,
-        directMemberRole: MemberRole.Inherited,
+        directMemberRole: MemberRole.Admin,
 
         encryptedCrypto: {
             armoredKey: "nodeKey",
@@ -149,13 +149,13 @@ describe("nodeAPIService", () => {
     });
 
     describe('iterateNodes', () => {
-        async function testIterateNodes(mockedLink: any, expectedNode: any) {
+        async function testIterateNodes(mockedLink: any, expectedNode: any, ownVolumeId = 'volumeId') {
             // @ts-expect-error Mocking for testing purposes
             apiMock.post = jest.fn(async () => Promise.resolve({
                 Links: [mockedLink],
             }));
 
-            const nodes = await Array.fromAsync(api.iterateNodes(['volumeId~nodeId']));
+            const nodes = await Array.fromAsync(api.iterateNodes(['volumeId~nodeId'], ownVolumeId));
             expect(nodes).toStrictEqual([expectedNode]);
         }
     
@@ -213,6 +213,7 @@ describe("nodeAPIService", () => {
                     shareId: 'shareId',
                     directMemberRole: MemberRole.Viewer,
                 }),
+                'myVolumeId',
             );
         });
 
@@ -240,7 +241,7 @@ describe("nodeAPIService", () => {
                 ],
             }));
 
-            const generator = api.iterateNodes(['volumeId~nodeId']);
+            const generator = api.iterateNodes(['volumeId~nodeId'], 'volumeId');
 
             const node1 = await generator.next();
             expect(node1.value).toStrictEqual(generateFolderNode());
@@ -272,10 +273,10 @@ describe("nodeAPIService", () => {
                 ],
             }));
 
-            const nodes = await Array.fromAsync(api.iterateNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2']));
+            const nodes = await Array.fromAsync(api.iterateNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2'], 'volumeId1'));
             expect(nodes).toStrictEqual([
-                generateFolderNode({ uid: 'volumeId1~nodeId1', parentUid: 'volumeId1~parentNodeId1' }),
-                generateFolderNode({ uid: 'volumeId2~nodeId2', parentUid: 'volumeId2~parentNodeId2' }),
+                generateFolderNode({ uid: 'volumeId1~nodeId1', parentUid: 'volumeId1~parentNodeId1', directMemberRole: MemberRole.Admin }),
+                generateFolderNode({ uid: 'volumeId2~nodeId2', parentUid: 'volumeId2~parentNodeId2', directMemberRole: MemberRole.Inherited }),
             ]);
         });
     });

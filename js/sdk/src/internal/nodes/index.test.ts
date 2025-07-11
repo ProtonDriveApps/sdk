@@ -55,7 +55,9 @@ describe('nodesModules integration tests', () => {
             }),
         }
         // @ts-expect-error No need to implement all methods for mocking
-        sharesService = {}
+        sharesService = {
+            getMyFilesIDs: jest.fn().mockResolvedValue({ volumeId: 'volumeId' }),
+        }
 
         nodesModule = initNodesModule(
             getMockTelemetry(),
