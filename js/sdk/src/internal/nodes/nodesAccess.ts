@@ -3,6 +3,7 @@ import { c } from 'ttag';
 import { PrivateKey, SessionKey } from "../../crypto";
 import { InvalidNameError, Logger, MissingNode, NodeType, Result, resultError, resultOk } from "../../interface";
 import { DecryptionError, ProtonDriveError } from "../../errors";
+import { asyncIteratorMap } from '../asyncIteratorMap';
 import { getErrorMessage } from '../errors';
 import { BatchLoading } from "../batchLoading";
 import { makeNodeUid, splitNodeUid } from "../uids";
@@ -14,6 +15,16 @@ import { parseFileExtendedAttributes, parseFolderExtendedAttributes } from "./ex
 import { SharesService, EncryptedNode, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys } from "./interface";
 import { validateNodeName } from "./validations";
 import { isProtonDocument, isProtonSheet } from './mediaTypes';
+
+// This is the number of nodes that are loaded in parallel.
+// It is a trade-off between initial wait time and overhead of API calls.
+const BATCH_LOADING_SIZE = 30;
+
+// This is the number of nodes that are decrypted in parallel.
+// It is a trade-off between performance and memory usage.
+// Higher number means more memory usage, but faster decryption.
+// Lower number means less memory usage, but slower decryption.
+const DECRYPTION_CONCURRENCY = 15;
 
 /**
  * Provides access to node metadata.
@@ -64,7 +75,7 @@ export class NodesAccess {
         // Ensure the parent is loaded and up-to-date.
         const parentNode = await this.getNode(parentNodeUid);
 
-        const batchLoading = new BatchLoading<string, DecryptedNode>({ iterateItems: (nodeUids) => this.loadNodes(nodeUids, signal) });
+        const batchLoading = new BatchLoading<string, DecryptedNode>({ iterateItems: (nodeUids) => this.loadNodes(nodeUids, signal), batchSize: BATCH_LOADING_SIZE });
 
         const areChildrenCached = await this.cache.isFolderChildrenLoaded(parentNodeUid);
         if (areChildrenCached) {
@@ -100,7 +111,7 @@ export class NodesAccess {
     // Improvement requested: keep status of loaded trash and leverage cache.
     async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
         const { volumeId } = await this.shareService.getMyFilesIDs();
-        const batchLoading = new BatchLoading<string, DecryptedNode>({ iterateItems: (nodeUids) => this.loadNodes(nodeUids, signal) });
+        const batchLoading = new BatchLoading<string, DecryptedNode>({ iterateItems: (nodeUids) => this.loadNodes(nodeUids, signal), batchSize: BATCH_LOADING_SIZE });
         for await (const nodeUid of this.apiService.iterateTrashedNodeUids(volumeId, signal)) {
             let node;
             try {
@@ -118,7 +129,7 @@ export class NodesAccess {
     }
 
     async *iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode | MissingNode> {
-        const batchLoading = new BatchLoading<string, DecryptedNode | MissingNode>({ iterateItems: (nodeUids) => this.loadNodesWithMissingReport(nodeUids, signal) });
+        const batchLoading = new BatchLoading<string, DecryptedNode | MissingNode>({ iterateItems: (nodeUids) => this.loadNodesWithMissingReport(nodeUids, signal), batchSize: BATCH_LOADING_SIZE });
         for await (const result of this.cache.iterateNodes(nodeUids)) {
             if (result.ok && !result.node.isStale) {
                 yield result.node;
@@ -150,13 +161,22 @@ export class NodesAccess {
 
         const { volumeId: ownVolumeId } = await this.shareService.getMyFilesIDs();
 
-        for await (const encryptedNode of this.apiService.iterateNodes(nodeUids, ownVolumeId, signal)) {
+        const encryptedNodesIterator = this.apiService.iterateNodes(nodeUids, ownVolumeId, signal);
+        const decryptNodeMapper = async (encryptedNode: EncryptedNode): Promise<Result<DecryptedNode, unknown>> => {
             returnedNodeUids.push(encryptedNode.uid);
             try {
                 const { node } = await this.decryptNode(encryptedNode);
-                yield node;
+                return resultOk(node);
             } catch (error: unknown) {
-                errors.push(error);
+                return resultError(error);
+            }
+        };
+        const decryptedNodesIterator = asyncIteratorMap(encryptedNodesIterator, decryptNodeMapper, DECRYPTION_CONCURRENCY);
+        for await (const node of decryptedNodesIterator) {
+            if (node.ok) {
+                yield node.value;
+            } else {
+                errors.push(node.error);
             }
         }
 
