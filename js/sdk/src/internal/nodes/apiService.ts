@@ -439,6 +439,7 @@ function transformRevisionResponse(
     return {
         uid: makeNodeRevisionUid(volumeId, nodeId, revision.ID),
         state: revision.State === APIRevisionState.Active ? RevisionState.Active : RevisionState.Superseded,
+        // @ts-expect-error: API doc is wrong, CreateTime is not optional.
         creationTime: new Date(revision.CreateTime*1000),
         storageSize: revision.Size,
         signatureEmail: revision.SignatureEmail || undefined,
