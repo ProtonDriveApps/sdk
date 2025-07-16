@@ -63,7 +63,7 @@ describe('asyncIteratorMap', () => {
 
         // Should complete in roughly the time of the longest delay (200ms) plus some overhead
         const executionTime = endTime - startTime;
-        expect(executionTime).toBeGreaterThanOrEqual(200);
+        expect(executionTime).toBeGreaterThanOrEqual(195); // We had failures with 199ms - JS is not precise.
         expect(executionTime).toBeLessThan(250);
 
         // Results should be in the order of the delays
