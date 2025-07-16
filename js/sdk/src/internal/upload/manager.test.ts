@@ -135,14 +135,18 @@ describe("UploadManager", () => {
                 armoredContentKeyPacketSignature: "newNode:armoredContentKeyPacketSignature",
                 signatureEmail: "signatureEmail",
             });
-            expect(apiService.checkAvailableHashes).not.toHaveBeenCalled();
         });
 
-        it("should handle existing draft by deleting and trying again", async () => {
-            let hashChecked = false;
+        it("should delete existing draft and trying again", async () => {
+            let firstCall = true;
             apiService.createDraft = jest.fn().mockImplementation(() => {
-                if (!hashChecked) {
-                    throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS);
+                if (firstCall) {
+                    firstCall = false;
+                    throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS, {
+                        ConflictLinkID: "existingLinkId",
+                        ConflictDraftRevisionID: "existingDraftRevisionId",
+                        ConflictDraftClientUID: "existingDraftClientUid",
+                    });
                 }
                 return {
                     nodeUid: "newNode:nodeUid",
@@ -150,26 +154,8 @@ describe("UploadManager", () => {
                 };
             });
 
-            apiService.checkAvailableHashes = jest.fn().mockImplementation(() => {
-                if (!hashChecked) {
-                    hashChecked = true;
-                    return {
-                        availalbleHashes: ["name1Hash"],
-                        pendingHashes: [{
-                            hash: "newNode:hash",
-                            nodeUid: "nodeUidToDelete"
-                        }],
-                    }
-                }
-                return {
-                    availalbleHashes: ["name1Hash"],
-                    pendingHashes: [],
-                }
-            });
+            const result = await manager.createDraftNode("volumeId~parentUid", "name", {} as UploadMetadata);
 
-            const result = await manager.createDraftNode("parentUid", "name", {} as UploadMetadata);
-
-            expect(apiService.checkAvailableHashes).toHaveBeenCalledTimes(1);
             expect(apiService.deleteDraft).toHaveBeenCalledTimes(1);
             expect(result).toEqual({
                 nodeUid: "newNode:nodeUid",
@@ -182,20 +168,25 @@ describe("UploadManager", () => {
                     },
                 },
                 newNodeInfo: {
-                    parentUid: "parentUid",
+                    parentUid: "volumeId~parentUid",
                     name: "name",
                     encryptedName: "newNode:encryptedName",
                     hash: "newNode:hash",
                 },
             });
-            expect(apiService.deleteDraft).toHaveBeenCalledWith("nodeUidToDelete");
+            expect(apiService.deleteDraft).toHaveBeenCalledWith("volumeId~existingLinkId");
         });
 
         it("should handle error when deleting existing draft", async () => {
-            let hashChecked = false;
+            let firstCall = true;
             apiService.createDraft = jest.fn().mockImplementation(() => {
-                if (!hashChecked) {
-                    throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS);
+                if (firstCall) {
+                    firstCall = false;
+                    throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS, {
+                        ConflictLinkID: "existingLinkId",
+                        ConflictDraftRevisionID: "existingDraftRevisionId",
+                        ConflictDraftClientUID: "existingDraftClientUid",
+                    });
                 }
                 return {
                     nodeUid: "newNode:nodeUid",
@@ -206,71 +197,38 @@ describe("UploadManager", () => {
                 throw new Error("Failed to delete draft");
             });
 
-            apiService.checkAvailableHashes = jest.fn().mockImplementation(() => {
-                if (!hashChecked) {
-                    hashChecked = true;
-                    return {
-                        availalbleHashes: ["name1Hash"],
-                        pendingHashes: [{
-                            hash: "newNode:hash",
-                            nodeUid: "nodeUidToDelete"
-                        }],
-                    }
-                }
-                return {
-                    availalbleHashes: ["name1Hash"],
-                    pendingHashes: [],
-                }
-            });
-
-            const result = manager.createDraftNode("parentUid", "name", {} as UploadMetadata);
-
-            await expect(result).rejects.toThrow("Draft already exists");
-            expect(apiService.checkAvailableHashes).toHaveBeenCalledTimes(1);
-            expect(apiService.deleteDraft).toHaveBeenCalledTimes(1);
-        });
-
-        it("should handle existing name by providing available name", async () => {
-            let count = 0;
-            apiService.createDraft = jest.fn().mockImplementation(() => {
-                if (count === 0) {
-                    count++;
-                    throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS, { ConflictLinkID: "existingLinkId" });
-                }
-                return {
-                    nodeUid: "newNode:nodeUid",
-                    nodeRevisionUid: "newNode:nodeRevisionUid",
-                };
-            });
-
             const result = manager.createDraftNode("volumeId~parentUid", "name", {} as UploadMetadata);
-
-            await expect(result).rejects.toThrow("Draft already exists");
-            expect(apiService.checkAvailableHashes).toHaveBeenCalledTimes(1);
 
             try {
                 await result;
             } catch (error: any) {
-                expect(error.availableName).toBe("name1");
+                expect(error.message).toBe("Draft already exists");
                 expect(error.existingNodeUid).toBe("volumeId~existingLinkId");
             }
+            expect(apiService.deleteDraft).toHaveBeenCalledTimes(1);
         });
+    });
 
-        it("should handle existing name by providing available name when there is too many conflicts", async () => {
-            let hashChecked = false;
-            apiService.createDraft = jest.fn().mockImplementation(() => {
-                if (!hashChecked) {
-                    throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS);
-                }
+    describe("findAvailableName", () => {
+        it("should find available name", async () => {
+            apiService.checkAvailableHashes = jest.fn().mockImplementation(() => {
                 return {
-                    nodeUid: "newNode:nodeUid",
-                    nodeRevisionUid: "newNode:nodeRevisionUid",
-                };
+                    availalbleHashes: ["name3Hash"],
+                    pendingHashes: [],
+                }
             });
 
+            const result = await manager.findAvailableName("parentUid", "name");
+            expect(result).toBe("name3");
+            expect(apiService.checkAvailableHashes).toHaveBeenCalledTimes(1);
+            expect(apiService.checkAvailableHashes).toHaveBeenCalledWith("parentUid", ["name1Hash", "name2Hash", "name3Hash"]);
+        });
+
+        it("should find available name with multiple pages", async () => {
+            let firstCall = false;
             apiService.checkAvailableHashes = jest.fn().mockImplementation(() => {
-                if (!hashChecked) {
-                    hashChecked = true;
+                if (!firstCall) {
+                    firstCall = true;
                     return {
                         // First page has no available hashes
                         availalbleHashes: [],
@@ -283,16 +241,10 @@ describe("UploadManager", () => {
                 }
             });
 
-            const result = manager.createDraftNode("parentUid", "name", {} as UploadMetadata);
-
-            await expect(result).rejects.toThrow("Draft already exists");
+            const result = await manager.findAvailableName("parentUid", "name");
+            expect(result).toBe("name3");
             expect(apiService.checkAvailableHashes).toHaveBeenCalledTimes(2);
-
-            try {
-                await result;
-            } catch (error: any) {
-                expect(error.availableName).toBe("name3");
-            }
+            expect(apiService.checkAvailableHashes).toHaveBeenCalledWith("parentUid", ["name1Hash", "name2Hash", "name3Hash"]);
         });
     });
 

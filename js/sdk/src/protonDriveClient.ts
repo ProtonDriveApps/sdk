@@ -19,7 +19,8 @@ import {
     DeviceOrUid,
     UploadMetadata,
     FileDownloader,
-    Fileuploader,
+    FileUploader,
+    FileRevisionUploader,
     ThumbnailType,
     ThumbnailResult,
     SDKEvent,
@@ -815,7 +816,7 @@ export class ProtonDriveClient {
      * 
      * ```typescript
      * const uploader = await client.getFileUploader(parentFolderUid, name, metadata, signal);
-     * const uploadController = uploader.writeStream(stream, thumbnails, (uploadedBytes) => { ... });
+     * const uploadController = await uploader.writeStream(stream, thumbnails, (uploadedBytes) => { ... });
      * 
      * signalController.abort(); // to cancel
      * uploadController.pause(); // to pause
@@ -823,7 +824,7 @@ export class ProtonDriveClient {
      * const nodeUid = await uploadController.completion(); // to await completion
      * ```
      */
-    async getFileUploader(parentFolderUid: NodeOrUid, name: string, metadata: UploadMetadata, signal?: AbortSignal): Promise<Fileuploader> {
+    async getFileUploader(parentFolderUid: NodeOrUid, name: string, metadata: UploadMetadata, signal?: AbortSignal): Promise<FileUploader> {
         this.logger.info(`Getting file uploader for parent ${getUid(parentFolderUid)}`);
         return this.upload.getFileUploader(getUid(parentFolderUid), name, metadata, signal);
     }
@@ -831,7 +832,7 @@ export class ProtonDriveClient {
     /**
      * Same as `getFileUploader`, but for a uploading new revision of the file.
      */
-    async getFileRevisionUploader(nodeUid: NodeOrUid, metadata: UploadMetadata, signal?: AbortSignal): Promise<Fileuploader> {
+    async getFileRevisionUploader(nodeUid: NodeOrUid, metadata: UploadMetadata, signal?: AbortSignal): Promise<FileRevisionUploader> {
         this.logger.info(`Getting file revision uploader for ${getUid(nodeUid)}`);
         return this.upload.getFileRevisionUploader(getUid(nodeUid), metadata, signal);
     }
