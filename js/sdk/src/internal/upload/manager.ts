@@ -96,23 +96,26 @@ export class UploadManager {
             if (error instanceof ValidationError) {
                 if (error.code === ErrorCode.ALREADY_EXISTS) {
                     this.logger.info(`Node with given name already exists`);
-                    const availableName = await this.findAvailableName(
-                        parentFolderUid,
-                        parentHashKey,
-                        name,
-                        generatedNodeCrypto.encryptedNode.hash,
-                    );
+
+                    const typedDetails = error.details as {
+                        ConflictLinkID: string,
+                        ConflictRevisionID?: string,
+                        ConflictDraftRevisionID?: string,
+                        ConflictDraftClientUID?: string,
+                    } | undefined;
 
                     // If there is existing draft created by this client,
                     // automatically delete it and try to create a new one
                     // with the same name again.
-                    if (availableName.existingDraftNodeUid) {
+                    if (typedDetails?.ConflictDraftRevisionID) {
+                        const existingDraftNodeUid = makeNodeUid(splitNodeUid(parentFolderUid).volumeId, typedDetails.ConflictLinkID);
+
                         let deleteFailed = false;
                         try {
-                            this.logger.warn(`Deleting existing draft node ${availableName.existingDraftNodeUid}`);
-                            await this.apiService.deleteDraft(availableName.existingDraftNodeUid);
+                            this.logger.warn(`Deleting existing draft node ${existingDraftNodeUid}`);
+                            await this.apiService.deleteDraft(existingDraftNodeUid);
                         } catch (deleteDraftError: unknown) {
-                            // Do not throw, let return the next available name to the client.
+                            // Do not throw, let throw the conflict error.
                             deleteFailed = true;
                             this.logger.error('Failed to delete existing draft node', deleteDraftError);
                         }
@@ -121,7 +124,6 @@ export class UploadManager {
                         }
                     }
 
-                    const typedDetails = error.details as { ConflictLinkID: string } | undefined;
                     const existingNodeUid = typedDetails ? makeNodeUid(splitNodeUid(parentFolderUid).volumeId, typedDetails.ConflictLinkID) : undefined;
 
                     // If there is existing node, return special error
@@ -129,7 +131,6 @@ export class UploadManager {
                     throw new NodeAlreadyExistsValidationError(
                         error.message,
                         error.code,
-                        availableName.availableName,
                         existingNodeUid,
                     );
                 }
@@ -138,10 +139,12 @@ export class UploadManager {
         }
     }
 
-    private async findAvailableName(parentFolderUid: string, parentHashKey: Uint8Array, name: string, nameHash: string): Promise<{
-        availableName: string,
-        existingDraftNodeUid?: string,
-    }> {
+    async findAvailableName(parentFolderUid: string, name: string): Promise<string> {
+        const { hashKey: parentHashKey } = await this.nodesService.getNodeKeys(parentFolderUid);
+        if (!parentHashKey) {
+            throw new ValidationError(c('Error').t`Creating files in non-folders is not allowed`);
+        }
+
         const [namePart, extension] = splitExtension(name);
 
         const batchSize = 10;
@@ -154,14 +157,9 @@ export class UploadManager {
 
             const hashesToCheck = await this.cryptoService.generateNameHashes(parentHashKey, namesToCheck);
 
-            const { pendingHashes, availalbleHashes } = await this.apiService.checkAvailableHashes(
+            const { availalbleHashes } = await this.apiService.checkAvailableHashes(
                 parentFolderUid,
-                [
-                    ...hashesToCheck.map(({ hash }) => hash),
-                    // Adding the current name hash to get the existing draft
-                    // node UID if it exists.
-                    ...startIndex ? [nameHash] : [],
-                ],
+                hashesToCheck.map(({ hash }) => hash),
             );
 
             if (!availalbleHashes.length) {
@@ -174,12 +172,7 @@ export class UploadManager {
                 throw Error('Backend returned unexpected hash');
             }
 
-            // FIXME: use client UID to ensure its own pending draft
-            const ownPendingHash = pendingHashes.find(({ hash }) => hash === nameHash);
-            return {
-                availableName: availableHash.name,
-                existingDraftNodeUid: ownPendingHash?.nodeUid,
-            }
+            return availableHash.name;
         }
     }
 

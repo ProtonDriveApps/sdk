@@ -3,12 +3,11 @@ import { DriveAPIService } from "../apiService";
 import { DriveCrypto } from "../../crypto";
 import { UploadAPIService } from "./apiService";
 import { UploadCryptoService } from "./cryptoService";
-import { UploadQueue } from "./queue";
+import { FileUploader, FileRevisionUploader } from "./fileUploader";
 import { NodesService, NodesEvents, SharesService } from "./interface";
-import { Fileuploader } from "./fileUploader";
-import { UploadTelemetry } from "./telemetry";
 import { UploadManager } from "./manager";
-import { BlockVerifier } from "./blockVerifier";
+import { UploadQueue } from "./queue";
+import { UploadTelemetry } from "./telemetry";
 
 /**
  * Provides facade for the upload module.
@@ -33,85 +32,62 @@ export function initUploadModule(
 
     const queue = new UploadQueue();
 
+    /**
+     * Returns a FileUploader instance that can be used to upload a file to
+     * a parent folder.
+     *
+     * This operation does not call the API, it only returns a FileUploader
+     * instance when the upload queue has capacity.
+     */
     async function getFileUploader(
         parentFolderUid: string,
         name: string,
         metadata: UploadMetadata,
         signal?: AbortSignal,
-    ): Promise<Fileuploader> {
+    ): Promise<FileUploader> {
         await queue.waitForCapacity(signal);
 
-        let revisionDraft, blockVerifier;
-        try {
-            revisionDraft = await manager.createDraftNode(parentFolderUid, name, metadata);
-
-            blockVerifier = new BlockVerifier(api, cryptoService, revisionDraft.nodeKeys.key, revisionDraft.nodeRevisionUid);
-            await blockVerifier.loadVerificationData();
-        } catch (error: unknown) {
+        const onFinish = () => {
             queue.releaseCapacity();
-            if (revisionDraft) {
-                await manager.deleteDraftNode(revisionDraft.nodeUid);
-            }
-            void uploadTelemetry.uploadInitFailed(parentFolderUid, error, metadata.expectedSize);
-            throw error;
         }
 
-        const onFinish = async (failure: boolean) => {
-            queue.releaseCapacity();
-            if (failure) {
-                await manager.deleteDraftNode(revisionDraft.nodeUid);
-            }
-        }
-
-        return new Fileuploader(
+        return new FileUploader(
             uploadTelemetry,
             api,
             cryptoService,
             manager,
-            blockVerifier,
-            revisionDraft,
+            parentFolderUid,
+            name,
             metadata,
             onFinish,
             signal,
         );
     }
 
+    /**
+     * Returns a FileUploader instance that can be used to upload a new
+     * revision of a file.
+     *
+     * This operation does not call the API, it only returns a
+     * FileRevisionUploader instance when the upload queue has capacity.
+     */
     async function getFileRevisionUploader(
         nodeUid: string,
         metadata: UploadMetadata,
         signal?: AbortSignal,
-    ): Promise<Fileuploader> {
+    ): Promise<FileRevisionUploader> {
         await queue.waitForCapacity(signal);
 
-        let revisionDraft, blockVerifier;
-        try {
-            revisionDraft = await manager.createDraftRevision(nodeUid, metadata);
-
-            blockVerifier = new BlockVerifier(api, cryptoService, revisionDraft.nodeKeys.key, revisionDraft.nodeRevisionUid);
-            await blockVerifier.loadVerificationData();
-        } catch (error: unknown) {
+        const onFinish = () => {
             queue.releaseCapacity();
-            if (revisionDraft) {
-                await manager.deleteDraftRevision(revisionDraft.nodeRevisionUid);
-            }
-            void uploadTelemetry.uploadInitFailed(nodeUid, error, metadata.expectedSize);
-            throw error;
         }
 
-        const onFinish = async (failure: boolean) => {
-            queue.releaseCapacity();
-            if (failure) {
-                await manager.deleteDraftNode(revisionDraft.nodeUid);
-            }
-        }
-
-        return new Fileuploader(
+        return new FileRevisionUploader(
             uploadTelemetry,
             api,
             cryptoService,
             manager,
-            blockVerifier,
-            revisionDraft,
+            nodeUid,
             metadata,
             onFinish,
             signal,
