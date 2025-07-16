@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { ParseArgsConfig } from "util";
 
+import { Thumbnail } from '../../../sdk/src';
 import { Command, ActionArgs } from './interface';
 
 export class CommandFileSystemUpload implements Command {
@@ -43,8 +44,8 @@ export class CommandFileSystemUpload implements Command {
 
         console.log(`Uploading ${name} (${metadata.expectedSize || 'N/A'} bytes)`);
 
-        const thumbnails = []; // TODO
-        const controller = uploader.writeStream(file.stream(), thumbnails, (writtenBytes) => {
+        const thumbnails: Thumbnail[] = []; // TODO
+        const controller = await uploader.writeStream(file.stream(), thumbnails, (writtenBytes) => {
             console.log(`Uploaded ${writtenBytes} bytes`);
         });
 

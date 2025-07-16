@@ -20,7 +20,7 @@ export type { ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, M
 export { NonProtonInvitationState } from './sharing';
 export type { Telemetry, Logger, MetricAPIRetrySucceededEvent, MetricUploadEvent, MetricsUploadErrorType, MetricDownloadEvent, MetricsDownloadErrorType, MetricDecryptionErrorEvent, MetricsDecryptionErrorField, MetricVerificationErrorEvent, MetricVerificationErrorField, MetricBlockVerificationErrorEvent, MetricVolumeEventsSubscriptionsChangedEvent, MetricEvent } from './telemetry';
 export { MetricVolumeType } from './telemetry';
-export type { Fileuploader, UploadController, UploadMetadata } from './upload';
+export type { FileUploader, FileRevisionUploader, UploadController, UploadMetadata } from './upload';
 export type { Thumbnail, ThumbnailResult } from './thumbnail';
 export { ThumbnailType } from './thumbnail';
 
