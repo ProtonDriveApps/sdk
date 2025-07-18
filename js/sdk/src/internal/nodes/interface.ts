@@ -30,7 +30,7 @@ interface BaseNode {
  * Outside of the module, the decrypted node interface should be used.
  */
 export interface EncryptedNode extends BaseNode {
-    encryptedCrypto: EncryptedNodeFolderCrypto | EncryptedNodeFileCrypto;
+    encryptedCrypto: EncryptedNodeFolderCrypto | EncryptedNodeFileCrypto | EncryptedNodeAlbumCrypto;
 }
 
 export interface EncryptedNodeCrypto {
@@ -55,6 +55,9 @@ export interface EncryptedNodeFolderCrypto extends EncryptedNodeCrypto {
         armoredHashKey: string;
     };
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface EncryptedNodeAlbumCrypto extends EncryptedNodeCrypto {}
 
 /**
  * Interface used only internally in the nodes module.

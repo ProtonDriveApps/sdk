@@ -44,6 +44,18 @@ function generateAPIFolderNode(linkOverrides = {}, overrides = {}) {
     };
 }
 
+function generateAPIAlbumNode(linkOverrides = {}, overrides = {}) {
+    const node = generateAPINode();
+    return {
+        Link: {
+            ...node.Link,
+            Type: 3,
+            ...linkOverrides,
+        },
+        ...overrides,
+    };
+}
+
 function generateAPINode() {
     return {
         Link: {
@@ -103,6 +115,15 @@ function generateFolderNode(overrides = {}) {
                 armoredExtendedAttributes: "{folder}",
             },
         },
+        ...overrides
+    }
+}
+
+function generateAlbumNode(overrides = {}) {
+    const node = generateNode();
+    return {
+        ...node,
+        type: NodeType.Album,
         ...overrides
     }
 }
@@ -177,6 +198,13 @@ describe("nodeAPIService", () => {
             await testIterateNodes(
                 generateAPIFileNode(),
                 generateFileNode(),
+            );
+        });
+
+        it('should get album node', async () => {
+            await testIterateNodes(
+                generateAPIAlbumNode(),
+                generateAlbumNode(),
             );
         });
 

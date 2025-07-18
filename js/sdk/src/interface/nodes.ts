@@ -135,6 +135,17 @@ export type InvalidNameError = {
 export enum NodeType {
     File = "file",
     Folder = "folder",
+    /**
+     * Album is a special type available only in Photos section.
+     *
+     * The SDK does not support any album-specific actions, but it can load
+     * the node and do general operations on it, such as sharing. However,
+     * you should not rely that anything can work. It is not guaranteed that
+     * and in the future specific Photos SDK will support albums.
+     *
+     * @deprecated This type is not part of the public API.
+     */
+    Album = "album",
 }
 
 export enum MemberRole {
