@@ -6,6 +6,8 @@ export function nodeTypeNumberToNodeType(logger: Logger, nodeTypeNumber: number)
             return NodeType.Folder;
         case 2:
             return NodeType.File;
+        case 3:
+            return NodeType.Album;
         default:
             logger.warn(`Unknown node type: ${nodeTypeNumber}`);
             return NodeType.File;

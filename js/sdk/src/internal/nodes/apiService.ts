@@ -428,6 +428,15 @@ function linkToEncryptedNode(logger: Logger, volumeId: string, link: PostLoadLin
         }
     }
 
+    if (link.Link.Type === 3) {
+        return {
+            ...baseNodeMetadata,
+            encryptedCrypto: {
+                ...baseCryptoNodeMetadata,
+            },
+        }
+    }
+
     throw new Error(`Unknown node type: ${link.Link.Type}`);
 }
 

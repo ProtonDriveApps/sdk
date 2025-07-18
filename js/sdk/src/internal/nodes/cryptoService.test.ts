@@ -578,6 +578,44 @@ describe("nodesCryptoService", () => {
         });
     });
 
+    describe("album node", () => {
+        const encryptedNode = {
+            uid: "volumeId~nodeId",
+            parentUid: "volumeId~parentId",
+            encryptedCrypto: {
+                signatureEmail: "signatureEmail",
+                nameSignatureEmail: "nameSignatureEmail",
+                armoredKey: "armoredKey",
+                armoredNodePassphrase: "armoredNodePassphrase",
+                armoredNodePassphraseSignature: "armoredNodePassphraseSignature",
+            },
+        } as EncryptedNode;
+
+        it("should decrypt successfuly", async () => {
+            const result = await cryptoService.decryptNode(encryptedNode, parentKey);
+
+            expect(result).toMatchObject({
+                node: {
+                    name: { ok: true, value: "name" },
+                    keyAuthor: { ok: true, value: "signatureEmail" },
+                    nameAuthor: { ok: true, value: "nameSignatureEmail" },
+                    folder: undefined,
+                    activeRevision: undefined,
+                    errors: undefined,
+                },
+                keys: {
+                    passphrase: "pass",
+                    key: "decryptedKey",
+                    passphraseSessionKey: "passphraseSessionKey",
+                    hashKey: new Uint8Array(),
+                }
+            });
+
+            expect(account.getPublicKeys).toHaveBeenCalledTimes(2);
+            expect(telemetry.logEvent).not.toHaveBeenCalled();
+        });
+    });
+
     describe("anonymous node", () => {
         const encryptedNode = {
             uid: "volumeId~nodeId",
