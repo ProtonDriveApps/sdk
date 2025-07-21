@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=ProtonDrive Linux
+Comment=Unofficial ProtonDrive desktop client for Linux
+Exec=protondrive-gui
+Icon=protondrive
+Terminal=false
+Type=Application
+Categories=Network;FileTransfer;
+Keywords=proton;drive;cloud;storage;sync;

@@ -1,0 +1,3 @@
+# ProtonDrive Linux Client Requirements
+# Core dependencies only
+rclone>=1.64.0

@@ -1,0 +1,88 @@
+Metadata-Version: 2.4
+Name: protondrive-linux
+Version: 1.0.0
+Summary: ProtonDrive Linux GUI Client
+Home-page: https://github.com/donniedice/protondrive-linux
+Author: donniedice
+Author-email: donniedice@protonmail.com
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: tkinter
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# ProtonDrive Linux Client
+
+An unofficial Linux desktop client for ProtonDrive, built with Python and Tkinter. This client provides a simple GUI interface for managing your ProtonDrive files on Linux systems.
+
+## Features
+
+- 🔐 Secure authentication with ProtonMail credentials
+- 📁 Browse and sync local folders with ProtonDrive
+- 💾 Mount ProtonDrive as a filesystem
+- 🖥️ Simple, native Linux GUI
+- ⚡ Built on proven rclone backend
+
+## Requirements
+
+- Linux system (Arch, Ubuntu, Fedora, etc.)
+- Python 3.8+
+- rclone (installed automatically with package)
+- tkinter (usually included with Python)
+
+## Installation
+
+### From AUR (Arch/Manjaro)
+```bash
+yay -S protondrive-linux
+```
+
+### From Source
+```bash
+git clone https://github.com/donniedice/protondrive-linux.git
+cd protondrive-linux
+pip install -e .
+protondrive-gui
+```
+
+## Usage
+
+1. Launch the application: `protondrive-gui`
+2. Enter your ProtonMail credentials
+3. Click "Configure ProtonDrive" to set up the connection
+4. Use the action buttons to:
+   - Sync local folders to ProtonDrive
+   - Browse your ProtonDrive files
+   - Mount ProtonDrive as a local filesystem
+
+## Security
+
+This client uses rclone's proven ProtonDrive backend for secure communication. Your credentials are stored locally in rclone's encrypted configuration.
+
+## Contributing
+
+This project aims to fill the gap until official Linux support is available from Proton. Contributions welcome!
+
+## License
+
+GPL v3 - Free and open source
+
+## Disclaimer
+
+This is an unofficial client. For official support, please use ProtonDrive's web interface or official mobile apps.

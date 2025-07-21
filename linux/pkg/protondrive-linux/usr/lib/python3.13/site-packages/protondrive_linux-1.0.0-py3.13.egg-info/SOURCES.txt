@@ -1,0 +1,10 @@
+README.md
+setup.py
+protondrive/__init__.py
+protondrive/gui.py
+protondrive_linux.egg-info/PKG-INFO
+protondrive_linux.egg-info/SOURCES.txt
+protondrive_linux.egg-info/dependency_links.txt
+protondrive_linux.egg-info/entry_points.txt
+protondrive_linux.egg-info/requires.txt
+protondrive_linux.egg-info/top_level.txt
