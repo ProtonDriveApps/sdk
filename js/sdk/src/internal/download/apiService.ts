@@ -1,5 +1,3 @@
-import { c } from "ttag";
-import { ValidationError } from "../../errors";
 import { DriveAPIService, drivePaths, ObserverStream } from "../apiService";
 import { makeNodeThumbnailUid, splitNodeRevisionUid, splitNodeThumbnailUid } from "../uids";
 import { BlockMetadata } from "./interface";
@@ -85,19 +83,22 @@ export class DownloadAPIService {
         return encryptedBlock;
     }
 
-    // Improvement requested: support multiple volumes.
     async* iterateThumbnails(thumbnailUids: string[], signal?: AbortSignal): AsyncGenerator<
         { uid: string, ok: true, bareUrl: string, token: string } |
         { uid: string, ok: false, error: string }
     > {
-        const thumbnailIds = thumbnailUids.map(splitNodeThumbnailUid);
+        const splitedThumbnailsIds = thumbnailUids.map(splitNodeThumbnailUid);
 
-        const uniqueVolumeIds = new Set(thumbnailIds.map(({ volumeId }) => volumeId));
-        if (uniqueVolumeIds.size !== 1) {
-            throw new ValidationError(c('Error').t`Loading thumbnails from multiple sections is not allowed`);
+        const thumbnailIdsByVolumeId = new Map<string, { volumeId: string, thumbnailId: string, nodeId: string }[]>();
+        for (const { volumeId, thumbnailId, nodeId } of splitedThumbnailsIds) {
+            if (!thumbnailIdsByVolumeId.has(volumeId)) {
+                thumbnailIdsByVolumeId.set(volumeId, []);
+            }
+            thumbnailIdsByVolumeId.get(volumeId)?.push({ volumeId, thumbnailId, nodeId });
         }
-        const volumeId = thumbnailIds[0].volumeId;
 
+
+      for (const [volumeId, thumbnailIds] of thumbnailIdsByVolumeId.entries()) {
         const result = await this.apiService.post<PostGetThumbnailsRequest, PostGetThumbnailsResponse>(
             `drive/volumes/${volumeId}/thumbnails`,
             {
@@ -130,6 +131,8 @@ export class DownloadAPIService {
                 error: error.Error,
             };
         }
+
+      }
     }
 }
 
