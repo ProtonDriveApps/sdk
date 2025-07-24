@@ -422,7 +422,7 @@ export class NodesCryptoService {
     };
 
     async moveNode(
-        node: DecryptedNode,
+        node: Pick<DecryptedNode, 'name'>,
         keys: { passphrase: string, passphraseSessionKey: SessionKey, nameSessionKey: SessionKey },
         parentKeys: { key: PrivateKey, hashKey: Uint8Array },
         address: { email: string, addressKey: PrivateKey },
