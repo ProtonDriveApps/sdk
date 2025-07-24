@@ -347,6 +347,7 @@ export class SharingCryptoService {
             url: `${encryptedPublicLink.publicUrl}#${password}`,
             customPassword,
             creatorEmail: encryptedPublicLink.creatorEmail,
+            numberOfInitializedDownloads: encryptedPublicLink.numberOfInitializedDownloads
         }
     }
 
