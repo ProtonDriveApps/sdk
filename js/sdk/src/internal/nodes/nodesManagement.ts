@@ -74,6 +74,7 @@ export class NodesManagement {
         const newNode: DecryptedNode = {
             ...node,
             name: resultOk(newName),
+            encryptedName: armoredNodeName,
             nameAuthor: resultOk(signatureEmail),
             hash,
         }
@@ -154,6 +155,7 @@ export class NodesManagement {
         );
         const newNode: DecryptedNode = {
             ...node,
+            encryptedName: encryptedCrypto.encryptedName,
             parentUid: newParentUid,
             hash: encryptedCrypto.hash,
             keyAuthor: resultOk(encryptedCrypto.signatureEmail),
