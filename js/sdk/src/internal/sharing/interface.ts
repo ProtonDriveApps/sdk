@@ -116,6 +116,7 @@ export interface EncryptedPublicLink {
     flags: number,
     creatorEmail: string,
     publicUrl: string,
+    numberOfInitializedDownloads: number;
     armoredUrlPassword: string,
     urlPasswordSalt: string,
     base64SharePassphraseKeyPacket: string,

@@ -486,6 +486,7 @@ export class SharingManagement {
             url: `${publicLink.publicUrl}#${generatedPassword}`,
             customPassword: options.customPassword,
             expirationTime: options.expiration,
+            numberOfInitializedDownloads: 0,
             creatorEmail,
         }
     }

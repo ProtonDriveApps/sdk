@@ -391,6 +391,7 @@ export class SharingAPIService {
             flags: shareUrl.Flags,
             creatorEmail: shareUrl.CreatorEmail,
             publicUrl: shareUrl.PublicUrl,
+            numberOfInitializedDownloads: shareUrl.NumAccesses,
             armoredUrlPassword: shareUrl.Password,
             urlPasswordSalt: shareUrl.UrlPasswordSalt,
             base64SharePassphraseKeyPacket: shareUrl.SharePassphraseKeyPacket,

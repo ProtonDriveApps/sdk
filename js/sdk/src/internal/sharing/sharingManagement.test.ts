@@ -526,6 +526,7 @@ describe("SharingManagement", () => {
                         expirationTime: undefined,
                         customPassword: undefined,
                         creatorEmail: "volume-email",
+                        numberOfInitializedDownloads: 0,
                     },
                 });
                 expect(cryptoService.generatePublicLinkPassword).toHaveBeenCalled();
@@ -563,6 +564,7 @@ describe("SharingManagement", () => {
                         expirationTime: new Date('2025-01-02'),
                         customPassword: "customPassword",
                         creatorEmail: "volume-email",
+                        numberOfInitializedDownloads: 0,
                     },
                 });
                 expect(cryptoService.generatePublicLinkPassword).toHaveBeenCalled();
@@ -661,7 +663,7 @@ describe("SharingManagement", () => {
         });
     });
 
-    describe("unsahreNode", () => {
+    describe("unshareNode", () => {
         const nodeUid = "volumeId~nodeUid";
 
         let invitation: ProtonInvitation;
@@ -697,6 +699,7 @@ describe("SharingManagement", () => {
                 creationTime: new Date(),
                 role: MemberRole.Viewer,
                 url: "url",
+                numberOfInitializedDownloads: 0,
             }
 
             apiService.getShareInvitations = jest.fn().mockResolvedValue([
