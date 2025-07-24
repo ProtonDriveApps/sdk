@@ -108,6 +108,7 @@ describe('NodesManagement', () => {
         expect(newNode).toEqual({
             ...nodes.nodeUid,
             name: { ok: true, value: 'new name' },
+            encryptedName: 'newArmoredNodeName',
             nameAuthor: { ok: true, value: 'newSignatureEmail' },
             hash: 'newHash',
         });
@@ -142,6 +143,7 @@ describe('NodesManagement', () => {
         expect(newNode).toEqual({
             ...nodes.nodeUid,
             parentUid: 'newParentNodeUid',
+            encryptedName: 'movedArmoredNodeName',
             hash: 'movedHash',
             keyAuthor: { ok: true, value: 'movedSignatureEmail' },
             nameAuthor: { ok: true, value: 'movedNameSignatureEmail' },
@@ -202,6 +204,7 @@ describe('NodesManagement', () => {
         expect(newNode).toEqual({
             ...nodes.anonymousNodeUid,
             parentUid: 'newParentNodeUid',
+            encryptedName: 'movedArmoredNodeName',
             hash: 'movedHash',
             keyAuthor: { ok: true, value: 'movedSignatureEmail' },
             nameAuthor: { ok: true, value: 'movedNameSignatureEmail' },

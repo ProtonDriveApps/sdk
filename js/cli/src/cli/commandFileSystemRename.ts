@@ -15,7 +15,7 @@ export class CommandFileSystemRename implements Command {
             console.log(JSON.stringify(renamedNode));
         } else {
             // Use inspect to disable the depth limit.
-            console.log(inspect(node, {showHidden: false, depth: null, colors: true}));
+            console.log(inspect(renamedNode, {showHidden: false, depth: null, colors: true}));
         }
     }
 }
