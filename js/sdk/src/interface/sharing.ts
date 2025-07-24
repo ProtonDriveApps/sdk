@@ -36,6 +36,7 @@ export type PublicLink = {
     url: string,
     customPassword?: string,
     expirationTime?: Date,
+    numberOfInitializedDownloads: number
 }
 
 /**
