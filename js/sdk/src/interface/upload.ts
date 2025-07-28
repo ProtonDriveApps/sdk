@@ -24,6 +24,12 @@ export type UploadMetadata = {
      * The metadata will be encrypted and stored with the file.
      */
     additionalMetadata?: object,
+    /**
+     * If there is an existing draft by another client, the upload will be
+     * rejected. If user decides to override the existing draft and continue
+     * with the upload, set this to true.
+     */
+    overrideExistingDraftByOtherClient?: boolean,
 };
 
 export interface FileRevisionUploader {
