@@ -71,6 +71,8 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
     generatePassphrase(): string {
         const value = crypto.getRandomValues(new Uint8Array(32));
+        // TODO: Once all clients can use non-ascii bytes, switch to simple
+        // generating of random bytes without encoding it into base64.
         return uint8ArrayToBase64String(value);
     }
 

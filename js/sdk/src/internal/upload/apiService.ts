@@ -27,8 +27,9 @@ type PostDeleteNodesRequest = Extract<drivePaths['/drive/v2/volumes/{volumeID}/d
 type PostDeleteNodesResponse = drivePaths['/drive/v2/volumes/{volumeID}/delete_multiple']['post']['responses']['200']['content']['application/json'];
 
 export class UploadAPIService {
-    constructor(private apiService: DriveAPIService) {
+    constructor(private apiService: DriveAPIService, private clientUid: string | undefined) {
         this.apiService = apiService;
+        this.clientUid = clientUid;
     }
 
     async checkAvailableHashes(parentNodeUid: string, hashes: string[]): Promise<{
@@ -46,7 +47,7 @@ export class UploadAPIService {
             PostCheckAvailableHashesResponse
         >(`drive/v2/volumes/${volumeId}/links/${parentNodeId}/checkAvailableHashes`, {
             Hashes: hashes,
-            ClientUID: null,
+            ClientUID: this.clientUid ? [this.clientUid] : null,
         });
 
         return {
@@ -64,7 +65,6 @@ export class UploadAPIService {
         armoredEncryptedName: string,
         hash: string,
         mediaType: string,
-        clientUID?: string,
         intendedUploadSize?: number,
         armoredNodeKey: string,
         armoredNodePassphrase: string,
@@ -85,7 +85,7 @@ export class UploadAPIService {
             Name: node.armoredEncryptedName,
             Hash: node.hash,
             MIMEType: node.mediaType,
-            ClientUID: node.clientUID || null,
+            ClientUID: this.clientUid || null,
             IntendedUploadSize: node.intendedUploadSize || null,
             NodeKey: node.armoredNodeKey,
             NodePassphrase: node.armoredNodePassphrase,
@@ -103,7 +103,6 @@ export class UploadAPIService {
 
     async createDraftRevision(nodeUid: string, revision: {
         currentRevisionUid: string,
-        clientUID?: string,
         intendedUploadSize?: number,
     }): Promise<{
         nodeRevisionUid: string,
@@ -116,7 +115,7 @@ export class UploadAPIService {
             PostCreateDraftRevisionResponse
         >(`drive/v2/volumes/${volumeId}/files/${nodeId}/revisions`, {
             CurrentRevisionID: currentRevisionId,
-            ClientUID: revision.clientUID || null,
+            ClientUID: this.clientUid || null,
             IntendedUploadSize: revision.intendedUploadSize || null,
         });
 

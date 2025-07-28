@@ -73,7 +73,10 @@ function initSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Sr
         httpClient,
         entitiesCache,
         cryptoCache,
-        config: { baseUrl: config.baseUrl },
+        config: {
+            baseUrl: config.baseUrl,
+            clientUid: 'proton-drive-sdk-js-cli-test',
+        },
         telemetry,
         account,
         openPGPCryptoModule,

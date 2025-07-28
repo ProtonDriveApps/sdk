@@ -23,11 +23,13 @@ export class UploadManager {
         private cryptoService: UploadCryptoService,
         private nodesService: NodesService,
         private nodesEvents: NodesEvents,
+        private clientUid: string | undefined,
     ) {
         this.logger = telemetry.getLogger('upload');
         this.apiService = apiService;
         this.cryptoService = cryptoService;
         this.nodesService = nodesService;
+        this.clientUid = clientUid;
     }
 
     async createDraftNode(parentFolderUid: string, name: string, metadata: UploadMetadata): Promise<NodeRevisionDraft> {
@@ -89,7 +91,6 @@ export class UploadManager {
                 base64ContentKeyPacket: generatedNodeCrypto.contentKey.encrypted.base64ContentKeyPacket,
                 armoredContentKeyPacketSignature: generatedNodeCrypto.contentKey.encrypted.armoredContentKeyPacketSignature,
                 signatureEmail: generatedNodeCrypto.signatureAddress.email,
-                // FIXME: client UID
             });
             return result;
         } catch (error: unknown) {
@@ -104,15 +105,23 @@ export class UploadManager {
                         ConflictDraftClientUID?: string,
                     } | undefined;
 
+                    // If the client doesn't specify the client UID, it should
+                    // never be considered own draft.
+                    const isOwnDraftConflict = (
+                        typedDetails?.ConflictDraftRevisionID &&
+                        this.clientUid &&
+                        typedDetails?.ConflictDraftClientUID === this.clientUid
+                    );
+
                     // If there is existing draft created by this client,
                     // automatically delete it and try to create a new one
                     // with the same name again.
-                    if (typedDetails?.ConflictDraftRevisionID) {
+                    if (typedDetails?.ConflictDraftRevisionID && (isOwnDraftConflict || metadata.overrideExistingDraftByOtherClient)) {
                         const existingDraftNodeUid = makeNodeUid(splitNodeUid(parentFolderUid).volumeId, typedDetails.ConflictLinkID);
 
                         let deleteFailed = false;
                         try {
-                            this.logger.warn(`Deleting existing draft node ${existingDraftNodeUid}`);
+                            this.logger.warn(`Deleting existing draft node ${existingDraftNodeUid} by ${typedDetails.ConflictDraftClientUID}`);
                             await this.apiService.deleteDraft(existingDraftNodeUid);
                         } catch (deleteDraftError: unknown) {
                             // Do not throw, let throw the conflict error.
@@ -124,6 +133,10 @@ export class UploadManager {
                         }
                     }
 
+                    if (isOwnDraftConflict) {
+                        this.logger.warn(`Existing draft conflict by another client ${typedDetails.ConflictDraftClientUID}`);
+                    }
+
                     const existingNodeUid = typedDetails ? makeNodeUid(splitNodeUid(parentFolderUid).volumeId, typedDetails.ConflictLinkID) : undefined;
 
                     // If there is existing node, return special error
@@ -132,6 +145,7 @@ export class UploadManager {
                         error.message,
                         error.code,
                         existingNodeUid,
+                        !!typedDetails?.ConflictDraftRevisionID,
                     );
                 }
             }
