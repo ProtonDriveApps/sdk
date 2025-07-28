@@ -1,19 +1,21 @@
 import { ProtonDriveCache } from '../cache';
 import { OpenPGPCrypto, PrivateKey, SessionKey, SRPModule } from '../crypto';
 import { ProtonDriveAccount } from './account';
-import { ProtonDriveHTTPClient, ProtonDriveConfig } from './httpClient';
+import { ProtonDriveConfig } from './config';
+import { ProtonDriveHTTPClient } from './httpClient';
 import { Telemetry, MetricEvent } from './telemetry';
 
 export type { Result } from './result';
 export { resultOk, resultError } from './result';
 export type { ProtonDriveAccount, ProtonDriveAccountAddress } from './account';
 export type { Author, UnverifiedAuthorError, AnonymousUser } from './author';
+export type { ProtonDriveConfig } from './config';
 export type { Device, DeviceOrUid } from './devices';
 export { DeviceType } from './devices';
 export type { FileDownloader, DownloadController } from './download';
 export type { NodeEvent, DeviceEvent, DeviceEventCallback, NodeEventCallback } from './events';
 export { SDKEvent } from './events';
-export type { ProtonDriveHTTPClient, ProtonDriveHTTPClientJsonOptions, ProtonDriveHTTPClientBlobOptions, ProtonDriveConfig } from './httpClient';
+export type { ProtonDriveHTTPClient, ProtonDriveHTTPClientJsonOptions, ProtonDriveHTTPClientBlobOptions } from './httpClient';
 export type { MaybeNode, NodeEntity, DegradedNode, MaybeMissingNode, MissingNode, InvalidNameError, Revision, NodeOrUid, RevisionOrUid, NodeResult } from './nodes';
 export { NodeType, MemberRole, RevisionState } from './nodes';
 export type { ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Member, PublicLink, MaybeBookmark, Bookmark, DegradedBookmark, ProtonInvitationOrUid, NonProtonInvitationOrUid, BookmarkOrUid, ShareNodeSettings, UnshareNodeSettings, ShareMembersSettings, SharePublicLinkSettings, SharePublicLinkSettingsObject, ShareResult } from './sharing';

@@ -16,6 +16,8 @@ describe("UploadManager", () => {
 
     let manager: UploadManager;
 
+    const clientUid = 'clientUid';
+
     beforeEach(() => {
         telemetry = getMockTelemetry();
         // @ts-expect-error No need to implement all methods for mocking
@@ -89,7 +91,7 @@ describe("UploadManager", () => {
             nodeUpdated: jest.fn(),
         }
 
-        manager = new UploadManager(telemetry, apiService, cryptoService, nodesService, nodesEvents);
+        manager = new UploadManager(telemetry, apiService, cryptoService, nodesService, nodesEvents, clientUid);
     });
 
     describe("createDraftNode", () => {
@@ -145,7 +147,7 @@ describe("UploadManager", () => {
                     throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS, {
                         ConflictLinkID: "existingLinkId",
                         ConflictDraftRevisionID: "existingDraftRevisionId",
-                        ConflictDraftClientUID: "existingDraftClientUid",
+                        ConflictDraftClientUID: clientUid,
                     });
                 }
                 return {
@@ -156,7 +158,6 @@ describe("UploadManager", () => {
 
             const result = await manager.createDraftNode("volumeId~parentUid", "name", {} as UploadMetadata);
 
-            expect(apiService.deleteDraft).toHaveBeenCalledTimes(1);
             expect(result).toEqual({
                 nodeUid: "newNode:nodeUid",
                 nodeRevisionUid: "newNode:nodeRevisionUid",
@@ -174,7 +175,67 @@ describe("UploadManager", () => {
                     hash: "newNode:hash",
                 },
             });
+            expect(apiService.deleteDraft).toHaveBeenCalledTimes(1);
             expect(apiService.deleteDraft).toHaveBeenCalledWith("volumeId~existingLinkId");
+        });
+
+        it("should not delete existing draft if client UID does not match", async () => {
+            let firstCall = true;
+            apiService.createDraft = jest.fn().mockImplementation(() => {
+                if (firstCall) {
+                    firstCall = false;
+                    throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS, {
+                        ConflictLinkID: "existingLinkId",
+                        ConflictDraftRevisionID: "existingDraftRevisionId",
+                        ConflictDraftClientUID: "anotherClientUid",
+                    });
+                }
+                return {
+                    nodeUid: "newNode:nodeUid",
+                    nodeRevisionUid: "newNode:nodeRevisionUid",
+                };
+            });
+
+            const promise = manager.createDraftNode("volumeId~parentUid", "name", {} as UploadMetadata);
+
+            try {
+                await promise;
+            } catch (error: any) {
+                expect(error.message).toBe("Draft already exists");
+                expect(error.ongoingUploadByOtherClient).toBe(true);
+            }
+            expect(apiService.deleteDraft).not.toHaveBeenCalled();
+        });
+
+        it("should not delete existing draft if client UID is not set", async () => {
+            const clientUid = undefined;
+            manager = new UploadManager(telemetry, apiService, cryptoService, nodesService, nodesEvents, clientUid);
+
+            let firstCall = true;
+            apiService.createDraft = jest.fn().mockImplementation(() => {
+                if (firstCall) {
+                    firstCall = false;
+                    throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS, {
+                        ConflictLinkID: "existingLinkId",
+                        ConflictDraftRevisionID: "existingDraftRevisionId",
+                        ConflictDraftClientUID: clientUid,
+                    });
+                }
+                return {
+                    nodeUid: "newNode:nodeUid",
+                    nodeRevisionUid: "newNode:nodeRevisionUid",
+                };
+            });
+
+            const promise = manager.createDraftNode("volumeId~parentUid", "name", {} as UploadMetadata);
+
+            try {
+                await promise;
+            } catch (error: any) {
+                expect(error.message).toBe("Draft already exists");
+                expect(error.ongoingUploadByOtherClient).toBe(true);
+            }
+            expect(apiService.deleteDraft).not.toHaveBeenCalled();
         });
 
         it("should handle error when deleting existing draft", async () => {
@@ -185,7 +246,7 @@ describe("UploadManager", () => {
                     throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS, {
                         ConflictLinkID: "existingLinkId",
                         ConflictDraftRevisionID: "existingDraftRevisionId",
-                        ConflictDraftClientUID: "existingDraftClientUid",
+                        ConflictDraftClientUID: clientUid,
                     });
                 }
                 return {

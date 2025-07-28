@@ -75,9 +75,12 @@ export class NodeAlreadyExistsValidationError extends ValidationError {
 
     public readonly existingNodeUid?: string;
 
-    constructor(message: string, code: number, existingNodeUid?: string) {
+    public readonly ongoingUploadByOtherClient: boolean;
+
+    constructor(message: string, code: number, existingNodeUid?: string, ongoingUploadByOtherClient = false) {
         super(message, code);
         this.existingNodeUid = existingNodeUid;
+        this.ongoingUploadByOtherClient = ongoingUploadByOtherClient;
     }
 }
 
