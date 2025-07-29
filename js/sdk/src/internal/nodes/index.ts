@@ -1,18 +1,23 @@
-import { DriveAPIService } from "../apiService";
-import { DriveCrypto } from "../../crypto";
-import { ProtonDriveEntitiesCache, ProtonDriveCryptoCache, ProtonDriveAccount, ProtonDriveTelemetry } from "../../interface";
-import { NodeAPIService } from "./apiService";
-import { NodesCache } from "./cache";
-import { NodesCryptoCache } from "./cryptoCache";
-import { NodesCryptoService } from "./cryptoService";
-import { SharesService } from "./interface";
-import { NodesAccess } from "./nodesAccess";
-import { NodesManagement } from "./nodesManagement";
-import { NodesRevisons } from "./nodesRevisions";
-import { NodesEventsHandler } from "./events";
+import { DriveAPIService } from '../apiService';
+import { DriveCrypto } from '../../crypto';
+import {
+    ProtonDriveEntitiesCache,
+    ProtonDriveCryptoCache,
+    ProtonDriveAccount,
+    ProtonDriveTelemetry,
+} from '../../interface';
+import { NodeAPIService } from './apiService';
+import { NodesCache } from './cache';
+import { NodesCryptoCache } from './cryptoCache';
+import { NodesCryptoService } from './cryptoService';
+import { SharesService } from './interface';
+import { NodesAccess } from './nodesAccess';
+import { NodesManagement } from './nodesManagement';
+import { NodesRevisons } from './nodesRevisions';
+import { NodesEventsHandler } from './events';
 
-export type { DecryptedNode, DecryptedRevision } from "./interface";
-export { generateFileExtendedAttributes } from "./extendedAttributes";
+export type { DecryptedNode, DecryptedRevision } from './interface';
+export { generateFileExtendedAttributes } from './extendedAttributes';
 
 /**
  * Provides facade for the whole nodes module.
@@ -36,7 +41,14 @@ export function initNodesModule(
     const cache = new NodesCache(telemetry.getLogger('nodes-cache'), driveEntitiesCache);
     const cryptoCache = new NodesCryptoCache(telemetry.getLogger('nodes-cache'), driveCryptoCache);
     const cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, sharesService);
-    const nodesAccess = new NodesAccess(telemetry.getLogger('nodes'), api, cache, cryptoCache, cryptoService, sharesService);
+    const nodesAccess = new NodesAccess(
+        telemetry.getLogger('nodes'),
+        api,
+        cache,
+        cryptoCache,
+        cryptoService,
+        sharesService,
+    );
     const nodesEventHandler = new NodesEventsHandler(telemetry.getLogger('nodes-events'), cache);
     const nodesManagement = new NodesManagement(api, cryptoCache, cryptoService, nodesAccess);
     const nodesRevisions = new NodesRevisons(telemetry.getLogger('nodes'), api, cryptoService, nodesAccess);

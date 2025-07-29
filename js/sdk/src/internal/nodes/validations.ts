@@ -16,8 +16,8 @@ export function validateNodeName(name: string): void {
             c('Error').ngettext(
                 msgid`Name must be ${MAX_NODE_NAME_LENGTH} character long at most`,
                 `Name must be ${MAX_NODE_NAME_LENGTH} characters long at most`,
-                MAX_NODE_NAME_LENGTH
-            )
+                MAX_NODE_NAME_LENGTH,
+            ),
         );
     }
     if (name.includes('/')) {

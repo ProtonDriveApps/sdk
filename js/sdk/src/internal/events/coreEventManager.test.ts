@@ -1,9 +1,9 @@
-import { getMockLogger } from "../../tests/logger";
-import { EventsAPIService } from "./apiService";
-import { DriveEvent, DriveEventsListWithStatus, DriveEventType } from "./interface";
-import { CoreEventManager } from "./coreEventManager";
+import { getMockLogger } from '../../tests/logger';
+import { EventsAPIService } from './apiService';
+import { DriveEvent, DriveEventsListWithStatus, DriveEventType } from './interface';
+import { CoreEventManager } from './coreEventManager';
 
-describe("CoreEventManager", () => {
+describe('CoreEventManager', () => {
     let mockApiService: jest.Mocked<EventsAPIService>;
     let coreEventManager: CoreEventManager;
     const mockLogger = getMockLogger();
@@ -22,9 +22,9 @@ describe("CoreEventManager", () => {
         coreEventManager = new CoreEventManager(mockLogger, mockApiService);
     });
 
-    describe("getLatestEventId", () => {
-        it("should return the latest event ID from API service", async () => {
-            const expectedEventId = "event-123";
+    describe('getLatestEventId', () => {
+        it('should return the latest event ID from API service', async () => {
+            const expectedEventId = 'event-123';
             mockApiService.getCoreLatestEventId.mockResolvedValue(expectedEventId);
 
             const result = await coreEventManager.getLatestEventId();
@@ -33,20 +33,20 @@ describe("CoreEventManager", () => {
             expect(mockApiService.getCoreLatestEventId).toHaveBeenCalledTimes(1);
         });
 
-        it("should handle API service errors", async () => {
-            const error = new Error("API error");
+        it('should handle API service errors', async () => {
+            const error = new Error('API error');
             mockApiService.getCoreLatestEventId.mockRejectedValue(error);
 
-            await expect(coreEventManager.getLatestEventId()).rejects.toThrow("API error");
+            await expect(coreEventManager.getLatestEventId()).rejects.toThrow('API error');
             expect(mockApiService.getCoreLatestEventId).toHaveBeenCalledTimes(1);
         });
     });
 
-    describe("getEvents", () => {
-        const eventId = "event1";
-        const latestEventId = "event2";
+    describe('getEvents', () => {
+        const eventId = 'event1';
+        const latestEventId = 'event2';
 
-        it("should yield ShareWithMeUpdated event when refresh is true", async () => {
+        it('should yield ShareWithMeUpdated event when refresh is true', async () => {
             const mockEvents: DriveEventsListWithStatus = {
                 latestEventId,
                 more: false,
@@ -69,15 +69,15 @@ describe("CoreEventManager", () => {
             expect(mockApiService.getCoreEvents).toHaveBeenCalledWith(eventId);
         });
 
-        it("should yield all events when there are actual events", async () => {
+        it('should yield all events when there are actual events', async () => {
             const mockEvent1: DriveEvent = {
                 type: DriveEventType.SharedWithMeUpdated,
-                eventId: "event-1",
+                eventId: 'event-1',
                 treeEventScopeId: 'core',
             };
             const mockEvent2: DriveEvent = {
                 type: DriveEventType.SharedWithMeUpdated,
-                eventId: "event-2",
+                eventId: 'event-2',
                 treeEventScopeId: 'core',
             };
             const mockEvents: DriveEventsListWithStatus = {

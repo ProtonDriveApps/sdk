@@ -1,13 +1,13 @@
-import { PrivateKey, SessionKey } from "../../crypto";
-import { Result, UnverifiedAuthorError } from "../../interface";
+import { PrivateKey, SessionKey } from '../../crypto';
+import { Result, UnverifiedAuthorError } from '../../interface';
 
 /**
  * Internal interface providing basic identification of volume and its root
  * share and node.
- * 
+ *
  * No interface should inherit from this, this is only for composition to
  * create basic volume or share interfaces.
- * 
+ *
  * Volumes do not have necessarily share or node, but we want to always
  * know what is the root share or node, thus we want to keep this for both
  * volumes or any type of share.
@@ -21,7 +21,7 @@ export interface VolumeShareNodeIDs {
 export type Volume = {
     /**
      * Creator email and address ID come from the default share.
-     * 
+     *
      * The idea is to keep this information synced, so whenever we check
      * cached volume information, we have creator details at hand for any
      * verification checks or creation needs.
@@ -62,7 +62,7 @@ interface BaseRootShare extends BaseShare {
 
 /**
  * Interface used only internaly in the shares module.
- * 
+ *
  * Outside of the module, the decrypted share interface should be used.
  */
 export interface EncryptedShare extends BaseShare {
@@ -77,7 +77,7 @@ interface ShareMembership {
 
 /**
  * Interface used only internaly in the shares module.
- * 
+ *
  * Outside of the module, the decrypted share interface should be used.
  */
 export interface EncryptedRootShare extends BaseRootShare {
@@ -89,7 +89,7 @@ export interface EncryptedRootShare extends BaseRootShare {
  * Interface holding decrypted share metadata.
  */
 export interface DecryptedRootShare extends BaseRootShare {
-    author: Result<string, UnverifiedAuthorError>,
+    author: Result<string, UnverifiedAuthorError>;
 }
 
 export interface EncryptedShareCrypto {

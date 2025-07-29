@@ -1,6 +1,6 @@
-import { ChunkStreamReader } from "./chunkStreamReader";
+import { ChunkStreamReader } from './chunkStreamReader';
 
-describe("ChunkStreamReader", () => {
+describe('ChunkStreamReader', () => {
     let stream: ReadableStream<Uint8Array>;
 
     beforeEach(() => {
@@ -15,7 +15,7 @@ describe("ChunkStreamReader", () => {
         });
     });
 
-    it("should yield chunks as enqueued if matching the size", async () => {
+    it('should yield chunks as enqueued if matching the size', async () => {
         const reader = new ChunkStreamReader(stream, 3);
 
         const chunks: Uint8Array[] = [];
@@ -30,7 +30,7 @@ describe("ChunkStreamReader", () => {
         expect(chunks[3]).toEqual(new Uint8Array([10, 11, 12]));
     });
 
-    it("should yield smaller chunks than enqueued chunks", async () => {
+    it('should yield smaller chunks than enqueued chunks', async () => {
         const reader = new ChunkStreamReader(stream, 2);
 
         const chunks: Uint8Array[] = [];
@@ -47,7 +47,7 @@ describe("ChunkStreamReader", () => {
         expect(chunks[5]).toEqual(new Uint8Array([11, 12]));
     });
 
-    it("should yield bigger chunks than enqueued chunks", async () => {
+    it('should yield bigger chunks than enqueued chunks', async () => {
         const reader = new ChunkStreamReader(stream, 4);
 
         const chunks: Uint8Array[] = [];
@@ -61,7 +61,7 @@ describe("ChunkStreamReader", () => {
         expect(chunks[2]).toEqual(new Uint8Array([9, 10, 11, 12]));
     });
 
-    it("should yield last incomplete chunk", async () => {
+    it('should yield last incomplete chunk', async () => {
         const reader = new ChunkStreamReader(stream, 5);
 
         const chunks: Uint8Array[] = [];
@@ -75,7 +75,7 @@ describe("ChunkStreamReader", () => {
         expect(chunks[2]).toEqual(new Uint8Array([11, 12]));
     });
 
-    it("should yield as one big chunk", async () => {
+    it('should yield as one big chunk', async () => {
         const reader = new ChunkStreamReader(stream, 100);
 
         const chunks: Uint8Array[] = [];

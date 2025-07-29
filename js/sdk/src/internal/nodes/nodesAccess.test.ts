@@ -1,13 +1,13 @@
-import { getMockLogger } from "../../tests/logger";
-import { PrivateKey } from "../../crypto";
-import { DecryptionError } from "../../errors";
-import { NodeAPIService } from "./apiService";
-import { NodesCache } from "./cache"
-import { NodesCryptoCache } from "./cryptoCache";
-import { NodesCryptoService } from "./cryptoService";
+import { getMockLogger } from '../../tests/logger';
+import { PrivateKey } from '../../crypto';
+import { DecryptionError } from '../../errors';
+import { NodeAPIService } from './apiService';
+import { NodesCache } from './cache';
+import { NodesCryptoCache } from './cryptoCache';
+import { NodesCryptoService } from './cryptoService';
 import { NodesAccess } from './nodesAccess';
-import { SharesService, DecryptedNode, DecryptedUnparsedNode, EncryptedNode, DecryptedNodeKeys } from "./interface";
-import { NodeType } from "../../interface";
+import { SharesService, DecryptedNode, DecryptedUnparsedNode, EncryptedNode, DecryptedNodeKeys } from './interface';
+import { NodeType } from '../../interface';
 
 describe('nodesAccess', () => {
     let apiService: NodeAPIService;
@@ -22,10 +22,10 @@ describe('nodesAccess', () => {
         apiService = {
             getNode: jest.fn(),
             iterateNodes: jest.fn().mockImplementation(async function* (uids: string[]) {
-                yield* uids.map((uid => ({ uid, parentUid: 'volumeId~parentNodeId' } as EncryptedNode)));
+                yield* uids.map((uid) => ({ uid, parentUid: 'volumeId~parentNodeId' }) as EncryptedNode);
             }),
             iterateChildrenNodeUids: jest.fn(),
-        }
+        };
         // @ts-expect-error No need to implement all methods for mocking
         cache = {
             getNode: jest.fn(),
@@ -34,16 +34,16 @@ describe('nodesAccess', () => {
             isFolderChildrenLoaded: jest.fn().mockResolvedValue(false),
             setFolderChildrenLoaded: jest.fn(),
             removeNodes: jest.fn(),
-        }
+        };
         // @ts-expect-error No need to implement all methods for mocking
         cryptoCache = {
             getNodeKeys: jest.fn(),
             setNodeKeys: jest.fn(),
-        }
+        };
         // @ts-expect-error No need to implement all methods for mocking
         cryptoService = {
             decryptNode: jest.fn(),
-        }
+        };
         // @ts-expect-error No need to implement all methods for mocking
         shareService = {
             getMyFilesIDs: jest.fn().mockResolvedValue({ volumeId: 'volumeId' }),
@@ -65,21 +65,27 @@ describe('nodesAccess', () => {
 
         it('should get node from API when cache is stale', async () => {
             const encryptedNode = { uid: 'volumeId~nodeId', parentUid: 'volumeId~parentNodeid' } as EncryptedNode;
-            const decryptedUnparsedNode = { uid: 'volumeId~nodeId', parentUid: 'volumeId~parentNodeid', name: { ok: true, value: 'name' } } as DecryptedUnparsedNode;
+            const decryptedUnparsedNode = {
+                uid: 'volumeId~nodeId',
+                parentUid: 'volumeId~parentNodeid',
+                name: { ok: true, value: 'name' },
+            } as DecryptedUnparsedNode;
             const decryptedNode = {
                 ...decryptedUnparsedNode,
                 name: { ok: true, value: 'name' },
                 isStale: false,
                 activeRevision: undefined,
                 folder: undefined,
-                treeEventScopeId: "volumeId",
+                treeEventScopeId: 'volumeId',
             } as DecryptedNode;
             const decryptedKeys = { key: 'key' } as any as DecryptedNodeKeys;
 
             cache.getNode = jest.fn(() => Promise.resolve({ uid: 'volumeId~nodeId', isStale: true } as DecryptedNode));
             apiService.getNode = jest.fn(() => Promise.resolve(encryptedNode));
             cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
-            cryptoService.decryptNode = jest.fn(() => Promise.resolve({ node: decryptedUnparsedNode, keys: decryptedKeys }));
+            cryptoService.decryptNode = jest.fn(() =>
+                Promise.resolve({ node: decryptedUnparsedNode, keys: decryptedKeys }),
+            );
 
             const result = await access.getNode('volumeId~nodeId');
             expect(result).toEqual(decryptedNode);
@@ -92,7 +98,11 @@ describe('nodesAccess', () => {
 
         it('should get node from API missing cache', async () => {
             const encryptedNode = { uid: 'volumeId~nodeId', parentUid: 'volumeId~parentNodeid' } as EncryptedNode;
-            const decryptedUnparsedNode = { uid: 'volumeId~nodeId', parentUid: 'volumeId~parentNodeid', name: { ok: true, value: 'name' } } as DecryptedUnparsedNode;
+            const decryptedUnparsedNode = {
+                uid: 'volumeId~nodeId',
+                parentUid: 'volumeId~parentNodeid',
+                name: { ok: true, value: 'name' },
+            } as DecryptedUnparsedNode;
             const decryptedNode = {
                 ...decryptedUnparsedNode,
                 name: { ok: true, value: 'name' },
@@ -106,7 +116,9 @@ describe('nodesAccess', () => {
             cache.getNode = jest.fn(() => Promise.reject(new Error('Entity not found')));
             apiService.getNode = jest.fn(() => Promise.resolve(encryptedNode));
             cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
-            cryptoService.decryptNode = jest.fn(() => Promise.resolve({ node: decryptedUnparsedNode, keys: decryptedKeys }));
+            cryptoService.decryptNode = jest.fn(() =>
+                Promise.resolve({ node: decryptedUnparsedNode, keys: decryptedKeys }),
+            );
 
             const result = await access.getNode('volumeId~nodeId');
             expect(result).toEqual(decryptedNode);
@@ -119,7 +131,11 @@ describe('nodesAccess', () => {
 
         it('should validate node name', async () => {
             const encryptedNode = { uid: 'volumeId~nodeId', parentUid: 'volumeId~parentNodeid' } as EncryptedNode;
-            const decryptedUnparsedNode = { uid: 'volumeId~nodeId', parentUid: 'volumeId~parentNodeid', name: { ok: true, value: 'foo/bar' } } as DecryptedUnparsedNode;
+            const decryptedUnparsedNode = {
+                uid: 'volumeId~nodeId',
+                parentUid: 'volumeId~parentNodeid',
+                name: { ok: true, value: 'foo/bar' },
+            } as DecryptedUnparsedNode;
             const decryptedNode = {
                 ...decryptedUnparsedNode,
                 name: { ok: false, error: { name: 'foo/bar', error: "Name must not contain the character '/'" } },
@@ -130,7 +146,9 @@ describe('nodesAccess', () => {
             cache.getNode = jest.fn(() => Promise.reject(new Error('Entity not found')));
             apiService.getNode = jest.fn(() => Promise.resolve(encryptedNode));
             cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
-            cryptoService.decryptNode = jest.fn(() => Promise.resolve({ node: decryptedUnparsedNode, keys: decryptedKeys }));
+            cryptoService.decryptNode = jest.fn(() =>
+                Promise.resolve({ node: decryptedUnparsedNode, keys: decryptedKeys }),
+            );
 
             const result = await access.getNode('volumeId~nodeId');
             expect(result).toMatchObject(decryptedNode);
@@ -139,11 +157,19 @@ describe('nodesAccess', () => {
 
     describe('iterate methods', () => {
         beforeEach(() => {
-            cryptoCache.getNodeKeys = jest.fn().mockImplementation((uid: string) => Promise.resolve({ key: 'key' } as any as DecryptedNodeKeys));
-            cryptoService.decryptNode = jest.fn().mockImplementation((encryptedNode: EncryptedNode) => Promise.resolve({
-                node: { uid: encryptedNode.uid, isStale: false, name: { ok: true, value: 'name' } } as DecryptedNode,
-                keys: { key: 'key' } as any as DecryptedNodeKeys,
-            }));
+            cryptoCache.getNodeKeys = jest
+                .fn()
+                .mockImplementation((uid: string) => Promise.resolve({ key: 'key' } as any as DecryptedNodeKeys));
+            cryptoService.decryptNode = jest.fn().mockImplementation((encryptedNode: EncryptedNode) =>
+                Promise.resolve({
+                    node: {
+                        uid: encryptedNode.uid,
+                        isStale: false,
+                        name: { ok: true, value: 'name' },
+                    } as DecryptedNode,
+                    keys: { key: 'key' } as any as DecryptedNodeKeys,
+                }),
+            );
         });
 
         describe('iterateChildren', () => {
@@ -222,7 +248,11 @@ describe('nodesAccess', () => {
                 const result = await Array.fromAsync(access.iterateFolderChildren('volumeId~parentNodeid'));
                 expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateChildrenNodeUids).toHaveBeenCalledWith('volumeId~parentNodeid', undefined);
-                expect(apiService.iterateNodes).toHaveBeenCalledWith(['volumeId~node1', 'volumeId~node2', 'volumeId~node3', 'volumeId~node4'], 'volumeId', undefined);
+                expect(apiService.iterateNodes).toHaveBeenCalledWith(
+                    ['volumeId~node1', 'volumeId~node2', 'volumeId~node3', 'volumeId~node4'],
+                    'volumeId',
+                    undefined,
+                );
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(4);
                 expect(cache.setNode).toHaveBeenCalledTimes(4);
                 expect(cryptoCache.setNodeKeys).toHaveBeenCalledTimes(4);
@@ -243,7 +273,7 @@ describe('nodesAccess', () => {
                 });
                 apiService.iterateNodes = jest.fn().mockImplementation(async function* (uids: string[]) {
                     // Skip first node - make it missing.
-                    yield* uids.slice(1).map((uid) => ({ uid, parentUid: parentNode.uid } as EncryptedNode));
+                    yield* uids.slice(1).map((uid) => ({ uid, parentUid: parentNode.uid }) as EncryptedNode);
                 });
 
                 const result = await Array.fromAsync(access.iterateFolderChildren('volumeId~parentNodeid'));
@@ -268,7 +298,11 @@ describe('nodesAccess', () => {
                         throw new DecryptionError('Decryption failed');
                     }
                     return Promise.resolve({
-                        node: { uid: encryptedNode.uid, isStale: false, name: { ok: true, value: 'name' } } as DecryptedNode,
+                        node: {
+                            uid: encryptedNode.uid,
+                            isStale: false,
+                            name: { ok: true, value: 'name' },
+                        } as DecryptedNode,
                         keys: { key: 'key' } as any as DecryptedNodeKeys,
                     });
                 });
@@ -283,11 +317,9 @@ describe('nodesAccess', () => {
                 try {
                     await node3;
                 } catch (error: any) {
-                    expect(error.cause).toEqual([
-                        new DecryptionError('Decryption failed'),
-                    ]);
+                    expect(error.cause).toEqual([new DecryptionError('Decryption failed')]);
                 }
-            })
+            });
         });
 
         describe('iterateTrashedNodes', () => {
@@ -324,7 +356,11 @@ describe('nodesAccess', () => {
                 const result = await Array.fromAsync(access.iterateTrashedNodes());
                 expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateTrashedNodeUids).toHaveBeenCalledWith(volumeId, undefined);
-                expect(apiService.iterateNodes).toHaveBeenCalledWith(['volumeId~node1', 'volumeId~node2', 'volumeId~node3', 'volumeId~node4'], volumeId, undefined);
+                expect(apiService.iterateNodes).toHaveBeenCalledWith(
+                    ['volumeId~node1', 'volumeId~node2', 'volumeId~node3', 'volumeId~node4'],
+                    volumeId,
+                    undefined,
+                );
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(4);
                 expect(cache.setNode).toHaveBeenCalledTimes(4);
                 expect(cryptoCache.setNodeKeys).toHaveBeenCalledTimes(4);
@@ -336,7 +372,7 @@ describe('nodesAccess', () => {
                 });
                 apiService.iterateNodes = jest.fn().mockImplementation(async function* (uids: string[]) {
                     // Skip first node - make it missing.
-                    yield* uids.slice(1).map((uid) => ({ uid, parentUid: 'volumeId~parentNodeid' } as EncryptedNode));
+                    yield* uids.slice(1).map((uid) => ({ uid, parentUid: 'volumeId~parentNodeid' }) as EncryptedNode);
                 });
 
                 const result = await Array.fromAsync(access.iterateTrashedNodes());
@@ -359,7 +395,9 @@ describe('nodesAccess', () => {
                     yield { ok: true, node: node4 };
                 });
 
-                const result = await Array.fromAsync(access.iterateNodes(['volumeId~node1', 'volumeId~node2', 'volumeId~node3', 'volumeId~node4']));
+                const result = await Array.fromAsync(
+                    access.iterateNodes(['volumeId~node1', 'volumeId~node2', 'volumeId~node3', 'volumeId~node4']),
+                );
                 expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateNodes).not.toHaveBeenCalled();
             });
@@ -372,9 +410,15 @@ describe('nodesAccess', () => {
                     yield { ok: true, node: node4 };
                 });
 
-                const result = await Array.fromAsync(access.iterateNodes(['volumeId~node1', 'volumeId~node2', 'volumeId~node3', 'volumeId~node4']));
+                const result = await Array.fromAsync(
+                    access.iterateNodes(['volumeId~node1', 'volumeId~node2', 'volumeId~node3', 'volumeId~node4']),
+                );
                 expect(result).toMatchObject([node1, node4, node2, node3]);
-                expect(apiService.iterateNodes).toHaveBeenCalledWith(['volumeId~node2', 'volumeId~node3'], 'volumeId', undefined);
+                expect(apiService.iterateNodes).toHaveBeenCalledWith(
+                    ['volumeId~node2', 'volumeId~node3'],
+                    'volumeId',
+                    undefined,
+                );
             });
 
             it('should remove from cache if missing on API and return back to caller', async () => {
@@ -385,11 +429,13 @@ describe('nodesAccess', () => {
                 });
                 apiService.iterateNodes = jest.fn().mockImplementation(async function* (uids: string[]) {
                     // Skip first node - make it missing.
-                    yield* uids.slice(1).map((uid) => ({ uid, parentUid: 'volumeId~parentNodeid' } as EncryptedNode));
+                    yield* uids.slice(1).map((uid) => ({ uid, parentUid: 'volumeId~parentNodeid' }) as EncryptedNode);
                 });
 
-                const result = await Array.fromAsync(access.iterateNodes(['volumeId~node1', 'volumeId~node2', 'volumeId~node3']));
-                expect(result).toMatchObject([node2, node3, {missingUid: 'volumeId~node1'}]);
+                const result = await Array.fromAsync(
+                    access.iterateNodes(['volumeId~node1', 'volumeId~node2', 'volumeId~node3']),
+                );
+                expect(result).toMatchObject([node2, node3, { missingUid: 'volumeId~node1' }]);
                 expect(cache.removeNodes).toHaveBeenCalledWith(['volumeId~node1']);
             });
 
@@ -407,10 +453,10 @@ describe('nodesAccess', () => {
                     yield* uids.map((uid) => {
                         const parentUid = uid.replace('node', 'parentOfNode');
                         return {
-                        uid,
-                        parentUid,
-                        encryptedCrypto,
-                        } as EncryptedNode
+                            uid,
+                            parentUid,
+                            encryptedCrypto,
+                        } as EncryptedNode;
                     });
                 });
                 const decryptionError = new DecryptionError('Parent cannot be decrypted');
@@ -419,19 +465,27 @@ describe('nodesAccess', () => {
                         throw decryptionError;
                     }
                     return {
-                        key: {_idx: 32132},
+                        key: { _idx: 32132 },
                     } as any;
-                } );
+                });
 
-                const result = await Array.fromAsync(access.iterateNodes(['volumeId~node1', 'volumeId~node2', 'volumeId~node3']));
+                const result = await Array.fromAsync(
+                    access.iterateNodes(['volumeId~node1', 'volumeId~node2', 'volumeId~node3']),
+                );
                 expect(result).toEqual([
                     {
                         ...node1,
                         encryptedCrypto,
                         parentUid: 'volumeId~parentOfNode1',
                         name: { ok: false, error: decryptionError },
-                        keyAuthor: { ok: false, error: { claimedAuthor: 'signatureEmail', error: decryptionError.message } },
-                        nameAuthor: { ok: false, error: { claimedAuthor: 'nameSignatureEmail', error: decryptionError.message } },
+                        keyAuthor: {
+                            ok: false,
+                            error: { claimedAuthor: 'signatureEmail', error: decryptionError.message },
+                        },
+                        nameAuthor: {
+                            ok: false,
+                            error: { claimedAuthor: 'nameSignatureEmail', error: decryptionError.message },
+                        },
                         errors: [decryptionError],
                     },
                     {
@@ -530,30 +584,42 @@ describe('nodesAccess', () => {
         const nodeUid = 'volumeId~nodeId';
 
         it('should return node URL of document', async () => {
-            jest.spyOn(access, 'getNode').mockReturnValue(Promise.resolve({ mediaType: 'application/vnd.proton.doc' } as any as DecryptedNode));
+            jest.spyOn(access, 'getNode').mockReturnValue(
+                Promise.resolve({ mediaType: 'application/vnd.proton.doc' } as any as DecryptedNode),
+            );
 
             const result = await access.getNodeUrl(nodeUid);
             expect(result).toBe('https://docs.proton.me/doc?type=doc&mode=open&volumeId=volumeId&linkId=nodeId');
         });
 
         it('should return node URL of sheet', async () => {
-            jest.spyOn(access, 'getNode').mockReturnValue(Promise.resolve({ mediaType: 'application/vnd.proton.sheet' } as any as DecryptedNode));
+            jest.spyOn(access, 'getNode').mockReturnValue(
+                Promise.resolve({ mediaType: 'application/vnd.proton.sheet' } as any as DecryptedNode),
+            );
 
             const result = await access.getNodeUrl(nodeUid);
             expect(result).toBe('https://docs.proton.me/doc?type=sheet&mode=open&volumeId=volumeId&linkId=nodeId');
         });
 
         it('should return node URL of image', async () => {
-            jest.spyOn(access, 'getNode').mockReturnValue(Promise.resolve({ type: NodeType.File } as any as DecryptedNode));
-            jest.spyOn(access as any, 'getRootNode').mockReturnValue(Promise.resolve({ shareId: 'shareId', type: NodeType.Folder } as any as DecryptedNode));
+            jest.spyOn(access, 'getNode').mockReturnValue(
+                Promise.resolve({ type: NodeType.File } as any as DecryptedNode),
+            );
+            jest.spyOn(access as any, 'getRootNode').mockReturnValue(
+                Promise.resolve({ shareId: 'shareId', type: NodeType.Folder } as any as DecryptedNode),
+            );
 
             const result = await access.getNodeUrl(nodeUid);
             expect(result).toBe('https://drive.proton.me/shareId/file/nodeId');
         });
 
         it('should return node URL of folder', async () => {
-            jest.spyOn(access, 'getNode').mockReturnValue(Promise.resolve({ type: NodeType.Folder } as any as DecryptedNode));
-            jest.spyOn(access as any, 'getRootNode').mockReturnValue(Promise.resolve({ shareId: 'shareId', type: NodeType.Folder } as any as DecryptedNode));
+            jest.spyOn(access, 'getNode').mockReturnValue(
+                Promise.resolve({ type: NodeType.Folder } as any as DecryptedNode),
+            );
+            jest.spyOn(access as any, 'getRootNode').mockReturnValue(
+                Promise.resolve({ shareId: 'shareId', type: NodeType.Folder } as any as DecryptedNode),
+            );
 
             const result = await access.getNodeUrl(nodeUid);
             expect(result).toBe('https://drive.proton.me/shareId/folder/nodeId');
@@ -567,7 +633,7 @@ describe('nodesAccess', () => {
             cache.setNode = jest.fn();
             await access.notifyNodeChanged(node.uid);
             expect(cache.getNode).toHaveBeenCalledWith(node.uid);
-            expect(cache.setNode).toHaveBeenCalledWith({...node, isStale: true});
+            expect(cache.setNode).toHaveBeenCalledWith({ ...node, isStale: true });
         });
         it('should update parent if needed', async () => {
             const node = { uid: 'volumeId~nodeId', parentUid: 'v1~pn1', isStale: false } as DecryptedNode;
@@ -575,7 +641,7 @@ describe('nodesAccess', () => {
             cache.setNode = jest.fn();
             await access.notifyNodeChanged(node.uid, 'v1~pn2');
             expect(cache.getNode).toHaveBeenCalledWith(node.uid);
-            expect(cache.setNode).toHaveBeenCalledWith({...node, parentUid: 'v1~pn2', isStale: true});
+            expect(cache.setNode).toHaveBeenCalledWith({ ...node, parentUid: 'v1~pn2', isStale: true });
         });
     });
 

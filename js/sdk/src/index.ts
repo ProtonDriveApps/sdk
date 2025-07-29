@@ -14,12 +14,12 @@ export { VERSION } from './version';
 
 /**
  * Provides the node UID for the given raw volume and node IDs.
- * 
+ *
  * This is required only for the internal implementation to provide
  * backward compatibility with the old Drive web setup.
- * 
+ *
  * If you are having share ID, use `ProtonDriveClient::getNodeUid` instead.
- * 
+ *
  * @deprecated This method is not part of the public API.
  * @param volumeId - Volume of the node.
  * @param nodeId - Node/link ID (not UID).

@@ -1,13 +1,13 @@
-import { ProtonDriveTelemetry, UploadMetadata } from "../../interface";
-import { DriveAPIService } from "../apiService";
-import { DriveCrypto } from "../../crypto";
-import { UploadAPIService } from "./apiService";
-import { UploadCryptoService } from "./cryptoService";
-import { FileUploader, FileRevisionUploader } from "./fileUploader";
-import { NodesService, SharesService } from "./interface";
-import { UploadManager } from "./manager";
-import { UploadQueue } from "./queue";
-import { UploadTelemetry } from "./telemetry";
+import { ProtonDriveTelemetry, UploadMetadata } from '../../interface';
+import { DriveAPIService } from '../apiService';
+import { DriveCrypto } from '../../crypto';
+import { UploadAPIService } from './apiService';
+import { UploadCryptoService } from './cryptoService';
+import { FileUploader, FileRevisionUploader } from './fileUploader';
+import { NodesService, SharesService } from './interface';
+import { UploadManager } from './manager';
+import { UploadQueue } from './queue';
+import { UploadTelemetry } from './telemetry';
 
 /**
  * Provides facade for the upload module.
@@ -49,7 +49,7 @@ export function initUploadModule(
 
         const onFinish = () => {
             queue.releaseCapacity();
-        }
+        };
 
         return new FileUploader(
             uploadTelemetry,
@@ -80,7 +80,7 @@ export function initUploadModule(
 
         const onFinish = () => {
             queue.releaseCapacity();
-        }
+        };
 
         return new FileRevisionUploader(
             uploadTelemetry,
@@ -92,11 +92,10 @@ export function initUploadModule(
             onFinish,
             signal,
         );
-
     }
 
     return {
         getFileUploader,
         getFileRevisionUploader,
-    }
+    };
 }

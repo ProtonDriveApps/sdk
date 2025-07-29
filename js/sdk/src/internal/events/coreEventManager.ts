@@ -1,7 +1,7 @@
-import { Logger } from "../../interface";
-import { LoggerWithPrefix } from "../../telemetry";
-import { EventsAPIService } from "./apiService";
-import { DriveEvent, DriveEventType, EventManagerInterface } from "./interface";
+import { Logger } from '../../interface';
+import { LoggerWithPrefix } from '../../telemetry';
+import { EventsAPIService } from './apiService';
+import { DriveEvent, DriveEventType, EventManagerInterface } from './interface';
 
 /**
  * Combines API and event manager to provide a service for listening to
@@ -15,7 +15,10 @@ import { DriveEvent, DriveEventType, EventManagerInterface } from "./interface";
  * with own implementation.
  */
 export class CoreEventManager implements EventManagerInterface<DriveEvent> {
-    constructor(private logger: Logger, private apiService: EventsAPIService) {
+    constructor(
+        private logger: Logger,
+        private apiService: EventsAPIService,
+    ) {
         this.apiService = apiService;
 
         this.logger = new LoggerWithPrefix(logger, `core`);
@@ -25,7 +28,7 @@ export class CoreEventManager implements EventManagerInterface<DriveEvent> {
         return await this.apiService.getCoreLatestEventId();
     }
 
-    async * getEvents(eventId: string): AsyncIterable<DriveEvent> {
+    async *getEvents(eventId: string): AsyncIterable<DriveEvent> {
         const events = await this.apiService.getCoreEvents(eventId);
         if (events.events.length === 0 && events.latestEventId !== eventId) {
             yield {

@@ -1,4 +1,4 @@
-import { ProtonDriveTelemetry, Logger, SDKEvent } from "../interface";
+import { ProtonDriveTelemetry, Logger, SDKEvent } from '../interface';
 
 export class SDKEvents {
     private logger: Logger;
@@ -9,17 +9,11 @@ export class SDKEvents {
     }
 
     addListener(eventName: SDKEvent, callback: () => void): () => void {
-        this.listeners.set(eventName, [
-            ...(this.listeners.get(eventName) || []),
-            callback,
-        ]);
+        this.listeners.set(eventName, [...(this.listeners.get(eventName) || []), callback]);
 
         return () => {
-            this.listeners.set(
-                eventName,
-                this.listeners.get(eventName)?.filter((cb) => cb !== callback) || []
-            );
-        }
+            this.listeners.set(eventName, this.listeners.get(eventName)?.filter((cb) => cb !== callback) || []);
+        };
     }
 
     transfersPaused(): void {
@@ -45,8 +39,6 @@ export class SDKEvents {
         }
 
         this.logger.debug(`Emitting event: ${eventName}`);
-        this.listeners
-            .get(eventName)
-            ?.forEach((callback) => callback());
+        this.listeners.get(eventName)?.forEach((callback) => callback());
     }
 }

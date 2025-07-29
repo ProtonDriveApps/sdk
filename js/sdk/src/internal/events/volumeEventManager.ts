@@ -1,17 +1,26 @@
-import { Logger } from "../../interface";
-import { LoggerWithPrefix } from "../../telemetry";
-import { EventsAPIService } from "./apiService";
-import { DriveEvent, DriveEventsListWithStatus, DriveEventType, EventManagerInterface, UnsubscribeFromEventsSourceError } from "./interface";
-import { NotFoundAPIError } from "../apiService";
+import { Logger } from '../../interface';
+import { LoggerWithPrefix } from '../../telemetry';
+import { EventsAPIService } from './apiService';
+import {
+    DriveEvent,
+    DriveEventsListWithStatus,
+    DriveEventType,
+    EventManagerInterface,
+    UnsubscribeFromEventsSourceError,
+} from './interface';
+import { NotFoundAPIError } from '../apiService';
 
 /**
  * Combines API and event manager to provide a service for listening to
  * volume events. Volume events are all about nodes updates. Whenever
  * there is update to the node metadata or content, the event is emitted.
  */
-export class VolumeEventManager implements EventManagerInterface<DriveEvent>{
-
-    constructor(private logger: Logger, private apiService: EventsAPIService, private volumeId: string) {
+export class VolumeEventManager implements EventManagerInterface<DriveEvent> {
+    constructor(
+        private logger: Logger,
+        private apiService: EventsAPIService,
+        private volumeId: string,
+    ) {
         this.apiService = apiService;
         this.volumeId = volumeId;
         this.logger = new LoggerWithPrefix(logger, `volume ${volumeId}`);
@@ -21,7 +30,7 @@ export class VolumeEventManager implements EventManagerInterface<DriveEvent>{
         return this.logger;
     }
 
-    async * getEvents(eventId: string): AsyncIterable<DriveEvent> {
+    async *getEvents(eventId: string): AsyncIterable<DriveEvent> {
         try {
             let events: DriveEventsListWithStatus;
             let more = true;

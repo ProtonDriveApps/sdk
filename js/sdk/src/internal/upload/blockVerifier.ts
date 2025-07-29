@@ -1,6 +1,6 @@
-import { PrivateKey, SessionKey } from "../../crypto";
-import { UploadAPIService } from "./apiService";
-import { UploadCryptoService } from "./cryptoService";
+import { PrivateKey, SessionKey } from '../../crypto';
+import { UploadAPIService } from './apiService';
+import { UploadCryptoService } from './cryptoService';
 
 export class BlockVerifier {
     private verificationCode?: Uint8Array;
@@ -20,11 +20,14 @@ export class BlockVerifier {
     async loadVerificationData() {
         const result = await this.apiService.getVerificationData(this.draftNodeRevisionUid);
         this.verificationCode = result.verificationCode;
-        this.contentKeyPacketSessionKey = await this.cryptoService.getContentKeyPacketSessionKey(this.nodeKey, result.base64ContentKeyPacket);
+        this.contentKeyPacketSessionKey = await this.cryptoService.getContentKeyPacketSessionKey(
+            this.nodeKey,
+            result.base64ContentKeyPacket,
+        );
     }
 
     async verifyBlock(encryptedBlock: Uint8Array): Promise<{
-        verificationToken: Uint8Array,
+        verificationToken: Uint8Array;
     }> {
         if (!this.verificationCode || !this.contentKeyPacketSessionKey) {
             throw new Error('Verifying block before loading verification data');

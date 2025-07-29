@@ -1,4 +1,4 @@
-import { sha1 } from "@noble/hashes/legacy";
+import { sha1 } from '@noble/hashes/legacy';
 import { bytesToHex } from '@noble/hashes/utils';
 
 export class UploadDigests {
@@ -13,6 +13,6 @@ export class UploadDigests {
     digests(): { sha1: string } {
         return {
             sha1: bytesToHex(this.digestSha1.digest()),
-        }
+        };
     }
 }

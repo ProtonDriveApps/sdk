@@ -1,10 +1,10 @@
-import { NodeAPIService } from "./apiService";
-import { NodesCryptoCache } from "./cryptoCache";
-import { NodesCryptoService } from "./cryptoService";
+import { NodeAPIService } from './apiService';
+import { NodesCryptoCache } from './cryptoCache';
+import { NodesCryptoService } from './cryptoService';
 import { NodesAccess } from './nodesAccess';
 import { DecryptedNode } from './interface';
 import { NodesManagement } from './nodesManagement';
-import { NodeResult } from "../../interface";
+import { NodeResult } from '../../interface';
 
 describe('NodesManagement', () => {
     let apiService: NodeAPIService;
@@ -50,20 +50,20 @@ describe('NodesManagement', () => {
             renameNode: jest.fn(),
             moveNode: jest.fn(),
             trashNodes: jest.fn(async function* (uids) {
-                yield* uids.map((uid) => ({ok: true, uid} as NodeResult))
+                yield* uids.map((uid) => ({ ok: true, uid }) as NodeResult);
             }),
             restoreNodes: jest.fn(async function* (uids) {
-                yield* uids.map((uid) => ({ok: true, uid} as NodeResult))
+                yield* uids.map((uid) => ({ ok: true, uid }) as NodeResult);
             }),
             deleteNodes: jest.fn(async function* (uids) {
-                yield* uids.map((uid) => ({ok: true, uid} as NodeResult))
+                yield* uids.map((uid) => ({ ok: true, uid }) as NodeResult);
             }),
             createFolder: jest.fn(),
-        }
+        };
         // @ts-expect-error No need to implement all methods for mocking
         cryptoCache = {
             setNodeKeys: jest.fn(),
-        }
+        };
         // @ts-expect-error No need to implement all methods for mocking
         cryptoService = {
             encryptNewName: jest.fn().mockResolvedValue({
@@ -73,7 +73,7 @@ describe('NodesManagement', () => {
             }),
             moveNode: jest.fn(),
             createFolder: jest.fn(),
-        }
+        };
         // @ts-expect-error No need to implement all methods for mocking
         nodesAccess = {
             getNode: jest.fn().mockImplementation((uid: string) => nodes[uid]),
@@ -88,17 +88,19 @@ describe('NodesManagement', () => {
                 hashKey: `${nodes[uid].parentUid}-hashKey`,
             })),
             iterateNodes: jest.fn(),
-            getNodePrivateAndSessionKeys: jest.fn().mockImplementation((uid) => Promise.resolve({
-                key: `${uid}-key`,
-                passphrase: `${uid}-passphrase`,
-                passphraseSessionKey: `${uid}-passphraseSessionKey`,
-                contentKeyPacketSessionKey: `${uid}-contentKeyPacketSessionKey`,
-                nameSessionKey: `${uid}-nameSessionKey`,
-            })),
-            getRootNodeEmailKey: jest.fn().mockResolvedValue({ email: "root-email", addressKey: "root-key" }),
+            getNodePrivateAndSessionKeys: jest.fn().mockImplementation((uid) =>
+                Promise.resolve({
+                    key: `${uid}-key`,
+                    passphrase: `${uid}-passphrase`,
+                    passphraseSessionKey: `${uid}-passphraseSessionKey`,
+                    contentKeyPacketSessionKey: `${uid}-contentKeyPacketSessionKey`,
+                    nameSessionKey: `${uid}-nameSessionKey`,
+                }),
+            ),
+            getRootNodeEmailKey: jest.fn().mockResolvedValue({ email: 'root-email', addressKey: 'root-key' }),
             notifyNodeChanged: jest.fn(),
             notifyNodeDeleted: jest.fn(),
-        }
+        };
 
         management = new NodesManagement(apiService, cryptoCache, cryptoService, nodesAccess);
     });
@@ -117,13 +119,13 @@ describe('NodesManagement', () => {
         expect(cryptoService.encryptNewName).toHaveBeenCalledWith(
             { key: 'parentUid-key', hashKey: 'parentUid-hashKey' },
             'nodeUid-nameSessionKey',
-            { email: "root-email", addressKey: "root-key" },
+            { email: 'root-email', addressKey: 'root-key' },
             'new name',
         );
         expect(apiService.renameNode).toHaveBeenCalledWith(
             nodes.nodeUid.uid,
             { hash: nodes.nodeUid.hash },
-            { encryptedName: 'newArmoredNodeName', nameSignatureEmail: 'newSignatureEmail', hash: 'newHash' }
+            { encryptedName: 'newArmoredNodeName', nameSignatureEmail: 'newSignatureEmail', hash: 'newHash' },
         );
         expect(nodesAccess.notifyNodeChanged).toHaveBeenCalledWith('nodeUid');
     });
@@ -136,7 +138,7 @@ describe('NodesManagement', () => {
             armoredNodePassphraseSignature: 'movedArmoredNodePassphraseSignature',
             signatureEmail: 'movedSignatureEmail',
             nameSignatureEmail: 'movedNameSignatureEmail',
-        }
+        };
         cryptoService.moveNode = jest.fn().mockResolvedValue(encryptedCrypto);
 
         const newNode = await management.moveNode('nodeUid', 'newParentNodeUid');
@@ -157,10 +159,10 @@ describe('NodesManagement', () => {
                 passphrase: 'nodeUid-passphrase',
                 passphraseSessionKey: 'nodeUid-passphraseSessionKey',
                 contentKeyPacketSessionKey: 'nodeUid-contentKeyPacketSessionKey',
-                nameSessionKey: 'nodeUid-nameSessionKey'
+                nameSessionKey: 'nodeUid-nameSessionKey',
             }),
             expect.objectContaining({ key: 'newParentNodeUid-key', hashKey: 'newParentNodeUid-hashKey' }),
-            { email: "root-email", addressKey: "root-key" },
+            { email: 'root-email', addressKey: 'root-key' },
         );
         expect(apiService.moveNode).toHaveBeenCalledWith(
             'nodeUid',
@@ -185,7 +187,7 @@ describe('NodesManagement', () => {
             armoredNodePassphraseSignature: 'movedArmoredNodePassphraseSignature',
             signatureEmail: 'movedSignatureEmail',
             nameSignatureEmail: 'movedNameSignatureEmail',
-        }
+        };
         cryptoService.moveNode = jest.fn().mockResolvedValue(encryptedCrypto);
 
         const newNode = await management.moveNode('anonymousNodeUid', 'newParentNodeUid');
@@ -197,10 +199,10 @@ describe('NodesManagement', () => {
                 passphrase: 'anonymousNodeUid-passphrase',
                 passphraseSessionKey: 'anonymousNodeUid-passphraseSessionKey',
                 contentKeyPacketSessionKey: 'anonymousNodeUid-contentKeyPacketSessionKey',
-                nameSessionKey: 'anonymousNodeUid-nameSessionKey'
+                nameSessionKey: 'anonymousNodeUid-nameSessionKey',
             }),
             expect.objectContaining({ key: 'newParentNodeUid-key', hashKey: 'newParentNodeUid-hashKey' }),
-            { email: "root-email", addressKey: "root-key" },
+            { email: 'root-email', addressKey: 'root-key' },
         );
         expect(newNode).toEqual({
             ...nodes.anonymousNodeUid,
@@ -217,12 +219,12 @@ describe('NodesManagement', () => {
             },
             {
                 parentUid: 'newParentNodeUid',
-                ...encryptedCrypto
+                ...encryptedCrypto,
             },
         );
     });
 
-    it("trashes node and updates cache", async () => {
+    it('trashes node and updates cache', async () => {
         const uids = ['v1~n1', 'v1~n2'];
         const trashed = new Set();
         for await (const node of management.trashNodes(uids)) {
@@ -232,7 +234,7 @@ describe('NodesManagement', () => {
         expect(nodesAccess.notifyNodeChanged).toHaveBeenCalledTimes(2);
     });
 
-    it("restores node and updates cache", async () => {
+    it('restores node and updates cache', async () => {
         const uids = ['v1~n1', 'v1~n2'];
         const restored = new Set();
         for await (const node of management.restoreNodes(uids)) {
@@ -241,5 +243,4 @@ describe('NodesManagement', () => {
         expect(restored).toEqual(new Set(uids));
         expect(nodesAccess.notifyNodeChanged).toHaveBeenCalledTimes(2);
     });
-
 });

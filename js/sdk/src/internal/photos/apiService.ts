@@ -1,16 +1,13 @@
-import { DriveAPIService } from "../apiService";
+import { DriveAPIService } from '../apiService';
 
 export class PhotosAPIService {
     constructor(private apiService: DriveAPIService) {
         this.apiService = apiService;
     }
 
-    async* iterateTimeline(): AsyncGenerator<any> {
-    }
+    async *iterateTimeline(): AsyncGenerator<any> {}
 
-    async* iterateAlbums(): AsyncGenerator<any> {
-    }
+    async *iterateAlbums(): AsyncGenerator<any> {}
 
-    async createAlbum(object: any): Promise<any> {
-    }
+    async createAlbum(object: any): Promise<any> {}
 }

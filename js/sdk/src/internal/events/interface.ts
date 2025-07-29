@@ -1,4 +1,4 @@
-import { Logger } from "../../interface";
+import { Logger } from '../../interface';
 
 /**
  * Callback that accepts list of Drive events and flag whether no
@@ -27,11 +27,11 @@ export interface LatestEventIdProvider {
  * events to fetch, or whether the listener should refresh its state.
  */
 export type EventsListWithStatus<T> = {
-    latestEventId: string,
-    more: boolean,
-    refresh: boolean,
-    events: T[],
-}
+    latestEventId: string;
+    more: boolean;
+    refresh: boolean;
+    events: T[];
+};
 
 /**
  * Internal event interface representing a list of specific Drive events.
@@ -41,47 +41,55 @@ export type DriveEventsListWithStatus = EventsListWithStatus<DriveEvent>;
 type NodeCruEventType = DriveEventType.NodeCreated | DriveEventType.NodeUpdated;
 export type NodeEventType = NodeCruEventType | DriveEventType.NodeDeleted;
 
-export type NodeEvent = {
-    type: NodeCruEventType,
-    nodeUid: string,
-    parentNodeUid?: string,
-    isTrashed: boolean,
-    isShared: boolean,
-    treeEventScopeId: string,
-    eventId: string,
-} | {
-    type: DriveEventType.NodeDeleted,
-    nodeUid: string,
-    parentNodeUid?: string,
-    treeEventScopeId: string,
-    eventId: string,
-}
+export type NodeEvent =
+    | {
+          type: NodeCruEventType;
+          nodeUid: string;
+          parentNodeUid?: string;
+          isTrashed: boolean;
+          isShared: boolean;
+          treeEventScopeId: string;
+          eventId: string;
+      }
+    | {
+          type: DriveEventType.NodeDeleted;
+          nodeUid: string;
+          parentNodeUid?: string;
+          treeEventScopeId: string;
+          eventId: string;
+      };
 
 export type FastForwardEvent = {
-    type: DriveEventType.FastForward,
-    treeEventScopeId: string,
-    eventId: string,
-}
+    type: DriveEventType.FastForward;
+    treeEventScopeId: string;
+    eventId: string;
+};
 
 export type TreeRefreshEvent = {
-    type: DriveEventType.TreeRefresh,
-    treeEventScopeId: string,
-    eventId: string,
-}
+    type: DriveEventType.TreeRefresh;
+    treeEventScopeId: string;
+    eventId: string;
+};
 
 export type TreeRemovalEvent = {
-    type: DriveEventType.TreeRemove,
-    treeEventScopeId: string,
-    eventId: 'none',
-}
+    type: DriveEventType.TreeRemove;
+    treeEventScopeId: string;
+    eventId: 'none';
+};
 
 export type SharedWithMeUpdated = {
-    type: DriveEventType.SharedWithMeUpdated,
-    eventId: string,
-    treeEventScopeId: 'core',
-}
+    type: DriveEventType.SharedWithMeUpdated;
+    eventId: string;
+    treeEventScopeId: 'core';
+};
 
-export type DriveEvent = NodeEvent | FastForwardEvent | TreeRefreshEvent | TreeRemovalEvent | FastForwardEvent | SharedWithMeUpdated;
+export type DriveEvent =
+    | NodeEvent
+    | FastForwardEvent
+    | TreeRefreshEvent
+    | TreeRemovalEvent
+    | FastForwardEvent
+    | SharedWithMeUpdated;
 
 export enum DriveEventType {
     NodeCreated = 'node_created',
@@ -97,7 +105,7 @@ export enum DriveEventType {
  * This can happen if all shared nodes in that volume where unshared or if the
  * volume was deleted.
  */
-export class UnsubscribeFromEventsSourceError extends Error {};
+export class UnsubscribeFromEventsSourceError extends Error {}
 
 export interface EventManagerInterface<T> {
     getLatestEventId(): Promise<string>;

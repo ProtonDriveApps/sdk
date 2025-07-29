@@ -1,21 +1,24 @@
-import { RateLimitedError, ValidationError, IntegrityError } from "../../errors";
-import { ProtonDriveTelemetry, MetricsUploadErrorType, Logger } from "../../interface";
-import { LoggerWithPrefix } from "../../telemetry";
+import { RateLimitedError, ValidationError, IntegrityError } from '../../errors';
+import { ProtonDriveTelemetry, MetricsUploadErrorType, Logger } from '../../interface';
+import { LoggerWithPrefix } from '../../telemetry';
 import { APIHTTPError } from '../apiService';
-import { splitNodeUid, splitNodeRevisionUid } from "../uids";
-import { SharesService } from "./interface";
+import { splitNodeUid, splitNodeRevisionUid } from '../uids';
+import { SharesService } from './interface';
 
 export class UploadTelemetry {
     private logger: Logger;
 
-    constructor(private telemetry: ProtonDriveTelemetry, private sharesService: SharesService) {
+    constructor(
+        private telemetry: ProtonDriveTelemetry,
+        private sharesService: SharesService,
+    ) {
         this.telemetry = telemetry;
-        this.logger = this.telemetry.getLogger("download");
+        this.logger = this.telemetry.getLogger('download');
         this.sharesService = sharesService;
     }
 
     getLoggerForRevision(revisionUid: string) {
-        const logger = this.telemetry.getLogger("upload");
+        const logger = this.telemetry.getLogger('upload');
         return new LoggerWithPrefix(logger, `revision ${revisionUid}`);
     }
 
@@ -70,12 +73,15 @@ export class UploadTelemetry {
         });
     }
 
-    private async sendTelemetry(volumeId: string, options: {
-        uploadedSize: number,
-        expectedSize: number,
-        error?: MetricsUploadErrorType,
-        originalError?: unknown,
-    }) {
+    private async sendTelemetry(
+        volumeId: string,
+        options: {
+            uploadedSize: number;
+            expectedSize: number;
+            error?: MetricsUploadErrorType;
+            originalError?: unknown;
+        },
+    ) {
         let volumeType;
         try {
             volumeType = await this.sharesService.getVolumeMetricContext(volumeId);
@@ -113,7 +119,11 @@ function getErrorCategory(error: unknown): MetricsUploadErrorType | undefined {
         if (error.name === 'TimeoutError') {
             return 'server_error';
         }
-        if (error.name === 'OfflineError' || error.name === 'NetworkError' || error.message?.toLowerCase() === 'network error') {
+        if (
+            error.name === 'OfflineError' ||
+            error.name === 'NetworkError' ||
+            error.message?.toLowerCase() === 'network error'
+        ) {
             return 'network_error';
         }
         if (error.name === 'AbortError') {

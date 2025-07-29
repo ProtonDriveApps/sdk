@@ -7,7 +7,7 @@ export function splitDeviceUid(deviceUid: string) {
     if (parts.length !== 2) {
         throw new Error(`"${deviceUid}" is not valid device UID`);
     }
-    const [ volumeId, deviceId ] = parts;
+    const [volumeId, deviceId] = parts;
     return { volumeId, deviceId };
 }
 

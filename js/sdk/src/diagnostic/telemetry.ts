@@ -36,7 +36,10 @@ export class DiagnosticTelemetry extends EventsGenerator {
 }
 
 class Logger {
-    constructor(private name: string, private callback?: (log: LogRecord) => void) {
+    constructor(
+        private name: string,
+        private callback?: (log: LogRecord) => void,
+    ) {
         this.name = name;
         this.callback = callback;
     }

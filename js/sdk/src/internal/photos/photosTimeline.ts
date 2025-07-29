@@ -1,6 +1,6 @@
-import { PhotosAPIService } from "./apiService";
-import { PhotosCache } from "./cache";
-import { NodesService } from "./interface";
+import { PhotosAPIService } from './apiService';
+import { PhotosCache } from './cache';
+import { NodesService } from './interface';
 
 export class PhotosTimeline {
     constructor(
@@ -13,6 +13,5 @@ export class PhotosTimeline {
         this.nodesService = nodesService;
     }
 
-    async getTimelineStructure() {
-    }
+    async getTimelineStructure() {}
 }

@@ -10,7 +10,12 @@ import { UploadManager } from './manager';
 
 const BLOCK_ENCRYPTION_OVERHEAD = 10000;
 
-async function mockEncryptBlock(verifyBlock: (block: Uint8Array) => Promise<void>, _: any, block: Uint8Array, index: number) {
+async function mockEncryptBlock(
+    verifyBlock: (block: Uint8Array) => Promise<void>,
+    _: any,
+    block: Uint8Array,
+    index: number,
+) {
     await verifyBlock(block);
     return {
         index,
@@ -23,7 +28,12 @@ async function mockEncryptBlock(verifyBlock: (block: Uint8Array) => Promise<void
     };
 }
 
-function mockUploadBlock(_: string, __: string, encryptedBlock: Uint8Array, onProgress: (uploadedBytes: number) => void) {
+function mockUploadBlock(
+    _: string,
+    __: string,
+    encryptedBlock: Uint8Array,
+    onProgress: (uploadedBytes: number) => void,
+) {
     onProgress(encryptedBlock.length);
 }
 
@@ -177,7 +187,9 @@ describe('FileUploader', () => {
         it('should throw an error if upload already started', async () => {
             await uploader.writeStream(stream, thumbnails, onProgress);
 
-            await expect(uploader.writeStream(stream, thumbnails, onProgress)).rejects.toThrow('Upload already started');
+            await expect(uploader.writeStream(stream, thumbnails, onProgress)).rejects.toThrow(
+                'Upload already started',
+            );
         });
     });
 });

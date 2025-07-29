@@ -1,13 +1,25 @@
 import { c } from 'ttag';
 
-import { SessionKey } from "../../crypto";
-import { ValidationError } from "../../errors";
-import { Logger, MemberRole, ShareNodeSettings, UnshareNodeSettings, ShareResult, ProtonInvitation, NonProtonInvitation, Member, resultOk, ProtonDriveAccount, SharePublicLinkSettingsObject } from "../../interface";
-import { splitNodeUid } from "../uids";
+import { SessionKey } from '../../crypto';
+import { ValidationError } from '../../errors';
+import {
+    Logger,
+    MemberRole,
+    ShareNodeSettings,
+    UnshareNodeSettings,
+    ShareResult,
+    ProtonInvitation,
+    NonProtonInvitation,
+    Member,
+    resultOk,
+    ProtonDriveAccount,
+    SharePublicLinkSettingsObject,
+} from '../../interface';
+import { splitNodeUid } from '../uids';
 import { getErrorMessage } from '../errors';
-import { SharingAPIService } from "./apiService";
-import { PUBLIC_LINK_GENERATED_PASSWORD_LENGTH, SharingCryptoService } from "./cryptoService";
-import { SharesService, NodesService, ShareResultWithCreatorEmail, PublicLinkWithCreatorEmail } from "./interface";
+import { SharingAPIService } from './apiService';
+import { PUBLIC_LINK_GENERATED_PASSWORD_LENGTH, SharingCryptoService } from './cryptoService';
+import { SharesService, NodesService, ShareResultWithCreatorEmail, PublicLinkWithCreatorEmail } from './interface';
 
 interface InternalShareResult extends ShareResultWithCreatorEmail {
     share: Share;
@@ -67,24 +79,24 @@ export class SharingManagement {
             nonProtonInvitations,
             members,
             publicLink,
-        }
+        };
     }
 
-    private async* iterateShareInvitations(shareId: string): AsyncGenerator<ProtonInvitation> {
+    private async *iterateShareInvitations(shareId: string): AsyncGenerator<ProtonInvitation> {
         const invitations = await this.apiService.getShareInvitations(shareId);
         for (const invitation of invitations) {
             yield this.cryptoService.decryptInvitation(invitation);
         }
     }
 
-    private async* iterateShareExternalInvitations(shareId: string): AsyncGenerator<NonProtonInvitation> {
+    private async *iterateShareExternalInvitations(shareId: string): AsyncGenerator<NonProtonInvitation> {
         const invitations = await this.apiService.getShareExternalInvitations(shareId);
         for (const invitation of invitations) {
             yield this.cryptoService.decryptExternalInvitation(invitation);
         }
     }
 
-    private async* iterateShareMembers(shareId: string): AsyncGenerator<Member> {
+    private async *iterateShareMembers(shareId: string): AsyncGenerator<Member> {
         const members = await this.apiService.getShareMembers(shareId);
         for (const member of members) {
             yield this.cryptoService.decryptMember(member);
@@ -106,9 +118,7 @@ export class SharingManagement {
         const nonProtonUsers = [];
         if (settings.users) {
             for (const user of settings.users) {
-                const { email, role } = typeof user === "string"
-                    ? { email: user, role: MemberRole.Viewer }
-                    : user;
+                const { email, role } = typeof user === 'string' ? { email: user, role: MemberRole.Viewer } : user;
                 const isProtonUser = await this.account.hasProtonAccount(email);
                 if (isProtonUser) {
                     protonUsers.push({ email, role });
@@ -120,7 +130,11 @@ export class SharingManagement {
 
         // Check if expiration date is in the past before creating share
         // so if this fails, we don't create empty share.
-        if (typeof settings.publicLink === 'object' && settings.publicLink.expiration && settings.publicLink.expiration < new Date()) {
+        if (
+            typeof settings.publicLink === 'object' &&
+            settings.publicLink.expiration &&
+            settings.publicLink.expiration < new Date()
+        ) {
             throw new ValidationError(c('Error').t`Expiration date cannot be in the past`);
         }
 
@@ -141,12 +155,14 @@ export class SharingManagement {
         const emailOptions: EmailOptions = {
             message: settings.emailOptions?.message,
             nodeName: settings.emailOptions?.includeNodeName ? currentSharing.nodeName : undefined,
-        }
+        };
 
         for (const user of protonUsers) {
             const { email, role } = user;
 
-            const existingInvitation = currentSharing.protonInvitations.find((invitation) => invitation.inviteeEmail === email);
+            const existingInvitation = currentSharing.protonInvitations.find(
+                (invitation) => invitation.inviteeEmail === email,
+            );
             if (existingInvitation) {
                 if (existingInvitation.role === role) {
                     this.logger.info(`Invitation for ${email} already exists with role ${role} to node ${nodeUid}`);
@@ -178,13 +194,19 @@ export class SharingManagement {
         for (const user of nonProtonUsers) {
             const { email, role } = user;
 
-            const existingExternalInvitation = currentSharing.nonProtonInvitations.find((invitation) => invitation.inviteeEmail === email);
+            const existingExternalInvitation = currentSharing.nonProtonInvitations.find(
+                (invitation) => invitation.inviteeEmail === email,
+            );
             if (existingExternalInvitation) {
                 if (existingExternalInvitation.role === role) {
-                    this.logger.info(`External invitation for ${email} already exists with role ${role} to node ${nodeUid}`);
+                    this.logger.info(
+                        `External invitation for ${email} already exists with role ${role} to node ${nodeUid}`,
+                    );
                     continue;
                 }
-                this.logger.info(`External invitation for ${email} already exists, updating role to ${role} to node ${nodeUid}`);
+                this.logger.info(
+                    `External invitation for ${email} already exists, updating role to ${role} to node ${nodeUid}`,
+                );
                 await this.updateExternalInvitation(existingExternalInvitation.uid, role);
                 existingExternalInvitation.role = role;
                 continue;
@@ -208,13 +230,15 @@ export class SharingManagement {
         }
 
         if (settings.publicLink) {
-            const options = settings.publicLink === true
-                ? { role: MemberRole.Viewer }
-                : settings.publicLink;
+            const options = settings.publicLink === true ? { role: MemberRole.Viewer } : settings.publicLink;
 
             if (currentSharing.publicLink) {
                 this.logger.info(`Updating public link with role ${options.role} to node ${nodeUid}`);
-                currentSharing.publicLink = await this.updateSharedLink(currentSharing.share, currentSharing.publicLink, options);
+                currentSharing.publicLink = await this.updateSharedLink(
+                    currentSharing.share,
+                    currentSharing.publicLink,
+                    options,
+                );
             } else {
                 this.logger.info(`Sharing via public link with role ${options.role} to node ${nodeUid}`);
                 currentSharing.publicLink = await this.shareViaLink(currentSharing.share, options);
@@ -242,19 +266,27 @@ export class SharingManagement {
         }
 
         for (const userEmail of settings.users || []) {
-            const existingInvitation = currentSharing.protonInvitations.find((invitation) => invitation.inviteeEmail === userEmail);
+            const existingInvitation = currentSharing.protonInvitations.find(
+                (invitation) => invitation.inviteeEmail === userEmail,
+            );
             if (existingInvitation) {
                 this.logger.info(`Deleting invitation for ${userEmail} to node ${nodeUid}`);
                 await this.deleteInvitation(existingInvitation.uid);
-                currentSharing.protonInvitations = currentSharing.protonInvitations.filter((invitation) => invitation.uid !== existingInvitation.uid);
+                currentSharing.protonInvitations = currentSharing.protonInvitations.filter(
+                    (invitation) => invitation.uid !== existingInvitation.uid,
+                );
                 continue;
             }
 
-            const existingExternalInvitation = currentSharing.nonProtonInvitations.find((invitation) => invitation.inviteeEmail === userEmail);
+            const existingExternalInvitation = currentSharing.nonProtonInvitations.find(
+                (invitation) => invitation.inviteeEmail === userEmail,
+            );
             if (existingExternalInvitation) {
                 this.logger.info(`Deleting external invitation for ${userEmail} to node ${nodeUid}`);
                 await this.deleteExternalInvitation(existingExternalInvitation.uid);
-                currentSharing.nonProtonInvitations = currentSharing.nonProtonInvitations.filter((invitation) => invitation.uid !== existingExternalInvitation.uid);
+                currentSharing.nonProtonInvitations = currentSharing.nonProtonInvitations.filter(
+                    (invitation) => invitation.uid !== existingExternalInvitation.uid,
+                );
                 continue;
             }
 
@@ -297,7 +329,9 @@ export class SharingManagement {
                 // as it might be a race condition that other client updated
                 // the share and it is not empty.
                 // If share is truly empty, backend will delete it eventually.
-                this.logger.warn(`Failed to delete share ${currentSharing.share.shareId} for node ${nodeUid}: ${getErrorMessage(error)}`);
+                this.logger.warn(
+                    `Failed to delete share ${currentSharing.share.shareId} for node ${nodeUid}: ${getErrorMessage(error)}`,
+                );
             }
             return;
         }
@@ -334,7 +368,7 @@ export class SharingManagement {
                 passphraseSessionKey: passphraseSessionKey,
             },
             nodeName: node.name.ok ? node.name.value : node.name.error.name,
-        }
+        };
     }
 
     private async createShare(nodeUid: string): Promise<Share> {
@@ -348,22 +382,17 @@ export class SharingManagement {
 
         const nodeKeys = await this.nodesService.getNodePrivateAndSessionKeys(nodeUid);
         const keys = await this.cryptoService.generateShareKeys(nodeKeys, addressKey);
-        const shareId = await this.apiService.createStandardShare(
-            nodeUid,
-            addressId,
-            keys.shareKey.encrypted,
-            {
-                base64PassphraseKeyPacket: keys.base64PpassphraseKeyPacket,
-                base64NameKeyPacket: keys.base64NameKeyPacket,
-            },
-        );
+        const shareId = await this.apiService.createStandardShare(nodeUid, addressId, keys.shareKey.encrypted, {
+            base64PassphraseKeyPacket: keys.base64PpassphraseKeyPacket,
+            base64NameKeyPacket: keys.base64NameKeyPacket,
+        });
         await this.nodesService.notifyNodeChanged(nodeUid);
         return {
             volumeId,
             shareId,
             creatorEmail: email,
             passphraseSessionKey: keys.shareKey.decrypted.passphraseSessionKey,
-        }
+        };
     }
 
     private async deleteShare(shareId: string, nodeUid: string): Promise<void> {
@@ -371,16 +400,29 @@ export class SharingManagement {
         await this.nodesService.notifyNodeChanged(nodeUid);
     }
 
-    private async inviteProtonUser(share: Share, inviteeEmail: string, role: MemberRole, emailOptions: EmailOptions): Promise<ProtonInvitation> {
+    private async inviteProtonUser(
+        share: Share,
+        inviteeEmail: string,
+        role: MemberRole,
+        emailOptions: EmailOptions,
+    ): Promise<ProtonInvitation> {
         const inviter = await this.sharesService.getContextShareMemberEmailKey(share.shareId);
-        const invitationCrypto = await this.cryptoService.encryptInvitation(share.passphraseSessionKey, inviter.addressKey, inviteeEmail);
+        const invitationCrypto = await this.cryptoService.encryptInvitation(
+            share.passphraseSessionKey,
+            inviter.addressKey,
+            inviteeEmail,
+        );
 
-        const encryptedInvitation = await this.apiService.inviteProtonUser(share.shareId, {
-            addedByEmail: inviter.email,
-            inviteeEmail: inviteeEmail,
-            role,
-            ...invitationCrypto,
-        }, emailOptions);
+        const encryptedInvitation = await this.apiService.inviteProtonUser(
+            share.shareId,
+            {
+                addedByEmail: inviter.email,
+                inviteeEmail: inviteeEmail,
+                role,
+                ...invitationCrypto,
+            },
+            emailOptions,
+        );
 
         return {
             ...encryptedInvitation,
@@ -404,7 +446,9 @@ export class SharingManagement {
             return await this.apiService.resendInvitationEmail(protonInvite.uid);
         }
 
-        const nonProtonInvite = currentSharing.nonProtonInvitations.find((invitation) => invitation.uid === invitationUid);
+        const nonProtonInvite = currentSharing.nonProtonInvitations.find(
+            (invitation) => invitation.uid === invitationUid,
+        );
         if (nonProtonInvite) {
             return await this.apiService.resendExternalInvitationEmail(nonProtonInvite.uid);
         }
@@ -416,16 +460,29 @@ export class SharingManagement {
         await this.apiService.deleteInvitation(invitationUid);
     }
 
-    private async inviteExternalUser(share: Share, inviteeEmail: string, role: MemberRole, emailOptions: EmailOptions): Promise<NonProtonInvitation> {
+    private async inviteExternalUser(
+        share: Share,
+        inviteeEmail: string,
+        role: MemberRole,
+        emailOptions: EmailOptions,
+    ): Promise<NonProtonInvitation> {
         const inviter = await this.sharesService.getContextShareMemberEmailKey(share.shareId);
-        const invitationCrypto = await this.cryptoService.encryptExternalInvitation(share.passphraseSessionKey, inviter.addressKey, inviteeEmail);
+        const invitationCrypto = await this.cryptoService.encryptExternalInvitation(
+            share.passphraseSessionKey,
+            inviter.addressKey,
+            inviteeEmail,
+        );
 
-        const encryptedInvitation = await this.apiService.inviteExternalUser(share.shareId, {
-            inviterAddressId: inviter.addressId,
-            inviteeEmail: inviteeEmail,
-            role,
-            base64Signature: invitationCrypto.base64ExternalInvitationSignature,
-        }, emailOptions);
+        const encryptedInvitation = await this.apiService.inviteExternalUser(
+            share.shareId,
+            {
+                inviterAddressId: inviter.addressId,
+                inviteeEmail: inviteeEmail,
+                role,
+                base64Signature: invitationCrypto.base64ExternalInvitationSignature,
+            },
+            emailOptions,
+        );
 
         return {
             uid: encryptedInvitation.uid,
@@ -440,7 +497,6 @@ export class SharingManagement {
     private async updateExternalInvitation(invitationUid: string, role: MemberRole): Promise<void> {
         await this.apiService.updateExternalInvitation(invitationUid, { role });
     }
-
 
     private async deleteExternalInvitation(invitationUid: string): Promise<void> {
         await this.apiService.deleteExternalInvitation(invitationUid);
@@ -458,13 +514,20 @@ export class SharingManagement {
         await this.apiService.updateMember(memberUid, { role });
     }
 
-    private async shareViaLink(share: Share, options: SharePublicLinkSettingsObject): Promise<PublicLinkWithCreatorEmail> {
+    private async shareViaLink(
+        share: Share,
+        options: SharePublicLinkSettingsObject,
+    ): Promise<PublicLinkWithCreatorEmail> {
         const { email: creatorEmail } = await this.sharesService.getContextShareMemberEmailKey(share.shareId);
 
         const generatedPassword = await this.cryptoService.generatePublicLinkPassword();
         const password = options.customPassword ? `${generatedPassword}${options.customPassword}` : generatedPassword;
 
-        const { crypto, srp } = await this.cryptoService.encryptPublicLink(creatorEmail, share.passphraseSessionKey, password);
+        const { crypto, srp } = await this.cryptoService.encryptPublicLink(
+            creatorEmail,
+            share.passphraseSessionKey,
+            password,
+        );
         const publicLink = await this.apiService.createPublicLink(share.shareId, {
             creatorEmail,
             role: options.role,
@@ -483,18 +546,28 @@ export class SharingManagement {
             expirationTime: options.expiration,
             numberOfInitializedDownloads: 0,
             creatorEmail,
-        }
+        };
     }
 
-    private async updateSharedLink(share: Share, publicLink: PublicLinkWithCreatorEmail, options: SharePublicLinkSettingsObject): Promise<PublicLinkWithCreatorEmail> {
+    private async updateSharedLink(
+        share: Share,
+        publicLink: PublicLinkWithCreatorEmail,
+        options: SharePublicLinkSettingsObject,
+    ): Promise<PublicLinkWithCreatorEmail> {
         const generatedPassword = publicLink.url.split('#')[1];
         // Legacy public links didn't have generated password or had various lengths.
         if (!generatedPassword || generatedPassword.length !== PUBLIC_LINK_GENERATED_PASSWORD_LENGTH) {
-            throw new ValidationError(c('Error').t`Legacy public link cannot be updated. Please re-create a new public link.`);
+            throw new ValidationError(
+                c('Error').t`Legacy public link cannot be updated. Please re-create a new public link.`,
+            );
         }
         const password = options.customPassword ? `${generatedPassword}${options.customPassword}` : generatedPassword;
 
-        const { crypto, srp } = await this.cryptoService.encryptPublicLink(publicLink.creatorEmail, share.passphraseSessionKey, password);
+        const { crypto, srp } = await this.cryptoService.encryptPublicLink(
+            publicLink.creatorEmail,
+            share.passphraseSessionKey,
+            password,
+        );
         await this.apiService.updatePublicLink(publicLink.uid, {
             role: options.role,
             includesCustomPassword: !!options.customPassword,
@@ -508,7 +581,7 @@ export class SharingManagement {
             role: options.role,
             customPassword: options.customPassword,
             expirationTime: options.expiration,
-        }
+        };
     }
 
     private async removeSharedLink(publicLinkUid: string): Promise<void> {

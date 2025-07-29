@@ -1,12 +1,12 @@
-import { getMockLogger } from "../../tests/logger";
-import { EventManager } from "./eventManager";
-import { DriveEvent, DriveEventType, EventSubscription, UnsubscribeFromEventsSourceError } from "./interface";
+import { getMockLogger } from '../../tests/logger';
+import { EventManager } from './eventManager';
+import { DriveEvent, DriveEventType, EventSubscription, UnsubscribeFromEventsSourceError } from './interface';
 
 jest.useFakeTimers();
 
 const POLLING_INTERVAL = 1;
 
-describe("EventManager", () => {
+describe('EventManager', () => {
     let manager: EventManager<DriveEvent>;
 
     const getLatestEventIdMock = jest.fn();
@@ -22,11 +22,7 @@ describe("EventManager", () => {
             getEvents: getEventsMock,
         };
 
-        manager = new EventManager(
-            mockEventManager as any,
-            POLLING_INTERVAL,
-            null,
-        );
+        manager = new EventManager(mockEventManager as any, POLLING_INTERVAL, null);
         const subscription = manager.addListener(listenerMock);
         subscriptions.push(subscription);
     });
@@ -40,28 +36,34 @@ describe("EventManager", () => {
         jest.clearAllMocks();
     });
 
-    it("should start polling when started", async () => {
+    it('should start polling when started', async () => {
         getLatestEventIdMock.mockResolvedValue('EventId1');
 
         const mockEvents: DriveEvent[][] = [
-            [{
-                type: DriveEventType.FastForward,
-                treeEventScopeId: 'volume1',
-                eventId: 'EventId2',
-            }],
-            [{
-                type: DriveEventType.FastForward,
-                treeEventScopeId: 'volume1',
-                eventId: 'EventId3',
-            }],
+            [
+                {
+                    type: DriveEventType.FastForward,
+                    treeEventScopeId: 'volume1',
+                    eventId: 'EventId2',
+                },
+            ],
+            [
+                {
+                    type: DriveEventType.FastForward,
+                    treeEventScopeId: 'volume1',
+                    eventId: 'EventId3',
+                },
+            ],
         ];
 
-        getEventsMock.mockImplementationOnce(async function* () {
-            yield* mockEvents[0];
-        }).mockImplementationOnce(async function* () {
-            yield* mockEvents[1];
-        }).mockImplementationOnce(async function* () {
-        });
+        getEventsMock
+            .mockImplementationOnce(async function* () {
+                yield* mockEvents[0];
+            })
+            .mockImplementationOnce(async function* () {
+                yield* mockEvents[1];
+            })
+            .mockImplementationOnce(async function* () {});
 
         expect(getLatestEventIdMock).toHaveBeenCalledTimes(0);
         expect(getEventsMock).toHaveBeenCalledTimes(0);
@@ -76,7 +78,7 @@ describe("EventManager", () => {
         expect(getEventsMock).toHaveBeenCalledWith('EventId2');
     });
 
-    it("should stop polling when stopped", async () => {
+    it('should stop polling when stopped', async () => {
         getLatestEventIdMock.mockResolvedValue('eventId1');
         getEventsMock.mockImplementation(async function* () {
             yield {
@@ -97,7 +99,7 @@ describe("EventManager", () => {
         expect(getEventsMock).toHaveBeenCalledTimes(callsBeforeStop);
     });
 
-    it("should notify all listeners when getting events", async () => {
+    it('should notify all listeners when getting events', async () => {
         getLatestEventIdMock.mockResolvedValue('eventId1');
 
         const mockEvents: DriveEvent[] = [
@@ -112,10 +114,11 @@ describe("EventManager", () => {
             },
         ];
 
-        getEventsMock.mockImplementationOnce(async function* () {
-            yield* mockEvents;
-        }).mockImplementation(async function* () {
-        });
+        getEventsMock
+            .mockImplementationOnce(async function* () {
+                yield* mockEvents;
+            })
+            .mockImplementation(async function* () {});
 
         expect(await manager.start()).toBeUndefined();
         await jest.runOnlyPendingTimersAsync();
@@ -123,9 +126,9 @@ describe("EventManager", () => {
         expect(listenerMock).toHaveBeenNthCalledWith(1, mockEvents[0]);
     });
 
-    it("should propagate unsubscription errors", async () => {
+    it('should propagate unsubscription errors', async () => {
         getLatestEventIdMock.mockImplementation(() => {
-            throw new UnsubscribeFromEventsSourceError("Not found");
+            throw new UnsubscribeFromEventsSourceError('Not found');
         });
 
         await expect(manager.start()).rejects.toThrow(UnsubscribeFromEventsSourceError);
@@ -135,7 +138,7 @@ describe("EventManager", () => {
         expect(getEventsMock).toHaveBeenCalledTimes(0);
     });
 
-    it("should continue processing multiple events", async () => {
+    it('should continue processing multiple events', async () => {
         getLatestEventIdMock.mockResolvedValue('eventId1');
 
         const mockEvents: DriveEvent[] = [
@@ -156,14 +159,16 @@ describe("EventManager", () => {
                 isShared: false,
                 treeEventScopeId: 'volume1',
                 eventId: 'eventId3',
-            }
+            },
         ];
 
-        getEventsMock.mockImplementationOnce(async function* () {
-            yield* mockEvents;
-        }).mockImplementation(async function* () {
-            // Empty generator for subsequent calls
-        });
+        getEventsMock
+            .mockImplementationOnce(async function* () {
+                yield* mockEvents;
+            })
+            .mockImplementation(async function* () {
+                // Empty generator for subsequent calls
+            });
 
         await manager.start();
         await jest.runOnlyPendingTimersAsync();
@@ -174,21 +179,21 @@ describe("EventManager", () => {
 
         getEventsMock.mockImplementationOnce(async function* () {
             yield* mockEvents;
-        })
+        });
         await jest.runOnlyPendingTimersAsync();
         expect(listenerMock).toHaveBeenCalledTimes(4);
         expect(listenerMock).toHaveBeenNthCalledWith(1, mockEvents[0]);
         expect(listenerMock).toHaveBeenNthCalledWith(2, mockEvents[1]);
     });
 
-    it("should retry on error with exponential backoff", async () => {
+    it('should retry on error with exponential backoff', async () => {
         getLatestEventIdMock.mockResolvedValue('eventId1');
 
         let callCount = 0;
         getEventsMock.mockImplementation(async function* () {
             callCount++;
             if (callCount <= 3) {
-                throw new Error("Network error");
+                throw new Error('Network error');
             }
             yield {
                 type: DriveEventType.FastForward,
@@ -218,7 +223,7 @@ describe("EventManager", () => {
         expect(manager['retryIndex']).toEqual(0);
     });
 
-    it("should stop polling when stopped immediately", async () => {
+    it('should stop polling when stopped immediately', async () => {
         getLatestEventIdMock.mockResolvedValue('eventId1');
         getEventsMock.mockImplementation(async function* () {
             yield {
@@ -237,7 +242,7 @@ describe("EventManager", () => {
         expect(getEventsMock).toHaveBeenCalledTimes(1);
     });
 
-    it("should handle empty event streams", async () => {
+    it('should handle empty event streams', async () => {
         getLatestEventIdMock.mockResolvedValue('eventId1');
 
         getEventsMock.mockImplementation(async function* () {

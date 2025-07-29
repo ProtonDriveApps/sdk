@@ -1,6 +1,6 @@
-import { Logger } from "../../interface";
-import { DriveEvent, DriveEventType } from "../events";
-import { NodesCache } from "./cache";
+import { Logger } from '../../interface';
+import { DriveEvent, DriveEventType } from '../events';
+import { NodesCache } from './cache';
 
 /**
  * Provides internal event handling.
@@ -9,8 +9,10 @@ import { NodesCache } from "./cache";
  * from the DriveEventsService.
  */
 export class NodesEventsHandler {
-    constructor(private logger: Logger, private cache: NodesCache) {
-    }
+    constructor(
+        private logger: Logger,
+        private cache: NodesCache,
+    ) {}
 
     async updateNodesCacheOnEvent(event: DriveEvent): Promise<void> {
         try {

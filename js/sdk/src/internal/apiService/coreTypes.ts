@@ -4,14 +4,14 @@
  */
 
 export interface paths {
-    "/core/{_version}/addresses/allowAddressDeletion": {
+    '/core/{_version}/addresses/allowAddressDeletion': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-addresses-allowAddressDeletion"];
+        get: operations['get_core-{_version}-addresses-allowAddressDeletion'];
         put?: never;
         post?: never;
         delete?: never;
@@ -20,7 +20,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/address/active": {
+    '/core/{_version}/keys/address/active': {
         parameters: {
             query?: never;
             header?: never;
@@ -29,7 +29,7 @@ export interface paths {
         };
         get?: never;
         /** Update list of active keys per address */
-        put: operations["put_core-{_version}-keys-address-active"];
+        put: operations['put_core-{_version}-keys-address-active'];
         post?: never;
         delete?: never;
         options?: never;
@@ -37,7 +37,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys": {
+    '/core/{_version}/keys': {
         parameters: {
             query?: never;
             header?: never;
@@ -52,19 +52,19 @@ export interface paths {
          *
          *     Deprecated! Please refer to https://confluence.protontech.ch/pages/viewpage.action?pageId=157816403 to upgrade
          */
-        get: operations["get_core-{_version}-keys"];
+        get: operations['get_core-{_version}-keys'];
         put?: never;
         /** POST /keys route (Deprecated, AddressKey migration step 1.2)
          *     Only used for address-associated keys, otherwise this would be a backdoor way to change the mailbox password
          *     Does not enforce key list validation. */
-        post: operations["post_core-{_version}-keys"];
+        post: operations['post_core-{_version}-keys'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/address": {
+    '/core/{_version}/keys/address': {
         parameters: {
             query?: never;
             header?: never;
@@ -78,14 +78,14 @@ export interface paths {
          * @description Locked route, only used for address-associated keys,
          *     otherwise this would be a backdoor way to change the mailbox password.
          */
-        post: operations["post_core-{_version}-keys-address"];
+        post: operations['post_core-{_version}-keys-address'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/group": {
+    '/core/{_version}/keys/group': {
         parameters: {
             query?: never;
             header?: never;
@@ -95,14 +95,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Create a group key */
-        post: operations["post_core-{_version}-keys-group"];
+        post: operations['post_core-{_version}-keys-group'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/setup": {
+    '/core/{_version}/keys/setup': {
         parameters: {
             query?: never;
             header?: never;
@@ -115,14 +115,14 @@ export interface paths {
          * Setup keys for new account, private user.
          * @description Initial key setup for new private users.
          */
-        post: operations["post_core-{_version}-keys-setup"];
+        post: operations['post_core-{_version}-keys-setup'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/{enc_id}/delete": {
+    '/core/{_version}/keys/{enc_id}/delete': {
         parameters: {
             query?: never;
             header?: never;
@@ -135,7 +135,7 @@ export interface paths {
          * @deprecated
          * @description Locked route
          */
-        put: operations["put_core-{_version}-keys-{enc_id}-delete"];
+        put: operations['put_core-{_version}-keys-{enc_id}-delete'];
         post?: never;
         delete?: never;
         options?: never;
@@ -143,7 +143,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/address/{enc_id}/delete": {
+    '/core/{_version}/keys/address/{enc_id}/delete': {
         parameters: {
             query?: never;
             header?: never;
@@ -156,14 +156,14 @@ export interface paths {
          * Delete address key.
          * @description Locked route
          */
-        post: operations["post_core-{_version}-keys-address-{enc_id}-delete"];
+        post: operations['post_core-{_version}-keys-address-{enc_id}-delete'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/private": {
+    '/core/{_version}/keys/private': {
         parameters: {
             query?: never;
             header?: never;
@@ -178,7 +178,7 @@ export interface paths {
          *     This route can not be used to re-activate keys that we don't have access to,
          *     in that case the route "Activate Key" must be used first.
          */
-        put: operations["put_core-{_version}-keys-private"];
+        put: operations['put_core-{_version}-keys-private'];
         post?: never;
         delete?: never;
         options?: never;
@@ -186,7 +186,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/images/logo": {
+    '/core/{_version}/images/logo': {
         parameters: {
             query?: never;
             header?: never;
@@ -194,7 +194,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get logo corresponding to an address or a domain. */
-        get: operations["get_core-{_version}-images-logo"];
+        get: operations['get_core-{_version}-images-logo'];
         put?: never;
         post?: never;
         delete?: never;
@@ -203,7 +203,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/addresses": {
+    '/core/{_version}/members/{enc_id}/addresses': {
         parameters: {
             query?: never;
             header?: never;
@@ -211,7 +211,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get addresses of a member. */
-        get: operations["get_core-{_version}-members-{enc_id}-addresses"];
+        get: operations['get_core-{_version}-members-{enc_id}-addresses'];
         put?: never;
         /**
          * Create new address.
@@ -229,21 +229,21 @@ export interface paths {
          *     }
          *     ```
          */
-        post: operations["post_core-{_version}-members-{enc_id}-addresses"];
+        post: operations['post_core-{_version}-members-{enc_id}-addresses'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/addresses": {
+    '/core/{_version}/addresses': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-addresses"];
+        get: operations['get_core-{_version}-addresses'];
         put?: never;
         /**
          * Create new address.
@@ -261,14 +261,14 @@ export interface paths {
          *     }
          *     ```
          */
-        post: operations["post_core-{_version}-addresses"];
+        post: operations['post_core-{_version}-addresses'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/addresses/available": {
+    '/core/{_version}/members/addresses/available': {
         parameters: {
             query?: never;
             header?: never;
@@ -278,14 +278,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Validates an address before creation (format and availability). */
-        post: operations["post_core-{_version}-members-addresses-available"];
+        post: operations['post_core-{_version}-members-addresses-available'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/addresses/order": {
+    '/core/{_version}/addresses/order': {
         parameters: {
             query?: never;
             header?: never;
@@ -294,7 +294,7 @@ export interface paths {
         };
         get?: never;
         /** Reorder user's addresses. */
-        put: operations["put_core-{_version}-addresses-order"];
+        put: operations['put_core-{_version}-addresses-order'];
         post?: never;
         delete?: never;
         options?: never;
@@ -302,7 +302,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/addresses/setup": {
+    '/core/{_version}/addresses/setup': {
         parameters: {
             query?: never;
             header?: never;
@@ -312,14 +312,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Setup new non-subuser address. */
-        post: operations["post_core-{_version}-addresses-setup"];
+        post: operations['post_core-{_version}-addresses-setup'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/addresses/canonical": {
+    '/core/{_version}/addresses/canonical': {
         parameters: {
             query?: never;
             header?: never;
@@ -327,7 +327,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get the canonical form of email addresses. */
-        get: operations["get_core-{_version}-addresses-canonical"];
+        get: operations['get_core-{_version}-addresses-canonical'];
         put?: never;
         post?: never;
         delete?: never;
@@ -336,7 +336,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/addresses/{enc_id}": {
+    '/core/{_version}/addresses/{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -344,12 +344,12 @@ export interface paths {
             cookie?: never;
         };
         /** Get a single address. */
-        get: operations["get_core-{_version}-addresses-{enc_id}"];
+        get: operations['get_core-{_version}-addresses-{enc_id}'];
         /**
          * Update address.
          * @description Update display name and/or signature.
          */
-        put: operations["put_core-{_version}-addresses-{enc_id}"];
+        put: operations['put_core-{_version}-addresses-{enc_id}'];
         post?: never;
         /**
          * Delete a Disabled Address.
@@ -358,13 +358,13 @@ export interface paths {
          *
          *     Warning - Locked route
          */
-        delete: operations["delete_core-{_version}-addresses-{enc_id}"];
+        delete: operations['delete_core-{_version}-addresses-{enc_id}'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/domains/{enc_id}/addresses": {
+    '/core/{_version}/domains/{enc_id}/addresses': {
         parameters: {
             query?: never;
             header?: never;
@@ -372,7 +372,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get a specific domain's addresses. */
-        get: operations["get_core-{_version}-domains-{enc_id}-addresses"];
+        get: operations['get_core-{_version}-domains-{enc_id}-addresses'];
         put?: never;
         post?: never;
         delete?: never;
@@ -381,7 +381,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/domains/{enc_id}/claimedAddresses": {
+    '/core/{_version}/domains/{enc_id}/claimedAddresses': {
         parameters: {
             query?: never;
             header?: never;
@@ -390,7 +390,7 @@ export interface paths {
         };
         /** Get external addresses belonging to users outside the organization
          *     with the same domain name as the specified domain. */
-        get: operations["get_core-{_version}-domains-{enc_id}-claimedAddresses"];
+        get: operations['get_core-{_version}-domains-{enc_id}-claimedAddresses'];
         put?: never;
         post?: never;
         delete?: never;
@@ -399,7 +399,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/addresses/{enc_id}/enable": {
+    '/core/{_version}/addresses/{enc_id}/enable': {
         parameters: {
             query?: never;
             header?: never;
@@ -413,7 +413,7 @@ export interface paths {
          *
          *     Warning - Locked route
          */
-        put: operations["put_core-{_version}-addresses-{enc_id}-enable"];
+        put: operations['put_core-{_version}-addresses-{enc_id}-enable'];
         post?: never;
         delete?: never;
         options?: never;
@@ -421,7 +421,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/addresses/{enc_id}/disable": {
+    '/core/{_version}/addresses/{enc_id}/disable': {
         parameters: {
             query?: never;
             header?: never;
@@ -435,7 +435,7 @@ export interface paths {
          *
          *     Warning - Locked route
          */
-        put: operations["put_core-{_version}-addresses-{enc_id}-disable"];
+        put: operations['put_core-{_version}-addresses-{enc_id}-disable'];
         post?: never;
         delete?: never;
         options?: never;
@@ -443,7 +443,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/addresses/{enc_id}/delete": {
+    '/core/{_version}/addresses/{enc_id}/delete': {
         parameters: {
             query?: never;
             header?: never;
@@ -457,7 +457,7 @@ export interface paths {
          *
          *     Warning - Locked route
          */
-        put: operations["put_core-{_version}-addresses-{enc_id}-delete"];
+        put: operations['put_core-{_version}-addresses-{enc_id}-delete'];
         post?: never;
         delete?: never;
         options?: never;
@@ -465,7 +465,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/addresses/{enc_id}/type": {
+    '/core/{_version}/addresses/{enc_id}/type': {
         parameters: {
             query?: never;
             header?: never;
@@ -477,7 +477,7 @@ export interface paths {
          * Change address type.
          * @description As of now it is possible only to convert an external address into a custom address when a domain has been activated.
          */
-        put: operations["put_core-{_version}-addresses-{enc_id}-type"];
+        put: operations['put_core-{_version}-addresses-{enc_id}-type'];
         post?: never;
         delete?: never;
         options?: never;
@@ -485,7 +485,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/addresses/{enc_id}/rename/internal": {
+    '/core/{_version}/addresses/{enc_id}/rename/internal': {
         parameters: {
             query?: never;
             header?: never;
@@ -494,7 +494,7 @@ export interface paths {
         };
         get?: never;
         /** Rename address keeping the keys, keeping the same clean email */
-        put: operations["put_core-{_version}-addresses-{enc_id}-rename-internal"];
+        put: operations['put_core-{_version}-addresses-{enc_id}-rename-internal'];
         post?: never;
         delete?: never;
         options?: never;
@@ -502,7 +502,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/addresses/{enc_id}/rename/external": {
+    '/core/{_version}/addresses/{enc_id}/rename/external': {
         parameters: {
             query?: never;
             header?: never;
@@ -511,7 +511,7 @@ export interface paths {
         };
         get?: never;
         /** Rename unverified external addresses freely (any change is allowed) */
-        put: operations["put_core-{_version}-addresses-{enc_id}-rename-external"];
+        put: operations['put_core-{_version}-addresses-{enc_id}-rename-external'];
         post?: never;
         delete?: never;
         options?: never;
@@ -519,7 +519,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/addresses/{enc_addressId}/encryption": {
+    '/core/{_version}/addresses/{enc_addressId}/encryption': {
         parameters: {
             query?: never;
             header?: never;
@@ -531,7 +531,7 @@ export interface paths {
          * Set encryption signature flags.
          * @description Allows setting "E2EE disabled" or "Do not expect signed" flags, address wide.
          */
-        put: operations["put_core-{_version}-addresses-{enc_addressId}-encryption"];
+        put: operations['put_core-{_version}-addresses-{enc_addressId}-encryption'];
         post?: never;
         delete?: never;
         options?: never;
@@ -539,7 +539,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/addresses/permissions/organization/switch": {
+    '/core/{_version}/members/addresses/permissions/organization/switch': {
         parameters: {
             query?: never;
             header?: never;
@@ -553,7 +553,7 @@ export interface paths {
          *     Having both PERMISSIONS_SEND_ALL and PERMISSIONS_SEND_ORG in the permissions array is forbidden.
          *     Having both PERMISSIONS_RECEIVE_ALL and PERMISSIONS_RECEIVE_ORG in the permissions array is forbidden.
          */
-        put: operations["put_core-{_version}-members-addresses-permissions-organization-switch"];
+        put: operations['put_core-{_version}-members-addresses-permissions-organization-switch'];
         post?: never;
         delete?: never;
         options?: never;
@@ -561,7 +561,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{memberId}/saml": {
+    '/core/{_version}/members/{memberId}/saml': {
         parameters: {
             query?: never;
             header?: never;
@@ -570,30 +570,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-members-{memberId}-saml"];
-        delete: operations["delete_core-{_version}-members-{memberId}-saml"];
+        post: operations['post_core-{_version}-members-{memberId}-saml'];
+        delete: operations['delete_core-{_version}-members-{memberId}-saml'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{memberId}/devices/{deviceId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete: operations["delete_core-{_version}-members-{memberId}-devices-{deviceId}"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/{_version}/members/{memberId}/devices": {
+    '/core/{_version}/members/{memberId}/devices/{deviceId}': {
         parameters: {
             query?: never;
             header?: never;
@@ -603,20 +587,36 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_core-{_version}-members-{memberId}-devices"];
+        delete: operations['delete_core-{_version}-members-{memberId}-devices-{deviceId}'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{id}/devices": {
+    '/core/{_version}/members/{memberId}/devices': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-members-{id}-devices"];
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations['delete_core-{_version}-members-{memberId}-devices'];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/core/{_version}/members/{id}/devices': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations['get_core-{_version}-members-{id}-devices'];
         put?: never;
         post?: never;
         delete?: never;
@@ -625,14 +625,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/devices/pending": {
+    '/core/{_version}/members/devices/pending': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-members-devices-pending"];
+        get: operations['get_core-{_version}-members-devices-pending'];
         put?: never;
         post?: never;
         delete?: never;
@@ -641,7 +641,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{memberId}/devices/{deviceId}/reject": {
+    '/core/{_version}/members/{memberId}/devices/{deviceId}/reject': {
         parameters: {
             query?: never;
             header?: never;
@@ -649,7 +649,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-members-{memberId}-devices-{deviceId}-reject"];
+        put: operations['put_core-{_version}-members-{memberId}-devices-{deviceId}-reject'];
         post?: never;
         delete?: never;
         options?: never;
@@ -657,7 +657,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{memberId}/devices/reset": {
+    '/core/{_version}/members/{memberId}/devices/reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -666,14 +666,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-members-{memberId}-devices-reset"];
+        post: operations['post_core-{_version}-members-{memberId}-devices-reset'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/keys": {
+    '/core/{_version}/members/{enc_id}/keys': {
         parameters: {
             query?: never;
             header?: never;
@@ -682,30 +682,30 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-members-{enc_id}-keys"];
+        post: operations['post_core-{_version}-members-{enc_id}-keys'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/scim": {
+    '/core/{_version}/organizations/scim': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-organizations-scim"];
-        put: operations["put_core-{_version}-organizations-scim"];
-        post: operations["post_core-{_version}-organizations-scim"];
+        get: operations['get_core-{_version}-organizations-scim'];
+        put: operations['put_core-{_version}-organizations-scim'];
+        post: operations['post_core-{_version}-organizations-scim'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/user": {
+    '/core/{_version}/keys/user': {
         parameters: {
             query?: never;
             header?: never;
@@ -714,14 +714,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-keys-user"];
+        post: operations['post_core-{_version}-keys-user'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/domains": {
+    '/core/{_version}/domains': {
         parameters: {
             query?: never;
             header?: never;
@@ -732,7 +732,7 @@ export interface paths {
          * Get Domains.
          * @description Get all domains for this user's organization and check their DNS's
          */
-        get: operations["get_core-{_version}-domains"];
+        get: operations['get_core-{_version}-domains'];
         put?: never;
         /**
          * Create Domain.
@@ -748,14 +748,14 @@ export interface paths {
          *     }
          *     ```
          */
-        post: operations["post_core-{_version}-domains"];
+        post: operations['post_core-{_version}-domains'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/domains/available": {
+    '/core/{_version}/domains/available': {
         parameters: {
             query?: never;
             header?: never;
@@ -763,7 +763,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get available domains. */
-        get: operations["get_core-{_version}-domains-available"];
+        get: operations['get_core-{_version}-domains-available'];
         put?: never;
         post?: never;
         delete?: never;
@@ -772,7 +772,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/domains/premium": {
+    '/core/{_version}/domains/premium': {
         parameters: {
             query?: never;
             header?: never;
@@ -780,7 +780,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get premium domains. */
-        get: operations["get_core-{_version}-domains-premium"];
+        get: operations['get_core-{_version}-domains-premium'];
         put?: never;
         post?: never;
         delete?: never;
@@ -789,7 +789,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/domains/optin": {
+    '/core/{_version}/domains/optin': {
         parameters: {
             query?: never;
             header?: never;
@@ -797,7 +797,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get opt-in domain if user is eligible. */
-        get: operations["get_core-{_version}-domains-optin"];
+        get: operations['get_core-{_version}-domains-optin'];
         put?: never;
         post?: never;
         delete?: never;
@@ -806,7 +806,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/domains/{enc_id}": {
+    '/core/{_version}/domains/{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -817,20 +817,20 @@ export interface paths {
          * Get Domain.
          * @description Get a specific domains and its check DNS
          */
-        get: operations["get_core-{_version}-domains-{enc_id}"];
+        get: operations['get_core-{_version}-domains-{enc_id}'];
         put?: never;
         post?: never;
         /**
          * Delete Domain.
          * @description Delete a Domain, locked route
          */
-        delete: operations["delete_core-{_version}-domains-{enc_id}"];
+        delete: operations['delete_core-{_version}-domains-{enc_id}'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/domains/{enc_id}/catchall": {
+    '/core/{_version}/domains/{enc_id}/catchall': {
         parameters: {
             query?: never;
             header?: never;
@@ -839,7 +839,7 @@ export interface paths {
         };
         get?: never;
         /** Set catch-all address, locked route. */
-        put: operations["put_core-{_version}-domains-{enc_id}-catchall"];
+        put: operations['put_core-{_version}-domains-{enc_id}-catchall'];
         post?: never;
         delete?: never;
         options?: never;
@@ -847,7 +847,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations": {
+    '/core/{_version}/organizations': {
         parameters: {
             query?: never;
             header?: never;
@@ -855,7 +855,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get information of current organization */
-        get: operations["get_core-{_version}-organizations"];
+        get: operations['get_core-{_version}-organizations'];
         put?: never;
         post?: never;
         delete?: never;
@@ -864,7 +864,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/groups/external/{jwt}": {
+    '/core/{_version}/groups/external/{jwt}': {
         parameters: {
             query?: never;
             header?: never;
@@ -872,15 +872,15 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-groups-external-{jwt}"];
+        put: operations['put_core-{_version}-groups-external-{jwt}'];
         post?: never;
-        delete: operations["delete_core-{_version}-groups-external-{jwt}"];
+        delete: operations['delete_core-{_version}-groups-external-{jwt}'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/groups/members": {
+    '/core/{_version}/groups/members': {
         parameters: {
             query?: never;
             header?: never;
@@ -889,30 +889,30 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-groups-members"];
+        post: operations['post_core-{_version}-groups-members'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/groups": {
+    '/core/{_version}/groups': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-groups"];
+        get: operations['get_core-{_version}-groups'];
         put?: never;
-        post: operations["post_core-{_version}-groups"];
+        post: operations['post_core-{_version}-groups'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/groups/unsubscribe/{jwt}": {
+    '/core/{_version}/groups/unsubscribe/{jwt}': {
         parameters: {
             query?: never;
             header?: never;
@@ -921,14 +921,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-groups-unsubscribe-{jwt}"];
+        post: operations['post_core-{_version}-groups-unsubscribe-{jwt}'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/groups/{enc_id}": {
+    '/core/{_version}/groups/{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -936,15 +936,15 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-groups-{enc_id}"];
+        put: operations['put_core-{_version}-groups-{enc_id}'];
         post?: never;
-        delete: operations["delete_core-{_version}-groups-{enc_id}"];
+        delete: operations['delete_core-{_version}-groups-{enc_id}'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/groups/members/{enc_id}": {
+    '/core/{_version}/groups/members/{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -954,13 +954,13 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_core-{_version}-groups-members-{enc_id}"];
+        delete: operations['delete_core-{_version}-groups-members-{enc_id}'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/groups/members/{groupMemberId}": {
+    '/core/{_version}/groups/members/{groupMemberId}': {
         parameters: {
             query?: never;
             header?: never;
@@ -968,7 +968,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-groups-members-{groupMemberId}"];
+        put: operations['put_core-{_version}-groups-members-{groupMemberId}'];
         post?: never;
         delete?: never;
         options?: never;
@@ -976,30 +976,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/v4/groups/members/external/{jwt}": {
+    '/core/v4/groups/members/external/{jwt}': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-v4-groups-members-external-{jwt}"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/v4/groups/{group_enc_id}/members": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["get_core-v4-groups-{group_enc_id}-members"];
+        get: operations['get_core-v4-groups-members-external-{jwt}'];
         put?: never;
         post?: never;
         delete?: never;
@@ -1008,14 +992,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/v4/groups/members/internal": {
+    '/core/v4/groups/{group_enc_id}/members': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-v4-groups-members-internal"];
+        get: operations['get_core-v4-groups-{group_enc_id}-members'];
         put?: never;
         post?: never;
         delete?: never;
@@ -1024,15 +1008,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/groups/{enc_id}/reinvite": {
+    '/core/v4/groups/members/internal': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put: operations["put_core-{_version}-groups-{enc_id}-reinvite"];
+        get: operations['get_core-v4-groups-members-internal'];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1040,7 +1024,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/groups/members/{groupMemberId}/resume": {
+    '/core/{_version}/groups/{enc_id}/reinvite': {
         parameters: {
             query?: never;
             header?: never;
@@ -1048,7 +1032,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-groups-members-{groupMemberId}-resume"];
+        put: operations['put_core-{_version}-groups-{enc_id}-reinvite'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1056,7 +1040,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/invites": {
+    '/core/{_version}/groups/members/{groupMemberId}/resume': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations['put_core-{_version}-groups-members-{groupMemberId}-resume'];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/core/{_version}/invites': {
         parameters: {
             query?: never;
             header?: never;
@@ -1065,14 +1065,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-invites"];
+        post: operations['post_core-{_version}-invites'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/invites/unused": {
+    '/core/{_version}/invites/unused': {
         parameters: {
             query?: never;
             header?: never;
@@ -1081,14 +1081,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-invites-unused"];
+        post: operations['post_core-{_version}-invites-unused'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/invites/check": {
+    '/core/{_version}/invites/check': {
         parameters: {
             query?: never;
             header?: never;
@@ -1097,14 +1097,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-invites-check"];
+        post: operations['post_core-{_version}-invites-check'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/all": {
+    '/core/{_version}/keys/all': {
         parameters: {
             query?: never;
             header?: never;
@@ -1117,7 +1117,7 @@ export interface paths {
          *
          *     This route replaces GET /keys. Please refer to https://confluence.protontech.ch/pages/viewpage.action?pageId=157816403 to upgrade
          */
-        get: operations["get_core-{_version}-keys-all"];
+        get: operations['get_core-{_version}-keys-all'];
         put?: never;
         post?: never;
         delete?: never;
@@ -1126,7 +1126,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/signedkeylists": {
+    '/core/{_version}/keys/signedkeylists': {
         parameters: {
             query?: never;
             header?: never;
@@ -1134,17 +1134,17 @@ export interface paths {
             cookie?: never;
         };
         /** Get multiple signed key lists for different epochs */
-        get: operations["get_core-{_version}-keys-signedkeylists"];
+        get: operations['get_core-{_version}-keys-signedkeylists'];
         put?: never;
         /** Update signed key list. */
-        post: operations["post_core-{_version}-keys-signedkeylists"];
+        post: operations['post_core-{_version}-keys-signedkeylists'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/signedkeylist": {
+    '/core/{_version}/keys/signedkeylist': {
         parameters: {
             query?: never;
             header?: never;
@@ -1152,7 +1152,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get a single signed key lists for a specific epoch */
-        get: operations["get_core-{_version}-keys-signedkeylist"];
+        get: operations['get_core-{_version}-keys-signedkeylist'];
         put?: never;
         post?: never;
         delete?: never;
@@ -1161,7 +1161,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/salts": {
+    '/core/{_version}/keys/salts': {
         parameters: {
             query?: never;
             header?: never;
@@ -1172,7 +1172,7 @@ export interface paths {
          * Get key salts.
          * @description Locked route
          */
-        get: operations["get_core-{_version}-keys-salts"];
+        get: operations['get_core-{_version}-keys-salts'];
         put?: never;
         post?: never;
         delete?: never;
@@ -1181,7 +1181,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/address/{enc_id}": {
+    '/core/{_version}/keys/address/{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -1190,7 +1190,7 @@ export interface paths {
         };
         get?: never;
         /** (Migrated keys) Reactivate just an address key */
-        put: operations["put_core-{_version}-keys-address-{enc_id}"];
+        put: operations['put_core-{_version}-keys-address-{enc_id}'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1198,7 +1198,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/address/{enc_id}/subkeys": {
+    '/core/{_version}/keys/address/{enc_id}/subkeys': {
         parameters: {
             query?: never;
             header?: never;
@@ -1207,7 +1207,7 @@ export interface paths {
         };
         get?: never;
         /** Add subkeys to an existing keypair. */
-        put: operations["put_core-{_version}-keys-address-{enc_id}-subkeys"];
+        put: operations['put_core-{_version}-keys-address-{enc_id}-subkeys'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1215,7 +1215,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/signedkeylists/signature": {
+    '/core/{_version}/keys/signedkeylists/signature': {
         parameters: {
             query?: never;
             header?: never;
@@ -1224,7 +1224,7 @@ export interface paths {
         };
         get?: never;
         /** Update signed key list signature for a specific revision. */
-        put: operations["put_core-{_version}-keys-signedkeylists-signature"];
+        put: operations['put_core-{_version}-keys-signedkeylists-signature'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1232,7 +1232,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/{enc_id}/primary": {
+    '/core/{_version}/keys/{enc_id}/primary': {
         parameters: {
             query?: never;
             header?: never;
@@ -1245,7 +1245,7 @@ export interface paths {
          * @description Locked route, only used for address-associated keys,
          *     otherwise this could be a backdoor way to revert to an earlier mailbox password.
          */
-        put: operations["put_core-{_version}-keys-{enc_id}-primary"];
+        put: operations['put_core-{_version}-keys-{enc_id}-primary'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1253,7 +1253,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/{enc_id}/flags": {
+    '/core/{_version}/keys/{enc_id}/flags': {
         parameters: {
             query?: never;
             header?: never;
@@ -1265,7 +1265,7 @@ export interface paths {
          * Update key flags.
          * @description Locked route
          */
-        put: operations["put_core-{_version}-keys-{enc_id}-flags"];
+        put: operations['put_core-{_version}-keys-{enc_id}-flags'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1273,7 +1273,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/tokens": {
+    '/core/{_version}/keys/tokens': {
         parameters: {
             query?: never;
             header?: never;
@@ -1281,7 +1281,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-keys-tokens"];
+        put: operations['put_core-{_version}-keys-tokens'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1289,7 +1289,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/user/{enc_id}": {
+    '/core/{_version}/keys/user/{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -1302,15 +1302,15 @@ export interface paths {
          * @description Reactivate inactive user key by sending a key copy encrypted with current mailbox password and the list
          *     of address key fingerprints to reactivate. Locked route.
          */
-        put: operations["put_core-{_version}-keys-user-{enc_id}"];
+        put: operations['put_core-{_version}-keys-user-{enc_id}'];
         post?: never;
-        delete: operations["delete_core-{_version}-keys-user-{enc_id}"];
+        delete: operations['delete_core-{_version}-keys-user-{enc_id}'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/private/upgrade": {
+    '/core/{_version}/keys/private/upgrade': {
         parameters: {
             query?: never;
             header?: never;
@@ -1326,14 +1326,14 @@ export interface paths {
          *     This route can not be used to re-activate keys that we don't have access to,
          *     in that case the route "Activate Key" must be used first.
          */
-        post: operations["post_core-{_version}-keys-private-upgrade"];
+        post: operations['post_core-{_version}-keys-private-upgrade'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/migrate": {
+    '/core/{_version}/keys/migrate': {
         parameters: {
             query?: never;
             header?: never;
@@ -1345,14 +1345,14 @@ export interface paths {
         /** Upgrade keys for key migration step 2
          *     This route can not be used to re-activate keys that we don't have access to,
          *     in that case the route "Activate Key" must be used before or after. */
-        post: operations["post_core-{_version}-keys-migrate"];
+        post: operations['post_core-{_version}-keys-migrate'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/{enc_id}/activate": {
+    '/core/{_version}/keys/{enc_id}/activate': {
         parameters: {
             query?: never;
             header?: never;
@@ -1362,7 +1362,7 @@ export interface paths {
         get?: never;
         /** (Legacy keys) Activate newly-provisioned member address key by sending a key copy encrypted with
          *     current mailbox password. */
-        put: operations["put_core-{_version}-keys-{enc_id}-activate"];
+        put: operations['put_core-{_version}-keys-{enc_id}-activate'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1370,7 +1370,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/{enc_id}": {
+    '/core/{_version}/keys/{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -1379,7 +1379,7 @@ export interface paths {
         };
         get?: never;
         /** (Legacy keys) Activate just an address key, when access to the user key is lost */
-        put: operations["put_core-{_version}-keys-{enc_id}"];
+        put: operations['put_core-{_version}-keys-{enc_id}'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1387,7 +1387,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/keys/reset": {
+    '/core/{_version}/keys/reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -1397,14 +1397,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Install a new key for each address. */
-        post: operations["post_core-{_version}-keys-reset"];
+        post: operations['post_core-{_version}-keys-reset'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members": {
+    '/core/{_version}/members': {
         parameters: {
             query?: never;
             header?: never;
@@ -1415,7 +1415,7 @@ export interface paths {
          * Get Members.
          * @description Get all members of user's organization
          */
-        get: operations["get_core-{_version}-members"];
+        get: operations['get_core-{_version}-members'];
         put?: never;
         /**
          * Create a new member.
@@ -1423,14 +1423,14 @@ export interface paths {
          *
          *     phpcs:disable Generic.Metrics.CyclomaticComplexity.MaxExceeded
          */
-        post: operations["post_core-{_version}-members"];
+        post: operations['post_core-{_version}-members'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/invitations": {
+    '/core/{_version}/members/invitations': {
         parameters: {
             query?: never;
             header?: never;
@@ -1439,14 +1439,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-members-invitations"];
+        post: operations['post_core-{_version}-members-invitations'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/invitations/{enc_id}": {
+    '/core/{_version}/members/invitations/{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -1458,7 +1458,7 @@ export interface paths {
          * Edit a pending invitation.
          * @description Locked route
          */
-        put: operations["put_core-{_version}-members-invitations-{enc_id}"];
+        put: operations['put_core-{_version}-members-invitations-{enc_id}'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1466,7 +1466,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/disable": {
+    '/core/{_version}/members/{enc_id}/disable': {
         parameters: {
             query?: never;
             header?: never;
@@ -1478,7 +1478,7 @@ export interface paths {
          * Disable a member.
          * @description Locked route
          */
-        put: operations["put_core-{_version}-members-{enc_id}-disable"];
+        put: operations['put_core-{_version}-members-{enc_id}-disable'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1486,7 +1486,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/enable": {
+    '/core/{_version}/members/{enc_id}/enable': {
         parameters: {
             query?: never;
             header?: never;
@@ -1498,7 +1498,7 @@ export interface paths {
          * Enable a member.
          * @description Locked route
          */
-        put: operations["put_core-{_version}-members-{enc_id}-enable"];
+        put: operations['put_core-{_version}-members-{enc_id}-enable'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1506,7 +1506,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/quota": {
+    '/core/{_version}/members/{enc_id}/quota': {
         parameters: {
             query?: never;
             header?: never;
@@ -1518,7 +1518,7 @@ export interface paths {
          * Update disk space quota in bytes.
          * @description Locked route
          */
-        put: operations["put_core-{_version}-members-{enc_id}-quota"];
+        put: operations['put_core-{_version}-members-{enc_id}-quota'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1526,7 +1526,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/name": {
+    '/core/{_version}/members/{enc_id}/name': {
         parameters: {
             query?: never;
             header?: never;
@@ -1538,7 +1538,7 @@ export interface paths {
          * Update member name.
          * @description Locked route
          */
-        put: operations["put_core-{_version}-members-{enc_id}-name"];
+        put: operations['put_core-{_version}-members-{enc_id}-name'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1546,7 +1546,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/role": {
+    '/core/{_version}/members/{enc_id}/role': {
         parameters: {
             query?: never;
             header?: never;
@@ -1555,7 +1555,7 @@ export interface paths {
         };
         get?: never;
         /** Update member role. */
-        put: operations["put_core-{_version}-members-{enc_id}-role"];
+        put: operations['put_core-{_version}-members-{enc_id}-role'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1563,7 +1563,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{memberId}/ai": {
+    '/core/{_version}/members/{memberId}/ai': {
         parameters: {
             query?: never;
             header?: never;
@@ -1572,7 +1572,7 @@ export interface paths {
         };
         get?: never;
         /** Update AI entitlement for member. */
-        put: operations["put_core-{_version}-members-{memberId}-ai"];
+        put: operations['put_core-{_version}-members-{memberId}-ai'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1580,7 +1580,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/privatize": {
+    '/core/{_version}/members/{enc_id}/privatize': {
         parameters: {
             query?: never;
             header?: never;
@@ -1592,7 +1592,7 @@ export interface paths {
          * Make account private.
          * @description Locked route
          */
-        put: operations["put_core-{_version}-members-{enc_id}-privatize"];
+        put: operations['put_core-{_version}-members-{enc_id}-privatize'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1600,7 +1600,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/me": {
+    '/core/{_version}/members/me': {
         parameters: {
             query?: never;
             header?: never;
@@ -1608,7 +1608,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get user's member. */
-        get: operations["get_core-{_version}-members-me"];
+        get: operations['get_core-{_version}-members-me'];
         put?: never;
         post?: never;
         delete?: never;
@@ -1617,7 +1617,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/me/unprivatize": {
+    '/core/{_version}/members/me/unprivatize': {
         parameters: {
             query?: never;
             header?: never;
@@ -1625,18 +1625,18 @@ export interface paths {
             cookie?: never;
         };
         /** Get unprivatization info for self */
-        get: operations["get_core-{_version}-members-me-unprivatize"];
+        get: operations['get_core-{_version}-members-me-unprivatize'];
         put?: never;
         /** Accept member unprivatization */
-        post: operations["post_core-{_version}-members-me-unprivatize"];
+        post: operations['post_core-{_version}-members-me-unprivatize'];
         /** Refuse unprivatization for self */
-        delete: operations["delete_core-{_version}-members-me-unprivatize"];
+        delete: operations['delete_core-{_version}-members-me-unprivatize'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{id}/unprivatize/resend": {
+    '/core/{_version}/members/{id}/unprivatize/resend': {
         parameters: {
             query?: never;
             header?: never;
@@ -1646,14 +1646,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Resend magic link email */
-        post: operations["post_core-{_version}-members-{id}-unprivatize-resend"];
+        post: operations['post_core-{_version}-members-{id}-unprivatize-resend'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{id}/unprivatize": {
+    '/core/{_version}/members/{id}/unprivatize': {
         parameters: {
             query?: never;
             header?: never;
@@ -1663,15 +1663,15 @@ export interface paths {
         get?: never;
         put?: never;
         /** Request unprivatization to existing member. */
-        post: operations["post_core-{_version}-members-{id}-unprivatize"];
+        post: operations['post_core-{_version}-members-{id}-unprivatize'];
         /** Cancel unprivatization for member */
-        delete: operations["delete_core-{_version}-members-{id}-unprivatize"];
+        delete: operations['delete_core-{_version}-members-{id}-unprivatize'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}": {
+    '/core/{_version}/members/{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -1679,27 +1679,27 @@ export interface paths {
             cookie?: never;
         };
         /** Get a specific member. */
-        get: operations["get_core-{_version}-members-{enc_id}"];
+        get: operations['get_core-{_version}-members-{enc_id}'];
         put?: never;
         post?: never;
         /**
          * Delete a member.
          * @description Remove member, deletes user if not PM user, locked route.
          */
-        delete: operations["delete_core-{_version}-members-{enc_id}"];
+        delete: operations['delete_core-{_version}-members-{enc_id}'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/details": {
+    '/core/{_version}/members/{enc_id}/details': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-members-{enc_id}-details"];
+        get: operations['get_core-{_version}-members-{enc_id}-details'];
         put?: never;
         post?: never;
         delete?: never;
@@ -1708,14 +1708,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/authlog": {
+    '/core/{_version}/members/{enc_id}/authlog': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-members-{enc_id}-authlog"];
+        get: operations['get_core-{_version}-members-{enc_id}-authlog'];
         put?: never;
         post?: never;
         delete?: never;
@@ -1724,7 +1724,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/require2fa": {
+    '/core/{_version}/members/{enc_id}/require2fa': {
         parameters: {
             query?: never;
             header?: never;
@@ -1733,16 +1733,16 @@ export interface paths {
         };
         get?: never;
         /** Enforce two-factor for a member based on the current organization two-factor grace period setting, locked route */
-        put: operations["put_core-{_version}-members-{enc_id}-require2fa"];
+        put: operations['put_core-{_version}-members-{enc_id}-require2fa'];
         post?: never;
         /** Do not enforce two-factor for a member, locked route */
-        delete: operations["delete_core-{_version}-members-{enc_id}-require2fa"];
+        delete: operations['delete_core-{_version}-members-{enc_id}-require2fa'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/permissions/forwarding": {
+    '/core/{_version}/members/{enc_id}/permissions/forwarding': {
         parameters: {
             query?: never;
             header?: never;
@@ -1752,15 +1752,15 @@ export interface paths {
         get?: never;
         put?: never;
         /** Allow member to use Email Forwarding */
-        post: operations["post_core-{_version}-members-{enc_id}-permissions-forwarding"];
+        post: operations['post_core-{_version}-members-{enc_id}-permissions-forwarding'];
         /** Forbid member to use Email Forwarding */
-        delete: operations["delete_core-{_version}-members-{enc_id}-permissions-forwarding"];
+        delete: operations['delete_core-{_version}-members-{enc_id}-permissions-forwarding'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/permissions": {
+    '/core/{_version}/members/permissions': {
         parameters: {
             query?: never;
             header?: never;
@@ -1769,7 +1769,7 @@ export interface paths {
         };
         get?: never;
         /** Add or remove Permissions field for a list of MemberIDs */
-        put: operations["put_core-{_version}-members-permissions"];
+        put: operations['put_core-{_version}-members-permissions'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1777,7 +1777,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/keys/setup": {
+    '/core/{_version}/members/{enc_id}/keys/setup': {
         parameters: {
             query?: never;
             header?: never;
@@ -1790,14 +1790,14 @@ export interface paths {
          * Setup Member Keys.
          * @description Setup new member keys, locked route.
          */
-        post: operations["post_core-{_version}-members-{enc_id}-keys-setup"];
+        post: operations['post_core-{_version}-members-{enc_id}-keys-setup'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/keys/migrate": {
+    '/core/{_version}/members/{enc_id}/keys/migrate': {
         parameters: {
             query?: never;
             header?: never;
@@ -1811,14 +1811,14 @@ export interface paths {
          * @description This route can not be used to re-activate keys that we don't have access to,
          *     in that case the route "Activate Key" must be used before or after.
          */
-        post: operations["post_core-{_version}-members-{enc_id}-keys-migrate"];
+        post: operations['post_core-{_version}-members-{enc_id}-keys-migrate'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/keys/signedkeylists": {
+    '/core/{_version}/members/{enc_id}/keys/signedkeylists': {
         parameters: {
             query?: never;
             header?: never;
@@ -1828,14 +1828,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Update signed key lists for a subuser. */
-        post: operations["post_core-{_version}-members-{enc_id}-keys-signedkeylists"];
+        post: operations['post_core-{_version}-members-{enc_id}-keys-signedkeylists'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/keys/unprivatize": {
+    '/core/{_version}/members/{enc_id}/keys/unprivatize': {
         parameters: {
             query?: never;
             header?: never;
@@ -1848,14 +1848,14 @@ export interface paths {
          * Unprivatize member
          * @description Can be called from the background provided validation of InvitationData succeeds
          */
-        post: operations["post_core-{_version}-members-{enc_id}-keys-unprivatize"];
+        post: operations['post_core-{_version}-members-{enc_id}-keys-unprivatize'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/auth": {
+    '/core/{_version}/members/{enc_id}/auth': {
         parameters: {
             query?: never;
             header?: never;
@@ -1868,14 +1868,14 @@ export interface paths {
          * Create Session.
          * @description Login as non-private member, password route
          */
-        post: operations["post_core-{_version}-members-{enc_id}-auth"];
+        post: operations['post_core-{_version}-members-{enc_id}-auth'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/sessions": {
+    '/core/{_version}/members/{enc_id}/sessions': {
         parameters: {
             query?: never;
             header?: never;
@@ -1886,24 +1886,24 @@ export interface paths {
          * Get sessions route.
          * @description Get active sessions.
          */
-        get: operations["get_core-{_version}-members-{enc_id}-sessions"];
+        get: operations['get_core-{_version}-members-{enc_id}-sessions'];
         put?: never;
         /**
          * Create Session.
          * @description Login as non-private member, password route
          */
-        post: operations["post_core-{_version}-members-{enc_id}-sessions"];
+        post: operations['post_core-{_version}-members-{enc_id}-sessions'];
         /**
          * Revoke all sessions route.
          * @description Revoke all access tokens, locked.
          */
-        delete: operations["delete_core-{_version}-members-{enc_id}-sessions"];
+        delete: operations['delete_core-{_version}-members-{enc_id}-sessions'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/sessions/{uid}": {
+    '/core/{_version}/members/{enc_id}/sessions/{uid}': {
         parameters: {
             query?: never;
             header?: never;
@@ -1914,13 +1914,13 @@ export interface paths {
         put?: never;
         post?: never;
         /** Revoke a session by UID, locked. */
-        delete: operations["delete_core-{_version}-members-{enc_id}-sessions-{uid}"];
+        delete: operations['delete_core-{_version}-members-{enc_id}-sessions-{uid}'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/keys": {
+    '/core/{_version}/organizations/keys': {
         parameters: {
             query?: never;
             header?: never;
@@ -1931,24 +1931,24 @@ export interface paths {
          * Get organization keys.
          * @description Get PGP keys of the current organization
          */
-        get: operations["get_core-{_version}-organizations-keys"];
+        get: operations['get_core-{_version}-organizations-keys'];
         /**
          * Create or replace organization keys.
          * @description Replace current organization keys and member keys
          */
-        put: operations["put_core-{_version}-organizations-keys"];
+        put: operations['put_core-{_version}-organizations-keys'];
         /**
          * Create or replace organization keys.
          * @description Replace current organization keys and member keys
          */
-        post: operations["post_core-{_version}-organizations-keys"];
+        post: operations['post_core-{_version}-organizations-keys'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/keys/backup": {
+    '/core/{_version}/organizations/keys/backup': {
         parameters: {
             query?: never;
             header?: never;
@@ -1959,24 +1959,24 @@ export interface paths {
          * Get backup key.
          * @description Get current organization backup private key, locked route.
          */
-        get: operations["get_core-{_version}-organizations-keys-backup"];
+        get: operations['get_core-{_version}-organizations-keys-backup'];
         /**
          * Update backup key.
          * @description Update current organization backup private key, locked route.
          */
-        put: operations["put_core-{_version}-organizations-keys-backup"];
+        put: operations['put_core-{_version}-organizations-keys-backup'];
         /**
          * Update backup key.
          * @description Update current organization backup private key, locked route.
          */
-        post: operations["post_core-{_version}-organizations-keys-backup"];
+        post: operations['post_core-{_version}-organizations-keys-backup'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/name": {
+    '/core/{_version}/organizations/name': {
         parameters: {
             query?: never;
             header?: never;
@@ -1988,7 +1988,7 @@ export interface paths {
          * Update organization name.
          * @description Update current organization name, locked route
          */
-        put: operations["put_core-{_version}-organizations-name"];
+        put: operations['put_core-{_version}-organizations-name'];
         post?: never;
         delete?: never;
         options?: never;
@@ -1996,7 +1996,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/email": {
+    '/core/{_version}/organizations/email': {
         parameters: {
             query?: never;
             header?: never;
@@ -2008,7 +2008,7 @@ export interface paths {
          * Update organization email.
          * @description Update current organization email, locked route.
          */
-        put: operations["put_core-{_version}-organizations-email"];
+        put: operations['put_core-{_version}-organizations-email'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2016,7 +2016,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/2fa": {
+    '/core/{_version}/organizations/2fa': {
         parameters: {
             query?: never;
             header?: never;
@@ -2025,7 +2025,7 @@ export interface paths {
         };
         get?: never;
         /** Update current organization two-factor grace period setting, locked route */
-        put: operations["put_core-{_version}-organizations-2fa"];
+        put: operations['put_core-{_version}-organizations-2fa'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2033,7 +2033,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/require2fa": {
+    '/core/{_version}/organizations/require2fa': {
         parameters: {
             query?: never;
             header?: never;
@@ -2042,16 +2042,16 @@ export interface paths {
         };
         get?: never;
         /** Enforce current organization two-factor authentication for a specific group of members, locked route */
-        put: operations["put_core-{_version}-organizations-require2fa"];
+        put: operations['put_core-{_version}-organizations-require2fa'];
         post?: never;
         /** Remove current organization two-factor authentication enforcement, locked route */
-        delete: operations["delete_core-{_version}-organizations-require2fa"];
+        delete: operations['delete_core-{_version}-organizations-require2fa'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/keys/activate": {
+    '/core/{_version}/organizations/keys/activate': {
         parameters: {
             query?: never;
             header?: never;
@@ -2063,7 +2063,7 @@ export interface paths {
          * Activate organization private key.
          * @description Update inactive private key with new copy encrypted with current mailbox password, locked route.
          */
-        put: operations["put_core-{_version}-organizations-keys-activate"];
+        put: operations['put_core-{_version}-organizations-keys-activate'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2071,7 +2071,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/membership": {
+    '/core/{_version}/organizations/membership': {
         parameters: {
             query?: never;
             header?: never;
@@ -2085,13 +2085,13 @@ export interface paths {
          * Leave organization.
          * @description Lets a member delete themselves from an organization.
          */
-        delete: operations["delete_core-{_version}-organizations-membership"];
+        delete: operations['delete_core-{_version}-organizations-membership'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/2fa/remind": {
+    '/core/{_version}/organizations/2fa/remind': {
         parameters: {
             query?: never;
             header?: never;
@@ -2101,14 +2101,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Send a 2FA reminder email to all members without 2FA set. */
-        post: operations["post_core-{_version}-organizations-2fa-remind"];
+        post: operations['post_core-{_version}-organizations-2fa-remind'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/keys/migrate": {
+    '/core/{_version}/organizations/keys/migrate': {
         parameters: {
             query?: never;
             header?: never;
@@ -2118,22 +2118,22 @@ export interface paths {
         get?: never;
         put?: never;
         /** Migrate organization key. */
-        post: operations["post_core-{_version}-organizations-keys-migrate"];
+        post: operations['post_core-{_version}-organizations-keys-migrate'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/keys/signature": {
+    '/core/{_version}/organizations/keys/signature': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-organizations-keys-signature"];
-        put: operations["put_core-{_version}-organizations-keys-signature"];
+        get: operations['get_core-{_version}-organizations-keys-signature'];
+        put: operations['put_core-{_version}-organizations-keys-signature'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2141,7 +2141,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/logo/{logo_id}": {
+    '/core/{_version}/organizations/logo/{logo_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -2149,7 +2149,7 @@ export interface paths {
             cookie?: never;
         };
         /** Having {enc_id} in the route allows us to cache the logo without invalidating the cache when a new logo is uploaded */
-        get: operations["get_core-{_version}-organizations-logo-{logo_id}"];
+        get: operations['get_core-{_version}-organizations-logo-{logo_id}'];
         put?: never;
         post?: never;
         delete?: never;
@@ -2158,15 +2158,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/settings": {
+    '/core/{_version}/organizations/settings': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-organizations-settings"];
-        put: operations["put_core-{_version}-organizations-settings"];
+        get: operations['get_core-{_version}-organizations-settings'];
+        put: operations['put_core-{_version}-organizations-settings'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2174,7 +2174,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/organizations/settings/logo": {
+    '/core/{_version}/organizations/settings/logo': {
         parameters: {
             query?: never;
             header?: never;
@@ -2183,14 +2183,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-organizations-settings-logo"];
-        delete: operations["delete_core-{_version}-organizations-settings-logo"];
+        post: operations['post_core-{_version}-organizations-settings-logo'];
+        delete: operations['delete_core-{_version}-organizations-settings-logo'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/captcha": {
+    '/core/{_version}/captcha': {
         parameters: {
             query?: never;
             header?: never;
@@ -2201,7 +2201,7 @@ export interface paths {
          * Captcha page.
          * @deprecated
          */
-        get: operations["get_core-{_version}-captcha"];
+        get: operations['get_core-{_version}-captcha'];
         put?: never;
         post?: never;
         delete?: never;
@@ -2210,7 +2210,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/resources/captcha": {
+    '/core/{_version}/resources/captcha': {
         parameters: {
             query?: never;
             header?: never;
@@ -2218,7 +2218,7 @@ export interface paths {
             cookie?: never;
         };
         /** Captcha page. */
-        get: operations["get_core-{_version}-resources-captcha"];
+        get: operations['get_core-{_version}-resources-captcha'];
         put?: never;
         post?: never;
         delete?: never;
@@ -2227,7 +2227,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/resources/zendesk": {
+    '/core/{_version}/resources/zendesk': {
         parameters: {
             query?: never;
             header?: never;
@@ -2235,7 +2235,7 @@ export interface paths {
             cookie?: never;
         };
         /** Zendesk chat. */
-        get: operations["get_core-{_version}-resources-zendesk"];
+        get: operations['get_core-{_version}-resources-zendesk'];
         put?: never;
         post?: never;
         delete?: never;
@@ -2244,7 +2244,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/saml/setup/fields": {
+    '/core/{_version}/saml/setup/fields': {
         parameters: {
             query?: never;
             header?: never;
@@ -2253,14 +2253,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-saml-setup-fields"];
+        post: operations['post_core-{_version}-saml-setup-fields'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/saml/setup/xml": {
+    '/core/{_version}/saml/setup/xml': {
         parameters: {
             query?: never;
             header?: never;
@@ -2269,14 +2269,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-saml-setup-xml"];
+        post: operations['post_core-{_version}-saml-setup-xml'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/saml/setup/url": {
+    '/core/{_version}/saml/setup/url': {
         parameters: {
             query?: never;
             header?: never;
@@ -2285,21 +2285,21 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-saml-setup-url"];
+        post: operations['post_core-{_version}-saml-setup-url'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/saml/configs": {
+    '/core/{_version}/saml/configs': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-saml-configs"];
+        get: operations['get_core-{_version}-saml-configs'];
         put?: never;
         post?: never;
         delete?: never;
@@ -2308,14 +2308,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/saml/configs/{enc_id}": {
+    '/core/{_version}/saml/configs/{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-saml-configs-{enc_id}"];
+        get: operations['get_core-{_version}-saml-configs-{enc_id}'];
         put?: never;
         post?: never;
         delete?: never;
@@ -2324,7 +2324,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/saml/configs/{enc_id}/fields": {
+    '/core/{_version}/saml/configs/{enc_id}/fields': {
         parameters: {
             query?: never;
             header?: never;
@@ -2332,7 +2332,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-saml-configs-{enc_id}-fields"];
+        put: operations['put_core-{_version}-saml-configs-{enc_id}-fields'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2340,7 +2340,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/saml/configs/{enc_id}/delete": {
+    '/core/{_version}/saml/configs/{enc_id}/delete': {
         parameters: {
             query?: never;
             header?: never;
@@ -2348,7 +2348,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-saml-configs-{enc_id}-delete"];
+        put: operations['put_core-{_version}-saml-configs-{enc_id}-delete'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2356,14 +2356,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/saml/sp/info": {
+    '/core/{_version}/saml/sp/info': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-saml-sp-info"];
+        get: operations['get_core-{_version}-saml-sp-info'];
         put?: never;
         post?: never;
         delete?: never;
@@ -2372,14 +2372,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/saml/edugain/info": {
+    '/core/{_version}/saml/edugain/info': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-saml-edugain-info"];
+        get: operations['get_core-{_version}-saml-edugain-info'];
         put?: never;
         post?: never;
         delete?: never;
@@ -2388,14 +2388,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/saml/edugain/info/{domainName}": {
+    '/core/{_version}/saml/edugain/info/{domainName}': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-saml-edugain-info-{domainName}"];
+        get: operations['get_core-{_version}-saml-edugain-info-{domainName}'];
         put?: never;
         post?: never;
         delete?: never;
@@ -2404,7 +2404,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/saml/metadata": {
+    '/core/{_version}/saml/metadata': {
         parameters: {
             query?: never;
             header?: never;
@@ -2412,7 +2412,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get the XML representation of the Service Provider metadata. */
-        get: operations["get_core-{_version}-saml-metadata"];
+        get: operations['get_core-{_version}-saml-metadata'];
         put?: never;
         post?: never;
         delete?: never;
@@ -2421,7 +2421,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings": {
+    '/core/{_version}/settings': {
         parameters: {
             query?: never;
             header?: never;
@@ -2429,7 +2429,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get general settings. */
-        get: operations["get_core-{_version}-settings"];
+        get: operations['get_core-{_version}-settings'];
         put?: never;
         post?: never;
         delete?: never;
@@ -2438,7 +2438,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/password": {
+    '/core/{_version}/settings/password': {
         parameters: {
             query?: never;
             header?: never;
@@ -2447,7 +2447,7 @@ export interface paths {
         };
         get?: never;
         /** Update login password. Only called in 2-password mode (or onboarding to 2-password mode). */
-        put: operations["put_core-{_version}-settings-password"];
+        put: operations['put_core-{_version}-settings-password'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2455,7 +2455,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/password/upgrade": {
+    '/core/{_version}/settings/password/upgrade': {
         parameters: {
             query?: never;
             header?: never;
@@ -2467,7 +2467,7 @@ export interface paths {
          * Upgrade Password.
          * @description Upgrade login password on login if version < 4.
          */
-        put: operations["put_core-{_version}-settings-password-upgrade"];
+        put: operations['put_core-{_version}-settings-password-upgrade'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2475,7 +2475,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/email": {
+    '/core/{_version}/settings/email': {
         parameters: {
             query?: never;
             header?: never;
@@ -2483,7 +2483,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-settings-email"];
+        put: operations['put_core-{_version}-settings-email'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2491,7 +2491,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/email/verify": {
+    '/core/{_version}/settings/email/verify': {
         parameters: {
             query?: never;
             header?: never;
@@ -2501,14 +2501,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Verify associated email address. */
-        post: operations["post_core-{_version}-settings-email-verify"];
+        post: operations['post_core-{_version}-settings-email-verify'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/email/notify": {
+    '/core/{_version}/settings/email/notify': {
         parameters: {
             query?: never;
             header?: never;
@@ -2517,7 +2517,7 @@ export interface paths {
         };
         get?: never;
         /** Toggle email notifications. */
-        put: operations["put_core-{_version}-settings-email-notify"];
+        put: operations['put_core-{_version}-settings-email-notify'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2525,7 +2525,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/email/reset": {
+    '/core/{_version}/settings/email/reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -2534,7 +2534,7 @@ export interface paths {
         };
         get?: never;
         /** Enable or disable login password reset by email. */
-        put: operations["put_core-{_version}-settings-email-reset"];
+        put: operations['put_core-{_version}-settings-email-reset'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2542,7 +2542,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/phone": {
+    '/core/{_version}/settings/phone': {
         parameters: {
             query?: never;
             header?: never;
@@ -2550,7 +2550,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-settings-phone"];
+        put: operations['put_core-{_version}-settings-phone'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2558,7 +2558,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/phone/verify": {
+    '/core/{_version}/settings/phone/verify': {
         parameters: {
             query?: never;
             header?: never;
@@ -2568,14 +2568,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Verify associated phone number. */
-        post: operations["post_core-{_version}-settings-phone-verify"];
+        post: operations['post_core-{_version}-settings-phone-verify'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/phone/notify": {
+    '/core/{_version}/settings/phone/notify': {
         parameters: {
             query?: never;
             header?: never;
@@ -2584,7 +2584,7 @@ export interface paths {
         };
         get?: never;
         /** Toggle phone notifications. */
-        put: operations["put_core-{_version}-settings-phone-notify"];
+        put: operations['put_core-{_version}-settings-phone-notify'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2592,7 +2592,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/phone/reset": {
+    '/core/{_version}/settings/phone/reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -2601,7 +2601,7 @@ export interface paths {
         };
         get?: never;
         /** Enable or disable login password reset by phone. */
-        put: operations["put_core-{_version}-settings-phone-reset"];
+        put: operations['put_core-{_version}-settings-phone-reset'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2609,7 +2609,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/locale": {
+    '/core/{_version}/settings/locale': {
         parameters: {
             query?: never;
             header?: never;
@@ -2617,7 +2617,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-settings-locale"];
+        put: operations['put_core-{_version}-settings-locale'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2625,7 +2625,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/logauth": {
+    '/core/{_version}/settings/logauth': {
         parameters: {
             query?: never;
             header?: never;
@@ -2634,7 +2634,7 @@ export interface paths {
         };
         get?: never;
         /** Update authentication logging. */
-        put: operations["put_core-{_version}-settings-logauth"];
+        put: operations['put_core-{_version}-settings-logauth'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2642,7 +2642,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/devicerecovery": {
+    '/core/{_version}/settings/devicerecovery': {
         parameters: {
             query?: never;
             header?: never;
@@ -2651,7 +2651,7 @@ export interface paths {
         };
         get?: never;
         /** Update device recovery enabled preference. */
-        put: operations["put_core-{_version}-settings-devicerecovery"];
+        put: operations['put_core-{_version}-settings-devicerecovery'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2659,7 +2659,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/news": {
+    '/core/{_version}/settings/news': {
         parameters: {
             query?: never;
             header?: never;
@@ -2671,16 +2671,16 @@ export interface paths {
          * Update newsletter subscription.
          * @deprecated
          */
-        put: operations["put_core-{_version}-settings-news"];
+        put: operations['put_core-{_version}-settings-news'];
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
         /** Patch newsletter subscription. */
-        patch: operations["patch_core-{_version}-settings-news"];
+        patch: operations['patch_core-{_version}-settings-news'];
         trace?: never;
     };
-    "/core/{_version}/settings/news/external": {
+    '/core/{_version}/settings/news/external': {
         parameters: {
             query?: never;
             header?: never;
@@ -2688,21 +2688,21 @@ export interface paths {
             cookie?: never;
         };
         /** Get newsletter subscription status as external user. */
-        get: operations["get_core-{_version}-settings-news-external"];
+        get: operations['get_core-{_version}-settings-news-external'];
         /**
          * Update newsletter subscription as external user.
          * @deprecated
          */
-        put: operations["put_core-{_version}-settings-news-external"];
+        put: operations['put_core-{_version}-settings-news-external'];
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
         /** Patch newsletter subscription as external user. */
-        patch: operations["patch_core-{_version}-settings-news-external"];
+        patch: operations['patch_core-{_version}-settings-news-external'];
         trace?: never;
     };
-    "/core/{_version}/settings/density": {
+    '/core/{_version}/settings/density': {
         parameters: {
             query?: never;
             header?: never;
@@ -2711,7 +2711,7 @@ export interface paths {
         };
         get?: never;
         /** Update the mail list density. */
-        put: operations["put_core-{_version}-settings-density"];
+        put: operations['put_core-{_version}-settings-density'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2719,7 +2719,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/invoicetext": {
+    '/core/{_version}/settings/invoicetext': {
         parameters: {
             query?: never;
             header?: never;
@@ -2728,7 +2728,7 @@ export interface paths {
         };
         get?: never;
         /** Update invoice user-defined text. */
-        put: operations["put_core-{_version}-settings-invoicetext"];
+        put: operations['put_core-{_version}-settings-invoicetext'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2736,7 +2736,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/2fa/codes": {
+    '/core/{_version}/settings/2fa/codes': {
         parameters: {
             query?: never;
             header?: never;
@@ -2749,14 +2749,14 @@ export interface paths {
          * Regenerate recovery codes.
          * @description Replace current recovery codes with new ones.
          */
-        post: operations["post_core-{_version}-settings-2fa-codes"];
+        post: operations['post_core-{_version}-settings-2fa-codes'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/2fa/totp": {
+    '/core/{_version}/settings/2fa/totp': {
         parameters: {
             query?: never;
             header?: never;
@@ -2764,16 +2764,16 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-settings-2fa-totp"];
+        put: operations['put_core-{_version}-settings-2fa-totp'];
         /** Signup for TOTP. */
-        post: operations["post_core-{_version}-settings-2fa-totp"];
+        post: operations['post_core-{_version}-settings-2fa-totp'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/2fa": {
+    '/core/{_version}/settings/2fa': {
         parameters: {
             query?: never;
             header?: never;
@@ -2782,16 +2782,16 @@ export interface paths {
         };
         get?: never;
         /** Disable all the 2FA methods. */
-        put: operations["put_core-{_version}-settings-2fa"];
+        put: operations['put_core-{_version}-settings-2fa'];
         /** Signup for TOTP. */
-        post: operations["post_core-{_version}-settings-2fa"];
+        post: operations['post_core-{_version}-settings-2fa'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/2fa/reset": {
+    '/core/{_version}/settings/2fa/reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -2804,14 +2804,14 @@ export interface paths {
          * Request Reset 2FA.
          * @description Reset all 2FA methods to disabled state.
          */
-        post: operations["post_core-{_version}-settings-2fa-reset"];
+        post: operations['post_core-{_version}-settings-2fa-reset'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/2fa/register": {
+    '/core/{_version}/settings/2fa/register': {
         parameters: {
             query?: never;
             header?: never;
@@ -2819,17 +2819,17 @@ export interface paths {
             cookie?: never;
         };
         /** Get a challenge for registration of a FIDO2 credential. */
-        get: operations["get_core-{_version}-settings-2fa-register"];
+        get: operations['get_core-{_version}-settings-2fa-register'];
         put?: never;
         /** Register a FIDO2 credential. */
-        post: operations["post_core-{_version}-settings-2fa-register"];
+        post: operations['post_core-{_version}-settings-2fa-register'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/2fa/{credentialID}/remove": {
+    '/core/{_version}/settings/2fa/{credentialID}/remove': {
         parameters: {
             query?: never;
             header?: never;
@@ -2839,14 +2839,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Remove a FIDO2 credential. */
-        post: operations["post_core-{_version}-settings-2fa-{credentialID}-remove"];
+        post: operations['post_core-{_version}-settings-2fa-{credentialID}-remove'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/2fa/{credentialID}/rename": {
+    '/core/{_version}/settings/2fa/{credentialID}/rename': {
         parameters: {
             query?: never;
             header?: never;
@@ -2855,7 +2855,7 @@ export interface paths {
         };
         get?: never;
         /** Rename a FIDO2 credential. */
-        put: operations["put_core-{_version}-settings-2fa-{credentialID}-rename"];
+        put: operations['put_core-{_version}-settings-2fa-{credentialID}-rename'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2863,7 +2863,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/hide-side-panel": {
+    '/core/{_version}/settings/hide-side-panel': {
         parameters: {
             query?: never;
             header?: never;
@@ -2872,7 +2872,7 @@ export interface paths {
         };
         get?: never;
         /** Update HideSidePanel for the current client. */
-        put: operations["put_core-{_version}-settings-hide-side-panel"];
+        put: operations['put_core-{_version}-settings-hide-side-panel'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2880,7 +2880,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/username": {
+    '/core/{_version}/settings/username': {
         parameters: {
             query?: never;
             header?: never;
@@ -2889,7 +2889,7 @@ export interface paths {
         };
         get?: never;
         /** Set username for external ProtonAccount. */
-        put: operations["put_core-{_version}-settings-username"];
+        put: operations['put_core-{_version}-settings-username'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2897,7 +2897,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/theme": {
+    '/core/{_version}/settings/theme': {
         parameters: {
             query?: never;
             header?: never;
@@ -2905,7 +2905,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-settings-theme"];
+        put: operations['put_core-{_version}-settings-theme'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2913,7 +2913,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/themetype": {
+    '/core/{_version}/settings/themetype': {
         parameters: {
             query?: never;
             header?: never;
@@ -2921,7 +2921,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-settings-themetype"];
+        put: operations['put_core-{_version}-settings-themetype'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2929,7 +2929,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/weekstart": {
+    '/core/{_version}/settings/weekstart': {
         parameters: {
             query?: never;
             header?: never;
@@ -2937,7 +2937,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-settings-weekstart"];
+        put: operations['put_core-{_version}-settings-weekstart'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2945,7 +2945,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/dateformat": {
+    '/core/{_version}/settings/dateformat': {
         parameters: {
             query?: never;
             header?: never;
@@ -2953,7 +2953,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-settings-dateformat"];
+        put: operations['put_core-{_version}-settings-dateformat'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2961,7 +2961,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/timeformat": {
+    '/core/{_version}/settings/timeformat': {
         parameters: {
             query?: never;
             header?: never;
@@ -2969,7 +2969,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-settings-timeformat"];
+        put: operations['put_core-{_version}-settings-timeformat'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2977,7 +2977,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/welcome": {
+    '/core/{_version}/settings/welcome': {
         parameters: {
             query?: never;
             header?: never;
@@ -2985,7 +2985,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-settings-welcome"];
+        put: operations['put_core-{_version}-settings-welcome'];
         post?: never;
         delete?: never;
         options?: never;
@@ -2993,7 +2993,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/earlyaccess": {
+    '/core/{_version}/settings/earlyaccess': {
         parameters: {
             query?: never;
             header?: never;
@@ -3002,7 +3002,7 @@ export interface paths {
         };
         get?: never;
         /** Update BetaFlags. */
-        put: operations["put_core-{_version}-settings-earlyaccess"];
+        put: operations['put_core-{_version}-settings-earlyaccess'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3010,7 +3010,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/flags": {
+    '/core/{_version}/settings/flags': {
         parameters: {
             query?: never;
             header?: never;
@@ -3018,7 +3018,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-settings-flags"];
+        put: operations['put_core-{_version}-settings-flags'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3026,7 +3026,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/telemetry": {
+    '/core/{_version}/settings/telemetry': {
         parameters: {
             query?: never;
             header?: never;
@@ -3035,7 +3035,7 @@ export interface paths {
         };
         get?: never;
         /** Update telemetry enabled preference. */
-        put: operations["put_core-{_version}-settings-telemetry"];
+        put: operations['put_core-{_version}-settings-telemetry'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3043,7 +3043,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/crashreports": {
+    '/core/{_version}/settings/crashreports': {
         parameters: {
             query?: never;
             header?: never;
@@ -3052,7 +3052,7 @@ export interface paths {
         };
         get?: never;
         /** Update crash reports enabled preference. */
-        put: operations["put_core-{_version}-settings-crashreports"];
+        put: operations['put_core-{_version}-settings-crashreports'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3060,7 +3060,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/highsecurity": {
+    '/core/{_version}/settings/highsecurity': {
         parameters: {
             query?: never;
             header?: never;
@@ -3073,18 +3073,18 @@ export interface paths {
          * High Security program - enable
          * @description https://confluence.protontech.ch/display/MSA/High+Security+Program
          */
-        post: operations["post_core-{_version}-settings-highsecurity"];
+        post: operations['post_core-{_version}-settings-highsecurity'];
         /**
          * High Security program - disable
          * @description https://confluence.protontech.ch/display/MSA/High+Security+Program
          */
-        delete: operations["delete_core-{_version}-settings-highsecurity"];
+        delete: operations['delete_core-{_version}-settings-highsecurity'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/breachalerts": {
+    '/core/{_version}/settings/breachalerts': {
         parameters: {
             query?: never;
             header?: never;
@@ -3097,18 +3097,18 @@ export interface paths {
          * Breach Alert - enable
          * @description https://confluence.protontech.ch/pages/viewpage.action?pageId=176045452#Proposalfornotifications&resolvingthem-UserSettings.BreachAlertssetting
          */
-        post: operations["post_core-{_version}-settings-breachalerts"];
+        post: operations['post_core-{_version}-settings-breachalerts'];
         /**
          * Breach Alert - disable
          * @description https://confluence.protontech.ch/pages/viewpage.action?pageId=176045452#Proposalfornotifications&resolvingthem-UserSettings.BreachAlertssetting
          */
-        delete: operations["delete_core-{_version}-settings-breachalerts"];
+        delete: operations['delete_core-{_version}-settings-breachalerts'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/sessionaccountrecovery": {
+    '/core/{_version}/settings/sessionaccountrecovery': {
         parameters: {
             query?: never;
             header?: never;
@@ -3117,7 +3117,7 @@ export interface paths {
         };
         get?: never;
         /** Update session account recovery preference. */
-        put: operations["put_core-{_version}-settings-sessionaccountrecovery"];
+        put: operations['put_core-{_version}-settings-sessionaccountrecovery'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3125,7 +3125,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/ai-assistant-flags": {
+    '/core/{_version}/settings/ai-assistant-flags': {
         parameters: {
             query?: never;
             header?: never;
@@ -3134,7 +3134,7 @@ export interface paths {
         };
         get?: never;
         /** Update setting to enable or disable AI Assistant. */
-        put: operations["put_core-{_version}-settings-ai-assistant-flags"];
+        put: operations['put_core-{_version}-settings-ai-assistant-flags'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3142,7 +3142,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/news/unsubscribe": {
+    '/core/{_version}/settings/news/unsubscribe': {
         parameters: {
             query?: never;
             header?: never;
@@ -3151,21 +3151,21 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-settings-news-unsubscribe"];
+        post: operations['post_core-{_version}-settings-news-unsubscribe'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/support/schedulecall": {
+    '/core/{_version}/support/schedulecall': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-support-schedulecall"];
+        get: operations['get_core-{_version}-support-schedulecall'];
         put?: never;
         post?: never;
         delete?: never;
@@ -3174,7 +3174,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{memberId}/lumo": {
+    '/core/{_version}/members/{memberId}/lumo': {
         parameters: {
             query?: never;
             header?: never;
@@ -3182,7 +3182,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-members-{memberId}-lumo"];
+        put: operations['put_core-{_version}-members-{memberId}-lumo'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3190,7 +3190,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/product-disabled": {
+    '/core/{_version}/settings/product-disabled': {
         parameters: {
             query?: never;
             header?: never;
@@ -3199,7 +3199,7 @@ export interface paths {
         };
         get?: never;
         /** Update setting to enable or disable specific product for all platforms. */
-        put: operations["put_core-{_version}-settings-product-disabled"];
+        put: operations['put_core-{_version}-settings-product-disabled'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3207,7 +3207,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/delete": {
+    '/core/{_version}/users/delete': {
         parameters: {
             query?: never;
             header?: never;
@@ -3228,18 +3228,18 @@ export interface paths {
          *
          *     > 5. Managed user in a multi-user organization (non-proton): you can’t delete yourself
          */
-        get: operations["get_core-{_version}-users-delete"];
+        get: operations['get_core-{_version}-users-delete'];
         /** Delete self, will invalidate API access token. */
-        put: operations["put_core-{_version}-users-delete"];
+        put: operations['put_core-{_version}-users-delete'];
         post?: never;
         /** Delete self, will invalidate API access token. */
-        delete: operations["delete_core-{_version}-users-delete"];
+        delete: operations['delete_core-{_version}-users-delete'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/reset": {
+    '/core/{_version}/users/reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -3247,7 +3247,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get available reset methods and account type. */
-        get: operations["get_core-{_version}-users-reset"];
+        get: operations['get_core-{_version}-users-reset'];
         put?: never;
         post?: never;
         delete?: never;
@@ -3256,7 +3256,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users": {
+    '/core/{_version}/users': {
         parameters: {
             query?: never;
             header?: never;
@@ -3325,20 +3325,20 @@ export interface paths {
          *      }
          *     ```
          */
-        get: operations["get_core-{_version}-users"];
+        get: operations['get_core-{_version}-users'];
         put?: never;
         /**
          * Create a user or ProtonID user with a 3rd party email as username.
          * @description TODO(fsalathe): Refactor this function into a service [refactor]
          */
-        post: operations["post_core-{_version}-users"];
+        post: operations['post_core-{_version}-users'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/external": {
+    '/core/{_version}/users/external': {
         parameters: {
             query?: never;
             header?: never;
@@ -3351,14 +3351,14 @@ export interface paths {
          * Create a user or ProtonID user with a 3rd party email as username.
          * @description TODO(fsalathe): Refactor this function into a service [refactor]
          */
-        post: operations["post_core-{_version}-users-external"];
+        post: operations['post_core-{_version}-users-external'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/check": {
+    '/core/{_version}/users/check': {
         parameters: {
             query?: never;
             header?: never;
@@ -3367,7 +3367,7 @@ export interface paths {
         };
         get?: never;
         /** Check user creation token validity. */
-        put: operations["put_core-{_version}-users-check"];
+        put: operations['put_core-{_version}-users-check'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3375,7 +3375,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/availableExternal": {
+    '/core/{_version}/users/availableExternal': {
         parameters: {
             query?: never;
             header?: never;
@@ -3383,7 +3383,7 @@ export interface paths {
             cookie?: never;
         };
         /** Check if username already taken. */
-        get: operations["get_core-{_version}-users-availableExternal"];
+        get: operations['get_core-{_version}-users-availableExternal'];
         put?: never;
         post?: never;
         delete?: never;
@@ -3392,7 +3392,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/available": {
+    '/core/{_version}/users/available': {
         parameters: {
             query?: never;
             header?: never;
@@ -3400,7 +3400,7 @@ export interface paths {
             cookie?: never;
         };
         /** Check if username already taken. */
-        get: operations["get_core-{_version}-users-available"];
+        get: operations['get_core-{_version}-users-available'];
         put?: never;
         post?: never;
         delete?: never;
@@ -3409,7 +3409,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/available/{username}": {
+    '/core/{_version}/users/available/{username}': {
         parameters: {
             query?: never;
             header?: never;
@@ -3417,7 +3417,7 @@ export interface paths {
             cookie?: never;
         };
         /** @deprecated */
-        get: operations["get_core-{_version}-users-available-{username}"];
+        get: operations['get_core-{_version}-users-available-{username}'];
         put?: never;
         post?: never;
         delete?: never;
@@ -3426,7 +3426,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/direct": {
+    '/core/{_version}/users/direct': {
         parameters: {
             query?: never;
             header?: never;
@@ -3434,7 +3434,7 @@ export interface paths {
             cookie?: never;
         };
         /** Deprecated. Placeholder left in place for handling old clients. */
-        get: operations["get_core-{_version}-users-direct"];
+        get: operations['get_core-{_version}-users-direct'];
         put?: never;
         post?: never;
         delete?: never;
@@ -3443,7 +3443,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/code": {
+    '/core/{_version}/users/code': {
         parameters: {
             query?: never;
             header?: never;
@@ -3453,14 +3453,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Send a verification code. */
-        post: operations["post_core-{_version}-users-code"];
+        post: operations['post_core-{_version}-users-code'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/lock": {
+    '/core/{_version}/users/lock': {
         parameters: {
             query?: never;
             header?: never;
@@ -3469,7 +3469,7 @@ export interface paths {
         };
         get?: never;
         /** Lock sensitive settings for keys/organization. */
-        put: operations["put_core-{_version}-users-lock"];
+        put: operations['put_core-{_version}-users-lock'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3477,7 +3477,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/unlock": {
+    '/core/{_version}/users/unlock': {
         parameters: {
             query?: never;
             header?: never;
@@ -3486,7 +3486,7 @@ export interface paths {
         };
         get?: never;
         /** Unlock sensitive settings for keys/organization. */
-        put: operations["put_core-{_version}-users-unlock"];
+        put: operations['put_core-{_version}-users-unlock'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3494,7 +3494,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/password": {
+    '/core/{_version}/users/password': {
         parameters: {
             query?: never;
             header?: never;
@@ -3503,7 +3503,7 @@ export interface paths {
         };
         get?: never;
         /** Unlock password changes. */
-        put: operations["put_core-{_version}-users-password"];
+        put: operations['put_core-{_version}-users-password'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3511,7 +3511,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/captcha/{token}": {
+    '/core/{_version}/users/captcha/{token}': {
         parameters: {
             query?: never;
             header?: never;
@@ -3519,7 +3519,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get captcha (javascript) (hv1). */
-        get: operations["get_core-{_version}-users-captcha-{token}"];
+        get: operations['get_core-{_version}-users-captcha-{token}'];
         put?: never;
         post?: never;
         delete?: never;
@@ -3528,14 +3528,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/disable/{jwt}": {
+    '/core/{_version}/users/disable/{jwt}': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-users-disable-{jwt}"];
+        get: operations['get_core-{_version}-users-disable-{jwt}'];
         put?: never;
         post?: never;
         delete?: never;
@@ -3544,19 +3544,19 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/members/{enc_id}/vpn": {
+    '/core/{_version}/members/{enc_id}/vpn': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-members-{enc_id}-vpn"];
+        get: operations['get_core-{_version}-members-{enc_id}-vpn'];
         /**
          * Update max number of VPNs for member.
          * @description Update number of maximum VPN connections, locked route.
          */
-        put: operations["put_core-{_version}-members-{enc_id}-vpn"];
+        put: operations['put_core-{_version}-members-{enc_id}-vpn'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3564,7 +3564,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/v4/features": {
+    '/core/v4/features': {
         parameters: {
             query?: never;
             header?: never;
@@ -3576,17 +3576,17 @@ export interface paths {
          * @description TypeScript typing files:
          *     https://gitlab.protontech.ch/ProtonMail/Slim-API/-/blob/develop/bundles/FeatureBundle/tests/Mock/Feature.ts
          */
-        get: operations["get_core-v4-features"];
+        get: operations['get_core-v4-features'];
         put?: never;
         /** Add a new feature definition. */
-        post: operations["post_core-v4-features"];
+        post: operations['post_core-v4-features'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/v4/features/{id}": {
+    '/core/v4/features/{id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -3595,7 +3595,7 @@ export interface paths {
         };
         get?: never;
         /** Update feature configuration. */
-        put: operations["put_core-v4-features-{id}"];
+        put: operations['put_core-v4-features-{id}'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3603,7 +3603,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/v4/features/{featureID}": {
+    '/core/v4/features/{featureID}': {
         parameters: {
             query?: never;
             header?: never;
@@ -3614,13 +3614,13 @@ export interface paths {
         put?: never;
         post?: never;
         /** Remove a feature definition. */
-        delete: operations["delete_core-v4-features-{featureID}"];
+        delete: operations['delete_core-v4-features-{featureID}'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/v4/features/{code}": {
+    '/core/v4/features/{code}': {
         parameters: {
             query?: never;
             header?: never;
@@ -3628,7 +3628,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get a single feature by its code. */
-        get: operations["get_core-v4-features-{code}"];
+        get: operations['get_core-v4-features-{code}'];
         put?: never;
         post?: never;
         delete?: never;
@@ -3637,7 +3637,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/v4/features/{code}/value": {
+    '/core/v4/features/{code}/value': {
         parameters: {
             query?: never;
             header?: never;
@@ -3646,16 +3646,16 @@ export interface paths {
         };
         get?: never;
         /** Set the value of a single feature by its code. */
-        put: operations["put_core-v4-features-{code}-value"];
+        put: operations['put_core-v4-features-{code}-value'];
         post?: never;
         /** Clear the value of a single feature by its code. */
-        delete: operations["delete_core-v4-features-{code}-value"];
+        delete: operations['delete_core-v4-features-{code}-value'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/v4/features/{code}/user/value": {
+    '/core/v4/features/{code}/user/value': {
         parameters: {
             query?: never;
             header?: never;
@@ -3664,7 +3664,7 @@ export interface paths {
         };
         get?: never;
         /** Set the value of a single feature by its code for a given list of users (selected by ID or Username). */
-        put: operations["put_core-v4-features-{code}-user-value"];
+        put: operations['put_core-v4-features-{code}-user-value'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3672,7 +3672,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/auth/info": {
+    '/core/{_version}/auth/info': {
         parameters: {
             query?: never;
             header?: never;
@@ -3682,14 +3682,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Set up SRP authentication request. */
-        post: operations["post_core-{_version}-auth-info"];
+        post: operations['post_core-{_version}-auth-info'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/auth/sso/{token}": {
+    '/core/{_version}/auth/sso/{token}': {
         parameters: {
             query?: never;
             header?: never;
@@ -3697,7 +3697,7 @@ export interface paths {
             cookie?: never;
         };
         /** Initiate SSO flow using token from POST /auth/info */
-        get: operations["get_core-{_version}-auth-sso-{token}"];
+        get: operations['get_core-{_version}-auth-sso-{token}'];
         put?: never;
         post?: never;
         delete?: never;
@@ -3706,7 +3706,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/auth/saml": {
+    '/core/{_version}/auth/saml': {
         parameters: {
             query?: never;
             header?: never;
@@ -3716,14 +3716,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** HTTP-POST binding for SAML authentication. Only to be called by an IdP. */
-        post: operations["post_core-{_version}-auth-saml"];
+        post: operations['post_core-{_version}-auth-saml'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/auth": {
+    '/core/{_version}/auth': {
         parameters: {
             query?: never;
             header?: never;
@@ -3733,15 +3733,15 @@ export interface paths {
         get?: never;
         put?: never;
         /** Authenticate. */
-        post: operations["post_core-{_version}-auth"];
+        post: operations['post_core-{_version}-auth'];
         /** Revoke a token. */
-        delete: operations["delete_core-{_version}-auth"];
+        delete: operations['delete_core-{_version}-auth'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/auth/jwt": {
+    '/core/{_version}/auth/jwt': {
         parameters: {
             query?: never;
             header?: never;
@@ -3751,14 +3751,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Authenticate using pre-issued JWT. */
-        post: operations["post_core-{_version}-auth-jwt"];
+        post: operations['post_core-{_version}-auth-jwt'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/auth/2fa": {
+    '/core/{_version}/auth/2fa': {
         parameters: {
             query?: never;
             header?: never;
@@ -3768,14 +3768,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Submit second factor. */
-        post: operations["post_core-{_version}-auth-2fa"];
+        post: operations['post_core-{_version}-auth-2fa'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/auth/modulus": {
+    '/core/{_version}/auth/modulus': {
         parameters: {
             query?: never;
             header?: never;
@@ -3783,7 +3783,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get random SRP modulus. */
-        get: operations["get_core-{_version}-auth-modulus"];
+        get: operations['get_core-{_version}-auth-modulus'];
         put?: never;
         post?: never;
         delete?: never;
@@ -3792,7 +3792,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/auth/scopes": {
+    '/core/{_version}/auth/scopes': {
         parameters: {
             query?: never;
             header?: never;
@@ -3803,7 +3803,7 @@ export interface paths {
          * Get the current user scopes.
          * @description Note that the bitmap of scopes is a string to avoid truncations of big numbers.
          */
-        get: operations["get_core-{_version}-auth-scopes"];
+        get: operations['get_core-{_version}-auth-scopes'];
         put?: never;
         post?: never;
         delete?: never;
@@ -3812,7 +3812,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/auth/refresh": {
+    '/core/{_version}/auth/refresh': {
         parameters: {
             query?: never;
             header?: never;
@@ -3836,14 +3836,14 @@ export interface paths {
          *     }
          *     ```
          */
-        post: operations["post_core-{_version}-auth-refresh"];
+        post: operations['post_core-{_version}-auth-refresh'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/auth/cookies": {
+    '/core/{_version}/auth/cookies': {
         parameters: {
             query?: never;
             header?: never;
@@ -3858,14 +3858,14 @@ export interface paths {
          *     For non-persistent sessions cookie expiration is set to 0 and the client should garbage collect them at the end
          *     of the session.
          */
-        post: operations["post_core-{_version}-auth-cookies"];
+        post: operations['post_core-{_version}-auth-cookies'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/auth/credentialless": {
+    '/core/{_version}/auth/credentialless': {
         parameters: {
             query?: never;
             header?: never;
@@ -3875,14 +3875,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Create and authenticate a credential-less user. */
-        post: operations["post_core-{_version}-auth-credentialless"];
+        post: operations['post_core-{_version}-auth-credentialless'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/mnemonic": {
+    '/core/{_version}/settings/mnemonic': {
         parameters: {
             query?: never;
             header?: never;
@@ -3894,13 +3894,13 @@ export interface paths {
          * @description Returns the mnemonic keyring and its encryption salt, to allow re-enabling user keys if a logged in user
          *     remembers an old mnemonic.
          */
-        get: operations["get_core-{_version}-settings-mnemonic"];
+        get: operations['get_core-{_version}-settings-mnemonic'];
         /**
          * Update or set mnemonic.
          * @description This route allows submission of a new mnemonic or update an existing mnemonic, alongside a backup keyring.
          *     If a keyring already exists the keys will be merged (newer replaces older).
          */
-        put: operations["put_core-{_version}-settings-mnemonic"];
+        put: operations['put_core-{_version}-settings-mnemonic'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3908,7 +3908,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/mnemonic/reset": {
+    '/core/{_version}/settings/mnemonic/reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -3919,7 +3919,7 @@ export interface paths {
          * Get mnemonic keyring to restore keys.
          * @description Returns the mnemonic keyring and its encryption salt, to allow re-enabling user keys in the reset flow.
          */
-        get: operations["get_core-{_version}-settings-mnemonic-reset"];
+        get: operations['get_core-{_version}-settings-mnemonic-reset'];
         put?: never;
         /**
          * Reset account using a mnemonic.
@@ -3927,14 +3927,14 @@ export interface paths {
          *     to allow resetting an account. This will change the session's scopes to the regular user's scopes.
          *     It logs out other sessions for security reasons.
          */
-        post: operations["post_core-{_version}-settings-mnemonic-reset"];
+        post: operations['post_core-{_version}-settings-mnemonic-reset'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/mnemonic/disable": {
+    '/core/{_version}/settings/mnemonic/disable': {
         parameters: {
             query?: never;
             header?: never;
@@ -3948,14 +3948,14 @@ export interface paths {
          * @description To re-enable it's needed to submit a new mnemonic via PUT /settings/mnemonic.
          *     This route removes the PASSWORD scope from the token.
          */
-        post: operations["post_core-{_version}-settings-mnemonic-disable"];
+        post: operations['post_core-{_version}-settings-mnemonic-disable'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/mnemonic/reactivate": {
+    '/core/{_version}/settings/mnemonic/reactivate': {
         parameters: {
             query?: never;
             header?: never;
@@ -3972,7 +3972,7 @@ export interface paths {
          *     It will work only if the mnemonic needs to be (re) activated and is to be prompted automatically (i.e. for
          *     states MNEMONIC_ENABLED and MNEMONIC_OUTDATED).
          */
-        put: operations["put_core-{_version}-settings-mnemonic-reactivate"];
+        put: operations['put_core-{_version}-settings-mnemonic-reactivate'];
         post?: never;
         delete?: never;
         options?: never;
@@ -3980,7 +3980,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/pushes": {
+    '/core/{_version}/pushes': {
         parameters: {
             query?: never;
             header?: never;
@@ -3993,7 +3993,7 @@ export interface paths {
          * @description List of active notifications for the current logged user.
          *     Can be used by the clients to always know what should still be showed as active notification.
          */
-        get: operations["get_core-{_version}-pushes"];
+        get: operations['get_core-{_version}-pushes'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4002,7 +4002,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/pushes/active": {
+    '/core/{_version}/pushes/active': {
         parameters: {
             query?: never;
             header?: never;
@@ -4014,7 +4014,7 @@ export interface paths {
          * @description List of active notifications for the current logged user.
          *     Can be used by the clients to always know what should still be showed as active notification.
          */
-        get: operations["get_core-{_version}-pushes-active"];
+        get: operations['get_core-{_version}-pushes-active'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4023,7 +4023,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/pushes/active/session": {
+    '/core/{_version}/pushes/active/session': {
         parameters: {
             query?: never;
             header?: never;
@@ -4035,7 +4035,7 @@ export interface paths {
          * @description List of active notifications for the current logged user using the current session.
          *     Can be used by the clients to always know what should still be showed as active notification.
          */
-        get: operations["get_core-{_version}-pushes-active-session"];
+        get: operations['get_core-{_version}-pushes-active-session'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4044,7 +4044,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/pushes/{enc_id}": {
+    '/core/{_version}/pushes/{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -4058,13 +4058,13 @@ export interface paths {
          * Delete the given push.
          * @description If the session belongs to a family, the pushes for the whole session family will be deleted.
          */
-        delete: operations["delete_core-{_version}-pushes-{enc_id}"];
+        delete: operations['delete_core-{_version}-pushes-{enc_id}'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/referrals": {
+    '/core/{_version}/referrals': {
         parameters: {
             query?: never;
             header?: never;
@@ -4072,17 +4072,17 @@ export interface paths {
             cookie?: never;
         };
         /** List current user referrals. */
-        get: operations["get_core-{_version}-referrals"];
+        get: operations['get_core-{_version}-referrals'];
         put?: never;
         /** Send referral invitation by email to a list of recipients. */
-        post: operations["post_core-{_version}-referrals"];
+        post: operations['post_core-{_version}-referrals'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/referrals/status": {
+    '/core/{_version}/referrals/status': {
         parameters: {
             query?: never;
             header?: never;
@@ -4090,7 +4090,7 @@ export interface paths {
             cookie?: never;
         };
         /** Current user referral status. */
-        get: operations["get_core-{_version}-referrals-status"];
+        get: operations['get_core-{_version}-referrals-status'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4099,7 +4099,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/referrals/identifiers/{identifier}": {
+    '/core/{_version}/referrals/identifiers/{identifier}': {
         parameters: {
             query?: never;
             header?: never;
@@ -4107,7 +4107,7 @@ export interface paths {
             cookie?: never;
         };
         /** Check if referrer identifier exists */
-        get: operations["get_core-{_version}-referrals-identifiers-{identifier}"];
+        get: operations['get_core-{_version}-referrals-identifiers-{identifier}'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4116,7 +4116,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/devices": {
+    '/core/{_version}/devices': {
         parameters: {
             query?: never;
             header?: never;
@@ -4128,18 +4128,18 @@ export interface paths {
         /** Register device. The registering will delete any duplicate having the same (UserID, Product, DeviceToken) from
          *     different sessions. If the registering is done from a session already having a registered device, the existing
          *     device will be replaced with the new one. */
-        post: operations["post_core-{_version}-devices"];
+        post: operations['post_core-{_version}-devices'];
         /**
          * Unregister device.
          * @description > Note: Please use the `DELETE /core/v4/devices` route
          */
-        delete: operations["delete_core-{_version}-devices"];
+        delete: operations['delete_core-{_version}-devices'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/betas/{client_id}": {
+    '/core/{_version}/betas/{client_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -4147,18 +4147,18 @@ export interface paths {
             cookie?: never;
         };
         /** Get a specific beta registration. */
-        get: operations["get_core-{_version}-betas-{client_id}"];
+        get: operations['get_core-{_version}-betas-{client_id}'];
         /** Create or update beta registration. */
-        put: operations["put_core-{_version}-betas-{client_id}"];
+        put: operations['put_core-{_version}-betas-{client_id}'];
         post?: never;
         /** Delete a specific beta registration. */
-        delete: operations["delete_core-{_version}-betas-{client_id}"];
+        delete: operations['delete_core-{_version}-betas-{client_id}'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/betas": {
+    '/core/{_version}/betas': {
         parameters: {
             query?: never;
             header?: never;
@@ -4166,17 +4166,17 @@ export interface paths {
             cookie?: never;
         };
         /** Get all beta registrations. */
-        get: operations["get_core-{_version}-betas"];
+        get: operations['get_core-{_version}-betas'];
         put?: never;
         post?: never;
         /** Delete all beta registrations. */
-        delete: operations["delete_core-{_version}-betas"];
+        delete: operations['delete_core-{_version}-betas'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/geofeed/geofeed.csv": {
+    '/core/{_version}/geofeed/geofeed.csv': {
         parameters: {
             query?: never;
             header?: never;
@@ -4184,7 +4184,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get a CSV export for GeoFeed. */
-        get: operations["get_core-{_version}-geofeed-geofeed-csv"];
+        get: operations['get_core-{_version}-geofeed-geofeed-csv'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4193,7 +4193,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/geofeed/geofeed-public.csv": {
+    '/core/{_version}/geofeed/geofeed-public.csv': {
         parameters: {
             query?: never;
             header?: never;
@@ -4201,7 +4201,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get geofeed data containing only the custom admin-set data */
-        get: operations["get_core-{_version}-geofeed-geofeed-public-csv"];
+        get: operations['get_core-{_version}-geofeed-geofeed-public-csv'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4210,7 +4210,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/load": {
+    '/core/{_version}/load': {
         parameters: {
             query?: never;
             header?: never;
@@ -4222,21 +4222,21 @@ export interface paths {
          * @description Placeholder route for app pages and modals that are loaded by front-end JavaScript instead of
          *     obtained via a GET request.
          */
-        get: operations["get_core-{_version}-load"];
+        get: operations['get_core-{_version}-load'];
         put?: never;
         /**
          * Placeholder route.
          * @description Placeholder route for app pages and modals that are loaded by front-end JavaScript instead of
          *     obtained via a GET request.
          */
-        post: operations["post_core-{_version}-load"];
+        post: operations['post_core-{_version}-load'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/logs/auth": {
+    '/core/{_version}/logs/auth': {
         parameters: {
             query?: never;
             header?: never;
@@ -4244,17 +4244,17 @@ export interface paths {
             cookie?: never;
         };
         /** Get authentication logs. */
-        get: operations["get_core-{_version}-logs-auth"];
+        get: operations['get_core-{_version}-logs-auth'];
         put?: never;
         post?: never;
         /** Delete all authentication logs. */
-        delete: operations["delete_core-{_version}-logs-auth"];
+        delete: operations['delete_core-{_version}-logs-auth'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/metrics": {
+    '/core/{_version}/metrics': {
         parameters: {
             query?: never;
             header?: never;
@@ -4262,20 +4262,20 @@ export interface paths {
             cookie?: never;
         };
         /** Send Simple Metrics. */
-        get: operations["get_core-{_version}-metrics"];
+        get: operations['get_core-{_version}-metrics'];
         put?: never;
         /**
          * Send Metrics Report.
          * @description The `Data` key can contain anything, that is what will be saved in the log (as context).
          */
-        post: operations["post_core-{_version}-metrics"];
+        post: operations['post_core-{_version}-metrics'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/settings/recovery/secret": {
+    '/core/{_version}/settings/recovery/secret': {
         parameters: {
             query?: never;
             header?: never;
@@ -4288,18 +4288,18 @@ export interface paths {
          * Set secret when empty.
          * @description This route allows submission of new secrets when they are empty for the primary user key.
          */
-        post: operations["post_core-{_version}-settings-recovery-secret"];
+        post: operations['post_core-{_version}-settings-recovery-secret'];
         /**
          * Reset secrets to the null state, in case the files are (suspect) compromised.
          * @description To re-enable it's needed to submit new secrets.
          */
-        delete: operations["delete_core-{_version}-settings-recovery-secret"];
+        delete: operations['delete_core-{_version}-settings-recovery-secret'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/reports/form/{portal_id}/{form_id}": {
+    '/core/{_version}/reports/form/{portal_id}/{form_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -4309,14 +4309,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Please refer to the Hubspot API docs for this route: https://legacydocs.hubspot.com/docs/methods/forms/submit_form */
-        post: operations["post_core-{_version}-reports-form-{portal_id}-{form_id}"];
+        post: operations['post_core-{_version}-reports-form-{portal_id}-{form_id}'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/reports/bug": {
+    '/core/{_version}/reports/bug': {
         parameters: {
             query?: never;
             header?: never;
@@ -4381,14 +4381,14 @@ export interface paths {
          *     ----WebKitFormBoundary7MA4YWxkTrZu0gW
          *     ```
          */
-        post: operations["post_core-{_version}-reports-bug"];
+        post: operations['post_core-{_version}-reports-bug'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/reports/bug/attachments": {
+    '/core/{_version}/reports/bug/attachments': {
         parameters: {
             query?: never;
             header?: never;
@@ -4412,14 +4412,14 @@ export interface paths {
          *      ----WebKitFormBoundary7MA4YWxkTrZu0gW
          *     ```
          */
-        post: operations["post_core-{_version}-reports-bug-attachments"];
+        post: operations['post_core-{_version}-reports-bug-attachments'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/reports/bug/{ticketId}": {
+    '/core/{_version}/reports/bug/{ticketId}': {
         parameters: {
             query?: never;
             header?: never;
@@ -4430,13 +4430,13 @@ export interface paths {
         put?: never;
         post?: never;
         /** Solve ticket */
-        delete: operations["delete_core-{_version}-reports-bug-{ticketId}"];
+        delete: operations['delete_core-{_version}-reports-bug-{ticketId}'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/reports/abuse": {
+    '/core/{_version}/reports/abuse': {
         parameters: {
             query?: never;
             header?: never;
@@ -4476,14 +4476,14 @@ export interface paths {
          *     ----WebKitFormBoundary7MA4YWxkTrZu0gW
          *     ```
          */
-        post: operations["post_core-{_version}-reports-abuse"];
+        post: operations['post_core-{_version}-reports-abuse'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/reports/crash": {
+    '/core/{_version}/reports/crash': {
         parameters: {
             query?: never;
             header?: never;
@@ -4493,14 +4493,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Report a client crash. */
-        post: operations["post_core-{_version}-reports-crash"];
+        post: operations['post_core-{_version}-reports-crash'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/reports/sentry/api/{id}/{type}": {
+    '/core/{_version}/reports/sentry/api/{id}/{type}': {
         parameters: {
             query?: never;
             header?: never;
@@ -4520,14 +4520,14 @@ export interface paths {
          *       <code>https://SENTRY_PUBLIC_KEY@api.protonmail.ch/core/v4/reports/sentry/{sentry_project_id}</code>
          *     </div>
          */
-        post: operations["post_core-{_version}-reports-sentry-api-{id}-{type}"];
+        post: operations['post_core-{_version}-reports-sentry-api-{id}-{type}'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/reports/sentry/api/{id}/{type}/": {
+    '/core/{_version}/reports/sentry/api/{id}/{type}/': {
         parameters: {
             query?: never;
             header?: never;
@@ -4547,14 +4547,14 @@ export interface paths {
          *       <code>https://SENTRY_PUBLIC_KEY@api.protonmail.ch/core/v4/reports/sentry/{sentry_project_id}</code>
          *     </div>
          */
-        post: operations["post_core-{_version}-reports-sentry-api-{id}-{type}"];
+        post: operations['post_core-{_version}-reports-sentry-api-{id}-{type}'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/reports/phishing": {
+    '/core/{_version}/reports/phishing': {
         parameters: {
             query?: never;
             header?: never;
@@ -4564,14 +4564,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Report a phishing email. */
-        post: operations["post_core-{_version}-reports-phishing"];
+        post: operations['post_core-{_version}-reports-phishing'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/reports/spam": {
+    '/core/{_version}/reports/spam': {
         parameters: {
             query?: never;
             header?: never;
@@ -4581,14 +4581,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Report spam. */
-        post: operations["post_core-{_version}-reports-spam"];
+        post: operations['post_core-{_version}-reports-spam'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/reports/cancel-plan": {
+    '/core/{_version}/reports/cancel-plan': {
         parameters: {
             query?: never;
             header?: never;
@@ -4597,14 +4597,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-reports-cancel-plan"];
+        post: operations['post_core-{_version}-reports-cancel-plan'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/reset/{username}/{token}": {
+    '/core/{_version}/reset/{username}/{token}': {
         parameters: {
             query?: never;
             header?: never;
@@ -4612,7 +4612,7 @@ export interface paths {
             cookie?: never;
         };
         /** Validate reset token. */
-        get: operations["get_core-{_version}-reset-{username}-{token}"];
+        get: operations['get_core-{_version}-reset-{username}-{token}'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4621,7 +4621,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/reset": {
+    '/core/{_version}/reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -4631,14 +4631,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Request login reset token. */
-        post: operations["post_core-{_version}-reset"];
+        post: operations['post_core-{_version}-reset'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/reset/username": {
+    '/core/{_version}/reset/username': {
         parameters: {
             query?: never;
             header?: never;
@@ -4648,21 +4648,21 @@ export interface paths {
         get?: never;
         put?: never;
         /** Send usernames to notification email. */
-        post: operations["post_core-{_version}-reset-username"];
+        post: operations['post_core-{_version}-reset-username'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/system/config": {
+    '/core/{_version}/system/config': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-system-config"];
+        get: operations['get_core-{_version}-system-config'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4671,14 +4671,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/system/version": {
+    '/core/{_version}/system/version': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-system-version"];
+        get: operations['get_core-{_version}-system-version'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4687,14 +4687,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/tests/exception": {
+    '/core/{_version}/tests/exception': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-tests-exception"];
+        get: operations['get_core-{_version}-tests-exception'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4703,14 +4703,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/tests/error": {
+    '/core/{_version}/tests/error': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-tests-error"];
+        get: operations['get_core-{_version}-tests-error'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4719,14 +4719,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/tests/notice": {
+    '/core/{_version}/tests/notice': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-tests-notice"];
+        get: operations['get_core-{_version}-tests-notice'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4735,7 +4735,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/tests/memoryLeak": {
+    '/core/{_version}/tests/memoryLeak': {
         parameters: {
             query?: never;
             header?: never;
@@ -4743,7 +4743,7 @@ export interface paths {
             cookie?: never;
         };
         /** Simulate a memory leak. */
-        get: operations["get_core-{_version}-tests-memoryLeak"];
+        get: operations['get_core-{_version}-tests-memoryLeak'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4752,14 +4752,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/tests/logger": {
+    '/core/{_version}/tests/logger': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-tests-logger"];
+        get: operations['get_core-{_version}-tests-logger'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4768,14 +4768,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/tests/logger/observability": {
+    '/core/{_version}/tests/logger/observability': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-tests-logger-observability"];
+        get: operations['get_core-{_version}-tests-logger-observability'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4784,7 +4784,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/tests/ping": {
+    '/core/{_version}/tests/ping': {
         parameters: {
             query?: never;
             header?: never;
@@ -4796,7 +4796,7 @@ export interface paths {
          * @description More info about when to use this route:
          *     https://confluence.protontech.ch/display/CP/When+and+How+to+Retry+API+Requests
          */
-        get: operations["get_core-{_version}-tests-ping"];
+        get: operations['get_core-{_version}-tests-ping'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4805,7 +4805,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/tests/version": {
+    '/core/{_version}/tests/version': {
         parameters: {
             query?: never;
             header?: never;
@@ -4813,7 +4813,7 @@ export interface paths {
             cookie?: never;
         };
         /** @deprecated */
-        get: operations["get_core-{_version}-tests-version"];
+        get: operations['get_core-{_version}-tests-version'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4822,7 +4822,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/tests/stream": {
+    '/core/{_version}/tests/stream': {
         parameters: {
             query?: never;
             header?: never;
@@ -4830,7 +4830,7 @@ export interface paths {
             cookie?: never;
         };
         /** Test endpoint to check streaming capabilities */
-        get: operations["get_core-{_version}-tests-stream"];
+        get: operations['get_core-{_version}-tests-stream'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4839,14 +4839,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/update": {
+    '/core/{_version}/update': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-update"];
+        get: operations['get_core-{_version}-update'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4855,7 +4855,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/invitations": {
+    '/core/{_version}/users/invitations': {
         parameters: {
             query?: never;
             header?: never;
@@ -4863,7 +4863,7 @@ export interface paths {
             cookie?: never;
         };
         /** Gets organization invitations sent to a user. */
-        get: operations["get_core-{_version}-users-invitations"];
+        get: operations['get_core-{_version}-users-invitations'];
         put?: never;
         post?: never;
         delete?: never;
@@ -4872,7 +4872,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/invitations/{enc_id}/reject": {
+    '/core/{_version}/users/invitations/{enc_id}/reject': {
         parameters: {
             query?: never;
             header?: never;
@@ -4882,14 +4882,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Rejects an invitation. */
-        post: operations["post_core-{_version}-users-invitations-{enc_id}-reject"];
+        post: operations['post_core-{_version}-users-invitations-{enc_id}-reject'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/users/invitations/{enc_id}/accept": {
+    '/core/{_version}/users/invitations/{enc_id}/accept': {
         parameters: {
             query?: never;
             header?: never;
@@ -4899,14 +4899,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Accepts an invitation. */
-        post: operations["post_core-{_version}-users-invitations-{enc_id}-accept"];
+        post: operations['post_core-{_version}-users-invitations-{enc_id}-accept'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/validate/email": {
+    '/core/{_version}/validate/email': {
         parameters: {
             query?: never;
             header?: never;
@@ -4916,14 +4916,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Validate email address. */
-        post: operations["post_core-{_version}-validate-email"];
+        post: operations['post_core-{_version}-validate-email'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/validate/phone": {
+    '/core/{_version}/validate/phone': {
         parameters: {
             query?: never;
             header?: never;
@@ -4933,14 +4933,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Validate phone number. */
-        post: operations["post_core-{_version}-validate-phone"];
+        post: operations['post_core-{_version}-validate-phone'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/verification/ownership/{token}": {
+    '/core/{_version}/verification/ownership/{token}': {
         parameters: {
             query?: never;
             header?: never;
@@ -4948,17 +4948,17 @@ export interface paths {
             cookie?: never;
         };
         /** Get details of a given Ownership Verification. */
-        get: operations["get_core-{_version}-verification-ownership-{token}"];
+        get: operations['get_core-{_version}-verification-ownership-{token}'];
         put?: never;
         /** Request ownership verification. */
-        post: operations["post_core-{_version}-verification-ownership-{token}"];
+        post: operations['post_core-{_version}-verification-ownership-{token}'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/verification/ownership-email/{token}": {
+    '/core/{_version}/verification/ownership-email/{token}': {
         parameters: {
             query?: never;
             header?: never;
@@ -4966,17 +4966,17 @@ export interface paths {
             cookie?: never;
         };
         /** Get details of a given Ownership Verification. */
-        get: operations["get_core-{_version}-verification-ownership-email-{token}"];
+        get: operations['get_core-{_version}-verification-ownership-email-{token}'];
         put?: never;
         /** Request ownership verification. */
-        post: operations["post_core-{_version}-verification-ownership-email-{token}"];
+        post: operations['post_core-{_version}-verification-ownership-email-{token}'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/verification/ownership-sms/{token}": {
+    '/core/{_version}/verification/ownership-sms/{token}': {
         parameters: {
             query?: never;
             header?: never;
@@ -4984,17 +4984,17 @@ export interface paths {
             cookie?: never;
         };
         /** Get details of a given Ownership Verification. */
-        get: operations["get_core-{_version}-verification-ownership-sms-{token}"];
+        get: operations['get_core-{_version}-verification-ownership-sms-{token}'];
         put?: never;
         /** Request ownership verification. */
-        post: operations["post_core-{_version}-verification-ownership-sms-{token}"];
+        post: operations['post_core-{_version}-verification-ownership-sms-{token}'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/verification/ownership/{token}/{code}": {
+    '/core/{_version}/verification/ownership/{token}/{code}': {
         parameters: {
             query?: never;
             header?: never;
@@ -5004,14 +5004,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Request ownership verification. */
-        post: operations["post_core-{_version}-verification-ownership-{token}-{code}"];
+        post: operations['post_core-{_version}-verification-ownership-{token}-{code}'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/verification/ownership-email/{token}/{code}": {
+    '/core/{_version}/verification/ownership-email/{token}/{code}': {
         parameters: {
             query?: never;
             header?: never;
@@ -5021,14 +5021,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Request ownership verification. */
-        post: operations["post_core-{_version}-verification-ownership-email-{token}-{code}"];
+        post: operations['post_core-{_version}-verification-ownership-email-{token}-{code}'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/verification/ownership-sms/{token}/{code}": {
+    '/core/{_version}/verification/ownership-sms/{token}/{code}': {
         parameters: {
             query?: never;
             header?: never;
@@ -5038,21 +5038,21 @@ export interface paths {
         get?: never;
         put?: never;
         /** Request ownership verification. */
-        post: operations["post_core-{_version}-verification-ownership-sms-{token}-{code}"];
+        post: operations['post_core-{_version}-verification-ownership-sms-{token}-{code}'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/v6/events/{id}": {
+    '/core/v6/events/{id}': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-v6-events-{id}"];
+        get: operations['get_core-v6-events-{id}'];
         put?: never;
         post?: never;
         delete?: never;
@@ -5061,14 +5061,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/events/latest": {
+    '/core/{_version}/events/latest': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-events-latest"];
+        get: operations['get_core-{_version}-events-latest'];
         put?: never;
         post?: never;
         delete?: never;
@@ -5077,7 +5077,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/events/{id}": {
+    '/core/{_version}/events/{id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -5088,7 +5088,7 @@ export interface paths {
          * Get events since ID.
          * @description Get a list of models to refresh for each event type.
          */
-        get: operations["get_core-{_version}-events-{id}"];
+        get: operations['get_core-{_version}-events-{id}'];
         put?: never;
         post?: never;
         delete?: never;
@@ -5097,7 +5097,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/v4/events/{id}": {
+    '/core/v4/events/{id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -5109,7 +5109,7 @@ export interface paths {
          * @deprecated
          * @description Get a list of models to refresh for each event type.
          */
-        get: operations["get_core-v4-events-{id}"];
+        get: operations['get_core-v4-events-{id}'];
         put?: never;
         post?: never;
         delete?: never;
@@ -5118,7 +5118,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/feedback": {
+    '/core/{_version}/feedback': {
         parameters: {
             query?: never;
             header?: never;
@@ -5128,21 +5128,21 @@ export interface paths {
         get?: never;
         put?: never;
         /** Log general user feedback. */
-        post: operations["post_core-{_version}-feedback"];
+        post: operations['post_core-{_version}-feedback'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/checklist/get-started": {
+    '/core/{_version}/checklist/get-started': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-checklist-get-started"];
+        get: operations['get_core-{_version}-checklist-get-started'];
         put?: never;
         post?: never;
         delete?: never;
@@ -5151,14 +5151,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/checklist/paying-user": {
+    '/core/{_version}/checklist/paying-user': {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_core-{_version}-checklist-paying-user"];
+        get: operations['get_core-{_version}-checklist-paying-user'];
         put?: never;
         post?: never;
         delete?: never;
@@ -5167,7 +5167,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/checklist/get-started/seen-completed-list": {
+    '/core/{_version}/checklist/get-started/seen-completed-list': {
         parameters: {
             query?: never;
             header?: never;
@@ -5176,14 +5176,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-checklist-get-started-seen-completed-list"];
+        post: operations['post_core-{_version}-checklist-get-started-seen-completed-list'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/checklist/paying-user/hide": {
+    '/core/{_version}/checklist/paying-user/hide': {
         parameters: {
             query?: never;
             header?: never;
@@ -5192,14 +5192,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-checklist-paying-user-hide"];
+        post: operations['post_core-{_version}-checklist-paying-user-hide'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/checklist/paying-user/seen-completed-list": {
+    '/core/{_version}/checklist/paying-user/seen-completed-list': {
         parameters: {
             query?: never;
             header?: never;
@@ -5208,14 +5208,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-checklist-paying-user-seen-completed-list"];
+        post: operations['post_core-{_version}-checklist-paying-user-seen-completed-list'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/checklist/get-started/init": {
+    '/core/{_version}/checklist/get-started/init': {
         parameters: {
             query?: never;
             header?: never;
@@ -5224,14 +5224,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-checklist-get-started-init"];
+        post: operations['post_core-{_version}-checklist-get-started-init'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/checklist/paying-user/init": {
+    '/core/{_version}/checklist/paying-user/init': {
         parameters: {
             query?: never;
             header?: never;
@@ -5240,14 +5240,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post_core-{_version}-checklist-paying-user-init"];
+        post: operations['post_core-{_version}-checklist-paying-user-init'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/checklist/check-item": {
+    '/core/{_version}/checklist/check-item': {
         parameters: {
             query?: never;
             header?: never;
@@ -5255,7 +5255,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-checklist-check-item"];
+        put: operations['put_core-{_version}-checklist-check-item'];
         post?: never;
         delete?: never;
         options?: never;
@@ -5263,7 +5263,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/checklist/update-display": {
+    '/core/{_version}/checklist/update-display': {
         parameters: {
             query?: never;
             header?: never;
@@ -5271,7 +5271,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-checklist-update-display"];
+        put: operations['put_core-{_version}-checklist-update-display'];
         post?: never;
         delete?: never;
         options?: never;
@@ -5279,7 +5279,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/verify/send": {
+    '/core/{_version}/verify/send': {
         parameters: {
             query?: never;
             header?: never;
@@ -5289,14 +5289,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Send a verification link. */
-        post: operations["post_core-{_version}-verify-send"];
+        post: operations['post_core-{_version}-verify-send'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/verify/validate": {
+    '/core/{_version}/verify/validate': {
         parameters: {
             query?: never;
             header?: never;
@@ -5306,15 +5306,15 @@ export interface paths {
         get?: never;
         put?: never;
         /** Validate JWT token. */
-        post: operations["post_core-{_version}-verify-validate"];
+        post: operations['post_core-{_version}-verify-validate'];
         /** Validate JWT token. */
-        delete: operations["delete_core-{_version}-verify-validate"];
+        delete: operations['delete_core-{_version}-verify-validate'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/verify/email": {
+    '/core/{_version}/verify/email': {
         parameters: {
             query?: never;
             header?: never;
@@ -5324,14 +5324,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Trigger ownership verification using email only. */
-        post: operations["post_core-{_version}-verify-email"];
+        post: operations['post_core-{_version}-verify-email'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/verify/phone": {
+    '/core/{_version}/verify/phone': {
         parameters: {
             query?: never;
             header?: never;
@@ -5341,14 +5341,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Trigger ownership verification on phone number only. */
-        post: operations["post_core-{_version}-verify-phone"];
+        post: operations['post_core-{_version}-verify-phone'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/verify/reauth/email": {
+    '/core/{_version}/verify/reauth/email': {
         parameters: {
             query?: never;
             header?: never;
@@ -5358,14 +5358,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Re-authenticate by verifying email and add Password scope to the session if the verification is successful. */
-        post: operations["post_core-{_version}-verify-reauth-email"];
+        post: operations['post_core-{_version}-verify-reauth-email'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/verify/reauth/phone": {
+    '/core/{_version}/verify/reauth/phone': {
         parameters: {
             query?: never;
             header?: never;
@@ -5375,14 +5375,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Re-authenticate by verifying phone and add Password scope to the session if the verification is successful. */
-        post: operations["post_core-{_version}-verify-reauth-phone"];
+        post: operations['post_core-{_version}-verify-reauth-phone'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/notifications": {
+    '/core/{_version}/notifications': {
         parameters: {
             query?: never;
             header?: never;
@@ -5390,7 +5390,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get all the notifications. */
-        get: operations["get_core-{_version}-notifications"];
+        get: operations['get_core-{_version}-notifications'];
         put?: never;
         post?: never;
         delete?: never;
@@ -5399,7 +5399,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/v4/labels/{enc_id}": {
+    '/core/v4/labels/{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -5413,10 +5413,10 @@ export interface paths {
         options?: never;
         head?: never;
         /** Patch existing label. */
-        patch: operations["patch_core-v4-labels-{enc_id}"];
+        patch: operations['patch_core-v4-labels-{enc_id}'];
         trace?: never;
     };
-    "/core/v4/labels/by-ids": {
+    '/core/v4/labels/by-ids': {
         parameters: {
             query?: never;
             header?: never;
@@ -5426,14 +5426,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Get user labels by IDs. */
-        post: operations["post_core-v4-labels-by-ids"];
+        post: operations['post_core-v4-labels-by-ids'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/labels": {
+    '/core/{_version}/labels': {
         parameters: {
             query?: never;
             header?: never;
@@ -5441,18 +5441,18 @@ export interface paths {
             cookie?: never;
         };
         /** Get user's labels. */
-        get: operations["get_core-{_version}-labels"];
+        get: operations['get_core-{_version}-labels'];
         put?: never;
         /** Create new label. */
-        post: operations["post_core-{_version}-labels"];
+        post: operations['post_core-{_version}-labels'];
         /** Delete multiple labels. */
-        delete: operations["delete_core-{_version}-labels"];
+        delete: operations['delete_core-{_version}-labels'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/labels/available": {
+    '/core/{_version}/labels/available': {
         parameters: {
             query?: never;
             header?: never;
@@ -5468,7 +5468,7 @@ export interface paths {
          *
          *     The name can't be a reserved name like `Inbox`, `Sent`, ...
          */
-        get: operations["get_core-{_version}-labels-available"];
+        get: operations['get_core-{_version}-labels-available'];
         put?: never;
         post?: never;
         delete?: never;
@@ -5477,7 +5477,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/labels/order": {
+    '/core/{_version}/labels/order': {
         parameters: {
             query?: never;
             header?: never;
@@ -5486,7 +5486,7 @@ export interface paths {
         };
         get?: never;
         /** Change label priority. */
-        put: operations["put_core-{_version}-labels-order"];
+        put: operations['put_core-{_version}-labels-order'];
         post?: never;
         delete?: never;
         options?: never;
@@ -5494,7 +5494,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/labels/order/tree/{startLabelId}": {
+    '/core/{_version}/labels/order/tree/{startLabelId}': {
         parameters: {
             query?: never;
             header?: never;
@@ -5502,7 +5502,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["put_core-{_version}-labels-order-tree-{startLabelId}"];
+        put: operations['put_core-{_version}-labels-order-tree-{startLabelId}'];
         post?: never;
         delete?: never;
         options?: never;
@@ -5510,7 +5510,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/labels/{id}": {
+    '/core/{_version}/labels/{id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -5519,7 +5519,7 @@ export interface paths {
         };
         get?: never;
         /** Update existing label. */
-        put: operations["put_core-{_version}-labels-{id}"];
+        put: operations['put_core-{_version}-labels-{id}'];
         post?: never;
         delete?: never;
         options?: never;
@@ -5527,7 +5527,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/labels/{enc_id}": {
+    '/core/{_version}/labels/{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -5538,13 +5538,13 @@ export interface paths {
         put?: never;
         post?: never;
         /** Delete a label. */
-        delete: operations["delete_core-{_version}-labels-{enc_id}"];
+        delete: operations['delete_core-{_version}-labels-{enc_id}'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/labels/{enc_labelID}/detach": {
+    '/core/{_version}/labels/{enc_labelID}/detach': {
         parameters: {
             query?: never;
             header?: never;
@@ -5556,7 +5556,7 @@ export interface paths {
          * Detach messages from the label.
          * @description Remove the label from all messages that have it. It deletes the MessageLabels entries in the db.
          */
-        put: operations["put_core-{_version}-labels-{enc_labelID}-detach"];
+        put: operations['put_core-{_version}-labels-{enc_labelID}-detach'];
         post?: never;
         delete?: never;
         options?: never;
@@ -5564,7 +5564,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/{_version}/images": {
+    '/core/{_version}/images': {
         parameters: {
             query?: never;
             header?: never;
@@ -5572,7 +5572,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get image through proxy. */
-        get: operations["get_core-{_version}-images"];
+        get: operations['get_core-{_version}-images'];
         put?: never;
         post?: never;
         delete?: never;
@@ -5591,7 +5591,7 @@ export interface components {
          */
         ResponseCodeSuccess: 1000;
         ProtonSuccess: {
-            Code: components["schemas"]["ResponseCodeSuccess"];
+            Code: components['schemas']['ResponseCodeSuccess'];
         };
         ProtonError: {
             /** ErrorCode */
@@ -5616,11 +5616,11 @@ export interface components {
             DownloadTokenExpirationTimeInSec?: 1800;
         };
         CreateLegacyKeyInput: {
-            AddressID: components["schemas"]["EncryptedId"];
-            PrivateKey: components["schemas"]["PGPPrivateKey"];
+            AddressID: components['schemas']['EncryptedId'];
+            PrivateKey: components['schemas']['PGPPrivateKey'];
             /** @example 1 */
             Primary?: number | null;
-            SignedKeyList: components["schemas"]["SignedKeyListInput"];
+            SignedKeyList: components['schemas']['SignedKeyListInput'];
             AddressForwardingID: Record<string, never>;
             /** @default null */
             GroupMemberID: Record<string, never> | null;
@@ -5651,9 +5651,9 @@ export interface components {
              * @example -----BEGIN PGP MESSAGE-----.*
              */
             OrgActivationToken: string;
-            AddressKeys: components["schemas"]["AddressKeyInput5"][];
-            Auth: components["schemas"]["AuthInput2"];
-            AddressList: components["schemas"]["KTAddressListTransformer"];
+            AddressKeys: components['schemas']['AddressKeyInput5'][];
+            Auth: components['schemas']['AuthInput2'];
+            AddressList: components['schemas']['KTAddressListTransformer'];
             /**
              * @description base64 encoded AES-GCM encrypted secret using the DeviceSecret as key
              * @example dzOtLW5psxgB8oNc8On...oFRykab4EW1ka3GtQPF9x
@@ -5661,7 +5661,7 @@ export interface components {
             EncryptedSecret: string;
         };
         SignedKeyListInputWrapper: {
-            SignedKeyList: components["schemas"]["SignedKeyListInput"];
+            SignedKeyList: components['schemas']['SignedKeyListInput'];
         };
         UpdateKeyInput: {
             /** @example <base64_encoded_key_salt> */
@@ -5683,7 +5683,7 @@ export interface components {
              * @example -----BEGIN PGP PRIVATE KEY BLOCK-----.*-----END PGP PRIVATE KEY BLOCK-----
              */
             OrganizationKey: string;
-            Auth: components["schemas"]["AuthInput2"];
+            Auth: components['schemas']['AuthInput2'];
             /**
              * @description Optional, for inline re-authentication
              * @example <base64_encoded_ephemeral>
@@ -5704,7 +5704,7 @@ export interface components {
              * @example 123456 or recovery code
              */
             TwoFactorCode: string;
-            FIDO2: components["schemas"]["Fido2Input"];
+            FIDO2: components['schemas']['Fido2Input'];
             /**
              * @description Required only when the session is SSO, base64 encoded AES-GCM encrypted secret using the DeviceSecret as key
              * @example <base64_encoded_secret>
@@ -5734,7 +5734,7 @@ export interface components {
              * @default light
              * @enum {string}
              */
-            Mode: "light" | "dark";
+            Mode: 'light' | 'dark';
             /**
              * The bimi-selector of the message
              * @default default
@@ -5752,7 +5752,7 @@ export interface components {
              * @default null
              * @enum {string|null}
              */
-            Format: "png" | null;
+            Format: 'png' | null;
             ComputedAddress: string;
         };
         CreateAddressInput: {
@@ -5775,14 +5775,14 @@ export interface components {
             Signature: string;
             MemberID: Record<string, never>;
             RequesterMemberId?: number | null;
-            AddressList: components["schemas"]["KTAddressListTransformer"];
+            AddressList: components['schemas']['KTAddressListTransformer'];
         };
         ReorderAddressesInput: {
             /** @description Will amend the order of addresses with the order of the corresponding AddressIDs */
             AddressIDs: string[];
         };
         AddressListInput: {
-            AddressList: components["schemas"]["KTAddressListTransformer"];
+            AddressList: components['schemas']['KTAddressListTransformer'];
         };
         ChangeAddressTypeInput: {
             /**
@@ -5791,7 +5791,7 @@ export interface components {
              */
             Type: number;
             /** @default null */
-            SignedKeyList: components["schemas"]["SignedKeyListInput"] | null;
+            SignedKeyList: components['schemas']['SignedKeyListInput'] | null;
         };
         RenameUnverifiedAddressInput: {
             /** @example me */
@@ -5801,7 +5801,7 @@ export interface components {
              * @example funoccupied.com
              */
             Domain: string;
-            AddressList: components["schemas"]["KTAddressListTransformer"];
+            AddressList: components['schemas']['KTAddressListTransformer'];
             AddressKeys: {
                 /** @example G1MbEt3Ep5P_...EWz8WbHVAOl_6h== */
                 ID?: string;
@@ -5826,7 +5826,7 @@ export interface components {
             Encrypt: number;
             /** @example 1 */
             Sign: number;
-            SignedKeyList: components["schemas"]["KTKeyList"];
+            SignedKeyList: components['schemas']['KTKeyList'];
         };
         AddressIdsInput: {
             /** @description List of encrypted addressIDs */
@@ -5837,10 +5837,10 @@ export interface components {
         /** @description An encrypted ID */
         Id: string;
         ResetAuthDevicesInput: {
-            AuthDeviceID: components["schemas"]["Id"];
-            EncryptedSecret: components["schemas"]["BinaryString"];
+            AuthDeviceID: components['schemas']['Id'];
+            EncryptedSecret: components['schemas']['BinaryString'];
             /** @description List of re-encrypted user keys secret to random generated secret (32 bytes, then hex encoded) */
-            UserKeys: components["schemas"]["ResetAuthDevicesUserKeyDto"][];
+            UserKeys: components['schemas']['ResetAuthDevicesUserKeyDto'][];
         };
         CreateMemberKeysInput: {
             /** @example xRvCGwFq_TW7i8FtJaGyFEq0g== */
@@ -5892,7 +5892,7 @@ export interface components {
              * @example <encrypted_id>
              */
             AddressID?: string | null;
-            AddressList: components["schemas"]["KTAddressListTransformer"];
+            AddressList: components['schemas']['KTAddressListTransformer'];
         };
         OffsetPagination: {
             /** The page size */
@@ -5912,29 +5912,29 @@ export interface components {
             Code: 1000;
         };
         AddGroupMemberRequest: {
-            Type: components["schemas"]["GroupMemberType"];
-            GroupID: components["schemas"]["Id"];
+            Type: components['schemas']['GroupMemberType'];
+            GroupID: components['schemas']['Id'];
             Email: string;
-            AddressSignaturePacket: components["schemas"]["PGPSignature"];
-            GroupMemberAddressPrivateKey?: components["schemas"]["PGPPrivateKey"] | null;
-            ActivationToken?: components["schemas"]["PGPMessage"] | null;
-            ProxyInstances: components["schemas"]["GroupProxyInstance"][];
-            Token?: components["schemas"]["PGPMessage"] | null;
-            Signature?: components["schemas"]["PGPSignature"] | null;
+            AddressSignaturePacket: components['schemas']['PGPSignature'];
+            GroupMemberAddressPrivateKey?: components['schemas']['PGPPrivateKey'] | null;
+            ActivationToken?: components['schemas']['PGPMessage'] | null;
+            ProxyInstances: components['schemas']['GroupProxyInstance'][];
+            Token?: components['schemas']['PGPMessage'] | null;
+            Signature?: components['schemas']['PGPSignature'] | null;
         };
         CreateGroupRequest: {
             Email: string;
             Name: string;
-            Permissions: components["schemas"]["GroupPermissions"];
-            Flags: components["schemas"]["GroupFlags"];
+            Permissions: components['schemas']['GroupPermissions'];
+            Flags: components['schemas']['GroupFlags'];
             /** @default  */
             Description: string;
         };
         EditGroupMemberRequest: {
-            Permissions: components["schemas"]["GroupMemberPermissions"];
+            Permissions: components['schemas']['GroupMemberPermissions'];
         };
         ExternalGroupMembershipsResponse: {
-            Memberships: components["schemas"]["ExternalGroupMembership"][];
+            Memberships: components['schemas']['ExternalGroupMembership'][];
             Total: number;
             /**
              * ProtonResponseCode
@@ -5946,7 +5946,7 @@ export interface components {
         /** @description An encrypted ID */
         EncryptedId: string;
         GroupMembersResponse: {
-            Members: components["schemas"]["GroupMember"][];
+            Members: components['schemas']['GroupMember'][];
             Total: number;
             /**
              * ProtonResponseCode
@@ -5956,7 +5956,7 @@ export interface components {
             Code: 1000;
         };
         InternalGroupMembershipsResponse: {
-            Memberships: components["schemas"]["InternalGroupMembership"][];
+            Memberships: components['schemas']['InternalGroupMembership'][];
             Total: number;
             /**
              * ProtonResponseCode
@@ -5979,9 +5979,9 @@ export interface components {
              */
             Email: string | null;
             /** @default null */
-            Permissions: components["schemas"]["GroupPermissions"] | null;
+            Permissions: components['schemas']['GroupPermissions'] | null;
             /** @default null */
-            Flags: components["schemas"]["GroupFlags"] | null;
+            Flags: components['schemas']['GroupFlags'] | null;
             /** @default null */
             Description: string | null;
         };
@@ -5992,11 +5992,11 @@ export interface components {
         UpdateFlagsInput: {
             /** @example 1 */
             Flags: number;
-            SignedKeyList: components["schemas"]["SignedKeyListInput"];
+            SignedKeyList: components['schemas']['SignedKeyListInput'];
         };
         ReplaceAddressTokensInput: {
             /** @description List of address key tokens encrypted to the primary user key */
-            AddressKeyTokens: components["schemas"]["AddressKeyToken"][];
+            AddressKeyTokens: components['schemas']['AddressKeyToken'][];
         };
         MigrateKeyInput: {
             AddressKeys: {
@@ -6009,18 +6009,18 @@ export interface components {
                 /** @example -----BEGIN PGP SIGNATURE-----.*-----END PGP SIGNATURE----- */
                 Signature?: string;
             }[];
-            SignedKeyLists: components["schemas"]["SignedKeyListInput"][];
+            SignedKeyLists: components['schemas']['SignedKeyListInput'][];
         };
         LegacyKeyInput: {
             /** @example -----BEGIN PGP PRIVATE KEY BLOCK-----.*-----END PGP PRIVATE KEY BLOCK----- */
             PrivateKey: string;
-            SignedKeyList: components["schemas"]["SignedKeyListInput"];
+            SignedKeyList: components['schemas']['SignedKeyListInput'];
         };
         ReactivateUserKeyInput: {
             /** @example -----BEGIN PGP PRIVATE KEY BLOCK-----.*-----END PGP PRIVATE KEY BLOCK----- */
             PrivateKey: string;
             AddressKeyFingerprints: string[];
-            SignedKeyLists: components["schemas"]["SignedKeyListInput"][];
+            SignedKeyLists: components['schemas']['SignedKeyListInput'][];
         };
         ResetUserKeyInput: {
             /**
@@ -6055,10 +6055,10 @@ export interface components {
                  * @example ----BEGIN PGP SIGNATURE-----.*
                  */
                 Signature?: string;
-                SignedKeyList?: components["schemas"]["SignedKeyListInput"];
+                SignedKeyList?: components['schemas']['SignedKeyListInput'];
             }[];
-            Auth: components["schemas"]["AuthInput2"];
-            AddressList: components["schemas"]["KTAddressListTransformer"];
+            Auth: components['schemas']['AuthInput2'];
+            AddressList: components['schemas']['KTAddressListTransformer'];
             /** @default null */
             OrgPrimaryUserKey: string | null;
             /** @default null */
@@ -6077,15 +6077,15 @@ export interface components {
             /** @example 0 */
             MaxVPN: number;
             /** @description Either 1=PROTON or 2=MANAGED (default) */
-            Type?: components["schemas"]["UserType"] | null;
+            Type?: components['schemas']['UserType'] | null;
             /**
              * @description Use only if type is 1=PROTON
              * @example user_name
              */
             Username: string;
             /** @description Invitation object if created using magic link */
-            Invitation?: components["schemas"]["MagicLinkInvitationInput"] | null;
-            Auth: components["schemas"]["AuthInfoInput"];
+            Invitation?: components['schemas']['MagicLinkInvitationInput'] | null;
+            Auth: components['schemas']['AuthInfoInput'];
             /**
              * @default 0
              * @enum {integer}
@@ -6116,8 +6116,8 @@ export interface components {
         };
         AcceptMemberUnprivatizationInput: {
             /** @description The user keys encrypted to the token contained in OrgActivationToken */
-            OrgUserKeys: components["schemas"]["PGPPrivateKey"][];
-            OrgActivationToken: components["schemas"]["PGPMessage"];
+            OrgUserKeys: components['schemas']['PGPPrivateKey'][];
+            OrgActivationToken: components['schemas']['PGPMessage'];
         };
         RequestMemberUnprivatizationInput: {
             /**
@@ -6125,13 +6125,13 @@ export interface components {
              * @example {"Address":"member@internal-domain.com", "Revision":2}
              */
             InvitationData: string;
-            InvitationSignature: components["schemas"]["PGPSignature"];
+            InvitationSignature: components['schemas']['PGPSignature'];
         };
         MemberManagePermissionsDto: {
             /** @description List of MemberIds */
             Ids: string[];
-            Permission: components["schemas"]["MemberPermission"];
-            Action: components["schemas"]["MemberPermissionAction"];
+            Permission: components['schemas']['MemberPermission'];
+            Action: components['schemas']['MemberPermissionAction'];
         };
         UpdateMemberKeysInput: {
             /**
@@ -6140,7 +6140,7 @@ export interface components {
              * @example cmFuZGJhc2U2NHN0cmluZw==
              */
             KeySalt: string;
-            UserKey: components["schemas"]["UserKeyInput"];
+            UserKey: components['schemas']['UserKeyInput'];
             AddressKeys: {
                 /** @example xRvCGwFq_TW7i8FtJaGyFEq0g== */
                 AddressID?: string;
@@ -6159,16 +6159,16 @@ export interface components {
                     Signature?: string;
                 };
             }[];
-            AddressList: components["schemas"]["KTAddressListTransformer"];
-            Auth: components["schemas"]["AuthInfoInput2"];
+            AddressList: components['schemas']['KTAddressListTransformer'];
+            Auth: components['schemas']['AuthInfoInput2'];
         };
         UnprivatizeMemberInput: {
             /** @deprecated */
-            UserKey?: components["schemas"]["UnprivatizeMemberUserKeyDto"] | null;
+            UserKey?: components['schemas']['UnprivatizeMemberUserKeyDto'] | null;
             /** @description All active member's user keys, with a signed and encrypted token to access them via the org key */
-            UserKeys?: components["schemas"]["UnprivatizeMemberUserKeyDto"][] | null;
+            UserKeys?: components['schemas']['UnprivatizeMemberUserKeyDto'][] | null;
             /** @description A token and signature for each address key to access them via the org key */
-            AddressKeys: components["schemas"]["UnprivatizeMemberAddressKeyDto"][];
+            AddressKeys: components['schemas']['UnprivatizeMemberAddressKeyDto'][];
         };
         UpdateOrganizationKeyBackupInput: {
             /**
@@ -6359,23 +6359,23 @@ export interface components {
              * @default null
              * @example -----BEGIN PGP MESSAGE-----*-----END PGP MESSAGE-----
              */
-            Token: components["schemas"]["PGPMessage"] | null;
+            Token: components['schemas']['PGPMessage'] | null;
             /**
              * @description Signature of the token made by the user key of the current user
              * @default null
              * @example -----BEGIN PGP SIGNATURE-----*-----END PGP SIGNATURE-----
              */
-            Signature: components["schemas"]["PGPSignature"] | null;
+            Signature: components['schemas']['PGPSignature'] | null;
             /**
              * @description Invite all other private admins to the new key
              * @default null
              */
-            AdminInvitations: components["schemas"]["ReplaceOrganizationKeyInvitationDto"][] | null;
+            AdminInvitations: components['schemas']['ReplaceOrganizationKeyInvitationDto'][] | null;
             /**
              * @description Activate new key for all other non-private admins
              * @default null
              */
-            AdminActivations: components["schemas"]["ReplaceOrganizationKeyActivationDto"][] | null;
+            AdminActivations: components['schemas']['ReplaceOrganizationKeyActivationDto'][] | null;
         };
         ActivateOrganizationKeyInput: {
             /**
@@ -6399,23 +6399,23 @@ export interface components {
             Signature: string | null;
         };
         MigrateOrganizationKeysInput: {
-            PrivateKey: components["schemas"]["PGPPrivateKey"];
-            Token: components["schemas"]["PGPMessage"];
-            Signature: components["schemas"]["PGPSignature"];
+            PrivateKey: components['schemas']['PGPPrivateKey'];
+            Token: components['schemas']['PGPMessage'];
+            Signature: components['schemas']['PGPSignature'];
             /**
              * @description Activate key for other active private admins
              * @default null
              */
-            AdminInvitations: components["schemas"]["MigrateOrganizationKeyInvitationDto"][] | null;
+            AdminInvitations: components['schemas']['MigrateOrganizationKeyInvitationDto'][] | null;
             /**
              * @description Activate new key for all other non-private admins
              * @default null
              */
-            AdminActivations: components["schemas"]["MigrateOrganizationKeyActivationDto"][] | null;
+            AdminActivations: components['schemas']['MigrateOrganizationKeyActivationDto'][] | null;
         };
         UpdateOrgKeyFingerprintSignatureInput: {
-            Signature: components["schemas"]["PGPSignature"];
-            AddressID: components["schemas"]["Id"];
+            Signature: components['schemas']['PGPSignature'];
+            AddressID: components['schemas']['Id'];
         };
         OrganizationSettings: {
             /**
@@ -6500,7 +6500,7 @@ export interface components {
              * @default []
              */
             EdugainAffiliations: string[];
-            SsoId?: components["schemas"]["Id"] | null;
+            SsoId?: components['schemas']['Id'] | null;
             SendingSubject: boolean;
         };
         SsoXml: {
@@ -6676,7 +6676,7 @@ export interface components {
         };
         /** AIAssistantFlagsInput */
         AIAssistantFlagsInput: {
-            AIAssistantFlags: components["schemas"]["AIAssistantFlags"];
+            AIAssistantFlags: components['schemas']['AIAssistantFlags'];
         };
         UpdateMemberLumoEntitlementInput: {
             /** @enum {integer} */
@@ -6710,22 +6710,22 @@ export interface components {
                  * Format: base64
                  * @example ++3dreJ+cHBSeEXvkxjLCRrf1...
                  */
-                "random-id-1"?: string;
+                'random-id-1'?: string;
                 /**
                  * Format: base64
                  * @example Xv5df3dreJ+cHBvkxjSeEXvkx...
                  */
-                "random-id-2"?: string;
+                'random-id-2'?: string;
                 /**
                  * Format: base64
                  * @example <base64_encoded_android_attestation_token>
                  */
-                "random-id-3"?: string;
+                'random-id-3'?: string;
                 /**
                  * Format: base64
                  * @example <base64_encoded_ios_device_check_token>
                  */
-                "random-id-4"?: string;
+                'random-id-4'?: string;
             } | null;
         };
         SendInvitationsInput: {
@@ -6735,13 +6735,13 @@ export interface components {
         RegisterDeviceInput: {
             /** @example 2335fcc381ef78a20e580065...515f4e8 */
             DeviceToken: string;
-            Environment: components["schemas"]["Environment"];
+            Environment: components['schemas']['Environment'];
             /** @default null */
-            PublicKey: components["schemas"]["PGPPublicKey"] | null;
+            PublicKey: components['schemas']['PGPPublicKey'] | null;
             /** @default null */
-            PingNotificationStatus: components["schemas"]["PingNotificationStatus"] | null;
+            PingNotificationStatus: components['schemas']['PingNotificationStatus'] | null;
             /** @default null */
-            PushNotificationStatus: components["schemas"]["PushNotificationStatus"] | null;
+            PushNotificationStatus: components['schemas']['PushNotificationStatus'] | null;
         };
         UploadAttachment: {
             /**
@@ -6751,7 +6751,7 @@ export interface components {
             Token: string;
             /** @description The body of attachment */
             Body: string;
-            Product: components["schemas"]["Product"];
+            Product: components['schemas']['Product'];
         };
         CancelPlanReport: {
             /**
@@ -6784,16 +6784,16 @@ export interface components {
         };
         Stream: {
             /** @default null */
-            Users: components["schemas"]["EventCollectionOutput"];
-            Addresses: components["schemas"]["EventCollectionOutput"];
-            Settings: components["schemas"]["EventCollectionOutput"];
+            Users: components['schemas']['EventCollectionOutput'];
+            Addresses: components['schemas']['EventCollectionOutput'];
+            Settings: components['schemas']['EventCollectionOutput'];
             /** @default null */
-            IncomingDefaults: components["schemas"]["EventCollectionOutput"];
+            IncomingDefaults: components['schemas']['EventCollectionOutput'];
             /** true if there is more events to pull */
             More: boolean;
             /** true if all data should be refreshed */
             Refresh: boolean;
-            EventID: components["schemas"]["Id"];
+            EventID: components['schemas']['Id'];
             /**
              * ProtonResponseCode
              * @example 1000
@@ -6837,7 +6837,7 @@ export interface components {
             Notify: 1 | 0 | null;
         };
         LabelIDs: {
-            LabelIDs: components["schemas"]["LabelID"][];
+            LabelIDs: components['schemas']['LabelID'][];
         };
         /** Signed Key List */
         KTKeyList: {
@@ -6915,7 +6915,7 @@ export interface components {
              * @example 70376905
              */
             UsedSpace: number;
-            ProductUsedSpace: components["schemas"]["UserUsage"];
+            ProductUsedSpace: components['schemas']['UserUsage'];
             /** @description 1 when the user's member has an AI seat, 0 otherwise */
             NumAI: number;
             /** @description the number of lumo seats attributed to the user, 0 otherwise */
@@ -6950,18 +6950,18 @@ export interface components {
              * @example 5
              */
             Services: number;
-            Delinquent: components["schemas"]["DelinquentState"];
-            Keys: components["schemas"]["UserKey"];
+            Delinquent: components['schemas']['DelinquentState'];
+            Keys: components['schemas']['UserKey'];
             Flags: {
                 protected?: boolean;
-                "onboard-checklist-storage-granted"?: boolean;
-                "has-temporary-password"?: boolean;
-                "test-account"?: boolean;
-                "no-login"?: boolean;
-                "recovery-attempt"?: boolean;
+                'onboard-checklist-storage-granted'?: boolean;
+                'has-temporary-password'?: boolean;
+                'test-account'?: boolean;
+                'no-login'?: boolean;
+                'recovery-attempt'?: boolean;
                 sso?: boolean;
                 /** @description User have no or only external addresses */
-                "no-proton-address"?: boolean;
+                'no-proton-address'?: boolean;
             };
         };
         UserKey: {
@@ -7071,8 +7071,8 @@ export interface components {
              * @example true
              */
             ProtonMX: Record<string, never>;
-            SignedKeyList: components["schemas"]["KTKeyList"];
-            Keys: components["schemas"]["AddressKey"][];
+            SignedKeyList: components['schemas']['KTKeyList'];
+            Keys: components['schemas']['AddressKey'][];
             /**
              * @description Bitflags representing noencrypt/nosign
              * @example 48
@@ -7104,11 +7104,11 @@ export interface components {
             };
         };
         AuthDeviceOutput: {
-            ID: components["schemas"]["Id"];
-            State: components["schemas"]["AuthDeviceState"];
+            ID: components['schemas']['Id'];
+            State: components['schemas']['AuthDeviceState'];
             /** @description The device name */
             Name: string;
-            LocalizedClientName: components["schemas"]["TranslatedStringInterface"];
+            LocalizedClientName: components['schemas']['TranslatedStringInterface'];
             /** @description The device platform */
             Platform?: string | null;
             /**
@@ -7132,9 +7132,9 @@ export interface components {
              */
             LastActivityTime: string;
             /** @description PGP message encrypted to the AddressID containing a 64-char random hex-encoded token */
-            ActivationToken?: components["schemas"]["PGPMessage"] | null;
-            ActivationAddressID?: components["schemas"]["Id"] | null;
-            MemberID?: components["schemas"]["Id"] | null;
+            ActivationToken?: components['schemas']['PGPMessage'] | null;
+            ActivationAddressID?: components['schemas']['Id'] | null;
+            MemberID?: components['schemas']['Id'] | null;
             /**
              * @description DeviceToken of the created device
              * @example wfih0367aa7dc0359bf5c42d15a93e6c
@@ -7225,30 +7225,30 @@ export interface components {
             };
             Flags: {
                 /** @description If the domain is intended to be used for custom addresses */
-                "mail-intent"?: boolean;
+                'mail-intent'?: boolean;
                 /** @description If the domain is intended to be used for SSO integration */
-                "sso-intent"?: boolean;
+                'sso-intent'?: boolean;
             };
         };
         /** GroupMemberResponse */
         GroupMemberResponse: {
-            ID: components["schemas"]["Id"];
-            Type: components["schemas"]["GroupMemberType"];
-            State: components["schemas"]["GroupMemberState"];
+            ID: components['schemas']['Id'];
+            Type: components['schemas']['GroupMemberType'];
+            State: components['schemas']['GroupMemberState'];
             CreateTime: number;
-            GroupID: components["schemas"]["Id"];
-            AddressID?: components["schemas"]["Id"] | null;
+            GroupID: components['schemas']['Id'];
+            AddressID?: components['schemas']['Id'] | null;
             Email?: string | null;
-            Permissions: components["schemas"]["GroupMemberPermissions"];
+            Permissions: components['schemas']['GroupMemberPermissions'];
         };
         /** GroupResponse */
         GroupResponse: {
-            ID: components["schemas"]["Id"];
+            ID: components['schemas']['Id'];
             Name: string;
             Address: unknown[];
-            Permissions: components["schemas"]["GroupPermissions"];
+            Permissions: components['schemas']['GroupPermissions'];
             CreateTime: number;
-            Flags: components["schemas"]["GroupFlags"];
+            Flags: components['schemas']['GroupFlags'];
             Description?: string | null;
         };
         MemberInfo: {
@@ -7304,7 +7304,7 @@ export interface components {
              * @description bit map: 1=TOTP, 2=FIDO2
              * @example 3
              */
-            "2faStatus": number;
+            '2faStatus': number;
             Keys: string[];
             /** @example -----BEGIN PUBLIC KEY BLOCK-----.*-----END PUBLIC KEY BLOCK----- */
             PublicKey: string;
@@ -7329,9 +7329,9 @@ export interface components {
         UpdateMemberRoleInput: {
             Role: number;
             /** @default null */
-            OrganizationKeyInvitation: components["schemas"]["OrganizationKeyInvitationDto"] | null;
+            OrganizationKeyInvitation: components['schemas']['OrganizationKeyInvitationDto'] | null;
             /** @default null */
-            OrganizationKeyActivation: components["schemas"]["OrganizationKeyActivationDto"] | null;
+            OrganizationKeyActivation: components['schemas']['OrganizationKeyActivationDto'] | null;
         };
         GetMemberUnprivatizationOutput: {
             /** @description State of the Unprivatization (0: declined), 1: pending, 2: ready */
@@ -7342,15 +7342,15 @@ export interface components {
              */
             InvitationData?: string | null;
             /** @description InvitationData signed with org key */
-            InvitationSignature?: components["schemas"]["PGPSignature"] | null;
+            InvitationSignature?: components['schemas']['PGPSignature'] | null;
             /** @description Email to send the invitation to */
             InvitationEmail?: string | null;
             /** @description Administrator email */
             AdminEmail: string;
             /** @description Fingerprint of the org key signed with primary address key */
-            OrgKeyFingerprintSignature?: components["schemas"]["PGPSignature"] | null;
+            OrgKeyFingerprintSignature?: components['schemas']['PGPSignature'] | null;
             /** @description Organization public key */
-            OrgPublicKey?: components["schemas"]["PGPPublicKey"] | null;
+            OrgPublicKey?: components['schemas']['PGPPublicKey'] | null;
             /** @description Whether the member should remain private after creation or be unprivatized */
             PrivateIntent: boolean;
         };
@@ -7369,7 +7369,7 @@ export interface components {
              * @example 1683644736
              */
             Time: number;
-            Status: components["schemas"]["AuthLogStatus"];
+            Status: components['schemas']['AuthLogStatus'];
             /**
              * @description Various values. See AuthLogEvent constants.
              * @example 23
@@ -7396,7 +7396,7 @@ export interface components {
              *                 See AuthLogProtection enum for possible values.
              * @example 1
              */
-            Protection?: components["schemas"]["AuthLogProtection"] | null;
+            Protection?: components['schemas']['AuthLogProtection'] | null;
             /**
              * @description Localized description of protection applied.
              *                 Can be missing. Only present if user has High Security enabled.
@@ -7467,7 +7467,7 @@ export interface components {
              * @description 0 - is not supposed to have access to org key, 1 - has access to org key, 2 - has lost access to key and needs to be re-invited, 3 - pending activation
              * @example 1
              */
-            AccessToOrgKey?: components["schemas"]["MemberOrgKeyStatus"] | null;
+            AccessToOrgKey?: components['schemas']['MemberOrgKeyStatus'] | null;
             /** @description Whether the organization has passwordless keys or not */
             Passwordless: boolean;
         };
@@ -7547,7 +7547,7 @@ export interface components {
                 /** @example 0 */
                 Reset?: number;
             };
-            "2FA": {
+            '2FA': {
                 /**
                  * @description 0 for disabled, 1 for OTP, 2 for FIDO2, 3 for both
                  * @example 3
@@ -7573,7 +7573,7 @@ export interface components {
                     Compromised?: number;
                 }[];
                 /** @description Contains the user's currently registered FIDO2 credentials. */
-                RegisteredKeys?: components["schemas"]["Fido2RegisteredKey"][];
+                RegisteredKeys?: components['schemas']['Fido2RegisteredKey'][];
             };
             /**
              * @description Bitmap informing which news the user is subscribed to:
@@ -7602,7 +7602,7 @@ export interface components {
              * @example 0
              */
             Density: number;
-            Theme: components["schemas"]["Theme2"];
+            Theme: components['schemas']['Theme2'];
             /** @example 1 */
             ThemeType: number;
             /**
@@ -7766,7 +7766,7 @@ export interface components {
              */
             Mode: string;
             SessionUID: string;
-            Session?: components["schemas"]["Session"] | null;
+            Session?: components['schemas']['Session'] | null;
             UserID: number;
             UserName: string;
             MaxTier: number;
@@ -7791,7 +7791,7 @@ export interface components {
              * @example enumeration
              * @enum {string}
              */
-            Type: "boolean" | "integer" | "float" | "string" | "enumeration" | "mixed";
+            Type: 'boolean' | 'integer' | 'float' | 'string' | 'enumeration' | 'mixed';
             /** @example 1 */
             Minimum: Record<string, never>;
             /** @example 100 */
@@ -7890,22 +7890,22 @@ export interface components {
                  * Format: base64
                  * @example ++3dreJ+cHBSeEXvkxjLCRrf1...
                  */
-                "random-id-1"?: string;
+                'random-id-1'?: string;
                 /**
                  * Format: base64
                  * @example Xv5df3dreJ+cHBvkxjSeEXvkx...
                  */
-                "random-id-2"?: string;
+                'random-id-2'?: string;
                 /**
                  * Format: base64
                  * @example <base64_encoded_android_attestation_token>
                  */
-                "random-id-3"?: string;
+                'random-id-3'?: string;
                 /**
                  * Format: base64
                  * @example <base64_encoded_ios_device_check_token>
                  */
-                "random-id-4"?: string;
+                'random-id-4'?: string;
             } | null;
             /**
              * @deprecated
@@ -7986,7 +7986,7 @@ export interface components {
             EmailsAvailable: number;
         };
         GetUserInvitationsOutput: {
-            UserInvitations: components["schemas"]["GetUserInvitationOutput"][];
+            UserInvitations: components['schemas']['GetUserInvitationOutput'][];
         };
         GetUserInvitationOutput: {
             /** @example xRvCGwFq_TW7i8FtJaGyFEq0g== */
@@ -7999,10 +7999,10 @@ export interface components {
             OrganizationName: string;
             /** @example family2022 | passfamily2024 */
             OrganizationPlanName: string;
-            Validation: components["schemas"]["AcceptInvitationValidation"];
+            Validation: components['schemas']['AcceptInvitationValidation'];
         };
         EventInfo: {
-            Code: components["schemas"]["ResponseCodeSuccess"];
+            Code: components['schemas']['ResponseCodeSuccess'];
             /**
              * Format: byte
              * @example ACXDmTaBub14w==
@@ -8028,7 +8028,7 @@ export interface components {
                  * @enum {integer}
                  */
                 Action?: 0 | 1 | 2 | 3;
-                Message?: components["schemas"]["MessageInfo"] & {
+                Message?: components['schemas']['MessageInfo'] & {
                     /** @deprecated */
                     LabelIDsAdded?: string[];
                     /** @deprecated */
@@ -8043,88 +8043,88 @@ export interface components {
                 Conversation?: {
                     /** @example AJuSqm0qvIL4LSMR9LWsqNO...a2OlAU_Iqr2Qcducsz-ZA== */
                     AddressID?: string;
-                } & components["schemas"]["Conversation"] & {
-                    LabelIDsAdded?: string[];
-                    LabelIDsRemoved?: string[];
-                    /**
-                     * @deprecated
-                     * @description Not available in the Events API
-                     */
-                    LabelIDs?: string[];
-                } & components["schemas"]["AttachmentsMetadata"];
+                } & components['schemas']['Conversation'] & {
+                        LabelIDsAdded?: string[];
+                        LabelIDsRemoved?: string[];
+                        /**
+                         * @deprecated
+                         * @description Not available in the Events API
+                         */
+                        LabelIDs?: string[];
+                    } & components['schemas']['AttachmentsMetadata'];
             }[];
             Importers: {
                 /** @example ziWi-ZOb28XR4sCGFCEpqQbd1...lEhjBbUPDMHGU699fw== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                Importer?: components["schemas"]["ImporterTransformer"];
+                Importer?: components['schemas']['ImporterTransformer'];
             }[];
             ImportReports: {
                 /** @example ARy95iNxhniEgYJrRrGv...F49RxFpMqWE_ZGDXEvGV2CEkA== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                ImportReport?: components["schemas"]["ImportReportTransformer"];
+                ImportReport?: components['schemas']['ImportReportTransformer'];
             }[];
             Contacts: {
                 /** @example afeaefaeTaBub14w== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                Contact?: components["schemas"]["Contact"];
+                Contact?: components['schemas']['Contact'];
             }[];
             ContactEmails: {
                 /** @example sadfaACXDmTaBub14w== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                ContactEmail?: components["schemas"]["ContactEmail"];
+                ContactEmail?: components['schemas']['ContactEmail'];
             }[];
             Filters: {
                 /** @example Ik65N-aChBuWFd...UvkFTwJFJPQg== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                Filter?: components["schemas"]["FilterOutput"];
+                Filter?: components['schemas']['FilterOutput'];
             }[];
             IncomingDefaults: {
                 /** @example Ik65N-aChBuWFd...UvkFTwJFJPQg== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                Filter?: components["schemas"]["IncomingDefault"];
+                Filter?: components['schemas']['IncomingDefault'];
             }[];
             OrgIncomingDefaults: {
                 /** @example Ik65N-aChBuWFd...UvkFTwJFJPQg== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                OrgIncomingDefault?: components["schemas"]["IncomingDefaultResponse"];
+                OrgIncomingDefault?: components['schemas']['IncomingDefaultResponse'];
             }[];
             Labels: {
                 /** @example sadfaACXDmTaBub14w== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                Label?: components["schemas"]["Label"];
+                Label?: components['schemas']['Label'];
             }[];
-            Subscription: components["schemas"]["Subscription"];
-            User: components["schemas"]["User"] & {
-                AccountRecovery?: components["schemas"]["AccountRecoveryAttempt"];
+            Subscription: components['schemas']['Subscription'];
+            User: components['schemas']['User'] & {
+                AccountRecovery?: components['schemas']['AccountRecoveryAttempt'];
             };
-            UserSettings: components["schemas"]["UserSettingsTransformer"];
-            MailSettings: components["schemas"]["Response"];
+            UserSettings: components['schemas']['UserSettingsTransformer'];
+            MailSettings: components['schemas']['Response'];
             VPNSettings: {
                 /** @example test-group */
                 GroupID?: string;
-            } & components["schemas"]["VPNSettings"];
+            } & components['schemas']['VPNSettings'];
             Invoices: {
                 /** @example IlnTbqicN-...-4NvrrIc6GLvDv28aKYVRRrSgEFhR_zhlkA== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                Invoice?: components["schemas"]["Invoice"];
+                Invoice?: components['schemas']['Invoice'];
             }[];
             Members: {
                 /** @example LO9aACXDmTaBub14w== */
@@ -8160,23 +8160,23 @@ export interface components {
                 ID?: string;
                 /** @example 2 */
                 Action?: number;
-                Domain?: components["schemas"]["DomainTransformer"];
+                Domain?: components['schemas']['DomainTransformer'];
             }[];
-            Addresses: components["schemas"]["AddressUser"][];
-            SignedAddressList?: components["schemas"]["KTAddressListTransformer"] | null;
+            Addresses: components['schemas']['AddressUser'][];
+            SignedAddressList?: components['schemas']['KTAddressListTransformer'] | null;
             IncomingAddressForwardings: {
                 /** @example 9aACXDmTaBub14w== */
                 ID?: string;
                 /** @example 2 */
                 Action?: number;
-                IncomingAddressForwarding?: components["schemas"]["IncomingAddressForwardingResponse"];
+                IncomingAddressForwarding?: components['schemas']['IncomingAddressForwardingResponse'];
             }[];
             OutgoingAddressForwardings: {
                 /** @example 9aACXDmTaBub14w== */
                 ID?: string;
                 /** @example 2 */
                 Action?: number;
-                OutgoingAddressForwarding?: components["schemas"]["OutgoingAddressForwardingResponse"];
+                OutgoingAddressForwarding?: components['schemas']['OutgoingAddressForwardingResponse'];
             }[];
             Organization: {
                 /** @example E-Corp */
@@ -8255,28 +8255,28 @@ export interface components {
              * @example 70376905
              */
             UsedSpace: number;
-            ProductUsedSpace: components["schemas"]["UserUsage"];
+            ProductUsedSpace: components['schemas']['UserUsage'];
             VPNProfiles: {
                 /** @example q_9v-GXEPLagg81jsUz2mHQ== */
                 ID?: string;
                 /** @example 2 */
                 Action?: number;
-                VPNProfile?: components["schemas"]["VPNProfile"];
+                VPNProfile?: components['schemas']['VPNProfile'];
             }[];
-            LogicalServers: components["schemas"]["VPNLogical"];
+            LogicalServers: components['schemas']['VPNLogical'];
             Calendars: {
                 /** @example wSGAB7IOerWAaIItAfyAIbSWIaFSS== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                Calendar?: components["schemas"]["CalendarWithMemberWithFlagsOutput"];
+                Calendar?: components['schemas']['CalendarWithMemberWithFlagsOutput'];
             }[];
             CalendarMembers: {
                 /** @example wSGAB7IOerWAaIItAfyAIbSWIaFSS== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                Member?: components["schemas"]["MemberWithFlagsOutput"];
+                Member?: components['schemas']['MemberWithFlagsOutput'];
             }[];
             Pushes: {
                 /** @example 1H8EGg3J1QpSDL6K8hGs...hrHx6nnGQ== */
@@ -8292,53 +8292,53 @@ export interface components {
                  */
                 Type?: string;
             }[];
-            Notifications: components["schemas"]["EventLoopNotificationTransformer"][];
-            CalendarUserSettings: components["schemas"]["UserSettingsTransformer2"];
+            Notifications: components['schemas']['EventLoopNotificationTransformer'][];
+            CalendarUserSettings: components['schemas']['UserSettingsTransformer2'];
             Wallets: {
                 /** @example wSGAB7IOerWAaIItAfyAIbSWIaFSS== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                Wallet?: components["schemas"]["WalletOutput"];
+                Wallet?: components['schemas']['WalletOutput'];
             }[];
             WalletAccounts: {
                 /** @example wSGAB7IOerWAaIItAfyAIbSWIaFSS== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                WalletAccount?: components["schemas"]["WalletAccountOutput"];
+                WalletAccount?: components['schemas']['WalletAccountOutput'];
             }[];
             WalletBitcoinAddresses: {
                 /** @example wSGAB7IOerWAaIItAfyAIbSWIaFSS== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                WalletBitcoinAddress?: components["schemas"]["WalletBitcoinAddressOutput"];
+                WalletBitcoinAddress?: components['schemas']['WalletBitcoinAddressOutput'];
             }[];
             WalletKeys: {
                 /** @example wSGAB7IOerWAaIItAfyAIbSWIaFSS== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                WalletKey?: components["schemas"]["WalletKeyOutput"];
+                WalletKey?: components['schemas']['WalletKeyOutput'];
             }[];
             WalletSettings: {
                 /** @example wSGAB7IOerWAaIItAfyAIbSWIaFSS== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                WalletSettings?: components["schemas"]["WalletSettingsOutput"];
+                WalletSettings?: components['schemas']['WalletSettingsOutput'];
             }[];
             WalletTransactions: {
                 /** @example wSGAB7IOerWAaIItAfyAIbSWIaFSS== */
                 ID?: string;
                 /** @example 1 */
                 Action?: number;
-                WalletTransaction?: components["schemas"]["WalletTransactionOutput"];
+                WalletTransaction?: components['schemas']['WalletTransactionOutput'];
             }[];
-            WalletUserSettings: components["schemas"]["WalletUserSettingsOutput"];
+            WalletUserSettings: components['schemas']['WalletUserSettingsOutput'];
             Notices: string[];
-        } & components["schemas"]["DriveShareRefreshCoreEventService"];
+        } & components['schemas']['DriveShareRefreshCoreEventService'];
         NotificationVersionTransformer: {
             /** @example wSGAB7IOerWAaIItAfyAIbSWIaFSS== */
             NotificationID: string;
@@ -8416,7 +8416,7 @@ export interface components {
             Token: string;
             /** @example -----BEGIN PGP SIGNATURE-----.* */
             Signature: string;
-            SignedKeyList: components["schemas"]["SignedKeyListInput"];
+            SignedKeyList: components['schemas']['SignedKeyListInput'];
             /** @example 3 */
             Revision: Record<string, never>;
         };
@@ -8445,8 +8445,8 @@ export interface components {
         /** @description Base64 encoded binary data */
         BinaryString: string;
         ResetAuthDevicesUserKeyDto: {
-            ID: components["schemas"]["EncryptedId"];
-            PrivateKey: components["schemas"]["PGPPrivateKey"];
+            ID: components['schemas']['EncryptedId'];
+            PrivateKey: components['schemas']['PGPPrivateKey'];
         };
         /**
          * @description <details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>0</td><td>Internal</td></tr><tr><td>1</td><td>External</td></tr><tr><td>2</td><td>InternalTypeExternal</td></tr></table></details></details>
@@ -8479,45 +8479,45 @@ export interface components {
          */
         GroupMemberPermissions: 0 | 1 | 2 | 3;
         ExternalGroupMembership: {
-            ID: components["schemas"]["Id"];
+            ID: components['schemas']['Id'];
             /** Format: date-time */
             CreateTime: string;
-            State: components["schemas"]["GroupMemberState"];
-            Type: components["schemas"]["GroupMemberType"];
+            State: components['schemas']['GroupMemberState'];
+            Type: components['schemas']['GroupMemberType'];
             Email?: string | null;
-            Permissions: components["schemas"]["GroupMemberPermissions"];
+            Permissions: components['schemas']['GroupMemberPermissions'];
             /** Format: date-time */
             JoinTime?: string | null;
-            Group: components["schemas"]["GroupMembershipGroup"];
+            Group: components['schemas']['GroupMembershipGroup'];
         };
         GroupMember: {
-            ID: components["schemas"]["Id"];
+            ID: components['schemas']['Id'];
             /** Format: date-time */
             CreateTime: string;
-            GroupID: components["schemas"]["Id"];
-            State: components["schemas"]["GroupMemberState"];
-            Type: components["schemas"]["GroupMemberType"];
-            AddressID?: components["schemas"]["Id"] | null;
+            GroupID: components['schemas']['Id'];
+            State: components['schemas']['GroupMemberState'];
+            Type: components['schemas']['GroupMemberType'];
+            AddressID?: components['schemas']['Id'] | null;
             Email?: string | null;
-            Permissions: components["schemas"]["GroupMemberPermissions"];
+            Permissions: components['schemas']['GroupMemberPermissions'];
         };
         InternalGroupMembership: {
-            ID: components["schemas"]["Id"];
+            ID: components['schemas']['Id'];
             /** Format: date-time */
             CreateTime: string;
-            State: components["schemas"]["GroupMemberState"];
-            Type: components["schemas"]["GroupMemberType"];
-            AddressId?: components["schemas"]["Id"] | null;
+            State: components['schemas']['GroupMemberState'];
+            Type: components['schemas']['GroupMemberType'];
+            AddressId?: components['schemas']['Id'] | null;
             Email?: string | null;
-            Permissions: components["schemas"]["GroupMemberPermissions"];
+            Permissions: components['schemas']['GroupMemberPermissions'];
             /** Format: date-time */
             JoinTime?: string | null;
-            TokenKeyPacket?: components["schemas"]["BinaryString"] | null;
-            TokenSignaturePacket?: components["schemas"]["BinaryString"] | null;
-            AddressSignaturePacket?: components["schemas"]["BinaryString"] | null;
-            Group: components["schemas"]["GroupMembershipGroup"];
-            ForwardingKeys: components["schemas"]["ForwardingKeys"];
-            GroupID: components["schemas"]["Id"];
+            TokenKeyPacket?: components['schemas']['BinaryString'] | null;
+            TokenSignaturePacket?: components['schemas']['BinaryString'] | null;
+            AddressSignaturePacket?: components['schemas']['BinaryString'] | null;
+            Group: components['schemas']['GroupMembershipGroup'];
+            ForwardingKeys: components['schemas']['ForwardingKeys'];
+            GroupID: components['schemas']['Id'];
         };
         AddressKeyToken: {
             /**
@@ -8547,7 +8547,7 @@ export interface components {
              * @example {"Address":"member@internal-domain.com", "Revision":2}
              */
             Data: Record<string, never>;
-            Signature?: components["schemas"]["PGPSignature"] | null;
+            Signature?: components['schemas']['PGPSignature'] | null;
             /**
              * @description The email to send an invitation to
              * @example some.user@example.com
@@ -8567,8 +8567,8 @@ export interface components {
          */
         MemberPermissionAction: 0 | 1;
         UserKeyInput: {
-            PrivateKey: components["schemas"]["PGPPrivateKey"];
-            OrgPrivateKey: components["schemas"]["PGPPrivateKey"];
+            PrivateKey: components['schemas']['PGPPrivateKey'];
+            OrgPrivateKey: components['schemas']['PGPPrivateKey'];
             /** @example -----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE----- */
             OrgToken: string;
         };
@@ -8586,35 +8586,35 @@ export interface components {
             Verifier: string;
         };
         UnprivatizeMemberUserKeyDto: {
-            OrgPrivateKey: components["schemas"]["PGPPrivateKey"];
-            OrgToken: components["schemas"]["PGPMessage"];
+            OrgPrivateKey: components['schemas']['PGPPrivateKey'];
+            OrgToken: components['schemas']['PGPMessage'];
         };
         UnprivatizeMemberAddressKeyDto: {
-            AddressKeyID: components["schemas"]["Id"];
-            OrgTokenKeyPacket: components["schemas"]["BinaryString"];
-            OrgSignature: components["schemas"]["PGPSignature"];
+            AddressKeyID: components['schemas']['Id'];
+            OrgTokenKeyPacket: components['schemas']['BinaryString'];
+            OrgSignature: components['schemas']['PGPSignature'];
         };
         ReplaceOrganizationKeyInvitationDto: {
-            MemberID: components["schemas"]["Id"];
-            TokenKeyPacket: components["schemas"]["BinaryString"];
-            Signature: components["schemas"]["PGPSignature"];
-            SignatureAddressID: components["schemas"]["Id"];
-            EncryptionAddressID: components["schemas"]["Id"];
+            MemberID: components['schemas']['Id'];
+            TokenKeyPacket: components['schemas']['BinaryString'];
+            Signature: components['schemas']['PGPSignature'];
+            SignatureAddressID: components['schemas']['Id'];
+            EncryptionAddressID: components['schemas']['Id'];
         };
         ReplaceOrganizationKeyActivationDto: {
-            MemberID: components["schemas"]["Id"];
-            TokenKeyPacket: components["schemas"]["BinaryString"];
-            Signature: components["schemas"]["PGPSignature"];
+            MemberID: components['schemas']['Id'];
+            TokenKeyPacket: components['schemas']['BinaryString'];
+            Signature: components['schemas']['PGPSignature'];
         };
         MigrateOrganizationKeyInvitationDto: {
-            MemberID: components["schemas"]["Id"];
-            TokenKeyPacket: components["schemas"]["BinaryString"];
-            Signature: components["schemas"]["PGPSignature"];
+            MemberID: components['schemas']['Id'];
+            TokenKeyPacket: components['schemas']['BinaryString'];
+            Signature: components['schemas']['PGPSignature'];
         };
         MigrateOrganizationKeyActivationDto: {
-            MemberID: components["schemas"]["Id"];
-            TokenKeyPacket: components["schemas"]["BinaryString"];
-            Signature: components["schemas"]["PGPSignature"];
+            MemberID: components['schemas']['Id'];
+            TokenKeyPacket: components['schemas']['BinaryString'];
+            Signature: components['schemas']['PGPSignature'];
         };
         /**
          * @description <p>Possible values:<br>- 0: Unset<br>- 1: Off<br>- 2: Server-Only<br>- 3: Client-Only</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>0</td><td>Unset</td></tr><tr><td>1</td><td>Off</td></tr><tr><td>2</td><td>ServerOnly</td></tr><tr><td>3</td><td>ClientOnly</td></tr></table></details></details>
@@ -8643,7 +8643,7 @@ export interface components {
          * @enum {integer}
          */
         Product: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-        EventCollectionOutput: components["schemas"]["EventOutput"][];
+        EventCollectionOutput: components['schemas']['EventOutput'][];
         /** @description An encrypted Label ID and default integer Label ID */
         LabelID: string;
         /** Product used space */
@@ -8755,19 +8755,19 @@ export interface components {
          */
         GroupMemberState: 0 | 1 | 2 | 3 | 4;
         OrganizationKeyInvitationDto: {
-            TokenKeyPacket: components["schemas"]["BinaryString"];
+            TokenKeyPacket: components['schemas']['BinaryString'];
             /** @description Signature of the token key packet by the inviters address key */
             Signature: string;
-            SignatureAddressID: components["schemas"]["EncryptedId"];
-            EncryptionAddressID: components["schemas"]["EncryptedId"];
+            SignatureAddressID: components['schemas']['EncryptedId'];
+            EncryptionAddressID: components['schemas']['EncryptedId'];
         };
         OrganizationKeyActivationDto: {
-            TokenKeyPacket: components["schemas"]["BinaryString"];
+            TokenKeyPacket: components['schemas']['BinaryString'];
             /** @description Signature of the token key packet by the user key of the member */
             Signature: string;
         };
         /** @enum {string} */
-        AuthLogStatus: "success" | "attempt" | "failure";
+        AuthLogStatus: 'success' | 'attempt' | 'failure';
         /**
          * @description <p>ID of protection applied.<br />
          *                 Can be missing. Only present if user has High Security enabled.<br />
@@ -8836,10 +8836,10 @@ export interface components {
              * @example Me
              */
             SenderName: string;
-            Sender: components["schemas"]["Sender"];
-            ToList: components["schemas"]["Recipient"];
-            CcList: components["schemas"]["Recipient"];
-            BccList: components["schemas"]["Recipient"];
+            Sender: components['schemas']['Sender'];
+            ToList: components['schemas']['Recipient'];
+            CcList: components['schemas']['Recipient'];
+            BccList: components['schemas']['Recipient'];
             /** @example 1433890289 */
             Time: number;
             /** @example 1433890289 */
@@ -8912,8 +8912,8 @@ export interface components {
              * @example 8198
              */
             Flags: number;
-            AttachmentInfo: components["schemas"]["GroupedAttachmentsCount"];
-            AttachmentsMetadata: components["schemas"]["Metadata"][];
+            AttachmentInfo: components['schemas']['GroupedAttachmentsCount'];
+            AttachmentsMetadata: components['schemas']['Metadata'][];
             /**
              * @deprecated
              * @description Deprecated, check Sender.* properties
@@ -8952,9 +8952,9 @@ export interface components {
              */
             Subject: string;
             /** @description The list of senders */
-            Senders: components["schemas"]["Sender2"][];
+            Senders: components['schemas']['Sender2'][];
             /** @description The list of recipients */
-            Recipients: components["schemas"]["Recipient2"][];
+            Recipients: components['schemas']['Recipient2'][];
             /**
              * @description The number of messages in the conversation.
              * @example 5
@@ -9024,8 +9024,8 @@ export interface components {
             BimiSelector?: string | null;
         };
         AttachmentsMetadata: {
-            AttachmentInfo: components["schemas"]["GroupedAttachmentsCount2"];
-            AttachmentsMetadata: components["schemas"]["Metadata2"][];
+            AttachmentInfo: components['schemas']['GroupedAttachmentsCount2'];
+            AttachmentsMetadata: components['schemas']['Metadata2'][];
         };
         /** Importer */
         ImporterTransformer: {
@@ -9072,13 +9072,13 @@ export interface components {
             /** @example 76844 */
             INBOX: number;
             /** @example 0 */
-            "\u041E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0435": number;
+            '\u041E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0435': number;
             /** @example 0 */
-            "\u0427\u0435\u0440\u043D\u043E\u0432\u0438\u043A\u0438": number;
+            '\u0427\u0435\u0440\u043D\u043E\u0432\u0438\u043A\u0438': number;
             /** @example 0 */
-            "INBOX/Social": number;
+            'INBOX/Social': number;
             /** @example 0 */
-            "INBOX/Newsletters": number;
+            'INBOX/Newsletters': number;
         };
         /** ImportReport */
         ImportReportTransformer: {
@@ -9177,11 +9177,11 @@ export interface components {
              */
             ModifyTime: number;
             /** @description List of emails, only included when returning one record */
-            ContactEmails: components["schemas"]["ContactEmail"][];
+            ContactEmails: components['schemas']['ContactEmail'][];
             /** @description Labels on Contact, ignore, maybe future feature */
             LabelIDs: string[];
             /** @description Only included when returning one record */
-            Cards: components["schemas"]["ContactData"][];
+            Cards: components['schemas']['ContactData'][];
         };
         ContactEmail: {
             /**
@@ -9217,7 +9217,7 @@ export interface components {
             IsProton: number;
         };
         FilterOutput: {
-            ID: components["schemas"]["Id"];
+            ID: components['schemas']['Id'];
             Name: string;
             /** @example 1 */
             Status: number;
@@ -9231,7 +9231,7 @@ export interface components {
              *             keep;
              *         } */
             Sieve: string;
-            Tree: components["schemas"]["Tree"];
+            Tree: components['schemas']['Tree'];
             /** @example 1 */
             Version: number;
         };
@@ -9261,7 +9261,7 @@ export interface components {
             Currency: string;
             /** @example 1500 */
             Amount: number;
-            Plans: components["schemas"]["Plan"][];
+            Plans: components['schemas']['Plan'][];
             /** @example 1 */
             Renew: boolean;
         };
@@ -9743,29 +9743,29 @@ export interface components {
         };
         /** IncomingAddressForwardingResponse */
         IncomingAddressForwardingResponse: {
-            ID: components["schemas"]["Id"];
-            Type: components["schemas"]["AddressForwardingType"];
-            State: components["schemas"]["AddressForwardingState"];
+            ID: components['schemas']['Id'];
+            Type: components['schemas']['AddressForwardingType'];
+            State: components['schemas']['AddressForwardingState'];
             /** When an email is received by forwarderEmail, it will be forwarded to forwardeeEmail or forwardeeAddressID */
             ForwarderEmail: string;
-            ForwardeeAddressID: components["schemas"]["Id"];
+            ForwardeeAddressID: components['schemas']['Id'];
             CreateTime: number;
             /** The forwarding keys encrypted to the tokens. They are present only for encrypted forwarding
              *     in the pending state. To activate the forwarding all of them must be re-encrypted to the user
              *     keys and added to the correct address keyring. */
-            ForwardingKeys: components["schemas"]["ActivationForwardingKey"][];
-            Filter?: components["schemas"]["AddressForwardingFilter"] | null;
+            ForwardingKeys: components['schemas']['ActivationForwardingKey'][];
+            Filter?: components['schemas']['AddressForwardingFilter'] | null;
         };
         /** OutgoingAddressForwardingResponse */
         OutgoingAddressForwardingResponse: {
-            ID: components["schemas"]["Id"];
-            Type: components["schemas"]["AddressForwardingType"];
-            State: components["schemas"]["AddressForwardingState"];
-            ForwarderAddressID: components["schemas"]["Id"];
+            ID: components['schemas']['Id'];
+            Type: components['schemas']['AddressForwardingType'];
+            State: components['schemas']['AddressForwardingState'];
+            ForwarderAddressID: components['schemas']['Id'];
             /** The final email address to forward messages to * */
             ForwardeeEmail: string;
             CreateTime: number;
-            Filter?: components["schemas"]["AddressForwardingFilter"] | null;
+            Filter?: components['schemas']['AddressForwardingFilter'] | null;
         };
         VPNProfile: Record<string, never>;
         VPNLogical: {
@@ -9835,7 +9835,7 @@ export interface components {
              * @example Stockholm
              */
             City?: number | null;
-            Servers: components["schemas"]["VPNServerTransformerInterface"][];
+            Servers: components['schemas']['VPNServerTransformerInterface'][];
             /**
              * @description Describe in a spiritual way how much the logical server is loaded
              * @example 0
@@ -9861,10 +9861,10 @@ export interface components {
             Score: Record<string, never>;
         };
         CalendarWithMemberWithFlagsOutput: {
-            Members: components["schemas"]["MemberWithFlagsOutput"][];
-            ID: components["schemas"]["Id"];
-            Type: components["schemas"]["CalendarType"];
-            Owner: components["schemas"]["CalendarOwner"];
+            Members: components['schemas']['MemberWithFlagsOutput'][];
+            ID: components['schemas']['Id'];
+            Type: components['schemas']['CalendarType'];
+            Owner: components['schemas']['CalendarOwner'];
             /** Format: date-time */
             CreateTime: string;
         };
@@ -9874,7 +9874,7 @@ export interface components {
              * @example 1
              */
             Flags: number;
-            ID: components["schemas"]["Id"];
+            ID: components['schemas']['Id'];
             /**
              * @description Flags bitmap:<br/>- `1`: Super-owner<br/>- `2`: Owner<br/>- `4`: Admin<br/>- `8`: Read member list<br/>- `16`: Write events<br/>- `32`: Read events (full details)<br/>- `64`: Availability view only<br/>
              * @example 63
@@ -9882,8 +9882,8 @@ export interface components {
             Permissions: number;
             /** @example andy@pm.me */
             Email: string;
-            AddressId: components["schemas"]["Id"];
-            CalendarId: components["schemas"]["Id"];
+            AddressId: components['schemas']['Id'];
+            CalendarId: components['schemas']['Id'];
             /** @example Organizational Calendar */
             Name: string;
             /** @example This text describes the calendar */
@@ -9979,7 +9979,7 @@ export interface components {
             ShareBusySchedule: number;
         };
         WalletOutput: {
-            ID: components["schemas"]["Id"];
+            ID: components['schemas']['Id'];
             /**
              * @description 1 if the wallet has a passphrase
              * @example 0
@@ -9995,13 +9995,13 @@ export interface components {
              * @description Encrypted wallet mnemonic with the WalletKey, in base64 format
              * @example <base64_encoded_mnemonic>
              */
-            Mnemonic?: components["schemas"]["BinaryString"] | null;
+            Mnemonic?: components['schemas']['BinaryString'] | null;
             /**
              * @description Unique identifier of the mnemonic, using the first 4 bytes of the master public key hash
              * @example 912914fb
              */
             Fingerprint?: string | null;
-            Name: components["schemas"]["BinaryString"];
+            Name: components['schemas']['BinaryString'];
             /**
              * @description Order of priority
              * @example 1
@@ -10012,9 +10012,9 @@ export interface components {
              * @description Encrypted wallet public key with the WalletKey, in base64 format, only if on-chain watch-only
              * @example <base64_encoded_publickey>
              */
-            PublicKey?: components["schemas"]["BinaryString"] | null;
-            Status: components["schemas"]["WalletStatus"];
-            Type: components["schemas"]["WalletType"];
+            PublicKey?: components['schemas']['BinaryString'] | null;
+            Status: components['schemas']['WalletStatus'];
+            Type: components['schemas']['WalletType'];
             /**
              * @description Set to 1 if wallet key needs to be rotated
              * @example 0
@@ -10027,15 +10027,15 @@ export interface components {
             Legacy: number;
         };
         WalletAccountOutput: {
-            ID: components["schemas"]["Id"];
-            WalletID: components["schemas"]["Id"];
+            ID: components['schemas']['Id'];
+            WalletID: components['schemas']['Id'];
             /**
              * @description Preferred fiat currency
              * @example CHF
              */
             FiatCurrency: string;
-            DerivationPath: components["schemas"]["DerivationPath"];
-            Label: components["schemas"]["BinaryString"];
+            DerivationPath: components['schemas']['DerivationPath'];
+            Label: components['schemas']['BinaryString'];
             /** @description The index number that wallet last used to create address */
             LastUsedIndex: number;
             /**
@@ -10048,23 +10048,23 @@ export interface components {
              * @example 1
              */
             Priority: number;
-            ScriptType: components["schemas"]["ScriptType"];
+            ScriptType: components['schemas']['ScriptType'];
             Addresses: unknown[];
         };
         WalletBitcoinAddressOutput: {
-            ID: components["schemas"]["Id"];
-            WalletID: components["schemas"]["Id"];
-            WalletAccountID: components["schemas"]["Id"];
+            ID: components['schemas']['Id'];
+            WalletID: components['schemas']['Id'];
+            WalletAccountID: components['schemas']['Id'];
             Fetched: number;
             Used: number;
             /** @default null */
-            BitcoinAddress: components["schemas"]["BitcoinAddress"] | null;
+            BitcoinAddress: components['schemas']['BitcoinAddress'] | null;
             /**
              * @description Detached signature of the bitcoin address
              * @default null
              * @example -----BEGIN PGP SIGNATURE-----...
              */
-            BitcoinAddressSignature: components["schemas"]["PGPSignature"] | null;
+            BitcoinAddressSignature: components['schemas']['PGPSignature'] | null;
             /**
              * @description Index of the bitcoin address
              * @default null
@@ -10073,9 +10073,9 @@ export interface components {
             BitcoinAddressIndex: number | null;
         };
         WalletKeyOutput: {
-            ID: components["schemas"]["Id"];
-            WalletID: components["schemas"]["Id"];
-            UserKeyID: components["schemas"]["Id"];
+            ID: components['schemas']['Id'];
+            WalletID: components['schemas']['Id'];
+            UserKeyID: components['schemas']['Id'];
             /**
              * @description Encrypted AES-GCM 256 key used to encrypt the mnemonic or public key, as armored PGP
              * @example -----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----
@@ -10088,7 +10088,7 @@ export interface components {
             WalletKeySignature: string;
         };
         WalletSettingsOutput: {
-            WalletID: components["schemas"]["Id"];
+            WalletID: components['schemas']['Id'];
             /**
              * @description Hide accounts, only used for on-chain wallet
              * @example 0
@@ -10116,10 +10116,10 @@ export interface components {
             ShowWalletRecovery: boolean;
         };
         WalletTransactionOutput: {
-            ID: components["schemas"]["Id"];
-            WalletID: components["schemas"]["Id"];
-            WalletAccountID: components["schemas"]["Id"];
-            TransactionID: components["schemas"]["PGPMessage"];
+            ID: components['schemas']['Id'];
+            WalletID: components['schemas']['Id'];
+            WalletAccountID: components['schemas']['Id'];
+            TransactionID: components['schemas']['PGPMessage'];
             /**
              * @description Unix timestamp of when the transaction got created in Proton Wallet or confirmed in blockchain for incoming ones
              * @example 1707287982
@@ -10131,20 +10131,20 @@ export interface components {
             IsPrivate: number;
             /** @description Set to 1 if user did not want to reveal its identify during sending */
             IsAnonymous: number;
-            Type: components["schemas"]["TransactionType"];
-            HashedTransactionID?: components["schemas"]["BinaryString"] | null;
+            Type: components['schemas']['TransactionType'];
+            HashedTransactionID?: components['schemas']['BinaryString'] | null;
             /** @default null */
-            Label: components["schemas"]["BinaryString"] | null;
+            Label: components['schemas']['BinaryString'] | null;
             /** @default null */
-            ExchangeRate: components["schemas"]["ExchangeRateOutput"] | null;
+            ExchangeRate: components['schemas']['ExchangeRateOutput'] | null;
             /** @default null */
-            Sender: components["schemas"]["PGPMessage"] | null;
+            Sender: components['schemas']['PGPMessage'] | null;
             /** @default null */
-            ToList: components["schemas"]["PGPMessage"] | null;
+            ToList: components['schemas']['PGPMessage'] | null;
             /** @default null */
-            Subject: components["schemas"]["PGPMessage"] | null;
+            Subject: components['schemas']['PGPMessage'] | null;
             /** @default null */
-            Body: components["schemas"]["PGPMessage"] | null;
+            Body: components['schemas']['PGPMessage'] | null;
         };
         WalletUserSettingsOutput: {
             /**
@@ -10200,17 +10200,17 @@ export interface components {
             };
         };
         GroupMembershipGroup: {
-            ID: components["schemas"]["Id"];
+            ID: components['schemas']['Id'];
             Name: string;
             Address: string;
         };
         ForwardingKeys: {
-            PrivateKey?: components["schemas"]["PGPPrivateKey"] | null;
-            ActivationToken?: components["schemas"]["PGPMessage"] | null;
+            PrivateKey?: components['schemas']['PGPPrivateKey'] | null;
+            ActivationToken?: components['schemas']['PGPMessage'] | null;
         };
         EventOutput: {
-            ID?: components["schemas"]["Id"] | null;
-            Action: components["schemas"]["EventAction"];
+            ID?: components['schemas']['Id'] | null;
+            Action: components['schemas']['EventAction'];
         };
         Sender: {
             /** @example foo@protonmail.dev */
@@ -10267,46 +10267,46 @@ export interface components {
         /** @description Attachment counts grouped by the MIME type and disposition.
          *             Listed types here are an example */
         GroupedAttachmentsCount: {
-            "image/jpeg": {
+            'image/jpeg': {
                 /** @example 2 */
                 inline?: number;
                 /** @example 1 */
                 attachment?: number;
             };
-            "text/calendar": {
+            'text/calendar': {
                 /** @example 1 */
                 attachment?: number;
             };
         };
         Metadata: {
-            ID: components["schemas"]["Id2"];
+            ID: components['schemas']['Id2'];
             Name?: string | null;
             Size: number;
             MIMEType: string;
-            Disposition?: components["schemas"]["Disposition"] | null;
+            Disposition?: components['schemas']['Disposition'] | null;
         };
         Sender2: Record<string, never>;
         Recipient2: Record<string, never>;
         /** @description Attachment counts grouped by the MIME type and disposition.
          *             Listed types here are an example */
         GroupedAttachmentsCount2: {
-            "image/jpeg": {
+            'image/jpeg': {
                 /** @example 2 */
                 inline?: number;
                 /** @example 1 */
                 attachment?: number;
             };
-            "text/calendar": {
+            'text/calendar': {
                 /** @example 1 */
                 attachment?: number;
             };
         };
         Metadata2: {
-            ID: components["schemas"]["Id3"];
+            ID: components['schemas']['Id3'];
             Name?: string | null;
             Size: number;
             MIMEType: string;
-            Disposition?: components["schemas"]["Disposition2"] | null;
+            Disposition?: components['schemas']['Disposition2'] | null;
         };
         ContactData: {
             /**
@@ -10412,9 +10412,9 @@ export interface components {
         };
         /** AddressForwardingFilter */
         AddressForwardingFilter: {
-            Tree: components["schemas"]["Tree"];
+            Tree: components['schemas']['Tree'];
             Sieve: string;
-            Version: components["schemas"]["SieveVersion"];
+            Version: components['schemas']['SieveVersion'];
         };
         VPNServerTransformerInterface: {
             /**
@@ -10575,7 +10575,7 @@ export interface components {
          */
         TransactionType: 1 | 2 | 3 | 4;
         ExchangeRateOutput: {
-            ID: components["schemas"]["Id"];
+            ID: components['schemas']['Id'];
             /**
              * @description Bitcoin unit of the exchange rate
              * @example BTC
@@ -10615,11 +10615,11 @@ export interface components {
         /** @description An encrypted ID */
         Id2: string;
         /** @enum {string} */
-        Disposition: "attachment" | "inline";
+        Disposition: 'attachment' | 'inline';
         /** @description An encrypted ID */
         Id3: string;
         /** @enum {string} */
-        Disposition2: "attachment" | "inline";
+        Disposition2: 'attachment' | 'inline';
         /**
          * @description <details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>2</td><td>V2</td></tr></table></details></details>
          * @enum {integer}
@@ -10631,11 +10631,11 @@ export interface components {
         ProtonSuccessResponse: {
             headers: {
                 /** @description The same as the body code */
-                "X-Pm-Code"?: 1000;
+                'X-Pm-Code'?: 1000;
                 [name: string]: unknown;
             };
             content: {
-                "application/json": components["schemas"]["ProtonSuccess"];
+                'application/json': components['schemas']['ProtonSuccess'];
             };
         };
         /** @description General Error */
@@ -10644,7 +10644,7 @@ export interface components {
                 [name: string]: unknown;
             };
             content: {
-                "application/json": components["schemas"]["ProtonError"];
+                'application/json': components['schemas']['ProtonError'];
             };
         };
     };
@@ -10655,7 +10655,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    "get_core-{_version}-addresses-allowAddressDeletion": {
+    'get_core-{_version}-addresses-allowAddressDeletion': {
         parameters: {
             query?: never;
             header?: never;
@@ -10674,7 +10674,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-keys-address-active": {
+    'put_core-{_version}-keys-address-active': {
         parameters: {
             query?: never;
             header?: never;
@@ -10685,7 +10685,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description The address ID
                      * @example ACXDmTa...Bub14w==
@@ -10719,15 +10719,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        SignedKeyList?: components["schemas"]["KTKeyList"] | null;
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        SignedKeyList?: components['schemas']['KTKeyList'] | null;
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-keys": {
+    'get_core-{_version}-keys': {
         parameters: {
             query?: {
                 Email?: string;
@@ -10747,8 +10747,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description 1:Internal, 2:External
                          * @example 1
@@ -10778,7 +10778,7 @@ export interface operations {
                              */
                             Source?: 0 | 1 | 2;
                         }[];
-                        SignedKeyList?: components["schemas"]["KTKeyList"];
+                        SignedKeyList?: components['schemas']['KTKeyList'];
                         /** @example [] */
                         Warnings?: string[];
                         /**
@@ -10791,7 +10791,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-keys": {
+    'post_core-{_version}-keys': {
         parameters: {
             query?: never;
             header?: never;
@@ -10802,7 +10802,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateLegacyKeyInput"];
+                'application/json': components['schemas']['CreateLegacyKeyInput'];
             };
         };
         responses: {
@@ -10812,8 +10812,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Key?: {
                             /** @example G1MbEt3Ep5P_EWz8WbHVAOl_6h== */
                             ID?: string;
@@ -10840,7 +10840,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-keys-address": {
+    'post_core-{_version}-keys-address': {
         parameters: {
             query?: never;
             header?: never;
@@ -10851,7 +10851,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example xRvCGwFq_TW7...i8FtJaGyFEq0g== */
                     AddressID?: string;
                     /** @example -----BEGIN PGP PRIVATE KEY BLOCK-----.*-----END PGP PRIVATE KEY BLOCK----- */
@@ -10880,8 +10880,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Key?: {
                             /** @example G1MbEt3Ep5P_EWz8WbHVAOl_6h== */
                             ID?: string;
@@ -10910,7 +10910,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-keys-group": {
+    'post_core-{_version}-keys-group': {
         parameters: {
             query?: never;
             header?: never;
@@ -10921,7 +10921,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example xRvCGwFq_TW7...i8FtJaGyFEq0g== */
                     AddressID?: string;
                     /** @example -----BEGIN PGP PRIVATE KEY BLOCK-----.*-----END PGP PRIVATE KEY BLOCK----- */
@@ -10946,8 +10946,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Key?: {
                             /** @example G1MbEt3Ep5P_EWz8WbHVAOl_6h== */
                             ID?: string;
@@ -10972,7 +10972,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-keys-setup": {
+    'post_core-{_version}-keys-setup': {
         parameters: {
             query?: {
                 /**
@@ -10989,7 +10989,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["SetupKeyInput"];
+                'application/json': components['schemas']['SetupKeyInput'];
             };
         };
         responses: {
@@ -10999,10 +10999,10 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        User?: components["schemas"]["User"] & {
-                            Keys?: components["schemas"]["UserKey"] & {
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        User?: components['schemas']['User'] & {
+                            Keys?: components['schemas']['UserKey'] & {
                                 /** @example 3 */
                                 Flags?: number;
                             };
@@ -11024,7 +11024,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-keys-{enc_id}-delete": {
+    'put_core-{_version}-keys-{enc_id}-delete': {
         parameters: {
             query?: never;
             header?: never;
@@ -11040,7 +11040,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["SignedKeyListInputWrapper"];
+                'application/json': components['schemas']['SignedKeyListInputWrapper'];
             };
         };
         responses: {
@@ -11050,14 +11050,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-keys-address-{enc_id}-delete": {
+    'post_core-{_version}-keys-address-{enc_id}-delete': {
         parameters: {
             query?: never;
             header?: never;
@@ -11073,7 +11073,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["SignedKeyListInputWrapper"];
+                'application/json': components['schemas']['SignedKeyListInputWrapper'];
             };
         };
         responses: {
@@ -11083,14 +11083,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-keys-private": {
+    'put_core-{_version}-keys-private': {
         parameters: {
             query?: never;
             header?: never;
@@ -11101,7 +11101,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateKeyInput"];
+                'application/json': components['schemas']['UpdateKeyInput'];
             };
         };
         responses: {
@@ -11111,8 +11111,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -11123,21 +11123,21 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-images-logo": {
+    'get_core-{_version}-images-logo': {
         parameters: {
             query?: {
                 /** @example noreply%40amazon.com */
-                Address?: components["schemas"]["LogoRequest"]["Address"];
+                Address?: components['schemas']['LogoRequest']['Address'];
                 /** @example amazon.com */
-                Domain?: components["schemas"]["LogoRequest"]["Domain"];
+                Domain?: components['schemas']['LogoRequest']['Domain'];
                 /** @example 64 */
-                Size?: components["schemas"]["LogoRequest"]["Size"];
-                Mode?: components["schemas"]["LogoRequest"]["Mode"];
-                BimiSelector?: components["schemas"]["LogoRequest"]["BimiSelector"];
+                Size?: components['schemas']['LogoRequest']['Size'];
+                Mode?: components['schemas']['LogoRequest']['Mode'];
+                BimiSelector?: components['schemas']['LogoRequest']['BimiSelector'];
                 /** @example 2 */
-                MaxScaleUpFactor?: components["schemas"]["LogoRequest"]["MaxScaleUpFactor"];
-                Format?: components["schemas"]["LogoRequest"]["Format"];
-                ComputedAddress?: components["schemas"]["LogoRequest"]["ComputedAddress"];
+                MaxScaleUpFactor?: components['schemas']['LogoRequest']['MaxScaleUpFactor'];
+                Format?: components['schemas']['LogoRequest']['Format'];
+                ComputedAddress?: components['schemas']['LogoRequest']['ComputedAddress'];
             };
             header?: never;
             path: {
@@ -11153,7 +11153,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/octet-stream": string;
+                    'application/octet-stream': string;
                 };
             };
             /** @description Return an empty image when we cannot find a valid logo */
@@ -11165,7 +11165,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-members-{enc_id}-addresses": {
+    'get_core-{_version}-members-{enc_id}-addresses': {
         parameters: {
             query?: {
                 /**
@@ -11199,15 +11199,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Addresses?: components["schemas"]["AddressUser"][];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Addresses?: components['schemas']['AddressUser'][];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-members-{enc_id}-addresses": {
+    'post_core-{_version}-members-{enc_id}-addresses': {
         parameters: {
             query?: never;
             header?: never;
@@ -11219,7 +11219,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateAddressInput"];
+                'application/json': components['schemas']['CreateAddressInput'];
             };
         };
         responses: {
@@ -11229,9 +11229,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Address?: components["schemas"]["AddressUser"] & {
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Address?: components['schemas']['AddressUser'] & {
                             /** @example Fred */
                             MemberName?: string;
                             /** @example gony7nIWbnqaj8gebXLCQre1H1ZTKkhhFxA== */
@@ -11242,11 +11242,11 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-addresses": {
+    'get_core-{_version}-addresses': {
         parameters: {
             query?: {
-                PageSize?: components["schemas"]["OffsetPagination"]["PageSize"] & unknown;
-                Page?: components["schemas"]["OffsetPagination"]["Page"] & unknown;
+                PageSize?: components['schemas']['OffsetPagination']['PageSize'] & unknown;
+                Page?: components['schemas']['OffsetPagination']['Page'] & unknown;
             };
             header?: never;
             path: {
@@ -11262,16 +11262,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Addresses?: components["schemas"]["AddressUser"][];
-                        SignedAddressList?: components["schemas"]["KTAddressListTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Addresses?: components['schemas']['AddressUser'][];
+                        SignedAddressList?: components['schemas']['KTAddressListTransformer'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-addresses": {
+    'post_core-{_version}-addresses': {
         parameters: {
             query?: never;
             header?: never;
@@ -11282,7 +11282,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateAddressInput"];
+                'application/json': components['schemas']['CreateAddressInput'];
             };
         };
         responses: {
@@ -11292,9 +11292,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Address?: components["schemas"]["AddressUser"] & {
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Address?: components['schemas']['AddressUser'] & {
                             /** @example Fred */
                             MemberName?: string;
                             /** @example gony7nIWbnqaj8gebXLCQre1H1ZTKkhhFxA== */
@@ -11305,7 +11305,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-members-addresses-available": {
+    'post_core-{_version}-members-addresses-available': {
         parameters: {
             query?: never;
             header?: never;
@@ -11316,7 +11316,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateAddressInput"];
+                'application/json': components['schemas']['CreateAddressInput'];
             };
         };
         responses: {
@@ -11329,7 +11329,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-addresses-order": {
+    'put_core-{_version}-addresses-order': {
         parameters: {
             query?: never;
             header?: never;
@@ -11340,7 +11340,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ReorderAddressesInput"];
+                'application/json': components['schemas']['ReorderAddressesInput'];
             };
         };
         responses: {
@@ -11350,14 +11350,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-addresses-setup": {
+    'post_core-{_version}-addresses-setup': {
         parameters: {
             query?: never;
             header?: never;
@@ -11368,7 +11368,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateAddressInput"];
+                'application/json': components['schemas']['CreateAddressInput'];
             };
         };
         responses: {
@@ -11378,8 +11378,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Address?: {
                             /** @example vuGSa1zsx0kV0jsfhX_xKSDQ0dvcLdMduA_c2c9fhaC1ZYCZKe8gony7nIWbnqaj8gebXLCQre1H1ZTKkhhFxA== */
                             ID?: string;
@@ -11420,7 +11420,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-addresses-canonical": {
+    'get_core-{_version}-addresses-canonical': {
         parameters: {
             query?: {
                 /** @description The list of email addresses, limited to maximum 100. They must be url encoded. */
@@ -11440,14 +11440,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 1001 */
                         Code?: number;
                         Responses?: {
                             /** @example john.doe+friend@gmail.com */
                             Email?: string;
                             Response?: {
-                                Code?: components["schemas"]["ResponseCodeSuccess"];
+                                Code?: components['schemas']['ResponseCodeSuccess'];
                                 /** @example johndoe@gmail.com */
                                 CanonicalEmail?: string;
                             };
@@ -11457,7 +11457,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-addresses-{enc_id}": {
+    'get_core-{_version}-addresses-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -11479,15 +11479,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Address?: components["schemas"]["AddressUser"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Address?: components['schemas']['AddressUser'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-addresses-{enc_id}": {
+    'put_core-{_version}-addresses-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -11503,7 +11503,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateAddressInput"];
+                'application/json': components['schemas']['UpdateAddressInput'];
             };
         };
         responses: {
@@ -11513,14 +11513,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-addresses-{enc_id}": {
+    'delete_core-{_version}-addresses-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -11536,7 +11536,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AddressListInput"];
+                'application/json': components['schemas']['AddressListInput'];
             };
         };
         responses: {
@@ -11546,14 +11546,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-domains-{enc_id}-addresses": {
+    'get_core-{_version}-domains-{enc_id}-addresses': {
         parameters: {
             query?: {
                 /**
@@ -11587,8 +11587,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Addresses?: (components["schemas"]["AddressUser"] & {
+                    'application/json': {
+                        Addresses?: (components['schemas']['AddressUser'] & {
                             /**
                              * @description whether this is the catch-all address for this domain
                              * @example 0
@@ -11606,7 +11606,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2501 */
                         Code?: number;
                         /** @example Domain does not exist */
@@ -11617,7 +11617,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-domains-{enc_id}-claimedAddresses": {
+    'get_core-{_version}-domains-{enc_id}-claimedAddresses': {
         parameters: {
             query?: {
                 /**
@@ -11651,8 +11651,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Addresses?: {
                             /** @example john.doe+friend@mydomain.com */
                             Email?: string;
@@ -11666,7 +11666,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2501 */
                         Code?: number;
                         /** @example Domain does not exist */
@@ -11677,7 +11677,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-addresses-{enc_id}-enable": {
+    'put_core-{_version}-addresses-{enc_id}-enable': {
         parameters: {
             query?: never;
             header?: never;
@@ -11693,7 +11693,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AddressListInput"];
+                'application/json': components['schemas']['AddressListInput'];
             };
         };
         responses: {
@@ -11703,14 +11703,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-addresses-{enc_id}-disable": {
+    'put_core-{_version}-addresses-{enc_id}-disable': {
         parameters: {
             query?: never;
             header?: never;
@@ -11726,7 +11726,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AddressListInput"];
+                'application/json': components['schemas']['AddressListInput'];
             };
         };
         responses: {
@@ -11736,14 +11736,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-addresses-{enc_id}-delete": {
+    'put_core-{_version}-addresses-{enc_id}-delete': {
         parameters: {
             query?: never;
             header?: never;
@@ -11759,7 +11759,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AddressListInput"];
+                'application/json': components['schemas']['AddressListInput'];
             };
         };
         responses: {
@@ -11769,14 +11769,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-addresses-{enc_id}-type": {
+    'put_core-{_version}-addresses-{enc_id}-type': {
         parameters: {
             query?: never;
             header?: never;
@@ -11792,7 +11792,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ChangeAddressTypeInput"];
+                'application/json': components['schemas']['ChangeAddressTypeInput'];
             };
         };
         responses: {
@@ -11802,14 +11802,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-addresses-{enc_id}-rename-internal": {
+    'put_core-{_version}-addresses-{enc_id}-rename-internal': {
         parameters: {
             query?: never;
             header?: never;
@@ -11825,7 +11825,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example john.doe */
                     Local?: string;
                     AddressKeys?: {
@@ -11844,14 +11844,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-addresses-{enc_id}-rename-external": {
+    'put_core-{_version}-addresses-{enc_id}-rename-external': {
         parameters: {
             query?: never;
             header?: never;
@@ -11867,7 +11867,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["RenameUnverifiedAddressInput"];
+                'application/json': components['schemas']['RenameUnverifiedAddressInput'];
             };
         };
         responses: {
@@ -11877,14 +11877,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-addresses-{enc_addressId}-encryption": {
+    'put_core-{_version}-addresses-{enc_addressId}-encryption': {
         parameters: {
             query?: never;
             header?: never;
@@ -11901,7 +11901,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateEncryptionSignatureFlagsInput"];
+                'application/json': components['schemas']['UpdateEncryptionSignatureFlagsInput'];
             };
         };
         responses: {
@@ -11911,14 +11911,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-members-addresses-permissions-organization-switch": {
+    'put_core-{_version}-members-addresses-permissions-organization-switch': {
         parameters: {
             query?: never;
             header?: never;
@@ -11929,7 +11929,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AddressIdsInput"];
+                'application/json': components['schemas']['AddressIdsInput'];
             };
         };
         responses: {
@@ -11939,22 +11939,22 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @enum {integer} */
                         Code?: 1001;
-                        Responses?: components["schemas"]["SwitchAddressesOrganizationPermissionsTransformer"][];
+                        Responses?: components['schemas']['SwitchAddressesOrganizationPermissionsTransformer'][];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-members-{memberId}-saml": {
+    'post_core-{_version}-members-{memberId}-saml': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                memberId: components["schemas"]["Id"];
+                memberId: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -11966,20 +11966,20 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-members-{memberId}-saml": {
+    'delete_core-{_version}-members-{memberId}-saml': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                memberId: components["schemas"]["Id"];
+                memberId: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -11991,21 +11991,21 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-members-{memberId}-devices-{deviceId}": {
+    'delete_core-{_version}-members-{memberId}-devices-{deviceId}': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                memberId: components["schemas"]["Id"];
-                deviceId: components["schemas"]["Id"];
+                memberId: components['schemas']['Id'];
+                deviceId: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -12017,20 +12017,20 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-members-{memberId}-devices": {
+    'delete_core-{_version}-members-{memberId}-devices': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                memberId: components["schemas"]["Id"];
+                memberId: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -12042,14 +12042,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-members-{id}-devices": {
+    'get_core-{_version}-members-{id}-devices': {
         parameters: {
             query?: never;
             header?: never;
@@ -12060,7 +12060,7 @@ export interface operations {
                  */
                 memberid: string;
                 _version: string;
-                id: components["schemas"]["Id"];
+                id: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -12072,15 +12072,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        AuthDevices?: components["schemas"]["AuthDeviceOutput"][];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        AuthDevices?: components['schemas']['AuthDeviceOutput'][];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-members-devices-pending": {
+    'get_core-{_version}-members-devices-pending': {
         parameters: {
             query?: never;
             header?: never;
@@ -12097,15 +12097,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        AuthDevices?: components["schemas"]["AuthDeviceOutput"][];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        AuthDevices?: components['schemas']['AuthDeviceOutput'][];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-members-{memberId}-devices-{deviceId}-reject": {
+    'put_core-{_version}-members-{memberId}-devices-{deviceId}-reject': {
         parameters: {
             query?: never;
             header?: never;
@@ -12119,9 +12119,9 @@ export interface operations {
                  * @description the device id
                  * @example ACXDmTaBub14w==
                  */
-                deviceId: components["schemas"]["Id"];
+                deviceId: components['schemas']['Id'];
                 _version: string;
-                memberId: components["schemas"]["Id"];
+                memberId: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -12133,14 +12133,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-members-{memberId}-devices-reset": {
+    'post_core-{_version}-members-{memberId}-devices-reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -12151,13 +12151,13 @@ export interface operations {
                  */
                 memberid: string;
                 _version: string;
-                memberId: components["schemas"]["Id"];
+                memberId: components['schemas']['Id'];
             };
             cookie?: never;
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ResetAuthDevicesInput"];
+                'application/json': components['schemas']['ResetAuthDevicesInput'];
             };
         };
         responses: {
@@ -12167,14 +12167,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-members-{enc_id}-keys": {
+    'post_core-{_version}-members-{enc_id}-keys': {
         parameters: {
             query?: never;
             header?: never;
@@ -12186,7 +12186,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateMemberKeysInput"];
+                'application/json': components['schemas']['CreateMemberKeysInput'];
             };
         };
         responses: {
@@ -12196,8 +12196,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         MemberKey?: {
                             /** @example G1MbEt3Ep5P_EWz8WbHVAOl_6h== */
                             ID?: string;
@@ -12222,7 +12222,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-organizations-scim": {
+    'get_core-{_version}-organizations-scim': {
         parameters: {
             query?: never;
             header?: never;
@@ -12241,7 +12241,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-organizations-scim": {
+    'put_core-{_version}-organizations-scim': {
         parameters: {
             query?: never;
             header?: never;
@@ -12252,7 +12252,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateScimTenantInput"];
+                'application/json': components['schemas']['UpdateScimTenantInput'];
             };
         };
         responses: {
@@ -12264,7 +12264,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-organizations-scim": {
+    'post_core-{_version}-organizations-scim': {
         parameters: {
             query?: never;
             header?: never;
@@ -12275,7 +12275,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateScimTenantInput"];
+                'application/json': components['schemas']['CreateScimTenantInput'];
             };
         };
         responses: {
@@ -12287,7 +12287,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-keys-user": {
+    'post_core-{_version}-keys-user': {
         parameters: {
             query?: never;
             header?: never;
@@ -12298,7 +12298,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AddNewUserKeyInput"];
+                'application/json': components['schemas']['AddNewUserKeyInput'];
             };
         };
         responses: {
@@ -12308,8 +12308,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example G1MbEt3Ep5P_EWz8WbHVAOl_6h== */
                         KeyID?: string;
                     };
@@ -12317,7 +12317,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-domains": {
+    'get_core-{_version}-domains': {
         parameters: {
             query?: never;
             header?: never;
@@ -12334,15 +12334,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Domains?: components["schemas"]["DomainTransformer"][];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Domains?: components['schemas']['DomainTransformer'][];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-domains": {
+    'post_core-{_version}-domains': {
         parameters: {
             query?: never;
             header?: never;
@@ -12353,7 +12353,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateDomainInput"];
+                'application/json': components['schemas']['CreateDomainInput'];
             };
         };
         responses: {
@@ -12363,15 +12363,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Domain?: components["schemas"]["DomainTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Domain?: components['schemas']['DomainTransformer'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-domains-available": {
+    'get_core-{_version}-domains-available': {
         parameters: {
             query?: {
                 Type?: string | null;
@@ -12390,15 +12390,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Domains?: string[];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-domains-premium": {
+    'get_core-{_version}-domains-premium': {
         parameters: {
             query?: never;
             header?: never;
@@ -12415,15 +12415,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Domains?: string[];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-domains-optin": {
+    'get_core-{_version}-domains-optin': {
         parameters: {
             query?: never;
             header?: never;
@@ -12440,8 +12440,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example proton.me */
                         Domain?: string;
                     };
@@ -12449,7 +12449,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-domains-{enc_id}": {
+    'get_core-{_version}-domains-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -12471,15 +12471,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Domain?: components["schemas"]["DomainTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Domain?: components['schemas']['DomainTransformer'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-domains-{enc_id}": {
+    'delete_core-{_version}-domains-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -12501,14 +12501,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-domains-{enc_id}-catchall": {
+    'put_core-{_version}-domains-{enc_id}-catchall': {
         parameters: {
             query?: never;
             header?: never;
@@ -12524,7 +12524,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateCatchAllAddressInput"];
+                'application/json': components['schemas']['UpdateCatchAllAddressInput'];
             };
         };
         responses: {
@@ -12534,14 +12534,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-organizations": {
+    'get_core-{_version}-organizations': {
         parameters: {
             query?: never;
             header?: never;
@@ -12558,8 +12558,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Organization?: {
                             /** @example My Org */
                             Name?: string;
@@ -12662,10 +12662,10 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-groups-external-{jwt}": {
+    'put_core-{_version}-groups-external-{jwt}': {
         parameters: {
             query?: {
-                GroupID?: components["schemas"]["Id"] | null;
+                GroupID?: components['schemas']['Id'] | null;
             };
             header?: never;
             path: {
@@ -12679,19 +12679,19 @@ export interface operations {
             /** @description Success */
             200: {
                 headers: {
-                    "x-pm-code": 1000;
+                    'x-pm-code': 1000;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuccessfulResponse"];
+                    'application/json': components['schemas']['SuccessfulResponse'];
                 };
             };
         };
     };
-    "delete_core-{_version}-groups-external-{jwt}": {
+    'delete_core-{_version}-groups-external-{jwt}': {
         parameters: {
             query?: {
-                GroupID?: components["schemas"]["Id"] | null;
+                GroupID?: components['schemas']['Id'] | null;
             };
             header?: never;
             path: {
@@ -12705,16 +12705,16 @@ export interface operations {
             /** @description Success */
             200: {
                 headers: {
-                    "x-pm-code": 1000;
+                    'x-pm-code': 1000;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuccessfulResponse"];
+                    'application/json': components['schemas']['SuccessfulResponse'];
                 };
             };
         };
     };
-    "post_core-{_version}-groups-members": {
+    'post_core-{_version}-groups-members': {
         parameters: {
             query?: never;
             header?: never;
@@ -12725,7 +12725,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AddGroupMemberRequest"];
+                'application/json': components['schemas']['AddGroupMemberRequest'];
             };
         };
         responses: {
@@ -12735,15 +12735,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        GroupMember?: components["schemas"]["GroupMemberResponse"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        GroupMember?: components['schemas']['GroupMemberResponse'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-groups": {
+    'get_core-{_version}-groups': {
         parameters: {
             query?: never;
             header?: never;
@@ -12760,16 +12760,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Total?: number;
-                        Groups?: components["schemas"]["GroupResponse"][];
+                        Groups?: components['schemas']['GroupResponse'][];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-groups": {
+    'post_core-{_version}-groups': {
         parameters: {
             query?: never;
             header?: never;
@@ -12780,7 +12780,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateGroupRequest"];
+                'application/json': components['schemas']['CreateGroupRequest'];
             };
         };
         responses: {
@@ -12790,18 +12790,18 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Group?: components["schemas"]["GroupResponse"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Group?: components['schemas']['GroupResponse'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-groups-unsubscribe-{jwt}": {
+    'post_core-{_version}-groups-unsubscribe-{jwt}': {
         parameters: {
             query?: {
-                GroupID?: components["schemas"]["Id"] | null;
+                GroupID?: components['schemas']['Id'] | null;
             };
             header?: never;
             path: {
@@ -12815,28 +12815,28 @@ export interface operations {
             /** @description Success */
             200: {
                 headers: {
-                    "x-pm-code": 1000;
+                    'x-pm-code': 1000;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuccessfulResponse"];
+                    'application/json': components['schemas']['SuccessfulResponse'];
                 };
             };
         };
     };
-    "put_core-{_version}-groups-{enc_id}": {
+    'put_core-{_version}-groups-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                enc_id: components["schemas"]["EncryptedId"];
+                enc_id: components['schemas']['EncryptedId'];
             };
             cookie?: never;
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateGroupRequest"];
+                'application/json': components['schemas']['UpdateGroupRequest'];
             };
         };
         responses: {
@@ -12846,21 +12846,21 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Group?: components["schemas"]["GroupResponse"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Group?: components['schemas']['GroupResponse'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-groups-{enc_id}": {
+    'delete_core-{_version}-groups-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                enc_id: components["schemas"]["Id"];
+                enc_id: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -12872,20 +12872,20 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-groups-members-{enc_id}": {
+    'delete_core-{_version}-groups-members-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                enc_id: components["schemas"]["Id"];
+                enc_id: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -12897,26 +12897,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-groups-members-{groupMemberId}": {
+    'put_core-{_version}-groups-members-{groupMemberId}': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                groupMemberId: components["schemas"]["Id"];
+                groupMemberId: components['schemas']['Id'];
             };
             cookie?: never;
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["EditGroupMemberRequest"];
+                'application/json': components['schemas']['EditGroupMemberRequest'];
             };
         };
         responses: {
@@ -12926,15 +12926,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        GroupMember?: components["schemas"]["GroupMemberResponse"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        GroupMember?: components['schemas']['GroupMemberResponse'];
                     };
                 };
             };
         };
     };
-    "get_core-v4-groups-members-external-{jwt}": {
+    'get_core-v4-groups-members-external-{jwt}': {
         parameters: {
             query?: never;
             header?: never;
@@ -12948,24 +12948,24 @@ export interface operations {
             /** @description Success */
             200: {
                 headers: {
-                    "x-pm-code": 1000;
+                    'x-pm-code': 1000;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ExternalGroupMembershipsResponse"];
+                    'application/json': components['schemas']['ExternalGroupMembershipsResponse'];
                 };
             };
         };
     };
-    "get_core-v4-groups-{group_enc_id}-members": {
+    'get_core-v4-groups-{group_enc_id}-members': {
         parameters: {
             query?: {
-                PageSize?: components["schemas"]["OffsetPagination"]["PageSize"] & unknown;
-                Page?: components["schemas"]["OffsetPagination"]["Page"] & unknown;
+                PageSize?: components['schemas']['OffsetPagination']['PageSize'] & unknown;
+                Page?: components['schemas']['OffsetPagination']['Page'] & unknown;
             };
             header?: never;
             path: {
-                group_enc_id: components["schemas"]["EncryptedId"];
+                group_enc_id: components['schemas']['EncryptedId'];
             };
             cookie?: never;
         };
@@ -12974,16 +12974,16 @@ export interface operations {
             /** @description Success */
             200: {
                 headers: {
-                    "x-pm-code": 1000;
+                    'x-pm-code': 1000;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GroupMembersResponse"];
+                    'application/json': components['schemas']['GroupMembersResponse'];
                 };
             };
         };
     };
-    "get_core-v4-groups-members-internal": {
+    'get_core-v4-groups-members-internal': {
         parameters: {
             query?: never;
             header?: never;
@@ -12995,22 +12995,22 @@ export interface operations {
             /** @description Success */
             200: {
                 headers: {
-                    "x-pm-code": 1000;
+                    'x-pm-code': 1000;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["InternalGroupMembershipsResponse"];
+                    'application/json': components['schemas']['InternalGroupMembershipsResponse'];
                 };
             };
         };
     };
-    "put_core-{_version}-groups-{enc_id}-reinvite": {
+    'put_core-{_version}-groups-{enc_id}-reinvite': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                enc_id: components["schemas"]["Id"];
+                enc_id: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -13022,20 +13022,20 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-groups-members-{groupMemberId}-resume": {
+    'put_core-{_version}-groups-members-{groupMemberId}-resume': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                groupMemberId: components["schemas"]["Id"];
+                groupMemberId: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -13047,15 +13047,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        GroupMember?: components["schemas"]["GroupMemberResponse"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        GroupMember?: components['schemas']['GroupMemberResponse'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-invites": {
+    'post_core-{_version}-invites': {
         parameters: {
             query?: never;
             header?: never;
@@ -13066,7 +13066,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example notification@email */
                     Email?: string;
                     /**
@@ -13081,16 +13081,16 @@ export interface operations {
             /** @description Success */
             200: {
                 headers: {
-                    "x-pm-code": 1000;
+                    'x-pm-code': 1000;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuccessfulResponse"];
+                    'application/json': components['schemas']['SuccessfulResponse'];
                 };
             };
         };
     };
-    "post_core-{_version}-invites-unused": {
+    'post_core-{_version}-invites-unused': {
         parameters: {
             query?: never;
             header?: never;
@@ -13109,7 +13109,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-invites-check": {
+    'post_core-{_version}-invites-check': {
         parameters: {
             query?: never;
             header?: never;
@@ -13128,7 +13128,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-keys-all": {
+    'get_core-{_version}-keys-all': {
         parameters: {
             query: {
                 /**
@@ -13140,7 +13140,7 @@ export interface operations {
                  * @description If 1, it will not perform any external lookup, and only provide information from the Proton DB
                  * @example 1
                  */
-                InternalOnly?: "0" | "1";
+                InternalOnly?: '0' | '1';
             };
             header?: never;
             path: {
@@ -13156,7 +13156,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /**
                          * @description Success code
                          * @example 1000
@@ -13188,7 +13188,7 @@ export interface operations {
                                 Source?: number;
                             }[];
                             /** @description Signed metadata to verify the public key list */
-                            SignedKeyList?: components["schemas"]["KTKeyList"] | null;
+                            SignedKeyList?: components['schemas']['KTKeyList'] | null;
                         };
                         /** @description Information about the catch all address itself, if it exists. This can be null if the address keys are valid */
                         CatchAll?: {
@@ -13216,7 +13216,7 @@ export interface operations {
                                 Source?: number;
                             }[];
                             /** @description Signed metadata to verify the public key list */
-                            SignedKeyList?: components["schemas"]["KTKeyList"] | null;
+                            SignedKeyList?: components['schemas']['KTKeyList'] | null;
                         } | null;
                         /** @description Any other key that cannot be verified, such as Proton legacy keys or WKD. This can be null if there are none. */
                         Unverified?: {
@@ -13266,7 +13266,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /**
                          * @description Error code 33102 corresponds to a failed lookup. It is returned only when (a) internal only lookup is requested and the user does not exist or (b) when the address is routed towards an internal domain (with valid MX records) and it does not exist internally
                          * @example 33102
@@ -13277,7 +13277,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-keys-signedkeylists": {
+    'get_core-{_version}-keys-signedkeylists': {
         parameters: {
             query?: {
                 /** @deprecated */
@@ -13305,15 +13305,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        SignedKeyLists?: components["schemas"]["KTKeyList"][];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        SignedKeyLists?: components['schemas']['KTKeyList'][];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-keys-signedkeylists": {
+    'post_core-{_version}-keys-signedkeylists': {
         parameters: {
             query?: never;
             header?: never;
@@ -13324,7 +13324,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AddressKeyInput3"];
+                'application/json': components['schemas']['AddressKeyInput3'];
             };
         };
         responses: {
@@ -13334,15 +13334,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        SignedKeyList?: components["schemas"]["KTKeyList"] | null;
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        SignedKeyList?: components['schemas']['KTKeyList'] | null;
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-keys-signedkeylist": {
+    'get_core-{_version}-keys-signedkeylist': {
         parameters: {
             query?: {
                 /** @deprecated */
@@ -13365,15 +13365,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        SignedKeyList?: components["schemas"]["KTKeyList"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        SignedKeyList?: components['schemas']['KTKeyList'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-keys-salts": {
+    'get_core-{_version}-keys-salts': {
         parameters: {
             query?: never;
             header?: never;
@@ -13390,8 +13390,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         KeySalts?: {
                             /** @example <encrypted_key_id> */
                             ID?: string;
@@ -13403,7 +13403,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-keys-address-{enc_id}": {
+    'put_core-{_version}-keys-address-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -13419,7 +13419,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AddressKeyInput"];
+                'application/json': components['schemas']['AddressKeyInput'];
             };
         };
         responses: {
@@ -13429,14 +13429,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-keys-address-{enc_id}-subkeys": {
+    'put_core-{_version}-keys-address-{enc_id}-subkeys': {
         parameters: {
             query?: never;
             header?: never;
@@ -13448,7 +13448,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AddressKeyInput2"];
+                'application/json': components['schemas']['AddressKeyInput2'];
             };
         };
         responses: {
@@ -13458,14 +13458,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-keys-signedkeylists-signature": {
+    'put_core-{_version}-keys-signedkeylists-signature': {
         parameters: {
             query?: never;
             header?: never;
@@ -13476,7 +13476,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AddressKeyInput4"];
+                'application/json': components['schemas']['AddressKeyInput4'];
             };
         };
         responses: {
@@ -13486,14 +13486,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-keys-{enc_id}-primary": {
+    'put_core-{_version}-keys-{enc_id}-primary': {
         parameters: {
             query?: never;
             header?: never;
@@ -13509,7 +13509,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["SignedKeyListInputWrapper"];
+                'application/json': components['schemas']['SignedKeyListInputWrapper'];
             };
         };
         responses: {
@@ -13519,14 +13519,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-keys-{enc_id}-flags": {
+    'put_core-{_version}-keys-{enc_id}-flags': {
         parameters: {
             query?: never;
             header?: never;
@@ -13542,7 +13542,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateFlagsInput"];
+                'application/json': components['schemas']['UpdateFlagsInput'];
             };
         };
         responses: {
@@ -13552,14 +13552,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-keys-tokens": {
+    'put_core-{_version}-keys-tokens': {
         parameters: {
             query?: never;
             header?: never;
@@ -13570,7 +13570,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ReplaceAddressTokensInput"];
+                'application/json': components['schemas']['ReplaceAddressTokensInput'];
             };
         };
         responses: {
@@ -13580,8 +13580,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -13594,7 +13594,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-keys-user-{enc_id}": {
+    'put_core-{_version}-keys-user-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -13610,7 +13610,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ReactivateUserKeyInput"];
+                'application/json': components['schemas']['ReactivateUserKeyInput'];
             };
         };
         responses: {
@@ -13620,14 +13620,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-keys-user-{enc_id}": {
+    'delete_core-{_version}-keys-user-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -13649,8 +13649,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -13663,7 +13663,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-keys-private-upgrade": {
+    'post_core-{_version}-keys-private-upgrade': {
         parameters: {
             query?: never;
             header?: never;
@@ -13674,7 +13674,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example <base64_encoded_key_salt> */
                     KeySalt?: string;
                     Keys?: {
@@ -13700,7 +13700,7 @@ export interface operations {
                         Signature?: string;
                     }[];
                     SignedKeyLists?: {
-                        "CasdiSFq_TW7i8FtJGuQyFEq0=="?: {
+                        'CasdiSFq_TW7i8FtJGuQyFEq0=='?: {
                             /** @example JSON.stringify([{"SHA256Fingerprints": ["164ec63...53c93f7", "f767d...f53b0c"],"Fingerprint": "c93f767df53b0ca8395cfde90483475164ec6353","Primary": 1,"Flags": 3}]) */
                             Data?: string;
                             /** @example -----BEGIN PGP SIGNATURE-----.*-----END PGP SIGNATURE----- */
@@ -13732,14 +13732,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-keys-migrate": {
+    'post_core-{_version}-keys-migrate': {
         parameters: {
             query?: never;
             header?: never;
@@ -13750,7 +13750,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["MigrateKeyInput"];
+                'application/json': components['schemas']['MigrateKeyInput'];
             };
         };
         responses: {
@@ -13760,43 +13760,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-keys-{enc_id}-activate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                _version: string;
-                enc_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["LegacyKeyInput"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                    };
-                };
-            };
-        };
-    };
-    "put_core-{_version}-keys-{enc_id}": {
+    'put_core-{_version}-keys-{enc_id}-activate': {
         parameters: {
             query?: never;
             header?: never;
@@ -13808,7 +13779,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["LegacyKeyInput"];
+                'application/json': components['schemas']['LegacyKeyInput'];
             };
         };
         responses: {
@@ -13818,14 +13789,43 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-keys-reset": {
+    'put_core-{_version}-keys-{enc_id}': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                _version: string;
+                enc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                'application/json': components['schemas']['LegacyKeyInput'];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    };
+                };
+            };
+        };
+    };
+    'post_core-{_version}-keys-reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -13836,7 +13836,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ResetUserKeyInput"];
+                'application/json': components['schemas']['ResetUserKeyInput'];
             };
         };
         responses: {
@@ -13846,14 +13846,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-members": {
+    'get_core-{_version}-members': {
         parameters: {
             query?: never;
             header?: never;
@@ -13870,15 +13870,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Members?: components["schemas"]["MemberInfo"][];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Members?: components['schemas']['MemberInfo'][];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-members": {
+    'post_core-{_version}-members': {
         parameters: {
             query?: never;
             header?: never;
@@ -13889,7 +13889,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateMemberInput"];
+                'application/json': components['schemas']['CreateMemberInput'];
             };
         };
         responses: {
@@ -13899,15 +13899,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Member?: components["schemas"]["MemberInfo"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Member?: components['schemas']['MemberInfo'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-members-invitations": {
+    'post_core-{_version}-members-invitations': {
         parameters: {
             query?: never;
             header?: never;
@@ -13918,7 +13918,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateMemberInvitationInput"];
+                'application/json': components['schemas']['CreateMemberInvitationInput'];
             };
         };
         responses: {
@@ -13928,15 +13928,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Member?: components["schemas"]["MemberInfo"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Member?: components['schemas']['MemberInfo'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-members-invitations-{enc_id}": {
+    'put_core-{_version}-members-invitations-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -13953,7 +13953,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateMemberInvitationInput"];
+                'application/json': components['schemas']['UpdateMemberInvitationInput'];
             };
         };
         responses: {
@@ -13963,45 +13963,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Member?: components["schemas"]["MemberInfo"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Member?: components['schemas']['MemberInfo'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-members-{enc_id}-disable": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /**
-                 * @description the member id
-                 * @example ACXDmTaBub14w==
-                 */
-                memberid: string;
-                _version: string;
-                enc_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                    };
-                };
-            };
-        };
-    };
-    "put_core-{_version}-members-{enc_id}-enable": {
+    'put_core-{_version}-members-{enc_id}-disable': {
         parameters: {
             query?: never;
             header?: never;
@@ -14024,14 +13994,44 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-members-{enc_id}-quota": {
+    'put_core-{_version}-members-{enc_id}-enable': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description the member id
+                 * @example ACXDmTaBub14w==
+                 */
+                memberid: string;
+                _version: string;
+                enc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    };
+                };
+            };
+        };
+    };
+    'put_core-{_version}-members-{enc_id}-quota': {
         parameters: {
             query?: never;
             header?: never;
@@ -14048,7 +14048,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example 9900000000 */
                     MaxSpace?: number;
                 };
@@ -14061,14 +14061,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-members-{enc_id}-name": {
+    'put_core-{_version}-members-{enc_id}-name': {
         parameters: {
             query?: never;
             header?: never;
@@ -14085,7 +14085,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example Jason */
                     Name?: string;
                 };
@@ -14098,14 +14098,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-members-{enc_id}-role": {
+    'put_core-{_version}-members-{enc_id}-role': {
         parameters: {
             query?: never;
             header?: never;
@@ -14122,7 +14122,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateMemberRoleInput"];
+                'application/json': components['schemas']['UpdateMemberRoleInput'];
             };
         };
         responses: {
@@ -14132,26 +14132,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-members-{memberId}-ai": {
+    'put_core-{_version}-members-{memberId}-ai': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                memberId: components["schemas"]["Id"];
+                memberId: components['schemas']['Id'];
             };
             cookie?: never;
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateMemberAIEntitlementInput"];
+                'application/json': components['schemas']['UpdateMemberAIEntitlementInput'];
             };
         };
         responses: {
@@ -14163,7 +14163,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-members-{enc_id}-privatize": {
+    'put_core-{_version}-members-{enc_id}-privatize': {
         parameters: {
             query?: never;
             header?: never;
@@ -14186,14 +14186,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-members-me": {
+    'get_core-{_version}-members-me': {
         parameters: {
             query?: never;
             header?: never;
@@ -14210,15 +14210,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Member?: components["schemas"]["MemberInfo"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Member?: components['schemas']['MemberInfo'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-members-me-unprivatize": {
+    'get_core-{_version}-members-me-unprivatize': {
         parameters: {
             query?: never;
             header?: never;
@@ -14235,14 +14235,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetMemberUnprivatizationOutput"] & {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': components['schemas']['GetMemberUnprivatizationOutput'] & {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-members-me-unprivatize": {
+    'post_core-{_version}-members-me-unprivatize': {
         parameters: {
             query?: never;
             header?: never;
@@ -14253,7 +14253,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AcceptMemberUnprivatizationInput"];
+                'application/json': components['schemas']['AcceptMemberUnprivatizationInput'];
             };
         };
         responses: {
@@ -14265,7 +14265,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-members-me-unprivatize": {
+    'delete_core-{_version}-members-me-unprivatize': {
         parameters: {
             query?: never;
             header?: never;
@@ -14284,13 +14284,13 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-members-{id}-unprivatize-resend": {
+    'post_core-{_version}-members-{id}-unprivatize-resend': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                id: components["schemas"]["Id"];
+                id: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -14304,19 +14304,19 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-members-{id}-unprivatize": {
+    'post_core-{_version}-members-{id}-unprivatize': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                id: components["schemas"]["Id"];
+                id: components['schemas']['Id'];
             };
             cookie?: never;
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["RequestMemberUnprivatizationInput"];
+                'application/json': components['schemas']['RequestMemberUnprivatizationInput'];
             };
         };
         responses: {
@@ -14328,13 +14328,13 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-members-{id}-unprivatize": {
+    'delete_core-{_version}-members-{id}-unprivatize': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                id: components["schemas"]["Id"];
+                id: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -14348,7 +14348,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-members-{enc_id}": {
+    'get_core-{_version}-members-{enc_id}': {
         parameters: {
             query?: {
                 /**
@@ -14377,15 +14377,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Member?: components["schemas"]["MemberInfo"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Member?: components['schemas']['MemberInfo'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-members-{enc_id}": {
+    'delete_core-{_version}-members-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -14408,14 +14408,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-members-{enc_id}-details": {
+    'get_core-{_version}-members-{enc_id}-details': {
         parameters: {
             query?: never;
             header?: never;
@@ -14438,7 +14438,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /**
                          * @description Last login time (unix timestamp)
                          * @example 1654615966
@@ -14464,7 +14464,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-members-{enc_id}-authlog": {
+    'get_core-{_version}-members-{enc_id}-authlog': {
         parameters: {
             query?: {
                 /**
@@ -14498,15 +14498,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @description List of authentication logs, ordered by "Time" (timestamp of the event) descending */
-                        Log?: components["schemas"]["AuthLogResponse"][];
+                        Log?: components['schemas']['AuthLogResponse'][];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-members-{enc_id}-require2fa": {
+    'put_core-{_version}-members-{enc_id}-require2fa': {
         parameters: {
             query?: never;
             header?: never;
@@ -14526,7 +14526,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-members-{enc_id}-require2fa": {
+    'delete_core-{_version}-members-{enc_id}-require2fa': {
         parameters: {
             query?: never;
             header?: never;
@@ -14546,7 +14546,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-members-{enc_id}-permissions-forwarding": {
+    'post_core-{_version}-members-{enc_id}-permissions-forwarding': {
         parameters: {
             query?: never;
             header?: never;
@@ -14569,14 +14569,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-members-{enc_id}-permissions-forwarding": {
+    'delete_core-{_version}-members-{enc_id}-permissions-forwarding': {
         parameters: {
             query?: never;
             header?: never;
@@ -14599,14 +14599,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-members-permissions": {
+    'put_core-{_version}-members-permissions': {
         parameters: {
             query?: never;
             header?: never;
@@ -14617,7 +14617,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["MemberManagePermissionsDto"];
+                'application/json': components['schemas']['MemberManagePermissionsDto'];
             };
         };
         responses: {
@@ -14627,14 +14627,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-members-{enc_id}-keys-setup": {
+    'post_core-{_version}-members-{enc_id}-keys-setup': {
         parameters: {
             query?: never;
             header?: never;
@@ -14651,7 +14651,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateMemberKeysInput"];
+                'application/json': components['schemas']['UpdateMemberKeysInput'];
             };
         };
         responses: {
@@ -14661,8 +14661,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Member?: {
                             /** @example xRvCGwFq_TW7i8FtJaGyFEq0g== */
                             ID?: string;
@@ -14710,7 +14710,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-members-{enc_id}-keys-migrate": {
+    'post_core-{_version}-members-{enc_id}-keys-migrate': {
         parameters: {
             query?: never;
             header?: never;
@@ -14727,7 +14727,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     AddressKeys?: {
                         /** @example adsft3Ep5P_EWz8WbasdkVAOl_6h== */
                         ID?: string;
@@ -14742,7 +14742,7 @@ export interface operations {
                     }[];
                     SignedKeyLists?: {
                         /** @description AddressID */
-                        "CasdiSFq_TW7i8FtJGuQyFEq0=="?: {
+                        'CasdiSFq_TW7i8FtJGuQyFEq0=='?: {
                             /** @example JSON.stringify([{""SHA256Fingerprints"": [""164ec63...53c93f7"", ""f767d...f53b0c""],""Fingerprint"": ""c93f767df53b0ca8395cfde90483475164ec6353"",""Primary"": 1,""Flags"": 3}]) */
                             Data?: string;
                             /** @example -----BEGIN PGP SIGNATURE-----.*-----END PGP SIGNATURE----- */
@@ -14759,14 +14759,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-members-{enc_id}-keys-signedkeylists": {
+    'post_core-{_version}-members-{enc_id}-keys-signedkeylists': {
         parameters: {
             query?: never;
             header?: never;
@@ -14783,10 +14783,10 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     SignedKeyLists?: {
                         /** @description AddressID */
-                        "CasdiSFq_TW7i8FtJGuQyFEq0=="?: {
+                        'CasdiSFq_TW7i8FtJGuQyFEq0=='?: {
                             /** @example JSON.stringify([{""SHA256Fingerprints"": [""164ec63...53c93f7"", ""f767d...f53b0c""],""Fingerprint"": ""c93f767df53b0ca8395cfde90483475164ec6353"",""Primary"": 1,""Flags"": 3}]) */
                             Data?: string;
                             /** @example -----BEGIN PGP SIGNATURE-----.*-----END PGP SIGNATURE----- */
@@ -14803,14 +14803,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-members-{enc_id}-keys-unprivatize": {
+    'post_core-{_version}-members-{enc_id}-keys-unprivatize': {
         parameters: {
             query?: never;
             header?: never;
@@ -14821,13 +14821,13 @@ export interface operations {
                  */
                 memberid: string;
                 _version: string;
-                enc_id: components["schemas"]["Id"];
+                enc_id: components['schemas']['Id'];
             };
             cookie?: never;
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UnprivatizeMemberInput"];
+                'application/json': components['schemas']['UnprivatizeMemberInput'];
             };
         };
         responses: {
@@ -14837,14 +14837,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-members-{enc_id}-auth": {
+    'post_core-{_version}-members-{enc_id}-auth': {
         parameters: {
             query?: never;
             header?: never;
@@ -14856,7 +14856,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description If true, LOCKED and PASSWORD scopes will be assigned to the child session
                      * @example false
@@ -14905,8 +14905,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example f3804b2ad70c3992a9496ff07f3e9b93 */
                         UID?: string;
                         /** @example 0 */
@@ -14926,7 +14926,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-members-{enc_id}-sessions": {
+    'get_core-{_version}-members-{enc_id}-sessions': {
         parameters: {
             query?: never;
             header?: never;
@@ -14944,9 +14944,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Sessions?: (components["schemas"]["Session"] & {
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Sessions?: (components['schemas']['Session'] & {
                             /**
                              * @deprecated
                              * @example gony7nIW...KkhhFxA==
@@ -14975,7 +14975,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-members-{enc_id}-sessions": {
+    'post_core-{_version}-members-{enc_id}-sessions': {
         parameters: {
             query?: never;
             header?: never;
@@ -14987,7 +14987,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description If true, LOCKED and PASSWORD scopes will be assigned to the child session
                      * @example false
@@ -15036,8 +15036,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example f3804b2ad70c3992a9496ff07f3e9b93 */
                         UID?: string;
                         /** @example 0 */
@@ -15057,7 +15057,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-members-{enc_id}-sessions": {
+    'delete_core-{_version}-members-{enc_id}-sessions': {
         parameters: {
             query?: never;
             header?: never;
@@ -15075,14 +15075,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-members-{enc_id}-sessions-{uid}": {
+    'delete_core-{_version}-members-{enc_id}-sessions-{uid}': {
         parameters: {
             query?: never;
             header?: never;
@@ -15101,14 +15101,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-organizations-keys": {
+    'get_core-{_version}-organizations-keys': {
         parameters: {
             query?: never;
             header?: never;
@@ -15125,12 +15125,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetOrganizationKeysOutput"];
+                    'application/json': components['schemas']['GetOrganizationKeysOutput'];
                 };
             };
         };
     };
-    "put_core-{_version}-organizations-keys": {
+    'put_core-{_version}-organizations-keys': {
         parameters: {
             query?: never;
             header?: never;
@@ -15141,7 +15141,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ReplaceOrganizationKeysInput"];
+                'application/json': components['schemas']['ReplaceOrganizationKeysInput'];
             };
         };
         responses: {
@@ -15151,8 +15151,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -15163,7 +15163,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-organizations-keys": {
+    'post_core-{_version}-organizations-keys': {
         parameters: {
             query?: never;
             header?: never;
@@ -15174,7 +15174,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ReplaceOrganizationKeysInput"];
+                'application/json': components['schemas']['ReplaceOrganizationKeysInput'];
             };
         };
         responses: {
@@ -15184,8 +15184,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -15196,7 +15196,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-organizations-keys-backup": {
+    'get_core-{_version}-organizations-keys-backup': {
         parameters: {
             query?: never;
             header?: never;
@@ -15213,8 +15213,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example -----BEGIN PGP PRIVATE KEY BLOCK-----*-----BEGIN PGP PRIVATE KEY BLOCK----- */
                         PrivateKey?: string;
                         /** @example 0123456789abcdef */
@@ -15224,7 +15224,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-organizations-keys-backup": {
+    'put_core-{_version}-organizations-keys-backup': {
         parameters: {
             query?: never;
             header?: never;
@@ -15235,7 +15235,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateOrganizationKeyBackupInput"];
+                'application/json': components['schemas']['UpdateOrganizationKeyBackupInput'];
             };
         };
         responses: {
@@ -15245,8 +15245,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -15257,7 +15257,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-organizations-keys-backup": {
+    'post_core-{_version}-organizations-keys-backup': {
         parameters: {
             query?: never;
             header?: never;
@@ -15268,7 +15268,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateOrganizationKeyBackupInput"];
+                'application/json': components['schemas']['UpdateOrganizationKeyBackupInput'];
             };
         };
         responses: {
@@ -15278,8 +15278,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -15290,7 +15290,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-organizations-name": {
+    'put_core-{_version}-organizations-name': {
         parameters: {
             query?: never;
             header?: never;
@@ -15301,7 +15301,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateOrganizationNameInput"];
+                'application/json': components['schemas']['UpdateOrganizationNameInput'];
             };
         };
         responses: {
@@ -15311,8 +15311,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Organization?: {
                             /** @example E-Corp */
                             Name?: string;
@@ -15372,7 +15372,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-organizations-email": {
+    'put_core-{_version}-organizations-email': {
         parameters: {
             query?: never;
             header?: never;
@@ -15383,7 +15383,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateOrganizationEmailInput"];
+                'application/json': components['schemas']['UpdateOrganizationEmailInput'];
             };
         };
         responses: {
@@ -15393,8 +15393,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Organization?: {
                             /** @example E-Corp */
                             Name?: string;
@@ -15454,7 +15454,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-organizations-2fa": {
+    'put_core-{_version}-organizations-2fa': {
         parameters: {
             query?: never;
             header?: never;
@@ -15465,7 +15465,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateOrganizationTwoFactorGracePeriodInput"];
+                'application/json': components['schemas']['UpdateOrganizationTwoFactorGracePeriodInput'];
             };
         };
         responses: {
@@ -15475,8 +15475,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Organization?: {
                             /** @example E-Corp */
                             Name?: string;
@@ -15536,7 +15536,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-organizations-require2fa": {
+    'put_core-{_version}-organizations-require2fa': {
         parameters: {
             query?: never;
             header?: never;
@@ -15547,7 +15547,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description 1 = at least enforced for admin members, 2 = enforced for all members
                      * @example 1
@@ -15563,8 +15563,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Organization?: {
                             /** @example E-Corp */
                             Name?: string;
@@ -15624,7 +15624,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-organizations-require2fa": {
+    'delete_core-{_version}-organizations-require2fa': {
         parameters: {
             query?: never;
             header?: never;
@@ -15641,8 +15641,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Organization?: {
                             /** @example E-Corp */
                             Name?: string;
@@ -15702,7 +15702,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-organizations-keys-activate": {
+    'put_core-{_version}-organizations-keys-activate': {
         parameters: {
             query?: never;
             header?: never;
@@ -15713,7 +15713,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ActivateOrganizationKeyInput"];
+                'application/json': components['schemas']['ActivateOrganizationKeyInput'];
             };
         };
         responses: {
@@ -15723,14 +15723,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-organizations-membership": {
+    'delete_core-{_version}-organizations-membership': {
         parameters: {
             query?: never;
             header?: never;
@@ -15747,14 +15747,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-organizations-2fa-remind": {
+    'post_core-{_version}-organizations-2fa-remind': {
         parameters: {
             query?: never;
             header?: never;
@@ -15771,14 +15771,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-organizations-keys-migrate": {
+    'post_core-{_version}-organizations-keys-migrate': {
         parameters: {
             query?: never;
             header?: never;
@@ -15789,7 +15789,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["MigrateOrganizationKeysInput"];
+                'application/json': components['schemas']['MigrateOrganizationKeysInput'];
             };
         };
         responses: {
@@ -15799,8 +15799,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -15810,7 +15810,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2011 */
                         Code?: number;
                         /** @example Organization already migrated */
@@ -15820,7 +15820,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-organizations-keys-signature": {
+    'get_core-{_version}-organizations-keys-signature': {
         parameters: {
             query?: never;
             header?: never;
@@ -15837,12 +15837,13 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProtonSuccess"] & components["schemas"]["GetOrganizationIdentityOutput"];
+                    'application/json': components['schemas']['ProtonSuccess'] &
+                        components['schemas']['GetOrganizationIdentityOutput'];
                 };
             };
         };
     };
-    "put_core-{_version}-organizations-keys-signature": {
+    'put_core-{_version}-organizations-keys-signature': {
         parameters: {
             query?: never;
             header?: never;
@@ -15853,7 +15854,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateOrgKeyFingerprintSignatureInput"];
+                'application/json': components['schemas']['UpdateOrgKeyFingerprintSignatureInput'];
             };
         };
         responses: {
@@ -15865,7 +15866,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-organizations-logo-{logo_id}": {
+    'get_core-{_version}-organizations-logo-{logo_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -15883,12 +15884,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/octet-stream": string;
+                    'application/octet-stream': string;
                 };
             };
         };
     };
-    "get_core-{_version}-organizations-settings": {
+    'get_core-{_version}-organizations-settings': {
         parameters: {
             query?: never;
             header?: never;
@@ -15905,12 +15906,13 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProtonSuccess"] & components["schemas"]["OrganizationSettings2"];
+                    'application/json': components['schemas']['ProtonSuccess'] &
+                        components['schemas']['OrganizationSettings2'];
                 };
             };
         };
     };
-    "put_core-{_version}-organizations-settings": {
+    'put_core-{_version}-organizations-settings': {
         parameters: {
             query?: never;
             header?: never;
@@ -15921,7 +15923,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["OrganizationSettings"];
+                'application/json': components['schemas']['OrganizationSettings'];
             };
         };
         responses: {
@@ -15931,12 +15933,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProtonSuccess"];
+                    'application/json': components['schemas']['ProtonSuccess'];
                 };
             };
         };
     };
-    "post_core-{_version}-organizations-settings-logo": {
+    'post_core-{_version}-organizations-settings-logo': {
         parameters: {
             query?: never;
             header?: never;
@@ -15947,7 +15949,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["OrganizationLogo"];
+                'application/json': components['schemas']['OrganizationLogo'];
             };
         };
         responses: {
@@ -15957,12 +15959,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProtonSuccess"];
+                    'application/json': components['schemas']['ProtonSuccess'];
                 };
             };
         };
     };
-    "delete_core-{_version}-organizations-settings-logo": {
+    'delete_core-{_version}-organizations-settings-logo': {
         parameters: {
             query?: never;
             header?: never;
@@ -15979,12 +15981,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProtonSuccess"];
+                    'application/json': components['schemas']['ProtonSuccess'];
                 };
             };
         };
     };
-    "get_core-{_version}-captcha": {
+    'get_core-{_version}-captcha': {
         parameters: {
             query: {
                 /** @example 1 */
@@ -15995,7 +15997,7 @@ export interface operations {
                 Token: string;
             };
             header?: {
-                "x-pm-nonce"?: string | null;
+                'x-pm-nonce'?: string | null;
                 host?: string;
             };
             path: {
@@ -16014,7 +16016,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-resources-captcha": {
+    'get_core-{_version}-resources-captcha': {
         parameters: {
             query: {
                 /** @example 1 */
@@ -16025,7 +16027,7 @@ export interface operations {
                 Token: string;
             };
             header?: {
-                "x-pm-nonce"?: string | null;
+                'x-pm-nonce'?: string | null;
                 host?: string;
             };
             path: {
@@ -16044,14 +16046,14 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-resources-zendesk": {
+    'get_core-{_version}-resources-zendesk': {
         parameters: {
             query?: {
                 /** @example 83fabdab-1337-4fd7-85c0-39baf5c114fe */
                 Key?: string;
             };
             header?: {
-                "x-pm-nonce"?: string | null;
+                'x-pm-nonce'?: string | null;
             };
             path: {
                 _version: string;
@@ -16069,7 +16071,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-saml-setup-fields": {
+    'post_core-{_version}-saml-setup-fields': {
         parameters: {
             query?: never;
             header?: never;
@@ -16080,7 +16082,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Sso"];
+                'application/json': components['schemas']['Sso'];
             };
         };
         responses: {
@@ -16090,14 +16092,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-saml-setup-xml": {
+    'post_core-{_version}-saml-setup-xml': {
         parameters: {
             query?: never;
             header?: never;
@@ -16108,7 +16110,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["SsoXml"];
+                'application/json': components['schemas']['SsoXml'];
             };
         };
         responses: {
@@ -16118,14 +16120,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-saml-setup-url": {
+    'post_core-{_version}-saml-setup-url': {
         parameters: {
             query?: never;
             header?: never;
@@ -16136,7 +16138,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["SsoUrl"];
+                'application/json': components['schemas']['SsoUrl'];
             };
         };
         responses: {
@@ -16146,15 +16148,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        SSO?: components["schemas"]["SsoTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        SSO?: components['schemas']['SsoTransformer'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-saml-configs": {
+    'get_core-{_version}-saml-configs': {
         parameters: {
             query?: never;
             header?: never;
@@ -16171,21 +16173,21 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        SSO?: components["schemas"]["SsoTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        SSO?: components['schemas']['SsoTransformer'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-saml-configs-{enc_id}": {
+    'get_core-{_version}-saml-configs-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                enc_id: components["schemas"]["Id"];
+                enc_id: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -16197,27 +16199,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        SSO?: components["schemas"]["SsoTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        SSO?: components['schemas']['SsoTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-saml-configs-{enc_id}-fields": {
+    'put_core-{_version}-saml-configs-{enc_id}-fields': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                enc_id: components["schemas"]["Id"];
+                enc_id: components['schemas']['Id'];
             };
             cookie?: never;
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Sso"];
+                'application/json': components['schemas']['Sso'];
             };
         };
         responses: {
@@ -16227,21 +16229,21 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        SSO?: components["schemas"]["SsoTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        SSO?: components['schemas']['SsoTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-saml-configs-{enc_id}-delete": {
+    'put_core-{_version}-saml-configs-{enc_id}-delete': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                enc_id: components["schemas"]["Id"];
+                enc_id: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -16253,37 +16255,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        SSO?: components["schemas"]["SsoTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        SSO?: components['schemas']['SsoTransformer'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-saml-sp-info": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                _version: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Info"];
-                };
-            };
-        };
-    };
-    "get_core-{_version}-saml-edugain-info": {
+    'get_core-{_version}-saml-sp-info': {
         parameters: {
             query?: never;
             header?: never;
@@ -16300,14 +16280,36 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': components['schemas']['Info'];
+                };
+            };
+        };
+    };
+    'get_core-{_version}-saml-edugain-info': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                _version: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-saml-edugain-info-{domainName}": {
+    'get_core-{_version}-saml-edugain-info-{domainName}': {
         parameters: {
             query?: never;
             header?: never;
@@ -16325,14 +16327,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-saml-metadata": {
+    'get_core-{_version}-saml-metadata': {
         parameters: {
             query?: never;
             header?: never;
@@ -16349,12 +16351,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "text/xml": string;
+                    'text/xml': string;
                 };
             };
         };
     };
-    "get_core-{_version}-settings": {
+    'get_core-{_version}-settings': {
         parameters: {
             query?: never;
             header?: never;
@@ -16371,15 +16373,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-password": {
+    'put_core-{_version}-settings-password': {
         parameters: {
             query?: never;
             header?: never;
@@ -16390,7 +16392,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Optional, for inline re-authentication
                      * @example <base64_encoded_ephemeral>
@@ -16444,9 +16446,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -16457,7 +16459,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-settings-password-upgrade": {
+    'put_core-{_version}-settings-password-upgrade': {
         parameters: {
             query?: never;
             header?: never;
@@ -16468,7 +16470,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     Auth?: {
                         /** @example 4 */
                         Version?: number;
@@ -16489,15 +16491,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-email": {
+    'put_core-{_version}-settings-email': {
         parameters: {
             query?: never;
             header?: never;
@@ -16508,7 +16510,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Optional, for inline re-authentication
                      * @example <base64_encoded_ephemeral>
@@ -16554,9 +16556,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -16567,7 +16569,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-settings-email-verify": {
+    'post_core-{_version}-settings-email-verify': {
         parameters: {
             query?: never;
             header?: never;
@@ -16578,7 +16580,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example <token_value> */
                     Token?: string;
                 };
@@ -16591,15 +16593,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-email-notify": {
+    'put_core-{_version}-settings-email-notify': {
         parameters: {
             query?: never;
             header?: never;
@@ -16610,7 +16612,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @example 1
                      * @enum {integer}
@@ -16626,15 +16628,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-email-reset": {
+    'put_core-{_version}-settings-email-reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -16645,7 +16647,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Optional, for inline re-authentication
                      * @example <base64_encoded_ephemeral>
@@ -16694,9 +16696,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -16707,7 +16709,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-settings-phone": {
+    'put_core-{_version}-settings-phone': {
         parameters: {
             query?: never;
             header?: never;
@@ -16718,7 +16720,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Optional, for inline re-authentication
                      * @example <base64_encoded_ephemeral>
@@ -16764,9 +16766,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -16777,7 +16779,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-settings-phone-verify": {
+    'post_core-{_version}-settings-phone-verify': {
         parameters: {
             query?: never;
             header?: never;
@@ -16788,7 +16790,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example <token_value> */
                     Token?: string;
                 };
@@ -16801,15 +16803,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-phone-notify": {
+    'put_core-{_version}-settings-phone-notify': {
         parameters: {
             query?: never;
             header?: never;
@@ -16820,7 +16822,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @example 1
                      * @enum {integer}
@@ -16836,15 +16838,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-phone-reset": {
+    'put_core-{_version}-settings-phone-reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -16855,7 +16857,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Optional, for inline re-authentication
                      * @example <base64_encoded_ephemeral>
@@ -16904,9 +16906,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -16917,7 +16919,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-settings-locale": {
+    'put_core-{_version}-settings-locale': {
         parameters: {
             query?: never;
             header?: never;
@@ -16928,7 +16930,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example en_US */
                     Locale?: string;
                 };
@@ -16941,15 +16943,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-logauth": {
+    'put_core-{_version}-settings-logauth': {
         parameters: {
             query?: never;
             header?: never;
@@ -16960,7 +16962,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description 0 = off, 1 = on, 2 = on with IP logging
                      * @example 0
@@ -16976,15 +16978,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-devicerecovery": {
+    'put_core-{_version}-settings-devicerecovery': {
         parameters: {
             query?: never;
             header?: never;
@@ -16995,7 +16997,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @description possible values:<br>- 0: disable<br>- 1: enable */
                     DeviceRecovery?: number;
                 };
@@ -17008,15 +17010,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-news": {
+    'put_core-{_version}-settings-news': {
         parameters: {
             query?: never;
             header?: never;
@@ -17027,7 +17029,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateNewsInput"];
+                'application/json': components['schemas']['UpdateNewsInput'];
             };
         };
         responses: {
@@ -17037,15 +17039,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "patch_core-{_version}-settings-news": {
+    'patch_core-{_version}-settings-news': {
         parameters: {
             query?: never;
             header?: never;
@@ -17056,7 +17058,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchNewsInput"];
+                'application/json': components['schemas']['PatchNewsInput'];
             };
         };
         responses: {
@@ -17066,15 +17068,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-settings-news-external": {
+    'get_core-{_version}-settings-news-external': {
         parameters: {
             query?: never;
             header?: never;
@@ -17091,8 +17093,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         UserSettings?: {
                             /**
                              * @description 0 - 255 bitmap. 1 is announcements, 2 is features, 4 is newsletter, 8 is beta, 16 is business. 32, 64, and 128 are currently unused.
@@ -17105,7 +17107,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-settings-news-external": {
+    'put_core-{_version}-settings-news-external': {
         parameters: {
             query?: never;
             header?: never;
@@ -17116,7 +17118,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateNewsInput"];
+                'application/json': components['schemas']['UpdateNewsInput'];
             };
         };
         responses: {
@@ -17126,8 +17128,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         UserSettings?: {
                             /**
                              * @description 0 - 255 bitmap. 1 is announcements, 2 is features, 4 is newsletter, 8 is beta, 16 is business. 32, 64, and 128 are currently unused.
@@ -17140,7 +17142,7 @@ export interface operations {
             };
         };
     };
-    "patch_core-{_version}-settings-news-external": {
+    'patch_core-{_version}-settings-news-external': {
         parameters: {
             query?: never;
             header?: never;
@@ -17151,7 +17153,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchNewsInput"];
+                'application/json': components['schemas']['PatchNewsInput'];
             };
         };
         responses: {
@@ -17161,8 +17163,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         UserSettings?: {
                             /**
                              * @description 0 - 255 bitmap. 1 is announcements, 2 is features, 4 is newsletter, 8 is beta, 16 is business. 32, 64, and 128 are currently unused.
@@ -17175,7 +17177,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-settings-density": {
+    'put_core-{_version}-settings-density': {
         parameters: {
             query?: never;
             header?: never;
@@ -17186,7 +17188,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description 0:comfortable, 1:compact
                      * @example 0
@@ -17202,15 +17204,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-invoicetext": {
+    'put_core-{_version}-settings-invoicetext': {
         parameters: {
             query?: never;
             header?: never;
@@ -17221,7 +17223,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Maximum 5 lines
                      * @example Mickey Mouse, Esq.
@@ -17238,15 +17240,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-settings-2fa-codes": {
+    'post_core-{_version}-settings-2fa-codes': {
         parameters: {
             query?: never;
             header?: never;
@@ -17257,7 +17259,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Optional, for inline re-authentication
                      * @example <base64_encoded_ephemeral>
@@ -17301,9 +17303,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -17320,7 +17322,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 10041 */
                         Code?: number;
                         /** @example Two Factor confirmation failed */
@@ -17331,7 +17333,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-settings-2fa-totp": {
+    'put_core-{_version}-settings-2fa-totp': {
         parameters: {
             query?: never;
             header?: never;
@@ -17342,7 +17344,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Optional, for inline re-authentication
                      * @example <base64_encoded_ephemeral>
@@ -17386,9 +17388,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -17399,7 +17401,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-settings-2fa-totp": {
+    'post_core-{_version}-settings-2fa-totp': {
         parameters: {
             query?: never;
             header?: never;
@@ -17410,7 +17412,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Optional, for inline re-authentication
                      * @example <base64_encoded_ephemeral>
@@ -17458,9 +17460,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -17477,7 +17479,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 10041 */
                         Code?: number;
                         /** @example Two Factor confirmation failed */
@@ -17488,7 +17490,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-settings-2fa": {
+    'put_core-{_version}-settings-2fa': {
         parameters: {
             query?: never;
             header?: never;
@@ -17499,7 +17501,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Optional, for inline re-authentication
                      * @example <base64_encoded_ephemeral>
@@ -17543,9 +17545,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -17556,7 +17558,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-settings-2fa": {
+    'post_core-{_version}-settings-2fa': {
         parameters: {
             query?: never;
             header?: never;
@@ -17567,7 +17569,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Optional, for inline re-authentication
                      * @example <base64_encoded_ephemeral>
@@ -17615,9 +17617,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -17634,7 +17636,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 10041 */
                         Code?: number;
                         /** @example Two Factor confirmation failed */
@@ -17645,7 +17647,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-settings-2fa-reset": {
+    'post_core-{_version}-settings-2fa-reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -17656,7 +17658,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example user_name */
                     Username?: string;
                     /**
@@ -17674,8 +17676,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -17685,7 +17687,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 19502 */
                         Code?: number;
                         /** @example Invalid reset token. Please request another token and try again */
@@ -17696,7 +17698,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-settings-2fa-register": {
+    'get_core-{_version}-settings-2fa-register': {
         parameters: {
             query?: {
                 /**
@@ -17719,9 +17721,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @description Contains the user's currently registered FIDO2 credentials. */
-                        RegisteredKeys?: components["schemas"]["Fido2RegisteredKey"][];
+                        RegisteredKeys?: components['schemas']['Fido2RegisteredKey'][];
                         /**
                          * @description Refer to the definition of PublicKeyCredentialCreationOptions in the WebAuthn spec. Binary data is encoded as Uint8Array.
                          * @example <PublicKeyCredentialCreationOptions>
@@ -17734,7 +17736,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-settings-2fa-register": {
+    'post_core-{_version}-settings-2fa-register': {
         parameters: {
             query?: never;
             header?: never;
@@ -17745,7 +17747,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Refer to the definition of PublicKeyCredentialCreationOptions in the WebAuthn spec. Binary data is encoded as Uint8Array.
                      * @example <PublicKeyCredentialCreationOptions>
@@ -17814,9 +17816,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -17827,7 +17829,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-settings-2fa-{credentialID}-remove": {
+    'post_core-{_version}-settings-2fa-{credentialID}-remove': {
         parameters: {
             query?: never;
             header?: never;
@@ -17839,7 +17841,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Optional, for inline re-authentication
                      * @example <base64_encoded_ephemeral>
@@ -17883,9 +17885,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -17896,7 +17898,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-settings-2fa-{credentialID}-rename": {
+    'put_core-{_version}-settings-2fa-{credentialID}-rename': {
         parameters: {
             query?: never;
             header?: never;
@@ -17908,7 +17910,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description User defined name for the credential.
                      * @example My FIDO2 key
@@ -17924,15 +17926,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-hide-side-panel": {
+    'put_core-{_version}-settings-hide-side-panel': {
         parameters: {
             query?: never;
             header?: never;
@@ -17943,7 +17945,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateHideSidePanelInput"];
+                'application/json': components['schemas']['UpdateHideSidePanelInput'];
             };
         };
         responses: {
@@ -17953,15 +17955,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-username": {
+    'put_core-{_version}-settings-username': {
         parameters: {
             query?: never;
             header?: never;
@@ -17972,7 +17974,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @description Length <= 40 */
                     Username?: string;
                 };
@@ -17985,14 +17987,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-theme": {
+    'put_core-{_version}-settings-theme': {
         parameters: {
             query?: never;
             header?: never;
@@ -18003,7 +18005,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Theme"];
+                'application/json': components['schemas']['Theme'];
             };
         };
         responses: {
@@ -18013,15 +18015,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-themetype": {
+    'put_core-{_version}-settings-themetype': {
         parameters: {
             query?: never;
             header?: never;
@@ -18032,7 +18034,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example 1 */
                     ThemeType?: number;
                 };
@@ -18045,15 +18047,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-weekstart": {
+    'put_core-{_version}-settings-weekstart': {
         parameters: {
             query?: never;
             header?: never;
@@ -18064,7 +18066,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description `0`: Locale default, `1`: Monday, `6`: Saturday, `7`: Sunday
                      * @example 1
@@ -18080,15 +18082,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-dateformat": {
+    'put_core-{_version}-settings-dateformat': {
         parameters: {
             query?: never;
             header?: never;
@@ -18099,7 +18101,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description 0: Locale default, 1: DD_MM_YYYY, 2: MM_DD_YYYY, 3: YYYY_MM_DD
                      * @example 1
@@ -18115,15 +18117,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-timeformat": {
+    'put_core-{_version}-settings-timeformat': {
         parameters: {
             query?: never;
             header?: never;
@@ -18134,7 +18136,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description 0: Locale default, 1: 24H, 2: 12H
                      * @example 1
@@ -18150,15 +18152,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-welcome": {
+    'put_core-{_version}-settings-welcome': {
         parameters: {
             query?: never;
             header?: never;
@@ -18175,8 +18177,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -18186,7 +18188,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2000 */
                         Code?: number;
                         /** @example Unknown client */
@@ -18197,7 +18199,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-settings-earlyaccess": {
+    'put_core-{_version}-settings-earlyaccess': {
         parameters: {
             query?: never;
             header?: never;
@@ -18208,7 +18210,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description 0: Disabled, 1: Enabled
                      * @example 1
@@ -18224,8 +18226,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -18235,7 +18237,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2000 */
                         Code?: number;
                         /** @example Invalid client */
@@ -18246,7 +18248,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-settings-flags": {
+    'put_core-{_version}-settings-flags': {
         parameters: {
             query?: never;
             header?: never;
@@ -18257,7 +18259,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description 0: Disabled, 1: Enabled
                      * @example 1
@@ -18278,14 +18280,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-telemetry": {
+    'put_core-{_version}-settings-telemetry': {
         parameters: {
             query?: never;
             header?: never;
@@ -18296,7 +18298,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @description possible values:<br>- 0: disable<br>- 1: enable */
                     Telemetry?: number;
                 };
@@ -18309,15 +18311,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-crashreports": {
+    'put_core-{_version}-settings-crashreports': {
         parameters: {
             query?: never;
             header?: never;
@@ -18328,7 +18330,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @description possible values:<br>- 0: disable<br>- 1: enable */
                     CrashReports?: number;
                 };
@@ -18341,15 +18343,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-settings-highsecurity": {
+    'post_core-{_version}-settings-highsecurity': {
         parameters: {
             query?: never;
             header?: never;
@@ -18366,8 +18368,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -18377,7 +18379,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @default 2011 */
                         Code: number;
                         /** @default You do not have an active subscription */
@@ -18387,7 +18389,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-settings-highsecurity": {
+    'delete_core-{_version}-settings-highsecurity': {
         parameters: {
             query?: never;
             header?: never;
@@ -18404,14 +18406,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-settings-breachalerts": {
+    'post_core-{_version}-settings-breachalerts': {
         parameters: {
             query?: never;
             header?: never;
@@ -18428,8 +18430,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -18439,7 +18441,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @default 2011 */
                         Code: number;
                         /** @default You do not have an active subscription */
@@ -18449,7 +18451,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-settings-breachalerts": {
+    'delete_core-{_version}-settings-breachalerts': {
         parameters: {
             query?: never;
             header?: never;
@@ -18466,14 +18468,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-sessionaccountrecovery": {
+    'put_core-{_version}-settings-sessionaccountrecovery': {
         parameters: {
             query?: never;
             header?: never;
@@ -18484,7 +18486,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["SessionAccountRecoveryInput"];
+                'application/json': components['schemas']['SessionAccountRecoveryInput'];
             };
         };
         responses: {
@@ -18494,15 +18496,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-settings-ai-assistant-flags": {
+    'put_core-{_version}-settings-ai-assistant-flags': {
         parameters: {
             query?: never;
             header?: never;
@@ -18513,7 +18515,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AIAssistantFlagsInput"];
+                'application/json': components['schemas']['AIAssistantFlagsInput'];
             };
         };
         responses: {
@@ -18523,15 +18525,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        UserSettings?: components["schemas"]["UserSettingsTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        UserSettings?: components['schemas']['UserSettingsTransformer'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-settings-news-unsubscribe": {
+    'post_core-{_version}-settings-news-unsubscribe': {
         parameters: {
             query?: {
                 News?: number;
@@ -18548,16 +18550,16 @@ export interface operations {
             /** @description Success */
             200: {
                 headers: {
-                    "x-pm-code": 1000;
+                    'x-pm-code': 1000;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuccessfulResponse"];
+                    'application/json': components['schemas']['SuccessfulResponse'];
                 };
             };
         };
     };
-    "get_core-{_version}-support-schedulecall": {
+    'get_core-{_version}-support-schedulecall': {
         parameters: {
             query?: never;
             header?: never;
@@ -18574,24 +18576,24 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ScheduleSupportCallOutput"];
+                    'application/json': components['schemas']['ScheduleSupportCallOutput'];
                 };
             };
         };
     };
-    "put_core-{_version}-members-{memberId}-lumo": {
+    'put_core-{_version}-members-{memberId}-lumo': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                memberId: components["schemas"]["Id"];
+                memberId: components['schemas']['Id'];
             };
             cookie?: never;
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateMemberLumoEntitlementInput"];
+                'application/json': components['schemas']['UpdateMemberLumoEntitlementInput'];
             };
         };
         responses: {
@@ -18603,7 +18605,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-settings-product-disabled": {
+    'put_core-{_version}-settings-product-disabled': {
         parameters: {
             query?: never;
             header?: never;
@@ -18614,7 +18616,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ProductDisabledInput"];
+                'application/json': components['schemas']['ProductDisabledInput'];
             };
         };
         responses: {
@@ -18626,7 +18628,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-users-delete": {
+    'get_core-{_version}-users-delete': {
         parameters: {
             query?: never;
             header?: never;
@@ -18643,14 +18645,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-users-delete": {
+    'put_core-{_version}-users-delete': {
         parameters: {
             query?: never;
             header?: never;
@@ -18661,7 +18663,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * Format: base64
                      * @description Optional, for inline re-authentication
@@ -18724,8 +18726,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -18736,7 +18738,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-users-delete": {
+    'delete_core-{_version}-users-delete': {
         parameters: {
             query?: never;
             header?: never;
@@ -18747,7 +18749,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * Format: base64
                      * @description Optional, for inline re-authentication
@@ -18810,8 +18812,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -18822,7 +18824,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-users-reset": {
+    'get_core-{_version}-users-reset': {
         parameters: {
             query: {
                 /**
@@ -18845,8 +18847,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description internal or external
                          * @example internal
@@ -18859,7 +18861,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-users": {
+    'get_core-{_version}-users': {
         parameters: {
             query?: never;
             header?: never;
@@ -18876,15 +18878,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        User?: components["schemas"]["User"] & {
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        User?: components['schemas']['User'] & {
                             /** @example jason@protonmail.ch */
                             Email?: string;
                             /** @example Jason */
                             DisplayName?: string;
-                            Keys?: components["schemas"]["UserKey"][];
-                            AccountRecovery?: components["schemas"]["AccountRecoveryAttempt"];
+                            Keys?: components['schemas']['UserKey'][];
+                            AccountRecovery?: components['schemas']['AccountRecoveryAttempt'];
                         };
                         VerifyMethods?: string[];
                     };
@@ -18892,7 +18894,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-users": {
+    'post_core-{_version}-users': {
         parameters: {
             query?: never;
             header?: never;
@@ -18903,7 +18905,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example user_name */
                     Username?: string;
                     /** @example proton.me */
@@ -18950,13 +18952,13 @@ export interface operations {
                     /** @description optional field, frontend fingerprints */
                     Payload?: {
                         /** @example ++3dreJ+cHBSeEXvkxjLCRrf1... */
-                        "random-id-1"?: string;
+                        'random-id-1'?: string;
                         /** @example Xv5df3dreJ+cHBvkxjSeEXvkx... */
-                        "random-id-2"?: string;
+                        'random-id-2'?: string;
                         /** @example <base64_encoded_android_attestation_token> */
-                        "random-id-3"?: string;
+                        'random-id-3'?: string;
                         /** @example <base64_encoded_ios_device_check_token> */
-                        "random-id-4"?: string;
+                        'random-id-4'?: string;
                     };
                     /**
                      * @deprecated
@@ -18974,16 +18976,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        User?: components["schemas"]["User"] & {
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        User?: components['schemas']['User'] & {
                             /** @example 1 */
                             Services?: number;
                             /** @example jason@protonmail.ch */
                             Email?: string;
                             /** @example Jason */
                             DisplayName?: string;
-                            Keys?: components["schemas"]["UserKey"][];
+                            Keys?: components['schemas']['UserKey'][];
                             /**
                              * @description Token for external account creation. If it matches the created email it will be pre-verified
                              * @example ASD3ldfa.asdfaoa3aw.asdfads
@@ -18995,7 +18997,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-users-external": {
+    'post_core-{_version}-users-external': {
         parameters: {
             query?: never;
             header?: never;
@@ -19006,7 +19008,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example user_name */
                     Username?: string;
                     /** @example proton.me */
@@ -19053,13 +19055,13 @@ export interface operations {
                     /** @description optional field, frontend fingerprints */
                     Payload?: {
                         /** @example ++3dreJ+cHBSeEXvkxjLCRrf1... */
-                        "random-id-1"?: string;
+                        'random-id-1'?: string;
                         /** @example Xv5df3dreJ+cHBvkxjSeEXvkx... */
-                        "random-id-2"?: string;
+                        'random-id-2'?: string;
                         /** @example <base64_encoded_android_attestation_token> */
-                        "random-id-3"?: string;
+                        'random-id-3'?: string;
                         /** @example <base64_encoded_ios_device_check_token> */
-                        "random-id-4"?: string;
+                        'random-id-4'?: string;
                     };
                     /**
                      * @deprecated
@@ -19077,16 +19079,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        User?: components["schemas"]["User"] & {
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        User?: components['schemas']['User'] & {
                             /** @example 1 */
                             Services?: number;
                             /** @example jason@protonmail.ch */
                             Email?: string;
                             /** @example Jason */
                             DisplayName?: string;
-                            Keys?: components["schemas"]["UserKey"][];
+                            Keys?: components['schemas']['UserKey'][];
                             /**
                              * @description Token for external account creation. If it matches the created email it will be pre-verified
                              * @example ASD3ldfa.asdfaoa3aw.asdfads
@@ -19098,7 +19100,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-users-check": {
+    'put_core-{_version}-users-check': {
         parameters: {
             query?: never;
             header?: never;
@@ -19109,7 +19111,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description in case of an invite must be selector:token
                      * @example <token value>
@@ -19135,14 +19137,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-users-availableExternal": {
+    'get_core-{_version}-users-availableExternal': {
         parameters: {
             query?: {
                 /**
@@ -19156,7 +19158,7 @@ export interface operations {
                  * @description Optional header containing a payment token value. When this value is set and the token is valid, the signup flow is started.
                  * @example 1234567890abcdefghijklmn
                  */
-                "X-PM-Payment-Info-Token"?: string;
+                'X-PM-Payment-Info-Token'?: string;
             };
             path: {
                 _version: string;
@@ -19171,8 +19173,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -19182,7 +19184,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 12106 */
                         Code?: number;
                         /** @example Username already used */
@@ -19195,7 +19197,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-users-available": {
+    'get_core-{_version}-users-available': {
         parameters: {
             query?: {
                 /**
@@ -19223,8 +19225,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -19234,7 +19236,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 12106 */
                         Code?: number;
                         /** @example Username already used */
@@ -19247,7 +19249,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-users-available-{username}": {
+    'get_core-{_version}-users-available-{username}': {
         parameters: {
             query?: never;
             header?: never;
@@ -19267,7 +19269,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-users-direct": {
+    'get_core-{_version}-users-direct': {
         parameters: {
             query?: {
                 /**
@@ -19290,8 +19292,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description 1 if enabled, 0 if disabled--client should show invite form
                          * @example 1
@@ -19303,7 +19305,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-users-code": {
+    'post_core-{_version}-users-code': {
         parameters: {
             query?: never;
             header?: never;
@@ -19314,13 +19316,13 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description email or sms
                      * @example email
                      * @enum {string}
                      */
-                    Type?: "email" | "sms";
+                    Type?: 'email' | 'sms';
                     /**
                      * @description Optional, can use android as well if link support
                      * @example ios
@@ -19348,14 +19350,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-users-lock": {
+    'put_core-{_version}-users-lock': {
         parameters: {
             query?: never;
             header?: never;
@@ -19372,14 +19374,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-users-unlock": {
+    'put_core-{_version}-users-unlock': {
         parameters: {
             query?: never;
             header?: never;
@@ -19390,7 +19392,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example <base64_encoded_ephemeral> */
                     ClientEphemeral?: string;
                     /** @example <base64_encoded_proof> */
@@ -19412,8 +19414,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example <base64_encoded_proof> */
                         ServerProof?: string;
                     };
@@ -19421,7 +19423,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-users-password": {
+    'put_core-{_version}-users-password': {
         parameters: {
             query?: never;
             header?: never;
@@ -19432,7 +19434,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example <base64_encoded_ephemeral> */
                     ClientEphemeral?: string;
                     /** @example <base64_encoded_proof> */
@@ -19475,8 +19477,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example <base64_encoded_proof> */
                         ServerProof?: string;
                     };
@@ -19484,11 +19486,11 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-users-captcha-{token}": {
+    'get_core-{_version}-users-captcha-{token}': {
         parameters: {
             query?: never;
             header?: {
-                "x-pm-nonce"?: string | null;
+                'x-pm-nonce'?: string | null;
             };
             path: {
                 _version: string;
@@ -19506,7 +19508,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-users-disable-{jwt}": {
+    'get_core-{_version}-users-disable-{jwt}': {
         parameters: {
             query?: never;
             header?: never;
@@ -19525,14 +19527,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-members-{enc_id}-vpn": {
+    'get_core-{_version}-members-{enc_id}-vpn': {
         parameters: {
             query?: {
                 /**
@@ -19566,8 +19568,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example  */
                         VPNName?: string;
                         /** @example  */
@@ -19577,14 +19579,14 @@ export interface operations {
                          * @example 1654615966
                          */
                         LastVPNLogin?: number | null;
-                        ActiveVPNSessions?: components["schemas"]["VPNAuthenticationCertificateDetailedTransformer"][];
-                        AuthenticationCertificates?: components["schemas"]["VPNAuthenticationCertificateDetailedTransformer"][];
+                        ActiveVPNSessions?: components['schemas']['VPNAuthenticationCertificateDetailedTransformer'][];
+                        AuthenticationCertificates?: components['schemas']['VPNAuthenticationCertificateDetailedTransformer'][];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-members-{enc_id}-vpn": {
+    'put_core-{_version}-members-{enc_id}-vpn': {
         parameters: {
             query?: never;
             header?: never;
@@ -19601,7 +19603,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example 2 */
                     MaxVPN?: number;
                 };
@@ -19614,14 +19616,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-v4-features": {
+    'get_core-v4-features': {
         parameters: {
             query?: {
                 /**
@@ -19671,17 +19673,17 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example 76 */
                         Total?: number;
-                        Features?: components["schemas"]["FeatureTransformer"][];
+                        Features?: components['schemas']['FeatureTransformer'][];
                     };
                 };
             };
         };
     };
-    "post_core-v4-features": {
+    'post_core-v4-features': {
         parameters: {
             query?: never;
             header?: never;
@@ -19690,14 +19692,14 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example blackFriday */
                     Code?: string;
                     /**
                      * @example string
                      * @enum {string}
                      */
-                    Type?: "boolean" | "integer" | "float" | "string" | "enumeration" | "mixed";
+                    Type?: 'boolean' | 'integer' | 'float' | 'string' | 'enumeration' | 'mixed';
                     /** @description List of the values if type is enumeration */
                     Options?: string[];
                     /**
@@ -19725,15 +19727,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Feature?: components["schemas"]["FeatureTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Feature?: components['schemas']['FeatureTransformer'];
                     };
                 };
             };
         };
     };
-    "put_core-v4-features-{id}": {
+    'put_core-v4-features-{id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -19745,14 +19747,14 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example blackFriday */
                     Code?: string;
                     /**
                      * @example string
                      * @enum {string}
                      */
-                    Type?: "boolean" | "integer" | "float" | "string" | "enumeration" | "mixed";
+                    Type?: 'boolean' | 'integer' | 'float' | 'string' | 'enumeration' | 'mixed';
                     /** @description List of the values if type is enumeration */
                     Options?: string[];
                     /**
@@ -19792,9 +19794,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Feature?: components["schemas"]["FeatureTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Feature?: components['schemas']['FeatureTransformer'];
                     };
                 };
             };
@@ -19804,7 +19806,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2001 */
                         Code?: number;
                         /** @example higher is not one of the possible options among [low, medium, high]. */
@@ -19818,7 +19820,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2026 */
                         Code?: number;
                         /** @example You're not allowed to modify the value of this feature */
@@ -19832,7 +19834,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2501 */
                         Code?: number;
                         /** @example Feature not found */
@@ -19842,7 +19844,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-v4-features-{featureID}": {
+    'delete_core-v4-features-{featureID}': {
         parameters: {
             query?: never;
             header?: never;
@@ -19861,8 +19863,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -19872,7 +19874,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2501 */
                         Code?: number;
                         /** @example Feature not found */
@@ -19882,7 +19884,7 @@ export interface operations {
             };
         };
     };
-    "get_core-v4-features-{code}": {
+    'get_core-v4-features-{code}': {
         parameters: {
             query?: never;
             header?: never;
@@ -19899,9 +19901,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Feature?: components["schemas"]["FeatureTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Feature?: components['schemas']['FeatureTransformer'];
                     };
                 };
             };
@@ -19911,7 +19913,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2501 */
                         Code?: number;
                         /** @example Feature not found */
@@ -19921,7 +19923,7 @@ export interface operations {
             };
         };
     };
-    "put_core-v4-features-{code}-value": {
+    'put_core-v4-features-{code}-value': {
         parameters: {
             query?: never;
             header?: never;
@@ -19933,7 +19935,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example true */
                     Value?: Record<string, never>;
                 };
@@ -19946,9 +19948,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Feature?: components["schemas"]["FeatureTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Feature?: components['schemas']['FeatureTransformer'];
                     };
                 };
             };
@@ -19958,7 +19960,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2001 */
                         Code?: number;
                         /** @example higher is not one of the possible options among [low, medium, high]. */
@@ -19972,7 +19974,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2026 */
                         Code?: number;
                         /** @example You're not allowed to modify the value of this feature */
@@ -19986,7 +19988,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2501 */
                         Code?: number;
                         /** @example Feature not found */
@@ -19996,7 +19998,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-v4-features-{code}-value": {
+    'delete_core-v4-features-{code}-value': {
         parameters: {
             query?: never;
             header?: never;
@@ -20013,9 +20015,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Feature?: components["schemas"]["FeatureTransformer"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Feature?: components['schemas']['FeatureTransformer'];
                     };
                 };
             };
@@ -20025,7 +20027,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2026 */
                         Code?: number;
                         /** @example You're not allowed to modify the value of this feature */
@@ -20039,7 +20041,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2501 */
                         Code?: number;
                         /** @example Feature not found */
@@ -20049,7 +20051,7 @@ export interface operations {
             };
         };
     };
-    "put_core-v4-features-{code}-user-value": {
+    'put_core-v4-features-{code}-user-value': {
         parameters: {
             query?: never;
             header?: never;
@@ -20061,7 +20063,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example true */
                     Value?: Record<string, never>;
                     UserIDs?: number[];
@@ -20076,8 +20078,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Number of touched users
                          * @example 2
@@ -20092,7 +20094,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2001 */
                         Code?: number;
                         /** @example higher is not one of the possible options among [low, medium, high]. */
@@ -20106,7 +20108,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2026 */
                         Code?: number;
                         /** @example You're not allowed to modify the value of this feature */
@@ -20120,7 +20122,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2501 */
                         Code?: number;
                         /** @example Feature not found */
@@ -20130,7 +20132,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-auth-info": {
+    'post_core-{_version}-auth-info': {
         parameters: {
             query?: never;
             header?: never;
@@ -20141,7 +20143,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -20154,7 +20156,7 @@ export interface operations {
                      * @example auto
                      * @enum {string}
                      */
-                    Intent?: "Proton" | "SSO" | "Auto";
+                    Intent?: 'Proton' | 'SSO' | 'Auto';
                     /**
                      * @description optional field, to start a testing sso login flow
                      * @example true
@@ -20175,38 +20177,40 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /**
-                         * @description If Intent SSO or Auto, token to pass to GET /auth/sso/{token} for initiating the SSO flow
-                         * @example a5fd396fcbb
-                         */
-                        SSOChallengeToken?: string;
-                    } | {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        /** @example -----BEGIN PGP SIGNED MESSAGE-----*-----END SIGNATURE----- */
-                        Modulus?: string;
-                        /** @example <base64_encoded_server_ephemeral> */
-                        ServerEphemeral?: string;
-                        /** @example 4 */
-                        Version?: number;
-                        /** @example <base64_encoded_salt> */
-                        Salt?: string;
-                        /** @example <hex_encoded_session_key> */
-                        SRPSession?: string;
-                        /** @description Only if already authenticated (not on login) */
-                        "2FA"?: {
-                            /**
-                             * @description 0 for disabled, 1 for OTP, 2 for FIDO2, 3 for both
-                             * @example 3
-                             */
-                            Enabled?: number;
-                            FIDO2?: {
-                                /** @description Refer to the definition of PublicKeyCredentialRequestOptions in the WebAuthn spec. Binary data is encoded as Uint8Array. */
-                                AuthenticationOptions?: Record<string, never>;
-                                RegisteredKeys?: components["schemas"]["Fido2RegisteredKey"][];
-                            };
-                        };
-                    };
+                    'application/json':
+                        | {
+                              /**
+                               * @description If Intent SSO or Auto, token to pass to GET /auth/sso/{token} for initiating the SSO flow
+                               * @example a5fd396fcbb
+                               */
+                              SSOChallengeToken?: string;
+                          }
+                        | {
+                              Code?: components['schemas']['ResponseCodeSuccess'];
+                              /** @example -----BEGIN PGP SIGNED MESSAGE-----*-----END SIGNATURE----- */
+                              Modulus?: string;
+                              /** @example <base64_encoded_server_ephemeral> */
+                              ServerEphemeral?: string;
+                              /** @example 4 */
+                              Version?: number;
+                              /** @example <base64_encoded_salt> */
+                              Salt?: string;
+                              /** @example <hex_encoded_session_key> */
+                              SRPSession?: string;
+                              /** @description Only if already authenticated (not on login) */
+                              '2FA'?: {
+                                  /**
+                                   * @description 0 for disabled, 1 for OTP, 2 for FIDO2, 3 for both
+                                   * @example 3
+                                   */
+                                  Enabled?: number;
+                                  FIDO2?: {
+                                      /** @description Refer to the definition of PublicKeyCredentialRequestOptions in the WebAuthn spec. Binary data is encoded as Uint8Array. */
+                                      AuthenticationOptions?: Record<string, never>;
+                                      RegisteredKeys?: components['schemas']['Fido2RegisteredKey'][];
+                                  };
+                              };
+                          };
                 };
             };
             /** @description Bad Request */
@@ -20215,7 +20219,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /**
                          * @description Session is not tied to a user and Username is null
                          * @enum {integer}
@@ -20234,42 +20238,45 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /**
-                         * @description User doesn't have SSO. Returned if Intent=SSO or Intent=Auto on backend's whim
-                         * @enum {integer}
-                         */
-                        Code?: 8101;
-                        /** @example Email domain not found, please sign in with a password */
-                        Error?: string;
-                        /** @description Empty */
-                        Details?: Record<string, never>;
-                    } | {
-                        /**
-                         * @description User has SSO. Returned if Intent=Proton or Intent=Auto on backend's whim
-                         * @enum {integer}
-                         */
-                        Code?: 8100;
-                        /** @example Email domain associated to an existing organization. Please sign in with SSO */
-                        Error?: string;
-                        /** @description Empty */
-                        Details?: Record<string, never>;
-                    } | {
-                        /**
-                         * @description Upgrade the app to call the endpoint this way
-                         * @enum {integer}
-                         */
-                        Code?: 5003;
-                        /** @example You need to update this app in order to perform this operation */
-                        Error?: string;
-                        /** @description Empty */
-                        Details?: Record<string, never>;
-                    };
+                    'application/json':
+                        | {
+                              /**
+                               * @description User doesn't have SSO. Returned if Intent=SSO or Intent=Auto on backend's whim
+                               * @enum {integer}
+                               */
+                              Code?: 8101;
+                              /** @example Email domain not found, please sign in with a password */
+                              Error?: string;
+                              /** @description Empty */
+                              Details?: Record<string, never>;
+                          }
+                        | {
+                              /**
+                               * @description User has SSO. Returned if Intent=Proton or Intent=Auto on backend's whim
+                               * @enum {integer}
+                               */
+                              Code?: 8100;
+                              /** @example Email domain associated to an existing organization. Please sign in with SSO */
+                              Error?: string;
+                              /** @description Empty */
+                              Details?: Record<string, never>;
+                          }
+                        | {
+                              /**
+                               * @description Upgrade the app to call the endpoint this way
+                               * @enum {integer}
+                               */
+                              Code?: 5003;
+                              /** @example You need to update this app in order to perform this operation */
+                              Error?: string;
+                              /** @description Empty */
+                              Details?: Record<string, never>;
+                          };
                 };
             };
         };
     };
-    "get_core-{_version}-auth-sso-{token}": {
+    'get_core-{_version}-auth-sso-{token}': {
         parameters: {
             query?: {
                 FinalRedirectBaseUrl?: string | null;
@@ -20295,7 +20302,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-auth-saml": {
+    'post_core-{_version}-auth-saml': {
         parameters: {
             query?: never;
             header?: never;
@@ -20306,7 +20313,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["IdpResponseVO"];
+                'application/json': components['schemas']['IdpResponseVO'];
             };
         };
         responses: {
@@ -20318,7 +20325,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-auth": {
+    'post_core-{_version}-auth': {
         parameters: {
             query?: never;
             header?: never;
@@ -20329,7 +20336,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AuthInput"];
+                'application/json': components['schemas']['AuthInput'];
             };
         };
         responses: {
@@ -20339,8 +20346,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Session unique ID
                          * @example 6f3c4f52cf499c2066e6c5669a293177c1f43755
@@ -20388,7 +20395,7 @@ export interface operations {
                          * @example 0
                          */
                         TemporaryPassword?: number;
-                        "2FA"?: {
+                        '2FA'?: {
                             /**
                              * @description 0 for disabled, 1 for OTP, 2 for FIDO2, 3 for both
                              * @example 3
@@ -20397,7 +20404,7 @@ export interface operations {
                             FIDO2?: {
                                 /** @description Refer to the definition of PublicKeyCredentialRequestOptions in the WebAuthn spec. Binary data is encoded as Uint8Array. */
                                 AuthenticationOptions?: Record<string, never>;
-                                RegisteredKeys?: components["schemas"]["Fido2RegisteredKey"][];
+                                RegisteredKeys?: components['schemas']['Fido2RegisteredKey'][];
                             };
                         };
                     };
@@ -20405,7 +20412,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-auth": {
+    'delete_core-{_version}-auth': {
         parameters: {
             query?: {
                 /** @description if 1 log out this child only */
@@ -20427,14 +20434,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-auth-jwt": {
+    'post_core-{_version}-auth-jwt': {
         parameters: {
             query?: never;
             header?: never;
@@ -20445,7 +20452,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example eyJhbGciOiJIUzI1Ni...yJV_adQssw5c */
                     Token?: string;
                     /**
@@ -20463,8 +20470,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example 3af9b9780014cacb4b72bc5c73c1d7c4bad6c1e3 */
                         AccessToken?: string;
                         /**
@@ -20489,7 +20496,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-auth-2fa": {
+    'post_core-{_version}-auth-2fa': {
         parameters: {
             query?: never;
             header?: never;
@@ -20500,7 +20507,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description either this or the FIDO2 object
                      * @example 123456 or recovery code
@@ -20528,8 +20535,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @deprecated
                          * @example full <other_scopes>
@@ -20541,7 +20548,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-auth-modulus": {
+    'get_core-{_version}-auth-modulus': {
         parameters: {
             query?: never;
             header?: never;
@@ -20558,8 +20565,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example -----BEGIN PGP SIGNED MESSAGE-----.*-----END PGP SIGNATURE----- */
                         Modulus?: string;
                         /** @example Oq_JB_IkrOx5WlpxzlRPocN3_NhJ80V7DGav77eRtSDkOtLxW2jfI3nUpEqANGpboOyN-GuzEFXadlpxgVp7_g== */
@@ -20569,7 +20576,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-auth-scopes": {
+    'get_core-{_version}-auth-scopes': {
         parameters: {
             query?: never;
             header?: never;
@@ -20586,8 +20593,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @deprecated
                          * @example 217017207043915776
@@ -20599,7 +20606,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-auth-refresh": {
+    'post_core-{_version}-auth-refresh': {
         parameters: {
             query?: never;
             header?: never;
@@ -20610,7 +20617,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example token */
                     ResponseType?: string;
                     /** @example refresh_token */
@@ -20633,8 +20640,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example abcDecryptedTokenAndNoSaltAndNoPrivateKey123 */
                         AccessToken?: string;
                         /**
@@ -20666,7 +20673,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-auth-cookies": {
+    'post_core-{_version}-auth-cookies': {
         parameters: {
             query?: never;
             header?: never;
@@ -20677,7 +20684,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example token */
                     ResponseType?: string;
                     /** @example refresh_token */
@@ -20699,8 +20706,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example 6f3c4f52cf499c2066e6c5669a293177c1f43755 */
                         UID?: string;
                         /** @example 0 */
@@ -20715,7 +20722,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-auth-credentialless": {
+    'post_core-{_version}-auth-credentialless': {
         parameters: {
             query?: never;
             header?: never;
@@ -20726,7 +20733,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateCredentiallessUserInput"];
+                'application/json': components['schemas']['CreateCredentiallessUserInput'];
             };
         };
         responses: {
@@ -20736,12 +20743,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CreateCredentiallessUserOutput"];
+                    'application/json': components['schemas']['CreateCredentiallessUserOutput'];
                 };
             };
         };
     };
-    "get_core-{_version}-settings-mnemonic": {
+    'get_core-{_version}-settings-mnemonic': {
         parameters: {
             query?: never;
             header?: never;
@@ -20758,8 +20765,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         MnemonicUserKeys?: {
                             /** @example 1H8EGg3J1QpSDL...k0uhrHx6nnGQ== */
                             ID?: string;
@@ -20773,7 +20780,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-settings-mnemonic": {
+    'put_core-{_version}-settings-mnemonic': {
         parameters: {
             query?: never;
             header?: never;
@@ -20784,7 +20791,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     MnemonicUserKeys?: {
                         /** @example 1H8EGg3J1QpSDL...k0uhrHx6nnGQ== */
                         ID?: string;
@@ -20794,7 +20801,7 @@ export interface operations {
                     /** @example 1H8EGg3J1Qwk243hf== */
                     MnemonicSalt?: string;
                     /** @description The new mnemonic SRP verifier */
-                    MnemonicAuth?: components["schemas"]["AuthInfoInput"];
+                    MnemonicAuth?: components['schemas']['AuthInfoInput'];
                     /**
                      * @description Optional, for inline re-authentication
                      * @example <base64_encoded_ephemeral>
@@ -20838,8 +20845,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -20850,7 +20857,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-settings-mnemonic-reset": {
+    'get_core-{_version}-settings-mnemonic-reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -20867,8 +20874,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         MnemonicUserKeys?: {
                             /** @example 1H8EGg3J1QpSDL...k0uhrHx6nnGQ== */
                             ID?: string;
@@ -20882,7 +20889,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-settings-mnemonic-reset": {
+    'post_core-{_version}-settings-mnemonic-reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -20893,7 +20900,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @description The user keys encrypted with the account password */
                     UserKeys?: {
                         /** @example 1H8EGg3J1QpSDL...k0uhrHx6nnGQ== */
@@ -20924,15 +20931,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Scopes?: string[];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-settings-mnemonic-disable": {
+    'post_core-{_version}-settings-mnemonic-disable': {
         parameters: {
             query?: never;
             header?: never;
@@ -20943,7 +20950,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Optional, for inline re-authentication
                      * @example <base64_encoded_ephemeral>
@@ -20987,8 +20994,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Present only if inline re-authentication is submitted
                          * @example <base64_encoded_proof>
@@ -20999,7 +21006,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-settings-mnemonic-reactivate": {
+    'put_core-{_version}-settings-mnemonic-reactivate': {
         parameters: {
             query?: never;
             header?: never;
@@ -21010,7 +21017,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     MnemonicUserKeys?: {
                         /** @example 1H8EGg3J1QpSDL...k0uhrHx6nnGQ== */
                         ID?: string;
@@ -21020,7 +21027,7 @@ export interface operations {
                     /** @example 1H8EGg3J1Qwk243hf== */
                     MnemonicSalt?: string;
                     /** @description The new mnemonic SRP verifier */
-                    MnemonicAuth?: components["schemas"]["AuthInfoInput"];
+                    MnemonicAuth?: components['schemas']['AuthInfoInput'];
                 };
             };
         };
@@ -21031,14 +21038,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-pushes": {
+    'get_core-{_version}-pushes': {
         parameters: {
             query?: {
                 /**
@@ -21066,15 +21073,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Pushes?: components["schemas"]["PushTransformer"][];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Pushes?: components['schemas']['PushTransformer'][];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-pushes-active": {
+    'get_core-{_version}-pushes-active': {
         parameters: {
             query?: {
                 /**
@@ -21102,15 +21109,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Pushes?: components["schemas"]["PushTransformer"][];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Pushes?: components['schemas']['PushTransformer'][];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-pushes-active-session": {
+    'get_core-{_version}-pushes-active-session': {
         parameters: {
             query?: {
                 /**
@@ -21138,15 +21145,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Pushes?: components["schemas"]["PushTransformer"][];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Pushes?: components['schemas']['PushTransformer'][];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-pushes-{enc_id}": {
+    'delete_core-{_version}-pushes-{enc_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -21164,15 +21171,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Pushes?: string[];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-referrals": {
+    'get_core-{_version}-referrals': {
         parameters: {
             query?: {
                 /** @description Skip the given number of results */
@@ -21194,16 +21201,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Referrals?: components["schemas"]["ReferralOutput"][];
+                    'application/json': {
+                        Referrals?: components['schemas']['ReferralOutput'][];
                         Total?: number;
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-referrals": {
+    'post_core-{_version}-referrals': {
         parameters: {
             query?: never;
             header?: never;
@@ -21214,7 +21221,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["SendInvitationsInput"];
+                'application/json': components['schemas']['SendInvitationsInput'];
             };
         };
         responses: {
@@ -21224,15 +21231,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Referrals?: components["schemas"]["ReferralOutput"][];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Referrals?: components['schemas']['ReferralOutput'][];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-referrals-status": {
+    'get_core-{_version}-referrals-status': {
         parameters: {
             query?: never;
             header?: never;
@@ -21249,15 +21256,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Referrals?: components["schemas"]["ReferralStatus"][];
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Referrals?: components['schemas']['ReferralStatus'][];
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-referrals-identifiers-{identifier}": {
+    'get_core-{_version}-referrals-identifiers-{identifier}': {
         parameters: {
             query?: never;
             header?: never;
@@ -21276,7 +21283,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    'application/json': unknown;
                 };
             };
             /** @description The identifier does not exist */
@@ -21285,12 +21292,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    'application/json': unknown;
                 };
             };
         };
     };
-    "post_core-{_version}-devices": {
+    'post_core-{_version}-devices': {
         parameters: {
             query?: never;
             header?: never;
@@ -21301,7 +21308,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["RegisterDeviceInput"];
+                'application/json': components['schemas']['RegisterDeviceInput'];
             };
         };
         responses: {
@@ -21311,14 +21318,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-devices": {
+    'delete_core-{_version}-devices': {
         parameters: {
             query?: never;
             header?: never;
@@ -21329,7 +21336,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example 4b3403665fea6... */
                     DeviceToken?: string;
                     /**
@@ -21347,14 +21354,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-betas-{client_id}": {
+    'get_core-{_version}-betas-{client_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -21376,8 +21383,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Beta?: {
                             /** @example iOSVPN */
                             ClientID?: string;
@@ -21393,7 +21400,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-betas-{client_id}": {
+    'put_core-{_version}-betas-{client_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -21409,7 +21416,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example john@example.com */
                     Email?: string;
                 };
@@ -21422,8 +21429,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Beta?: {
                             /** @example iOSVPN */
                             ClientID?: string;
@@ -21439,7 +21446,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-betas-{client_id}": {
+    'delete_core-{_version}-betas-{client_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -21461,14 +21468,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-betas": {
+    'get_core-{_version}-betas': {
         parameters: {
             query?: never;
             header?: never;
@@ -21485,8 +21492,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Betas?: {
                             /** @example iOSVPN */
                             ClientID?: string;
@@ -21502,7 +21509,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-betas": {
+    'delete_core-{_version}-betas': {
         parameters: {
             query?: never;
             header?: never;
@@ -21519,14 +21526,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-geofeed-geofeed-csv": {
+    'get_core-{_version}-geofeed-geofeed-csv': {
         parameters: {
             query?: never;
             header?: never;
@@ -21545,7 +21552,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-geofeed-geofeed-public-csv": {
+    'get_core-{_version}-geofeed-geofeed-public-csv': {
         parameters: {
             query?: never;
             header?: never;
@@ -21564,7 +21571,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-load": {
+    'get_core-{_version}-load': {
         parameters: {
             query?: never;
             header?: never;
@@ -21581,14 +21588,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-load": {
+    'post_core-{_version}-load': {
         parameters: {
             query?: never;
             header?: never;
@@ -21605,14 +21612,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-logs-auth": {
+    'get_core-{_version}-logs-auth': {
         parameters: {
             query?: {
                 /**
@@ -21644,9 +21651,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Logs?: components["schemas"]["AuthLogResponse"][];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Logs?: components['schemas']['AuthLogResponse'][];
                         /** @example 1 */
                         Total?: number;
                     };
@@ -21654,7 +21661,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-logs-auth": {
+    'delete_core-{_version}-logs-auth': {
         parameters: {
             query?: never;
             header?: never;
@@ -21671,14 +21678,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-metrics": {
+    'get_core-{_version}-metrics': {
         parameters: {
             query?: {
                 /** @example signup */
@@ -21702,14 +21709,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-metrics": {
+    'post_core-{_version}-metrics': {
         parameters: {
             query?: never;
             header?: never;
@@ -21720,12 +21727,12 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @example encrypted_search
                      * @enum {string}
                      */
-                    Log?: "signup" | "encrypted_search" | "dark_styles";
+                    Log?: 'signup' | 'encrypted_search' | 'dark_styles';
                     /**
                      * @description Optional title
                      * @example index
@@ -21745,14 +21752,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-settings-recovery-secret": {
+    'post_core-{_version}-settings-recovery-secret': {
         parameters: {
             query?: never;
             header?: never;
@@ -21763,7 +21770,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Base64-encoded secret, decodes to 32 bytes
                      * @example 1H8EGg3J1...Qwk243hf
@@ -21781,14 +21788,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-settings-recovery-secret": {
+    'delete_core-{_version}-settings-recovery-secret': {
         parameters: {
             query?: never;
             header?: never;
@@ -21805,14 +21812,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-reports-form-{portal_id}-{form_id}": {
+    'post_core-{_version}-reports-form-{portal_id}-{form_id}': {
         parameters: {
             query?: never;
             header?: never;
@@ -21825,7 +21832,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     fields?: Record<string, never>;
                     context?: Record<string, never>;
                     legalConsentOptions?: Record<string, never>;
@@ -21839,14 +21846,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-reports-bug": {
+    'post_core-{_version}-reports-bug': {
         parameters: {
             query?: never;
             header?: never;
@@ -21857,7 +21864,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "multipart/form-data": {
+                'multipart/form-data': {
                     /**
                      * @description Client should supply if mobile app, ask user if web app
                      * @example iOS
@@ -21976,14 +21983,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-reports-bug-attachments": {
+    'post_core-{_version}-reports-bug-attachments': {
         parameters: {
             query?: never;
             header?: never;
@@ -21994,7 +22001,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UploadAttachment"];
+                'application/json': components['schemas']['UploadAttachment'];
             };
         };
         responses: {
@@ -22004,14 +22011,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "delete_core-{_version}-reports-bug-{ticketId}": {
+    'delete_core-{_version}-reports-bug-{ticketId}': {
         parameters: {
             query?: {
                 RequesterID?: number;
@@ -22033,8 +22040,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -22044,7 +22051,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2501 */
                         Code?: number;
                         /** @example Ticket does not exist */
@@ -22054,7 +22061,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-reports-abuse": {
+    'post_core-{_version}-reports-abuse': {
         parameters: {
             query?: never;
             header?: never;
@@ -22065,7 +22072,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example harassment */
                     Category?: string;
                     /** @example This person has been harassing me. */
@@ -22090,14 +22097,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-reports-crash": {
+    'post_core-{_version}-reports-crash': {
         parameters: {
             query?: never;
             header?: never;
@@ -22108,7 +22115,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Optional
                      * @example iOS
@@ -22147,7 +22154,7 @@ export interface operations {
                     /** @description Client should supply */
                     Debug?: {
                         /** @example you want */
-                        "Whatever JSON"?: string;
+                        'Whatever JSON'?: string;
                     };
                 };
             };
@@ -22159,14 +22166,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-reports-sentry-api-{id}-{type}": {
+    'post_core-{_version}-reports-sentry-api-{id}-{type}': {
         parameters: {
             query?: never;
             header?: never;
@@ -22187,7 +22194,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-reports-phishing": {
+    'post_core-{_version}-reports-phishing': {
         parameters: {
             query?: never;
             header?: never;
@@ -22198,7 +22205,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w== */
                     MessageID?: string;
                     /**
@@ -22218,14 +22225,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-reports-spam": {
+    'post_core-{_version}-reports-spam': {
         parameters: {
             query?: never;
             header?: never;
@@ -22244,7 +22251,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-reports-cancel-plan": {
+    'post_core-{_version}-reports-cancel-plan': {
         parameters: {
             query?: never;
             header?: never;
@@ -22255,7 +22262,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CancelPlanReport"];
+                'application/json': components['schemas']['CancelPlanReport'];
             };
         };
         responses: {
@@ -22265,14 +22272,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-reset-{username}-{token}": {
+    'get_core-{_version}-reset-{username}-{token}': {
         parameters: {
             query?: never;
             header?: never;
@@ -22296,8 +22303,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @example 1
                          * @enum {integer}
@@ -22309,13 +22316,13 @@ export interface operations {
                          */
                         SupportPgpV6Keys?: 0 | 1;
                         /** @description NB: PrivateKey is null in keys */
-                        Addresses?: components["schemas"]["AddressUser"][];
+                        Addresses?: components['schemas']['AddressUser'][];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-reset": {
+    'post_core-{_version}-reset': {
         parameters: {
             query?: never;
             header?: never;
@@ -22326,7 +22333,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example derp */
                     Username?: string;
                     /**
@@ -22349,8 +22356,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -22360,7 +22367,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 19305 */
                         Code?: number;
                         /** @example Username and recovery email mismatch */
@@ -22371,7 +22378,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-reset-username": {
+    'post_core-{_version}-reset-username': {
         parameters: {
             query?: never;
             header?: never;
@@ -22382,7 +22389,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description if Phone is not present
                      * @example derp@gmail.com
@@ -22403,14 +22410,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-system-config": {
+    'get_core-{_version}-system-config': {
         parameters: {
             query?: never;
             header?: never;
@@ -22429,7 +22436,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-system-version": {
+    'get_core-{_version}-system-version': {
         parameters: {
             query?: never;
             header?: never;
@@ -22448,7 +22455,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-tests-exception": {
+    'get_core-{_version}-tests-exception': {
         parameters: {
             query?: never;
             header?: never;
@@ -22467,7 +22474,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-tests-error": {
+    'get_core-{_version}-tests-error': {
         parameters: {
             query?: never;
             header?: never;
@@ -22486,7 +22493,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-tests-notice": {
+    'get_core-{_version}-tests-notice': {
         parameters: {
             query?: never;
             header?: never;
@@ -22505,7 +22512,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-tests-memoryLeak": {
+    'get_core-{_version}-tests-memoryLeak': {
         parameters: {
             query?: never;
             header?: never;
@@ -22524,7 +22531,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-tests-logger": {
+    'get_core-{_version}-tests-logger': {
         parameters: {
             query?: never;
             header?: never;
@@ -22543,7 +22550,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-tests-logger-observability": {
+    'get_core-{_version}-tests-logger-observability': {
         parameters: {
             query?: {
                 Level?: number;
@@ -22564,7 +22571,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-tests-ping": {
+    'get_core-{_version}-tests-ping': {
         parameters: {
             query?: never;
             header?: never;
@@ -22581,14 +22588,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-tests-version": {
+    'get_core-{_version}-tests-version': {
         parameters: {
             query?: never;
             header?: never;
@@ -22607,7 +22614,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-tests-stream": {
+    'get_core-{_version}-tests-stream': {
         parameters: {
             query?: never;
             header?: never;
@@ -22626,7 +22633,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-update": {
+    'get_core-{_version}-update': {
         parameters: {
             query?: {
                 /** @example 24m */
@@ -22646,14 +22653,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-users-invitations": {
+    'get_core-{_version}-users-invitations': {
         parameters: {
             query?: never;
             header?: never;
@@ -22670,14 +22677,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                    } & components["schemas"]["GetUserInvitationsOutput"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    } & components['schemas']['GetUserInvitationsOutput'];
                 };
             };
         };
     };
-    "post_core-{_version}-users-invitations-{enc_id}-reject": {
+    'post_core-{_version}-users-invitations-{enc_id}-reject': {
         parameters: {
             query?: never;
             header?: never;
@@ -22695,14 +22702,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-users-invitations-{enc_id}-accept": {
+    'post_core-{_version}-users-invitations-{enc_id}-accept': {
         parameters: {
             query?: never;
             header?: never;
@@ -22720,8 +22727,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -22731,18 +22738,18 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2011 */
                         Code?: number;
                         Details?: {
-                            Validation?: components["schemas"]["GetUserInvitationOutput"];
+                            Validation?: components['schemas']['GetUserInvitationOutput'];
                         };
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-validate-email": {
+    'post_core-{_version}-validate-email': {
         parameters: {
             query?: never;
             header?: never;
@@ -22753,7 +22760,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Email address
                      * @example einstein@pm.me
@@ -22769,8 +22776,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -22780,7 +22787,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProtonError"] & {
+                    'application/json': components['schemas']['ProtonError'] & {
                         /**
                          * @description Email address failed validation
                          * @default 2050
@@ -22791,7 +22798,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-validate-phone": {
+    'post_core-{_version}-validate-phone': {
         parameters: {
             query?: never;
             header?: never;
@@ -22802,7 +22809,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description Phone number
                      * @example +37012345678
@@ -22818,8 +22825,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -22829,7 +22836,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProtonError"] & {
+                    'application/json': components['schemas']['ProtonError'] & {
                         /**
                          * @description Phone number failed validation
                          * @default 2058
@@ -22840,7 +22847,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-verification-ownership-{token}": {
+    'get_core-{_version}-verification-ownership-{token}': {
         parameters: {
             query?: never;
             header?: never;
@@ -22860,7 +22867,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-verification-ownership-{token}": {
+    'post_core-{_version}-verification-ownership-{token}': {
         parameters: {
             query?: never;
             header?: never;
@@ -22880,7 +22887,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-verification-ownership-email-{token}": {
+    'get_core-{_version}-verification-ownership-email-{token}': {
         parameters: {
             query?: never;
             header?: never;
@@ -22900,7 +22907,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-verification-ownership-email-{token}": {
+    'post_core-{_version}-verification-ownership-email-{token}': {
         parameters: {
             query?: never;
             header?: never;
@@ -22920,7 +22927,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-verification-ownership-sms-{token}": {
+    'get_core-{_version}-verification-ownership-sms-{token}': {
         parameters: {
             query?: never;
             header?: never;
@@ -22940,7 +22947,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-verification-ownership-sms-{token}": {
+    'post_core-{_version}-verification-ownership-sms-{token}': {
         parameters: {
             query?: never;
             header?: never;
@@ -22960,28 +22967,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-verification-ownership-{token}-{code}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                _version: string;
-                token: string;
-                code: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    "post_core-{_version}-verification-ownership-email-{token}-{code}": {
+    'post_core-{_version}-verification-ownership-{token}-{code}': {
         parameters: {
             query?: never;
             header?: never;
@@ -23002,7 +22988,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-verification-ownership-sms-{token}-{code}": {
+    'post_core-{_version}-verification-ownership-email-{token}-{code}': {
         parameters: {
             query?: never;
             header?: never;
@@ -23023,12 +23009,33 @@ export interface operations {
             };
         };
     };
-    "get_core-v6-events-{id}": {
+    'post_core-{_version}-verification-ownership-sms-{token}-{code}': {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: components["schemas"]["Id"];
+                _version: string;
+                token: string;
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    'get_core-v6-events-{id}': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -23037,16 +23044,16 @@ export interface operations {
             /** @description Success */
             200: {
                 headers: {
-                    "x-pm-code": 1000;
+                    'x-pm-code': 1000;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Stream"];
+                    'application/json': components['schemas']['Stream'];
                 };
             };
         };
     };
-    "get_core-{_version}-events-latest": {
+    'get_core-{_version}-events-latest': {
         parameters: {
             query?: never;
             header?: never;
@@ -23063,8 +23070,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example ACXDmTaBub14w== */
                         EventID?: string;
                     };
@@ -23072,17 +23079,17 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-events-{id}": {
+    'get_core-{_version}-events-{id}': {
         parameters: {
             query?: {
-                MessageCounts?: components["schemas"]["BoolInt"];
-                ConversationCounts?: components["schemas"]["BoolInt"];
+                MessageCounts?: components['schemas']['BoolInt'];
+                ConversationCounts?: components['schemas']['BoolInt'];
                 NoMetaData?: unknown[];
             };
             header?: never;
             path: {
                 _version: string;
-                id: components["schemas"]["Id"];
+                id: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -23094,22 +23101,22 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EventInfo"];
+                    'application/json': components['schemas']['EventInfo'];
                 };
             };
         };
     };
-    "get_core-v4-events-{id}": {
+    'get_core-v4-events-{id}': {
         parameters: {
             query?: {
                 MessageCounts?: boolean;
                 ConversationCounts?: boolean;
             };
             header?: {
-                "x-pm-appversion"?: string;
+                'x-pm-appversion'?: string;
             };
             path: {
-                id: components["schemas"]["Id"];
+                id: components['schemas']['Id'];
             };
             cookie?: never;
         };
@@ -23121,12 +23128,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EventInfo"];
+                    'application/json': components['schemas']['EventInfo'];
                 };
             };
         };
     };
-    "post_core-{_version}-feedback": {
+    'post_core-{_version}-feedback': {
         parameters: {
             query?: never;
             header?: never;
@@ -23137,7 +23144,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["FeedbackVO"];
+                'application/json': components['schemas']['FeedbackVO'];
             };
         };
         responses: {
@@ -23147,14 +23154,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-checklist-get-started": {
+    'get_core-{_version}-checklist-get-started': {
         parameters: {
             query?: never;
             header?: never;
@@ -23171,8 +23178,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @description Array of completed checklist items */
                         Items?: string[];
                         /** @description Timestamp of checklist creation */
@@ -23186,7 +23193,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-checklist-paying-user": {
+    'get_core-{_version}-checklist-paying-user': {
         parameters: {
             query?: never;
             header?: never;
@@ -23203,8 +23210,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @description Array of completed checklist items */
                         Items?: string[];
                         /** @description Timestamp of checklist creation */
@@ -23214,7 +23221,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-checklist-get-started-seen-completed-list": {
+    'post_core-{_version}-checklist-get-started-seen-completed-list': {
         parameters: {
             query?: never;
             header?: never;
@@ -23231,14 +23238,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-checklist-paying-user-hide": {
+    'post_core-{_version}-checklist-paying-user-hide': {
         parameters: {
             query?: never;
             header?: never;
@@ -23255,14 +23262,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-checklist-paying-user-seen-completed-list": {
+    'post_core-{_version}-checklist-paying-user-seen-completed-list': {
         parameters: {
             query?: never;
             header?: never;
@@ -23279,14 +23286,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-checklist-get-started-init": {
+    'post_core-{_version}-checklist-get-started-init': {
         parameters: {
             query?: never;
             header?: never;
@@ -23303,14 +23310,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-checklist-paying-user-init": {
+    'post_core-{_version}-checklist-paying-user-init': {
         parameters: {
             query?: never;
             header?: never;
@@ -23327,14 +23334,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-checklist-check-item": {
+    'put_core-{_version}-checklist-check-item': {
         parameters: {
             query?: never;
             header?: never;
@@ -23345,7 +23352,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example MobileApp */
                     Item?: string;
                 };
@@ -23358,14 +23365,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-checklist-update-display": {
+    'put_core-{_version}-checklist-update-display': {
         parameters: {
             query?: never;
             header?: never;
@@ -23376,7 +23383,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example Hidden */
                     Display?: string;
                 };
@@ -23389,14 +23396,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-verify-send": {
+    'post_core-{_version}-verify-send': {
         parameters: {
             query?: never;
             header?: never;
@@ -23407,12 +23414,12 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @example external_email
                      * @enum {string}
                      */
-                    Type?: "external_email, recovery_email";
+                    Type?: 'external_email, recovery_email';
                     /** @example me@example.com */
                     Destination?: string;
                 };
@@ -23425,14 +23432,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-verify-validate": {
+    'post_core-{_version}-verify-validate': {
         parameters: {
             query?: never;
             header?: never;
@@ -23443,7 +23450,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc... */
                     JWT?: string;
                 };
@@ -23456,8 +23463,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Previous confirmation state
                          * @example 1
@@ -23468,7 +23475,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-verify-validate": {
+    'delete_core-{_version}-verify-validate': {
         parameters: {
             query?: never;
             header?: never;
@@ -23479,7 +23486,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @example eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc... */
                     JWT?: string;
                 };
@@ -23492,8 +23499,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Previous confirmation state
                          * @example 1
@@ -23504,7 +23511,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-verify-email": {
+    'post_core-{_version}-verify-email': {
         parameters: {
             query?: never;
             header?: never;
@@ -23521,8 +23528,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Previous confirmation state
                          * @example 1
@@ -23533,7 +23540,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-verify-phone": {
+    'post_core-{_version}-verify-phone': {
         parameters: {
             query?: never;
             header?: never;
@@ -23550,8 +23557,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /**
                          * @description Previous confirmation state
                          * @example 1
@@ -23562,7 +23569,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-verify-reauth-email": {
+    'post_core-{_version}-verify-reauth-email': {
         parameters: {
             query?: never;
             header?: never;
@@ -23579,8 +23586,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -23590,7 +23597,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 12087 */
                         Code?: number;
                         /** @example Invalid or already used token */
@@ -23604,7 +23611,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 9001 */
                         Code?: number;
                         /** @example Human verification required */
@@ -23614,7 +23621,7 @@ export interface operations {
             };
         };
     };
-    "post_core-{_version}-verify-reauth-phone": {
+    'post_core-{_version}-verify-reauth-phone': {
         parameters: {
             query?: never;
             header?: never;
@@ -23631,8 +23638,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -23642,7 +23649,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 12087 */
                         Code?: number;
                         /** @example Invalid or already used token */
@@ -23656,7 +23663,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 9001 */
                         Code?: number;
                         /** @example Human verification required */
@@ -23666,7 +23673,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-notifications": {
+    'get_core-{_version}-notifications': {
         parameters: {
             query?: {
                 /**
@@ -23674,11 +23681,11 @@ export interface operations {
                  * @example 2
                  */
                 WithImageScale?: number;
-                FullScreenImageSupport?: components["schemas"]["NotificationRequest"]["FullScreenImageSupport"];
-                FullScreenImageWidth?: components["schemas"]["NotificationRequest"]["FullScreenImageWidth"];
-                FullScreenImageHeight?: components["schemas"]["NotificationRequest"]["FullScreenImageHeight"];
-                SupportedFullScreenImageFormats?: components["schemas"]["NotificationRequest"]["SupportedFullScreenImageFormats"];
-                Null?: components["schemas"]["NotificationRequest"]["Null"];
+                FullScreenImageSupport?: components['schemas']['NotificationRequest']['FullScreenImageSupport'];
+                FullScreenImageWidth?: components['schemas']['NotificationRequest']['FullScreenImageWidth'];
+                FullScreenImageHeight?: components['schemas']['NotificationRequest']['FullScreenImageHeight'];
+                SupportedFullScreenImageFormats?: components['schemas']['NotificationRequest']['SupportedFullScreenImageFormats'];
+                Null?: components['schemas']['NotificationRequest']['Null'];
             };
             header?: never;
             path: {
@@ -23694,15 +23701,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Notifications?: components["schemas"]["NotificationVersionTransformer"][];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Notifications?: components['schemas']['NotificationVersionTransformer'][];
                     };
                 };
             };
         };
     };
-    "patch_core-v4-labels-{enc_id}": {
+    'patch_core-v4-labels-{enc_id}': {
         parameters: {
             query?: {
                 /**
@@ -23719,7 +23726,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchInput"];
+                'application/json': components['schemas']['PatchInput'];
             };
         };
         responses: {
@@ -23729,9 +23736,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Label?: components["schemas"]["Label"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Label?: components['schemas']['Label'];
                     };
                 };
             };
@@ -23741,7 +23748,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2500 */
                         Code?: number;
                         /** @example Attribute Expanded should be of type int, null (float given) */
@@ -23751,7 +23758,7 @@ export interface operations {
             };
         };
     };
-    "post_core-v4-labels-by-ids": {
+    'post_core-v4-labels-by-ids': {
         parameters: {
             query?: never;
             header?: never;
@@ -23760,7 +23767,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["LabelIDs"];
+                'application/json': components['schemas']['LabelIDs'];
             };
         };
         responses: {
@@ -23770,17 +23777,17 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         Labels?: {
-                            [key: string]: components["schemas"]["Label"];
+                            [key: string]: components['schemas']['Label'];
                         };
                     };
                 };
             };
         };
     };
-    "get_core-{_version}-labels": {
+    'get_core-{_version}-labels': {
         parameters: {
             query?: {
                 /**
@@ -23803,15 +23810,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Labels?: components["schemas"]["Label"][];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Labels?: components['schemas']['Label'][];
                     };
                 };
             };
         };
     };
-    "post_core-{_version}-labels": {
+    'post_core-{_version}-labels': {
         parameters: {
             query?: never;
             header?: never;
@@ -23822,7 +23829,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description required, cannot be same as an existing label of this Type. Max length is 100 characters
                      * @example Red Label
@@ -23876,9 +23883,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Label?: components["schemas"]["Label"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Label?: components['schemas']['Label'];
                     };
                 };
             };
@@ -23888,7 +23895,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2011 */
                         Code?: number;
                         /** @example Maximum 3 levels in the folder hierarchy */
@@ -23902,7 +23909,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2500 */
                         Code?: number;
                         /** @example A label or folder with this name already exists */
@@ -23916,7 +23923,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2011 */
                         Code?: number;
                         /** @example Invalid name */
@@ -23926,7 +23933,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-labels": {
+    'delete_core-{_version}-labels': {
         parameters: {
             query?: never;
             header?: never;
@@ -23937,7 +23944,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     LabelIDs?: string[];
                 };
             };
@@ -23949,7 +23956,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 1001 */
                         Code?: number;
                         /** @description Array of responses, one element per label */
@@ -23958,7 +23965,7 @@ export interface operations {
                                 /** @example KPlISx5MiML3XcSY-tfNw== */
                                 LabelID?: string;
                                 Response?: {
-                                    Code?: components["schemas"]["ResponseCodeSuccess"];
+                                    Code?: components['schemas']['ResponseCodeSuccess'];
                                 };
                             };
                             1?: {
@@ -23981,30 +23988,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @default 2000 */
-                        Code: number;
-                        /** @default The LabelIDs is required */
-                        Error: string;
-                        Details?: {
-                            /** @default The LabelIDs is required */
-                            LabelIDs: Record<string, never>;
-                        };
-                    } | {
-                        /** @default 2002 */
-                        Code: number;
-                        /** @default The LabelIDs must be a array */
-                        Error: string;
-                        Details?: {
-                            /** @default The LabelIDs must be a array */
-                            LabelIDs: Record<string, never>;
-                        };
-                    };
+                    'application/json':
+                        | {
+                              /** @default 2000 */
+                              Code: number;
+                              /** @default The LabelIDs is required */
+                              Error: string;
+                              Details?: {
+                                  /** @default The LabelIDs is required */
+                                  LabelIDs: Record<string, never>;
+                              };
+                          }
+                        | {
+                              /** @default 2002 */
+                              Code: number;
+                              /** @default The LabelIDs must be a array */
+                              Error: string;
+                              Details?: {
+                                  /** @default The LabelIDs must be a array */
+                                  LabelIDs: Record<string, never>;
+                              };
+                          };
                 };
             };
         };
     };
-    "get_core-{_version}-labels-available": {
+    'get_core-{_version}-labels-available': {
         parameters: {
             query: {
                 /** @description The name to check */
@@ -24028,8 +24037,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
@@ -24039,7 +24048,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2011 */
                         Code?: number;
                         /** @example Maximum 3 levels in the folder hierarchy */
@@ -24053,7 +24062,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2500 */
                         Code?: number;
                         /** @example A label or folder with this name already exists */
@@ -24067,7 +24076,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2011 */
                         Code?: number;
                         /** @example Invalid name */
@@ -24077,7 +24086,7 @@ export interface operations {
             };
         };
     };
-    "put_core-{_version}-labels-order": {
+    'put_core-{_version}-labels-order': {
         parameters: {
             query?: never;
             header?: never;
@@ -24088,7 +24097,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /** @description Will amend the order of labels with the order of the corresponding LabelIDs */
                     LabelIDs?: string[];
                     /**
@@ -24111,20 +24120,20 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-labels-order-tree-{startLabelId}": {
+    'put_core-{_version}-labels-order-tree-{startLabelId}': {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                startLabelId: (string & components["schemas"]["Id"]) | null;
+                startLabelId: (string & components['schemas']['Id']) | null;
             };
             cookie?: never;
         };
@@ -24136,14 +24145,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-labels-{id}": {
+    'put_core-{_version}-labels-{id}': {
         parameters: {
             query?: {
                 /**
@@ -24166,7 +24175,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                'application/json': {
                     /**
                      * @description required, cannot be same as an existing label of this Type. Max length is 100 characters.
                      *          *             Must be the same for Message System Folders (Type = 4)
@@ -24213,9 +24222,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
-                        Label?: components["schemas"]["Label"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
+                        Label?: components['schemas']['Label'];
                     };
                 };
             };
@@ -24225,7 +24234,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2011 */
                         Code?: number;
                         /** @example Maximum 3 levels in the folder hierarchy */
@@ -24239,7 +24248,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2500 */
                         Code?: number;
                         /** @example A sub-folder with this name already exists in the destination folder */
@@ -24249,7 +24258,7 @@ export interface operations {
             };
         };
     };
-    "delete_core-{_version}-labels-{enc_id}": {
+    'delete_core-{_version}-labels-{enc_id}': {
         parameters: {
             query?: {
                 /**
@@ -24273,14 +24282,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                     };
                 };
             };
         };
     };
-    "put_core-{_version}-labels-{enc_labelID}-detach": {
+    'put_core-{_version}-labels-{enc_labelID}-detach': {
         parameters: {
             query?: {
                 /**
@@ -24304,8 +24313,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                    'application/json': {
+                        Code?: components['schemas']['ResponseCodeSuccess'];
                         /** @example 3 */
                         NumMessages?: number;
                     };
@@ -24317,27 +24326,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @default 2001 */
-                        Code: number;
-                        /** @default The action can't be performed on this label */
-                        Error: string;
-                        Details?: {
-                            /** @default LabelID corresponds to a global PM label, which can't be edited by this route */
-                            LabelID: Record<string, never>;
-                        };
-                    } | {
-                        /** @default 2002 */
-                        Code: number;
-                        /** @default The action can't be performed on this label */
-                        Error: string;
-                        Details?: {
-                            /** @default LabelID must correspond to a label of the MessageLabel type */
-                            LabelID: Record<string, never>;
-                            /** @default Folder */
-                            LabelTypeReceived: Record<string, never>;
-                        };
-                    };
+                    'application/json':
+                        | {
+                              /** @default 2001 */
+                              Code: number;
+                              /** @default The action can't be performed on this label */
+                              Error: string;
+                              Details?: {
+                                  /** @default LabelID corresponds to a global PM label, which can't be edited by this route */
+                                  LabelID: Record<string, never>;
+                              };
+                          }
+                        | {
+                              /** @default 2002 */
+                              Code: number;
+                              /** @default The action can't be performed on this label */
+                              Error: string;
+                              Details?: {
+                                  /** @default LabelID must correspond to a label of the MessageLabel type */
+                                  LabelID: Record<string, never>;
+                                  /** @default Folder */
+                                  LabelTypeReceived: Record<string, never>;
+                              };
+                          };
                 };
             };
             /** @description Unprocessable Entity */
@@ -24346,7 +24357,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @default 2501 */
                         Code: number;
                         /** @default Label does not exist */
@@ -24356,7 +24367,7 @@ export interface operations {
             };
         };
     };
-    "get_core-{_version}-images": {
+    'get_core-{_version}-images': {
         parameters: {
             query: {
                 /**
@@ -24392,11 +24403,11 @@ export interface operations {
                 headers: {
                     /** @description If this header is set, the image is being tracked.
                      *                         The value of the headers is the service providing the tracking. */
-                    "X-Pm-Tracker-Provider"?: string;
+                    'X-Pm-Tracker-Provider'?: string;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/octet-stream": string;
+                    'application/octet-stream': string;
                 };
             };
             /** @description Return an empty image when we cannot proxy the remote image */
@@ -24412,7 +24423,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2000 */
                         Code?: number;
                         /** @example The Url is required */
@@ -24426,7 +24437,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         /** @example 2052 */
                         Code?: number;
                         /** @example The Url is not valid URL */

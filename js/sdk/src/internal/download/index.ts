@@ -1,16 +1,16 @@
 import { c } from 'ttag';
 
-import { DriveCrypto } from "../../crypto";
-import { ValidationError } from "../../errors";
-import { ProtonDriveAccount, ProtonDriveTelemetry, NodeType, ThumbnailType, ThumbnailResult } from "../../interface";
-import { DriveAPIService } from "../apiService";
-import { DownloadAPIService } from "./apiService";
-import { DownloadCryptoService } from "./cryptoService";
-import { NodesService, RevisionsService, SharesService } from "./interface";
-import { FileDownloader } from "./fileDownloader";
-import { DownloadQueue } from "./queue";
-import { DownloadTelemetry } from "./telemetry";
-import { makeNodeUidFromRevisionUid } from "../uids";
+import { DriveCrypto } from '../../crypto';
+import { ValidationError } from '../../errors';
+import { ProtonDriveAccount, ProtonDriveTelemetry, NodeType, ThumbnailType, ThumbnailResult } from '../../interface';
+import { DriveAPIService } from '../apiService';
+import { DownloadAPIService } from './apiService';
+import { DownloadCryptoService } from './cryptoService';
+import { NodesService, RevisionsService, SharesService } from './interface';
+import { FileDownloader } from './fileDownloader';
+import { DownloadQueue } from './queue';
+import { DownloadTelemetry } from './telemetry';
+import { makeNodeUidFromRevisionUid } from '../uids';
 import { ThumbnailDownloader } from './thumbnailDownloader';
 
 export function initDownloadModule(
@@ -36,13 +36,13 @@ export function initDownloadModule(
             nodeKey = await nodesService.getNodeKeys(nodeUid);
 
             if (node.type === NodeType.Folder) {
-                throw new ValidationError(c("Error").t`Cannot download a folder`);
+                throw new ValidationError(c('Error').t`Cannot download a folder`);
             }
             if (!nodeKey.contentKeyPacketSessionKey) {
-                throw new ValidationError(c("Error").t`File has no content key`);
+                throw new ValidationError(c('Error').t`File has no content key`);
             }
             if (!node.activeRevision?.ok || !node.activeRevision.value) {
-                throw new ValidationError(c("Error").t`File has no active revision`);
+                throw new ValidationError(c('Error').t`File has no active revision`);
             }
         } catch (error: unknown) {
             queue.releaseCapacity();
@@ -76,12 +76,12 @@ export function initDownloadModule(
             node = await nodesService.getNode(nodeUid);
             nodeKey = await nodesService.getNodeKeys(nodeUid);
             revision = await revisionsService.getRevision(nodeRevisionUid);
-            
+
             if (node.type === NodeType.Folder) {
-                throw new ValidationError(c("Error").t`Cannot download a folder`);
+                throw new ValidationError(c('Error').t`Cannot download a folder`);
             }
             if (!nodeKey.contentKeyPacketSessionKey) {
-                throw new ValidationError(c("Error").t`File has no content key`);
+                throw new ValidationError(c('Error').t`File has no content key`);
             }
         } catch (error: unknown) {
             queue.releaseCapacity();
@@ -105,7 +105,7 @@ export function initDownloadModule(
         );
     }
 
-    async function *iterateThumbnails(
+    async function* iterateThumbnails(
         nodeUids: string[],
         thumbnailType?: ThumbnailType,
         signal?: AbortSignal,
@@ -118,5 +118,5 @@ export function initDownloadModule(
         getFileDownloader,
         getFileRevisionDownloader,
         iterateThumbnails,
-    }
+    };
 }

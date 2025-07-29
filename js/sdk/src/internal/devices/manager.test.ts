@@ -53,9 +53,26 @@ describe('DevicesManager', () => {
         const name = 'Test Device';
         const deviceType = DeviceType.Linux;
         const address = { addressId: 'address123', addressKeyId: 'key123' };
-        const shareKey = { armoredKey: 'armoredKey', armoredPassphrase: 'passphrase', armoredPassphraseSignature: 'signature' };
-        const node = { encryptedName: 'encryptedName', key: { armoredKey: 'nodeKey', armoredPassphrase: 'nodePassphrase', armoredPassphraseSignature: 'nodeSignature' }, armoredHashKey: 'hashKey' };
-        const createdDevice = { uid: 'device123', rootFolderUid: 'rootFolder123', type: deviceType, shareId: 'shareid' } as DeviceMetadata;
+        const shareKey = {
+            armoredKey: 'armoredKey',
+            armoredPassphrase: 'passphrase',
+            armoredPassphraseSignature: 'signature',
+        };
+        const node = {
+            encryptedName: 'encryptedName',
+            key: {
+                armoredKey: 'nodeKey',
+                armoredPassphrase: 'nodePassphrase',
+                armoredPassphraseSignature: 'nodeSignature',
+            },
+            armoredHashKey: 'hashKey',
+        };
+        const createdDevice = {
+            uid: 'device123',
+            rootFolderUid: 'rootFolder123',
+            type: deviceType,
+            shareId: 'shareid',
+        } as DeviceMetadata;
 
         sharesService.getMyFilesIDs.mockResolvedValue({ volumeId });
         cryptoService.createDevice.mockResolvedValue({ address, shareKey, node });
@@ -80,7 +97,7 @@ describe('DevicesManager', () => {
                 armoredNodePassphrase: node.key.armoredPassphrase,
                 armoredNodePassphraseSignature: node.key.armoredPassphraseSignature,
                 armoredHashKey: node.armoredHashKey,
-            }
+            },
         );
         expect(result).toEqual({ ...createdDevice, name: { ok: true, value: name } });
     });
@@ -88,7 +105,12 @@ describe('DevicesManager', () => {
     it('renames device with deprecated name', async () => {
         const deviceUid = 'device123';
         const name = 'New Device Name';
-        const device = { uid: deviceUid, rootFolderUid: 'rootFolder123', hasDeprecatedName: true, shareId: 'shareid' } as DeviceMetadata;
+        const device = {
+            uid: deviceUid,
+            rootFolderUid: 'rootFolder123',
+            hasDeprecatedName: true,
+            shareId: 'shareid',
+        } as DeviceMetadata;
 
         apiService.getDevices.mockResolvedValue([device]);
 
@@ -96,14 +118,21 @@ describe('DevicesManager', () => {
 
         expect(apiService.getDevices).toHaveBeenCalled();
         expect(apiService.removeNameFromDevice).toHaveBeenCalledWith(deviceUid);
-        expect(nodesManagementService.renameNode).toHaveBeenCalledWith(device.rootFolderUid, name, { allowRenameRootNode: true });
+        expect(nodesManagementService.renameNode).toHaveBeenCalledWith(device.rootFolderUid, name, {
+            allowRenameRootNode: true,
+        });
         expect(result).toEqual({ ...device, name: { ok: true, value: name } });
     });
 
     it('renames device without deprecated name', async () => {
         const deviceUid = 'device123';
         const name = 'New Device Name';
-        const device = { uid: deviceUid, rootFolderUid: 'rootFolder123', hasDeprecatedName: false, shareId: 'shareid' } as DeviceMetadata;
+        const device = {
+            uid: deviceUid,
+            rootFolderUid: 'rootFolder123',
+            hasDeprecatedName: false,
+            shareId: 'shareid',
+        } as DeviceMetadata;
 
         apiService.getDevices.mockResolvedValue([device]);
 
@@ -111,7 +140,9 @@ describe('DevicesManager', () => {
 
         expect(apiService.getDevices).toHaveBeenCalled();
         expect(apiService.removeNameFromDevice).not.toHaveBeenCalled();
-        expect(nodesManagementService.renameNode).toHaveBeenCalledWith(device.rootFolderUid, name, { allowRenameRootNode: true });
+        expect(nodesManagementService.renameNode).toHaveBeenCalledWith(device.rootFolderUid, name, {
+            allowRenameRootNode: true,
+        });
         expect(result).toEqual({ ...device, name: { ok: true, value: name } });
     });
 

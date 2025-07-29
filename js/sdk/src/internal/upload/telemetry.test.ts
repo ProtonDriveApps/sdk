@@ -25,7 +25,7 @@ describe('UploadTelemetry', () => {
 
         sharesService = {
             getVolumeMetricContext: jest.fn().mockResolvedValue('own_volume'),
-        }
+        };
 
         uploadTelemetry = new UploadTelemetry(mockTelemetry, sharesService);
     });
@@ -35,11 +35,11 @@ describe('UploadTelemetry', () => {
         await uploadTelemetry.uploadInitFailed(parentNodeUid, error, 1000);
 
         expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
-            eventName: "upload",
-            volumeType: "own_volume",
+            eventName: 'upload',
+            volumeType: 'own_volume',
             uploadedSize: 0,
             expectedSize: 1000,
-            error: "unknown",
+            error: 'unknown',
             originalError: error,
         });
     });
@@ -49,11 +49,11 @@ describe('UploadTelemetry', () => {
         await uploadTelemetry.uploadFailed(revisionUid, error, 500, 1000);
 
         expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
-            eventName: "upload",
-            volumeType: "own_volume",
+            eventName: 'upload',
+            volumeType: 'own_volume',
             uploadedSize: 500,
             expectedSize: 1000,
-            error: "unknown",
+            error: 'unknown',
             originalError: error,
         });
     });
@@ -62,8 +62,8 @@ describe('UploadTelemetry', () => {
         await uploadTelemetry.uploadFinished(revisionUid, 1000);
 
         expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
-            eventName: "upload",
-            volumeType: "own_volume",
+            eventName: 'upload',
+            volumeType: 'own_volume',
             uploadedSize: 1000,
             expectedSize: 1000,
         });
@@ -74,7 +74,7 @@ describe('UploadTelemetry', () => {
             expect(mockTelemetry.logEvent).toHaveBeenCalledWith(
                 expect.objectContaining({
                     error,
-                })
+                }),
             );
         };
 

@@ -1,10 +1,9 @@
-import { Logger } from "../../interface";
-import { EventManagerInterface, Event, EventSubscription } from "./interface";
+import { Logger } from '../../interface';
+import { EventManagerInterface, Event, EventSubscription } from './interface';
 
 const FIBONACCI_LIST = [1, 1, 2, 3, 5, 8, 13];
 
 type Listener<T> = (event: T) => Promise<void>;
-
 
 /**
  * Event manager general helper that is responsible for fetching events
@@ -99,7 +98,9 @@ export class EventManager<T extends Event> {
             this.retryIndex = 0;
         } catch (error: unknown) {
             // This could be improved to catch api specific errors and let the listener errors bubble up directly
-            this.logger.error(`Failed to process events: ${error instanceof Error ? error.message : error} (retry ${this.retryIndex}, last event ID: ${this.latestEventId})`);
+            this.logger.error(
+                `Failed to process events: ${error instanceof Error ? error.message : error} (retry ${this.retryIndex}, last event ID: ${this.latestEventId})`,
+            );
             this.retryIndex++;
         }
         if (listenerError) {
@@ -109,7 +110,7 @@ export class EventManager<T extends Event> {
         this.timeoutHandle = setTimeout(() => {
             this.processPromise = this.processEvents();
         }, this.nextPollTimeout);
-    };
+    }
 
     /**
      * Polling timeout is using exponential backoff with Fibonacci sequence.

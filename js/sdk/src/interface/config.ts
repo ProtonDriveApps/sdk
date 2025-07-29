@@ -4,14 +4,14 @@ export type ProtonDriveConfig = {
      *
      * If not provided, defaults to 'drive-api.proton.me'.
      */
-    baseUrl?: string,
+    baseUrl?: string;
 
     /**
      * The language to use for error messages.
      *
      * If not provided, defaults to 'en'.
      */
-    language?: string,
+    language?: string;
 
     /**
      * Client UID is used to identify the client for the upload.
@@ -24,5 +24,5 @@ export type ProtonDriveConfig = {
      * You can force the upload by setting up
      * `overrideExistingDraftByOtherClient` to true.
      */
-    clientUid?: string,
-}
+    clientUid?: string;
+};

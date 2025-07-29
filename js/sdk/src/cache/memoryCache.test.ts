@@ -1,5 +1,5 @@
-import { EntityResult } from "./interface";
-import { MemoryCache } from "./memoryCache";
+import { EntityResult } from './interface';
+import { MemoryCache } from './memoryCache';
 
 describe('MemoryCache', () => {
     let cache: MemoryCache<string>;
@@ -81,9 +81,7 @@ describe('MemoryCache', () => {
             results.push(result);
         }
 
-        expect(results).toEqual([
-            { key: 'key1', ok: true, value: 'value1' },
-        ]);
+        expect(results).toEqual([{ key: 'key1', ok: true, value: 'value1' }]);
     });
 
     it('should iterate over entities by empty tag', async () => {
@@ -97,9 +95,11 @@ describe('MemoryCache', () => {
 
     it('should iterate over entities with concurrent changes to the same set', async () => {
         const iterator = cache.iterateEntities(['key1', 'key2', 'key3']);
-        
+
         const results: string[] = [];
-        const { value: { key: key1 } } = await iterator.next();
+        const {
+            value: { key: key1 },
+        } = await iterator.next();
         results.push(key1);
         await cache.removeEntities([key1]);
 

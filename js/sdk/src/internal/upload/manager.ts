@@ -1,13 +1,13 @@
-import { c } from "ttag";
+import { c } from 'ttag';
 
-import { Logger, ProtonDriveTelemetry, UploadMetadata } from "../../interface";
-import { ValidationError, NodeAlreadyExistsValidationError } from "../../errors";
-import { ErrorCode } from "../apiService";
-import { generateFileExtendedAttributes } from "../nodes";
-import { UploadAPIService } from "./apiService";
-import { UploadCryptoService } from "./cryptoService";
-import { NodeRevisionDraft, NodesService, NodeCrypto } from "./interface";
-import { makeNodeUid, splitNodeUid } from "../uids";
+import { Logger, ProtonDriveTelemetry, UploadMetadata } from '../../interface';
+import { ValidationError, NodeAlreadyExistsValidationError } from '../../errors';
+import { ErrorCode } from '../apiService';
+import { generateFileExtendedAttributes } from '../nodes';
+import { UploadAPIService } from './apiService';
+import { UploadCryptoService } from './cryptoService';
+import { NodeRevisionDraft, NodesService, NodeCrypto } from './interface';
+import { makeNodeUid, splitNodeUid } from '../uids';
 
 /**
  * UploadManager is responsible for creating and deleting draft nodes
@@ -75,8 +75,8 @@ export class UploadManager {
         metadata: UploadMetadata,
         generatedNodeCrypto: NodeCrypto,
     ): Promise<{
-        nodeUid: string,
-        nodeRevisionUid: string,
+        nodeUid: string;
+        nodeRevisionUid: string;
     }> {
         try {
             const result = await this.apiService.createDraft(parentFolderUid, {
@@ -88,7 +88,8 @@ export class UploadManager {
                 armoredNodePassphrase: generatedNodeCrypto.nodeKeys.encrypted.armoredPassphrase,
                 armoredNodePassphraseSignature: generatedNodeCrypto.nodeKeys.encrypted.armoredPassphraseSignature,
                 base64ContentKeyPacket: generatedNodeCrypto.contentKey.encrypted.base64ContentKeyPacket,
-                armoredContentKeyPacketSignature: generatedNodeCrypto.contentKey.encrypted.armoredContentKeyPacketSignature,
+                armoredContentKeyPacketSignature:
+                    generatedNodeCrypto.contentKey.encrypted.armoredContentKeyPacketSignature,
                 signatureEmail: generatedNodeCrypto.signatureAddress.email,
             });
             return result;
@@ -97,30 +98,39 @@ export class UploadManager {
                 if (error.code === ErrorCode.ALREADY_EXISTS) {
                     this.logger.info(`Node with given name already exists`);
 
-                    const typedDetails = error.details as {
-                        ConflictLinkID: string,
-                        ConflictRevisionID?: string,
-                        ConflictDraftRevisionID?: string,
-                        ConflictDraftClientUID?: string,
-                    } | undefined;
+                    const typedDetails = error.details as
+                        | {
+                              ConflictLinkID: string;
+                              ConflictRevisionID?: string;
+                              ConflictDraftRevisionID?: string;
+                              ConflictDraftClientUID?: string;
+                          }
+                        | undefined;
 
                     // If the client doesn't specify the client UID, it should
                     // never be considered own draft.
-                    const isOwnDraftConflict = (
+                    const isOwnDraftConflict =
                         typedDetails?.ConflictDraftRevisionID &&
                         this.clientUid &&
-                        typedDetails?.ConflictDraftClientUID === this.clientUid
-                    );
+                        typedDetails?.ConflictDraftClientUID === this.clientUid;
 
                     // If there is existing draft created by this client,
                     // automatically delete it and try to create a new one
                     // with the same name again.
-                    if (typedDetails?.ConflictDraftRevisionID && (isOwnDraftConflict || metadata.overrideExistingDraftByOtherClient)) {
-                        const existingDraftNodeUid = makeNodeUid(splitNodeUid(parentFolderUid).volumeId, typedDetails.ConflictLinkID);
+                    if (
+                        typedDetails?.ConflictDraftRevisionID &&
+                        (isOwnDraftConflict || metadata.overrideExistingDraftByOtherClient)
+                    ) {
+                        const existingDraftNodeUid = makeNodeUid(
+                            splitNodeUid(parentFolderUid).volumeId,
+                            typedDetails.ConflictLinkID,
+                        );
 
                         let deleteFailed = false;
                         try {
-                            this.logger.warn(`Deleting existing draft node ${existingDraftNodeUid} by ${typedDetails.ConflictDraftClientUID}`);
+                            this.logger.warn(
+                                `Deleting existing draft node ${existingDraftNodeUid} by ${typedDetails.ConflictDraftClientUID}`,
+                            );
                             await this.apiService.deleteDraft(existingDraftNodeUid);
                         } catch (deleteDraftError: unknown) {
                             // Do not throw, let throw the conflict error.
@@ -128,15 +138,25 @@ export class UploadManager {
                             this.logger.error('Failed to delete existing draft node', deleteDraftError);
                         }
                         if (!deleteFailed) {
-                            return this.createDraftOnAPI(parentFolderUid, parentHashKey, name, metadata, generatedNodeCrypto);
+                            return this.createDraftOnAPI(
+                                parentFolderUid,
+                                parentHashKey,
+                                name,
+                                metadata,
+                                generatedNodeCrypto,
+                            );
                         }
                     }
 
                     if (isOwnDraftConflict) {
-                        this.logger.warn(`Existing draft conflict by another client ${typedDetails.ConflictDraftClientUID}`);
+                        this.logger.warn(
+                            `Existing draft conflict by another client ${typedDetails.ConflictDraftClientUID}`,
+                        );
                     }
 
-                    const existingNodeUid = typedDetails ? makeNodeUid(splitNodeUid(parentFolderUid).volumeId, typedDetails.ConflictLinkID) : undefined;
+                    const existingNodeUid = typedDetails
+                        ? makeNodeUid(splitNodeUid(parentFolderUid).volumeId, typedDetails.ConflictLinkID)
+                        : undefined;
 
                     // If there is existing node, return special error
                     // that includes the available name the client can use.
@@ -223,7 +243,7 @@ export class UploadManager {
                 contentKeyPacketSessionKey: nodeKeys.contentKeyPacketSessionKey,
                 signatureAddress: signatureAddress,
             },
-        }
+        };
     }
 
     async deleteDraftRevision(nodeRevisionUid: string): Promise<void> {
@@ -242,16 +262,20 @@ export class UploadManager {
         manifest: Uint8Array,
         _metadata: UploadMetadata,
         extendedAttributes: {
-            modificationTime?: Date,
-            size?: number,
-            blockSizes?: number[],
+            modificationTime?: Date;
+            size?: number;
+            blockSizes?: number[];
             digests?: {
-                sha1?: string,
-            },
+                sha1?: string;
+            };
         },
     ): Promise<void> {
         const generatedExtendedAttributes = generateFileExtendedAttributes(extendedAttributes);
-        const nodeCommitCrypto = await this.cryptoService.commitFile(nodeRevisionDraft.nodeKeys, manifest, generatedExtendedAttributes);
+        const nodeCommitCrypto = await this.cryptoService.commitFile(
+            nodeRevisionDraft.nodeKeys,
+            manifest,
+            generatedExtendedAttributes,
+        );
         await this.apiService.commitDraftRevision(nodeRevisionDraft.nodeRevisionUid, nodeCommitCrypto);
         const node = await this.nodesService.getNode(nodeRevisionDraft.nodeUid);
         if (node.parentUid) {
@@ -269,7 +293,7 @@ function splitExtension(filename = ''): [string, string] {
         return [filename, ''];
     }
     return [filename.slice(0, endIdx), filename.slice(endIdx + 1)];
-};
+}
 
 /**
  * Join a filename into `name (index).extension`

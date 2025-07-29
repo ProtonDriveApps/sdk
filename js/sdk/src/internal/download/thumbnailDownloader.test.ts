@@ -1,5 +1,5 @@
 import { ProtonDriveTelemetry } from '../../interface';
-import { getMockTelemetry } from "../../tests/telemetry";
+import { getMockTelemetry } from '../../tests/telemetry';
 import { ThumbnailDownloader } from './thumbnailDownloader';
 import { DownloadAPIService } from './apiService';
 import { DownloadCryptoService } from './cryptoService';
@@ -28,7 +28,7 @@ describe('ThumbnailDownloader', () => {
                                 thumbnails: [{ type: 1, uid: `thumb-${nodeUid}` }],
                             },
                         },
-                    }
+                    };
                 }
             }),
             getNodeKeys: jest.fn().mockReturnValue({
@@ -45,7 +45,7 @@ describe('ThumbnailDownloader', () => {
                         ok: true,
                         bareUrl: `url-${thumbnailUid}`,
                         token: `token-${thumbnailUid}`,
-                    }
+                    };
                 }
             }),
             downloadBlock: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
@@ -68,11 +68,17 @@ describe('ThumbnailDownloader', () => {
             { nodeUid: 'node3', ok: true, thumbnail: new Uint8Array([1, 2, 3]) },
         ]);
         expect(nodesService.iterateNodes).toHaveBeenCalledWith(['node1', 'node2', 'node3'], undefined);
-        expect(apiService.iterateThumbnails).toHaveBeenCalledWith(['thumb-node1', 'thumb-node2', 'thumb-node3'], undefined);
+        expect(apiService.iterateThumbnails).toHaveBeenCalledWith(
+            ['thumb-node1', 'thumb-node2', 'thumb-node3'],
+            undefined,
+        );
         expect(nodesService.getNodeKeys).toHaveBeenCalledTimes(3);
         expect(apiService.downloadBlock).toHaveBeenCalledTimes(3);
         expect(cryptoService.decryptThumbnail).toHaveBeenCalledTimes(3);
-        expect(cryptoService.decryptThumbnail).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]), 'contentKeyPacketSessionKey');
+        expect(cryptoService.decryptThumbnail).toHaveBeenCalledWith(
+            new Uint8Array([1, 2, 3]),
+            'contentKeyPacketSessionKey',
+        );
     });
 
     it('should handle no requested node', async () => {
@@ -114,7 +120,6 @@ describe('ThumbnailDownloader', () => {
         expect(results).toEqual([{ nodeUid: 'node1', ok: false, error: 'Node is not a file' }]);
         expect(apiService.iterateThumbnails).not.toHaveBeenCalled();
     });
-
 
     it('should handle node without requested thumbnail', async () => {
         nodesService.iterateNodes = jest.fn().mockImplementation(async function* () {

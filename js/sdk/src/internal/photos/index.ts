@@ -1,10 +1,10 @@
-import { DriveAPIService } from "../apiService";
-import { ProtonDriveEntitiesCache } from "../../interface";
-import { PhotosAPIService } from "./apiService";
-import { PhotosCache } from "./cache";
-import { PhotosTimeline } from "./photosTimeline";
-import { Albums } from "./albums";
-import { NodesService } from "./interface";
+import { DriveAPIService } from '../apiService';
+import { ProtonDriveEntitiesCache } from '../../interface';
+import { PhotosAPIService } from './apiService';
+import { PhotosCache } from './cache';
+import { PhotosTimeline } from './photosTimeline';
+import { Albums } from './albums';
+import { NodesService } from './interface';
 
 export function initPhotosModule(
     apiService: DriveAPIService,
@@ -19,5 +19,5 @@ export function initPhotosModule(
     return {
         timeline,
         albums,
-    }
+    };
 }

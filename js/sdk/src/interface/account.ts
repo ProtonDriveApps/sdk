@@ -6,17 +6,17 @@ export interface ProtonDriveAccount {
      *
      * @throws Error If there is no primary address.
      */
-    getOwnPrimaryAddress(): Promise<ProtonDriveAccountAddress>,
+    getOwnPrimaryAddress(): Promise<ProtonDriveAccountAddress>;
     /**
      * Get own address by email or addressId.
      *
      * @throws Error If there is no address with given email or addressId.
      */
-    getOwnAddress(emailOrAddressId: string): Promise<ProtonDriveAccountAddress>,
+    getOwnAddress(emailOrAddressId: string): Promise<ProtonDriveAccountAddress>;
     /**
      * Returns whether given email can be used to share files with Proton Drive.
      */
-    hasProtonAccount(email: string): Promise<boolean>,
+    hasProtonAccount(email: string): Promise<boolean>;
     /**
      * Get public keys for given email.
      *
@@ -24,15 +24,15 @@ export interface ProtonDriveAccount {
      *
      * @throws Error Only if there is an error while fetching keys.
      */
-    getPublicKeys(email: string): Promise<PublicKey[]>,
+    getPublicKeys(email: string): Promise<PublicKey[]>;
 }
 
 export interface ProtonDriveAccountAddress {
-    email: string,
-    addressId: string,
-    primaryKeyIndex: number,
+    email: string;
+    addressId: string;
+    primaryKeyIndex: number;
     keys: {
-        id: string,
-        key: PrivateKey,
-    }[],
+        id: string;
+        key: PrivateKey;
+    }[];
 }

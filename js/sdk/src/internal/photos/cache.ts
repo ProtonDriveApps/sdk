@@ -1,4 +1,4 @@
-import { ProtonDriveEntitiesCache } from "../../interface";
+import { ProtonDriveEntitiesCache } from '../../interface';
 
 export class PhotosCache {
     constructor(private driveCache: ProtonDriveEntitiesCache) {

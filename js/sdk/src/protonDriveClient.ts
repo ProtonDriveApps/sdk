@@ -35,7 +35,14 @@ import { initUploadModule } from './internal/upload';
 import { DriveEventsService, DriveListener } from './internal/events';
 import { SDKEvents } from './internal/sdkEvents';
 import { getConfig } from './config';
-import { getUid, getUids, convertInternalNodePromise, convertInternalNodeIterator, convertInternalMissingNodeIterator, convertInternalNode } from './transformers';
+import {
+    getUid,
+    getUids,
+    convertInternalNodePromise,
+    convertInternalNodeIterator,
+    convertInternalMissingNodeIterator,
+    convertInternalNode,
+} from './transformers';
 import { Telemetry } from './telemetry';
 import { initDevicesModule } from './internal/devices';
 import { makeNodeUid } from './internal/uids';
@@ -95,16 +102,69 @@ export class ProtonDriveClient {
         const fullConfig = getConfig(config);
         this.sdkEvents = new SDKEvents(telemetry);
         const cryptoModule = new DriveCrypto(openPGPCryptoModule, srpModule);
-        const apiService = new DriveAPIService(telemetry, this.sdkEvents, httpClient, fullConfig.baseUrl, fullConfig.language);
+        const apiService = new DriveAPIService(
+            telemetry,
+            this.sdkEvents,
+            httpClient,
+            fullConfig.baseUrl,
+            fullConfig.language,
+        );
         this.shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
-        this.nodes = initNodesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule, this.shares);
-        this.sharing = initSharingModule(telemetry, apiService, entitiesCache, account, cryptoModule, this.shares, this.nodes.access);
-        this.download = initDownloadModule(telemetry, apiService, cryptoModule, account, this.shares, this.nodes.access, this.nodes.revisions);
-        this.upload = initUploadModule(telemetry, apiService, cryptoModule, this.shares, this.nodes.access, fullConfig.clientUid);
-        this.devices = initDevicesModule(telemetry, apiService, cryptoModule, this.shares, this.nodes.access, this.nodes.management);
+        this.nodes = initNodesModule(
+            telemetry,
+            apiService,
+            entitiesCache,
+            cryptoCache,
+            account,
+            cryptoModule,
+            this.shares,
+        );
+        this.sharing = initSharingModule(
+            telemetry,
+            apiService,
+            entitiesCache,
+            account,
+            cryptoModule,
+            this.shares,
+            this.nodes.access,
+        );
+        this.download = initDownloadModule(
+            telemetry,
+            apiService,
+            cryptoModule,
+            account,
+            this.shares,
+            this.nodes.access,
+            this.nodes.revisions,
+        );
+        this.upload = initUploadModule(
+            telemetry,
+            apiService,
+            cryptoModule,
+            this.shares,
+            this.nodes.access,
+            fullConfig.clientUid,
+        );
+        this.devices = initDevicesModule(
+            telemetry,
+            apiService,
+            cryptoModule,
+            this.shares,
+            this.nodes.access,
+            this.nodes.management,
+        );
         // These are used to keep the internal cache up to date
-        const cacheEventListeners: DriveListener[] = [this.nodes.eventHandler.updateNodesCacheOnEvent, this.sharing.eventHandler.handleDriveEvent];
-        this.events = new DriveEventsService(telemetry, apiService, this.shares, cacheEventListeners, latestEventIdProvider);
+        const cacheEventListeners: DriveListener[] = [
+            this.nodes.eventHandler.updateNodesCacheOnEvent,
+            this.sharing.eventHandler.handleDriveEvent,
+        ];
+        this.events = new DriveEventsService(
+            telemetry,
+            apiService,
+            this.shares,
+            cacheEventListeners,
+            latestEventIdProvider,
+        );
 
         this.experimental = {
             getNodeUrl: async (nodeUid: NodeOrUid) => {
@@ -119,7 +179,7 @@ export class ProtonDriveClient {
                 }
                 return keys.contentKeyPacketSessionKey;
             },
-        }
+        };
     }
 
     /**
@@ -150,7 +210,7 @@ export class ProtonDriveClient {
      */
     async subscribeToTreeEvents(treeEventScopeId: string, callback: DriveListener): Promise<EventSubscription> {
         this.logger.debug('Subscribing to node updates');
-        return this.events.subscribeToTreeEvents(treeEventScopeId, callback)
+        return this.events.subscribeToTreeEvents(treeEventScopeId, callback);
     }
 
     /**
@@ -160,7 +220,7 @@ export class ProtonDriveClient {
      */
     async subscribeToDriveEvents(callback: DriveListener): Promise<EventSubscription> {
         this.logger.debug('Subscribing to core updates');
-        return this.events.subscribeToCoreEvents(callback)
+        return this.events.subscribeToCoreEvents(callback);
     }
 
     /**
@@ -199,7 +259,7 @@ export class ProtonDriveClient {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the children of the given parent node.
      */
-    async* iterateFolderChildren(parentNodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+    async *iterateFolderChildren(parentNodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<MaybeNode> {
         this.logger.info(`Iterating children of ${getUid(parentNodeUid)}`);
         yield* convertInternalNodeIterator(this.nodes.access.iterateFolderChildren(getUid(parentNodeUid), signal));
     }
@@ -215,7 +275,7 @@ export class ProtonDriveClient {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the trashed nodes.
      */
-    async* iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+    async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
         this.logger.info('Iterating trashed nodes');
         yield* convertInternalNodeIterator(this.nodes.access.iterateTrashedNodes(signal));
     }
@@ -229,7 +289,7 @@ export class ProtonDriveClient {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the nodes.
      */
-    async* iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<MaybeMissingNode> {
+    async *iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<MaybeMissingNode> {
         this.logger.info(`Iterating ${nodeUids.length} nodes`);
         yield* convertInternalMissingNodeIterator(this.nodes.access.iterateNodes(getUids(nodeUids), signal));
     }
@@ -277,7 +337,11 @@ export class ProtonDriveClient {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the results of the move operation
      */
-    async* moveNodes(nodeUids: NodeOrUid[], newParentNodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<NodeResult> {
+    async *moveNodes(
+        nodeUids: NodeOrUid[],
+        newParentNodeUid: NodeOrUid,
+        signal?: AbortSignal,
+    ): AsyncGenerator<NodeResult> {
         this.logger.info(`Moving ${nodeUids.length} nodes to ${newParentNodeUid}`);
         yield* this.nodes.management.moveNodes(getUids(nodeUids), getUid(newParentNodeUid), signal);
     }
@@ -295,7 +359,7 @@ export class ProtonDriveClient {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the results of the trash operation
      */
-    async* trashNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
+    async *trashNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         this.logger.info(`Trashing ${nodeUids.length} nodes`);
         yield* this.nodes.management.trashNodes(getUids(nodeUids), signal);
     }
@@ -313,7 +377,7 @@ export class ProtonDriveClient {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the results of the restore operation
      */
-    async* restoreNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
+    async *restoreNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         this.logger.info(`Restoring ${nodeUids.length} nodes`);
         yield* this.nodes.management.restoreNodes(getUids(nodeUids), signal);
     }
@@ -331,7 +395,7 @@ export class ProtonDriveClient {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the results of the delete operation
      */
-    async* deleteNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
+    async *deleteNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         this.logger.info(`Deleting ${nodeUids.length} nodes`);
         yield* this.nodes.management.deleteNodes(getUids(nodeUids), signal);
     }
@@ -356,7 +420,9 @@ export class ProtonDriveClient {
      */
     async createFolder(parentNodeUid: NodeOrUid, name: string, modificationTime?: Date): Promise<MaybeNode> {
         this.logger.info(`Creating folder in ${getUid(parentNodeUid)}`);
-        return convertInternalNodePromise(this.nodes.management.createFolder(getUid(parentNodeUid), name, modificationTime));
+        return convertInternalNodePromise(
+            this.nodes.management.createFolder(getUid(parentNodeUid), name, modificationTime),
+        );
     }
 
     /**
@@ -372,7 +438,7 @@ export class ProtonDriveClient {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the node revisions.
      */
-    async* iterateRevisions(nodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<Revision> {
+    async *iterateRevisions(nodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<Revision> {
         this.logger.info(`Iterating revisions of ${getUid(nodeUid)}`);
         yield* this.nodes.revisions.iterateRevisions(getUid(nodeUid), signal);
     }
@@ -410,7 +476,7 @@ export class ProtonDriveClient {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the shared nodes.
      */
-    async* iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+    async *iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
         this.logger.info('Iterating shared nodes by me');
         yield* convertInternalNodeIterator(this.sharing.access.iterateSharedNodes(signal));
     }
@@ -427,7 +493,7 @@ export class ProtonDriveClient {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the shared nodes.
      */
-    async* iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+    async *iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
         this.logger.info('Iterating shared nodes with me');
 
         for await (const node of this.sharing.access.iterateSharedNodesWithMe(signal)) {
@@ -453,7 +519,7 @@ export class ProtonDriveClient {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the invitations.
      */
-    async* iterateInvitations(signal?: AbortSignal): AsyncGenerator<ProtonInvitationWithNode> {
+    async *iterateInvitations(signal?: AbortSignal): AsyncGenerator<ProtonInvitationWithNode> {
         this.logger.info('Iterating invitations');
         yield* this.sharing.access.iterateInvitations(signal);
     }
@@ -486,7 +552,7 @@ export class ProtonDriveClient {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the shared bookmarks.
      */
-    async* iterateBookmarks(signal?: AbortSignal): AsyncGenerator<MaybeBookmark> {
+    async *iterateBookmarks(signal?: AbortSignal): AsyncGenerator<MaybeBookmark> {
         this.logger.info('Iterating shared bookmarks');
         yield* this.sharing.access.iterateBookmarks(signal);
     }
@@ -552,9 +618,12 @@ export class ProtonDriveClient {
         return this.sharing.management.unshareNode(getUid(nodeUid), settings);
     }
 
-    async resendInvitation(nodeUid: NodeOrUid, invitationUid: ProtonInvitationOrUid | NonProtonInvitationOrUid): Promise<void> {
+    async resendInvitation(
+        nodeUid: NodeOrUid,
+        invitationUid: ProtonInvitationOrUid | NonProtonInvitationOrUid,
+    ): Promise<void> {
         this.logger.info(`Resending invitation ${getUid(invitationUid)}`);
-        return this.sharing.management.resendInvitationEmail(getUid(nodeUid), getUid(invitationUid))
+        return this.sharing.management.resendInvitationEmail(getUid(nodeUid), getUid(invitationUid));
     }
 
     /**
@@ -612,15 +681,19 @@ export class ProtonDriveClient {
     }
 
     /**
-    * Iterates the thumbnails of the given nodes.
-    *
-    * The output is not sorted and the order of the nodes is not guaranteed.
-    *
-    * @param nodeUids - List of node entities or their UIDs.
-    * @param thumbnailType - Type of the thumbnail to download.
-    * @returns An async generator of the results of the restore operation
-    */
-    async *iterateThumbnails(nodeUids: NodeOrUid[], thumbnailType?: ThumbnailType, signal?: AbortSignal): AsyncGenerator<ThumbnailResult> {
+     * Iterates the thumbnails of the given nodes.
+     *
+     * The output is not sorted and the order of the nodes is not guaranteed.
+     *
+     * @param nodeUids - List of node entities or their UIDs.
+     * @param thumbnailType - Type of the thumbnail to download.
+     * @returns An async generator of the results of the restore operation
+     */
+    async *iterateThumbnails(
+        nodeUids: NodeOrUid[],
+        thumbnailType?: ThumbnailType,
+        signal?: AbortSignal,
+    ): AsyncGenerator<ThumbnailResult> {
         this.logger.info(`Iterating ${nodeUids.length} thumbnails`);
         yield* this.download.iterateThumbnails(getUids(nodeUids), thumbnailType, signal);
     }
@@ -654,7 +727,12 @@ export class ProtonDriveClient {
      * const nodeUid = await uploadController.completion(); // to await completion
      * ```
      */
-    async getFileUploader(parentFolderUid: NodeOrUid, name: string, metadata: UploadMetadata, signal?: AbortSignal): Promise<FileUploader> {
+    async getFileUploader(
+        parentFolderUid: NodeOrUid,
+        name: string,
+        metadata: UploadMetadata,
+        signal?: AbortSignal,
+    ): Promise<FileUploader> {
         this.logger.info(`Getting file uploader for parent ${getUid(parentFolderUid)}`);
         return this.upload.getFileUploader(getUid(parentFolderUid), name, metadata, signal);
     }
@@ -662,7 +740,11 @@ export class ProtonDriveClient {
     /**
      * Same as `getFileUploader`, but for a uploading new revision of the file.
      */
-    async getFileRevisionUploader(nodeUid: NodeOrUid, metadata: UploadMetadata, signal?: AbortSignal): Promise<FileRevisionUploader> {
+    async getFileRevisionUploader(
+        nodeUid: NodeOrUid,
+        metadata: UploadMetadata,
+        signal?: AbortSignal,
+    ): Promise<FileRevisionUploader> {
         this.logger.info(`Getting file revision uploader for ${getUid(nodeUid)}`);
         return this.upload.getFileRevisionUploader(getUid(nodeUid), metadata, signal);
     }
@@ -677,7 +759,7 @@ export class ProtonDriveClient {
      *
      * @returns An async generator of devices.
      */
-    async* iterateDevices(signal?: AbortSignal): AsyncGenerator<Device> {
+    async *iterateDevices(signal?: AbortSignal): AsyncGenerator<Device> {
         this.logger.info('Iterating devices');
         yield* this.devices.iterateDevices(signal);
     }
