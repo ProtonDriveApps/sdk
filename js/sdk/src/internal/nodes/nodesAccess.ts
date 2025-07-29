@@ -28,7 +28,7 @@ const DECRYPTION_CONCURRENCY = 15;
 
 /**
  * Provides access to node metadata.
- * 
+ *
  * The node access module is responsible for fetching, decrypting and caching
  * nodes metadata.
  */
@@ -140,6 +140,42 @@ export class NodesAccess {
         yield* batchLoading.loadRest();
     }
 
+    /**
+     * Call to invalidate the folder listing cache. This should be refactored into a clean
+     * cache layer once the cache is split off.
+     */
+    async notifyChildCreated(nodeUid: string): Promise<void> {
+        await this.cache.resetFolderChildrenLoaded(nodeUid);
+    }
+
+    /**
+     * Call to invalidate the node cache when a node changes. Parent can be set after a move
+     * to ensure parent listing of new parent is up to date if cached.
+     * This should be refactored into a clean cache layer once the cache is split off.
+     */
+    async notifyNodeChanged(nodeUid: string, newParentUid?: string): Promise<void> {
+        try {
+            const node = await this.cache.getNode(nodeUid);
+            if (node.isStale && newParentUid === null) {
+                return;
+            }
+            node.isStale = true;
+            if (newParentUid) {
+                node.parentUid = newParentUid;
+            }
+            await this.cache.setNode(node);
+        } catch (error: unknown) {
+            this.logger.warn(`Failed to set node ${nodeUid} as stale after sharing: ${error}`);
+        }
+    }
+
+    /**
+     * Call to remove a node from cache. This should be refactored when the cache is split off.
+     */
+    async notifyNodeDeleted(nodeUid: string): Promise<void> {
+        await this.cache.removeNodes([nodeUid]);
+    }
+
     private async loadNode(nodeUid: string): Promise<{ node: DecryptedNode, keys?: DecryptedNodeKeys }> {
         const { volumeId: ownVolumeId } = await this.shareService.getMyFilesIDs();
         const encryptedNode = await this.apiService.getNode(nodeUid, ownVolumeId);
@@ -217,6 +253,7 @@ export class NodesAccess {
                             error: getErrorMessage(error),
                         }),
                         errors: [error],
+                        treeEventScopeId: splitNodeUid(encryptedNode.uid).volumeId,
                     },
                 };
             }
@@ -272,6 +309,7 @@ export class NodesAccess {
                     ...extendedAttributes,
                 }),
                 folder: undefined,
+                treeEventScopeId: splitNodeUid(unparsedNode.uid).volumeId,
             }
         }
 
@@ -286,6 +324,7 @@ export class NodesAccess {
             folder: extendedAttributes ? {
                 ...extendedAttributes,
             } : undefined,
+            treeEventScopeId: splitNodeUid(unparsedNode.uid).volumeId,
         }
     }
 

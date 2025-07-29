@@ -26,7 +26,7 @@ interface BaseNode {
 
 /**
  * Interface used only internaly in the nodes module.
- * 
+ *
  * Outside of the module, the decrypted node interface should be used.
  */
 export interface EncryptedNode extends BaseNode {
@@ -96,7 +96,7 @@ export interface DecryptedNode extends Omit<DecryptedUnparsedNode, 'name' | 'act
  * Interface holding decrypted node key, including session key, and hash key.
  *
  * These keys are cached as they are needed for various actions on the node.
- * 
+ *
  * Passphrase, for example, might be removed at some point. It is needed as
  * at this moment the move requires both node key passphrase and the session
  * key.

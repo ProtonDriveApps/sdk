@@ -2,7 +2,7 @@ import { getMockLogger } from "../../tests/logger";
 import { Member, MemberRole, NonProtonInvitation, NonProtonInvitationState, ProtonDriveAccount, ProtonInvitation, PublicLink, resultOk } from "../../interface";
 import { SharingAPIService } from "./apiService";
 import { SharingCryptoService } from "./cryptoService";
-import { SharesService, NodesService, NodesEvents } from "./interface";
+import { SharesService, NodesService } from "./interface";
 import { SharingManagement } from "./sharingManagement";
 
 describe("SharingManagement", () => {
@@ -11,7 +11,6 @@ describe("SharingManagement", () => {
     let accountService: ProtonDriveAccount;
     let sharesService: SharesService;
     let nodesService: NodesService;
-    let nodesEvents: NodesEvents;
 
     let sharingManagement: SharingManagement;
 
@@ -82,12 +81,10 @@ describe("SharingManagement", () => {
             getNodeKeys: jest.fn().mockImplementation((nodeUid) => ({ key: "node-key" })),
             getNodePrivateAndSessionKeys: jest.fn().mockImplementation((nodeUid) => ({})),
             getRootNodeEmailKey: jest.fn().mockResolvedValue({ email: "volume-email", addressKey: "volume-key" }),
-        }
-        nodesEvents = {
-            nodeUpdated: jest.fn(),
+            notifyNodeChanged: jest.fn(),
         }
 
-        sharingManagement = new SharingManagement(getMockLogger(), apiService, cryptoService, accountService, sharesService, nodesService, nodesEvents);
+        sharingManagement = new SharingManagement(getMockLogger(), apiService, cryptoService, accountService, sharesService, nodesService);
     });
 
     describe("getSharingInfo", () => {
@@ -175,6 +172,7 @@ describe("SharingManagement", () => {
 
         it("should create share if no exists", async () => {
             nodesService.getNode = jest.fn().mockImplementation((nodeUid) => ({ nodeUid, parentUid: 'parentUid', name: { ok: true, value: "name" } }));
+            nodesService.notifyNodeChanged = jest.fn();
 
             const sharingInfo = await sharingManagement.shareNode(nodeUid, { users: ["email"] });
 
@@ -191,11 +189,7 @@ describe("SharingManagement", () => {
             });
             expect(apiService.updateInvitation).not.toHaveBeenCalled();
             expect(apiService.inviteProtonUser).toHaveBeenCalled();
-            expect(nodesEvents.nodeUpdated).toHaveBeenCalledWith({
-                uid: nodeUid,
-                shareId: "newShareId",
-                isShared: true,
-            });
+            expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith(nodeUid);
         });
     })
 
@@ -264,7 +258,6 @@ describe("SharingManagement", () => {
                 });
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).toHaveBeenCalled();
-                expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
             });
 
             it("should share node with proton email with specific role", async () => {
@@ -283,7 +276,6 @@ describe("SharingManagement", () => {
                 });
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).toHaveBeenCalled();
-                expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
             });
 
             it("should update existing role", async () => {
@@ -300,7 +292,6 @@ describe("SharingManagement", () => {
                 });
                 expect(apiService.updateInvitation).toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).not.toHaveBeenCalled();
-                expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
             });
 
             it("should be no-op if no change", async () => {
@@ -314,7 +305,6 @@ describe("SharingManagement", () => {
                 });
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).not.toHaveBeenCalled();
-                expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
             });
         });
 
@@ -340,7 +330,6 @@ describe("SharingManagement", () => {
                 });
                 expect(apiService.updateExternalInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteExternalUser).toHaveBeenCalled();
-                expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
             });
 
             it("should share node with external email with specific role", async () => {
@@ -360,7 +349,6 @@ describe("SharingManagement", () => {
                 });
                 expect(apiService.updateExternalInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteExternalUser).toHaveBeenCalled();
-                expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
             });
 
             it("should update existing role", async () => {
@@ -377,7 +365,6 @@ describe("SharingManagement", () => {
                 });
                 expect(apiService.updateExternalInvitation).toHaveBeenCalled();
                 expect(apiService.inviteExternalUser).not.toHaveBeenCalled();
-                expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
             });
 
             it("should be no-op if no change", async () => {
@@ -391,7 +378,6 @@ describe("SharingManagement", () => {
                 });
                 expect(apiService.updateExternalInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteExternalUser).not.toHaveBeenCalled();
-                expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
             });
         });
 
@@ -429,7 +415,6 @@ describe("SharingManagement", () => {
                 expect(apiService.inviteExternalUser).toHaveBeenCalledWith("shareId", expect.objectContaining({
                     inviteeEmail: "email2",
                 }), expect.anything());
-                expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
             });
         });
 
@@ -449,7 +434,6 @@ describe("SharingManagement", () => {
                 expect(apiService.updateMember).toHaveBeenCalled();
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).not.toHaveBeenCalled();
-                expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
             });
 
             it("should be no-op if no change via proton user", async () => {
@@ -464,7 +448,6 @@ describe("SharingManagement", () => {
                 expect(apiService.updateMember).not.toHaveBeenCalled();
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).not.toHaveBeenCalled();
-                expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
             });
 
             it("should update member via non-proton user", async () => {
@@ -482,7 +465,6 @@ describe("SharingManagement", () => {
                 expect(apiService.updateMember).toHaveBeenCalled();
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).not.toHaveBeenCalled();
-                expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
             });
 
             it("should be no-op if no change via non-proton user", async () => {
@@ -497,7 +479,6 @@ describe("SharingManagement", () => {
                 expect(apiService.updateMember).not.toHaveBeenCalled();
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).not.toHaveBeenCalled();
-                expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
             });
         });
 
@@ -728,7 +709,6 @@ describe("SharingManagement", () => {
             expect(apiService.deleteExternalInvitation).not.toHaveBeenCalled();
             expect(apiService.removeMember).not.toHaveBeenCalled();
             expect(apiService.removePublicLink).not.toHaveBeenCalled();
-            expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
         });
 
         it("should delete external invitation", async () => {
@@ -745,7 +725,6 @@ describe("SharingManagement", () => {
             expect(apiService.deleteExternalInvitation).toHaveBeenCalled();
             expect(apiService.removeMember).not.toHaveBeenCalled();
             expect(apiService.removePublicLink).not.toHaveBeenCalled();
-            expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
         });
 
         it("should remove member", async () => {
@@ -762,7 +741,6 @@ describe("SharingManagement", () => {
             expect(apiService.deleteExternalInvitation).not.toHaveBeenCalled();
             expect(apiService.removeMember).toHaveBeenCalled();
             expect(apiService.removePublicLink).not.toHaveBeenCalled();
-            expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
         });
 
         it("should be no-op if not shared with email", async () => {
@@ -779,7 +757,6 @@ describe("SharingManagement", () => {
             expect(apiService.deleteExternalInvitation).not.toHaveBeenCalled();
             expect(apiService.removeMember).not.toHaveBeenCalled();
             expect(apiService.removePublicLink).not.toHaveBeenCalled();
-            expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
         });
 
         it("should remove public link", async () => {
@@ -796,7 +773,6 @@ describe("SharingManagement", () => {
             expect(apiService.deleteExternalInvitation).not.toHaveBeenCalled();
             expect(apiService.removeMember).not.toHaveBeenCalled();
             expect(apiService.removePublicLink).toHaveBeenCalled();
-            expect(nodesEvents.nodeUpdated).not.toHaveBeenCalled();
         });
 
         it("should remove share if all is removed", async () => {
@@ -808,11 +784,7 @@ describe("SharingManagement", () => {
             expect(apiService.deleteExternalInvitation).not.toHaveBeenCalled();
             expect(apiService.removeMember).not.toHaveBeenCalled();
             expect(apiService.removePublicLink).not.toHaveBeenCalled();
-            expect(nodesEvents.nodeUpdated).toHaveBeenCalledWith({
-                uid: nodeUid,
-                shareId: undefined,
-                isShared: false,
-            });
+            expect(nodesService.notifyNodeChanged).toHaveBeenCalled();
         });
 
         it("should remove share if everything is manually removed", async () => {
@@ -827,11 +799,6 @@ describe("SharingManagement", () => {
             expect(apiService.deleteExternalInvitation).toHaveBeenCalled();
             expect(apiService.removeMember).toHaveBeenCalled();
             expect(apiService.removePublicLink).toHaveBeenCalled();
-            expect(nodesEvents.nodeUpdated).toHaveBeenCalledWith({
-                uid: nodeUid,
-                shareId: undefined,
-                isShared: false,
-            });
         });
     });
 

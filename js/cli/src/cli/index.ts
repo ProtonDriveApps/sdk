@@ -5,11 +5,8 @@ import { CommandDeviceCreate } from './commandDeviceCreate';
 import { CommandDeviceDelete } from './commandDeviceDelete';
 import { CommandDeviceRename } from './commandDeviceRename';
 import { CommandDiagnosticTree } from './CommandDiagnosticTree';
-import { CommandEventFolder } from './commandEventFolder';
-import { CommandEventSharedByMe } from './commandEventSharedByMe';
-import { CommandEventSharedWithMe } from './commandEventSharedWithMe';
-import { CommandEventSync } from "./commandEventSync";
-import { CommandEventTrash } from './commandEventTrash';
+import { CommandEventsDrive } from './commandEventsDrive';
+import { CommandEventsMyVolume } from './commandEventsMyVolume';
 import { CommandFileSystemCreateFolder } from './commandFileSystemCreateFolder';
 import { CommandFileSystemDelete } from "./commandFileSystemDelete";
 import { CommandFileSystemDownload } from './commandFileSystemDownload';
@@ -34,15 +31,14 @@ import { CommandSharingStatus } from "./commandSharingStatus";
 import { Command } from './interface';
 import { CommandBookmarkRemove } from "./commandBookmarkRemove";
 import { CommandBookmarkList } from "./commandBookmarkList";
+import { CommandEventsPath } from "./commandEventsPath";
 
 const COMMANDS = [
     new CommandAuthLogin(),
     new CommandAuthLogout(),
-    new CommandEventSync(),
-    new CommandEventFolder(),
-    new CommandEventTrash(),
-    new CommandEventSharedByMe(),
-    new CommandEventSharedWithMe(),
+    new CommandEventsDrive(),
+    new CommandEventsMyVolume(),
+    new CommandEventsPath(),
     new CommandFileSystemList(),
     new CommandFileSystemInfo(),
     new CommandFileSystemCreateFolder(),
