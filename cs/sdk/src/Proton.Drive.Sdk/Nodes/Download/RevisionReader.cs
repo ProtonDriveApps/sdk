@@ -7,8 +7,8 @@ namespace Proton.Drive.Sdk.Nodes.Download;
 
 internal sealed class RevisionReader : IDisposable
 {
-    public const int BlockPageSize = 10;
     public const int MinBlockIndex = 1;
+    public const int DefaultBlockPageSize = 10;
 
     private readonly ProtonDriveClient _client;
     private readonly NodeUid _fileUid;
@@ -17,6 +17,7 @@ internal sealed class RevisionReader : IDisposable
     private readonly PgpSessionKey _contentKey;
     private readonly BlockListingRevisionDto _revisionDto;
     private readonly Action<int> _releaseBlockListingAction;
+    private readonly int _blockPageSize;
 
     private bool _semaphoreReleased;
 
@@ -28,7 +29,8 @@ internal sealed class RevisionReader : IDisposable
         PgpPrivateKey fileKey,
         PgpSessionKey contentKey,
         BlockListingRevisionDto revisionDto,
-        Action<int> releaseBlockListingAction)
+        Action<int> releaseBlockListingAction,
+        int blockPageSize = DefaultBlockPageSize)
     {
         _client = client;
         _fileUid = revisionUid.NodeUid;
@@ -37,6 +39,7 @@ internal sealed class RevisionReader : IDisposable
         _contentKey = contentKey;
         _revisionDto = revisionDto;
         _releaseBlockListingAction = releaseBlockListingAction;
+        _blockPageSize = blockPageSize;
     }
 
     public async ValueTask ReadAsync(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
@@ -217,7 +220,7 @@ internal sealed class RevisionReader : IDisposable
             var mustTryNextPageOfBlocks = true;
             var nextExpectedIndex = 1;
             var outstandingBlock = default(Block);
-            var currentPageBlocks = new List<Block>(BlockPageSize);
+            var currentPageBlocks = new List<Block>(_blockPageSize);
 
             var revisionDto = _revisionDto;
 
@@ -232,7 +235,7 @@ internal sealed class RevisionReader : IDisposable
                     break;
                 }
 
-                mustTryNextPageOfBlocks = revisionDto.Blocks.Count >= BlockPageSize;
+                mustTryNextPageOfBlocks = revisionDto.Blocks.Count >= _blockPageSize;
 
                 currentPageBlocks.AddRange(revisionDto.Blocks);
                 currentPageBlocks.Sort((a, b) => a.Index.CompareTo(b.Index));
@@ -267,7 +270,7 @@ internal sealed class RevisionReader : IDisposable
                             _fileUid.LinkId,
                             _revisionId,
                             lastKnownIndex + 1,
-                            BlockPageSize,
+                            _blockPageSize,
                             false,
                             cancellationToken).ConfigureAwait(false);
 

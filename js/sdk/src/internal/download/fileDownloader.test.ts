@@ -263,7 +263,7 @@ describe('FileDownloader', () => {
             await verifyOnProgress([1, 2, 3]);
         });
 
-        it('should handle failure when veryfing block', async () => {
+        it('should handle failure when verifying block', async () => {
             cryptoService.verifyBlockIntegrity = jest.fn().mockImplementation(async function () {
                 throw new Error('Failed to verify block');
             });
@@ -271,7 +271,7 @@ describe('FileDownloader', () => {
             await verifyFailure('Failed to verify block', undefined);
         });
 
-        it('should handle one time-off failure when veryfing block', async () => {
+        it('should handle one time-off failure when verifying block', async () => {
             let count = 0;
             cryptoService.verifyBlockIntegrity = jest.fn().mockImplementation(async function () {
                 if (count === 0) {
@@ -336,7 +336,7 @@ describe('FileDownloader', () => {
             await verifyOnProgress([1, 2, 3]);
         });
 
-        it('should handle failure when veryfing manifest', async () => {
+        it('should handle failure when verifying manifest', async () => {
             cryptoService.verifyManifest = jest.fn().mockImplementation(async function () {
                 throw new Error('Failed to verify manifest');
             });
