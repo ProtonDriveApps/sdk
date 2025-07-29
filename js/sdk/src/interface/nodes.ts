@@ -3,7 +3,7 @@ import { Author } from './author';
 
 /**
  * Node representing a file or folder in the system.
- * 
+ *
  * This covers both happy path and degraded path. It is used in the SDK to
  * represent the node in a way that is easy to work with. Whenever any field
  * cannot be decrypted, it is returned as `DegradedNode` type.
@@ -12,7 +12,7 @@ export type MaybeNode = Result<NodeEntity, DegradedNode>;
 
 /**
  * Node representing a file or folder in the system, or missing node.
- * 
+ *
  * In most cases, SDK returns `MaybeNode`, but in some specific cases, when
  * client is requesting specific nodes, SDK must return `MissingNode` type
  * to indicate the case when the node is not available. That can be when
@@ -27,11 +27,11 @@ export type MissingNode = {
 
 /**
  * Node representing a file or folder in the system.
- * 
+ *
  * This is a happy path representation of the node. It is used in the SDK to
  * represent the node in a way that is easy to work with. Whenever any field
  * cannot be decrypted, it is returned as `DegradedNode` type.
- * 
+ *
  * SDK never returns this entity directly but wrapped in `MaybeNode`.
  *
  * Note on naming: Node is reserved by JS/DOM, thus we need exception how the
@@ -43,7 +43,7 @@ export type NodeEntity = {
     name: string,
     /**
      * Author of the node key.
-     * 
+     *
      * Person who created the node and keys for it. If user A uploads the file
      * and user B renames the file and uploads new revision, name and content
      * author is user B, while key author stays to user A who has forever
@@ -52,7 +52,7 @@ export type NodeEntity = {
     keyAuthor: Author,
     /**
      * Author of the name.
-     * 
+     *
      * Person who named the file. If user A uploads the file and user B renames
      * the file, key and content author is user A, while name author is user B.
      */
@@ -87,20 +87,29 @@ export type NodeEntity = {
     folder?: {
         claimedModificationTime?: Date,
     },
+    /**
+     * Provides an ID for the event scope.
+     *
+     * By subscribing to events in a scope, all updates to nodes
+     * withing that scope will be passed to the client. The scope can
+     * comprise one or more folder trees and will be shared by all
+     * nodes in the tree. Nodes cannot change scopes.
+     */
+    treeEventScopeId: string,
 }
 
 /**
  * Degraded node representing a file or folder in the system.
- * 
+ *
  * This is a degraded path representation of the node. It is used in the SDK to
  * represent the node in a way that is easy to work with. Whenever any field
  * cannot be decrypted, it is returned as `DegradedNode` type.
- * 
+ *
  * SDK never returns this entity directly but wrapped in `MaybeNode`.
- * 
+ *
  * The node can be still used around, but it is not guaranteed that all
  * properties are decrypted, or that all actions can be performed on it.
- * 
+ *
  * For example, if the node has issue decrypting the name, the name will be
  * set as `Error` and potentially rename or move actions will not be
  * possible, but download and upload new revision will still work.
@@ -110,10 +119,10 @@ export type DegradedNode = Omit<NodeEntity, 'name' | 'activeRevision'> & {
     activeRevision?: Result<Revision, Error>,
     /**
      * If the error is not related to any specific field, it is set here.
-     * 
+     *
      * For example, if the node has issue decrypting the name, the name will be
      * set as `Error` while this will be empty.
-     * 
+     *
      * On the other hand, if the node has issue decrypting the node key, but
      * the name is still working, this will include the node key error, while
      * the name will be set to the decrypted value.

@@ -6,11 +6,11 @@ import { getErrorMessage } from '../errors';
 import { NodeAPIService } from "./apiService";
 import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
-import { NodesEvents } from './events';
 import { DecryptedNode } from "./interface";
 import { NodesAccess } from "./nodesAccess";
 import { validateNodeName } from "./validations";
 import { generateFolderExtendedAttributes } from "./extendedAttributes";
+import { splitNodeUid } from '../uids';
 
 /**
  * Provides high-level actions for managing nodes.
@@ -27,13 +27,11 @@ export class NodesManagement {
         private cryptoCache: NodesCryptoCache,
         private cryptoService: NodesCryptoService,
         private nodesAccess: NodesAccess,
-        private nodesEvents: NodesEvents,
     ) {
         this.apiService = apiService;
         this.cryptoCache = cryptoCache;
         this.cryptoService = cryptoService;
         this.nodesAccess = nodesAccess;
-        this.nodesEvents = nodesEvents;
     }
 
     async renameNode(nodeUid: string, newName: string, options = { allowRenameRootNode: false }): Promise<DecryptedNode> {
@@ -71,6 +69,7 @@ export class NodesManagement {
                 hash: hash,
             }
         );
+        await this.nodesAccess.notifyNodeChanged(nodeUid);
         const newNode: DecryptedNode = {
             ...node,
             name: resultOk(newName),
@@ -78,7 +77,6 @@ export class NodesManagement {
             nameAuthor: resultOk(signatureEmail),
             hash,
         }
-        await this.nodesEvents.nodeUpdated(newNode);
         return newNode;
     }
 
@@ -161,44 +159,24 @@ export class NodesManagement {
             keyAuthor: resultOk(encryptedCrypto.signatureEmail),
             nameAuthor: resultOk(encryptedCrypto.nameSignatureEmail),
         };
-        await this.nodesEvents.nodeUpdated(newNode);
+        await this.nodesAccess.notifyNodeChanged(node.uid, newParentUid);
         return newNode;
     }
 
     async* trashNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
-        const nodesOrMissing = await Array.fromAsync(this.nodesAccess.iterateNodes(nodeUids, signal));
-        const nodes = nodesOrMissing.filter(node => !('missingUid' in node)) as DecryptedNode[];
-
         for await (const result of this.apiService.trashNodes(nodeUids, signal)) {
             if (result.ok) {
-                const node = nodes.find(node => node.uid === result.uid);
-                if (node) {
-                    await this.nodesEvents.nodeUpdated({
-                        ...node,
-                        trashTime: new Date(),
-                    });
-                }
+                await this.nodesAccess.notifyNodeChanged(result.uid);
             }
-
             yield result;
         }
     }
 
     async* restoreNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
-        const nodesOrMissing = await Array.fromAsync(this.nodesAccess.iterateNodes(nodeUids, signal));
-        const nodes = nodesOrMissing.filter(node => !('missingUid' in node)) as DecryptedNode[];
-
         for await (const result of this.apiService.restoreNodes(nodeUids, signal)) {
             if (result.ok) {
-                const node = nodes.find(node => node.uid === result.uid);
-                if (node) {
-                    await this.nodesEvents.nodeUpdated({
-                        ...node,
-                        trashTime: undefined,
-                    });
-                }
+                await this.nodesAccess.notifyNodeChanged(result.uid);
             }
-
             yield result;
         }
     }
@@ -209,13 +187,13 @@ export class NodesManagement {
         for await (const result of this.apiService.deleteNodes(nodeUids, signal)) {
             if (result.ok) {
                 deletedNodeUids.push(result.uid);
+                await this.nodesAccess.notifyNodeDeleted(result.uid);
             }
             yield result;
         }
-
-        await this.nodesEvents.nodesDeleted(deletedNodeUids);
     }
 
+    // FIXME create test for create folder
     async createFolder(parentNodeUid: string, folderName: string, modificationTime?: Date): Promise<DecryptedNode> {
         validateNodeName(folderName);
 
@@ -244,6 +222,8 @@ export class NodesManagement {
             armoredExtendedAttributes: encryptedCrypto.folder.armoredExtendedAttributes,
         });
 
+        await this.nodesAccess.notifyChildCreated(parentNodeUid);
+
         const node: DecryptedNode = {
             // Internal metadata
             hash: encryptedCrypto.hash,
@@ -265,9 +245,9 @@ export class NodesManagement {
             keyAuthor: resultOk(encryptedCrypto.signatureEmail),
             nameAuthor: resultOk(encryptedCrypto.signatureEmail),
             name: resultOk(folderName),
+            treeEventScopeId: splitNodeUid(nodeUid).volumeId,
         }
 
-        await this.nodesEvents.nodeCreated(node);
         await this.cryptoCache.setNodeKeys(nodeUid, keys);
         return node;
     }

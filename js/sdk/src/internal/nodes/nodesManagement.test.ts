@@ -2,16 +2,15 @@ import { NodeAPIService } from "./apiService";
 import { NodesCryptoCache } from "./cryptoCache";
 import { NodesCryptoService } from "./cryptoService";
 import { NodesAccess } from './nodesAccess';
-import { NodesEvents } from './events';
 import { DecryptedNode } from './interface';
 import { NodesManagement } from './nodesManagement';
+import { NodeResult } from "../../interface";
 
 describe('NodesManagement', () => {
     let apiService: NodeAPIService;
     let cryptoCache: NodesCryptoCache;
     let cryptoService: NodesCryptoService;
     let nodesAccess: NodesAccess;
-    let nodesEvents: NodesEvents;
     let management: NodesManagement;
 
     let nodes: { [uid: string]: DecryptedNode };
@@ -50,9 +49,15 @@ describe('NodesManagement', () => {
         apiService = {
             renameNode: jest.fn(),
             moveNode: jest.fn(),
-            trashNodes: jest.fn(),
-            restoreNodes: jest.fn(),
-            deleteNodes: jest.fn(),
+            trashNodes: jest.fn(async function* (uids) {
+                yield* uids.map((uid) => ({ok: true, uid} as NodeResult))
+            }),
+            restoreNodes: jest.fn(async function* (uids) {
+                yield* uids.map((uid) => ({ok: true, uid} as NodeResult))
+            }),
+            deleteNodes: jest.fn(async function* (uids) {
+                yield* uids.map((uid) => ({ok: true, uid} as NodeResult))
+            }),
             createFolder: jest.fn(),
         }
         // @ts-expect-error No need to implement all methods for mocking
@@ -91,15 +96,11 @@ describe('NodesManagement', () => {
                 nameSessionKey: `${uid}-nameSessionKey`,
             })),
             getRootNodeEmailKey: jest.fn().mockResolvedValue({ email: "root-email", addressKey: "root-key" }),
-        }
-        // @ts-expect-error No need to implement all methods for mocking
-        nodesEvents = {
-            nodeCreated: jest.fn(),
-            nodeUpdated: jest.fn(),
-            nodesDeleted: jest.fn(),
+            notifyNodeChanged: jest.fn(),
+            notifyNodeDeleted: jest.fn(),
         }
 
-        management = new NodesManagement(apiService, cryptoCache, cryptoService, nodesAccess, nodesEvents);
+        management = new NodesManagement(apiService, cryptoCache, cryptoService, nodesAccess);
     });
 
     it('renameNode manages rename and updates cache', async () => {
@@ -124,7 +125,7 @@ describe('NodesManagement', () => {
             { hash: nodes.nodeUid.hash },
             { encryptedName: 'newArmoredNodeName', nameSignatureEmail: 'newSignatureEmail', hash: 'newHash' }
         );
-        expect(nodesEvents.nodeUpdated).toHaveBeenCalledWith(newNode);
+        expect(nodesAccess.notifyNodeChanged).toHaveBeenCalledWith('nodeUid');
     });
 
     it('moveNode manages move and updates cache', async () => {
@@ -173,7 +174,7 @@ describe('NodesManagement', () => {
                 signatureEmail: undefined,
             },
         );
-        expect(nodesEvents.nodeUpdated).toHaveBeenCalledWith(newNode);
+        expect(nodesAccess.notifyNodeChanged).toHaveBeenCalledWith('nodeUid', 'newParentNodeUid');
     });
 
     it('moveNode manages move of anonymous node', async () => {
@@ -219,6 +220,26 @@ describe('NodesManagement', () => {
                 ...encryptedCrypto
             },
         );
-        expect(nodesEvents.nodeUpdated).toHaveBeenCalledWith(newNode);
     });
+
+    it("trashes node and updates cache", async () => {
+        const uids = ['v1~n1', 'v1~n2'];
+        const trashed = new Set();
+        for await (const node of management.trashNodes(uids)) {
+            trashed.add(node.uid);
+        }
+        expect(trashed).toEqual(new Set(uids));
+        expect(nodesAccess.notifyNodeChanged).toHaveBeenCalledTimes(2);
+    });
+
+    it("restores node and updates cache", async () => {
+        const uids = ['v1~n1', 'v1~n2'];
+        const restored = new Set();
+        for await (const node of management.restoreNodes(uids)) {
+            restored.add(node.uid);
+        }
+        expect(restored).toEqual(new Set(uids));
+        expect(nodesAccess.notifyNodeChanged).toHaveBeenCalledTimes(2);
+    });
+
 });

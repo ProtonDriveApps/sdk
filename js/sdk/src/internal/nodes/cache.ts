@@ -6,6 +6,7 @@ import { DecryptedNode, DecryptedRevision } from "./interface";
 export enum CACHE_TAG_KEYS {
     ParentUid = 'nodeParentUid',
     Trashed = 'nodeTrashed',
+    Roots = 'nodeRoot',
 }
 
 type DecryptedNodeResult = (
@@ -15,10 +16,10 @@ type DecryptedNodeResult = (
 
 /**
  * Provides caching for nodes metadata.
- * 
+ *
  * The cache is responsible for serialising and deserialising node metadata,
  * recording parent-child relationships, and recursively removing nodes.
- * 
+ *
  * The cache of node metadata should not contain any crypto material.
  */
 export class NodesCache {
@@ -35,6 +36,8 @@ export class NodesCache {
         const tags = [`volume:${volumeId}`];
         if (node.parentUid) {
             tags.push(`${CACHE_TAG_KEYS.ParentUid}:${node.parentUid}`)
+        } else {
+            tags.push(`${CACHE_TAG_KEYS.Roots}:${volumeId}`)
         }
         if (node.trashTime) {
             tags.push(`${CACHE_TAG_KEYS.Trashed}`)
@@ -71,6 +74,17 @@ export class NodesCache {
         // Force all calls to children UIDs to be re-fetched.
         for await (const result of this.driveCache.iterateEntitiesByTag(`children-volume:${volumeId}`)) {
             await this.driveCache.removeEntities([result.key]);
+        }
+    }
+
+    /**
+     * Remove all entries associated with a volume.
+     *
+     * This is needed when a user looses access to a volume.
+     */
+    async removeVolume(volumeId: string): Promise<void> {
+        for await (const result of this.iterateRootNodeUids(volumeId)) {
+            await this.removeNodes([result.key]);
         }
     }
 
@@ -140,6 +154,10 @@ export class NodesCache {
                 yield node;
             }
         }
+    }
+
+    async *iterateRootNodeUids(volumeId: string): AsyncGenerator<EntityResult<string>> {
+        yield* this.driveCache.iterateEntitiesByTag(`${CACHE_TAG_KEYS.Roots}:${volumeId}`);
     }
 
     async *iterateTrashedNodes(): AsyncGenerator<DecryptedNodeResult> {
