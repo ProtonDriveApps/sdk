@@ -1,9 +1,9 @@
-import { Logger, Revision } from "../../interface";
-import { makeNodeUidFromRevisionUid } from "../uids";
-import { NodeAPIService } from "./apiService";
-import { NodesCryptoService } from "./cryptoService";
-import { NodesAccess } from "./nodesAccess";
-import { parseFileExtendedAttributes } from "./extendedAttributes";
+import { Logger, Revision } from '../../interface';
+import { makeNodeUidFromRevisionUid } from '../uids';
+import { NodeAPIService } from './apiService';
+import { NodesCryptoService } from './cryptoService';
+import { NodesAccess } from './nodesAccess';
+import { parseFileExtendedAttributes } from './extendedAttributes';
 
 /**
  * Provides access to revisions metadata.
@@ -34,7 +34,7 @@ export class NodesRevisons {
         };
     }
 
-    async* iterateRevisions(nodeUid: string, signal?: AbortSignal): AsyncGenerator<Revision> {
+    async *iterateRevisions(nodeUid: string, signal?: AbortSignal): AsyncGenerator<Revision> {
         const { key } = await this.nodesAccess.getNodeKeys(nodeUid);
 
         const encryptedRevisions = await this.apiService.getRevisions(nodeUid, signal);

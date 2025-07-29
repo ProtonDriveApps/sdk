@@ -1,5 +1,5 @@
-import { MissingNode } from "../../interface";
-import { DecryptedNode } from "../nodes";
+import { MissingNode } from '../../interface';
+import { DecryptedNode } from '../nodes';
 
 export interface NodesService {
     getNode(nodeUid: string): Promise<DecryptedNode>;

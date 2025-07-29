@@ -5,7 +5,7 @@ export class CommandSharingStatus implements Command {
     name = 'status';
     args = ['path'];
 
-    async action({ sdk, paths, args: [ pathString ], options: { json } }: ActionArgs) {
+    async action({ sdk, paths, args: [pathString], options: { json } }: ActionArgs) {
         const path = paths.getPath(pathString);
 
         const node = await path.getNode();

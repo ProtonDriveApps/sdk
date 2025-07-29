@@ -5,7 +5,7 @@ export class CommandRevisionDownload implements Command {
     name = 'download';
     args = ['revisionUid', 'localPath'];
 
-    async action({ sdk, args: [ revisionUid, localPath ] }: ActionArgs) {
+    async action({ sdk, args: [revisionUid, localPath] }: ActionArgs) {
         const downloader = await sdk.getFileRevisionDownloader(revisionUid);
         const claimedSize = downloader.getClaimedSizeInBytes();
         console.log(`Downloading revision (${claimedSize || 'N/A'} bytes) to ${localPath}`);
@@ -17,7 +17,7 @@ export class CommandRevisionDownload implements Command {
             close: () => writer.end(),
             abort: () => writer.end(),
             locked: false,
-        }
+        };
 
         const controller = downloader.writeToStream(writableStream, (writtenBytes) => {
             console.log(`Downloaded ${writtenBytes} bytes`);

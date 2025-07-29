@@ -1,5 +1,16 @@
-import { PrivateKey, SessionKey } from "../../crypto";
-import { NodeEntity, Result, InvalidNameError, Author, MemberRole, NodeType, ThumbnailType, MetricVolumeType, Revision, RevisionState } from "../../interface";
+import { PrivateKey, SessionKey } from '../../crypto';
+import {
+    NodeEntity,
+    Result,
+    InvalidNameError,
+    Author,
+    MemberRole,
+    NodeType,
+    ThumbnailType,
+    MetricVolumeType,
+    Revision,
+    RevisionState,
+} from '../../interface';
 
 /**
  * Internal common node interface for both encrypted or decrypted node.
@@ -20,8 +31,8 @@ interface BaseNode {
 
     // Share node metadata
     shareId?: string;
-    isShared: boolean,
-    directMemberRole: MemberRole,
+    isShared: boolean;
+    directMemberRole: MemberRole;
 }
 
 /**
@@ -68,28 +79,30 @@ export interface EncryptedNodeAlbumCrypto extends EncryptedNodeCrypto {}
  * such as extended attributes.
  */
 export interface DecryptedUnparsedNode extends BaseNode {
-    keyAuthor: Author,
-    nameAuthor: Author,
-    name: Result<string, Error>,
-    activeRevision?: Result<DecryptedUnparsedRevision, Error>,
+    keyAuthor: Author;
+    nameAuthor: Author;
+    name: Result<string, Error>;
+    activeRevision?: Result<DecryptedUnparsedRevision, Error>;
     folder?: {
-        extendedAttributes?: string,
-    },
-    errors?: unknown[],
+        extendedAttributes?: string;
+    };
+    errors?: unknown[];
 }
 
 /**
  * Interface holding decrypted node metadata.
  */
-export interface DecryptedNode extends Omit<DecryptedUnparsedNode, 'name' | 'activeRevision' | 'folder'>, Omit<NodeEntity, 'name' | 'activeRevision'> {
+export interface DecryptedNode
+    extends Omit<DecryptedUnparsedNode, 'name' | 'activeRevision' | 'folder'>,
+        Omit<NodeEntity, 'name' | 'activeRevision'> {
     // Internal metadata
     isStale: boolean;
-    name: Result<string, Error | InvalidNameError>,
+    name: Result<string, Error | InvalidNameError>;
 
-    activeRevision?: Result<DecryptedRevision, Error>,
+    activeRevision?: Result<DecryptedRevision, Error>;
     folder?: {
-        claimedModificationTime?: Date,
-    },
+        claimedModificationTime?: Date;
+    };
 }
 
 /**
@@ -120,7 +133,7 @@ interface BaseRevision {
 export type Thumbnail = {
     uid: string;
     type: ThumbnailType;
-}
+};
 
 export interface EncryptedRevision extends BaseRevision {
     signatureEmail?: string;
@@ -128,8 +141,8 @@ export interface EncryptedRevision extends BaseRevision {
 }
 
 export interface DecryptedUnparsedRevision extends BaseRevision {
-    contentAuthor: Author,
-    extendedAttributes?: string,
+    contentAuthor: Author;
+    extendedAttributes?: string;
 }
 
 export interface DecryptedRevision extends Revision {
@@ -140,16 +153,16 @@ export interface DecryptedRevision extends Revision {
  * Interface describing the dependencies to the shares module.
  */
 export interface SharesService {
-    getMyFilesIDs(): Promise<{ volumeId: string, rootNodeId: string }>,
-    getSharePrivateKey(shareId: string): Promise<PrivateKey>,
+    getMyFilesIDs(): Promise<{ volumeId: string; rootNodeId: string }>;
+    getSharePrivateKey(shareId: string): Promise<PrivateKey>;
     getMyFilesShareMemberEmailKey(): Promise<{
-        email: string,
-    }>,
+        email: string;
+    }>;
     getContextShareMemberEmailKey(shareId: string): Promise<{
-        email: string,
-        addressId: string,
-        addressKey: PrivateKey,
-        addressKeyId: string,
-    }>,
-    getVolumeMetricContext(volumeId: string): Promise<MetricVolumeType>,
+        email: string;
+        addressId: string;
+        addressKey: PrivateKey;
+        addressKeyId: string;
+    }>;
+    getVolumeMetricContext(volumeId: string): Promise<MetricVolumeType>;
 }

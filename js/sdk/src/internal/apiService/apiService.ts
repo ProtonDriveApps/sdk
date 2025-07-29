@@ -1,7 +1,7 @@
 import { c } from 'ttag';
 
-import { VERSION } from "../../version";
-import { ProtonDriveHTTPClient, ProtonDriveTelemetry, Logger } from "../../interface";
+import { VERSION } from '../../version';
+import { ProtonDriveHTTPClient, ProtonDriveTelemetry, Logger } from '../../interface';
 import { AbortError, ServerError, RateLimitedError, ProtonDriveError } from '../../errors';
 import { waitSeconds } from '../wait';
 import { SDKEvents } from '../sdkEvents';
@@ -107,19 +107,27 @@ export class DriveAPIService {
 
     async get<ResponsePayload>(url: string, signal?: AbortSignal): Promise<ResponsePayload> {
         return this.makeRequest(url, 'GET', undefined, signal);
-    };
+    }
 
-    async post<RequestPayload, ResponsePayload>(url: string, data?: RequestPayload, signal?: AbortSignal): Promise<ResponsePayload> {
+    async post<RequestPayload, ResponsePayload>(
+        url: string,
+        data?: RequestPayload,
+        signal?: AbortSignal,
+    ): Promise<ResponsePayload> {
         return this.makeRequest(url, 'POST', data, signal);
-    };
+    }
 
-    async put<RequestPayload, ResponsePayload>(url: string, data: RequestPayload, signal?: AbortSignal): Promise<ResponsePayload> {
+    async put<RequestPayload, ResponsePayload>(
+        url: string,
+        data: RequestPayload,
+        signal?: AbortSignal,
+    ): Promise<ResponsePayload> {
         return this.makeRequest(url, 'PUT', data, signal);
-    };
+    }
 
     async delete<Response>(url: string, signal?: AbortSignal): Promise<Response> {
         return this.makeRequest(url, 'DELETE', undefined, signal);
-    };
+    }
 
     private async makeRequest<RequestPayload, ResponsePayload>(
         url: string,
@@ -131,15 +139,15 @@ export class DriveAPIService {
             url: `${this.baseUrl}/${url}`,
             method,
             headers: new Headers({
-                "Accept": "application/vnd.protonmail.v1+json",
-                "Content-Type": "application/json",
-                "Language": this.language,
-                "x-pm-drive-sdk-version": `js@${VERSION}`,
+                Accept: 'application/vnd.protonmail.v1+json',
+                'Content-Type': 'application/json',
+                Language: this.language,
+                'x-pm-drive-sdk-version': `js@${VERSION}`,
             }),
             json: data || undefined,
             timeoutMs: DEFAULT_TIMEOUT_MS,
             signal,
-        }
+        };
 
         const response = await this.fetch(request, () => this.httpClient.fetchJson(request));
 
@@ -169,7 +177,13 @@ export class DriveAPIService {
         return response.body;
     }
 
-    async postBlockStream(baseUrl: string, token: string, data: XMLHttpRequestBodyInit, onProgress?: (uploadedBytes: number) => void, signal?: AbortSignal): Promise<void> {
+    async postBlockStream(
+        baseUrl: string,
+        token: string,
+        data: XMLHttpRequestBodyInit,
+        onProgress?: (uploadedBytes: number) => void,
+        signal?: AbortSignal,
+    ): Promise<void> {
         await this.makeStorageRequest('POST', baseUrl, token, data, onProgress, signal);
     }
 
@@ -185,9 +199,9 @@ export class DriveAPIService {
             url,
             method,
             headers: new Headers({
-                "pm-storage-token": token,
-                "Language": this.language,
-                "x-pm-drive-sdk-version": `js@${VERSION}`,
+                'pm-storage-token': token,
+                Language: this.language,
+                'x-pm-drive-sdk-version': `js@${VERSION}`,
             }),
             body,
             onProgress,
@@ -217,9 +231,9 @@ export class DriveAPIService {
     // u=5 for background (e.g., upload, download)
     // u=7 for optional (e.g., metrics, telemetry)
     private async fetch(
-        request: { method: string, url: string, signal?: AbortSignal },
+        request: { method: string; url: string; signal?: AbortSignal },
         callback: () => Promise<Response>,
-        attempt = 0
+        attempt = 0,
     ): Promise<Response> {
         if (request.signal?.aborted) {
             throw new AbortError(c('Error').t`Request aborted`);
@@ -244,19 +258,19 @@ export class DriveAPIService {
                 if (error.name === 'OfflineError') {
                     this.logger.info(`${request.method} ${request.url}: Offline error, retrying`);
                     await waitSeconds(OFFLINE_RETRY_DELAY_SECONDS);
-                    return this.fetch(request, callback, attempt+1);
+                    return this.fetch(request, callback, attempt + 1);
                 }
 
                 if (error.name === 'TimeoutError') {
                     this.logger.warn(`${request.method} ${request.url}: Timeout error, retrying`);
                     await waitSeconds(SERVER_ERROR_RETRY_DELAY_SECONDS);
-                    return this.fetch(request, callback, attempt+1);
+                    return this.fetch(request, callback, attempt + 1);
                 }
             }
             if (attempt === 0) {
                 this.logger.error(`${request.method} ${request.url}: failed, retrying once`, error);
                 await waitSeconds(GENERAL_RETRY_DELAY_SECONDS);
-                return this.fetch(request, callback, attempt+1);
+                return this.fetch(request, callback, attempt + 1);
             }
             this.logger.error(`${request.method} ${request.url}: failed`, error);
             throw error;
@@ -272,7 +286,7 @@ export class DriveAPIService {
             this.tooManyRequestsErrorHappened();
             const timeout = parseInt(response.headers.get('retry-after') || '0', DEFAULT_429_RETRY_DELAY_SECONDS);
             await waitSeconds(timeout);
-            return this.fetch(request, callback, attempt+1);
+            return this.fetch(request, callback, attempt + 1);
         } else {
             this.clearSubsequentTooManyRequestsError();
         }
@@ -286,7 +300,7 @@ export class DriveAPIService {
                 this.logger.warn(`${request.method} ${request.url}: ${response.status} - retry failed`);
             } else {
                 await waitSeconds(SERVER_ERROR_RETRY_DELAY_SECONDS);
-                return this.fetch(request, callback, attempt+1);
+                return this.fetch(request, callback, attempt + 1);
             }
         } else {
             if (attempt > 0) {
@@ -308,7 +322,7 @@ export class DriveAPIService {
         return (
             this.subsequentTooManyRequestsCounter >= TOO_MANY_SUBSEQUENT_429_ERRORS &&
             secondsSinceLast429Error < TOO_MANY_SUBSEQUENT_429_ERRORS_TIMEOUT_IN_SECONDS
-        )
+        );
     }
 
     private tooManyRequestsErrorHappened() {
@@ -338,7 +352,7 @@ export class DriveAPIService {
         return (
             this.subsequentServerErrorsCounter >= TOO_MANY_SUBSEQUENT_SERVER_ERRORS &&
             secondsSinceLastServerError < TOO_MANY_SUBSEQUENT_SERVER_ERRORS_TIMEOUT_IN_SECONDS
-        )
+        );
     }
 
     private serverErrorHappened() {

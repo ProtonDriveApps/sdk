@@ -1,10 +1,10 @@
-import { Command, ActionArgs } from "./interface";
+import { Command, ActionArgs } from './interface';
 
 export class CommandFileSystemDelete implements Command {
-    group = "filesystem";
-    name = "delete";
+    group = 'filesystem';
+    name = 'delete';
     // FIXME: support delete of multiple files
-    args = ["path"];
+    args = ['path'];
 
     async action({ sdk, paths, args: [pathString], options: { json } }: ActionArgs) {
         const nodePath = paths.getPath(pathString);

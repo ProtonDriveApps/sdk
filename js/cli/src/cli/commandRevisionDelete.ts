@@ -5,7 +5,7 @@ export class CommandRevisionDelete implements Command {
     name = 'delete';
     args = ['revisionUid'];
 
-    async action({ sdk, args: [ revisionUid ] }: ActionArgs) {
+    async action({ sdk, args: [revisionUid] }: ActionArgs) {
         await sdk.deleteRevision(revisionUid);
     }
 }

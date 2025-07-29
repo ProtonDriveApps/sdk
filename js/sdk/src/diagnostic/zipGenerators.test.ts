@@ -2,7 +2,7 @@ import { zipGenerators } from './zipGenerators';
 
 async function* createTimedGenerator<T>(values: { value: T; delay: number }[]): AsyncGenerator<T> {
     for (const { value, delay } of values) {
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         yield value;
     }
 }

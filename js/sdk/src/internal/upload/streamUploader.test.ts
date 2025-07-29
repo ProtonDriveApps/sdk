@@ -12,7 +12,12 @@ import { UploadManager } from './manager';
 
 const BLOCK_ENCRYPTION_OVERHEAD = 10000;
 
-async function mockEncryptBlock(verifyBlock: (block: Uint8Array) => Promise<void>, _: any, block: Uint8Array, index: number) {
+async function mockEncryptBlock(
+    verifyBlock: (block: Uint8Array) => Promise<void>,
+    _: any,
+    block: Uint8Array,
+    index: number,
+) {
     await verifyBlock(block);
     return {
         index,
@@ -25,7 +30,12 @@ async function mockEncryptBlock(verifyBlock: (block: Uint8Array) => Promise<void
     };
 }
 
-function mockUploadBlock(_: string, __: string, encryptedBlock: Uint8Array, onProgress: (uploadedBytes: number) => void) {
+function mockUploadBlock(
+    _: string,
+    __: string,
+    encryptedBlock: Uint8Array,
+    onProgress: (uploadedBytes: number) => void,
+) {
     onProgress(encryptedBlock.length);
 }
 
@@ -137,22 +147,19 @@ describe('StreamUploader', () => {
 
             const numberOfExpectedBlocks = Math.ceil(metadata.expectedSize / FILE_CHUNK_SIZE);
             expect(uploadManager.commitDraft).toHaveBeenCalledTimes(1);
-            expect(uploadManager.commitDraft).toHaveBeenCalledWith(
-                revisionDraft,
-                expect.anything(),
-                metadata,
-                {
-                    size: metadata.expectedSize,
-                    blockSizes: metadata.expectedSize ? [
-                        ...Array(numberOfExpectedBlocks - 1).fill(FILE_CHUNK_SIZE),
-                        metadata.expectedSize % FILE_CHUNK_SIZE
-                    ] : [],
-                    modificationTime: undefined,
-                    digests: {
-                        sha1: expect.anything(),
-                    }
+            expect(uploadManager.commitDraft).toHaveBeenCalledWith(revisionDraft, expect.anything(), metadata, {
+                size: metadata.expectedSize,
+                blockSizes: metadata.expectedSize
+                    ? [
+                          ...Array(numberOfExpectedBlocks - 1).fill(FILE_CHUNK_SIZE),
+                          metadata.expectedSize % FILE_CHUNK_SIZE,
+                      ]
+                    : [],
+                modificationTime: undefined,
+                digests: {
+                    sha1: expect.anything(),
                 },
-            );
+            });
             expect(telemetry.uploadFinished).toHaveBeenCalledTimes(1);
             expect(telemetry.uploadFinished).toHaveBeenCalledWith('revisionUid', metadata.expectedSize + thumbnailSize);
             expect(telemetry.uploadFailed).not.toHaveBeenCalled();
@@ -160,7 +167,11 @@ describe('StreamUploader', () => {
             expect(onFinish).toHaveBeenCalledWith(false);
         };
 
-        const verifyFailure = async (error: string, uploadedBytes: number | undefined, expectedSize = metadata.expectedSize) => {
+        const verifyFailure = async (
+            error: string,
+            uploadedBytes: number | undefined,
+            expectedSize = metadata.expectedSize,
+        ) => {
             const promise = uploader.start(stream, thumbnails, onProgress);
             await expect(promise).rejects.toThrow(error);
 
@@ -189,7 +200,7 @@ describe('StreamUploader', () => {
                 {
                     type: ThumbnailType.Type1,
                     thumbnail: new Uint8Array(1024),
-                }
+                },
             ];
             thumbnailSize = thumbnails.reduce((acc, thumbnail) => acc + thumbnail.thumbnail.length, 0);
             stream = new ReadableStream({
@@ -204,7 +215,7 @@ describe('StreamUploader', () => {
             });
         });
 
-        it("should upload successfully", async () => {
+        it('should upload successfully', async () => {
             await verifySuccess();
             expect(apiService.requestBlockUpload).toHaveBeenCalledTimes(1);
             expect(apiService.uploadBlock).toHaveBeenCalledTimes(4); // 3 blocks + 1 thumbnail
@@ -213,7 +224,7 @@ describe('StreamUploader', () => {
             await verifyOnProgress([thumbnailSize, 4 * 1024 * 1024, 4 * 1024 * 1024, 2 * 1024 * 1024]);
         });
 
-        it("should upload successfully empty file without thumbnail", async () => {
+        it('should upload successfully empty file without thumbnail', async () => {
             metadata = {
                 expectedSize: 0,
             } as UploadMetadata;
@@ -242,7 +253,7 @@ describe('StreamUploader', () => {
             await verifyOnProgress([]);
         });
 
-        it("should upload successfully empty file with thumbnail", async () => {
+        it('should upload successfully empty file with thumbnail', async () => {
             metadata = {
                 expectedSize: 0,
             } as UploadMetadata;
@@ -395,7 +406,7 @@ describe('StreamUploader', () => {
                             hash: 'blockHash',
                             armoredSignature: 'signature',
                             verificationToken: 'verificationToken',
-                        }
+                        },
                     ],
                 },
             );
@@ -420,9 +431,12 @@ describe('StreamUploader', () => {
             });
 
             it('should report block verification error when retry helped', async () => {
-                blockVerifier.verifyBlock = jest.fn().mockRejectedValueOnce(new IntegrityError('Block verification error')).mockResolvedValue({
-                    verificationToken: new Uint8Array(),
-                });
+                blockVerifier.verifyBlock = jest
+                    .fn()
+                    .mockRejectedValueOnce(new IntegrityError('Block verification error'))
+                    .mockResolvedValue({
+                        verificationToken: new Uint8Array(),
+                    });
                 await verifySuccess();
                 expect(telemetry.logBlockVerificationError).toHaveBeenCalledWith(true);
             });

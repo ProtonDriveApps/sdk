@@ -1,13 +1,13 @@
-import { ProtonDriveAccount, ProtonDriveEntitiesCache, ProtonDriveTelemetry } from "../../interface";
+import { ProtonDriveAccount, ProtonDriveEntitiesCache, ProtonDriveTelemetry } from '../../interface';
 import { DriveCrypto } from '../../crypto';
-import { DriveAPIService } from "../apiService";
-import { SharingAPIService } from "./apiService";
-import { SharingCache } from "./cache";
-import { SharingCryptoService } from "./cryptoService";
-import { SharingAccess } from "./sharingAccess";
-import { SharingManagement } from "./sharingManagement";
-import { SharesService, NodesService } from "./interface";
-import { SharingEventHandler } from "./events";
+import { DriveAPIService } from '../apiService';
+import { SharingAPIService } from './apiService';
+import { SharingCache } from './cache';
+import { SharingCryptoService } from './cryptoService';
+import { SharingAccess } from './sharingAccess';
+import { SharingManagement } from './sharingManagement';
+import { SharesService, NodesService } from './interface';
+import { SharingEventHandler } from './events';
 
 /**
  * Provides facade for the whole sharing module.
@@ -29,8 +29,19 @@ export function initSharingModule(
     const cache = new SharingCache(driveEntitiesCache);
     const cryptoService = new SharingCryptoService(telemetry, crypto, account, sharesService);
     const sharingAccess = new SharingAccess(api, cache, cryptoService, sharesService, nodesService);
-    const sharingManagement = new SharingManagement(telemetry.getLogger('sharing'), api, cryptoService, account, sharesService, nodesService);
-    const sharingEventHandler = new SharingEventHandler(telemetry.getLogger('sharing-event-handler'), cache, sharesService);
+    const sharingManagement = new SharingManagement(
+        telemetry.getLogger('sharing'),
+        api,
+        cryptoService,
+        account,
+        sharesService,
+        nodesService,
+    );
+    const sharingEventHandler = new SharingEventHandler(
+        telemetry.getLogger('sharing-event-handler'),
+        cache,
+        sharesService,
+    );
 
     return {
         access: sharingAccess,

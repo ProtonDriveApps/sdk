@@ -80,7 +80,7 @@ export class DevicesManager {
         const device = await this.getDeviceMetadata(deviceUid);
 
         if (device.hasDeprecatedName) {
-            this.logger.info("Removing deprecated name from device");
+            this.logger.info('Removing deprecated name from device');
             try {
                 await this.apiService.removeNameFromDevice(deviceUid);
             } catch (error: unknown) {
@@ -95,12 +95,12 @@ export class DevicesManager {
         return {
             ...device,
             name: resultOk(name),
-        }
+        };
     }
 
     private async getDeviceMetadata(deviceUid: string): Promise<DeviceMetadata> {
         const devices = await this.apiService.getDevices();
-        const device = devices.find(device => device.uid === deviceUid);
+        const device = devices.find((device) => device.uid === deviceUid);
         if (!device) {
             throw new ValidationError(c('Error').t`Device not found`);
         }

@@ -1,13 +1,13 @@
-import { ValidationError } from "../../errors";
-import { ProtonDriveTelemetry, UploadMetadata } from "../../interface";
-import { getMockTelemetry } from "../../tests/telemetry";
-import { ErrorCode } from "../apiService";
-import { UploadAPIService } from "./apiService";
-import { UploadCryptoService } from "./cryptoService";
-import { NodesService } from "./interface";
+import { ValidationError } from '../../errors';
+import { ProtonDriveTelemetry, UploadMetadata } from '../../interface';
+import { getMockTelemetry } from '../../tests/telemetry';
+import { ErrorCode } from '../apiService';
+import { UploadAPIService } from './apiService';
+import { UploadCryptoService } from './cryptoService';
+import { NodesService } from './interface';
 import { UploadManager } from './manager';
 
-describe("UploadManager", () => {
+describe('UploadManager', () => {
     let telemetry: ProtonDriveTelemetry;
     let apiService: UploadAPIService;
     let cryptoService: UploadCryptoService;
@@ -22,16 +22,16 @@ describe("UploadManager", () => {
         // @ts-expect-error No need to implement all methods for mocking
         apiService = {
             createDraft: jest.fn().mockResolvedValue({
-                nodeUid: "newNode:nodeUid",
-                nodeRevisionUid: "newNode:nodeRevisionUid",
+                nodeUid: 'newNode:nodeUid',
+                nodeRevisionUid: 'newNode:nodeRevisionUid',
             }),
             deleteDraft: jest.fn(),
             checkAvailableHashes: jest.fn().mockResolvedValue({
-                availalbleHashes: ["name1Hash"],
+                availalbleHashes: ['name1Hash'],
                 pendingHashes: [],
             }),
             commitDraftRevision: jest.fn(),
-        }
+        };
         // @ts-expect-error No need to implement all methods for mocking
         cryptoService = {
             generateFileCrypto: jest.fn().mockResolvedValue({
@@ -51,163 +51,168 @@ describe("UploadManager", () => {
                     },
                 },
                 encryptedNode: {
-                    encryptedName: "newNode:encryptedName",
-                    hash: "newNode:hash",
+                    encryptedName: 'newNode:encryptedName',
+                    hash: 'newNode:hash',
                 },
                 signatureAddress: {
-                    email: "signatureEmail",
+                    email: 'signatureEmail',
                 },
             }),
-            generateNameHashes: jest.fn().mockResolvedValue([{
-                name: "name1",
-                hash: "name1Hash",
-            }, {
-                name: "name2",
-                hash: "name2Hash",
-            }, {
-                name: "name3",
-                hash: "name3Hash",
-            }]),
+            generateNameHashes: jest.fn().mockResolvedValue([
+                {
+                    name: 'name1',
+                    hash: 'name1Hash',
+                },
+                {
+                    name: 'name2',
+                    hash: 'name2Hash',
+                },
+                {
+                    name: 'name3',
+                    hash: 'name3Hash',
+                },
+            ]),
             commitFile: jest.fn().mockResolvedValue({
-                armoredManifestSignature: "newNode:armoredManifestSignature",
-                signatureEmail: "signatureEmail",
-                armoredExtendedAttributes: "newNode:armoredExtendedAttributes",
+                armoredManifestSignature: 'newNode:armoredManifestSignature',
+                signatureEmail: 'signatureEmail',
+                armoredExtendedAttributes: 'newNode:armoredExtendedAttributes',
             }),
-        }
+        };
         nodesService = {
             getNode: jest.fn(async (nodeUid: string) => ({
                 uid: nodeUid,
                 parentUid: 'parentUid',
-
             })),
             getNodeKeys: jest.fn().mockResolvedValue({
                 hashKey: 'parentNode:hashKey',
                 key: 'parentNode:nodekey',
             }),
             getRootNodeEmailKey: jest.fn().mockResolvedValue({
-                email: "signatureEmail",
-                addressId: "addressId",
+                email: 'signatureEmail',
+                addressId: 'addressId',
             }),
-            notifyChildCreated: jest.fn(async (nodeUid: string) => { return }),
-        }
+            notifyChildCreated: jest.fn(async (nodeUid: string) => {
+                return;
+            }),
+        };
 
         manager = new UploadManager(telemetry, apiService, cryptoService, nodesService, clientUid);
     });
 
-    describe("createDraftNode", () => {
-        it("should fail to create node in non-folder parent", async () => {
+    describe('createDraftNode', () => {
+        it('should fail to create node in non-folder parent', async () => {
             nodesService.getNodeKeys = jest.fn().mockResolvedValue({ hashKey: undefined });
 
-            const result = manager.createDraftNode("parentUid", "name", {} as UploadMetadata);
-            await expect(result).rejects.toThrow("Creating files in non-folders is not allowed");
+            const result = manager.createDraftNode('parentUid', 'name', {} as UploadMetadata);
+            await expect(result).rejects.toThrow('Creating files in non-folders is not allowed');
         });
 
-        it("should create draft node", async () => {
-            const result = await manager.createDraftNode("parentUid", "name", {
-                mediaType: "myMimeType",
+        it('should create draft node', async () => {
+            const result = await manager.createDraftNode('parentUid', 'name', {
+                mediaType: 'myMimeType',
                 expectedSize: 123456,
             } as UploadMetadata);
 
             expect(result).toEqual({
-                nodeUid: "newNode:nodeUid",
-                nodeRevisionUid: "newNode:nodeRevisionUid",
+                nodeUid: 'newNode:nodeUid',
+                nodeRevisionUid: 'newNode:nodeRevisionUid',
                 nodeKeys: {
-                    key: "newNode:key",
-                    contentKeyPacketSessionKey: "newNode:ContentKeyPacketSessionKey",
+                    key: 'newNode:key',
+                    contentKeyPacketSessionKey: 'newNode:ContentKeyPacketSessionKey',
                     signatureAddress: {
-                        email: "signatureEmail",
+                        email: 'signatureEmail',
                     },
                 },
                 newNodeInfo: {
-                    parentUid: "parentUid",
-                    name: "name",
-                    encryptedName: "newNode:encryptedName",
-                    hash: "newNode:hash",
+                    parentUid: 'parentUid',
+                    name: 'name',
+                    encryptedName: 'newNode:encryptedName',
+                    hash: 'newNode:hash',
                 },
             });
-            expect(apiService.createDraft).toHaveBeenCalledWith("parentUid", {
-                armoredEncryptedName: "newNode:encryptedName",
-                hash: "newNode:hash",
-                mediaType: "myMimeType",
+            expect(apiService.createDraft).toHaveBeenCalledWith('parentUid', {
+                armoredEncryptedName: 'newNode:encryptedName',
+                hash: 'newNode:hash',
+                mediaType: 'myMimeType',
                 intendedUploadSize: 123456,
-                armoredNodeKey: "newNode:armoredKey",
-                armoredNodePassphrase: "newNode:armoredPassphrase",
-                armoredNodePassphraseSignature: "newNode:armoredPassphraseSignature",
-                base64ContentKeyPacket: "newNode:base64ContentKeyPacket",
-                armoredContentKeyPacketSignature: "newNode:armoredContentKeyPacketSignature",
-                signatureEmail: "signatureEmail",
+                armoredNodeKey: 'newNode:armoredKey',
+                armoredNodePassphrase: 'newNode:armoredPassphrase',
+                armoredNodePassphraseSignature: 'newNode:armoredPassphraseSignature',
+                base64ContentKeyPacket: 'newNode:base64ContentKeyPacket',
+                armoredContentKeyPacketSignature: 'newNode:armoredContentKeyPacketSignature',
+                signatureEmail: 'signatureEmail',
             });
         });
 
-        it("should delete existing draft and trying again", async () => {
+        it('should delete existing draft and trying again', async () => {
             let firstCall = true;
             apiService.createDraft = jest.fn().mockImplementation(() => {
                 if (firstCall) {
                     firstCall = false;
-                    throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS, {
-                        ConflictLinkID: "existingLinkId",
-                        ConflictDraftRevisionID: "existingDraftRevisionId",
+                    throw new ValidationError('Draft already exists', ErrorCode.ALREADY_EXISTS, {
+                        ConflictLinkID: 'existingLinkId',
+                        ConflictDraftRevisionID: 'existingDraftRevisionId',
                         ConflictDraftClientUID: clientUid,
                     });
                 }
                 return {
-                    nodeUid: "newNode:nodeUid",
-                    nodeRevisionUid: "newNode:nodeRevisionUid",
+                    nodeUid: 'newNode:nodeUid',
+                    nodeRevisionUid: 'newNode:nodeRevisionUid',
                 };
             });
 
-            const result = await manager.createDraftNode("volumeId~parentUid", "name", {} as UploadMetadata);
+            const result = await manager.createDraftNode('volumeId~parentUid', 'name', {} as UploadMetadata);
 
             expect(result).toEqual({
-                nodeUid: "newNode:nodeUid",
-                nodeRevisionUid: "newNode:nodeRevisionUid",
+                nodeUid: 'newNode:nodeUid',
+                nodeRevisionUid: 'newNode:nodeRevisionUid',
                 nodeKeys: {
-                    key: "newNode:key",
-                    contentKeyPacketSessionKey: "newNode:ContentKeyPacketSessionKey",
+                    key: 'newNode:key',
+                    contentKeyPacketSessionKey: 'newNode:ContentKeyPacketSessionKey',
                     signatureAddress: {
-                        email: "signatureEmail",
+                        email: 'signatureEmail',
                     },
                 },
                 newNodeInfo: {
-                    parentUid: "volumeId~parentUid",
-                    name: "name",
-                    encryptedName: "newNode:encryptedName",
-                    hash: "newNode:hash",
+                    parentUid: 'volumeId~parentUid',
+                    name: 'name',
+                    encryptedName: 'newNode:encryptedName',
+                    hash: 'newNode:hash',
                 },
             });
             expect(apiService.deleteDraft).toHaveBeenCalledTimes(1);
-            expect(apiService.deleteDraft).toHaveBeenCalledWith("volumeId~existingLinkId");
+            expect(apiService.deleteDraft).toHaveBeenCalledWith('volumeId~existingLinkId');
         });
 
-        it("should not delete existing draft if client UID does not match", async () => {
+        it('should not delete existing draft if client UID does not match', async () => {
             let firstCall = true;
             apiService.createDraft = jest.fn().mockImplementation(() => {
                 if (firstCall) {
                     firstCall = false;
-                    throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS, {
-                        ConflictLinkID: "existingLinkId",
-                        ConflictDraftRevisionID: "existingDraftRevisionId",
-                        ConflictDraftClientUID: "anotherClientUid",
+                    throw new ValidationError('Draft already exists', ErrorCode.ALREADY_EXISTS, {
+                        ConflictLinkID: 'existingLinkId',
+                        ConflictDraftRevisionID: 'existingDraftRevisionId',
+                        ConflictDraftClientUID: 'anotherClientUid',
                     });
                 }
                 return {
-                    nodeUid: "newNode:nodeUid",
-                    nodeRevisionUid: "newNode:nodeRevisionUid",
+                    nodeUid: 'newNode:nodeUid',
+                    nodeRevisionUid: 'newNode:nodeRevisionUid',
                 };
             });
 
-            const promise = manager.createDraftNode("volumeId~parentUid", "name", {} as UploadMetadata);
+            const promise = manager.createDraftNode('volumeId~parentUid', 'name', {} as UploadMetadata);
 
             try {
                 await promise;
             } catch (error: any) {
-                expect(error.message).toBe("Draft already exists");
+                expect(error.message).toBe('Draft already exists');
                 expect(error.ongoingUploadByOtherClient).toBe(true);
             }
             expect(apiService.deleteDraft).not.toHaveBeenCalled();
         });
 
-        it("should not delete existing draft if client UID is not set", async () => {
+        it('should not delete existing draft if client UID is not set', async () => {
             const clientUid = undefined;
             manager = new UploadManager(telemetry, apiService, cryptoService, nodesService, clientUid);
 
@@ -215,77 +220,81 @@ describe("UploadManager", () => {
             apiService.createDraft = jest.fn().mockImplementation(() => {
                 if (firstCall) {
                     firstCall = false;
-                    throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS, {
-                        ConflictLinkID: "existingLinkId",
-                        ConflictDraftRevisionID: "existingDraftRevisionId",
+                    throw new ValidationError('Draft already exists', ErrorCode.ALREADY_EXISTS, {
+                        ConflictLinkID: 'existingLinkId',
+                        ConflictDraftRevisionID: 'existingDraftRevisionId',
                         ConflictDraftClientUID: clientUid,
                     });
                 }
                 return {
-                    nodeUid: "newNode:nodeUid",
-                    nodeRevisionUid: "newNode:nodeRevisionUid",
+                    nodeUid: 'newNode:nodeUid',
+                    nodeRevisionUid: 'newNode:nodeRevisionUid',
                 };
             });
 
-            const promise = manager.createDraftNode("volumeId~parentUid", "name", {} as UploadMetadata);
+            const promise = manager.createDraftNode('volumeId~parentUid', 'name', {} as UploadMetadata);
 
             try {
                 await promise;
             } catch (error: any) {
-                expect(error.message).toBe("Draft already exists");
+                expect(error.message).toBe('Draft already exists');
                 expect(error.ongoingUploadByOtherClient).toBe(true);
             }
             expect(apiService.deleteDraft).not.toHaveBeenCalled();
         });
 
-        it("should handle error when deleting existing draft", async () => {
+        it('should handle error when deleting existing draft', async () => {
             let firstCall = true;
             apiService.createDraft = jest.fn().mockImplementation(() => {
                 if (firstCall) {
                     firstCall = false;
-                    throw new ValidationError("Draft already exists", ErrorCode.ALREADY_EXISTS, {
-                        ConflictLinkID: "existingLinkId",
-                        ConflictDraftRevisionID: "existingDraftRevisionId",
+                    throw new ValidationError('Draft already exists', ErrorCode.ALREADY_EXISTS, {
+                        ConflictLinkID: 'existingLinkId',
+                        ConflictDraftRevisionID: 'existingDraftRevisionId',
                         ConflictDraftClientUID: clientUid,
                     });
                 }
                 return {
-                    nodeUid: "newNode:nodeUid",
-                    nodeRevisionUid: "newNode:nodeRevisionUid",
+                    nodeUid: 'newNode:nodeUid',
+                    nodeRevisionUid: 'newNode:nodeRevisionUid',
                 };
             });
             apiService.deleteDraft = jest.fn().mockImplementation(() => {
-                throw new Error("Failed to delete draft");
+                throw new Error('Failed to delete draft');
             });
 
-            const result = manager.createDraftNode("volumeId~parentUid", "name", {} as UploadMetadata);
+            const result = manager.createDraftNode('volumeId~parentUid', 'name', {} as UploadMetadata);
 
             try {
                 await result;
             } catch (error: any) {
-                expect(error.message).toBe("Draft already exists");
-                expect(error.existingNodeUid).toBe("volumeId~existingLinkId");
+                expect(error.message).toBe('Draft already exists');
+                expect(error.existingNodeUid).toBe('volumeId~existingLinkId');
             }
             expect(apiService.deleteDraft).toHaveBeenCalledTimes(1);
         });
     });
 
-    describe("findAvailableName", () => {
-        it("should find available name", async () => {
+    describe('findAvailableName', () => {
+        it('should find available name', async () => {
             apiService.checkAvailableHashes = jest.fn().mockImplementation(() => {
                 return {
-                    availalbleHashes: ["name3Hash"],
+                    availalbleHashes: ['name3Hash'],
                     pendingHashes: [],
-                }
+                };
             });
 
-            const result = await manager.findAvailableName("parentUid", "name");
-            expect(result).toBe("name3");
+            const result = await manager.findAvailableName('parentUid', 'name');
+            expect(result).toBe('name3');
             expect(apiService.checkAvailableHashes).toHaveBeenCalledTimes(1);
-            expect(apiService.checkAvailableHashes).toHaveBeenCalledWith("parentUid", ["name1Hash", "name2Hash", "name3Hash"]);
+            expect(apiService.checkAvailableHashes).toHaveBeenCalledWith('parentUid', [
+                'name1Hash',
+                'name2Hash',
+                'name3Hash',
+            ]);
         });
 
-        it("should find available name with multiple pages", async () => {
+        it('should find available name with multiple pages', async () => {
             let firstCall = false;
             apiService.checkAvailableHashes = jest.fn().mockImplementation(() => {
                 if (!firstCall) {
@@ -294,80 +303,88 @@ describe("UploadManager", () => {
                         // First page has no available hashes
                         availalbleHashes: [],
                         pendingHashes: [],
-                    }
+                    };
                 }
                 return {
-                    availalbleHashes: ["name3Hash"],
+                    availalbleHashes: ['name3Hash'],
                     pendingHashes: [],
-                }
+                };
             });
 
-            const result = await manager.findAvailableName("parentUid", "name");
-            expect(result).toBe("name3");
+            const result = await manager.findAvailableName('parentUid', 'name');
+            expect(result).toBe('name3');
             expect(apiService.checkAvailableHashes).toHaveBeenCalledTimes(2);
-            expect(apiService.checkAvailableHashes).toHaveBeenCalledWith("parentUid", ["name1Hash", "name2Hash", "name3Hash"]);
+            expect(apiService.checkAvailableHashes).toHaveBeenCalledWith('parentUid', [
+                'name1Hash',
+                'name2Hash',
+                'name3Hash',
+            ]);
         });
     });
 
-    describe("commit draft", () => {
+    describe('commit draft', () => {
         const nodeRevisionDraft = {
-            nodeUid: "newNode:nodeUid",
-            nodeRevisionUid: "newNode:nodeRevisionUid",
+            nodeUid: 'newNode:nodeUid',
+            nodeRevisionUid: 'newNode:nodeRevisionUid',
             nodeKeys: {
                 key: { _idx: 32321 },
-                contentKeyPacketSessionKey: "newNode:contentKeyPacketSessionKey",
+                contentKeyPacketSessionKey: 'newNode:contentKeyPacketSessionKey',
                 signatureAddress: {
-                    email: "signatureEmail",
-                    addressId: "addressId",
-                    addressKey: "addressKey",
+                    email: 'signatureEmail',
+                    addressId: 'addressId',
+                    addressKey: 'addressKey',
                 } as any,
             },
         };
         const manifest = new Uint8Array([1, 2, 3]);
         const metadata = {
-            mediaType: "myMimeType",
+            mediaType: 'myMimeType',
             expectedSize: 123456,
         };
         const extendedAttributes = {
             modificationTime: new Date(),
             digests: {
-                sha1: "sha1",
-            }
+                sha1: 'sha1',
+            },
         };
 
-        it("should commit revision draft", async () => {
-            await manager.commitDraft(
-                nodeRevisionDraft as any,
+        it('should commit revision draft', async () => {
+            await manager.commitDraft(nodeRevisionDraft as any, manifest, metadata, extendedAttributes);
+
+            expect(cryptoService.commitFile).toHaveBeenCalledWith(
+                nodeRevisionDraft.nodeKeys,
                 manifest,
-                metadata,
-                extendedAttributes,
+                expect.anything(),
             );
+            expect(apiService.commitDraftRevision).toHaveBeenCalledWith(
+                nodeRevisionDraft.nodeRevisionUid,
+                expect.anything(),
+            );
+            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('parentUid');
+        });
 
-            expect(cryptoService.commitFile).toHaveBeenCalledWith(nodeRevisionDraft.nodeKeys, manifest, expect.anything());
-            expect(apiService.commitDraftRevision).toHaveBeenCalledWith(nodeRevisionDraft.nodeRevisionUid, expect.anything());
-            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith("parentUid");
-        })
-
-        it("should commit node draft", async () => {
+        it('should commit node draft', async () => {
             const nodeRevisionDraftWithNewNodeInfo = {
                 ...nodeRevisionDraft,
                 newNodeInfo: {
-                    parentUid: "parentUid",
-                    name: "newNode:name",
-                    encryptedName: "newNode:encryptedName",
-                    hash: "newNode:hash",
-                }
-            }
-            await manager.commitDraft(
-                nodeRevisionDraftWithNewNodeInfo as any,
-                manifest,
-                metadata,
-                extendedAttributes,
-            );
+                    parentUid: 'parentUid',
+                    name: 'newNode:name',
+                    encryptedName: 'newNode:encryptedName',
+                    hash: 'newNode:hash',
+                },
+            };
+            await manager.commitDraft(nodeRevisionDraftWithNewNodeInfo as any, manifest, metadata, extendedAttributes);
 
-            expect(cryptoService.commitFile).toHaveBeenCalledWith(nodeRevisionDraft.nodeKeys, manifest, expect.anything());
-            expect(apiService.commitDraftRevision).toHaveBeenCalledWith(nodeRevisionDraft.nodeRevisionUid, expect.anything());
-            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith("parentUid");
+            expect(cryptoService.commitFile).toHaveBeenCalledWith(
+                nodeRevisionDraft.nodeKeys,
+                manifest,
+                expect.anything(),
+            );
+            expect(apiService.commitDraftRevision).toHaveBeenCalledWith(
+                nodeRevisionDraft.nodeRevisionUid,
+                expect.anything(),
+            );
+            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('parentUid');
         });
     });
 });

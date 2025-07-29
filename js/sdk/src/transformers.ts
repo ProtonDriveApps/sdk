@@ -13,28 +13,28 @@ import { DecryptedNode as InternalNode, DecryptedRevision as InternalRevision } 
 
 type InternalPartialNode = Pick<
     InternalNode,
-    'uid' |
-    'parentUid' |
-    'name' |
-    'keyAuthor' |
-    'nameAuthor' |
-    'directMemberRole' |
-    'type' |
-    'mediaType' |
-    'isShared' |
-    'creationTime' |
-    'trashTime' |
-    'activeRevision' |
-    'folder' |
-    'totalStorageSize' |
-    'errors' |
-    'shareId'
+    | 'uid'
+    | 'parentUid'
+    | 'name'
+    | 'keyAuthor'
+    | 'nameAuthor'
+    | 'directMemberRole'
+    | 'type'
+    | 'mediaType'
+    | 'isShared'
+    | 'creationTime'
+    | 'trashTime'
+    | 'activeRevision'
+    | 'folder'
+    | 'totalStorageSize'
+    | 'errors'
+    | 'shareId'
 >;
 
 type NodeUid = string | { uid: string } | Result<{ uid: string }, { uid: string }>;
 
 export function getUid(nodeUid: NodeUid): string {
-    if (typeof nodeUid === "string") {
+    if (typeof nodeUid === 'string') {
         return nodeUid;
     }
     // Directly passed NodeEntity or DegradedNode that has UID directly.
@@ -52,13 +52,17 @@ export function getUids(nodeUids: NodeUid[]): string[] {
     return nodeUids.map(getUid);
 }
 
-export async function *convertInternalNodeIterator(nodeIterator: AsyncGenerator<InternalPartialNode>): AsyncGenerator<PublicMaybeNode> {
+export async function* convertInternalNodeIterator(
+    nodeIterator: AsyncGenerator<InternalPartialNode>,
+): AsyncGenerator<PublicMaybeNode> {
     for await (const node of nodeIterator) {
         yield convertInternalNode(node);
     }
 }
 
-export async function *convertInternalMissingNodeIterator(nodeIterator: AsyncGenerator<InternalPartialNode | MissingNode>): AsyncGenerator<PublicMaybeMissingNode> {
+export async function* convertInternalMissingNodeIterator(
+    nodeIterator: AsyncGenerator<InternalPartialNode | MissingNode>,
+): AsyncGenerator<PublicMaybeMissingNode> {
     for await (const node of nodeIterator) {
         if ('missingUid' in node) {
             yield resultError(node);
@@ -97,7 +101,9 @@ export function convertInternalNode(node: InternalPartialNode): PublicMaybeNode 
         return resultError({
             ...baseNodeMetadata,
             name,
-            activeRevision: activeRevision?.ok ? resultOk(convertInternalRevision(activeRevision.value)) : activeRevision,
+            activeRevision: activeRevision?.ok
+                ? resultOk(convertInternalRevision(activeRevision.value))
+                : activeRevision,
             errors: node.errors,
         } as PublicDegradedNode);
     }
@@ -120,5 +126,5 @@ function convertInternalRevision(revision: InternalRevision): PublicRevision {
         claimedModificationTime: revision.claimedModificationTime,
         claimedDigests: revision.claimedDigests,
         claimedAdditionalMetadata: revision.claimedAdditionalMetadata,
-    }
+    };
 }

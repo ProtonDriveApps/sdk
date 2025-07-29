@@ -1,4 +1,4 @@
-import { sha1 } from "@noble/hashes/legacy";
+import { sha1 } from '@noble/hashes/legacy';
 import { bytesToHex } from '@noble/hashes/utils';
 
 /**
@@ -30,7 +30,7 @@ export class IntegrityVerificationStream extends WritableStream<Uint8Array> {
             abort: () => {
                 this._isClosed = true;
                 this._computedSha1 = undefined;
-            }
+            },
         });
     }
 
@@ -52,5 +52,4 @@ export class IntegrityVerificationStream extends WritableStream<Uint8Array> {
         }
         return this._computedSizeInBytes;
     }
-
-} 
+}

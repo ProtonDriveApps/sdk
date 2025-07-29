@@ -14,10 +14,10 @@ export class EventsGenerator {
         this.eventQueue.push(event);
         // Notify all waiting generators
         const resolvers = this.waitingResolvers.splice(0);
-        resolvers.forEach(resolve => resolve());
+        resolvers.forEach((resolve) => resolve());
     }
 
-    async* iterateEvents(): AsyncGenerator<DiagnosticResult> {
+    async *iterateEvents(): AsyncGenerator<DiagnosticResult> {
         try {
             while (true) {
                 if (this.eventQueue.length === 0) {

@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { ParseArgsConfig } from "util";
+import { ParseArgsConfig } from 'util';
 
 import { Thumbnail } from '../../../sdk/src';
 import { Command, ActionArgs } from './interface';
@@ -22,14 +22,14 @@ export class CommandFileSystemUpload implements Command {
         },
     };
 
-    async action({ sdk, paths, args: [ localPath, parentPath ], options: { name, newRevision } }: ActionArgs) {
+    async action({ sdk, paths, args: [localPath, parentPath], options: { name, newRevision } }: ActionArgs) {
         name = name || path.basename(localPath);
 
         const file = Bun.file(localPath);
         const metadata = {
             mediaType: file.type,
             expectedSize: file.size,
-        }
+        };
 
         let uploader;
         if (newRevision) {

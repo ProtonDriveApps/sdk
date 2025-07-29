@@ -1,27 +1,44 @@
 import { c } from 'ttag';
 
-import { DriveCrypto, PrivateKey, PublicKey, SessionKey, uint8ArrayToBase64String, VERIFICATION_STATUS } from "../../crypto";
-import { ProtonDriveAccount, Revision } from "../../interface";
-import { DecryptionError, IntegrityError } from "../../errors";
-import { getErrorMessage } from "../errors";
-import { mergeUint8Arrays } from "../utils";
-import { RevisionKeys } from "./interface";
+import {
+    DriveCrypto,
+    PrivateKey,
+    PublicKey,
+    SessionKey,
+    uint8ArrayToBase64String,
+    VERIFICATION_STATUS,
+} from '../../crypto';
+import { ProtonDriveAccount, Revision } from '../../interface';
+import { DecryptionError, IntegrityError } from '../../errors';
+import { getErrorMessage } from '../errors';
+import { mergeUint8Arrays } from '../utils';
+import { RevisionKeys } from './interface';
 
 export class DownloadCryptoService {
-    constructor(private driveCrypto: DriveCrypto, private account: ProtonDriveAccount) {
+    constructor(
+        private driveCrypto: DriveCrypto,
+        private account: ProtonDriveAccount,
+    ) {
         this.account = account;
         this.driveCrypto = driveCrypto;
     }
 
-    async getRevisionKeys(nodeKey: { key: PrivateKey, contentKeyPacketSessionKey: SessionKey }, revision: Revision): Promise<RevisionKeys> {
+    async getRevisionKeys(
+        nodeKey: { key: PrivateKey; contentKeyPacketSessionKey: SessionKey },
+        revision: Revision,
+    ): Promise<RevisionKeys> {
         const verificationKeys = await this.getRevisionVerificationKeys(revision);
         return {
             ...nodeKey,
             verificationKeys,
-        }
+        };
     }
 
-    async decryptBlock(encryptedBlock: Uint8Array, armoredSignature: string, revisionKeys: RevisionKeys): Promise<Uint8Array> {
+    async decryptBlock(
+        encryptedBlock: Uint8Array,
+        armoredSignature: string,
+        revisionKeys: RevisionKeys,
+    ): Promise<Uint8Array> {
         let decryptedBlock;
         try {
             // We do not verify signatures on blocks. We only verify
@@ -75,8 +92,13 @@ export class DownloadCryptoService {
         }
     }
 
-    async verifyManifest(revision: Revision, nodeKey: PrivateKey, allBlockHashes: Uint8Array[], armoredManifestSignature?: string): Promise<void> {
-        const verificationKeys = await this.getRevisionVerificationKeys(revision) || nodeKey;
+    async verifyManifest(
+        revision: Revision,
+        nodeKey: PrivateKey,
+        allBlockHashes: Uint8Array[],
+        armoredManifestSignature?: string,
+    ): Promise<void> {
+        const verificationKeys = (await this.getRevisionVerificationKeys(revision)) || nodeKey;
         const hash = mergeUint8Arrays(allBlockHashes);
 
         if (!armoredManifestSignature) {
@@ -90,7 +112,9 @@ export class DownloadCryptoService {
     }
 
     private async getRevisionVerificationKeys(revision: Revision): Promise<PublicKey[] | undefined> {
-        const signatureEmail = revision.contentAuthor.ok ? revision.contentAuthor.value : revision.contentAuthor.error.claimedAuthor;
+        const signatureEmail = revision.contentAuthor.ok
+            ? revision.contentAuthor.value
+            : revision.contentAuthor.error.claimedAuthor;
         return signatureEmail ? await this.account.getPublicKeys(signatureEmail) : undefined;
     }
 }

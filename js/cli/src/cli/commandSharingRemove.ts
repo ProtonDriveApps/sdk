@@ -1,4 +1,4 @@
-import { ParseArgsConfig } from "util";
+import { ParseArgsConfig } from 'util';
 import { Command, ActionArgs } from './interface';
 
 export class CommandSharingRemove implements Command {
@@ -19,12 +19,7 @@ export class CommandSharingRemove implements Command {
         },
     };
 
-    async action({
-        sdk,
-        paths,
-        args: [ pathString ],
-        options: { email: emails, everyone, json },
-    }: ActionArgs) {
+    async action({ sdk, paths, args: [pathString], options: { email: emails, everyone, json } }: ActionArgs) {
         const path = paths.getPath(pathString);
         const node = await path.getNode();
 
@@ -32,8 +27,8 @@ export class CommandSharingRemove implements Command {
         const sharingInfo = everyone
             ? await sdk.unshareNode(node)
             : await sdk.unshareNode(node, {
-                users: emails,
-            });
+                  users: emails,
+              });
 
         if (json) {
             console.log(JSON.stringify(sharingInfo));

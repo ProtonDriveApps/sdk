@@ -99,7 +99,7 @@ describe('FileDownloader', () => {
             expect(telemetry.downloadFinished).toHaveBeenCalledWith('revisionUid', fileProgress);
             expect(telemetry.downloadFailed).not.toHaveBeenCalled();
             expect(onFinish).toHaveBeenCalledTimes(1);
-        }
+        };
 
         const verifyFailure = async (error: string, downloadedBytes: number | undefined) => {
             const controller = downloader.writeToStream(stream, onProgress);
@@ -136,12 +136,20 @@ describe('FileDownloader', () => {
                 write: jest.fn(),
                 close: jest.fn(),
                 abort: jest.fn(),
-            }
+            };
             // @ts-expect-error Mocking WritableStream
             stream = {
                 getWriter: () => writer,
-            }
-            downloader = new FileDownloader(telemetry, apiService, cryptoService, nodeKey as any, revision, undefined, onFinish);
+            };
+            downloader = new FileDownloader(
+                telemetry,
+                apiService,
+                cryptoService,
+                nodeKey as any,
+                revision,
+                undefined,
+                onFinish,
+            );
         });
 
         it('should reject two download starts', async () => {
@@ -178,9 +186,9 @@ describe('FileDownloader', () => {
                 yield { type: 'block', index: 9, bareUrl: 'url', token: 'token3', base64sha256Hash: 'aGFzaDM=' };
                 yield { type: 'block', index: 10, bareUrl: 'url', token: 'token1', base64sha256Hash: 'aGFzaDE=' };
                 yield { type: 'block', index: 11, bareUrl: 'url', token: 'token2', base64sha256Hash: 'aGFzaDI=' };
-            })
+            });
             apiService.downloadBlock = jest.fn().mockImplementation(async function (bareUrl, token, onProgress) {
-                await new Promise(resolve => setTimeout(resolve, timeouts[count++]));
+                await new Promise((resolve) => setTimeout(resolve, timeouts[count++]));
                 return mockBlockDownload(bareUrl, token, onProgress);
             });
 
@@ -353,12 +361,20 @@ describe('FileDownloader', () => {
                 write: jest.fn(),
                 close: jest.fn(),
                 abort: jest.fn(),
-            }
+            };
             // @ts-expect-error Mocking WritableStream
             stream = {
                 getWriter: () => writer,
-            }
-            downloader = new FileDownloader(telemetry, apiService, cryptoService, nodeKey as any, revision, undefined, onFinish);
+            };
+            downloader = new FileDownloader(
+                telemetry,
+                apiService,
+                cryptoService,
+                nodeKey as any,
+                revision,
+                undefined,
+                onFinish,
+            );
         });
 
         it('should skip verification steps', async () => {

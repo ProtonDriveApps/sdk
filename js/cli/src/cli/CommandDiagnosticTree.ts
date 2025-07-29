@@ -1,4 +1,4 @@
-import { ParseArgsConfig } from "util";
+import { ParseArgsConfig } from 'util';
 
 import { Command, ActionArgs } from './interface';
 
@@ -21,7 +21,7 @@ export class CommandDiagnosticTree implements Command {
             type: 'string',
             short: 's',
             default: '',
-        }
+        },
     };
 
     async action({ sdkDiagnostic, paths, args: [pathString], options: { json, content, thumbnails } }: ActionArgs) {

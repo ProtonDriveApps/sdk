@@ -1,7 +1,7 @@
 import { Command, ActionArgs } from './interface';
 
 export class CommandInvitationList implements Command {
-    group  = 'invitation';
+    group = 'invitation';
     name = 'list';
 
     async action({ sdk, options: { json } }: ActionArgs) {

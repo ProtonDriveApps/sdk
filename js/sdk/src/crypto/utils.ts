@@ -4,7 +4,7 @@ export function uint8ArrayToBase64String(array: Uint8Array) {
     return encodeBase64(arrayToBinaryString(array));
 }
 
-export function base64StringToUint8Array(string: string){
+export function base64StringToUint8Array(string: string) {
     return binaryStringToArray(decodeBase64(string) || '');
 }
 

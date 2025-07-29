@@ -1,14 +1,14 @@
-import { NodeType, Revision } from "../../../sdk/src";
+import { NodeType, Revision } from '../../../sdk/src';
 import { Command, ActionArgs } from './interface';
 import { formatAuthor, formatDate, formatSize } from './formatters';
-import { getNode } from "./node";
+import { getNode } from './node';
 
 export class CommandRevisionList implements Command {
     group = 'revision';
     name = 'list';
     args = ['path'];
 
-    async action({ sdk, paths, args: [ pathString ], options: { json } }: ActionArgs) {
+    async action({ sdk, paths, args: [pathString], options: { json } }: ActionArgs) {
         const path = paths.getPath(pathString);
         const maybeNode = await path.getNode();
 

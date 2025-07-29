@@ -35,4 +35,4 @@ export class NullCache<T> implements ProtonDriveCache<T> {
     async removeEntities(keys: string[]) {
         // No-op.
     }
-};
+}

@@ -3,7 +3,7 @@ import { c } from 'ttag';
 import { ServerError, ValidationError } from '../../errors';
 import { ErrorCode, HTTPErrorCode } from './errorCodes';
 
-export function apiErrorFactory({ response, result }: { response: Response, result?: unknown }): ServerError {
+export function apiErrorFactory({ response, result }: { response: Response; result?: unknown }): ServerError {
     // Backend responses with 404 both in the response and body code.
     // In such a case we want to stick to APIHTTPError to be very clear
     // it is not NotFoundAPIError.
@@ -22,15 +22,21 @@ export function apiErrorFactory({ response, result }: { response: Response, resu
         trace?: object;
     };
 
-    const [code, message, details] = [typedResult.Code || 0, typedResult.Error || c('Error').t`Unknown error`, typedResult.Details];
+    const [code, message, details] = [
+        typedResult.Code || 0,
+        typedResult.Error || c('Error').t`Unknown error`,
+        typedResult.Details,
+    ];
 
-    const debug = typedResult.exception ? {
-        exception: typedResult.exception,
-        message: typedResult.message,
-        file: typedResult.file,
-        line: typedResult.line,
-        trace: typedResult.trace,
-    } : undefined;
+    const debug = typedResult.exception
+        ? {
+              exception: typedResult.exception,
+              message: typedResult.message,
+              file: typedResult.file,
+              line: typedResult.line,
+              trace: typedResult.trace,
+          }
+        : undefined;
 
     switch (code) {
         case ErrorCode.NOT_EXISTS:

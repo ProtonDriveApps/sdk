@@ -1,4 +1,4 @@
-import { ParseArgsConfig } from "util";
+import { ParseArgsConfig } from 'util';
 import { Command, ActionArgs } from './interface';
 
 export class CommandSharingSetUrl implements Command {
@@ -20,12 +20,7 @@ export class CommandSharingSetUrl implements Command {
         },
     };
 
-    async action({
-        sdk,
-        paths,
-        args: [pathString],
-        options: { json, role, password, expiration },
-    }: ActionArgs) {
+    async action({ sdk, paths, args: [pathString], options: { json, role, password, expiration } }: ActionArgs) {
         const path = paths.getPath(pathString);
         const node = await path.getNode();
 

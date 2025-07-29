@@ -1,6 +1,6 @@
-import { PhotosAPIService } from "./apiService";
-import { PhotosCache } from "./cache";
-import { NodesService } from "./interface";
+import { PhotosAPIService } from './apiService';
+import { PhotosCache } from './cache';
+import { NodesService } from './interface';
 
 export class Albums {
     constructor(
@@ -13,12 +13,12 @@ export class Albums {
         this.nodesService = nodesService;
     }
 
-    async* iterateAlbums() {
+    async *iterateAlbums() {
         for await (const album of this.apiService.iterateAlbums()) {
             const node = await this.nodesService.getNode(album.uid);
             yield {
                 node,
-            }
+            };
         }
     }
 

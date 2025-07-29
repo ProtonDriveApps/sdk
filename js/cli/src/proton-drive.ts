@@ -1,7 +1,7 @@
-import { parseArgs } from "util";
+import { parseArgs } from 'util';
 
-import { init } from "./init";
-import { getCommand, validateCommandArguments } from "./cli";
+import { init } from './init';
+import { getCommand, validateCommandArguments } from './cli';
 
 const { account, sdk, sdkDiagnostic, paths } = await init();
 
@@ -21,14 +21,14 @@ validateCommandArguments(command, args, options);
 
 if (!command.isAuthAction) {
     if (!account.session) {
-        throw new Error("You need to login first");
+        throw new Error('You need to login first');
     }
     await account.loadPrimaryKeys();
-    console.log("----------");
+    console.log('----------');
 }
 
 if (!options.json) {
-    console.time("Command execution");
+    console.time('Command execution');
 }
 
 await command.action({
@@ -41,7 +41,7 @@ await command.action({
 });
 
 if (!options.json) {
-    console.timeEnd("Command execution");
+    console.timeEnd('Command execution');
 }
 
-process.exit()
+process.exit();

@@ -1,14 +1,14 @@
-import { Logger, ProtonDriveTelemetry } from "../../interface";
-import { DriveAPIService } from "../apiService";
-import { DriveEvent, DriveListener, EventSubscription, LatestEventIdProvider } from "./interface";
-import { EventsAPIService } from "./apiService";
-import { CoreEventManager } from "./coreEventManager";
-import { VolumeEventManager } from "./volumeEventManager";
-import { EventManager } from "./eventManager";
-import { SharesManager } from "../shares/manager";
+import { Logger, ProtonDriveTelemetry } from '../../interface';
+import { DriveAPIService } from '../apiService';
+import { DriveEvent, DriveListener, EventSubscription, LatestEventIdProvider } from './interface';
+import { EventsAPIService } from './apiService';
+import { CoreEventManager } from './coreEventManager';
+import { VolumeEventManager } from './volumeEventManager';
+import { EventManager } from './eventManager';
+import { SharesManager } from '../shares/manager';
 
-export type { DriveEvent, DriveListener } from "./interface";
-export { DriveEventType } from "./interface";
+export type { DriveEvent, DriveListener } from './interface';
+export { DriveEventType } from './interface';
 
 const OWN_VOLUME_POLLING_INTERVAL = 30;
 const OTHER_VOLUME_POLLING_INTERVAL = 60;
@@ -25,7 +25,13 @@ export class DriveEventsService {
     private volumeEventManagers: { [volumeId: string]: EventManager<DriveEvent> };
     private logger: Logger;
 
-    constructor(private telemetry: ProtonDriveTelemetry, apiService: DriveAPIService, private shareManagement: SharesManager, private cacheEventListeners: DriveListener[] = [], private latestEventIdProvider?: LatestEventIdProvider) {
+    constructor(
+        private telemetry: ProtonDriveTelemetry,
+        apiService: DriveAPIService,
+        private shareManagement: SharesManager,
+        private cacheEventListeners: DriveListener[] = [],
+        private latestEventIdProvider?: LatestEventIdProvider,
+    ) {
         this.telemetry = telemetry;
         this.logger = telemetry.getLogger('events');
         this.apiService = new EventsAPIService(apiService);
@@ -56,7 +62,9 @@ export class DriveEventsService {
     // FIXME: Allow to pass own core events manager from the public interface.
     async subscribeToCoreEvents(callback: DriveListener): Promise<EventSubscription> {
         if (this.latestEventIdProvider === null || this.latestEventIdProvider === undefined) {
-            throw new Error('Cannot subscribe to events without passing a latestEventIdProvider in ProtonDriveClient initialization');
+            throw new Error(
+                'Cannot subscribe to events without passing a latestEventIdProvider in ProtonDriveClient initialization',
+            );
         }
         if (this.coreEvents === undefined) {
             const coreEventManager = new CoreEventManager(this.logger, this.apiService);
@@ -80,7 +88,9 @@ export class DriveEventsService {
 
     private async createVolumeEventManager(volumeId: string): Promise<EventManager<DriveEvent>> {
         if (this.latestEventIdProvider === null || this.latestEventIdProvider === undefined) {
-            throw new Error('Cannot subscribe to events without passing a latestEventIdProvider in ProtonDriveClient initialization');
+            throw new Error(
+                'Cannot subscribe to events without passing a latestEventIdProvider in ProtonDriveClient initialization',
+            );
         }
         const isOwnVolume = await this.shareManagement.isOwnVolume(volumeId);
         const pollingInterval = this.getDefaultVolumePollingInterval(isOwnVolume);
@@ -96,6 +106,6 @@ export class DriveEventsService {
     }
 
     private getDefaultVolumePollingInterval(isOwnVolume: boolean): number {
-        return isOwnVolume ? OWN_VOLUME_POLLING_INTERVAL : OTHER_VOLUME_POLLING_INTERVAL
+        return isOwnVolume ? OWN_VOLUME_POLLING_INTERVAL : OTHER_VOLUME_POLLING_INTERVAL;
     }
 }

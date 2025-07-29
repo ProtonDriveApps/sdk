@@ -48,24 +48,24 @@ export interface SessionKey {
 export enum VERIFICATION_STATUS {
     NOT_SIGNED = 0,
     SIGNED_AND_VALID = 1,
-    SIGNED_AND_INVALID = 2
+    SIGNED_AND_INVALID = 2,
 }
 
 export interface SRPModule {
-    getSrpVerifier: (password: string) => Promise<SRPVerifier>,
-    computeKeyPassword: (password: string, salt: string) => Promise<string>,
+    getSrpVerifier: (password: string) => Promise<SRPVerifier>;
+    computeKeyPassword: (password: string, salt: string) => Promise<string>;
 }
 
 export type SRPVerifier = {
-    modulusId: string,
-    version: number,
-    salt: string,
-    verifier: string,
-}
+    modulusId: string;
+    version: number;
+    salt: string;
+    verifier: string;
+};
 
 /**
  * OpenPGP crypto layer to provide necessary PGP operations for Drive crypto.
- * 
+ *
  * This layer focuses on providing general openPGP functions. Every operation
  * should prefer binary input and output. Ideally, armoring should be done
  * later in serialisation step, but for now, it is part of the interface to
@@ -77,38 +77,44 @@ export type SRPVerifier = {
 export interface OpenPGPCrypto {
     /**
      * Generate a random passphrase.
-     * 
+     *
      * 32 random bytes are generated and encoded into a base64 string.
      */
-    generatePassphrase: () => string,
+    generatePassphrase: () => string;
 
-    generateSessionKey: (encryptionKeys: PrivateKey[]) => Promise<SessionKey>,
+    generateSessionKey: (encryptionKeys: PrivateKey[]) => Promise<SessionKey>;
 
-    encryptSessionKey: (sessionKey: SessionKey, encryptionKeys: PublicKey | PublicKey[]) => Promise<{
-        keyPacket: Uint8Array,
-    }>,
+    encryptSessionKey: (
+        sessionKey: SessionKey,
+        encryptionKeys: PublicKey | PublicKey[],
+    ) => Promise<{
+        keyPacket: Uint8Array;
+    }>;
 
-    encryptSessionKeyWithPassword: (sessionKey: SessionKey, password: string) => Promise<{
-        keyPacket: Uint8Array,
-    }>,
+    encryptSessionKeyWithPassword: (
+        sessionKey: SessionKey,
+        password: string,
+    ) => Promise<{
+        keyPacket: Uint8Array;
+    }>;
 
     /**
      * Generate a new key pair locked by a passphrase.
-     * 
+     *
      * The key pair is generated using the Curve25519 algorithm.
      */
     generateKey: (passphrase: string) => Promise<{
-        privateKey: PrivateKey,
-        armoredKey: string,
-    }>,
+        privateKey: PrivateKey;
+        armoredKey: string;
+    }>;
 
     encryptArmored: (
         data: Uint8Array,
         encryptionKeys: PrivateKey[],
         sessionKey?: SessionKey,
     ) => Promise<{
-        armoredData: string,
-    }>,
+        armoredData: string;
+    }>;
 
     encryptAndSign: (
         data: Uint8Array,
@@ -116,8 +122,8 @@ export interface OpenPGPCrypto {
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
     ) => Promise<{
-        encryptedData: Uint8Array,
-    }>,
+        encryptedData: Uint8Array;
+    }>;
 
     encryptAndSignArmored: (
         data: Uint8Array,
@@ -125,8 +131,8 @@ export interface OpenPGPCrypto {
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
     ) => Promise<{
-        armoredData: string,
-    }>,
+        armoredData: string;
+    }>;
 
     encryptAndSignDetached: (
         data: Uint8Array,
@@ -134,9 +140,9 @@ export interface OpenPGPCrypto {
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
     ) => Promise<{
-        encryptedData: Uint8Array,
-        signature: Uint8Array,
-    }>,
+        encryptedData: Uint8Array;
+        signature: Uint8Array;
+    }>;
 
     encryptAndSignDetachedArmored: (
         data: Uint8Array,
@@ -144,56 +150,47 @@ export interface OpenPGPCrypto {
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
     ) => Promise<{
-        armoredData: string,
-        armoredSignature: string,
-    }>,
+        armoredData: string;
+        armoredSignature: string;
+    }>;
 
     sign: (
         data: Uint8Array,
         signingKey: PrivateKey,
         signatureContext: string,
     ) => Promise<{
-        signature: Uint8Array,
-    }>,
+        signature: Uint8Array;
+    }>;
 
     signArmored: (
         data: Uint8Array,
         signingKey: PrivateKey | PrivateKey[],
     ) => Promise<{
-        signature: string,
-    }>,
+        signature: string;
+    }>;
 
     verify: (
         data: Uint8Array,
         armoredSignature: string,
         verificationKeys: PublicKey | PublicKey[],
     ) => Promise<{
-        verified: VERIFICATION_STATUS,
-    }>,
+        verified: VERIFICATION_STATUS;
+    }>;
 
-    decryptSessionKey: (
-        data: Uint8Array,
-        decryptionKeys: PrivateKey | PrivateKey[],
-    ) => Promise<SessionKey>,
+    decryptSessionKey: (data: Uint8Array, decryptionKeys: PrivateKey | PrivateKey[]) => Promise<SessionKey>;
 
-    decryptArmoredSessionKey: (
-        armoredData: string,
-        decryptionKeys: PrivateKey | PrivateKey[],
-    ) => Promise<SessionKey>,
+    decryptArmoredSessionKey: (armoredData: string, decryptionKeys: PrivateKey | PrivateKey[]) => Promise<SessionKey>;
 
-    decryptKey: (
-        armoredKey: string,
-        passphrase: string,
-    ) => Promise<PrivateKey>,
+    decryptKey: (armoredKey: string, passphrase: string) => Promise<PrivateKey>;
 
     decryptAndVerify(
         data: Uint8Array,
         sessionKey: SessionKey,
         verificationKeys: PublicKey | PublicKey[],
     ): Promise<{
-        data: Uint8Array,
-        verified: VERIFICATION_STATUS,
-    }>,
+        data: Uint8Array;
+        verified: VERIFICATION_STATUS;
+    }>;
 
     decryptAndVerifyDetached(
         data: Uint8Array,
@@ -201,23 +198,20 @@ export interface OpenPGPCrypto {
         sessionKey: SessionKey,
         verificationKeys?: PublicKey | PublicKey[],
     ): Promise<{
-        data: Uint8Array,
-        verified: VERIFICATION_STATUS,
-    }>,
+        data: Uint8Array;
+        verified: VERIFICATION_STATUS;
+    }>;
 
-    decryptArmored(
-        armoredData: string,
-        decryptionKeys: PrivateKey | PrivateKey[],
-    ): Promise<Uint8Array>,
+    decryptArmored(armoredData: string, decryptionKeys: PrivateKey | PrivateKey[]): Promise<Uint8Array>;
 
     decryptArmoredAndVerify: (
         armoredData: string,
         decryptionKeys: PrivateKey | PrivateKey[],
         verificationKeys: PublicKey | PublicKey[],
     ) => Promise<{
-        data: Uint8Array,
-        verified: VERIFICATION_STATUS,
-    }>,
+        data: Uint8Array;
+        verified: VERIFICATION_STATUS;
+    }>;
 
     decryptArmoredAndVerifyDetached: (
         armoredData: string,
@@ -225,12 +219,9 @@ export interface OpenPGPCrypto {
         sessionKey: SessionKey,
         verificationKeys: PublicKey | PublicKey[],
     ) => Promise<{
-        data: Uint8Array,
-        verified: VERIFICATION_STATUS,
-    }>,
+        data: Uint8Array;
+        verified: VERIFICATION_STATUS;
+    }>;
 
-    decryptArmoredWithPassword(
-        armoredData: string,
-        password: string,
-    ): Promise<Uint8Array>,
+    decryptArmoredWithPassword(armoredData: string, password: string): Promise<Uint8Array>;
 }

@@ -1,11 +1,11 @@
 import { c } from 'ttag';
 
-import { NodeType, ThumbnailType, ProtonDriveTelemetry, Logger, ThumbnailResult } from "../../interface";
+import { NodeType, ThumbnailType, ProtonDriveTelemetry, Logger, ThumbnailResult } from '../../interface';
 import { ValidationError } from '../../errors';
 import { LoggerWithPrefix } from '../../telemetry';
-import { DownloadAPIService } from "./apiService";
-import { DownloadCryptoService } from "./cryptoService";
-import { NodesService } from "./interface";
+import { DownloadAPIService } from './apiService';
+import { DownloadCryptoService } from './cryptoService';
+import { NodesService } from './interface';
 import { getErrorMessage } from '../errors';
 
 /**
@@ -24,8 +24,8 @@ export class ThumbnailDownloader {
     private batchThumbnailToNodeUids = new Map<string, string>();
     private ongoingDownloads = new Map<string, Promise<void>>();
     private bufferedThumbnails: (
-        { nodeUid: string, ok: true, thumbnail: Uint8Array } |
-        { nodeUid: string, ok: false, error: string }
+        | { nodeUid: string; ok: true; thumbnail: Uint8Array }
+        | { nodeUid: string; ok: false; error: string }
     )[] = [];
 
     constructor(
@@ -34,7 +34,7 @@ export class ThumbnailDownloader {
         private apiService: DownloadAPIService,
         private cryptoService: DownloadCryptoService,
     ) {
-        this.logger = telemetry.getLogger("download");
+        this.logger = telemetry.getLogger('download');
         this.nodesService = nodesService;
         this.apiService = apiService;
         this.cryptoService = cryptoService;
@@ -79,40 +79,41 @@ export class ThumbnailDownloader {
         this.bufferedThumbnails = [];
     }
 
-    private async *iterateThumbnailUids(nodeUids: string[], thumbnailType: ThumbnailType, signal?: AbortSignal): AsyncGenerator<
-        { nodeUid: string, ok: true, thumbnailUid: string } |
-        { nodeUid: string, ok: false, error: string }
+    private async *iterateThumbnailUids(
+        nodeUids: string[],
+        thumbnailType: ThumbnailType,
+        signal?: AbortSignal,
+    ): AsyncGenerator<
+        { nodeUid: string; ok: true; thumbnailUid: string } | { nodeUid: string; ok: false; error: string }
     > {
         for await (const node of this.nodesService.iterateNodes(nodeUids, signal)) {
             if ('missingUid' in node) {
                 yield {
                     nodeUid: node.missingUid,
                     ok: false,
-                    error: c("Error").t`Node not found`,
-                }
+                    error: c('Error').t`Node not found`,
+                };
                 continue;
             }
             if (node.type !== NodeType.File) {
                 yield {
                     nodeUid: node.uid,
                     ok: false,
-                    error: c("Error").t`Node is not a file`,
-                }
+                    error: c('Error').t`Node is not a file`,
+                };
                 continue;
             }
 
             let thumbnail;
             if (node.activeRevision?.ok) {
-                thumbnail = node.activeRevision.value.thumbnails?.find(
-                    (t) => t.type === thumbnailType,
-                );
+                thumbnail = node.activeRevision.value.thumbnails?.find((t) => t.type === thumbnailType);
             }
             if (!thumbnail) {
                 yield {
                     nodeUid: node.uid,
                     ok: false,
-                    error: c("Error").t`Node has no thumbnail`,
-                }
+                    error: c('Error').t`Node has no thumbnail`,
+                };
                 continue;
             }
 
@@ -120,7 +121,7 @@ export class ThumbnailDownloader {
                 nodeUid: node.uid,
                 ok: true,
                 thumbnailUid: thumbnail.uid,
-            }
+            };
         }
     }
 
@@ -163,13 +164,15 @@ export class ThumbnailDownloader {
                     }),
             );
         }
-        
+
         this.batchThumbnailToNodeUids.clear();
     }
 
-    private async *iterateThumbnailDownloads(signal?: AbortSignal): AsyncGenerator<
-        { nodeUid: string, ok: true, downloadPromise: Promise<Uint8Array> } |
-        { nodeUid: string, ok: false, error: string }
+    private async *iterateThumbnailDownloads(
+        signal?: AbortSignal,
+    ): AsyncGenerator<
+        | { nodeUid: string; ok: true; downloadPromise: Promise<Uint8Array> }
+        | { nodeUid: string; ok: false; error: string }
     > {
         const missingThumbnailUids = new Set(this.batchThumbnailToNodeUids.keys());
 
@@ -190,7 +193,7 @@ export class ThumbnailDownloader {
                     nodeUid,
                     ok: false,
                     error: result.error,
-                }
+                };
                 continue;
             }
 
@@ -198,7 +201,7 @@ export class ThumbnailDownloader {
                 nodeUid,
                 ok: true,
                 downloadPromise: this.downloadThumbnail(nodeUid, result.bareUrl, result.token, signal),
-            }
+            };
         }
 
         for (const uid of missingThumbnailUids) {
@@ -207,14 +210,19 @@ export class ThumbnailDownloader {
             yield {
                 nodeUid,
                 ok: false,
-                error: c("Error").t`Thumbnail not found`,
-            }
+                error: c('Error').t`Thumbnail not found`,
+            };
         }
     }
 
-    private async downloadThumbnail(nodeUid: string, bareUrl: string, token: string, signal?: AbortSignal): Promise<Uint8Array> {
+    private async downloadThumbnail(
+        nodeUid: string,
+        bareUrl: string,
+        token: string,
+        signal?: AbortSignal,
+    ): Promise<Uint8Array> {
         const logger = new LoggerWithPrefix(this.logger, `thumbnail ${token}`);
-        
+
         let decryptedBlock: Uint8Array | null = null;
         let attempt = 0;
 
@@ -229,11 +237,14 @@ export class ThumbnailDownloader {
                 ]);
 
                 if (!nodeKeys.contentKeyPacketSessionKey) {
-                    throw new ValidationError(c("Error").t`File has no content key`);
+                    throw new ValidationError(c('Error').t`File has no content key`);
                 }
 
                 logger.debug(`Decrypting`);
-                decryptedBlock = await this.cryptoService.decryptThumbnail(encryptedBlock, nodeKeys.contentKeyPacketSessionKey);
+                decryptedBlock = await this.cryptoService.decryptThumbnail(
+                    encryptedBlock,
+                    nodeKeys.contentKeyPacketSessionKey,
+                );
             } catch (error: unknown) {
                 if (attempt <= MAX_THUMBNAIL_DOWNLOAD_ATTEMPTS) {
                     logger.warn(`Thumbnail download failed #${attempt}, retrying: ${getErrorMessage(error)}`);

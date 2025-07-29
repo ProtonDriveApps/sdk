@@ -1,8 +1,8 @@
-import { ParseArgsConfig } from "util";
-import { ProtonDriveClient } from "../../../sdk/src";
-import { Diagnostic } from "../../../sdk/src/diagnostic";
-import { Account } from "../account/account";
-import { Paths } from "./paths";
+import { ParseArgsConfig } from 'util';
+import { ProtonDriveClient } from '../../../sdk/src';
+import { Diagnostic } from '../../../sdk/src/diagnostic';
+import { Account } from '../account/account';
+import { Paths } from './paths';
 
 export interface Command {
     group: string;

@@ -1,4 +1,4 @@
-import { ParseArgsConfig } from "util";
+import { ParseArgsConfig } from 'util';
 import { Command, ActionArgs } from './interface';
 
 export class CommandAuthLogin implements Command {
@@ -13,9 +13,9 @@ export class CommandAuthLogin implements Command {
         },
     };
 
-    async action({ account, args: [ username ], options: { password } }: ActionArgs) {
+    async action({ account, args: [username], options: { password } }: ActionArgs) {
         if (!password) {
-            console.log("Password:");
+            console.log('Password:');
             // FIXME hide password when typing
             for await (const line of console) {
                 password = line.trim();
@@ -23,6 +23,6 @@ export class CommandAuthLogin implements Command {
             }
         }
         await account.auth(username, password);
-        console.log("session:", account.session);
+        console.log('session:', account.session);
     }
 }

@@ -1,6 +1,6 @@
-import { MemberRole, NodeType } from "../../interface";
-import { getMockLogger } from "../../tests/logger";
-import { DriveAPIService, ErrorCode } from "../apiService";
+import { MemberRole, NodeType } from '../../interface';
+import { getMockLogger } from '../../tests/logger';
+import { DriveAPIService, ErrorCode } from '../apiService';
 import { NodeAPIService } from './apiService';
 
 function generateAPIFileNode(linkOverrides = {}, overrides = {}) {
@@ -81,26 +81,26 @@ function generateFileNode(overrides = {}) {
     return {
         ...node,
         type: NodeType.File,
-        mediaType: "text",
+        mediaType: 'text',
         totalStorageSize: 42,
         encryptedCrypto: {
             ...node.encryptedCrypto,
             file: {
-                base64ContentKeyPacket: "contentKeyPacket",
-                armoredContentKeyPacketSignature: "contentKeyPacketSig",
+                base64ContentKeyPacket: 'contentKeyPacket',
+                armoredContentKeyPacketSignature: 'contentKeyPacketSig',
             },
             activeRevision: {
-                uid: "volumeId~linkId~revisionId",
-                state: "active",
+                uid: 'volumeId~linkId~revisionId',
+                state: 'active',
                 creationTime: new Date(1234567890000),
                 storageSize: 12,
-                signatureEmail: "revSigEmail",
-                armoredExtendedAttributes: "{file}",
+                signatureEmail: 'revSigEmail',
+                armoredExtendedAttributes: '{file}',
                 thumbnails: [],
             },
         },
-        ...overrides
-    }
+        ...overrides,
+    };
 }
 
 function generateFolderNode(overrides = {}) {
@@ -111,12 +111,12 @@ function generateFolderNode(overrides = {}) {
         encryptedCrypto: {
             ...node.encryptedCrypto,
             folder: {
-                armoredHashKey: "nodeHashKey",
-                armoredExtendedAttributes: "{folder}",
+                armoredHashKey: 'nodeHashKey',
+                armoredExtendedAttributes: '{folder}',
             },
         },
-        ...overrides
-    }
+        ...overrides,
+    };
 }
 
 function generateAlbumNode(overrides = {}) {
@@ -124,17 +124,17 @@ function generateAlbumNode(overrides = {}) {
     return {
         ...node,
         type: NodeType.Album,
-        ...overrides
-    }
+        ...overrides,
+    };
 }
 
 function generateNode() {
     return {
-        hash: "nameHash",
-        encryptedName: "encName",
+        hash: 'nameHash',
+        encryptedName: 'encName',
 
-        uid: "volumeId~linkId",
-        parentUid: "volumeId~parentLinkId",
+        uid: 'volumeId~linkId',
+        parentUid: 'volumeId~parentLinkId',
         creationTime: new Date(123456789000),
         trashTime: undefined,
 
@@ -143,16 +143,16 @@ function generateNode() {
         directMemberRole: MemberRole.Admin,
 
         encryptedCrypto: {
-            armoredKey: "nodeKey",
-            armoredNodePassphrase: "nodePass",
-            armoredNodePassphraseSignature: "nodePassSig",
-            nameSignatureEmail: "nameSigEmail",
-            signatureEmail: "sigEmail",
+            armoredKey: 'nodeKey',
+            armoredNodePassphrase: 'nodePass',
+            armoredNodePassphraseSignature: 'nodePassSig',
+            nameSignatureEmail: 'nameSigEmail',
+            signatureEmail: 'sigEmail',
         },
-    }
+    };
 }
 
-describe("nodeAPIService", () => {
+describe('nodeAPIService', () => {
     let apiMock: DriveAPIService;
     let api: NodeAPIService;
 
@@ -172,19 +172,18 @@ describe("nodeAPIService", () => {
     describe('iterateNodes', () => {
         async function testIterateNodes(mockedLink: any, expectedNode: any, ownVolumeId = 'volumeId') {
             // @ts-expect-error Mocking for testing purposes
-            apiMock.post = jest.fn(async () => Promise.resolve({
-                Links: [mockedLink],
-            }));
+            apiMock.post = jest.fn(async () =>
+                Promise.resolve({
+                    Links: [mockedLink],
+                }),
+            );
 
             const nodes = await Array.fromAsync(api.iterateNodes(['volumeId~nodeId'], ownVolumeId));
             expect(nodes).toStrictEqual([expectedNode]);
         }
-    
+
         it('should get folder node', async () => {
-            await testIterateNodes(
-                generateAPIFolderNode(),
-                generateFolderNode(),
-            );
+            await testIterateNodes(generateAPIFolderNode(), generateFolderNode());
         });
 
         it('should get root folder node', async () => {
@@ -193,31 +192,28 @@ describe("nodeAPIService", () => {
                 generateFolderNode({ parentUid: undefined }),
             );
         });
-    
+
         it('should get file node', async () => {
-            await testIterateNodes(
-                generateAPIFileNode(),
-                generateFileNode(),
-            );
+            await testIterateNodes(generateAPIFileNode(), generateFileNode());
         });
 
         it('should get album node', async () => {
-            await testIterateNodes(
-                generateAPIAlbumNode(),
-                generateAlbumNode(),
-            );
+            await testIterateNodes(generateAPIAlbumNode(), generateAlbumNode());
         });
 
         it('should get shared node', async () => {
             await testIterateNodes(
-                generateAPIFolderNode({}, {
-                    Sharing: {
-                        ShareID: 'shareId',
+                generateAPIFolderNode(
+                    {},
+                    {
+                        Sharing: {
+                            ShareID: 'shareId',
+                        },
+                        Membership: {
+                            Permissions: 22,
+                        },
                     },
-                    Membership: {
-                        Permissions: 22,
-                    },
-                }),
+                ),
                 generateFolderNode({
                     isShared: true,
                     shareId: 'shareId',
@@ -228,14 +224,17 @@ describe("nodeAPIService", () => {
 
         it('should get shared node with unknown permissions', async () => {
             await testIterateNodes(
-                generateAPIFolderNode({}, {
-                    Sharing: {
-                        ShareID: 'shareId',
+                generateAPIFolderNode(
+                    {},
+                    {
+                        Sharing: {
+                            ShareID: 'shareId',
+                        },
+                        Membership: {
+                            Permissions: 42,
+                        },
                     },
-                    Membership: {
-                        Permissions: 42,
-                    },
-                }),
+                ),
                 generateFolderNode({
                     isShared: true,
                     shareId: 'shareId',
@@ -251,23 +250,25 @@ describe("nodeAPIService", () => {
                     TrashTime: 123456,
                 }),
                 generateFileNode({
-                    trashTime: new Date(123456000)
+                    trashTime: new Date(123456000),
                 }),
             );
         });
 
         it('should get all recognised nodes before throwing error', async () => {
             // @ts-expect-error Mocking for testing purposes
-            apiMock.post = jest.fn(async () => Promise.resolve({
-                Links: [
-                    generateAPIFolderNode(),
-                    // Type 42 is not recognised - should throw error.
-                    generateAPIFolderNode({ Type: 42 }),
-                    // Type 43 is not recognised - should throw error.
-                    generateAPIFileNode({ Type: 43 }),
-                    generateAPIFileNode(),
-                ],
-            }));
+            apiMock.post = jest.fn(async () =>
+                Promise.resolve({
+                    Links: [
+                        generateAPIFolderNode(),
+                        // Type 42 is not recognised - should throw error.
+                        generateAPIFolderNode({ Type: 42 }),
+                        // Type 43 is not recognised - should throw error.
+                        generateAPIFileNode({ Type: 43 }),
+                        generateAPIFileNode(),
+                    ],
+                }),
+            );
 
             const generator = api.iterateNodes(['volumeId~nodeId'], 'volumeId');
 
@@ -283,28 +284,37 @@ describe("nodeAPIService", () => {
             try {
                 await node3;
             } catch (error: any) {
-                expect(error.cause).toEqual([
-                    new Error('Unknown node type: 42'),
-                    new Error('Unknown node type: 43'),
-                ]);
+                expect(error.cause).toEqual([new Error('Unknown node type: 42'), new Error('Unknown node type: 43')]);
             }
         });
 
         it('should get nodes across various volumes', async () => {
             // @ts-expect-error Mocking for testing purposes
-            apiMock.post = jest.fn(async (url) => Promise.resolve({
-                Links: [
-                    generateAPIFolderNode({
-                        LinkID: url.includes('volumeId1') ? 'nodeId1' : 'nodeId2',
-                        ParentLinkID: url.includes('volumeId1') ? 'parentNodeId1' : 'parentNodeId2',
-                    }),
-                ],
-            }));
+            apiMock.post = jest.fn(async (url) =>
+                Promise.resolve({
+                    Links: [
+                        generateAPIFolderNode({
+                            LinkID: url.includes('volumeId1') ? 'nodeId1' : 'nodeId2',
+                            ParentLinkID: url.includes('volumeId1') ? 'parentNodeId1' : 'parentNodeId2',
+                        }),
+                    ],
+                }),
+            );
 
-            const nodes = await Array.fromAsync(api.iterateNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2'], 'volumeId1'));
+            const nodes = await Array.fromAsync(
+                api.iterateNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2'], 'volumeId1'),
+            );
             expect(nodes).toStrictEqual([
-                generateFolderNode({ uid: 'volumeId1~nodeId1', parentUid: 'volumeId1~parentNodeId1', directMemberRole: MemberRole.Admin }),
-                generateFolderNode({ uid: 'volumeId2~nodeId2', parentUid: 'volumeId2~parentNodeId2', directMemberRole: MemberRole.Inherited }),
+                generateFolderNode({
+                    uid: 'volumeId1~nodeId1',
+                    parentUid: 'volumeId1~parentNodeId1',
+                    directMemberRole: MemberRole.Admin,
+                }),
+                generateFolderNode({
+                    uid: 'volumeId2~nodeId2',
+                    parentUid: 'volumeId2~parentNodeId2',
+                    directMemberRole: MemberRole.Inherited,
+                }),
             ]);
         });
     });
@@ -312,23 +322,25 @@ describe("nodeAPIService", () => {
     describe('trashNodes', () => {
         it('should trash nodes', async () => {
             // @ts-expect-error Mocking for testing purposes
-            apiMock.post = jest.fn(async () => Promise.resolve({
-                Responses: [
-                    {
-                        LinkID: 'nodeId1',
-                        Response: {
-                            Code: ErrorCode.OK,
-                        }
-                    },
-                    {
-                        LinkID: 'nodeId2',
-                        Response: {
-                            Code: 2027,
-                            Error: 'INSUFFICIENT_SCOPE'
-                        }
-                    }
-                ],
-            }));
+            apiMock.post = jest.fn(async () =>
+                Promise.resolve({
+                    Responses: [
+                        {
+                            LinkID: 'nodeId1',
+                            Response: {
+                                Code: ErrorCode.OK,
+                            },
+                        },
+                        {
+                            LinkID: 'nodeId2',
+                            Response: {
+                                Code: 2027,
+                                Error: 'INSUFFICIENT_SCOPE',
+                            },
+                        },
+                    ],
+                }),
+            );
 
             const result = await Array.fromAsync(api.trashNodes(['volumeId~nodeId1', 'volumeId~nodeId2']));
             expect(result).toEqual([
@@ -341,31 +353,35 @@ describe("nodeAPIService", () => {
     describe('restoreNodes', () => {
         it('should restore nodes', async () => {
             // @ts-expect-error Mocking for testing purposes
-            apiMock.put = jest.fn(async () => Promise.resolve({
-                Responses: [
-                    {
-                        LinkID: 'nodeId1',
-                        Response: {
-                            Code: ErrorCode.OK,
-                        }
-                    },
-                    {
-                        LinkID: 'nodeId2',
-                        Response: {
-                            Code: 2027,
-                            Error: 'INSUFFICIENT_SCOPE'
-                        }
-                    },
-                    {
-                        LinkID: 'nodeId3',
-                        Response: {
-                            Code: 2000,
-                        }
-                    },
-                ],
-            }));
+            apiMock.put = jest.fn(async () =>
+                Promise.resolve({
+                    Responses: [
+                        {
+                            LinkID: 'nodeId1',
+                            Response: {
+                                Code: ErrorCode.OK,
+                            },
+                        },
+                        {
+                            LinkID: 'nodeId2',
+                            Response: {
+                                Code: 2027,
+                                Error: 'INSUFFICIENT_SCOPE',
+                            },
+                        },
+                        {
+                            LinkID: 'nodeId3',
+                            Response: {
+                                Code: 2000,
+                            },
+                        },
+                    ],
+                }),
+            );
 
-            const result = await Array.fromAsync(api.restoreNodes(['volumeId~nodeId1', 'volumeId~nodeId2', 'volumeId~nodeId3']));
+            const result = await Array.fromAsync(
+                api.restoreNodes(['volumeId~nodeId1', 'volumeId~nodeId2', 'volumeId~nodeId3']),
+            );
             expect(result).toEqual([
                 { uid: 'volumeId~nodeId1', ok: true },
                 { uid: 'volumeId~nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
@@ -373,7 +389,7 @@ describe("nodeAPIService", () => {
             ]);
         });
 
-        it('should fail restoring from multiple volumes', async () => {  
+        it('should fail restoring from multiple volumes', async () => {
             try {
                 await Array.fromAsync(api.restoreNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2']));
                 throw new Error('Should have thrown');
@@ -386,23 +402,25 @@ describe("nodeAPIService", () => {
     describe('deleteNOdes', () => {
         it('should delete nodes', async () => {
             // @ts-expect-error Mocking for testing purposes
-            apiMock.post = jest.fn(async () => Promise.resolve({
-                Responses: [
-                    {
-                        LinkID: 'nodeId1',
-                        Response: {
-                            Code: ErrorCode.OK,
-                        }
-                    },
-                    {
-                        LinkID: 'nodeId2',
-                        Response: {
-                            Code: 2027,
-                            Error: 'INSUFFICIENT_SCOPE'
-                        }
-                    }
-                ],
-            }));
+            apiMock.post = jest.fn(async () =>
+                Promise.resolve({
+                    Responses: [
+                        {
+                            LinkID: 'nodeId1',
+                            Response: {
+                                Code: ErrorCode.OK,
+                            },
+                        },
+                        {
+                            LinkID: 'nodeId2',
+                            Response: {
+                                Code: 2027,
+                                Error: 'INSUFFICIENT_SCOPE',
+                            },
+                        },
+                    ],
+                }),
+            );
 
             const result = await Array.fromAsync(api.deleteNodes(['volumeId~nodeId1', 'volumeId~nodeId2']));
             expect(result).toEqual([
@@ -411,7 +429,7 @@ describe("nodeAPIService", () => {
             ]);
         });
 
-        it('should fail deleting nodes from multiple volumes', async () => {  
+        it('should fail deleting nodes from multiple volumes', async () => {
             try {
                 await Array.fromAsync(api.deleteNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2']));
                 throw new Error('Should have thrown');

@@ -1,6 +1,6 @@
-import { MemoryCache } from "../../cache";
-import { getMockLogger } from "../../tests/logger";
-import { SharesCache } from "./cache";
+import { MemoryCache } from '../../cache';
+import { getMockLogger } from '../../tests/logger';
+import { SharesCache } from './cache';
 
 describe('sharesCache', () => {
     let memoryCache: MemoryCache<string>;
@@ -45,7 +45,9 @@ describe('sharesCache', () => {
             await cache.getVolume('badObject');
             fail('Should have thrown an error');
         } catch (error) {
-            expect(`${error}`).toBe('Error: Failed to deserialize volume: Unexpected token \'a\', \"aaa\" is not valid JSON');
+            expect(`${error}`).toBe(
+                'Error: Failed to deserialize volume: Unexpected token \'a\', \"aaa\" is not valid JSON',
+            );
         }
 
         try {

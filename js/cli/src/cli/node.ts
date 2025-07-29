@@ -1,4 +1,4 @@
-import { MaybeNode, NodeEntity, DegradedNode } from "../../../sdk/src";
+import { MaybeNode, NodeEntity, DegradedNode } from '../../../sdk/src';
 
 export function getNode(maybeNode: MaybeNode): NodeEntity | DegradedNode {
     return maybeNode.ok ? maybeNode.value : maybeNode.error;

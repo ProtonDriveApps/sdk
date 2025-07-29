@@ -1,21 +1,21 @@
-import { c } from "ttag";
+import { c } from 'ttag';
 
-import { Thumbnail, Logger, ThumbnailType, UploadMetadata } from "../../interface";
-import { IntegrityError } from "../../errors";
-import { LoggerWithPrefix } from "../../telemetry";
-import { APIHTTPError, HTTPErrorCode, NotFoundAPIError } from "../apiService";
-import { getErrorMessage } from "../errors";
-import { mergeUint8Arrays } from "../utils";
+import { Thumbnail, Logger, ThumbnailType, UploadMetadata } from '../../interface';
+import { IntegrityError } from '../../errors';
+import { LoggerWithPrefix } from '../../telemetry';
+import { APIHTTPError, HTTPErrorCode, NotFoundAPIError } from '../apiService';
+import { getErrorMessage } from '../errors';
+import { mergeUint8Arrays } from '../utils';
 import { waitForCondition } from '../wait';
-import { UploadAPIService } from "./apiService";
-import { BlockVerifier } from "./blockVerifier";
+import { UploadAPIService } from './apiService';
+import { BlockVerifier } from './blockVerifier';
 import { UploadController } from './controller';
-import { UploadCryptoService } from "./cryptoService";
-import { UploadDigests } from "./digests";
-import { NodeRevisionDraft, EncryptedBlock, EncryptedThumbnail, EncryptedBlockMetadata } from "./interface";
+import { UploadCryptoService } from './cryptoService';
+import { UploadDigests } from './digests';
+import { NodeRevisionDraft, EncryptedBlock, EncryptedThumbnail, EncryptedBlockMetadata } from './interface';
 import { UploadTelemetry } from './telemetry';
 import { ChunkStreamReader } from './chunkStreamReader';
-import { UploadManager } from "./manager";
+import { UploadManager } from './manager';
 
 /**
  * File chunk size in bytes representing the size of each block.
@@ -65,10 +65,13 @@ export class StreamUploader {
     private encryptedBlocks = new Map<number, EncryptedBlock>();
     private encryptionFinished = false;
 
-    private ongoingUploads = new Map<string, {
-        uploadPromise: Promise<void>,
-        encryptedBlock: EncryptedBlock | EncryptedThumbnail,
-    }>();
+    private ongoingUploads = new Map<
+        string,
+        {
+            uploadPromise: Promise<void>;
+            encryptedBlock: EncryptedBlock | EncryptedThumbnail;
+        }
+    >();
     private uploadedThumbnails: ({ type: ThumbnailType } & EncryptedBlockMetadata)[] = [];
     private uploadedBlocks: ({ index: number } & EncryptedBlockMetadata)[] = [];
 
@@ -104,7 +107,11 @@ export class StreamUploader {
         this.controller = new UploadController();
     }
 
-    async start(stream: ReadableStream, thumbnails: Thumbnail[], onProgress?: (uploadedBytes: number) => void): Promise<string> {
+    async start(
+        stream: ReadableStream,
+        thumbnails: Thumbnail[],
+        onProgress?: (uploadedBytes: number) => void,
+    ): Promise<string> {
         let failure = false;
 
         // File progress is tracked for telemetry - to track at what
@@ -116,7 +123,7 @@ export class StreamUploader {
             await this.encryptAndUploadBlocks(stream, thumbnails, (uploadedBytes) => {
                 fileProgress += uploadedBytes;
                 onProgress?.(uploadedBytes);
-            })
+            });
 
             this.logger.debug(`All blocks uploaded, committing`);
             await this.commitFile(thumbnails);
@@ -126,7 +133,12 @@ export class StreamUploader {
         } catch (error: unknown) {
             failure = true;
             this.logger.error(`Upload failed`, error);
-            void this.telemetry.uploadFailed(this.revisionDraft.nodeRevisionUid, error, fileProgress, this.metadata.expectedSize);
+            void this.telemetry.uploadFailed(
+                this.revisionDraft.nodeRevisionUid,
+                error,
+                fileProgress,
+                this.metadata.expectedSize,
+            );
             throw error;
         } finally {
             this.logger.debug(`Upload cleanup`);
@@ -145,7 +157,11 @@ export class StreamUploader {
         return this.revisionDraft.nodeRevisionUid;
     }
 
-    private async encryptAndUploadBlocks(stream: ReadableStream, thumbnails: Thumbnail[], onProgress?: (uploadedBytes: number) => void) {
+    private async encryptAndUploadBlocks(
+        stream: ReadableStream,
+        thumbnails: Thumbnail[],
+        onProgress?: (uploadedBytes: number) => void,
+    ) {
         // We await for the encryption of thumbnails to finish before
         // starting the upload. This is because we need to request the
         // upload tokens for the thumbnails with the first blocks.
@@ -198,15 +214,10 @@ export class StreamUploader {
         const extendedAttributes = {
             modificationTime: this.metadata.modificationTime,
             size: this.metadata.expectedSize,
-            blockSizes: uploadedBlocks.map(block => block.originalSize),
+            blockSizes: uploadedBlocks.map((block) => block.originalSize),
             digests: this.digests.digests(),
         };
-        await this.uploadManager.commitDraft(
-            this.revisionDraft,
-            this.manifest,
-            this.metadata,
-            extendedAttributes,
-        );
+        await this.uploadManager.commitDraft(this.revisionDraft, this.manifest, this.metadata, extendedAttributes);
     }
 
     private async encryptThumbnails(thumbnails: Thumbnail[]) {
@@ -216,7 +227,10 @@ export class StreamUploader {
 
         for (const thumbnail of thumbnails) {
             this.logger.debug(`Encrypting thumbnail ${thumbnail.type}`);
-            const encryptedThumbnail = await this.cryptoService.encryptThumbnail(this.revisionDraft.nodeKeys, thumbnail);
+            const encryptedThumbnail = await this.cryptoService.encryptThumbnail(
+                this.revisionDraft.nodeKeys,
+                thumbnail,
+            );
             this.encryptedThumbnails.set(thumbnail.type, encryptedThumbnail);
         }
     }
@@ -256,7 +270,9 @@ export class StreamUploader {
                         }
 
                         if (attempt <= MAX_BLOCK_ENCRYPTION_RETRIES) {
-                            this.logger.warn(`Block encryption failed #${attempt}, retrying: ${getErrorMessage(error)}`);
+                            this.logger.warn(
+                                `Block encryption failed #${attempt}, retrying: ${getErrorMessage(error)}`,
+                            );
                             continue;
                         }
 
@@ -280,18 +296,22 @@ export class StreamUploader {
             this.revisionDraft.nodeRevisionUid,
             this.revisionDraft.nodeKeys.signatureAddress.addressId,
             {
-                contentBlocks: Array.from(this.encryptedBlocks.values().map(block => ({
-                    index: block.index,
-                    encryptedSize: block.encryptedSize,
-                    hash: block.hash,
-                    armoredSignature: block.armoredSignature,
-                    verificationToken: block.verificationToken,
-                }))),
-                thumbnails: Array.from(this.encryptedThumbnails.values().map(block => ({
-                    type: block.type,
-                    encryptedSize: block.encryptedSize,
-                    hash: block.hash,
-                }))),
+                contentBlocks: Array.from(
+                    this.encryptedBlocks.values().map((block) => ({
+                        index: block.index,
+                        encryptedSize: block.encryptedSize,
+                        hash: block.hash,
+                        armoredSignature: block.armoredSignature,
+                        verificationToken: block.verificationToken,
+                    })),
+                ),
+                thumbnails: Array.from(
+                    this.encryptedThumbnails.values().map((block) => ({
+                        type: block.type,
+                        encryptedSize: block.encryptedSize,
+                        hash: block.hash,
+                    })),
+                ),
             },
         );
 
@@ -305,11 +325,7 @@ export class StreamUploader {
 
             const uploadKey = `thumbnail:${thumbnailToken.type}`;
             this.ongoingUploads.set(uploadKey, {
-                uploadPromise: this.uploadThumbnail(
-                    thumbnailToken,
-                    encryptedThumbnail,
-                    onProgress,
-                ).finally(() => {
+                uploadPromise: this.uploadThumbnail(thumbnailToken, encryptedThumbnail, onProgress).finally(() => {
                     this.ongoingUploads.delete(uploadKey);
 
                     // Help the garbage collector to clean up the memory.
@@ -329,11 +345,7 @@ export class StreamUploader {
 
             const uploadKey = `block:${blockToken.index}`;
             this.ongoingUploads.set(uploadKey, {
-                uploadPromise: this.uploadBlock(
-                    blockToken,
-                    encryptedBlock,
-                    onProgress,
-                ).finally(() => {
+                uploadPromise: this.uploadBlock(blockToken, encryptedBlock, onProgress).finally(() => {
                     this.ongoingUploads.delete(uploadKey);
 
                     // Help the garbage collector to clean up the memory.
@@ -345,11 +357,14 @@ export class StreamUploader {
     }
 
     private async uploadThumbnail(
-        uploadToken: { bareUrl: string, token: string },
+        uploadToken: { bareUrl: string; token: string },
         encryptedThumbnail: EncryptedThumbnail,
         onProgress?: (uploadedBytes: number) => void,
     ) {
-        const logger = new LoggerWithPrefix(this.logger, `thumbnail type ${encryptedThumbnail.type} to ${uploadToken.token}`);
+        const logger = new LoggerWithPrefix(
+            this.logger,
+            `thumbnail type ${encryptedThumbnail.type} to ${uploadToken.token}`,
+        );
         logger.info(`Upload started`);
 
         let blockProgress = 0;
@@ -368,13 +383,13 @@ export class StreamUploader {
                         onProgress?.(uploadedBytes);
                     },
                     this.abortController.signal,
-                )
+                );
                 this.uploadedThumbnails.push({
                     type: encryptedThumbnail.type,
                     hash: encryptedThumbnail.hash,
                     encryptedSize: encryptedThumbnail.encryptedSize,
                     originalSize: encryptedThumbnail.originalSize,
-                })
+                });
                 break;
             } catch (error: unknown) {
                 if (blockProgress !== 0) {
@@ -407,7 +422,7 @@ export class StreamUploader {
     }
 
     private async uploadBlock(
-        uploadToken: { index: number, bareUrl: string, token: string },
+        uploadToken: { index: number; bareUrl: string; token: string },
         encryptedBlock: EncryptedBlock,
         onProgress?: (uploadedBytes: number) => void,
     ) {
@@ -430,13 +445,13 @@ export class StreamUploader {
                         onProgress?.(uploadedBytes);
                     },
                     this.abortController.signal,
-                )
+                );
                 this.uploadedBlocks.push({
                     index: encryptedBlock.index,
                     hash: encryptedBlock.hash,
                     encryptedSize: encryptedBlock.encryptedSize,
                     originalSize: encryptedBlock.originalSize,
-                })
+                });
                 break;
             } catch (error: unknown) {
                 if (blockProgress !== 0) {
@@ -446,20 +461,22 @@ export class StreamUploader {
 
                 if (
                     (error instanceof APIHTTPError && error.statusCode === HTTPErrorCode.NOT_FOUND) ||
-                    (error instanceof NotFoundAPIError)
+                    error instanceof NotFoundAPIError
                 ) {
                     logger.warn(`Token expired, fetching new token and retrying`);
                     const uploadTokens = await this.apiService.requestBlockUpload(
                         this.revisionDraft.nodeRevisionUid,
                         this.revisionDraft.nodeKeys.signatureAddress.addressId,
                         {
-                            contentBlocks: [{
-                                index: encryptedBlock.index,
-                                encryptedSize: encryptedBlock.encryptedSize,
-                                hash: encryptedBlock.hash,
-                                armoredSignature: encryptedBlock.armoredSignature,
-                                verificationToken: encryptedBlock.verificationToken,
-                            }],
+                            contentBlocks: [
+                                {
+                                    index: encryptedBlock.index,
+                                    encryptedSize: encryptedBlock.encryptedSize,
+                                    hash: encryptedBlock.hash,
+                                    armoredSignature: encryptedBlock.armoredSignature,
+                                    verificationToken: encryptedBlock.verificationToken,
+                                },
+                            ],
                         },
                     );
                     uploadToken = uploadTokens.blockTokens[0];
@@ -498,7 +515,8 @@ export class StreamUploader {
     }
 
     private verifyIntegrity(thumbnails: Thumbnail[]) {
-        const expectedBlockCount = Math.ceil(this.metadata.expectedSize / FILE_CHUNK_SIZE) + (thumbnails ? thumbnails?.length : 0);
+        const expectedBlockCount =
+            Math.ceil(this.metadata.expectedSize / FILE_CHUNK_SIZE) + (thumbnails ? thumbnails?.length : 0);
         if (this.uploadedBlockCount !== expectedBlockCount) {
             throw new IntegrityError(c('Error').t`Some file parts failed to upload`, {
                 uploadedBlockCount: this.uploadedBlockCount,
