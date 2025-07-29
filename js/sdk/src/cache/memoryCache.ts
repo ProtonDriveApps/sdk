@@ -41,7 +41,7 @@ export class MemoryCache<T> implements ProtonDriveCache<T> {
         }
     }
 
-    async getEntity(key: string) {
+    async getEntity(key: string): Promise<T> {
         const value = this.entities[key];
         if (!value) {
             throw Error('Entity not found');
