@@ -8,7 +8,7 @@ export async function* zipGenerators<T, U>(
     genA: AsyncGenerator<T>,
     genB: AsyncGenerator<U>,
     options?: {
-        stopOnFirstDone?: boolean
+        stopOnFirstDone?: boolean;
     },
 ): AsyncGenerator<T | U> {
     const { stopOnFirstDone = false } = options || {};
@@ -21,8 +21,8 @@ export async function* zipGenerators<T, U>(
 
     while (promiseA && promiseB) {
         const result = await Promise.race([
-            promiseA.then(res => ({ source: 'A' as const, result: res })),
-            promiseB.then(res => ({ source: 'B' as const, result: res }))
+            promiseA.then((res) => ({ source: 'A' as const, result: res })),
+            promiseB.then((res) => ({ source: 'B' as const, result: res })),
         ]);
 
         if (result.source === 'A') {

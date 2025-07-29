@@ -1,4 +1,4 @@
-import { inspect } from "util";
+import { inspect } from 'util';
 import { Command, ActionArgs } from './interface';
 
 export class CommandFileSystemRename implements Command {
@@ -6,7 +6,7 @@ export class CommandFileSystemRename implements Command {
     name = 'rename';
     args = ['path', 'newName'];
 
-    async action({ sdk, paths, args: [ pathString, newName ], options: { json } }: ActionArgs) {
+    async action({ sdk, paths, args: [pathString, newName], options: { json } }: ActionArgs) {
         const nodePath = paths.getPath(pathString);
         const node = await nodePath.getNode();
         const renamedNode = await sdk.renameNode(node, newName);
@@ -15,7 +15,7 @@ export class CommandFileSystemRename implements Command {
             console.log(JSON.stringify(renamedNode));
         } else {
             // Use inspect to disable the depth limit.
-            console.log(inspect(renamedNode, {showHidden: false, depth: null, colors: true}));
+            console.log(inspect(renamedNode, { showHidden: false, depth: null, colors: true }));
         }
     }
 }

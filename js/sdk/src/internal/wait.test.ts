@@ -1,4 +1,4 @@
-import { waitForCondition } from "./wait";
+import { waitForCondition } from './wait';
 
 describe('waitForCondition', () => {
     it('should resolve immediately if condition is met', async () => {

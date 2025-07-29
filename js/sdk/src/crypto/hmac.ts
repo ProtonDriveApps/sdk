@@ -9,7 +9,7 @@ type HmacKeyUsage = 'sign' | 'verify';
  */
 export const importHmacKey = async (
     key: Uint8Array,
-    keyUsage: HmacKeyUsage[] = ['sign', 'verify']
+    keyUsage: HmacKeyUsage[] = ['sign', 'verify'],
 ): Promise<HmacCryptoKey> => {
     // From https://datatracker.ietf.org/doc/html/rfc2104:
     // The key for HMAC can be of any length (keys longer than B bytes are first hashed using H).

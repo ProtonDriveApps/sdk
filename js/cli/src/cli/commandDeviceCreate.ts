@@ -1,4 +1,4 @@
-import { ParseArgsConfig } from "util";
+import { ParseArgsConfig } from 'util';
 import { Command, ActionArgs } from './interface';
 
 export class CommandDeviceCreate implements Command {

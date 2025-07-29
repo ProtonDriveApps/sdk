@@ -1,13 +1,19 @@
-import { Account } from "./account/account";
-import { Srp } from "./account/srp";
-import { SQLiteEntititesCache } from "./cache";
-import { Paths } from "./cli/paths";
-import { Api as CryptoApi } from "./crypto/lib/worker/api";
-import { HTTPClient } from "./httpClient";
-import { initTelemetry } from "./telemetry";
+import { Account } from './account/account';
+import { Srp } from './account/srp';
+import { SQLiteEntititesCache } from './cache';
+import { Paths } from './cli/paths';
+import { Api as CryptoApi } from './crypto/lib/worker/api';
+import { HTTPClient } from './httpClient';
+import { initTelemetry } from './telemetry';
 
-import { ProtonDriveClient, MemoryCache, CachedCryptoMaterial, OpenPGPCryptoWithCryptoProxy, VERSION } from "../../sdk/src";
-import { initDiagnostic } from "../../sdk/src/diagnostic";
+import {
+    ProtonDriveClient,
+    MemoryCache,
+    CachedCryptoMaterial,
+    OpenPGPCryptoWithCryptoProxy,
+    VERSION,
+} from '../../sdk/src';
+import { initDiagnostic } from '../../sdk/src/diagnostic';
 
 interface Config {
     appVersion: string;
@@ -46,7 +52,7 @@ function getConfig(): Config {
         baseUrl: process.env.PROTON_DRIVE_BASE_URL || 'drive-api.proton.me',
         cacheDir: process.env.PROTON_DRIVE_CACHE_DIR || process.cwd(),
         enableConsoleLog: process.env.PROTON_DRIVE_DISABLE_CONSOLE_LOG === undefined,
-    }
+    };
 }
 
 async function initAccount(cryptoApi: CryptoApi, config: Config) {
@@ -62,8 +68,8 @@ async function initSrp(cryptoApi: CryptoApi, config: Config) {
 function initSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Srp) {
     const httpClient = new HTTPClient({
         ...config,
-        uid: account.session?.uid || "",
-        accessToken: account.session?.accessToken || "",
+        uid: account.session?.uid || '',
+        accessToken: account.session?.accessToken || '',
     });
     const openPGPCryptoModule = new OpenPGPCryptoWithCryptoProxy(cryptoApi);
 
@@ -91,8 +97,8 @@ function initSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Sr
 function initSDKDiagnostic(cryptoApi: CryptoApi, config: Config, account: Account, srp: Srp) {
     const httpClient = new HTTPClient({
         ...config,
-        uid: account.session?.uid || "",
-        accessToken: account.session?.accessToken || "",
+        uid: account.session?.uid || '',
+        accessToken: account.session?.accessToken || '',
     });
     const openPGPCryptoModule = new OpenPGPCryptoWithCryptoProxy(cryptoApi);
 

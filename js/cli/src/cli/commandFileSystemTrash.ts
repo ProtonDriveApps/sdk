@@ -6,7 +6,7 @@ export class CommandFileSystemTrash implements Command {
     // FIXME: support trahs of multiple files
     args = ['path'];
 
-    async action({ sdk, paths, args: [ pathString ], options: { json } }: ActionArgs) {
+    async action({ sdk, paths, args: [pathString], options: { json } }: ActionArgs) {
         const nodePath = paths.getPath(pathString);
         const node = await nodePath.getNode();
         for await (const result of sdk.trashNodes([node])) {

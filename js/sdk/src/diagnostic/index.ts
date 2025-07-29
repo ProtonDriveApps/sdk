@@ -1,13 +1,13 @@
-import { MemoryCache, NullCache } from "../cache";
-import { ProtonDriveClientContructorParameters } from "../interface";
-import { ProtonDriveClient } from "../protonDriveClient";
-import { DiagnosticHTTPClient } from "./httpClient";
-import { Diagnostic } from "./interface";
-import { SDKDiagnostic } from "./sdkDiagnostic";
-import { FullSDKDiagnostic } from "./sdkDiagnosticFull";
-import { DiagnosticTelemetry } from "./telemetry";
+import { MemoryCache, NullCache } from '../cache';
+import { ProtonDriveClientContructorParameters } from '../interface';
+import { ProtonDriveClient } from '../protonDriveClient';
+import { DiagnosticHTTPClient } from './httpClient';
+import { Diagnostic } from './interface';
+import { SDKDiagnostic } from './sdkDiagnostic';
+import { FullSDKDiagnostic } from './sdkDiagnosticFull';
+import { DiagnosticTelemetry } from './telemetry';
 
-export type { Diagnostic, DiagnosticResult } from "./interface";
+export type { Diagnostic, DiagnosticResult } from './interface';
 
 /**
  * Initializes the diagnostic tool. It creates the instance of
@@ -15,7 +15,9 @@ export type { Diagnostic, DiagnosticResult } from "./interface";
  * metrics and HTTP calls; and enforced null/empty cache to always
  * start from scratch.
  */
-export function initDiagnostic(options: Omit<ProtonDriveClientContructorParameters, 'entitiesCache' | 'cryptoCache' | 'telemetry'>): Diagnostic {
+export function initDiagnostic(
+    options: Omit<ProtonDriveClientContructorParameters, 'entitiesCache' | 'cryptoCache' | 'telemetry'>,
+): Diagnostic {
     const httpClient = new DiagnosticHTTPClient(options.httpClient);
     const telemetry = new DiagnosticTelemetry();
 

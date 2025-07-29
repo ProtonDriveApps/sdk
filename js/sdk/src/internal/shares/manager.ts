@@ -1,11 +1,11 @@
-import { Logger, MetricVolumeType, ProtonDriveAccount } from "../../interface";
-import { PrivateKey } from "../../crypto";
-import { NotFoundAPIError } from "../apiService";
-import { SharesAPIService } from "./apiService";
-import { SharesCache } from "./cache";
-import { SharesCryptoCache } from "./cryptoCache";
-import { SharesCryptoService } from "./cryptoService";
-import { VolumeShareNodeIDs, EncryptedShare, EncryptedRootShare } from "./interface";
+import { Logger, MetricVolumeType, ProtonDriveAccount } from '../../interface';
+import { PrivateKey } from '../../crypto';
+import { NotFoundAPIError } from '../apiService';
+import { SharesAPIService } from './apiService';
+import { SharesCache } from './cache';
+import { SharesCryptoCache } from './cryptoCache';
+import { SharesCryptoService } from './cryptoService';
+import { VolumeShareNodeIDs, EncryptedShare, EncryptedRootShare } from './interface';
 
 /**
  * Provides high-level actions for managing shares.
@@ -126,7 +126,7 @@ export class SharesManager {
         try {
             const { key } = await this.cryptoCache.getShareKey(shareId);
             return key;
-        } catch { }
+        } catch {}
 
         const encryptedShare = await this.apiService.getRootShare(shareId);
         const { key } = await this.cryptoService.decryptRootShare(encryptedShare);
@@ -135,10 +135,10 @@ export class SharesManager {
     }
 
     async getMyFilesShareMemberEmailKey(): Promise<{
-        email: string,
-        addressId: string,
-        addressKey: PrivateKey,
-        addressKeyId: string,
+        email: string;
+        addressId: string;
+        addressKey: PrivateKey;
+        addressKeyId: string;
     }> {
         const { volumeId } = await this.getMyFilesIDs();
 
@@ -151,7 +151,7 @@ export class SharesManager {
                 addressKey: address.keys[address.primaryKeyIndex].key,
                 addressKeyId: address.keys[address.primaryKeyIndex].id,
             };
-        } catch { }
+        } catch {}
 
         const { shareId } = await this.apiService.getVolume(volumeId);
         const share = await this.apiService.getRootShare(shareId);
@@ -174,10 +174,10 @@ export class SharesManager {
     }
 
     async getContextShareMemberEmailKey(shareId: string): Promise<{
-        email: string,
-        addressId: string,
-        addressKey: PrivateKey,
-        addressKeyId: string,
+        email: string;
+        addressId: string;
+        addressKey: PrivateKey;
+        addressKeyId: string;
     }> {
         let encryptedShare = this.rootShares.get(shareId);
         if (!encryptedShare) {
@@ -195,7 +195,7 @@ export class SharesManager {
         };
     }
 
-    async isOwnVolume(volumeId: string): Promise<boolean>{
+    async isOwnVolume(volumeId: string): Promise<boolean> {
         return (await this.getMyFilesIDs()).volumeId === volumeId;
     }
 

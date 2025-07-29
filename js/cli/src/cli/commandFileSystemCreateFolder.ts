@@ -1,4 +1,4 @@
-import { inspect } from "util";
+import { inspect } from 'util';
 import { Command, ActionArgs } from './interface';
 
 export class CommandFileSystemCreateFolder implements Command {
@@ -6,7 +6,7 @@ export class CommandFileSystemCreateFolder implements Command {
     name = 'create-folder';
     args = ['path', 'name'];
 
-    async action({ sdk, paths, args: [ pathString, name ], options: { json } }: ActionArgs) {
+    async action({ sdk, paths, args: [pathString, name], options: { json } }: ActionArgs) {
         const path = paths.getPath(pathString);
         const parent = await path.getNode();
         const folder = await sdk.createFolder(parent, name, new Date());
@@ -15,7 +15,7 @@ export class CommandFileSystemCreateFolder implements Command {
             console.log(JSON.stringify(folder));
         } else {
             // Use inspect to disable the depth limit.
-            console.log(inspect(folder, {showHidden: false, depth: null, colors: true}));
+            console.log(inspect(folder, { showHidden: false, depth: null, colors: true }));
         }
     }
 }

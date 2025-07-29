@@ -1,4 +1,4 @@
-import { Logger } from "../../interface";
+import { Logger } from '../../interface';
 
 interface FolderExtendedAttributesSchema {
     Common?: {
@@ -38,16 +38,16 @@ interface FileExtendedAttributesSchema {
 }
 
 export interface FolderExtendedAttributes {
-    claimedModificationTime?: Date,
+    claimedModificationTime?: Date;
 }
 
 export interface FileExtendedAttributesParsed {
-    claimedSize?: number,
-    claimedModificationTime?: Date,
+    claimedSize?: number;
+    claimedModificationTime?: Date;
     claimedDigests?: {
-        sha1?: string,
-    },
-    claimedAdditionalMetadata?: object,
+        sha1?: string;
+    };
+    claimedAdditionalMetadata?: object;
 }
 
 export function generateFolderExtendedAttributes(claimedModificationTime?: Date): string | undefined {
@@ -83,12 +83,12 @@ export function parseFolderExtendedAttributes(logger: Logger, extendedAttributes
 }
 
 export function generateFileExtendedAttributes(options: {
-    modificationTime?: Date,
-    size?: number,
-    blockSizes?: number[],
+    modificationTime?: Date;
+    size?: number;
+    blockSizes?: number[];
     digests?: {
-        sha1?: string,
-    },
+        sha1?: string;
+    };
 }): string | undefined {
     const commonAttributes: FileExtendedAttributesSchema['Common'] = {};
     if (options.modificationTime) {
@@ -115,7 +115,7 @@ export function generateFileExtendedAttributes(options: {
 
 export function parseFileExtendedAttributes(logger: Logger, extendedAttributes?: string): FileExtendedAttributesParsed {
     if (!extendedAttributes) {
-        return {}
+        return {};
     }
 
     try {
@@ -128,7 +128,9 @@ export function parseFileExtendedAttributes(logger: Logger, extendedAttributes?:
             claimedSize: parseSize(logger, parsed),
             claimedModificationTime: parseModificationTime(logger, parsed),
             claimedDigests: parseDigests(logger, parsed),
-            claimedAdditionalMetadata: Object.keys(claimedAdditionalMetadata).length ? claimedAdditionalMetadata : undefined,
+            claimedAdditionalMetadata: Object.keys(claimedAdditionalMetadata).length
+                ? claimedAdditionalMetadata
+                : undefined,
         };
     } catch (error: unknown) {
         logger.error(`Failed to parse extended attributes`, error);
@@ -148,7 +150,10 @@ function parseSize(logger: Logger, xattr?: FileExtendedAttributesSchema): number
     return size;
 }
 
-function parseModificationTime(logger: Logger, xattr?: FolderExtendedAttributesSchema | FolderExtendedAttributesSchema): Date | undefined {
+function parseModificationTime(
+    logger: Logger,
+    xattr?: FolderExtendedAttributesSchema | FolderExtendedAttributesSchema,
+): Date | undefined {
     const modificationTime = xattr?.Common?.ModificationTime;
     if (modificationTime === undefined) {
         return undefined;

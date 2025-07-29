@@ -1,7 +1,7 @@
-import { Thumbnail } from "./thumbnail";
+import { Thumbnail } from './thumbnail';
 
 export type UploadMetadata = {
-    mediaType: string,
+    mediaType: string;
     /**
      * Expected size of the file.
      *
@@ -9,13 +9,13 @@ export type UploadMetadata = {
      * If the expected size does not match the actual size, the upload will
      * fail.
      */
-    expectedSize: number,
+    expectedSize: number;
     /**
      * Modification time of the file.
      *
      * The modification time will be encrypted and stored with the file.
      */
-    modificationTime?: Date,
+    modificationTime?: Date;
     /**
      * Additional metadata to be stored with the file.
      *
@@ -23,13 +23,13 @@ export type UploadMetadata = {
      *
      * The metadata will be encrypted and stored with the file.
      */
-    additionalMetadata?: object,
+    additionalMetadata?: object;
     /**
      * If there is an existing draft by another client, the upload will be
      * rejected. If user decides to override the existing draft and continue
      * with the upload, set this to true.
      */
-    overrideExistingDraftByOtherClient?: boolean,
+    overrideExistingDraftByOtherClient?: boolean;
 };
 
 export interface FileRevisionUploader {
@@ -41,7 +41,11 @@ export interface FileRevisionUploader {
      *
      * The function will reject if the node with the given name already exists.
      */
-    writeStream(stream: ReadableStream, thumnbails: Thumbnail[], onProgress?: (uploadedBytes: number) => void): Promise<UploadController>,
+    writeStream(
+        stream: ReadableStream,
+        thumnbails: Thumbnail[],
+        onProgress?: (uploadedBytes: number) => void,
+    ): Promise<UploadController>;
 
     /**
      * Uploads a file from a file object. It is convenient to use this method
@@ -53,7 +57,11 @@ export interface FileRevisionUploader {
      *
      * The function will reject if the node with the given name already exists.
      */
-    writeFile(fileObject: File, thumnbails: Thumbnail[], onProgress?: (uploadedBytes: number) => void): Promise<UploadController>,
+    writeFile(
+        fileObject: File,
+        thumnbails: Thumbnail[],
+        onProgress?: (uploadedBytes: number) => void,
+    ): Promise<UploadController>;
 }
 
 export interface FileUploader extends FileRevisionUploader {
@@ -65,11 +73,11 @@ export interface FileUploader extends FileRevisionUploader {
      *
      * Example new name: `file (2).txt`.
      */
-    getAvailableName(): Promise<string>,
+    getAvailableName(): Promise<string>;
 }
 
 export interface UploadController {
-    pause(): void,
-    resume(): void,
-    completion(): Promise<string>,
+    pause(): void;
+    resume(): void;
+    completion(): Promise<string>;
 }

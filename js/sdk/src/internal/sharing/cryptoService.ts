@@ -1,12 +1,42 @@
 import bcrypt from 'bcryptjs';
 import { c } from 'ttag';
 
-import { DriveCrypto, PrivateKey, SessionKey, SRPVerifier, uint8ArrayToBase64String, VERIFICATION_STATUS } from '../../crypto';
-import { ProtonDriveAccount, ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Author, Result, Member, UnverifiedAuthorError, resultError, resultOk, InvalidNameError, ProtonDriveTelemetry, MetricVolumeType } from "../../interface";
+import {
+    DriveCrypto,
+    PrivateKey,
+    SessionKey,
+    SRPVerifier,
+    uint8ArrayToBase64String,
+    VERIFICATION_STATUS,
+} from '../../crypto';
+import {
+    ProtonDriveAccount,
+    ProtonInvitation,
+    ProtonInvitationWithNode,
+    NonProtonInvitation,
+    Author,
+    Result,
+    Member,
+    UnverifiedAuthorError,
+    resultError,
+    resultOk,
+    InvalidNameError,
+    ProtonDriveTelemetry,
+    MetricVolumeType,
+} from '../../interface';
 import { validateNodeName } from '../nodes/validations';
-import { getErrorMessage, getVerificationMessage } from "../errors";
-import { EncryptedShare } from "../shares";
-import { EncryptedInvitation, EncryptedInvitationWithNode, EncryptedExternalInvitation, EncryptedMember, EncryptedPublicLink, PublicLinkWithCreatorEmail, EncryptedBookmark, SharesService } from "./interface";
+import { getErrorMessage, getVerificationMessage } from '../errors';
+import { EncryptedShare } from '../shares';
+import {
+    EncryptedInvitation,
+    EncryptedInvitationWithNode,
+    EncryptedExternalInvitation,
+    EncryptedMember,
+    EncryptedPublicLink,
+    PublicLinkWithCreatorEmail,
+    EncryptedBookmark,
+    SharesService,
+} from './interface';
 
 // Version 2 of bcrypt with 2**10 rounds.
 // https://en.wikipedia.org/wiki/Bcrypt#Description
@@ -26,7 +56,7 @@ enum PublicLinkFlags {
 
 /**
  * Provides crypto operations for sharing.
- * 
+ *
  * The sharing crypto service is responsible for encrypting and decrypting
  * shares, invitations, etc.
  */
@@ -45,31 +75,31 @@ export class SharingCryptoService {
 
     /**
      * Generates a share key for a standard share used for sharing with other users.
-     * 
+     *
      * Standard share, in contrast to a root share, is encrypted with node key and
      * can be managed by any admin.
      */
     async generateShareKeys(
         nodeKeys: {
-            key: PrivateKey
-            passphraseSessionKey: SessionKey,
-            nameSessionKey: SessionKey,
+            key: PrivateKey;
+            passphraseSessionKey: SessionKey;
+            nameSessionKey: SessionKey;
         },
         addressKey: PrivateKey,
     ): Promise<{
         shareKey: {
             encrypted: {
-                armoredKey: string,
-                armoredPassphrase: string,
-                armoredPassphraseSignature: string,
-            },
+                armoredKey: string;
+                armoredPassphrase: string;
+                armoredPassphraseSignature: string;
+            };
             decrypted: {
-                key: PrivateKey,
-                passphraseSessionKey: SessionKey,
-            },
-        },
-        base64PpassphraseKeyPacket: string,
-        base64NameKeyPacket: string,
+                key: PrivateKey;
+                passphraseSessionKey: SessionKey;
+            };
+        };
+        base64PpassphraseKeyPacket: string;
+        base64NameKeyPacket: string;
     }> {
         const shareKey = await this.driveCrypto.generateKey([nodeKeys.key, addressKey], addressKey);
 
@@ -87,21 +117,24 @@ export class SharingCryptoService {
             base64PpassphraseKeyPacket,
             base64NameKeyPacket,
         };
-    };
+    }
 
     /**
      * Decrypts a share using the node key.
-     * 
+     *
      * The share is encrypted with the node key and can be managed by any admin.
      *
      * Old shares are encrypted with address key only and thus available only
      * to owners. `decryptShare` automatically tries to decrypt the share with
      * address keys as fallback if available.
      */
-    async decryptShare(share: EncryptedShare, nodeKey: PrivateKey): Promise<{
-        author: Author,
-        key: PrivateKey,
-        passphraseSessionKey: SessionKey,
+    async decryptShare(
+        share: EncryptedShare,
+        nodeKey: PrivateKey,
+    ): Promise<{
+        author: Author;
+        key: PrivateKey;
+        passphraseSessionKey: SessionKey;
     }> {
         // All standard shares should be encrypted with node key.
         // Using node key is essential so any admin can manage the share.
@@ -121,25 +154,26 @@ export class SharingCryptoService {
             share.encryptedCrypto.armoredPassphraseSignature,
             decryptionKeys,
             addressPublicKeys,
-        )
+        );
 
-        const author: Result<string, UnverifiedAuthorError> = verified === VERIFICATION_STATUS.SIGNED_AND_VALID
-            ? resultOk(share.creatorEmail)
-            : resultError({
-                claimedAuthor: share.creatorEmail,
-                error: getVerificationMessage(verified),
-            });
+        const author: Result<string, UnverifiedAuthorError> =
+            verified === VERIFICATION_STATUS.SIGNED_AND_VALID
+                ? resultOk(share.creatorEmail)
+                : resultError({
+                      claimedAuthor: share.creatorEmail,
+                      error: getVerificationMessage(verified),
+                  });
 
         return {
             author,
             key,
             passphraseSessionKey,
-        }
+        };
     }
 
     /**
      * Encrypts an invitation for sharing a node with another user.
-     * 
+     *
      * `inviteeEmail` is used to load public key of the invitee and used to
      * encrypt share's session key. `inviterKey` is used to sign the invitation.
      */
@@ -148,18 +182,20 @@ export class SharingCryptoService {
         inviterKey: PrivateKey,
         inviteeEmail: string,
     ): Promise<{
-        base64KeyPacket: string,
-        base64KeyPacketSignature: string,
+        base64KeyPacket: string;
+        base64KeyPacketSignature: string;
     }> {
         const inviteePublicKeys = await this.account.getPublicKeys(inviteeEmail);
-        const result = await this.driveCrypto.encryptInvitation(shareSessionKey, inviteePublicKeys[0], inviterKey)
+        const result = await this.driveCrypto.encryptInvitation(shareSessionKey, inviteePublicKeys[0], inviterKey);
         return result;
-    };
+    }
 
     /**
      * Decrypts and verifies an invitation and node's name.
      */
-    async decryptInvitationWithNode(encryptedInvitation: EncryptedInvitationWithNode): Promise<ProtonInvitationWithNode> {
+    async decryptInvitationWithNode(
+        encryptedInvitation: EncryptedInvitationWithNode,
+    ): Promise<ProtonInvitationWithNode> {
         const inviteeAddress = await this.account.getOwnAddress(encryptedInvitation.inviteeEmail);
         const inviteeKey = inviteeAddress.keys[inviteeAddress.primaryKeyIndex].key;
 
@@ -171,11 +207,7 @@ export class SharingCryptoService {
 
         let nodeName: Result<string, Error>;
         try {
-            const result = await this.driveCrypto.decryptNodeName(
-                encryptedInvitation.node.encryptedName,
-                shareKey,
-                [],
-            );
+            const result = await this.driveCrypto.decryptNodeName(encryptedInvitation.node.encryptedName, shareKey, []);
             nodeName = resultOk(result.name);
         } catch (error: unknown) {
             const message = getErrorMessage(error);
@@ -184,13 +216,13 @@ export class SharingCryptoService {
         }
 
         return {
-            ...await this.decryptInvitation(encryptedInvitation),
+            ...(await this.decryptInvitation(encryptedInvitation)),
             node: {
                 name: nodeName,
                 type: encryptedInvitation.node.type,
                 mediaType: encryptedInvitation.node.mediaType,
             },
-        }
+        };
     }
 
     /**
@@ -213,22 +245,19 @@ export class SharingCryptoService {
      * Accepts an invitation by signing the session key by invitee.
      */
     async acceptInvitation(encryptedInvitation: EncryptedInvitationWithNode): Promise<{
-        base64SessionKeySignature: string,
+        base64SessionKeySignature: string;
     }> {
         const inviteeAddress = await this.account.getOwnAddress(encryptedInvitation.inviteeEmail);
         const inviteeKey = inviteeAddress.keys[inviteeAddress.primaryKeyIndex].key;
-        const result = await this.driveCrypto.acceptInvitation(
-            encryptedInvitation.base64KeyPacket,
-            inviteeKey,
-        );
+        const result = await this.driveCrypto.acceptInvitation(encryptedInvitation.base64KeyPacket, inviteeKey);
         return result;
     }
 
     /**
      * Encrypts an external invitation for sharing a node with another user.
-     * 
+     *
      * `inviteeEmail` is used to sign the invitation with `inviterKey`.
-     * 
+     *
      * External invitations are used to share nodes with users who are not
      * registered with Proton Drive. The external invitation then requires
      * the invitee to sign up to create key. Then it can be followed by
@@ -239,7 +268,7 @@ export class SharingCryptoService {
         inviterKey: PrivateKey,
         inviteeEmail: string,
     ): Promise<{
-        base64ExternalInvitationSignature: string,
+        base64ExternalInvitationSignature: string;
     }> {
         const result = await this.driveCrypto.encryptExternalInvitation(shareSessionKey, inviterKey, inviteeEmail);
         return result;
@@ -278,19 +307,30 @@ export class SharingCryptoService {
         };
     }
 
-    async encryptPublicLink(creatorEmail: string, shareSessionKey: SessionKey, password: string): Promise<{
+    async encryptPublicLink(
+        creatorEmail: string,
+        shareSessionKey: SessionKey,
+        password: string,
+    ): Promise<{
         crypto: {
-            base64SharePasswordSalt: string,
-            base64SharePassphraseKeyPacket: string,
-            armoredPassword: string,
-        },
-        srp: SRPVerifier,
+            base64SharePasswordSalt: string;
+            base64SharePassphraseKeyPacket: string;
+            armoredPassword: string;
+        };
+        srp: SRPVerifier;
     }> {
         const address = await this.account.getOwnAddress(creatorEmail);
         const addressKey = address.keys[address.primaryKeyIndex].key;
 
-        const { base64Salt: base64SharePasswordSalt, bcryptPassphrase } = await this.computeKeySaltAndPassphrase(password);
-        const { base64SharePassphraseKeyPacket, armoredPassword, srp } = await this.driveCrypto.encryptPublicLinkPasswordAndSessionKey(password, addressKey, bcryptPassphrase, shareSessionKey);
+        const { base64Salt: base64SharePasswordSalt, bcryptPassphrase } =
+            await this.computeKeySaltAndPassphrase(password);
+        const { base64SharePassphraseKeyPacket, armoredPassword, srp } =
+            await this.driveCrypto.encryptPublicLinkPasswordAndSessionKey(
+                password,
+                addressKey,
+                bcryptPassphrase,
+                shareSessionKey,
+            );
 
         return {
             crypto: {
@@ -299,7 +339,7 @@ export class SharingCryptoService {
                 armoredPassword,
             },
             srp,
-        }
+        };
     }
 
     async generatePublicLinkPassword(): Promise<string> {
@@ -327,17 +367,14 @@ export class SharingCryptoService {
         return {
             base64Salt: uint8ArrayToBase64String(salt),
             bcryptPassphrase,
-        }
-    };
+        };
+    }
 
     async decryptPublicLink(encryptedPublicLink: EncryptedPublicLink): Promise<PublicLinkWithCreatorEmail> {
         const address = await this.account.getOwnAddress(encryptedPublicLink.creatorEmail);
         const addressKeys = address.keys.map(({ key }) => key);
 
-        const { password, customPassword } = await this.decryptShareUrlPassword(
-            encryptedPublicLink,
-            addressKeys,
-        );
+        const { password, customPassword } = await this.decryptShareUrlPassword(encryptedPublicLink, addressKeys);
 
         return {
             uid: encryptedPublicLink.uid,
@@ -347,16 +384,16 @@ export class SharingCryptoService {
             url: `${encryptedPublicLink.publicUrl}#${password}`,
             customPassword,
             creatorEmail: encryptedPublicLink.creatorEmail,
-            numberOfInitializedDownloads: encryptedPublicLink.numberOfInitializedDownloads
-        }
+            numberOfInitializedDownloads: encryptedPublicLink.numberOfInitializedDownloads,
+        };
     }
 
     private async decryptShareUrlPassword(
         encryptedPublicLink: Pick<EncryptedPublicLink, 'armoredUrlPassword' | 'flags'>,
         addressKeys: PrivateKey[],
     ): Promise<{
-        password: string,
-        customPassword?: string,
+        password: string;
+        customPassword?: string;
     }> {
         const password = await this.driveCrypto.decryptShareUrlPassword(
             encryptedPublicLink.armoredUrlPassword,
@@ -370,21 +407,21 @@ export class SharingCryptoService {
             case PublicLinkFlags.CustomPassword:
                 return {
                     password,
-                }
+                };
             case PublicLinkFlags.GeneratedPasswordIncluded:
             case PublicLinkFlags.GeneratedPasswordWithCustomPassword:
                 return {
                     password: password.substring(0, PUBLIC_LINK_GENERATED_PASSWORD_LENGTH),
                     customPassword: password.substring(PUBLIC_LINK_GENERATED_PASSWORD_LENGTH) || undefined,
-                }
+                };
             default:
                 throw new Error(`Unsupported public link with flags: ${encryptedPublicLink.flags}`);
         }
     }
 
     async decryptBookmark(encryptedBookmark: EncryptedBookmark): Promise<{
-        url: Result<string, Error>,
-        nodeName: Result<string, Error | InvalidNameError>,
+        url: Result<string, Error>;
+        nodeName: Result<string, Error | InvalidNameError>;
     }> {
         // TODO: Signatures are not checked and not specified in the interface.
         // In the future, we will need to add authorship verification.
@@ -478,14 +515,13 @@ export class SharingCryptoService {
         }
     }
 
-    private async decryptBookmarkName(encryptedBookmark: EncryptedBookmark, shareKey: PrivateKey): Promise<Result<string, Error | InvalidNameError>> {
+    private async decryptBookmarkName(
+        encryptedBookmark: EncryptedBookmark,
+        shareKey: PrivateKey,
+    ): Promise<Result<string, Error | InvalidNameError>> {
         try {
             // Use the share key to decrypt the node name of the bookmark.
-            const { name } = await this.driveCrypto.decryptNodeName(
-                encryptedBookmark.node.encryptedName,
-                shareKey,
-                [],
-            );
+            const { name } = await this.driveCrypto.decryptNodeName(encryptedBookmark.node.encryptedName, shareKey, []);
 
             try {
                 validateNodeName(name);

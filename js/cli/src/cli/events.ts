@@ -1,11 +1,11 @@
-import { DriveEvent, DriveEventType } from "../../../sdk/src";
+import { DriveEvent, DriveEventType } from '../../../sdk/src';
 
 export async function runForever() {
     return new Promise(() => {});
 }
 
 function mapEventToIcon(eventType: DriveEventType): string {
-    switch(eventType) {
+    switch (eventType) {
         case DriveEventType.NodeUpdated:
             return '♻️';
         case DriveEventType.NodeCreated:
@@ -24,14 +24,13 @@ function mapEventToIcon(eventType: DriveEventType): string {
 }
 
 export function eventsCallback(json: boolean, filter: (event: DriveEvent) => boolean, event: DriveEvent) {
-
     if (!filter(event)) {
         return;
     }
     if (json) {
         console.log(JSON.stringify(event));
     } else {
-        const icon = mapEventToIcon(event.type)
+        const icon = mapEventToIcon(event.type);
         console.log(icon, event);
     }
 }

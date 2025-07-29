@@ -1,15 +1,15 @@
-import { ProtonDriveClient, MaybeNode, MemberRole, Device } from "../../../sdk/src";
+import { ProtonDriveClient, MaybeNode, MemberRole, Device } from '../../../sdk/src';
 import { Command, ActionArgs } from './interface';
 import { PathType, Path } from './paths';
 import { formatAuthor, formatDate, formatSize } from './formatters';
-import { getName, getClaimedSize, getNode } from "./node";
+import { getName, getClaimedSize, getNode } from './node';
 
 export class CommandFileSystemList implements Command {
     group = 'filesystem';
     name = 'list';
     args = ['path'];
 
-    async action({ sdk, paths, args: [ pathString ], options: { json } }: ActionArgs) {
+    async action({ sdk, paths, args: [pathString], options: { json } }: ActionArgs) {
         const path = paths.getPath(pathString);
 
         if (path.type === PathType.Root) {
@@ -60,14 +60,12 @@ export class CommandFileSystemList implements Command {
         }
         const node = getNode(maybeNode);
 
-        const type = node.type === "file" ? "📄" : "🗂️";
-        const sharedFlag = node.isShared
-            ? '🔗'
-            : '  '; // Two spaces to align with the shared icon.
+        const type = node.type === 'file' ? '📄' : '🗂️';
+        const sharedFlag = node.isShared ? '🔗' : '  '; // Two spaces to align with the shared icon.
         const permissionFlag = getPermissionFlag(node.directMemberRole);
         const author = formatAuthor(node.keyAuthor);
         const created = formatDate(node.creationTime, true);
-        const claimedSize = getClaimedSize(maybeNode)
+        const claimedSize = getClaimedSize(maybeNode);
         const size = claimedSize ? formatSize(claimedSize) : '-';
         const id = node.uid.split('~')[1];
         const name = getName(maybeNode);

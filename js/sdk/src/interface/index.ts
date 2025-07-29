@@ -16,12 +16,60 @@ export { DeviceType } from './devices';
 export type { FileDownloader, DownloadController } from './download';
 export type { DriveListener, LatestEventIdProvider, DriveEvent } from './events';
 export { DriveEventType, SDKEvent } from './events';
-export type { ProtonDriveHTTPClient, ProtonDriveHTTPClientJsonOptions, ProtonDriveHTTPClientBlobOptions } from './httpClient';
-export type { MaybeNode, NodeEntity, DegradedNode, MaybeMissingNode, MissingNode, InvalidNameError, Revision, NodeOrUid, RevisionOrUid, NodeResult } from './nodes';
+export type {
+    ProtonDriveHTTPClient,
+    ProtonDriveHTTPClientJsonOptions,
+    ProtonDriveHTTPClientBlobOptions,
+} from './httpClient';
+export type {
+    MaybeNode,
+    NodeEntity,
+    DegradedNode,
+    MaybeMissingNode,
+    MissingNode,
+    InvalidNameError,
+    Revision,
+    NodeOrUid,
+    RevisionOrUid,
+    NodeResult,
+} from './nodes';
 export { NodeType, MemberRole, RevisionState } from './nodes';
-export type { ProtonInvitation, ProtonInvitationWithNode, NonProtonInvitation, Member, PublicLink, MaybeBookmark, Bookmark, DegradedBookmark, ProtonInvitationOrUid, NonProtonInvitationOrUid, BookmarkOrUid, ShareNodeSettings, UnshareNodeSettings, ShareMembersSettings, SharePublicLinkSettings, SharePublicLinkSettingsObject, ShareResult } from './sharing';
+export type {
+    ProtonInvitation,
+    ProtonInvitationWithNode,
+    NonProtonInvitation,
+    Member,
+    PublicLink,
+    MaybeBookmark,
+    Bookmark,
+    DegradedBookmark,
+    ProtonInvitationOrUid,
+    NonProtonInvitationOrUid,
+    BookmarkOrUid,
+    ShareNodeSettings,
+    UnshareNodeSettings,
+    ShareMembersSettings,
+    SharePublicLinkSettings,
+    SharePublicLinkSettingsObject,
+    ShareResult,
+} from './sharing';
 export { NonProtonInvitationState } from './sharing';
-export type { Telemetry, Logger, MetricAPIRetrySucceededEvent, MetricUploadEvent, MetricsUploadErrorType, MetricDownloadEvent, MetricsDownloadErrorType, MetricDecryptionErrorEvent, MetricsDecryptionErrorField, MetricVerificationErrorEvent, MetricVerificationErrorField, MetricBlockVerificationErrorEvent, MetricVolumeEventsSubscriptionsChangedEvent, MetricEvent } from './telemetry';
+export type {
+    Telemetry,
+    Logger,
+    MetricAPIRetrySucceededEvent,
+    MetricUploadEvent,
+    MetricsUploadErrorType,
+    MetricDownloadEvent,
+    MetricsDownloadErrorType,
+    MetricDecryptionErrorEvent,
+    MetricsDecryptionErrorField,
+    MetricVerificationErrorEvent,
+    MetricVerificationErrorField,
+    MetricBlockVerificationErrorEvent,
+    MetricVolumeEventsSubscriptionsChangedEvent,
+    MetricEvent,
+} from './telemetry';
 export { MetricVolumeType } from './telemetry';
 export type { FileUploader, FileRevisionUploader, UploadController, UploadMetadata } from './upload';
 export type { Thumbnail, ThumbnailResult } from './thumbnail';
@@ -31,20 +79,20 @@ export type ProtonDriveTelemetry = Telemetry<MetricEvent>;
 export type ProtonDriveEntitiesCache = ProtonDriveCache<string>;
 export type ProtonDriveCryptoCache = ProtonDriveCache<CachedCryptoMaterial>;
 export type CachedCryptoMaterial = {
-    passphrase?: string,
-    key: PrivateKey,
-    passphraseSessionKey: SessionKey,
-    hashKey?: Uint8Array,
+    passphrase?: string;
+    key: PrivateKey;
+    passphraseSessionKey: SessionKey;
+    hashKey?: Uint8Array;
 };
 
 export interface ProtonDriveClientContructorParameters {
-    httpClient: ProtonDriveHTTPClient,
-    entitiesCache: ProtonDriveEntitiesCache,
-    cryptoCache: ProtonDriveCryptoCache,
-    account: ProtonDriveAccount,
-    openPGPCryptoModule: OpenPGPCrypto,
-    srpModule: SRPModule,
-    config?: ProtonDriveConfig,
-    telemetry?: ProtonDriveTelemetry,
-    latestEventIdProvider?: LatestEventIdProvider
-};
+    httpClient: ProtonDriveHTTPClient;
+    entitiesCache: ProtonDriveEntitiesCache;
+    cryptoCache: ProtonDriveCryptoCache;
+    account: ProtonDriveAccount;
+    openPGPCryptoModule: OpenPGPCrypto;
+    srpModule: SRPModule;
+    config?: ProtonDriveConfig;
+    telemetry?: ProtonDriveTelemetry;
+    latestEventIdProvider?: LatestEventIdProvider;
+}

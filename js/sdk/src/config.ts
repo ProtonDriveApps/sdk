@@ -6,14 +6,14 @@ import { ProtonDriveConfig } from './interface';
  * The object should be almost identical to the original config, but making
  * some fields required (setting reasonable defaults for the missing fields),
  * or changed for easier usage inside of the SDK.
- * 
+ *
  * For more property details, see the original config declaration.
  */
 type ParsedProtonDriveConfig = {
-    baseUrl: string,
-    language: string,
-    clientUid?: string,
-}
+    baseUrl: string;
+    language: string;
+    clientUid?: string;
+};
 
 export function getConfig(config?: ProtonDriveConfig): ParsedProtonDriveConfig {
     return {

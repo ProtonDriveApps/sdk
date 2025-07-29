@@ -8,7 +8,7 @@ const DEFAULT_CONCURRENCY = 10;
  *
  * Any error from the input iterator or the mapper function is propagated
  * to the output iterator.
- * 
+ *
  * @param inputIterator - The input async iterator.
  * @param mapper - The mapper function that maps the input values to output values.
  * @param concurrency - The concurrency limit. How many parallel async mapper calls are allowed.

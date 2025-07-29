@@ -1,10 +1,10 @@
-import { Thumbnail, UploadMetadata } from "../../interface";
-import { UploadAPIService } from "./apiService";
-import { BlockVerifier } from "./blockVerifier";
+import { Thumbnail, UploadMetadata } from '../../interface';
+import { UploadAPIService } from './apiService';
+import { BlockVerifier } from './blockVerifier';
 import { UploadController } from './controller';
-import { UploadCryptoService } from "./cryptoService";
-import { NodeRevisionDraft } from "./interface";
-import { UploadManager } from "./manager";
+import { UploadCryptoService } from './cryptoService';
+import { NodeRevisionDraft } from './interface';
+import { UploadManager } from './manager';
 import { StreamUploader } from './streamUploader';
 import { UploadTelemetry } from './telemetry';
 
@@ -46,7 +46,11 @@ class Uploader {
         this.controller = new UploadController();
     }
 
-    async writeFile(fileObject: File, thumbnails: Thumbnail[], onProgress?: (uploadedBytes: number) => void): Promise<UploadController> {
+    async writeFile(
+        fileObject: File,
+        thumbnails: Thumbnail[],
+        onProgress?: (uploadedBytes: number) => void,
+    ): Promise<UploadController> {
         if (this.controller.promise) {
             throw new Error(`Upload already started`);
         }
@@ -63,7 +67,11 @@ class Uploader {
         return this.controller;
     }
 
-    async writeStream(stream: ReadableStream, thumbnails: Thumbnail[], onProgress?: (uploadedBytes: number) => void): Promise<UploadController> {
+    async writeStream(
+        stream: ReadableStream,
+        thumbnails: Thumbnail[],
+        onProgress?: (uploadedBytes: number) => void,
+    ): Promise<UploadController> {
         if (this.controller.promise) {
             throw new Error(`Upload already started`);
         }
@@ -71,7 +79,11 @@ class Uploader {
         return this.controller;
     }
 
-    protected async startUpload(stream: ReadableStream, thumbnails: Thumbnail[], onProgress?: (uploadedBytes: number) => void): Promise<string> {
+    protected async startUpload(
+        stream: ReadableStream,
+        thumbnails: Thumbnail[],
+        onProgress?: (uploadedBytes: number) => void,
+    ): Promise<string> {
         const uploader = await this.initStreamUploader();
         return uploader.start(stream, thumbnails, onProgress);
     }
@@ -84,7 +96,7 @@ class Uploader {
             if (failure) {
                 await this.manager.deleteDraftNode(revisionDraft.nodeUid);
             }
-        }
+        };
 
         return new StreamUploader(
             this.telemetry,
@@ -99,7 +111,7 @@ class Uploader {
         );
     }
 
-    protected async createRevisionDraft(): Promise<{ revisionDraft: NodeRevisionDraft, blockVerifier: BlockVerifier }> {
+    protected async createRevisionDraft(): Promise<{ revisionDraft: NodeRevisionDraft; blockVerifier: BlockVerifier }> {
         throw new Error('Not implemented');
     }
 }
@@ -125,12 +137,17 @@ export class FileUploader extends Uploader {
         this.name = name;
     }
 
-    protected async createRevisionDraft(): Promise<{ revisionDraft: NodeRevisionDraft, blockVerifier: BlockVerifier }> {
+    protected async createRevisionDraft(): Promise<{ revisionDraft: NodeRevisionDraft; blockVerifier: BlockVerifier }> {
         let revisionDraft, blockVerifier;
         try {
             revisionDraft = await this.manager.createDraftNode(this.parentFolderUid, this.name, this.metadata);
 
-            blockVerifier = new BlockVerifier(this.apiService, this.cryptoService, revisionDraft.nodeKeys.key, revisionDraft.nodeRevisionUid);
+            blockVerifier = new BlockVerifier(
+                this.apiService,
+                this.cryptoService,
+                revisionDraft.nodeKeys.key,
+                revisionDraft.nodeRevisionUid,
+            );
             await blockVerifier.loadVerificationData();
         } catch (error: unknown) {
             this.onFinish();
@@ -144,7 +161,7 @@ export class FileUploader extends Uploader {
         return {
             revisionDraft,
             blockVerifier,
-        }
+        };
     }
 
     async getAvailableName(): Promise<string> {
@@ -172,12 +189,17 @@ export class FileRevisionUploader extends Uploader {
         this.nodeUid = nodeUid;
     }
 
-    protected async createRevisionDraft(): Promise<{ revisionDraft: NodeRevisionDraft, blockVerifier: BlockVerifier }> {
+    protected async createRevisionDraft(): Promise<{ revisionDraft: NodeRevisionDraft; blockVerifier: BlockVerifier }> {
         let revisionDraft, blockVerifier;
         try {
             revisionDraft = await this.manager.createDraftRevision(this.nodeUid, this.metadata);
 
-            blockVerifier = new BlockVerifier(this.apiService, this.cryptoService, revisionDraft.nodeKeys.key, revisionDraft.nodeRevisionUid);
+            blockVerifier = new BlockVerifier(
+                this.apiService,
+                this.cryptoService,
+                revisionDraft.nodeKeys.key,
+                revisionDraft.nodeRevisionUid,
+            );
             await blockVerifier.loadVerificationData();
         } catch (error: unknown) {
             this.onFinish();
@@ -191,6 +213,6 @@ export class FileRevisionUploader extends Uploader {
         return {
             revisionDraft,
             blockVerifier,
-        }
+        };
     }
 }

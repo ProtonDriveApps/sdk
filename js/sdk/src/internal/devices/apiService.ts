@@ -1,19 +1,26 @@
-import { DeviceType } from "../../interface";
-import { DriveAPIService, drivePaths } from "../apiService";
-import { makeDeviceUid, makeNodeUid, splitDeviceUid } from "../uids";
-import { DeviceMetadata } from "./interface";
+import { DeviceType } from '../../interface';
+import { DriveAPIService, drivePaths } from '../apiService';
+import { makeDeviceUid, makeNodeUid, splitDeviceUid } from '../uids';
+import { DeviceMetadata } from './interface';
 
 type GetDevicesResponse = drivePaths['/drive/devices']['get']['responses']['200']['content']['application/json'];
 
-type PostCreateDeviceRequest = Extract<drivePaths['/drive/devices']['post']['requestBody'], { 'content': object }>['content']['application/json'];
+type PostCreateDeviceRequest = Extract<
+    drivePaths['/drive/devices']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
 type PostCreateDeviceResponse = drivePaths['/drive/devices']['post']['responses']['200']['content']['application/json'];
 
-type PutUpdateDeviceRequest = Extract<drivePaths['/drive/devices/{deviceID}']['put']['requestBody'], { 'content': object }>['content']['application/json'];
-type PutUpdateDeviceResponse = drivePaths['/drive/devices/{deviceID}']['put']['responses']['200']['content']['application/json'];
+type PutUpdateDeviceRequest = Extract<
+    drivePaths['/drive/devices/{deviceID}']['put']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PutUpdateDeviceResponse =
+    drivePaths['/drive/devices/{deviceID}']['put']['responses']['200']['content']['application/json'];
 
 /**
  * Provides API communication for managing devices.
- * 
+ *
  * The service is responsible for transforming local objects to API payloads
  * and vice versa. It should not contain any business logic.
  */
@@ -28,8 +35,8 @@ export class DevicesAPIService {
             uid: makeDeviceUid(device.Device.VolumeID, device.Device.DeviceID),
             type: deviceTypeNumberToEnum(device.Device.Type),
             rootFolderUid: makeNodeUid(device.Device.VolumeID, device.Share.LinkID),
-            creationTime: new Date(device.Device.CreateTime*1000),
-            lastSyncTime: device.Device.LastSyncTime ? new Date(device.Device.LastSyncTime*1000) : undefined,
+            creationTime: new Date(device.Device.CreateTime * 1000),
+            lastSyncTime: device.Device.LastSyncTime ? new Date(device.Device.LastSyncTime * 1000) : undefined,
             hasDeprecatedName: !!device.Share.Name,
             /** @deprecated to be removed once Volume-based navigation is implemented in web */
             shareId: device.Share.ShareID,
@@ -48,56 +55,56 @@ export class DevicesAPIService {
             // Web clients do not update Device fields, that is only for desktop clients.
             Omit<PutUpdateDeviceRequest, 'Device'>,
             PutUpdateDeviceResponse
-        >(
-            `drive/devices/${deviceId}`,
-            {
-                Share: { Name: "" },
-            },
-        );
+        >(`drive/devices/${deviceId}`, {
+            Share: { Name: '' },
+        });
     }
 
     async createDevice(
         device: {
-            volumeId: string,
-            type: DeviceType,
+            volumeId: string;
+            type: DeviceType;
         },
         share: {
-            addressId: string,
-            addressKeyId: string,
-            armoredKey: string,
-            armoredSharePassphrase: string,
-            armoredSharePassphraseSignature: string,
+            addressId: string;
+            addressKeyId: string;
+            armoredKey: string;
+            armoredSharePassphrase: string;
+            armoredSharePassphraseSignature: string;
         },
         node: {
-            encryptedName: string,
-            armoredKey: string,
-            armoredNodePassphrase: string,
-            armoredNodePassphraseSignature: string,
-            armoredHashKey: string,
-        }
+            encryptedName: string;
+            armoredKey: string;
+            armoredNodePassphrase: string;
+            armoredNodePassphraseSignature: string;
+            armoredHashKey: string;
+        },
     ): Promise<DeviceMetadata> {
-        const response = await this.apiService.post<PostCreateDeviceRequest, PostCreateDeviceResponse>('drive/devices', {
-            // @ts-expect-error VolumeID is deprecated.
-            Device: {
-                Type: deviceTypeEnumToNumber(device.type),
-                SyncState: 0,
+        const response = await this.apiService.post<PostCreateDeviceRequest, PostCreateDeviceResponse>(
+            'drive/devices',
+            {
+                // @ts-expect-error VolumeID is deprecated.
+                Device: {
+                    Type: deviceTypeEnumToNumber(device.type),
+                    SyncState: 0,
+                },
+                // @ts-expect-error Name is deprecated.
+                Share: {
+                    AddressID: share.addressId,
+                    AddressKeyID: share.addressKeyId,
+                    Key: share.armoredKey,
+                    Passphrase: share.armoredSharePassphrase,
+                    PassphraseSignature: share.armoredSharePassphraseSignature,
+                },
+                Link: {
+                    Name: node.encryptedName,
+                    NodeKey: node.armoredKey,
+                    NodePassphrase: node.armoredNodePassphrase,
+                    NodePassphraseSignature: node.armoredNodePassphraseSignature,
+                    NodeHashKey: node.armoredHashKey,
+                },
             },
-            // @ts-expect-error Name is deprecated.
-            Share: {
-                AddressID: share.addressId,
-                AddressKeyID: share.addressKeyId,
-                Key: share.armoredKey,
-                Passphrase: share.armoredSharePassphrase,
-                PassphraseSignature: share.armoredSharePassphraseSignature,
-            },
-            Link: {
-                Name: node.encryptedName,
-                NodeKey: node.armoredKey,
-                NodePassphrase: node.armoredNodePassphrase,
-                NodePassphraseSignature: node.armoredNodePassphraseSignature,
-                NodeHashKey: node.armoredHashKey,
-            }
-        });
+        );
 
         return {
             uid: makeDeviceUid(device.volumeId, response.Device.DeviceID),
@@ -106,7 +113,7 @@ export class DevicesAPIService {
             creationTime: new Date(),
             hasDeprecatedName: false,
             shareId: response.Device.ShareID,
-        }
+        };
     }
 
     async deleteDevice(deviceUid: string): Promise<void> {

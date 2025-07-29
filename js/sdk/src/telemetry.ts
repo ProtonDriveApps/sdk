@@ -1,7 +1,7 @@
 import { Logger as LoggerInterface } from './interface';
 
 export interface LogRecord {
-    time: Date,
+    time: Date;
     level: LogLevel;
     loggerName: string;
     message: string;
@@ -24,13 +24,13 @@ export interface LogHandler {
 }
 
 export interface MetricRecord<T extends MetricEvent> {
-    time: Date,
+    time: Date;
     event: T;
 }
 
 export type MetricEvent = {
     eventName: string;
-}
+};
 
 export interface MetricHandler<T extends MetricEvent> {
     onEvent(metric: MetricRecord<T>): void;
@@ -38,12 +38,12 @@ export interface MetricHandler<T extends MetricEvent> {
 
 /**
  * Telemetry class that logs messages and metrics.
- * 
+ *
  * Example:
- * 
+ *
  * ```typescript
  * const memoryLogHandler = new MemoryLogHandler();
- * 
+ *
  * interface MetricEvents = {
  *    name: string,
  *    value: number,
@@ -53,7 +53,7 @@ export interface MetricHandler<T extends MetricEvent> {
  *        // Process metric event
  *    }
  * }
- * 
+ *
  * const telemetry = new Telemetry<MetricEvents>({
  *    // Enable debug logging
  *    logFilter: new LogFilter({ level: LogLevel.DEBUG }),
@@ -62,16 +62,16 @@ export interface MetricHandler<T extends MetricEvent> {
  *    // Log to console and own handler to process further
  *    metricHandlers: [new ConsoleMetricHandler(), ownMetricHandler],
  * });
- * 
+ *
  * const logger = telemetry.getLogger('myLogger');
  * logger.debug('Debug message');
- * 
+ *
  * telemetry.logEvent({ name: 'somethingHappened', value: 42 });
- * 
+ *
  * const logs = memoryLogHandler.getLogs();
  * // Process logs
  * ```
- * 
+ *
  * @param logFilter - Log filter to filter logs based on log level, default INFO
  * @param logHandlers - Log handlers to use for logging, see LogHandler implementations
  * @param metricHandlers - Metric handlers to use for logging, see MetricHandler implementations
@@ -81,13 +81,7 @@ export class Telemetry<T extends MetricEvent> {
     private logHandlers: LogHandler[];
     private metricHandlers: MetricHandler<T>[];
 
-    constructor(
-        options?: {
-            logFilter?: LogFilter,
-            logHandlers?: LogHandler[],
-            metricHandlers?: MetricHandler<T>[],
-        }
-    ) {
+    constructor(options?: { logFilter?: LogFilter; logHandlers?: LogHandler[]; metricHandlers?: MetricHandler<T>[] }) {
         this.logFilter = options?.logFilter || new LogFilter();
         this.logHandlers = options?.logHandlers || [new ConsoleLogHandler()];
         this.metricHandlers = options?.metricHandlers || [new ConsoleMetricHandler()];
@@ -102,18 +96,22 @@ export class Telemetry<T extends MetricEvent> {
             time: new Date(),
             event,
         };
-        this.metricHandlers.forEach(handler => handler.onEvent(metric));
+        this.metricHandlers.forEach((handler) => handler.onEvent(metric));
     }
 }
 
 /**
  * Logger class that logs messages with different levels.
- * 
+ *
  * @param name - Name of the logger
  * @param handlers - Log handlers to use for logging, see LogHandler implementations
  */
 class Logger {
-    constructor(private name: string, private filter: LogFilter, private handlers: LogHandler[]) {
+    constructor(
+        private name: string,
+        private filter: LogFilter,
+        private handlers: LogHandler[],
+    ) {
         this.name = name;
         this.filter = filter;
         this.handlers = handlers;
@@ -160,15 +158,15 @@ class Logger {
         if (!this.filter.filter(log)) {
             return;
         }
-        this.handlers.forEach(handler => handler.log(log));
+        this.handlers.forEach((handler) => handler.log(log));
     }
 }
 
 /**
  * Logger class that logs messages with a prefix.
- * 
+ *
  * Example:
- * 
+ *
  * ```typescript
  * const logger = new Logger('myLogger', new LogFilter(), [new ConsoleLogHandler()]);
  * const loggerWithPrefix = new LoggerWithPrefix(logger, 'prefix');
@@ -176,7 +174,10 @@ class Logger {
  * ```
  */
 export class LoggerWithPrefix {
-    constructor(private logger: LoggerInterface, private prefix: string) {
+    constructor(
+        private logger: LoggerInterface,
+        private prefix: string,
+    ) {
         this.logger = logger;
         this.prefix = prefix;
     }
@@ -201,28 +202,29 @@ export class LoggerWithPrefix {
 /**
  * Filter logs based on log level. It can be configured by global level or
  * per logger level.
- * 
+ *
  * @param globalLevel - Global log level, default INFO
  * @param loggerLevels - Log levels for specific loggers, default empty
  */
 export class LogFilter {
     private logLevelMap = {
-        'DEBUG': 0,
-        'INFO': 1,
-        'WARNING': 2,
-        'ERROR': 3,
-    }
+        DEBUG: 0,
+        INFO: 1,
+        WARNING: 2,
+        ERROR: 3,
+    };
 
     private globalLevel: number;
     private loggerLevels: { [loggerName: string]: number };
 
-    constructor(options?: {
-        globalLevel?: LogLevel,
-        loggerLevels?: { [loggerName: string]: LogLevel },
-    }) {
+    constructor(options?: { globalLevel?: LogLevel; loggerLevels?: { [loggerName: string]: LogLevel } }) {
         this.globalLevel = this.logLevelMap[options?.globalLevel || LogLevel.INFO];
-        this.loggerLevels = Object.fromEntries(Object.entries(options?.loggerLevels || {})
-            .map(([loggerName, level]) => [loggerName, this.logLevelMap[level]]));
+        this.loggerLevels = Object.fromEntries(
+            Object.entries(options?.loggerLevels || {}).map(([loggerName, level]) => [
+                loggerName,
+                this.logLevelMap[level],
+            ]),
+        );
     }
 
     /**
@@ -243,16 +245,16 @@ export class LogFilter {
 
 /**
  * Log handler that logs to console.
- * 
+ *
  * @param formatter - Formatter to use for log messages, default BasicLogFormatter
  */
 export class ConsoleLogHandler implements LogHandler {
     private logLevelMap = {
-        'DEBUG': console.debug, // eslint-disable-line no-console
-        'INFO': console.info, // eslint-disable-line no-console
-        'WARNING': console.warn, // eslint-disable-line no-console
-        'ERROR': console.error, // eslint-disable-line no-console
-    }
+        DEBUG: console.debug, // eslint-disable-line no-console
+        INFO: console.info, // eslint-disable-line no-console
+        WARNING: console.warn, // eslint-disable-line no-console
+        ERROR: console.error, // eslint-disable-line no-console
+    };
 
     private formatter: LogFormatter;
 
@@ -268,10 +270,10 @@ export class ConsoleLogHandler implements LogHandler {
 
 /**
  * Log handler that stores logs in memory with option to retrieve later.
- * 
+ *
  * Useful for keeping logs around and retrieve them on demand when an error
  * occures.
- * 
+ *
  * @param formatter - Formatter to use for log messages, default JSONLogFormatter
  * @param maxLogs - Maximum number of logs to store, default 10000
  */
@@ -280,7 +282,10 @@ export class MemoryLogHandler implements LogHandler {
 
     private formatter: LogFormatter;
 
-    constructor(formatter?: LogFormatter, private maxLogs = 10000) {
+    constructor(
+        formatter?: LogFormatter,
+        private maxLogs = 10000,
+    ) {
         this.formatter = formatter || new JSONLogFormatter();
         this.maxLogs = maxLogs;
     }
@@ -305,7 +310,7 @@ export class MemoryLogHandler implements LogHandler {
 
 /**
  * Formatter that formats logs as JSON.
- * 
+ *
  * Useful for machine processing.
  */
 export class JSONLogFormatter implements LogFormatter {
@@ -323,16 +328,17 @@ export class JSONLogFormatter implements LogFormatter {
 
 /**
  * Formatter that formats logs as plain text.
- * 
+ *
  * Useful for human reading.
  */
 export class BasicLogFormatter implements LogFormatter {
     format(log: LogRecord) {
         let errorDetails = '';
         if (log.error) {
-            errorDetails = log.error instanceof Error
-                ? `\nError: ${log.error.message}\nStack:\n${log.error.stack}`
-                : `\nError: ${log.error}`;
+            errorDetails =
+                log.error instanceof Error
+                    ? `\nError: ${log.error.message}\nStack:\n${log.error.stack}`
+                    : `\nError: ${log.error}`;
         }
         return `${log.time.toISOString()} ${log.level} [${log.loggerName}] ${log.message}${errorDetails}`;
     }
@@ -341,6 +347,8 @@ export class BasicLogFormatter implements LogFormatter {
 class ConsoleMetricHandler<T extends MetricEvent> implements MetricHandler<T> {
     onEvent(metric: MetricRecord<T>) {
         // eslint-disable-next-line no-console
-        console.info(`${metric.time.toISOString()} INFO [metric] ${metric.event.eventName} ${JSON.stringify({ ...metric.event, name: undefined })}`);
+        console.info(
+            `${metric.time.toISOString()} INFO [metric] ${metric.event.eventName} ${JSON.stringify({ ...metric.event, name: undefined })}`,
+        );
     }
 }

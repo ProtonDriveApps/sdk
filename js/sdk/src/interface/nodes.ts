@@ -22,7 +22,7 @@ export type MaybeNode = Result<NodeEntity, DegradedNode>;
 export type MaybeMissingNode = Result<NodeEntity, DegradedNode | MissingNode>;
 
 export type MissingNode = {
-    missingUid: string,
+    missingUid: string;
 };
 
 /**
@@ -38,9 +38,9 @@ export type MissingNode = {
  * entity is called.
  */
 export type NodeEntity = {
-    uid: string,
-    parentUid?: string,
-    name: string,
+    uid: string;
+    parentUid?: string;
+    name: string;
     /**
      * Author of the node key.
      *
@@ -49,22 +49,22 @@ export type NodeEntity = {
      * author is user B, while key author stays to user A who has forever
      * option to decrypt latest versions.
      */
-    keyAuthor: Author,
+    keyAuthor: Author;
     /**
      * Author of the name.
      *
      * Person who named the file. If user A uploads the file and user B renames
      * the file, key and content author is user A, while name author is user B.
      */
-    nameAuthor: Author,
-    directMemberRole: MemberRole,
-    type: NodeType,
-    mediaType?: string,
+    nameAuthor: Author;
+    directMemberRole: MemberRole;
+    type: NodeType;
+    mediaType?: string;
     /**
      * Whether the node is shared. If true, the node is shared with at least
      * one user, or via public link.
      */
-    isShared: boolean,
+    isShared: boolean;
     /**
      * Provides the ID of the share that the node is shared with.
      *
@@ -73,20 +73,20 @@ export type NodeEntity = {
      *
      * @deprecated This field is not part of the public API.
      */
-    deprecatedShareId?: string,
+    deprecatedShareId?: string;
     /**
      * Created on server date.
      */
-    creationTime: Date,
-    trashTime?: Date,
+    creationTime: Date;
+    trashTime?: Date;
     /**
      * Total size of all revisions, encrypted size on the server.
      */
-    totalStorageSize?: number,
-    activeRevision?: Revision,
+    totalStorageSize?: number;
+    activeRevision?: Revision;
     folder?: {
-        claimedModificationTime?: Date,
-    },
+        claimedModificationTime?: Date;
+    };
     /**
      * Provides an ID for the event scope.
      *
@@ -95,8 +95,8 @@ export type NodeEntity = {
      * comprise one or more folder trees and will be shared by all
      * nodes in the tree. Nodes cannot change scopes.
      */
-    treeEventScopeId: string,
-}
+    treeEventScopeId: string;
+};
 
 /**
  * Degraded node representing a file or folder in the system.
@@ -115,8 +115,8 @@ export type NodeEntity = {
  * possible, but download and upload new revision will still work.
  */
 export type DegradedNode = Omit<NodeEntity, 'name' | 'activeRevision'> & {
-    name: Result<string, Error | InvalidNameError>,
-    activeRevision?: Result<Revision, Error>,
+    name: Result<string, Error | InvalidNameError>;
+    activeRevision?: Result<Revision, Error>;
     /**
      * If the error is not related to any specific field, it is set here.
      *
@@ -127,8 +127,8 @@ export type DegradedNode = Omit<NodeEntity, 'name' | 'activeRevision'> & {
      * the name is still working, this will include the node key error, while
      * the name will be set to the decrypted value.
      */
-    errors?: unknown[],
-}
+    errors?: unknown[];
+};
 
 /**
  * Invalid name error represents node name that includes invalid characters.
@@ -137,13 +137,13 @@ export type InvalidNameError = {
     /**
      * Placeholder instead of node name that client can use to display.
      */
-    name: string,
-    error: string,
-}
+    name: string;
+    error: string;
+};
 
 export enum NodeType {
-    File = "file",
-    Folder = "folder",
+    File = 'file',
+    Folder = 'folder',
     /**
      * Album is a special type available only in Photos section.
      *
@@ -154,44 +154,42 @@ export enum NodeType {
      *
      * @deprecated This type is not part of the public API.
      */
-    Album = "album",
+    Album = 'album',
 }
 
 export enum MemberRole {
-    Viewer = "viewer",
-    Editor = "editor",
-    Admin = "admin",
-    Inherited = "inherited",
+    Viewer = 'viewer',
+    Editor = 'editor',
+    Admin = 'admin',
+    Inherited = 'inherited',
 }
 
 export type Revision = {
-    uid: string,
-    state: RevisionState,
-    creationTime: Date, // created on server date
-    contentAuthor: Author,
+    uid: string;
+    state: RevisionState;
+    creationTime: Date; // created on server date
+    contentAuthor: Author;
     /**
      * Encrypted size of the revision, as stored on the server.
      */
-    storageSize: number,
+    storageSize: number;
     /**
      * Raw size of the revision, as stored in extended attributes.
      */
-    claimedSize?: number,
-    claimedModificationTime?: Date,
+    claimedSize?: number;
+    claimedModificationTime?: Date;
     claimedDigests?: {
-        sha1?: string,
-    },
-    claimedAdditionalMetadata?: object,
-}
+        sha1?: string;
+    };
+    claimedAdditionalMetadata?: object;
+};
 
 export enum RevisionState {
-    Active = "active",
-    Superseded = "superseded",
+    Active = 'active',
+    Superseded = 'superseded',
 }
 
 export type NodeOrUid = MaybeNode | NodeEntity | DegradedNode | string;
 export type RevisionOrUid = Revision | string;
 
-export type NodeResult =
-    {uid: string, ok: true} |
-    {uid: string, ok: false, error: string};
+export type NodeResult = { uid: string; ok: true } | { uid: string; ok: false; error: string };

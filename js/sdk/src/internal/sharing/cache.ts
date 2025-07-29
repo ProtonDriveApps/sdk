@@ -1,5 +1,5 @@
-import { ProtonDriveEntitiesCache } from "../../interface";
-import { SharingType } from "./interface";
+import { ProtonDriveEntitiesCache } from '../../interface';
+import { SharingType } from './interface';
 
 /**
  * Provides caching for shared by me and with me listings.

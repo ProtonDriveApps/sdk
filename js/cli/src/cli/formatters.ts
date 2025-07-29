@@ -1,4 +1,4 @@
-import { Author } from "../../../sdk/src";
+import { Author } from '../../../sdk/src';
 
 export function formatAuthor(author: Author) {
     return author.ok ? author.value : `(${author.error.claimedAuthor})`;

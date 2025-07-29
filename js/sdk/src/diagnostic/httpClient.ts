@@ -1,4 +1,8 @@
-import { ProtonDriveHTTPClient, ProtonDriveHTTPClientBlobOptions, ProtonDriveHTTPClientJsonOptions } from "../interface";
+import {
+    ProtonDriveHTTPClient,
+    ProtonDriveHTTPClientBlobOptions,
+    ProtonDriveHTTPClientJsonOptions,
+} from '../interface';
 import { EventsGenerator } from './eventsGenerator';
 
 /**

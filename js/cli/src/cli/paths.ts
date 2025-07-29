@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { ProtonDriveClient, MaybeNode } from "../../../sdk/src";
+import { ProtonDriveClient, MaybeNode } from '../../../sdk/src';
 import { getName } from './node';
 
 export enum PathType {
@@ -17,13 +17,9 @@ export class Paths {
     }
 
     get rootPaths(): string[] {
-        return [
-            PathType.MyFiles,
-            PathType.Devices,
-            PathType.SharedByMe,
-            PathType.SharedWithMe,
-            PathType.Trash,
-        ].map((path) => `/${path}`);
+        return [PathType.MyFiles, PathType.Devices, PathType.SharedByMe, PathType.SharedWithMe, PathType.Trash].map(
+            (path) => `/${path}`,
+        );
     }
 
     getPath(path: string): Path {
@@ -32,7 +28,10 @@ export class Paths {
 }
 
 export class Path {
-    constructor(private sdk: ProtonDriveClient, public fullPath: string) {
+    constructor(
+        private sdk: ProtonDriveClient,
+        public fullPath: string,
+    ) {
         this.sdk = sdk;
         this.fullPath = fullPath;
     }
@@ -146,7 +145,7 @@ export class Path {
         let node = parentNode;
         const pathParts = pathString.split(path.sep);
         for (const part of pathParts) {
-            if (part === "") {
+            if (part === '') {
                 continue;
             }
             node = await this.getNodeByName(node, part);

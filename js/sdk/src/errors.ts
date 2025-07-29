@@ -2,13 +2,13 @@ import { c } from 'ttag';
 
 /**
  * Base class for all SDK errors.
- * 
+ *
  * This class can be used for catching all SDK errors. The error should have
  * translated message in the `message` property that should be shown to the
  * user without any modification.
- * 
+ *
  * No retries should be done as that is already handled by the SDK.
- * 
+ *
  * When SDK throws an error and it is not `ProtonDriveError`, it is unhandled error
  * by the SDK and usually indicates bug in the SDK. Please, report it.
  */
@@ -18,7 +18,7 @@ export class ProtonDriveError extends Error {
 
 /**
  * Error thrown when the operation is aborted.
- * 
+ *
  * This error is thrown when the operation is aborted by the user.
  * For example, by calling `abort()` on the `AbortSignal`.
  */
@@ -32,7 +32,7 @@ export class AbortError extends ProtonDriveError {
 
 /**
  * Error thrown when the validation fails.
- * 
+ *
  * This error is thrown when the validation of the input fails.
  * Validation can be done on the client side or on the server side.
  *
@@ -45,7 +45,7 @@ export class ValidationError extends ProtonDriveError {
 
     /**
      * Internal API code.
-     * 
+     *
      * Use only for debugging purposes.
      */
     public readonly code?: number;
@@ -64,7 +64,7 @@ export class ValidationError extends ProtonDriveError {
 
 /**
  * Error thrown when the node already exists.
- * 
+ *
  * This error is thrown when the node with the same name already exists in the
  * parent folder. The client should ask the user to replace the existing node
  * or choose another name. The available name is provided in the `availableName`
@@ -86,11 +86,11 @@ export class NodeAlreadyExistsValidationError extends ValidationError {
 
 /**
  * Error thrown when the API call fails.
- * 
+ *
  * This error covers both HTTP errors and API errors. SDK automatically
  * retries the request before the error is thrown. The sepcific algorithm
  * used for retries depends on the type of the error.
- * 
+ *
  * Client should not retry the request when this error is thrown.
  */
 export class ServerError extends ProtonDriveError {
@@ -98,13 +98,13 @@ export class ServerError extends ProtonDriveError {
 
     /**
      * HTTP status code of the response.
-     * 
+     *
      * Use only for debugging purposes.
      */
     public readonly statusCode?: number;
     /**
      * Internal API code.
-     * 
+     *
      * Use only for debugging purposes.
      */
     public readonly code?: number;
@@ -112,16 +112,16 @@ export class ServerError extends ProtonDriveError {
 
 /**
  * Error thrown when the client makes too many requests to the API.
- * 
+ *
  * SDK is configured to stay below the rate limits, but it can still happen if
  * client is running multiple SDKs in parallel, or if the rate limits are
  * changed on the server side.
- * 
+ *
  * SDK automatically retries the request before the error is thrown after
  * waiting for the required time specified by the server.
- * 
+ *
  * Client should slow down calling SDK when this error is thrown.
- * 
+ *
  * You can be also notified about the rate limits by the `requestsThrottled`
  * event. See `onMessage` method on the SDK class for more details.
  */
@@ -133,9 +133,9 @@ export class RateLimitedError extends ServerError {
 
 /**
  * Error thrown when the client is not connected to the internet.
- * 
+ *
  * Client should check the internet connection when this error is thrown.
- * 
+ *
  * You can also be notified about the connection status by the `offline` event
  * See `onMessage` method on the SDK class for more details.
  */
@@ -145,9 +145,9 @@ export class ConnectionError extends ProtonDriveError {
 
 /**
  * Error thrown when the decryption fails.
- * 
+ *
  * Client should report this error to the user and report bug report.
- * 
+ *
  * In most cases, there is no decryption error. Every decryption error should
  * be not exposed but set as empty value on the node, for example. But in the
  * case of the file content, if block cannot be decrypted, decryption error
@@ -159,9 +159,9 @@ export class DecryptionError extends ProtonDriveError {
 
 /**
  * Error thrown when the data integrity check fails.
- * 
+ *
  * Client should report this error to the user and report bug report.
- * 
+ *
  * For example, it can happen when hashes don't match, etc. In some cases,
  * SDK allows to run command without verification checks for debug purposes.
  */

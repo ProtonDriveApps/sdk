@@ -6,7 +6,7 @@ export class CommandFileSystemRestore implements Command {
     // FIXME: support restore of multiple files
     args = ['path'];
 
-    async action({ sdk, paths, args: [ pathString ], options: { json } }: ActionArgs) {
+    async action({ sdk, paths, args: [pathString], options: { json } }: ActionArgs) {
         const nodePath = paths.getPath(pathString);
         const node = await nodePath.getNode();
         for await (const result of sdk.restoreNodes([node])) {

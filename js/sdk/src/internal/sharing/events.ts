@@ -1,11 +1,14 @@
-import { Logger } from "../../interface";
-import { DriveEvent, DriveEventType } from "../events";
-import { SharingCache } from "./cache";
-import { SharesService } from "./interface";
+import { Logger } from '../../interface';
+import { DriveEvent, DriveEventType } from '../events';
+import { SharingCache } from './cache';
+import { SharesService } from './interface';
 
 export class SharingEventHandler {
-    constructor(private logger: Logger, private cache: SharingCache, private shares: SharesService) {
-    };
+    constructor(
+        private logger: Logger,
+        private cache: SharingCache,
+        private shares: SharesService,
+    ) {}
 
     /**
      * Update cache and notify listeners accordingly for any updates

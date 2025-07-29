@@ -2,14 +2,14 @@ const DEFAULT_BATCH_LOADING = 10;
 
 /**
  * Helper class for batch loading items.
- * 
+ *
  * The class is responsible for fetching items in batches. Any call to
  * `load` will add the item to the batch (without fetching anything),
  * and if the batch reaches the limit, it will fetch the items and yield
  * them transparently to the caller.
- * 
+ *
  * Example:
- * 
+ *
  * ```typescript
  * const batchLoading = new BatchLoading<string, DecryptedNode>({ loadItems: loadNodesCallback });
  * for (const nodeUid of nodeUids) {
@@ -29,19 +29,19 @@ export class BatchLoading<ID, ITEM> {
     private itemsToFetch: ID[];
 
     constructor(options: {
-        loadItems?: (ids: ID[]) => Promise<ITEM[]>,
-        iterateItems?: (ids: ID[]) => AsyncGenerator<ITEM>,
-        batchSize?: number,
+        loadItems?: (ids: ID[]) => Promise<ITEM[]>;
+        iterateItems?: (ids: ID[]) => AsyncGenerator<ITEM>;
+        batchSize?: number;
     }) {
         this.itemsToFetch = [];
-        
+
         if (options.loadItems) {
             const loadItems = options.loadItems;
             this.iterateItems = async function* (ids: ID[]) {
                 for (const item of await loadItems(ids)) {
                     yield item;
                 }
-            }
+            };
         } else if (options.iterateItems) {
             this.iterateItems = options.iterateItems;
         } else {

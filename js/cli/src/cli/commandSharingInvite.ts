@@ -1,4 +1,4 @@
-import { ParseArgsConfig } from "util";
+import { ParseArgsConfig } from 'util';
 import { Command, ActionArgs } from './interface';
 
 export class CommandSharingInvite implements Command {
@@ -32,7 +32,7 @@ export class CommandSharingInvite implements Command {
     async action({
         sdk,
         paths,
-        args: [ pathString ],
+        args: [pathString],
         options: { user: userEmails, role, message, includeNodeName, json },
     }: ActionArgs) {
         const path = paths.getPath(pathString);

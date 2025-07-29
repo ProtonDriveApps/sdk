@@ -1,28 +1,23 @@
-import path from "node:path";
-import { ParseArgsConfig } from "util";
+import path from 'node:path';
+import { ParseArgsConfig } from 'util';
 
-import { Command, ActionArgs } from "./interface";
-import { getName } from "./node";
+import { Command, ActionArgs } from './interface';
+import { getName } from './node';
 
 export class CommandFileSystemDownload implements Command {
-    group = "filesystem";
-    name = "download";
+    group = 'filesystem';
+    name = 'download';
     // FIXME: support download of multiple files
-    args = ["path", "localPath"];
-    options: ParseArgsConfig["options"] = {
+    args = ['path', 'localPath'];
+    options: ParseArgsConfig['options'] = {
         name: {
-            type: "string",
-            short: "n",
-            default: "",
+            type: 'string',
+            short: 'n',
+            default: '',
         },
     };
 
-    async action({
-        sdk,
-        paths,
-        args: [pathString, localParentPath],
-        options: { name, json },
-    }: ActionArgs) {
+    async action({ sdk, paths, args: [pathString, localParentPath], options: { name, json } }: ActionArgs) {
         const nodePath = paths.getPath(pathString);
         const node = await nodePath.getNode();
         const downloader = await sdk.getFileDownloader(node);
@@ -36,14 +31,10 @@ export class CommandFileSystemDownload implements Command {
                     localPath: localPath,
                     name: getName(node),
                     claimedSize,
-                })
+                }),
             );
         } else {
-            console.log(
-                `Downloading ${getName(node)} (${
-                    claimedSize || "N/A"
-                } bytes) to ${localPath}`
-            );
+            console.log(`Downloading ${getName(node)} (${claimedSize || 'N/A'} bytes) to ${localPath}`);
         }
 
         const file = Bun.file(localPath);
@@ -55,14 +46,11 @@ export class CommandFileSystemDownload implements Command {
             locked: false,
         };
 
-        const controller = downloader.writeToStream(
-            writableStream,
-            (writtenBytes) => {
-                if (!json) {
-                    console.log(`Downloaded ${writtenBytes} bytes`);
-                }
+        const controller = downloader.writeToStream(writableStream, (writtenBytes) => {
+            if (!json) {
+                console.log(`Downloaded ${writtenBytes} bytes`);
             }
-        );
+        });
 
         await controller.completion();
     }

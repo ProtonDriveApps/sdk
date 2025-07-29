@@ -1,8 +1,8 @@
 export enum SDKEvent {
-    TransfersPaused = "transfersPaused",
-    TransfersResumed = "transfersResumed",
-    RequestsThrottled = "requestsThrottled",
-    RequestsUnthrottled = "requestsUnthrottled",
+    TransfersPaused = 'transfersPaused',
+    TransfersResumed = 'transfersResumed',
+    RequestsThrottled = 'requestsThrottled',
+    RequestsUnthrottled = 'requestsUnthrottled',
 }
 
 export interface LatestEventIdProvider {
@@ -22,47 +22,55 @@ export type DriveListener = (event: DriveEvent) => Promise<void>;
 
 type NodeCruEventType = DriveEventType.NodeCreated | DriveEventType.NodeUpdated;
 
-export type NodeEvent = {
-    type: NodeCruEventType,
-    nodeUid: string,
-    parentNodeUid?: string,
-    isTrashed: boolean,
-    isShared: boolean,
-    treeEventScopeId: string,
-    eventId: string,
-} | {
-    type: DriveEventType.NodeDeleted,
-    nodeUid: string,
-    parentNodeUid?: string,
-    treeEventScopeId: string,
-    eventId: string,
-}
+export type NodeEvent =
+    | {
+          type: NodeCruEventType;
+          nodeUid: string;
+          parentNodeUid?: string;
+          isTrashed: boolean;
+          isShared: boolean;
+          treeEventScopeId: string;
+          eventId: string;
+      }
+    | {
+          type: DriveEventType.NodeDeleted;
+          nodeUid: string;
+          parentNodeUid?: string;
+          treeEventScopeId: string;
+          eventId: string;
+      };
 
 export type FastForwardEvent = {
-    type: DriveEventType.FastForward,
-    treeEventScopeId: string,
-    eventId: string,
-}
+    type: DriveEventType.FastForward;
+    treeEventScopeId: string;
+    eventId: string;
+};
 
 export type TreeRefreshEvent = {
-    type: DriveEventType.TreeRefresh,
-    treeEventScopeId: string,
-    eventId: string,
-}
+    type: DriveEventType.TreeRefresh;
+    treeEventScopeId: string;
+    eventId: string;
+};
 
 export type TreeRemovalEvent = {
-    type: DriveEventType.TreeRemove,
-    treeEventScopeId: string,
-    eventId: 'none',
-}
+    type: DriveEventType.TreeRemove;
+    treeEventScopeId: string;
+    eventId: 'none';
+};
 
 export type SharedWithMeUpdated = {
-    type: DriveEventType.SharedWithMeUpdated,
-    eventId: string,
-    treeEventScopeId: 'core',
-}
+    type: DriveEventType.SharedWithMeUpdated;
+    eventId: string;
+    treeEventScopeId: 'core';
+};
 
-export type DriveEvent = NodeEvent | FastForwardEvent | TreeRefreshEvent | TreeRemovalEvent | FastForwardEvent | SharedWithMeUpdated;
+export type DriveEvent =
+    | NodeEvent
+    | FastForwardEvent
+    | TreeRefreshEvent
+    | TreeRemovalEvent
+    | FastForwardEvent
+    | SharedWithMeUpdated;
 
 export enum DriveEventType {
     NodeCreated = 'node_created',
@@ -71,5 +79,5 @@ export enum DriveEventType {
     SharedWithMeUpdated = 'shared_with_me_updated',
     TreeRefresh = 'tree_refresh',
     TreeRemove = 'tree_remove',
-    FastForward = 'fast_forward'
+    FastForward = 'fast_forward',
 }

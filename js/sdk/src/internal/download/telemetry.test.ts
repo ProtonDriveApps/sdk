@@ -25,7 +25,7 @@ describe('DownloadTelemetry', () => {
 
         sharesService = {
             getVolumeMetricContext: jest.fn().mockResolvedValue('own_volume'),
-        }
+        };
 
         downloadTelemetry = new DownloadTelemetry(mockTelemetry, sharesService);
     });
@@ -35,10 +35,10 @@ describe('DownloadTelemetry', () => {
         await downloadTelemetry.downloadInitFailed(nodeUid, error);
 
         expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
-            eventName: "download",
-            volumeType: "own_volume",
+            eventName: 'download',
+            volumeType: 'own_volume',
             downloadedSize: 0,
-            error: "unknown",
+            error: 'unknown',
             originalError: error,
         });
     });
@@ -48,11 +48,11 @@ describe('DownloadTelemetry', () => {
         await downloadTelemetry.downloadFailed(revisionUid, error, 123, 456);
 
         expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
-            eventName: "download",
-            volumeType: "own_volume",
+            eventName: 'download',
+            volumeType: 'own_volume',
             downloadedSize: 123,
             claimedFileSize: 456,
-            error: "unknown",
+            error: 'unknown',
             originalError: error,
         });
     });
@@ -61,8 +61,8 @@ describe('DownloadTelemetry', () => {
         await downloadTelemetry.downloadFinished(revisionUid, 500);
 
         expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
-            eventName: "download",
-            volumeType: "own_volume",
+            eventName: 'download',
+            volumeType: 'own_volume',
             downloadedSize: 500,
             claimedFileSize: 500,
         });
@@ -73,9 +73,9 @@ describe('DownloadTelemetry', () => {
             expect(mockTelemetry.logEvent).toHaveBeenCalledWith(
                 expect.objectContaining({
                     error,
-                })
+                }),
             );
-        }
+        };
 
         it('should ignore ValidationError', async () => {
             const error = new ValidationError('Validation error');

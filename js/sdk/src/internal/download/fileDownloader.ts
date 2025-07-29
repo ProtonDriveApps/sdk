@@ -1,10 +1,10 @@
-import { PrivateKey, SessionKey, base64StringToUint8Array } from "../../crypto";
-import { Logger, Revision } from "../../interface";
-import { LoggerWithPrefix } from "../../telemetry";
+import { PrivateKey, SessionKey, base64StringToUint8Array } from '../../crypto';
+import { Logger, Revision } from '../../interface';
+import { LoggerWithPrefix } from '../../telemetry';
 import { APIHTTPError, HTTPErrorCode } from '../apiService';
-import { DownloadAPIService } from "./apiService";
+import { DownloadAPIService } from './apiService';
 import { DownloadController } from './controller';
-import { DownloadCryptoService } from "./cryptoService";
+import { DownloadCryptoService } from './cryptoService';
 import { BlockMetadata, RevisionKeys } from './interface';
 import { DownloadTelemetry } from './telemetry';
 
@@ -20,16 +20,19 @@ export class FileDownloader {
 
     private controller: DownloadController;
     private nextBlockIndex = 1;
-    private ongoingDownloads = new Map<number, {
-        downloadPromise: Promise<void>,
-        decryptedBufferedBlock?: Uint8Array,
-    }>();
+    private ongoingDownloads = new Map<
+        number,
+        {
+            downloadPromise: Promise<void>;
+            decryptedBufferedBlock?: Uint8Array;
+        }
+    >();
 
     constructor(
         private telemetry: DownloadTelemetry,
         private apiService: DownloadAPIService,
         private cryptoService: DownloadCryptoService,
-        private nodeKey: { key: PrivateKey, contentKeyPacketSessionKey: SessionKey },
+        private nodeKey: { key: PrivateKey; contentKeyPacketSessionKey: SessionKey },
         private revision: Revision,
         private signal?: AbortSignal,
         private onFinish?: () => void,
@@ -127,7 +130,12 @@ export class FileDownloader {
                 this.logger.warn('Skipping manifest check');
             } else {
                 this.logger.debug(`Verifying manifest`);
-                await this.cryptoService.verifyManifest(this.revision, this.nodeKey.key, allBlockHashes, armoredManifestSignature);
+                await this.cryptoService.verifyManifest(
+                    this.revision,
+                    this.nodeKey.key,
+                    allBlockHashes,
+                    armoredManifestSignature,
+                );
             }
 
             await writer.close();
@@ -161,10 +169,15 @@ export class FileDownloader {
             logger.debug(`Downloading`);
             await this.controller.waitWhilePaused();
             try {
-                const encryptedBlock = await this.apiService.downloadBlock(blockMetadata.bareUrl, blockMetadata.token, (downloadedBytes) => {
-                    blockProgress += downloadedBytes;
-                    onProgress?.(downloadedBytes);
-                }, this.signal);
+                const encryptedBlock = await this.apiService.downloadBlock(
+                    blockMetadata.bareUrl,
+                    blockMetadata.token,
+                    (downloadedBytes) => {
+                        blockProgress += downloadedBytes;
+                        onProgress?.(downloadedBytes);
+                    },
+                    this.signal,
+                );
 
                 if (ignoreIntegrityErrors) {
                     logger.warn('Skipping hash check');
@@ -174,7 +187,11 @@ export class FileDownloader {
                 }
 
                 logger.debug(`Decrypting`);
-                decryptedBlock = await this.cryptoService.decryptBlock(encryptedBlock, blockMetadata.armoredSignature!, cryptoKeys);
+                decryptedBlock = await this.cryptoService.decryptBlock(
+                    encryptedBlock,
+                    blockMetadata.armoredSignature!,
+                    cryptoKeys,
+                );
             } catch (error) {
                 if (blockProgress !== 0) {
                     onProgress?.(-blockProgress);
@@ -183,7 +200,11 @@ export class FileDownloader {
 
                 if (error instanceof APIHTTPError && error.statusCode === HTTPErrorCode.NOT_FOUND) {
                     logger.warn(`Token expired, fetching new token and retrying`);
-                    blockMetadata = await this.apiService.getRevisionBlockToken(this.revision.uid, blockMetadata.index, this.signal);
+                    blockMetadata = await this.apiService.getRevisionBlockToken(
+                        this.revision.uid,
+                        blockMetadata.index,
+                        this.signal,
+                    );
                     continue;
                 }
 
@@ -255,7 +276,8 @@ export class FileDownloader {
     }
 
     private get ongoingDownloadPromises() {
-        return this.ongoingDownloads.values()
+        return this.ongoingDownloads
+            .values()
             .filter((value) => value.decryptedBufferedBlock === undefined)
             .map((value) => value.downloadPromise);
     }

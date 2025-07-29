@@ -1,7 +1,7 @@
-import { Author, FileDownloader, MaybeNode, NodeType, Revision, ThumbnailType } from "../interface";
-import { ProtonDriveClient } from "../protonDriveClient";
-import { Diagnostic, DiagnosticOptions, DiagnosticResult } from "./interface";
-import { IntegrityVerificationStream } from "./integrityVerificationStream";
+import { Author, FileDownloader, MaybeNode, NodeType, Revision, ThumbnailType } from '../interface';
+import { ProtonDriveClient } from '../protonDriveClient';
+import { Diagnostic, DiagnosticOptions, DiagnosticResult } from './interface';
+import { IntegrityVerificationStream } from './integrityVerificationStream';
 
 /**
  * Diagnostic tool that uses SDK to traverse the node tree and verify
@@ -15,7 +15,7 @@ export class SDKDiagnostic implements Diagnostic {
         this.protonDriveClient = protonDriveClient;
     }
 
-    async* verifyMyFiles(options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
+    async *verifyMyFiles(options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
         let myFilesRootFolder: MaybeNode;
 
         try {
@@ -32,7 +32,7 @@ export class SDKDiagnostic implements Diagnostic {
         yield* this.verifyNodeTree(myFilesRootFolder, options);
     }
 
-    async* verifyNodeTree(node: MaybeNode, options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
+    async *verifyNodeTree(node: MaybeNode, options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
         const isFolder = getNodeType(node) === NodeType.Folder;
 
         yield* this.verifyNode(node, options);
@@ -42,7 +42,7 @@ export class SDKDiagnostic implements Diagnostic {
         }
     }
 
-    private async* verifyNode(node: MaybeNode, options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
+    private async *verifyNode(node: MaybeNode, options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
         const nodeUid = node.ok ? node.value.uid : node.error.uid;
 
         if (!node.ok) {
@@ -57,10 +57,16 @@ export class SDKDiagnostic implements Diagnostic {
         const nodeInfo = {
             ...getNodeUids(node),
             node,
-        }
+        };
 
-        yield* this.verifyAuthor(node.ok ? node.value.keyAuthor : node.error.keyAuthor, { ...nodeInfo, authorType: 'key' });
-        yield* this.verifyAuthor(node.ok ? node.value.nameAuthor : node.error.nameAuthor, { ...nodeInfo, authorType: 'name' });
+        yield* this.verifyAuthor(node.ok ? node.value.keyAuthor : node.error.keyAuthor, {
+            ...nodeInfo,
+            authorType: 'key',
+        });
+        yield* this.verifyAuthor(node.ok ? node.value.nameAuthor : node.error.nameAuthor, {
+            ...nodeInfo,
+            authorType: 'name',
+        });
         if (activeRevision) {
             yield* this.verifyAuthor(activeRevision.contentAuthor, { ...nodeInfo, authorType: 'content' });
         }
@@ -75,7 +81,10 @@ export class SDKDiagnostic implements Diagnostic {
         }
     }
 
-    private async* verifyAuthor(author: Author, info: { nodeUid: string, authorType: string, revisionUid?: string, node: MaybeNode }): AsyncGenerator<DiagnosticResult> {
+    private async *verifyAuthor(
+        author: Author,
+        info: { nodeUid: string; authorType: string; revisionUid?: string; node: MaybeNode },
+    ): AsyncGenerator<DiagnosticResult> {
         if (!author.ok) {
             yield {
                 type: 'unverified_author',
@@ -86,7 +95,7 @@ export class SDKDiagnostic implements Diagnostic {
         }
     }
 
-    private async* verifyFileExtendedAttributes(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
+    private async *verifyFileExtendedAttributes(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
         const activeRevision = getActiveRevision(node);
 
         const expectedAttributes = getNodeType(node) === NodeType.File;
@@ -98,7 +107,7 @@ export class SDKDiagnostic implements Diagnostic {
                 ...getNodeUids(node),
                 field: 'sha1',
                 value: claimedSha1,
-            }
+            };
         }
 
         if (expectedAttributes && !claimedSha1) {
@@ -106,11 +115,11 @@ export class SDKDiagnostic implements Diagnostic {
                 type: 'extended_attributes_missing_field',
                 ...getNodeUids(node),
                 missingField: 'sha1',
-            }
+            };
         }
     }
 
-    private async* verifyContent(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
+    private async *verifyContent(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
         if (getNodeType(node) !== NodeType.File) {
             return;
         }
@@ -119,7 +128,7 @@ export class SDKDiagnostic implements Diagnostic {
             yield {
                 type: 'content_file_missing_revision',
                 nodeUid: node.ok ? node.value.uid : node.error.uid,
-            }
+            };
             return;
         }
 
@@ -165,7 +174,7 @@ export class SDKDiagnostic implements Diagnostic {
         }
     }
 
-    private async* verifyThumbnails(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
+    private async *verifyThumbnails(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
         if (getNodeType(node) !== NodeType.File) {
             return;
         }
@@ -173,14 +182,16 @@ export class SDKDiagnostic implements Diagnostic {
         const nodeUid = node.ok ? node.value.uid : node.error.uid;
 
         try {
-            const result = await Array.fromAsync(this.protonDriveClient.iterateThumbnails([nodeUid], ThumbnailType.Type1));
+            const result = await Array.fromAsync(
+                this.protonDriveClient.iterateThumbnails([nodeUid], ThumbnailType.Type1),
+            );
 
             if (result.length === 0) {
                 yield {
                     type: 'sdk_error',
                     call: `iterateThumbnails(${nodeUid})`,
                     error: new Error('No thumbnails found'),
-                }
+                };
             }
             // TODO: We should have better way to check if the thumbnail is not expected.
             if (!result[0].ok && result[0].error !== 'Node has no thumbnail') {
@@ -188,18 +199,18 @@ export class SDKDiagnostic implements Diagnostic {
                     type: 'thumbnails_error',
                     nodeUid,
                     error: result[0].error,
-                }
+                };
             }
         } catch (error: unknown) {
             yield {
                 type: 'sdk_error',
                 call: `iterateThumbnails(${nodeUid})`,
                 error,
-            }
+            };
         }
     }
 
-    private async* verifyNodeChildren(node: MaybeNode, options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
+    private async *verifyNodeChildren(node: MaybeNode, options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
         const nodeUid = node.ok ? node.value.uid : node.error.uid;
         try {
             for await (const child of this.protonDriveClient.iterateFolderChildren(node)) {
@@ -215,7 +226,7 @@ export class SDKDiagnostic implements Diagnostic {
     }
 }
 
-function getNodeUids(node: MaybeNode): { nodeUid: string, revisionUid?: string } {
+function getNodeUids(node: MaybeNode): { nodeUid: string; revisionUid?: string } {
     const activeRevision = getActiveRevision(node);
     return {
         nodeUid: node.ok ? node.value.uid : node.error.uid,

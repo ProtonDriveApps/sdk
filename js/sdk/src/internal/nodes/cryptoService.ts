@@ -1,15 +1,35 @@
 import { c } from 'ttag';
 
-import { DriveCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from "../../crypto";
-import { resultOk, resultError, Result, Author, AnonymousUser, ProtonDriveAccount, ProtonDriveTelemetry, Logger, MetricsDecryptionErrorField, MetricVerificationErrorField } from "../../interface";
+import { DriveCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from '../../crypto';
+import {
+    resultOk,
+    resultError,
+    Result,
+    Author,
+    AnonymousUser,
+    ProtonDriveAccount,
+    ProtonDriveTelemetry,
+    Logger,
+    MetricsDecryptionErrorField,
+    MetricVerificationErrorField,
+} from '../../interface';
 import { ValidationError } from '../../errors';
-import { getErrorMessage, getVerificationMessage } from "../errors";
-import { splitNodeUid } from "../uids";
-import { EncryptedNode, EncryptedNodeFolderCrypto, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys, SharesService, EncryptedRevision, DecryptedUnparsedRevision } from "./interface";
+import { getErrorMessage, getVerificationMessage } from '../errors';
+import { splitNodeUid } from '../uids';
+import {
+    EncryptedNode,
+    EncryptedNodeFolderCrypto,
+    DecryptedUnparsedNode,
+    DecryptedNode,
+    DecryptedNodeKeys,
+    SharesService,
+    EncryptedRevision,
+    DecryptedUnparsedRevision,
+} from './interface';
 
 /**
  * Provides crypto operations for nodes metadata.
- * 
+ *
  * The node crypto service is responsible for decrypting and encrypting node
  * metadata. It should export high-level actions only, such as "decrypt node"
  * instead of low-level operations like "decrypt node key". Low-level operations
@@ -36,11 +56,14 @@ export class NodesCryptoService {
         this.shareService = shareService;
     }
 
-    async decryptNode(node: EncryptedNode, parentKey: PrivateKey): Promise<{ node: DecryptedUnparsedNode, keys?: DecryptedNodeKeys }> {
+    async decryptNode(
+        node: EncryptedNode,
+        parentKey: PrivateKey,
+    ): Promise<{ node: DecryptedUnparsedNode; keys?: DecryptedNodeKeys }> {
         const commonNodeMetadata = {
             ...node,
             encryptedCrypto: undefined,
-        }
+        };
 
         const signatureEmailKeys = node.encryptedCrypto.signatureEmail
             ? await this.account.getPublicKeys(node.encryptedCrypto.signatureEmail)
@@ -53,9 +76,7 @@ export class NodesCryptoService {
         const nodeParentKeys = node.parentUid ? [parentKey] : [];
 
         // Anonymous uploads (without signature email set) use parent key instead.
-        const keyVerificationKeys = node.encryptedCrypto.signatureEmail
-            ? signatureEmailKeys
-            : nodeParentKeys;
+        const keyVerificationKeys = node.encryptedCrypto.signatureEmail ? signatureEmailKeys : nodeParentKeys;
 
         let nameVerificationKeys;
         const nameSignatureEmail = node.encryptedCrypto.nameSignatureEmail;
@@ -89,13 +110,11 @@ export class NodesCryptoService {
                         error: errorMessage,
                     }),
                     nameAuthor,
-                    activeRevision: "file" in node.encryptedCrypto
-                        ? resultError(new Error(errorMessage))
-                        : undefined,
+                    activeRevision: 'file' in node.encryptedCrypto ? resultError(new Error(errorMessage)) : undefined,
                     folder: undefined,
                     errors: [error],
                 },
-            }
+            };
         }
 
         const errors = [];
@@ -104,7 +123,7 @@ export class NodesCryptoService {
         let hashKeyAuthor;
         let folder;
         let folderExtendedAttributesAuthor;
-        if ("folder" in node.encryptedCrypto) {
+        if ('folder' in node.encryptedCrypto) {
             try {
                 const hashKeyResult = await this.decryptHashKey(node, key, signatureEmailKeys);
                 hashKey = hashKeyResult.hashKey;
@@ -123,7 +142,7 @@ export class NodesCryptoService {
                     node.encryptedCrypto.folder.armoredExtendedAttributes,
                     key,
                     folderExtendedAttributesVerificationKeys,
-                    node.encryptedCrypto.signatureEmail
+                    node.encryptedCrypto.signatureEmail,
                 );
                 folder = {
                     extendedAttributes: extendedAttributesResult.extendedAttributes,
@@ -138,9 +157,11 @@ export class NodesCryptoService {
         let activeRevision: Result<DecryptedUnparsedRevision, Error> | undefined;
         let contentKeyPacketSessionKey;
         let contentKeyPacketAuthor;
-        if ("file" in node.encryptedCrypto) {
+        if ('file' in node.encryptedCrypto) {
             try {
-                activeRevision = resultOk(await this.decryptRevision(node.uid, node.encryptedCrypto.activeRevision, key));
+                activeRevision = resultOk(
+                    await this.decryptRevision(node.uid, node.encryptedCrypto.activeRevision, key),
+                );
             } catch (error: unknown) {
                 void this.reportDecryptionError(node, 'nodeExtendedAttributes', error);
                 const message = getErrorMessage(error);
@@ -159,13 +180,15 @@ export class NodesCryptoService {
                 );
 
                 contentKeyPacketSessionKey = keySessionKeyResult.sessionKey;
-                contentKeyPacketAuthor = keySessionKeyResult.verified && await this.handleClaimedAuthor(
-                    node,
-                    'nodeContentKey',
-                    c('Property').t`content key`,
-                    keySessionKeyResult.verified,
-                    node.encryptedCrypto.signatureEmail,
-                );
+                contentKeyPacketAuthor =
+                    keySessionKeyResult.verified &&
+                    (await this.handleClaimedAuthor(
+                        node,
+                        'nodeContentKey',
+                        c('Property').t`content key`,
+                        keySessionKeyResult.verified,
+                        node.encryptedCrypto.signatureEmail,
+                    ));
             } catch (error: unknown) {
                 void this.reportDecryptionError(node, 'nodeContentKey', error);
                 const message = getErrorMessage(error);
@@ -217,11 +240,17 @@ export class NodesCryptoService {
                 hashKey,
             },
         };
-    };
+    }
 
-    private async decryptKey(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PublicKey[]): Promise<DecryptedNodeKeys & {
-        author: Author,
-    }> {
+    private async decryptKey(
+        node: EncryptedNode,
+        parentKey: PrivateKey,
+        verificationKeys: PublicKey[],
+    ): Promise<
+        DecryptedNodeKeys & {
+            author: Author;
+        }
+    > {
         const key = await this.driveCrypto.decryptKey(
             node.encryptedCrypto.armoredKey,
             node.encryptedCrypto.armoredNodePassphrase,
@@ -234,13 +263,24 @@ export class NodesCryptoService {
             passphrase: key.passphrase,
             key: key.key,
             passphraseSessionKey: key.passphraseSessionKey,
-            author: await this.handleClaimedAuthor(node, 'nodeKey', c('Property').t`key`, key.verified, node.encryptedCrypto.signatureEmail, verificationKeys.length === 0),
+            author: await this.handleClaimedAuthor(
+                node,
+                'nodeKey',
+                c('Property').t`key`,
+                key.verified,
+                node.encryptedCrypto.signatureEmail,
+                verificationKeys.length === 0,
+            ),
         };
-    };
+    }
 
-    private async decryptName(node: EncryptedNode, parentKey: PrivateKey, verificationKeys: PublicKey[]): Promise<{
-        name: Result<string, Error>,
-        author: Author,
+    private async decryptName(
+        node: EncryptedNode,
+        parentKey: PrivateKey,
+        verificationKeys: PublicKey[],
+    ): Promise<{
+        name: Result<string, Error>;
+        author: Author;
     }> {
         const nameSignatureEmail = node.encryptedCrypto.nameSignatureEmail;
 
@@ -253,8 +293,15 @@ export class NodesCryptoService {
 
             return {
                 name: resultOk(name),
-                author: await this.handleClaimedAuthor(node, 'nodeName', c('Property').t`name`, verified, nameSignatureEmail, verificationKeys.length === 0),
-            }
+                author: await this.handleClaimedAuthor(
+                    node,
+                    'nodeName',
+                    c('Property').t`name`,
+                    verified,
+                    nameSignatureEmail,
+                    verificationKeys.length === 0,
+                ),
+            };
         } catch (error: unknown) {
             void this.reportDecryptionError(node, 'nodeName', error);
             const errorMessage = getErrorMessage(error);
@@ -264,19 +311,23 @@ export class NodesCryptoService {
                     claimedAuthor: nameSignatureEmail,
                     error: errorMessage,
                 }),
-            }
+            };
         }
-    };
+    }
 
     async getNameSessionKey(node: { encryptedName: string }, parentKey: PrivateKey): Promise<SessionKey> {
         return this.driveCrypto.decryptSessionKey(node.encryptedName, parentKey);
     }
 
-    private async decryptHashKey(node: EncryptedNode, nodeKey: PrivateKey, addressKeys: PublicKey[]): Promise<{
-        hashKey: Uint8Array,
-        author: Author,
+    private async decryptHashKey(
+        node: EncryptedNode,
+        nodeKey: PrivateKey,
+        addressKeys: PublicKey[],
+    ): Promise<{
+        hashKey: Uint8Array;
+        author: Author;
     }> {
-        if (!("folder" in node.encryptedCrypto)) {
+        if (!('folder' in node.encryptedCrypto)) {
             // This is developer error.
             throw new Error('Node is not a folder');
         }
@@ -289,19 +340,26 @@ export class NodesCryptoService {
 
         return {
             hashKey,
-            author: await this.handleClaimedAuthor(node, 'nodeHashKey', c('Property').t`hash key`, verified, node.encryptedCrypto.signatureEmail),
-        }
+            author: await this.handleClaimedAuthor(
+                node,
+                'nodeHashKey',
+                c('Property').t`hash key`,
+                verified,
+                node.encryptedCrypto.signatureEmail,
+            ),
+        };
     }
 
-    async decryptRevision(nodeUid: string, encryptedRevision: EncryptedRevision, nodeKey: PrivateKey): Promise<DecryptedUnparsedRevision> {
+    async decryptRevision(
+        nodeUid: string,
+        encryptedRevision: EncryptedRevision,
+        nodeKey: PrivateKey,
+    ): Promise<DecryptedUnparsedRevision> {
         const verificationKeys = encryptedRevision.signatureEmail
             ? await this.account.getPublicKeys(encryptedRevision.signatureEmail)
             : [nodeKey];
 
-        const {
-            extendedAttributes,
-            author: contentAuthor,
-        } = await this.decryptExtendedAttributes(
+        const { extendedAttributes, author: contentAuthor } = await this.decryptExtendedAttributes(
             { uid: nodeUid, creationTime: encryptedRevision.creationTime },
             encryptedRevision.armoredExtendedAttributes,
             nodeKey,
@@ -317,23 +375,23 @@ export class NodesCryptoService {
             contentAuthor,
             extendedAttributes,
             thumbnails: encryptedRevision.thumbnails,
-        }
+        };
     }
 
     private async decryptExtendedAttributes(
-        node: { uid: string, creationTime: Date },
+        node: { uid: string; creationTime: Date },
         encryptedExtendedAttributes: string | undefined,
         nodeKey: PrivateKey,
         addressKeys: PublicKey[],
         signatureEmail?: string,
     ): Promise<{
-        extendedAttributes?: string,
-        author: Author,
+        extendedAttributes?: string;
+        author: Author;
     }> {
         if (!encryptedExtendedAttributes) {
             return {
                 author: resultOk(signatureEmail) as Author,
-            }
+            };
         }
 
         const { extendedAttributes, verified } = await this.driveCrypto.decryptExtendedAttributes(
@@ -344,25 +402,27 @@ export class NodesCryptoService {
 
         return {
             extendedAttributes,
-            author: await this.handleClaimedAuthor(node, "nodeExtendedAttributes", c('Property').t`attributes`, verified, signatureEmail),
-        }
+            author: await this.handleClaimedAuthor(
+                node,
+                'nodeExtendedAttributes',
+                c('Property').t`attributes`,
+                verified,
+                signatureEmail,
+            ),
+        };
     }
 
     async createFolder(
-        parentKeys: { key: PrivateKey, hashKey: Uint8Array },
-        address: { email: string, addressKey: PrivateKey },
+        parentKeys: { key: PrivateKey; hashKey: Uint8Array },
+        address: { email: string; addressKey: PrivateKey },
         name: string,
         extendedAttributes?: string,
     ): Promise<{
-        encryptedCrypto: Required<EncryptedNodeFolderCrypto> & { encryptedName: string, hash: string },
-        keys: DecryptedNodeKeys,
+        encryptedCrypto: Required<EncryptedNodeFolderCrypto> & { encryptedName: string; hash: string };
+        keys: DecryptedNodeKeys;
     }> {
         const { email, addressKey } = address;
-        const [
-            nodeKeys,
-            { armoredNodeName },
-            hash,
-        ] = await Promise.all([
+        const [nodeKeys, { armoredNodeName }, hash] = await Promise.all([
             this.driveCrypto.generateKey([parentKeys.key], addressKey),
             this.driveCrypto.encryptNodeName(name, undefined, parentKeys.key, addressKey),
             this.driveCrypto.generateLookupHash(name, parentKeys.hashKey),
@@ -398,18 +458,23 @@ export class NodesCryptoService {
     }
 
     async encryptNewName(
-        parentKeys: { key: PrivateKey, hashKey?: Uint8Array },
+        parentKeys: { key: PrivateKey; hashKey?: Uint8Array },
         nodeNameSessionKey: SessionKey,
-        address: { email: string, addressKey: PrivateKey },
+        address: { email: string; addressKey: PrivateKey },
         newName: string,
     ): Promise<{
-        signatureEmail: string,
-        armoredNodeName: string,
-        hash?: string,
+        signatureEmail: string;
+        armoredNodeName: string;
+        hash?: string;
     }> {
         const { email, addressKey } = address;
 
-        const { armoredNodeName } = await this.driveCrypto.encryptNodeName(newName, nodeNameSessionKey, parentKeys.key, addressKey);
+        const { armoredNodeName } = await this.driveCrypto.encryptNodeName(
+            newName,
+            nodeNameSessionKey,
+            parentKeys.key,
+            addressKey,
+        );
 
         const hash = parentKeys.hashKey
             ? await this.driveCrypto.generateLookupHash(newName, parentKeys.hashKey)
@@ -419,20 +484,20 @@ export class NodesCryptoService {
             armoredNodeName,
             hash,
         };
-    };
+    }
 
     async moveNode(
         node: Pick<DecryptedNode, 'name'>,
-        keys: { passphrase: string, passphraseSessionKey: SessionKey, nameSessionKey: SessionKey },
-        parentKeys: { key: PrivateKey, hashKey: Uint8Array },
-        address: { email: string, addressKey: PrivateKey },
+        keys: { passphrase: string; passphraseSessionKey: SessionKey; nameSessionKey: SessionKey },
+        parentKeys: { key: PrivateKey; hashKey: Uint8Array },
+        address: { email: string; addressKey: PrivateKey },
     ): Promise<{
-        encryptedName: string,
-        hash: string,
-        armoredNodePassphrase: string,
-        armoredNodePassphraseSignature: string,
-        signatureEmail: string,
-        nameSignatureEmail: string,
+        encryptedName: string;
+        hash: string;
+        armoredNodePassphrase: string;
+        armoredNodePassphraseSignature: string;
+        signatureEmail: string;
+        nameSignatureEmail: string;
     }> {
         if (!parentKeys.hashKey) {
             throw new ValidationError('Moving item to a non-folder is not allowed');
@@ -442,9 +507,19 @@ export class NodesCryptoService {
         }
 
         const { email, addressKey } = address;
-        const { armoredNodeName } = await this.driveCrypto.encryptNodeName(node.name.value, keys.nameSessionKey, parentKeys.key, addressKey);
+        const { armoredNodeName } = await this.driveCrypto.encryptNodeName(
+            node.name.value,
+            keys.nameSessionKey,
+            parentKeys.key,
+            addressKey,
+        );
         const hash = await this.driveCrypto.generateLookupHash(node.name.value, parentKeys.hashKey);
-        const { armoredPassphrase, armoredPassphraseSignature } = await this.driveCrypto.encryptPassphrase(keys.passphrase, keys.passphraseSessionKey, [parentKeys.key], addressKey);
+        const { armoredPassphrase, armoredPassphraseSignature } = await this.driveCrypto.encryptPassphrase(
+            keys.passphrase,
+            keys.passphraseSessionKey,
+            [parentKeys.key],
+            addressKey,
+        );
 
         return {
             encryptedName: armoredNodeName,
@@ -457,7 +532,7 @@ export class NodesCryptoService {
     }
 
     private async handleClaimedAuthor(
-        node: { uid: string, creationTime: Date },
+        node: { uid: string; creationTime: Date },
         field: MetricVerificationErrorField,
         signatureType: string,
         verified: VERIFICATION_STATUS,
@@ -472,7 +547,7 @@ export class NodesCryptoService {
     }
 
     private async reportVerificationError(
-        node: { uid: string, creationTime: Date },
+        node: { uid: string; creationTime: Date },
         field: MetricVerificationErrorField,
         claimedAuthor?: string,
     ) {
@@ -492,7 +567,9 @@ export class NodesCryptoService {
             this.logger.error('Failed to check if claimed author matches default share', error);
         }
 
-        this.logger.warn(`Failed to verify ${field} for node ${node.uid} (from before 2024: ${fromBefore2024}, matching address: ${addressMatchingDefaultShare})`);
+        this.logger.warn(
+            `Failed to verify ${field} for node ${node.uid} (from before 2024: ${fromBefore2024}, matching address: ${addressMatchingDefaultShare})`,
+        );
 
         this.telemetry.logEvent({
             eventName: 'verificationError',
@@ -535,7 +612,12 @@ export class NodesCryptoService {
 /**
  * @param signatureType - Must be translated before calling this function.
  */
-function handleClaimedAuthor(signatureType: string, verified: VERIFICATION_STATUS, claimedAuthor?: string, notAvailableVerificationKeys = false): Author {
+function handleClaimedAuthor(
+    signatureType: string,
+    verified: VERIFICATION_STATUS,
+    claimedAuthor?: string,
+    notAvailableVerificationKeys = false,
+): Author {
     if (!claimedAuthor && notAvailableVerificationKeys) {
         return resultOk(null as AnonymousUser);
     }

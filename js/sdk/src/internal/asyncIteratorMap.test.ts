@@ -52,7 +52,7 @@ describe('asyncIteratorMap', () => {
         const inputGen = createAsyncGenerator(Object.keys(delays).map(Number));
 
         const slowMapper = async (x: number) => {
-            await new Promise(resolve => setTimeout(resolve, delays[x]));
+            await new Promise((resolve) => setTimeout(resolve, delays[x]));
             return x * 2;
         };
 
@@ -71,11 +71,11 @@ describe('asyncIteratorMap', () => {
     });
 
     test('handles errors from input iterator properly', async () => {
-        const throwingInputGen = async function*() {
+        const throwingInputGen = async function* () {
             yield 1;
             yield 2;
             throw new Error('Error providing value: 3');
-        }
+        };
 
         const mapper = async (x: number) => x * 2;
 
@@ -134,7 +134,7 @@ describe('asyncIteratorMap', () => {
             maxConcurrentExecutions = Math.max(maxConcurrentExecutions, concurrentExecutions);
 
             // Wait for 100ms to simulate work
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 100));
 
             concurrentExecutions--;
             return x * 2;

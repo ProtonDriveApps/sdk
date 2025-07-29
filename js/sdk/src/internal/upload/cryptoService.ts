@@ -1,9 +1,9 @@
-import { c } from "ttag";
+import { c } from 'ttag';
 
-import { DriveCrypto, PrivateKey, SessionKey } from "../../crypto";
-import { IntegrityError } from "../../errors";
-import { Thumbnail } from "../../interface";
-import { EncryptedBlock, EncryptedThumbnail, NodeCrypto, NodeRevisionDraftKeys, NodesService } from "./interface";
+import { DriveCrypto, PrivateKey, SessionKey } from '../../crypto';
+import { IntegrityError } from '../../errors';
+import { Thumbnail } from '../../interface';
+import { EncryptedBlock, EncryptedThumbnail, NodeCrypto, NodeRevisionDraftKeys, NodesService } from './interface';
 
 export class UploadCryptoService {
     constructor(
@@ -16,16 +16,12 @@ export class UploadCryptoService {
 
     async generateFileCrypto(
         parentUid: string,
-        parentKeys: { key: PrivateKey, hashKey: Uint8Array },
+        parentKeys: { key: PrivateKey; hashKey: Uint8Array },
         name: string,
     ): Promise<NodeCrypto> {
         const signatureAddress = await this.nodesService.getRootNodeEmailKey(parentUid);
 
-        const [
-            nodeKeys,
-            { armoredNodeName },
-            hash,
-        ] = await Promise.all([
+        const [nodeKeys, { armoredNodeName }, hash] = await Promise.all([
             this.driveCrypto.generateKey([parentKeys.key], signatureAddress.addressKey),
             this.driveCrypto.encryptNodeName(name, undefined, parentKeys.key, signatureAddress.addressKey),
             this.driveCrypto.generateLookupHash(name, parentKeys.hashKey),
@@ -44,19 +40,24 @@ export class UploadCryptoService {
         };
     }
 
-    async generateNameHashes(parentHashKey: Uint8Array, names: string[]): Promise<{ name: string, hash: string }[]> {
-        return Promise.all(names.map(async (name) => ({
-            name,
-            hash: await this.driveCrypto.generateLookupHash(name, parentHashKey)
-        })));
+    async generateNameHashes(parentHashKey: Uint8Array, names: string[]): Promise<{ name: string; hash: string }[]> {
+        return Promise.all(
+            names.map(async (name) => ({
+                name,
+                hash: await this.driveCrypto.generateLookupHash(name, parentHashKey),
+            })),
+        );
     }
 
-    async encryptThumbnail(nodeRevisionDraftKeys: NodeRevisionDraftKeys, thumbnail: Thumbnail): Promise<EncryptedThumbnail> {
+    async encryptThumbnail(
+        nodeRevisionDraftKeys: NodeRevisionDraftKeys,
+        thumbnail: Thumbnail,
+    ): Promise<EncryptedThumbnail> {
         const { encryptedData } = await this.driveCrypto.encryptThumbnailBlock(
             thumbnail.thumbnail,
             nodeRevisionDraftKeys.contentKeyPacketSessionKey,
             nodeRevisionDraftKeys.signatureAddress.addressKey,
-        )
+        );
 
         const digest = await crypto.subtle.digest('SHA-256', encryptedData);
 
@@ -66,7 +67,7 @@ export class UploadCryptoService {
             originalSize: thumbnail.thumbnail.length,
             encryptedSize: encryptedData.length,
             hash: new Uint8Array(digest),
-        }
+        };
     }
 
     async encryptBlock(
@@ -93,25 +94,36 @@ export class UploadCryptoService {
             originalSize: block.length,
             encryptedSize: encryptedData.length,
             hash: new Uint8Array(digest),
-        }
+        };
     }
 
-    async commitFile(nodeRevisionDraftKeys: NodeRevisionDraftKeys, manifest: Uint8Array, extendedAttributes?: string): Promise<{
-        armoredManifestSignature: string,
-        signatureEmail: string,
-        armoredExtendedAttributes?: string,
+    async commitFile(
+        nodeRevisionDraftKeys: NodeRevisionDraftKeys,
+        manifest: Uint8Array,
+        extendedAttributes?: string,
+    ): Promise<{
+        armoredManifestSignature: string;
+        signatureEmail: string;
+        armoredExtendedAttributes?: string;
     }> {
-        const { armoredManifestSignature } = await this.driveCrypto.signManifest(manifest, nodeRevisionDraftKeys.signatureAddress.addressKey);
+        const { armoredManifestSignature } = await this.driveCrypto.signManifest(
+            manifest,
+            nodeRevisionDraftKeys.signatureAddress.addressKey,
+        );
 
         const { armoredExtendedAttributes } = extendedAttributes
-            ? await this.driveCrypto.encryptExtendedAttributes(extendedAttributes, nodeRevisionDraftKeys.key, nodeRevisionDraftKeys.signatureAddress.addressKey)
+            ? await this.driveCrypto.encryptExtendedAttributes(
+                  extendedAttributes,
+                  nodeRevisionDraftKeys.key,
+                  nodeRevisionDraftKeys.signatureAddress.addressKey,
+              )
             : { armoredExtendedAttributes: undefined };
 
         return {
             armoredManifestSignature,
             signatureEmail: nodeRevisionDraftKeys.signatureAddress.email,
             armoredExtendedAttributes,
-        }
+        };
     }
 
     async getContentKeyPacketSessionKey(nodeKey: PrivateKey, base64ContentKeyPacket: string): Promise<SessionKey> {
@@ -130,7 +142,7 @@ export class UploadCryptoService {
         verificationCode: Uint8Array,
         encryptedData: Uint8Array,
     ): Promise<{
-        verificationToken: Uint8Array,
+        verificationToken: Uint8Array;
     }> {
         // Attempt to decrypt data block, to try to detect bitflips / bad hardware
         //
@@ -140,12 +152,7 @@ export class UploadCryptoService {
         // Additionally, we use the key provided by the verification endpoint, to
         // ensure the correct key was used to encrypt the data
         try {
-            await this.driveCrypto.decryptBlock(
-                encryptedData,
-                undefined,
-                nodeKey,
-                contentKeyPacketSessionKey,
-            );
+            await this.driveCrypto.decryptBlock(encryptedData, undefined, nodeKey, contentKeyPacketSessionKey);
         } catch (error) {
             throw new IntegrityError(c('Error').t`Data integrity check of one part failed`, {
                 error,
@@ -157,6 +164,6 @@ export class UploadCryptoService {
         const verificationToken = verificationCode.map((value, index) => value ^ (encryptedData[index] || 0));
         return {
             verificationToken,
-        }
+        };
     }
 }

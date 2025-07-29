@@ -1,22 +1,26 @@
-import { DriveAPIService, drivePaths, corePaths } from "../apiService";
-import { makeNodeUid } from "../uids";
-import { DriveEventsListWithStatus, DriveEvent, DriveEventType, NodeEvent, NodeEventType } from "./interface";
+import { DriveAPIService, drivePaths, corePaths } from '../apiService';
+import { makeNodeUid } from '../uids';
+import { DriveEventsListWithStatus, DriveEvent, DriveEventType, NodeEvent, NodeEventType } from './interface';
 
-type GetCoreLatestEventResponse = corePaths['/core/{_version}/events/latest']['get']['responses']['200']['content']['application/json'];
-type GetCoreEventResponse = corePaths['/core/{_version}/events/{id}']['get']['responses']['200']['content']['application/json'];
+type GetCoreLatestEventResponse =
+    corePaths['/core/{_version}/events/latest']['get']['responses']['200']['content']['application/json'];
+type GetCoreEventResponse =
+    corePaths['/core/{_version}/events/{id}']['get']['responses']['200']['content']['application/json'];
 
-type GetVolumeLatestEventResponse = drivePaths['/drive/volumes/{volumeID}/events/latest']['get']['responses']['200']['content']['application/json'];
-type GetVolumeEventResponse = drivePaths['/drive/v2/volumes/{volumeID}/events/{eventID}']['get']['responses']['200']['content']['application/json'];
+type GetVolumeLatestEventResponse =
+    drivePaths['/drive/volumes/{volumeID}/events/latest']['get']['responses']['200']['content']['application/json'];
+type GetVolumeEventResponse =
+    drivePaths['/drive/v2/volumes/{volumeID}/events/{eventID}']['get']['responses']['200']['content']['application/json'];
 
 interface VolumeEventTypeMap {
-    [key: number]: NodeEventType,
+    [key: number]: NodeEventType;
 }
 const VOLUME_EVENT_TYPE_MAP: VolumeEventTypeMap = {
     0: DriveEventType.NodeDeleted,
     1: DriveEventType.NodeCreated,
     2: DriveEventType.NodeUpdated,
     3: DriveEventType.NodeUpdated,
-}
+};
 
 /**
  * Provides API communication for fetching events.
@@ -39,11 +43,16 @@ export class EventsAPIService {
         const result = await this.apiService.get<GetCoreEventResponse>(`core/v5/events/${eventId}`);
         // in core/v5/events, refresh is always all apps, value 255
         const refresh = result.Refresh > 0;
-        const events: DriveEvent[] = (refresh || result.DriveShareRefresh?.Action === 2) ? [{
-            type: DriveEventType.SharedWithMeUpdated,
-            eventId: result.EventID,
-            treeEventScopeId: 'core',
-        }] : [];
+        const events: DriveEvent[] =
+            refresh || result.DriveShareRefresh?.Action === 2
+                ? [
+                      {
+                          type: DriveEventType.SharedWithMeUpdated,
+                          eventId: result.EventID,
+                          treeEventScopeId: 'core',
+                      },
+                  ]
+                : [];
 
         return {
             latestEventId: result.EventID,
@@ -54,12 +63,16 @@ export class EventsAPIService {
     }
 
     async getVolumeLatestEventId(volumeId: string): Promise<string> {
-        const result = await this.apiService.get<GetVolumeLatestEventResponse>(`drive/volumes/${volumeId}/events/latest`);
+        const result = await this.apiService.get<GetVolumeLatestEventResponse>(
+            `drive/volumes/${volumeId}/events/latest`,
+        );
         return result.EventID;
     }
 
     async getVolumeEvents(volumeId: string, eventId: string): Promise<DriveEventsListWithStatus> {
-        const result = await this.apiService.get<GetVolumeEventResponse>(`drive/v2/volumes/${volumeId}/events/${eventId}`);
+        const result = await this.apiService.get<GetVolumeEventResponse>(
+            `drive/v2/volumes/${volumeId}/events/${eventId}`,
+        );
         return {
             latestEventId: result.EventID,
             more: result.More,
@@ -69,7 +82,7 @@ export class EventsAPIService {
                 const uids = {
                     nodeUid: makeNodeUid(volumeId, event.Link.LinkID),
                     parentNodeUid: makeNodeUid(volumeId, event.Link.ParentLinkID as string),
-                }
+                };
                 return {
                     type,
                     ...uids,
