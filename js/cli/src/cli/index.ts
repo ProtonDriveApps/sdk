@@ -4,6 +4,7 @@ import { CommandAuthLogout } from './commandAuthLogout';
 import { CommandDeviceCreate } from './commandDeviceCreate';
 import { CommandDeviceDelete } from './commandDeviceDelete';
 import { CommandDeviceRename } from './commandDeviceRename';
+import { CommandDiagnosticTree } from './CommandDiagnosticTree';
 import { CommandEventFolder } from './commandEventFolder';
 import { CommandEventSharedByMe } from './commandEventSharedByMe';
 import { CommandEventSharedWithMe } from './commandEventSharedWithMe';
@@ -68,6 +69,7 @@ const COMMANDS = [
     new CommandDeviceCreate(),
     new CommandDeviceRename(),
     new CommandDeviceDelete(),
+    new CommandDiagnosticTree(),
 ].map((command: Command) => {
     command.options = command.options || {};
     command.options['help'] = {

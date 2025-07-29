@@ -1,12 +1,13 @@
 import { Account } from "./account/account";
+import { Srp } from "./account/srp";
+import { SQLiteEntititesCache } from "./cache";
+import { Paths } from "./cli/paths";
 import { Api as CryptoApi } from "./crypto/lib/worker/api";
 import { HTTPClient } from "./httpClient";
 import { initTelemetry } from "./telemetry";
-import { SQLiteEntititesCache } from "./cache";
-import { Paths } from "./cli/paths";
 
 import { ProtonDriveClient, MemoryCache, CachedCryptoMaterial, OpenPGPCryptoWithCryptoProxy, VERSION } from "../../sdk/src";
-import { Srp } from "./account/srp";
+import { initDiagnostic } from "../../sdk/src/diagnostic";
 
 interface Config {
     appVersion: string;
@@ -24,10 +25,12 @@ export async function init() {
     const account = await initAccount(cryptoApi, config);
     const srp = await initSrp(cryptoApi, config);
     const sdk = initSDK(cryptoApi, config, account, srp);
+    const sdkDiagnostic = initSDKDiagnostic(cryptoApi, config, account, srp);
     const paths = new Paths(sdk);
     return {
         account,
         sdk,
+        sdkDiagnostic,
         paths,
     };
 }
@@ -83,4 +86,21 @@ function initSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Sr
         srpModule: srp,
     });
     return sdk;
+}
+
+function initSDKDiagnostic(cryptoApi: CryptoApi, config: Config, account: Account, srp: Srp) {
+    const httpClient = new HTTPClient({
+        ...config,
+        uid: account.session?.uid || "",
+        accessToken: account.session?.accessToken || "",
+    });
+    const openPGPCryptoModule = new OpenPGPCryptoWithCryptoProxy(cryptoApi);
+
+    return initDiagnostic({
+        httpClient,
+        config: { baseUrl: config.baseUrl },
+        account,
+        openPGPCryptoModule,
+        srpModule: srp,
+    });
 }
