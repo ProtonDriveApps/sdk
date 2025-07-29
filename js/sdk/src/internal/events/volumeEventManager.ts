@@ -1,74 +1,76 @@
 import { Logger } from "../../interface";
 import { LoggerWithPrefix } from "../../telemetry";
 import { EventsAPIService } from "./apiService";
-import { EventsCache } from "./cache";
-import { DriveEvent, DriveListener } from "./interface";
-import { EventManager } from "./eventManager";
+import { DriveEvent, DriveEventsListWithStatus, DriveEventType, EventManagerInterface, UnsubscribeFromEventsSourceError } from "./interface";
+import { NotFoundAPIError } from "../apiService";
 
 /**
  * Combines API and event manager to provide a service for listening to
  * volume events. Volume events are all about nodes updates. Whenever
  * there is update to the node metadata or content, the event is emitted.
  */
-export class VolumeEventManager {
-    private manager: EventManager<DriveEvent>;
+export class VolumeEventManager implements EventManagerInterface<DriveEvent>{
 
-    constructor(logger: Logger, private apiService: EventsAPIService, private cache: EventsCache, private volumeId: string, isOwnVolume: boolean) {
+    constructor(private logger: Logger, private apiService: EventsAPIService, private volumeId: string) {
         this.apiService = apiService;
         this.volumeId = volumeId;
+        this.logger = new LoggerWithPrefix(logger, `volume ${volumeId}`);
+    }
 
-        this.manager = new EventManager(
-            new LoggerWithPrefix(logger, `volume ${volumeId}`),
-            () => this.getLastEventId(),
-            (eventId) => this.apiService.getVolumeEvents(volumeId, eventId, isOwnVolume),
-            (lastEventId) => this.cache.setLastEventId(volumeId, {
-                lastEventId,
-                pollingIntervalInSeconds: this.manager.pollingIntervalInSeconds,
-                isOwnVolume
-            }),
-        );
-        this.cache.getPollingIntervalInSeconds(volumeId)
-            .then((pollingIntervalInSeconds) => {
-                if (pollingIntervalInSeconds) {
-                    this.manager.pollingIntervalInSeconds = pollingIntervalInSeconds;
+    getLogger(): Logger {
+        return this.logger;
+    }
+
+    async * getEvents(eventId: string): AsyncIterable<DriveEvent> {
+        try {
+            let events: DriveEventsListWithStatus;
+            let more = true;
+            while (more) {
+                events = await this.apiService.getVolumeEvents(this.volumeId, eventId);
+                more = events.more;
+                if (events.refresh) {
+                    yield {
+                        type: DriveEventType.TreeRefresh,
+                        treeEventScopeId: this.volumeId,
+                        eventId: events.latestEventId,
+                    };
+                    break;
                 }
-            })
-            .catch(() => {});
-    }
-
-    private async getLastEventId(): Promise<string> {
-        const lastEventId = await this.cache.getLastEventId(this.volumeId);
-        if (lastEventId) {
-            return lastEventId;
-        }
-        return this.apiService.getVolumeLatestEventId(this.volumeId);
-    }
-
-    /**
-     * There is a limit how many volume subscribtions can be active at
-     * the same time. The manager of all volume managers should set the
-     * intervals for each volume accordingly depending on the volume
-     * type or the total number of subscriptions.
-     */
-    setPollingInterval(pollingIntervalInSeconds: number): void {
-        this.manager.pollingIntervalInSeconds = pollingIntervalInSeconds;
-    }
-
-    async startSubscription(): Promise<void> {
-        await this.manager.start();
-    }
-
-    async stopSubscription(): Promise<void> {
-        await this.manager.stop();
-    }
-
-    addListener(callback: DriveListener): void {
-        this.manager.addListener(async (events, fullRefresh) => {
-            if (fullRefresh) {
-                await callback([], this.volumeId);
-            } else {
-                await callback(events);
+                // Update to the latest eventId to avoid inactive volumes from getting out of sync
+                if (events.events.length === 0 && events.latestEventId !== eventId) {
+                    yield {
+                        type: DriveEventType.FastForward,
+                        treeEventScopeId: this.volumeId,
+                        eventId: events.latestEventId,
+                    };
+                    break;
+                }
+                yield* events.events;
+                eventId = events.latestEventId;
             }
-        });
+        } catch (error: unknown) {
+            if (error instanceof NotFoundAPIError) {
+                this.logger.info(`Volume events no longer accessible`);
+                yield {
+                    type: DriveEventType.TreeRemove,
+                    treeEventScopeId: this.volumeId,
+                    // After a TreeRemoval event, polling should stop.
+                    eventId: 'none',
+                };
+            }
+            throw error;
+        }
+    }
+
+    async getLatestEventId(): Promise<string> {
+        try {
+            return await this.apiService.getVolumeLatestEventId(this.volumeId);
+        } catch (error: unknown) {
+            if (error instanceof NotFoundAPIError) {
+                this.logger.info(`Volume events no longer accessible`);
+                throw new UnsubscribeFromEventsSourceError(error.message);
+            }
+            throw error;
+        }
     }
 }

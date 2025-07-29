@@ -1,5 +1,6 @@
 import { ProtonDriveCache } from '../cache';
 import { OpenPGPCrypto, PrivateKey, SessionKey, SRPModule } from '../crypto';
+import { LatestEventIdProvider } from '../internal/events/interface';
 import { ProtonDriveAccount } from './account';
 import { ProtonDriveConfig } from './config';
 import { ProtonDriveHTTPClient } from './httpClient';
@@ -13,8 +14,8 @@ export type { ProtonDriveConfig } from './config';
 export type { Device, DeviceOrUid } from './devices';
 export { DeviceType } from './devices';
 export type { FileDownloader, DownloadController } from './download';
-export type { NodeEvent, DeviceEvent, DeviceEventCallback, NodeEventCallback } from './events';
-export { SDKEvent } from './events';
+export type { DriveListener, LatestEventIdProvider, DriveEvent } from './events';
+export { DriveEventType, SDKEvent } from './events';
 export type { ProtonDriveHTTPClient, ProtonDriveHTTPClientJsonOptions, ProtonDriveHTTPClientBlobOptions } from './httpClient';
 export type { MaybeNode, NodeEntity, DegradedNode, MaybeMissingNode, MissingNode, InvalidNameError, Revision, NodeOrUid, RevisionOrUid, NodeResult } from './nodes';
 export { NodeType, MemberRole, RevisionState } from './nodes';
@@ -45,4 +46,5 @@ export interface ProtonDriveClientContructorParameters {
     srpModule: SRPModule,
     config?: ProtonDriveConfig,
     telemetry?: ProtonDriveTelemetry,
+    latestEventIdProvider?: LatestEventIdProvider
 };

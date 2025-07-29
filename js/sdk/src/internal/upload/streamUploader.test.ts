@@ -152,7 +152,6 @@ describe('StreamUploader', () => {
                         sha1: expect.anything(),
                     }
                 },
-                metadata.expectedSize + numberOfExpectedBlocks * BLOCK_ENCRYPTION_OVERHEAD,
             );
             expect(telemetry.uploadFinished).toHaveBeenCalledTimes(1);
             expect(telemetry.uploadFinished).toHaveBeenCalledWith('revisionUid', metadata.expectedSize + thumbnailSize);

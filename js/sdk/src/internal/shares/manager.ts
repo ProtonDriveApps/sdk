@@ -43,7 +43,7 @@ export class SharesManager {
 
     /**
      * It returns the IDs of the My files section.
-     * 
+     *
      * If the default volume or My files section doesn't exist, it creates it.
      */
     async getMyFilesIDs(): Promise<VolumeShareNodeIDs> {
@@ -85,12 +85,12 @@ export class SharesManager {
 
     /**
      * Creates new default volume for the user.
-     * 
+     *
      * It generates the volume bootstrap, creates the volume on the server,
      * and caches the volume metadata.
-     * 
+     *
      * User can have only one default volume.
-     * 
+     *
      * @throws If the volume cannot be created (e.g., one already exists).
      */
     private async createVolume(): Promise<VolumeShareNodeIDs> {
@@ -117,7 +117,7 @@ export class SharesManager {
      * It is a high-level action that retrieves the private key for a share.
      * If prefers to use the cache, but if the key is not there, it fetches
      * the share from the API, decrypts it, and caches it.
-     * 
+     *
      * @param shareId - The ID of the share.
      * @returns The private key for the share.
      * @throws If the share is not found or cannot be decrypted, or cached.
@@ -193,6 +193,10 @@ export class SharesManager {
             addressKey: address.keys[address.primaryKeyIndex].key,
             addressKeyId: address.keys[address.primaryKeyIndex].id,
         };
+    }
+
+    async isOwnVolume(volumeId: string): Promise<boolean>{
+        return (await this.getMyFilesIDs()).volumeId === volumeId;
     }
 
     async getVolumeMetricContext(volumeId: string): Promise<MetricVolumeType> {

@@ -4,14 +4,14 @@ import { DriveCrypto } from "../../crypto";
 import { UploadAPIService } from "./apiService";
 import { UploadCryptoService } from "./cryptoService";
 import { FileUploader, FileRevisionUploader } from "./fileUploader";
-import { NodesService, NodesEvents, SharesService } from "./interface";
+import { NodesService, SharesService } from "./interface";
 import { UploadManager } from "./manager";
 import { UploadQueue } from "./queue";
 import { UploadTelemetry } from "./telemetry";
 
 /**
  * Provides facade for the upload module.
- * 
+ *
  * The upload module is responsible for handling file uploads, including
  * metadata generation, content upload, API communication, encryption,
  * and verifications.
@@ -22,14 +22,13 @@ export function initUploadModule(
     driveCrypto: DriveCrypto,
     sharesService: SharesService,
     nodesService: NodesService,
-    nodesEvents: NodesEvents,
     clientUid?: string,
 ) {
     const api = new UploadAPIService(apiService, clientUid);
     const cryptoService = new UploadCryptoService(driveCrypto, nodesService);
 
     const uploadTelemetry = new UploadTelemetry(telemetry, sharesService);
-    const manager = new UploadManager(telemetry, api, cryptoService, nodesService, nodesEvents, clientUid);
+    const manager = new UploadManager(telemetry, api, cryptoService, nodesService, clientUid);
 
     const queue = new UploadQueue();
 

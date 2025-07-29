@@ -1,5 +1,5 @@
 import { DriveAPIService } from './internal/apiService';
-import { ProtonDriveClientContructorParameters } from './interface';
+import { DriveListener, ProtonDriveClientContructorParameters } from './interface';
 import { DriveCrypto } from './crypto';
 import { initSharesModule } from './internal/shares';
 import { initNodesModule } from './internal/nodes';
@@ -32,9 +32,10 @@ export class ProtonDrivePhotosClient {
         const sdkEvents = new SDKEvents(telemetry);
         const cryptoModule = new DriveCrypto(openPGPCryptoModule, srpModule);
         const apiService = new DriveAPIService(telemetry, sdkEvents, httpClient, fullConfig.baseUrl, fullConfig.language);
-        const events = new DriveEventsService(telemetry, apiService, entitiesCache);
         const shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
-        this.nodes = initNodesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule, events, shares);
+        this.nodes = initNodesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule, shares);
+        const cacheEventListeners: DriveListener[] = [this.nodes.eventHandler.updateNodesCacheOnEvent];
+        new DriveEventsService(telemetry, apiService, shares, cacheEventListeners);
         this.photos = initPhotosModule(apiService, entitiesCache, this.nodes.access);
     }
 

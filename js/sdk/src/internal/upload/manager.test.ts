@@ -1,10 +1,10 @@
 import { ValidationError } from "../../errors";
-import { NodeType, ProtonDriveTelemetry, RevisionState, UploadMetadata } from "../../interface";
+import { ProtonDriveTelemetry, UploadMetadata } from "../../interface";
 import { getMockTelemetry } from "../../tests/telemetry";
 import { ErrorCode } from "../apiService";
 import { UploadAPIService } from "./apiService";
 import { UploadCryptoService } from "./cryptoService";
-import { NodesService, NodesEvents } from "./interface";
+import { NodesService } from "./interface";
 import { UploadManager } from './manager';
 
 describe("UploadManager", () => {
@@ -12,7 +12,6 @@ describe("UploadManager", () => {
     let apiService: UploadAPIService;
     let cryptoService: UploadCryptoService;
     let nodesService: NodesService;
-    let nodesEvents: NodesEvents;
 
     let manager: UploadManager;
 
@@ -75,8 +74,12 @@ describe("UploadManager", () => {
                 armoredExtendedAttributes: "newNode:armoredExtendedAttributes",
             }),
         }
-        // @ts-expect-error No need to implement all methods for mocking
         nodesService = {
+            getNode: jest.fn(async (nodeUid: string) => ({
+                uid: nodeUid,
+                parentUid: 'parentUid',
+
+            })),
             getNodeKeys: jest.fn().mockResolvedValue({
                 hashKey: 'parentNode:hashKey',
                 key: 'parentNode:nodekey',
@@ -85,13 +88,10 @@ describe("UploadManager", () => {
                 email: "signatureEmail",
                 addressId: "addressId",
             }),
-        }
-        nodesEvents = {
-            nodeCreated: jest.fn(),
-            nodeUpdated: jest.fn(),
+            notifyChildCreated: jest.fn(async (nodeUid: string) => { return }),
         }
 
-        manager = new UploadManager(telemetry, apiService, cryptoService, nodesService, nodesEvents, clientUid);
+        manager = new UploadManager(telemetry, apiService, cryptoService, nodesService, clientUid);
     });
 
     describe("createDraftNode", () => {
@@ -209,7 +209,7 @@ describe("UploadManager", () => {
 
         it("should not delete existing draft if client UID is not set", async () => {
             const clientUid = undefined;
-            manager = new UploadManager(telemetry, apiService, cryptoService, nodesService, nodesEvents, clientUid);
+            manager = new UploadManager(telemetry, apiService, cryptoService, nodesService, clientUid);
 
             let firstCall = true;
             apiService.createDraft = jest.fn().mockImplementation(() => {
@@ -341,29 +341,11 @@ describe("UploadManager", () => {
                 manifest,
                 metadata,
                 extendedAttributes,
-                1234567,
             );
 
             expect(cryptoService.commitFile).toHaveBeenCalledWith(nodeRevisionDraft.nodeKeys, manifest, expect.anything());
             expect(apiService.commitDraftRevision).toHaveBeenCalledWith(nodeRevisionDraft.nodeRevisionUid, expect.anything());
-            expect(nodesEvents.nodeUpdated).toHaveBeenCalledWith({
-                uid: "newNode:nodeUid",
-                activeRevision: {
-                    ok: true,
-                    value: {
-                        uid: "newNode:nodeRevisionUid",
-                        state: RevisionState.Active,
-                        creationTime: expect.any(Date),
-                        contentAuthor: { ok: true, value: "signatureEmail" },
-                        storageSize: 1234567,
-                        claimedSize: 123456,
-                        claimedModificationTime: extendedAttributes.modificationTime,
-                        claimedDigests: {
-                            sha1: "sha1",
-                        },
-                    },
-                },
-            });
+            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith("parentUid");
         })
 
         it("should commit node draft", async () => {
@@ -381,24 +363,11 @@ describe("UploadManager", () => {
                 manifest,
                 metadata,
                 extendedAttributes,
-                1234567,
             );
 
             expect(cryptoService.commitFile).toHaveBeenCalledWith(nodeRevisionDraft.nodeKeys, manifest, expect.anything());
             expect(apiService.commitDraftRevision).toHaveBeenCalledWith(nodeRevisionDraft.nodeRevisionUid, expect.anything());
-            expect(nodesEvents.nodeCreated).toHaveBeenCalledWith(expect.objectContaining({
-                uid: "newNode:nodeUid",
-                parentUid: "parentUid",
-                type: NodeType.File,
-                totalStorageSize: 1234567,
-                activeRevision: {
-                    ok: true,
-                    value: expect.objectContaining({
-                        uid: "newNode:nodeRevisionUid",
-                        storageSize: 1234567,
-                    }),
-                },
-            }));
+            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith("parentUid");
         });
     });
 });

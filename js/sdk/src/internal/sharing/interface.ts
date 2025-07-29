@@ -21,7 +21,7 @@ export interface EncryptedInvitationRequest {
 
 /**
  * Internal interface of existing invitation on the API.
- * 
+ *
  * This interface is used only for managing the invitations. For listing
  * invitations with node metadata, see `EncryptedInvitationWithNode`.
  */
@@ -32,7 +32,7 @@ export interface EncryptedInvitation extends EncryptedInvitationRequest {
 
 /**
  * Internal interface of existing invitation with the share and node metadata.
- * 
+ *
  * Invitation with node is used for listing shared nodes with me, so it includes
  * what is being shared as well.
  */
@@ -153,6 +153,7 @@ export interface SharesService {
         addressId: string,
         addressKey: PrivateKey,
     }>,
+    isOwnVolume(volumeId: string): Promise<boolean>;
 }
 
 /**
@@ -172,8 +173,10 @@ export interface NodesService {
         addressKey: PrivateKey,
     }>,
     iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode | MissingNode>;
+    notifyNodeChanged(nodeUid: string): Promise<void>;
 }
 
+// TODO I think this can be removed
 /**
  * Interface describing the dependencies to the nodes module.
  */

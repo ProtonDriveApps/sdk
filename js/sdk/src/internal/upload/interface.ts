@@ -105,6 +105,7 @@ export interface NodesService {
         addressKey: PrivateKey,
         addressKeyId: string,
     }>,
+    notifyChildCreated(nodeUid: string): Promise<void>;
 }
 
 /**
@@ -117,6 +118,7 @@ export interface NodesEvents {
 
 export interface NodesServiceNode {
     uid: string,
+    parentUid?: string,
     activeRevision?: Result<Revision, Error>,
 }
 

@@ -7,7 +7,7 @@ import { splitNodeUid } from "../uids";
 import { getErrorMessage } from '../errors';
 import { SharingAPIService } from "./apiService";
 import { PUBLIC_LINK_GENERATED_PASSWORD_LENGTH, SharingCryptoService } from "./cryptoService";
-import { SharesService, NodesService, NodesEvents, ShareResultWithCreatorEmail, PublicLinkWithCreatorEmail } from "./interface";
+import { SharesService, NodesService, ShareResultWithCreatorEmail, PublicLinkWithCreatorEmail } from "./interface";
 
 interface InternalShareResult extends ShareResultWithCreatorEmail {
     share: Share;
@@ -40,7 +40,6 @@ export class SharingManagement {
         private account: ProtonDriveAccount,
         private sharesService: SharesService,
         private nodesService: NodesService,
-        private nodesEvents: NodesEvents,
     ) {
         this.logger = logger;
         this.apiService = apiService;
@@ -48,7 +47,6 @@ export class SharingManagement {
         this.account = account;
         this.sharesService = sharesService;
         this.nodesService = nodesService;
-        this.nodesEvents = nodesEvents;
     }
 
     async getSharingInfo(nodeUid: string): Promise<ShareResultWithCreatorEmail | undefined> {
@@ -239,7 +237,7 @@ export class SharingManagement {
 
         if (!settings) {
             this.logger.info(`Unsharing node ${nodeUid}`);
-            await this.deleteShare(nodeUid, currentSharing.share.shareId);
+            await this.deleteShare(currentSharing.share.shareId, nodeUid);
             return;
         }
 
@@ -293,7 +291,7 @@ export class SharingManagement {
             // update local state immediately.
             this.logger.info(`Deleting share ${currentSharing.share.shareId} for node ${nodeUid}`);
             try {
-                await this.deleteShare(nodeUid, currentSharing.share.shareId);
+                await this.deleteShare(currentSharing.share.shareId, nodeUid);
             } catch (error: unknown) {
                 // If deleting the share fails, we don't want to throw an error
                 // as it might be a race condition that other client updated
@@ -359,9 +357,7 @@ export class SharingManagement {
                 base64NameKeyPacket: keys.base64NameKeyPacket,
             },
         );
-
-        await this.nodesEvents.nodeUpdated({ uid: nodeUid, shareId, isShared: true });
-
+        await this.nodesService.notifyNodeChanged(nodeUid);
         return {
             volumeId,
             shareId,
@@ -370,10 +366,9 @@ export class SharingManagement {
         }
     }
 
-    private async deleteShare(nodeUid: string, shareId: string): Promise<void> {
+    private async deleteShare(shareId: string, nodeUid: string): Promise<void> {
         await this.apiService.deleteShare(shareId);
-
-        await this.nodesEvents.nodeUpdated({ uid: nodeUid, shareId: undefined, isShared: false });
+        await this.nodesService.notifyNodeChanged(nodeUid);
     }
 
     private async inviteProtonUser(share: Share, inviteeEmail: string, role: MemberRole, emailOptions: EmailOptions): Promise<ProtonInvitation> {

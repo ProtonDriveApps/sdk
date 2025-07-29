@@ -22,7 +22,7 @@ describe('nodesAccess', () => {
         apiService = {
             getNode: jest.fn(),
             iterateNodes: jest.fn().mockImplementation(async function* (uids: string[]) {
-                yield* uids.map((uid => ({ uid, parentUid: 'parentUid' } as EncryptedNode)));
+                yield* uids.map((uid => ({ uid, parentUid: 'volumeId~parentNodeId' } as EncryptedNode)));
             }),
             iterateChildrenNodeUids: jest.fn(),
         }
@@ -55,49 +55,51 @@ describe('nodesAccess', () => {
 
     describe('getNode', () => {
         it('should get node from cache', async () => {
-            const node = { uid: 'nodeId', isStale: false } as DecryptedNode;
+            const node = { uid: 'volumeId~nodeId', isStale: false } as DecryptedNode;
             cache.getNode = jest.fn(() => Promise.resolve(node));
 
-            const result = await access.getNode('nodeId');
+            const result = await access.getNode('volumeId~nodeId');
             expect(result).toBe(node);
             expect(apiService.getNode).not.toHaveBeenCalled();
         });
 
-        it('should get node from API when cahce is stale', async () => {
-            const encryptedNode = { uid: 'nodeId', parentUid: 'parentUid' } as EncryptedNode;
-            const decryptedUnparsedNode = { uid: 'nodeId', parentUid: 'parentUid', name: { ok: true, value: 'name' } } as DecryptedUnparsedNode;
+        it('should get node from API when cache is stale', async () => {
+            const encryptedNode = { uid: 'volumeId~nodeId', parentUid: 'volumeId~parentNodeid' } as EncryptedNode;
+            const decryptedUnparsedNode = { uid: 'volumeId~nodeId', parentUid: 'volumeId~parentNodeid', name: { ok: true, value: 'name' } } as DecryptedUnparsedNode;
             const decryptedNode = {
                 ...decryptedUnparsedNode,
                 name: { ok: true, value: 'name' },
                 isStale: false,
                 activeRevision: undefined,
                 folder: undefined,
+                treeEventScopeId: "volumeId",
             } as DecryptedNode;
             const decryptedKeys = { key: 'key' } as any as DecryptedNodeKeys;
 
-            cache.getNode = jest.fn(() => Promise.resolve({ uid: 'nodeId', isStale: true } as DecryptedNode));
+            cache.getNode = jest.fn(() => Promise.resolve({ uid: 'volumeId~nodeId', isStale: true } as DecryptedNode));
             apiService.getNode = jest.fn(() => Promise.resolve(encryptedNode));
             cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
             cryptoService.decryptNode = jest.fn(() => Promise.resolve({ node: decryptedUnparsedNode, keys: decryptedKeys }));
 
-            const result = await access.getNode('nodeId');
+            const result = await access.getNode('volumeId~nodeId');
             expect(result).toEqual(decryptedNode);
-            expect(apiService.getNode).toHaveBeenCalledWith('nodeId', 'volumeId');
-            expect(cryptoCache.getNodeKeys).toHaveBeenCalledWith('parentUid');
+            expect(apiService.getNode).toHaveBeenCalledWith('volumeId~nodeId', 'volumeId');
+            expect(cryptoCache.getNodeKeys).toHaveBeenCalledWith('volumeId~parentNodeid');
             expect(cryptoService.decryptNode).toHaveBeenCalledWith(encryptedNode, 'parentKey');
             expect(cache.setNode).toHaveBeenCalledWith(decryptedNode);
-            expect(cryptoCache.setNodeKeys).toHaveBeenCalledWith('nodeId', decryptedKeys);
+            expect(cryptoCache.setNodeKeys).toHaveBeenCalledWith('volumeId~nodeId', decryptedKeys);
         });
 
         it('should get node from API missing cache', async () => {
-            const encryptedNode = { uid: 'nodeId', parentUid: 'parentUid' } as EncryptedNode;
-            const decryptedUnparsedNode = { uid: 'nodeId', parentUid: 'parentUid', name: { ok: true, value: 'name' } } as DecryptedUnparsedNode;
+            const encryptedNode = { uid: 'volumeId~nodeId', parentUid: 'volumeId~parentNodeid' } as EncryptedNode;
+            const decryptedUnparsedNode = { uid: 'volumeId~nodeId', parentUid: 'volumeId~parentNodeid', name: { ok: true, value: 'name' } } as DecryptedUnparsedNode;
             const decryptedNode = {
                 ...decryptedUnparsedNode,
                 name: { ok: true, value: 'name' },
                 isStale: false,
                 activeRevision: undefined,
                 folder: undefined,
+                treeEventScopeId: 'volumeId',
             } as DecryptedNode;
             const decryptedKeys = { key: 'key' } as any as DecryptedNodeKeys;
 
@@ -106,21 +108,22 @@ describe('nodesAccess', () => {
             cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
             cryptoService.decryptNode = jest.fn(() => Promise.resolve({ node: decryptedUnparsedNode, keys: decryptedKeys }));
 
-            const result = await access.getNode('nodeId');
+            const result = await access.getNode('volumeId~nodeId');
             expect(result).toEqual(decryptedNode);
-            expect(apiService.getNode).toHaveBeenCalledWith('nodeId', 'volumeId');
-            expect(cryptoCache.getNodeKeys).toHaveBeenCalledWith('parentUid');
+            expect(apiService.getNode).toHaveBeenCalledWith('volumeId~nodeId', 'volumeId');
+            expect(cryptoCache.getNodeKeys).toHaveBeenCalledWith('volumeId~parentNodeid');
             expect(cryptoService.decryptNode).toHaveBeenCalledWith(encryptedNode, 'parentKey');
             expect(cache.setNode).toHaveBeenCalledWith(decryptedNode);
-            expect(cryptoCache.setNodeKeys).toHaveBeenCalledWith('nodeId', decryptedKeys);
+            expect(cryptoCache.setNodeKeys).toHaveBeenCalledWith('volumeId~nodeId', decryptedKeys);
         });
 
         it('should validate node name', async () => {
-            const encryptedNode = { uid: 'nodeId', parentUid: 'parentUid' } as EncryptedNode;
-            const decryptedUnparsedNode = { uid: 'nodeId', parentUid: 'parentUid', name: { ok: true, value: 'foo/bar' } } as DecryptedUnparsedNode;
+            const encryptedNode = { uid: 'volumeId~nodeId', parentUid: 'volumeId~parentNodeid' } as EncryptedNode;
+            const decryptedUnparsedNode = { uid: 'volumeId~nodeId', parentUid: 'volumeId~parentNodeid', name: { ok: true, value: 'foo/bar' } } as DecryptedUnparsedNode;
             const decryptedNode = {
                 ...decryptedUnparsedNode,
                 name: { ok: false, error: { name: 'foo/bar', error: "Name must not contain the character '/'" } },
+                treeEventScopeId: 'volumeId',
             } as DecryptedNode;
             const decryptedKeys = { key: 'key' } as any as DecryptedNodeKeys;
 
@@ -129,7 +132,7 @@ describe('nodesAccess', () => {
             cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
             cryptoService.decryptNode = jest.fn(() => Promise.resolve({ node: decryptedUnparsedNode, keys: decryptedKeys }));
 
-            const result = await access.getNode('nodeId');
+            const result = await access.getNode('volumeId~nodeId');
             expect(result).toMatchObject(decryptedNode);
         });
     });
@@ -144,11 +147,11 @@ describe('nodesAccess', () => {
         });
 
         describe('iterateChildren', () => {
-            const parentNode = { uid: 'parentUid', isStale: false } as DecryptedNode;
-            const node1 = { uid: 'node1', isStale: false } as DecryptedNode;
-            const node2 = { uid: 'node2', isStale: false } as DecryptedNode;
-            const node3 = { uid: 'node3', isStale: false } as DecryptedNode;
-            const node4 = { uid: 'node4', isStale: false } as DecryptedNode;
+            const parentNode = { uid: 'volumeId~parentNodeid', isStale: false } as DecryptedNode;
+            const node1 = { uid: 'volumeId~node1', isStale: false } as DecryptedNode;
+            const node2 = { uid: 'volumeId~node2', isStale: false } as DecryptedNode;
+            const node3 = { uid: 'volumeId~node3', isStale: false } as DecryptedNode;
+            const node4 = { uid: 'volumeId~node4', isStale: false } as DecryptedNode;
 
             beforeEach(() => {
                 cache.getNode = jest.fn().mockResolvedValue(parentNode);
@@ -163,7 +166,7 @@ describe('nodesAccess', () => {
                     yield { ok: true, node: node4 };
                 });
 
-                const result = await Array.fromAsync(access.iterateFolderChildren('parentUid'));
+                const result = await Array.fromAsync(access.iterateFolderChildren('volumeId~parentNodeid'));
                 expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateChildrenNodeUids).not.toHaveBeenCalled();
                 expect(apiService.iterateNodes).not.toHaveBeenCalled();
@@ -178,9 +181,9 @@ describe('nodesAccess', () => {
                     yield { ok: true, uid: node4.uid, node: node4 };
                 });
 
-                const result = await Array.fromAsync(access.iterateFolderChildren('parentUid'));
+                const result = await Array.fromAsync(access.iterateFolderChildren('volumeId~parentNodeid'));
                 expect(result).toMatchObject([node1, node4, node2, node3]);
-                expect(apiService.iterateNodes).toHaveBeenCalledWith(['node2', 'node3'], 'volumeId', undefined);
+                expect(apiService.iterateNodes).toHaveBeenCalledWith([node2.uid, node3.uid], 'volumeId', undefined);
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(2);
                 expect(cache.setNode).toHaveBeenCalledTimes(2);
                 expect(cryptoCache.setNodeKeys).toHaveBeenCalledTimes(2);
@@ -188,26 +191,26 @@ describe('nodesAccess', () => {
 
             it('should load children uids and serve nodes from cache', async () => {
                 apiService.iterateChildrenNodeUids = jest.fn().mockImplementation(async function* () {
-                    yield 'node1';
-                    yield 'node2';
-                    yield 'node3';
-                    yield 'node4';
+                    yield node1.uid;
+                    yield node2.uid;
+                    yield node3.uid;
+                    yield node4.uid;
                 });
                 cache.getNode = jest.fn().mockImplementation((uid: string) => ({ uid, isStale: false }));
 
-                const result = await Array.fromAsync(access.iterateFolderChildren('parentUid'));
+                const result = await Array.fromAsync(access.iterateFolderChildren('volumeId~parentNodeid'));
                 expect(result).toMatchObject([node1, node2, node3, node4]);
-                expect(apiService.iterateChildrenNodeUids).toHaveBeenCalledWith('parentUid', undefined);
+                expect(apiService.iterateChildrenNodeUids).toHaveBeenCalledWith('volumeId~parentNodeid', undefined);
                 expect(apiService.iterateNodes).not.toHaveBeenCalled();
-                expect(cache.setFolderChildrenLoaded).toHaveBeenCalledWith('parentUid');
+                expect(cache.setFolderChildrenLoaded).toHaveBeenCalledWith('volumeId~parentNodeid');
             });
 
             it('should load from API', async () => {
                 apiService.iterateChildrenNodeUids = jest.fn().mockImplementation(async function* () {
-                    yield 'node1';
-                    yield 'node2';
-                    yield 'node3';
-                    yield 'node4';
+                    yield node1.uid;
+                    yield node2.uid;
+                    yield node3.uid;
+                    yield node4.uid;
                 });
                 cache.getNode = jest.fn().mockImplementation((uid: string) => {
                     if (uid === parentNode.uid) {
@@ -216,21 +219,21 @@ describe('nodesAccess', () => {
                     throw new Error('Entity not found');
                 });
 
-                const result = await Array.fromAsync(access.iterateFolderChildren('parentUid'));
+                const result = await Array.fromAsync(access.iterateFolderChildren('volumeId~parentNodeid'));
                 expect(result).toMatchObject([node1, node2, node3, node4]);
-                expect(apiService.iterateChildrenNodeUids).toHaveBeenCalledWith('parentUid', undefined);
-                expect(apiService.iterateNodes).toHaveBeenCalledWith(['node1', 'node2', 'node3', 'node4'], 'volumeId', undefined);
+                expect(apiService.iterateChildrenNodeUids).toHaveBeenCalledWith('volumeId~parentNodeid', undefined);
+                expect(apiService.iterateNodes).toHaveBeenCalledWith(['volumeId~node1', 'volumeId~node2', 'volumeId~node3', 'volumeId~node4'], 'volumeId', undefined);
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(4);
                 expect(cache.setNode).toHaveBeenCalledTimes(4);
                 expect(cryptoCache.setNodeKeys).toHaveBeenCalledTimes(4);
-                expect(cache.setFolderChildrenLoaded).toHaveBeenCalledWith('parentUid');
+                expect(cache.setFolderChildrenLoaded).toHaveBeenCalledWith('volumeId~parentNodeid');
             });
 
             it('should remove from cache if missing on API', async () => {
                 apiService.iterateChildrenNodeUids = jest.fn().mockImplementation(async function* () {
-                    yield 'node1';
-                    yield 'node2';
-                    yield 'node3';
+                    yield node1.uid;
+                    yield node2.uid;
+                    yield node3.uid;
                 });
                 cache.getNode = jest.fn().mockImplementation((uid: string) => {
                     if (uid === parentNode.uid) {
@@ -243,16 +246,16 @@ describe('nodesAccess', () => {
                     yield* uids.slice(1).map((uid) => ({ uid, parentUid: parentNode.uid } as EncryptedNode));
                 });
 
-                const result = await Array.fromAsync(access.iterateFolderChildren('parentUid'));
+                const result = await Array.fromAsync(access.iterateFolderChildren('volumeId~parentNodeid'));
                 expect(result).toMatchObject([node2, node3]);
-                expect(cache.removeNodes).toHaveBeenCalledWith(['node1']);
+                expect(cache.removeNodes).toHaveBeenCalledWith([node1.uid]);
             });
 
             it('should yield all decryptable children before throwing error', async () => {
                 apiService.iterateChildrenNodeUids = jest.fn().mockImplementation(async function* () {
-                    yield 'node1';
-                    yield 'node2';
-                    yield 'node3';
+                    yield 'volumeId~node1';
+                    yield 'volumeId~node2';
+                    yield 'volumeId~node3';
                 });
                 cache.getNode = jest.fn().mockImplementation((uid: string) => {
                     if (uid === parentNode.uid) {
@@ -261,7 +264,7 @@ describe('nodesAccess', () => {
                     throw new Error('Entity not found');
                 });
                 cryptoService.decryptNode = jest.fn().mockImplementation((encryptedNode: EncryptedNode) => {
-                    if (encryptedNode.uid === 'node2') {
+                    if (encryptedNode.uid === 'volumeId~node2') {
                         throw new DecryptionError('Decryption failed');
                     }
                     return Promise.resolve({
@@ -270,11 +273,11 @@ describe('nodesAccess', () => {
                     });
                 });
 
-                const generator = access.iterateFolderChildren('parentUid');
+                const generator = access.iterateFolderChildren('volumeId~parentNodeid');
                 const node1 = await generator.next();
-                expect(node1.value).toMatchObject({ uid: 'node1' });
+                expect(node1.value).toMatchObject({ uid: 'volumeId~node1' });
                 const node2 = await generator.next();
-                expect(node2.value).toMatchObject({ uid: 'node3' });
+                expect(node2.value).toMatchObject({ uid: 'volumeId~node3' });
                 const node3 = generator.next();
                 await expect(node3).rejects.toThrow('Failed to decrypt some nodes');
                 try {
@@ -289,10 +292,10 @@ describe('nodesAccess', () => {
 
         describe('iterateTrashedNodes', () => {
             const volumeId = 'volumeId';
-            const node1 = { uid: 'node1', isStale: false } as DecryptedNode;
-            const node2 = { uid: 'node2', isStale: false } as DecryptedNode;
-            const node3 = { uid: 'node3', isStale: false } as DecryptedNode;
-            const node4 = { uid: 'node4', isStale: false } as DecryptedNode;
+            const node1 = { uid: 'volumeId~node1', isStale: false } as DecryptedNode;
+            const node2 = { uid: 'volumeId~node2', isStale: false } as DecryptedNode;
+            const node3 = { uid: 'volumeId~node3', isStale: false } as DecryptedNode;
+            const node4 = { uid: 'volumeId~node4', isStale: false } as DecryptedNode;
 
             beforeEach(() => {
                 shareService.getMyFilesIDs = jest.fn().mockResolvedValue({ volumeId });
@@ -321,7 +324,7 @@ describe('nodesAccess', () => {
                 const result = await Array.fromAsync(access.iterateTrashedNodes());
                 expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateTrashedNodeUids).toHaveBeenCalledWith(volumeId, undefined);
-                expect(apiService.iterateNodes).toHaveBeenCalledWith(['node1', 'node2', 'node3', 'node4'], volumeId, undefined);
+                expect(apiService.iterateNodes).toHaveBeenCalledWith(['volumeId~node1', 'volumeId~node2', 'volumeId~node3', 'volumeId~node4'], volumeId, undefined);
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(4);
                 expect(cache.setNode).toHaveBeenCalledTimes(4);
                 expect(cryptoCache.setNodeKeys).toHaveBeenCalledTimes(4);
@@ -333,20 +336,20 @@ describe('nodesAccess', () => {
                 });
                 apiService.iterateNodes = jest.fn().mockImplementation(async function* (uids: string[]) {
                     // Skip first node - make it missing.
-                    yield* uids.slice(1).map((uid) => ({ uid, parentUid: 'parentUid' } as EncryptedNode));
+                    yield* uids.slice(1).map((uid) => ({ uid, parentUid: 'volumeId~parentNodeid' } as EncryptedNode));
                 });
 
                 const result = await Array.fromAsync(access.iterateTrashedNodes());
                 expect(result).toMatchObject([node2, node3, node4]);
-                expect(cache.removeNodes).toHaveBeenCalledWith(['node1']);
+                expect(cache.removeNodes).toHaveBeenCalledWith(['volumeId~node1']);
             });
         });
 
         describe('iterateNodes', () => {
-            const node1 = { uid: 'node1', isStale: false } as DecryptedNode;
-            const node2 = { uid: 'node2', isStale: false } as DecryptedNode;
-            const node3 = { uid: 'node3', isStale: false } as DecryptedNode;
-            const node4 = { uid: 'node4', isStale: false } as DecryptedNode;
+            const node1 = { uid: 'volumeId~node1', isStale: false, treeEventScopeId: 'volumeId' } as DecryptedNode;
+            const node2 = { uid: 'volumeId~node2', isStale: false, treeEventScopeId: 'volumeId' } as DecryptedNode;
+            const node3 = { uid: 'volumeId~node3', isStale: false, treeEventScopeId: 'volumeId' } as DecryptedNode;
+            const node4 = { uid: 'volume~node4', isStale: false, treeEventScopeId: 'volumeId' } as DecryptedNode;
 
             it('should serve fully from cache', async () => {
                 cache.iterateNodes = jest.fn().mockImplementation(async function* () {
@@ -356,7 +359,7 @@ describe('nodesAccess', () => {
                     yield { ok: true, node: node4 };
                 });
 
-                const result = await Array.fromAsync(access.iterateNodes(['node1', 'node2', 'node3', 'node4']));
+                const result = await Array.fromAsync(access.iterateNodes(['volumeId~node1', 'volumeId~node2', 'volumeId~node3', 'volumeId~node4']));
                 expect(result).toMatchObject([node1, node2, node3, node4]);
                 expect(apiService.iterateNodes).not.toHaveBeenCalled();
             });
@@ -364,52 +367,55 @@ describe('nodesAccess', () => {
             it('should load from API', async () => {
                 cache.iterateNodes = jest.fn().mockImplementation(async function* () {
                     yield { ok: true, node: node1 };
-                    yield { ok: false, uid: 'node2' };
-                    yield { ok: false, uid: 'node3' };
+                    yield { ok: false, uid: 'volumeId~node2' };
+                    yield { ok: false, uid: 'volumeId~node3' };
                     yield { ok: true, node: node4 };
                 });
 
-                const result = await Array.fromAsync(access.iterateNodes(['node1', 'node2', 'node3', 'node4']));
+                const result = await Array.fromAsync(access.iterateNodes(['volumeId~node1', 'volumeId~node2', 'volumeId~node3', 'volumeId~node4']));
                 expect(result).toMatchObject([node1, node4, node2, node3]);
-                expect(apiService.iterateNodes).toHaveBeenCalledWith(['node2', 'node3'], 'volumeId', undefined);
+                expect(apiService.iterateNodes).toHaveBeenCalledWith(['volumeId~node2', 'volumeId~node3'], 'volumeId', undefined);
             });
 
             it('should remove from cache if missing on API and return back to caller', async () => {
                 cache.iterateNodes = jest.fn().mockImplementation(async function* () {
-                    yield { ok: false, uid: 'node1' };
-                    yield { ok: false, uid: 'node2' };
-                    yield { ok: false, uid: 'node3' };
+                    yield { ok: false, uid: 'volumeId~node1' };
+                    yield { ok: false, uid: 'volumeId~node2' };
+                    yield { ok: false, uid: 'volumeId~node3' };
                 });
                 apiService.iterateNodes = jest.fn().mockImplementation(async function* (uids: string[]) {
                     // Skip first node - make it missing.
-                    yield* uids.slice(1).map((uid) => ({ uid, parentUid: 'parentUid' } as EncryptedNode));
+                    yield* uids.slice(1).map((uid) => ({ uid, parentUid: 'volumeId~parentNodeid' } as EncryptedNode));
                 });
 
-                const result = await Array.fromAsync(access.iterateNodes(['node1', 'node2', 'node3']));
-                expect(result).toMatchObject([node2, node3, {missingUid: 'node1'}]);
-                expect(cache.removeNodes).toHaveBeenCalledWith(['node1']);
+                const result = await Array.fromAsync(access.iterateNodes(['volumeId~node1', 'volumeId~node2', 'volumeId~node3']));
+                expect(result).toMatchObject([node2, node3, {missingUid: 'volumeId~node1'}]);
+                expect(cache.removeNodes).toHaveBeenCalledWith(['volumeId~node1']);
             });
 
             it('should return degraded node if parent cannot be decrypted', async () => {
                 cache.iterateNodes = jest.fn().mockImplementation(async function* () {
-                    yield { ok: false, uid: 'node1' };
-                    yield { ok: false, uid: 'node2' };
-                    yield { ok: false, uid: 'node3' };
+                    yield { ok: false, uid: 'volumeId~node1' };
+                    yield { ok: false, uid: 'volumeId~node2' };
+                    yield { ok: false, uid: 'volumeId~node3' };
                 });
                 const encryptedCrypto = {
                     signatureEmail: 'signatureEmail',
                     nameSignatureEmail: 'nameSignatureEmail',
                 };
                 apiService.iterateNodes = jest.fn().mockImplementation(async function* (uids: string[]) {
-                    yield* uids.map((uid) => ({
+                    yield* uids.map((uid) => {
+                        const parentUid = uid.replace('node', 'parentOfNode');
+                        return {
                         uid,
-                        parentUid: `parentUidFor:${uid}`,
+                        parentUid,
                         encryptedCrypto,
-                    } as EncryptedNode));
+                        } as EncryptedNode
+                    });
                 });
                 const decryptionError = new DecryptionError('Parent cannot be decrypted');
                 jest.spyOn(access, 'getParentKeys').mockImplementation(async ({ parentUid }) => {
-                    if (parentUid === 'parentUidFor:node1') {
+                    if (parentUid === 'volumeId~parentOfNode1') {
                         throw decryptionError;
                     }
                     return {
@@ -417,12 +423,12 @@ describe('nodesAccess', () => {
                     } as any;
                 } );
 
-                const result = await Array.fromAsync(access.iterateNodes(['node1', 'node2', 'node3']));
+                const result = await Array.fromAsync(access.iterateNodes(['volumeId~node1', 'volumeId~node2', 'volumeId~node3']));
                 expect(result).toEqual([
                     {
                         ...node1,
                         encryptedCrypto,
-                        parentUid: 'parentUidFor:node1',
+                        parentUid: 'volumeId~parentOfNode1',
                         name: { ok: false, error: decryptionError },
                         keyAuthor: { ok: false, error: { claimedAuthor: 'signatureEmail', error: decryptionError.message } },
                         nameAuthor: { ok: false, error: { claimedAuthor: 'nameSignatureEmail', error: decryptionError.message } },
@@ -457,7 +463,7 @@ describe('nodesAccess', () => {
         it('should get node parent keys', async () => {
             cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
 
-            const result = await access.getParentKeys({ shareId: undefined, parentUid: 'parentUid' });
+            const result = await access.getParentKeys({ shareId: undefined, parentUid: 'volumeId~parentNodeid' });
             expect(result).toEqual({ key: 'parentKey' });
             expect(shareService.getSharePrivateKey).not.toHaveBeenCalled();
         });
@@ -465,7 +471,7 @@ describe('nodesAccess', () => {
         it('should get node parent keys even if share is set', async () => {
             cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
 
-            const result = await access.getParentKeys({ shareId: 'shareId', parentUid: 'parentUid' });
+            const result = await access.getParentKeys({ shareId: 'shareId', parentUid: 'volume1~parentNodeid' });
             expect(result).toEqual({ key: 'parentKey' });
             expect(shareService.getSharePrivateKey).not.toHaveBeenCalled();
         });
@@ -477,7 +483,7 @@ describe('nodesAccess', () => {
             apiService.getNode = jest.fn(() => Promise.reject(new Error('API called')));
 
             try {
-                await access.getNodeKeys('nodeId');
+                await access.getNodeKeys('volumeId~nodeId');
                 throw new Error('Expected error');
             } catch (error: unknown) {
                 expect(`${error}`).toBe('Error: API called');
@@ -490,7 +496,7 @@ describe('nodesAccess', () => {
             const nodeUid = 'nodeUid';
             const node = {
                 uid: nodeUid,
-                parentUid: 'parentUid',
+                parentUid: 'volume1~parentNodeid',
                 encryptedName: 'encryptedName',
             } as DecryptedNode;
 
@@ -551,6 +557,41 @@ describe('nodesAccess', () => {
 
             const result = await access.getNodeUrl(nodeUid);
             expect(result).toBe('https://drive.proton.me/shareId/folder/nodeId');
+        });
+    });
+
+    describe('notifyNodeChanged', () => {
+        it('should mark node as stale', async () => {
+            const node = { uid: 'volumeId~nodeId', isStale: false } as DecryptedNode;
+            cache.getNode = jest.fn(() => Promise.resolve(node));
+            cache.setNode = jest.fn();
+            await access.notifyNodeChanged(node.uid);
+            expect(cache.getNode).toHaveBeenCalledWith(node.uid);
+            expect(cache.setNode).toHaveBeenCalledWith({...node, isStale: true});
+        });
+        it('should update parent if needed', async () => {
+            const node = { uid: 'volumeId~nodeId', parentUid: 'v1~pn1', isStale: false } as DecryptedNode;
+            cache.getNode = jest.fn(() => Promise.resolve(node));
+            cache.setNode = jest.fn();
+            await access.notifyNodeChanged(node.uid, 'v1~pn2');
+            expect(cache.getNode).toHaveBeenCalledWith(node.uid);
+            expect(cache.setNode).toHaveBeenCalledWith({...node, parentUid: 'v1~pn2', isStale: true});
+        });
+    });
+
+    describe('notifyChildCreated', () => {
+        it('should reset parent listing', async () => {
+            const nodeUid = 'VolumeId1~NodeId1';
+            cache.resetFolderChildrenLoaded = jest.fn();
+            await access.notifyChildCreated(nodeUid);
+            expect(cache.resetFolderChildrenLoaded).toHaveBeenCalledWith(nodeUid);
+        });
+    });
+
+    describe('notifyNodeDeleted', () => {
+        it('should reset parent listing', async () => {
+            await access.notifyNodeDeleted('v1~n1');
+            expect(cache.removeNodes).toHaveBeenCalledWith(['v1~n1']);
         });
     });
 });

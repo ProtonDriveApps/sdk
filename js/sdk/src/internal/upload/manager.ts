@@ -1,12 +1,12 @@
 import { c } from "ttag";
 
-import { Logger, MemberRole, NodeType, ProtonDriveTelemetry, resultOk, Revision, RevisionState, UploadMetadata } from "../../interface";
+import { Logger, ProtonDriveTelemetry, UploadMetadata } from "../../interface";
 import { ValidationError, NodeAlreadyExistsValidationError } from "../../errors";
 import { ErrorCode } from "../apiService";
-import { DecryptedNode, generateFileExtendedAttributes } from "../nodes";
+import { generateFileExtendedAttributes } from "../nodes";
 import { UploadAPIService } from "./apiService";
 import { UploadCryptoService } from "./cryptoService";
-import { NodeRevisionDraft, NodesService, NodesEvents, NodeCrypto } from "./interface";
+import { NodeRevisionDraft, NodesService, NodeCrypto } from "./interface";
 import { makeNodeUid, splitNodeUid } from "../uids";
 
 /**
@@ -22,7 +22,6 @@ export class UploadManager {
         private apiService: UploadAPIService,
         private cryptoService: UploadCryptoService,
         private nodesService: NodesService,
-        private nodesEvents: NodesEvents,
         private clientUid: string | undefined,
     ) {
         this.logger = telemetry.getLogger('upload');
@@ -241,7 +240,7 @@ export class UploadManager {
     async commitDraft(
         nodeRevisionDraft: NodeRevisionDraft,
         manifest: Uint8Array,
-        metadata: UploadMetadata,
+        _metadata: UploadMetadata,
         extendedAttributes: {
             modificationTime?: Date,
             size?: number,
@@ -250,56 +249,13 @@ export class UploadManager {
                 sha1?: string,
             },
         },
-        encryptedSize: number,
     ): Promise<void> {
         const generatedExtendedAttributes = generateFileExtendedAttributes(extendedAttributes);
         const nodeCommitCrypto = await this.cryptoService.commitFile(nodeRevisionDraft.nodeKeys, manifest, generatedExtendedAttributes);
         await this.apiService.commitDraftRevision(nodeRevisionDraft.nodeRevisionUid, nodeCommitCrypto);
-
-        const activeRevision = resultOk<Revision, Error>({
-            uid: nodeRevisionDraft.nodeRevisionUid,
-            state: RevisionState.Active,
-            creationTime: new Date(),
-            storageSize: encryptedSize,
-            contentAuthor: resultOk(nodeCommitCrypto.signatureEmail),
-            claimedSize: metadata.expectedSize,
-            claimedModificationTime: extendedAttributes.modificationTime,
-            claimedDigests: {
-                sha1: extendedAttributes.digests?.sha1,
-            },
-        });
-        if (nodeRevisionDraft.newNodeInfo) {
-            const node: DecryptedNode = {
-                // Internal metadata
-                hash: nodeRevisionDraft.newNodeInfo.hash,
-                encryptedName: nodeRevisionDraft.newNodeInfo.encryptedName,
-
-                // Basic node metadata
-                uid: nodeRevisionDraft.nodeUid,
-                parentUid: nodeRevisionDraft.newNodeInfo.parentUid,
-                type: NodeType.File,
-                mediaType: metadata.mediaType,
-                creationTime: new Date(),
-                totalStorageSize: encryptedSize,
-
-                // Share node metadata
-                isShared: false,
-                directMemberRole: MemberRole.Inherited,
-
-                // Decrypted metadata
-                isStale: false,
-                keyAuthor: resultOk(nodeRevisionDraft.nodeKeys.signatureAddress.email),
-                nameAuthor: resultOk(nodeRevisionDraft.nodeKeys.signatureAddress.email),
-                name: resultOk(nodeRevisionDraft.newNodeInfo.name),
-
-                activeRevision,
-            }
-            await this.nodesEvents.nodeCreated(node);
-        } else {
-            await this.nodesEvents.nodeUpdated({
-                uid: nodeRevisionDraft.nodeUid,
-                activeRevision,
-            });
+        const node = await this.nodesService.getNode(nodeRevisionDraft.nodeUid);
+        if (node.parentUid) {
+            await this.nodesService.notifyChildCreated(node.parentUid);
         }
     }
 }

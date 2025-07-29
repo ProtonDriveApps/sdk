@@ -3,7 +3,7 @@ import { SharingType } from "./interface";
 
 /**
  * Provides caching for shared by me and with me listings.
- * 
+ *
  * The cache is responsible for serialising and deserialising the node
  * UIDs for each sharing type. Also, ensuring that only full lists are
  * cached.

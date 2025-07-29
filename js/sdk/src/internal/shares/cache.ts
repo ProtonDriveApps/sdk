@@ -4,8 +4,10 @@ import { Volume } from "./interface";
 
 /**
  * Provides caching for shares and volume metadata.
- * 
+ *
  * The cache is responsible for serialising and deserialising volume metadata.
+ *
+ * This is only intended for the owner's main volume. There is no cache invalidation.
  */
 export class SharesCache {
     constructor(private logger: Logger, private driveCache: ProtonDriveEntitiesCache) {
