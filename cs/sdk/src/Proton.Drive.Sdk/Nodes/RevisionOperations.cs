@@ -45,7 +45,7 @@ internal static class RevisionOperations
             fileUid.LinkId,
             revisionId,
             RevisionReader.MinBlockIndex,
-            RevisionReader.BlockPageSize,
+            RevisionReader.DefaultBlockPageSize,
             false,
             cancellationToken).ConfigureAwait(false);
 

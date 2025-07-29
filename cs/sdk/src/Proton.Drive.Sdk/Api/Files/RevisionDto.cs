@@ -8,7 +8,7 @@ namespace Proton.Drive.Sdk.Api.Files;
 internal class RevisionDto
 {
     [JsonPropertyName("ID")]
-    public required string Id { get; init; }
+    public required RevisionId Id { get; init; }
 
     [JsonPropertyName("ClientUID")]
     public string? ClientId { get; init; }
