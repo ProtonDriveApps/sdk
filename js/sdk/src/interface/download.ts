@@ -15,14 +15,14 @@ export interface FileDownloader {
      * 
      * @param onProgress - Callback that is called with the number of downloaded bytes
      */
-    writeToStream(streamFactory: WritableStream, onProgress: (downloadedBytes: number) => void): DownloadController,
+    writeToStream(streamFactory: WritableStream, onProgress?: (downloadedBytes: number) => void): DownloadController,
 
     /**
      * Same as `writeToStream` but without verification checks.
      * 
      * Use this only for debugging purposes.
      */
-    unsafeWriteToStream(streamFactory: WritableStream, onProgress: (downloadedBytes: number) => void): DownloadController,
+    unsafeWriteToStream(streamFactory: WritableStream, onProgress?: (downloadedBytes: number) => void): DownloadController,
 }
 
 export interface DownloadController {

@@ -49,7 +49,7 @@ export class FileDownloader {
         return this.revision.claimedSize;
     }
 
-    writeToStream(stream: WritableStream, onProgress: (downloadedBytes: number) => void): DownloadController {
+    writeToStream(stream: WritableStream, onProgress?: (downloadedBytes: number) => void): DownloadController {
         if (this.controller.promise) {
             throw new Error(`Download already started`);
         }
@@ -57,7 +57,7 @@ export class FileDownloader {
         return this.controller;
     }
 
-    unsafeWriteToStream(stream: WritableStream, onProgress: (downloadedBytes: number) => void): DownloadController {
+    unsafeWriteToStream(stream: WritableStream, onProgress?: (downloadedBytes: number) => void): DownloadController {
         if (this.controller.promise) {
             throw new Error(`Download already started`);
         }
