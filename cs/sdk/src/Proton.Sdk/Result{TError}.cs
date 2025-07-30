@@ -25,6 +25,11 @@ public readonly struct Result<TError>
 
     public static implicit operator Result<TError>(TError error) => new(error);
 
+    public static Result<TError> Failure(TError error)
+    {
+        return new Result<TError>(error);
+    }
+
     public bool TryGetError([MaybeNullWhen(true)] out TError error)
     {
         error = _error;

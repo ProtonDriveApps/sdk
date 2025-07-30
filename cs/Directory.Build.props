@@ -17,6 +17,8 @@
     <Deterministic>true</Deterministic>
     <!--<TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>-->
 
+    <NativeLibPrefix Condition="$(RuntimeIdentifier.StartsWith('linux')) or $(RuntimeIdentifier.StartsWith('android'))">lib</NativeLibPrefix>
+
     <JsonSerializerIsReflectionEnabledByDefault Condition="!$(MSBuildProjectName.EndsWith('.Tests'))">false</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
 

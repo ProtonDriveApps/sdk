@@ -4,7 +4,7 @@ namespace Proton.Sdk.CExports;
 
 internal static class InteropTokenRefreshedCallbackExtensions
 {
-    internal static unsafe void Invoke(this InteropTokensRefreshedCallback callback, string accessToken, string refreshToken)
+    internal static unsafe void Invoke(this InteropValueCallback<InteropArray<byte>> callback, void* callerState, string accessToken, string refreshToken)
     {
         var sessionTokens = new SessionTokens
         {
@@ -12,15 +12,15 @@ internal static class InteropTokenRefreshedCallbackExtensions
             RefreshToken = refreshToken,
         };
 
-        var tokenBytes = InteropArray.FromMemory(sessionTokens.ToByteArray());
+        var sessionTokensBytes = InteropArray<byte>.FromMemory(sessionTokens.ToByteArray());
 
         try
         {
-            callback.OnTokenRefreshed(callback.State, tokenBytes);
+            callback.Invoke(callerState, sessionTokensBytes);
         }
         finally
         {
-            tokenBytes.Free();
+            sessionTokensBytes.Free();
         }
     }
 }

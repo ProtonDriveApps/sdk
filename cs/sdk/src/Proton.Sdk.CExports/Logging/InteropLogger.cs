@@ -24,7 +24,7 @@ internal sealed class InteropLogger(InteropLogCallback logCallback, string categ
         var message = formatter.Invoke(state, exception);
         var logEvent = new LogEvent { Level = (int)logLevel, Message = message, CategoryName = _categoryName };
 
-        var messageBytes = InteropArray.FromMemory(logEvent.ToByteArray());
+        var messageBytes = InteropArray<byte>.FromMemory(logEvent.ToByteArray());
 
         try
         {
