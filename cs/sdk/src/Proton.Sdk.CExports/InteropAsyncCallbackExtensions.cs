@@ -2,7 +2,11 @@
 
 internal static class InteropAsyncCallbackExtensions
 {
-    public static unsafe int InvokeFor(this InteropAsyncCallback callback, Func<CancellationToken, ValueTask<Result<InteropArray, InteropArray>>> asyncFunction)
+    public static unsafe int InvokeFor<TResult>(
+        this InteropAsyncValueCallback<TResult> callback,
+        void* callerState,
+        Func<CancellationToken, ValueTask<Result<TResult, InteropArray<byte>>>> asyncFunction)
+        where TResult : unmanaged
     {
         if (!InteropCancellationTokenSource.TryGetTokenFromHandle(callback.CancellationTokenSourceHandle, out var cancellationToken))
         {
@@ -10,18 +14,37 @@ internal static class InteropAsyncCallbackExtensions
         }
 
         Use(
-            value => callback.OnSuccess(callback.State, value),
-            error => callback.OnFailure(callback.State, error),
+            value => callback.OnSuccess(callerState, value),
+            error => callback.OnFailure(callerState, error),
             asyncFunction,
-            cancellationToken);
+            cancellationToken).RunInBackground();
 
         return 0;
     }
 
-    private static async void Use<T>(
+    public static unsafe int InvokeFor(
+        this InteropAsyncVoidCallback callback,
+        void* callerState,
+        Func<CancellationToken, ValueTask<Result<InteropArray<byte>>>> asyncFunction)
+    {
+        if (!InteropCancellationTokenSource.TryGetTokenFromHandle(callback.CancellationTokenSourceHandle, out var cancellationToken))
+        {
+            return -1;
+        }
+
+        Use(
+            () => callback.OnSuccess(callerState),
+            error => callback.OnFailure(callerState, error),
+            asyncFunction,
+            cancellationToken).RunInBackground();
+
+        return 0;
+    }
+
+    private static async ValueTask Use<T>(
         Action<T> onSuccess,
-        Action<T> onFailure,
-        Func<CancellationToken, ValueTask<Result<T, T>>> asyncFunction,
+        Action<InteropArray<byte>> onFailure,
+        Func<CancellationToken, ValueTask<Result<T, InteropArray<byte>>>> asyncFunction,
         CancellationToken cancellationToken)
     {
         try
@@ -35,6 +58,30 @@ internal static class InteropAsyncCallbackExtensions
             }
 
             onSuccess(value);
+        }
+        catch
+        {
+            // TODO: log
+        }
+    }
+
+    private static async ValueTask Use(
+        Action onSuccess,
+        Action<InteropArray<byte>> onFailure,
+        Func<CancellationToken, ValueTask<Result<InteropArray<byte>>>> asyncFunction,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await asyncFunction.Invoke(cancellationToken).ConfigureAwait(false);
+
+            if (result.TryGetError(out var error))
+            {
+                onFailure(error);
+                return;
+            }
+
+            onSuccess();
         }
         catch
         {

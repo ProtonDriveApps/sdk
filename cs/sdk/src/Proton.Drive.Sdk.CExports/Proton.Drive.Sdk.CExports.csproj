@@ -1,0 +1,49 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>$(NativeLibPrefix)proton_drive_sdk</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PublishAot>true</PublishAot>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <NativeCryptoLibName>proton_crypto</NativeCryptoLibName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Proton.Drive.Sdk\Proton.Drive.Sdk.csproj" />
+    <ProjectReference Include="..\Proton.Sdk.CExports\Proton.Sdk.CExports.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="..\protos\drive.proto" Link="drive.proto" Access="internal" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="$(AssemblyName).Tests" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+
+  <!-- Static-link the crypto library unless targeting Android -->
+  <ItemGroup Condition="!$(RuntimeIdentifier.StartsWith('linux-bionic'))">
+    <!-- While the project does not use the package directly, the path to the package is needed to refer to the static link library -->
+    <PackageReference Include="Proton.Cryptography" GeneratePathProperty="true" />
+
+    <DirectPInvoke Include="$(NativeCryptoLibName)" />
+    <NativeLibrary Include="$(PkgProton_Cryptography)\runtimes\$(RuntimeIdentifier)\native\$(NativeLibPrefix)$(NativeCryptoLibName)$(LibFileExt)" />
+  </ItemGroup>
+
+  <!-- If targeting Android, add the required SONAME to the output library -->
+  <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('linux-bionic'))">
+    <LinkerArg Include="-Wl,-soname,$(TargetName)$(NativeBinaryExt)" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="$(RuntimeIdentifier.StartsWith('linux-bionic'))">
+    <DisableUnsupportedError>true</DisableUnsupportedError>
+    <PublishAotUsingRuntimePack>true</PublishAotUsingRuntimePack>
+  </PropertyGroup>
+
+</Project>
