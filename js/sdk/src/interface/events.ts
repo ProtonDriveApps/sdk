@@ -20,11 +20,17 @@ export interface LatestEventIdProvider {
  */
 export type DriveListener = (event: DriveEvent) => Promise<void>;
 
-type NodeCruEventType = DriveEventType.NodeCreated | DriveEventType.NodeUpdated;
+export type DriveEvent =
+    | NodeEvent
+    | FastForwardEvent
+    | TreeRefreshEvent
+    | TreeRemovalEvent
+    | FastForwardEvent
+    | SharedWithMeUpdated;
 
 export type NodeEvent =
     | {
-          type: NodeCruEventType;
+          type: DriveEventType.NodeCreated | DriveEventType.NodeUpdated;
           nodeUid: string;
           parentNodeUid?: string;
           isTrashed: boolean;
@@ -63,14 +69,6 @@ export type SharedWithMeUpdated = {
     eventId: string;
     treeEventScopeId: 'core';
 };
-
-export type DriveEvent =
-    | NodeEvent
-    | FastForwardEvent
-    | TreeRefreshEvent
-    | TreeRemovalEvent
-    | FastForwardEvent
-    | SharedWithMeUpdated;
 
 export enum DriveEventType {
     NodeCreated = 'node_created',

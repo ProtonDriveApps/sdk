@@ -14,7 +14,16 @@ export type { ProtonDriveConfig } from './config';
 export type { Device, DeviceOrUid } from './devices';
 export { DeviceType } from './devices';
 export type { FileDownloader, DownloadController } from './download';
-export type { DriveListener, LatestEventIdProvider, DriveEvent } from './events';
+export type {
+    DriveListener,
+    LatestEventIdProvider,
+    DriveEvent,
+    NodeEvent,
+    FastForwardEvent,
+    TreeRefreshEvent,
+    TreeRemovalEvent,
+    SharedWithMeUpdated,
+} from './events';
 export { DriveEventType, SDKEvent } from './events';
 export type {
     ProtonDriveHTTPClient,
