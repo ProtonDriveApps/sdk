@@ -6,5 +6,5 @@ namespace Proton.Sdk.CExports.Logging;
 internal readonly unsafe struct InteropLogCallback
 {
     public readonly void* State;
-    public readonly delegate* unmanaged[Cdecl]<void*, InteropArray, void> Invoke;
+    public readonly delegate* unmanaged[Cdecl]<void*, InteropArray<byte>, void> Invoke;
 }

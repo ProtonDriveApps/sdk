@@ -27,6 +27,21 @@ public readonly struct Result<T, TError>
     public static implicit operator Result<T, TError>(T value) => new(value);
     public static implicit operator Result<T, TError>(TError error) => new(error);
 
+    public static implicit operator Result<TError>(Result<T, TError> result) =>
+        result.TryGetValueElseError(out _, out var error)
+            ? Result<TError>.Success
+            : new Result<TError>(error);
+
+    public static Result<T, TError> Success(T value)
+    {
+        return new Result<T, TError>(value);
+    }
+
+    public static Result<T, TError> Failure(TError error)
+    {
+        return new Result<T, TError>(error);
+    }
+
     public bool TryGetValueElseError([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out TError error)
     {
         value = _value;

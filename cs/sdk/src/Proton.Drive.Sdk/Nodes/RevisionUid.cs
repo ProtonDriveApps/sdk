@@ -22,6 +22,11 @@ public readonly record struct RevisionUid : ICompositeUid<RevisionUid>
         return $"{NodeUid}~{RevisionId}";
     }
 
+    public static bool TryParse(string s, [NotNullWhen(true)] out RevisionUid? result)
+    {
+        return ICompositeUid<RevisionUid>.TryParse(s, out result);
+    }
+
     static bool ICompositeUid<RevisionUid>.TryCreate(string baseUidString, string relativeIdString, [NotNullWhen(true)] out RevisionUid? uid)
     {
         if (!ICompositeUid<NodeUid>.TryParse(baseUidString, out var nodeUid))

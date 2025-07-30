@@ -2,12 +2,30 @@ syntax = "proto3";
 
 option csharp_namespace = "Proton.Sdk.Drive.CExports";
 
-import "account.proto";
-
-message NodeUid {
-    string value = 1;
+message FileUploaderProvisionRequest {
+    string name = 1;
+    string mediaType = 2;
+    int64 last_modification_date = 3;
+    int64 file_size = 4;
 }
 
-message RevisionUid {
-    string value = 1;
+message FileUploadRequest {
+    string parent_folder_uid = 1;
+    bool create_new_revision_if_exists = 2;
+    optional bytes thumbnail = 3;
+}
+
+message RevisionUploadRequest {
+    string file_uid = 1;
+    optional bytes thumbnail = 2;
+    int64 last_modification_date = 3;
+}
+
+message ProgressUpdate {
+    int64 bytes_completed = 1;
+    int64 bytes_in_total = 2;
+}
+
+message FileDownloaderProvisionRequest {
+    string revision_uid = 1;
 }

@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using Proton.Sdk.Authentication;
 using Proton.Sdk.Caching;
@@ -27,11 +28,11 @@ internal static class InteropProtonApiSession
     }
 
     [UnmanagedCallersOnly(EntryPoint = "session_begin", CallConvs = [typeof(CallConvCdecl)])]
-    private static int NativeBegin(InteropArray sessionBeginRequestBytes, InteropAsyncCallback callback)
+    private static unsafe int NativeBegin(InteropArray<byte> requestBytes, void* callerState, InteropAsyncValueCallback<InteropArray<byte>> resultCallback)
     {
         try
         {
-            return callback.InvokeFor(ct => InteropBeginAsync(sessionBeginRequestBytes, ct));
+            return resultCallback.InvokeFor(callerState, ct => InteropBeginAsync(requestBytes, ct));
         }
         catch
         {
@@ -40,7 +41,7 @@ internal static class InteropProtonApiSession
     }
 
     [UnmanagedCallersOnly(EntryPoint = "session_resume", CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe int NativeResume(InteropArray requestBytes, nint* sessionHandle)
+    private static unsafe int NativeResume(InteropArray<byte> requestBytes, nint* sessionHandle)
     {
         try
         {
@@ -96,11 +97,11 @@ internal static class InteropProtonApiSession
     }
 
     [UnmanagedCallersOnly(EntryPoint = "session_renew", CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe int NativeRenew(nint oldSessionHandle, InteropArray sessionRenewRequestBytes, nint* newSessionHandle)
+    private static unsafe int NativeRenew(nint oldSessionHandle, InteropArray<byte> requestBytes, nint* newSessionHandle)
     {
         try
         {
-            var request = SessionRenewRequest.Parser.ParseFrom(sessionRenewRequestBytes.AsReadOnlySpan());
+            var request = SessionRenewRequest.Parser.ParseFrom(requestBytes.AsReadOnlySpan());
 
             if (!TryGetFromHandle(oldSessionHandle, out var expiredSession))
             {
@@ -129,7 +130,7 @@ internal static class InteropProtonApiSession
     }
 
     [UnmanagedCallersOnly(EntryPoint = "session_end", CallConvs = [typeof(CallConvCdecl), typeof(CallConvMemberFunction)])]
-    private static int NativeEnd(nint sessionHandle, InteropAsyncCallback callback)
+    private static unsafe int NativeEnd(nint sessionHandle, void* callerState, InteropAsyncVoidCallback resultCallback)
     {
         try
         {
@@ -138,7 +139,7 @@ internal static class InteropProtonApiSession
                 return -1;
             }
 
-            callback.InvokeFor(_ => InteropEndAsync(session));
+            resultCallback.InvokeFor(callerState, _ => InteropEndAsync(session));
 
             return 0;
         }
@@ -149,7 +150,10 @@ internal static class InteropProtonApiSession
     }
 
     [UnmanagedCallersOnly(EntryPoint = "session_tokens_refreshed_subscribe", CallConvs = [typeof(CallConvCdecl)])]
-    private static nint NativeSubscribeTokensRefreshed(nint sessionHandle, InteropTokensRefreshedCallback tokensRefreshedCallback)
+    private static unsafe nint NativeSubscribeTokensRefreshed(
+        nint sessionHandle,
+        void* callerState,
+        InteropValueCallback<InteropArray<byte>> tokensRefreshedCallback)
     {
         try
         {
@@ -158,11 +162,9 @@ internal static class InteropProtonApiSession
                 return 0;
             }
 
-            Action<string, string> handler = (accessToken, refreshToken) => tokensRefreshedCallback.Invoke(accessToken, refreshToken);
+            var subscription = TokensRefreshedSubscription.Create(session, callerState, tokensRefreshedCallback);
 
-            session.TokenCredential.TokensRefreshed += handler;
-
-            return GCHandle.ToIntPtr(GCHandle.Alloc(handler));
+            return GCHandle.ToIntPtr(GCHandle.Alloc(subscription));
         }
         catch
         {
@@ -171,27 +173,20 @@ internal static class InteropProtonApiSession
     }
 
     [UnmanagedCallersOnly(EntryPoint = "session_tokens_refreshed_unsubscribe", CallConvs = [typeof(CallConvCdecl)])]
-    private static int NativeUnsubscribeTokensRefreshed(nint sessionHandle, nint subscriptionHandle)
+    private static void NativeUnsubscribeTokensRefreshed(nint subscriptionHandle)
     {
         try
         {
-            if (!TryGetFromHandle(sessionHandle, out var session))
+            if (!TryGetTokensExpiredSubscriptionFromHandle(subscriptionHandle, out var unregisterAction))
             {
-                return -1;
+                return;
             }
 
-            if (!TryGetTokensExpiredSubscriptionFromHandle(subscriptionHandle, out var handler))
-            {
-                return -1;
-            }
-
-            session.TokenCredential.TokensRefreshed -= handler;
-
-            return 0;
+            unregisterAction.Dispose();
         }
         catch
         {
-            return -1;
+            // Ignore
         }
     }
 
@@ -215,7 +210,9 @@ internal static class InteropProtonApiSession
         }
     }
 
-    private static async ValueTask<Result<InteropArray, InteropArray>> InteropBeginAsync(InteropArray requestBytes, CancellationToken cancellationToken)
+    private static async ValueTask<Result<InteropArray<byte>, InteropArray<byte>>> InteropBeginAsync(
+        InteropArray<byte> requestBytes,
+        CancellationToken cancellationToken)
     {
         try
         {
@@ -256,40 +253,85 @@ internal static class InteropProtonApiSession
                 cancellationToken).ConfigureAwait(false);
 
             var handle = GCHandle.ToIntPtr(GCHandle.Alloc(session));
-            return ResultExtensions.Success(new IntResponse { Value = handle });
+            return InteropResultExtensions.Success(new IntResponse { Value = handle });
         }
         catch (Exception e)
         {
-            return ResultExtensions.Failure(e, InteropErrorConverter.SetDomainAndCodes);
+            return InteropResultExtensions.Failure<InteropArray<byte>>(e, InteropErrorConverter.SetDomainAndCodes);
         }
     }
 
-    private static async ValueTask<Result<InteropArray, InteropArray>> InteropEndAsync(ProtonApiSession session)
+    private static async ValueTask<Result<InteropArray<byte>>> InteropEndAsync(ProtonApiSession session)
     {
         try
         {
             await session.EndAsync().ConfigureAwait(false);
 
-            return ResultExtensions.Success();
+            return Result<InteropArray<byte>>.Success;
         }
         catch (Exception e)
         {
-            return ResultExtensions.Failure(e, InteropErrorConverter.SetDomainAndCodes);
+            return InteropResultExtensions.Failure(e, InteropErrorConverter.SetDomainAndCodes);
         }
     }
 
-    private static bool TryGetTokensExpiredSubscriptionFromHandle(nint handle, [MaybeNullWhen(false)] out Action<string, string> handler)
+    private static bool TryGetTokensExpiredSubscriptionFromHandle(nint handle, [MaybeNullWhen(false)] out TokensRefreshedSubscription subscription)
     {
         if (handle == 0)
         {
-            handler = null;
+            subscription = null;
             return false;
         }
 
         var gcHandle = GCHandle.FromIntPtr(handle);
 
-        handler = gcHandle.Target as Action<string, string>;
+        subscription = gcHandle.Target as TokensRefreshedSubscription;
 
-        return handler is not null;
+        return subscription is not null;
+    }
+
+    private sealed unsafe class TokensRefreshedSubscription : IDisposable
+    {
+        private readonly ProtonApiSession _session;
+        private readonly void* _callerState;
+        private readonly InteropValueCallback<InteropArray<byte>> _tokensRefreshedCallback;
+
+        private TokensRefreshedSubscription(ProtonApiSession session, void* callerState, InteropValueCallback<InteropArray<byte>> tokensRefreshedCallback)
+        {
+            _session = session;
+            _callerState = callerState;
+            _tokensRefreshedCallback = tokensRefreshedCallback;
+        }
+
+        public static TokensRefreshedSubscription Create(
+            ProtonApiSession session,
+            void* callerState,
+            InteropValueCallback<InteropArray<byte>> tokensRefreshedCallback)
+        {
+            var subscription = new TokensRefreshedSubscription(session, callerState, tokensRefreshedCallback);
+
+            session.TokenCredential.TokensRefreshed += subscription.Handle;
+
+            return subscription;
+        }
+
+        public void Dispose()
+        {
+            _session.TokenCredential.TokensRefreshed -= Handle;
+        }
+
+        private void Handle(string accessToken, string refreshToken)
+        {
+            var tokensMessage = InteropArray<byte>.FromMemory(new SessionTokens { AccessToken = accessToken, RefreshToken = refreshToken }.ToByteArray());
+
+            try
+            {
+                _tokensRefreshedCallback.Invoke(_callerState, tokensMessage);
+            }
+            finally
+            {
+                tokensMessage.Free();
+            }
+        }
     }
 }

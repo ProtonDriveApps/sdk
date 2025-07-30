@@ -2,10 +2,9 @@
 
   <PropertyGroup>
     <AssemblyName>$(NativeLibPrefix)proton_sdk</AssemblyName>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PublishAot>true</PublishAot>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="..\Protos\account.proto" Link="account.proto" Access="internal" />
+    <Protobuf Include="..\protos\account.proto" Link="account.proto" Access="internal" />
   </ItemGroup>
 
   <ItemGroup>

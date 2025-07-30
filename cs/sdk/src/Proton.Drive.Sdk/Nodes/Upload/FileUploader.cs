@@ -26,7 +26,7 @@ public sealed class FileUploader : IDisposable
         _remainingNumberOfBlocks = expectedNumberOfBlocks;
     }
 
-    public UploadController UploadStream(
+    public UploadController UploadFromStream(
         NodeUid parentFolderUid,
         Stream contentInputStream,
         IEnumerable<FileSample> samples,
@@ -34,7 +34,7 @@ public sealed class FileUploader : IDisposable
         Action<long, long> onProgress,
         CancellationToken cancellationToken)
     {
-        var task = UploadStreamAsync(parentFolderUid, contentInputStream, samples, createNewRevisionIfExists, onProgress, cancellationToken);
+        var task = UploadFromStreamAsync(parentFolderUid, contentInputStream, samples, createNewRevisionIfExists, onProgress, cancellationToken);
 
         return new UploadController(task);
     }
@@ -50,7 +50,7 @@ public sealed class FileUploader : IDisposable
         _remainingNumberOfBlocks = 0;
     }
 
-    private async Task UploadStreamAsync(
+    private async Task UploadFromStreamAsync(
         NodeUid parentFolderUid,
         Stream contentInputStream,
         IEnumerable<FileSample> samples,
