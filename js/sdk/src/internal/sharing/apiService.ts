@@ -231,6 +231,7 @@ export class SharingAPIService {
                 creatorEmail: response.Share.CreatorEmail,
             },
             node: {
+                uid: makeNodeUid(response.Share.VolumeID, response.Link.LinkID),
                 type: nodeTypeNumberToNodeType(this.logger, response.Link.Type),
                 mediaType: response.Link.MIMEType || undefined,
                 encryptedName: response.Link.Name,
