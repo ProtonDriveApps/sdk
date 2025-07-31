@@ -179,7 +179,7 @@ export class DriveCrypto {
         passphraseSessionKey: SessionKey;
         verified: VERIFICATION_STATUS;
     }> {
-        const passphraseSessionKey = await this.decryptSessionKey(armoredPassphrase, decryptionKeys);
+        const passphraseSessionKey = await this.openPGPCrypto.decryptArmoredSessionKey(armoredPassphrase, decryptionKeys);
 
         const { data: decryptedPassphrase, verified } = await this.openPGPCrypto.decryptArmoredAndVerifyDetached(
             armoredPassphrase,
@@ -530,7 +530,10 @@ export class DriveCrypto {
     ): Promise<{
         base64SessionKeySignature: string;
     }> {
-        const sessionKey = await this.decryptSessionKey(base64KeyPacket, signingKey);
+        const sessionKey = await this.openPGPCrypto.decryptSessionKey(
+            base64StringToUint8Array(base64KeyPacket),
+            signingKey,
+        );
 
         const { signature } = await this.openPGPCrypto.sign(
             sessionKey.data,

@@ -14,6 +14,7 @@ export type ProtonInvitation = Member;
 
 export type ProtonInvitationWithNode = ProtonInvitation & {
     node: {
+        uid: string;
         name: Result<string, Error | InvalidNameError>;
         type: NodeType;
         mediaType?: string;

@@ -218,6 +218,7 @@ export class SharingCryptoService {
         return {
             ...(await this.decryptInvitation(encryptedInvitation)),
             node: {
+                uid: encryptedInvitation.node.uid,
                 name: nodeName,
                 type: encryptedInvitation.node.type,
                 mediaType: encryptedInvitation.node.mediaType,
