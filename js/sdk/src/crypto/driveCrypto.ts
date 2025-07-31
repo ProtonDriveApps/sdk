@@ -629,29 +629,15 @@ export class DriveCrypto {
 
     async decryptBlock(
         encryptedBlock: Uint8Array,
-        armoredSignature: string | undefined,
-        decryptionKey: PrivateKey,
         sessionKey: SessionKey,
-        verificationKeys?: PublicKey[],
-    ): Promise<{
-        decryptedBlock: Uint8Array;
-        verified: VERIFICATION_STATUS;
-    }> {
-        const signature = armoredSignature
-            ? await this.openPGPCrypto.decryptArmored(armoredSignature, [decryptionKey])
-            : undefined;
-
-        const { data: decryptedBlock, verified } = await this.openPGPCrypto.decryptAndVerifyDetached(
+    ): Promise<Uint8Array> {
+        const { data: decryptedBlock } = await this.openPGPCrypto.decryptAndVerify(
             encryptedBlock,
-            signature,
             sessionKey,
-            verificationKeys,
+            [],
         );
 
-        return {
-            decryptedBlock,
-            verified,
-        };
+        return decryptedBlock;
     }
 
     async signManifest(

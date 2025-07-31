@@ -161,6 +161,5 @@ function transformBlock(block: GetRevisionResponse['Revision']['Blocks'][0]): Bl
         token: block.Token as string,
         base64sha256Hash: block.Hash,
         signatureEmail: block.SignatureEmail || undefined,
-        armoredSignature: block.EncSignature || undefined,
     };
 }

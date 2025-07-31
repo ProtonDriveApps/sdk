@@ -34,11 +34,7 @@ export class DownloadCryptoService {
         };
     }
 
-    async decryptBlock(
-        encryptedBlock: Uint8Array,
-        armoredSignature: string,
-        revisionKeys: RevisionKeys,
-    ): Promise<Uint8Array> {
+    async decryptBlock(encryptedBlock: Uint8Array, revisionKeys: RevisionKeys): Promise<Uint8Array> {
         let decryptedBlock;
         try {
             // We do not verify signatures on blocks. We only verify
@@ -47,14 +43,10 @@ export class DownloadCryptoService {
             // We plan to drop signatures of individual blocks
             // completely in the future. Any issue on the blocks
             // should be considered serious integrity issue.
-            const result = await this.driveCrypto.decryptBlock(
+            decryptedBlock = await this.driveCrypto.decryptBlock(
                 encryptedBlock,
-                armoredSignature,
-                revisionKeys.key,
                 revisionKeys.contentKeyPacketSessionKey,
-                revisionKeys.verificationKeys,
             );
-            decryptedBlock = result.decryptedBlock;
         } catch (error: unknown) {
             const message = getErrorMessage(error);
             throw new DecryptionError(c('Error').t`Failed to decrypt block: ${message}`);

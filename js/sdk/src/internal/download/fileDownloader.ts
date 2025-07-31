@@ -187,11 +187,7 @@ export class FileDownloader {
                 }
 
                 logger.debug(`Decrypting`);
-                decryptedBlock = await this.cryptoService.decryptBlock(
-                    encryptedBlock,
-                    blockMetadata.armoredSignature!,
-                    cryptoKeys,
-                );
+                decryptedBlock = await this.cryptoService.decryptBlock(encryptedBlock, cryptoKeys);
             } catch (error) {
                 if (blockProgress !== 0) {
                     onProgress?.(-blockProgress);
