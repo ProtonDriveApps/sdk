@@ -8,7 +8,6 @@ export type BlockMetadata = {
     token: string;
     base64sha256Hash: string;
     signatureEmail?: string;
-    armoredSignature?: string;
 };
 
 export type RevisionKeys = {

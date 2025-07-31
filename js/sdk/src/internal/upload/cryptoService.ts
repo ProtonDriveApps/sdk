@@ -137,7 +137,6 @@ export class UploadCryptoService {
     }
 
     async verifyBlock(
-        nodeKey: PrivateKey,
         contentKeyPacketSessionKey: SessionKey,
         verificationCode: Uint8Array,
         encryptedData: Uint8Array,
@@ -152,7 +151,7 @@ export class UploadCryptoService {
         // Additionally, we use the key provided by the verification endpoint, to
         // ensure the correct key was used to encrypt the data
         try {
-            await this.driveCrypto.decryptBlock(encryptedData, undefined, nodeKey, contentKeyPacketSessionKey);
+            await this.driveCrypto.decryptBlock(encryptedData, contentKeyPacketSessionKey);
         } catch (error) {
             throw new IntegrityError(c('Error').t`Data integrity check of one part failed`, {
                 error,

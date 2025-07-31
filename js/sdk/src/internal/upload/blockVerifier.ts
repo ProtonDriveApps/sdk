@@ -34,7 +34,6 @@ export class BlockVerifier {
         }
 
         return this.cryptoService.verifyBlock(
-            this.nodeKey,
             this.contentKeyPacketSessionKey,
             this.verificationCode,
             encryptedBlock,
