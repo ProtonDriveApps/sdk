@@ -43,6 +43,7 @@ export interface EncryptedInvitationWithNode extends EncryptedInvitation {
         creatorEmail: string;
     };
     node: {
+        uid: string;
         type: NodeType;
         mediaType?: string;
         encryptedName: string;
