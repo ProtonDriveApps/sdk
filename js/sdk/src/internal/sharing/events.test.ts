@@ -44,8 +44,7 @@ describe('handleSharedByMeNodes', () => {
             expect(cache.setSharedWithMeNodeUids).not.toHaveBeenCalled();
         });
 
-        // FIXME enable when volume ownership is handled
-        test.skip('should not add if new shared node is not own', async () => {
+        test('should not add if new shared node is not own', async () => {
             const event: DriveEvent = {
                 eventId: '1',
                 type: DriveEventType.NodeCreated,

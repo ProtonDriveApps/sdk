@@ -317,6 +317,38 @@ describe('nodeAPIService', () => {
                 }),
             ]);
         });
+
+        it('should get nodes in batches', async () => {
+            // @ts-expect-error Mocking for testing purposes
+            apiMock.post = jest.fn(async (_, { LinkIDs }) =>
+                Promise.resolve({
+                    Links: LinkIDs.map((linkId: string) => generateAPIFolderNode({ LinkID: linkId })),
+                }),
+            );
+
+            const nodeUids = Array.from({ length: 250 }, (_, i) => `volumeId1~nodeId${i}`);
+            const nodeIds = nodeUids.map((uid) => uid.split('~')[1]);
+
+            const nodes = await Array.fromAsync(api.iterateNodes(nodeUids, 'volumeId1'));
+            expect(nodes).toHaveLength(nodeUids.length);
+
+            expect(apiMock.post).toHaveBeenCalledTimes(3);
+            expect(apiMock.post).toHaveBeenCalledWith(
+                'drive/v2/volumes/volumeId1/links',
+                { LinkIDs: nodeIds.slice(0, 100) },
+                undefined,
+            );
+            expect(apiMock.post).toHaveBeenCalledWith(
+                'drive/v2/volumes/volumeId1/links',
+                { LinkIDs: nodeIds.slice(100, 200) },
+                undefined,
+            );
+            expect(apiMock.post).toHaveBeenCalledWith(
+                'drive/v2/volumes/volumeId1/links',
+                { LinkIDs: nodeIds.slice(200, 250) },
+                undefined,
+            );
+        });
     });
 
     describe('trashNodes', () => {

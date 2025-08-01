@@ -10,8 +10,16 @@ import {
     nodeTypeNumberToNodeType,
     permissionsToDirectMemberRole,
 } from '../apiService';
+import { asyncIteratorRace } from '../asyncIteratorRace';
+import { batch } from '../batch';
 import { splitNodeUid, makeNodeUid, makeNodeRevisionUid, splitNodeRevisionUid, makeNodeThumbnailUid } from '../uids';
 import { EncryptedNode, EncryptedRevision, Thumbnail } from './interface';
+
+// This is the number of calls to the API that are made in parallel.
+const API_CONCURRENCY = 15;
+
+// This is the number of nodes that are loaded from the API in one call.
+const API_NODES_BATCH_SIZE = 100;
 
 type PostLoadLinksMetadataRequest = Extract<
     drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['requestBody'],
@@ -106,7 +114,6 @@ export class NodeAPIService {
         return result.value;
     }
 
-    // Improvement requested: split into multiple calls for many nodes.
     async *iterateNodes(nodeUids: string[], ownVolumeId: string, signal?: AbortSignal): AsyncGenerator<EncryptedNode> {
         const allNodeIds = nodeUids.map(splitNodeUid);
 
@@ -121,22 +128,50 @@ export class NodeAPIService {
         // If the API returns node that is not recognised, it is returned as
         // an error, but first all nodes that are recognised are yielded.
         // Thus we capture all errors and throw them at the end of iteration.
-        const errors = [];
+        const errors: unknown[] = [];
 
-        for (const [volumeId, nodeIds] of nodeIdsByVolumeId.entries()) {
-            const isAdmin = volumeId === ownVolumeId;
+        const iterateNodesPerVolume = this.iterateNodesPerVolume.bind(this);
+        const iterateNodesPerVolumeGenerator = async function* () {
+            for (const [volumeId, nodeIds] of nodeIdsByVolumeId.entries()) {
+                const isAdmin = volumeId === ownVolumeId;
 
+                yield (async function* () {
+                    const errorsPerVolume = yield* iterateNodesPerVolume(volumeId, nodeIds, isAdmin, signal);
+                    if (errorsPerVolume.length) {
+                        errors.push(...errorsPerVolume);
+                    }
+                })();
+            }
+        };
+
+        yield* asyncIteratorRace(iterateNodesPerVolumeGenerator(), API_CONCURRENCY);
+
+        if (errors.length) {
+            this.logger.warn(`Failed to load ${errors.length} nodes`);
+            throw new ProtonDriveError(c('Error').t`Failed to load some nodes`, { cause: errors });
+        }
+    }
+
+    private async *iterateNodesPerVolume(
+        volumeId: string,
+        nodeIds: string[],
+        isOwnVolumeId: boolean,
+        signal?: AbortSignal,
+    ): AsyncGenerator<EncryptedNode, unknown[]> {
+        const errors: unknown[] = [];
+
+        for (const nodeIdsBatch of batch(nodeIds, API_NODES_BATCH_SIZE)) {
             const response = await this.apiService.post<PostLoadLinksMetadataRequest, PostLoadLinksMetadataResponse>(
                 `drive/v2/volumes/${volumeId}/links`,
                 {
-                    LinkIDs: nodeIds,
+                    LinkIDs: nodeIdsBatch,
                 },
                 signal,
             );
 
             for (const link of response.Links) {
                 try {
-                    yield linkToEncryptedNode(this.logger, volumeId, link, isAdmin);
+                    yield linkToEncryptedNode(this.logger, volumeId, link, isOwnVolumeId);
                 } catch (error: unknown) {
                     this.logger.error(`Failed to transform node ${link.Link.LinkID}`, error);
                     errors.push(error);
@@ -144,10 +179,7 @@ export class NodeAPIService {
             }
         }
 
-        if (errors.length) {
-            this.logger.warn(`Failed to load ${errors.length} nodes`);
-            throw new ProtonDriveError(c('Error').t`Failed to load some nodes`, { cause: errors });
-        }
+        return errors;
     }
 
     // Improvement requested: load next page sooner before all IDs are yielded.
