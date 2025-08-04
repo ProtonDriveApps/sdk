@@ -21,7 +21,7 @@ const CORE_POLLING_INTERVAL = 30;
  */
 export class DriveEventsService {
     private apiService: EventsAPIService;
-    private coreEvents?: EventManager<DriveEvent>;
+    private coreEventManager?: EventManager<DriveEvent>;
     private volumeEventManagers: { [volumeId: string]: EventManager<DriveEvent> };
     private logger: Logger;
 
@@ -38,20 +38,16 @@ export class DriveEventsService {
         this.volumeEventManagers = {};
     }
 
-    /**
-     * Subscribe to drive events. The treeEventScopeId can be obtained from a node.
-     */
-    async subscribeToTreeEvents(treeEventScopeId: string, callback: DriveListener): Promise<EventSubscription> {
-        const volumeId = treeEventScopeId;
-        this.logger.debug(`Creating volume event manager for volume ${volumeId}`);
-        let manager = this.volumeEventManagers[volumeId];
-        let started = true;
+    // FIXME: Allow to pass own core events manager from the public interface.
+    async subscribeToCoreEvents(callback: DriveListener): Promise<EventSubscription> {
+        let manager = this.coreEventManager;
+        const started = !!manager;
+
         if (manager === undefined) {
-            manager = await this.createVolumeEventManager(volumeId);
-            this.volumeEventManagers[volumeId] = manager;
-            started = false;
-            this.sendNumberOfVolumeSubscriptionsToTelemetry();
+            manager = await this.createCoreEventManager();
+            this.coreEventManager = manager;
         }
+
         const eventSubscription = manager.addListener(callback);
         if (!started) {
             await manager.start();
@@ -59,24 +55,69 @@ export class DriveEventsService {
         return eventSubscription;
     }
 
-    // FIXME: Allow to pass own core events manager from the public interface.
-    async subscribeToCoreEvents(callback: DriveListener): Promise<EventSubscription> {
-        if (this.latestEventIdProvider === null || this.latestEventIdProvider === undefined) {
+    private async createCoreEventManager() {
+        if (!this.latestEventIdProvider) {
             throw new Error(
                 'Cannot subscribe to events without passing a latestEventIdProvider in ProtonDriveClient initialization',
             );
         }
-        if (this.coreEvents === undefined) {
-            const coreEventManager = new CoreEventManager(this.logger, this.apiService);
-            const latestEventId = this.latestEventIdProvider.getLatestEventId('core') ?? null;
-            this.coreEvents = new EventManager(coreEventManager, CORE_POLLING_INTERVAL, latestEventId);
-            for (const listener of this.cacheEventListeners) {
-                this.coreEvents.addListener(listener);
-            }
+
+        const coreEventManager = new CoreEventManager(this.logger, this.apiService);
+        const latestEventId = this.latestEventIdProvider.getLatestEventId('core') ?? null;
+        const eventManager = new EventManager(coreEventManager, CORE_POLLING_INTERVAL, latestEventId);
+
+        for (const listener of this.cacheEventListeners) {
+            eventManager.addListener(listener);
         }
-        const eventSubscription = this.coreEvents.addListener(callback);
-        await this.coreEvents.start();
+
+        return eventManager;
+    }
+
+    /**
+     * Subscribe to drive events. The treeEventScopeId can be obtained from a node.
+     */
+    async subscribeToTreeEvents(treeEventScopeId: string, callback: DriveListener): Promise<EventSubscription> {
+        const volumeId = treeEventScopeId;
+        let manager = this.volumeEventManagers[volumeId];
+        const started = !!manager;
+
+        if (manager === undefined) {
+            manager = await this.createVolumeEventManager(volumeId);
+            this.volumeEventManagers[volumeId] = manager;
+        }
+
+        const eventSubscription = manager.addListener(callback);
+        if (!started) {
+            await manager.start();
+            this.sendNumberOfVolumeSubscriptionsToTelemetry();
+        }
         return eventSubscription;
+    }
+
+    private async createVolumeEventManager(volumeId: string): Promise<EventManager<DriveEvent>> {
+        if (!this.latestEventIdProvider) {
+            throw new Error(
+                'Cannot subscribe to events without passing a latestEventIdProvider in ProtonDriveClient initialization',
+            );
+        }
+
+        this.logger.debug(`Creating volume event manager for volume ${volumeId}`);
+        const volumeEventManager = new VolumeEventManager(this.logger, this.apiService, volumeId);
+
+        const isOwnVolume = await this.shareManagement.isOwnVolume(volumeId);
+        const pollingInterval = this.getDefaultVolumePollingInterval(isOwnVolume);
+        const latestEventId = this.latestEventIdProvider.getLatestEventId(volumeId);
+        const eventManager = new EventManager<DriveEvent>(volumeEventManager, pollingInterval, latestEventId);
+
+        for (const listener of this.cacheEventListeners) {
+            eventManager.addListener(listener);
+        }
+
+        return eventManager;
+    }
+
+    private getDefaultVolumePollingInterval(isOwnVolume: boolean): number {
+        return isOwnVolume ? OWN_VOLUME_POLLING_INTERVAL : OTHER_VOLUME_POLLING_INTERVAL;
     }
 
     private sendNumberOfVolumeSubscriptionsToTelemetry() {
@@ -84,28 +125,5 @@ export class DriveEventsService {
             eventName: 'volumeEventsSubscriptionsChanged',
             numberOfVolumeSubscriptions: Object.keys(this.volumeEventManagers).length,
         });
-    }
-
-    private async createVolumeEventManager(volumeId: string): Promise<EventManager<DriveEvent>> {
-        if (this.latestEventIdProvider === null || this.latestEventIdProvider === undefined) {
-            throw new Error(
-                'Cannot subscribe to events without passing a latestEventIdProvider in ProtonDriveClient initialization',
-            );
-        }
-        const isOwnVolume = await this.shareManagement.isOwnVolume(volumeId);
-        const pollingInterval = this.getDefaultVolumePollingInterval(isOwnVolume);
-        const volumeEventManager = new VolumeEventManager(this.logger, this.apiService, volumeId);
-        const latestEventId = this.latestEventIdProvider.getLatestEventId(volumeId);
-        const eventManager = new EventManager<DriveEvent>(volumeEventManager, pollingInterval, latestEventId);
-        for (const listener of this.cacheEventListeners) {
-            eventManager.addListener(listener);
-        }
-        await eventManager.start();
-        this.volumeEventManagers[volumeId] = eventManager;
-        return eventManager;
-    }
-
-    private getDefaultVolumePollingInterval(isOwnVolume: boolean): number {
-        return isOwnVolume ? OWN_VOLUME_POLLING_INTERVAL : OTHER_VOLUME_POLLING_INTERVAL;
     }
 }

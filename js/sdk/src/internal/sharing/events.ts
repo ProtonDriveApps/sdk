@@ -30,26 +30,41 @@ export class SharingEventHandler {
                 await this.cache.setSharedWithMeNodeUids(undefined);
                 return;
             }
-            if (!(await this.shares.isOwnVolume(event.treeEventScopeId))) {
-                return;
-            }
-            if (event.type === DriveEventType.NodeCreated || event.type == DriveEventType.NodeUpdated) {
-                if (event.isShared && !event.isTrashed) {
-                    await this.cache.addSharedByMeNodeUid(event.nodeUid);
-                } else {
-                    await this.cache.removeSharedByMeNodeUid(event.nodeUid);
-                }
-                return;
-            }
-            if (event.type === DriveEventType.NodeDeleted) {
-                await this.cache.removeSharedByMeNodeUid(event.nodeUid);
-                return;
-            }
-            if (event.type === DriveEventType.TreeRefresh || event.type === DriveEventType.TreeRemove) {
-                await this.cache.setSharedWithMeNodeUids(undefined);
-            }
+            await this.handleSharedByMeNodeUidsLoaded(event);
         } catch (error: unknown) {
             this.logger.error(`Skipping shared by me node cache update`, error);
+        }
+    }
+
+    private async handleSharedByMeNodeUidsLoaded(event: DriveEvent) {
+        if (event.type === DriveEventType.TreeRefresh || event.type === DriveEventType.TreeRemove) {
+            await this.cache.setSharedWithMeNodeUids(undefined);
+            return;
+        }
+
+        if (![DriveEventType.NodeCreated, DriveEventType.NodeUpdated, DriveEventType.NodeDeleted].includes(event.type)) {
+            return;
+        }
+
+        const hasSharedByMeLoaded = await this.cache.hasSharedByMeNodeUidsLoaded();
+        if (!hasSharedByMeLoaded) {
+            return;
+        }
+
+        const isOwnVolume = await this.shares.isOwnVolume(event.treeEventScopeId);
+        if (!isOwnVolume) {
+            return;
+        }
+
+        if (event.type === DriveEventType.NodeCreated || event.type == DriveEventType.NodeUpdated) {
+            if (event.isShared && !event.isTrashed) {
+                await this.cache.addSharedByMeNodeUid(event.nodeUid);
+            } else {
+                await this.cache.removeSharedByMeNodeUid(event.nodeUid);
+            }
+        }
+        if (event.type === DriveEventType.NodeDeleted) {
+            await this.cache.removeSharedByMeNodeUid(event.nodeUid);
         }
     }
 }

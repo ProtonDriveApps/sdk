@@ -21,6 +21,7 @@ describe('handleSharedByMeNodes', () => {
             removeSharedByMeNodeUid: jest.fn(),
             setSharedWithMeNodeUids: jest.fn(),
             getSharedByMeNodeUids: jest.fn().mockResolvedValue(['cachedNodeUid']),
+            hasSharedByMeNodeUidsLoaded: jest.fn().mockResolvedValue(true),
         };
         sharesManager = {
             isOwnVolume: jest.fn(async (volumeId: string) => volumeId === 'MyVolume1'),
@@ -28,94 +29,108 @@ describe('handleSharedByMeNodes', () => {
         sharingEventHandler = new SharingEventHandler(getMockLogger(), cache, sharesManager);
     });
 
-    describe('node events trigger cache update', () => {
-        it('should add if new own shared node is created', async () => {
-            const event: DriveEvent = {
-                eventId: '1',
-                type: DriveEventType.NodeCreated,
-                nodeUid: 'newNodeUid',
-                parentNodeUid: 'parentUid',
-                isTrashed: false,
-                isShared: true,
-                treeEventScopeId: 'MyVolume1',
-            };
-            await sharingEventHandler.handleDriveEvent(event);
-            expect(cache.addSharedByMeNodeUid).toHaveBeenCalledWith('newNodeUid');
-            expect(cache.setSharedWithMeNodeUids).not.toHaveBeenCalled();
-        });
+    it('should add if new own shared node is created', async () => {
+        const event: DriveEvent = {
+            eventId: '1',
+            type: DriveEventType.NodeCreated,
+            nodeUid: 'newNodeUid',
+            parentNodeUid: 'parentUid',
+            isTrashed: false,
+            isShared: true,
+            treeEventScopeId: 'MyVolume1',
+        };
+        await sharingEventHandler.handleDriveEvent(event);
+        expect(cache.addSharedByMeNodeUid).toHaveBeenCalledWith('newNodeUid');
+        expect(cache.setSharedWithMeNodeUids).not.toHaveBeenCalled();
+    });
 
-        test('should not add if new shared node is not own', async () => {
-            const event: DriveEvent = {
-                eventId: '1',
-                type: DriveEventType.NodeCreated,
-                nodeUid: 'newNodeUid',
-                parentNodeUid: 'parentUid',
-                isTrashed: false,
-                isShared: true,
-                treeEventScopeId: 'NotOwnVolume',
-            };
-            await sharingEventHandler.handleDriveEvent(event);
-            expect(cache.addSharedByMeNodeUid).not.toHaveBeenCalled();
-            expect(cache.setSharedWithMeNodeUids).not.toHaveBeenCalled();
-        });
+    test('should not add if new shared node is not own', async () => {
+        const event: DriveEvent = {
+            eventId: '1',
+            type: DriveEventType.NodeCreated,
+            nodeUid: 'newNodeUid',
+            parentNodeUid: 'parentUid',
+            isTrashed: false,
+            isShared: true,
+            treeEventScopeId: 'NotOwnVolume',
+        };
+        await sharingEventHandler.handleDriveEvent(event);
+        expect(cache.addSharedByMeNodeUid).not.toHaveBeenCalled();
+        expect(cache.setSharedWithMeNodeUids).not.toHaveBeenCalled();
+    });
 
-        it('should not add if new own node is not shared', async () => {
-            const event: DriveEvent = {
-                type: DriveEventType.NodeCreated,
-                nodeUid: 'newNodeUid',
-                parentNodeUid: 'parentUid',
-                isTrashed: false,
-                isShared: false,
-                eventId: '1',
-                treeEventScopeId: 'MyVolume1',
-            };
-            await sharingEventHandler.handleDriveEvent(event);
-            expect(cache.addSharedByMeNodeUid).not.toHaveBeenCalled();
-            expect(cache.setSharedWithMeNodeUids).not.toHaveBeenCalled();
-        });
+    it('should not add if new own node is not shared', async () => {
+        const event: DriveEvent = {
+            type: DriveEventType.NodeCreated,
+            nodeUid: 'newNodeUid',
+            parentNodeUid: 'parentUid',
+            isTrashed: false,
+            isShared: false,
+            eventId: '1',
+            treeEventScopeId: 'MyVolume1',
+        };
+        await sharingEventHandler.handleDriveEvent(event);
+        expect(cache.addSharedByMeNodeUid).not.toHaveBeenCalled();
+        expect(cache.setSharedWithMeNodeUids).not.toHaveBeenCalled();
+    });
 
-        it('should add if own node is updated and shared', async () => {
-            const event: DriveEvent = {
-                type: DriveEventType.NodeUpdated,
-                nodeUid: 'cachedNodeUid',
-                parentNodeUid: 'parentUid',
-                isTrashed: false,
-                isShared: true,
-                eventId: '1',
-                treeEventScopeId: 'MyVolume1',
-            };
-            await sharingEventHandler.handleDriveEvent(event);
-            expect(cache.addSharedByMeNodeUid).toHaveBeenCalledWith('cachedNodeUid');
-            expect(cache.setSharedWithMeNodeUids).not.toHaveBeenCalled();
-        });
+    it('should add if own node is updated and shared', async () => {
+        const event: DriveEvent = {
+            type: DriveEventType.NodeUpdated,
+            nodeUid: 'cachedNodeUid',
+            parentNodeUid: 'parentUid',
+            isTrashed: false,
+            isShared: true,
+            eventId: '1',
+            treeEventScopeId: 'MyVolume1',
+        };
+        await sharingEventHandler.handleDriveEvent(event);
+        expect(cache.addSharedByMeNodeUid).toHaveBeenCalledWith('cachedNodeUid');
+        expect(cache.setSharedWithMeNodeUids).not.toHaveBeenCalled();
+    });
 
-        it('should remove if shared node is un-shared', async () => {
-            const event: DriveEvent = {
-                type: DriveEventType.NodeUpdated,
-                nodeUid: 'cachedNodeUid',
-                parentNodeUid: 'parentUid',
-                isTrashed: false,
-                isShared: false,
-                eventId: '1',
-                treeEventScopeId: 'MyVolume1',
-            };
-            await sharingEventHandler.handleDriveEvent(event);
-            expect(cache.removeSharedByMeNodeUid).toHaveBeenCalledWith('cachedNodeUid');
-            expect(cache.setSharedWithMeNodeUids).not.toHaveBeenCalled();
-        });
+    it('should remove if shared node is un-shared', async () => {
+        const event: DriveEvent = {
+            type: DriveEventType.NodeUpdated,
+            nodeUid: 'cachedNodeUid',
+            parentNodeUid: 'parentUid',
+            isTrashed: false,
+            isShared: false,
+            eventId: '1',
+            treeEventScopeId: 'MyVolume1',
+        };
+        await sharingEventHandler.handleDriveEvent(event);
+        expect(cache.removeSharedByMeNodeUid).toHaveBeenCalledWith('cachedNodeUid');
+        expect(cache.setSharedWithMeNodeUids).not.toHaveBeenCalled();
+    });
 
-        it('should remove if shared node is deleted', async () => {
-            const event: DriveEvent = {
-                type: DriveEventType.NodeDeleted,
-                nodeUid: 'cachedNodeUid',
-                parentNodeUid: 'parentUid',
-                eventId: '1',
-                treeEventScopeId: 'MyVolume1',
-            };
-            await sharingEventHandler.handleDriveEvent(event);
-            expect(cache.removeSharedByMeNodeUid).toHaveBeenCalledWith('cachedNodeUid');
-            expect(cache.setSharedWithMeNodeUids).not.toHaveBeenCalled();
-        });
+    it('should remove if shared node is deleted', async () => {
+        const event: DriveEvent = {
+            type: DriveEventType.NodeDeleted,
+            nodeUid: 'cachedNodeUid',
+            parentNodeUid: 'parentUid',
+            eventId: '1',
+            treeEventScopeId: 'MyVolume1',
+        };
+        await sharingEventHandler.handleDriveEvent(event);
+        expect(cache.removeSharedByMeNodeUid).toHaveBeenCalledWith('cachedNodeUid');
+        expect(cache.setSharedWithMeNodeUids).not.toHaveBeenCalled();
+    });
+
+    it('should not update cache if shared by me is not loaded', async () => {
+        cache.hasSharedByMeNodeUidsLoaded = jest.fn().mockResolvedValue(false);
+        const event: DriveEvent = {
+            eventId: '1',
+            type: DriveEventType.NodeCreated,
+            nodeUid: 'newNodeUid',
+            parentNodeUid: 'parentUid',
+            isTrashed: false,
+            isShared: true,
+            treeEventScopeId: 'MyVolume1',
+        };
+        await sharingEventHandler.handleDriveEvent(event);
+        expect(cache.addSharedByMeNodeUid).not.toHaveBeenCalled();
+        expect(cache.setSharedWithMeNodeUids).not.toHaveBeenCalled();
     });
 });
 
@@ -141,7 +156,7 @@ describe('handleSharedWithMeNodes', () => {
         } as any;
     });
 
-    it('should only update cache', async () => {
+    it('should update cache', async () => {
         const event: DriveEvent = {
             type: DriveEventType.SharedWithMeUpdated,
             eventId: 'event1',

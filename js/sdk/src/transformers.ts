@@ -29,6 +29,7 @@ type InternalPartialNode = Pick<
     | 'totalStorageSize'
     | 'errors'
     | 'shareId'
+    | 'treeEventScopeId'
 >;
 
 type NodeUid = string | { uid: string } | Result<{ uid: string }, { uid: string }>;
@@ -92,6 +93,7 @@ export function convertInternalNode(node: InternalPartialNode): PublicMaybeNode 
         totalStorageSize: node.totalStorageSize,
         folder: node.folder,
         deprecatedShareId: node.shareId,
+        treeEventScopeId: node.treeEventScopeId,
     };
 
     const name = node.name;
