@@ -260,7 +260,6 @@ export class UploadManager {
     async commitDraft(
         nodeRevisionDraft: NodeRevisionDraft,
         manifest: Uint8Array,
-        _metadata: UploadMetadata,
         extendedAttributes: {
             modificationTime?: Date;
             size?: number;
@@ -277,9 +276,13 @@ export class UploadManager {
             generatedExtendedAttributes,
         );
         await this.apiService.commitDraftRevision(nodeRevisionDraft.nodeRevisionUid, nodeCommitCrypto);
-        const node = await this.nodesService.getNode(nodeRevisionDraft.nodeUid);
-        if (node.parentUid) {
-            await this.nodesService.notifyChildCreated(node.parentUid);
+
+        // If new revision to existing node was created, invalidate the node.
+        // Otherwise notify about the new child in the parent.
+        if (nodeRevisionDraft.newNodeInfo) {
+            await this.nodesService.notifyChildCreated(nodeRevisionDraft.newNodeInfo.parentUid);
+        } else {
+            await this.nodesService.notifyNodeChanged(nodeRevisionDraft.nodeUid);
         }
     }
 }
