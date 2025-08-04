@@ -155,8 +155,8 @@ export class ProtonDriveClient {
         );
         // These are used to keep the internal cache up to date
         const cacheEventListeners: DriveListener[] = [
-            this.nodes.eventHandler.updateNodesCacheOnEvent,
-            this.sharing.eventHandler.handleDriveEvent,
+            this.nodes.eventHandler.updateNodesCacheOnEvent.bind(this.nodes.eventHandler),
+            this.sharing.eventHandler.handleDriveEvent.bind(this.sharing.eventHandler),
         ];
         this.events = new DriveEventsService(
             telemetry,

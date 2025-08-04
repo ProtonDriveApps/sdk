@@ -22,6 +22,15 @@ export class SharingCache {
         return this.getNodeUids(SharingType.SharedByMe);
     }
 
+    async hasSharedByMeNodeUidsLoaded(): Promise<boolean> {
+        try {
+            await this.getNodeUids(SharingType.SharedByMe);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
     async addSharedByMeNodeUid(nodeUid: string): Promise<void> {
         return this.addNodeUid(SharingType.SharedByMe, nodeUid);
     }

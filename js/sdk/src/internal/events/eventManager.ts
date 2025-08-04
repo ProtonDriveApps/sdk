@@ -38,8 +38,11 @@ export class EventManager<T extends Event> {
     }
 
     async start(): Promise<void> {
+        this.logger.info(`Starting event manager with latestEventId: ${this.latestEventId}`);
         if (this.latestEventId === undefined) {
             this.latestEventId = await this.specializedEventManager.getLatestEventId();
+            this.scheduleNextPoll();
+            return;
         }
         this.processPromise = this.processEvents();
     }
@@ -107,6 +110,13 @@ export class EventManager<T extends Event> {
             throw listenerError;
         }
 
+        this.scheduleNextPoll();
+    }
+
+    private scheduleNextPoll() {
+        if (this.timeoutHandle) {
+            clearTimeout(this.timeoutHandle);
+        }
         this.timeoutHandle = setTimeout(() => {
             this.processPromise = this.processEvents();
         }, this.nextPollTimeout);
