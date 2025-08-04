@@ -41,7 +41,12 @@ export class NodesEventsHandler {
                 return;
             }
             if (event.type === DriveEventType.NodeUpdated) {
-                const node = await this.cache.getNode(event.nodeUid);
+                let node;
+                try {
+                    node = await this.cache.getNode(event.nodeUid);
+                } catch {
+                    return;
+                }
                 node.isStale = true;
                 node.parentUid = event.parentNodeUid;
                 node.isShared = event.isShared;
@@ -53,12 +58,6 @@ export class NodesEventsHandler {
                 await this.cache.setNode(node);
             }
         } catch (error: unknown) {
-            if (error instanceof Error) {
-                // FIXME throw CacheMissException error and catch it
-                if (error.message === 'Entity not found') {
-                    return;
-                }
-            }
             this.logger.error(`Failed to update node cache for event: ${event.eventId}`, error);
         }
     }

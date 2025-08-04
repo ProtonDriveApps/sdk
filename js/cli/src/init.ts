@@ -90,6 +90,7 @@ function initSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Sr
         account,
         openPGPCryptoModule,
         srpModule: srp,
+        latestEventIdProvider: new NoLatestEventIdProvider(),
     });
     return sdk;
 }
@@ -109,4 +110,10 @@ function initSDKDiagnostic(cryptoApi: CryptoApi, config: Config, account: Accoun
         openPGPCryptoModule,
         srpModule: srp,
     });
+}
+
+class NoLatestEventIdProvider {
+    getLatestEventId(): string | null {
+        return null;
+    }
 }
