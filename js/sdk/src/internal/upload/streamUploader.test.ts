@@ -147,7 +147,7 @@ describe('StreamUploader', () => {
 
             const numberOfExpectedBlocks = Math.ceil(metadata.expectedSize / FILE_CHUNK_SIZE);
             expect(uploadManager.commitDraft).toHaveBeenCalledTimes(1);
-            expect(uploadManager.commitDraft).toHaveBeenCalledWith(revisionDraft, expect.anything(), metadata, {
+            expect(uploadManager.commitDraft).toHaveBeenCalledWith(revisionDraft, expect.anything(), {
                 size: metadata.expectedSize,
                 blockSizes: metadata.expectedSize
                     ? [

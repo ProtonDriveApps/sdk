@@ -91,9 +91,8 @@ describe('UploadManager', () => {
                 email: 'signatureEmail',
                 addressId: 'addressId',
             }),
-            notifyChildCreated: jest.fn(async (nodeUid: string) => {
-                return;
-            }),
+            notifyChildCreated: jest.fn(),
+            notifyNodeChanged: jest.fn(),
         };
 
         manager = new UploadManager(telemetry, apiService, cryptoService, nodesService, clientUid);
@@ -337,10 +336,6 @@ describe('UploadManager', () => {
             },
         };
         const manifest = new Uint8Array([1, 2, 3]);
-        const metadata = {
-            mediaType: 'myMimeType',
-            expectedSize: 123456,
-        };
         const extendedAttributes = {
             modificationTime: new Date(),
             digests: {
@@ -349,7 +344,7 @@ describe('UploadManager', () => {
         };
 
         it('should commit revision draft', async () => {
-            await manager.commitDraft(nodeRevisionDraft as any, manifest, metadata, extendedAttributes);
+            await manager.commitDraft(nodeRevisionDraft as any, manifest, extendedAttributes);
 
             expect(cryptoService.commitFile).toHaveBeenCalledWith(
                 nodeRevisionDraft.nodeKeys,
@@ -360,7 +355,8 @@ describe('UploadManager', () => {
                 nodeRevisionDraft.nodeRevisionUid,
                 expect.anything(),
             );
-            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('parentUid');
+            expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('newNode:nodeUid');
+            expect(nodesService.notifyChildCreated).not.toHaveBeenCalled();
         });
 
         it('should commit node draft', async () => {
@@ -373,7 +369,7 @@ describe('UploadManager', () => {
                     hash: 'newNode:hash',
                 },
             };
-            await manager.commitDraft(nodeRevisionDraftWithNewNodeInfo as any, manifest, metadata, extendedAttributes);
+            await manager.commitDraft(nodeRevisionDraftWithNewNodeInfo as any, manifest, extendedAttributes);
 
             expect(cryptoService.commitFile).toHaveBeenCalledWith(
                 nodeRevisionDraft.nodeKeys,
@@ -385,6 +381,7 @@ describe('UploadManager', () => {
                 expect.anything(),
             );
             expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('parentUid');
+            expect(nodesService.notifyNodeChanged).not.toHaveBeenCalled();
         });
     });
 });
