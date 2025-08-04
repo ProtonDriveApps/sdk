@@ -217,7 +217,7 @@ export class StreamUploader {
             blockSizes: uploadedBlocks.map((block) => block.originalSize),
             digests: this.digests.digests(),
         };
-        await this.uploadManager.commitDraft(this.revisionDraft, this.manifest, this.metadata, extendedAttributes);
+        await this.uploadManager.commitDraft(this.revisionDraft, this.manifest, extendedAttributes);
     }
 
     private async encryptThumbnails(thumbnails: Thumbnail[]) {

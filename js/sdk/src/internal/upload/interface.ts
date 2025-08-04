@@ -106,6 +106,7 @@ export interface NodesService {
         addressKeyId: string;
     }>;
     notifyChildCreated(nodeUid: string): Promise<void>;
+    notifyNodeChanged(nodeUid: string): Promise<void>;
 }
 
 /**
