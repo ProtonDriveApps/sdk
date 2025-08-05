@@ -1,5 +1,5 @@
 import { Command, ActionArgs } from './interface';
-import { runForever, eventsCallback } from './events';
+import { runForever, eventsCallback, eventsReady } from './events';
 import { DriveEvent, DriveEventType } from '../../../sdk/src';
 
 export class CommandEventsPath implements Command {
@@ -33,6 +33,7 @@ export class CommandEventsPath implements Command {
         await sdk.subscribeToTreeEvents(node.treeEventScopeId, async (event: DriveEvent) =>
             eventsCallback(json, filter, event),
         );
+        eventsReady(json);
         await runForever();
     }
 }
