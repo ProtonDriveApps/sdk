@@ -28,13 +28,13 @@ public sealed class FileUploader : IDisposable
 
     public UploadController UploadFromStream(
         NodeUid parentFolderUid,
-        Stream contentInputStream,
-        IEnumerable<FileSample> samples,
+        Stream contentStream,
+        IEnumerable<Thumbnail> thumbnails,
         bool createNewRevisionIfExists,
         Action<long, long> onProgress,
         CancellationToken cancellationToken)
     {
-        var task = UploadFromStreamAsync(parentFolderUid, contentInputStream, samples, createNewRevisionIfExists, onProgress, cancellationToken);
+        var task = UploadFromStreamAsync(parentFolderUid, contentStream, thumbnails, createNewRevisionIfExists, onProgress, cancellationToken);
 
         return new UploadController(task);
     }
@@ -52,8 +52,8 @@ public sealed class FileUploader : IDisposable
 
     private async Task UploadFromStreamAsync(
         NodeUid parentFolderUid,
-        Stream contentInputStream,
-        IEnumerable<FileSample> samples,
+        Stream contentStream,
+        IEnumerable<Thumbnail> thumbnails,
         bool createNewRevisionIfExists,
         Action<long, long> onProgress,
         CancellationToken cancellationToken)
@@ -74,8 +74,8 @@ public sealed class FileUploader : IDisposable
         await UploadAsync(
             draftRevisionUid,
             fileSecrets,
-            contentInputStream,
-            samples,
+            contentStream,
+            thumbnails,
             _lastModificationTime,
             onProgress,
             cancellationToken).ConfigureAwait(false);
@@ -84,8 +84,8 @@ public sealed class FileUploader : IDisposable
     private async ValueTask UploadAsync(
         RevisionUid revisionUid,
         FileSecrets fileSecrets,
-        Stream contentInputStream,
-        IEnumerable<FileSample> samples,
+        Stream contentStream,
+        IEnumerable<Thumbnail> thumbnails,
         DateTimeOffset? lastModificationTime,
         Action<long, long> onProgress,
         CancellationToken cancellationToken)
@@ -93,7 +93,7 @@ public sealed class FileUploader : IDisposable
         using var revisionWriter = await RevisionOperations.OpenForWritingAsync(_client, revisionUid, fileSecrets, ReleaseBlocks, cancellationToken)
             .ConfigureAwait(false);
 
-        await revisionWriter.WriteAsync(contentInputStream, samples, lastModificationTime, onProgress, cancellationToken).ConfigureAwait(false);
+        await revisionWriter.WriteAsync(contentStream, thumbnails, lastModificationTime, onProgress, cancellationToken).ConfigureAwait(false);
     }
 
     private void ReleaseBlocks(int numberOfBlocks)

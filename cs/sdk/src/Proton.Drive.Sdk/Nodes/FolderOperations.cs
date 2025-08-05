@@ -1,8 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
+using Proton.Drive.Sdk.Cryptography;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
@@ -63,7 +63,7 @@ internal static class FolderOperations
 
         var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
 
-        var hashKey = RandomNumberGenerator.GetBytes(32);
+        var hashKey = CryptoGenerator.GenerateFolderHashKey();
 
         NodeOperations.GetCommonCreationParameters(
             name,

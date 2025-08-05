@@ -27,9 +27,7 @@ internal static class CryptoGenerator
 
     public static byte[] GenerateFolderHashKey()
     {
-        var hashKeyBuffer = new byte[FolderHashKeyLength];
-        RandomNumberGenerator.Fill(hashKeyBuffer);
-        return hashKeyBuffer;
+        return RandomNumberGenerator.GetBytes(FolderHashKeyLength);
     }
 
     public static PgpSessionKey GenerateSessionKey()

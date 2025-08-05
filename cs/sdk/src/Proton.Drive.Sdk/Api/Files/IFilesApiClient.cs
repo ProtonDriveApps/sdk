@@ -4,7 +4,7 @@ using Proton.Sdk.Api;
 
 namespace Proton.Drive.Sdk.Api.Files;
 
-internal interface IFilesApiClient : IRevisionVerificationApiClient
+internal interface IFilesApiClient
 {
     ValueTask<FileCreationResponse> CreateFileAsync(VolumeId volumeId, FileCreationRequest request, CancellationToken cancellationToken);
 

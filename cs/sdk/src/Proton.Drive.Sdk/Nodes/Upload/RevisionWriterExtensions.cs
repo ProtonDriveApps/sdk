@@ -1,8 +1,6 @@
-﻿using Proton.Sdk.Drive;
+﻿namespace Proton.Drive.Sdk.Nodes.Upload;
 
-namespace Proton.Drive.Sdk.Nodes.Upload;
-
-public static class RevisionWriterExtensions
+internal static class RevisionWriterExtensions
 {
     public static ValueTask WriteAsync(
         this RevisionWriter revisionWriter,
@@ -27,12 +25,12 @@ public static class RevisionWriterExtensions
     public static ValueTask WriteAsync(
         this RevisionWriter revisionWriter,
         Stream contentStream,
-        IEnumerable<FileSample> samples,
+        IEnumerable<Thumbnail> thumbnails,
         DateTime lastModificationTime,
         Action<long, long> onProgress,
         CancellationToken cancellationToken)
     {
-        return revisionWriter.WriteAsync(contentStream, samples, new DateTimeOffset(lastModificationTime), onProgress, cancellationToken);
+        return revisionWriter.WriteAsync(contentStream, thumbnails, new DateTimeOffset(lastModificationTime), onProgress, cancellationToken);
     }
 
     public static async ValueTask WriteAsync(

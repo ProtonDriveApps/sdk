@@ -5,6 +5,7 @@ using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;
+using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk;
 
@@ -22,18 +23,24 @@ public sealed class ProtonDriveClient
     /// <param name="session">Authenticated API session.</param>
     public ProtonDriveClient(ProtonApiSession session)
         : this(
+            session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ApiTimeoutSeconds)),
             new AccountClientAdapter(session),
-            new DriveApiClients(session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ApiTimeoutSeconds))),
             new DriveClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository),
             session.ClientConfiguration.LoggerFactory)
     {
     }
 
-    internal ProtonDriveClient(IAccountClient accountClient, IDriveApiClients apiClients, IDriveClientCache cache, ILoggerFactory loggerFactory)
+    internal ProtonDriveClient(
+        IAccountClient accountClient,
+        IDriveApiClients apiClients,
+        IDriveClientCache cache,
+        IBlockVerifierFactory blockVerifierFactory,
+        ILoggerFactory loggerFactory)
     {
         Account = accountClient;
         Api = apiClients;
         Cache = cache;
+        BlockVerifierFactory = blockVerifierFactory;
         Logger = loggerFactory.CreateLogger<ProtonDriveClient>();
 
         var maxDegreeOfBlockTransferParallelism = Math.Max(
@@ -49,15 +56,33 @@ public sealed class ProtonDriveClient
         BlockDownloader = new BlockDownloader(this, maxDegreeOfBlockTransferParallelism);
     }
 
+    private ProtonDriveClient(
+        HttpClient httpClient,
+        IAccountClient accountClient,
+        IDriveClientCache cache,
+        ILoggerFactory loggerFactory)
+        : this(
+            accountClient,
+            new DriveApiClients(httpClient),
+            cache,
+            new BlockVerifierFactory(httpClient),
+            loggerFactory)
+    {
+    }
+
     internal static RecyclableMemoryStreamManager MemoryStreamManager { get; } = new();
 
     internal IAccountClient Account { get; }
     internal IDriveApiClients Api { get; }
     internal IDriveClientCache Cache { get; }
+    internal IBlockVerifierFactory BlockVerifierFactory { get; }
     internal ILogger Logger { get; }
 
     internal FifoFlexibleSemaphore RevisionCreationSemaphore { get; }
     internal FifoFlexibleSemaphore BlockListingSemaphore { get; }
+
+    internal int TargetBlockSize { get; set; } = RevisionWriter.DefaultBlockSize;
+    internal int MaxBlockSize { get; set; } = RevisionWriter.DefaultBlockSize * 3 / 2;
 
     internal BlockUploader BlockUploader { get; }
     internal BlockDownloader BlockDownloader { get; }
