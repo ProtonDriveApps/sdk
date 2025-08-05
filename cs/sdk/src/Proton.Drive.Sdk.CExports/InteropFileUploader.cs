@@ -81,7 +81,7 @@ internal static class InteropFileUploader
             var uploadController = uploader.UploadFromStream(
                 parentUid.Value,
                 stream,
-                request.HasThumbnail ? [new FileSample(FileSamplePurpose.Thumbnail, request.Thumbnail.ToByteArray())] : [],
+                request.HasThumbnail ? [new Thumbnail(ThumbnailType.Thumbnail, request.Thumbnail.ToByteArray())] : [],
                 request.CreateNewRevisionIfExists,
                 (completed, total) => progressCallback.UpdateProgress(completed, total),
                 cancellationToken);

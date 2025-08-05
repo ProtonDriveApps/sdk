@@ -38,7 +38,7 @@ internal sealed class BlockUploader
         AddressId membershipAddressId,
         PgpKey signatureEncryptionKey,
         Stream plainDataStream,
-        BlockVerifier verifier,
+        IBlockVerifier verifier,
         byte[] plainDataPrefix,
         int plainDataPrefixLength,
         Action<long> onBlockProgress,
@@ -139,7 +139,7 @@ internal sealed class BlockUploader
         PgpSessionKey contentKey,
         PgpPrivateKey signingKey,
         AddressId membershipAddressId,
-        FileSample sample,
+        Thumbnail thumbnail,
         Action<long>? onProgress,
         CancellationToken cancellationToken)
     {
@@ -158,7 +158,7 @@ internal sealed class BlockUploader
 
                     await using (encryptingStream.ConfigureAwait(false))
                     {
-                        await encryptingStream.WriteAsync(sample.Content, cancellationToken).ConfigureAwait(false);
+                        await encryptingStream.WriteAsync(thumbnail.Content, cancellationToken).ConfigureAwait(false);
                     }
                 }
 
@@ -176,7 +176,7 @@ internal sealed class BlockUploader
                         new ThumbnailCreationRequest
                         {
                             Size = (int)dataPacketStream.Length,
-                            Type = (ThumbnailType)sample.Purpose,
+                            Type = (Api.Files.ThumbnailType)thumbnail.Type,
                             HashDigest = sha256Digest,
                         },
                     ],

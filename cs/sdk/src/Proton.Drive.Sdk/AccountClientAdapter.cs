@@ -8,7 +8,7 @@ internal sealed class AccountClientAdapter(ProtonApiSession session) : IAccountC
 {
     private readonly ProtonAccountClient _client = new(session);
 
-    public ValueTask<Address> GetAddressAsync(ProtonDriveClient client, AddressId addressId, CancellationToken cancellationToken)
+    public ValueTask<Address> GetAddressAsync(AddressId addressId, CancellationToken cancellationToken)
     {
         return _client.GetAddressAsync(addressId, cancellationToken);
     }
