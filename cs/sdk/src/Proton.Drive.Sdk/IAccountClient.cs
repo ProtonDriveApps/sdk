@@ -5,7 +5,7 @@ namespace Proton.Drive.Sdk;
 
 internal interface IAccountClient
 {
-    ValueTask<Address> GetAddressAsync(ProtonDriveClient client, AddressId addressId, CancellationToken cancellationToken);
+    ValueTask<Address> GetAddressAsync(AddressId addressId, CancellationToken cancellationToken);
     ValueTask<Address> GetDefaultAddressAsync(CancellationToken cancellationToken);
     ValueTask<PgpPrivateKey> GetAddressPrimaryPrivateKeyAsync(AddressId addressId, CancellationToken cancellationToken);
     ValueTask<PgpPrivateKey> GetAddressPrivateKeyAsync(AddressId addressId, int index, CancellationToken cancellationToken);

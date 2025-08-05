@@ -42,17 +42,6 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
                 cancellationToken).ConfigureAwait(false);
     }
 
-    public async ValueTask<BlockVerificationInputResponse> GetVerificationInputAsync(
-        VolumeId volumeId,
-        LinkId linkId,
-        RevisionId revisionId,
-        CancellationToken cancellationToken)
-    {
-        return await _httpClient
-            .Expecting(DriveApiSerializerContext.Default.BlockVerificationInputResponse)
-            .GetAsync($"v2/volumes/{volumeId}/links/{linkId}/revisions/{revisionId}/verification", cancellationToken).ConfigureAwait(false);
-    }
-
     public async ValueTask<RevisionResponse> GetRevisionAsync(
         VolumeId volumeId,
         LinkId linkId,

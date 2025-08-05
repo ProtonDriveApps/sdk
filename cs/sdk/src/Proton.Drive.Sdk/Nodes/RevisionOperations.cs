@@ -17,8 +17,6 @@ internal static class RevisionOperations
 
         await client.BlockUploader.FileSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-        const int targetBlockSize = RevisionWriter.DefaultBlockSize;
-
         return new RevisionWriter(
             client,
             revisionUid,
@@ -27,8 +25,9 @@ internal static class RevisionOperations
             signingKey,
             membershipAddress,
             releaseBlocksAction,
-            targetBlockSize,
-            targetBlockSize * 3 / 2);
+            () => client.BlockUploader.FileSemaphore.Release(),
+            client.TargetBlockSize,
+            client.MaxBlockSize);
     }
 
     internal static async ValueTask<RevisionReader> OpenForReadingAsync(

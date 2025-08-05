@@ -3,13 +3,12 @@ using System.Text.Json;
 using Microsoft.IO;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
-using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Drive.Sdk.Serialization;
 using Proton.Sdk.Addresses;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
-public sealed class RevisionWriter : IDisposable
+internal sealed class RevisionWriter : IDisposable
 {
     public const int DefaultBlockSize = 1 << 22; // 4 MiB
 
@@ -21,6 +20,7 @@ public sealed class RevisionWriter : IDisposable
     private readonly PgpPrivateKey _signingKey;
     private readonly Address _membershipAddress;
     private readonly Action<int> _releaseBlocksAction;
+    private readonly Action _releaseFileAction;
 
     private readonly int _targetBlockSize;
     private readonly int _maxBlockSize;
@@ -35,6 +35,7 @@ public sealed class RevisionWriter : IDisposable
         PgpPrivateKey signingKey,
         Address membershipAddress,
         Action<int> releaseBlocksAction,
+        Action releaseFileAction,
         int targetBlockSize = DefaultBlockSize,
         int maxBlockSize = DefaultBlockSize)
     {
@@ -45,13 +46,14 @@ public sealed class RevisionWriter : IDisposable
         _signingKey = signingKey;
         _membershipAddress = membershipAddress;
         _releaseBlocksAction = releaseBlocksAction;
+        _releaseFileAction = releaseFileAction;
         _targetBlockSize = targetBlockSize;
         _maxBlockSize = maxBlockSize;
     }
 
     public async ValueTask WriteAsync(
-        Stream contentInputStream,
-        IEnumerable<FileSample> samples,
+        Stream contentStream,
+        IEnumerable<Thumbnail> thumbnails,
         DateTimeOffset? lastModificationTime,
         Action<long, long> onProgress,
         CancellationToken cancellationToken)
@@ -71,7 +73,7 @@ public sealed class RevisionWriter : IDisposable
 
         await using (manifestStream.ConfigureAwait(false))
         {
-            var blockVerifier = await BlockVerifier.CreateAsync(_client.Api.Files, _fileUid, _revisionId, _fileKey, cancellationToken).ConfigureAwait(false);
+            var blockVerifier = await _client.BlockVerifierFactory.CreateAsync(_fileUid, _revisionId, _fileKey, cancellationToken).ConfigureAwait(false);
 
             using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
@@ -79,7 +81,7 @@ public sealed class RevisionWriter : IDisposable
             {
                 try
                 {
-                    foreach (var sample in samples)
+                    foreach (var thumbnail in thumbnails)
                     {
                         await WaitForBlockUploaderAsync(uploadTasks, manifestStream, cancellationTokenSource.Token).ConfigureAwait(false);
 
@@ -89,14 +91,14 @@ public sealed class RevisionWriter : IDisposable
                             _contentKey,
                             _signingKey,
                             _membershipAddress.Id,
-                            sample,
+                            thumbnail,
                             onProgress: null,
                             cancellationTokenSource.Token);
 
                         uploadTasks.Enqueue(uploadTask);
                     }
 
-                    if (contentInputStream.Length > 0)
+                    if (contentStream.Length > 0)
                     {
                         do
                         {
@@ -105,7 +107,7 @@ public sealed class RevisionWriter : IDisposable
                             {
                                 var plainDataStream = ProtonDriveClient.MemoryStreamManager.GetStream();
 
-                                await contentInputStream.PartiallyCopyToAsync(plainDataStream, _targetBlockSize, plainDataPrefix, cancellationTokenSource.Token)
+                                await contentStream.PartiallyCopyToAsync(plainDataStream, _targetBlockSize, plainDataPrefix, cancellationTokenSource.Token)
                                     .ConfigureAwait(false);
 
                                 blockSizes.Add((int)plainDataStream.Length);
@@ -129,7 +131,7 @@ public sealed class RevisionWriter : IDisposable
                                     progress =>
                                     {
                                         numberOfBytesUploaded += progress;
-                                        onProgress(numberOfBytesUploaded, contentInputStream.Length);
+                                        onProgress(numberOfBytesUploaded, contentStream.Length);
                                     },
                                     _releaseBlocksAction,
                                     cancellationTokenSource.Token);
@@ -141,12 +143,12 @@ public sealed class RevisionWriter : IDisposable
                                 ArrayPool<byte>.Shared.Return(plainDataPrefix);
                                 throw;
                             }
-                        } while (contentInputStream.Position < contentInputStream.Length);
+                        } while (contentStream.Position < contentStream.Length);
                     }
                 }
                 finally
                 {
-                    _client.BlockUploader.FileSemaphore.Release();
+                    _releaseFileAction.Invoke();
                     _semaphoreReleased = true;
                 }
 
@@ -176,7 +178,7 @@ public sealed class RevisionWriter : IDisposable
             manifestSignature = await _signingKey.SignAsync(manifestStream, cancellationTokenSource.Token).ConfigureAwait(false);
         }
 
-        var request = GetRevisionUpdateRequest(contentInputStream, lastModificationTime, blockSizes, manifestSignature, signingEmailAddress);
+        var request = GetRevisionUpdateRequest(contentStream, lastModificationTime, blockSizes, manifestSignature, signingEmailAddress);
 
         await _client.Api.Files.UpdateRevisionAsync(_fileUid.VolumeId, _fileUid.LinkId, _revisionId, request, cancellationToken).ConfigureAwait(false);
     }

@@ -1,10 +1,11 @@
 ﻿using CommunityToolkit.HighPerformance;
 using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Api.BlockVerification;
 using Proton.Drive.Sdk.Api.Files;
 
 namespace Proton.Drive.Sdk.Nodes.Upload.Verification;
 
-internal sealed class BlockVerifier
+internal sealed class BlockVerifier : IBlockVerifier
 {
     private const int MaxVerificationLength = 16;
 
@@ -19,14 +20,15 @@ internal sealed class BlockVerifier
 
     public int DataPacketPrefixMaxLength => _verificationCode.Length;
 
-    public static async Task<BlockVerifier> CreateAsync(
-        IRevisionVerificationApiClient client,
+    public static async ValueTask<BlockVerifier> CreateAsync(
+        IRevisionVerificationApiClient apiClient,
         NodeUid fileUid,
         RevisionId revisionId,
         PgpPrivateKey key,
         CancellationToken cancellationToken)
     {
-        var verificationInput = await client.GetVerificationInputAsync(fileUid.VolumeId, fileUid.LinkId, revisionId, cancellationToken).ConfigureAwait(false);
+        var verificationInput =
+            await apiClient.GetVerificationInputAsync(fileUid.VolumeId, fileUid.LinkId, revisionId, cancellationToken).ConfigureAwait(false);
 
         PgpSessionKey sessionKey;
         try
@@ -43,13 +45,13 @@ internal sealed class BlockVerifier
 
     public VerificationToken VerifyBlock(ReadOnlyMemory<byte> dataPacketPrefix, ReadOnlySpan<byte> plainDataPrefix)
     {
-        var verificationLength = Math.Min(MaxVerificationLength, plainDataPrefix.Length);
-        using var decryptingStream = PgpDecryptingStream.Open(dataPacketPrefix.AsStream(), _sessionKey);
-
-        Span<byte> buffer = stackalloc byte[verificationLength];
-
         try
         {
+            var verificationLength = Math.Min(MaxVerificationLength, plainDataPrefix.Length);
+            using var decryptingStream = _sessionKey.OpenDecryptingStream(dataPacketPrefix.AsStream());
+
+            Span<byte> buffer = stackalloc byte[verificationLength];
+
             var numberOfBytesRead = decryptingStream.Read(buffer);
             if (!plainDataPrefix.StartsWith(buffer[..numberOfBytesRead]))
             {

@@ -1,4 +1,6 @@
-﻿namespace Proton.Drive.Sdk.Nodes.Upload.Verification;
+﻿using System.Numerics.Tensors;
+
+namespace Proton.Drive.Sdk.Nodes.Upload.Verification;
 
 public readonly struct VerificationToken
 {
@@ -15,7 +17,11 @@ public readonly struct VerificationToken
         // the length of the data packet prefix, we have padding logic to deal with it, as per the agreed verification protocol.
         var dataPacketPrefixForToken = GetPaddedOrTruncatedBytes(dataPacketPrefix, verificationCode.Length);
 
-        return new VerificationToken(BitwiseOperations.Xor(verificationCode, dataPacketPrefixForToken));
+        var tokenData = new byte[verificationCode.Length];
+
+        TensorPrimitives.Xor(verificationCode, dataPacketPrefixForToken, tokenData);
+
+        return new VerificationToken(tokenData);
     }
 
     public ReadOnlyMemory<byte> AsReadOnlyMemory() => _data;
