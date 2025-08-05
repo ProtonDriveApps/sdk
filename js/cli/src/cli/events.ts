@@ -23,6 +23,14 @@ function mapEventToIcon(eventType: DriveEventType): string {
     }
 }
 
+export function eventsReady(json: boolean) {
+    if (json) {
+        console.log('{"ready": true}');
+    } else {
+        console.log('🟢 Events ready');
+    }
+}
+
 export function eventsCallback(json: boolean, filter: (event: DriveEvent) => boolean, event: DriveEvent) {
     if (!filter(event)) {
         return;
