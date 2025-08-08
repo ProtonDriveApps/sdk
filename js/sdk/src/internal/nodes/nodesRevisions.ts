@@ -1,9 +1,10 @@
-import { Logger, Revision } from '../../interface';
+import { Logger } from '../../interface';
 import { makeNodeUidFromRevisionUid } from '../uids';
 import { NodeAPIService } from './apiService';
 import { NodesCryptoService } from './cryptoService';
 import { NodesAccess } from './nodesAccess';
 import { parseFileExtendedAttributes } from './extendedAttributes';
+import { DecryptedRevision } from './interface';
 
 /**
  * Provides access to revisions metadata.
@@ -21,26 +22,34 @@ export class NodesRevisons {
         this.nodesAccess = nodesAccess;
     }
 
-    async getRevision(nodeRevisionUid: string): Promise<Revision> {
+    async getRevision(nodeRevisionUid: string): Promise<DecryptedRevision> {
         const nodeUid = makeNodeUidFromRevisionUid(nodeRevisionUid);
         const { key } = await this.nodesAccess.getNodeKeys(nodeUid);
 
         const encryptedRevision = await this.apiService.getRevision(nodeRevisionUid);
         const revision = await this.cryptoService.decryptRevision(nodeUid, encryptedRevision, key);
-        const extendedAttributes = parseFileExtendedAttributes(this.logger, revision.extendedAttributes);
+        const extendedAttributes = parseFileExtendedAttributes(
+            this.logger,
+            revision.creationTime,
+            revision.extendedAttributes,
+        );
         return {
             ...revision,
             ...extendedAttributes,
         };
     }
 
-    async *iterateRevisions(nodeUid: string, signal?: AbortSignal): AsyncGenerator<Revision> {
+    async *iterateRevisions(nodeUid: string, signal?: AbortSignal): AsyncGenerator<DecryptedRevision> {
         const { key } = await this.nodesAccess.getNodeKeys(nodeUid);
 
         const encryptedRevisions = await this.apiService.getRevisions(nodeUid, signal);
         for (const encryptedRevision of encryptedRevisions) {
             const revision = await this.cryptoService.decryptRevision(nodeUid, encryptedRevision, key);
-            const extendedAttributes = parseFileExtendedAttributes(this.logger, revision.extendedAttributes);
+            const extendedAttributes = parseFileExtendedAttributes(
+                this.logger,
+                revision.creationTime,
+                revision.extendedAttributes,
+            );
             yield {
                 ...revision,
                 ...extendedAttributes,

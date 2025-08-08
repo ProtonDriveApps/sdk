@@ -1,9 +1,9 @@
-import { Revision } from '../../interface';
+import { APIHTTPError, HTTPErrorCode } from '../apiService';
+import { DecryptedRevision } from '../nodes';
 import { FileDownloader } from './fileDownloader';
 import { DownloadTelemetry } from './telemetry';
 import { DownloadAPIService } from './apiService';
 import { DownloadCryptoService } from './cryptoService';
-import { APIHTTPError, HTTPErrorCode } from '../apiService';
 
 function mockBlockDownload(_: string, token: string, onProgress: (downloadedBytes: number) => void) {
     const index = parseInt(token.slice(5, 6));
@@ -21,7 +21,7 @@ describe('FileDownloader', () => {
     let apiService: DownloadAPIService;
     let cryptoService: DownloadCryptoService;
     let nodeKey: { key: object; contentKeyPacketSessionKey: string };
-    let revision: Revision;
+    let revision: DecryptedRevision;
 
     beforeEach(() => {
         // @ts-expect-error No need to implement all methods for mocking
@@ -74,7 +74,8 @@ describe('FileDownloader', () => {
         revision = {
             uid: 'revisionUid',
             claimedSize: 1024,
-        } as Revision;
+            claimedBlockSizes: [16, 16, 16, 16],
+        } as DecryptedRevision;
     });
 
     describe('writeToStream', () => {
@@ -392,6 +393,98 @@ describe('FileDownloader', () => {
             expect(telemetry.downloadFinished).toHaveBeenCalledWith('revisionUid', 6); // 3 blocks of length 1, 2, 3.
             expect(telemetry.downloadFailed).not.toHaveBeenCalled();
             expect(onFinish).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('getSeekableStream', () => {
+        let onFinish: () => void;
+        let downloader: FileDownloader;
+
+        beforeEach(() => {
+            apiService.downloadBlock = jest.fn().mockImplementation(async function (_, token) {
+                const index = parseInt(token.slice(5, 6)) - 1;
+                const data = new Uint8Array(16);
+                for (let i = 0; i < data.length; i++) {
+                    data[i] = index * 16 + i;
+                }
+                return data;
+            });
+
+            onFinish = jest.fn();
+
+            downloader = new FileDownloader(
+                telemetry,
+                apiService,
+                cryptoService,
+                nodeKey as any,
+                revision,
+                undefined,
+                onFinish,
+            );
+        });
+
+        it('should read the stream', async () => {
+            const stream = downloader.getSeekableStream();
+
+            const data = await stream.read(32);
+            expect(data.value).toEqual(
+                new Uint8Array([
+                    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                    27, 28, 29, 30, 31,
+                ]),
+            );
+            expect(data.done).toEqual(false);
+
+            const data2 = await stream.read(32);
+            expect(data2.value).toEqual(
+                new Uint8Array([
+                    32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56,
+                    57, 58, 59, 60, 61, 62, 63,
+                ]),
+            );
+            expect(data2.done).toEqual(false);
+
+            const data3 = await stream.read(32);
+            expect(data3.value).toEqual(new Uint8Array([]));
+            expect(data3.done).toEqual(true);
+
+            expect(cryptoService.decryptBlock).toHaveBeenCalledTimes(4);
+            expect(cryptoService.decryptBlock).toHaveBeenCalledWith(expect.anything(), {
+                key: 'privateKey',
+                contentKeyPacketSessionKey: 'contentSessionKey',
+                verificationKeys: 'verificationKeys',
+            });
+        });
+
+        it('should read the stream with seeking', async () => {
+            const stream = downloader.getSeekableStream();
+
+            const data1 = await stream.read(5);
+            expect(data1.value).toEqual(new Uint8Array([0, 1, 2, 3, 4]));
+            expect(data1.done).toEqual(false);
+            expect(cryptoService.decryptBlock).toHaveBeenCalledTimes(1);
+
+            await stream.seek(10);
+
+            // Seek withing first block, so no new block is downloaded.
+            const data2 = await stream.read(5);
+            expect(data2.value).toEqual(new Uint8Array([10, 11, 12, 13, 14]));
+            expect(data2.done).toEqual(false);
+            expect(cryptoService.decryptBlock).toHaveBeenCalledTimes(1);
+
+            // Seek and read from second and third blocks.
+            await stream.seek(30);
+
+            const data3 = await stream.read(5);
+            expect(data3.value).toEqual(new Uint8Array([30, 31, 32, 33, 34]));
+            expect(data3.done).toEqual(false);
+            expect(cryptoService.decryptBlock).toHaveBeenCalledTimes(3);
+
+            expect(cryptoService.decryptBlock).toHaveBeenCalledWith(expect.anything(), {
+                key: 'privateKey',
+                contentKeyPacketSessionKey: 'contentSessionKey',
+                verificationKeys: 'verificationKeys',
+            });
         });
     });
 });

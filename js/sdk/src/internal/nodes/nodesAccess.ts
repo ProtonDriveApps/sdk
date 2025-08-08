@@ -311,7 +311,11 @@ export class NodesAccess {
 
         if (unparsedNode.type === NodeType.File) {
             const extendedAttributes = unparsedNode.activeRevision?.ok
-                ? parseFileExtendedAttributes(this.logger, unparsedNode.activeRevision.value.extendedAttributes)
+                ? parseFileExtendedAttributes(
+                      this.logger,
+                      unparsedNode.activeRevision.value.creationTime,
+                      unparsedNode.activeRevision.value.extendedAttributes,
+                  )
                 : undefined;
 
             return {
