@@ -10,6 +10,7 @@ import { CommandEventsMyVolume } from './commandEventsMyVolume';
 import { CommandFileSystemCreateFolder } from './commandFileSystemCreateFolder';
 import { CommandFileSystemDelete } from './commandFileSystemDelete';
 import { CommandFileSystemDownload } from './commandFileSystemDownload';
+import { CommandFileSystemDownloadSeeking } from './commandFileSystemDownloadSeeking';
 import { CommandFileSystemDownloadThumbnails } from './commandFileSystemDownloadThumbnails';
 import { CommandFileSystemInfo } from './commandFileSystemInfo';
 import { CommandFileSystemList } from './commandFileSystemList';
@@ -48,6 +49,7 @@ const COMMANDS = [
     new CommandFileSystemDelete(),
     new CommandFileSystemRestore(),
     new CommandFileSystemDownload(),
+    new CommandFileSystemDownloadSeeking(),
     new CommandFileSystemDownloadThumbnails(),
     new CommandFileSystemUpload(),
     new CommandRevisionList(),

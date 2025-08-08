@@ -147,6 +147,7 @@ export interface DecryptedUnparsedRevision extends BaseRevision {
 
 export interface DecryptedRevision extends Revision {
     thumbnails?: Thumbnail[];
+    claimedBlockSizes?: number[];
 }
 
 /**

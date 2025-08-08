@@ -13,7 +13,7 @@ export type { Author, UnverifiedAuthorError, AnonymousUser } from './author';
 export type { ProtonDriveConfig } from './config';
 export type { Device, DeviceOrUid } from './devices';
 export { DeviceType } from './devices';
-export type { FileDownloader, DownloadController } from './download';
+export type { FileDownloader, DownloadController, SeekableReadableStream } from './download';
 export type {
     DriveListener,
     LatestEventIdProvider,
