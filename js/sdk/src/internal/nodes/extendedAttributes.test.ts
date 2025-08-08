@@ -83,83 +83,100 @@ describe('extended attrbiutes', () => {
     });
 
     describe('should parses file attributes', () => {
-        const testCases: [string, FileExtendedAttributesParsed][] = [
-            ['', {}],
-            ['{}', {}],
-            ['a', {}],
+        const testCases: [Date, string, FileExtendedAttributesParsed][] = [
+            [new Date('2025-01-01'), '', {}],
+            [new Date('2025-01-01'), '{}', {}],
+            [new Date('2025-01-01'), 'a', {}],
             [
+                new Date('2025-01-01'),
                 '{"Common": {"ModificationTime": "2009-02-13T23:31:30+0000"}}',
                 {
                     claimedModificationTime: new Date(1234567890000),
                     claimedSize: undefined,
                     claimedDigests: undefined,
                     claimedAdditionalMetadata: undefined,
+                    claimedBlockSizes: undefined,
                 },
             ],
             [
+                new Date('2025-01-01'),
                 '{"Common": {"Size": 123}}',
                 {
                     claimedModificationTime: undefined,
                     claimedSize: 123,
                     claimedDigests: undefined,
                     claimedAdditionalMetadata: undefined,
+                    claimedBlockSizes: undefined,
                 },
             ],
             [
-                '{"Common": {"ModificationTime": "2009-02-13T23:31:30+0000", "Size": 123, "BlockSizes": [1, 2, 3]}}',
+                new Date('2025-01-01'),
+                '{"Common": {"ModificationTime": "2009-02-13T23:31:30+0000", "Size": 123, "BlockSizes": [123]}}',
                 {
                     claimedModificationTime: new Date(1234567890000),
                     claimedSize: 123,
                     claimedDigests: undefined,
                     claimedAdditionalMetadata: undefined,
+                    claimedBlockSizes: [123],
                 },
             ],
             [
+                new Date('2025-01-01'),
                 '{"Common": {"ModificationTime": "aa", "Size": 123}}',
                 {
                     claimedModificationTime: undefined,
                     claimedSize: 123,
                     claimedDigests: undefined,
                     claimedAdditionalMetadata: undefined,
+                    claimedBlockSizes: undefined,
                 },
             ],
             [
+                new Date('2025-01-01'),
                 '{"Common": {"ModificationTime": "2009-02-13T23:31:30+0000", "Size": "aaa"}}',
                 {
                     claimedModificationTime: new Date(1234567890000),
                     claimedSize: undefined,
                     claimedDigests: undefined,
                     claimedAdditionalMetadata: undefined,
+                    claimedBlockSizes: undefined,
                 },
             ],
             [
+                new Date('2025-01-01'),
                 '{"Common": {"Digests": {}}}',
                 {
                     claimedModificationTime: undefined,
                     claimedSize: undefined,
                     claimedDigests: undefined,
                     claimedAdditionalMetadata: undefined,
+                    claimedBlockSizes: undefined,
                 },
             ],
             [
+                new Date('2025-01-01'),
                 '{"Common": {"Digests": {"SHA1": null}}}',
                 {
                     claimedModificationTime: undefined,
                     claimedSize: undefined,
                     claimedDigests: undefined,
                     claimedAdditionalMetadata: undefined,
+                    claimedBlockSizes: undefined,
                 },
             ],
             [
+                new Date('2025-01-01'),
                 '{"Common": {"Digests": {"SHA1": "abcdef"}}}',
                 {
                     claimedModificationTime: undefined,
                     claimedSize: undefined,
                     claimedDigests: { sha1: 'abcdef' },
                     claimedAdditionalMetadata: undefined,
+                    claimedBlockSizes: undefined,
                 },
             ],
             [
+                new Date('2025-01-01'),
                 '{"Common": {}, "Media": {}}',
                 {
                     claimedModificationTime: undefined,
@@ -168,12 +185,48 @@ describe('extended attrbiutes', () => {
                     claimedAdditionalMetadata: {
                         Media: {},
                     },
+                    claimedBlockSizes: undefined,
+                },
+            ],
+            [
+                new Date('2025-01-01'),
+                '{"Common": {"BlockSizes": [1024, 1024, 1024, 1024, 123]}}',
+                {
+                    claimedModificationTime: undefined,
+                    claimedSize: undefined,
+                    claimedDigests: undefined,
+                    claimedAdditionalMetadata: undefined,
+                    claimedBlockSizes: [1024, 1024, 1024, 1024, 123],
+                },
+            ],
+            [
+                // Starting from 2025-01-01, block sizes are passed as is.
+                new Date('2025-01-01'),
+                '{"Common": {"BlockSizes": [1024, 1024, 123, 1024, 1024]}}',
+                {
+                    claimedModificationTime: undefined,
+                    claimedSize: undefined,
+                    claimedDigests: undefined,
+                    claimedAdditionalMetadata: undefined,
+                    claimedBlockSizes: [1024, 1024, 123, 1024, 1024],
+                },
+            ],
+            [
+                // Before 2025-01-01, block sizes are sorted in descending order.
+                new Date('2024-01-01'),
+                '{"Common": {"BlockSizes": [123, 1024, 1024, 1024, 1024]}}',
+                {
+                    claimedModificationTime: undefined,
+                    claimedSize: undefined,
+                    claimedDigests: undefined,
+                    claimedAdditionalMetadata: undefined,
+                    claimedBlockSizes: [1024, 1024, 1024, 1024, 123],
                 },
             ],
         ];
-        testCases.forEach(([input, expectedAttributes]) => {
+        testCases.forEach(([creationTime, input, expectedAttributes]) => {
             it(`should parse ${input}`, () => {
-                const output = parseFileExtendedAttributes(getMockLogger(), input);
+                const output = parseFileExtendedAttributes(getMockLogger(), creationTime, input);
                 expect(output).toMatchObject(expectedAttributes);
             });
         });
