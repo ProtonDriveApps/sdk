@@ -199,12 +199,16 @@ export class FileDownloader {
                 this.ongoingDownloads.set(blockMetadata.index, { downloadPromise });
 
                 await this.waitForDownloadCapacity();
-                await this.flushCompletedBlocks(writer.write);
+                await this.flushCompletedBlocks(async (chunk) => {
+                    await writer.write(chunk);
+                });
             }
 
             this.logger.debug(`All blocks downloading, waiting for them to finish`);
             await Promise.all(this.downloadPromises);
-            await this.flushCompletedBlocks(writer.write);
+            await this.flushCompletedBlocks(async (chunk) => {
+                await writer.write(chunk);
+            });
 
             if (this.ongoingDownloads.size > 0) {
                 this.logger.error(`Some blocks were not downloaded: ${this.ongoingDownloads.keys()}`);
