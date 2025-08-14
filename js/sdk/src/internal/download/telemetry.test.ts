@@ -14,7 +14,7 @@ describe('DownloadTelemetry', () => {
 
     beforeEach(() => {
         mockTelemetry = {
-            logEvent: jest.fn(),
+            recordMetric: jest.fn(),
             getLogger: jest.fn().mockReturnValue({
                 info: jest.fn(),
                 warn: jest.fn(),
@@ -34,7 +34,7 @@ describe('DownloadTelemetry', () => {
         const error = new Error('Failed');
         await downloadTelemetry.downloadInitFailed(nodeUid, error);
 
-        expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
+        expect(mockTelemetry.recordMetric).toHaveBeenCalledWith({
             eventName: 'download',
             volumeType: 'own_volume',
             downloadedSize: 0,
@@ -47,7 +47,7 @@ describe('DownloadTelemetry', () => {
         const error = new Error('Failed');
         await downloadTelemetry.downloadFailed(revisionUid, error, 123, 456);
 
-        expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
+        expect(mockTelemetry.recordMetric).toHaveBeenCalledWith({
             eventName: 'download',
             volumeType: 'own_volume',
             downloadedSize: 123,
@@ -60,7 +60,7 @@ describe('DownloadTelemetry', () => {
     it('should log successful download (excludes error)', async () => {
         await downloadTelemetry.downloadFinished(revisionUid, 500);
 
-        expect(mockTelemetry.logEvent).toHaveBeenCalledWith({
+        expect(mockTelemetry.recordMetric).toHaveBeenCalledWith({
             eventName: 'download',
             volumeType: 'own_volume',
             downloadedSize: 500,
@@ -70,7 +70,7 @@ describe('DownloadTelemetry', () => {
 
     describe('detect error category', () => {
         const verifyErrorCategory = (error: string) => {
-            expect(mockTelemetry.logEvent).toHaveBeenCalledWith(
+            expect(mockTelemetry.recordMetric).toHaveBeenCalledWith(
                 expect.objectContaining({
                     error,
                 }),
@@ -80,7 +80,7 @@ describe('DownloadTelemetry', () => {
         it('should ignore ValidationError', async () => {
             const error = new ValidationError('Validation error');
             await downloadTelemetry.downloadFailed(revisionUid, error, 100, 200);
-            expect(mockTelemetry.logEvent).not.toHaveBeenCalled();
+            expect(mockTelemetry.recordMetric).not.toHaveBeenCalled();
         });
 
         it('should ignore AbortError', async () => {
@@ -88,7 +88,7 @@ describe('DownloadTelemetry', () => {
             error.name = 'AbortError';
             await downloadTelemetry.downloadFailed(revisionUid, error, 100, 200);
 
-            expect(mockTelemetry.logEvent).not.toHaveBeenCalled();
+            expect(mockTelemetry.recordMetric).not.toHaveBeenCalled();
         });
 
         it('should detect "rate_limited" error for RateLimitedError', async () => {

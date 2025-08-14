@@ -59,7 +59,7 @@ describe('SharesCryptoService', () => {
 
         expect(account.getOwnAddress).toHaveBeenCalledWith('addressId');
         expect(account.getPublicKeys).toHaveBeenCalledWith('signatureEmail');
-        expect(telemetry.logEvent).not.toHaveBeenCalled();
+        expect(telemetry.recordMetric).not.toHaveBeenCalled();
     });
 
     it('should decrypt root share with signiture verification error', async () => {
@@ -97,12 +97,13 @@ describe('SharesCryptoService', () => {
 
         expect(account.getOwnAddress).toHaveBeenCalledWith('addressId');
         expect(account.getPublicKeys).toHaveBeenCalledWith('signatureEmail');
-        expect(telemetry.logEvent).toHaveBeenCalledWith({
+        expect(telemetry.recordMetric).toHaveBeenCalledWith({
             eventName: 'verificationError',
             volumeType: 'own_volume',
             field: 'shareKey',
             addressMatchingDefaultShare: undefined,
             fromBefore2024: undefined,
+            uid: 'shareId',
         });
     });
 
@@ -124,12 +125,13 @@ describe('SharesCryptoService', () => {
 
         await expect(result).rejects.toThrow(error);
 
-        expect(telemetry.logEvent).toHaveBeenCalledWith({
+        expect(telemetry.recordMetric).toHaveBeenCalledWith({
             eventName: 'decryptionError',
             volumeType: 'own_volume',
             field: 'shareKey',
             fromBefore2024: undefined,
             error,
+            uid: 'shareId',
         });
     });
 });

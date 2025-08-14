@@ -80,7 +80,7 @@ export class DownloadTelemetry {
             this.logger.error('Failed to get metric volume type', error);
         }
 
-        this.telemetry.logEvent({
+        this.telemetry.recordMetric({
             eventName: 'download',
             volumeType,
             ...options,

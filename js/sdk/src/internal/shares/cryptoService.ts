@@ -125,12 +125,13 @@ export class SharesCryptoService {
         const fromBefore2024 = share.creationTime ? share.creationTime < new Date('2024-01-01') : undefined;
         this.logger.error(`Failed to decrypt share ${share.shareId} (from before 2024: ${fromBefore2024})`, error);
 
-        this.telemetry.logEvent({
+        this.telemetry.recordMetric({
             eventName: 'decryptionError',
             volumeType: shareTypeToMetricContext(share.type),
             field: 'shareKey',
             fromBefore2024,
             error,
+            uid: share.shareId,
         });
         this.reportedDecryptionErrors.add(share.shareId);
     }
@@ -143,11 +144,12 @@ export class SharesCryptoService {
         const fromBefore2024 = share.creationTime ? share.creationTime < new Date('2024-01-01') : undefined;
         this.logger.error(`Failed to verify share ${share.shareId} (from before 2024: ${fromBefore2024})`);
 
-        this.telemetry.logEvent({
+        this.telemetry.recordMetric({
             eventName: 'verificationError',
             volumeType: shareTypeToMetricContext(share.type),
             field: 'shareKey',
             fromBefore2024,
+            uid: share.shareId,
         });
         this.reportedVerificationErrors.add(share.shareId);
     }
