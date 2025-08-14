@@ -270,6 +270,16 @@ export class NodesAccess {
                             claimedAuthor: encryptedNode.encryptedCrypto.nameSignatureEmail,
                             error: getErrorMessage(error),
                         }),
+                        membership: encryptedNode.membership
+                            ? {
+                                  role: encryptedNode.membership.role,
+                                  inviteTime: encryptedNode.membership.inviteTime,
+                                  sharedBy: resultError({
+                                      claimedAuthor: encryptedNode.encryptedCrypto.membership?.inviterEmail,
+                                      error: getErrorMessage(error),
+                                  }),
+                              }
+                            : undefined,
                         errors: [error],
                         treeEventScopeId: splitNodeUid(encryptedNode.uid).volumeId,
                     },

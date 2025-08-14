@@ -11,6 +11,7 @@ export function getErrorMessage(error: unknown): string {
  */
 export function getVerificationMessage(
     verified: VERIFICATION_STATUS,
+    verificationErrors?: Error[],
     signatureType?: string,
     notAvailableVerificationKeys = false,
 ): string {
@@ -22,6 +23,13 @@ export function getVerificationMessage(
         return signatureType
             ? c('Error').t`Verification keys for ${signatureType} are not available`
             : c('Error').t`Verification keys are not available`;
+    }
+
+    if (verificationErrors) {
+        const errorMessage = verificationErrors?.map((e) => e.message).join(', ');
+        return signatureType
+            ? c('Error').t`Signature verification for ${signatureType} failed: ${errorMessage}`
+            : c('Error').t`Signature verification failed: ${errorMessage}`;
     }
 
     return signatureType

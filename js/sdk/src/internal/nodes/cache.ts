@@ -252,8 +252,9 @@ function deserialiseNode(nodeData: string): DecryptedNode {
         typeof node !== 'object' ||
         !node.uid ||
         typeof node.uid !== 'string' ||
-        !node.directMemberRole ||
-        typeof node.directMemberRole !== 'string' ||
+        !node.directRole ||
+        typeof node.directRole !== 'string' ||
+        (typeof node.membership !== 'object' && node.membership !== undefined) ||
         !node.type ||
         typeof node.type !== 'string' ||
         (typeof node.mediaType !== 'string' && node.mediaType !== undefined) ||
@@ -271,6 +272,12 @@ function deserialiseNode(nodeData: string): DecryptedNode {
         creationTime: new Date(node.creationTime),
         trashTime: node.trashTime ? new Date(node.trashTime) : undefined,
         activeRevision: node.activeRevision ? deserialiseRevision(node.activeRevision) : undefined,
+        membership: node.membership
+            ? {
+                  ...node.membership,
+                  inviteTime: new Date(node.membership.inviteTime),
+              }
+            : undefined,
         folder: node.folder
             ? {
                   ...node.folder,

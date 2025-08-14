@@ -76,7 +76,7 @@ function generateAPINode() {
     };
 }
 
-function generateFileNode(overrides = {}) {
+function generateFileNode(overrides = {}, encryptedCryptoOverrides = {}) {
     const node = generateNode();
     return {
         ...node,
@@ -98,12 +98,13 @@ function generateFileNode(overrides = {}) {
                 armoredExtendedAttributes: '{file}',
                 thumbnails: [],
             },
+            ...encryptedCryptoOverrides,
         },
         ...overrides,
     };
 }
 
-function generateFolderNode(overrides = {}) {
+function generateFolderNode(overrides = {}, encryptedCryptoOverrides = {}) {
     const node = generateNode();
     return {
         ...node,
@@ -114,6 +115,7 @@ function generateFolderNode(overrides = {}) {
                 armoredHashKey: 'nodeHashKey',
                 armoredExtendedAttributes: '{folder}',
             },
+            ...encryptedCryptoOverrides,
         },
         ...overrides,
     };
@@ -140,7 +142,8 @@ function generateNode() {
 
         shareId: undefined,
         isShared: false,
-        directMemberRole: MemberRole.Admin,
+        directRole: MemberRole.Admin,
+        membership: undefined,
 
         encryptedCrypto: {
             armoredKey: 'nodeKey',
@@ -148,6 +151,7 @@ function generateNode() {
             armoredNodePassphraseSignature: 'nodePassSig',
             nameSignatureEmail: 'nameSigEmail',
             signatureEmail: 'sigEmail',
+            membership: undefined,
         },
     };
 }
@@ -211,14 +215,34 @@ describe('nodeAPIService', () => {
                         },
                         Membership: {
                             Permissions: 22,
+                            InviteTime: 1234567890,
+                            InviterEmail: 'inviterEmail',
+                            MemberSharePassphraseKeyPacket: 'memberSharePassphraseKeyPacket',
+                            InviterSharePassphraseKeyPacketSignature: 'inviterSharePassphraseKeyPacketSignature',
+                            InviteeSharePassphraseSessionKeySignature: 'inviteeSharePassphraseSessionKeySignature',
                         },
                     },
                 ),
-                generateFolderNode({
-                    isShared: true,
-                    shareId: 'shareId',
-                    directMemberRole: MemberRole.Admin,
-                }),
+                generateFolderNode(
+                    {
+                        isShared: true,
+                        shareId: 'shareId',
+                        directRole: MemberRole.Admin,
+                        membership: {
+                            role: MemberRole.Admin,
+                            inviteTime: new Date(1234567890000),
+                        },
+                    },
+                    {
+                        membership: {
+                            inviterEmail: 'inviterEmail',
+                            base64MemberSharePassphraseKeyPacket: 'memberSharePassphraseKeyPacket',
+                            armoredInviterSharePassphraseKeyPacketSignature: 'inviterSharePassphraseKeyPacketSignature',
+                            armoredInviteeSharePassphraseSessionKeySignature:
+                                'inviteeSharePassphraseSessionKeySignature',
+                        },
+                    },
+                ),
             );
         });
 
@@ -232,14 +256,34 @@ describe('nodeAPIService', () => {
                         },
                         Membership: {
                             Permissions: 42,
+                            InviteTime: 1234567890,
+                            InviterEmail: 'inviterEmail',
+                            MemberSharePassphraseKeyPacket: 'memberSharePassphraseKeyPacket',
+                            InviterSharePassphraseKeyPacketSignature: 'inviterSharePassphraseKeyPacketSignature',
+                            InviteeSharePassphraseSessionKeySignature: 'inviteeSharePassphraseSessionKeySignature',
                         },
                     },
                 ),
-                generateFolderNode({
-                    isShared: true,
-                    shareId: 'shareId',
-                    directMemberRole: MemberRole.Viewer,
-                }),
+                generateFolderNode(
+                    {
+                        isShared: true,
+                        shareId: 'shareId',
+                        directRole: MemberRole.Viewer,
+                        membership: {
+                            role: MemberRole.Viewer,
+                            inviteTime: new Date(1234567890000),
+                        },
+                    },
+                    {
+                        membership: {
+                            inviterEmail: 'inviterEmail',
+                            base64MemberSharePassphraseKeyPacket: 'memberSharePassphraseKeyPacket',
+                            armoredInviterSharePassphraseKeyPacketSignature: 'inviterSharePassphraseKeyPacketSignature',
+                            armoredInviteeSharePassphraseSessionKeySignature:
+                                'inviteeSharePassphraseSessionKeySignature',
+                        },
+                    },
+                ),
                 'myVolumeId',
             );
         });
@@ -308,12 +352,12 @@ describe('nodeAPIService', () => {
                 generateFolderNode({
                     uid: 'volumeId1~nodeId1',
                     parentUid: 'volumeId1~parentNodeId1',
-                    directMemberRole: MemberRole.Admin,
+                    directRole: MemberRole.Admin,
                 }),
                 generateFolderNode({
                     uid: 'volumeId2~nodeId2',
                     parentUid: 'volumeId2~parentNodeId2',
-                    directMemberRole: MemberRole.Inherited,
+                    directRole: MemberRole.Inherited,
                 }),
             ]);
         });

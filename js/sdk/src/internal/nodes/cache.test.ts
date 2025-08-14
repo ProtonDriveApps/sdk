@@ -12,7 +12,12 @@ function generateNode(
     return {
         uid: `${params.volumeId || 'volumeId'}~:${uid}`,
         parentUid: `${params.volumeId || 'volumeId'}~:${parentUid}`,
-        directMemberRole: MemberRole.Admin,
+        directRole: MemberRole.Admin,
+        membership: {
+            role: MemberRole.Admin,
+            inviteTime: new Date(),
+            sharedBy: resultOk('test@example.com'),
+        },
         type: NodeType.File,
         mediaType: 'text',
         isShared: false,

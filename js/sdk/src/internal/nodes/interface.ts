@@ -32,7 +32,12 @@ interface BaseNode {
     // Share node metadata
     shareId?: string;
     isShared: boolean;
-    directMemberRole: MemberRole;
+    directRole: MemberRole;
+    membership?: {
+        role: MemberRole;
+        inviteTime: Date;
+        // TODO: acceptedBy: Author;
+    };
 }
 
 /**
@@ -50,6 +55,12 @@ export interface EncryptedNodeCrypto {
     armoredKey: string;
     armoredNodePassphrase: string;
     armoredNodePassphraseSignature: string;
+    membership?: {
+        inviterEmail: string;
+        base64MemberSharePassphraseKeyPacket: string;
+        armoredInviterSharePassphraseKeyPacketSignature: string;
+        armoredInviteeSharePassphraseSessionKeySignature: string;
+    };
 }
 
 export interface EncryptedNodeFileCrypto extends EncryptedNodeCrypto {
@@ -78,9 +89,14 @@ export interface EncryptedNodeAlbumCrypto extends EncryptedNodeCrypto {}
  * This interface is holding decrypted node metadata that is not yet parsed,
  * such as extended attributes.
  */
-export interface DecryptedUnparsedNode extends BaseNode {
+export interface DecryptedUnparsedNode extends Omit<BaseNode, 'membership'> {
     keyAuthor: Author;
     nameAuthor: Author;
+    membership?: {
+        role: MemberRole;
+        inviteTime: Date;
+        sharedBy: Author;
+    };
     name: Result<string, Error>;
     activeRevision?: Result<DecryptedUnparsedRevision, Error>;
     folder?: {
