@@ -8,7 +8,7 @@ import {
     drivePaths,
     isCodeOk,
     nodeTypeNumberToNodeType,
-    permissionsToDirectMemberRole,
+    permissionsToMemberRole,
 } from '../apiService';
 import { asyncIteratorRace } from '../asyncIteratorRace';
 import { batch } from '../batch';
@@ -471,6 +471,8 @@ function linkToEncryptedNode(
     link: PostLoadLinksMetadataResponse['Links'][0],
     isAdmin: boolean,
 ): EncryptedNode {
+    const membershipRole = permissionsToMemberRole(logger, link.Membership?.Permissions);
+
     const baseNodeMetadata = {
         // Internal metadata
         hash: link.Link.NameHash || undefined,
@@ -486,16 +488,31 @@ function linkToEncryptedNode(
         // Sharing node metadata
         shareId: link.Sharing?.ShareID || undefined,
         isShared: !!link.Sharing,
-        directMemberRole: isAdmin
-            ? MemberRole.Admin
-            : permissionsToDirectMemberRole(logger, link.Membership?.Permissions),
+        directRole: isAdmin ? MemberRole.Admin : membershipRole,
+        membership: link.Membership
+            ? {
+                  role: membershipRole,
+                  inviteTime: new Date(link.Membership.InviteTime * 1000),
+              }
+            : undefined,
     };
+
     const baseCryptoNodeMetadata = {
         signatureEmail: link.Link.SignatureEmail || undefined,
         nameSignatureEmail: link.Link.NameSignatureEmail || undefined,
         armoredKey: link.Link.NodeKey,
         armoredNodePassphrase: link.Link.NodePassphrase,
         armoredNodePassphraseSignature: link.Link.NodePassphraseSignature,
+        membership: link.Membership
+            ? {
+                  inviterEmail: link.Membership.InviterEmail,
+                  base64MemberSharePassphraseKeyPacket: link.Membership.MemberSharePassphraseKeyPacket,
+                  armoredInviterSharePassphraseKeyPacketSignature:
+                      link.Membership.InviterSharePassphraseKeyPacketSignature,
+                  armoredInviteeSharePassphraseSessionKeySignature:
+                      link.Membership.InviteeSharePassphraseSessionKeySignature,
+              }
+            : undefined,
     };
 
     if (link.Link.Type === 1 && link.Folder) {

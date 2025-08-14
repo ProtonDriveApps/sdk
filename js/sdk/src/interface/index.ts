@@ -41,6 +41,7 @@ export type {
     NodeOrUid,
     RevisionOrUid,
     NodeResult,
+    Membership,
 } from './nodes';
 export { NodeType, MemberRole, RevisionState } from './nodes';
 export type {

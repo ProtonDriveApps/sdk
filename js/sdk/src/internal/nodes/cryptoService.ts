@@ -12,6 +12,7 @@ import {
     Logger,
     MetricsDecryptionErrorField,
     MetricVerificationErrorField,
+    Membership,
 } from '../../interface';
 import { ValidationError } from '../../errors';
 import { getErrorMessage, getVerificationMessage } from '../errors';
@@ -90,6 +91,11 @@ export class NodesCryptoService {
 
         const { name, author: nameAuthor } = await this.decryptName(node, parentKey, nameVerificationKeys);
 
+        let membership;
+        if (node.membership) {
+            membership = await this.decryptMembership(node);
+        }
+
         let passphrase, key, passphraseSessionKey, keyAuthor;
         try {
             const keyResult = await this.decryptKey(node, parentKey, keyVerificationKeys);
@@ -110,6 +116,7 @@ export class NodesCryptoService {
                         error: errorMessage,
                     }),
                     nameAuthor,
+                    membership,
                     activeRevision: 'file' in node.encryptedCrypto ? resultError(new Error(errorMessage)) : undefined,
                     folder: undefined,
                     errors: [error],
@@ -187,6 +194,7 @@ export class NodesCryptoService {
                         'nodeContentKey',
                         c('Property').t`content key`,
                         keySessionKeyResult.verified,
+                        keySessionKeyResult.verificationErrors,
                         node.encryptedCrypto.signatureEmail,
                     ));
             } catch (error: unknown) {
@@ -228,6 +236,7 @@ export class NodesCryptoService {
                 name,
                 keyAuthor: finalKeyAuthor,
                 nameAuthor,
+                membership,
                 activeRevision,
                 folder,
                 errors: errors.length ? errors : undefined,
@@ -268,6 +277,7 @@ export class NodesCryptoService {
                 'nodeKey',
                 c('Property').t`key`,
                 key.verified,
+                key.verificationErrors,
                 node.encryptedCrypto.signatureEmail,
                 verificationKeys.length === 0,
             ),
@@ -285,7 +295,7 @@ export class NodesCryptoService {
         const nameSignatureEmail = node.encryptedCrypto.nameSignatureEmail;
 
         try {
-            const { name, verified } = await this.driveCrypto.decryptNodeName(
+            const { name, verified, verificationErrors } = await this.driveCrypto.decryptNodeName(
                 node.encryptedName,
                 parentKey,
                 verificationKeys,
@@ -298,6 +308,7 @@ export class NodesCryptoService {
                     'nodeName',
                     c('Property').t`name`,
                     verified,
+                    verificationErrors,
                     nameSignatureEmail,
                     verificationKeys.length === 0,
                 ),
@@ -319,6 +330,60 @@ export class NodesCryptoService {
         return this.driveCrypto.decryptSessionKey(node.encryptedName, parentKey);
     }
 
+    private async decryptMembership(node: EncryptedNode): Promise<Membership | undefined> {
+        if (!node.membership) {
+            return undefined;
+        }
+
+        let sharedBy: Author;
+        if (node.encryptedCrypto.membership) {
+            let inviterEmailKeys: PublicKey[] | undefined;
+            try {
+                inviterEmailKeys = await this.account.getPublicKeys(node.encryptedCrypto.membership.inviterEmail);
+            } catch (error: unknown) {
+                this.logger.error('Failed to get inviter email keys', error);
+                sharedBy = resultError({
+                    claimedAuthor: node.encryptedCrypto.membership.inviterEmail,
+                    error: c('Error').t`Failed to get inviter keys`,
+                });
+            }
+
+            try {
+                const { verified, verificationErrors } = await this.driveCrypto.verifyInvitation(
+                    node.encryptedCrypto.membership.base64MemberSharePassphraseKeyPacket,
+                    node.encryptedCrypto.membership.armoredInviterSharePassphraseKeyPacketSignature,
+                    inviterEmailKeys || [],
+                );
+
+                sharedBy = await this.handleClaimedAuthor(
+                    node,
+                    'membershipInviter',
+                    c('Property').t`membership`,
+                    verified,
+                    verificationErrors,
+                    node.encryptedCrypto.membership.inviterEmail,
+                );
+            } catch (error: unknown) {
+                void this.reportVerificationError(node, 'membershipInviter');
+                this.logger.error('Failed to verify invitation', error);
+                sharedBy = resultError({
+                    claimedAuthor: node.encryptedCrypto.membership.inviterEmail,
+                    error: c('Error').t`Failed to verify invitation`,
+                });
+            }
+        } else {
+            sharedBy = resultError({
+                error: c('Error').t`Missing inviter email`,
+            });
+        }
+
+        return {
+            role: node.membership.role,
+            inviteTime: node.membership.inviteTime,
+            sharedBy,
+        };
+    }
+
     private async decryptHashKey(
         node: EncryptedNode,
         nodeKey: PrivateKey,
@@ -332,7 +397,7 @@ export class NodesCryptoService {
             throw new Error('Node is not a folder');
         }
 
-        const { hashKey, verified } = await this.driveCrypto.decryptNodeHashKey(
+        const { hashKey, verified, verificationErrors } = await this.driveCrypto.decryptNodeHashKey(
             node.encryptedCrypto.folder.armoredHashKey,
             nodeKey,
             addressKeys,
@@ -345,6 +410,7 @@ export class NodesCryptoService {
                 'nodeHashKey',
                 c('Property').t`hash key`,
                 verified,
+                verificationErrors,
                 node.encryptedCrypto.signatureEmail,
             ),
         };
@@ -394,7 +460,7 @@ export class NodesCryptoService {
             };
         }
 
-        const { extendedAttributes, verified } = await this.driveCrypto.decryptExtendedAttributes(
+        const { extendedAttributes, verified, verificationErrors } = await this.driveCrypto.decryptExtendedAttributes(
             encryptedExtendedAttributes,
             nodeKey,
             addressKeys,
@@ -407,6 +473,7 @@ export class NodesCryptoService {
                 'nodeExtendedAttributes',
                 c('Property').t`attributes`,
                 verified,
+                verificationErrors,
                 signatureEmail,
             ),
         };
@@ -418,7 +485,13 @@ export class NodesCryptoService {
         name: string,
         extendedAttributes?: string,
     ): Promise<{
-        encryptedCrypto: Required<EncryptedNodeFolderCrypto> & { encryptedName: string; hash: string };
+        encryptedCrypto: EncryptedNodeFolderCrypto & {
+            // signatureEmail and nameSignatureEmail are not optional.
+            signatureEmail: string;
+            nameSignatureEmail: string;
+            encryptedName: string;
+            hash: string;
+        };
         keys: DecryptedNodeKeys;
     }> {
         const { email, addressKey } = address;
@@ -536,12 +609,19 @@ export class NodesCryptoService {
         field: MetricVerificationErrorField,
         signatureType: string,
         verified: VERIFICATION_STATUS,
+        verificationErrors?: Error[],
         claimedAuthor?: string,
         notAvailableVerificationKeys = false,
     ): Promise<Author> {
-        const author = handleClaimedAuthor(signatureType, verified, claimedAuthor, notAvailableVerificationKeys);
+        const author = handleClaimedAuthor(
+            signatureType,
+            verified,
+            verificationErrors,
+            claimedAuthor,
+            notAvailableVerificationKeys,
+        );
         if (!author.ok) {
-            void this.reportVerificationError(node, field, claimedAuthor);
+            void this.reportVerificationError(node, field, verificationErrors, claimedAuthor);
         }
         return author;
     }
@@ -549,6 +629,7 @@ export class NodesCryptoService {
     private async reportVerificationError(
         node: { uid: string; creationTime: Date },
         field: MetricVerificationErrorField,
+        verificationErrors?: Error[],
         claimedAuthor?: string,
     ) {
         if (this.reportedVerificationErrors.has(node.uid)) {
@@ -577,6 +658,7 @@ export class NodesCryptoService {
             field,
             addressMatchingDefaultShare,
             fromBefore2024,
+            error: verificationErrors?.map((e) => e.message).join(', '),
             uid: node.uid,
         });
         this.reportedVerificationErrors.add(node.uid);
@@ -617,6 +699,7 @@ export class NodesCryptoService {
 function handleClaimedAuthor(
     signatureType: string,
     verified: VERIFICATION_STATUS,
+    verificationErrors?: Error[],
     claimedAuthor?: string,
     notAvailableVerificationKeys = false,
 ): Author {
@@ -630,6 +713,6 @@ function handleClaimedAuthor(
 
     return resultError({
         claimedAuthor: claimedAuthor,
-        error: getVerificationMessage(verified, signatureType, notAvailableVerificationKeys),
+        error: getVerificationMessage(verified, verificationErrors, signatureType, notAvailableVerificationKeys),
     });
 }

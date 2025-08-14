@@ -1,5 +1,5 @@
 import { DriveCrypto, PrivateKey, SessionKey, VERIFICATION_STATUS } from '../../crypto';
-import { ProtonDriveAccount, ProtonDriveTelemetry, RevisionState } from '../../interface';
+import { MemberRole, ProtonDriveAccount, ProtonDriveTelemetry, RevisionState } from '../../interface';
 import { getMockTelemetry } from '../../tests/telemetry';
 import { DecryptedNode, DecryptedNodeKeys, DecryptedUnparsedNode, EncryptedNode, SharesService } from './interface';
 import { NodesCryptoService } from './cryptoService';
@@ -48,10 +48,15 @@ describe('nodesCryptoService', () => {
                     armoredNodeName: 'armoredName',
                 }),
             ),
-            // @ts-expect-error No need to implement all methods for mocking
+            // @ts-expect-error Faking sessionKey as string.
             decryptAndVerifySessionKey: jest.fn(async () =>
                 Promise.resolve({
                     sessionKey: 'contentKeyPacketSessionKey',
+                    verified: VERIFICATION_STATUS.SIGNED_AND_VALID,
+                }),
+            ),
+            verifyInvitation: jest.fn(async () =>
+                Promise.resolve({
                     verified: VERIFICATION_STATUS.SIGNED_AND_VALID,
                 }),
             ),
@@ -98,21 +103,37 @@ describe('nodesCryptoService', () => {
     }
 
     describe('folder node', () => {
-        const encryptedNode = {
-            uid: 'volumeId~nodeId',
-            parentUid: 'volumeId~parentId',
-            encryptedCrypto: {
-                signatureEmail: 'signatureEmail',
-                nameSignatureEmail: 'nameSignatureEmail',
-                armoredKey: 'armoredKey',
-                armoredNodePassphrase: 'armoredNodePassphrase',
-                armoredNodePassphraseSignature: 'armoredNodePassphraseSignature',
-                folder: {
-                    armoredHashKey: 'armoredHashKey',
-                    armoredExtendedAttributes: 'folderArmoredExtendedAttributes',
+        let encryptedNode: EncryptedNode;
+
+        beforeEach(() => {
+            encryptedNode = {
+                uid: 'volumeId~nodeId',
+                parentUid: 'volumeId~parentId',
+                membership: {
+                    role: MemberRole.Admin,
+                    inviteTime: new Date(1234567890000),
                 },
-            },
-        } as EncryptedNode;
+                encryptedCrypto: {
+                    signatureEmail: 'signatureEmail',
+                    nameSignatureEmail: 'nameSignatureEmail',
+                    armoredKey: 'armoredKey',
+                    armoredNodePassphrase: 'armoredNodePassphrase',
+                    armoredNodePassphraseSignature: 'armoredNodePassphraseSignature',
+                    folder: {
+                        armoredHashKey: 'armoredHashKey',
+                        armoredExtendedAttributes: 'folderArmoredExtendedAttributes',
+                    },
+                    membership: {
+                        inviterEmail: 'inviterEmail',
+                        base64MemberSharePassphraseKeyPacket: 'base64MemberSharePassphraseKeyPacket',
+                        armoredInviterSharePassphraseKeyPacketSignature:
+                            'armoredInviterSharePassphraseKeyPacketSignature',
+                        armoredInviteeSharePassphraseSessionKeySignature:
+                            'armoredInviteeSharePassphraseSessionKeySignature',
+                    },
+                },
+            } as EncryptedNode;
+        });
 
         function verifyResult(
             result: { node: DecryptedUnparsedNode; keys?: DecryptedNodeKeys },
@@ -126,6 +147,11 @@ describe('nodesCryptoService', () => {
                     nameAuthor: { ok: true, value: 'nameSignatureEmail' },
                     folder: {
                         extendedAttributes: '{}',
+                    },
+                    membership: {
+                        role: MemberRole.Admin,
+                        inviteTime: new Date(1234567890000),
+                        sharedBy: { ok: true, value: 'inviterEmail' },
                     },
                     activeRevision: undefined,
                     errors: undefined,
@@ -147,19 +173,7 @@ describe('nodesCryptoService', () => {
 
         describe('should decrypt successfuly', () => {
             it('same author everywhere', async () => {
-                const encryptedNode = {
-                    encryptedCrypto: {
-                        signatureEmail: 'signatureEmail',
-                        nameSignatureEmail: 'signatureEmail',
-                        armoredKey: 'armoredKey',
-                        armoredNodePassphrase: 'armoredNodePassphrase',
-                        armoredNodePassphraseSignature: 'armoredNodePassphraseSignature',
-                        folder: {
-                            armoredHashKey: 'armoredHashKey',
-                            armoredExtendedAttributes: 'folderArmoredExtendedAttributes',
-                        },
-                    },
-                } as EncryptedNode;
+                encryptedNode.encryptedCrypto.nameSignatureEmail = 'signatureEmail';
 
                 const result = await cryptoService.decryptNode(encryptedNode, parentKey);
                 verifyResult(result, {
@@ -167,17 +181,19 @@ describe('nodesCryptoService', () => {
                     nameAuthor: { ok: true, value: 'signatureEmail' },
                 });
 
-                expect(account.getPublicKeys).toHaveBeenCalledTimes(1);
+                expect(account.getPublicKeys).toHaveBeenCalledTimes(2); // signatureEmail (for both key and name) and inviterEmail
                 expect(account.getPublicKeys).toHaveBeenCalledWith('signatureEmail');
+                expect(account.getPublicKeys).toHaveBeenCalledWith('inviterEmail');
                 expect(telemetry.recordMetric).not.toHaveBeenCalled();
             });
 
             it('different authors on key and name', async () => {
                 const result = await cryptoService.decryptNode(encryptedNode, parentKey);
                 verifyResult(result);
-                expect(account.getPublicKeys).toHaveBeenCalledTimes(2);
+                expect(account.getPublicKeys).toHaveBeenCalledTimes(3); // signatureEmail, nameSignatureEmail, inviterEmail
                 expect(account.getPublicKeys).toHaveBeenCalledWith('signatureEmail');
                 expect(account.getPublicKeys).toHaveBeenCalledWith('nameSignatureEmail');
+                expect(account.getPublicKeys).toHaveBeenCalledWith('inviterEmail');
                 expect(telemetry.recordMetric).not.toHaveBeenCalled();
             });
         });
@@ -190,6 +206,7 @@ describe('nodesCryptoService', () => {
                         key: 'decryptedKey' as unknown as PrivateKey,
                         passphraseSessionKey: 'passphraseSessionKey' as unknown as SessionKey,
                         verified: VERIFICATION_STATUS.NOT_SIGNED,
+                        verificationErrors: [new Error('verification error')],
                     }),
                 );
 
@@ -202,6 +219,7 @@ describe('nodesCryptoService', () => {
                 });
                 verifyLogEventVerificationError({
                     field: 'nodeKey',
+                    error: 'verification error',
                 });
             });
 
@@ -210,6 +228,7 @@ describe('nodesCryptoService', () => {
                     Promise.resolve({
                         name: 'name',
                         verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                        verificationErrors: [new Error('verification error')],
                     }),
                 );
 
@@ -217,11 +236,15 @@ describe('nodesCryptoService', () => {
                 verifyResult(result, {
                     nameAuthor: {
                         ok: false,
-                        error: { claimedAuthor: 'nameSignatureEmail', error: 'Signature verification for name failed' },
+                        error: {
+                            claimedAuthor: 'nameSignatureEmail',
+                            error: 'Signature verification for name failed: verification error',
+                        },
                     },
                 });
                 verifyLogEventVerificationError({
                     field: 'nodeName',
+                    error: 'verification error',
                 });
             });
 
@@ -230,6 +253,7 @@ describe('nodesCryptoService', () => {
                     Promise.resolve({
                         hashKey: new Uint8Array(),
                         verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                        verificationErrors: [new Error('verification error')],
                     }),
                 );
 
@@ -237,11 +261,15 @@ describe('nodesCryptoService', () => {
                 verifyResult(result, {
                     keyAuthor: {
                         ok: false,
-                        error: { claimedAuthor: 'signatureEmail', error: 'Signature verification for hash key failed' },
+                        error: {
+                            claimedAuthor: 'signatureEmail',
+                            error: 'Signature verification for hash key failed: verification error',
+                        },
                     },
                 });
                 verifyLogEventVerificationError({
                     field: 'nodeHashKey',
+                    error: 'verification error',
                 });
             });
 
@@ -252,6 +280,7 @@ describe('nodesCryptoService', () => {
                         key: 'decryptedKey' as unknown as PrivateKey,
                         passphraseSessionKey: 'passphraseSessionKey' as unknown as SessionKey,
                         verified: VERIFICATION_STATUS.NOT_SIGNED,
+                        verificationErrors: [new Error('verification error')],
                     }),
                 );
                 driveCrypto.decryptNodeHashKey = jest.fn(async () =>
@@ -270,6 +299,7 @@ describe('nodesCryptoService', () => {
                 });
                 verifyLogEventVerificationError({
                     field: 'nodeKey',
+                    error: 'verification error',
                 });
             });
 
@@ -278,6 +308,7 @@ describe('nodesCryptoService', () => {
                     Promise.resolve({
                         extendedAttributes: '{}',
                         verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                        verificationErrors: [new Error('verification error')],
                     }),
                 );
 
@@ -287,12 +318,39 @@ describe('nodesCryptoService', () => {
                         ok: false,
                         error: {
                             claimedAuthor: 'signatureEmail',
-                            error: 'Signature verification for attributes failed',
+                            error: 'Signature verification for attributes failed: verification error',
                         },
                     },
                 });
                 verifyLogEventVerificationError({
                     field: 'nodeExtendedAttributes',
+                    error: 'verification error',
+                });
+            });
+
+            it('on membership', async () => {
+                driveCrypto.verifyInvitation = jest.fn().mockResolvedValue({
+                    verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                    verificationErrors: [new Error('verification error')],
+                });
+
+                const result = await cryptoService.decryptNode(encryptedNode, parentKey);
+                verifyResult(result, {
+                    membership: {
+                        role: MemberRole.Admin,
+                        inviteTime: new Date(1234567890000),
+                        sharedBy: {
+                            ok: false,
+                            error: {
+                                claimedAuthor: 'inviterEmail',
+                                error: 'Signature verification for membership failed: verification error',
+                            },
+                        },
+                    },
+                });
+                verifyLogEventVerificationError({
+                    field: 'membershipInviter',
+                    error: 'verification error',
                 });
             });
         });
@@ -380,6 +438,27 @@ describe('nodesCryptoService', () => {
                 verifyLogEventDecryptionError({
                     field: 'nodeExtendedAttributes',
                     error,
+                });
+            });
+
+            it('on membership', async () => {
+                const error = new Error('Decryption error');
+                driveCrypto.verifyInvitation = jest.fn(async () => Promise.reject(error));
+
+                const result = await cryptoService.decryptNode(encryptedNode, parentKey);
+                verifyResult(result, {
+                    membership: {
+                        role: MemberRole.Admin,
+                        inviteTime: new Date(1234567890000),
+                        sharedBy: {
+                            ok: false,
+                            error: { claimedAuthor: 'inviterEmail', error: 'Failed to verify invitation' },
+                        },
+                    },
+                });
+                verifyLogEventVerificationError({
+                    field: 'membershipInviter',
+                    addressMatchingDefaultShare: undefined,
                 });
             });
         });
@@ -515,6 +594,7 @@ describe('nodesCryptoService', () => {
                         key: 'decryptedKey' as unknown as PrivateKey,
                         passphraseSessionKey: 'passphraseSessionKey' as unknown as SessionKey,
                         verified: VERIFICATION_STATUS.NOT_SIGNED,
+                        verificationErrors: [new Error('verification error')],
                     }),
                 );
 
@@ -527,6 +607,7 @@ describe('nodesCryptoService', () => {
                 });
                 verifyLogEventVerificationError({
                     field: 'nodeKey',
+                    error: 'verification error',
                 });
             });
 
@@ -535,6 +616,7 @@ describe('nodesCryptoService', () => {
                     Promise.resolve({
                         name: 'name',
                         verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                        verificationErrors: [new Error('verification error')],
                     }),
                 );
 
@@ -542,11 +624,15 @@ describe('nodesCryptoService', () => {
                 verifyResult(result, {
                     nameAuthor: {
                         ok: false,
-                        error: { claimedAuthor: 'nameSignatureEmail', error: 'Signature verification for name failed' },
+                        error: {
+                            claimedAuthor: 'nameSignatureEmail',
+                            error: 'Signature verification for name failed: verification error',
+                        },
                     },
                 });
                 verifyLogEventVerificationError({
                     field: 'nodeName',
+                    error: 'verification error',
                 });
             });
 
@@ -555,6 +641,7 @@ describe('nodesCryptoService', () => {
                     Promise.resolve({
                         extendedAttributes: '{}',
                         verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                        verificationErrors: [new Error('verification error')],
                     }),
                 );
 
@@ -572,7 +659,7 @@ describe('nodesCryptoService', () => {
                                 ok: false,
                                 error: {
                                     claimedAuthor: 'revisionSignatureEmail',
-                                    error: 'Signature verification for attributes failed',
+                                    error: 'Signature verification for attributes failed: verification error',
                                 },
                             },
                         },
@@ -580,6 +667,7 @@ describe('nodesCryptoService', () => {
                 });
                 verifyLogEventVerificationError({
                     field: 'nodeExtendedAttributes',
+                    error: 'verification error',
                 });
             });
 
@@ -589,6 +677,7 @@ describe('nodesCryptoService', () => {
                         Promise.resolve({
                             sessionKey: 'contentKeyPacketSessionKey',
                             verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                            verificationErrors: [new Error('verification error')],
                         }) as any,
                 );
 
@@ -598,12 +687,13 @@ describe('nodesCryptoService', () => {
                         ok: false,
                         error: {
                             claimedAuthor: 'signatureEmail',
-                            error: 'Signature verification for content key failed',
+                            error: 'Signature verification for content key failed: verification error',
                         },
                     },
                 });
                 verifyLogEventVerificationError({
                     field: 'nodeContentKey',
+                    error: 'verification error',
                 });
             });
         });

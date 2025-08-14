@@ -1924,27 +1924,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    '/drive/sanitization/asv': {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List top level ShareIDs for the user Volume in AUTO_RESTORE state. */
-        get: operations['get_drive-sanitization-asv'];
-        put?: never;
-        /**
-         * Log Missing Keys error for restore process
-         * @description Log a Restore Procedure error when Web detects that Keys are missing.
-         */
-        post: operations['post_drive-sanitization-asv'];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     '/drive/shares': {
         parameters: {
             query?: never;
@@ -2636,7 +2615,9 @@ export interface paths {
         };
         /**
          * List volumes
-         * @description List all volumes available to current user.
+         * @description List all volumes owned by the current user - can be between zero and two: none, regular and/or photo.
+         *     It can also return volumes in locked state, which are - upon creation of new volumes - re-activated with new root shares.
+         *     The pagination params Page and PageSize are deprecated.
          */
         get: operations['get_drive-volumes'];
         put?: never;
@@ -2647,7 +2628,8 @@ export interface paths {
          *      + Main share for the new Volume
          *      + Adds ShareMember with given Address ID
          *
-         *     Main share cannot be deleted.
+         *     If the user already has a locked volume, then this locked volume is re-activated
+         *     with a new root share and folder instead of creating a new volume.
          */
         post: operations['post_drive-volumes'];
         delete?: never;
@@ -2706,10 +2688,8 @@ export interface paths {
         get?: never;
         /**
          * Restore locked data in volume.
-         * @description There are two modes:
-         *     1. When the user has a locked volume and a different active one, you need to restore the locked volume data into the active
-         *        one of the same type (e.g., locked regular into active regular). This is processed async.
-         *     2. When the user has locked root shares in an active volume, the data is restored within the same volume. This is done synchronous.
+         * @description The locked root shares in the volume can be recovered by providing the new encryption material for each share.
+         *     This operation used to be heavy and processed async. But now it's quick and done synchronously.
          */
         put: operations['put_drive-volumes-{volumeID}-restore'];
         post?: never;
@@ -3871,8 +3851,9 @@ export interface components {
             /**
              * Format: email
              * @description Signature email address used to sign the blocks content
+             * @default null
              */
-            SignatureEmail?: string | null;
+            SignatureEmail: string | null;
             /** @default [] */
             BlockList: components['schemas']['AnonymousUploadBlockDto'][];
             /** @default [] */
@@ -3888,6 +3869,14 @@ export interface components {
              * @enum {integer}
              */
             Code: 1000;
+        };
+        LinkMapQueryParameters: {
+            /** @default null */
+            SessionName: string | null;
+            /** @default null */
+            LastIndex: number | null;
+            /** @default 500 */
+            PageSize: number;
         };
         LinkMapResponse: {
             SessionName: string;
@@ -3957,12 +3946,6 @@ export interface components {
             PossibleKeyPackets: components['schemas']['KeyPacketResponseDto'][];
             RootLinkRecoveryPassphrase?: components['schemas']['PGPMessage2'] | null;
             /**
-             * @deprecated
-             * @description User for AutoRestoreProcedure, see /sanitization/asv endpoint(s)
-             * @default false
-             */
-            ForASV: boolean;
-            /**
              * ProtonResponseCode
              * @example 1000
              * @enum {integer}
@@ -3978,15 +3961,6 @@ export interface components {
              */
             Code: 1000;
         };
-        ListAutoRestoreVolumeRootSharesResponseDto: {
-            ShareIDs: components['schemas']['Id2'][];
-            /**
-             * ProtonResponseCode
-             * @example 1000
-             * @enum {integer}
-             */
-            Code: 1000;
-        };
         ListSharesResponseDto: {
             Shares: components['schemas']['ShareResponseDto'][];
             /**
@@ -3995,9 +3969,6 @@ export interface components {
              * @enum {integer}
              */
             Code: 1000;
-        };
-        LogFailedRestoreProcedureRequestDto: {
-            Shares: components['schemas']['FailedRestoreProcedureShareDataDto'][];
         };
         TransferInput: {
             /** @description The ID of the new address */
@@ -4489,47 +4460,15 @@ export interface components {
              */
             Code: 1000;
         };
-        /** @description Name, Hash, NodePassphrase and NodePassphraseSignature are required when restoring a regular volume but should not be passed when restoring a photo volume. Please pass them as part of MainShares array to support multiple locked main shares. */
         RestoreVolumeDto: {
             /** Format: email */
             SignatureAddress: string;
-            /**
-             * @deprecated
-             * @default null
-             */
-            TargetVolumeID: components['schemas']['Id'] | null;
-            /**
-             * @deprecated
-             * @description Folder name as armored PGP message
-             * @default null
-             */
-            Name: string | null;
-            /**
-             * @deprecated
-             * @description Hash of the name
-             */
-            Hash?: string | null;
-            /**
-             * @deprecated
-             * @default null
-             */
-            NodePassphrase: components['schemas']['PGPMessage'] | null;
-            /**
-             * @deprecated
-             * @default null
-             */
-            NodePassphraseSignature: components['schemas']['PGPSignature'] | null;
             /** @default [] */
             MainShares: components['schemas']['RestoreMainShareDto'][];
             /** @default [] */
-            Devices: components['schemas']['RestoreDeviceDto'][];
+            Devices: components['schemas']['RestoreRootShareDto'][];
             /** @default [] */
-            PhotoShares: components['schemas']['RestorePhotoShareDto'][];
-            /**
-             * @deprecated
-             * @default null
-             */
-            NodeHashKey: components['schemas']['PGPMessage'] | null;
+            PhotoShares: components['schemas']['RestoreRootShareDto'][];
             /** @description User's encrypted AddressKeyID. Must be the primary key from the signatureAddress */
             AddressKeyID: string;
         };
@@ -4768,8 +4707,6 @@ export interface components {
             /** @description Unencrypted signature of the content session key (plain text of the ContentKeyPacket), signed with the NodeKey. */
             ContentKeyPacketSignature?: string | null;
             ManifestSignature: components['schemas']['PGPSignature'];
-            /** @description Encrypted PGP Signature of the raw block content. Is null for empty files as they do not have blocks or when uploaded by anonymous users. */
-            ContentBlockEncSignature?: string | null;
             ContentBlockVerificationToken?: components['schemas']['BinaryString'] | null;
             /**
              * @description Extended attributes encrypted with link key
@@ -4778,6 +4715,11 @@ export interface components {
             XAttr: string | null;
             /** @default null */
             Photo: components['schemas']['CommitRevisionPhotoDto'] | null;
+            /**
+             * @description Encrypted PGP Signature of the raw block content. Is null for empty files as they do not have blocks or when uploaded by anonymous users. Deprecated: Once clients do not validate the block signature, it should also not be calculated and uploaded anymore.
+             * @default null
+             */
+            ContentBlockEncSignature: string | null;
         };
         SmallRevisionUploadMetadataRequestDto: {
             CurrentRevisionID: components['schemas']['Id'];
@@ -5293,12 +5235,15 @@ export interface components {
             Size: number;
             /** @description Index of block in list (must be consecutive starting at 1) */
             Index: number;
-            /** @description Encrypted PGP Signature of the raw block content */
-            EncSignature: string;
             /** @description Hash of encrypted block, base64 encoded */
             Hash: string;
             /** @default null */
             Verifier: components['schemas']['Verifier'] | null;
+            /**
+             * @description Encrypted PGP Signature of the raw block content. Deprecated: Once clients do not validate the block signature, it should also not be calculated and uploaded anymore.
+             * @default null
+             */
+            EncSignature: string | null;
         };
         RequestUploadThumbnailInput: {
             /** @description Block size in bytes. WARNING: when type is NOT 2=HDPreview(1920) then the max size is 65536 */
@@ -5385,11 +5330,14 @@ export interface components {
             Size: number;
             /** @description Index of block in list (must be consecutive starting at 1) */
             Index: number;
-            /** @description Encrypted PGP Signature of the raw block content */
-            EncSignature: string;
             /** @description Hash of encrypted block, base64 encoded */
             Hash: string;
             Verifier: components['schemas']['Verifier'];
+            /**
+             * @description Encrypted PGP Signature of the raw block content. Deprecated: Once clients do not validate the block signature, it should also not be calculated and uploaded anymore.
+             * @default null
+             */
+            EncSignature: string | null;
         };
         ShareURLContext: {
             /** @description Share ID of the share highest in the tree with permissions */
@@ -5431,6 +5379,8 @@ export interface components {
             Passphrase: components['schemas']['PGPMessage2'];
             PassphraseSignature: components['schemas']['PGPSignature2'];
             AddressID: components['schemas']['Id2'];
+            InviterSharePassphraseKeyPacketSignature?: components['schemas']['PGPSignature2'] | null;
+            InviteeSharePassphraseSessionKeySignature?: components['schemas']['PGPSignature2'] | null;
         };
         FolderDetailsDto2: {
             Link: components['schemas']['LinkDto2'];
@@ -5543,10 +5493,6 @@ export interface components {
             BlockSize: number;
             /** @deprecated */
             VolumeSoftDeleted: boolean;
-        };
-        FailedRestoreProcedureShareDataDto: {
-            ShareID: components['schemas']['Id'];
-            Reason: string;
         };
         ShareKPMigrationData: {
             /** @description Share to migrate. Can only be Active (State=1) Shares of Type=2 */
@@ -6139,15 +6085,7 @@ export interface components {
              */
             NodeHashKey: string | null;
         };
-        RestoreDeviceDto: {
-            /** @description ShareID of the existing share on the old volume */
-            LockedShareID: string;
-            /** @description Key packet for the share passphrase, encrypted with the active key associated with the new volume. Encoded with Base64. */
-            ShareKeyPacket: string;
-            /** @description Signed with new key as armored PGP signature */
-            PassphraseSignature: string;
-        };
-        RestorePhotoShareDto: {
+        RestoreRootShareDto: {
             /** @description ShareID of the existing share on the old volume */
             LockedShareID: string;
             /** @description Key packet for the share passphrase, encrypted with the active key associated with the new volume. Encoded with Base64. */
@@ -6452,6 +6390,8 @@ export interface components {
             SignatureEmail?: string | null;
             /** Format: email */
             NameSignatureEmail?: string | null;
+            /** @default null */
+            DirectPermissions: number | null;
         };
         FileDto: {
             TotalEncryptedSize: number;
@@ -6476,6 +6416,15 @@ export interface components {
              * @enum {integer}
              */
             Permissions: 4 | 6 | 22;
+            InviteTime: number;
+            /** Format: email */
+            InviterEmail: string;
+            /** @description base64 encoded key packet, encrypting the share passphrase's session key with the invitee's address key */
+            MemberSharePassphraseKeyPacket: string;
+            /** @description PGP signature of the member key packet (encrypted) by inviter */
+            InviterSharePassphraseKeyPacketSignature: string;
+            /** @description Signature of the share passphrase's session key with the private key of the user (invitee). */
+            InviteeSharePassphraseSessionKeySignature: string;
         };
         FolderDto: {
             NodeHashKey?: components['schemas']['PGPMessage'] | null;
@@ -6545,6 +6494,8 @@ export interface components {
             SignatureEmail?: string | null;
             /** Format: email */
             NameSignatureEmail?: string | null;
+            /** @default null */
+            DirectPermissions: number | null;
         };
         FolderDto2: {
             NodeHashKey?: components['schemas']['PGPMessage2'] | null;
@@ -6566,6 +6517,15 @@ export interface components {
              * @enum {integer}
              */
             Permissions: 4 | 6 | 22;
+            InviteTime: number;
+            /** Format: email */
+            InviterEmail: string;
+            /** @description base64 encoded key packet, encrypting the share passphrase's session key with the invitee's address key */
+            MemberSharePassphraseKeyPacket: string;
+            /** @description PGP signature of the member key packet (encrypted) by inviter */
+            InviterSharePassphraseKeyPacketSignature: string;
+            /** @description Signature of the share passphrase's session key with the private key of the user (invitee). */
+            InviteeSharePassphraseSessionKeySignature: string;
         };
         /**
          * @description <p>1=active, 3=locked</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Name</th><th>Description</th></tr><tr><td>1</td><td>Active</td><td></td></tr><tr><td>2</td><td>Deleted</td><td></td></tr><tr><td>3</td><td>Locked</td><td>* Locked membership can have two reasons:
@@ -6599,12 +6559,18 @@ export interface components {
             /** @deprecated */
             URL?: string | null;
             BareURL?: string | null;
-            EncSignature?: components['schemas']['PGPMessage2'] | null;
+            /**
+             * @deprecated
+             * @default null
+             */
+            EncSignature: components['schemas']['PGPMessage2'] | null;
             /**
              * Format: email
+             * @deprecated
              * @description Email used to sign block
+             * @default null
              */
-            SignatureEmail?: string | null;
+            SignatureEmail: string | null;
         };
         PhotoResponseDto: {
             LinkID: components['schemas']['Id2'];
@@ -6662,12 +6628,18 @@ export interface components {
             /** @deprecated */
             URL?: string | null;
             BareURL?: string | null;
-            EncSignature?: components['schemas']['PGPMessage'] | null;
+            /**
+             * @deprecated
+             * @default null
+             */
+            EncSignature: components['schemas']['PGPMessage'] | null;
             /**
              * Format: email
+             * @deprecated
              * @description Email used to sign block
+             * @default null
              */
-            SignatureEmail?: string | null;
+            SignatureEmail: string | null;
         };
         PhotoResponseDto2: {
             LinkID: components['schemas']['Id'];
@@ -6948,7 +6920,6 @@ export interface operations {
                 content: {
                     'application/json': {
                         /** @description Potential codes and their meaning:
-                         *      - 200001: Maximum number of volumes reached for current user
                          *      - 2500: A volume is already active
                          *      - 2500: Cannot create the new Photo volume. Should be migrated from current Photo stream
                          *      - 2001: Invalid PGP message
@@ -10983,11 +10954,9 @@ export interface operations {
     'get_drive-shares-{shareID}-map': {
         parameters: {
             query?: {
-                PageSize?: number;
-                /** @description SessionName provided by previous response */
-                SessionName?: string;
-                /** @description Index value of last element in previous request */
-                LastIndex?: number;
+                SessionName?: components['schemas']['LinkMapQueryParameters']['SessionName'];
+                LastIndex?: components['schemas']['LinkMapQueryParameters']['LastIndex'];
+                PageSize?: components['schemas']['LinkMapQueryParameters']['PageSize'];
             };
             header?: never;
             path: {
@@ -11129,52 +11098,6 @@ export interface operations {
                          */
                         Code: 2501;
                     };
-                };
-            };
-        };
-    };
-    'get_drive-sanitization-asv': {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    'x-pm-code': 1000;
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['ListAutoRestoreVolumeRootSharesResponseDto'];
-                };
-            };
-        };
-    };
-    'post_drive-sanitization-asv': {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                'application/json': components['schemas']['LogFailedRestoreProcedureRequestDto'];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    'x-pm-code': 1000;
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['SuccessfulResponse'];
                 };
             };
         };
@@ -12745,16 +12668,6 @@ export interface operations {
                 };
                 content: {
                     'application/json': components['schemas']['SuccessfulResponse'];
-                };
-            };
-            /** @description Accepted */
-            202: {
-                headers: {
-                    'x-pm-code': 1002;
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['AcceptedResponse'];
                 };
             };
             422: components['responses']['ProtonErrorResponse'];

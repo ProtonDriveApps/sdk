@@ -245,7 +245,7 @@ export class NodesManagement {
 
             // Share node metadata
             isShared: false,
-            directMemberRole: MemberRole.Inherited,
+            directRole: MemberRole.Inherited,
 
             // Decrypted metadata
             isStale: false,

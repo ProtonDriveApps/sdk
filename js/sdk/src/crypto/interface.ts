@@ -171,10 +171,21 @@ export interface OpenPGPCrypto {
 
     verify: (
         data: Uint8Array,
-        armoredSignature: string,
+        signature: Uint8Array,
         verificationKeys: PublicKey | PublicKey[],
     ) => Promise<{
         verified: VERIFICATION_STATUS;
+        verificationErrors?: Error[];
+    }>;
+
+    verifyArmored: (
+        data: Uint8Array,
+        armoredSignature: string,
+        verificationKeys: PublicKey | PublicKey[],
+        signatureContext?: string,
+    ) => Promise<{
+        verified: VERIFICATION_STATUS;
+        verificationErrors?: Error[];
     }>;
 
     decryptSessionKey: (data: Uint8Array, decryptionKeys: PrivateKey | PrivateKey[]) => Promise<SessionKey>;
@@ -190,6 +201,7 @@ export interface OpenPGPCrypto {
     ): Promise<{
         data: Uint8Array;
         verified: VERIFICATION_STATUS;
+        verificationErrors?: Error[];
     }>;
 
     decryptAndVerifyDetached(
@@ -200,6 +212,7 @@ export interface OpenPGPCrypto {
     ): Promise<{
         data: Uint8Array;
         verified: VERIFICATION_STATUS;
+        verificationErrors?: Error[];
     }>;
 
     decryptArmored(armoredData: string, decryptionKeys: PrivateKey | PrivateKey[]): Promise<Uint8Array>;
@@ -211,6 +224,7 @@ export interface OpenPGPCrypto {
     ) => Promise<{
         data: Uint8Array;
         verified: VERIFICATION_STATUS;
+        verificationErrors?: Error[];
     }>;
 
     decryptArmoredAndVerifyDetached: (
@@ -221,6 +235,7 @@ export interface OpenPGPCrypto {
     ) => Promise<{
         data: Uint8Array;
         verified: VERIFICATION_STATUS;
+        verificationErrors?: Error[];
     }>;
 
     decryptArmoredWithPassword(armoredData: string, password: string): Promise<Uint8Array>;

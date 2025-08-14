@@ -148,7 +148,7 @@ export class SharingCryptoService {
         }
         const addressPublicKeys = await this.account.getPublicKeys(share.creatorEmail);
 
-        const { key, passphraseSessionKey, verified } = await this.driveCrypto.decryptKey(
+        const { key, passphraseSessionKey, verified, verificationErrors } = await this.driveCrypto.decryptKey(
             share.encryptedCrypto.armoredKey,
             share.encryptedCrypto.armoredPassphrase,
             share.encryptedCrypto.armoredPassphraseSignature,
@@ -161,7 +161,7 @@ export class SharingCryptoService {
                 ? resultOk(share.creatorEmail)
                 : resultError({
                       claimedAuthor: share.creatorEmail,
-                      error: getVerificationMessage(verified),
+                      error: getVerificationMessage(verified, verificationErrors),
                   });
 
         return {

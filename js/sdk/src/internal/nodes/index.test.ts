@@ -20,7 +20,7 @@ function generateNode(uid: string, parentUid = 'volumeId~root', params: Partial<
     return {
         uid,
         parentUid,
-        directMemberRole: MemberRole.Admin,
+        directRole: MemberRole.Admin,
         type: NodeType.File,
         mediaType: 'text',
         isShared: false,
