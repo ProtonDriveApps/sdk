@@ -304,7 +304,7 @@ export class DriveAPIService {
             }
         } else {
             if (attempt > 0) {
-                this.telemetry.logEvent({
+                this.telemetry.recordMetric({
                     eventName: 'apiRetrySucceeded',
                     failedAttempts: attempt,
                     url: request.url,

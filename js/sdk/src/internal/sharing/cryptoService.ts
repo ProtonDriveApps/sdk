@@ -478,11 +478,12 @@ export class SharingCryptoService {
 
             return urlPassword;
         } catch (error: unknown) {
-            this.telemetry.logEvent({
+            this.telemetry.recordMetric({
                 eventName: 'decryptionError',
                 volumeType: MetricVolumeType.SharedPublic,
                 field: 'shareUrlPassword',
                 error,
+                uid: encryptedBookmark.tokenId,
             });
 
             const message = getErrorMessage(error);
@@ -503,11 +504,12 @@ export class SharingCryptoService {
 
             return shareKey;
         } catch (error: unknown) {
-            this.telemetry.logEvent({
+            this.telemetry.recordMetric({
                 eventName: 'decryptionError',
                 volumeType: MetricVolumeType.SharedPublic,
                 field: 'shareKey',
                 error,
+                uid: encryptedBookmark.tokenId,
             });
 
             const message = getErrorMessage(error);
@@ -535,11 +537,12 @@ export class SharingCryptoService {
 
             return resultOk(name);
         } catch (error: unknown) {
-            this.telemetry.logEvent({
+            this.telemetry.recordMetric({
                 eventName: 'decryptionError',
                 volumeType: MetricVolumeType.SharedPublic,
                 field: 'nodeName',
                 error,
+                uid: encryptedBookmark.tokenId,
             });
 
             const message = getErrorMessage(error);

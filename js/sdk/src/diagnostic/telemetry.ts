@@ -20,7 +20,7 @@ export class DiagnosticTelemetry extends EventsGenerator {
         });
     }
 
-    logEvent(event: MetricEvent): void {
+    recordMetric(event: MetricEvent): void {
         if (event.eventName === 'download' && !event.error) {
             return;
         }

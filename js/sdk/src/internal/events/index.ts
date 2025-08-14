@@ -121,7 +121,7 @@ export class DriveEventsService {
     }
 
     private sendNumberOfVolumeSubscriptionsToTelemetry() {
-        this.telemetry.logEvent({
+        this.telemetry.recordMetric({
             eventName: 'volumeEventsSubscriptionsChanged',
             numberOfVolumeSubscriptions: Object.keys(this.volumeEventManagers).length,
         });

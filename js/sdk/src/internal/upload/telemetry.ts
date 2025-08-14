@@ -23,7 +23,7 @@ export class UploadTelemetry {
     }
 
     logBlockVerificationError(retryHelped: boolean) {
-        this.telemetry.logEvent({
+        this.telemetry.recordMetric({
             eventName: 'blockVerificationError',
             retryHelped,
         });
@@ -89,7 +89,7 @@ export class UploadTelemetry {
             this.logger.error('Failed to get metric volume type', error);
         }
 
-        this.telemetry.logEvent({
+        this.telemetry.recordMetric({
             eventName: 'upload',
             volumeType,
             ...options,

@@ -66,7 +66,7 @@ export interface MetricHandler<T extends MetricEvent> {
  * const logger = telemetry.getLogger('myLogger');
  * logger.debug('Debug message');
  *
- * telemetry.logEvent({ name: 'somethingHappened', value: 42 });
+ * telemetry.recordMetric({ name: 'somethingHappened', value: 42 });
  *
  * const logs = memoryLogHandler.getLogs();
  * // Process logs
@@ -91,7 +91,7 @@ export class Telemetry<T extends MetricEvent> {
         return new Logger(name, this.logFilter, this.logHandlers);
     }
 
-    logEvent(event: T): void {
+    recordMetric(event: T): void {
         const metric = {
             time: new Date(),
             event,
