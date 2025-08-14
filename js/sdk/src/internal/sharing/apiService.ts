@@ -4,7 +4,7 @@ import {
     DriveAPIService,
     drivePaths,
     nodeTypeNumberToNodeType,
-    permissionsToDirectMemberRole,
+    permissionsToMemberRole,
     memberRoleToPermission,
 } from '../apiService';
 import {
@@ -224,7 +224,7 @@ export class SharingAPIService {
             base64KeyPacket: response.Invitation.KeyPacket,
             base64KeyPacketSignature: response.Invitation.KeyPacketSignature,
             invitationTime: new Date(response.Invitation.CreateTime * 1000),
-            role: permissionsToDirectMemberRole(this.logger, response.Invitation.Permissions),
+            role: permissionsToMemberRole(this.logger, response.Invitation.Permissions),
             share: {
                 armoredKey: response.Share.ShareKey,
                 armoredPassphrase: response.Share.Passphrase,
@@ -312,7 +312,7 @@ export class SharingAPIService {
                 base64KeyPacket: member.KeyPacket,
                 base64KeyPacketSignature: member.KeyPacketSignature,
                 invitationTime: new Date(member.CreateTime * 1000),
-                role: permissionsToDirectMemberRole(this.logger, member.Permissions),
+                role: permissionsToMemberRole(this.logger, member.Permissions),
             };
         });
     }
@@ -469,7 +469,7 @@ export class SharingAPIService {
             uid: makePublicLinkUid(shareUrl.ShareID, shareUrl.ShareURLID),
             creationTime: new Date(shareUrl.CreateTime * 1000),
             expirationTime: shareUrl.ExpirationTime ? new Date(shareUrl.ExpirationTime * 1000) : undefined,
-            role: permissionsToDirectMemberRole(this.logger, shareUrl.Permissions),
+            role: permissionsToMemberRole(this.logger, shareUrl.Permissions),
             flags: shareUrl.Flags,
             creatorEmail: shareUrl.CreatorEmail,
             publicUrl: shareUrl.PublicUrl,
@@ -588,7 +588,7 @@ export class SharingAPIService {
             addedByEmail: invitation.InviterEmail,
             inviteeEmail: invitation.InviteeEmail,
             invitationTime: new Date(invitation.CreateTime * 1000),
-            role: permissionsToDirectMemberRole(this.logger, invitation.Permissions),
+            role: permissionsToMemberRole(this.logger, invitation.Permissions),
             base64KeyPacket: invitation.KeyPacket,
             base64KeyPacketSignature: invitation.KeyPacketSignature,
         };
@@ -605,7 +605,7 @@ export class SharingAPIService {
             addedByEmail: invitation.InviterEmail,
             inviteeEmail: invitation.InviteeEmail,
             invitationTime: new Date(invitation.CreateTime * 1000),
-            role: permissionsToDirectMemberRole(this.logger, invitation.Permissions),
+            role: permissionsToMemberRole(this.logger, invitation.Permissions),
             base64Signature: invitation.ExternalInvitationSignature,
             state,
         };

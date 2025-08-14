@@ -62,7 +62,7 @@ export class CommandFileSystemList implements Command {
 
         const type = node.type === 'file' ? '📄' : '🗂️';
         const sharedFlag = node.isShared ? '🔗' : '  '; // Two spaces to align with the shared icon.
-        const permissionFlag = getPermissionFlag(node.directMemberRole);
+        const permissionFlag = getPermissionFlag(node.directRole);
         const author = formatAuthor(node.keyAuthor);
         const created = formatDate(node.creationTime, true);
         const claimedSize = getClaimedSize(maybeNode);

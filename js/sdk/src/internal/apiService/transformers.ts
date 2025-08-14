@@ -14,7 +14,7 @@ export function nodeTypeNumberToNodeType(logger: Logger, nodeTypeNumber: number)
     }
 }
 
-export function permissionsToDirectMemberRole(logger: Logger, permissionsNumber?: number): MemberRole {
+export function permissionsToMemberRole(logger: Logger, permissionsNumber?: number): MemberRole {
     switch (permissionsNumber) {
         case undefined:
             return MemberRole.Inherited;

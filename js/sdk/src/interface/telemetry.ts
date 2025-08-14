@@ -82,10 +82,13 @@ export interface MetricVerificationErrorEvent {
     field: MetricVerificationErrorField;
     addressMatchingDefaultShare?: boolean;
     fromBefore2024?: boolean;
+    error?: unknown;
     uid: string;
 }
 export type MetricVerificationErrorField =
     | 'shareKey'
+    | 'membershipInviter'
+    | 'membershipInvitee'
     | 'nodeKey'
     | 'nodeName'
     | 'nodeHashKey'

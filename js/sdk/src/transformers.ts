@@ -18,7 +18,8 @@ type InternalPartialNode = Pick<
     | 'name'
     | 'keyAuthor'
     | 'nameAuthor'
-    | 'directMemberRole'
+    | 'directRole'
+    | 'membership'
     | 'type'
     | 'mediaType'
     | 'isShared'
@@ -84,7 +85,8 @@ export function convertInternalNode(node: InternalPartialNode): PublicMaybeNode 
         parentUid: node.parentUid,
         keyAuthor: node.keyAuthor,
         nameAuthor: node.nameAuthor,
-        directMemberRole: node.directMemberRole,
+        directRole: node.directRole,
+        membership: node.membership,
         type: node.type,
         mediaType: node.mediaType,
         isShared: node.isShared,

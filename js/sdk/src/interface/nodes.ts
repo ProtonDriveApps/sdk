@@ -57,7 +57,17 @@ export type NodeEntity = {
      * the file, key and content author is user A, while name author is user B.
      */
     nameAuthor: Author;
-    directMemberRole: MemberRole;
+    /**
+     * Role set directly on the node. If not set, the role is inherited from
+     * the parent node. Client must traverse the tree to get the actual role.
+     * Actual role should be the highest role available in the tree.
+     */
+    directRole: MemberRole;
+    /**
+     * Membership information set directly on the node. If not set, the
+     * membership is inherited from the parent node.
+     */
+    membership?: Membership;
     type: NodeType;
     mediaType?: string;
     /**
@@ -156,6 +166,23 @@ export enum NodeType {
      */
     Album = 'album',
 }
+
+export type Membership = {
+    role: MemberRole;
+    /**
+     * Date when the node was shared with the user.
+     */
+    inviteTime: Date;
+    /**
+     * Author who shared the node with the user.
+     *
+     * If the author cannot be verified, it means that the invitation could
+     * be forged by bad actor. User should be warned before accepting
+     * the invitation or opening the shared content.
+     */
+    sharedBy: Author;
+    // TODO: acceptedBy: Author;
+};
 
 export enum MemberRole {
     Viewer = 'viewer',
