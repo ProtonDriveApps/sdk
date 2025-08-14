@@ -75,22 +75,24 @@ describe('nodesCryptoService', () => {
     const parentKey = 'parentKey' as unknown as PrivateKey;
 
     function verifyLogEventVerificationError(options = {}) {
-        expect(telemetry.logEvent).toHaveBeenCalledTimes(1);
-        expect(telemetry.logEvent).toHaveBeenCalledWith({
+        expect(telemetry.recordMetric).toHaveBeenCalledTimes(1);
+        expect(telemetry.recordMetric).toHaveBeenCalledWith({
             eventName: 'verificationError',
             volumeType: 'own_volume',
             fromBefore2024: false,
             addressMatchingDefaultShare: false,
+            uid: 'volumeId~nodeId',
             ...options,
         });
     }
 
     function verifyLogEventDecryptionError(options = {}) {
-        expect(telemetry.logEvent).toHaveBeenCalledTimes(1);
-        expect(telemetry.logEvent).toHaveBeenCalledWith({
+        expect(telemetry.recordMetric).toHaveBeenCalledTimes(1);
+        expect(telemetry.recordMetric).toHaveBeenCalledWith({
             eventName: 'decryptionError',
             volumeType: 'own_volume',
             fromBefore2024: false,
+            uid: 'volumeId~nodeId',
             ...options,
         });
     }
@@ -167,7 +169,7 @@ describe('nodesCryptoService', () => {
 
                 expect(account.getPublicKeys).toHaveBeenCalledTimes(1);
                 expect(account.getPublicKeys).toHaveBeenCalledWith('signatureEmail');
-                expect(telemetry.logEvent).not.toHaveBeenCalled();
+                expect(telemetry.recordMetric).not.toHaveBeenCalled();
             });
 
             it('different authors on key and name', async () => {
@@ -176,7 +178,7 @@ describe('nodesCryptoService', () => {
                 expect(account.getPublicKeys).toHaveBeenCalledTimes(2);
                 expect(account.getPublicKeys).toHaveBeenCalledWith('signatureEmail');
                 expect(account.getPublicKeys).toHaveBeenCalledWith('nameSignatureEmail');
-                expect(telemetry.logEvent).not.toHaveBeenCalled();
+                expect(telemetry.recordMetric).not.toHaveBeenCalled();
             });
         });
 
@@ -491,7 +493,7 @@ describe('nodesCryptoService', () => {
 
                 expect(account.getPublicKeys).toHaveBeenCalledTimes(2); // node + revision
                 expect(account.getPublicKeys).toHaveBeenCalledWith('signatureEmail');
-                expect(telemetry.logEvent).not.toHaveBeenCalled();
+                expect(telemetry.recordMetric).not.toHaveBeenCalled();
             });
 
             it('different authors on key and name', async () => {
@@ -501,7 +503,7 @@ describe('nodesCryptoService', () => {
                 expect(account.getPublicKeys).toHaveBeenCalledWith('signatureEmail');
                 expect(account.getPublicKeys).toHaveBeenCalledWith('nameSignatureEmail');
                 expect(account.getPublicKeys).toHaveBeenCalledWith('revisionSignatureEmail');
-                expect(telemetry.logEvent).not.toHaveBeenCalled();
+                expect(telemetry.recordMetric).not.toHaveBeenCalled();
             });
         });
 
@@ -743,7 +745,7 @@ describe('nodesCryptoService', () => {
             });
 
             expect(account.getPublicKeys).toHaveBeenCalledTimes(2);
-            expect(telemetry.logEvent).not.toHaveBeenCalled();
+            expect(telemetry.recordMetric).not.toHaveBeenCalled();
         });
     });
 
@@ -878,7 +880,7 @@ describe('nodesCryptoService', () => {
                     keyAuthor: { ok: true, value: null },
                     nameAuthor: { ok: true, value: null },
                 });
-                expect(telemetry.logEvent).not.toHaveBeenCalled();
+                expect(telemetry.recordMetric).not.toHaveBeenCalled();
                 expect(driveCrypto.decryptKey).toHaveBeenCalledWith(
                     encryptedNode.encryptedCrypto.armoredKey,
                     encryptedNode.encryptedCrypto.armoredNodePassphrase,

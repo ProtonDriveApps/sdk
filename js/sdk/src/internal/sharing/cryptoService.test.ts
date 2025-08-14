@@ -84,7 +84,7 @@ describe('SharingCryptoService', () => {
                 'armoredPassphrase',
             );
             expect(driveCrypto.decryptNodeName).toHaveBeenCalledWith('encryptedName', 'decryptedKey', []);
-            expect(telemetry.logEvent).not.toHaveBeenCalled();
+            expect(telemetry.recordMetric).not.toHaveBeenCalled();
         });
 
         it('should handle undecryptable URL password', async () => {
@@ -97,11 +97,12 @@ describe('SharingCryptoService', () => {
                 url: resultError(new Error('Failed to decrypt bookmark password: Failed to decrypt URL password')),
                 nodeName: resultError(new Error('Failed to decrypt bookmark password: Failed to decrypt URL password')),
             });
-            expect(telemetry.logEvent).toHaveBeenCalledWith({
+            expect(telemetry.recordMetric).toHaveBeenCalledWith({
                 eventName: 'decryptionError',
                 volumeType: MetricVolumeType.SharedPublic,
                 field: 'shareUrlPassword',
                 error,
+                uid: 'tokenId',
             });
         });
 
@@ -115,11 +116,12 @@ describe('SharingCryptoService', () => {
                 url: resultOk('https://drive.proton.me/urls/tokenId#urlPassword'),
                 nodeName: resultError(new Error('Failed to decrypt bookmark key: Failed to decrypt share key')),
             });
-            expect(telemetry.logEvent).toHaveBeenCalledWith({
+            expect(telemetry.recordMetric).toHaveBeenCalledWith({
                 eventName: 'decryptionError',
                 volumeType: MetricVolumeType.SharedPublic,
                 field: 'shareKey',
                 error,
+                uid: 'tokenId',
             });
         });
 
@@ -133,11 +135,12 @@ describe('SharingCryptoService', () => {
                 url: resultOk('https://drive.proton.me/urls/tokenId#urlPassword'),
                 nodeName: resultError(new Error('Failed to decrypt bookmark name: Failed to decrypt node name')),
             });
-            expect(telemetry.logEvent).toHaveBeenCalledWith({
+            expect(telemetry.recordMetric).toHaveBeenCalledWith({
                 eventName: 'decryptionError',
                 volumeType: MetricVolumeType.SharedPublic,
                 field: 'nodeName',
                 error,
+                uid: 'tokenId',
             });
         });
 

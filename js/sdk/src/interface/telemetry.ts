@@ -1,6 +1,6 @@
 export interface Telemetry<MetricEvent> {
     getLogger: (name: string) => Logger;
-    logEvent: (event: MetricEvent) => void;
+    recordMetric: (event: MetricEvent) => void;
 }
 
 export interface Logger {
@@ -64,6 +64,7 @@ export interface MetricDecryptionErrorEvent {
     field: MetricsDecryptionErrorField;
     fromBefore2024?: boolean;
     error?: unknown;
+    uid: string;
 }
 export type MetricsDecryptionErrorField =
     | 'shareKey'
@@ -81,6 +82,7 @@ export interface MetricVerificationErrorEvent {
     field: MetricVerificationErrorField;
     addressMatchingDefaultShare?: boolean;
     fromBefore2024?: boolean;
+    uid: string;
 }
 export type MetricVerificationErrorField =
     | 'shareKey'

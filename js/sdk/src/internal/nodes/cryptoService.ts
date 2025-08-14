@@ -571,12 +571,13 @@ export class NodesCryptoService {
             `Failed to verify ${field} for node ${node.uid} (from before 2024: ${fromBefore2024}, matching address: ${addressMatchingDefaultShare})`,
         );
 
-        this.telemetry.logEvent({
+        this.telemetry.recordMetric({
             eventName: 'verificationError',
             volumeType,
             field,
             addressMatchingDefaultShare,
             fromBefore2024,
+            uid: node.uid,
         });
         this.reportedVerificationErrors.add(node.uid);
     }
@@ -598,12 +599,13 @@ export class NodesCryptoService {
 
         this.logger.error(`Failed to decrypt node ${node.uid} (from before 2024: ${fromBefore2024})`, error);
 
-        this.telemetry.logEvent({
+        this.telemetry.recordMetric({
             eventName: 'decryptionError',
             volumeType,
             field,
             fromBefore2024,
             error,
+            uid: node.uid,
         });
         this.reportedDecryptionErrors.add(node.uid);
     }
