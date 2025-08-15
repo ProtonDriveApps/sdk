@@ -118,6 +118,34 @@ describe('nodesCache', () => {
             storageSize: 100,
             contentAuthor: resultOk('test@test.com'),
             claimedModificationTime: new Date('2021-02-01'),
+            claimedSize: 100,
+            claimedDigests: {
+                sha1: 'hash',
+            },
+            claimedBlockSizes: [100],
+            claimedAdditionalMetadata: {
+                media: { width: 100, height: 100 },
+            },
+        });
+        const node = generateNode('node1', '', { activeRevision });
+
+        await cache.setNode(node);
+        const result = await cache.getNode(node.uid);
+
+        expect(result).toStrictEqual({
+            ...node,
+            activeRevision,
+        });
+    });
+
+    it('should store and retrieve node with active revision with no claimed data', async () => {
+        const activeRevision: Result<DecryptedRevision, Error> = resultOk({
+            uid: 'revision1',
+            state: RevisionState.Active,
+            creationTime: new Date('2021-01-01'),
+            storageSize: 100,
+            contentAuthor: resultOk('test@test.com'),
+            claimedModificationTime: undefined,
         });
         const node = generateNode('node1', '', { activeRevision });
 
