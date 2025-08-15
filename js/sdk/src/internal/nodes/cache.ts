@@ -302,7 +302,9 @@ function deserialiseRevision(revision: any): Result<DecryptedRevision, Error> {
         return resultOk({
             ...revision.value,
             creationTime: new Date(revision.value.creationTime),
-            claimedModificationTime: new Date(revision.value.claimedModificationTime),
+            claimedModificationTime: revision.value.claimedModificationTime
+                ? new Date(revision.value.claimedModificationTime)
+                : undefined,
         });
     }
 
