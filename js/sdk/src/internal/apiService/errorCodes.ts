@@ -17,6 +17,7 @@ export const enum ErrorCode {
     OK = 1000,
     OK_MANY = 1001,
     OK_ASYNC = 1002,
+    INVALID_VALUE = 2001,
     NOT_ENOUGH_PERMISSIONS = 2011,
     NOT_ENOUGH_PERMISSIONS_TO_GRANT_PERMISSIONS = 2026,
     // Following codes takes name from the API documentation.
