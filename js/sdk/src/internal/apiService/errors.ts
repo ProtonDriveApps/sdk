@@ -46,6 +46,7 @@ export function apiErrorFactory({ response, result }: { response: Response; resu
         // Here we convert only general enough codes. Specific cases that are
         // not clear from the code itself must be handled by each module
         // separately.
+        case ErrorCode.INVALID_VALUE:
         case ErrorCode.NOT_ENOUGH_PERMISSIONS:
         case ErrorCode.NOT_ENOUGH_PERMISSIONS_TO_GRANT_PERMISSIONS:
         case ErrorCode.ALREADY_EXISTS:
