@@ -51,6 +51,7 @@ export type Bookmark = {
     uid: string;
     creationTime: Date;
     url: string;
+    customPassword?: string;
     node: {
         name: string;
         type: NodeType;
@@ -65,8 +66,9 @@ export type Bookmark = {
  * SDK to represent the bookmark in a way that is easy to work with. Whenever
  * any field cannot be decrypted, it is returned as `DegradedBookmark` type.
  */
-export type DegradedBookmark = Omit<Bookmark, 'url' | 'node'> & {
+export type DegradedBookmark = Omit<Bookmark, 'url' | 'customPassword' | 'node'> & {
     url: Result<string, Error>;
+    customPassword: Result<string | undefined, Error>;
     node: Omit<Bookmark['node'], 'name'> & {
         name: Result<string, Error | InvalidNameError>;
     };
