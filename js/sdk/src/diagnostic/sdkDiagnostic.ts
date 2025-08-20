@@ -1,6 +1,6 @@
 import { Author, FileDownloader, MaybeNode, NodeType, Revision, ThumbnailType } from '../interface';
 import { ProtonDriveClient } from '../protonDriveClient';
-import { Diagnostic, DiagnosticOptions, DiagnosticResult } from './interface';
+import { Diagnostic, DiagnosticOptions, DiagnosticResult, NodeDetails } from './interface';
 import { IntegrityVerificationStream } from './integrityVerificationStream';
 
 /**
@@ -43,32 +43,19 @@ export class SDKDiagnostic implements Diagnostic {
     }
 
     private async *verifyNode(node: MaybeNode, options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
-        const nodeUid = node.ok ? node.value.uid : node.error.uid;
-
         if (!node.ok) {
             yield {
                 type: 'degraded_node',
-                nodeUid,
-                node: node.error,
+                ...getNodeDetails(node),
             };
         }
 
-        const activeRevision = getActiveRevision(node);
-        const nodeInfo = {
-            ...getNodeUids(node),
-            node,
-        };
+        yield* this.verifyAuthor(node.ok ? node.value.keyAuthor : node.error.keyAuthor, 'key', node);
+        yield* this.verifyAuthor(node.ok ? node.value.nameAuthor : node.error.nameAuthor, 'name', node);
 
-        yield* this.verifyAuthor(node.ok ? node.value.keyAuthor : node.error.keyAuthor, {
-            ...nodeInfo,
-            authorType: 'key',
-        });
-        yield* this.verifyAuthor(node.ok ? node.value.nameAuthor : node.error.nameAuthor, {
-            ...nodeInfo,
-            authorType: 'name',
-        });
+        const activeRevision = getActiveRevision(node);
         if (activeRevision) {
-            yield* this.verifyAuthor(activeRevision.contentAuthor, { ...nodeInfo, authorType: 'content' });
+            yield* this.verifyAuthor(activeRevision.contentAuthor, 'content', node);
         }
 
         yield* this.verifyFileExtendedAttributes(node);
@@ -81,16 +68,14 @@ export class SDKDiagnostic implements Diagnostic {
         }
     }
 
-    private async *verifyAuthor(
-        author: Author,
-        info: { nodeUid: string; authorType: string; revisionUid?: string; node: MaybeNode },
-    ): AsyncGenerator<DiagnosticResult> {
+    private async *verifyAuthor(author: Author, authorType: string, node: MaybeNode): AsyncGenerator<DiagnosticResult> {
         if (!author.ok) {
             yield {
                 type: 'unverified_author',
+                authorType,
                 claimedAuthor: author.error.claimedAuthor,
                 error: author.error.error,
-                ...info,
+                ...getNodeDetails(node),
             };
         }
     }
@@ -104,17 +89,17 @@ export class SDKDiagnostic implements Diagnostic {
         if (claimedSha1 && !/^[0-9a-f]{40}$/i.test(claimedSha1)) {
             yield {
                 type: 'extended_attributes_error',
-                ...getNodeUids(node),
                 field: 'sha1',
                 value: claimedSha1,
+                ...getNodeDetails(node),
             };
         }
 
         if (expectedAttributes && !claimedSha1) {
             yield {
                 type: 'extended_attributes_missing_field',
-                ...getNodeUids(node),
                 missingField: 'sha1',
+                ...getNodeDetails(node),
             };
         }
     }
@@ -127,7 +112,7 @@ export class SDKDiagnostic implements Diagnostic {
         if (!activeRevision) {
             yield {
                 type: 'content_file_missing_revision',
-                nodeUid: node.ok ? node.value.uid : node.error.uid,
+                ...getNodeDetails(node),
             };
             return;
         }
@@ -158,18 +143,18 @@ export class SDKDiagnostic implements Diagnostic {
             if (claimedSha1 !== computedSha1 || claimedSizeInBytes !== computedSizeInBytes) {
                 yield {
                     type: 'content_integrity_error',
-                    ...getNodeUids(node),
                     claimedSha1,
                     computedSha1,
                     claimedSizeInBytes,
                     computedSizeInBytes,
+                    ...getNodeDetails(node),
                 };
             }
         } catch (error: unknown) {
             yield {
                 type: 'content_download_error',
-                ...getNodeUids(node),
                 error,
+                ...getNodeDetails(node),
             };
         }
     }
@@ -197,8 +182,8 @@ export class SDKDiagnostic implements Diagnostic {
             if (!result[0].ok && result[0].error !== 'Node has no thumbnail') {
                 yield {
                     type: 'thumbnails_error',
-                    nodeUid,
                     error: result[0].error,
+                    ...getNodeDetails(node),
                 };
             }
         } catch (error: unknown) {
@@ -224,6 +209,49 @@ export class SDKDiagnostic implements Diagnostic {
             };
         }
     }
+}
+
+function getNodeDetails(node: MaybeNode): NodeDetails {
+    const errors: {
+        field: string;
+        error: unknown;
+    }[] = [];
+
+    if (!node.ok) {
+        const degradedNode = node.error;
+        if (!degradedNode.name.ok) {
+            errors.push({
+                field: 'name',
+                error: degradedNode.name.error,
+            });
+        }
+        if (degradedNode.activeRevision?.ok === false) {
+            errors.push({
+                field: 'activeRevision',
+                error: degradedNode.activeRevision.error,
+            });
+        }
+        for (const error of degradedNode.errors ?? []) {
+            if (error instanceof Error) {
+                errors.push({
+                    field: 'error',
+                    error,
+                });
+            }
+        }
+    }
+
+    return {
+        safeNodeDetails: {
+            ...getNodeUids(node),
+            nodeType: getNodeType(node),
+            nodeCreationTime: node.ok ? node.value.creationTime : node.error.creationTime,
+            keyAuthor: node.ok ? node.value.keyAuthor : node.error.keyAuthor,
+            nameAuthor: node.ok ? node.value.nameAuthor : node.error.nameAuthor,
+            errors,
+        },
+        sensitiveNodeDetails: node,
+    };
 }
 
 function getNodeUids(node: MaybeNode): { nodeUid: string; revisionUid?: string } {

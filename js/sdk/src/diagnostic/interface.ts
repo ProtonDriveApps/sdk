@@ -1,4 +1,4 @@
-import { DegradedNode, MaybeNode, MetricEvent } from '../interface';
+import { Author, MaybeNode, MetricEvent, NodeType } from '../interface';
 import { LogRecord } from '../telemetry';
 
 export interface Diagnostic {
@@ -67,77 +67,59 @@ export type HttpErrorResult = {
 // Event representing that node has some decryption or other (e.g., invalid name) issues.
 export type DegradedNodeResult = {
     type: 'degraded_node';
-    nodeUid: string;
-    node: DegradedNode;
-};
+} & NodeDetails;
 
 // Event representing that signature verification failing.
 export type UnverifiedAuthorResult = {
     type: 'unverified_author';
-    nodeUid: string;
-    revisionUid?: string;
     authorType: string;
     claimedAuthor?: string;
     error: string;
-    node: MaybeNode;
-};
+} & NodeDetails;
 
 // Event representing that field from the extended attributes is not valid format.
 // Currently only `sha1` verification is supported.
 export type ExtendedAttributesErrorResult = {
     type: 'extended_attributes_error';
-    nodeUid: string;
-    revisionUid?: string;
     field: 'sha1';
     value: string;
-};
+} & NodeDetails;
 
 // Event representing that field from the extended attributes is missing.
 // Currently only `sha1` verification is supported.
 export type ExtendedAttributesMissingFieldResult = {
     type: 'extended_attributes_missing_field';
-    nodeUid: string;
-    revisionUid?: string;
     missingField: 'sha1';
-};
+} & NodeDetails;
 
 // Event representing that file is missing the active revision.
 export type ContentFileMissingRevisionResult = {
     type: 'content_file_missing_revision';
-    nodeUid: string;
-    revisionUid?: string;
-};
+} & NodeDetails;
 
 // Event representing that file content is not valid - either sha1 or size is not correct.
 export type ContentIntegrityErrorResult = {
     type: 'content_integrity_error';
-    nodeUid: string;
-    revisionUid?: string;
     claimedSha1?: string;
     computedSha1?: string;
     claimedSizeInBytes?: number;
     computedSizeInBytes?: number;
-};
+} & NodeDetails;
 
 // Event representing that downloading the file content failed.
 // This can be connection issue or server error. If its integrity issue,
 // it should be reported as `ContentIntegrityErrorResult`.
 export type ContentDownloadErrorResult = {
     type: 'content_download_error';
-    nodeUid: string;
-    revisionUid?: string;
     error: unknown;
-};
+} & NodeDetails;
 
 // Event representing that getting the thumbnails failed.
 // This can be connection issue or server error.
 export type ThumbnailsErrorResult = {
     type: 'thumbnails_error';
-    nodeUid: string;
-    revisionUid?: string;
-    message?: string;
-    error?: unknown;
-};
+    error: unknown;
+} & NodeDetails;
 
 // Event representing errors logged during the diagnostic.
 export type LogErrorResult = {
@@ -155,4 +137,20 @@ export type LogWarningResult = {
 export type MetricResult = {
     type: 'metric';
     event: MetricEvent;
+};
+
+export type NodeDetails = {
+    safeNodeDetails: {
+        nodeUid: string;
+        revisionUid?: string;
+        nodeType: NodeType;
+        nodeCreationTime: Date;
+        keyAuthor: Author;
+        nameAuthor: Author;
+        errors: {
+            field: string;
+            error: unknown;
+        }[];
+    };
+    sensitiveNodeDetails: MaybeNode;
 };
