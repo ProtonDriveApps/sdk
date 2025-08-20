@@ -140,13 +140,14 @@ export class SharingAccess {
 
     async *iterateBookmarks(signal?: AbortSignal): AsyncGenerator<MaybeBookmark> {
         for await (const bookmark of this.apiService.iterateBookmarks(signal)) {
-            const { url, nodeName } = await this.cryptoService.decryptBookmark(bookmark);
+            const { url, customPassword, nodeName } = await this.cryptoService.decryptBookmark(bookmark);
 
-            if (!url.ok || !nodeName.ok) {
+            if (!url.ok || !customPassword.ok || !nodeName.ok) {
                 yield resultError({
                     uid: bookmark.tokenId,
                     creationTime: bookmark.creationTime,
                     url: url,
+                    customPassword,
                     node: {
                         name: nodeName,
                         type: bookmark.node.type,
@@ -158,6 +159,7 @@ export class SharingAccess {
                     uid: bookmark.tokenId,
                     creationTime: bookmark.creationTime,
                     url: url.value,
+                    customPassword: customPassword.value,
                     node: {
                         name: nodeName.value,
                         type: bookmark.node.type,
