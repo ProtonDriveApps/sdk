@@ -116,6 +116,7 @@ describe('SharingAccess', () => {
         it('should return decrypted bookmark', async () => {
             cryptoService.decryptBookmark = jest.fn().mockResolvedValue({
                 url: resultOk('url'),
+                customPassword: resultOk('customPassword'),
                 nodeName: resultOk('nodeName'),
             });
 
@@ -126,6 +127,7 @@ describe('SharingAccess', () => {
                     uid: 'tokenId',
                     creationTime: new Date('2025-01-01'),
                     url: 'url',
+                    customPassword: 'customPassword',
                     node: {
                         name: 'nodeName',
                         type: NodeType.File,
@@ -138,6 +140,7 @@ describe('SharingAccess', () => {
         it('should return degraded bookmark if URL password cannot be decrypted', async () => {
             cryptoService.decryptBookmark = jest.fn().mockResolvedValue({
                 url: resultError('url cannot be decrypted'),
+                customPassword: resultOk('url cannot be decrypted'),
                 nodeName: resultError('url cannot be decrypted'),
             });
 
@@ -148,6 +151,7 @@ describe('SharingAccess', () => {
                     uid: 'tokenId',
                     creationTime: new Date('2025-01-01'),
                     url: resultError('url cannot be decrypted'),
+                    customPassword: resultOk('url cannot be decrypted'),
                     node: {
                         name: resultError('url cannot be decrypted'),
                         type: NodeType.File,
@@ -160,6 +164,7 @@ describe('SharingAccess', () => {
         it('should return degraded bookmark if node name cannot be decrypted', async () => {
             cryptoService.decryptBookmark = jest.fn().mockResolvedValue({
                 url: resultOk('url'),
+                customPassword: resultOk(undefined),
                 nodeName: resultError('node name cannot be decrypted'),
             });
 
@@ -170,6 +175,7 @@ describe('SharingAccess', () => {
                     uid: 'tokenId',
                     creationTime: new Date('2025-01-01'),
                     url: resultOk('url'),
+                    customPassword: resultOk(undefined),
                     node: {
                         name: resultError('node name cannot be decrypted'),
                         type: NodeType.File,

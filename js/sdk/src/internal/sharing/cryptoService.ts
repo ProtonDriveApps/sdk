@@ -411,10 +411,7 @@ export class SharingCryptoService {
                 };
             case PublicLinkFlags.GeneratedPasswordIncluded:
             case PublicLinkFlags.GeneratedPasswordWithCustomPassword:
-                return {
-                    password: password.substring(0, PUBLIC_LINK_GENERATED_PASSWORD_LENGTH),
-                    customPassword: password.substring(PUBLIC_LINK_GENERATED_PASSWORD_LENGTH) || undefined,
-                };
+                return splitGeneratedAndCustomPassword(password);
             default:
                 throw new Error(`Unsupported public link with flags: ${encryptedPublicLink.flags}`);
         }
@@ -422,18 +419,24 @@ export class SharingCryptoService {
 
     async decryptBookmark(encryptedBookmark: EncryptedBookmark): Promise<{
         url: Result<string, Error>;
+        customPassword: Result<string | undefined, Error>;
         nodeName: Result<string, Error | InvalidNameError>;
     }> {
         // TODO: Signatures are not checked and not specified in the interface.
         // In the future, we will need to add authorship verification.
 
         let urlPassword: string;
+        let customPassword: Result<string | undefined, Error>;
         try {
-            urlPassword = await this.decryptBookmarkUrlPassword(encryptedBookmark);
+            const password = await this.decryptBookmarkUrlPassword(encryptedBookmark);
+            const result = splitGeneratedAndCustomPassword(password);
+            urlPassword = result.password;
+            customPassword = resultOk(result.customPassword);
         } catch (originalError: unknown) {
             const error = originalError instanceof Error ? originalError : new Error(c('Error').t`Unknown error`);
             return {
                 url: resultError(error),
+                customPassword: resultError(error),
                 nodeName: resultError(error),
             };
         }
@@ -448,6 +451,7 @@ export class SharingCryptoService {
             const error = originalError instanceof Error ? originalError : new Error(c('Error').t`Unknown error`);
             return {
                 url,
+                customPassword,
                 nodeName: resultError(error),
             };
         }
@@ -456,6 +460,7 @@ export class SharingCryptoService {
 
         return {
             url,
+            customPassword,
             nodeName,
         };
     }
@@ -550,4 +555,13 @@ export class SharingCryptoService {
             return resultError(new Error(errorMessage));
         }
     }
+}
+
+function splitGeneratedAndCustomPassword(concatenatedPassword: string): {
+    password: string;
+    customPassword?: string;
+} {
+    const password = concatenatedPassword.substring(0, PUBLIC_LINK_GENERATED_PASSWORD_LENGTH);
+    const customPassword = concatenatedPassword.substring(PUBLIC_LINK_GENERATED_PASSWORD_LENGTH) || undefined;
+    return { password, customPassword };
 }
