@@ -37,7 +37,8 @@ export class CommandDiagnosticTree implements Command {
             if (json) {
                 console.log(JSON.stringify(result));
             } else {
-                console.log(result);
+                // Empty string as first argument is a workaround to print deep structures with Bun.
+                console.log('', result);
             }
         }
     }
