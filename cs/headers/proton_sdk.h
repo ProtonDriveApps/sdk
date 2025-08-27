@@ -9,33 +9,48 @@ typedef struct {
     size_t length;
 } ByteArray;
 
-typedef void ArrayFunction(const void* state, ByteArray array);
+typedef void array_callback_function(const void* state, ByteArray array);
 
 typedef struct {
-    ArrayFunction* success_function;
-    ArrayFunction* failure_function;
+    array_callback_function* success_function;
+    array_callback_function* failure_function;
     intptr_t cancellation_token_source_handle;
 } AsyncArrayCallback;
 
 typedef struct {
     void (*success_function)(const void* state, int returnValue);
-    ArrayFunction* failure_function;
+    array_callback_function* failure_function;
     intptr_t cancellation_token_source_handle;
 } AsyncIntCallback;
 
 typedef struct {
+    void (*success_function)(const void* state, intptr_t returnValue);
+    array_callback_function* failure_function;
+    intptr_t cancellation_token_source_handle;
+} AsyncIntPtrCallback;
+
+typedef struct {
     void (*success_function)(const void* state);
-    ArrayFunction* failure_function;
+    array_callback_function* failure_function;
     intptr_t cancellation_token_source_handle;
 } AsyncVoidCallback;
 
 typedef struct {
-    ArrayFunction* function;
+    array_callback_function* function;
 } ArrayCallback;
 
 // These callbacks receive yet another callback to allow asynchronous read/writes
-typedef void ReadCallback(const void* state, ByteArray buffer, const void* caller_state, AsyncIntCallback callback);
-typedef void WriteCallback(const void* state, ByteArray buffer, const void* caller_state, AsyncVoidCallback callback);
+typedef void ReadCallback(
+    const void* state,
+    ByteArray buffer,
+    const void* completion_callback_state,
+    AsyncIntCallback completion_callback);
+
+typedef void WriteCallback(
+    const void* state,
+    ByteArray buffer,
+    const void* completion_callback_state,
+    AsyncVoidCallback completion_callback);
 
 intptr_t cancellation_token_source_create();
 
@@ -50,7 +65,7 @@ void cancellation_token_source_free(
 int session_begin(
     ByteArray request,
     const void* caller_state,
-    AsyncArrayCallback result_callback
+    AsyncIntPtrCallback result_callback
 );
 
 int session_resume(
@@ -83,6 +98,7 @@ void session_tokens_refreshed_unsubscribe(
 void session_free(intptr_t session_handle);
 
 int logger_provider_create(
+    const void* caller_state,
     ArrayCallback log_callback,
     intptr_t* logger_provider_handle
 );
@@ -99,7 +115,7 @@ int get_file_uploader(
     intptr_t client_handle,
     ByteArray request, // FileUploaderProvisionRequest
     const void* caller_state,
-    AsyncArrayCallback result_callback
+    AsyncIntPtrCallback result_callback
 );
 
 intptr_t upload_from_stream(
@@ -107,7 +123,7 @@ intptr_t upload_from_stream(
     ByteArray request, // FileUploadRequest
     const void* caller_state,
     ReadCallback* read_callback,
-    AsyncArrayCallback progress_callback,
+    ArrayCallback progress_callback,
     intptr_t cancellation_token_source_handle
 );
 
@@ -116,7 +132,7 @@ void file_uploader_free(intptr_t file_uploader_handle);
 int upload_controller_set_completion_callback(
     intptr_t upload_controller_handle,
     const void* caller_state,
-    AsyncArrayCallback result_callback);
+    AsyncVoidCallback result_callback);
 
 void upload_controller_pause(intptr_t file_uploader_handle);
 
@@ -128,7 +144,7 @@ int get_file_downloader(
     intptr_t client_handle,
     ByteArray request, // FileDownloaderProvisionRequest
     const void* caller_state,
-    AsyncArrayCallback result_callback
+    AsyncIntPtrCallback result_callback
 );
 
 intptr_t download_to_stream(
@@ -144,7 +160,7 @@ void file_downloader_free(intptr_t file_downloader_handle);
 int download_controller_set_completion_callback(
     intptr_t download_controller_handle,
     const void* caller_state,
-    AsyncArrayCallback result_callback
+    AsyncVoidCallback result_callback
 );
 
 void download_controller_pause(intptr_t file_downloader_handle);

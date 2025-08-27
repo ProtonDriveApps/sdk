@@ -109,10 +109,6 @@ message StringResponse {
     string value = 1;
 }
 
-message IntResponse {
-    int64 value = 1;
-}
-
 message SessionId {
     string value = 1;
 }

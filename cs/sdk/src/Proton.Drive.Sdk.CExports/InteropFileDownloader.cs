@@ -72,7 +72,7 @@ internal static class InteropFileDownloader
 
             var downloadController = downloader.DownloadToStream(
                 stream,
-                (completed, total) => progressCallback.UpdateProgress(completed, total),
+                (completed, total) => progressCallback.UpdateProgress(callerState, completed, total),
                 cancellationToken);
 
             return GCHandle.ToIntPtr(GCHandle.Alloc(downloadController));
