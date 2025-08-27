@@ -113,7 +113,7 @@ public sealed class ProtonDriveClient
 
         await RevisionCreationSemaphore.EnterAsync(expectedNumberOfBlocks, cancellationToken).ConfigureAwait(false);
 
-        return new FileUploader(this, name, mediaType, lastModificationTime, expectedNumberOfBlocks);
+        return new FileUploader(this, name, mediaType, lastModificationTime, size, expectedNumberOfBlocks);
     }
 
     public async ValueTask<FileDownloader> GetFileDownloaderAsync(RevisionUid revisionUid, CancellationToken cancellationToken)

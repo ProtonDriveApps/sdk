@@ -17,14 +17,18 @@ public sealed class FileUploader : IDisposable
         string name,
         string mediaType,
         DateTimeOffset? lastModificationTime,
+        long size,
         int expectedNumberOfBlocks)
     {
         _client = client;
         _name = name;
         _mediaType = mediaType;
         _lastModificationTime = lastModificationTime;
+        FileSize = size;
         _remainingNumberOfBlocks = expectedNumberOfBlocks;
     }
+
+    internal long FileSize { get; }
 
     public UploadController UploadFromStream(
         NodeUid parentFolderUid,

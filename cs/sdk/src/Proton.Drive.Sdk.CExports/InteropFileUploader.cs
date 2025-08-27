@@ -76,14 +76,14 @@ internal static class InteropFileUploader
                 return -1;
             }
 
-            var stream = new InteropStream(callerState, readCallback);
+            var stream = new InteropStream(uploader.FileSize, callerState, readCallback);
 
             var uploadController = uploader.UploadFromStream(
                 parentUid.Value,
                 stream,
                 request.HasThumbnail ? [new Thumbnail(ThumbnailType.Thumbnail, request.Thumbnail.ToByteArray())] : [],
                 request.CreateNewRevisionIfExists,
-                (completed, total) => progressCallback.UpdateProgress(completed, total),
+                (completed, total) => progressCallback.UpdateProgress(callerState, completed, total),
                 cancellationToken);
 
             return GCHandle.ToIntPtr(GCHandle.Alloc(uploadController));

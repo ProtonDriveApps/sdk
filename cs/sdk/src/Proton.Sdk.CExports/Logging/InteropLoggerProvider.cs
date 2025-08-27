@@ -5,13 +5,14 @@ using Microsoft.Extensions.Logging;
 
 namespace Proton.Sdk.CExports.Logging;
 
-internal sealed class InteropLoggerProvider(InteropLogCallback logCallback) : ILoggerProvider
+internal sealed unsafe class InteropLoggerProvider(void* callerState, InteropValueCallback<InteropArray<byte>> logCallback) : ILoggerProvider
 {
-    private readonly InteropLogCallback _logCallback = logCallback;
+    private readonly void* _callerState = callerState;
+    private readonly InteropValueCallback<InteropArray<byte>> _logCallback = logCallback;
 
     public ILogger CreateLogger(string categoryName)
     {
-        return new InteropLogger(_logCallback, categoryName);
+        return new InteropLogger(_callerState, _logCallback, categoryName);
     }
 
     public void Dispose()
@@ -35,11 +36,11 @@ internal sealed class InteropLoggerProvider(InteropLogCallback logCallback) : IL
     }
 
     [UnmanagedCallersOnly(EntryPoint = "logger_provider_create", CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe int InitializeLoggerProvider(InteropLogCallback logCallback, nint* loggerProviderHandle)
+    private static int InitializeLoggerProvider(void* callerState, InteropValueCallback<InteropArray<byte>> logCallback, nint* loggerProviderHandle)
     {
         try
         {
-            var provider = new InteropLoggerProvider(logCallback);
+            var provider = new InteropLoggerProvider(callerState, logCallback);
             *loggerProviderHandle = GCHandle.ToIntPtr(GCHandle.Alloc(provider));
             return 0;
         }

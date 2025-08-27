@@ -7,12 +7,16 @@ namespace Proton.Drive.Sdk.CExports;
 
 internal sealed unsafe class InteropStream : Stream
 {
+    private readonly long? _length;
     private readonly void* _callerState;
     private readonly InteropReadCallback _readCallback;
     private readonly InteropWriteCallback _writeCallback;
 
-    public InteropStream(void* callerState, InteropReadCallback readCallback)
+    private long _position;
+
+    public InteropStream(long length, void* callerState, InteropReadCallback readCallback)
     {
+        _length = length;
         _callerState = callerState;
         _readCallback = readCallback;
         _writeCallback = default;
@@ -28,12 +32,12 @@ internal sealed unsafe class InteropStream : Stream
     public override bool CanRead => _readCallback.Invoke != null;
     public override bool CanSeek => false;
     public override bool CanWrite => _writeCallback.Invoke != null;
-    public override long Length => throw new NotSupportedException();
+    public override long Length => _length ?? throw new NotSupportedException("Getting length not supported");
 
     public override long Position
     {
-        get => throw new NotSupportedException();
-        set => throw new NotSupportedException();
+        get => _position;
+        set => throw new NotSupportedException("Seeking not supported");
     }
 
     public override void Flush()
@@ -61,7 +65,7 @@ internal sealed unsafe class InteropStream : Stream
 
         try
         {
-            var operation = new ReadOperation(memoryHandle);
+            var operation = new ReadOperation(this, memoryHandle);
             var operationHandle = GCHandle.Alloc(operation);
 
             try
@@ -70,7 +74,7 @@ internal sealed unsafe class InteropStream : Stream
                     _callerState,
                     new InteropArray<byte>((byte*)memoryHandle.Pointer, buffer.Length),
                     GCHandle.ToIntPtr(operationHandle),
-                    new InteropValueCallback<int>(&OnReadDone));
+                    new InteropAsyncValueCallback<int>(&OnReadSucceeded, &OnReadFailed, 0));
 
                 return new ValueTask<int>(operation.Task);
             }
@@ -89,17 +93,17 @@ internal sealed unsafe class InteropStream : Stream
 
     public override long Seek(long offset, SeekOrigin origin)
     {
-        throw new NotSupportedException();
+        throw new NotSupportedException("Seeking not supported");
     }
 
     public override void SetLength(long value)
     {
-        throw new NotSupportedException();
+        throw new NotSupportedException("Setting length not supported");
     }
 
     public override void Write(byte[] buffer, int offset, int count)
     {
-        throw new NotSupportedException();
+        WriteAsync(buffer.AsMemory(offset, count)).AsTask().GetAwaiter().GetResult();
     }
 
     public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
@@ -118,7 +122,7 @@ internal sealed unsafe class InteropStream : Stream
 
         try
         {
-            var operation = new WriteOperation(memoryHandle);
+            var operation = new WriteOperation(this, memoryHandle, buffer.Length);
             var operationHandle = GCHandle.Alloc(operation);
 
             try
@@ -127,7 +131,7 @@ internal sealed unsafe class InteropStream : Stream
                     _callerState,
                     new InteropArray<byte>((byte*)memoryHandle.Pointer, buffer.Length),
                     GCHandle.ToIntPtr(operationHandle),
-                    new InteropVoidCallback(&OnWriteDone));
+                    new InteropAsyncVoidCallback(&OnWriteSucceeded, &OnWriteFailed, 0));
 
                 return new ValueTask(operation.Task);
             }
@@ -145,23 +149,76 @@ internal sealed unsafe class InteropStream : Stream
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    private static void OnReadDone(void* state, int numberOfBytesRead)
+    private static void OnReadSucceeded(void* state, int numberOfBytesRead)
     {
-        var operation = (ReadOperation)GCHandle.FromIntPtr(new nint(state)).Target!;
+        var operationHandle = GCHandle.FromIntPtr(new nint(state));
 
-        operation.Complete(numberOfBytesRead);
+        try
+        {
+            var operation = (ReadOperation)operationHandle.Target!;
+
+            operation.Complete(numberOfBytesRead);
+        }
+        finally
+        {
+            operationHandle.Free();
+        }
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    private static void OnWriteDone(void* state)
+    private static void OnReadFailed(void* state, InteropArray<byte> errorBytes)
     {
-        var operation = (WriteOperation)GCHandle.FromIntPtr(new nint(state)).Target!;
+        var operationHandle = GCHandle.FromIntPtr(new nint(state));
 
-        operation.Complete();
+        try
+        {
+            var operation = (ReadOperation)operationHandle.Target!;
+
+            operation.CompleteWithFailure(errorBytes);
+        }
+        finally
+        {
+            operationHandle.Free();
+        }
     }
 
-    private sealed class ReadOperation(MemoryHandle memoryHandle)
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static void OnWriteSucceeded(void* state)
     {
+        var operationHandle = GCHandle.FromIntPtr(new nint(state));
+
+        try
+        {
+            var operation = (WriteOperation)operationHandle.Target!;
+
+            operation.CompleteSuccessfully();
+        }
+        finally
+        {
+            operationHandle.Free();
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static void OnWriteFailed(void* state, InteropArray<byte> errorBytes)
+    {
+        var operationHandle = GCHandle.FromIntPtr(new nint(state));
+
+        try
+        {
+            var operation = (WriteOperation)operationHandle.Target!;
+
+            operation.CompleteWithFailure(errorBytes);
+        }
+        finally
+        {
+            operationHandle.Free();
+        }
+    }
+
+    private sealed class ReadOperation(InteropStream stream, MemoryHandle memoryHandle)
+    {
+        private readonly InteropStream _stream = stream;
         private readonly TaskCompletionSource<int> _taskCompletionSource = new();
 
         private MemoryHandle _memoryHandle = memoryHandle;
@@ -170,23 +227,65 @@ internal sealed unsafe class InteropStream : Stream
 
         public void Complete(int bytesRead)
         {
-            _taskCompletionSource.SetResult(bytesRead);
-            _memoryHandle.Dispose();
+            try
+            {
+                _stream._position += bytesRead;
+                _taskCompletionSource.SetResult(bytesRead);
+            }
+            finally
+            {
+                _memoryHandle.Dispose();
+            }
+        }
+
+        public void CompleteWithFailure(InteropArray<byte> errorBytes)
+        {
+            try
+            {
+                var error = Error.Parser.ParseFrom(errorBytes.AsReadOnlySpan());
+                _taskCompletionSource.SetException(new IOException(error.Message));
+            }
+            finally
+            {
+                _memoryHandle.Dispose();
+            }
         }
     }
 
-    private sealed class WriteOperation(MemoryHandle memoryHandle)
+    private sealed class WriteOperation(InteropStream stream, MemoryHandle memoryHandle, int bufferLength)
     {
+        private readonly InteropStream _stream = stream;
+        private readonly int _bufferLength = bufferLength;
         private readonly TaskCompletionSource _taskCompletionSource = new();
 
         private MemoryHandle _memoryHandle = memoryHandle;
 
         public Task Task => _taskCompletionSource.Task;
 
-        public void Complete()
+        public void CompleteSuccessfully()
         {
-            _taskCompletionSource.SetResult();
-            _memoryHandle.Dispose();
+            try
+            {
+                _stream._position += _bufferLength;
+                _taskCompletionSource.SetResult();
+            }
+            finally
+            {
+                _memoryHandle.Dispose();
+            }
+        }
+
+        public void CompleteWithFailure(InteropArray<byte> errorBytes)
+        {
+            try
+            {
+                var error = Error.Parser.ParseFrom(errorBytes.AsReadOnlySpan());
+                _taskCompletionSource.SetException(new IOException(error.Message));
+            }
+            finally
+            {
+                _memoryHandle.Dispose();
+            }
         }
     }
 }

@@ -28,11 +28,13 @@ internal static class InteropProtonApiSession
     }
 
     [UnmanagedCallersOnly(EntryPoint = "session_begin", CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe int NativeBegin(InteropArray<byte> requestBytes, void* callerState, InteropAsyncValueCallback<InteropArray<byte>> resultCallback)
+    private static unsafe int NativeBegin(InteropArray<byte> requestBytes, void* callerState, InteropAsyncValueCallback<nint> resultCallback)
     {
         try
         {
-            return resultCallback.InvokeFor(callerState, ct => InteropBeginAsync(requestBytes, ct));
+            var request = SessionBeginRequest.Parser.ParseFrom(requestBytes.AsReadOnlySpan());
+
+            return resultCallback.InvokeFor(callerState, ct => InteropBeginAsync(request, ct));
         }
         catch
         {
@@ -210,14 +212,12 @@ internal static class InteropProtonApiSession
         }
     }
 
-    private static async ValueTask<Result<InteropArray<byte>, InteropArray<byte>>> InteropBeginAsync(
-        InteropArray<byte> requestBytes,
+    private static async ValueTask<Result<nint, InteropArray<byte>>> InteropBeginAsync(
+        SessionBeginRequest request,
         CancellationToken cancellationToken)
     {
         try
         {
-            var request = SessionBeginRequest.Parser.ParseFrom(requestBytes.AsReadOnlySpan());
-
             ILoggerFactory? loggerFactory = null;
 
             if (request.Options.HasLoggerProviderHandle
@@ -252,12 +252,11 @@ internal static class InteropProtonApiSession
                 options,
                 cancellationToken).ConfigureAwait(false);
 
-            var handle = GCHandle.ToIntPtr(GCHandle.Alloc(session));
-            return InteropResultExtensions.Success(new IntResponse { Value = handle });
+            return GCHandle.ToIntPtr(GCHandle.Alloc(session));
         }
         catch (Exception e)
         {
-            return InteropResultExtensions.Failure<InteropArray<byte>>(e, InteropErrorConverter.SetDomainAndCodes);
+            return InteropResultExtensions.Failure<nint>(e, InteropErrorConverter.SetDomainAndCodes);
         }
     }
 
