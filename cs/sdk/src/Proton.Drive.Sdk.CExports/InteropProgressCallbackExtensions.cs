@@ -6,7 +6,7 @@ namespace Proton.Drive.Sdk.CExports;
 
 internal static class InteropProgressCallbackExtensions
 {
-    internal static unsafe void UpdateProgress(this InteropValueCallback<InteropArray<byte>> progressCallback, long completed, long total)
+    internal static unsafe void UpdateProgress(this InteropValueCallback<InteropArray<byte>> progressCallback, void* callerState, long completed, long total)
     {
         var progressUpdate = new ProgressUpdate
         {
@@ -18,7 +18,7 @@ internal static class InteropProgressCallbackExtensions
 
         try
         {
-            progressCallback.Invoke(progressCallback.Invoke, messageBytes);
+            progressCallback.Invoke(callerState, messageBytes);
         }
         finally
         {

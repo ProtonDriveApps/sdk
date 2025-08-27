@@ -27,6 +27,11 @@
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- This includes the C exports for the account functions -->
+    <IlcCompileInput Include="$(OutputPath)\$(NativeLibPrefix)proton_sdk.dll" />
+  </ItemGroup>
+
   <!-- Static-link the crypto library unless targeting Android -->
   <ItemGroup Condition="!$(RuntimeIdentifier.StartsWith('linux-bionic'))">
     <!-- While the project does not use the package directly, the path to the package is needed to refer to the static link library -->
