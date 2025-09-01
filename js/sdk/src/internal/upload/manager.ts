@@ -1,7 +1,7 @@
 import { c } from 'ttag';
 
 import { Logger, ProtonDriveTelemetry, UploadMetadata } from '../../interface';
-import { ValidationError, NodeAlreadyExistsValidationError } from '../../errors';
+import { ValidationError, NodeWithSameNameExistsValidationError } from '../../errors';
 import { ErrorCode } from '../apiService';
 import { generateFileExtendedAttributes } from '../nodes';
 import { UploadAPIService } from './apiService';
@@ -158,9 +158,7 @@ export class UploadManager {
                         ? makeNodeUid(splitNodeUid(parentFolderUid).volumeId, typedDetails.ConflictLinkID)
                         : undefined;
 
-                    // If there is existing node, return special error
-                    // that includes the available name the client can use.
-                    throw new NodeAlreadyExistsValidationError(
+                    throw new NodeWithSameNameExistsValidationError(
                         error.message,
                         error.code,
                         existingNodeUid,

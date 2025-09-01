@@ -70,17 +70,17 @@ export class ValidationError extends ProtonDriveError {
  * or choose another name. The available name is provided in the `availableName`
  * property (that will contain original name with the index that can be used).
  */
-export class NodeAlreadyExistsValidationError extends ValidationError {
-    name = 'NodeAlreadyExistsValidationError';
+export class NodeWithSameNameExistsValidationError extends ValidationError {
+    name = 'NodeWithSameNameExistsValidationError';
 
     public readonly existingNodeUid?: string;
 
-    public readonly ongoingUploadByOtherClient: boolean;
+    public readonly isUnfinishedUpload: boolean;
 
-    constructor(message: string, code: number, existingNodeUid?: string, ongoingUploadByOtherClient = false) {
+    constructor(message: string, code: number, existingNodeUid?: string, isUnfinishedUpload = false) {
         super(message, code);
         this.existingNodeUid = existingNodeUid;
-        this.ongoingUploadByOtherClient = ongoingUploadByOtherClient;
+        this.isUnfinishedUpload = isUnfinishedUpload;
     }
 }
 
