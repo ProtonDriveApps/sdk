@@ -58,11 +58,9 @@ describe('SharingManagement', () => {
         };
         // @ts-expect-error No need to implement all methods for mocking
         cryptoService = {
-            generateShareKeys: jest
-                .fn()
-                .mockResolvedValue({
-                    shareKey: { encrypted: 'encrypted-key', decrypted: { passphraseSessionKey: 'pass-session-key' } },
-                }),
+            generateShareKeys: jest.fn().mockResolvedValue({
+                shareKey: { encrypted: 'encrypted-key', decrypted: { passphraseSessionKey: 'pass-session-key' } },
+            }),
             decryptShare: jest.fn().mockImplementation((share) => share),
             decryptInvitation: jest.fn().mockImplementation((invitation) => invitation),
             decryptExternalInvitation: jest.fn().mockImplementation((invitation) => invitation),
@@ -70,7 +68,7 @@ describe('SharingManagement', () => {
             encryptInvitation: jest.fn().mockImplementation(() => {}),
             encryptExternalInvitation: jest.fn().mockImplementation((invitation) => ({
                 ...invitation,
-                base64ExternalInvitationSignature: 'extenral-signature',
+                base64ExternalInvitationSignature: 'external-signature',
             })),
             decryptPublicLink: jest.fn().mockImplementation((publicLink) => publicLink),
             generatePublicLinkPassword: jest.fn().mockResolvedValue('generatedPassword'),
@@ -85,17 +83,12 @@ describe('SharingManagement', () => {
         };
         // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
-            loadEncryptedShare: jest
-                .fn()
-                .mockResolvedValue({
-                    id: 'shareId',
-                    addressId: 'addressId',
-                    creatorEmail: 'address@example.com',
-                    passphraseSessionKey: 'sharePassphraseSessionKey',
-                }),
-            getContextShareMemberEmailKey: jest
-                .fn()
-                .mockResolvedValue({ email: 'volume-email', addressId: 'addressId', addressKey: 'volume-key' }),
+            loadEncryptedShare: jest.fn().mockResolvedValue({
+                id: 'shareId',
+                addressId: 'addressId',
+                creatorEmail: 'address@example.com',
+                passphraseSessionKey: 'sharePassphraseSessionKey',
+            }),
         };
         // @ts-expect-error No need to implement all methods for mocking
         nodesService = {
@@ -196,13 +189,11 @@ describe('SharingManagement', () => {
         const nodeUid = 'volumeId~nodeUid';
 
         it('should create share if no exists', async () => {
-            nodesService.getNode = jest
-                .fn()
-                .mockImplementation((nodeUid) => ({
-                    nodeUid,
-                    parentUid: 'parentUid',
-                    name: { ok: true, value: 'name' },
-                }));
+            nodesService.getNode = jest.fn().mockImplementation((nodeUid) => ({
+                nodeUid,
+                parentUid: 'parentUid',
+                name: { ok: true, value: 'name' },
+            }));
             nodesService.notifyNodeChanged = jest.fn();
 
             const sharingInfo = await sharingManagement.shareNode(nodeUid, { users: ['email'] });
@@ -347,6 +338,24 @@ describe('SharingManagement', () => {
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).not.toHaveBeenCalled();
             });
+
+            it('should use address from the root node context share', async () => {
+                nodesService.getRootNodeEmailKey = jest
+                    .fn()
+                    .mockResolvedValue({ email: 'my-volume-email', addressKey: 'my-volume-key' });
+
+                await sharingManagement.shareNode(nodeUid, { users: ['email'] });
+
+                expect(apiService.inviteProtonUser).toHaveBeenCalledWith(
+                    'shareId',
+                    {
+                        addedByEmail: 'my-volume-email',
+                        inviteeEmail: 'email',
+                        role: 'viewer',
+                    },
+                    expect.anything(),
+                );
+            });
         });
 
         describe('external invitations', () => {
@@ -433,6 +442,27 @@ describe('SharingManagement', () => {
                 });
                 expect(apiService.updateExternalInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteExternalUser).not.toHaveBeenCalled();
+            });
+
+            it('should use address from the root node context share', async () => {
+                nodesService.getRootNodeEmailKey = jest.fn().mockResolvedValue({
+                    email: 'my-volume-email',
+                    addressId: 'my-volume-addressId',
+                    addressKey: 'my-volume-key',
+                });
+
+                await sharingManagement.shareNode(nodeUid, { users: ['email'] });
+
+                expect(apiService.inviteExternalUser).toHaveBeenCalledWith(
+                    'shareId',
+                    {
+                        inviterAddressId: 'my-volume-addressId',
+                        inviteeEmail: 'email',
+                        role: 'viewer',
+                        base64Signature: 'external-signature',
+                    },
+                    expect.anything(),
+                );
             });
         });
 
