@@ -6,6 +6,7 @@ import {
     MaybeMissingNode,
     NodeResult,
     Revision,
+    RevisionOrUid,
     ShareNodeSettings,
     UnshareNodeSettings,
     ProtonInvitationOrUid,
@@ -453,9 +454,9 @@ export class ProtonDriveClient {
      *
      * @param revisionUid - UID of the revision to restore.
      */
-    async restoreRevision(revisionUid: string): Promise<void> {
-        this.logger.info(`Restoring revision ${revisionUid}`);
-        await this.nodes.revisions.restoreRevision(revisionUid);
+    async restoreRevision(revisionUid: RevisionOrUid): Promise<void> {
+        this.logger.info(`Restoring revision ${getUid(revisionUid)}`);
+        await this.nodes.revisions.restoreRevision(getUid(revisionUid));
     }
 
     /**
@@ -463,9 +464,9 @@ export class ProtonDriveClient {
      *
      * @param revisionUid - UID of the revision to delete.
      */
-    async deleteRevision(revisionUid: string): Promise<void> {
-        this.logger.info(`Deleting revision ${revisionUid}`);
-        await this.nodes.revisions.deleteRevision(revisionUid);
+    async deleteRevision(revisionUid: RevisionOrUid): Promise<void> {
+        this.logger.info(`Deleting revision ${getUid(revisionUid)}`);
+        await this.nodes.revisions.deleteRevision(getUid(revisionUid));
     }
 
     /**
@@ -527,21 +528,21 @@ export class ProtonDriveClient {
     /**
      * Accept the invitation to the shared node.
      *
-     * @param invitationId - Invitation entity or its UID string.
+     * @param invitationUid - Invitation entity or its UID string.
      */
-    async acceptInvitation(invitationId: string): Promise<void> {
-        this.logger.info(`Accepting invitation ${invitationId}`);
-        await this.sharing.access.acceptInvitation(invitationId);
+    async acceptInvitation(invitationUid: ProtonInvitationOrUid): Promise<void> {
+        this.logger.info(`Accepting invitation ${getUid(invitationUid)}`);
+        await this.sharing.access.acceptInvitation(getUid(invitationUid));
     }
 
     /**
      * Reject the invitation to the shared node.
      *
-     * @param invitationId - Invitation entity or its UID string.
+     * @param invitationOrUid - Invitation entity or its UID string.
      */
-    async rejectInvitation(invitationId: string): Promise<void> {
-        this.logger.info(`Rejecting invitation ${invitationId}`);
-        await this.sharing.access.rejectInvitation(invitationId);
+    async rejectInvitation(invitationUid: ProtonInvitationOrUid): Promise<void> {
+        this.logger.info(`Rejecting invitation ${getUid(invitationUid)}`);
+        await this.sharing.access.rejectInvitation(getUid(invitationUid));
     }
 
     /**
