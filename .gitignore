@@ -2,6 +2,8 @@
 .DS_Store
 
 # Docs
+__pycache__
+docs/build
 public
 
 # JS

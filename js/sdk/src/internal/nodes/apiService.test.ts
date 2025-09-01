@@ -173,6 +173,34 @@ describe('nodeAPIService', () => {
         api = new NodeAPIService(getMockLogger(), apiMock);
     });
 
+    describe('getNode', () => {
+        it('should get node', async () => {
+            // @ts-expect-error Mocking for testing purposes
+            apiMock.post = jest.fn(async () =>
+                Promise.resolve({
+                    Links: [generateAPIFolderNode()],
+                }),
+            );
+
+            const node = await api.getNode('volumeId~nodeId', 'volumeId');
+
+            expect(node).toStrictEqual(generateFolderNode());
+        });
+
+        it('should throw error if node is not found', async () => {
+            // @ts-expect-error Mocking for testing purposes
+            apiMock.post = jest.fn(async () =>
+                Promise.resolve({
+                    Links: [],
+                }),
+            );
+
+            const promise = api.getNode('volumeId~nodeId', 'volumeId');
+
+            await expect(promise).rejects.toThrow('Node not found');
+        });
+    });
+
     describe('iterateNodes', () => {
         async function testIterateNodes(mockedLink: any, expectedNode: any, ownVolumeId = 'volumeId') {
             // @ts-expect-error Mocking for testing purposes

@@ -110,6 +110,9 @@ export class NodeAPIService {
     async getNode(nodeUid: string, ownVolumeId: string, signal?: AbortSignal): Promise<EncryptedNode> {
         const nodesGenerator = this.iterateNodes([nodeUid], ownVolumeId, signal);
         const result = await nodesGenerator.next();
+        if (!result.value) {
+            throw new ValidationError(c('Error').t`Node not found`);
+        }
         await nodesGenerator.return('finish');
         return result.value;
     }

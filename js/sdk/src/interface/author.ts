@@ -24,6 +24,6 @@ export type AnonymousUser = null;
  * the claimed author and the verification error.
  */
 export type UnverifiedAuthorError = {
-    claimedAuthor?: string;
+    claimedAuthor?: string | AnonymousUser;
     error: string;
 };
