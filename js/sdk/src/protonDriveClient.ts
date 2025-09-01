@@ -311,7 +311,7 @@ export class ProtonDriveClient {
      * @param nodeUid - Node entity or its UID string.
      * @returns The updated node entity.
      * @throws {@link ValidationError} If the name is empty, too long, or contains a slash.
-     * @throws {@link Error} If another node with the same name already exists.
+     * @throws {@link ValidationError} If another node with the same name already exists.
      */
     async renameNode(nodeUid: NodeOrUid, newName: string): Promise<MaybeNode> {
         this.logger.info(`Renaming node ${getUid(nodeUid)}`);

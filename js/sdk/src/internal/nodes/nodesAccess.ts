@@ -234,7 +234,7 @@ export class NodesAccess {
 
         if (errors.length > 0) {
             this.logger.error(`Failed to decrypt ${errors.length} nodes`, errors);
-            throw new ProtonDriveError(c('Error').t`Failed to decrypt some nodes`, { cause: errors });
+            throw new DecryptionError(c('Error').t`Failed to decrypt some nodes`, { cause: errors });
         }
 
         const missingNodeUids = nodeUids.filter((nodeUid) => !returnedNodeUids.includes(nodeUid));

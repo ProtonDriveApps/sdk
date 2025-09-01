@@ -112,7 +112,10 @@ export class NodesCryptoService {
                     ...commonNodeMetadata,
                     name,
                     keyAuthor: resultError({
-                        claimedAuthor: node.encryptedCrypto.signatureEmail,
+                        claimedAuthor: getClaimedAuthor(
+                            node.encryptedCrypto.signatureEmail,
+                            keyVerificationKeys.length === 0,
+                        ),
                         error: errorMessage,
                     }),
                     nameAuthor,
@@ -319,7 +322,7 @@ export class NodesCryptoService {
             return {
                 name: resultError(new Error(errorMessage)),
                 author: resultError({
-                    claimedAuthor: nameSignatureEmail,
+                    claimedAuthor: getClaimedAuthor(nameSignatureEmail, verificationKeys.length === 0),
                     error: errorMessage,
                 }),
             };
@@ -715,4 +718,15 @@ function handleClaimedAuthor(
         claimedAuthor: claimedAuthor,
         error: getVerificationMessage(verified, verificationErrors, signatureType, notAvailableVerificationKeys),
     });
+}
+
+function getClaimedAuthor(
+    claimedAuthor?: string,
+    notAvailableVerificationKeys = false,
+): string | AnonymousUser | undefined {
+    if (!claimedAuthor && notAvailableVerificationKeys) {
+        return null as AnonymousUser;
+    }
+
+    return claimedAuthor;
 }
