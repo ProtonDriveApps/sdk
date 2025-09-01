@@ -1,4 +1,4 @@
-import { Author, MaybeNode, MetricEvent, NodeType } from '../interface';
+import { Author, MaybeNode, MetricEvent, NodeType, AnonymousUser } from '../interface';
 import { LogRecord } from '../telemetry';
 
 export interface Diagnostic {
@@ -73,7 +73,7 @@ export type DegradedNodeResult = {
 export type UnverifiedAuthorResult = {
     type: 'unverified_author';
     authorType: string;
-    claimedAuthor?: string;
+    claimedAuthor?: string | AnonymousUser;
     error: string;
 } & NodeDetails;
 

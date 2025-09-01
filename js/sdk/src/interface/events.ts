@@ -20,13 +20,7 @@ export interface LatestEventIdProvider {
  */
 export type DriveListener = (event: DriveEvent) => Promise<void>;
 
-export type DriveEvent =
-    | NodeEvent
-    | FastForwardEvent
-    | TreeRefreshEvent
-    | TreeRemovalEvent
-    | FastForwardEvent
-    | SharedWithMeUpdated;
+export type DriveEvent = NodeEvent | FastForwardEvent | TreeRefreshEvent | TreeRemovalEvent | SharedWithMeUpdated;
 
 export type NodeEvent =
     | {

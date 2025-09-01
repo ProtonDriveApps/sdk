@@ -189,11 +189,8 @@ export class NodesManagement {
     }
 
     async *deleteNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
-        const deletedNodeUids = [];
-
         for await (const result of this.apiService.deleteNodes(nodeUids, signal)) {
             if (result.ok) {
-                deletedNodeUids.push(result.uid);
                 await this.nodesAccess.notifyNodeDeleted(result.uid);
             }
             yield result;
