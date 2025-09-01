@@ -206,7 +206,7 @@ describe('UploadManager', () => {
                 await promise;
             } catch (error: any) {
                 expect(error.message).toBe('Draft already exists');
-                expect(error.ongoingUploadByOtherClient).toBe(true);
+                expect(error.isUnfinishedUpload).toBe(true);
             }
             expect(apiService.deleteDraft).not.toHaveBeenCalled();
         });
@@ -237,7 +237,7 @@ describe('UploadManager', () => {
                 await promise;
             } catch (error: any) {
                 expect(error.message).toBe('Draft already exists');
-                expect(error.ongoingUploadByOtherClient).toBe(true);
+                expect(error.isUnfinishedUpload).toBe(true);
             }
             expect(apiService.deleteDraft).not.toHaveBeenCalled();
         });
