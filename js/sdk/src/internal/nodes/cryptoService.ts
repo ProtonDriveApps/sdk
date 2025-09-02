@@ -61,6 +61,8 @@ export class NodesCryptoService {
         node: EncryptedNode,
         parentKey: PrivateKey,
     ): Promise<{ node: DecryptedUnparsedNode; keys?: DecryptedNodeKeys }> {
+        const start = Date.now();
+
         const commonNodeMetadata = {
             ...node,
             encryptedCrypto: undefined,
@@ -89,16 +91,17 @@ export class NodesCryptoService {
                 : nodeParentKeys;
         }
 
-        const { name, author: nameAuthor } = await this.decryptName(node, parentKey, nameVerificationKeys);
-
-        let membership;
-        if (node.membership) {
-            membership = await this.decryptMembership(node);
-        }
+        // Start promises early, but await them only when required to do
+        // as much work as possible in parallel.
+        const [membershipPromise, namePromise, keyPromise] = [
+            node.membership ? this.decryptMembership(node) : undefined,
+            this.decryptName(node, parentKey, nameVerificationKeys),
+            this.decryptKey(node, parentKey, keyVerificationKeys),
+        ];
 
         let passphrase, key, passphraseSessionKey, keyAuthor;
         try {
-            const keyResult = await this.decryptKey(node, parentKey, keyVerificationKeys);
+            const keyResult = await keyPromise;
             passphrase = keyResult.passphrase;
             key = keyResult.key;
             passphraseSessionKey = keyResult.passphraseSessionKey;
@@ -107,6 +110,8 @@ export class NodesCryptoService {
             void this.reportDecryptionError(node, 'nodeKey', error);
             const message = getErrorMessage(error);
             const errorMessage = c('Error').t`Failed to decrypt node key: ${message}`;
+            const { name, author: nameAuthor } = await namePromise;
+            const membership = await membershipPromise;
             return {
                 node: {
                     ...commonNodeMetadata,
@@ -134,8 +139,23 @@ export class NodesCryptoService {
         let folder;
         let folderExtendedAttributesAuthor;
         if ('folder' in node.encryptedCrypto) {
+            const folderExtendedAttributesVerificationKeys = node.encryptedCrypto.signatureEmail
+                ? signatureEmailKeys
+                : [key];
+
+            const [hashKeyPromise, folderExtendedAttributesPromise] = [
+                this.decryptHashKey(node, key, signatureEmailKeys),
+                this.decryptExtendedAttributes(
+                    node,
+                    node.encryptedCrypto.folder.armoredExtendedAttributes,
+                    key,
+                    folderExtendedAttributesVerificationKeys,
+                    node.encryptedCrypto.signatureEmail,
+                ),
+            ];
+
             try {
-                const hashKeyResult = await this.decryptHashKey(node, key, signatureEmailKeys);
+                const hashKeyResult = await hashKeyPromise;
                 hashKey = hashKeyResult.hashKey;
                 hashKeyAuthor = hashKeyResult.author;
             } catch (error: unknown) {
@@ -144,16 +164,7 @@ export class NodesCryptoService {
             }
 
             try {
-                const folderExtendedAttributesVerificationKeys = node.encryptedCrypto.signatureEmail
-                    ? signatureEmailKeys
-                    : [key];
-                const extendedAttributesResult = await this.decryptExtendedAttributes(
-                    node,
-                    node.encryptedCrypto.folder.armoredExtendedAttributes,
-                    key,
-                    folderExtendedAttributesVerificationKeys,
-                    node.encryptedCrypto.signatureEmail,
-                );
+                const extendedAttributesResult = await folderExtendedAttributesPromise;
                 folder = {
                     extendedAttributes: extendedAttributesResult.extendedAttributes,
                 };
@@ -168,10 +179,20 @@ export class NodesCryptoService {
         let contentKeyPacketSessionKey;
         let contentKeyPacketAuthor;
         if ('file' in node.encryptedCrypto) {
+            const [activeRevisionPromise, contentKeyPacketSessionKeyPromise] = [
+                this.decryptRevision(node.uid, node.encryptedCrypto.activeRevision, key),
+                this.driveCrypto.decryptAndVerifySessionKey(
+                    node.encryptedCrypto.file.base64ContentKeyPacket,
+                    node.encryptedCrypto.file.armoredContentKeyPacketSignature,
+                    key,
+                    // Content key packet is signed with the node key, but
+                    // in the past some clients signed with the address key.
+                    [key, ...keyVerificationKeys],
+                ),
+            ];
+
             try {
-                activeRevision = resultOk(
-                    await this.decryptRevision(node.uid, node.encryptedCrypto.activeRevision, key),
-                );
+                activeRevision = resultOk(await activeRevisionPromise);
             } catch (error: unknown) {
                 void this.reportDecryptionError(node, 'nodeExtendedAttributes', error);
                 const message = getErrorMessage(error);
@@ -180,18 +201,10 @@ export class NodesCryptoService {
             }
 
             try {
-                const keySessionKeyResult = await this.driveCrypto.decryptAndVerifySessionKey(
-                    node.encryptedCrypto.file.base64ContentKeyPacket,
-                    node.encryptedCrypto.file.armoredContentKeyPacketSignature,
-                    key,
-                    // Content key packet is signed with the node key, but
-                    // in the past some clients signed with the address key.
-                    [key, ...keyVerificationKeys],
-                );
-
+                const keySessionKeyResult = await contentKeyPacketSessionKeyPromise;
                 contentKeyPacketSessionKey = keySessionKeyResult.sessionKey;
                 contentKeyPacketAuthor =
-                    keySessionKeyResult.verified &&
+                    keySessionKeyResult.verified !== undefined &&
                     (await this.handleClaimedAuthor(
                         node,
                         'nodeContentKey',
@@ -232,6 +245,13 @@ export class NodesCryptoService {
         if (!finalKeyAuthor) {
             finalKeyAuthor = keyAuthor;
         }
+
+        const { name, author: nameAuthor } = await namePromise;
+        const membership = await membershipPromise;
+
+        const end = Date.now();
+        const duration = end - start;
+        this.logger.debug(`Node ${node.uid} decrypted in ${duration}ms`);
 
         return {
             node: {
@@ -638,6 +658,7 @@ export class NodesCryptoService {
         if (this.reportedVerificationErrors.has(node.uid)) {
             return;
         }
+        this.reportedVerificationErrors.add(node.uid);
 
         const fromBefore2024 = node.creationTime < new Date('2024-01-01');
 
@@ -664,7 +685,6 @@ export class NodesCryptoService {
             error: verificationErrors?.map((e) => e.message).join(', '),
             uid: node.uid,
         });
-        this.reportedVerificationErrors.add(node.uid);
     }
 
     private async reportDecryptionError(node: EncryptedNode, field: MetricsDecryptionErrorField, error: unknown) {

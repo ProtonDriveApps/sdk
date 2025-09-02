@@ -24,7 +24,7 @@ const BATCH_LOADING_SIZE = 30;
 // It is a trade-off between performance and memory usage.
 // Higher number means more memory usage, but faster decryption.
 // Lower number means less memory usage, but slower decryption.
-const DECRYPTION_CONCURRENCY = 15;
+const DECRYPTION_CONCURRENCY = 30;
 
 /**
  * Provides access to node metadata.
