@@ -3,12 +3,23 @@ import { c } from 'ttag';
 import { ServerError, ValidationError } from '../../errors';
 import { ErrorCode, HTTPErrorCode } from './errorCodes';
 
-export function apiErrorFactory({ response, result }: { response: Response; result?: unknown }): ServerError {
+export function apiErrorFactory({
+    response,
+    result,
+    error,
+}: {
+    response: Response;
+    result?: unknown;
+    error?: unknown;
+}): ServerError {
     // Backend responses with 404 both in the response and body code.
     // In such a case we want to stick to APIHTTPError to be very clear
     // it is not NotFoundAPIError.
     if (response.status === HTTPErrorCode.NOT_FOUND || !result) {
-        return new APIHTTPError(response.statusText || c('Error').t`Unknown error`, response.status);
+        const fallbackMessage = error instanceof Error ? error.message : c('Error').t`Unknown error`;
+        const apiHttpError = new APIHTTPError(response.statusText || fallbackMessage, response.status);
+        apiHttpError.cause = error;
+        return apiHttpError;
     }
 
     const typedResult = result as {
@@ -40,7 +51,7 @@ export function apiErrorFactory({ response, result }: { response: Response; resu
 
     switch (code) {
         case ErrorCode.NOT_EXISTS:
-            return new NotFoundAPIError(message, code);
+            return new NotFoundAPIError(message, code, details);
         // ValidationError should be only when it is clearly user input error,
         // otherwise it should be ServerError.
         // Here we convert only general enough codes. Specific cases that are
@@ -94,6 +105,6 @@ export class APICodeError extends ServerError {
     }
 }
 
-export class NotFoundAPIError extends APICodeError {
+export class NotFoundAPIError extends ValidationError {
     name = 'NotFoundAPIError';
 }

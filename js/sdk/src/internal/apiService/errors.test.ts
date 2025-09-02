@@ -62,7 +62,8 @@ describe('apiErrorFactory should return', () => {
     it('NotFoundAPIError when code is ErrorCode.NOT_EXISTS', () => {
         const error = apiErrorFactory(mockAPIResponseAndResult({ code: ErrorCode.NOT_EXISTS, message: 'Not found' }));
         expect(error).toBeInstanceOf(errors.NotFoundAPIError);
-        expectAPICodeError(error, ErrorCode.NOT_EXISTS, 'Not found');
+        expect(error.message).toBe('Not found');
+        expect((error as errors.NotFoundAPIError).code).toBe(ErrorCode.NOT_EXISTS);
     });
 });
 
