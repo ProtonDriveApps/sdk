@@ -239,7 +239,11 @@ export class DriveAPIService {
             throw new AbortError(c('Error').t`Request aborted`);
         }
 
-        this.logger.debug(`${request.method} ${request.url}`);
+        if (attempt > 0) {
+            this.logger.debug(`${request.method} ${request.url}: retry ${attempt}`);
+        } else {
+            this.logger.debug(`${request.method} ${request.url}`);
+        }
 
         if (this.hasReachedServerErrorLimit) {
             this.logger.warn('Server errors limit reached');
@@ -249,6 +253,8 @@ export class DriveAPIService {
             this.logger.warn('Too many requests limit reached');
             throw new RateLimitedError(c('Error').t`Too many server requests, please try again later`);
         }
+
+        const start = Date.now();
 
         let response;
         try {
@@ -276,10 +282,13 @@ export class DriveAPIService {
             throw error;
         }
 
+        const end = Date.now();
+        const duration = end - start;
+
         if (response.ok) {
-            this.logger.info(`${request.method} ${request.url}: ${response.status}`);
+            this.logger.info(`${request.method} ${request.url}: ${response.status} (${duration}ms)`);
         } else {
-            this.logger.warn(`${request.method} ${request.url}: ${response.status}`);
+            this.logger.warn(`${request.method} ${request.url}: ${response.status} (${duration}ms)`);
         }
 
         if (response.status === HTTPErrorCode.TOO_MANY_REQUESTS) {
