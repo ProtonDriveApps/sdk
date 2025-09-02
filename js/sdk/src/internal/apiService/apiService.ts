@@ -165,7 +165,7 @@ export class DriveAPIService {
             if (error instanceof ProtonDriveError) {
                 throw error;
             }
-            throw apiErrorFactory({ response });
+            throw apiErrorFactory({ response, error });
         }
     }
 
