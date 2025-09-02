@@ -9,6 +9,10 @@ import { SharingCache } from './cache';
 import { SharingCryptoService } from './cryptoService';
 import { SharesService, NodesService } from './interface';
 
+// This is the number of nodes that are loaded in parallel.
+// It is a trade-off between initial wait time and overhead of API calls.
+export const BATCH_LOADING_SIZE = 30;
+
 /**
  * Provides high-level actions for access shared nodes.
  *
@@ -66,6 +70,7 @@ export class SharingAccess {
     ): AsyncGenerator<DecryptedNode> {
         const batchLoading = new BatchLoading<string, DecryptedNode>({
             iterateItems: (nodeUids) => this.iterateNodesAndIgnoreMissingOnes(nodeUids, signal),
+            batchSize: BATCH_LOADING_SIZE,
         });
         for (const nodeUid of nodeUids) {
             yield* batchLoading.load(nodeUid);
@@ -81,6 +86,7 @@ export class SharingAccess {
         const loadedNodeUids = [];
         const batchLoading = new BatchLoading<string, DecryptedNode>({
             iterateItems: (nodeUids) => this.iterateNodesAndIgnoreMissingOnes(nodeUids, signal),
+            batchSize: BATCH_LOADING_SIZE,
         });
         for await (const nodeUid of nodeUidsIterator) {
             loadedNodeUids.push(nodeUid);

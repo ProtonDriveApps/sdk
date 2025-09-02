@@ -3,7 +3,7 @@ import { SharingAPIService } from './apiService';
 import { SharingCache } from './cache';
 import { SharingCryptoService } from './cryptoService';
 import { SharesService, NodesService } from './interface';
-import { SharingAccess } from './sharingAccess';
+import { SharingAccess, BATCH_LOADING_SIZE } from './sharingAccess';
 
 describe('SharingAccess', () => {
     let apiService: SharingAPIService;
@@ -14,7 +14,7 @@ describe('SharingAccess', () => {
 
     let sharingAccess: SharingAccess;
 
-    const nodeUids = Array.from({ length: 15 }, (_, i) => `nodeUid${i}`);
+    const nodeUids = Array.from({ length: BATCH_LOADING_SIZE + 5 }, (_, i) => `nodeUid${i}`);
     const nodes = nodeUids.map((nodeUid) => ({ nodeUid }));
     const nodeUidsIterator = async function* () {
         for (const nodeUid of nodeUids) {
@@ -84,7 +84,7 @@ describe('SharingAccess', () => {
 
             expect(result).toEqual(nodes);
             expect(apiService.iterateSharedNodeUids).toHaveBeenCalledWith('volumeId', undefined);
-            expect(nodesService.iterateNodes).toHaveBeenCalledTimes(2); // 15 / 10 per batch
+            expect(nodesService.iterateNodes).toHaveBeenCalledTimes(2); // Mocked is a bit more over one batch
             expect(cache.setSharedByMeNodeUids).toHaveBeenCalledWith(nodeUids);
         });
     });
@@ -107,7 +107,7 @@ describe('SharingAccess', () => {
 
             expect(result).toEqual(nodes);
             expect(apiService.iterateSharedWithMeNodeUids).toHaveBeenCalledWith(undefined);
-            expect(nodesService.iterateNodes).toHaveBeenCalledTimes(2); // 15 / 10 per batch
+            expect(nodesService.iterateNodes).toHaveBeenCalledTimes(2); // Mocked is a bit more over one batch
             expect(cache.setSharedWithMeNodeUids).toHaveBeenCalledWith(nodeUids);
         });
     });
