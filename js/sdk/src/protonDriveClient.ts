@@ -343,7 +343,7 @@ export class ProtonDriveClient {
         newParentNodeUid: NodeOrUid,
         signal?: AbortSignal,
     ): AsyncGenerator<NodeResult> {
-        this.logger.info(`Moving ${nodeUids.length} nodes to ${newParentNodeUid}`);
+        this.logger.info(`Moving ${nodeUids.length} nodes to ${getUid(newParentNodeUid)}`);
         yield* this.nodes.management.moveNodes(getUids(nodeUids), getUid(newParentNodeUid), signal);
     }
 
