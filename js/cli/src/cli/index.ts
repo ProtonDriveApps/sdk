@@ -33,6 +33,7 @@ import { Command } from './interface';
 import { CommandBookmarkRemove } from './commandBookmarkRemove';
 import { CommandBookmarkList } from './commandBookmarkList';
 import { CommandEventsPath } from './commandEventsPath';
+import { CommandPublicList } from './commandPublicList';
 
 const COMMANDS = [
     new CommandAuthLogin(),
@@ -67,6 +68,7 @@ const COMMANDS = [
     new CommandDeviceCreate(),
     new CommandDeviceRename(),
     new CommandDeviceDelete(),
+    new CommandPublicList(),
     new CommandDiagnosticTree(),
 ].map((command: Command) => {
     command.options = command.options || {};

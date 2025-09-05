@@ -33,7 +33,7 @@ export function initSharesModule(
 ) {
     const api = new SharesAPIService(apiService);
     const cache = new SharesCache(telemetry.getLogger('shares-cache'), driveEntitiesCache);
-    const cryptoCache = new SharesCryptoCache(driveCryptoCache);
+    const cryptoCache = new SharesCryptoCache(telemetry.getLogger('shares-cache'), driveCryptoCache);
     const cryptoService = new SharesCryptoService(telemetry, crypto, account);
     const sharesManager = new SharesManager(
         telemetry.getLogger('shares'),

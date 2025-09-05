@@ -7,7 +7,7 @@ import { VolumeEventManager } from './volumeEventManager';
 import { EventManager } from './eventManager';
 import { SharesManager } from '../shares/manager';
 
-export type { DriveEvent, DriveListener } from './interface';
+export type { DriveEvent, DriveListener, EventSubscription } from './interface';
 export { DriveEventType } from './interface';
 
 const OWN_VOLUME_POLLING_INTERVAL = 30;

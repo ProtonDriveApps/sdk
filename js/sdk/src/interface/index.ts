@@ -89,10 +89,22 @@ export type ProtonDriveTelemetry = Telemetry<MetricEvent>;
 export type ProtonDriveEntitiesCache = ProtonDriveCache<string>;
 export type ProtonDriveCryptoCache = ProtonDriveCache<CachedCryptoMaterial>;
 export type CachedCryptoMaterial = {
-    passphrase?: string;
-    key: PrivateKey;
-    passphraseSessionKey: SessionKey;
-    hashKey?: Uint8Array;
+    nodeKeys?: {
+        // Passphrase should not be needed to keep, sessionKey should be enough.
+        // We will improve this in the future.
+        passphrase: string;
+        key: PrivateKey;
+        passphraseSessionKey: SessionKey;
+        contentKeyPacketSessionKey?: SessionKey;
+        hashKey?: Uint8Array;
+    };
+    shareKey?: {
+        key: PrivateKey;
+        passphraseSessionKey: SessionKey;
+    };
+    publicShareKey?: {
+        key: PrivateKey;
+    };
 };
 
 export interface ProtonDriveClientContructorParameters {
