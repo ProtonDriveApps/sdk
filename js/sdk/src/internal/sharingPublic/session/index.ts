@@ -1,0 +1,1 @@
+export { SharingPublicSessionManager } from './manager';

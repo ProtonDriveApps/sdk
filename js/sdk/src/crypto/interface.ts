@@ -52,6 +52,17 @@ export enum VERIFICATION_STATUS {
 }
 
 export interface SRPModule {
+    getSrp: (
+        version: number,
+        modulus: string,
+        serverEphemeral: string,
+        salt: string,
+        password: string,
+    ) => Promise<{
+        expectedServerProof: string;
+        clientProof: string;
+        clientEphemeral: string;
+    }>;
     getSrpVerifier: (password: string) => Promise<SRPVerifier>;
     computeKeyPassword: (password: string, salt: string) => Promise<string>;
 }

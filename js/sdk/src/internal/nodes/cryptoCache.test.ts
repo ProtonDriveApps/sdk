@@ -18,10 +18,7 @@ describe('nodesCryptoCache', () => {
 
     beforeEach(async () => {
         memoryCache = new MemoryCache();
-        await memoryCache.setEntity('nodeKeys-missingPassphrase', {
-            key: 'privateKey',
-            sessionKey: 'sessionKey',
-        } as any);
+        await memoryCache.setEntity('nodeKeys-missingProperties', {} as any);
 
         cache = new NodesCryptoCache(getMockLogger(), memoryCache);
     });
@@ -96,14 +93,14 @@ describe('nodesCryptoCache', () => {
 
     it('should throw an error when retrieving a bad keys and remove the key', async () => {
         try {
-            await cache.getNodeKeys('missingPassphrase');
+            await cache.getNodeKeys('missingProperties');
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(`${error}`).toBe('Error: Failed to deserialize node keys: missing passphrase');
+            expect(`${error}`).toBe('Error: Failed to deserialize node keys');
         }
 
         try {
-            await memoryCache.getEntity('nodeKeys-missingPassphrase');
+            await memoryCache.getEntity('nodeKeys-missingProperties');
             throw new Error('Should have thrown an error');
         } catch (error) {
             expect(`${error}`).toBe('Error: Entity not found');

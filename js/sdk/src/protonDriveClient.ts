@@ -1,3 +1,5 @@
+import { getConfig } from './config';
+import { DriveCrypto, SessionKey } from './crypto';
 import {
     Logger,
     ProtonDriveClientContructorParameters,
@@ -26,16 +28,6 @@ import {
     ThumbnailResult,
     SDKEvent,
 } from './interface';
-import { DriveCrypto, SessionKey } from './crypto';
-import { DriveAPIService } from './internal/apiService';
-import { initSharesModule } from './internal/shares';
-import { initNodesModule } from './internal/nodes';
-import { initSharingModule } from './internal/sharing';
-import { initDownloadModule } from './internal/download';
-import { initUploadModule } from './internal/upload';
-import { DriveEventsService, DriveListener } from './internal/events';
-import { SDKEvents } from './internal/sdkEvents';
-import { getConfig } from './config';
 import {
     getUid,
     getUids,
@@ -45,9 +37,18 @@ import {
     convertInternalNode,
 } from './transformers';
 import { Telemetry } from './telemetry';
+import { DriveAPIService } from './internal/apiService';
 import { initDevicesModule } from './internal/devices';
+import { initDownloadModule } from './internal/download';
+import { DriveEventsService, DriveListener, EventSubscription } from './internal/events';
+import { initNodesModule } from './internal/nodes';
+import { SDKEvents } from './internal/sdkEvents';
+import { initSharesModule } from './internal/shares';
+import { initSharingModule } from './internal/sharing';
+import { SharingPublicSessionManager } from './internal/sharingPublic';
+import { initUploadModule } from './internal/upload';
 import { makeNodeUid } from './internal/uids';
-import { EventSubscription } from './internal/events/interface';
+import { ProtonDrivePublicLinkClient } from './protonDrivePublicLinkClient';
 
 /**
  * ProtonDriveClient is the main interface for the ProtonDrive SDK.
@@ -66,6 +67,7 @@ export class ProtonDriveClient {
     private download: ReturnType<typeof initDownloadModule>;
     private upload: ReturnType<typeof initUploadModule>;
     private devices: ReturnType<typeof initDevicesModule>;
+    private sessionManager: SharingPublicSessionManager;
 
     public experimental: {
         /**
@@ -82,6 +84,20 @@ export class ProtonDriveClient {
          * This is used by Docs app to encrypt and decrypt document updates.
          */
         getDocsKey: (nodeUid: NodeOrUid) => Promise<SessionKey>;
+        /**
+         * Experimental feature to get the info for a public link
+         * required to authenticate the public link.
+         */
+        getPublicLinkInfo: (url: string) => Promise<{
+            isCustomPasswordProtected: boolean;
+            isLegacy: boolean;
+            vendorType: number;
+        }>;
+        /**
+         * Experimental feature to authenticate a public link and
+         * return the client for the public link to access it.
+         */
+        authPublicLink: (url: string, customPassword?: string) => Promise<ProtonDrivePublicLinkClient>;
     };
 
     constructor({
@@ -167,6 +183,8 @@ export class ProtonDriveClient {
             latestEventIdProvider,
         );
 
+        this.sessionManager = new SharingPublicSessionManager(httpClient, apiService, srpModule);
+
         this.experimental = {
             getNodeUrl: async (nodeUid: NodeOrUid) => {
                 this.logger.debug(`Getting node URL for ${getUid(nodeUid)}`);
@@ -179,6 +197,24 @@ export class ProtonDriveClient {
                     throw new Error('Node does not have a content key packet session key');
                 }
                 return keys.contentKeyPacketSessionKey;
+            },
+            getPublicLinkInfo: async (url: string) => {
+                this.logger.info(`Getting info for public link ${url}`);
+                return this.sessionManager.getInfo(url);
+            },
+            authPublicLink: async (url: string, customPassword?: string) => {
+                this.logger.info(`Authenticating public link ${url}`);
+                const { httpClient, token, password } = await this.sessionManager.auth(url, customPassword);
+                return new ProtonDrivePublicLinkClient({
+                    httpClient,
+                    cryptoCache,
+                    openPGPCryptoModule,
+                    srpModule,
+                    config,
+                    telemetry,
+                    token,
+                    password,
+                });
             },
         };
     }

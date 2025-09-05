@@ -18,6 +18,8 @@ import {
 interface BaseNode {
     // Internal metadata
     hash?: string; // root node doesn't have any hash
+    // ecnryptedName should not be needed to keep, nameSessionKey should be enough.
+    // We will improve this in the future.
     encryptedName: string;
 
     // Basic node metadata

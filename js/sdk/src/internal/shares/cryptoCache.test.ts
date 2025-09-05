@@ -1,6 +1,7 @@
 import { PrivateKey, SessionKey } from '../../crypto';
 import { MemoryCache } from '../../cache';
 import { CachedCryptoMaterial } from '../../interface';
+import { getMockLogger } from '../../tests/logger';
 import { SharesCryptoCache } from './cryptoCache';
 
 describe('sharesCryptoCache', () => {
@@ -17,7 +18,7 @@ describe('sharesCryptoCache', () => {
 
     beforeEach(() => {
         memoryCache = new MemoryCache();
-        cache = new SharesCryptoCache(memoryCache);
+        cache = new SharesCryptoCache(getMockLogger(), memoryCache);
     });
 
     it('should store and retrieve keys', async () => {
@@ -53,7 +54,7 @@ describe('sharesCryptoCache', () => {
         const keys = { key: generatePrivateKey('privateKey'), passphraseSessionKey: generateSessionKey('sessionKey') };
 
         await cache.setShareKey(shareId, keys);
-        await cache.removeShareKey([shareId]);
+        await cache.removeShareKeys([shareId]);
 
         try {
             await cache.getShareKey(shareId);

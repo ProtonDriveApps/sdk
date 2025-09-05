@@ -18,12 +18,14 @@ export class NodesCryptoCache {
 
     async setNodeKeys(nodeUid: string, keys: DecryptedNodeKeys): Promise<void> {
         const cacheUid = getCacheKey(nodeUid);
-        await this.driveCache.setEntity(cacheUid, keys);
+        await this.driveCache.setEntity(cacheUid, {
+            nodeKeys: keys,
+        });
     }
 
     async getNodeKeys(nodeUid: string): Promise<DecryptedNodeKeys> {
         const nodeKeysData = await this.driveCache.getEntity(getCacheKey(nodeUid));
-        if (!nodeKeysData.passphrase) {
+        if (!nodeKeysData.nodeKeys) {
             try {
                 await this.removeNodeKeys([nodeUid]);
             } catch (removingError: unknown) {
@@ -33,12 +35,9 @@ export class NodesCryptoCache {
                     `Failed to remove corrupted node keys from the cache: ${removingError instanceof Error ? removingError.message : removingError}`,
                 );
             }
-            throw new Error(`Failed to deserialize node keys: missing passphrase`);
+            throw new Error(`Failed to deserialize node keys`);
         }
-        return {
-            ...nodeKeysData,
-            passphrase: nodeKeysData.passphrase,
-        };
+        return nodeKeysData.nodeKeys;
     }
 
     async removeNodeKeys(nodeUids: string[]): Promise<void> {
