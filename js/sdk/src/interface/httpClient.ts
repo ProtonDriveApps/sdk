@@ -1,18 +1,18 @@
 export interface ProtonDriveHTTPClient {
-    fetchJson(options: ProtonDriveHTTPClientJsonOptions): Promise<Response>;
-    fetchBlob(options: ProtonDriveHTTPClientBlobOptions): Promise<Response>;
+    fetchJson(request: ProtonDriveHTTPClientJsonRequest): Promise<Response>;
+    fetchBlob(request: ProtonDriveHTTPClientBlobRequest): Promise<Response>;
 }
 
-export type ProtonDriveHTTPClientJsonOptions = ProtonDriveHTTPClientBaseOptions & {
+export type ProtonDriveHTTPClientJsonRequest = ProtonDriveHTTPClientBaseRequest & {
     json?: object;
 };
 
-export type ProtonDriveHTTPClientBlobOptions = ProtonDriveHTTPClientBaseOptions & {
+export type ProtonDriveHTTPClientBlobRequest = ProtonDriveHTTPClientBaseRequest & {
     body?: XMLHttpRequestBodyInit;
     onProgress?: (progress: number) => void;
 };
 
-type ProtonDriveHTTPClientBaseOptions = {
+type ProtonDriveHTTPClientBaseRequest = {
     url: string;
     method: string;
     headers: Headers;

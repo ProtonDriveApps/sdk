@@ -1,7 +1,7 @@
 import {
     ProtonDriveHTTPClient,
-    ProtonDriveHTTPClientBlobOptions,
-    ProtonDriveHTTPClientJsonOptions,
+    ProtonDriveHTTPClientBlobRequest,
+    ProtonDriveHTTPClientJsonRequest,
 } from '../interface';
 import { EventsGenerator } from './eventsGenerator';
 
@@ -19,7 +19,7 @@ export class DiagnosticHTTPClient extends EventsGenerator implements ProtonDrive
         this.httpClient = httpClient;
     }
 
-    async fetchJson(options: ProtonDriveHTTPClientJsonOptions): Promise<Response> {
+    async fetchJson(options: ProtonDriveHTTPClientJsonRequest): Promise<Response> {
         try {
             const response = await this.httpClient.fetchJson(options);
 
@@ -78,7 +78,7 @@ export class DiagnosticHTTPClient extends EventsGenerator implements ProtonDrive
         }
     }
 
-    fetchBlob(options: ProtonDriveHTTPClientBlobOptions): Promise<Response> {
+    fetchBlob(options: ProtonDriveHTTPClientBlobRequest): Promise<Response> {
         return this.httpClient.fetchBlob(options);
     }
 }
