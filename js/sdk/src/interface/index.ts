@@ -27,8 +27,8 @@ export type {
 export { DriveEventType, SDKEvent } from './events';
 export type {
     ProtonDriveHTTPClient,
-    ProtonDriveHTTPClientJsonOptions,
-    ProtonDriveHTTPClientBlobOptions,
+    ProtonDriveHTTPClientJsonRequest,
+    ProtonDriveHTTPClientBlobRequest,
 } from './httpClient';
 export type {
     MaybeNode,
