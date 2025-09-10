@@ -20,6 +20,7 @@ import { getErrorMessage } from '../errors';
 import { SharingAPIService } from './apiService';
 import { PUBLIC_LINK_GENERATED_PASSWORD_LENGTH, SharingCryptoService } from './cryptoService';
 import { SharesService, NodesService, ShareResultWithCreatorEmail, PublicLinkWithCreatorEmail } from './interface';
+import { SharingCache } from './cache';
 
 interface InternalShareResult extends ShareResultWithCreatorEmail {
     share: Share;
@@ -54,6 +55,7 @@ export class SharingManagement {
     constructor(
         private logger: Logger,
         private apiService: SharingAPIService,
+        private cache: SharingCache,
         private cryptoService: SharingCryptoService,
         private account: ProtonDriveAccount,
         private sharesService: SharesService,
@@ -61,6 +63,7 @@ export class SharingManagement {
     ) {
         this.logger = logger;
         this.apiService = apiService;
+        this.cache = cache;
         this.cryptoService = cryptoService;
         this.account = account;
         this.sharesService = sharesService;
@@ -409,6 +412,9 @@ export class SharingManagement {
             base64NameKeyPacket: keys.base64NameKeyPacket,
         });
         await this.nodesService.notifyNodeChanged(nodeUid);
+        if (await this.cache.hasSharedByMeNodeUidsLoaded()) {
+            await this.cache.addSharedByMeNodeUid(nodeUid);
+        }
 
         const share = {
             volumeId,
@@ -430,6 +436,9 @@ export class SharingManagement {
     private async deleteShare(shareId: string, nodeUid: string): Promise<void> {
         await this.apiService.deleteShare(shareId);
         await this.nodesService.notifyNodeChanged(nodeUid);
+        if (await this.cache.hasSharedByMeNodeUidsLoaded()) {
+            await this.cache.removeSharedByMeNodeUid(nodeUid);
+        }
     }
 
     private async inviteProtonUser(

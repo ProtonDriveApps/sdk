@@ -32,6 +32,7 @@ export function initSharingModule(
     const sharingManagement = new SharingManagement(
         telemetry.getLogger('sharing'),
         api,
+        cache,
         cryptoService,
         account,
         sharesService,
