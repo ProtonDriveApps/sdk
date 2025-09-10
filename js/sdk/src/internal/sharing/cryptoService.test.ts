@@ -9,7 +9,7 @@ import {
 } from '../../interface';
 import { getMockTelemetry } from '../../tests/telemetry';
 import { SharesService } from './interface';
-import { SharingCryptoService } from './cryptoService';
+import { PUBLIC_LINK_GENERATED_PASSWORD_LENGTH, SharingCryptoService } from './cryptoService';
 
 describe('SharingCryptoService', () => {
     let telemetry: ProtonDriveTelemetry;
@@ -79,6 +79,27 @@ describe('SharingCryptoService', () => {
             expect(driveCrypto.decryptShareUrlPassword).toHaveBeenCalledWith('encryptedUrlPassword', ['addressKey']);
             expect(driveCrypto.decryptKeyWithSrpPassword).toHaveBeenCalledWith(
                 'urlPassword',
+                'base64SharePasswordSalt',
+                'armoredKey',
+                'armoredPassphrase',
+            );
+            expect(driveCrypto.decryptNodeName).toHaveBeenCalledWith('encryptedName', 'decryptedKey', []);
+            expect(telemetry.recordMetric).not.toHaveBeenCalled();
+        });
+
+        it('should decrypt bookmark with custom password', async () => {
+            // First 12 characters are the generated password. Anything beyond is the custom password.
+            driveCrypto.decryptShareUrlPassword = jest.fn().mockResolvedValue('urlPassword1WithCustomPassword');
+
+            const result = await cryptoService.decryptBookmark(encryptedBookmark);
+
+            expect(result).toMatchObject({
+                url: resultOk('https://drive.proton.me/urls/tokenId#urlPassword1'),
+                nodeName: resultOk('nodeName'),
+            });
+            expect(driveCrypto.decryptShareUrlPassword).toHaveBeenCalledWith('encryptedUrlPassword', ['addressKey']);
+            expect(driveCrypto.decryptKeyWithSrpPassword).toHaveBeenCalledWith(
+                'urlPassword1WithCustomPassword',
                 'base64SharePasswordSalt',
                 'armoredKey',
                 'armoredPassphrase',
