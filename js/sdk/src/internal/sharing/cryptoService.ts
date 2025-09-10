@@ -37,6 +37,7 @@ import {
     EncryptedBookmark,
     SharesService,
 } from './interface';
+import { DecryptionError } from '../../errors';
 
 // Version 2 of bcrypt with 2**10 rounds.
 // https://en.wikipedia.org/wiki/Bcrypt#Description
@@ -425,10 +426,11 @@ export class SharingCryptoService {
         // TODO: Signatures are not checked and not specified in the interface.
         // In the future, we will need to add authorship verification.
 
+        let password: string;
         let urlPassword: string;
         let customPassword: Result<string | undefined, Error>;
         try {
-            const password = await this.decryptBookmarkUrlPassword(encryptedBookmark);
+            password = await this.decryptBookmarkUrlPassword(encryptedBookmark);
             const result = splitGeneratedAndCustomPassword(password);
             urlPassword = result.password;
             customPassword = resultOk(result.customPassword);
@@ -446,7 +448,7 @@ export class SharingCryptoService {
 
         let shareKey: PrivateKey;
         try {
-            shareKey = await this.decryptBookmarkKey(encryptedBookmark, urlPassword);
+            shareKey = await this.decryptBookmarkKey(encryptedBookmark, password);
         } catch (originalError: unknown) {
             const error = originalError instanceof Error ? originalError : new Error(c('Error').t`Unknown error`);
             return {
@@ -493,15 +495,15 @@ export class SharingCryptoService {
 
             const message = getErrorMessage(error);
             const errorMessage = c('Error').t`Failed to decrypt bookmark password: ${message}`;
-            throw new Error(errorMessage);
+            throw new DecryptionError(errorMessage, { cause: error });
         }
     }
 
-    private async decryptBookmarkKey(encryptedBookmark: EncryptedBookmark, urlPassword: string): Promise<PrivateKey> {
+    private async decryptBookmarkKey(encryptedBookmark: EncryptedBookmark, password: string): Promise<PrivateKey> {
         try {
             // Use the password to decrypt the share key.
             const { key: shareKey } = await this.driveCrypto.decryptKeyWithSrpPassword(
-                urlPassword,
+                password,
                 encryptedBookmark.url.base64SharePasswordSalt,
                 encryptedBookmark.share.armoredKey,
                 encryptedBookmark.share.armoredPassphrase,
@@ -519,7 +521,7 @@ export class SharingCryptoService {
 
             const message = getErrorMessage(error);
             const errorMessage = c('Error').t`Failed to decrypt bookmark key: ${message}`;
-            throw new Error(errorMessage);
+            throw new DecryptionError(errorMessage, { cause: error });
         }
     }
 
