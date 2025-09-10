@@ -1,5 +1,9 @@
-import { ProtonDriveHTTPClient, ProtonDriveHTTPClientBlobOptions, ProtonDriveHTTPClientJsonOptions } from "../../../interface";
-import { HTTPErrorCode } from "../../apiService";
+import {
+    ProtonDriveHTTPClient,
+    ProtonDriveHTTPClientBlobRequest,
+    ProtonDriveHTTPClientJsonRequest,
+} from '../../../interface';
+import { HTTPErrorCode } from '../../apiService';
 import { SharingPublicLinkSession } from './session';
 
 /**
@@ -17,7 +21,7 @@ export class SharingPublicSessionHttpClient implements ProtonDriveHTTPClient {
         this.session = session;
     }
 
-    async fetchJson(options: ProtonDriveHTTPClientJsonOptions) {
+    async fetchJson(options: ProtonDriveHTTPClientJsonRequest) {
         const response = await this.httpClient.fetchJson(this.getOptionsWithSessionHeaders(options));
 
         if (response.status === HTTPErrorCode.UNAUTHORIZED) {
@@ -28,11 +32,11 @@ export class SharingPublicSessionHttpClient implements ProtonDriveHTTPClient {
         return response;
     }
 
-    async fetchBlob(options: ProtonDriveHTTPClientBlobOptions) {
+    async fetchBlob(options: ProtonDriveHTTPClientBlobRequest) {
         return this.httpClient.fetchBlob(this.getOptionsWithSessionHeaders(options));
     }
 
-    private getOptionsWithSessionHeaders(options: ProtonDriveHTTPClientJsonOptions) {
+    private getOptionsWithSessionHeaders(options: ProtonDriveHTTPClientJsonRequest) {
         // Set headers if the session is newly created.
         // This is needed only if the user is not logged in.
         if (this.session.session.accessToken) {
