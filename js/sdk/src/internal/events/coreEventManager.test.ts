@@ -46,29 +46,6 @@ describe('CoreEventManager', () => {
         const eventId = 'event1';
         const latestEventId = 'event2';
 
-        it('should yield ShareWithMeUpdated event when refresh is true', async () => {
-            const mockEvents: DriveEventsListWithStatus = {
-                latestEventId,
-                more: false,
-                refresh: true,
-                events: [],
-            };
-            mockApiService.getCoreEvents.mockResolvedValue(mockEvents);
-
-            const events = [];
-            for await (const event of coreEventManager.getEvents(eventId)) {
-                events.push(event);
-            }
-
-            expect(events).toHaveLength(1);
-            expect(events[0]).toEqual({
-                type: DriveEventType.SharedWithMeUpdated,
-                treeEventScopeId: 'core',
-                eventId: latestEventId,
-            });
-            expect(mockApiService.getCoreEvents).toHaveBeenCalledWith(eventId);
-        });
-
         it('should yield all events when there are actual events', async () => {
             const mockEvent1: DriveEvent = {
                 type: DriveEventType.SharedWithMeUpdated,
@@ -88,14 +65,31 @@ describe('CoreEventManager', () => {
             };
             mockApiService.getCoreEvents.mockResolvedValue(mockEvents);
 
-            const events = [];
-            for await (const event of coreEventManager.getEvents(eventId)) {
-                events.push(event);
-            }
+            const events = await Array.fromAsync(coreEventManager.getEvents(eventId));
 
             expect(events).toHaveLength(2);
             expect(events[0]).toEqual(mockEvent1);
             expect(events[1]).toEqual(mockEvent2);
+        });
+
+        it('should yield FastForward event there are no events but lastEventId changed', async () => {
+            const mockEvents: DriveEventsListWithStatus = {
+                latestEventId,
+                more: false,
+                refresh: false,
+                events: [],
+            };
+            mockApiService.getCoreEvents.mockResolvedValue(mockEvents);
+
+            const events = await Array.fromAsync(coreEventManager.getEvents(eventId));
+
+            expect(events).toHaveLength(1);
+            expect(events[0]).toEqual({
+                type: DriveEventType.FastForward,
+                treeEventScopeId: 'core',
+                eventId: latestEventId,
+            });
+            expect(mockApiService.getCoreEvents).toHaveBeenCalledWith(eventId);
         });
     });
 });
