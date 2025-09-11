@@ -189,8 +189,10 @@ describe('StreamUploader', () => {
 
         const verifyOnProgress = async (uploadedBytes: number[]) => {
             expect(onProgress).toHaveBeenCalledTimes(uploadedBytes.length);
+            let fileProgress = 0;
             for (let i = 0; i < uploadedBytes.length; i++) {
-                expect(onProgress).toHaveBeenNthCalledWith(i + 1, uploadedBytes[i]);
+                fileProgress += uploadedBytes[i];
+                expect(onProgress).toHaveBeenNthCalledWith(i + 1, fileProgress);
             }
         };
 
