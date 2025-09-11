@@ -375,7 +375,7 @@ export class NodesAccess {
                     // Change the error message to be more specific.
                     // Original error message is referring to node, while here
                     // it referes to as parent to follow the method context.
-                    throw new DecryptionError(c('Error').t`Parent cannot be decrypted`);
+                    throw new DecryptionError(c('Error').t`Parent cannot be decrypted`, { cause: error });
                 }
                 throw error;
             }

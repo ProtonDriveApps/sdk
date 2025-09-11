@@ -53,7 +53,9 @@ export class NodesCache {
             return deserialiseNode(nodeData);
         } catch (error: unknown) {
             await this.removeCorruptedNode({ nodeUid }, error);
-            throw new Error(`Failed to deserialise node: ${error instanceof Error ? error.message : error}`);
+            throw new Error(`Failed to deserialise node: ${error instanceof Error ? error.message : error}`, {
+                cause: error,
+            });
         }
     }
 

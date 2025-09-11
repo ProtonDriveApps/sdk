@@ -134,7 +134,7 @@ export class FileDownloader {
             const blockData = await this.downloadBlockData(blockMetadata, true, cryptoKeys);
             return blockData.slice(blockOffset);
         } catch (error: unknown) {
-            return error instanceof Error ? error : new Error(`Unknown error: ${error}`);
+            return error instanceof Error ? error : new Error(`Unknown error: ${error}`, { cause: error });
         }
     }
 
