@@ -57,7 +57,7 @@ export class EventsAPIService {
         return {
             latestEventId: result.EventID,
             more: result.More === 1,
-            refresh: result.Refresh === 1,
+            refresh,
             events,
         };
     }

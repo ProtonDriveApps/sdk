@@ -32,7 +32,7 @@ export class CoreEventManager implements EventManagerInterface<DriveEvent> {
         const events = await this.apiService.getCoreEvents(eventId);
         if (events.events.length === 0 && events.latestEventId !== eventId) {
             yield {
-                type: DriveEventType.SharedWithMeUpdated,
+                type: DriveEventType.FastForward,
                 treeEventScopeId: 'core',
                 eventId: events.latestEventId,
             };
