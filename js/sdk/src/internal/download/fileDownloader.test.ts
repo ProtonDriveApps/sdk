@@ -123,8 +123,10 @@ describe('FileDownloader', () => {
 
         const verifyOnProgress = async (downloadedBytes: number[]) => {
             expect(onProgress).toHaveBeenCalledTimes(downloadedBytes.length);
+            let fileProgress = 0;
             for (let i = 0; i < downloadedBytes.length; i++) {
-                expect(onProgress).toHaveBeenNthCalledWith(i + 1, downloadedBytes[i]);
+                fileProgress += downloadedBytes[i];
+                expect(onProgress).toHaveBeenNthCalledWith(i + 1, fileProgress);
             }
         };
 

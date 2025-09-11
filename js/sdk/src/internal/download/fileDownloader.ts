@@ -193,7 +193,7 @@ export class FileDownloader {
                     cryptoKeys,
                     (downloadedBytes) => {
                         fileProgress += downloadedBytes;
-                        onProgress?.(downloadedBytes);
+                        onProgress?.(fileProgress);
                     },
                 );
                 this.ongoingDownloads.set(blockMetadata.index, { downloadPromise });
