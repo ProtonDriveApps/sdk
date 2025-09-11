@@ -122,7 +122,7 @@ export class StreamUploader {
             this.logger.info(`Starting upload`);
             await this.encryptAndUploadBlocks(stream, thumbnails, (uploadedBytes) => {
                 fileProgress += uploadedBytes;
-                onProgress?.(uploadedBytes);
+                onProgress?.(fileProgress);
             });
 
             this.logger.debug(`All blocks uploaded, committing`);
