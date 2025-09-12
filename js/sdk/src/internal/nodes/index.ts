@@ -10,6 +10,7 @@ import { NodeAPIService } from './apiService';
 import { NodesCache } from './cache';
 import { NodesCryptoCache } from './cryptoCache';
 import { NodesCryptoService } from './cryptoService';
+import { NodesCryptoReporter } from './cryptoReporter';
 import { SharesService } from './interface';
 import { NodesAccess } from './nodesAccess';
 import { NodesManagement } from './nodesManagement';
@@ -40,7 +41,8 @@ export function initNodesModule(
     const api = new NodeAPIService(telemetry.getLogger('nodes-api'), apiService);
     const cache = new NodesCache(telemetry.getLogger('nodes-cache'), driveEntitiesCache);
     const cryptoCache = new NodesCryptoCache(telemetry.getLogger('nodes-cache'), driveCryptoCache);
-    const cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, sharesService);
+    const cryptoReporter = new NodesCryptoReporter(telemetry, sharesService);
+    const cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, cryptoReporter);
     const nodesAccess = new NodesAccess(
         telemetry.getLogger('nodes'),
         api,

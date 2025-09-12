@@ -1,26 +1,34 @@
-import { DriveCrypto, PrivateKey } from '../../crypto';
-import { resultOk, resultError, Result } from '../../interface';
-import { getErrorMessage } from '../errors';
-import { EncryptedShareCrypto, EncryptedNode, DecryptedNode, DecryptedNodeKeys } from './interface';
+import { c } from 'ttag';
 
-/**
- * Provides crypto operations for public link data.
- *
- * The public link crypto service is responsible for decrypting and encrypting
- * public link data. It should export high-level actions only, such as "decrypt
- * share key" instead of low-level operations like "decrypt key". Low-level
- * operations should be kept private to the module.
- */
-export class SharingPublicCryptoService {
+import { DriveCrypto, PrivateKey, VERIFICATION_STATUS } from '../../crypto';
+import { getVerificationMessage } from '../errors';
+import {
+    resultOk,
+    resultError,
+    Author,
+    AnonymousUser,
+    ProtonDriveTelemetry,
+    MetricVerificationErrorField,
+    MetricVolumeType,
+    MetricsDecryptionErrorField,
+    Logger,
+    ProtonDriveAccount,
+} from '../../interface';
+import { NodesCryptoService } from '../nodes/cryptoService';
+import { EncryptedShareCrypto } from './interface';
+
+export class SharingPublicCryptoService extends NodesCryptoService {
     constructor(
-        private driveCrypto: DriveCrypto,
+        telemetry: ProtonDriveTelemetry,
+        driveCrypto: DriveCrypto,
+        account: ProtonDriveAccount,
         private password: string,
     ) {
-        this.driveCrypto = driveCrypto;
+        super(telemetry, driveCrypto, account, new SharingPublicCryptoReporter(telemetry));
         this.password = password;
     }
 
-    async decryptShareKey(encryptedShare: EncryptedShareCrypto): Promise<PrivateKey> {
+    async decryptPublicLinkShareKey(encryptedShare: EncryptedShareCrypto): Promise<PrivateKey> {
         const { key: shareKey } = await this.driveCrypto.decryptKeyWithSrpPassword(
             this.password,
             encryptedShare.base64UrlPasswordSalt,
@@ -29,134 +37,62 @@ export class SharingPublicCryptoService {
         );
         return shareKey;
     }
+}
 
-    // TODO: verfiy it has all needed
-    async decryptNode(
-        node: EncryptedNode,
-        parentKey: PrivateKey,
-    ): Promise<{ node: DecryptedNode; keys?: DecryptedNodeKeys }> {
-        const commonNodeMetadata = {
-            ...node,
-            encryptedCrypto: undefined,
-        };
+class SharingPublicCryptoReporter {
+    private logger: Logger;
+    private telemetry: ProtonDriveTelemetry;
 
-        const { name } = await this.decryptName(node, parentKey);
-
-        let passphrase, key, passphraseSessionKey;
-        try {
-            const keyResult = await this.decryptKey(node, parentKey);
-            passphrase = keyResult.passphrase;
-            key = keyResult.key;
-            passphraseSessionKey = keyResult.passphraseSessionKey;
-        } catch (error: unknown) {
-            return {
-                node: {
-                    ...commonNodeMetadata,
-                    name,
-                    errors: [error],
-                },
-            };
-        }
-
-        const errors = [];
-
-        let hashKey;
-        if ('folder' in node.encryptedCrypto) {
-            try {
-                const hashKeyResult = await this.decryptHashKey(node, key);
-                hashKey = hashKeyResult.hashKey;
-            } catch (error: unknown) {
-                errors.push(error);
-            }
-        }
-
-        let contentKeyPacketSessionKey;
-        if ('file' in node.encryptedCrypto) {
-            try {
-                const keySessionKeyResult = await this.driveCrypto.decryptAndVerifySessionKey(
-                    node.encryptedCrypto.file.base64ContentKeyPacket,
-                    '',
-                    key,
-                    [],
-                );
-
-                contentKeyPacketSessionKey = keySessionKeyResult.sessionKey;
-            } catch (error: unknown) {
-                errors.push(error);
-            }
-        }
-
-        return {
-            node: {
-                ...commonNodeMetadata,
-                name,
-                errors: errors.length ? errors : undefined,
-            },
-            keys: {
-                passphrase,
-                key,
-                passphraseSessionKey,
-                contentKeyPacketSessionKey,
-                hashKey,
-            },
-        };
+    constructor(telemetry: ProtonDriveTelemetry) {
+        this.telemetry = telemetry;
+        this.logger = telemetry.getLogger('sharingPublic-crypto');
     }
 
-    private async decryptKey(node: EncryptedNode, parentKey: PrivateKey): Promise<DecryptedNodeKeys> {
-        const key = await this.driveCrypto.decryptKey(
-            node.encryptedCrypto.armoredKey,
-            node.encryptedCrypto.armoredNodePassphrase,
-            '',
-            [parentKey],
-            [],
+    async handleClaimedAuthor(
+        node: { uid: string; creationTime: Date },
+        field: MetricVerificationErrorField,
+        signatureType: string,
+        verified: VERIFICATION_STATUS,
+        verificationErrors?: Error[],
+        claimedAuthor?: string,
+        notAvailableVerificationKeys = false,
+    ): Promise<Author> {
+        if (verified === VERIFICATION_STATUS.SIGNED_AND_VALID) {
+            return resultOk(claimedAuthor || (null as AnonymousUser));
+        }
+
+        return resultError({
+            claimedAuthor,
+            error: !claimedAuthor
+                ? c('Info').t`Author is not provided on public link`
+                : getVerificationMessage(verified, verificationErrors, signatureType, notAvailableVerificationKeys),
+        });
+    }
+
+    reportDecryptionError(
+        node: { uid: string; creationTime: Date },
+        field: MetricsDecryptionErrorField,
+        error: unknown,
+    ) {
+        const fromBefore2024 = node.creationTime < new Date('2024-01-01');
+
+        this.logger.error(
+            `Failed to decrypt public link node ${node.uid} (from before 2024: ${fromBefore2024})`,
+            error,
         );
 
-        return {
-            passphrase: key.passphrase,
-            key: key.key,
-            passphraseSessionKey: key.passphraseSessionKey,
-        };
+        this.telemetry.recordMetric({
+            eventName: 'decryptionError',
+            volumeType: MetricVolumeType.SharedPublic,
+            field,
+            fromBefore2024,
+            error,
+            uid: node.uid,
+        });
     }
 
-    private async decryptName(
-        node: EncryptedNode,
-        parentKey: PrivateKey,
-    ): Promise<{
-        name: Result<string, Error>;
-    }> {
-        try {
-            const { name } = await this.driveCrypto.decryptNodeName(node.encryptedName, parentKey, []);
-
-            return {
-                name: resultOk(name),
-            };
-        } catch (error: unknown) {
-            const errorMessage = getErrorMessage(error);
-            return {
-                name: resultError(new Error(errorMessage)),
-            };
-        }
-    }
-
-    private async decryptHashKey(
-        node: EncryptedNode,
-        nodeKey: PrivateKey,
-    ): Promise<{
-        hashKey: Uint8Array;
-    }> {
-        if (!('folder' in node.encryptedCrypto)) {
-            // This is developer error.
-            throw new Error('Node is not a folder');
-        }
-
-        const { hashKey } = await this.driveCrypto.decryptNodeHashKey(
-            node.encryptedCrypto.folder.armoredHashKey,
-            nodeKey,
-            [],
-        );
-
-        return {
-            hashKey,
-        };
+    reportVerificationError() {
+        // Authors or signatures are not provided on public links.
+        // We do not report any signature verification errors at this moment.
     }
 }

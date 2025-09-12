@@ -208,6 +208,7 @@ export class ProtonDriveClient {
                 return new ProtonDrivePublicLinkClient({
                     httpClient,
                     cryptoCache,
+                    account,
                     openPGPCryptoModule,
                     srpModule,
                     config,

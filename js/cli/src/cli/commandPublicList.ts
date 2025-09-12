@@ -28,10 +28,11 @@ export class CommandPublicList implements Command {
 
         const client = await sdk.experimental.authPublicLink(url, customPassword);
 
+        // TODO: get node by path
         const root = await client.getRootNode();
         console.log(root);
 
-        for await (const node of client.iterateChildren(root.uid)) {
+        for await (const node of client.iterateFolderChildren(root)) {
             console.log(node);
         }
     }

@@ -3,6 +3,7 @@ import { MemberRole, ProtonDriveAccount, ProtonDriveTelemetry, RevisionState } f
 import { getMockTelemetry } from '../../tests/telemetry';
 import { DecryptedNode, DecryptedNodeKeys, DecryptedUnparsedNode, EncryptedNode, SharesService } from './interface';
 import { NodesCryptoService } from './cryptoService';
+import { NodesCryptoReporter } from './cryptoReporter';
 
 describe('nodesCryptoService', () => {
     let telemetry: ProtonDriveTelemetry;
@@ -74,7 +75,8 @@ describe('nodesCryptoService', () => {
             getVolumeMetricContext: jest.fn().mockResolvedValue('own_volume'),
         };
 
-        cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, sharesService);
+        const nodesCryptoReporter = new NodesCryptoReporter(telemetry, sharesService);
+        cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, nodesCryptoReporter);
     });
 
     const parentKey = 'parentKey' as unknown as PrivateKey;

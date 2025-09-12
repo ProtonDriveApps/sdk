@@ -7,26 +7,48 @@ import {
     Result,
     Author,
     AnonymousUser,
-    ProtonDriveAccount,
     ProtonDriveTelemetry,
     Logger,
     MetricsDecryptionErrorField,
     MetricVerificationErrorField,
     Membership,
+    ProtonDriveAccount,
 } from '../../interface';
 import { ValidationError } from '../../errors';
-import { getErrorMessage, getVerificationMessage } from '../errors';
-import { splitNodeUid } from '../uids';
+import { getErrorMessage } from '../errors';
 import {
     EncryptedNode,
     EncryptedNodeFolderCrypto,
     DecryptedUnparsedNode,
     DecryptedNode,
     DecryptedNodeKeys,
-    SharesService,
     EncryptedRevision,
     DecryptedUnparsedRevision,
 } from './interface';
+
+export interface NodesCryptoReporter {
+    handleClaimedAuthor(
+        node: NodesCryptoReporterNode,
+        field: MetricVerificationErrorField,
+        signatureType: string,
+        verified: VERIFICATION_STATUS,
+        verificationErrors?: Error[],
+        claimedAuthor?: string,
+        notAvailableVerificationKeys?: boolean,
+    ): Promise<Author>;
+    reportDecryptionError(node: NodesCryptoReporterNode, field: MetricsDecryptionErrorField, error: unknown): void;
+    reportVerificationError(
+        node: NodesCryptoReporterNode,
+        field: MetricVerificationErrorField,
+        verificationErrors?: Error[],
+        claimedAuthor?: string,
+    ): void;
+}
+
+type NodesCryptoReporterNode = {
+    uid: string;
+    creationTime: Date;
+};
 
 /**
  * Provides crypto operations for nodes metadata.
@@ -41,20 +63,16 @@ import {
 export class NodesCryptoService {
     private logger: Logger;
 
-    private reportedDecryptionErrors = new Set<string>();
-    private reportedVerificationErrors = new Set<string>();
-
     constructor(
-        private telemetry: ProtonDriveTelemetry,
-        private driveCrypto: DriveCrypto,
+        telemetry: ProtonDriveTelemetry,
+        protected driveCrypto: DriveCrypto,
         private account: ProtonDriveAccount,
-        private shareService: SharesService,
+        private reporter: NodesCryptoReporter,
     ) {
-        this.telemetry = telemetry;
         this.logger = telemetry.getLogger('nodes-crypto');
         this.driveCrypto = driveCrypto;
         this.account = account;
-        this.shareService = shareService;
+        this.reporter = reporter;
     }
 
     async decryptNode(
@@ -107,7 +125,7 @@ export class NodesCryptoService {
             passphraseSessionKey = keyResult.passphraseSessionKey;
             keyAuthor = keyResult.author;
         } catch (error: unknown) {
-            void this.reportDecryptionError(node, 'nodeKey', error);
+            void this.reporter.reportDecryptionError(node, 'nodeKey', error);
             const message = getErrorMessage(error);
             const errorMessage = c('Error').t`Failed to decrypt node key: ${message}`;
             const { name, author: nameAuthor } = await namePromise;
@@ -159,7 +177,7 @@ export class NodesCryptoService {
                 hashKey = hashKeyResult.hashKey;
                 hashKeyAuthor = hashKeyResult.author;
             } catch (error: unknown) {
-                void this.reportDecryptionError(node, 'nodeHashKey', error);
+                void this.reporter.reportDecryptionError(node, 'nodeHashKey', error);
                 errors.push(error);
             }
 
@@ -170,7 +188,7 @@ export class NodesCryptoService {
                 };
                 folderExtendedAttributesAuthor = extendedAttributesResult.author;
             } catch (error: unknown) {
-                void this.reportDecryptionError(node, 'nodeExtendedAttributes', error);
+                void this.reporter.reportDecryptionError(node, 'nodeExtendedAttributes', error);
                 errors.push(error);
             }
         }
@@ -194,7 +212,7 @@ export class NodesCryptoService {
             try {
                 activeRevision = resultOk(await activeRevisionPromise);
             } catch (error: unknown) {
-                void this.reportDecryptionError(node, 'nodeExtendedAttributes', error);
+                void this.reporter.reportDecryptionError(node, 'nodeExtendedAttributes', error);
                 const message = getErrorMessage(error);
                 const errorMessage = c('Error').t`Failed to decrypt active revision: ${message}`;
                 activeRevision = resultError(new Error(errorMessage));
@@ -205,7 +223,7 @@ export class NodesCryptoService {
                 contentKeyPacketSessionKey = keySessionKeyResult.sessionKey;
                 contentKeyPacketAuthor =
                     keySessionKeyResult.verified !== undefined &&
-                    (await this.handleClaimedAuthor(
+                    (await this.reporter.handleClaimedAuthor(
                         node,
                         'nodeContentKey',
                         c('Property').t`content key`,
@@ -214,7 +232,7 @@ export class NodesCryptoService {
                         node.encryptedCrypto.signatureEmail,
                     ));
             } catch (error: unknown) {
-                void this.reportDecryptionError(node, 'nodeContentKey', error);
+                void this.reporter.reportDecryptionError(node, 'nodeContentKey', error);
                 const message = getErrorMessage(error);
                 const errorMessage = c('Error').t`Failed to decrypt content key: ${message}`;
                 contentKeyPacketAuthor = resultError({
@@ -295,7 +313,7 @@ export class NodesCryptoService {
             passphrase: key.passphrase,
             key: key.key,
             passphraseSessionKey: key.passphraseSessionKey,
-            author: await this.handleClaimedAuthor(
+            author: await this.reporter.handleClaimedAuthor(
                 node,
                 'nodeKey',
                 c('Property').t`key`,
@@ -326,7 +344,7 @@ export class NodesCryptoService {
 
             return {
                 name: resultOk(name),
-                author: await this.handleClaimedAuthor(
+                author: await this.reporter.handleClaimedAuthor(
                     node,
                     'nodeName',
                     c('Property').t`name`,
@@ -337,7 +355,7 @@ export class NodesCryptoService {
                 ),
             };
         } catch (error: unknown) {
-            void this.reportDecryptionError(node, 'nodeName', error);
+            void this.reporter.reportDecryptionError(node, 'nodeName', error);
             const errorMessage = getErrorMessage(error);
             return {
                 name: resultError(new Error(errorMessage)),
@@ -378,7 +396,7 @@ export class NodesCryptoService {
                     inviterEmailKeys || [],
                 );
 
-                sharedBy = await this.handleClaimedAuthor(
+                sharedBy = await this.reporter.handleClaimedAuthor(
                     node,
                     'membershipInviter',
                     c('Property').t`membership`,
@@ -387,7 +405,7 @@ export class NodesCryptoService {
                     node.encryptedCrypto.membership.inviterEmail,
                 );
             } catch (error: unknown) {
-                void this.reportVerificationError(node, 'membershipInviter');
+                void this.reporter.reportVerificationError(node, 'membershipInviter');
                 this.logger.error('Failed to verify invitation', error);
                 sharedBy = resultError({
                     claimedAuthor: node.encryptedCrypto.membership.inviterEmail,
@@ -428,7 +446,7 @@ export class NodesCryptoService {
 
         return {
             hashKey,
-            author: await this.handleClaimedAuthor(
+            author: await this.reporter.handleClaimedAuthor(
                 node,
                 'nodeHashKey',
                 c('Property').t`hash key`,
@@ -491,7 +509,7 @@ export class NodesCryptoService {
 
         return {
             extendedAttributes,
-            author: await this.handleClaimedAuthor(
+            author: await this.reporter.handleClaimedAuthor(
                 node,
                 'nodeExtendedAttributes',
                 c('Property').t`attributes`,
@@ -509,6 +527,7 @@ export class NodesCryptoService {
         extendedAttributes?: string,
     ): Promise<{
         encryptedCrypto: EncryptedNodeFolderCrypto & {
+            armoredNodePassphraseSignature: string;
             // signatureEmail and nameSignatureEmail are not optional.
             signatureEmail: string;
             nameSignatureEmail: string;
@@ -626,118 +645,6 @@ export class NodesCryptoService {
             nameSignatureEmail: email,
         };
     }
-
-    private async handleClaimedAuthor(
-        node: { uid: string; creationTime: Date },
-        field: MetricVerificationErrorField,
-        signatureType: string,
-        verified: VERIFICATION_STATUS,
-        verificationErrors?: Error[],
-        claimedAuthor?: string,
-        notAvailableVerificationKeys = false,
-    ): Promise<Author> {
-        const author = handleClaimedAuthor(
-            signatureType,
-            verified,
-            verificationErrors,
-            claimedAuthor,
-            notAvailableVerificationKeys,
-        );
-        if (!author.ok) {
-            void this.reportVerificationError(node, field, verificationErrors, claimedAuthor);
-        }
-        return author;
-    }
-
-    private async reportVerificationError(
-        node: { uid: string; creationTime: Date },
-        field: MetricVerificationErrorField,
-        verificationErrors?: Error[],
-        claimedAuthor?: string,
-    ) {
-        if (this.reportedVerificationErrors.has(node.uid)) {
-            return;
-        }
-        this.reportedVerificationErrors.add(node.uid);
-
-        const fromBefore2024 = node.creationTime < new Date('2024-01-01');
-
-        let addressMatchingDefaultShare, volumeType;
-        try {
-            const { volumeId } = splitNodeUid(node.uid);
-            const { email } = await this.shareService.getMyFilesShareMemberEmailKey();
-            addressMatchingDefaultShare = claimedAuthor ? claimedAuthor === email : undefined;
-            volumeType = await this.shareService.getVolumeMetricContext(volumeId);
-        } catch (error: unknown) {
-            this.logger.error('Failed to check if claimed author matches default share', error);
-        }
-
-        this.logger.warn(
-            `Failed to verify ${field} for node ${node.uid} (from before 2024: ${fromBefore2024}, matching address: ${addressMatchingDefaultShare})`,
-        );
-
-        this.telemetry.recordMetric({
-            eventName: 'verificationError',
-            volumeType,
-            field,
-            addressMatchingDefaultShare,
-            fromBefore2024,
-            error: verificationErrors?.map((e) => e.message).join(', '),
-            uid: node.uid,
-        });
-    }
-
-    private async reportDecryptionError(node: EncryptedNode, field: MetricsDecryptionErrorField, error: unknown) {
-        if (this.reportedDecryptionErrors.has(node.uid)) {
-            return;
-        }
-
-        const fromBefore2024 = node.creationTime < new Date('2024-01-01');
-
-        let volumeType;
-        try {
-            const { volumeId } = splitNodeUid(node.uid);
-            volumeType = await this.shareService.getVolumeMetricContext(volumeId);
-        } catch (error: unknown) {
-            this.logger.error('Failed to get metric context', error);
-        }
-
-        this.logger.error(`Failed to decrypt node ${node.uid} (from before 2024: ${fromBefore2024})`, error);
-
-        this.telemetry.recordMetric({
-            eventName: 'decryptionError',
-            volumeType,
-            field,
-            fromBefore2024,
-            error,
-            uid: node.uid,
-        });
-        this.reportedDecryptionErrors.add(node.uid);
-    }
-}
-
-/**
- * @param signatureType - Must be translated before calling this function.
- */
-function handleClaimedAuthor(
-    signatureType: string,
-    verified: VERIFICATION_STATUS,
-    verificationErrors?: Error[],
-    claimedAuthor?: string,
-    notAvailableVerificationKeys = false,
-): Author {
-    if (!claimedAuthor && notAvailableVerificationKeys) {
-        return resultOk(null as AnonymousUser);
-    }
-
-    if (verified === VERIFICATION_STATUS.SIGNED_AND_VALID) {
-        return resultOk(claimedAuthor || (null as AnonymousUser));
-    }
-
-    return resultError({
-        claimedAuthor: claimedAuthor,
-        error: getVerificationMessage(verified, verificationErrors, signatureType, notAvailableVerificationKeys),
-    });
 }
 
 function getClaimedAuthor(

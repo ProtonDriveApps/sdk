@@ -56,7 +56,7 @@ export interface EncryptedNodeCrypto {
     nameSignatureEmail?: string;
     armoredKey: string;
     armoredNodePassphrase: string;
-    armoredNodePassphraseSignature: string;
+    armoredNodePassphraseSignature?: string;
     membership?: {
         inviterEmail: string;
         base64MemberSharePassphraseKeyPacket: string;
