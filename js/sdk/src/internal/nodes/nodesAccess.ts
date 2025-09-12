@@ -289,7 +289,7 @@ export class NodesAccess {
         }
 
         const { node: unparsedNode, keys } = await this.cryptoService.decryptNode(encryptedNode, parentKey);
-        const node = await this.parseNode(unparsedNode);
+        const node = await parseNode(this.logger, unparsedNode);
         try {
             await this.cache.setNode(node);
         } catch (error: unknown) {
@@ -303,65 +303,6 @@ export class NodesAccess {
             }
         }
         return { node, keys };
-    }
-
-    private async parseNode(unparsedNode: DecryptedUnparsedNode): Promise<DecryptedNode> {
-        let nodeName: Result<string, Error | InvalidNameError> = unparsedNode.name;
-        if (unparsedNode.name.ok) {
-            try {
-                validateNodeName(unparsedNode.name.value);
-            } catch (error: unknown) {
-                this.logger.warn(`Node name validation failed: ${error instanceof Error ? error.message : error}`);
-                nodeName = resultError({
-                    name: unparsedNode.name.value,
-                    error: error instanceof Error ? error.message : c('Error').t`Unknown error`,
-                });
-            }
-        }
-
-        if (unparsedNode.type === NodeType.File) {
-            const extendedAttributes = unparsedNode.activeRevision?.ok
-                ? parseFileExtendedAttributes(
-                      this.logger,
-                      unparsedNode.activeRevision.value.creationTime,
-                      unparsedNode.activeRevision.value.extendedAttributes,
-                  )
-                : undefined;
-
-            return {
-                ...unparsedNode,
-                isStale: false,
-                activeRevision: !unparsedNode.activeRevision?.ok
-                    ? unparsedNode.activeRevision
-                    : resultOk({
-                          uid: unparsedNode.activeRevision.value.uid,
-                          state: unparsedNode.activeRevision.value.state,
-                          creationTime: unparsedNode.activeRevision.value.creationTime,
-                          storageSize: unparsedNode.activeRevision.value.storageSize,
-                          contentAuthor: unparsedNode.activeRevision.value.contentAuthor,
-                          thumbnails: unparsedNode.activeRevision.value.thumbnails,
-                          ...extendedAttributes,
-                      }),
-                folder: undefined,
-                treeEventScopeId: splitNodeUid(unparsedNode.uid).volumeId,
-            };
-        }
-
-        const extendedAttributes = unparsedNode.folder?.extendedAttributes
-            ? parseFolderExtendedAttributes(this.logger, unparsedNode.folder.extendedAttributes)
-            : undefined;
-        return {
-            ...unparsedNode,
-            name: nodeName,
-            isStale: false,
-            activeRevision: undefined,
-            folder: extendedAttributes
-                ? {
-                      ...extendedAttributes,
-                  }
-                : undefined,
-            treeEventScopeId: splitNodeUid(unparsedNode.uid).volumeId,
-        };
     }
 
     async getParentKeys(
@@ -457,4 +398,61 @@ export class NodesAccess {
         const node = await this.getNode(nodeUid);
         return node.parentUid ? this.getRootNode(node.parentUid) : node;
     }
+}
+
+export async function parseNode(logger: Logger, unparsedNode: DecryptedUnparsedNode): Promise<DecryptedNode> {
+    let nodeName: Result<string, Error | InvalidNameError> = unparsedNode.name;
+    if (unparsedNode.name.ok) {
+        try {
+            validateNodeName(unparsedNode.name.value);
+        } catch (error: unknown) {
+            logger.warn(`Node name validation failed: ${error instanceof Error ? error.message : error}`);
+            nodeName = resultError({
+                name: unparsedNode.name.value,
+                error: error instanceof Error ? error.message : c('Error').t`Unknown error`,
+            });
+        }
+    }
+
+    const treeEventScopeId = splitNodeUid(unparsedNode.uid).volumeId;
+
+    if (unparsedNode.type === NodeType.File) {
+        const extendedAttributes = unparsedNode.activeRevision?.ok
+            ? parseFileExtendedAttributes(
+                  logger,
+                  unparsedNode.activeRevision.value.creationTime,
+                  unparsedNode.activeRevision.value.extendedAttributes,
+              )
+            : undefined;
+
+        return {
+            ...unparsedNode,
+            isStale: false,
+            activeRevision: !unparsedNode.activeRevision?.ok
+                ? unparsedNode.activeRevision
+                : resultOk({
+                      uid: unparsedNode.activeRevision.value.uid,
+                      state: unparsedNode.activeRevision.value.state,
+                      creationTime: unparsedNode.activeRevision.value.creationTime,
+                      storageSize: unparsedNode.activeRevision.value.storageSize,
+                      contentAuthor: unparsedNode.activeRevision.value.contentAuthor,
+                      thumbnails: unparsedNode.activeRevision.value.thumbnails,
+                      ...extendedAttributes,
+                  }),
+            folder: undefined,
+            treeEventScopeId,
+        };
+    }
+
+    const extendedAttributes = unparsedNode.folder?.extendedAttributes
+        ? parseFolderExtendedAttributes(logger, unparsedNode.folder.extendedAttributes)
+        : undefined;
+    return {
+        ...unparsedNode,
+        name: nodeName,
+        isStale: false,
+        activeRevision: undefined,
+        folder: extendedAttributes,
+        treeEventScopeId,
+    };
 }

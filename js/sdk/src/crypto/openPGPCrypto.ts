@@ -1,3 +1,4 @@
+import { c } from 'ttag';
 import { OpenPGPCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from './interface';
 import { uint8ArrayToBase64String } from './utils';
 
@@ -393,7 +394,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
     async decryptArmoredAndVerifyDetached(
         armoredData: string,
-        armoredSignature: string,
+        armoredSignature: string | undefined,
         sessionKey: SessionKey,
         verificationKeys: PublicKey | PublicKey[],
     ) {
@@ -410,7 +411,9 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             // pmcrypto 8.3.0 changes `verified` to `verificationStatus`.
             // Proper typing is too complex, it will be removed to support only newer pmcrypto.
             verified: verified || verificationStatus!,
-            verificationErrors,
+            verificationErrors: !armoredSignature
+                ? [new Error(c('Error').t`Signature is missing`)]
+                : verificationErrors,
         };
     }
 

@@ -170,7 +170,7 @@ export class DriveCrypto {
     async decryptKey(
         armoredKey: string,
         armoredPassphrase: string,
-        armoredPassphraseSignature: string,
+        armoredPassphraseSignature: string | undefined,
         decryptionKeys: PrivateKey[],
         verificationKeys: PublicKey[],
     ): Promise<{

@@ -1,5 +1,6 @@
 import { PrivateKey } from '../../crypto';
 import { Logger } from '../../interface';
+import { parseNode } from '../nodes/nodesAccess';
 import { SharingPublicAPIService } from './apiService';
 import { SharingPublicCryptoCache } from './cryptoCache';
 import { SharingPublicCryptoService } from './cryptoService';
@@ -27,35 +28,35 @@ export class SharingPublicManager {
         return this.decryptNode(encryptedNode);
     }
 
-    async *iterateChildren(parentUid: string): AsyncGenerator<DecryptedNode> {
+    async *iterateFolderChildren(parentUid: string, signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
         // TODO: optimise this - decrypt in parallel
-        for await (const node of this.api.iterateChildren(parentUid)) {
+        for await (const node of this.api.iterateFolderChildren(parentUid, signal)) {
             const decryptedNode = await this.decryptNode(node);
             yield decryptedNode;
         }
     }
 
     private async decryptShare(encryptedShare: EncryptedShareCrypto): Promise<void> {
-        const shareKey = await this.cryptoService.decryptShareKey(encryptedShare);
+        const shareKey = await this.cryptoService.decryptPublicLinkShareKey(encryptedShare);
         await this.cryptoCache.setShareKey(shareKey);
     }
 
     private async decryptNode(encryptedNode: EncryptedNode): Promise<DecryptedNode> {
         const parentKey = await this.getParentKey(encryptedNode);
 
-        const { node: decryptedNode, keys } = await this.cryptoService.decryptNode(encryptedNode, parentKey);
+        const { node: unparsedNode, keys } = await this.cryptoService.decryptNode(encryptedNode, parentKey);
+        const node = await parseNode(this.logger, unparsedNode);
 
         // TODO: cache of metadata?
-
         if (keys) {
             try {
-                await this.cryptoCache.setNodeKeys(decryptedNode.uid, keys);
+                await this.cryptoCache.setNodeKeys(node.uid, keys);
             } catch (error: unknown) {
-                this.logger.error(`Failed to cache node keys ${decryptedNode.uid}`, error);
+                this.logger.error(`Failed to cache node keys ${node.uid}`, error);
             }
         }
 
-        return decryptedNode;
+        return node;
     }
 
     private async getParentKey(node: Pick<DecryptedNode, 'parentUid'>): Promise<PrivateKey> {

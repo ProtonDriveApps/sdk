@@ -1,5 +1,5 @@
 import { DriveCrypto } from '../../crypto';
-import { ProtonDriveCryptoCache, ProtonDriveTelemetry } from '../../interface';
+import { ProtonDriveCryptoCache, ProtonDriveTelemetry, ProtonDriveAccount } from '../../interface';
 import { DriveAPIService } from '../apiService';
 import { SharingPublicAPIService } from './apiService';
 import { SharingPublicCryptoCache } from './cryptoCache';
@@ -22,12 +22,13 @@ export function initSharingPublicModule(
     apiService: DriveAPIService,
     driveCryptoCache: ProtonDriveCryptoCache,
     driveCrypto: DriveCrypto,
+    account: ProtonDriveAccount,
     token: string,
     password: string,
 ) {
     const api = new SharingPublicAPIService(telemetry.getLogger('sharingPublic-api'), apiService);
     const cryptoCache = new SharingPublicCryptoCache(telemetry.getLogger('sharingPublic-crypto'), driveCryptoCache);
-    const cryptoService = new SharingPublicCryptoService(driveCrypto, password);
+    const cryptoService = new SharingPublicCryptoService(telemetry, driveCrypto, account, password);
     const manager = new SharingPublicManager(
         telemetry.getLogger('sharingPublic-nodes'),
         api,

@@ -240,7 +240,7 @@ export interface OpenPGPCrypto {
 
     decryptArmoredAndVerifyDetached: (
         armoredData: string,
-        armoredSignature: string,
+        armoredSignature: string | undefined,
         sessionKey: SessionKey,
         verificationKeys: PublicKey | PublicKey[],
     ) => Promise<{

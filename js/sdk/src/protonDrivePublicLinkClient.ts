@@ -7,9 +7,11 @@ import {
     Logger,
     ProtonDriveCryptoCache,
     NodeOrUid,
+    ProtonDriveAccount,
+    MaybeNode,
 } from './interface';
 import { Telemetry } from './telemetry';
-import { getUid } from './transformers';
+import { getUid, convertInternalNodePromise, convertInternalNodeIterator } from './transformers';
 import { DriveAPIService } from './internal/apiService';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharingPublicModule } from './internal/sharingPublic';
@@ -52,6 +54,7 @@ export class ProtonDrivePublicLinkClient {
     constructor({
         httpClient,
         cryptoCache,
+        account,
         openPGPCryptoModule,
         srpModule,
         config,
@@ -61,6 +64,7 @@ export class ProtonDrivePublicLinkClient {
     }: {
         httpClient: ProtonDriveHTTPClient;
         cryptoCache: ProtonDriveCryptoCache;
+        account: ProtonDriveAccount;
         openPGPCryptoModule: OpenPGPCrypto;
         srpModule: SRPModule;
         config?: ProtonDriveConfig;
@@ -84,7 +88,15 @@ export class ProtonDrivePublicLinkClient {
             fullConfig.language,
         );
         const driveCrypto = new DriveCrypto(openPGPCryptoModule, srpModule);
-        this.sharingPublic = initSharingPublicModule(telemetry, apiService, cryptoCache, driveCrypto, token, password);
+        this.sharingPublic = initSharingPublicModule(
+            telemetry,
+            apiService,
+            cryptoCache,
+            driveCrypto,
+            account,
+            token,
+            password,
+        );
 
         this.experimental = {
             getNodeUrl: async (nodeUid: NodeOrUid) => {
@@ -103,19 +115,21 @@ export class ProtonDrivePublicLinkClient {
         };
     }
 
-    // TODO: comment
-    // TODO: add public node interface
-    async getRootNode() {
+    /**
+     * @returns The root folder to the public link.
+     */
+    async getRootNode(): Promise<MaybeNode> {
         this.logger.info(`Getting root node`);
-        // TODO: conversion to public node
-        return this.sharingPublic.getRootNode();
+        return convertInternalNodePromise(this.sharingPublic.getRootNode());
     }
 
-    // TODO: comment
-    // TODO: add public node interface
-    async *iterateChildren(parentUid: NodeOrUid) {
+    /**
+     * Iterates the children of the given parent node.
+     *
+     * See `ProtonDriveClient.iterateFolderChildren` for more information.
+     */
+    async *iterateFolderChildren(parentUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<MaybeNode> {
         this.logger.info(`Iterating children of ${getUid(parentUid)}`);
-        // TODO: conversion to public node
-        yield * this.sharingPublic.iterateChildren(getUid(parentUid));
+        yield * convertInternalNodeIterator(this.sharingPublic.iterateFolderChildren(getUid(parentUid), signal));
     }
 }
