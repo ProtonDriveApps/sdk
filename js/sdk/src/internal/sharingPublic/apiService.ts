@@ -1,5 +1,5 @@
 import { DriveAPIService, drivePaths, nodeTypeNumberToNodeType } from '../apiService';
-import { Logger } from '../../interface';
+import { Logger, MemberRole } from '../../interface';
 import { makeNodeUid, splitNodeUid } from '../uids';
 import { EncryptedShareCrypto, EncryptedNode } from './interface';
 
@@ -42,13 +42,14 @@ export class SharingPublicAPIService {
         };
     }
 
-    async *iterateChildren(parentUid: string): AsyncGenerator<EncryptedNode> {
+    async *iterateFolderChildren(parentUid: string, signal?: AbortSignal): AsyncGenerator<EncryptedNode> {
         const { volumeId: token, nodeId } = splitNodeUid(parentUid);
 
         let page = 0;
         while (true) {
             const response = await this.apiService.get<GetTokenFolderChildrenResponse>(
                 `drive/urls/${token}/folders/${nodeId}/children?Page=${page}&PageSize=${PAGE_SIZE}`,
+                signal,
             );
 
             for (const link of response.Links) {
@@ -72,6 +73,10 @@ function tokenToEncryptedNode(logger: Logger, token: GetTokenInfoResponse['Token
         uid: makeNodeUid(token.Token, token.LinkID),
         parentUid: undefined,
         type: nodeTypeNumberToNodeType(logger, token.LinkType),
+        creationTime: new Date(), // TODO
+
+        isShared: false,
+        directRole: MemberRole.Viewer, // TODO
     };
 
     const baseCryptoNodeMetadata = {
@@ -124,7 +129,11 @@ function linkToEncryptedNode(
         uid: makeNodeUid(token, link.LinkID),
         parentUid: link.ParentLinkID ? makeNodeUid(token, link.ParentLinkID) : undefined,
         type: nodeTypeNumberToNodeType(logger, link.Type),
+        creationTime: new Date(), // TODO
         totalStorageSize: link.TotalSize,
+
+        isShared: false,
+        directRole: MemberRole.Viewer, // TODO
     };
 
     const baseCryptoNodeMetadata = {
