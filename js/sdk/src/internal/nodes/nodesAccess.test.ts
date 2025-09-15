@@ -209,7 +209,12 @@ describe('nodesAccess', () => {
 
                 const result = await Array.fromAsync(access.iterateFolderChildren('volumeId~parentNodeid'));
                 expect(result).toMatchObject([node1, node4, node2, node3]);
-                expect(apiService.iterateNodes).toHaveBeenCalledWith([node2.uid, node3.uid], 'volumeId', undefined);
+                expect(apiService.iterateNodes).toHaveBeenCalledWith(
+                    [node2.uid, node3.uid],
+                    'volumeId',
+                    undefined, // filterOptions
+                    undefined, // signal
+                );
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(2);
                 expect(cache.setNode).toHaveBeenCalledTimes(2);
                 expect(cryptoCache.setNodeKeys).toHaveBeenCalledTimes(2);
@@ -226,7 +231,11 @@ describe('nodesAccess', () => {
 
                 const result = await Array.fromAsync(access.iterateFolderChildren('volumeId~parentNodeid'));
                 expect(result).toMatchObject([node1, node2, node3, node4]);
-                expect(apiService.iterateChildrenNodeUids).toHaveBeenCalledWith('volumeId~parentNodeid', undefined);
+                expect(apiService.iterateChildrenNodeUids).toHaveBeenCalledWith(
+                    'volumeId~parentNodeid',
+                    false, // onlyFolders
+                    undefined, // signal
+                );
                 expect(apiService.iterateNodes).not.toHaveBeenCalled();
                 expect(cache.setFolderChildrenLoaded).toHaveBeenCalledWith('volumeId~parentNodeid');
             });
@@ -247,11 +256,16 @@ describe('nodesAccess', () => {
 
                 const result = await Array.fromAsync(access.iterateFolderChildren('volumeId~parentNodeid'));
                 expect(result).toMatchObject([node1, node2, node3, node4]);
-                expect(apiService.iterateChildrenNodeUids).toHaveBeenCalledWith('volumeId~parentNodeid', undefined);
+                expect(apiService.iterateChildrenNodeUids).toHaveBeenCalledWith(
+                    'volumeId~parentNodeid',
+                    false, // onlyFolders
+                    undefined, // signal
+                );
                 expect(apiService.iterateNodes).toHaveBeenCalledWith(
                     ['volumeId~node1', 'volumeId~node2', 'volumeId~node3', 'volumeId~node4'],
                     'volumeId',
-                    undefined,
+                    undefined, // filterOptions
+                    undefined, // signal
                 );
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(4);
                 expect(cache.setNode).toHaveBeenCalledTimes(4);
@@ -320,6 +334,50 @@ describe('nodesAccess', () => {
                     expect(error.cause).toEqual([new DecryptionError('Decryption failed')]);
                 }
             });
+
+            it('should return only filtered nodes from cache', async () => {
+                cache.isFolderChildrenLoaded = jest.fn().mockResolvedValue(true);
+                cache.iterateChildren = jest.fn().mockImplementation(async function* () {
+                    yield { ok: true, node: { ...node1, type: NodeType.Folder } };
+                    yield { ok: true, node: { ...node2, type: NodeType.Folder } };
+                    yield { ok: true, node: { ...node3, type: NodeType.File } };
+                    yield { ok: true, node: { ...node4, type: NodeType.File } };
+                });
+
+                const result = await Array.fromAsync(
+                    access.iterateFolderChildren('volumeId~parentNodeid', { type: NodeType.Folder }),
+                );
+
+                expect(result).toMatchObject([node1, node2]);
+                expect(cache.setFolderChildrenLoaded).not.toHaveBeenCalled();
+            });
+
+            it.only('should return only filtered nodes from API', async () => {
+                cache.isFolderChildrenLoaded = jest.fn().mockResolvedValue(false);
+                cache.getNode = jest.fn().mockImplementation((uid: string) => {
+                    if (uid === parentNode.uid) {
+                        return parentNode;
+                    }
+                    throw new Error('Entity not found');
+                });
+                apiService.iterateChildrenNodeUids = jest.fn().mockImplementation(async function* () {
+                    yield 'volumeId~node1';
+                    yield 'volumeId~node2';
+                    yield 'volumeId~node3';
+                    yield 'volumeId~node4';
+                });
+                apiService.iterateNodes = jest.fn().mockImplementation(async function* () {
+                    yield { ...node1, parentUid: 'volumeId~parentNodeId', type: NodeType.Folder };
+                    yield { ...node2, parentUid: 'volumeId~parentNodeId', type: NodeType.Folder };
+                });
+
+                const result = await Array.fromAsync(
+                    access.iterateFolderChildren('volumeId~parentNodeid', { type: NodeType.Folder }),
+                );
+
+                expect(result).toMatchObject([node1, node2]);
+                expect(cache.setFolderChildrenLoaded).not.toHaveBeenCalled();
+            });
         });
 
         describe('iterateTrashedNodes', () => {
@@ -359,7 +417,8 @@ describe('nodesAccess', () => {
                 expect(apiService.iterateNodes).toHaveBeenCalledWith(
                     ['volumeId~node1', 'volumeId~node2', 'volumeId~node3', 'volumeId~node4'],
                     volumeId,
-                    undefined,
+                    undefined, // filterOptions
+                    undefined, // signal
                 );
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(4);
                 expect(cache.setNode).toHaveBeenCalledTimes(4);
@@ -417,7 +476,8 @@ describe('nodesAccess', () => {
                 expect(apiService.iterateNodes).toHaveBeenCalledWith(
                     ['volumeId~node2', 'volumeId~node3'],
                     'volumeId',
-                    undefined,
+                    undefined, // filterOptions
+                    undefined, // signal
                 );
             });
 
