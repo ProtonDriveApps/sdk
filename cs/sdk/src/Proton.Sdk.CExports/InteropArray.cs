@@ -13,7 +13,7 @@ internal readonly unsafe struct InteropArray<T>(T* pointer, nint length)
 
     public bool IsNullOrEmpty => Pointer is null || Length == 0;
 
-    public static InteropArray<T> FromMemory(ReadOnlyMemory<T> memory)
+    public static InteropArray<T> AllocFromMemory(ReadOnlyMemory<T> memory)
     {
         if (memory.Length == 0)
         {

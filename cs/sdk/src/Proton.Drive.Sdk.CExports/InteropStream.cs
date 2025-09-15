@@ -1,94 +1,41 @@
-﻿using System.Buffers;
-using System.Runtime.InteropServices;
+﻿using Google.Protobuf.WellKnownTypes;
 using Proton.Sdk.CExports;
-using Proton.Sdk.Drive.CExports;
 
 namespace Proton.Drive.Sdk.CExports;
 
-internal sealed unsafe class InteropStream : Stream
+internal sealed class InteropStream : Stream
 {
     private readonly nint _callerState;
-    private readonly delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, nint, void> _readCallback;
-    private readonly delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, nint, void> _writeCallback;
+    private readonly InteropAction<nint, InteropArray<byte>, nint>? _readAction;
+    private readonly InteropAction<nint, InteropArray<byte>, nint>? _writeAction;
 
     private long _position;
     private long? _length;
 
-    public InteropStream(long length, nint callerState, nint readCallbackPointer)
+    public InteropStream(long length, nint callerState, InteropAction<nint, InteropArray<byte>, nint>? readAction)
     {
         _length = length;
         _callerState = callerState;
-        _readCallback = (delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, nint, void>)readCallbackPointer;
-        _writeCallback = default;
+        _readAction = readAction;
+        _writeAction = null;
     }
 
-    public InteropStream(nint callerState, nint writeCallbackPointer)
+    public InteropStream(nint callerState, InteropAction<nint, InteropArray<byte>, nint>? writeAction)
     {
         _callerState = callerState;
-        _readCallback = default;
-        _writeCallback = (delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, nint, void>)writeCallbackPointer;
+        _readAction = null;
+        _writeAction = writeAction;
     }
 
-    public override bool CanRead => _readCallback != null;
+    public override bool CanRead => _readAction != null;
     public override bool CanSeek => false;
-    public override bool CanWrite => _writeCallback != null;
+    public override bool CanWrite => _writeAction != null;
     public override long Length => _length ?? 0;
 
     public override long Position
     {
         get => _position;
         set => throw new NotSupportedException("Seeking not supported");
-    }
-
-    internal static void HandleReadResponse(nint state, StreamReadResponse response)
-    {
-        var operationHandle = GCHandle.FromIntPtr(state);
-
-        try
-        {
-            var operation = Interop.GetFromHandle<ReadOperation>(operationHandle);
-
-            switch (response.ResultCase)
-            {
-                case StreamReadResponse.ResultOneofCase.BytesRead:
-                    operation.Complete(response.BytesRead);
-                    break;
-
-                case StreamReadResponse.ResultOneofCase.Error:
-                    operation.Complete(response.Error.Message);
-                    break;
-
-                case StreamReadResponse.ResultOneofCase.None:
-                default:
-                    break;
-            }
-        }
-        finally
-        {
-            operationHandle.Free();
-        }
-    }
-
-    internal static void HandleWriteResponse(nint state, StreamWriteResponse response)
-    {
-        var operationHandle = GCHandle.FromIntPtr(new nint(state));
-
-        try
-        {
-            var operation = Interop.GetFromHandle<WriteOperation>(operationHandle);
-
-            if (response.Error != null)
-            {
-                operation.Complete(response.Error.Message);
-                return;
-            }
-
-            operation.Complete();
-        }
-        finally
-        {
-            operationHandle.Free();
-        }
     }
 
     public override void Flush()
@@ -105,37 +52,20 @@ internal sealed unsafe class InteropStream : Stream
         return ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
     }
 
-    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+    public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        if (_readCallback == null)
+        if (_readAction is null)
         {
             throw new NotSupportedException("Reading not supported");
         }
 
-        var memoryHandle = buffer.Pin();
+        using var memoryHandle = buffer.Pin();
 
-        try
-        {
-            var operation = new ReadOperation(this, memoryHandle);
-            var operationHandle = GCHandle.Alloc(operation);
+        var response = await _readAction.Value.InvokeWithBufferAsync<Int32Value>(_callerState, buffer.Span).ConfigureAwait(false);
 
-            try
-            {
-                _readCallback(_callerState, new InteropArray<byte>((byte*)memoryHandle.Pointer, buffer.Length), GCHandle.ToIntPtr(operationHandle));
+        _position += response.Value;
 
-                return new ValueTask<int>(operation.Task);
-            }
-            catch
-            {
-                operationHandle.Free();
-                throw;
-            }
-        }
-        catch
-        {
-            memoryHandle.Dispose();
-            throw;
-        }
+        return response.Value;
     }
 
     public override long Seek(long offset, SeekOrigin origin)
@@ -158,108 +88,18 @@ internal sealed unsafe class InteropStream : Stream
         return WriteAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
     }
 
-    public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+    public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        if (_writeCallback == null)
+        if (_writeAction == null)
         {
             throw new NotSupportedException("Writing not supported");
         }
 
-        var memoryHandle = buffer.Pin();
+        using var memoryHandle = buffer.Pin();
 
-        try
-        {
-            var operation = new WriteOperation(this, memoryHandle, buffer.Length);
-            var operationHandle = GCHandle.Alloc(operation);
+        await _writeAction.Value.InvokeWithBufferAsync(_callerState, buffer.Span).ConfigureAwait(false);
 
-            try
-            {
-                _writeCallback(_callerState, new InteropArray<byte>((byte*)memoryHandle.Pointer, buffer.Length), GCHandle.ToIntPtr(operationHandle));
-
-                return new ValueTask(operation.Task);
-            }
-            catch
-            {
-                operationHandle.Free();
-                throw;
-            }
-        }
-        catch
-        {
-            memoryHandle.Dispose();
-            throw;
-        }
-    }
-
-    private sealed class ReadOperation(InteropStream stream, MemoryHandle memoryHandle)
-    {
-        private readonly InteropStream _stream = stream;
-        private readonly TaskCompletionSource<int> _taskCompletionSource = new();
-
-        private MemoryHandle _memoryHandle = memoryHandle;
-
-        public Task<int> Task => _taskCompletionSource.Task;
-
-        public void Complete(int bytesRead)
-        {
-            try
-            {
-                _stream._position += bytesRead;
-                _taskCompletionSource.SetResult(bytesRead);
-            }
-            finally
-            {
-                _memoryHandle.Dispose();
-            }
-        }
-
-        public void Complete(string errorMessage)
-        {
-            try
-            {
-                _taskCompletionSource.SetException(new IOException(errorMessage));
-            }
-            finally
-            {
-                _memoryHandle.Dispose();
-            }
-        }
-    }
-
-    private sealed class WriteOperation(InteropStream stream, MemoryHandle memoryHandle, int bufferLength)
-    {
-        private readonly InteropStream _stream = stream;
-        private readonly int _bufferLength = bufferLength;
-        private readonly TaskCompletionSource _taskCompletionSource = new();
-
-        private MemoryHandle _memoryHandle = memoryHandle;
-
-        public Task Task => _taskCompletionSource.Task;
-
-        public void Complete()
-        {
-            try
-            {
-                _stream._position += _bufferLength;
-                _stream._length = Math.Max(_stream._length ?? 0, _stream._position);
-                _taskCompletionSource.SetResult();
-            }
-            finally
-            {
-                _memoryHandle.Dispose();
-            }
-        }
-
-        public void Complete(string errorMessage)
-        {
-            try
-            {
-                _taskCompletionSource.SetException(new IOException(errorMessage));
-            }
-            finally
-            {
-                _memoryHandle.Dispose();
-            }
-        }
+        _position += buffer.Length;
+        _length = Math.Max(_length ?? 0, _position);
     }
 }

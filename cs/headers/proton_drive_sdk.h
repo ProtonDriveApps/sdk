@@ -9,7 +9,7 @@
 void proton_drive_sdk_handle_request(
     ByteArray request,
     const void* caller_state,
-    array_callback_function response_callback
+    array_action response_callback
 );
 
 void proton_drive_sdk_handle_response(

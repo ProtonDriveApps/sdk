@@ -6,35 +6,25 @@ namespace Proton.Sdk.CExports;
 internal static class Interop
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static long AllocHandle<T>(T obj)
+    public static long AllocHandle<T>(T obj)
         where T : class
     {
         return GCHandle.ToIntPtr(GCHandle.Alloc(obj));
     }
 
-    internal static T GetFromHandle<T>(long handle)
+    public static T GetFromHandle<T>(long handle)
         where T : class
     {
-        GCHandle gcHandle;
-        try
-        {
-            gcHandle = GCHandle.FromIntPtr((nint)handle);
-        }
-        catch (Exception e)
-        {
-            throw InvalidHandleException.Create<T>((nint)handle, e);
-        }
-
-        return GetFromHandle<T>(gcHandle);
+        return GetFromHandle<T>(handle, free: false);
     }
 
-    internal static T GetFromHandle<T>(GCHandle gcHandle)
+    public static T GetFromHandleAndFree<T>(long handle)
         where T : class
     {
-        return (T)(gcHandle.Target ?? throw InvalidHandleException.Create<T>(GCHandle.ToIntPtr(gcHandle)));
+        return GetFromHandle<T>(handle, free: true);
     }
 
-    internal static void FreeHandle<T>(long handle)
+    public static void FreeHandle<T>(long handle)
         where T : class
     {
         var gcHandle = GCHandle.FromIntPtr((nint)handle);
@@ -48,8 +38,31 @@ internal static class Interop
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static CancellationToken GetCancellationToken(long cancellationTokenSourceHandle)
+    public static CancellationToken GetCancellationToken(long cancellationTokenSourceHandle)
     {
         return GetFromHandle<CancellationTokenSource>(cancellationTokenSourceHandle).Token;
+    }
+
+    private static T GetFromHandle<T>(long handle, bool free)
+        where T : class
+    {
+        GCHandle gcHandle;
+        try
+        {
+            gcHandle = GCHandle.FromIntPtr((nint)handle);
+        }
+        catch (Exception e)
+        {
+            throw InvalidHandleException.Create<T>((nint)handle, e);
+        }
+
+        var handleTarget = gcHandle.Target;
+
+        if (free)
+        {
+            gcHandle.Free();
+        }
+
+        return (T)(handleTarget ?? throw InvalidHandleException.Create<T>(GCHandle.ToIntPtr(gcHandle)));
     }
 }

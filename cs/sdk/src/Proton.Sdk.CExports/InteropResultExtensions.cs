@@ -14,7 +14,7 @@ internal static class InteropResultExtensions
     internal static Result<InteropArray<byte>, InteropArray<byte>> Success(IMessage data)
     {
         return new Result<InteropArray<byte>, InteropArray<byte>>(
-            value: InteropArray<byte>.FromMemory(data.ToByteArray()));
+            value: InteropArray<byte>.AllocFromMemory(data.ToByteArray()));
     }
 
     internal static unsafe Result<InteropArray<byte>, InteropArray<byte>> Success(string value)
@@ -51,25 +51,25 @@ internal static class InteropResultExtensions
     {
         var error = exception.ToErrorMessage(setDomainAndCodesFunction);
 
-        return new Result<InteropArray<byte>>(error: InteropArray<byte>.FromMemory(error.ToByteArray()));
+        return new Result<InteropArray<byte>>(error: InteropArray<byte>.AllocFromMemory(error.ToByteArray()));
     }
 
     internal static Result<TValue, InteropArray<byte>> Failure<TValue>(Exception exception, Action<Error, Exception> setDomainAndCodesFunction)
     {
         var error = exception.ToErrorMessage(setDomainAndCodesFunction);
 
-        return new Result<TValue, InteropArray<byte>>(error: InteropArray<byte>.FromMemory(error.ToByteArray()));
+        return new Result<TValue, InteropArray<byte>>(error: InteropArray<byte>.AllocFromMemory(error.ToByteArray()));
     }
 
     private static Result<InteropArray<byte>> Failure(int code, string message)
     {
         return new Result<InteropArray<byte>>(
-            error: InteropArray<byte>.FromMemory(new Error { PrimaryCode = code, Message = message }.ToByteArray()));
+            error: InteropArray<byte>.AllocFromMemory(new Error { PrimaryCode = code, Message = message }.ToByteArray()));
     }
 
     private static Result<TValue, InteropArray<byte>> Failure<TValue>(int code, string message)
     {
         return new Result<TValue, InteropArray<byte>>(
-            error: InteropArray<byte>.FromMemory(new Error { PrimaryCode = code, Message = message }.ToByteArray()));
+            error: InteropArray<byte>.AllocFromMemory(new Error { PrimaryCode = code, Message = message }.ToByteArray()));
     }
 }

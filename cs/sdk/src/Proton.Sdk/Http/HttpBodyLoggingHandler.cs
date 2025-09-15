@@ -45,22 +45,22 @@ internal sealed partial class HttpBodyLoggingHandler(ILogger logger) : Delegatin
             return null;
         }
 
-        var contentString = await content.ReadAsStringAsync(cancellationToken);
+        var contentString = await content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
         return mediaType is MediaTypeNames.Application.Json ? Indent(contentString) : contentString;
     }
 
     private async Task<HttpResponseMessage> SendWithBodyLoggingAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        var requestContentString = await TryGetContentAsString(request.Content, cancellationToken);
+        var requestContentString = await TryGetContentAsString(request.Content, cancellationToken).ConfigureAwait(false);
         if (requestContentString is not null)
         {
             _logger.LogInformation($"Request body:{NewLine}{{Body}}", requestContentString);
         }
 
-        var response = await base.SendAsync(request, cancellationToken);
+        var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
-        var responseContentString = await TryGetContentAsString(response.Content, cancellationToken);
+        var responseContentString = await TryGetContentAsString(response.Content, cancellationToken).ConfigureAwait(false);
         if (responseContentString is not null)
         {
             if (request.RequestUri?.PathAndQuery.Contains("auth/", StringComparison.OrdinalIgnoreCase) == true)

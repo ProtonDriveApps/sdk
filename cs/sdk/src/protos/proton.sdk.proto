@@ -8,19 +8,19 @@ option csharp_namespace = "Proton.Sdk.CExports";
 
 message Request {
     oneof payload {
-        CancellationTokenSourceCreateRequest cancellationTokenSourceCreate = 100;
-        CancellationTokenSourceCancelRequest cancellationTokenSourceCancel = 101;
-        CancellationTokenSourceFreeRequest cancellationTokenSourceFree = 102;
+        CancellationTokenSourceCreateRequest cancellation_token_source_create = 100;
+        CancellationTokenSourceCancelRequest cancellation_token_source_cancel = 101;
+        CancellationTokenSourceFreeRequest cancellation_token_source_free = 102;
 
-        SessionBeginRequest sessionBegin = 200;
-        SessionResumeRequest sessionResume = 201;
-        SessionRenewRequest sessionRenew = 202;
-        SessionEndRequest sessionEnd = 203;
-        SessionTokensRefreshedSubscribeRequest sessionTokensRefreshedSubscribe = 204;
-        SessionTokensRefreshedUnsubscribeRequest sessionTokensRefreshedUnsubscribe = 205;
-        SessionFreeRequest sessionFree = 206;
+        SessionBeginRequest session_begin = 200;
+        SessionResumeRequest session_resume = 201;
+        SessionRenewRequest session_renew = 202;
+        SessionEndRequest session_end = 203;
+        SessionTokensRefreshedSubscribeRequest session_tokens_refreshed_subscribe = 204;
+        SessionTokensRefreshedUnsubscribeRequest session_tokens_refreshed_unsubscribe = 205;
+        SessionFreeRequest session_free = 206;
 
-        LoggerProviderCreate loggerProviderCreate = 300;
+        LoggerProviderCreate logger_provider_create = 300;
     };
 }
 
@@ -31,9 +31,13 @@ message Response {
     }
 }
 
+message RepeatedBytesValue {
+    repeated bytes value = 1;
+}
+
 // Cancellation tokens
 
-// The response value will be an Int64Value message.
+// The response value type must be Int64Value.
 message CancellationTokenSourceCreateRequest {}
 
 // No response value.
@@ -48,7 +52,7 @@ message CancellationTokenSourceFreeRequest {
 
 // Sessions
 
-// The response value will be an Int64Value message.
+// The response value type must be Int64Value.
 message SessionBeginRequest {
     string username = 1;
     string password = 2;
@@ -58,12 +62,12 @@ message SessionBeginRequest {
     int64 cancellation_token_source_handle = 6;
 }
 
-// The response value will be an Int64Value message.
+// The response value type must be Int64Value.
 message SessionResumeRequest {
     string username = 1;
     string app_version = 2;
-    SessionId session_id = 3;
-    UserId user_id = 4;
+    string session_id = 3;
+    string user_id = 4;
     string access_token = 5;
     string refresh_token = 6;
     repeated string scopes = 7;
@@ -73,10 +77,10 @@ message SessionResumeRequest {
     ProtonClientOptions options = 11;
 }
 
-// The response value will be an Int64Value message.
+// The response value type must be Int64Value.
 message SessionRenewRequest {
     int64 old_session_handle = 1;
-    SessionId session_id = 2;
+    string session_id = 2;
     string access_token = 3;
     string refresh_token = 4;
     repeated string scopes = 5;
@@ -89,10 +93,10 @@ message SessionEndRequest {
     int64 session_handle = 1;
 }
 
-// The response value will be an Int64Value message.
+// The response value type must be Int64Value.
 message SessionTokensRefreshedSubscribeRequest {
     int64 session_handle = 1;
-    int64 tokens_refreshed_callback = 2;
+    int64 tokens_refreshed_action = 2;
 }
 
 // No response value.
@@ -105,9 +109,9 @@ message SessionFreeRequest {
     int64 session_handle = 1;
 }
 
-// The response value will be an Int64Value message.
+// The response value type must be Int64Value.
 message LoggerProviderCreate {
-    int64 log_callback = 1;
+    int64 log_action = 1;
 }
 
 message LogEvent {
@@ -178,32 +182,38 @@ message Error {
     Error inner_error = 7; // Optional
 }
 
-message StringResponse {
-    string value = 1;
-}
-
-message SessionId {
-    string value = 1;
-}
-
-message UserId {
-    string value = 1;
-}
-
-message UserKeyId {
-    string value = 1;
-}
-
-message AddressId {
-    string value = 1;
-}
-
-message AddressKeyId {
-    string value = 1;
+message Address {
+    string address_id = 1;
+    int32 order = 2;
+    string email_address = 3;
+    AddressStatus status = 4;
+    repeated proton.sdk.AddressKey keys = 5;
+    int32 primary_key_index = 6;
 }
 
 message AddressKey {
-    AddressId address_id = 1;
-    AddressKeyId address_key_id = 2;
-    bool is_allowed_for_encryption = 3;
+    string address_id = 1;
+    string address_key_id = 2;
+    bool is_active = 3;
+    bool is_allowed_for_encryption = 4;
+    bool is_allowed_for_verification = 5;
+}
+
+message HttpHeader {
+    string name = 1;
+    repeated string values = 2;
+}
+
+// The response value type must be HttpResponse.
+message HttpRequest {
+    string url = 1;
+    string method = 2;
+    repeated HttpHeader headers = 3;
+    bytes content = 4; // Optional
+}
+
+message HttpResponse {
+    int32 status_code = 1;
+    repeated HttpHeader headers = 2;
+    bytes content = 3; // Optional
 }

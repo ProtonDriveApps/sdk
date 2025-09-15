@@ -8,7 +8,7 @@ namespace Proton.Sdk.CExports;
 internal static class InteropMessageHandler
 {
     [UnmanagedCallersOnly(EntryPoint = "proton_sdk_handle_request", CallConvs = [typeof(CallConvCdecl)])]
-    public static async void OnRequestReceived(InteropArray<byte> requestBytes, nint callerState, InteropValueCallback<InteropArray<byte>> responseCallback)
+    public static async void OnRequestReceived(InteropArray<byte> requestBytes, nint callerState, InteropAction<nint, InteropArray<byte>> responseAction)
     {
         try
         {
@@ -53,13 +53,13 @@ internal static class InteropMessageHandler
                     => throw new ArgumentException($"Unknown request type: {request.PayloadCase}", nameof(requestBytes)),
             };
 
-            responseCallback.InvokeWithResponse(callerState, response is not null ? new Response { Value = Any.Pack(response) } : new Response());
+            responseAction.InvokeWithMessage(callerState, response is not null ? new Response { Value = Any.Pack(response) } : new Response());
         }
         catch (Exception e)
         {
             var error = e.ToErrorMessage(InteropErrorConverter.SetDomainAndCodes);
 
-            responseCallback.InvokeWithResponse(callerState, new Response { Error = error });
+            responseAction.InvokeWithMessage(callerState, new Response { Error = error });
         }
     }
 }
