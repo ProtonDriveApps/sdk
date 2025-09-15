@@ -12,7 +12,14 @@ import { NodesCache } from './cache';
 import { NodesCryptoCache } from './cryptoCache';
 import { NodesCryptoService } from './cryptoService';
 import { parseFileExtendedAttributes, parseFolderExtendedAttributes } from './extendedAttributes';
-import { SharesService, EncryptedNode, DecryptedUnparsedNode, DecryptedNode, DecryptedNodeKeys } from './interface';
+import {
+    SharesService,
+    EncryptedNode,
+    DecryptedUnparsedNode,
+    DecryptedNode,
+    DecryptedNodeKeys,
+    FilterOptions,
+} from './interface';
 import { validateNodeName } from './validations';
 import { isProtonDocument, isProtonSheet } from './mediaTypes';
 
@@ -71,12 +78,16 @@ export class NodesAccess {
         return node;
     }
 
-    async *iterateFolderChildren(parentNodeUid: string, signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
+    async *iterateFolderChildren(
+        parentNodeUid: string,
+        filterOptions?: FilterOptions,
+        signal?: AbortSignal,
+    ): AsyncGenerator<DecryptedNode> {
         // Ensure the parent is loaded and up-to-date.
         const parentNode = await this.getNode(parentNodeUid);
 
         const batchLoading = new BatchLoading<string, DecryptedNode>({
-            iterateItems: (nodeUids) => this.loadNodes(nodeUids, signal),
+            iterateItems: (nodeUids) => this.loadNodes(nodeUids, filterOptions, signal),
             batchSize: BATCH_LOADING_SIZE,
         });
 
@@ -84,6 +95,9 @@ export class NodesAccess {
         if (areChildrenCached) {
             for await (const node of this.cache.iterateChildren(parentNodeUid)) {
                 if (node.ok && !node.node.isStale) {
+                    if (filterOptions?.type && node.node.type !== filterOptions.type) {
+                        continue;
+                    }
                     yield node.node;
                 } else {
                     yield* batchLoading.load(node.uid);
@@ -94,13 +108,17 @@ export class NodesAccess {
         }
 
         this.logger.debug(`Folder ${parentNodeUid} children are not cached`);
-        for await (const nodeUid of this.apiService.iterateChildrenNodeUids(parentNode.uid, signal)) {
+        const onlyFolders = filterOptions?.type === NodeType.Folder;
+        for await (const nodeUid of this.apiService.iterateChildrenNodeUids(parentNode.uid, onlyFolders, signal)) {
             let node;
             try {
                 node = await this.cache.getNode(nodeUid);
             } catch {}
 
             if (node && !node.isStale) {
+                if (filterOptions?.type && node.type !== filterOptions.type) {
+                    continue;
+                }
                 yield node;
             } else {
                 this.logger.debug(`Node ${nodeUid} from ${parentNodeUid} is ${node?.isStale ? 'stale' : 'not cached'}`);
@@ -108,14 +126,18 @@ export class NodesAccess {
             }
         }
         yield* batchLoading.loadRest();
-        await this.cache.setFolderChildrenLoaded(parentNodeUid);
+
+        // If some nodes were filtered out, we don't have the folder fully loaded.
+        if (!filterOptions) {
+            await this.cache.setFolderChildrenLoaded(parentNodeUid);
+        }
     }
 
     // Improvement requested: keep status of loaded trash and leverage cache.
     async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
         const { volumeId } = await this.shareService.getMyFilesIDs();
         const batchLoading = new BatchLoading<string, DecryptedNode>({
-            iterateItems: (nodeUids) => this.loadNodes(nodeUids, signal),
+            iterateItems: (nodeUids) => this.loadNodes(nodeUids, undefined, signal),
             batchSize: BATCH_LOADING_SIZE,
         });
         for await (const nodeUid of this.apiService.iterateTrashedNodeUids(volumeId, signal)) {
@@ -136,7 +158,7 @@ export class NodesAccess {
 
     async *iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode | MissingNode> {
         const batchLoading = new BatchLoading<string, DecryptedNode | MissingNode>({
-            iterateItems: (nodeUids) => this.loadNodesWithMissingReport(nodeUids, signal),
+            iterateItems: (nodeUids) => this.loadNodesWithMissingReport(nodeUids, undefined, signal),
             batchSize: BATCH_LOADING_SIZE,
         });
         for await (const result of this.cache.iterateNodes(nodeUids)) {
@@ -191,8 +213,12 @@ export class NodesAccess {
         return this.decryptNode(encryptedNode);
     }
 
-    private async *loadNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
-        for await (const result of this.loadNodesWithMissingReport(nodeUids, signal)) {
+    private async *loadNodes(
+        nodeUids: string[],
+        filterOptions?: FilterOptions,
+        signal?: AbortSignal,
+    ): AsyncGenerator<DecryptedNode> {
+        for await (const result of this.loadNodesWithMissingReport(nodeUids, filterOptions, signal)) {
             if ('missingUid' in result) {
                 continue;
             }
@@ -202,6 +228,7 @@ export class NodesAccess {
 
     private async *loadNodesWithMissingReport(
         nodeUids: string[],
+        filterOptions?: FilterOptions,
         signal?: AbortSignal,
     ): AsyncGenerator<DecryptedNode | MissingNode> {
         const returnedNodeUids: string[] = [];
@@ -209,7 +236,7 @@ export class NodesAccess {
 
         const { volumeId: ownVolumeId } = await this.shareService.getMyFilesIDs();
 
-        const encryptedNodesIterator = this.apiService.iterateNodes(nodeUids, ownVolumeId, signal);
+        const encryptedNodesIterator = this.apiService.iterateNodes(nodeUids, ownVolumeId, filterOptions, signal);
         const decryptNodeMapper = async (encryptedNode: EncryptedNode): Promise<Result<DecryptedNode, unknown>> => {
             returnedNodeUids.push(encryptedNode.uid);
             try {

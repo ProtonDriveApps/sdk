@@ -1,4 +1,6 @@
-import { ProtonDriveClient, MaybeNode, MemberRole, Device } from '../../../sdk/src';
+import { ParseArgsConfig } from 'node:util';
+
+import { ProtonDriveClient, MaybeNode, MemberRole, Device, NodeType } from '../../../sdk/src';
 import { Command, ActionArgs } from './interface';
 import { PathType, Path } from './paths';
 import { formatAuthor, formatDate, formatSize } from './formatters';
@@ -8,9 +10,21 @@ export class CommandFileSystemList implements Command {
     group = 'filesystem';
     name = 'list';
     args = ['path'];
+    options: ParseArgsConfig['options'] = {
+        type: {
+            type: 'string',
+            short: 't',
+            default: '',
+        },
+    };
 
-    async action({ sdk, paths, args: [pathString], options: { json } }: ActionArgs) {
+    async action({ sdk, paths, args: [pathString], options: { json, type } }: ActionArgs) {
         const path = paths.getPath(pathString);
+
+        const nodeType = type ? Object.entries(NodeType).find(([, value]) => value === type)?.[1] : undefined;
+        if (type && !nodeType) {
+            throw new Error(`Invalid node type: ${type}`);
+        }
 
         if (path.type === PathType.Root) {
             if (json) {
@@ -18,7 +32,7 @@ export class CommandFileSystemList implements Command {
             }
             paths.rootPaths.forEach((path) => console.log(path));
         } else if (path.type === PathType.MyFiles) {
-            await this.printChildren(sdk, path, { json });
+            await this.printChildren(sdk, path, { json, nodeType });
         } else if (path.type === PathType.Devices) {
             if (path.fullPath === '/devices') {
                 for await (const device of sdk.iterateDevices()) {
@@ -46,9 +60,10 @@ export class CommandFileSystemList implements Command {
         }
     }
 
-    private async printChildren(sdk: ProtonDriveClient, path: Path, options: { json: boolean }) {
+    private async printChildren(sdk: ProtonDriveClient, path: Path, options: { json: boolean; nodeType?: NodeType }) {
         const parentNode = await path.getNode();
-        for await (const node of sdk.iterateFolderChildren(parentNode)) {
+        const filterOptions = options.nodeType ? { type: options.nodeType } : undefined;
+        for await (const node of sdk.iterateFolderChildren(parentNode, filterOptions)) {
             this.printNode(node, options);
         }
     }
