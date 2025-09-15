@@ -27,6 +27,7 @@ import {
     ThumbnailType,
     ThumbnailResult,
     SDKEvent,
+    NodeType,
 } from './interface';
 import {
     getUid,
@@ -297,9 +298,14 @@ export class ProtonDriveClient {
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the children of the given parent node.
      */
-    async *iterateFolderChildren(parentNodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+    async *iterateFolderChildren(
+        parentNodeUid: NodeOrUid,
+        filterOptions?: { type?: NodeType },
+        signal?: AbortSignal,
+    ): AsyncGenerator<MaybeNode> {
         this.logger.info(`Iterating children of ${getUid(parentNodeUid)}`);
-        yield* convertInternalNodeIterator(this.nodes.access.iterateFolderChildren(getUid(parentNodeUid), signal));
+        const iterator = this.nodes.access.iterateFolderChildren(getUid(parentNodeUid), filterOptions, signal);
+        yield* convertInternalNodeIterator(iterator);
     }
 
     /**

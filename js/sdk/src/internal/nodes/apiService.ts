@@ -15,7 +15,7 @@ import { asyncIteratorRace } from '../asyncIteratorRace';
 import { batch } from '../batch';
 import { splitNodeUid, makeNodeUid, makeNodeRevisionUid, splitNodeRevisionUid, makeNodeThumbnailUid } from '../uids';
 import { NodeOutOfSyncError } from './errors';
-import { EncryptedNode, EncryptedRevision, Thumbnail } from './interface';
+import { EncryptedNode, EncryptedRevision, FilterOptions, Thumbnail } from './interface';
 
 // This is the number of calls to the API that are made in parallel.
 const API_CONCURRENCY = 15;
@@ -117,7 +117,7 @@ export class NodeAPIService {
     }
 
     async getNode(nodeUid: string, ownVolumeId: string, signal?: AbortSignal): Promise<EncryptedNode> {
-        const nodesGenerator = this.iterateNodes([nodeUid], ownVolumeId, signal);
+        const nodesGenerator = this.iterateNodes([nodeUid], ownVolumeId, undefined, signal);
         const result = await nodesGenerator.next();
         if (!result.value) {
             throw new ValidationError(c('Error').t`Node not found`);
@@ -126,7 +126,12 @@ export class NodeAPIService {
         return result.value;
     }
 
-    async *iterateNodes(nodeUids: string[], ownVolumeId: string, signal?: AbortSignal): AsyncGenerator<EncryptedNode> {
+    async *iterateNodes(
+        nodeUids: string[],
+        ownVolumeId: string,
+        filterOptions?: FilterOptions,
+        signal?: AbortSignal,
+    ): AsyncGenerator<EncryptedNode> {
         const allNodeIds = nodeUids.map(splitNodeUid);
 
         const nodeIdsByVolumeId = new Map<string, string[]>();
@@ -148,7 +153,13 @@ export class NodeAPIService {
                 const isAdmin = volumeId === ownVolumeId;
 
                 yield (async function* () {
-                    const errorsPerVolume = yield* iterateNodesPerVolume(volumeId, nodeIds, isAdmin, signal);
+                    const errorsPerVolume = yield* iterateNodesPerVolume(
+                        volumeId,
+                        nodeIds,
+                        isAdmin,
+                        filterOptions,
+                        signal,
+                    );
                     if (errorsPerVolume.length) {
                         errors.push(...errorsPerVolume);
                     }
@@ -168,6 +179,7 @@ export class NodeAPIService {
         volumeId: string,
         nodeIds: string[],
         isOwnVolumeId: boolean,
+        filterOptions?: FilterOptions,
         signal?: AbortSignal,
     ): AsyncGenerator<EncryptedNode, unknown[]> {
         const errors: unknown[] = [];
@@ -183,7 +195,11 @@ export class NodeAPIService {
 
             for (const link of response.Links) {
                 try {
-                    yield linkToEncryptedNode(this.logger, volumeId, link, isOwnVolumeId);
+                    const encryptedNode = linkToEncryptedNode(this.logger, volumeId, link, isOwnVolumeId);
+                    if (filterOptions?.type && encryptedNode.type !== filterOptions.type) {
+                        continue;
+                    }
+                    yield encryptedNode;
                 } catch (error: unknown) {
                     this.logger.error(`Failed to transform node ${link.Link.LinkID}`, error);
                     errors.push(error);
@@ -195,13 +211,25 @@ export class NodeAPIService {
     }
 
     // Improvement requested: load next page sooner before all IDs are yielded.
-    async *iterateChildrenNodeUids(parentNodeUid: string, signal?: AbortSignal): AsyncGenerator<string> {
+    async *iterateChildrenNodeUids(
+        parentNodeUid: string,
+        onlyFolders: boolean = false,
+        signal?: AbortSignal,
+    ): AsyncGenerator<string> {
         const { volumeId, nodeId } = splitNodeUid(parentNodeUid);
 
         let anchor = '';
         while (true) {
+            const queryParams = new URLSearchParams();
+            if (onlyFolders) {
+                queryParams.set('FoldersOnly', '1');
+            }
+            if (anchor) {
+                queryParams.set('AnchorID', anchor);
+            }
+
             const response = await this.apiService.get<GetChildrenResponse>(
-                `drive/v2/volumes/${volumeId}/folders/${nodeId}/children?${anchor ? `AnchorID=${anchor}` : ''}`,
+                `drive/v2/volumes/${volumeId}/folders/${nodeId}/children?${queryParams.toString()}`,
                 signal,
             );
             for (const linkID of response.LinkIDs) {

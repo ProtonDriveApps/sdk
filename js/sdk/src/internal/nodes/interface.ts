@@ -12,6 +12,10 @@ import {
     RevisionState,
 } from '../../interface';
 
+export type FilterOptions = {
+    type?: NodeType;
+};
+
 /**
  * Internal common node interface for both encrypted or decrypted node.
  */
