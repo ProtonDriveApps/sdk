@@ -1,16 +1,23 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Google.Protobuf.Reflection;
 using Google.Protobuf.WellKnownTypes;
 using Proton.Sdk.CExports;
-using Proton.Sdk.Drive.CExports;
-using Request = Proton.Sdk.Drive.CExports.Request;
+using Proton.Sdk.CExports.Tasks;
 
 namespace Proton.Drive.Sdk.CExports;
 
 internal static class InteropMessageHandler
 {
+    private static readonly TypeRegistry ResponseTypeRegistry = TypeRegistry.FromMessages(
+        Int32Value.Descriptor,
+        StringValue.Descriptor,
+        BytesValue.Descriptor,
+        RepeatedBytesValue.Descriptor,
+        Address.Descriptor);
+
     [UnmanagedCallersOnly(EntryPoint = "proton_drive_sdk_handle_request", CallConvs = [typeof(CallConvCdecl)])]
-    public static async void OnRequestReceived(InteropArray<byte> requestBytes, nint callerState, InteropValueCallback<InteropArray<byte>> responseCallback)
+    public static async void OnRequestReceived(InteropArray<byte> requestBytes, nint callerState, InteropAction<nint, InteropArray<byte>> responseAction)
     {
         try
         {
@@ -19,7 +26,10 @@ internal static class InteropMessageHandler
             var response = request.PayloadCase switch
             {
                 Request.PayloadOneofCase.DriveClientCreate
-                    => InteropProtonDriveClient.HandleCreate(request.DriveClientCreate),
+                    => InteropProtonDriveClient.HandleCreate(request.DriveClientCreate, callerState),
+
+                Request.PayloadOneofCase.DriveClientCreateFromSession
+                    => InteropProtonDriveClient.HandleCreate(request.DriveClientCreateFromSession),
 
                 Request.PayloadOneofCase.DriveClientFree
                     => InteropProtonDriveClient.HandleFree(request.DriveClientFree),
@@ -73,34 +83,84 @@ internal static class InteropMessageHandler
                     => throw new ArgumentException($"Unknown request type: {request.PayloadCase}", nameof(requestBytes)),
             };
 
-            responseCallback.InvokeWithResponse(callerState, response is not null ? new Response { Value = Any.Pack(response) } : new Response());
+            responseAction.InvokeWithMessage(callerState, response is not null ? new Response { Value = Any.Pack(response) } : new Response());
         }
         catch (Exception e)
         {
-            var error = e.ToErrorMessage(InteropErrorConverter.SetDomainAndCodes);
+            var error = e.ToErrorMessage(InteropDriveErrorConverter.SetDomainAndCodes);
 
-            responseCallback.InvokeWithResponse(callerState, new Response { Error = error });
+            responseAction.InvokeWithMessage(callerState, new Response { Error = error });
         }
     }
 
     [UnmanagedCallersOnly(EntryPoint = "proton_drive_sdk_handle_response", CallConvs = [typeof(CallConvCdecl)])]
     public static void OnResponseReceived(nint state, InteropArray<byte> responseBytes)
     {
-        var response = CallbackResponse.Parser.ParseFrom(responseBytes.AsReadOnlySpan());
+        var response = Response.Parser.ParseFrom(responseBytes.AsReadOnlySpan());
 
-        switch (response.PayloadCase)
+        if (response.Error is not null)
         {
-            case CallbackResponse.PayloadOneofCase.StreamRead:
-                InteropStream.HandleReadResponse(state, response.StreamRead);
-                break;
-
-            case CallbackResponse.PayloadOneofCase.StreamWrite:
-                InteropStream.HandleWriteResponse(state, response.StreamWrite);
-                break;
-
-            case CallbackResponse.PayloadOneofCase.None:
-            default:
-                throw new ArgumentException($"Unknown request type: {response.PayloadCase}", nameof(responseBytes));
+            SetException(state, response.Error.Message);
+            return;
         }
+
+        if (response.Value is null)
+        {
+            SetResult(state);
+            return;
+        }
+
+        var responseValue = response.Value.Unpack(ResponseTypeRegistry);
+
+        switch (responseValue)
+        {
+            case Int32Value value:
+                SetResult(state, value);
+                break;
+
+            case StringValue value:
+                SetResult(state, value);
+                break;
+
+            case BytesValue value:
+                SetResult(state, value);
+                break;
+
+            case RepeatedBytesValue value:
+                SetResult(state, value);
+                break;
+
+            case Address value:
+                SetResult(state, value);
+                break;
+
+            case HttpResponse value:
+                SetResult(state, value);
+                break;
+
+            default:
+                throw new ArgumentException($"Unknown response value type: {responseValue.Descriptor.Name}", nameof(responseBytes));
+        }
+    }
+
+    private static void SetResult<T>(nint tcsHandle, T value)
+    {
+        var tcs = Interop.GetFromHandleAndFree<ValueTaskCompletionSource<T>>(tcsHandle);
+
+        tcs.SetResult(value);
+    }
+
+    private static void SetResult(nint tcsHandle)
+    {
+        var tcs = Interop.GetFromHandleAndFree<ValueTaskCompletionSource>(tcsHandle);
+
+        tcs.SetResult();
+    }
+
+    private static void SetException(nint tcsHandle, string errorMessage)
+    {
+        var tfs = Interop.GetFromHandleAndFree<IValueTaskFaultingSource>(tcsHandle);
+
+        tfs.SetException(new Exception(errorMessage));
     }
 }

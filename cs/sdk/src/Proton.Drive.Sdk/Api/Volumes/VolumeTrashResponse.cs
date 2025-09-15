@@ -6,5 +6,5 @@ namespace Proton.Drive.Sdk.Api.Volumes;
 internal sealed class VolumeTrashResponse : ApiResponse
 {
     [JsonPropertyName("Trash")]
-    public IReadOnlyList<ShareTrashDto> TrashByShare { get; init; }
+    public required IReadOnlyList<ShareTrashDto> TrashByShare { get; init; }
 }

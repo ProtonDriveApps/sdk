@@ -10,6 +10,7 @@ public record ProtonClientOptions
     public string? UserAgent { get; set; }
     public ProtonClientTlsPolicy? TlsPolicy { get; set; }
     public Func<DelegatingHandler>? CustomHttpMessageHandlerFactory { get; set; }
+    public IHttpClientFactory? HttpClientFactory { get; set; }
     public ICacheRepository? EntityCacheRepository { get; set; }
     public ILoggerFactory? LoggerFactory { get; set; }
     internal ICacheRepository? SecretCacheRepository { get; set; }

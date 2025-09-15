@@ -1,7 +1,6 @@
 ﻿using Google.Protobuf;
 using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Sdk.CExports;
-using Proton.Sdk.Drive.CExports;
 
 namespace Proton.Drive.Sdk.CExports;
 

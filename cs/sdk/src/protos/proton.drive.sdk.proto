@@ -1,41 +1,82 @@
 edition = "2023";
-package proton.sdk.drive;
+package proton.drive.sdk;
 
 option features.utf8_validation = NONE;
-option csharp_namespace = "Proton.Sdk.Drive.CExports";
+option csharp_namespace = "Proton.Drive.Sdk.CExports";
 
 import "proton.sdk.proto";
 
 message Request {
     oneof payload {
-        DriveClientCreateRequest DriveClientCreate = 100;
-        DriveClientFreeRequest DriveClientFree = 101;
-        DriveClientGetFileUploaderRequest DriveClientGetFileUploader = 102;
-        DriveClientGetFileRevisionUploaderRequest DriveClientGetFileRevisionUploader = 103;
-        DriveClientGetFileDownloaderRequest DriveClientGetFileDownloader = 104;
+        DriveClientCreateRequest drive_client_create = 1000;
+        DriveClientCreateFromSessionRequest drive_client_create_from_session = 1001;
+        DriveClientFreeRequest drive_client_free = 1002;
+        DriveClientGetFileUploaderRequest drive_client_get_file_uploader = 1003;
+        DriveClientGetFileRevisionUploaderRequest drive_client_get_file_revision_uploader = 1004;
+        DriveClientGetFileDownloaderRequest drive_client_get_file_downloader = 1005;
 
-        UploadFromStreamRequest UploadFromStream = 200;
-        FileUploaderFreeRequest FileUploaderFree = 201;
-        UploadControllerAwaitCompletionRequest UploadControllerAwaitCompletion = 202;
-        UploadControllerPauseRequest UploadControllerPause = 203;
-        UploadControllerResumeRequest UploadControllerResume = 204;
-        UploadControllerFreeRequest UploadControllerFree = 205;
+        UploadFromStreamRequest upload_from_stream = 1100;
+        FileUploaderFreeRequest file_uploader_free = 1101;
+        UploadControllerAwaitCompletionRequest upload_controller_await_completion = 1102;
+        UploadControllerPauseRequest upload_controller_pause = 1103;
+        UploadControllerResumeRequest upload_controller_resume = 1104;
+        UploadControllerFreeRequest upload_controller_free = 1105;
 
-        DownloadToStreamRequest DownloadToStream = 300;
-        FileDownloaderFreeRequest FileDownloaderFree = 301;
-        DownloadControllerAwaitCompletionRequest DownloadControllerAwaitCompletion = 302;
-        DownloadControllerPauseRequest DownloadControllerPause = 303;
-        DownloadControllerResumeRequest DownloadControllerResume = 304;
-        DownloadControllerFreeRequest DownloadControllerFree = 305;
+        DownloadToStreamRequest download_to_stream = 1200;
+        FileDownloaderFreeRequest file_downloader_free = 1201;
+        DownloadControllerAwaitCompletionRequest download_controller_await_completion = 1202;
+        DownloadControllerPauseRequest download_controller_pause = 1203;
+        DownloadControllerResumeRequest download_controller_resume = 1204;
+        DownloadControllerFreeRequest download_controller_free = 1205;
     };
 }
 
-message CallbackResponse {
+// Account client interface
+
+message AccountClient {
+    // Pointer to C function that will be called:
+    // void account_client_request_action(long state, ByteArray http_request, long caller_state)
+    //   state: value that was passed as caller state when this message was sent, i.e. state of the bindings
+    //   http_request: Protobuf message of type proton.drive.sdk.AccountClientRequest carrying the request data
+    //   caller_state: value to provide as state during the response call
+    int64 request_action = 1;
+}
+
+message AccountClientRequest {
     oneof payload {
-        StreamReadResponse StreamRead = 100;
-        StreamWriteResponse StreamWrite = 101;
+        GetAddressRequest get_address = 1;
+        GetDefaultAddressRequest get_default_address = 2;
+        GetAddressPrimaryPrivateKeyRequest get_address_primary_private_key = 3;
+        GetAddressPrivateKeysRequest get_address_private_keys = 4;
+        GetAddressPublicKeysRequest get_address_public_keys = 5;
     };
 }
+
+// The response value type must be Address.
+message GetAddressRequest {
+    string address_id = 1;
+}
+
+// The response value type must be Address.
+message GetDefaultAddressRequest {
+}
+
+// The response value type must be BytesValue.
+message GetAddressPrimaryPrivateKeyRequest {
+    string address_id = 1;
+}
+
+// The response value type must be RepeatedBytesValue.
+message GetAddressPrivateKeysRequest {
+    string address_id = 1;
+}
+
+// The response value type must be RepeatedBytesValue.
+message GetAddressPublicKeysRequest {
+    string email_address = 1;
+}
+
+// Drive - client
 
 message RevisionUploaderProvisionRequest {
     string file_uid = 1;
@@ -53,10 +94,26 @@ message Thumbnail {
     int64 content_pointer = 2;
 }
 
-// Drive - client
-
-// The response value will be an Int64Value message.
+// The response value type must be Int64Value.
 message DriveClientCreateRequest {
+    string base_url = 1;
+    string bindings_language = 2; // Optional
+
+    // Pointer to C function that will be called:
+    // void send_http_request_action(long state, ByteArray http_request, long caller_state)
+    //   state: value that was passed as caller state when this message was sent, i.e. state of the bindings
+    //   http_request: Protobuf message of type proton.sdk.HttpRequest carrying the HTTP request data
+    //   caller_state: value to provide as state during the response call
+    int64 send_http_request_action = 3;
+
+    AccountClient account_client = 4;
+    string entity_cache_path = 5; // Optional
+    string secret_cache_path = 6; // Optional
+    int64 logger_provider_handle = 7;
+}
+
+// The response value type must be Int64Value.
+message DriveClientCreateFromSessionRequest {
     int64 session_handle = 1;
 }
 
@@ -67,7 +124,7 @@ message DriveClientFreeRequest {
 
 // Drive - uploads
 
-// The response value will be an Int64Value message.
+// The response value type must be Int64Value.
 message DriveClientGetFileUploaderRequest {
     int64 client_handle = 1;
     string parent_folder_uid = 2;
@@ -88,12 +145,12 @@ message DriveClientGetFileRevisionUploaderRequest {
     int64 cancellation_token_source_handle = 5;
 }
 
-// The response value will be an Int64Value message.
+// The response value type must be Int64Value.
 message UploadFromStreamRequest {
     int64 uploader_handle = 1;
     repeated Thumbnail thumbnails = 2;
-    int64 read_callback = 3; // C signature: void on_stream_operation(const void* state, ByteArray buffer, const void* caller_state);
-    int64 progress_callback = 4; // See array_callback_function in C header file for signature
+    int64 read_action = 3; // C signature: void on_stream_operation(const void* state, ByteArray buffer, const void* caller_state);
+    int64 progress_action = 4; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 5;
 }
 
@@ -124,18 +181,18 @@ message UploadControllerFreeRequest {
 
 // Drive - downloads
 
-// The response value will be an Int64Value message.
+// The response value type must be Int64Value.
 message DriveClientGetFileDownloaderRequest {
     int64 client_handle = 1;
     string revision_uid = 2;
     int64 cancellation_token_source_handle = 3;
 }
 
-// The response value will be an Int64Value message.
+// The response value type must be Int64Value.
 message DownloadToStreamRequest {
     int64 downloader_handle = 1;
-    int64 write_callback = 2; // C signature: void on_stream_operation(const void* state, ByteArray buffer, const void* caller_state);
-    int64 progress_callback = 3; // See array_callback_function in C header file for signature
+    int64 write_action = 2; // C signature: void on_stream_operation(const void* state, ByteArray buffer, const void* caller_state);
+    int64 progress_action = 3; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 4;
 }
 
@@ -164,25 +221,14 @@ message DownloadControllerFreeRequest {
     int64 download_controller_handle = 1;
 }
 
-// The response must be a StreamReadResponse message.
+// The response value type must be Int32Value.
 message StreamReadRequest {
     int64 buffer_pointer = 1;
     int32 buffer_length = 2;
 }
 
-// The response must be a StreamWriteResponse message.
+// No response value.
 message StreamWriteRequest {
     int64 data_pointer = 1;
     int32 data_length = 2;
-}
-
-message StreamReadResponse {
-    oneof result {
-        int32 BytesRead = 1;
-        proton.sdk.Error Error = 2;
-    }
-}
-
-message StreamWriteResponse {
-    proton.sdk.Error error = 1; // Optional
 }
