@@ -81,9 +81,9 @@ internal static class ProtonApiSessionRequestHandler
         var passwordMode = request.IsWaitingForDataPassword ? PasswordMode.Dual : PasswordMode.Single;
 
         var session = ProtonApiSession.Resume(
-            new Authentication.SessionId(request.SessionId.Value),
+            new SessionId(request.SessionId),
             request.Username,
-            new Users.UserId(request.UserId.Value),
+            new Users.UserId(request.UserId),
             request.AccessToken,
             request.RefreshToken,
             request.Scopes,
@@ -104,7 +104,7 @@ internal static class ProtonApiSessionRequestHandler
 
         var session = ProtonApiSession.Renew(
             expiredSession,
-            new Authentication.SessionId(request.SessionId.Value),
+            new SessionId(request.SessionId),
             request.AccessToken,
             request.RefreshToken,
             request.Scopes,
@@ -127,9 +127,9 @@ internal static class ProtonApiSessionRequestHandler
     {
         var session = Interop.GetFromHandle<ProtonApiSession>((nint)request.SessionHandle);
 
-        var tokenRefreshedCallback = (delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, void>)request.TokensRefreshedCallback;
+        var tokenRefreshedAction = new InteropAction<nint, InteropArray<byte>>(request.TokensRefreshedAction);
 
-        var subscription = TokensRefreshedSubscription.Create(session, callerState, tokenRefreshedCallback);
+        var subscription = TokensRefreshedSubscription.Create(session, callerState, tokenRefreshedAction);
 
         return new Int64Value { Value = Interop.AllocHandle(subscription) };
     }
@@ -150,28 +150,28 @@ internal static class ProtonApiSessionRequestHandler
         return null;
     }
 
-    private sealed unsafe class TokensRefreshedSubscription : IDisposable
+    private sealed class TokensRefreshedSubscription : IDisposable
     {
         private readonly ProtonApiSession _session;
         private readonly nint _callerState;
-        private readonly delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, void> _tokensRefreshedCallback;
+        private readonly InteropAction<nint, InteropArray<byte>> _tokensRefreshedAction;
 
         private TokensRefreshedSubscription(
             ProtonApiSession session,
             nint callerState,
-            delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, void> tokensRefreshedCallback)
+            InteropAction<nint, InteropArray<byte>> tokensRefreshedAction)
         {
             _session = session;
             _callerState = callerState;
-            _tokensRefreshedCallback = tokensRefreshedCallback;
+            _tokensRefreshedAction = tokensRefreshedAction;
         }
 
         public static TokensRefreshedSubscription Create(
             ProtonApiSession session,
             nint callerState,
-            delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, void> tokensRefreshedCallback)
+            InteropAction<nint, InteropArray<byte>> tokensRefreshedAction)
         {
-            var subscription = new TokensRefreshedSubscription(session, callerState, tokensRefreshedCallback);
+            var subscription = new TokensRefreshedSubscription(session, callerState, tokensRefreshedAction);
 
             session.TokenCredential.TokensRefreshed += subscription.Handle;
 
@@ -185,11 +185,11 @@ internal static class ProtonApiSessionRequestHandler
 
         private void Handle(string accessToken, string refreshToken)
         {
-            var tokensMessage = InteropArray<byte>.FromMemory(new SessionTokens { AccessToken = accessToken, RefreshToken = refreshToken }.ToByteArray());
+            var tokensMessage = InteropArray<byte>.AllocFromMemory(new SessionTokens { AccessToken = accessToken, RefreshToken = refreshToken }.ToByteArray());
 
             try
             {
-                _tokensRefreshedCallback(_callerState, tokensMessage);
+                _tokensRefreshedAction.Invoke(_callerState, tokensMessage);
             }
             finally
             {

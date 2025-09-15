@@ -8,6 +8,7 @@ using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk;
+using Proton.Sdk.Caching;
 
 namespace Proton.Drive.Sdk;
 
@@ -29,6 +30,22 @@ public sealed class ProtonDriveClient
             new AccountClientAdapter(session),
             new DriveClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository),
             session.ClientConfiguration.LoggerFactory,
+            uid ?? Guid.NewGuid().ToString())
+    {
+    }
+
+    public ProtonDriveClient(
+        IHttpClientFactory httpClientFactory,
+        IAccountClient accountClient,
+        ICacheRepository entityCacheRepository,
+        ICacheRepository secretCacheRepository,
+        ILoggerFactory loggerFactory,
+        string? uid = null)
+        : this(
+            httpClientFactory.CreateClient(),
+            accountClient,
+            new DriveClientCache(entityCacheRepository, secretCacheRepository),
+            loggerFactory,
             uid ?? Guid.NewGuid().ToString())
     {
     }

@@ -11,6 +11,7 @@
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
+    <PackageReference Include="Proton.Cryptography" />
   </ItemGroup>
 
   <ItemGroup>
