@@ -5,7 +5,7 @@ import { DecryptedNode } from '../nodes';
 
 export enum SharingType {
     SharedByMe = 'sharedByMe',
-    sharedWithMe = 'sharedWithMe',
+    SharedWithMe = 'sharedWithMe',
 }
 
 /**
