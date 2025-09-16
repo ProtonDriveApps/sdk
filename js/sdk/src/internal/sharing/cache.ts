@@ -44,11 +44,28 @@ export class SharingCache {
     }
 
     async getSharedWithMeNodeUids(): Promise<string[]> {
-        return this.getNodeUids(SharingType.sharedWithMe);
+        return this.getNodeUids(SharingType.SharedWithMe);
+    }
+
+    async hasSharedWithMeNodeUidsLoaded(): Promise<boolean> {
+        try {
+            await this.getNodeUids(SharingType.SharedWithMe);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    async addSharedWithMeNodeUid(nodeUid: string): Promise<void> {
+        return this.addNodeUid(SharingType.SharedWithMe, nodeUid);
+    }
+
+    async removeSharedWithMeNodeUid(nodeUid: string): Promise<void> {
+        return this.removeNodeUid(SharingType.SharedWithMe, nodeUid);
     }
 
     async setSharedWithMeNodeUids(nodeUids: string[] | undefined): Promise<void> {
-        return this.setNodeUids(SharingType.sharedWithMe, nodeUids);
+        return this.setNodeUids(SharingType.SharedWithMe, nodeUids);
     }
 
     /**

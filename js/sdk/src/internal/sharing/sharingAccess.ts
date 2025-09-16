@@ -124,6 +124,9 @@ export class SharingAccess {
         }
 
         await this.apiService.removeMember(memberUid);
+        if (await this.cache.hasSharedWithMeNodeUidsLoaded()) {
+            await this.cache.removeSharedWithMeNodeUid(nodeUid);
+        }
     }
 
     async *iterateInvitations(signal?: AbortSignal): AsyncGenerator<ProtonInvitationWithNode> {
@@ -138,6 +141,9 @@ export class SharingAccess {
         const encryptedInvitation = await this.apiService.getInvitation(invitationUid);
         const { base64SessionKeySignature } = await this.cryptoService.acceptInvitation(encryptedInvitation);
         await this.apiService.acceptInvitation(invitationUid, base64SessionKeySignature);
+        if (await this.cache.hasSharedWithMeNodeUidsLoaded()) {
+            await this.cache.addSharedWithMeNodeUid(encryptedInvitation.node.uid);
+        }
     }
 
     async rejectInvitation(invitationUid: string): Promise<void> {
