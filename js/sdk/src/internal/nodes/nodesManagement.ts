@@ -137,7 +137,7 @@ export class NodesManagement {
             throw new ValidationError(c('Error').t`Moving item to a non-folder is not allowed`);
         }
 
-        const encryptedCrypto = await this.cryptoService.moveNode(
+        const encryptedCrypto = await this.cryptoService.encryptNodeWithNewParent(
             node,
             keys,
             { key: newParentKeys.key, hashKey: newParentKeys.hashKey },
@@ -179,6 +179,81 @@ export class NodesManagement {
             nameAuthor: resultOk(encryptedCrypto.nameSignatureEmail),
         };
         await this.nodesAccess.notifyNodeChanged(node.uid, newParentUid);
+        return newNode;
+    }
+
+    // Improvement requested: copy nodes in parallel
+    async *copyNodes(nodeUids: string[], newParentNodeUid: string, signal?: AbortSignal): AsyncGenerator<NodeResult> {
+        for (const nodeUid of nodeUids) {
+            if (signal?.aborted) {
+                throw new AbortError(c('Error').t`Copy operation aborted`);
+            }
+            try {
+                await this.copyNode(nodeUid, newParentNodeUid);
+                yield {
+                    uid: nodeUid,
+                    ok: true,
+                };
+            } catch (error: unknown) {
+                yield {
+                    uid: nodeUid,
+                    ok: false,
+                    error: getErrorMessage(error),
+                };
+            }
+        }
+    }
+
+    async copyNode(nodeUid: string, newParentUid: string): Promise<DecryptedNode> {
+        const [node, address] = await Promise.all([
+            this.nodesAccess.getNode(nodeUid),
+            this.nodesAccess.getRootNodeEmailKey(newParentUid),
+        ]);
+
+        const [keys, newParentKeys] = await Promise.all([
+            this.nodesAccess.getNodePrivateAndSessionKeys(nodeUid),
+            this.nodesAccess.getNodeKeys(newParentUid),
+        ]);
+
+        if (!newParentKeys.hashKey) {
+            throw new ValidationError(c('Error').t`Copying item to a non-folder is not allowed`);
+        }
+
+        const encryptedCrypto = await this.cryptoService.encryptNodeWithNewParent(
+            node,
+            keys,
+            { key: newParentKeys.key, hashKey: newParentKeys.hashKey },
+            address,
+        );
+
+        // Node could be uploaded or renamed by anonymous user and thus have
+        // missing signatures that must be added to the copy request.
+        // Node passphrase and signature email must be passed if and only if
+        // the the signatures are missing (key author is null).
+        const anonymousKey = node.keyAuthor.ok && node.keyAuthor.value === null;
+        const keySignatureProperties = !anonymousKey
+            ? {}
+            : {
+                  signatureEmail: encryptedCrypto.signatureEmail,
+                  armoredNodePassphraseSignature: encryptedCrypto.armoredNodePassphraseSignature,
+              };
+        await this.apiService.copyNode(nodeUid, {
+            ...keySignatureProperties,
+            parentUid: newParentUid,
+            armoredNodePassphrase: encryptedCrypto.armoredNodePassphrase,
+            encryptedName: encryptedCrypto.encryptedName,
+            nameSignatureEmail: encryptedCrypto.nameSignatureEmail,
+            hash: encryptedCrypto.hash,
+        });
+        const newNode: DecryptedNode = {
+            ...node,
+            encryptedName: encryptedCrypto.encryptedName,
+            parentUid: newParentUid,
+            hash: encryptedCrypto.hash,
+            keyAuthor: resultOk(encryptedCrypto.signatureEmail),
+            nameAuthor: resultOk(encryptedCrypto.nameSignatureEmail),
+        };
+        await this.nodesAccess.notifyChildCreated(newParentUid);
         return newNode;
     }
 

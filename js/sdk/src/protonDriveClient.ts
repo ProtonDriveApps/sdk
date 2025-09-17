@@ -385,6 +385,29 @@ export class ProtonDriveClient {
     }
 
     /**
+     * Copy the nodes to a new parent node.
+     *
+     * The operation is performed node by node and the results are yielded
+     * as they are available. Order of the results is not guaranteed.
+     *
+     * If one of the nodes fails to copy, the operation continues with the
+     * rest of the nodes. Use `NodeResult` to check the status of the action.
+     *
+     * @param nodeUids - List of node entities or their UIDs.
+     * @param newParentNodeUid - Node entity or its UID string.
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the results of the copy operation
+     */
+    async *copyNodes(
+        nodeUids: NodeOrUid[],
+        newParentNodeUid: NodeOrUid,
+        signal?: AbortSignal,
+    ): AsyncGenerator<NodeResult> {
+        this.logger.info(`Copying ${nodeUids.length} nodes to ${getUid(newParentNodeUid)}`);
+        yield* this.nodes.management.copyNodes(getUids(nodeUids), getUid(newParentNodeUid), signal);
+    }
+
+    /**
      * Trash the nodes.
      *
      * The operation is performed in batches and the results are yielded

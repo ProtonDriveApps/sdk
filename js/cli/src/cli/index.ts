@@ -7,6 +7,7 @@ import { CommandDeviceRename } from './commandDeviceRename';
 import { CommandDiagnosticTree } from './CommandDiagnosticTree';
 import { CommandEventsDrive } from './commandEventsDrive';
 import { CommandEventsMyVolume } from './commandEventsMyVolume';
+import { CommandFileSystemCopy } from './commandFileSystemCopy';
 import { CommandFileSystemCreateFolder } from './commandFileSystemCreateFolder';
 import { CommandFileSystemDelete } from './commandFileSystemDelete';
 import { CommandFileSystemDownload } from './commandFileSystemDownload';
@@ -46,6 +47,7 @@ const COMMANDS = [
     new CommandFileSystemCreateFolder(),
     new CommandFileSystemRename(),
     new CommandFileSystemMove(),
+    new CommandFileSystemCopy(),
     new CommandFileSystemTrash(),
     new CommandFileSystemDelete(),
     new CommandFileSystemRestore(),

@@ -50,6 +50,13 @@ type PutMoveNodeRequest = Extract<
 type PutMoveNodeResponse =
     drivePaths['/drive/v2/volumes/{volumeID}/links/{linkID}/move']['put']['responses']['200']['content']['application/json'];
 
+type PostCopyNodeRequest = Extract<
+    drivePaths['/drive/volumes/{volumeID}/links/{linkID}/copy']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostCopyNodeResponse =
+    drivePaths['/drive/volumes/{volumeID}/links/{linkID}/copy']['post']['responses']['200']['content']['application/json'];
+
 type PostTrashNodesRequest = Extract<
     drivePaths['/drive/v2/volumes/{volumeID}/trash_multiple']['post']['requestBody'],
     { content: object }
@@ -315,6 +322,43 @@ export class NodeAPIService {
             },
             signal,
         );
+    }
+
+    async copyNode(
+        nodeUid: string,
+        newNode: {
+            parentUid: string;
+            armoredNodePassphrase: string;
+            armoredNodePassphraseSignature?: string;
+            signatureEmail?: string;
+            encryptedName: string;
+            nameSignatureEmail?: string;
+            hash: string;
+        },
+        signal?: AbortSignal,
+    ): Promise<string> {
+        const { volumeId, nodeId } = splitNodeUid(nodeUid);
+        const { volumeId: parentVolumeId, nodeId: parentNodeId } = splitNodeUid(newNode.parentUid);
+
+        const response = await this.apiService.post<PostCopyNodeRequest, PostCopyNodeResponse>(
+            `drive/volumes/${volumeId}/links/${nodeId}/copy`,
+            {
+                TargetVolumeID: parentVolumeId,
+                TargetParentLinkID: parentNodeId,
+                NodePassphrase: newNode.armoredNodePassphrase,
+                // @ts-expect-error: API accepts NodePassphraseSignature as optional.
+                NodePassphraseSignature: newNode.armoredNodePassphraseSignature,
+                // @ts-expect-error: API accepts SignatureEmail as optional.
+                SignatureEmail: newNode.signatureEmail,
+                Name: newNode.encryptedName,
+                // @ts-expect-error: API accepts NameSignatureEmail as optional.
+                NameSignatureEmail: newNode.nameSignatureEmail,
+                Hash: newNode.hash,
+            },
+            signal,
+        );
+
+        return makeNodeUid(volumeId, response.LinkID);
     }
 
     // Improvement requested: split into multiple calls for many nodes.
