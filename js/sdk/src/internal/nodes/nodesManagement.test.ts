@@ -5,6 +5,7 @@ import { NodesAccess } from './nodesAccess';
 import { DecryptedNode } from './interface';
 import { NodesManagement } from './nodesManagement';
 import { NodeResult } from '../../interface';
+import { NodeOutOfSyncError } from './errors';
 
 describe('NodesManagement', () => {
     let apiService: NodeAPIService;
@@ -127,6 +128,15 @@ describe('NodesManagement', () => {
             { hash: nodes.nodeUid.hash },
             { encryptedName: 'newArmoredNodeName', nameSignatureEmail: 'newSignatureEmail', hash: 'newHash' },
         );
+        expect(nodesAccess.notifyNodeChanged).toHaveBeenCalledWith('nodeUid');
+    });
+
+    it('renameNode refreshes cache if node is out of sync', async () => {
+        const error = new NodeOutOfSyncError('Node is out of sync');
+        apiService.renameNode = jest.fn().mockRejectedValue(error);
+
+        await expect(management.renameNode('nodeUid', 'new name')).rejects.toThrow(error);
+
         expect(nodesAccess.notifyNodeChanged).toHaveBeenCalledWith('nodeUid');
     });
 
