@@ -3,14 +3,15 @@ import { c } from 'ttag';
 import { MemberRole, NodeType, NodeResult, resultOk } from '../../interface';
 import { AbortError, ValidationError } from '../../errors';
 import { getErrorMessage } from '../errors';
+import { splitNodeUid } from '../uids';
 import { NodeAPIService } from './apiService';
 import { NodesCryptoCache } from './cryptoCache';
 import { NodesCryptoService } from './cryptoService';
+import { NodeOutOfSyncError } from './errors';
 import { DecryptedNode } from './interface';
 import { NodesAccess } from './nodesAccess';
 import { validateNodeName } from './validations';
 import { generateFolderExtendedAttributes } from './extendedAttributes';
-import { splitNodeUid } from '../uids';
 
 /**
  * Provides high-level actions for managing nodes.
@@ -63,17 +64,28 @@ export class NodesManagement {
             throw new Error('Node hash not generated');
         }
 
-        await this.apiService.renameNode(
-            nodeUid,
-            {
-                hash: node.hash,
-            },
-            {
-                encryptedName: armoredNodeName,
-                nameSignatureEmail: signatureEmail,
-                hash: hash,
-            },
-        );
+        try {
+            await this.apiService.renameNode(
+                nodeUid,
+                {
+                    hash: node.hash,
+                },
+                {
+                    encryptedName: armoredNodeName,
+                    nameSignatureEmail: signatureEmail,
+                    hash: hash,
+                },
+            );
+        } catch (error: unknown) {
+            // If node is out of sync, we notify cache to refresh it before next usage.
+            // We let the code still throw the error as it must bubble to the user
+            // so user can re-open the node to ensure they still want to rename it.
+            if (error instanceof NodeOutOfSyncError) {
+                await this.nodesAccess.notifyNodeChanged(nodeUid);
+            }
+            throw error;
+        }
+
         await this.nodesAccess.notifyNodeChanged(nodeUid);
         const newNode: DecryptedNode = {
             ...node,

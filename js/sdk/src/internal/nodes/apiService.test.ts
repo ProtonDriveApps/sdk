@@ -1,7 +1,8 @@
 import { MemberRole, NodeType } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
-import { DriveAPIService, ErrorCode } from '../apiService';
+import { DriveAPIService, ErrorCode, InvalidRequirementsAPIError } from '../apiService';
 import { NodeAPIService } from './apiService';
+import { NodeOutOfSyncError } from './errors';
 
 function generateAPIFileNode(linkOverrides = {}, overrides = {}) {
     const node = generateAPINode();
@@ -540,6 +541,39 @@ describe('nodeAPIService', () => {
             } catch (error: any) {
                 expect(error.message).toEqual('Deleting items from multiple sections is not allowed');
             }
+        });
+    });
+
+    describe('renameNode', () => {
+        it('should rename node', async () => {
+            await api.renameNode(
+                'volumeId~nodeId1',
+                { hash: 'originalHash' },
+                { encryptedName: 'encryptedName1', nameSignatureEmail: 'nameSignatureEmail1', hash: 'newHash' },
+            );
+
+            expect(apiMock.put).toHaveBeenCalledWith(
+                'drive/v2/volumes/volumeId/links/nodeId1/rename',
+                {
+                    Name: 'encryptedName1',
+                    NameSignatureEmail: 'nameSignatureEmail1',
+                    Hash: 'newHash',
+                    OriginalHash: 'originalHash',
+                },
+                undefined,
+            );
+        });
+
+        it('should throw error if node is out of sync', async () => {
+            apiMock.put = jest.fn().mockRejectedValue(new InvalidRequirementsAPIError('Node is out of sync'));
+
+            await expect(
+                api.renameNode(
+                    'volumeId~nodeId1',
+                    { hash: 'originalHash' },
+                    { encryptedName: 'encryptedName1', nameSignatureEmail: 'nameSignatureEmail1', hash: 'newHash' },
+                ),
+            ).rejects.toThrow(new NodeOutOfSyncError('Node is out of sync'));
         });
     });
 });

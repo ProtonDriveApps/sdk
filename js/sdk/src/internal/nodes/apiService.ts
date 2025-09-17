@@ -6,6 +6,7 @@ import { MemberRole, RevisionState } from '../../interface/nodes';
 import {
     DriveAPIService,
     drivePaths,
+    InvalidRequirementsAPIError,
     isCodeOk,
     nodeTypeNumberToNodeType,
     permissionsToMemberRole,
@@ -13,6 +14,7 @@ import {
 import { asyncIteratorRace } from '../asyncIteratorRace';
 import { batch } from '../batch';
 import { splitNodeUid, makeNodeUid, makeNodeRevisionUid, splitNodeRevisionUid, makeNodeThumbnailUid } from '../uids';
+import { NodeOutOfSyncError } from './errors';
 import { EncryptedNode, EncryptedRevision, Thumbnail } from './interface';
 
 // This is the number of calls to the API that are made in parallel.
@@ -251,16 +253,28 @@ export class NodeAPIService {
     ): Promise<void> {
         const { volumeId, nodeId } = splitNodeUid(nodeUid);
 
-        await this.apiService.put<Omit<PutRenameNodeRequest, 'SignatureAddress' | 'MIMEType'>, PutRenameNodeResponse>(
-            `drive/v2/volumes/${volumeId}/links/${nodeId}/rename`,
-            {
-                Name: newNode.encryptedName,
-                NameSignatureEmail: newNode.nameSignatureEmail,
-                Hash: newNode.hash,
-                OriginalHash: originalNode.hash || null,
-            },
-            signal,
-        );
+        try {
+            await this.apiService.put<
+                Omit<PutRenameNodeRequest, 'SignatureAddress' | 'MIMEType'>,
+                PutRenameNodeResponse
+            >(
+                `drive/v2/volumes/${volumeId}/links/${nodeId}/rename`,
+                {
+                    Name: newNode.encryptedName,
+                    NameSignatureEmail: newNode.nameSignatureEmail,
+                    Hash: newNode.hash,
+                    OriginalHash: originalNode.hash || null,
+                },
+                signal,
+            );
+        } catch (error: unknown) {
+            // API returns generic code 2000 when node is out of sync.
+            // We map this to specific error for clarity.
+            if (error instanceof InvalidRequirementsAPIError) {
+                throw new NodeOutOfSyncError(error.message, error.code, { cause: error });
+            }
+            throw error;
+        }
     }
 
     async moveNode(

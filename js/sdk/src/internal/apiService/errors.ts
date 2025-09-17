@@ -57,6 +57,8 @@ export function apiErrorFactory({
         // Here we convert only general enough codes. Specific cases that are
         // not clear from the code itself must be handled by each module
         // separately.
+        case ErrorCode.INVALID_REQUIREMENTS:
+            return new InvalidRequirementsAPIError(message, code, details);
         case ErrorCode.INVALID_VALUE:
         case ErrorCode.NOT_ENOUGH_PERMISSIONS:
         case ErrorCode.NOT_ENOUGH_PERMISSIONS_TO_GRANT_PERMISSIONS:
@@ -107,4 +109,8 @@ export class APICodeError extends ServerError {
 
 export class NotFoundAPIError extends ValidationError {
     name = 'NotFoundAPIError';
+}
+
+export class InvalidRequirementsAPIError extends ValidationError {
+    name = 'InvalidRequirementsAPIError';
 }
