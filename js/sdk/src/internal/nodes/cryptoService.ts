@@ -601,7 +601,7 @@ export class NodesCryptoService {
         };
     }
 
-    async moveNode(
+    async encryptNodeWithNewParent(
         node: Pick<DecryptedNode, 'name'>,
         keys: { passphrase: string; passphraseSessionKey: SessionKey; nameSessionKey: SessionKey },
         parentKeys: { key: PrivateKey; hashKey: Uint8Array },

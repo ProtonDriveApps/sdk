@@ -50,6 +50,7 @@ describe('NodesManagement', () => {
         apiService = {
             renameNode: jest.fn(),
             moveNode: jest.fn(),
+            copyNode: jest.fn(),
             trashNodes: jest.fn(async function* (uids) {
                 yield* uids.map((uid) => ({ ok: true, uid }) as NodeResult);
             }),
@@ -72,7 +73,7 @@ describe('NodesManagement', () => {
                 armoredNodeName: 'newArmoredNodeName',
                 hash: 'newHash',
             }),
-            moveNode: jest.fn(),
+            encryptNodeWithNewParent: jest.fn(),
             createFolder: jest.fn(),
         };
         // @ts-expect-error No need to implement all methods for mocking
@@ -101,6 +102,7 @@ describe('NodesManagement', () => {
             getRootNodeEmailKey: jest.fn().mockResolvedValue({ email: 'root-email', addressKey: 'root-key' }),
             notifyNodeChanged: jest.fn(),
             notifyNodeDeleted: jest.fn(),
+            notifyChildCreated: jest.fn(),
         };
 
         management = new NodesManagement(apiService, cryptoCache, cryptoService, nodesAccess);
@@ -149,7 +151,7 @@ describe('NodesManagement', () => {
             signatureEmail: 'movedSignatureEmail',
             nameSignatureEmail: 'movedNameSignatureEmail',
         };
-        cryptoService.moveNode = jest.fn().mockResolvedValue(encryptedCrypto);
+        cryptoService.encryptNodeWithNewParent = jest.fn().mockResolvedValue(encryptedCrypto);
 
         const newNode = await management.moveNode('nodeUid', 'newParentNodeUid');
 
@@ -162,7 +164,7 @@ describe('NodesManagement', () => {
             nameAuthor: { ok: true, value: 'movedNameSignatureEmail' },
         });
         expect(nodesAccess.getRootNodeEmailKey).toHaveBeenCalledWith('newParentNodeUid');
-        expect(cryptoService.moveNode).toHaveBeenCalledWith(
+        expect(cryptoService.encryptNodeWithNewParent).toHaveBeenCalledWith(
             nodes.nodeUid,
             expect.objectContaining({
                 key: 'nodeUid-key',
@@ -198,11 +200,11 @@ describe('NodesManagement', () => {
             signatureEmail: 'movedSignatureEmail',
             nameSignatureEmail: 'movedNameSignatureEmail',
         };
-        cryptoService.moveNode = jest.fn().mockResolvedValue(encryptedCrypto);
+        cryptoService.encryptNodeWithNewParent = jest.fn().mockResolvedValue(encryptedCrypto);
 
         const newNode = await management.moveNode('anonymousNodeUid', 'newParentNodeUid');
 
-        expect(cryptoService.moveNode).toHaveBeenCalledWith(
+        expect(cryptoService.encryptNodeWithNewParent).toHaveBeenCalledWith(
             nodes.anonymousNodeUid,
             expect.objectContaining({
                 key: 'anonymousNodeUid-key',
@@ -232,6 +234,89 @@ describe('NodesManagement', () => {
                 ...encryptedCrypto,
             },
         );
+    });
+
+    it('copyNode manages copy and updates cache', async () => {
+        const encryptedCrypto = {
+            encryptedName: 'copiedArmoredNodeName',
+            hash: 'copiedHash',
+            armoredNodePassphrase: 'copiedArmoredNodePassphrase',
+            armoredNodePassphraseSignature: 'copiedArmoredNodePassphraseSignature',
+            signatureEmail: 'copiedSignatureEmail',
+            nameSignatureEmail: 'copiedNameSignatureEmail',
+        };
+        cryptoService.encryptNodeWithNewParent = jest.fn().mockResolvedValue(encryptedCrypto);
+
+        const newNode = await management.copyNode('nodeUid', 'newParentNodeUid');
+
+        expect(newNode).toEqual({
+            ...nodes.nodeUid,
+            parentUid: 'newParentNodeUid',
+            encryptedName: 'copiedArmoredNodeName',
+            hash: 'copiedHash',
+            keyAuthor: { ok: true, value: 'copiedSignatureEmail' },
+            nameAuthor: { ok: true, value: 'copiedNameSignatureEmail' },
+        });
+        expect(nodesAccess.getRootNodeEmailKey).toHaveBeenCalledWith('newParentNodeUid');
+        expect(cryptoService.encryptNodeWithNewParent).toHaveBeenCalledWith(
+            nodes.nodeUid,
+            expect.objectContaining({
+                key: 'nodeUid-key',
+                passphrase: 'nodeUid-passphrase',
+                passphraseSessionKey: 'nodeUid-passphraseSessionKey',
+                contentKeyPacketSessionKey: 'nodeUid-contentKeyPacketSessionKey',
+                nameSessionKey: 'nodeUid-nameSessionKey',
+            }),
+            expect.objectContaining({ key: 'newParentNodeUid-key', hashKey: 'newParentNodeUid-hashKey' }),
+            { email: 'root-email', addressKey: 'root-key' },
+        );
+        expect(apiService.copyNode).toHaveBeenCalledWith('nodeUid', {
+            parentUid: 'newParentNodeUid',
+            ...encryptedCrypto,
+            armoredNodePassphraseSignature: undefined,
+            signatureEmail: undefined,
+        });
+        expect(nodesAccess.notifyNodeChanged).not.toHaveBeenCalledWith();
+        expect(nodesAccess.notifyChildCreated).toHaveBeenCalledWith('newParentNodeUid');
+    });
+
+    it('copyNode manages copy of anonymous node', async () => {
+        const encryptedCrypto = {
+            encryptedName: 'copiedArmoredNodeName',
+            hash: 'copiedHash',
+            armoredNodePassphrase: 'copiedArmoredNodePassphrase',
+            armoredNodePassphraseSignature: 'copiedArmoredNodePassphraseSignature',
+            signatureEmail: 'copiedSignatureEmail',
+            nameSignatureEmail: 'copiedNameSignatureEmail',
+        };
+        cryptoService.encryptNodeWithNewParent = jest.fn().mockResolvedValue(encryptedCrypto);
+
+        const newNode = await management.copyNode('anonymousNodeUid', 'newParentNodeUid');
+
+        expect(cryptoService.encryptNodeWithNewParent).toHaveBeenCalledWith(
+            nodes.anonymousNodeUid,
+            expect.objectContaining({
+                key: 'anonymousNodeUid-key',
+                passphrase: 'anonymousNodeUid-passphrase',
+                passphraseSessionKey: 'anonymousNodeUid-passphraseSessionKey',
+                contentKeyPacketSessionKey: 'anonymousNodeUid-contentKeyPacketSessionKey',
+                nameSessionKey: 'anonymousNodeUid-nameSessionKey',
+            }),
+            expect.objectContaining({ key: 'newParentNodeUid-key', hashKey: 'newParentNodeUid-hashKey' }),
+            { email: 'root-email', addressKey: 'root-key' },
+        );
+        expect(newNode).toEqual({
+            ...nodes.anonymousNodeUid,
+            parentUid: 'newParentNodeUid',
+            encryptedName: 'copiedArmoredNodeName',
+            hash: 'copiedHash',
+            keyAuthor: { ok: true, value: 'copiedSignatureEmail' },
+            nameAuthor: { ok: true, value: 'copiedNameSignatureEmail' },
+        });
+        expect(apiService.copyNode).toHaveBeenCalledWith('anonymousNodeUid', {
+            parentUid: 'newParentNodeUid',
+            ...encryptedCrypto,
+        });
     });
 
     it('trashes node and updates cache', async () => {

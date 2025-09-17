@@ -985,7 +985,7 @@ describe('nodesCryptoService', () => {
         });
     });
 
-    describe('moveNode', () => {
+    describe('encryptNodeWithNewParent', () => {
         it('should encrypt node data for move operation', async () => {
             const node = {
                 name: { ok: true, value: 'testFile.txt' },
@@ -1012,7 +1012,7 @@ describe('nodesCryptoService', () => {
                 armoredPassphraseSignature: 'passphraseSignature',
             });
 
-            const result = await cryptoService.moveNode(node, keys as any, parentKeys, address);
+            const result = await cryptoService.encryptNodeWithNewParent(node, keys as any, parentKeys, address);
 
             expect(result).toEqual({
                 encryptedName: 'encryptedNodeName',
@@ -1056,9 +1056,9 @@ describe('nodesCryptoService', () => {
                 addressKey: 'addressKey' as any,
             };
 
-            await expect(cryptoService.moveNode(node, keys as any, parentKeys, address)).rejects.toThrow(
-                'Moving item to a non-folder is not allowed',
-            );
+            await expect(
+                cryptoService.encryptNodeWithNewParent(node, keys as any, parentKeys, address),
+            ).rejects.toThrow('Moving item to a non-folder is not allowed');
         });
 
         it('should throw error when node has invalid name', async () => {
@@ -1079,9 +1079,9 @@ describe('nodesCryptoService', () => {
                 addressKey: 'addressKey' as any,
             };
 
-            await expect(cryptoService.moveNode(node, keys as any, parentKeys, address)).rejects.toThrow(
-                'Cannot move item without a valid name, please rename the item first',
-            );
+            await expect(
+                cryptoService.encryptNodeWithNewParent(node, keys as any, parentKeys, address),
+            ).rejects.toThrow('Cannot move item without a valid name, please rename the item first');
         });
     });
 });
