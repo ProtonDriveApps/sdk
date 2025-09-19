@@ -1,8 +1,8 @@
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
-public sealed class UploadController(Task uploadTask)
+public sealed class UploadController(Task<Node> uploadTask)
 {
-    public Task Completion { get; } = uploadTask;
+    public Task<Node> Completion { get; } = uploadTask;
 
     public void Pause()
     {

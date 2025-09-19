@@ -21,12 +21,15 @@ public sealed class ProtonDriveClient
     /// Creates a new instance of <see cref="ProtonDriveClient"/>.
     /// </summary>
     /// <param name="session">Authenticated API session.</param>
-    public ProtonDriveClient(ProtonApiSession session)
+    /// <param name="uid">Unique ID for this client to allow it to resume drafts across instances.</param>
+    /// <remarks>If no UID is not provided, one will be generated for the duration of this instance.</remarks>
+    public ProtonDriveClient(ProtonApiSession session, string? uid = null)
         : this(
             session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ApiTimeoutSeconds)),
             new AccountClientAdapter(session),
             new DriveClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository),
-            session.ClientConfiguration.LoggerFactory)
+            session.ClientConfiguration.LoggerFactory,
+            uid ?? Guid.NewGuid().ToString())
     {
     }
 
@@ -35,8 +38,11 @@ public sealed class ProtonDriveClient
         IDriveApiClients apiClients,
         IDriveClientCache cache,
         IBlockVerifierFactory blockVerifierFactory,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory,
+        string uid)
     {
+        Uid = uid;
+
         Account = accountClient;
         Api = apiClients;
         Cache = cache;
@@ -60,17 +66,21 @@ public sealed class ProtonDriveClient
         HttpClient httpClient,
         IAccountClient accountClient,
         IDriveClientCache cache,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory,
+        string uid)
         : this(
             accountClient,
             new DriveApiClients(httpClient),
             cache,
             new BlockVerifierFactory(httpClient),
-            loggerFactory)
+            loggerFactory,
+            uid)
     {
     }
 
     internal static RecyclableMemoryStreamManager MemoryStreamManager { get; } = new();
+
+    internal string Uid { get; }
 
     internal IAccountClient Account { get; }
     internal IDriveApiClients Api { get; }
@@ -103,17 +113,28 @@ public sealed class ProtonDriveClient
     }
 
     public async ValueTask<FileUploader> GetFileUploaderAsync(
+        NodeUid parentFolderUid,
         string name,
         string mediaType,
-        DateTime? lastModificationTime,
         long size,
+        DateTime? lastModificationTime,
+        bool overrideExistingDraftByOtherClient,
         CancellationToken cancellationToken)
     {
-        var expectedNumberOfBlocks = (int)size.DivideAndRoundUp(RevisionWriter.DefaultBlockSize);
+        var draftProvider = new NewFileDraftProvider(parentFolderUid, name, mediaType, overrideExistingDraftByOtherClient);
 
-        await RevisionCreationSemaphore.EnterAsync(expectedNumberOfBlocks, cancellationToken).ConfigureAwait(false);
+        return await GetFileUploaderAsync(draftProvider, size, lastModificationTime, cancellationToken).ConfigureAwait(false);
+    }
 
-        return new FileUploader(this, name, mediaType, lastModificationTime, size, expectedNumberOfBlocks);
+    public async ValueTask<FileUploader> GetFileRevisionUploaderAsync(
+        RevisionUid currentActiveRevisionUid,
+        long size,
+        DateTime? lastModificationTime,
+        CancellationToken cancellationToken)
+    {
+        var draftProvider = new NewRevisionDraftProvider(currentActiveRevisionUid.NodeUid, currentActiveRevisionUid.RevisionId);
+
+        return await GetFileUploaderAsync(draftProvider, size, lastModificationTime, cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<FileDownloader> GetFileDownloaderAsync(RevisionUid revisionUid, CancellationToken cancellationToken)
@@ -162,17 +183,16 @@ public sealed class ProtonDriveClient
         return VolumeOperations.EmptyTrashAsync(this, cancellationToken);
     }
 
-    internal async ValueTask<string> GetClientUidAsync(CancellationToken cancellationToken)
+    private async ValueTask<FileUploader> GetFileUploaderAsync(
+        IFileDraftProvider fileDraftProvider,
+        long size,
+        DateTime? lastModificationTime,
+        CancellationToken cancellationToken)
     {
-        var clientUid = await Cache.Entities.TryGetClientUidAsync(cancellationToken).ConfigureAwait(false);
+        var expectedNumberOfBlocks = (int)size.DivideAndRoundUp(RevisionWriter.DefaultBlockSize);
 
-        if (clientUid is null)
-        {
-            clientUid = Guid.NewGuid().ToString("N");
+        await RevisionCreationSemaphore.EnterAsync(expectedNumberOfBlocks, cancellationToken).ConfigureAwait(false);
 
-            await Cache.Entities.SetClientUidAsync(clientUid, cancellationToken).ConfigureAwait(false);
-        }
-
-        return clientUid;
+        return new FileUploader(this, fileDraftProvider, size, lastModificationTime, expectedNumberOfBlocks);
     }
 }

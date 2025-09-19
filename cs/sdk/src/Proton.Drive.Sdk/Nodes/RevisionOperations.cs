@@ -1,10 +1,48 @@
-﻿using Proton.Drive.Sdk.Nodes.Download;
+﻿using Proton.Drive.Sdk.Api.Files;
+using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;
+using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
 
 internal static class RevisionOperations
 {
+    public static async ValueTask<(RevisionUid RevisionUid, FileSecrets FileSecrets)> CreateDraftAsync(
+        ProtonDriveClient client,
+        NodeUid fileUid,
+        RevisionId lastKnownRevisionId,
+        CancellationToken cancellationToken)
+    {
+        var parameters = new RevisionCreationRequest
+        {
+            CurrentRevisionId = lastKnownRevisionId,
+            ClientId = client.Uid,
+        };
+
+        var fileSecrets = await FileOperations.GetSecretsAsync(client, fileUid, cancellationToken).ConfigureAwait(false);
+
+        RevisionId revisionId;
+        try
+        {
+            var revisionResponse = await client.Api.Files.CreateRevisionAsync(fileUid.VolumeId, fileUid.LinkId, parameters, cancellationToken)
+                .ConfigureAwait(false);
+
+            revisionId = revisionResponse.Identity.RevisionId;
+        }
+        catch (ProtonApiException<RevisionConflictResponse> e)
+            when (e.Response is { Conflict.DraftRevisionId: { } draftRevisionId }
+                && (e.Response.Conflict.DraftClientUid == client.Uid))
+        {
+            revisionId = draftRevisionId;
+        }
+        catch (ProtonApiException<RevisionConflictResponse> e)
+        {
+            throw new RevisionDraftConflictException(e);
+        }
+
+        return (new RevisionUid(fileUid, revisionId), fileSecrets);
+    }
+
     public static async ValueTask<RevisionWriter> OpenForWritingAsync(
         ProtonDriveClient client,
         RevisionUid revisionUid,
