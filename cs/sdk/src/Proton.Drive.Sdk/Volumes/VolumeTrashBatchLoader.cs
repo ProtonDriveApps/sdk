@@ -13,7 +13,7 @@ internal sealed class VolumeTrashBatchLoader(ProtonDriveClient client, VolumeId 
     private readonly VolumeId _volumeId = volumeId;
     private readonly PgpPrivateKey _shareKey = shareKey;
 
-    private readonly Dictionary<LinkId, PgpPrivateKey> _parentKeys = new();
+    private readonly Dictionary<LinkId, PgpPrivateKey> _parentKeys = [];
 
     protected override async ValueTask<IReadOnlyList<Result<Node, DegradedNode>>> LoadBatchAsync(
         ReadOnlyMemory<LinkId> ids,

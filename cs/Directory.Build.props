@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <IsPackable>false</IsPackable>
 
     <Product>Proton Drive</Product>
     <Authors>Proton AG</Authors>
@@ -56,6 +57,8 @@
     <PackageReference Include="xunit.v3" />
 
     <Using Include="Xunit" />
+    <Using Include="AwesomeAssertions" />
+    <Using Include="NSubstitute" />
   </ItemGroup>
 
 </Project>

@@ -1,44 +1,35 @@
-using Proton.Drive.Sdk.Api.Files;
-using Proton.Sdk;
-
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
 public sealed class FileUploader : IDisposable
 {
     private readonly ProtonDriveClient _client;
-    private readonly string _name;
-    private readonly string _mediaType;
+    private readonly IFileDraftProvider _fileDraftProvider;
     private readonly DateTimeOffset? _lastModificationTime;
-
     private volatile int _remainingNumberOfBlocks;
 
     internal FileUploader(
         ProtonDriveClient client,
-        string name,
-        string mediaType,
-        DateTimeOffset? lastModificationTime,
+        IFileDraftProvider fileDraftProvider,
         long size,
+        DateTimeOffset? lastModificationTime,
         int expectedNumberOfBlocks)
     {
         _client = client;
-        _name = name;
-        _mediaType = mediaType;
-        _lastModificationTime = lastModificationTime;
+        _fileDraftProvider = fileDraftProvider;
         FileSize = size;
+        _lastModificationTime = lastModificationTime;
         _remainingNumberOfBlocks = expectedNumberOfBlocks;
     }
 
     internal long FileSize { get; }
 
     public UploadController UploadFromStream(
-        NodeUid parentFolderUid,
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
-        bool createNewRevisionIfExists,
         Action<long, long> onProgress,
         CancellationToken cancellationToken)
     {
-        var task = UploadFromStreamAsync(parentFolderUid, contentStream, thumbnails, createNewRevisionIfExists, onProgress, cancellationToken);
+        var task = UploadFromStreamAsync(contentStream, thumbnails, onProgress, cancellationToken);
 
         return new UploadController(task);
     }
@@ -54,28 +45,15 @@ public sealed class FileUploader : IDisposable
         _remainingNumberOfBlocks = 0;
     }
 
-    private async Task UploadFromStreamAsync(
-        NodeUid parentFolderUid,
+    private async Task<Node> UploadFromStreamAsync(
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
-        bool createNewRevisionIfExists,
         Action<long, long> onProgress,
         CancellationToken cancellationToken)
     {
-        RevisionUid draftRevisionUid;
-        FileSecrets fileSecrets;
-        try
-        {
-            (draftRevisionUid, fileSecrets) = await FileOperations.CreateOrGetExistingDraftAsync(_client, parentFolderUid, _name, _mediaType, cancellationToken)
-                .ConfigureAwait(false);
-        }
-        catch (ProtonApiException<RevisionConflictResponse> ex)
-            when (createNewRevisionIfExists && ex.Response is { Conflict: { LinkId: not null, RevisionId: not null, DraftRevisionId: null } })
-        {
-            throw new NotImplementedException("Uploading new revision not yet implemented");
-        }
+        var (draftRevisionUid, fileSecrets) = await _fileDraftProvider.GetDraftAsync(_client, cancellationToken).ConfigureAwait(false);
 
-        await UploadAsync(
+        return await UploadAsync(
             draftRevisionUid,
             fileSecrets,
             contentStream,
@@ -85,7 +63,7 @@ public sealed class FileUploader : IDisposable
             cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask UploadAsync(
+    private async ValueTask<Node> UploadAsync(
         RevisionUid revisionUid,
         FileSecrets fileSecrets,
         Stream contentStream,
@@ -98,6 +76,10 @@ public sealed class FileUploader : IDisposable
             .ConfigureAwait(false);
 
         await revisionWriter.WriteAsync(contentStream, thumbnails, lastModificationTime, onProgress, cancellationToken).ConfigureAwait(false);
+
+        var nodeMetadata = await NodeOperations.GetNodeMetadataAsync(_client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
+
+        return nodeMetadata.Node;
     }
 
     private void ReleaseBlocks(int numberOfBlocks)
