@@ -2,7 +2,7 @@
 
 internal static class ExceptionExtensions
 {
-    public static Error ToInteropError(this Exception exception, Action<Error, Exception> setDomainAndCodesFunction)
+    public static Error ToErrorMessage(this Exception exception, Action<Error, Exception> setDomainAndCodesFunction)
     {
         var error = new Error
         {
@@ -23,7 +23,7 @@ internal static class ExceptionExtensions
 
         setDomainAndCodesFunction.Invoke(error, exception);
 
-        error.InnerError = exception.InnerException?.ToInteropError(setDomainAndCodesFunction);
+        error.InnerError = exception.InnerException?.ToErrorMessage(setDomainAndCodesFunction);
 
         return error;
     }

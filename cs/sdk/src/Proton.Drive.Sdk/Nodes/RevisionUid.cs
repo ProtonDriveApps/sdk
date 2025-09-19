@@ -27,6 +27,13 @@ public readonly record struct RevisionUid : ICompositeUid<RevisionUid>
         return ICompositeUid<RevisionUid>.TryParse(s, out result);
     }
 
+    public static RevisionUid Parse(string s)
+    {
+        return ICompositeUid<RevisionUid>.TryParse(s, out var result)
+            ? result.Value
+            : throw new FormatException($"Invalid revision UID format: \"{s}\"");
+    }
+
     static bool ICompositeUid<RevisionUid>.TryCreate(string baseUidString, string relativeIdString, [NotNullWhen(true)] out RevisionUid? uid)
     {
         if (!ICompositeUid<NodeUid>.TryParse(baseUidString, out var nodeUid))

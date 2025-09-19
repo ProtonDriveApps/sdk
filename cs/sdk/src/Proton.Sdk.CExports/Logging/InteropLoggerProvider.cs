@@ -1,14 +1,13 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Logging;
 
 namespace Proton.Sdk.CExports.Logging;
 
-internal sealed unsafe class InteropLoggerProvider(void* callerState, InteropValueCallback<InteropArray<byte>> logCallback) : ILoggerProvider
+internal sealed unsafe class InteropLoggerProvider(nint callerState, delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, void> logCallback) : ILoggerProvider
 {
-    private readonly void* _callerState = callerState;
-    private readonly InteropValueCallback<InteropArray<byte>> _logCallback = logCallback;
+    private readonly nint _callerState = callerState;
+    private readonly delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, void> _logCallback = logCallback;
 
     public ILogger CreateLogger(string categoryName)
     {
@@ -20,33 +19,10 @@ internal sealed unsafe class InteropLoggerProvider(void* callerState, InteropVal
         // Nothing to do
     }
 
-    internal static bool TryGetFromHandle(nint handle, [MaybeNullWhen(false)] out InteropLoggerProvider session)
+    public static IMessage HandleCreate(LoggerProviderCreate request, nint callerState)
     {
-        if (handle == 0)
-        {
-            session = null;
-            return false;
-        }
+        var provider = new InteropLoggerProvider(callerState, (delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, void>)request.LogCallback);
 
-        var gcHandle = GCHandle.FromIntPtr(handle);
-
-        session = gcHandle.Target as InteropLoggerProvider;
-
-        return session is not null;
-    }
-
-    [UnmanagedCallersOnly(EntryPoint = "logger_provider_create", CallConvs = [typeof(CallConvCdecl)])]
-    private static int InitializeLoggerProvider(void* callerState, InteropValueCallback<InteropArray<byte>> logCallback, nint* loggerProviderHandle)
-    {
-        try
-        {
-            var provider = new InteropLoggerProvider(callerState, logCallback);
-            *loggerProviderHandle = GCHandle.ToIntPtr(GCHandle.Alloc(provider));
-            return 0;
-        }
-        catch
-        {
-            return -1;
-        }
+        return new Int64Value { Value = Interop.AllocHandle(provider) };
     }
 }

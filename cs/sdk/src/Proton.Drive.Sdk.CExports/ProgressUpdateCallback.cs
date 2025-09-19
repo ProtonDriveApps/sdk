@@ -4,9 +4,14 @@ using Proton.Sdk.Drive.CExports;
 
 namespace Proton.Drive.Sdk.CExports;
 
-internal static class InteropProgressCallbackExtensions
+internal readonly unsafe struct ProgressUpdateCallback(nint progressCallbackPointer, nint callerState)
 {
-    internal static unsafe void UpdateProgress(this InteropValueCallback<InteropArray<byte>> progressCallback, void* callerState, long completed, long total)
+    private readonly delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, void> _progressCallback =
+        (delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, void>)progressCallbackPointer;
+
+    private readonly IntPtr _callerState = callerState;
+
+    public void UpdateProgress(long completed, long total)
     {
         var progressUpdate = new ProgressUpdate
         {
@@ -18,7 +23,7 @@ internal static class InteropProgressCallbackExtensions
 
         try
         {
-            progressCallback.Invoke(callerState, messageBytes);
+            _progressCallback(_callerState, messageBytes);
         }
         finally
         {

@@ -2,6 +2,7 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
+using Microsoft.Extensions.Logging;
 using Polly;
 using Proton.Sdk.Authentication;
 using Proton.Sdk.Http;
@@ -57,6 +58,10 @@ internal static class ProtonClientConfigurationExtensions
                 {
                     builder.AddHttpMessageHandler(() => config.CustomHttpMessageHandlerFactory.Invoke());
                 }
+
+#if DEBUG
+                builder.AddHttpMessageHandler(() => new HttpBodyLoggingHandler(config.LoggerFactory.CreateLogger<HttpBodyLoggingHandler>()));
+#endif
 
                 builder.AddHttpMessageHandler(() => new CryptographyTimeProvisionHandler());
 

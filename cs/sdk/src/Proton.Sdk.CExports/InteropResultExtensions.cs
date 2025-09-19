@@ -49,14 +49,14 @@ internal static class InteropResultExtensions
 
     internal static Result<InteropArray<byte>> Failure(Exception exception, Action<Error, Exception> setDomainAndCodesFunction)
     {
-        var error = exception.ToInteropError(setDomainAndCodesFunction);
+        var error = exception.ToErrorMessage(setDomainAndCodesFunction);
 
         return new Result<InteropArray<byte>>(error: InteropArray<byte>.FromMemory(error.ToByteArray()));
     }
 
     internal static Result<TValue, InteropArray<byte>> Failure<TValue>(Exception exception, Action<Error, Exception> setDomainAndCodesFunction)
     {
-        var error = exception.ToInteropError(setDomainAndCodesFunction);
+        var error = exception.ToErrorMessage(setDomainAndCodesFunction);
 
         return new Result<TValue, InteropArray<byte>>(error: InteropArray<byte>.FromMemory(error.ToByteArray()));
     }

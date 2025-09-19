@@ -1,81 +1,28 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+﻿using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 
 namespace Proton.Sdk.CExports;
 
 internal static class InteropCancellationTokenSource
 {
-    internal static bool TryGetFromHandle(nint handle, [MaybeNullWhen(false)] out CancellationTokenSource cancellationTokenSource)
+    public static IMessage HandleCreate(CancellationTokenSourceCreateRequest request)
     {
-        var gcHandle = GCHandle.FromIntPtr(handle);
-
-        cancellationTokenSource = gcHandle.Target as CancellationTokenSource;
-
-        return cancellationTokenSource is not null;
+        return new Int64Value { Value = Interop.AllocHandle(new CancellationTokenSource()) };
     }
 
-    internal static bool TryGetTokenFromHandle(nint handle, out CancellationToken cancellationToken)
+    public static IMessage? HandleCancel(CancellationTokenSourceCancelRequest request)
     {
-        if (handle == 0)
-        {
-            cancellationToken = CancellationToken.None;
-            return true;
-        }
+        var cancellationTokenSource = Interop.GetFromHandle<CancellationTokenSource>(request.CancellationTokenSourceHandle);
 
-        if (!TryGetFromHandle(handle, out var cancellationTokenSource))
-        {
-            cancellationToken = CancellationToken.None;
-            return false;
-        }
+        cancellationTokenSource.Cancel();
 
-        cancellationToken = cancellationTokenSource.Token;
-        return true;
+        return null;
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "cancellation_token_source_create", CallConvs = [typeof(CallConvCdecl)])]
-    private static nint NativeCreate()
+    public static IMessage? HandleFree(CancellationTokenSourceFreeRequest request)
     {
-        return GCHandle.ToIntPtr(GCHandle.Alloc(new CancellationTokenSource()));
-    }
+        Interop.FreeHandle<CancellationTokenSource>(request.CancellationTokenSourceHandle);
 
-    [UnmanagedCallersOnly(EntryPoint = "cancellation_token_source_cancel", CallConvs = [typeof(CallConvCdecl)])]
-    private static void NativeCancel(nint cancellationTokenSourceHandle)
-    {
-        try
-        {
-            if (!TryGetFromHandle(cancellationTokenSourceHandle, out var cancellationTokenSource))
-            {
-                return;
-            }
-
-            cancellationTokenSource.Cancel();
-        }
-        catch
-        {
-            // Ignore
-        }
-    }
-
-    [UnmanagedCallersOnly(EntryPoint = "cancellation_token_source_free", CallConvs = [typeof(CallConvCdecl)])]
-    private static void NativeFree(nint cancellationTokenSourceHandle)
-    {
-        try
-        {
-            var gcHandle = GCHandle.FromIntPtr(cancellationTokenSourceHandle);
-
-            if (gcHandle.Target is not CancellationTokenSource cancellationTokenSource)
-            {
-                return;
-            }
-
-            gcHandle.Free();
-
-            cancellationTokenSource.Dispose();
-        }
-        catch
-        {
-            // Ignore
-        }
+        return null;
     }
 }
