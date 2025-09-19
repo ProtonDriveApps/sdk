@@ -28,6 +28,13 @@ public readonly record struct NodeUid : ICompositeUid<NodeUid>
         return ICompositeUid<NodeUid>.TryParse(s, out result);
     }
 
+    public static NodeUid Parse(string s)
+    {
+        return ICompositeUid<NodeUid>.TryParse(s, out var result)
+            ? result.Value
+            : throw new FormatException($"Invalid node UID format: \"{s}\"");
+    }
+
     static bool ICompositeUid<NodeUid>.TryCreate(string baseUidString, string relativeIdString, [NotNullWhen(true)] out NodeUid? uid)
     {
         uid = new NodeUid(new VolumeId(baseUidString), new LinkId(relativeIdString));

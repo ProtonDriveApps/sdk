@@ -1,6 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Sdk;
 using Proton.Sdk.CExports;
@@ -10,161 +9,63 @@ namespace Proton.Drive.Sdk.CExports;
 
 internal static class InteropProtonDriveClient
 {
-    internal static bool TryGetFromHandle(nint handle, [MaybeNullWhen(false)] out ProtonDriveClient client)
+    public static IMessage HandleCreate(DriveClientCreateRequest request)
     {
-        if (handle == 0)
-        {
-            client = null;
-            return false;
-        }
+        var session = Interop.GetFromHandle<ProtonApiSession>(request.SessionHandle);
 
-        var gcHandle = GCHandle.FromIntPtr(handle);
+        var client = new ProtonDriveClient(session);
 
-        client = gcHandle.Target as ProtonDriveClient;
-
-        return client is not null;
+        return new Int64Value { Value = Interop.AllocHandle(client) };
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "drive_client_create", CallConvs = [typeof(CallConvCdecl)])]
-    private static nint NativeCreate(nint sessionHandle)
+    public static async ValueTask<IMessage> HandleGetFileUploaderAsync(DriveClientGetFileUploaderRequest request)
     {
-        try
-        {
-            if (!InteropProtonApiSession.TryGetFromHandle(sessionHandle, out var session))
-            {
-                return 0;
-            }
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
-            var client = new ProtonDriveClient(session);
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
 
-            return GCHandle.ToIntPtr(GCHandle.Alloc(client));
-        }
-        catch
-        {
-            return 0;
-        }
+        var fileUploader = await client.GetFileUploaderAsync(
+            NodeUid.Parse(request.ParentFolderUid),
+            request.Name,
+            request.MediaType,
+            request.Size,
+            DateTimeOffset.FromUnixTimeSeconds(request.LastModificationTime).DateTime,
+            request.OverrideExistingDraftByOtherClient,
+            cancellationToken).ConfigureAwait(false);
+
+        return new Int64Value { Value = Interop.AllocHandle(fileUploader) };
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "get_file_uploader", CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe int NativeGetFileUploader(
-        nint clientHandle,
-        InteropArray<byte> requestBytes,
-        void* callerState,
-        InteropAsyncValueCallback<nint> resultCallback)
+    public static async ValueTask<IMessage> HandleGetFileRevisionUploaderAsync(DriveClientGetFileRevisionUploaderRequest request)
     {
-        try
-        {
-            if (!TryGetFromHandle(clientHandle, out var client))
-            {
-                return -1;
-            }
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
-            return resultCallback.InvokeFor(callerState, ct => InteropGetFileUploaderAsync(client, requestBytes, ct));
-        }
-        catch
-        {
-            return -1;
-        }
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        var fileUploader = await client.GetFileRevisionUploaderAsync(
+            RevisionUid.Parse(request.CurrentActiveRevisionUid),
+            request.FileSize,
+            DateTimeOffset.FromUnixTimeSeconds(request.LastModificationTime).DateTime,
+            cancellationToken).ConfigureAwait(false);
+
+        return new Int64Value { Value = Interop.AllocHandle(fileUploader) };
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "get_revision_uploader", CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe int NativeGetRevisionUploader(
-        nint clientHandle,
-        InteropArray<byte> requestBytes,
-        void* callerState,
-        InteropAsyncValueCallback<nint> resultCallback)
+    public static async ValueTask<IMessage> HandleGetFileDownloaderAsync(DriveClientGetFileDownloaderRequest request)
     {
-        try
-        {
-            if (!TryGetFromHandle(clientHandle, out var client))
-            {
-                return -1;
-            }
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
-            return resultCallback.InvokeFor(callerState, ct => InteropGetRevisionUploaderAsync(client, requestBytes, ct));
-        }
-        catch
-        {
-            return -1;
-        }
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        var fileUploader = await client.GetFileDownloaderAsync(RevisionUid.Parse(request.RevisionUid), cancellationToken).ConfigureAwait(false);
+
+        return new Int64Value { Value = Interop.AllocHandle(fileUploader) };
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "drive_client_free", CallConvs = [typeof(CallConvCdecl)])]
-    private static void NativeFree(nint handle)
+    public static IMessage? HandleFree(DriveClientFreeRequest request)
     {
-        try
-        {
-            var gcHandle = GCHandle.FromIntPtr(handle);
+        Interop.FreeHandle<ProtonDriveClient>(request.ClientHandle);
 
-            if (gcHandle.Target is not ProtonDriveClient)
-            {
-                return;
-            }
-
-            gcHandle.Free();
-        }
-        catch
-        {
-            // Ignore
-        }
-    }
-
-    private static async ValueTask<Result<nint, InteropArray<byte>>> InteropGetFileUploaderAsync(
-        ProtonDriveClient client,
-        InteropArray<byte> requestBytes,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var request = FileUploaderProvisionRequest.Parser.ParseFrom(requestBytes.AsReadOnlySpan());
-
-            if (!NodeUid.TryParse(request.ParentFolderUid, out var parentUid))
-            {
-                return -1;
-            }
-
-            var uploader = await client.GetFileUploaderAsync(
-                parentUid.Value,
-                request.Name,
-                request.MediaType,
-                request.FileSize,
-                DateTimeOffset.FromUnixTimeSeconds(request.LastModificationDate).DateTime,
-                overrideExistingDraftByOtherClient: request.CreateNewRevisionIfExists,
-                cancellationToken).ConfigureAwait(false);
-
-            return GCHandle.ToIntPtr(GCHandle.Alloc(uploader));
-        }
-        catch (Exception e)
-        {
-            return InteropResultExtensions.Failure<nint>(e, InteropDriveErrorConverter.SetDomainAndCodes);
-        }
-    }
-
-    private static async ValueTask<Result<nint, InteropArray<byte>>> InteropGetRevisionUploaderAsync(
-        ProtonDriveClient client,
-        InteropArray<byte> requestBytes,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var request = FileRevisionUploaderProvisionRequest.Parser.ParseFrom(requestBytes.AsReadOnlySpan());
-
-            if (!RevisionUid.TryParse(request.CurrentActiveRevisionUid, out var currentActiveRevisionUid))
-            {
-                return -1;
-            }
-
-            var uploader = await client.GetFileRevisionUploaderAsync(
-                currentActiveRevisionUid.Value,
-                request.FileSize,
-                DateTimeOffset.FromUnixTimeSeconds(request.LastModificationDate).DateTime,
-                cancellationToken).ConfigureAwait(false);
-
-            return GCHandle.ToIntPtr(GCHandle.Alloc(uploader));
-        }
-        catch (Exception e)
-        {
-            return InteropResultExtensions.Failure<nint>(e, InteropDriveErrorConverter.SetDomainAndCodes);
-        }
+        return null;
     }
 }

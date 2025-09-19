@@ -28,10 +28,6 @@ internal static class InteropDriveErrorConverter
                 break;
 
             case NodeKeyAndSessionKeyMismatchException:
-                error.Domain = ErrorDomain.DataIntegrity;
-                error.PrimaryCode = UploadKeyMismatchErrorPrimaryCode;
-                break;
-
             case SessionKeyAndDataPacketMismatchException:
                 error.Domain = ErrorDomain.DataIntegrity;
                 error.PrimaryCode = UploadKeyMismatchErrorPrimaryCode;
