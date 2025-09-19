@@ -176,7 +176,7 @@ export interface DecryptedRevision extends Revision {
  * Interface describing the dependencies to the shares module.
  */
 export interface SharesService {
-    getMyFilesIDs(): Promise<{ volumeId: string; rootNodeId: string }>;
+    getOwnVolumeIDs(): Promise<{ volumeId: string; rootNodeId: string }>;
     getSharePrivateKey(shareId: string): Promise<PrivateKey>;
     getMyFilesShareMemberEmailKey(): Promise<{
         email: string;

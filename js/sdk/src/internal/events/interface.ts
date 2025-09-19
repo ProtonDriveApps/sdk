@@ -112,3 +112,7 @@ export interface EventManagerInterface<T> {
     getEvents(eventId: string): AsyncIterable<T>;
     getLogger(): Logger;
 }
+
+export interface SharesService {
+    isOwnVolume(volumeId: string): Promise<boolean>;
+}

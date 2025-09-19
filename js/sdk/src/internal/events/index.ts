@@ -1,11 +1,10 @@
 import { Logger, ProtonDriveTelemetry } from '../../interface';
 import { DriveAPIService } from '../apiService';
-import { DriveEvent, DriveListener, EventSubscription, LatestEventIdProvider } from './interface';
+import { DriveEvent, DriveListener, EventSubscription, LatestEventIdProvider, SharesService } from './interface';
 import { EventsAPIService } from './apiService';
 import { CoreEventManager } from './coreEventManager';
 import { VolumeEventManager } from './volumeEventManager';
 import { EventManager } from './eventManager';
-import { SharesManager } from '../shares/manager';
 
 export type { DriveEvent, DriveListener, EventSubscription } from './interface';
 export { DriveEventType } from './interface';
@@ -28,7 +27,7 @@ export class DriveEventsService {
     constructor(
         private telemetry: ProtonDriveTelemetry,
         apiService: DriveAPIService,
-        private shareManagement: SharesManager,
+        private sharesService: SharesService,
         private cacheEventListeners: DriveListener[] = [],
         private latestEventIdProvider?: LatestEventIdProvider,
     ) {
@@ -104,7 +103,7 @@ export class DriveEventsService {
         this.logger.debug(`Creating volume event manager for volume ${volumeId}`);
         const volumeEventManager = new VolumeEventManager(this.logger, this.apiService, volumeId);
 
-        const isOwnVolume = await this.shareManagement.isOwnVolume(volumeId);
+        const isOwnVolume = await this.sharesService.isOwnVolume(volumeId);
         const pollingInterval = this.getDefaultVolumePollingInterval(isOwnVolume);
         const latestEventId = this.latestEventIdProvider.getLatestEventId(volumeId);
         const eventManager = new EventManager<DriveEvent>(volumeEventManager, pollingInterval, latestEventId);

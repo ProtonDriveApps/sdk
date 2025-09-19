@@ -46,7 +46,7 @@ export class SharesManager {
      *
      * If the default volume or My files section doesn't exist, it creates it.
      */
-    async getMyFilesIDs(): Promise<VolumeShareNodeIDs> {
+    async getOwnVolumeIDs(): Promise<VolumeShareNodeIDs> {
         if (this.myFilesIds) {
             return this.myFilesIds;
         }
@@ -140,7 +140,7 @@ export class SharesManager {
         addressKey: PrivateKey;
         addressKeyId: string;
     }> {
-        const { volumeId } = await this.getMyFilesIDs();
+        const { volumeId } = await this.getOwnVolumeIDs();
 
         try {
             const { addressId } = await this.cache.getVolume(volumeId);
@@ -196,11 +196,11 @@ export class SharesManager {
     }
 
     async isOwnVolume(volumeId: string): Promise<boolean> {
-        return (await this.getMyFilesIDs()).volumeId === volumeId;
+        return (await this.getOwnVolumeIDs()).volumeId === volumeId;
     }
 
     async getVolumeMetricContext(volumeId: string): Promise<MetricVolumeType> {
-        const { volumeId: myVolumeId } = await this.getMyFilesIDs();
+        const { volumeId: myVolumeId } = await this.getOwnVolumeIDs();
 
         // SDK doesn't support public sharing yet, also public sharing
         // doesn't use a volume but shareURL, thus we can simplify and
