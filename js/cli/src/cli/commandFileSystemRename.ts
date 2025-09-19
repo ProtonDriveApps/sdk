@@ -1,4 +1,4 @@
-import { inspect } from 'util';
+import { formatReadableJson } from './formatters';
 import { Command, ActionArgs } from './interface';
 
 export class CommandFileSystemRename implements Command {
@@ -14,8 +14,7 @@ export class CommandFileSystemRename implements Command {
         if (json) {
             console.log(JSON.stringify(renamedNode));
         } else {
-            // Use inspect to disable the depth limit.
-            console.log(inspect(renamedNode, { showHidden: false, depth: null, colors: true }));
+            console.log(formatReadableJson(renamedNode));
         }
     }
 }

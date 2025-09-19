@@ -50,7 +50,7 @@ describe('SharesManager', () => {
         manager = new SharesManager(getMockLogger(), apiService, cache, cryptoCache, cryptoService, account);
     });
 
-    describe('getMyFilesIDs', () => {
+    describe('getOwnVolumeIDs', () => {
         const myFilesShare = {
             shareId: 'myFilesShareId',
             volumeId: 'myFilesVolumeId',
@@ -71,8 +71,8 @@ describe('SharesManager', () => {
             cryptoService.decryptRootShare = jest.fn().mockResolvedValue({ share: myFilesShare, key });
 
             // Calling twice to check if it loads only once.
-            await manager.getMyFilesIDs();
-            const result = await manager.getMyFilesIDs();
+            await manager.getOwnVolumeIDs();
+            const result = await manager.getOwnVolumeIDs();
 
             expect(result).toStrictEqual(myFilesShare);
             expect(apiService.getMyFiles).toHaveBeenCalledTimes(1);
@@ -103,7 +103,7 @@ describe('SharesManager', () => {
             });
             apiService.createVolume = jest.fn().mockResolvedValue(myFilesShare);
 
-            const result = await manager.getMyFilesIDs();
+            const result = await manager.getOwnVolumeIDs();
 
             expect(result).toStrictEqual(myFilesShare);
             expect(cryptoService.decryptRootShare).not.toHaveBeenCalled();
@@ -113,7 +113,7 @@ describe('SharesManager', () => {
         it('should throw on unknown error', async () => {
             apiService.getMyFiles = jest.fn().mockRejectedValue(new Error('Some error'));
 
-            await expect(manager.getMyFilesIDs()).rejects.toThrow('Some error');
+            await expect(manager.getOwnVolumeIDs()).rejects.toThrow('Some error');
             expect(cryptoService.decryptRootShare).not.toHaveBeenCalled();
             expect(apiService.createVolume).not.toHaveBeenCalled();
         });
@@ -142,7 +142,7 @@ describe('SharesManager', () => {
 
     describe('getMyFilesShareMemberEmailKey', () => {
         it('should return cached volume email key', async () => {
-            jest.spyOn(manager, 'getMyFilesIDs').mockResolvedValue({ volumeId: 'volumeId' } as VolumeShareNodeIDs);
+            jest.spyOn(manager, 'getOwnVolumeIDs').mockResolvedValue({ volumeId: 'volumeId' } as VolumeShareNodeIDs);
             cache.getVolume = jest.fn().mockResolvedValue({ addressId: 'addressId' });
             account.getOwnAddress = jest
                 .fn()
@@ -158,7 +158,7 @@ describe('SharesManager', () => {
         });
 
         it('should load volume email key if not in cache', async () => {
-            jest.spyOn(manager, 'getMyFilesIDs').mockResolvedValue({ volumeId: 'volumeId' } as VolumeShareNodeIDs);
+            jest.spyOn(manager, 'getOwnVolumeIDs').mockResolvedValue({ volumeId: 'volumeId' } as VolumeShareNodeIDs);
             const share = {
                 volumeId: 'volumeId',
                 shareId: 'shareId',

@@ -1,4 +1,5 @@
 import { ParseArgsConfig } from 'util';
+import { CommandAlbumList } from './commandAlbumList';
 import { CommandAuthLogin } from './commandAuthLogin';
 import { CommandAuthLogout } from './commandAuthLogout';
 import { CommandDeviceCreate } from './commandDeviceCreate';
@@ -21,6 +22,8 @@ import { CommandFileSystemRestore } from './commandFileSystemRestore';
 import { CommandFileSystemUpload } from './commandFileSystemUpload';
 import { CommandFileSystemTrash } from './commandFileSystemTrash';
 import { CommandInvitationList } from './commandInvitationList';
+import { CommandPhotoTimeline } from './commandPhotoTimeline';
+import { CommandPhotoUpload } from './commandPhotoUpload';
 import { CommandRevisionDelete } from './commandRevisionDelete';
 import { CommandRevisionDownload } from './commandRevisionDownload';
 import { CommandRevisionList } from './commandRevisionList';
@@ -71,6 +74,9 @@ const COMMANDS = [
     new CommandDeviceRename(),
     new CommandDeviceDelete(),
     new CommandPublicList(),
+    new CommandPhotoTimeline(),
+    new CommandPhotoUpload(),
+    new CommandAlbumList(),
     new CommandDiagnosticTree(),
 ].map((command: Command) => {
     command.options = command.options || {};

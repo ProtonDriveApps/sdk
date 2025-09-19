@@ -1,5 +1,6 @@
 import { ParseArgsConfig } from 'util';
 import { ProtonDriveClient } from '../../../sdk/src';
+import { ProtonDrivePhotosClient } from '../../../sdk/src/protonDrivePhotosClient';
 import { Diagnostic } from '../../../sdk/src/diagnostic';
 import { Account } from '../account/account';
 import { Paths } from './paths';
@@ -17,6 +18,7 @@ export interface Command {
 export interface ActionArgs {
     account: Account;
     sdk: ProtonDriveClient;
+    photosSdk: ProtonDrivePhotosClient;
     sdkDiagnostic: Diagnostic;
     paths: Paths;
     args: string[];

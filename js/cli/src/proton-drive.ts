@@ -3,7 +3,7 @@ import { parseArgs } from 'util';
 import { init } from './init';
 import { getCommand, validateCommandArguments } from './cli';
 
-const { account, sdk, sdkDiagnostic, paths } = await init();
+const { account, sdk, photosSdk, sdkDiagnostic, paths } = await init();
 
 const groupName = Bun.argv[2];
 const commandName = Bun.argv[3];
@@ -34,6 +34,7 @@ if (!options.json) {
 await command.action({
     account,
     sdk,
+    photosSdk,
     sdkDiagnostic,
     paths,
     args,

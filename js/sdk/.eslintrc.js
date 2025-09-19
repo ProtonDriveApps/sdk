@@ -19,7 +19,6 @@ module.exports =  {
         {
             files: [
                 "*.test.ts",
-                "**/photos/**/*",
             ],
             rules: {
                 // Any is used during prototyping - remove once all the types are available to fix all the places.

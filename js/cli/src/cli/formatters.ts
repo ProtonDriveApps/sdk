@@ -1,4 +1,11 @@
+import { inspect } from 'util';
+
 import { Author } from '../../../sdk/src';
+
+export function formatReadableJson(json: object) {
+    // Prints the JSON in a readable format without the depth limit.
+    return inspect(json, { showHidden: false, depth: null, colors: true });
+}
 
 export function formatAuthor(author: Author) {
     return author.ok ? author.value : `(${author.error.claimedAuthor})`;

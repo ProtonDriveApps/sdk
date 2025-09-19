@@ -56,8 +56,8 @@ export class NodesAccess {
         this.shareService = shareService;
     }
 
-    async getMyFilesRootFolder() {
-        const { volumeId, rootNodeId } = await this.shareService.getMyFilesIDs();
+    async getVolumeRootFolder() {
+        const { volumeId, rootNodeId } = await this.shareService.getOwnVolumeIDs();
         const nodeUid = makeNodeUid(volumeId, rootNodeId);
         return this.getNode(nodeUid);
     }
@@ -135,7 +135,7 @@ export class NodesAccess {
 
     // Improvement requested: keep status of loaded trash and leverage cache.
     async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
-        const { volumeId } = await this.shareService.getMyFilesIDs();
+        const { volumeId } = await this.shareService.getOwnVolumeIDs();
         const batchLoading = new BatchLoading<string, DecryptedNode>({
             iterateItems: (nodeUids) => this.loadNodes(nodeUids, undefined, signal),
             batchSize: BATCH_LOADING_SIZE,
@@ -208,7 +208,7 @@ export class NodesAccess {
     }
 
     private async loadNode(nodeUid: string): Promise<{ node: DecryptedNode; keys?: DecryptedNodeKeys }> {
-        const { volumeId: ownVolumeId } = await this.shareService.getMyFilesIDs();
+        const { volumeId: ownVolumeId } = await this.shareService.getOwnVolumeIDs();
         const encryptedNode = await this.apiService.getNode(nodeUid, ownVolumeId);
         return this.decryptNode(encryptedNode);
     }
@@ -234,7 +234,7 @@ export class NodesAccess {
         const returnedNodeUids: string[] = [];
         const errors = [];
 
-        const { volumeId: ownVolumeId } = await this.shareService.getMyFilesIDs();
+        const { volumeId: ownVolumeId } = await this.shareService.getOwnVolumeIDs();
 
         const encryptedNodesIterator = this.apiService.iterateNodes(nodeUids, ownVolumeId, filterOptions, signal);
         const decryptNodeMapper = async (encryptedNode: EncryptedNode): Promise<Result<DecryptedNode, unknown>> => {

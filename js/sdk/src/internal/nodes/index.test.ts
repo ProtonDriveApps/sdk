@@ -52,7 +52,7 @@ describe('nodesModules integration tests', () => {
         driveCrypto = {};
         // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
-            getMyFilesIDs: jest.fn().mockResolvedValue({ volumeId: 'volumeId' }),
+            getOwnVolumeIDs: jest.fn().mockResolvedValue({ volumeId: 'volumeId' }),
         };
 
         nodesModule = initNodesModule(

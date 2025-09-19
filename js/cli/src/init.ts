@@ -13,6 +13,7 @@ import {
     OpenPGPCryptoWithCryptoProxy,
     VERSION,
 } from '../../sdk/src';
+import { ProtonDrivePhotosClient } from '../../sdk/src/protonDrivePhotosClient';
 import { initDiagnostic } from '../../sdk/src/diagnostic';
 
 interface Config {
@@ -31,11 +32,13 @@ export async function init() {
     const account = await initAccount(cryptoApi, config);
     const srp = await initSrp(cryptoApi, config);
     const sdk = initSDK(cryptoApi, config, account, srp);
+    const photosSdk = initPhotosSDK(cryptoApi, config, account, srp);
     const sdkDiagnostic = initSDKDiagnostic(cryptoApi, config, account, srp);
     const paths = new Paths(sdk);
     return {
         account,
         sdk,
+        photosSdk,
         sdkDiagnostic,
         paths,
     };
@@ -66,17 +69,8 @@ async function initSrp(cryptoApi: CryptoApi, config: Config) {
 }
 
 function initSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Srp) {
-    const httpClient = new HTTPClient({
-        ...config,
-        uid: account.session?.uid || '',
-        accessToken: account.session?.accessToken || '',
-    });
-    const openPGPCryptoModule = new OpenPGPCryptoWithCryptoProxy(cryptoApi);
-
-    const entitiesCache = new SQLiteEntititesCache(config.cacheDir);
-    const cryptoCache = new MemoryCache<CachedCryptoMaterial>();
-
-    const telemetry = initTelemetry(config.cacheDir, config.enableConsoleLog);
+    const { httpClient, entitiesCache, cryptoCache, telemetry, openPGPCryptoModule, latestEventIdProvider } =
+        createSDKDependencies(config, account, cryptoApi);
 
     const sdk = new ProtonDriveClient({
         httpClient,
@@ -90,18 +84,33 @@ function initSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Sr
         account,
         openPGPCryptoModule,
         srpModule: srp,
-        latestEventIdProvider: new NoLatestEventIdProvider(),
+        latestEventIdProvider,
     });
     return sdk;
 }
 
-function initSDKDiagnostic(cryptoApi: CryptoApi, config: Config, account: Account, srp: Srp) {
-    const httpClient = new HTTPClient({
-        ...config,
-        uid: account.session?.uid || '',
-        accessToken: account.session?.accessToken || '',
+function initPhotosSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Srp) {
+    const { httpClient, entitiesCache, cryptoCache, telemetry, openPGPCryptoModule, latestEventIdProvider } =
+        createSDKDependencies(config, account, cryptoApi);
+
+    return new ProtonDrivePhotosClient({
+        httpClient,
+        entitiesCache,
+        cryptoCache,
+        config: {
+            baseUrl: config.baseUrl,
+            clientUid: 'proton-drive-photos-sdk-js-cli-test',
+        },
+        telemetry,
+        account,
+        openPGPCryptoModule,
+        srpModule: srp,
+        latestEventIdProvider,
     });
-    const openPGPCryptoModule = new OpenPGPCryptoWithCryptoProxy(cryptoApi);
+}
+
+function initSDKDiagnostic(cryptoApi: CryptoApi, config: Config, account: Account, srp: Srp) {
+    const { httpClient, openPGPCryptoModule } = createSDKDependencies(config, account, cryptoApi);
 
     return initDiagnostic({
         httpClient,
@@ -110,6 +119,21 @@ function initSDKDiagnostic(cryptoApi: CryptoApi, config: Config, account: Accoun
         openPGPCryptoModule,
         srpModule: srp,
     });
+}
+
+function createSDKDependencies(config: Config, account: Account, cryptoApi: CryptoApi) {
+    return {
+        httpClient: new HTTPClient({
+            ...config,
+            uid: account.session?.uid || '',
+            accessToken: account.session?.accessToken || '',
+        }),
+        entitiesCache: new SQLiteEntititesCache(config.cacheDir),
+        cryptoCache: new MemoryCache<CachedCryptoMaterial>(),
+        telemetry: initTelemetry(config.cacheDir, config.enableConsoleLog),
+        openPGPCryptoModule: new OpenPGPCryptoWithCryptoProxy(cryptoApi),
+        latestEventIdProvider: new NoLatestEventIdProvider(),
+    };
 }
 
 class NoLatestEventIdProvider {
