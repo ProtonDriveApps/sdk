@@ -3,21 +3,17 @@ syntax = "proto3";
 option csharp_namespace = "Proton.Sdk.Drive.CExports";
 
 message FileUploaderProvisionRequest {
-    string name = 1;
-    string mediaType = 2;
-    int64 last_modification_date = 3;
-    int64 file_size = 4;
-}
-
-message FileUploadRequest {
     string parent_folder_uid = 1;
-    bool create_new_revision_if_exists = 2;
-    optional bytes thumbnail = 3;
+    string name = 2;
+    string mediaType = 3;
+    int64 file_size = 4;
+    int64 last_modification_date = 5;
+    bool create_new_revision_if_exists = 6;
 }
 
-message RevisionUploadRequest {
-    string file_uid = 1;
-    optional bytes thumbnail = 2;
+message FileRevisionUploaderProvisionRequest {
+    string current_active_revision_uid = 1;
+    int64 file_size = 2;
     int64 last_modification_date = 3;
 }
 

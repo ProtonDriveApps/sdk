@@ -6,12 +6,12 @@ namespace Proton.Sdk.CExports;
 internal readonly unsafe struct InteropArray<T>(T* pointer, nint length)
     where T : unmanaged
 {
-    private readonly void* _pointer = pointer;
-    private readonly nint _length = length;
+    public readonly T* Pointer = pointer;
+    public readonly nint Length = length;
 
     public static InteropArray<T> Null => default;
 
-    public bool IsNullOrEmpty => _pointer is null || _length == 0;
+    public bool IsNullOrEmpty => Pointer is null || Length == 0;
 
     public static InteropArray<T> FromMemory(ReadOnlyMemory<T> memory)
     {
@@ -27,23 +27,28 @@ internal readonly unsafe struct InteropArray<T>(T* pointer, nint length)
         return new InteropArray<T>((T*)interopBytes, memory.Length);
     }
 
-    public byte[] ToArray()
+    public T[] ToArray()
     {
-        return !IsNullOrEmpty ? new ReadOnlySpan<byte>(_pointer, (int)_length).ToArray() : [];
+        return !IsNullOrEmpty ? new ReadOnlySpan<T>(Pointer, (int)Length).ToArray() : [];
     }
 
-    public byte[]? ToArrayOrNull()
+    public T[]? ToArrayOrNull()
     {
-        return !IsNullOrEmpty ? new ReadOnlySpan<byte>(_pointer, (int)_length).ToArray() : null;
+        return !IsNullOrEmpty ? new ReadOnlySpan<T>(Pointer, (int)Length).ToArray() : null;
     }
 
-    public ReadOnlySpan<byte> AsReadOnlySpan()
+    public Span<T> AsSpan()
     {
-        return !IsNullOrEmpty ? new ReadOnlySpan<byte>(_pointer, (int)_length) : null;
+        return !IsNullOrEmpty ? new Span<T>(Pointer, (int)Length) : null;
+    }
+
+    public ReadOnlySpan<T> AsReadOnlySpan()
+    {
+        return !IsNullOrEmpty ? new ReadOnlySpan<T>(Pointer, (int)Length) : null;
     }
 
     public void Free()
     {
-        NativeMemory.Free(_pointer);
+        NativeMemory.Free(Pointer);
     }
 }

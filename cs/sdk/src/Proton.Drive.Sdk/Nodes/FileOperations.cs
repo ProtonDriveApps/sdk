@@ -6,11 +6,12 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal static class FileOperations
 {
-    public static async Task<(RevisionUid RevisionUid, FileSecrets FileSecrets)> CreateOrGetExistingDraftAsync(
+    public static async Task<(RevisionUid RevisionUid, FileSecrets FileSecrets)> CreateDraftAsync(
         ProtonDriveClient client,
         NodeUid parentUid,
         string name,
         string mediaType,
+        bool overrideExistingDraftByOtherClient,
         CancellationToken cancellationToken)
     {
         var parentSecrets = await FolderOperations.GetSecretsAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
@@ -36,11 +37,9 @@ internal static class FileOperations
         var contentKey = PgpSessionKey.Generate();
         var (contentKeyToken, _) = contentKey.Export();
 
-        var clientUid = await client.GetClientUidAsync(cancellationToken).ConfigureAwait(false);
-
         var request = new FileCreationRequest
         {
-            ClientUid = clientUid,
+            ClientUid = client.Uid,
             Name = encryptedName,
             NameHashDigest = nameHashDigest,
             ParentLinkId = parentUid.LinkId,
@@ -53,38 +52,38 @@ internal static class FileOperations
             ContentKeyPacketSignature = key.Sign(contentKeyToken),
         };
 
-        FileSecrets fileSecrets;
-        RevisionUid draftRevisionUid;
-        try
+        FileCreationResponse? response = null;
+
+        while (response is null)
         {
-            var response = await client.Api.Files.CreateFileAsync(parentUid.VolumeId, request, cancellationToken).ConfigureAwait(false);
-
-            var draftNodeUid = new NodeUid(parentUid.VolumeId, response.Identifiers.LinkId);
-            draftRevisionUid = new RevisionUid(draftNodeUid, response.Identifiers.RevisionId);
-
-            fileSecrets = new FileSecrets
+            try
             {
-                Key = key,
-                PassphraseSessionKey = passphraseSessionKey,
-                NameSessionKey = nameSessionKey,
-                ContentKey = contentKey,
-            };
-
-            await client.Cache.Secrets.SetFileSecretsAsync(draftNodeUid, fileSecrets, cancellationToken).ConfigureAwait(false);
-        }
-        catch (ProtonApiException<RevisionConflictResponse> ex)
-            when (ex.Response is { Conflict: { LinkId: not null, DraftClientUid: not null, DraftRevisionId: not null } })
-        {
-            if (ex.Response.Conflict.DraftClientUid != clientUid)
-            {
-                throw;
+                response = await client.Api.Files.CreateFileAsync(parentUid.VolumeId, request, cancellationToken).ConfigureAwait(false);
             }
-
-            var draftNodeUid = new NodeUid(parentUid.VolumeId, ex.Response.Conflict.LinkId.Value);
-            draftRevisionUid = new RevisionUid(draftNodeUid, ex.Response.Conflict.DraftRevisionId.Value);
-
-            fileSecrets = await GetSecretsAsync(client, draftNodeUid, cancellationToken).ConfigureAwait(false);
+            catch (ProtonApiException<RevisionConflictResponse> e)
+                when (e.Response is { Conflict: { LinkId: { } linkId, RevisionId: null, DraftRevisionId: not null } }
+                    && (e.Response.Conflict.DraftClientUid == client.Uid || overrideExistingDraftByOtherClient))
+            {
+                await NodeOperations.DeleteAsync(client, [new NodeUid(parentUid.VolumeId, linkId)], cancellationToken).ConfigureAwait(false);
+            }
+            catch (ProtonApiException<RevisionConflictResponse> e)
+            {
+                throw new NodeWithSameNameExistsException(parentUid.VolumeId, e);
+            }
         }
+
+        var draftNodeUid = new NodeUid(parentUid.VolumeId, response.Identifiers.LinkId);
+        var draftRevisionUid = new RevisionUid(draftNodeUid, response.Identifiers.RevisionId);
+
+        var fileSecrets = new FileSecrets
+        {
+            Key = key,
+            PassphraseSessionKey = passphraseSessionKey,
+            NameSessionKey = nameSessionKey,
+            ContentKey = contentKey,
+        };
+
+        await client.Cache.Secrets.SetFileSecretsAsync(draftNodeUid, fileSecrets, cancellationToken).ConfigureAwait(false);
 
         return (draftRevisionUid, fileSecrets);
     }

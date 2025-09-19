@@ -21,8 +21,10 @@ internal sealed class StorageApiClient(HttpClient httpClient) : IStorageApiClien
         blobContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data") { Name = "Block", FileName = "blob" };
         blobContent.Headers.ContentType = new MediaTypeHeaderValue(MediaTypeNames.Application.Octet);
 
-        using var multipartContent = new MultipartFormDataContent("-----------------------------" + Guid.NewGuid().ToString("N"));
-        multipartContent.Add(blobContent);
+        using var multipartContent = new MultipartFormDataContent("-----------------------------" + Guid.NewGuid().ToString("N"))
+        {
+            blobContent
+        };
 
         using var requestMessage = HttpRequestMessageFactory.Create(HttpMethod.Post, baseUrl, multipartContent);
         requestMessage.Headers.Add("pm-storage-token", token);

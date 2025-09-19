@@ -9,6 +9,11 @@ typedef struct {
     size_t length;
 } ByteArray;
 
+typedef struct {
+    const ByteArray* pointer;
+    size_t length;
+} ByteArrayArray;
+
 typedef void array_callback_function(const void* state, ByteArray array);
 
 typedef struct {
@@ -114,15 +119,33 @@ void drive_client_free(intptr_t client_handle);
 int get_file_uploader(
     intptr_t client_handle,
     ByteArray request, // FileUploaderProvisionRequest
+    size_t file_size,
+    const void* caller_state,
+    AsyncIntPtrCallback result_callback
+);
+
+int get_revision_uploader(
+    intptr_t client_handle,
+    ByteArray request, // RevisionUploaderProvisionRequest
+    size_t file_size,
     const void* caller_state,
     AsyncIntPtrCallback result_callback
 );
 
 intptr_t upload_from_stream(
     intptr_t uploader_handle,
-    ByteArray request, // FileUploadRequest
+    ByteArrayArray thumbnails,
     const void* caller_state,
     ReadCallback* read_callback,
+    ArrayCallback progress_callback,
+    intptr_t cancellation_token_source_handle
+);
+
+intptr_t upload_from_path(
+    intptr_t uploader_handle,
+    ByteArray path, // UTF-8
+    ByteArrayArray thumbnails,
+    const void* caller_state,
     ArrayCallback progress_callback,
     intptr_t cancellation_token_source_handle
 );
@@ -151,7 +174,7 @@ intptr_t download_to_stream(
     intptr_t downloader_handle,
     const void* caller_state,
     WriteCallback* write_callback,
-    AsyncArrayCallback progress_callback,
+    ArrayCallback progress_callback,
     intptr_t cancellation_token_source_handle
 );
 

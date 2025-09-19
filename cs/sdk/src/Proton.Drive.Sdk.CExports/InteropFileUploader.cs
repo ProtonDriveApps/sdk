@@ -1,11 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using DotNext.Buffers;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Upload;
-using Proton.Sdk;
 using Proton.Sdk.CExports;
-using Proton.Sdk.Drive.CExports;
 
 namespace Proton.Drive.Sdk.CExports;
 
@@ -26,32 +25,10 @@ internal static class InteropFileUploader
         return uploader is not null;
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "get_file_uploader", CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe int NativeCreate(
-        nint clientHandle,
-        InteropArray<byte> requestBytes,
-        void* callerState,
-        InteropAsyncValueCallback<nint> resultCallback)
-    {
-        try
-        {
-            if (!InteropProtonDriveClient.TryGetFromHandle(clientHandle, out var client))
-            {
-                return -1;
-            }
-
-            return resultCallback.InvokeFor(callerState, ct => InteropGetFileUploaderAsync(client, requestBytes, ct));
-        }
-        catch
-        {
-            return -1;
-        }
-    }
-
     [UnmanagedCallersOnly(EntryPoint = "upload_from_stream", CallConvs = [typeof(CallConvCdecl)])]
     private static unsafe nint NativeUploadFromStream(
         nint fileUploaderHandle,
-        InteropArray<byte> requestBytes,
+        InteropArray<InteropThumbnail> interopThumbnails,
         void* callerState,
         InteropReadCallback readCallback,
         InteropValueCallback<InteropArray<byte>> progressCallback,
@@ -69,20 +46,13 @@ internal static class InteropFileUploader
                 return -1;
             }
 
-            var request = FileUploadRequest.Parser.ParseFrom(requestBytes.AsReadOnlySpan());
-
-            if (!NodeUid.TryParse(request.ParentFolderUid, out var parentUid))
-            {
-                return -1;
-            }
-
             var stream = new InteropStream(uploader.FileSize, callerState, readCallback);
 
+            var thumbnails = GetThumbnailsFromInteropArray(interopThumbnails);
+
             var uploadController = uploader.UploadFromStream(
-                parentUid.Value,
                 stream,
-                request.HasThumbnail ? [new Thumbnail(ThumbnailType.Thumbnail, request.Thumbnail.ToByteArray())] : [],
-                request.CreateNewRevisionIfExists,
+                thumbnails,
                 (completed, total) => progressCallback.UpdateProgress(callerState, completed, total),
                 cancellationToken);
 
@@ -121,27 +91,25 @@ internal static class InteropFileUploader
         }
     }
 
-    private static async ValueTask<Result<nint, InteropArray<byte>>> InteropGetFileUploaderAsync(
-        ProtonDriveClient client,
-        InteropArray<byte> requestBytes,
-        CancellationToken cancellationToken)
+    private static unsafe Thumbnail[] GetThumbnailsFromInteropArray(InteropArray<InteropThumbnail> interopThumbnails)
     {
-        try
-        {
-            var request = FileUploaderProvisionRequest.Parser.ParseFrom(requestBytes.AsReadOnlySpan());
+        var thumbnails = new Thumbnail[interopThumbnails.Length];
+        var interopThumbnailsSpan = interopThumbnails.AsReadOnlySpan();
 
-            var uploader = await client.GetFileUploaderAsync(
-                request.Name,
-                request.MediaType,
-                DateTimeOffset.FromUnixTimeSeconds(request.LastModificationDate).DateTime,
-                request.FileSize,
-                cancellationToken).ConfigureAwait(false);
-
-            return GCHandle.ToIntPtr(GCHandle.Alloc(uploader));
-        }
-        catch (Exception e)
+        for (var i = 0; i < thumbnails.Length; ++i)
         {
-            return InteropResultExtensions.Failure<nint>(e, InteropDriveErrorConverter.SetDomainAndCodes);
+            var interopThumbnail = interopThumbnailsSpan[i];
+            var thumbnailContent = UnmanagedMemory.AsMemory(interopThumbnail.Content.Pointer, (int)interopThumbnail.Content.Length);
+            thumbnails[i] = new Thumbnail(interopThumbnail.Type, thumbnailContent);
         }
+
+        return thumbnails;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private readonly struct InteropThumbnail
+    {
+        public readonly ThumbnailType Type;
+        public readonly InteropArray<byte> Content;
     }
 }

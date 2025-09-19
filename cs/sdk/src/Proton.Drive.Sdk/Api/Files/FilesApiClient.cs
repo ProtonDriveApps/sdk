@@ -19,6 +19,22 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
             .ConfigureAwait(false);
     }
 
+    public async Task<RevisionCreationResponse> CreateRevisionAsync(
+        VolumeId volumeId,
+        LinkId linkId,
+        RevisionCreationRequest request,
+        CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(DriveApiSerializerContext.Default.RevisionCreationResponse, DriveApiSerializerContext.Default.RevisionConflictResponse)
+            .PostAsync(
+                $"volumes/{volumeId}/files/{linkId}/revisions",
+                request,
+                DriveApiSerializerContext.Default.RevisionCreationRequest,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public async ValueTask<BlockUploadPreparationResponse> PrepareBlockUploadAsync(BlockUploadPreparationRequest request, CancellationToken cancellationToken)
     {
         return await _httpClient

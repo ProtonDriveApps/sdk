@@ -8,6 +8,8 @@ internal interface IFilesApiClient
 {
     ValueTask<FileCreationResponse> CreateFileAsync(VolumeId volumeId, FileCreationRequest request, CancellationToken cancellationToken);
 
+    Task<RevisionCreationResponse> CreateRevisionAsync(VolumeId volumeId, LinkId linkId, RevisionCreationRequest request, CancellationToken cancellationToken);
+
     ValueTask<BlockUploadPreparationResponse> PrepareBlockUploadAsync(BlockUploadPreparationRequest request, CancellationToken cancellationToken);
 
     ValueTask<ApiResponse> UpdateRevisionAsync(
