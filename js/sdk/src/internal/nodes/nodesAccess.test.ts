@@ -46,7 +46,7 @@ describe('nodesAccess', () => {
         };
         // @ts-expect-error No need to implement all methods for mocking
         shareService = {
-            getMyFilesIDs: jest.fn().mockResolvedValue({ volumeId: 'volumeId' }),
+            getOwnVolumeIDs: jest.fn().mockResolvedValue({ volumeId: 'volumeId' }),
             getSharePrivateKey: jest.fn(),
         };
 
@@ -388,7 +388,7 @@ describe('nodesAccess', () => {
             const node4 = { uid: 'volumeId~node4', isStale: false } as DecryptedNode;
 
             beforeEach(() => {
-                shareService.getMyFilesIDs = jest.fn().mockResolvedValue({ volumeId });
+                shareService.getOwnVolumeIDs = jest.fn().mockResolvedValue({ volumeId });
                 apiService.iterateTrashedNodeUids = jest.fn().mockImplementation(async function* () {
                     yield node1.uid;
                     yield node2.uid;

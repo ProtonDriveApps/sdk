@@ -253,7 +253,7 @@ export class ProtonDriveClient {
     }
 
     /**
-     * Subscribes to sharing updates.
+     * Subscribes to the remote general data updates.
      *
      * Only one instance of the SDK should subscribe to updates.
      */
@@ -286,7 +286,7 @@ export class ProtonDriveClient {
      */
     async getMyFilesRootFolder(): Promise<MaybeNode> {
         this.logger.info('Getting my files root folder');
-        return convertInternalNodePromise(this.nodes.access.getMyFilesRootFolder());
+        return convertInternalNodePromise(this.nodes.access.getVolumeRootFolder());
     }
 
     /**
