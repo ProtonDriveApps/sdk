@@ -9,7 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DotNext.Unsafe" />
     <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
   </ItemGroup>
@@ -20,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="..\protos\drive.proto" Link="drive.proto" Access="internal" />
+    <Protobuf Include="../protos/proton.drive.sdk.proto" Link="proton.drive.sdk.proto" Access="internal" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,15 +30,6 @@
   <ItemGroup>
     <!-- This includes the C exports for the account functions -->
     <IlcCompileInput Include="$(OutputPath)\$(NativeLibPrefix)proton_sdk.dll" />
-  </ItemGroup>
-
-  <!-- Static-link the crypto library unless targeting Android -->
-  <ItemGroup Condition="!$(RuntimeIdentifier.StartsWith('linux-bionic'))">
-    <!-- While the project does not use the package directly, the path to the package is needed to refer to the static link library -->
-    <PackageReference Include="Proton.Cryptography" GeneratePathProperty="true" />
-
-    <DirectPInvoke Include="$(NativeCryptoLibName)" />
-    <NativeLibrary Include="$(PkgProton_Cryptography)\runtimes\$(RuntimeIdentifier)\native\$(NativeLibPrefix)$(NativeCryptoLibName)$(LibFileExt)" />
   </ItemGroup>
 
   <!-- If targeting Android, add the required SONAME to the output library -->

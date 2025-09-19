@@ -25,6 +25,7 @@ namespace Proton.Drive.Sdk.Serialization;
 #pragma warning restore SA1114, SA1118
 [JsonSerializable(typeof(VolumeCreationRequest))]
 [JsonSerializable(typeof(VolumeCreationResponse))]
+[JsonSerializable(typeof(VolumeResponse))]
 [JsonSerializable(typeof(LinkDetailsRequest))]
 [JsonSerializable(typeof(LinkDetailsResponse))]
 [JsonSerializable(typeof(ExtendedAttributes))]

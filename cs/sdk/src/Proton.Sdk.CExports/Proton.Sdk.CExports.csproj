@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="..\protos\account.proto" Link="account.proto" Access="internal" />
+    <Protobuf Include="../protos/proton.sdk.proto" Link="proton.sdk.proto" Access="internal" />
   </ItemGroup>
 
   <ItemGroup>

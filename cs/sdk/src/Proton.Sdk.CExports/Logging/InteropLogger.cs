@@ -4,13 +4,14 @@ using Microsoft.Extensions.Logging;
 
 namespace Proton.Sdk.CExports.Logging;
 
-using EventId = Microsoft.Extensions.Logging.EventId;
-
 [StructLayout(LayoutKind.Sequential)]
-internal sealed unsafe class InteropLogger(void* callerState, InteropValueCallback<InteropArray<byte>> logCallback, string categoryName) : ILogger
+internal sealed unsafe class InteropLogger(
+    nint callerState,
+    delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, void> logCallback,
+    string categoryName) : ILogger
 {
-    private readonly void* _callerState = callerState;
-    private readonly InteropValueCallback<InteropArray<byte>> _logCallback = logCallback;
+    private readonly nint _callerState = callerState;
+    private readonly delegate* unmanaged[Cdecl]<nint, InteropArray<byte>, void> _logCallback = logCallback;
     private readonly string _categoryName = categoryName;
 
     public IDisposable BeginScope<TState>(TState state)
@@ -29,7 +30,7 @@ internal sealed unsafe class InteropLogger(void* callerState, InteropValueCallba
 
         try
         {
-            _logCallback.Invoke(_callerState, messageBytes);
+            _logCallback(_callerState, messageBytes);
         }
         finally
         {

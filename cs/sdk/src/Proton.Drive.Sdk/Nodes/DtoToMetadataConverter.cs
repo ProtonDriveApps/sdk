@@ -22,7 +22,7 @@ internal static class DtoToMetadataConverter
             volumeId,
             linkDetailsDto.Link.ParentId,
             knownShareAndKey,
-            linkDetailsDto.Membership?.ShareId,
+            linkDetailsDto.Sharing?.ShareId,
             cancellationToken).ConfigureAwait(false);
 
         return await ConvertDtoToNodeMetadataAsync(client, volumeId, linkDetailsDto, parentKeyResult, cancellationToken).ConfigureAwait(false);
@@ -59,7 +59,7 @@ internal static class DtoToMetadataConverter
         Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
         CancellationToken cancellationToken)
     {
-        var (linkDto, folderDto, _, membershipDto) = linkDetailsDto;
+        var (linkDto, folderDto, _, _, membershipDto) = linkDetailsDto;
 
         if (folderDto is null)
         {
@@ -98,7 +98,13 @@ internal static class DtoToMetadataConverter
                 HashKey = decryptionResult.HashKey.Merge(x => (ReadOnlyMemory<byte>?)x.Data, _ => null),
             };
 
-            throw new NotImplementedException();
+            var nameOrError = decryptionResult.Link.Name.TryGetValueElseError(out var nameValue, out var error) ? nameValue.Data : error;
+            var name = (NodeOperations.ValidateName(decryptionResult.Link.Name, out _, out _, out _) ? "✅ " : "❌ ") + $"(\"{nameOrError}\")";
+            var nk = decryptionResult.Link.NodeKey.TryGetValueElseError(out _, out var nkError) ? "✅" : $"❌ (\"{nkError}\")";
+            var pp = decryptionResult.Link.Passphrase.TryGetValueElseError(out _, out var ppError) ? "✅" : $"❌ (\"{ppError}\")";
+            var hk = decryptionResult.HashKey.TryGetValueElseError(out _, out var hkError) ? "✅" : $"❌ (\"{hkError}\")";
+
+            throw new TempDebugException($"Name: {name}, Node key: {nk}, Passphrase: {pp}, Hash Key: {hk}");
         }
 
         var secrets = new FolderSecrets
@@ -136,7 +142,7 @@ internal static class DtoToMetadataConverter
         Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
         CancellationToken cancellationToken)
     {
-        var (linkDto, _, fileDto, membershipDto) = linkDetailsDto;
+        var (linkDto, _, fileDto, _, membershipDto) = linkDetailsDto;
 
         if (fileDto is null)
         {
@@ -192,7 +198,14 @@ internal static class DtoToMetadataConverter
                 ContentKey = decryptionResult.ContentKey.Merge(x => (PgpSessionKey?)x.Data, _ => null),
             };
 
-            throw new NotImplementedException();
+            var nameOrError = decryptionResult.Link.Name.TryGetValueElseError(out var nameValue, out var error) ? nameValue.Data : error;
+            var name = (NodeOperations.ValidateName(decryptionResult.Link.Name, out _, out _, out _) ? "✅ " : "❌ ") + $"(\"{nameOrError}\")";
+            var nk = decryptionResult.Link.NodeKey.TryGetValueElseError(out _, out var nkError) ? "✅" : $"❌ (\"{nkError}\")";
+            var pp = decryptionResult.Link.Passphrase.TryGetValueElseError(out _, out var ppError) ? "✅" : $"❌ (\"{ppError}\")";
+            var ea = decryptionResult.ExtendedAttributes.TryGetValueElseError(out _, out var eaError) ? "✅" : $"❌ (\"{eaError}\")";
+            var ck = decryptionResult.ContentKey.TryGetValueElseError(out _, out var ckError) ? "✅" : $"❌ (\"{ckError}\")";
+
+            throw new TempDebugException($"Name: {name}, Node key: {nk}, Passphrase: {pp}, Extended Attributes: {ea}, Content Key: {ck}");
         }
 
         var secrets = new FileSecrets
@@ -244,16 +257,16 @@ internal static class DtoToMetadataConverter
         VolumeId volumeId,
         LinkId? parentId,
         ShareAndKey? shareAndKeyToUse,
-        ShareId? childMembershipShareId,
+        ShareId? childShareId,
         CancellationToken cancellationToken)
     {
-        if (childMembershipShareId is not null && childMembershipShareId == shareAndKeyToUse?.Share.Id)
+        if (childShareId is not null && childShareId == shareAndKeyToUse?.Share.Id)
         {
             return shareAndKeyToUse.Value.Key;
         }
 
         var currentId = parentId;
-        var currentMembershipShareId = childMembershipShareId;
+        var currentShareId = childShareId;
 
         var linkAncestry = new Stack<LinkDetailsDto>(8);
 
@@ -286,11 +299,11 @@ internal static class DtoToMetadataConverter
 
                 linkAncestry.Push(linkDetails);
 
-                var (link, _, _, membership) = linkDetails;
+                var (link, _, _, sharing, _) = linkDetails;
+
+                currentShareId = sharing?.ShareId;
 
                 currentId = link.ParentId;
-
-                currentMembershipShareId = membership?.ShareId;
             }
         }
         catch (Exception e)
@@ -306,12 +319,12 @@ internal static class DtoToMetadataConverter
             }
             else
             {
-                if (currentMembershipShareId is null)
+                if (currentShareId is null)
                 {
-                    return new ProtonDriveError("No membership available to access node");
+                    return new ProtonDriveError("No share available to access node");
                 }
 
-                (_, currentParentKey) = await ShareOperations.GetShareAsync(client, currentMembershipShareId.Value, cancellationToken).ConfigureAwait(false);
+                (_, currentParentKey) = await ShareOperations.GetShareAsync(client, currentShareId.Value, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -334,5 +347,22 @@ internal static class DtoToMetadataConverter
         }
 
         return currentParentKey;
+    }
+}
+
+public sealed class TempDebugException : Exception
+{
+    public TempDebugException(string message)
+        : base(message)
+    {
+    }
+
+    public TempDebugException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
+
+    public TempDebugException()
+    {
     }
 }

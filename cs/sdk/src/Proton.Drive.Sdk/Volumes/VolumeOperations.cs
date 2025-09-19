@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Api.Volumes;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Nodes;
@@ -51,6 +52,13 @@ internal static class VolumeOperations
         await client.Cache.Secrets.SetFolderSecretsAsync(volume.RootFolderId, rootFolderSecrets, cancellationToken).ConfigureAwait(false);
 
         return (volume, share, rootFolder);
+    }
+
+    public static async ValueTask<ShareId> GetVolumeMainShareIdAsync(ProtonDriveClient client, VolumeId volumeId, CancellationToken cancellationToken)
+    {
+        var response = await client.Api.Volumes.GetVolumeAsync(volumeId, cancellationToken).ConfigureAwait(false);
+
+        return response.Volume.Share.ShareId;
     }
 
     public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateTrashAsync(
