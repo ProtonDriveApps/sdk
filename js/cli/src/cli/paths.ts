@@ -1,5 +1,6 @@
 import path from 'node:path';
-import { ProtonDriveClient, MaybeNode } from '../../../sdk/src';
+import { ProtonDriveClient, MaybeNode, MaybeMissingNode } from '../../../sdk/src';
+import { ProtonDrivePhotosClient } from '../../../sdk/src/protonDrivePhotosClient';
 import { getName } from './node';
 
 export enum PathType {
@@ -12,8 +13,12 @@ export enum PathType {
 }
 
 export class Paths {
-    constructor(private sdk: ProtonDriveClient) {
+    constructor(
+        private sdk: ProtonDriveClient,
+        private photosSdk: ProtonDrivePhotosClient,
+    ) {
         this.sdk = sdk;
+        this.photosSdk = photosSdk;
     }
 
     get rootPaths(): string[] {
@@ -24,6 +29,10 @@ export class Paths {
 
     getPath(path: string): Path {
         return new Path(this.sdk, path);
+    }
+
+    getPhotoPath(path: string): PhotoPath {
+        return new PhotoPath(this.photosSdk, path);
     }
 }
 
@@ -131,11 +140,12 @@ export class Path {
         for await (const device of this.sdk.iterateDevices()) {
             const name = device.name.ok ? device.name.value : device.name.error.name;
             if (name === this.sectionRootNodeName) {
-                const [maybeNode] = await Array.fromAsync(this.sdk.iterateNodes([device.rootFolderUid]));
-                if (!maybeNode.ok && 'missingUid' in maybeNode.error) {
+                const [maybeMissingNode] = await Array.fromAsync(this.sdk.iterateNodes([device.rootFolderUid]));
+                const maybeNode = getMaybeNodeAndIgnoreMissingNode(maybeMissingNode);
+                if (!maybeNode) {
                     throw new Error(`Node not found`);
                 }
-                return maybeNode as MaybeNode;
+                return maybeNode;
             }
         }
         throw new Error('Device not found');
@@ -161,4 +171,48 @@ export class Path {
         }
         throw new Error(`Node not found: ${name}`);
     }
+}
+
+export class PhotoPath {
+    constructor(
+        private photosSdk: ProtonDrivePhotosClient,
+        public fullPath: string,
+    ) {
+        this.photosSdk = photosSdk;
+        this.fullPath = fullPath;
+    }
+
+    async getNode(): Promise<MaybeNode> {
+        if (this.fullPath.includes('~')) {
+            const nodeUid = this.fullPath;
+            return this.photosSdk.getNode(nodeUid);
+        }
+
+        return this.getNodeByName(this.fullPath);
+    }
+
+    private async getNodeByName(name: string): Promise<MaybeNode> {
+        const photoNodeUids = await Array.fromAsync(this.photosSdk.iterateTimeline(), (photo) => photo.nodeUid);
+        for await (const maybeMissingNode of this.photosSdk.iterateNodes(photoNodeUids)) {
+            const maybeNode = getMaybeNodeAndIgnoreMissingNode(maybeMissingNode);
+            if (!maybeNode) {
+                continue;
+            }
+            if (getName(maybeNode) === name) {
+                return maybeNode;
+            }
+        }
+        throw new Error(`Node not found: ${name}`);
+    }
+}
+
+function getMaybeNodeAndIgnoreMissingNode(maybeMissingNode: MaybeMissingNode): MaybeNode | undefined {
+    if (maybeMissingNode.ok) {
+        return maybeMissingNode;
+    }
+    const erroredNode = maybeMissingNode.error;
+    if ('missingUid' in erroredNode) {
+        return;
+    }
+    return { ok: false, error: erroredNode };
 }
