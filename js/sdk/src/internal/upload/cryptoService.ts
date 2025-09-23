@@ -7,8 +7,8 @@ import { EncryptedBlock, EncryptedThumbnail, NodeCrypto, NodeRevisionDraftKeys, 
 
 export class UploadCryptoService {
     constructor(
-        private driveCrypto: DriveCrypto,
-        private nodesService: NodesService,
+        protected driveCrypto: DriveCrypto,
+        protected nodesService: NodesService,
     ) {
         this.driveCrypto = driveCrypto;
         this.nodesService = nodesService;

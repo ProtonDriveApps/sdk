@@ -50,7 +50,7 @@ describe('extended attrbiutes', () => {
         });
     });
 
-    describe('should generate file attributes', () => {
+    describe('should generate file attributes without additional metadata', () => {
         const testCases: [object, string | undefined][] = [
             [{}, undefined],
             [
@@ -79,6 +79,28 @@ describe('extended attrbiutes', () => {
                 const output = generateFileExtendedAttributes(input);
                 expect(output).toBe(expectedAttributes);
             });
+        });
+    });
+
+    describe('should generate file attributes with additional metadata', () => {
+        const testCases: [object, string | undefined][] = [
+            [{}, '{"Media":{"Width":100,"Height":100}}'],
+            [{ size: undefined }, '{"Media":{"Width":100,"Height":100}}'],
+            [{ size: 123 }, '{"Common":{"Size":123},"Media":{"Width":100,"Height":100}}'],
+        ];
+        testCases.forEach(([input, expectedAttributes]) => {
+            it(`should generate ${input}`, () => {
+                const output = generateFileExtendedAttributes(input, { Media: { Width: 100, Height: 100 } });
+                expect(output).toBe(expectedAttributes);
+            });
+        });
+    });
+
+    describe('should throw an error if additional metadata contains common attributes', () => {
+        it('should throw an error', () => {
+            expect(() => generateFileExtendedAttributes({ size: 123 }, { Common: { Hello: 'World' } })).toThrow(
+                'Common attributes are not allowed in additional metadata',
+            );
         });
     });
 

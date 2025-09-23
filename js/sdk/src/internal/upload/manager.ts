@@ -15,14 +15,14 @@ import { makeNodeUid, splitNodeUid } from '../uids';
  * generating the necessary cryptographic keys and metadata.
  */
 export class UploadManager {
-    private logger: Logger;
+    protected logger: Logger;
 
     constructor(
         telemetry: ProtonDriveTelemetry,
-        private apiService: UploadAPIService,
-        private cryptoService: UploadCryptoService,
-        private nodesService: NodesService,
-        private clientUid: string | undefined,
+        protected apiService: UploadAPIService,
+        protected cryptoService: UploadCryptoService,
+        protected nodesService: NodesService,
+        protected clientUid: string | undefined,
     ) {
         this.logger = telemetry.getLogger('upload');
         this.apiService = apiService;
@@ -58,6 +58,9 @@ export class UploadManager {
                 key: generatedNodeCrypto.nodeKeys.decrypted.key,
                 contentKeyPacketSessionKey: generatedNodeCrypto.contentKey.decrypted.contentKeyPacketSessionKey,
                 signatureAddress: generatedNodeCrypto.signatureAddress,
+            },
+            parentNodeKeys: {
+                hashKey: parentKeys.hashKey,
             },
             newNodeInfo: {
                 parentUid: parentFolderUid,
@@ -260,21 +263,28 @@ export class UploadManager {
         manifest: Uint8Array,
         extendedAttributes: {
             modificationTime?: Date;
-            size?: number;
-            blockSizes?: number[];
-            digests?: {
-                sha1?: string;
+            size: number;
+            blockSizes: number[];
+            digests: {
+                sha1: string;
             };
         },
+        additionalExtendedAttributes?: object,
     ): Promise<void> {
-        const generatedExtendedAttributes = generateFileExtendedAttributes(extendedAttributes);
+        const generatedExtendedAttributes = generateFileExtendedAttributes(
+            extendedAttributes,
+            additionalExtendedAttributes,
+        );
         const nodeCommitCrypto = await this.cryptoService.commitFile(
             nodeRevisionDraft.nodeKeys,
             manifest,
             generatedExtendedAttributes,
         );
         await this.apiService.commitDraftRevision(nodeRevisionDraft.nodeRevisionUid, nodeCommitCrypto);
+        await this.notifyNodeUploaded(nodeRevisionDraft);
+    }
 
+    protected async notifyNodeUploaded(nodeRevisionDraft: NodeRevisionDraft): Promise<void> {
         // If new revision to existing node was created, invalidate the node.
         // Otherwise notify about the new child in the parent.
         if (nodeRevisionDraft.newNodeInfo) {
