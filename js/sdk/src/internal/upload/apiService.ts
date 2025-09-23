@@ -53,8 +53,8 @@ type PostDeleteNodesResponse =
 
 export class UploadAPIService {
     constructor(
-        private apiService: DriveAPIService,
-        private clientUid: string | undefined,
+        protected apiService: DriveAPIService,
+        protected clientUid: string | undefined,
     ) {
         this.apiService = apiService;
         this.clientUid = clientUid;
@@ -252,7 +252,7 @@ export class UploadAPIService {
             ManifestSignature: options.armoredManifestSignature,
             SignatureAddress: options.signatureEmail,
             XAttr: options.armoredExtendedAttributes || null,
-            Photo: null, // TODO
+            Photo: null, // Only used for photos in the Photo volume.
         });
     }
 

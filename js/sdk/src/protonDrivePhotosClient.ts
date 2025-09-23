@@ -17,11 +17,10 @@ import { DriveAPIService } from './internal/apiService';
 import { initDownloadModule } from './internal/download';
 import { DriveEventsService, DriveListener, EventSubscription } from './internal/events';
 import { initNodesModule } from './internal/nodes';
-import { initPhotoSharesModule, initPhotosModule } from './internal/photos';
+import { initPhotosModule, initPhotoSharesModule, initPhotoUploadModule } from './internal/photos';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharesModule } from './internal/shares';
 import { initSharingModule } from './internal/sharing';
-import { initUploadModule } from './internal/upload';
 
 /**
  * ProtonDrivePhotosClient is the interface to access Photos functionality.
@@ -39,7 +38,7 @@ export class ProtonDrivePhotosClient {
     private nodes: ReturnType<typeof initNodesModule>;
     private sharing: ReturnType<typeof initSharingModule>;
     private download: ReturnType<typeof initDownloadModule>;
-    private upload: ReturnType<typeof initUploadModule>;
+    private upload: ReturnType<typeof initPhotoUploadModule>;
     private photos: ReturnType<typeof initPhotosModule>;
 
     public experimental: {
@@ -115,7 +114,7 @@ export class ProtonDrivePhotosClient {
             this.nodes.access,
             this.nodes.revisions,
         );
-        this.upload = initUploadModule(
+        this.upload = initPhotoUploadModule(
             telemetry,
             apiService,
             cryptoModule,
@@ -234,7 +233,16 @@ export class ProtonDrivePhotosClient {
      *
      * See `ProtonDriveClient.getFileUploader` for more information.
      */
-    async getFileUploader(name: string, metadata: UploadMetadata, signal?: AbortSignal): Promise<FileUploader> {
+    async getFileUploader(
+        name: string,
+        metadata: UploadMetadata & {
+            captureTime?: Date;
+            mainPhotoLinkID?: string;
+            // TODO: handle tags enum in the SDK
+            tags?: (0 | 3 | 1 | 2 | 7 | 4 | 5 | 6 | 8 | 9)[];
+        },
+        signal?: AbortSignal,
+    ): Promise<FileUploader> {
         this.logger.info(`Getting file uploader`);
         const parentFolderUid = await this.nodes.access.getVolumeRootFolder();
         return this.upload.getFileUploader(getUid(parentFolderUid), name, metadata, signal);

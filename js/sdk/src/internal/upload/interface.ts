@@ -7,6 +7,9 @@ export type NodeRevisionDraft = {
     nodeUid: string;
     nodeRevisionUid: string;
     nodeKeys: NodeRevisionDraftKeys;
+    parentNodeKeys?: {
+        hashKey: Uint8Array;
+    };
     // newNodeInfo is set only when revision is created with the new node.
     newNodeInfo?: {
         parentUid: string;

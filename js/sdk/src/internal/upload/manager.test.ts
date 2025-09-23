@@ -122,6 +122,9 @@ describe('UploadManager', () => {
                         email: 'signatureEmail',
                     },
                 },
+                parentNodeKeys: {
+                    hashKey: 'parentNode:hashKey',
+                },
                 newNodeInfo: {
                     parentUid: 'parentUid',
                     name: 'name',
@@ -171,6 +174,9 @@ describe('UploadManager', () => {
                     signatureAddress: {
                         email: 'signatureEmail',
                     },
+                },
+                parentNodeKeys: {
+                    hashKey: 'parentNode:hashKey',
                 },
                 newNodeInfo: {
                     parentUid: 'volumeId~parentUid',
@@ -338,6 +344,8 @@ describe('UploadManager', () => {
         const manifest = new Uint8Array([1, 2, 3]);
         const extendedAttributes = {
             modificationTime: new Date(),
+            size: 123,
+            blockSizes: [100, 20, 3],
             digests: {
                 sha1: 'sha1',
             },

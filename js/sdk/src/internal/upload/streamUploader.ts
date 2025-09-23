@@ -55,36 +55,36 @@ const MAX_BLOCK_UPLOAD_RETRIES = 3;
  * that the upload process is efficient and does not overload the server.
  */
 export class StreamUploader {
-    private logger: Logger;
+    protected logger: Logger;
 
-    private digests: UploadDigests;
-    private controller: UploadController;
-    private abortController: AbortController;
+    protected digests: UploadDigests;
+    protected controller: UploadController;
+    protected abortController: AbortController;
 
-    private encryptedThumbnails = new Map<ThumbnailType, EncryptedThumbnail>();
-    private encryptedBlocks = new Map<number, EncryptedBlock>();
-    private encryptionFinished = false;
+    protected encryptedThumbnails = new Map<ThumbnailType, EncryptedThumbnail>();
+    protected encryptedBlocks = new Map<number, EncryptedBlock>();
+    protected encryptionFinished = false;
 
-    private ongoingUploads = new Map<
+    protected ongoingUploads = new Map<
         string,
         {
             uploadPromise: Promise<void>;
             encryptedBlock: EncryptedBlock | EncryptedThumbnail;
         }
     >();
-    private uploadedThumbnails: ({ type: ThumbnailType } & EncryptedBlockMetadata)[] = [];
-    private uploadedBlocks: ({ index: number } & EncryptedBlockMetadata)[] = [];
+    protected uploadedThumbnails: ({ type: ThumbnailType } & EncryptedBlockMetadata)[] = [];
+    protected uploadedBlocks: ({ index: number } & EncryptedBlockMetadata)[] = [];
 
     constructor(
-        private telemetry: UploadTelemetry,
-        private apiService: UploadAPIService,
-        private cryptoService: UploadCryptoService,
-        private uploadManager: UploadManager,
-        private blockVerifier: BlockVerifier,
-        private revisionDraft: NodeRevisionDraft,
-        private metadata: UploadMetadata,
-        private onFinish: (failure: boolean) => Promise<void>,
-        private signal?: AbortSignal,
+        protected telemetry: UploadTelemetry,
+        protected apiService: UploadAPIService,
+        protected cryptoService: UploadCryptoService,
+        protected uploadManager: UploadManager,
+        protected blockVerifier: BlockVerifier,
+        protected revisionDraft: NodeRevisionDraft,
+        protected metadata: UploadMetadata,
+        protected onFinish: (failure: boolean) => Promise<void>,
+        protected signal?: AbortSignal,
     ) {
         this.telemetry = telemetry;
         this.logger = telemetry.getLoggerForRevision(revisionDraft.nodeRevisionUid);
@@ -205,19 +205,21 @@ export class StreamUploader {
         await Promise.all(this.ongoingUploads.values().map(({ uploadPromise }) => uploadPromise));
     }
 
-    private async commitFile(thumbnails: Thumbnail[]) {
+    protected async commitFile(thumbnails: Thumbnail[]) {
         this.verifyIntegrity(thumbnails);
-
-        const uploadedBlocks = Array.from(this.uploadedBlocks.values());
-        uploadedBlocks.sort((a, b) => a.index - b.index);
 
         const extendedAttributes = {
             modificationTime: this.metadata.modificationTime,
             size: this.metadata.expectedSize,
-            blockSizes: uploadedBlocks.map((block) => block.originalSize),
+            blockSizes: this.uploadedBlockSizes,
             digests: this.digests.digests(),
         };
-        await this.uploadManager.commitDraft(this.revisionDraft, this.manifest, extendedAttributes);
+        await this.uploadManager.commitDraft(
+            this.revisionDraft,
+            this.manifest,
+            extendedAttributes,
+            this.metadata.additionalMetadata,
+        );
     }
 
     private async encryptThumbnails(thumbnails: Thumbnail[]) {
@@ -514,7 +516,7 @@ export class StreamUploader {
         await waitForCondition(() => this.encryptedBlocks.size > 0 || this.encryptionFinished);
     }
 
-    private verifyIntegrity(thumbnails: Thumbnail[]) {
+    protected verifyIntegrity(thumbnails: Thumbnail[]) {
         const expectedBlockCount =
             Math.ceil(this.metadata.expectedSize / FILE_CHUNK_SIZE) + (thumbnails ? thumbnails?.length : 0);
         if (this.uploadedBlockCount !== expectedBlockCount) {
@@ -549,7 +551,13 @@ export class StreamUploader {
         return this.uploadedBlocks.reduce((sum, { originalSize }) => sum + originalSize, 0);
     }
 
-    private get manifest(): Uint8Array {
+    protected get uploadedBlockSizes(): number[] {
+        const uploadedBlocks = Array.from(this.uploadedBlocks.values());
+        uploadedBlocks.sort((a, b) => a.index - b.index);
+        return uploadedBlocks.map((block) => block.originalSize);
+    }
+
+    protected get manifest(): Uint8Array {
         this.uploadedThumbnails.sort((a, b) => a.type - b.type);
         this.uploadedBlocks.sort((a, b) => a.index - b.index);
         const hashes = [

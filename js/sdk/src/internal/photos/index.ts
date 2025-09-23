@@ -9,11 +9,21 @@ import {
 import { SharesCache } from '../shares/cache';
 import { SharesCryptoCache } from '../shares/cryptoCache';
 import { SharesCryptoService } from '../shares/cryptoService';
+import { NodesService as UploadNodesService } from '../upload/interface';
+import { UploadTelemetry } from '../upload/telemetry';
+import { UploadQueue } from '../upload/queue';
 import { Albums } from './albums';
 import { PhotosAPIService } from './apiService';
 import { NodesService, SharesService } from './interface';
 import { PhotoSharesManager } from './shares';
 import { PhotosTimeline } from './timeline';
+import {
+    PhotoFileUploader,
+    PhotoUploadAPIService,
+    PhotoUploadCryptoService,
+    PhotoUploadManager,
+    PhotoUploadMetadata,
+} from './upload';
 
 /**
  * Provides facade for the whole photos module.
@@ -65,4 +75,56 @@ export function initPhotoSharesModule(
         cryptoService,
         sharesService,
     );
+}
+
+/**
+ * Provides facade for the photo upload module.
+ *
+ * The photo upload wraps the core upload module and adds photo specific metadata.
+ * It provides the same interface so it can be used in the same way.
+ */
+export function initPhotoUploadModule(
+    telemetry: ProtonDriveTelemetry,
+    apiService: DriveAPIService,
+    driveCrypto: DriveCrypto,
+    sharesService: SharesService,
+    nodesService: UploadNodesService,
+    clientUid?: string,
+) {
+    const api = new PhotoUploadAPIService(apiService, clientUid);
+    const cryptoService = new PhotoUploadCryptoService(driveCrypto, nodesService);
+
+    const uploadTelemetry = new UploadTelemetry(telemetry, sharesService);
+    const manager = new PhotoUploadManager(telemetry, api, cryptoService, nodesService, clientUid);
+
+    const queue = new UploadQueue();
+
+    async function getFileUploader(
+        parentFolderUid: string,
+        name: string,
+        metadata: PhotoUploadMetadata,
+        signal?: AbortSignal,
+    ): Promise<PhotoFileUploader> {
+        await queue.waitForCapacity(signal);
+
+        const onFinish = () => {
+            queue.releaseCapacity();
+        };
+
+        return new PhotoFileUploader(
+            uploadTelemetry,
+            api,
+            cryptoService,
+            manager,
+            parentFolderUid,
+            name,
+            metadata,
+            onFinish,
+            signal,
+        );
+    }
+
+    return {
+        getFileUploader,
+    };
 }

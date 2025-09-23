@@ -147,19 +147,24 @@ describe('StreamUploader', () => {
 
             const numberOfExpectedBlocks = Math.ceil(metadata.expectedSize / FILE_CHUNK_SIZE);
             expect(uploadManager.commitDraft).toHaveBeenCalledTimes(1);
-            expect(uploadManager.commitDraft).toHaveBeenCalledWith(revisionDraft, expect.anything(), {
-                size: metadata.expectedSize,
-                blockSizes: metadata.expectedSize
-                    ? [
-                          ...Array(numberOfExpectedBlocks - 1).fill(FILE_CHUNK_SIZE),
-                          metadata.expectedSize % FILE_CHUNK_SIZE,
-                      ]
-                    : [],
-                modificationTime: undefined,
-                digests: {
-                    sha1: expect.anything(),
+            expect(uploadManager.commitDraft).toHaveBeenCalledWith(
+                revisionDraft,
+                expect.anything(),
+                {
+                    size: metadata.expectedSize,
+                    blockSizes: metadata.expectedSize
+                        ? [
+                              ...Array(numberOfExpectedBlocks - 1).fill(FILE_CHUNK_SIZE),
+                              metadata.expectedSize % FILE_CHUNK_SIZE,
+                          ]
+                        : [],
+                    modificationTime: undefined,
+                    digests: {
+                        sha1: expect.anything(),
+                    },
                 },
-            });
+                metadata.additionalMetadata,
+            );
             expect(telemetry.uploadFinished).toHaveBeenCalledTimes(1);
             expect(telemetry.uploadFinished).toHaveBeenCalledWith('revisionUid', metadata.expectedSize + thumbnailSize);
             expect(telemetry.uploadFailed).not.toHaveBeenCalled();

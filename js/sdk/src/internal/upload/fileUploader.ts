@@ -98,6 +98,18 @@ class Uploader {
             }
         };
 
+        return this.newStreamUploader(
+            blockVerifier,
+            revisionDraft,
+            onFinish,
+        );
+    }
+
+    protected async newStreamUploader(
+        blockVerifier: BlockVerifier,
+        revisionDraft: NodeRevisionDraft,
+        onFinish: (failure: boolean) => Promise<void>,
+    ): Promise<StreamUploader> {
         return new StreamUploader(
             this.telemetry,
             this.apiService,

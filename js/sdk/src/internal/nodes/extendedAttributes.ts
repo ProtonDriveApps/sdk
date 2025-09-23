@@ -83,34 +83,42 @@ export function parseFolderExtendedAttributes(logger: Logger, extendedAttributes
     }
 }
 
-export function generateFileExtendedAttributes(options: {
-    modificationTime?: Date;
-    size?: number;
-    blockSizes?: number[];
-    digests?: {
-        sha1?: string;
-    };
-}): string | undefined {
+export function generateFileExtendedAttributes(
+    common: {
+        modificationTime?: Date;
+        size?: number;
+        blockSizes?: number[];
+        digests?: {
+            sha1?: string;
+        };
+    },
+    additionalMetadata?: object,
+): string | undefined {
+    if (additionalMetadata && 'Common' in additionalMetadata) {
+        throw new Error('Common attributes are not allowed in additional metadata');
+    }
+
     const commonAttributes: FileExtendedAttributesSchema['Common'] = {};
-    if (options.modificationTime) {
-        commonAttributes.ModificationTime = dateToIsoString(options.modificationTime);
+    if (common.modificationTime) {
+        commonAttributes.ModificationTime = dateToIsoString(common.modificationTime);
     }
-    if (options.size !== undefined) {
-        commonAttributes.Size = options.size;
+    if (common.size !== undefined) {
+        commonAttributes.Size = common.size;
     }
-    if (options.blockSizes?.length) {
-        commonAttributes.BlockSizes = options.blockSizes;
+    if (common.blockSizes?.length) {
+        commonAttributes.BlockSizes = common.blockSizes;
     }
-    if (options.digests?.sha1) {
+    if (common.digests?.sha1) {
         commonAttributes.Digests = {
-            SHA1: options.digests.sha1,
+            SHA1: common.digests.sha1,
         };
     }
-    if (!Object.keys(commonAttributes).length) {
+    if (!Object.keys(commonAttributes).length && !additionalMetadata) {
         return undefined;
     }
     return JSON.stringify({
-        Common: commonAttributes,
+        ...(Object.keys(commonAttributes).length ? { Common: commonAttributes } : {}),
+        ...(additionalMetadata ? { ...additionalMetadata } : {}),
     });
 }
 
