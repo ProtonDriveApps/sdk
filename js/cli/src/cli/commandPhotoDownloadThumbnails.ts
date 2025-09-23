@@ -4,8 +4,8 @@ import { ParseArgsConfig } from 'node:util';
 import { Command, ActionArgs } from './interface';
 import { ThumbnailType } from '../../../sdk/src';
 
-export class CommandFileSystemDownloadThumbnails implements Command {
-    group = 'filesystem';
+export class CommandPhotoDownloadThumbnails implements Command {
+    group = 'photo';
     name = 'download-thumbnails';
     // FIXME: support download of multiple thumbnails
     args = ['path', 'parentLocalPath'];
@@ -17,11 +17,11 @@ export class CommandFileSystemDownloadThumbnails implements Command {
         },
     };
 
-    async action({ sdk, paths, args: [pathString, parentLocalPath], options: { json, thumbnailType } }: ActionArgs) {
-        const nodePath = paths.getPath(pathString);
+    async action({ photosSdk, paths, args: [pathString, parentLocalPath], options: { json, thumbnailType } }: ActionArgs) {
+        const nodePath = paths.getPhotoPath(pathString);
         const node = await nodePath.getNode();
 
-        for await (const result of sdk.iterateThumbnails([node], parseInt(thumbnailType))) {
+        for await (const result of photosSdk.iterateThumbnails([node], parseInt(thumbnailType))) {
             // Thumbnail can be jpeg or webp. All new code should produce webp.
             const thumbnailFileName = `thumbnail-${result.nodeUid}.webp`;
             const thumbnailFilePath = path.join(parentLocalPath, thumbnailFileName);

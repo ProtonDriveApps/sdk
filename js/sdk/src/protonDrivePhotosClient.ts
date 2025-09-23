@@ -8,11 +8,19 @@ import {
     FileUploader,
     SDKEvent,
     MaybeNode,
+    ThumbnailType,
+    ThumbnailResult,
 } from './interface';
 import { getConfig } from './config';
 import { DriveCrypto } from './crypto';
 import { Telemetry } from './telemetry';
-import { convertInternalMissingNodeIterator, convertInternalNodeIterator, getUid, getUids } from './transformers';
+import {
+    convertInternalMissingNodeIterator,
+    convertInternalNodeIterator,
+    convertInternalNodePromise,
+    getUid,
+    getUids,
+} from './transformers';
 import { DriveAPIService } from './internal/apiService';
 import { initDownloadModule } from './internal/download';
 import { DriveEventsService, DriveListener, EventSubscription } from './internal/events';
@@ -208,6 +216,16 @@ export class ProtonDrivePhotosClient {
     }
 
     /**
+     * Get the node by its UID.
+     *
+     * See `ProtonDriveClient.getNode` for more information.
+     */
+    async getNode(nodeUid: NodeOrUid): Promise<MaybeNode> {
+        this.logger.info(`Getting node ${getUid(nodeUid)}`);
+        return convertInternalNodePromise(this.nodes.access.getNode(getUid(nodeUid)));
+    }
+
+    /**
      * Iterates the albums.
      *
      * The output is not sorted and the order of the nodes is not guaranteed.
@@ -226,6 +244,20 @@ export class ProtonDrivePhotosClient {
     async getFileDownloader(nodeUid: NodeOrUid, signal?: AbortSignal): Promise<FileDownloader> {
         this.logger.info(`Getting file downloader for ${getUid(nodeUid)}`);
         return this.download.getFileDownloader(getUid(nodeUid), signal);
+    }
+
+    /**
+     * Iterates the thumbnails of the given nodes.
+     *
+     * See `ProtonDriveClient.iterateThumbnails` for more information.
+     */
+    async *iterateThumbnails(
+        nodeUids: NodeOrUid[],
+        thumbnailType?: ThumbnailType,
+        signal?: AbortSignal,
+    ): AsyncGenerator<ThumbnailResult> {
+        this.logger.info(`Iterating ${nodeUids.length} thumbnails`);
+        yield* this.download.iterateThumbnails(getUids(nodeUids), thumbnailType, signal);
     }
 
     /**

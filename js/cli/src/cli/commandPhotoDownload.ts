@@ -4,8 +4,8 @@ import { ParseArgsConfig } from 'util';
 import { Command, ActionArgs } from './interface';
 import { getName } from './node';
 
-export class CommandFileSystemDownload implements Command {
-    group = 'filesystem';
+export class CommandPhotoDownload implements Command {
+    group = 'photo';
     name = 'download';
     // FIXME: support download of multiple files
     args = ['path', 'localParentPath'];
@@ -17,10 +17,10 @@ export class CommandFileSystemDownload implements Command {
         },
     };
 
-    async action({ sdk, paths, args: [pathString, localParentPath], options: { name, json } }: ActionArgs) {
-        const nodePath = paths.getPath(pathString);
+    async action({ photosSdk, paths, args: [pathString, localParentPath], options: { json, name } }: ActionArgs) {
+        const nodePath = paths.getPhotoPath(pathString);
         const node = await nodePath.getNode();
-        const downloader = await sdk.getFileDownloader(node);
+        const downloader = await photosSdk.getFileDownloader(node);
 
         const claimedSize = downloader.getClaimedSizeInBytes();
         const localPath = path.join(localParentPath, name || getName(node));

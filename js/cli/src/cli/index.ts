@@ -22,6 +22,8 @@ import { CommandFileSystemRestore } from './commandFileSystemRestore';
 import { CommandFileSystemUpload } from './commandFileSystemUpload';
 import { CommandFileSystemTrash } from './commandFileSystemTrash';
 import { CommandInvitationList } from './commandInvitationList';
+import { CommandPhotoDownload } from './commandPhotoDownload';
+import { CommandPhotoDownloadThumbnails } from './commandPhotoDownloadThumbnails';
 import { CommandPhotoTimeline } from './commandPhotoTimeline';
 import { CommandPhotoUpload } from './commandPhotoUpload';
 import { CommandRevisionDelete } from './commandRevisionDelete';
@@ -75,6 +77,8 @@ const COMMANDS = [
     new CommandDeviceDelete(),
     new CommandPublicList(),
     new CommandPhotoTimeline(),
+    new CommandPhotoDownload(),
+    new CommandPhotoDownloadThumbnails(),
     new CommandPhotoUpload(),
     new CommandAlbumList(),
     new CommandDiagnosticTree(),
