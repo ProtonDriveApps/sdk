@@ -143,6 +143,7 @@ function generateNode() {
 
         shareId: undefined,
         isShared: false,
+        isSharedPublicly: false,
         directRole: MemberRole.Admin,
         membership: undefined,
 
@@ -255,6 +256,7 @@ describe('nodeAPIService', () => {
                 generateFolderNode(
                     {
                         isShared: true,
+                        isSharedPublicly: false,
                         shareId: 'shareId',
                         directRole: MemberRole.Admin,
                         membership: {
@@ -296,6 +298,7 @@ describe('nodeAPIService', () => {
                 generateFolderNode(
                     {
                         isShared: true,
+                        isSharedPublicly: false,
                         shareId: 'shareId',
                         directRole: MemberRole.Viewer,
                         membership: {
@@ -314,6 +317,26 @@ describe('nodeAPIService', () => {
                     },
                 ),
                 'myVolumeId',
+            );
+        });
+
+        it('should get publicly shared node', async () => {
+            await testIterateNodes(
+                generateAPIFolderNode(
+                    {},
+                    {
+                        Sharing: {
+                            ShareID: 'shareId',
+                            ShareURLID: 'shareUrlId',
+                        },
+                    },
+                ),
+                generateFolderNode({
+                    isShared: true,
+                    isSharedPublicly: true,
+                    shareId: 'shareId',
+                    directRole: MemberRole.Admin,
+                }),
             );
         });
 
