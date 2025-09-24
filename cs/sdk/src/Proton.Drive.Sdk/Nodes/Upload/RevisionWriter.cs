@@ -107,23 +107,8 @@ internal sealed class RevisionWriter : IDisposable
                             {
                                 var plainDataStream = ProtonDriveClient.MemoryStreamManager.GetStream();
 
-                                var buffer = ArrayPool<byte>.Shared.Rent(_targetBlockSize);
-
-                                try
-                                {
-                                    var bytesRead = await contentStream.ReadAsync(buffer, cancellationTokenSource.Token).ConfigureAwait(false);
-
-                                    buffer.AsSpan(0, Math.Min(bytesRead, plainDataPrefix.Length)).CopyTo(plainDataPrefix);
-
-                                    plainDataStream.Write(buffer.AsSpan(0, bytesRead));
-                                }
-                                finally
-                                {
-                                    ArrayPool<byte>.Shared.Return(buffer);
-                                }
-
-                                //await contentStream.PartiallyCopyToAsync(plainDataStream, _targetBlockSize, plainDataPrefix, cancellationTokenSource.Token)
-                                //    .ConfigureAwait(false);
+                                await contentStream.PartiallyCopyToAsync(plainDataStream, _targetBlockSize, plainDataPrefix, cancellationTokenSource.Token)
+                                    .ConfigureAwait(false);
 
                                 blockSizes.Add((int)plainDataStream.Length);
 

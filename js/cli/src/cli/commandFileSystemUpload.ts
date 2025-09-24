@@ -45,7 +45,7 @@ export class CommandFileSystemUpload implements Command {
         console.log(`Uploading ${name} (${metadata.expectedSize || 'N/A'} bytes)`);
 
         const thumbnails: Thumbnail[] = []; // TODO
-        const controller = await uploader.writeStream(file.stream(), thumbnails, (writtenBytes) => {
+        const controller = await uploader.uploadFromStream(file.stream(), thumbnails, (writtenBytes) => {
             console.log(`Uploaded ${writtenBytes} bytes`);
         });
 

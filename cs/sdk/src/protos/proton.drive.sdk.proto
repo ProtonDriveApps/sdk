@@ -16,18 +16,20 @@ message Request {
         DriveClientGetFileDownloaderRequest drive_client_get_file_downloader = 1005;
 
         UploadFromStreamRequest upload_from_stream = 1100;
-        FileUploaderFreeRequest file_uploader_free = 1101;
-        UploadControllerAwaitCompletionRequest upload_controller_await_completion = 1102;
-        UploadControllerPauseRequest upload_controller_pause = 1103;
-        UploadControllerResumeRequest upload_controller_resume = 1104;
-        UploadControllerFreeRequest upload_controller_free = 1105;
+        UploadFromFileRequest upload_from_file = 1101;
+        FileUploaderFreeRequest file_uploader_free = 1102;
+        UploadControllerAwaitCompletionRequest upload_controller_await_completion = 1103;
+        UploadControllerPauseRequest upload_controller_pause = 1104;
+        UploadControllerResumeRequest upload_controller_resume = 1105;
+        UploadControllerFreeRequest upload_controller_free = 1106;
 
         DownloadToStreamRequest download_to_stream = 1200;
-        FileDownloaderFreeRequest file_downloader_free = 1201;
-        DownloadControllerAwaitCompletionRequest download_controller_await_completion = 1202;
-        DownloadControllerPauseRequest download_controller_pause = 1203;
-        DownloadControllerResumeRequest download_controller_resume = 1204;
-        DownloadControllerFreeRequest download_controller_free = 1205;
+        DownloadToFileRequest download_to_file = 1201;
+        FileDownloaderFreeRequest file_downloader_free = 1202;
+        DownloadControllerAwaitCompletionRequest download_controller_await_completion = 1203;
+        DownloadControllerPauseRequest download_controller_pause = 1204;
+        DownloadControllerResumeRequest download_controller_resume = 1205;
+        DownloadControllerFreeRequest download_controller_free = 1206;
     };
 }
 
@@ -109,6 +111,7 @@ message ProgressUpdate {
 message Thumbnail {
     int32 type = 1;
     int64 content_pointer = 2;
+    int64 content_length = 3;
 }
 
 message UploadResult {
@@ -176,6 +179,15 @@ message UploadFromStreamRequest {
     int64 cancellation_token_source_handle = 5;
 }
 
+// The response value type must be Int64Value.
+message UploadFromFileRequest {
+    int64 uploader_handle = 1;
+    repeated Thumbnail thumbnails = 2;
+    string file_path = 3;
+    int64 progress_action = 4; // See array_action in C header file for signature
+    int64 cancellation_token_source_handle = 5;
+}
+
 // No response value.
 message FileUploaderFreeRequest {
     int64 file_uploader_handle = 1;
@@ -214,6 +226,14 @@ message DriveClientGetFileDownloaderRequest {
 message DownloadToStreamRequest {
     int64 downloader_handle = 1;
     int64 write_action = 2; // C signature: void on_stream_operation(const void* state, ByteArray buffer, const void* caller_state);
+    int64 progress_action = 3; // See array_action in C header file for signature
+    int64 cancellation_token_source_handle = 4;
+}
+
+// The response value type must be Int64Value.
+message DownloadToFileRequest {
+    int64 downloader_handle = 1;
+    string file_path = 2;
     int64 progress_action = 3; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 4;
 }

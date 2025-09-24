@@ -19,7 +19,7 @@ export class CommandRevisionDownload implements Command {
             locked: false,
         };
 
-        const controller = downloader.writeToStream(writableStream, (writtenBytes) => {
+        const controller = downloader.downloadToStream(writableStream, (writtenBytes) => {
             console.log(`Downloaded ${writtenBytes} bytes`);
         });
 

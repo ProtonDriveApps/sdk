@@ -19,6 +19,13 @@ public sealed class FileDownloader : IDisposable
         return new DownloadController(task);
     }
 
+    public DownloadController DownloadToFile(string filePath, Action<long, long> onProgress, CancellationToken cancellationToken)
+    {
+        var task = DownloadToFileAsync(filePath, onProgress, cancellationToken);
+
+        return new DownloadController(task);
+    }
+
     public void Dispose()
     {
         if (_remainingNumberOfBlocksToList <= 0)
@@ -36,6 +43,16 @@ public sealed class FileDownloader : IDisposable
             .ConfigureAwait(false);
 
         await revisionReader.ReadAsync(contentOutputStream, onProgress, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task DownloadToFileAsync(string filePath, Action<long, long> onProgress, CancellationToken cancellationToken)
+    {
+        var contentOutputStream = File.Open(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+
+        await using (contentOutputStream.ConfigureAwait(false))
+        {
+            await DownloadToStreamAsync(contentOutputStream, onProgress, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private void ReleaseBlockListing(int numberOfBlockListings)

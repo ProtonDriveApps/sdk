@@ -726,7 +726,7 @@ export class ProtonDriveClient {
      * ```typescript
      * const downloader = await client.getFileDownloader(nodeUid, signal);
      * const claimedSize = fileDownloader.getClaimedSizeInBytes();
-     * const downloadController = fileDownloader.writeToStream(stream, (downloadedBytes) => { ... });
+     * const downloadController = fileDownloader.downloadToStream(stream, (downloadedBytes) => { ... });
      *
      * signalController.abort(); // to cancel
      * downloadController.pause(); // to pause
@@ -786,7 +786,7 @@ export class ProtonDriveClient {
      *
      * ```typescript
      * const uploader = await client.getFileUploader(parentFolderUid, name, metadata, signal);
-     * const uploadController = await uploader.writeStream(stream, thumbnails, (uploadedBytes) => { ... });
+     * const uploadController = await uploader.uploadFromStream(stream, thumbnails, (uploadedBytes) => { ... });
      *
      * signalController.abort(); // to cancel
      * uploadController.pause(); // to pause

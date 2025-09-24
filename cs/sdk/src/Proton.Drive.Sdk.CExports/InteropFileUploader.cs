@@ -16,12 +16,43 @@ internal static class InteropFileUploader
 
         var stream = new InteropStream(uploader.FileSize, callerState, new InteropAction<nint, InteropArray<byte>, nint>(request.ReadAction));
 
-        var thumbnails = request.Thumbnails.Select(t => new Nodes.Thumbnail((ThumbnailType)t.Type, t.ToByteArray()));
+        var thumbnails = request.Thumbnails.Select(t =>
+        {
+            unsafe
+            {
+                return new Nodes.Thumbnail((ThumbnailType)t.Type, new InteropArray<byte>((byte*)t.ContentPointer, (nint)t.ContentLength).ToArray());
+            }
+        });
 
         var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
 
         var uploadController = uploader.UploadFromStream(
             stream,
+            thumbnails,
+            (completed, total) => progressAction.InvokeProgressUpdate(callerState, total, completed),
+            cancellationToken);
+
+        return new Int64Value { Value = Interop.AllocHandle(uploadController) };
+    }
+
+    public static IMessage HandleUploadFromFile(UploadFromFileRequest request, nint callerState)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var uploader = Interop.GetFromHandle<FileUploader>(request.UploaderHandle);
+
+        var thumbnails = request.Thumbnails.Select(t =>
+        {
+            unsafe
+            {
+                return new Nodes.Thumbnail((ThumbnailType)t.Type, new InteropArray<byte>((byte*)t.ContentPointer, (nint)t.ContentLength).ToArray());
+            }
+        });
+
+        var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
+
+        var uploadController = uploader.UploadFromFile(
+            request.FilePath,
             thumbnails,
             (completed, total) => progressAction.InvokeProgressUpdate(callerState, total, completed),
             cancellationToken);
