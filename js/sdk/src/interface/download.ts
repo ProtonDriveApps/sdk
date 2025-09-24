@@ -15,14 +15,14 @@ export interface FileDownloader {
      *
      * @param onProgress - Callback that is called with the number of downloaded bytes
      */
-    writeToStream(streamFactory: WritableStream, onProgress?: (downloadedBytes: number) => void): DownloadController;
+    downloadToStream(streamFactory: WritableStream, onProgress?: (downloadedBytes: number) => void): DownloadController;
 
     /**
-     * Same as `writeToStream` but without verification checks.
+     * Same as `downloadToStream` but without verification checks.
      *
      * Use this only for debugging purposes.
      */
-    unsafeWriteToStream(
+    unsafeDownloadToStream(
         streamFactory: WritableStream,
         onProgress?: (downloadedBytes: number) => void,
     ): DownloadController;
@@ -34,7 +34,7 @@ export interface FileDownloader {
      * need to download the entire file.
      *
      * Stream doesn't verify data integrity. For the full integrity of
-     * the file, use `writeToStream` instead.
+     * the file, use `downloadToStream` instead.
      *
      * The stream is not opportunitistically downloading the data ahead of
      * the time. It will only download the data when it is requested. To

@@ -46,7 +46,7 @@ export class CommandFileSystemDownload implements Command {
             locked: false,
         };
 
-        const controller = downloader.writeToStream(writableStream, (writtenBytes) => {
+        const controller = downloader.downloadToStream(writableStream, (writtenBytes) => {
             if (!json) {
                 console.log(`Downloaded ${writtenBytes} bytes`);
             }

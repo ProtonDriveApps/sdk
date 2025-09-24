@@ -46,6 +46,9 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.UploadFromStream
                     => InteropFileUploader.HandleUploadFromStream(request.UploadFromStream, callerState),
 
+                Request.PayloadOneofCase.UploadFromFile
+                    => InteropFileUploader.HandleUploadFromFile(request.UploadFromFile, callerState),
+
                 Request.PayloadOneofCase.FileUploaderFree
                     => InteropFileUploader.HandleFree(request.FileUploaderFree),
 
@@ -63,6 +66,9 @@ internal static class InteropMessageHandler
 
                 Request.PayloadOneofCase.DownloadToStream
                     => InteropFileDownloader.HandleDownloadToStream(request.DownloadToStream, callerState),
+
+                Request.PayloadOneofCase.DownloadToFile
+                    => InteropFileDownloader.HandleDownloadToFile(request.DownloadToFile, callerState),
 
                 Request.PayloadOneofCase.FileDownloaderFree
                     => InteropFileDownloader.HandleFree(request.FileDownloaderFree),
