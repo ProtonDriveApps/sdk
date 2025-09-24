@@ -577,6 +577,7 @@ function linkToEncryptedNode(
         // Sharing node metadata
         shareId: link.Sharing?.ShareID || undefined,
         isShared: !!link.Sharing,
+        isSharedPublicly: !!link.Sharing?.ShareURLID,
         directRole: isAdmin ? MemberRole.Admin : membershipRole,
         membership: link.Membership
             ? {

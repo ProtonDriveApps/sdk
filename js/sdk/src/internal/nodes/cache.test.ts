@@ -21,6 +21,7 @@ function generateNode(
         type: NodeType.File,
         mediaType: 'text',
         isShared: false,
+        isSharedPublicly: false,
         creationTime: new Date(),
         trashTime: undefined,
         volumeId: 'volumeId',

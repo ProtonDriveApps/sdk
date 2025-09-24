@@ -76,6 +76,7 @@ function tokenToEncryptedNode(logger: Logger, token: GetTokenInfoResponse['Token
         creationTime: new Date(), // TODO
 
         isShared: false,
+        isSharedPublicly: false,
         directRole: MemberRole.Viewer, // TODO
     };
 
@@ -133,6 +134,7 @@ function linkToEncryptedNode(
         totalStorageSize: link.TotalSize,
 
         isShared: false,
+        isSharedPublicly: false,
         directRole: MemberRole.Viewer, // TODO
     };
 
