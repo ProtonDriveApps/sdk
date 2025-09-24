@@ -10,9 +10,9 @@ internal static class InteropUploadController
     {
         var uploadController = Interop.GetFromHandle<UploadController>(request.UploadControllerHandle);
 
-        await uploadController.Completion.ConfigureAwait(false);
+        var (nodeUid, revisionUid) = await uploadController.Completion.ConfigureAwait(false);
 
-        return null;
+        return new UploadResult { NodeUid = nodeUid.ToString(), RevisionUid = revisionUid.ToString() };
     }
 
     public static IMessage? HandlePause(UploadControllerPauseRequest request)
