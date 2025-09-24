@@ -41,7 +41,7 @@ export interface FileRevisionUploader {
      *
      * The function will reject if the node with the given name already exists.
      */
-    writeStream(
+    uploadFromStream(
         stream: ReadableStream,
         thumnbails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,
@@ -57,7 +57,7 @@ export interface FileRevisionUploader {
      *
      * The function will reject if the node with the given name already exists.
      */
-    writeFile(
+    uploadFromFile(
         fileObject: File,
         thumnbails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,

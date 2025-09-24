@@ -46,7 +46,7 @@ class Uploader {
         this.controller = new UploadController();
     }
 
-    async writeFile(
+    async uploadFromFile(
         fileObject: File,
         thumbnails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,
@@ -67,7 +67,7 @@ class Uploader {
         return this.controller;
     }
 
-    async writeStream(
+    async uploadFromStream(
         stream: ReadableStream,
         thumbnails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,

@@ -138,24 +138,24 @@ export class FileDownloader {
         }
     }
 
-    writeToStream(stream: WritableStream, onProgress?: (downloadedBytes: number) => void): DownloadController {
+    downloadToStream(stream: WritableStream, onProgress?: (downloadedBytes: number) => void): DownloadController {
         if (this.controller.promise) {
             throw new Error(`Download already started`);
         }
-        this.controller.promise = this.downloadToStream(stream, onProgress);
+        this.controller.promise = this.internalDownloadToStream(stream, onProgress);
         return this.controller;
     }
 
-    unsafeWriteToStream(stream: WritableStream, onProgress?: (downloadedBytes: number) => void): DownloadController {
+    unsafeDownloadToStream(stream: WritableStream, onProgress?: (downloadedBytes: number) => void): DownloadController {
         if (this.controller.promise) {
             throw new Error(`Download already started`);
         }
         const ignoreIntegrityErrors = true;
-        this.controller.promise = this.downloadToStream(stream, onProgress, ignoreIntegrityErrors);
+        this.controller.promise = this.internalDownloadToStream(stream, onProgress, ignoreIntegrityErrors);
         return this.controller;
     }
 
-    private async downloadToStream(
+    private async internalDownloadToStream(
         stream: WritableStream,
         onProgress?: (downloadedBytes: number) => void,
         ignoreIntegrityErrors = false,

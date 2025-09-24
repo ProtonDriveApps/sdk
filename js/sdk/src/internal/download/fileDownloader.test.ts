@@ -78,7 +78,7 @@ describe('FileDownloader', () => {
         } as DecryptedRevision;
     });
 
-    describe('writeToStream', () => {
+    describe('downloadToStream', () => {
         let onProgress: (downloadedBytes: number) => void;
         let onFinish: () => void;
 
@@ -89,7 +89,7 @@ describe('FileDownloader', () => {
         const verifySuccess = async (
             fileProgress: number = 6, // 3 blocks of length 1, 2, 3
         ) => {
-            const controller = downloader.writeToStream(stream, onProgress);
+            const controller = downloader.downloadToStream(stream, onProgress);
             await controller.completion();
 
             expect(apiService.iterateRevisionBlocks).toHaveBeenCalledWith('revisionUid', undefined);
@@ -103,7 +103,7 @@ describe('FileDownloader', () => {
         };
 
         const verifyFailure = async (error: string, downloadedBytes: number | undefined) => {
-            const controller = downloader.writeToStream(stream, onProgress);
+            const controller = downloader.downloadToStream(stream, onProgress);
 
             await expect(controller.completion()).rejects.toThrow(error);
 
@@ -156,9 +156,9 @@ describe('FileDownloader', () => {
         });
 
         it('should reject two download starts', async () => {
-            downloader.writeToStream(stream, onProgress);
-            expect(() => downloader.writeToStream(stream, onProgress)).toThrow('Download already started');
-            expect(() => downloader.unsafeWriteToStream(stream, onProgress)).toThrow('Download already started');
+            downloader.downloadToStream(stream, onProgress);
+            expect(() => downloader.downloadToStream(stream, onProgress)).toThrow('Download already started');
+            expect(() => downloader.unsafeDownloadToStream(stream, onProgress)).toThrow('Download already started');
         });
 
         it('should start a download and write to the stream', async () => {
@@ -347,7 +347,7 @@ describe('FileDownloader', () => {
         });
     });
 
-    describe('unsafeWriteToStream', () => {
+    describe('unsafeDownloadToStream', () => {
         let onProgress: (downloadedBytes: number) => void;
         let onFinish: () => void;
 
@@ -381,7 +381,7 @@ describe('FileDownloader', () => {
         });
 
         it('should skip verification steps', async () => {
-            const controller = downloader.unsafeWriteToStream(stream, onProgress);
+            const controller = downloader.unsafeDownloadToStream(stream, onProgress);
             await controller.completion();
 
             expect(apiService.iterateRevisionBlocks).toHaveBeenCalledWith('revisionUid', undefined);

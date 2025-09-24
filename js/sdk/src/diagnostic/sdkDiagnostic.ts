@@ -133,7 +133,7 @@ export class SDKDiagnostic implements Diagnostic {
         const claimedSizeInBytes = downloader.getClaimedSizeInBytes();
 
         const integrityVerificationStream = new IntegrityVerificationStream();
-        const controller = downloader.writeToStream(integrityVerificationStream);
+        const controller = downloader.downloadToStream(integrityVerificationStream);
 
         try {
             await controller.completion();

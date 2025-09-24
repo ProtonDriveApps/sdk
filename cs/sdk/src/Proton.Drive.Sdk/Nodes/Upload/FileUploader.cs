@@ -34,6 +34,17 @@ public sealed class FileUploader : IDisposable
         return new UploadController(task);
     }
 
+    public UploadController UploadFromFile(
+        string filePath,
+        IEnumerable<Thumbnail> thumbnails,
+        Action<long, long> onProgress,
+        CancellationToken cancellationToken)
+    {
+        var task = UploadFromFileAsync(filePath, thumbnails, onProgress, cancellationToken);
+
+        return new UploadController(task);
+    }
+
     public void Dispose()
     {
         if (_remainingNumberOfBlocks <= 0)
@@ -63,6 +74,20 @@ public sealed class FileUploader : IDisposable
             cancellationToken).ConfigureAwait(false);
 
         return (fileNode.Uid, fileNode.ActiveRevision.Uid);
+    }
+
+    private async Task<(NodeUid NodeUid, RevisionUid RevisionUid)> UploadFromFileAsync(
+        string filePath,
+        IEnumerable<Thumbnail> thumbnails,
+        Action<long, long> onProgress,
+        CancellationToken cancellationToken)
+    {
+        var contentStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+
+        await using (contentStream.ConfigureAwait(false))
+        {
+            return await UploadFromStreamAsync(contentStream, thumbnails, onProgress, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private async ValueTask<FileNode> UploadAsync(

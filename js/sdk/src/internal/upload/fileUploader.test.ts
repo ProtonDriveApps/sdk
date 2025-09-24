@@ -134,7 +134,7 @@ describe('FileUploader', () => {
         startUploadSpy = jest.spyOn(uploader as any, 'startUpload').mockReturnValue(Promise.resolve('revisionUid'));
     });
 
-    describe('writeFile', () => {
+    describe('uploadFromFile', () => {
         // @ts-expect-error Ignore mocking File
         const file = {
             type: 'image/png',
@@ -146,48 +146,48 @@ describe('FileUploader', () => {
         const onProgress = jest.fn();
 
         it('should set media type if not set', async () => {
-            await uploader.writeFile(file, thumbnails, onProgress);
+            await uploader.uploadFromFile(file, thumbnails, onProgress);
 
             expect(metadata.mediaType).toEqual('image/png');
             expect(startUploadSpy).toHaveBeenCalledWith('stream', thumbnails, onProgress);
         });
 
         it('should set expected size if not set', async () => {
-            await uploader.writeFile(file, thumbnails, onProgress);
+            await uploader.uploadFromFile(file, thumbnails, onProgress);
 
             expect(metadata.expectedSize).toEqual(file.size);
             expect(startUploadSpy).toHaveBeenCalledWith('stream', thumbnails, onProgress);
         });
 
         it('should set modification time if not set', async () => {
-            await uploader.writeFile(file, thumbnails, onProgress);
+            await uploader.uploadFromFile(file, thumbnails, onProgress);
 
             expect(metadata.modificationTime).toEqual(new Date(123456789));
             expect(startUploadSpy).toHaveBeenCalledWith('stream', thumbnails, onProgress);
         });
 
         it('should throw an error if upload already started', async () => {
-            await uploader.writeFile(file, thumbnails, onProgress);
+            await uploader.uploadFromFile(file, thumbnails, onProgress);
 
-            await expect(uploader.writeFile(file, thumbnails, onProgress)).rejects.toThrow('Upload already started');
+            await expect(uploader.uploadFromFile(file, thumbnails, onProgress)).rejects.toThrow('Upload already started');
         });
     });
 
-    describe('writeStream', () => {
+    describe('uploadFromStream', () => {
         const stream = new ReadableStream();
         const thumbnails: Thumbnail[] = [];
         const onProgress = jest.fn();
 
         it('should start the upload process', async () => {
-            await uploader.writeStream(stream, thumbnails, onProgress);
+            await uploader.uploadFromStream(stream, thumbnails, onProgress);
 
             expect(startUploadSpy).toHaveBeenCalledWith(stream, thumbnails, onProgress);
         });
 
         it('should throw an error if upload already started', async () => {
-            await uploader.writeStream(stream, thumbnails, onProgress);
+            await uploader.uploadFromStream(stream, thumbnails, onProgress);
 
-            await expect(uploader.writeStream(stream, thumbnails, onProgress)).rejects.toThrow(
+            await expect(uploader.uploadFromStream(stream, thumbnails, onProgress)).rejects.toThrow(
                 'Upload already started',
             );
         });
