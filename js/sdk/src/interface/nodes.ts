@@ -76,6 +76,10 @@ export type NodeEntity = {
      */
     isShared: boolean;
     /**
+     * Whether the node is publicly shared. If true, the node is shared via public link.
+     */
+    isSharedPublicly: boolean;
+    /**
      * Provides the ID of the share that the node is shared with.
      *
      * This is required only for the internal implementation to provide
