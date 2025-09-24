@@ -57,7 +57,7 @@ internal static class InteropProtonDriveClient
             request.Name,
             request.MediaType,
             request.Size,
-            DateTimeOffset.FromUnixTimeSeconds(request.LastModificationTime).DateTime,
+            request.LastModificationTime.ToDateTime(),
             request.OverrideExistingDraftByOtherClient,
             cancellationToken).ConfigureAwait(false);
 
@@ -73,7 +73,7 @@ internal static class InteropProtonDriveClient
         var fileUploader = await client.GetFileRevisionUploaderAsync(
             RevisionUid.Parse(request.CurrentActiveRevisionUid),
             request.FileSize,
-            DateTimeOffset.FromUnixTimeSeconds(request.LastModificationTime).DateTime,
+            request.LastModificationTime.ToDateTime(),
             cancellationToken).ConfigureAwait(false);
 
         return new Int64Value { Value = Interop.AllocHandle(fileUploader) };

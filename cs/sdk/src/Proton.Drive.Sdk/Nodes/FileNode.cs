@@ -4,5 +4,5 @@ public sealed record FileNode : FileOrFileDraftNode
 {
     public required Revision ActiveRevision { get; init; }
 
-    public required long TotalStorageQuotaUsage { get; init; }
+    public required long TotalSizeOnCloudStorage { get; init; }
 }
