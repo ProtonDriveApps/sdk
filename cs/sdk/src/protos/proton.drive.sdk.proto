@@ -4,7 +4,7 @@ package proton.drive.sdk;
 option features.utf8_validation = NONE;
 option csharp_namespace = "Proton.Drive.Sdk.CExports";
 
-import "proton.sdk.proto";
+import "google/protobuf/timestamp.proto";
 
 message Request {
     oneof payload {
@@ -78,10 +78,27 @@ message GetAddressPublicKeysRequest {
 
 // Drive - client
 
+message FileRevision {
+    string uid = 1;
+    google.protobuf.Timestamp creation_time = 2;
+    int64 size_on_cloud_storage = 3;
+    int64 claimed_size = 4; // Optional
+    google.protobuf.Timestamp claimed_modification_time = 5; // Optional
+}
+
+message FileNode {
+    string uid = 1;
+    string parent_uid = 2;
+    string name = 3;
+    string media_type = 4;
+    int64 total_size_on_cloud_storage = 5;
+    FileRevision active_revision = 6;
+}
+
 message RevisionUploaderProvisionRequest {
     string file_uid = 1;
     int64 file_size = 2;
-    int64 last_modification_date = 3;
+    google.protobuf.Timestamp last_modification_time = 3;
 }
 
 message ProgressUpdate {
@@ -92,6 +109,11 @@ message ProgressUpdate {
 message Thumbnail {
     int32 type = 1;
     int64 content_pointer = 2;
+}
+
+message UploadResult {
+    string node_uid = 1;
+    string revision_uid = 2;
 }
 
 // The response value type must be Int64Value.
@@ -131,7 +153,7 @@ message DriveClientGetFileUploaderRequest {
     string name = 3;
     string mediaType = 4;
     int64 size = 5;
-    int64 last_modification_time = 6;
+    google.protobuf.Timestamp last_modification_time = 6;
     bool override_existing_draft_by_other_client = 7;
     int64 cancellation_token_source_handle = 8;
 }
@@ -141,7 +163,7 @@ message DriveClientGetFileRevisionUploaderRequest {
     int64 client_handle = 1;
     string current_active_revision_uid = 2;
     int64 file_size = 3;
-    int64 last_modification_time = 4;
+    google.protobuf.Timestamp last_modification_time = 4;
     int64 cancellation_token_source_handle = 5;
 }
 
@@ -159,7 +181,7 @@ message FileUploaderFreeRequest {
     int64 file_uploader_handle = 1;
 }
 
-// The response value will be a Node message.
+// The response value will be a UploadResult message containing the new revision UID.
 message UploadControllerAwaitCompletionRequest {
     int64 upload_controller_handle = 1;
 }

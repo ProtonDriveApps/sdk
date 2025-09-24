@@ -23,7 +23,7 @@ public sealed record DegradedFileNode : DegradedNode
             NameAuthor = NameAuthor,
             Author = Author,
             ActiveRevision = ActiveRevision ?? substituteRevision,
-            TotalStorageQuotaUsage = TotalStorageQuotaUsage,
+            TotalSizeOnCloudStorage = TotalStorageQuotaUsage,
         };
     }
 }

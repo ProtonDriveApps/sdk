@@ -238,13 +238,13 @@ internal static class DtoToMetadataConverter
             {
                 Uid = new RevisionUid(uid, activeRevisionDto.Id),
                 CreationTime = activeRevisionDto.CreationTime,
-                StorageQuotaConsumption = activeRevisionDto.StorageQuotaConsumption,
+                SizeOnCloudStorage = activeRevisionDto.StorageQuotaConsumption,
                 ClaimedSize = extendedAttributes?.Common?.Size,
                 ClaimedModificationTime = extendedAttributes?.Common?.ModificationTime,
                 Thumbnails = [], // FIXME: thumbnails
                 ContentAuthor = decryptionResult.ContentAuthorshipClaim.ToAuthorshipResult(extendedAttributesOutput.AuthorshipVerificationFailure),
             },
-            TotalStorageQuotaUsage = fileDto.TotalStorageQuotaUsage,
+            TotalSizeOnCloudStorage = fileDto.TotalStorageQuotaUsage,
         };
 
         await client.Cache.Entities.SetNodeAsync(uid, node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken).ConfigureAwait(false);

@@ -6,7 +6,7 @@ public sealed class Revision
 {
     public required RevisionUid Uid { get; init; }
     public required DateTime CreationTime { get; init; }
-    public required long StorageQuotaConsumption { get; init; }
+    public required long SizeOnCloudStorage { get; init; }
     public required long? ClaimedSize { get; init; }
     public required DateTime? ClaimedModificationTime { get; init; }
     public required IReadOnlyList<ReadOnlyMemory<byte>> Thumbnails { get; init; }

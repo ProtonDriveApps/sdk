@@ -45,7 +45,7 @@ public sealed class FileUploader : IDisposable
         _remainingNumberOfBlocks = 0;
     }
 
-    private async Task<Node> UploadFromStreamAsync(
+    private async Task<(NodeUid NodeUid, RevisionUid RevisionUid)> UploadFromStreamAsync(
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
         Action<long, long> onProgress,
@@ -53,7 +53,7 @@ public sealed class FileUploader : IDisposable
     {
         var (draftRevisionUid, fileSecrets) = await _fileDraftProvider.GetDraftAsync(_client, cancellationToken).ConfigureAwait(false);
 
-        return await UploadAsync(
+        var fileNode = await UploadAsync(
             draftRevisionUid,
             fileSecrets,
             contentStream,
@@ -61,9 +61,11 @@ public sealed class FileUploader : IDisposable
             _lastModificationTime,
             onProgress,
             cancellationToken).ConfigureAwait(false);
+
+        return (fileNode.Uid, fileNode.ActiveRevision.Uid);
     }
 
-    private async ValueTask<Node> UploadAsync(
+    private async ValueTask<FileNode> UploadAsync(
         RevisionUid revisionUid,
         FileSecrets fileSecrets,
         Stream contentStream,
@@ -79,7 +81,7 @@ public sealed class FileUploader : IDisposable
 
         var nodeMetadata = await NodeOperations.GetNodeMetadataAsync(_client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
 
-        return nodeMetadata.Node;
+        return (FileNode)nodeMetadata.Node;
     }
 
     private void ReleaseBlocks(int numberOfBlocks)
