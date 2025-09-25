@@ -352,7 +352,7 @@ describe('nodesAccess', () => {
                 expect(cache.setFolderChildrenLoaded).not.toHaveBeenCalled();
             });
 
-            it.only('should return only filtered nodes from API', async () => {
+            it('should return only filtered nodes from API', async () => {
                 cache.isFolderChildrenLoaded = jest.fn().mockResolvedValue(false);
                 cache.getNode = jest.fn().mockImplementation((uid: string) => {
                     if (uid === parentNode.uid) {
@@ -444,7 +444,7 @@ describe('nodesAccess', () => {
             const node1 = { uid: 'volumeId~node1', isStale: false, treeEventScopeId: 'volumeId' } as DecryptedNode;
             const node2 = { uid: 'volumeId~node2', isStale: false, treeEventScopeId: 'volumeId' } as DecryptedNode;
             const node3 = { uid: 'volumeId~node3', isStale: false, treeEventScopeId: 'volumeId' } as DecryptedNode;
-            const node4 = { uid: 'volume~node4', isStale: false, treeEventScopeId: 'volumeId' } as DecryptedNode;
+            const node4 = { uid: 'volumeId~node4', isStale: false, treeEventScopeId: 'volumeId' } as DecryptedNode;
 
             it('should serve fully from cache', async () => {
                 cache.iterateNodes = jest.fn().mockImplementation(async function* () {
