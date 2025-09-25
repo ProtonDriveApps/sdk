@@ -98,14 +98,14 @@ internal sealed class BlockUploader
                             Blocks =
                             [
                                 new BlockCreationRequest
-                            {
-                                Index = index,
-                                Size = (int)dataPacketStream.Length,
-                                HashDigest = sha256Digest,
-                                EncryptedSignature = signature,
-                                VerificationOutput = new BlockVerificationOutput { Token = verificationToken.AsReadOnlyMemory() },
-                            },
-                        ],
+                                {
+                                    Index = index,
+                                    Size = (int)dataPacketStream.Length,
+                                    HashDigest = sha256Digest,
+                                    EncryptedSignature = signature,
+                                    VerificationOutput = new BlockVerificationOutput { Token = verificationToken.AsReadOnlyMemory() },
+                                },
+                            ],
                             Thumbnails = [],
                         };
 
