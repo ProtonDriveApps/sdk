@@ -17,7 +17,7 @@
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="System.Numerics.Tensors" Version="9.0.9" />
     <PackageVersion Include="xunit.v3" Version="3.0.1" />
-    <PackageVersion Include="AwesomeAssertions" Version="9.1.0" />
+    <PackageVersion Include="AwesomeAssertions" Version="9.2.0" />
     <PackageVersion Include="NSubstitute" Version="5.3.0" />
     <PackageVersion Include="NSubstitute.Analyzers.CSharp" Version="1.0.17" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.9" />
