@@ -11,6 +11,7 @@ import { NodeAPIService } from './apiService';
 import { NodesCache } from './cache';
 import { NodesCryptoCache } from './cryptoCache';
 import { NodesCryptoService } from './cryptoService';
+import { NodesDebouncer } from './debouncer';
 import { parseFileExtendedAttributes, parseFolderExtendedAttributes } from './extendedAttributes';
 import {
     SharesService,
@@ -40,6 +41,8 @@ const DECRYPTION_CONCURRENCY = 30;
  * nodes metadata.
  */
 export class NodesAccess {
+    private debouncer: NodesDebouncer;
+
     constructor(
         private logger: Logger,
         private apiService: NodeAPIService,
@@ -54,6 +57,7 @@ export class NodesAccess {
         this.cryptoCache = cryptoCache;
         this.cryptoService = cryptoService;
         this.shareService = shareService;
+        this.debouncer = new NodesDebouncer(this.logger);
     }
 
     async getVolumeRootFolder() {
@@ -65,6 +69,7 @@ export class NodesAccess {
     async getNode(nodeUid: string): Promise<DecryptedNode> {
         let cachedNode;
         try {
+            await this.debouncer.waitForLoadingNode(nodeUid);
             cachedNode = await this.cache.getNode(nodeUid);
         } catch {}
 
@@ -112,6 +117,7 @@ export class NodesAccess {
         for await (const nodeUid of this.apiService.iterateChildrenNodeUids(parentNode.uid, onlyFolders, signal)) {
             let node;
             try {
+                await this.debouncer.waitForLoadingNode(nodeUid);
                 node = await this.cache.getNode(nodeUid);
             } catch {}
 
@@ -143,6 +149,7 @@ export class NodesAccess {
         for await (const nodeUid of this.apiService.iterateTrashedNodeUids(volumeId, signal)) {
             let node;
             try {
+                await this.debouncer.waitForLoadingNode(nodeUid);
                 node = await this.cache.getNode(nodeUid);
             } catch {}
 
@@ -208,9 +215,14 @@ export class NodesAccess {
     }
 
     private async loadNode(nodeUid: string): Promise<{ node: DecryptedNode; keys?: DecryptedNodeKeys }> {
-        const { volumeId: ownVolumeId } = await this.shareService.getOwnVolumeIDs();
-        const encryptedNode = await this.apiService.getNode(nodeUid, ownVolumeId);
-        return this.decryptNode(encryptedNode);
+        this.debouncer.loadingNode(nodeUid);
+        try {
+            const { volumeId: ownVolumeId } = await this.shareService.getOwnVolumeIDs();
+            const encryptedNode = await this.apiService.getNode(nodeUid, ownVolumeId);
+            return this.decryptNode(encryptedNode);
+        } finally {
+            this.debouncer.finishedLoadingNode(nodeUid);
+        }
     }
 
     private async *loadNodes(
@@ -236,7 +248,14 @@ export class NodesAccess {
 
         const { volumeId: ownVolumeId } = await this.shareService.getOwnVolumeIDs();
 
-        const encryptedNodesIterator = this.apiService.iterateNodes(nodeUids, ownVolumeId, filterOptions, signal);
+        const apiNodesIterator = this.apiService.iterateNodes(nodeUids, ownVolumeId, filterOptions, signal);
+
+        const debouncedNodeMapper = async (encryptedNode: EncryptedNode): Promise<EncryptedNode> => {
+            this.debouncer.loadingNode(encryptedNode.uid);
+            return encryptedNode;
+        };
+        const encryptedNodesIterator = asyncIteratorMap(apiNodesIterator, debouncedNodeMapper, 1);
+
         const decryptNodeMapper = async (encryptedNode: EncryptedNode): Promise<Result<DecryptedNode, unknown>> => {
             returnedNodeUids.push(encryptedNode.uid);
             try {
@@ -329,6 +348,7 @@ export class NodesAccess {
                 this.logger.error(`Failed to cache node keys ${node.uid}`, error);
             }
         }
+        this.debouncer.finishedLoadingNode(node.uid);
         return { node, keys };
     }
 
@@ -360,6 +380,7 @@ export class NodesAccess {
 
     async getNodeKeys(nodeUid: string): Promise<DecryptedNodeKeys> {
         try {
+            await this.debouncer.waitForLoadingNode(nodeUid);
             return await this.cryptoCache.getNodeKeys(nodeUid);
         } catch {
             const { keys } = await this.loadNode(nodeUid);
