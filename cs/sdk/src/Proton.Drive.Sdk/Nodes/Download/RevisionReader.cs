@@ -145,15 +145,6 @@ internal sealed class RevisionReader : IDisposable
 
             try
             {
-                if (downloadResult.VerificationStatus is not PgpVerificationStatus.Ok)
-                {
-                    _client.Logger.LogWarning(
-                        "Verification failed for block #{Index} of file with UID \"{FileUid}\": {VerificationStatus}",
-                        downloadResult.Index,
-                        _fileUid,
-                        downloadResult.VerificationStatus);
-                }
-
                 manifestStream.Write(downloadResult.Sha256Digest.Span);
 
                 if (downloadResult.IsIntermediateStream)
@@ -197,20 +188,9 @@ internal sealed class RevisionReader : IDisposable
             isIntermediateStream = true;
         }
 
-        var signatureVerificationKeyRing = !string.IsNullOrEmpty(block.SignatureEmailAddress)
-            ? new PgpKeyRing(await _client.Account.GetAddressPublicKeysAsync(block.SignatureEmailAddress, cancellationToken).ConfigureAwait(false))
-            : new PgpKeyRing(_fileKey);
+        var hashDigest = await _client.BlockDownloader.DownloadAsync(block.Url, _contentKey, blockOutputStream, cancellationToken).ConfigureAwait(false);
 
-        var (hashDigest, verificationStatus) = await _client.BlockDownloader.DownloadAsync(
-            block.Url,
-            _contentKey,
-            block.EncryptedSignature,
-            _fileKey,
-            signatureVerificationKeyRing,
-            blockOutputStream,
-            cancellationToken).ConfigureAwait(false);
-
-        return new BlockDownloadResult(block.Index, blockOutputStream, isIntermediateStream, hashDigest, verificationStatus);
+        return new BlockDownloadResult(block.Index, blockOutputStream, isIntermediateStream, hashDigest);
     }
 
     private async IAsyncEnumerable<(Block Value, bool IsLast)> GetBlocksAsync([EnumeratorCancellation] CancellationToken cancellationToken)
@@ -315,17 +295,11 @@ internal sealed class RevisionReader : IDisposable
         return verificationResult.Status;
     }
 
-    private readonly struct BlockDownloadResult(
-        int index,
-        Stream stream,
-        bool isIntermediateStream,
-        ReadOnlyMemory<byte> sha256Digest,
-        PgpVerificationStatus verificationStatus)
+    private readonly struct BlockDownloadResult(int index, Stream stream, bool isIntermediateStream, ReadOnlyMemory<byte> sha256Digest)
     {
         public int Index { get; } = index;
         public Stream Stream { get; } = stream;
         public bool IsIntermediateStream { get; } = isIntermediateStream;
         public ReadOnlyMemory<byte> Sha256Digest { get; } = sha256Digest;
-        public PgpVerificationStatus VerificationStatus { get; } = verificationStatus;
     }
 }
