@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <IsPackable>true</IsPackable>
     <PackageTags>Cloud Storage Volume Folder File</PackageTags>
-    <Description>Package that provides the means to interact with the Proton Drive services.</Description>
+    <Description>Provides the means to interact with the Proton Drive services.</Description>
     <EmbedAllSources>true</EmbedAllSources>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
