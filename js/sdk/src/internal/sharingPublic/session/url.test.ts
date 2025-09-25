@@ -9,7 +9,7 @@ describe('getTokenAndPasswordFromUrl', () => {
 
             expect(result).toEqual({
                 token: 'abc123',
-                password: 'def456'
+                password: 'def456',
             });
         });
 
@@ -19,7 +19,7 @@ describe('getTokenAndPasswordFromUrl', () => {
 
             expect(result).toEqual({
                 token: 'mytoken',
-                password: 'mypassword'
+                password: 'mypassword',
             });
         });
 
@@ -29,7 +29,7 @@ describe('getTokenAndPasswordFromUrl', () => {
 
             expect(result).toEqual({
                 token: 'token123',
-                password: 'password456'
+                password: 'password456',
             });
         });
     });

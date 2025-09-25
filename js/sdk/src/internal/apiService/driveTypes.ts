@@ -1540,10 +1540,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get status of migration from legacy photo share on a regular volume into a new Photo Volume */
+        /**
+         * Get status of migration from legacy photo share on a regular volume into a new Photo Volume
+         * @deprecated
+         */
         get: operations['get_drive-photos-migrate-legacy'];
         put?: never;
-        /** Start migration from legacy photo share on a regular volume into a new Photo Volume */
+        /**
+         * DEPRECATED: All shares have been migrated, always returns share not found
+         * @deprecated
+         */
         post: operations['post_drive-photos-migrate-legacy'];
         delete?: never;
         options?: never;
@@ -3502,7 +3508,7 @@ export interface components {
             Thumbnail: number | null;
             /**
              * @deprecated
-             * @description Hash of thumbnail contents
+             * @description sha256 hash of thumbnail contents
              * @default null
              */
             ThumbnailHash: string | null;
@@ -3679,7 +3685,6 @@ export interface components {
              */
             Code: 1000;
         };
-        MigrateFromLegacyRequest: Record<string, never>;
         RemoveTagsRequestDto: {
             Tags: components['schemas']['TagType'][];
         };
@@ -5097,7 +5102,10 @@ export interface components {
             File: components['schemas']['FileDto'];
             /** @default null */
             Sharing: components['schemas']['SharingDto'] | null;
-            /** @default null */
+            /**
+             * @description Will be null if the user is not a member or is the owner.
+             * @default null
+             */
             Membership: components['schemas']['MembershipDto'] | null;
             /** @default null */
             Folder: null | null;
@@ -5109,7 +5117,10 @@ export interface components {
             Folder: components['schemas']['FolderDto'];
             /** @default null */
             Sharing: components['schemas']['SharingDto'] | null;
-            /** @default null */
+            /**
+             * @description Will be null if the user is not a member or is the owner.
+             * @default null
+             */
             Membership: components['schemas']['MembershipDto'] | null;
             /** @default null */
             File: null | null;
@@ -5235,7 +5246,7 @@ export interface components {
             Size: number;
             /** @description Index of block in list (must be consecutive starting at 1) */
             Index: number;
-            /** @description Hash of encrypted block, base64 encoded */
+            /** @description sha256 hash of encrypted block, base64 encoded */
             Hash: string;
             /** @default null */
             Verifier: components['schemas']['Verifier'] | null;
@@ -5249,7 +5260,7 @@ export interface components {
             /** @description Block size in bytes. WARNING: when type is NOT 2=HDPreview(1920) then the max size is 65536 */
             Size: number;
             Type: components['schemas']['ThumbnailType'];
-            /** @description Hash of encrypted block, base64 encoded */
+            /** @description sha256 hash of encrypted block, base64 encoded */
             Hash: string;
         };
         BlockURL: {
@@ -5330,7 +5341,7 @@ export interface components {
             Size: number;
             /** @description Index of block in list (must be consecutive starting at 1) */
             Index: number;
-            /** @description Hash of encrypted block, base64 encoded */
+            /** @description sha256 hash of encrypted block, base64 encoded */
             Hash: string;
             Verifier: components['schemas']['Verifier'];
             /**
@@ -5387,7 +5398,10 @@ export interface components {
             Folder: components['schemas']['FolderDto2'];
             /** @default null */
             Sharing: components['schemas']['SharingDto2'] | null;
-            /** @default null */
+            /**
+             * @description Will be null if the user is not a member or is the owner.
+             * @default null
+             */
             Membership: components['schemas']['MembershipDto2'] | null;
             /** @default null */
             File: null | null;
@@ -5400,10 +5414,10 @@ export interface components {
          */
         ShareType: 1 | 2 | 3 | 4;
         /**
-         * @description <p>1=Active, 3=Restored</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Active</td></tr><tr><td>2</td><td>Deleted</td></tr><tr><td>3</td><td>Restored</td></tr><tr><td>4</td><td>Migrating</td></tr><tr><td>5</td><td>Migrated</td></tr><tr><td>6</td><td>Locked</td></tr></table></details></details>
+         * @description <p>1=Active, 3=Restored</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Active</td></tr><tr><td>2</td><td>Deleted</td></tr><tr><td>3</td><td>Restored</td></tr><tr><td>5</td><td>Migrated</td></tr><tr><td>6</td><td>Locked</td></tr></table></details></details>
          * @enum {integer}
          */
-        ShareState: 1 | 2 | 3 | 4 | 5 | 6;
+        ShareState: 1 | 2 | 3 | 5 | 6;
         /**
          * @description <p>1=Regular, 2=Photo</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Regular</td></tr><tr><td>2</td><td>Photo</td></tr></table></details></details>
          * @enum {integer}
@@ -5518,6 +5532,7 @@ export interface components {
              */
             Token: string;
             LinkType: components['schemas']['NodeType3'];
+            VolumeID: components['schemas']['Id2'];
             LinkID: components['schemas']['Id2'];
             SharePasswordSalt: components['schemas']['BinaryString2'];
             SharePassphrase: components['schemas']['PGPMessage2'];
@@ -6921,7 +6936,6 @@ export interface operations {
                     'application/json': {
                         /** @description Potential codes and their meaning:
                          *      - 2500: A volume is already active
-                         *      - 2500: Cannot create the new Photo volume. Should be migrated from current Photo stream
                          *      - 2001: Invalid PGP message
                          *      - 200501: Operation failed: Please retry
                          *      - 200200: Address not found
@@ -8717,6 +8731,7 @@ export interface operations {
                         | {
                               /** @description Potential codes and their meaning:
                                *      - 200003: Max file size limited to 100 MB on your plan. Please upgrade.
+                               *      - 200303: Cannot commit related photo with main already in album
                                *      */
                               Code: number;
                           }
@@ -8837,6 +8852,7 @@ export interface operations {
                         | {
                               /** @description Potential codes and their meaning:
                                *      - 200003: Max file size limited to 100 MB on your plan. Please upgrade.
+                               *      - 200303: Cannot commit related photo with main already in album
                                *      */
                               Code: number;
                           }
@@ -10257,22 +10273,8 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: {
-            content: {
-                'application/json': components['schemas']['MigrateFromLegacyRequest'];
-            };
-        };
+        requestBody?: never;
         responses: {
-            /** @description Accepted */
-            202: {
-                headers: {
-                    'x-pm-code': 1002;
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['AcceptedResponse'];
-                };
-            };
             /** @description Unprocessable Entity */
             422: {
                 headers: {
@@ -10281,29 +10283,9 @@ export interface operations {
                 content: {
                     'application/json': {
                         /** @description Potential codes and their meaning:
-                         *      - 2500: Migration in progress
                          *      - 2501: Share not found
-                         *      - 2501: Volume not found
-                         *      - 2501: Address not found
                          *      */
                         Code: number;
-                    };
-                };
-            };
-            /** @description Failed dependency */
-            424: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': {
-                        /**
-                         * @description Potential codes:
-                         *      - 2032
-                         *
-                         * @enum {integer}
-                         */
-                        Code: 2032;
                     };
                 };
             };
@@ -10482,6 +10464,7 @@ export interface operations {
                               /** @description Potential codes and their meaning:
                                *      - 2011: The current ShareURL does not have read+write permissions.
                                *      - 200003: Max file size limited to 100 MB on your plan. Please upgrade.
+                               *      - 200303: Cannot commit related photo with main already in album
                                *      */
                               Code: number;
                           }
