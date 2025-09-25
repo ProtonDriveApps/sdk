@@ -1,11 +1,9 @@
 <Project>
 
-  <Target Name="SetRuntimeIdentifier" BeforeTargets="PrepareForPublish" Condition="'$(PublishAot)' == 'true'">
-    <PropertyGroup>
-      <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
-      <DefineConstants Condition="$(RuntimeIdentifier.StartsWith('win'))">$(DefineConstants);WINDOWS</DefineConstants>
-      <NativeLibPrefix Condition="$(RuntimeIdentifier.StartsWith('linux')) or $(RuntimeIdentifier.StartsWith('android'))">lib</NativeLibPrefix>
-    </PropertyGroup>
-  </Target>
+  <PropertyGroup Condition="'$(_IsPublishing)' == 'yes'">
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
+    <DefineConstants Condition="$(RuntimeIdentifier.StartsWith('win'))">$(DefineConstants);WINDOWS</DefineConstants>
+    <NativeLibPrefix Condition="$(RuntimeIdentifier.StartsWith('linux')) or $(RuntimeIdentifier.StartsWith('android'))">lib</NativeLibPrefix>
+  </PropertyGroup>
 
 </Project>
