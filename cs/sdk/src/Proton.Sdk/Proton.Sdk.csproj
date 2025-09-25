@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <IsPackable>true</IsPackable>
     <PackageTags>Authentication Session Account</PackageTags>
-    <Description>Package that provides the means to authenticate with the Proton API and get user account information.</Description>
+    <Description>Provides the means to authenticate with the Proton API and get user account information.</Description>
     <EmbedAllSources>true</EmbedAllSources>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
