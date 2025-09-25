@@ -128,7 +128,7 @@ export class NodeAPIService {
 
     async *iterateNodes(
         nodeUids: string[],
-        ownVolumeId: string,
+        ownVolumeId: string | undefined,
         filterOptions?: FilterOptions,
         signal?: AbortSignal,
     ): AsyncGenerator<EncryptedNode> {
