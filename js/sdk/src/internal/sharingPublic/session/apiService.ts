@@ -9,7 +9,7 @@ type PostPublicLinkAuthRequest = Extract<
     { content: object }
 >['content']['application/json'];
 type PostPublicLinkAuthResponse =
-        drivePaths['/drive/urls/{token}/auth']['post']['responses']['200']['content']['application/json'];
+    drivePaths['/drive/urls/{token}/auth']['post']['responses']['200']['content']['application/json'];
 
 /**
  * Provides API communication for managing public link session (not data).

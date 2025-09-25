@@ -49,7 +49,10 @@ export class NodesAccess {
         private cache: NodesCache,
         private cryptoCache: NodesCryptoCache,
         private cryptoService: NodesCryptoService,
-        private shareService: SharesService,
+        private shareService: Pick<
+            SharesService,
+            'getOwnVolumeIDs' | 'getSharePrivateKey' | 'getContextShareMemberEmailKey'
+        >,
     ) {
         this.logger = logger;
         this.apiService = apiService;

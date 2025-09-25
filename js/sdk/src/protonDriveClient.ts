@@ -208,7 +208,6 @@ export class ProtonDriveClient {
                 const { httpClient, token, password } = await this.sessionManager.auth(url, customPassword);
                 return new ProtonDrivePublicLinkClient({
                     httpClient,
-                    cryptoCache,
                     account,
                     openPGPCryptoModule,
                     srpModule,

@@ -1,3 +1,4 @@
+import { MemoryCache } from './cache';
 import { getConfig } from './config';
 import { DriveCrypto, OpenPGPCrypto, SRPModule, SessionKey } from './crypto';
 import {
@@ -5,10 +6,11 @@ import {
     ProtonDriveTelemetry,
     ProtonDriveConfig,
     Logger,
-    ProtonDriveCryptoCache,
     NodeOrUid,
     ProtonDriveAccount,
     MaybeNode,
+    NodeType,
+    CachedCryptoMaterial,
 } from './interface';
 import { Telemetry } from './telemetry';
 import { getUid, convertInternalNodePromise, convertInternalNodeIterator } from './transformers';
@@ -53,7 +55,6 @@ export class ProtonDrivePublicLinkClient {
 
     constructor({
         httpClient,
-        cryptoCache,
         account,
         openPGPCryptoModule,
         srpModule,
@@ -63,7 +64,6 @@ export class ProtonDrivePublicLinkClient {
         password,
     }: {
         httpClient: ProtonDriveHTTPClient;
-        cryptoCache: ProtonDriveCryptoCache;
         account: ProtonDriveAccount;
         openPGPCryptoModule: OpenPGPCrypto;
         srpModule: SRPModule;
@@ -77,6 +77,10 @@ export class ProtonDrivePublicLinkClient {
         }
         this.logger = telemetry.getLogger('interface');
 
+        // Use only in memory cache for public link as there are no events to keep it up to date if persisted.
+        const entitiesCache = new MemoryCache<string>();
+        const cryptoCache = new MemoryCache<CachedCryptoMaterial>();
+
         const fullConfig = getConfig(config);
         this.sdkEvents = new SDKEvents(telemetry);
 
@@ -87,12 +91,13 @@ export class ProtonDrivePublicLinkClient {
             fullConfig.baseUrl,
             fullConfig.language,
         );
-        const driveCrypto = new DriveCrypto(openPGPCryptoModule, srpModule);
+        const cryptoModule = new DriveCrypto(openPGPCryptoModule, srpModule);
         this.sharingPublic = initSharingPublicModule(
             telemetry,
             apiService,
+            entitiesCache,
             cryptoCache,
-            driveCrypto,
+            cryptoModule,
             account,
             token,
             password,
@@ -106,7 +111,7 @@ export class ProtonDrivePublicLinkClient {
             },
             getDocsKey: async (nodeUid: NodeOrUid) => {
                 this.logger.debug(`Getting docs keys for ${getUid(nodeUid)}`);
-                const keys = await this.sharingPublic.getNodeKeys(getUid(nodeUid));
+                const keys = await this.sharingPublic.nodes.access.getNodeKeys(getUid(nodeUid));
                 if (!keys.contentKeyPacketSessionKey) {
                     throw new Error('Node does not have a content key packet session key');
                 }
@@ -120,7 +125,8 @@ export class ProtonDrivePublicLinkClient {
      */
     async getRootNode(): Promise<MaybeNode> {
         this.logger.info(`Getting root node`);
-        return convertInternalNodePromise(this.sharingPublic.getRootNode());
+        const { rootNodeUid } = await this.sharingPublic.shares.getOwnVolumeIDs();
+        return convertInternalNodePromise(this.sharingPublic.nodes.access.getNode(rootNodeUid));
     }
 
     /**
@@ -128,8 +134,14 @@ export class ProtonDrivePublicLinkClient {
      *
      * See `ProtonDriveClient.iterateFolderChildren` for more information.
      */
-    async *iterateFolderChildren(parentUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+    async *iterateFolderChildren(
+        parentUid: NodeOrUid,
+        filterOptions?: { type?: NodeType },
+        signal?: AbortSignal,
+    ): AsyncGenerator<MaybeNode> {
         this.logger.info(`Iterating children of ${getUid(parentUid)}`);
-        yield * convertInternalNodeIterator(this.sharingPublic.iterateFolderChildren(getUid(parentUid), signal));
+        yield* convertInternalNodeIterator(
+            this.sharingPublic.nodes.access.iterateFolderChildren(getUid(parentUid), filterOptions, signal),
+        );
     }
 }

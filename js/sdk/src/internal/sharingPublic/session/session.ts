@@ -1,6 +1,6 @@
-import { SRPModule } from "../../../crypto";
-import { SharingPublicSessionAPIService } from "./apiService";
-import { PublicLinkInfo, PublicLinkSrpInfo } from "./interface";
+import { SRPModule } from '../../../crypto';
+import { SharingPublicSessionAPIService } from './apiService';
+import { PublicLinkInfo, PublicLinkSrpInfo } from './interface';
 
 /**
  * Session for a public link.
