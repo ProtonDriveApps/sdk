@@ -1,18 +1,14 @@
+import { ProtonDriveTelemetry } from '../../interface';
+import { getMockTelemetry } from '../../tests/telemetry';
 import { NodesDebouncer } from './debouncer';
-import { Logger } from '../../interface';
 
 describe('NodesDebouncer', () => {
     let debouncer: NodesDebouncer;
-    let mockLogger: jest.Mocked<Logger>;
+    let mockTelemetry: ReturnType<typeof getMockTelemetry>;
 
     beforeEach(() => {
-        mockLogger = {
-            debug: jest.fn(),
-            info: jest.fn(),
-            warn: jest.fn(),
-            error: jest.fn(),
-        };
-        debouncer = new NodesDebouncer(mockLogger);
+        mockTelemetry = getMockTelemetry();
+        debouncer = new NodesDebouncer(mockTelemetry);
 
         jest.useFakeTimers();
     });
@@ -77,7 +73,22 @@ describe('NodesDebouncer', () => {
         debouncer.loadingNode(nodeUid);
         debouncer.loadingNode(nodeUid);
 
-        expect(mockLogger.warn).toHaveBeenCalledWith(`debouncer: Loading twice for: ${nodeUid}`);
+        expect(mockTelemetry.mockLogger.warn).toHaveBeenCalledWith(`Loading twice for: ${nodeUid}`);
+    });
+
+    it('should send metric when waiting for a long time', async () => {
+        const nodeUid = 'test-node-1';
+        debouncer.loadingNode(nodeUid);
+
+        const waitPromise = debouncer.waitForLoadingNode(nodeUid);
+        expect(mockTelemetry.recordMetric).not.toHaveBeenCalled();
+        jest.advanceTimersByTime(1500);
+        expect(mockTelemetry.recordMetric).toHaveBeenCalledWith({
+            eventName: 'debounceLongWait',
+        });
+
+        debouncer.finishedLoadingNode(nodeUid);
+        await waitPromise;
     });
 
     it('should timeout', async () => {
@@ -85,7 +96,7 @@ describe('NodesDebouncer', () => {
         debouncer.loadingNode(nodeUid);
 
         jest.advanceTimersByTime(6000);
-        expect(mockLogger.warn).toHaveBeenCalledWith(`debouncer: Timeout for: ${nodeUid}`);
+        expect(mockTelemetry.mockLogger.warn).toHaveBeenCalledWith(`Timeout for: ${nodeUid}`);
         await expect(debouncer.waitForLoadingNode(nodeUid)).resolves.toBeUndefined();
     });
 
@@ -112,7 +123,7 @@ describe('NodesDebouncer', () => {
 
             const result = await debouncer.waitForLoadingNode(nodeUid);
             expect(result).toBeUndefined();
-            expect(mockLogger.debug).not.toHaveBeenCalled();
+            expect(mockTelemetry.mockLogger.debug).not.toHaveBeenCalled();
         });
 
         it('should wait for registered node and log debug message', async () => {
@@ -121,7 +132,8 @@ describe('NodesDebouncer', () => {
 
             const waitPromise = debouncer.waitForLoadingNode(nodeUid);
 
-            expect(mockLogger.debug).toHaveBeenCalledWith(`debouncer: Wait for: ${nodeUid}`);
+            expect(mockTelemetry.mockLogger.debug).toHaveBeenCalledWith(`Wait for: ${nodeUid}`);
+
             debouncer.finishedLoadingNode(nodeUid);
             await waitPromise;
         });

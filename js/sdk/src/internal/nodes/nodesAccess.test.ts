@@ -1,4 +1,4 @@
-import { getMockLogger } from '../../tests/logger';
+import { getMockTelemetry } from '../../tests/telemetry';
 import { PrivateKey } from '../../crypto';
 import { DecryptionError } from '../../errors';
 import { NodeAPIService } from './apiService';
@@ -50,7 +50,7 @@ describe('nodesAccess', () => {
             getSharePrivateKey: jest.fn(),
         };
 
-        access = new NodesAccess(getMockLogger(), apiService, cache, cryptoCache, cryptoService, shareService);
+        access = new NodesAccess(getMockTelemetry(), apiService, cache, cryptoCache, cryptoService, shareService);
     });
 
     describe('getNode', () => {

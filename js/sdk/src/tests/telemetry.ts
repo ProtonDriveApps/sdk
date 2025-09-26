@@ -1,9 +1,12 @@
-import { ProtonDriveTelemetry } from '../interface';
+import { Logger, ProtonDriveTelemetry } from '../interface';
 import { getMockLogger } from './logger';
 
-export function getMockTelemetry(): ProtonDriveTelemetry {
+export function getMockTelemetry(): ProtonDriveTelemetry & { mockLogger: Logger } {
+    const mockLogger = getMockLogger();
+
     return {
-        getLogger: getMockLogger,
+        mockLogger,
+        getLogger: () => mockLogger,
         recordMetric: jest.fn(),
     };
 }
