@@ -37,15 +37,15 @@ message RepeatedBytesValue {
 
 // Cancellation tokens
 
-// The response value type must be Int64Value.
+// The response value must be an Int64Value carrying a handle to an instance of CancellationTokenSource.
 message CancellationTokenSourceCreateRequest {}
 
-// No response value.
+// The reponse must not have a value.
 message CancellationTokenSourceCancelRequest {
     int64 cancellation_token_source_handle = 1;
 }
 
-// No response value.
+// The reponse must not have a value.
 message CancellationTokenSourceFreeRequest {
     int64 cancellation_token_source_handle = 1;
 }
@@ -88,28 +88,28 @@ message SessionRenewRequest {
     bool is_waiting_for_data_password = 7;
 }
 
-// No response value.
+// The reponse must not have a value.
 message SessionEndRequest {
     int64 session_handle = 1;
 }
 
-// The response value type must be Int64Value.
+// The response value must be an Int64Value carrying a handle to an instance of TokensRefreshedSubscription.
 message SessionTokensRefreshedSubscribeRequest {
     int64 session_handle = 1;
     int64 tokens_refreshed_action = 2;
 }
 
-// No response value.
+// The reponse must not have a value.
 message SessionTokensRefreshedUnsubscribeRequest {
     int64 subscription_handle = 1;
 }
 
-// No response value.
+// The reponse must not have a value.
 message SessionFreeRequest {
     int64 session_handle = 1;
 }
 
-// The response value type must be Int64Value.
+// The response value must be an Int64Value carrying a handle to an instance of ILoggerProvider.
 message LoggerProviderCreate {
     int64 log_action = 1;
 }
@@ -204,7 +204,7 @@ message HttpHeader {
     repeated string values = 2;
 }
 
-// The response value type must be HttpResponse.
+// The response value must be an HttpResponse.
 message HttpRequest {
     string url = 1;
     string method = 2;

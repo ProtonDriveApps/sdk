@@ -54,26 +54,26 @@ message AccountClientRequest {
     };
 }
 
-// The response value type must be Address.
+// The response value must be an Address.
 message GetAddressRequest {
     string address_id = 1;
 }
 
-// The response value type must be Address.
+// The response value must be an Address.
 message GetDefaultAddressRequest {
 }
 
-// The response value type must be BytesValue.
+// The response value must be a BytesValue.
 message GetAddressPrimaryPrivateKeyRequest {
     string address_id = 1;
 }
 
-// The response value type must be RepeatedBytesValue.
+// The response value must be a RepeatedBytesValue.
 message GetAddressPrivateKeysRequest {
     string address_id = 1;
 }
 
-// The response value type must be RepeatedBytesValue.
+// The response value must be a RepeatedBytesValue.
 message GetAddressPublicKeysRequest {
     string email_address = 1;
 }
@@ -97,12 +97,6 @@ message FileNode {
     FileRevision active_revision = 6;
 }
 
-message RevisionUploaderProvisionRequest {
-    string file_uid = 1;
-    int64 file_size = 2;
-    google.protobuf.Timestamp last_modification_time = 3;
-}
-
 message ProgressUpdate {
     int64 bytes_completed = 1;
     int64 bytes_in_total = 2;
@@ -119,7 +113,7 @@ message UploadResult {
     string revision_uid = 2;
 }
 
-// The response value type must be Int64Value.
+// The response value must be an Int64Value carrying a handle to an instance of ProtonDriveClient.
 message DriveClientCreateRequest {
     string base_url = 1;
     string bindings_language = 2; // Optional
@@ -137,19 +131,19 @@ message DriveClientCreateRequest {
     int64 logger_provider_handle = 7;
 }
 
-// The response value type must be Int64Value.
+// The response value must be an Int64Value carrying a handle to an instance of ProtonDriveClient.
 message DriveClientCreateFromSessionRequest {
     int64 session_handle = 1;
 }
 
-// No response value.
+// The reponse must not have a value.
 message DriveClientFreeRequest {
     int64 client_handle = 1;
 }
 
 // Drive - uploads
 
-// The response value type must be Int64Value.
+// The response value must be an Int64Value carrying a handle to an instance of FileUploader.
 message DriveClientGetFileUploaderRequest {
     int64 client_handle = 1;
     string parent_folder_uid = 2;
@@ -161,16 +155,16 @@ message DriveClientGetFileUploaderRequest {
     int64 cancellation_token_source_handle = 8;
 }
 
-// The response value will be an Int64Value message.
+// The response value must be an Int64Value carrying a handle to an instance of FileUploader.
 message DriveClientGetFileRevisionUploaderRequest {
     int64 client_handle = 1;
     string current_active_revision_uid = 2;
-    int64 file_size = 3;
+    int64 size = 3;
     google.protobuf.Timestamp last_modification_time = 4;
     int64 cancellation_token_source_handle = 5;
 }
 
-// The response value type must be Int64Value.
+// The response value must be an Int64Value carrying a handle to an instance of UploadController.
 message UploadFromStreamRequest {
     int64 uploader_handle = 1;
     repeated Thumbnail thumbnails = 2;
@@ -179,7 +173,7 @@ message UploadFromStreamRequest {
     int64 cancellation_token_source_handle = 5;
 }
 
-// The response value type must be Int64Value.
+// The response value must be an Int64Value carrying a handle to an instance of UploadController.
 message UploadFromFileRequest {
     int64 uploader_handle = 1;
     repeated Thumbnail thumbnails = 2;
@@ -188,41 +182,41 @@ message UploadFromFileRequest {
     int64 cancellation_token_source_handle = 5;
 }
 
-// No response value.
+// The reponse must not have a value.
 message FileUploaderFreeRequest {
     int64 file_uploader_handle = 1;
 }
 
-// The response value will be a UploadResult message containing the new revision UID.
+// The response message must be of type UploadResult.
 message UploadControllerAwaitCompletionRequest {
     int64 upload_controller_handle = 1;
 }
 
-// No response value.
+// The reponse must not have a value.
 message UploadControllerPauseRequest {
     int64 upload_controller_handle = 1;
 }
 
-// No response value.
+// The reponse must not have a value.
 message UploadControllerResumeRequest {
     int64 upload_controller_handle = 1;
 }
 
-// No response value.
+// The reponse must not have a value.
 message UploadControllerFreeRequest {
     int64 upload_controller_handle = 1;
 }
 
 // Drive - downloads
 
-// The response value type must be Int64Value.
+// The response value must be an Int64Value carrying a handle to an instance of FileDownloader.
 message DriveClientGetFileDownloaderRequest {
     int64 client_handle = 1;
     string revision_uid = 2;
     int64 cancellation_token_source_handle = 3;
 }
 
-// The response value type must be Int64Value.
+// The response value must be an Int64Value carrying a handle to an instance of DownloadController.
 message DownloadToStreamRequest {
     int64 downloader_handle = 1;
     int64 write_action = 2; // C signature: void on_stream_operation(const void* state, ByteArray buffer, const void* caller_state);
@@ -230,7 +224,7 @@ message DownloadToStreamRequest {
     int64 cancellation_token_source_handle = 4;
 }
 
-// The response value type must be Int64Value.
+// The response value must be an Int64Value carrying a handle to an instance of DownloadController.
 message DownloadToFileRequest {
     int64 downloader_handle = 1;
     string file_path = 2;
@@ -238,38 +232,38 @@ message DownloadToFileRequest {
     int64 cancellation_token_source_handle = 4;
 }
 
-// No response value.
+// The reponse must not have a value.
 message FileDownloaderFreeRequest  {
     int64 file_downloader_handle = 1;
 }
 
-// No response value.
+// The reponse must not have a value.
 message DownloadControllerAwaitCompletionRequest {
     int64 download_controller_handle = 1;
 }
 
-// No response value.
+// The reponse must not have a value.
 message DownloadControllerPauseRequest {
     int64 download_controller_handle = 1;
 }
 
-// No response value.
+// The reponse must not have a value.
 message DownloadControllerResumeRequest {
     int64 download_controller_handle = 1;
 }
 
-// No response value.
+// The reponse must not have a value.
 message DownloadControllerFreeRequest {
     int64 download_controller_handle = 1;
 }
 
-// The response value type must be Int32Value.
+// The response value must be an Int32Value carrying the number of bytes read into the buffer. That number must not be negative.
 message StreamReadRequest {
     int64 buffer_pointer = 1;
     int32 buffer_length = 2;
 }
 
-// No response value.
+// The reponse must not have a value.
 message StreamWriteRequest {
     int64 data_pointer = 1;
     int32 data_length = 2;
