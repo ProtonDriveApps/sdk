@@ -10,11 +10,12 @@ import { NodeAPIService } from '../nodes/apiService';
 import { NodesCache } from '../nodes/cache';
 import { NodesCryptoCache } from '../nodes/cryptoCache';
 import { NodesCryptoService } from '../nodes/cryptoService';
-import { NodesAccess } from '../nodes/nodesAccess';
+import { NodesRevisons } from '../nodes/nodesRevisions';
 import { SharingPublicAPIService } from './apiService';
 import { SharingPublicCryptoCache } from './cryptoCache';
 import { SharingPublicCryptoReporter } from './cryptoReporter';
 import { SharingPublicCryptoService } from './cryptoService';
+import { SharingPublicNodesAccess } from './nodes';
 import { SharingPublicSharesManager } from './shares';
 
 export { SharingPublicSessionManager } from './session/manager';
@@ -35,6 +36,7 @@ export function initSharingPublicModule(
     driveCryptoCache: ProtonDriveCryptoCache,
     driveCrypto: DriveCrypto,
     account: ProtonDriveAccount,
+    url: string,
     token: string,
     password: string,
 ) {
@@ -50,6 +52,8 @@ export function initSharingPublicModule(
         driveCrypto,
         account,
         shares,
+        url,
+        token,
     );
 
     return {
@@ -72,22 +76,28 @@ export function initSharingPublicNodesModule(
     driveCrypto: DriveCrypto,
     account: ProtonDriveAccount,
     sharesService: SharingPublicSharesManager,
+    url: string,
+    token: string,
 ) {
     const api = new NodeAPIService(telemetry.getLogger('nodes-api'), apiService);
     const cache = new NodesCache(telemetry.getLogger('nodes-cache'), driveEntitiesCache);
     const cryptoCache = new NodesCryptoCache(telemetry.getLogger('nodes-cache'), driveCryptoCache);
     const cryptoReporter = new SharingPublicCryptoReporter(telemetry);
     const cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, cryptoReporter);
-    const nodesAccess = new NodesAccess(
+    const nodesAccess = new SharingPublicNodesAccess(
         telemetry.getLogger('nodes'),
         api,
         cache,
         cryptoCache,
         cryptoService,
         sharesService,
+        url,
+        token,
     );
+    const nodesRevisions = new NodesRevisons(telemetry.getLogger('nodes'), api, cryptoService, nodesAccess);
 
     return {
         access: nodesAccess,
+        revisions: nodesRevisions,
     };
 }

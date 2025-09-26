@@ -213,6 +213,7 @@ export class ProtonDriveClient {
                     srpModule,
                     config,
                     telemetry,
+                    url,
                     token,
                     password,
                 });
