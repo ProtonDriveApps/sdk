@@ -76,6 +76,7 @@ internal sealed class RevisionWriter : IDisposable
             var blockVerifier = await _client.BlockVerifierFactory.CreateAsync(_fileUid, _revisionId, _fileKey, cancellationToken).ConfigureAwait(false);
 
             using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var linkedCancellationToken = cancellationTokenSource.Token;
 
             try
             {
@@ -83,7 +84,7 @@ internal sealed class RevisionWriter : IDisposable
                 {
                     foreach (var thumbnail in thumbnails)
                     {
-                        await WaitForBlockUploaderAsync(uploadTasks, manifestStream, cancellationTokenSource.Token).ConfigureAwait(false);
+                        await WaitForBlockUploaderAsync(uploadTasks, manifestStream, linkedCancellationToken).ConfigureAwait(false);
 
                         var uploadTask = _client.BlockUploader.UploadThumbnailAsync(
                             _fileUid,
@@ -102,17 +103,20 @@ internal sealed class RevisionWriter : IDisposable
                     {
                         do
                         {
-                            var plainDataPrefix = ArrayPool<byte>.Shared.Rent(blockVerifier.DataPacketPrefixMaxLength);
+                            var plainDataPrefixBuffer = ArrayPool<byte>.Shared.Rent(blockVerifier.DataPacketPrefixMaxLength);
                             try
                             {
                                 var plainDataStream = ProtonDriveClient.MemoryStreamManager.GetStream();
 
-                                await contentStream.PartiallyCopyToAsync(plainDataStream, _targetBlockSize, plainDataPrefix, cancellationTokenSource.Token)
-                                    .ConfigureAwait(false);
+                                var bytesCopied = await contentStream.PartiallyCopyToAsync(
+                                    plainDataStream,
+                                    _targetBlockSize,
+                                    plainDataPrefixBuffer,
+                                    linkedCancellationToken).ConfigureAwait(false);
 
                                 blockSizes.Add((int)plainDataStream.Length);
 
-                                await WaitForBlockUploaderAsync(uploadTasks, manifestStream, cancellationTokenSource.Token).ConfigureAwait(false);
+                                await WaitForBlockUploaderAsync(uploadTasks, manifestStream, linkedCancellationToken).ConfigureAwait(false);
 
                                 plainDataStream.Seek(0, SeekOrigin.Begin);
 
@@ -126,21 +130,21 @@ internal sealed class RevisionWriter : IDisposable
                                     _fileKey,
                                     plainDataStream,
                                     blockVerifier,
-                                    plainDataPrefix,
-                                    (int)Math.Min(blockVerifier.DataPacketPrefixMaxLength, plainDataStream.Length),
+                                    plainDataPrefixBuffer,
+                                    Math.Min(blockVerifier.DataPacketPrefixMaxLength, bytesCopied),
                                     progress =>
                                     {
                                         numberOfBytesUploaded += progress;
                                         onProgress(numberOfBytesUploaded, contentStream.Length);
                                     },
                                     _releaseBlocksAction,
-                                    cancellationTokenSource.Token);
+                                    linkedCancellationToken);
 
                                 uploadTasks.Enqueue(uploadTask);
                             }
                             catch
                             {
-                                ArrayPool<byte>.Shared.Return(plainDataPrefix);
+                                ArrayPool<byte>.Shared.Return(plainDataPrefixBuffer);
                                 throw;
                             }
                         } while (contentStream.Position < contentStream.Length);

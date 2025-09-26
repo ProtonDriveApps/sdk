@@ -63,6 +63,11 @@ internal sealed class InteropStream : Stream
 
         var response = await _readAction.Value.InvokeWithBufferAsync<Int32Value>(_callerState, buffer.Span).ConfigureAwait(false);
 
+        if (response.Value < 0)
+        {
+            throw new IOException($"Invalid number of bytes read: {response.Value}");
+        }
+
         _position += response.Value;
 
         return response.Value;

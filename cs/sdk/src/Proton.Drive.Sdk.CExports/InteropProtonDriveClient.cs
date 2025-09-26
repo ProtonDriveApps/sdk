@@ -72,7 +72,7 @@ internal static class InteropProtonDriveClient
 
         var fileUploader = await client.GetFileRevisionUploaderAsync(
             RevisionUid.Parse(request.CurrentActiveRevisionUid),
-            request.FileSize,
+            request.Size,
             request.LastModificationTime.ToDateTime(),
             cancellationToken).ConfigureAwait(false);
 
