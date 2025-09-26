@@ -74,7 +74,7 @@ internal static class Interop
         }
         catch (InvalidCastException e)
         {
-            throw new InvalidHandleException($"Expected handle for object of type {typeof(T).Name} but object was of type {handleTarget.GetType()}", e);
+            throw new InvalidHandleException($"Expected handle for object of type {typeof(T)} but object was of type {handleTarget.GetType()}", e);
         }
     }
 }

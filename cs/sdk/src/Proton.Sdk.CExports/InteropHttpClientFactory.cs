@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Reflection;
 using Google.Protobuf;
+using Proton.Sdk.CExports.Tasks;
 
 namespace Proton.Sdk.CExports;
 
@@ -54,7 +55,7 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var taskCompletionSource = new TaskCompletionSource<HttpResponse>();
+            var taskCompletionSource = new ValueTaskCompletionSource<HttpResponse>();
             var taskCompletionSourceHandle = Interop.AllocHandle(taskCompletionSource);
 
             var interopHttpRequest = await ConvertHttpRequestToInteropAsync(request, cancellationToken).ConfigureAwait(false);
