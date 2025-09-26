@@ -11,10 +11,21 @@ import {
     MaybeNode,
     NodeType,
     CachedCryptoMaterial,
+    MaybeMissingNode,
+    FileDownloader,
+    ThumbnailType,
+    ThumbnailResult,
 } from './interface';
 import { Telemetry } from './telemetry';
-import { getUid, convertInternalNodePromise, convertInternalNodeIterator } from './transformers';
+import {
+    getUid,
+    convertInternalNodePromise,
+    convertInternalNodeIterator,
+    convertInternalMissingNodeIterator,
+    getUids,
+} from './transformers';
 import { DriveAPIService } from './internal/apiService';
+import { initDownloadModule } from './internal/download';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharingPublicModule } from './internal/sharingPublic';
 
@@ -35,6 +46,7 @@ export class ProtonDrivePublicLinkClient {
     private logger: Logger;
     private sdkEvents: SDKEvents;
     private sharingPublic: ReturnType<typeof initSharingPublicModule>;
+    private download: ReturnType<typeof initDownloadModule>;
 
     public experimental: {
         /**
@@ -60,6 +72,7 @@ export class ProtonDrivePublicLinkClient {
         srpModule,
         config,
         telemetry,
+        url,
         token,
         password,
     }: {
@@ -69,6 +82,7 @@ export class ProtonDrivePublicLinkClient {
         srpModule: SRPModule;
         config?: ProtonDriveConfig;
         telemetry?: ProtonDriveTelemetry;
+        url: string;
         token: string;
         password: string;
     }) {
@@ -99,15 +113,24 @@ export class ProtonDrivePublicLinkClient {
             cryptoCache,
             cryptoModule,
             account,
+            url,
             token,
             password,
+        );
+        this.download = initDownloadModule(
+            telemetry,
+            apiService,
+            cryptoModule,
+            account,
+            this.sharingPublic.shares,
+            this.sharingPublic.nodes.access,
+            this.sharingPublic.nodes.revisions,
         );
 
         this.experimental = {
             getNodeUrl: async (nodeUid: NodeOrUid) => {
                 this.logger.debug(`Getting node URL for ${getUid(nodeUid)}`);
-                // TODO: public node has different URL
-                return '';
+                return this.sharingPublic.nodes.access.getNodeUrl(getUid(nodeUid));
             },
             getDocsKey: async (nodeUid: NodeOrUid) => {
                 this.logger.debug(`Getting docs keys for ${getUid(nodeUid)}`);
@@ -143,5 +166,51 @@ export class ProtonDrivePublicLinkClient {
         yield* convertInternalNodeIterator(
             this.sharingPublic.nodes.access.iterateFolderChildren(getUid(parentUid), filterOptions, signal),
         );
+    }
+
+    /**
+     * Iterates the nodes by their UIDs.
+     *
+     * See `ProtonDriveClient.iterateNodes` for more information.
+     */
+    async *iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<MaybeMissingNode> {
+        this.logger.info(`Iterating ${nodeUids.length} nodes`);
+        yield* convertInternalMissingNodeIterator(
+            this.sharingPublic.nodes.access.iterateNodes(getUids(nodeUids), signal),
+        );
+    }
+
+    /**
+     * Get the node by its UID.
+     *
+     * See `ProtonDriveClient.getNode` for more information.
+     */
+    async getNode(nodeUid: NodeOrUid): Promise<MaybeNode> {
+        this.logger.info(`Getting node ${getUid(nodeUid)}`);
+        return convertInternalNodePromise(this.sharingPublic.nodes.access.getNode(getUid(nodeUid)));
+    }
+
+    /**
+     * Get the file downloader to download the node content.
+     *
+     * See `ProtonDriveClient.getFileDownloader` for more information.
+     */
+    async getFileDownloader(nodeUid: NodeOrUid, signal?: AbortSignal): Promise<FileDownloader> {
+        this.logger.info(`Getting file downloader for ${getUid(nodeUid)}`);
+        return this.download.getFileDownloader(getUid(nodeUid), signal);
+    }
+
+    /**
+     * Iterates the thumbnails of the given nodes.
+     *
+     * See `ProtonDriveClient.iterateThumbnails` for more information.
+     */
+    async *iterateThumbnails(
+        nodeUids: NodeOrUid[],
+        thumbnailType?: ThumbnailType,
+        signal?: AbortSignal,
+    ): AsyncGenerator<ThumbnailResult> {
+        this.logger.info(`Iterating ${nodeUids.length} thumbnails`);
+        yield* this.download.iterateThumbnails(getUids(nodeUids), thumbnailType, signal);
     }
 }

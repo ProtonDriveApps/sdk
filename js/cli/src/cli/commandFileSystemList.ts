@@ -1,9 +1,9 @@
 import { ParseArgsConfig } from 'node:util';
 
-import { ProtonDriveClient, MaybeNode, MemberRole, Device, NodeType } from '../../../sdk/src';
+import { ProtonDriveClient, MaybeNode, Device, NodeType } from '../../../sdk/src';
 import { Command, ActionArgs } from './interface';
 import { PathType, Path } from './paths';
-import { formatAuthor, formatDate, formatSize } from './formatters';
+import { formatAuthor, formatDate, formatSize, formatMemberRole } from './formatters';
 import { getName, getClaimedSize, getNode } from './node';
 
 export class CommandFileSystemList implements Command {
@@ -77,7 +77,7 @@ export class CommandFileSystemList implements Command {
 
         const type = node.type === 'file' ? '📄' : '🗂️';
         const sharedFlag = node.isShared ? '🔗' : '  '; // Two spaces to align with the shared icon.
-        const permissionFlag = getPermissionFlag(node.directRole);
+        const permissionFlag = formatMemberRole(node.directRole);
         const author = formatAuthor(node.keyAuthor);
         const created = formatDate(node.creationTime, true);
         const claimedSize = getClaimedSize(maybeNode);
@@ -94,18 +94,5 @@ export class CommandFileSystemList implements Command {
         }
 
         console.log(`${device.type} ${device.name.ok ? device.name.value : device.name.error.name}`);
-    }
-}
-
-function getPermissionFlag(memberRole: MemberRole): string {
-    switch (memberRole) {
-        case MemberRole.Inherited:
-            return '  '; // Two spaces to align with icon.
-        case MemberRole.Viewer:
-            return '👁 '; // Extra space due to how terminal render this.
-        case MemberRole.Editor:
-            return '📝';
-        case MemberRole.Admin:
-            return '👑';
     }
 }
