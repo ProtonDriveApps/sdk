@@ -1,6 +1,6 @@
 import { inspect } from 'util';
 
-import { Author } from '../../../sdk/src';
+import { Author, MemberRole } from '../../../sdk/src';
 
 export function formatReadableJson(json: object) {
     // Prints the JSON in a readable format without the depth limit.
@@ -35,4 +35,17 @@ export function formatSize(size: number | undefined, humanReadable: boolean = fa
         return `${(size / 1024 / 1024 / 1024).toFixed(2)} GiB`;
     }
     return `${size}`;
+}
+
+export function formatMemberRole(memberRole: MemberRole): string {
+    switch (memberRole) {
+        case MemberRole.Inherited:
+            return '  '; // Two spaces to align with icon.
+        case MemberRole.Viewer:
+            return '👁 '; // Extra space due to how terminal render this.
+        case MemberRole.Editor:
+            return '📝';
+        case MemberRole.Admin:
+            return '👑';
+    }
 }

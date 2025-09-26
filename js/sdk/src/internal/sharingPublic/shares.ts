@@ -1,5 +1,5 @@
 import { PrivateKey } from '../../crypto';
-import { ProtonDriveAccount } from '../../interface';
+import { MetricVolumeType, ProtonDriveAccount } from '../../interface';
 import { splitNodeUid } from '../uids';
 import { SharingPublicAPIService } from './apiService';
 import { SharingPublicCryptoCache } from './cryptoCache';
@@ -78,5 +78,9 @@ export class SharingPublicSharesManager {
             addressKey: address.keys[address.primaryKeyIndex].key,
             addressKeyId: address.keys[address.primaryKeyIndex].id,
         };
+    }
+
+    async getVolumeMetricContext(): Promise<MetricVolumeType> {
+        return MetricVolumeType.SharedPublic;
     }
 }

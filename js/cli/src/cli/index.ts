@@ -39,11 +39,16 @@ import { Command } from './interface';
 import { CommandBookmarkRemove } from './commandBookmarkRemove';
 import { CommandBookmarkList } from './commandBookmarkList';
 import { CommandEventsPath } from './commandEventsPath';
-import { CommandPublicList } from './commandPublicList';
+import { CommandPublicDownload } from './public/commandPublicDownload';
+import { CommandPublicDownloadThumbnails } from './public/commandPublicDownloadThumbnails';
+import { CommandPublicInfo } from './public/commandPublicInfo';
+import { CommandPublicList } from './public/commandPublicList';
 
 const COMMANDS = [
+    // CLI Account
     new CommandAuthLogin(),
     new CommandAuthLogout(),
+    // ProtonDriveClient
     new CommandEventsDrive(),
     new CommandEventsMyVolume(),
     new CommandEventsPath(),
@@ -75,12 +80,18 @@ const COMMANDS = [
     new CommandDeviceCreate(),
     new CommandDeviceRename(),
     new CommandDeviceDelete(),
+    // ProtonDrivePublicLinkClient
     new CommandPublicList(),
+    new CommandPublicInfo(),
+    new CommandPublicDownload(),
+    new CommandPublicDownloadThumbnails(),
+    // ProtonDrivePhotosClient
     new CommandPhotoTimeline(),
     new CommandPhotoDownload(),
     new CommandPhotoDownloadThumbnails(),
     new CommandPhotoUpload(),
     new CommandAlbumList(),
+    // Diagnostic
     new CommandDiagnosticTree(),
 ].map((command: Command) => {
     command.options = command.options || {};

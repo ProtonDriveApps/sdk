@@ -2,6 +2,7 @@ import path from 'node:path';
 import { ProtonDriveClient, MaybeNode, MaybeMissingNode } from '../../../sdk/src';
 import { ProtonDrivePhotosClient } from '../../../sdk/src/protonDrivePhotosClient';
 import { getName } from './node';
+import { ProtonDrivePublicLinkClient } from '../../../sdk/src/protonDrivePublicLinkClient';
 
 export enum PathType {
     Root = 'root',
@@ -13,6 +14,8 @@ export enum PathType {
 }
 
 export class Paths {
+    private publicLinkSdk?: ProtonDrivePublicLinkClient;
+
     constructor(
         private sdk: ProtonDriveClient,
         private photosSdk: ProtonDrivePhotosClient,
@@ -33,6 +36,24 @@ export class Paths {
 
     getPhotoPath(path: string): PhotoPath {
         return new PhotoPath(this.photosSdk, path);
+    }
+
+    getPublicLinkPath(path: string): PublicLinkPath {
+        if (!this.publicLinkSdk) {
+            throw new Error('Public link SDK not initialized');
+        }
+        return new PublicLinkPath(this.publicLinkSdk, path);
+    }
+
+    async authPublicLinkSession(url: string, customPassword: string): Promise<ProtonDrivePublicLinkClient> {
+        const { isCustomPasswordProtected } = await this.sdk.experimental.getPublicLinkInfo(url);
+
+        if (isCustomPasswordProtected && !customPassword) {
+            throw new Error('Custom password is required');
+        }
+
+        this.publicLinkSdk = await this.sdk.experimental.authPublicLink(url, customPassword);
+        return this.publicLinkSdk;
     }
 }
 
@@ -165,6 +186,47 @@ export class Path {
 
     private async getNodeByName(parentNode: MaybeNode, name: string) {
         for await (const maybeChild of this.sdk.iterateFolderChildren(parentNode)) {
+            if (getName(maybeChild) === name) {
+                return maybeChild;
+            }
+        }
+        throw new Error(`Node not found: ${name}`);
+    }
+}
+
+export class PublicLinkPath {
+    constructor(
+        private publicLinkSdk: ProtonDrivePublicLinkClient,
+        public fullPath: string,
+    ) {
+        this.publicLinkSdk = publicLinkSdk;
+        this.fullPath = fullPath;
+    }
+
+    async getNode(): Promise<MaybeNode> {
+        if (this.fullPath.includes('~')) {
+            const nodeUid = this.fullPath;
+            return this.publicLinkSdk.getNode(nodeUid);
+        }
+
+        const rootNode = await this.publicLinkSdk.getRootNode();
+        return this.getNodeByPath(rootNode, this.fullPath);
+    }
+
+    private async getNodeByPath(parentNode: MaybeNode, pathString: string) {
+        let node = parentNode;
+        const pathParts = pathString.split(path.sep);
+        for (const part of pathParts) {
+            if (part === '') {
+                continue;
+            }
+            node = await this.getNodeByName(node, part);
+        }
+        return node;
+    }
+
+    private async getNodeByName(parentNode: MaybeNode, name: string) {
+        for await (const maybeChild of this.publicLinkSdk.iterateFolderChildren(parentNode)) {
             if (getName(maybeChild) === name) {
                 return maybeChild;
             }
