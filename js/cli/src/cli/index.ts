@@ -21,7 +21,9 @@ import { CommandFileSystemRename } from './commandFileSystemRename';
 import { CommandFileSystemRestore } from './commandFileSystemRestore';
 import { CommandFileSystemUpload } from './commandFileSystemUpload';
 import { CommandFileSystemTrash } from './commandFileSystemTrash';
+import { CommandInvitationAccept } from './commandInvitationAccept';
 import { CommandInvitationList } from './commandInvitationList';
+import { CommandInvitationReject } from './commandInvitationReject';
 import { CommandPhotoDownload } from './commandPhotoDownload';
 import { CommandPhotoDownloadThumbnails } from './commandPhotoDownloadThumbnails';
 import { CommandPhotoTimeline } from './commandPhotoTimeline';
@@ -75,6 +77,8 @@ const COMMANDS = [
     new CommandSharingSetUrl(),
     new CommandSharingRemoveUrl(),
     new CommandInvitationList(),
+    new CommandInvitationAccept(),
+    new CommandInvitationReject(),
     new CommandBookmarkList(),
     new CommandBookmarkRemove(),
     new CommandDeviceCreate(),
