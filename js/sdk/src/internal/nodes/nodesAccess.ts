@@ -1,7 +1,16 @@
 import { c } from 'ttag';
 
 import { PrivateKey, SessionKey } from '../../crypto';
-import { InvalidNameError, Logger, MissingNode, NodeType, Result, resultError, resultOk } from '../../interface';
+import {
+    InvalidNameError,
+    Logger,
+    MissingNode,
+    NodeType,
+    ProtonDriveTelemetry,
+    Result,
+    resultError,
+    resultOk,
+} from '../../interface';
 import { DecryptionError, ProtonDriveError } from '../../errors';
 import { asyncIteratorMap } from '../asyncIteratorMap';
 import { getErrorMessage } from '../errors';
@@ -41,10 +50,11 @@ const DECRYPTION_CONCURRENCY = 30;
  * nodes metadata.
  */
 export class NodesAccess {
+    private logger: Logger;
     private debouncer: NodesDebouncer;
 
     constructor(
-        private logger: Logger,
+        private telemetry: ProtonDriveTelemetry,
         private apiService: NodeAPIService,
         private cache: NodesCache,
         private cryptoCache: NodesCryptoCache,
@@ -54,13 +64,13 @@ export class NodesAccess {
             'getOwnVolumeIDs' | 'getSharePrivateKey' | 'getContextShareMemberEmailKey'
         >,
     ) {
-        this.logger = logger;
+        this.logger = telemetry.getLogger('nodes');
         this.apiService = apiService;
         this.cache = cache;
         this.cryptoCache = cryptoCache;
         this.cryptoService = cryptoService;
         this.shareService = shareService;
-        this.debouncer = new NodesDebouncer(this.logger);
+        this.debouncer = new NodesDebouncer(this.telemetry);
     }
 
     async getVolumeRootFolder() {

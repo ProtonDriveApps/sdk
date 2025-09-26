@@ -1,5 +1,4 @@
-import { Logger } from "../../interface";
-import { LoggerWithPrefix } from '../../telemetry';
+import { Logger, ProtonDriveTelemetry } from '../../interface';
 
 /**
  * The timeout for which the node is considered to be loading.
@@ -10,6 +9,12 @@ import { LoggerWithPrefix } from '../../telemetry';
  * more time for this.
  */
 const DEBOUNCE_TIMEOUT = 5000;
+
+/**
+ * The timeout for which the node is considered to be waiting for a long time.
+ * After this timeout the metric is sent.
+ */
+const DEBOUNCE_LONG_WAIT_TIMEOUT = 1000;
 
 /**
  * Helper to avoid loading the same node twice.
@@ -23,6 +28,8 @@ const DEBOUNCE_TIMEOUT = 5000;
  * the node to be loaded if that is the case.
  */
 export class NodesDebouncer {
+    private logger: Logger;
+
     private promises: Map<
         string,
         {
@@ -32,8 +39,9 @@ export class NodesDebouncer {
         }
     > = new Map();
 
-    constructor(private logger: Logger) {
-        this.logger = new LoggerWithPrefix(logger, 'debouncer');
+    constructor(private telemetry: ProtonDriveTelemetry) {
+        this.logger = telemetry.getLogger('nodes-debouncer');
+        this.telemetry = telemetry;
     }
 
     loadingNodes(nodeUids: string[]) {
@@ -79,8 +87,16 @@ export class NodesDebouncer {
             return;
         }
 
+        const metricTimeout = setTimeout(() => {
+            this.telemetry.recordMetric({
+                eventName: 'debounceLongWait',
+            });
+        }, DEBOUNCE_LONG_WAIT_TIMEOUT);
+
         this.logger.debug(`Wait for: ${nodeUid}`);
         await result.promise;
+
+        clearTimeout(metricTimeout);
     }
 
     clear() {

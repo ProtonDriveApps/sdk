@@ -1,16 +1,16 @@
-import { Logger } from "../../interface";
-import { NodeAPIService } from "../nodes/apiService";
-import { NodesCache } from "../nodes/cache";
-import { NodesCryptoCache } from "../nodes/cryptoCache";
-import { NodesCryptoService } from "../nodes/cryptoService";
-import { NodesAccess } from "../nodes/nodesAccess";
-import { isProtonDocument, isProtonSheet } from "../nodes/mediaTypes";
-import { splitNodeUid } from "../uids";
-import { SharingPublicSharesManager } from "./shares";
+import { ProtonDriveTelemetry } from '../../interface';
+import { NodeAPIService } from '../nodes/apiService';
+import { NodesCache } from '../nodes/cache';
+import { NodesCryptoCache } from '../nodes/cryptoCache';
+import { NodesCryptoService } from '../nodes/cryptoService';
+import { NodesAccess } from '../nodes/nodesAccess';
+import { isProtonDocument, isProtonSheet } from '../nodes/mediaTypes';
+import { splitNodeUid } from '../uids';
+import { SharingPublicSharesManager } from './shares';
 
 export class SharingPublicNodesAccess extends NodesAccess {
     constructor(
-        logger: Logger,
+        telemetry: ProtonDriveTelemetry,
         apiService: NodeAPIService,
         cache: NodesCache,
         cryptoCache: NodesCryptoCache,
@@ -19,7 +19,7 @@ export class SharingPublicNodesAccess extends NodesAccess {
         private url: string,
         private token: string,
     ) {
-        super(logger, apiService, cache, cryptoCache, cryptoService, sharesService);
+        super(telemetry, apiService, cache, cryptoCache, cryptoService, sharesService);
         this.token = token;
     }
 
