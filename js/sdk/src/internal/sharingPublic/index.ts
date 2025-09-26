@@ -85,7 +85,7 @@ export function initSharingPublicNodesModule(
     const cryptoReporter = new SharingPublicCryptoReporter(telemetry);
     const cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, cryptoReporter);
     const nodesAccess = new SharingPublicNodesAccess(
-        telemetry.getLogger('nodes'),
+        telemetry,
         api,
         cache,
         cryptoCache,

@@ -12,6 +12,7 @@ export interface Logger {
 
 export type MetricEvent =
     | MetricAPIRetrySucceededEvent
+    | MetricDebounceLongWaitEvent
     | MetricUploadEvent
     | MetricDownloadEvent
     | MetricDecryptionErrorEvent
@@ -23,6 +24,10 @@ export interface MetricAPIRetrySucceededEvent {
     eventName: 'apiRetrySucceeded';
     url: string;
     failedAttempts: number;
+}
+
+export interface MetricDebounceLongWaitEvent {
+    eventName: 'debounceLongWait';
 }
 
 export interface MetricUploadEvent {
