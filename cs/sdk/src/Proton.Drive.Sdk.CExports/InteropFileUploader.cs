@@ -1,6 +1,5 @@
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
-using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Sdk.CExports;
 
@@ -20,7 +19,8 @@ internal static class InteropFileUploader
         {
             unsafe
             {
-                return new Nodes.Thumbnail((ThumbnailType)t.Type, new InteropArray<byte>((byte*)t.ContentPointer, (nint)t.ContentLength).ToArray());
+                var thumbnailType = (Proton.Drive.Sdk.Nodes.ThumbnailType)t.Type;
+                return new Nodes.Thumbnail(thumbnailType, new InteropArray<byte>((byte*)t.ContentPointer, (nint)t.ContentLength).ToArray());
             }
         });
 
@@ -45,7 +45,8 @@ internal static class InteropFileUploader
         {
             unsafe
             {
-                return new Nodes.Thumbnail((ThumbnailType)t.Type, new InteropArray<byte>((byte*)t.ContentPointer, (nint)t.ContentLength).ToArray());
+                var thumbnailType = (Proton.Drive.Sdk.Nodes.ThumbnailType)t.Type;
+                return new Nodes.Thumbnail(thumbnailType, new InteropArray<byte>((byte*)t.ContentPointer, (nint)t.ContentLength).ToArray());
             }
         });
 

@@ -80,6 +80,11 @@ message GetAddressPublicKeysRequest {
 
 // Drive - client
 
+enum ThumbnailType {
+    THUMBNAIL_TYPE_THUMBNAIL = 0;
+    THUMBNAIL_TYPE_PREVIEW = 1;
+}
+
 message FileRevision {
     string uid = 1;
     google.protobuf.Timestamp creation_time = 2;
@@ -103,7 +108,7 @@ message ProgressUpdate {
 }
 
 message Thumbnail {
-    int32 type = 1;
+    ThumbnailType type = 1;
     int64 content_pointer = 2;
     int64 content_length = 3;
 }
