@@ -84,6 +84,7 @@ export class StreamUploader {
         protected revisionDraft: NodeRevisionDraft,
         protected metadata: UploadMetadata,
         protected onFinish: (failure: boolean) => Promise<void>,
+        protected uploadController: UploadController,
         protected signal?: AbortSignal,
     ) {
         this.telemetry = telemetry;
@@ -104,7 +105,7 @@ export class StreamUploader {
         }
 
         this.digests = new UploadDigests();
-        this.controller = new UploadController();
+        this.controller = uploadController;
     }
 
     async start(
