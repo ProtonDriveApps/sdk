@@ -8,12 +8,12 @@
 
 void proton_drive_sdk_handle_request(
     ByteArray request,
-    const void* caller_state,
-    array_action response_callback
+    intptr_t bindings_handle,
+    array_action response_action
 );
 
 void proton_drive_sdk_handle_response(
-    const void* state,
+    intptr_t sdk_handle,
     ByteArray response
 );
 

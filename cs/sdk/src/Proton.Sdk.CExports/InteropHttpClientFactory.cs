@@ -12,13 +12,13 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
     private readonly string _sdkTechnicalStack;
 
     public InteropHttpClientFactory(
-        nint state,
+        nint bindingsHandle,
         string baseUrl,
         string? bindingsLanguage,
         InteropAction<nint, InteropArray<byte>, nint> sendHttpRequestAction)
     {
         _baseUrl = baseUrl;
-        State = state;
+        BindingsHandle = bindingsHandle;
         SendHttpRequestAction = sendHttpRequestAction;
 
         var executingAssembly = Assembly.GetExecutingAssembly();
@@ -34,7 +34,7 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
         _sdkTechnicalStack = "dotnet" + bindingsSuffix;
     }
 
-    private nint State { get; }
+    private nint BindingsHandle { get; }
     private InteropAction<nint, InteropArray<byte>, nint> SendHttpRequestAction { get; }
 
     public HttpClient CreateClient(string name)
@@ -60,7 +60,7 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
 
             var interopHttpRequest = await ConvertHttpRequestToInteropAsync(request, cancellationToken).ConfigureAwait(false);
 
-            _owner.SendHttpRequestAction.InvokeWithMessage(_owner.State, interopHttpRequest, (nint)taskCompletionSourceHandle);
+            _owner.SendHttpRequestAction.InvokeWithMessage(_owner.BindingsHandle, interopHttpRequest, (nint)taskCompletionSourceHandle);
 
             var interopHttpResponse = await taskCompletionSource.Task.ConfigureAwait(false);
 

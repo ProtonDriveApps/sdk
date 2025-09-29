@@ -7,13 +7,13 @@ namespace Proton.Drive.Sdk.CExports;
 
 internal static class InteropFileUploader
 {
-    public static IMessage HandleUploadFromStream(UploadFromStreamRequest request, nint callerState)
+    public static IMessage HandleUploadFromStream(UploadFromStreamRequest request, nint bindingsHandle)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
         var uploader = Interop.GetFromHandle<FileUploader>(request.UploaderHandle);
 
-        var stream = new InteropStream(uploader.FileSize, callerState, new InteropAction<nint, InteropArray<byte>, nint>(request.ReadAction));
+        var stream = new InteropStream(uploader.FileSize, bindingsHandle, new InteropAction<nint, InteropArray<byte>, nint>(request.ReadAction));
 
         var thumbnails = request.Thumbnails.Select(t =>
         {
@@ -29,13 +29,13 @@ internal static class InteropFileUploader
         var uploadController = uploader.UploadFromStream(
             stream,
             thumbnails,
-            (completed, total) => progressAction.InvokeProgressUpdate(callerState, total, completed),
+            (completed, total) => progressAction.InvokeProgressUpdate(bindingsHandle, total, completed),
             cancellationToken);
 
         return new Int64Value { Value = Interop.AllocHandle(uploadController) };
     }
 
-    public static IMessage HandleUploadFromFile(UploadFromFileRequest request, nint callerState)
+    public static IMessage HandleUploadFromFile(UploadFromFileRequest request, nint bindingsHandle)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
@@ -55,7 +55,7 @@ internal static class InteropFileUploader
         var uploadController = uploader.UploadFromFile(
             request.FilePath,
             thumbnails,
-            (completed, total) => progressAction.InvokeProgressUpdate(callerState, total, completed),
+            (completed, total) => progressAction.InvokeProgressUpdate(bindingsHandle, total, completed),
             cancellationToken);
 
         return new Int64Value { Value = Interop.AllocHandle(uploadController) };
