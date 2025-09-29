@@ -131,6 +131,7 @@ describe('StreamUploader', () => {
             revisionDraft,
             metadata,
             onFinish,
+            controller,
             abortController.signal,
         );
     });
@@ -251,6 +252,8 @@ describe('StreamUploader', () => {
                 revisionDraft,
                 metadata,
                 onFinish,
+                controller,
+                abortController.signal,
             );
 
             await verifySuccess();
@@ -278,6 +281,8 @@ describe('StreamUploader', () => {
                 revisionDraft,
                 metadata,
                 onFinish,
+                controller,
+                abortController.signal,
             );
 
             await verifySuccess();
@@ -459,9 +464,10 @@ describe('StreamUploader', () => {
                     {
                         // Fake expected size to break verification
                         expectedSize: 1 * 1024 * 1024 + 1024,
-                        mediaType: '',
-                    },
+                    } as UploadMetadata,
                     onFinish,
+                    controller,
+                    abortController.signal,
                 );
 
                 await verifyFailure(
