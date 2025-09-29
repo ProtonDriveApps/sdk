@@ -5,6 +5,7 @@ import { generateFileExtendedAttributes } from '../nodes';
 import { splitNodeRevisionUid } from '../uids';
 import { UploadAPIService } from '../upload/apiService';
 import { BlockVerifier } from '../upload/blockVerifier';
+import { UploadController } from '../upload/controller';
 import { UploadCryptoService } from '../upload/cryptoService';
 import { FileUploader } from '../upload/fileUploader';
 import { NodeRevisionDraft, NodesService } from '../upload/interface';
@@ -62,6 +63,7 @@ export class PhotoFileUploader extends FileUploader {
             revisionDraft,
             this.photoMetadata,
             onFinish,
+            this.controller,
             this.signal,
         );
     }
@@ -80,9 +82,10 @@ export class PhotoStreamUploader extends StreamUploader {
         revisionDraft: NodeRevisionDraft,
         metadata: PhotoUploadMetadata,
         onFinish: (failure: boolean) => Promise<void>,
+        controller: UploadController,
         signal?: AbortSignal,
     ) {
-        super(telemetry, apiService, cryptoService, uploadManager, blockVerifier, revisionDraft, metadata, onFinish, signal);
+        super(telemetry, apiService, cryptoService, uploadManager, blockVerifier, revisionDraft, metadata, onFinish, controller, signal);
         this.photoUploadManager = uploadManager;
         this.photoMetadata = metadata;
     }

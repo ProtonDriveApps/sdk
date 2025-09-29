@@ -119,6 +119,7 @@ class Uploader {
             revisionDraft,
             this.metadata,
             onFinish,
+            this.controller,
             this.signal,
         );
     }
