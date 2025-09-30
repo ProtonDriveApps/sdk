@@ -1,4 +1,4 @@
-import { formatReadableJson } from './formatters';
+import { printObject } from './formatters';
 import { Command, ActionArgs } from './interface';
 
 export class CommandFileSystemRename implements Command {
@@ -11,10 +11,6 @@ export class CommandFileSystemRename implements Command {
         const node = await nodePath.getNode();
         const renamedNode = await sdk.renameNode(node, newName);
 
-        if (json) {
-            console.log(JSON.stringify(renamedNode));
-        } else {
-            console.log(formatReadableJson(renamedNode));
-        }
+        printObject(renamedNode, json);
     }
 }

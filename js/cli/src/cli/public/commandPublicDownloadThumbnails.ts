@@ -1,9 +1,11 @@
 import path from 'node:path';
 import { ParseArgsConfig } from 'node:util';
 
+import { printIterable } from '../formatters';
 import { Command, ActionArgs } from '../interface';
-import { ThumbnailType } from '../../../../sdk/src';
+import { MaybeNode, ThumbnailType } from '../../../../sdk/src';
 import { PUBLIC_OPTIONS } from './base';
+import { ProtonDrivePublicLinkClient } from '../../../../sdk/src/protonDrivePublicLinkClient';
 
 export class CommandPublicDownloadThumbnails implements Command {
     group = 'public';
@@ -18,35 +20,46 @@ export class CommandPublicDownloadThumbnails implements Command {
         ...PUBLIC_OPTIONS,
     };
 
-    async action({ paths, args: [pathString, parentLocalPath], options: { json, thumbnailType, url, customPassword } }: ActionArgs) {
+    async action({
+        paths,
+        args: [pathString, parentLocalPath],
+        options: { json, thumbnailType, url, customPassword },
+    }: ActionArgs) {
         const client = await paths.authPublicLinkSession(url, customPassword);
         const nodePath = paths.getPublicLinkPath(pathString);
         const node = await nodePath.getNode();
 
-        for await (const result of client.iterateThumbnails([node], parseInt(thumbnailType))) {
+        const thumbnailsIterator = this.processThumbnails(client, node, parseInt(thumbnailType), parentLocalPath);
+        await printIterable(thumbnailsIterator, json, (result) => {
+            console.log(
+                result.ok
+                    ? `Downloaded thumbnail for ${result.nodeUid}`
+                    : `Failed to download thumbnail for ${result.nodeUid}: ${result.error}`,
+            );
+        });
+    }
+
+    private async *processThumbnails(
+        sdk: ProtonDrivePublicLinkClient,
+        node: MaybeNode,
+        thumbnailType: ThumbnailType,
+        parentLocalPath: string,
+    ) {
+        for await (const result of sdk.iterateThumbnails([node], thumbnailType)) {
             // Thumbnail can be jpeg or webp. All new code should produce webp.
             const thumbnailFileName = `thumbnail-${result.nodeUid}.webp`;
             const thumbnailFilePath = path.join(parentLocalPath, thumbnailFileName);
 
-            if (json) {
-                console.log(
-                    JSON.stringify({
-                        ...result,
-                        thumbnail: undefined, // Avoid dumping binary data to JSON.
-                        thumbnailFileName,
-                    }),
-                );
-            } else {
-                console.log(
-                    result.ok
-                        ? `Downloaded thumbnail for ${result.nodeUid}`
-                        : `Failed to download thumbnail for ${result.nodeUid}: ${result.error}`,
-                );
-            }
-
             if (result.ok) {
                 await Bun.write(thumbnailFilePath, result.thumbnail);
             }
+
+            yield {
+                ok: result.ok,
+                nodeUid: result.nodeUid,
+                error: !result.ok ? result.error : undefined,
+                thumbnailFileName,
+            };
         }
     }
 }

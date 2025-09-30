@@ -5,7 +5,10 @@ export class CommandInvitationReject implements Command {
     name = 'reject';
     args = ['invitationUid'];
 
-    async action({ sdk, args: [invitationUid] }: ActionArgs) {
+    async action({ sdk, args: [invitationUid], options: { json } }: ActionArgs) {
         await sdk.rejectInvitation(invitationUid);
+        if (!json) {
+            console.log(`Invitation rejected: ${invitationUid}`);
+        }
     }
 }

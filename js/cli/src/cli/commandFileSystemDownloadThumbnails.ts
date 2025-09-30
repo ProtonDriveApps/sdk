@@ -2,7 +2,8 @@ import path from 'node:path';
 import { ParseArgsConfig } from 'node:util';
 
 import { Command, ActionArgs } from './interface';
-import { ThumbnailType } from '../../../sdk/src';
+import { MaybeNode, ProtonDriveClient, ThumbnailType } from '../../../sdk/src';
+import { printIterable } from './formatters';
 
 export class CommandFileSystemDownloadThumbnails implements Command {
     group = 'filesystem';
@@ -21,30 +22,37 @@ export class CommandFileSystemDownloadThumbnails implements Command {
         const nodePath = paths.getPath(pathString);
         const node = await nodePath.getNode();
 
-        for await (const result of sdk.iterateThumbnails([node], parseInt(thumbnailType))) {
+        const thumbnailsIterator = this.processThumbnails(sdk, node, parseInt(thumbnailType), parentLocalPath);
+        await printIterable(thumbnailsIterator, json, (result) => {
+            console.log(
+                result.ok
+                    ? `Downloaded thumbnail for ${result.nodeUid}`
+                    : `Failed to download thumbnail for ${result.nodeUid}: ${result.error}`,
+            );
+        });
+    }
+
+    private async *processThumbnails(
+        sdk: ProtonDriveClient,
+        node: MaybeNode,
+        thumbnailType: ThumbnailType,
+        parentLocalPath: string,
+    ) {
+        for await (const result of sdk.iterateThumbnails([node], thumbnailType)) {
             // Thumbnail can be jpeg or webp. All new code should produce webp.
             const thumbnailFileName = `thumbnail-${result.nodeUid}.webp`;
             const thumbnailFilePath = path.join(parentLocalPath, thumbnailFileName);
 
-            if (json) {
-                console.log(
-                    JSON.stringify({
-                        ...result,
-                        thumbnail: undefined, // Avoid dumping binary data to JSON.
-                        thumbnailFileName,
-                    }),
-                );
-            } else {
-                console.log(
-                    result.ok
-                        ? `Downloaded thumbnail for ${result.nodeUid}`
-                        : `Failed to download thumbnail for ${result.nodeUid}: ${result.error}`,
-                );
-            }
-
             if (result.ok) {
                 await Bun.write(thumbnailFilePath, result.thumbnail);
             }
+
+            yield {
+                ok: result.ok,
+                nodeUid: result.nodeUid,
+                error: !result.ok ? result.error : undefined,
+                thumbnailFileName,
+            };
         }
     }
 }

@@ -3,7 +3,7 @@ import { ParseArgsConfig } from 'util';
 
 import { MaybeNode } from '../../../../sdk/src';
 import { Command, ActionArgs } from '../interface';
-import { formatAuthor, formatDate, formatSize, formatMemberRole } from '../formatters';
+import { formatAuthor, formatDate, formatSize, formatMemberRole, printIterable } from '../formatters';
 import { getName, getClaimedSize, getNode } from '../node';
 import { PUBLIC_OPTIONS } from './base';
 
@@ -18,16 +18,10 @@ export class CommandPublicList implements Command {
         const path = paths.getPublicLinkPath(pathString);
         const folder = await path.getNode();
 
-        for await (const node of client.iterateFolderChildren(folder)) {
-            this.printNode(node, { json });
-        }
+        await printIterable(client.iterateFolderChildren(folder), json, (node) => this.printNodeHuman(node));
     }
 
-    private printNode(maybeNode: MaybeNode, options: { json: boolean }) {
-        if (options.json) {
-            console.log(JSON.stringify(maybeNode));
-            return;
-        }
+    private printNodeHuman(maybeNode: MaybeNode): void {
         const node = getNode(maybeNode);
 
         const type = node.type === 'file' ? '📄' : '🗂️';

@@ -5,7 +5,10 @@ export class CommandInvitationAccept implements Command {
     name = 'accept';
     args = ['invitationUid'];
 
-    async action({ sdk, args: [invitationUid] }: ActionArgs) {
+    async action({ sdk, args: [invitationUid], options: { json } }: ActionArgs) {
         await sdk.acceptInvitation(invitationUid);
+        if (!json) {
+            console.log(`Invitation accepted: ${invitationUid}`);
+        }
     }
 }

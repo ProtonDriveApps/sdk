@@ -1,4 +1,5 @@
 import { Command, ActionArgs } from './interface';
+import { printObject } from './formatters';
 
 export class CommandSharingRemoveUrl implements Command {
     group = 'sharing';
@@ -13,10 +14,6 @@ export class CommandSharingRemoveUrl implements Command {
             publicLink: 'remove',
         });
 
-        if (json) {
-            console.log(JSON.stringify(sharingInfo));
-        } else {
-            console.log(sharingInfo);
-        }
+        printObject(sharingInfo, json);
     }
 }

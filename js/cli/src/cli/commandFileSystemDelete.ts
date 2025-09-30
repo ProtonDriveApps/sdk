@@ -1,3 +1,4 @@
+import { printIterable } from './formatters';
 import { Command, ActionArgs } from './interface';
 
 export class CommandFileSystemDelete implements Command {
@@ -9,12 +10,8 @@ export class CommandFileSystemDelete implements Command {
     async action({ sdk, paths, args: [pathString], options: { json } }: ActionArgs) {
         const nodePath = paths.getPath(pathString);
         const node = await nodePath.getNode();
-        for await (const result of sdk.deleteNodes([node])) {
-            if (json) {
-                console.log(JSON.stringify(result));
-            } else {
-                console.log(result.ok ? `Deleted ${result.uid}` : `Failed to delete ${result.uid}: ${result.error}`);
-            }
-        }
+        await printIterable(sdk.deleteNodes([node]), json, (result) =>
+            console.log(result.ok ? `Deleted ${result.uid}` : `Failed to delete ${result.uid}: ${result.error}`),
+        );
     }
 }

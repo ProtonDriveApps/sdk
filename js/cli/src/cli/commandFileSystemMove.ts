@@ -1,4 +1,5 @@
 import { ProtonDriveClient } from '../../../sdk/src';
+import { printIterable } from './formatters';
 import { Command, ActionArgs } from './interface';
 import { Path, PathType } from './paths';
 
@@ -23,12 +24,8 @@ export class CommandFileSystemMove implements Command {
     private async moveNode(sdk: ProtonDriveClient, sourcePath: Path, targetPath: Path, json: boolean) {
         const sourceNode = await sourcePath.getNode();
         const targetNode = await targetPath.getNode();
-        for await (const result of sdk.moveNodes([sourceNode], targetNode)) {
-            if (json) {
-                console.log(JSON.stringify(result));
-            } else {
-                console.log(result.ok ? `✅ ${result.uid}` : `❌ ${result.uid}: ${result.error}`);
-            }
-        }
+        await printIterable(sdk.moveNodes([sourceNode], targetNode), json, (result) =>
+            console.log(result.ok ? `✅ ${result.uid}` : `❌ ${result.uid}: ${result.error}`),
+        );
     }
 }

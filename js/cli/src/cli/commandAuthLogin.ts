@@ -13,7 +13,7 @@ export class CommandAuthLogin implements Command {
         },
     };
 
-    async action({ account, args: [username], options: { password } }: ActionArgs) {
+    async action({ account, args: [username], options: { password, json } }: ActionArgs) {
         if (!password) {
             console.log('Password:');
             // FIXME hide password when typing
@@ -22,7 +22,7 @@ export class CommandAuthLogin implements Command {
                 break;
             }
         }
-        await account.auth(username, password);
-        console.log('session:', account.session);
+        await account.auth(username, password, !json);
+        console.log(account.session);
     }
 }

@@ -3,7 +3,7 @@ import { ParseArgsConfig } from 'node:util';
 import { ProtonDriveClient, MaybeNode, Device, NodeType } from '../../../sdk/src';
 import { Command, ActionArgs } from './interface';
 import { PathType, Path } from './paths';
-import { formatAuthor, formatDate, formatSize, formatMemberRole } from './formatters';
+import { formatAuthor, formatDate, formatSize, formatMemberRole, printIterable } from './formatters';
 import { getName, getClaimedSize, getNode } from './node';
 
 export class CommandFileSystemList implements Command {
@@ -35,44 +35,47 @@ export class CommandFileSystemList implements Command {
             await this.printChildren(sdk, path, { json, nodeType });
         } else if (path.type === PathType.Devices) {
             if (path.fullPath === '/devices') {
-                for await (const device of sdk.iterateDevices()) {
-                    this.printDevice(device, { json });
-                }
+                await this.printDevices(sdk, { json });
             } else {
                 await this.printChildren(sdk, path, { json });
             }
         } else if (path.type === PathType.SharedByMe) {
-            for await (const node of sdk.iterateSharedNodes()) {
-                this.printNode(node, { json });
-            }
+            await this.printSharedNodes(sdk, { json });
         } else if (path.type === PathType.SharedWithMe) {
             if (path.fullPath === '/shared-with-me') {
-                for await (const node of sdk.iterateSharedNodesWithMe()) {
-                    this.printNode(node, { json });
-                }
+                await this.printSharedWithMe(sdk, { json });
             } else {
                 await this.printChildren(sdk, path, { json });
             }
         } else if (path.type === PathType.Trash) {
-            for await (const node of sdk.iterateTrashedNodes()) {
-                this.printNode(node, { json });
-            }
+            await this.printTrashedNodes(sdk, { json });
         }
+    }
+
+    private async printDevices(sdk: ProtonDriveClient, options: { json: boolean }) {
+        await printIterable(sdk.iterateDevices(), options.json, (device) => this.printDeviceHuman(device));
     }
 
     private async printChildren(sdk: ProtonDriveClient, path: Path, options: { json: boolean; nodeType?: NodeType }) {
         const parentNode = await path.getNode();
         const filterOptions = options.nodeType ? { type: options.nodeType } : undefined;
-        for await (const node of sdk.iterateFolderChildren(parentNode, filterOptions)) {
-            this.printNode(node, options);
-        }
+        const childrenIterator = sdk.iterateFolderChildren(parentNode, filterOptions);
+        await printIterable(childrenIterator, options.json, (node) => this.printNodeHuman(node));
     }
 
-    private printNode(maybeNode: MaybeNode, options: { json: boolean }) {
-        if (options.json) {
-            console.log(JSON.stringify(maybeNode));
-            return;
-        }
+    private async printSharedNodes(sdk: ProtonDriveClient, options: { json: boolean }) {
+        await printIterable(sdk.iterateSharedNodes(), options.json, (node) => this.printNodeHuman(node));
+    }
+
+    private async printSharedWithMe(sdk: ProtonDriveClient, options: { json: boolean }) {
+        await printIterable(sdk.iterateSharedNodesWithMe(), options.json, (node) => this.printNodeHuman(node));
+    }
+
+    private async printTrashedNodes(sdk: ProtonDriveClient, options: { json: boolean }) {
+        await printIterable(sdk.iterateTrashedNodes(), options.json, (node) => this.printNodeHuman(node));
+    }
+
+    private printNodeHuman(maybeNode: MaybeNode): void {
         const node = getNode(maybeNode);
 
         const type = node.type === 'file' ? '📄' : '🗂️';
@@ -87,12 +90,7 @@ export class CommandFileSystemList implements Command {
         console.log(`${type}${sharedFlag}${permissionFlag} ${author} ${created} ${size} ${id} ${name}`);
     }
 
-    private printDevice(device: Device, options: { json: boolean }) {
-        if (options.json) {
-            console.log(JSON.stringify(device));
-            return;
-        }
-
+    private printDeviceHuman(device: Device): void {
         console.log(`${device.type} ${device.name.ok ? device.name.value : device.name.error.name}`);
     }
 }

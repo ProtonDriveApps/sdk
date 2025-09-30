@@ -1,5 +1,6 @@
 import { ParseArgsConfig } from 'util';
 import { Command, ActionArgs } from './interface';
+import { printObject } from './formatters';
 
 export class CommandSharingSetUrl implements Command {
     group = 'sharing';
@@ -40,10 +41,6 @@ export class CommandSharingSetUrl implements Command {
             },
         });
 
-        if (json) {
-            console.log(JSON.stringify(sharingInfo));
-        } else {
-            console.log(sharingInfo);
-        }
+        printObject(sharingInfo, json);
     }
 }

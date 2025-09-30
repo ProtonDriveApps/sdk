@@ -1,3 +1,4 @@
+import { printObject } from './formatters';
 import { Command, ActionArgs } from './interface';
 
 export class CommandSharingStatus implements Command {
@@ -11,10 +12,6 @@ export class CommandSharingStatus implements Command {
         const node = await path.getNode();
         const sharingInfo = await sdk.getSharingInfo(node);
 
-        if (json) {
-            console.log(JSON.stringify(sharingInfo));
-        } else {
-            console.log(sharingInfo);
-        }
+        printObject(sharingInfo, json);
     }
 }

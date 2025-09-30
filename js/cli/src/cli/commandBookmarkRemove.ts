@@ -5,8 +5,10 @@ export class CommandBookmarkRemove implements Command {
     name = 'remove';
     args = ['bookmarkUid'];
 
-    async action({ sdk, args: [bookmarkUid] }: ActionArgs) {
+    async action({ sdk, args: [bookmarkUid], options: { json } }: ActionArgs) {
         await sdk.removeBookmark(bookmarkUid);
-        console.log(`Deleted bookmark: ${bookmarkUid}`);
+        if (!json) {
+            console.log(`Deleted bookmark: ${bookmarkUid}`);
+        }
     }
 }
