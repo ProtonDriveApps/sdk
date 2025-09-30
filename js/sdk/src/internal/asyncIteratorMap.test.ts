@@ -1,3 +1,4 @@
+import { AbortError } from '../errors';
 import { asyncIteratorMap } from './asyncIteratorMap';
 
 // Helper function to create an async generator from array
@@ -146,5 +147,16 @@ describe('asyncIteratorMap', () => {
 
         expect(maxConcurrentExecutions).toBe(concurrencyLimit);
         expect(results).toEqual([2, 4, 6, 8, 10, 12, 14, 16]);
+    });
+
+    test('throws AbortError if signal is aborted', async () => {
+        const inputGen = createAsyncGenerator([1, 2, 3, 4, 5]);
+        const mapper = async (x: number) => x * 2;
+
+        const ac = new AbortController();
+        ac.abort();
+
+        const mappedGen = asyncIteratorMap(inputGen, mapper, 1, ac.signal);
+        await expect(collectResults(mappedGen)).rejects.toThrow(AbortError);
     });
 });

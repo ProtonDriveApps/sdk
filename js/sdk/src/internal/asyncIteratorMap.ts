@@ -1,3 +1,7 @@
+import { c } from 'ttag';
+
+import { AbortError } from '../errors';
+
 const DEFAULT_CONCURRENCY = 10;
 
 /**
@@ -18,6 +22,7 @@ export async function* asyncIteratorMap<I, O>(
     inputIterator: AsyncGenerator<I>,
     mapper: (item: I) => Promise<O>,
     concurrency: number = DEFAULT_CONCURRENCY,
+    signal?: AbortSignal,
 ): AsyncGenerator<O> {
     let done = false;
 
@@ -50,6 +55,9 @@ export async function* asyncIteratorMap<I, O>(
     };
 
     while (!done || executing.size > 0 || results.length > 0) {
+        if (signal?.aborted) {
+            throw new AbortError(c('Error').t`Operation aborted`);
+        }
         while (!done && executing.size < concurrency) {
             await pump();
         }
