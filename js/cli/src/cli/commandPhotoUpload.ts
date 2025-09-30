@@ -17,7 +17,7 @@ export class CommandPhotoUpload implements Command {
         },
     };
 
-    async action({ photosSdk, args: [localPath], options: { name } }: ActionArgs) {
+    async action({ photosSdk, args: [localPath], options: { json, name } }: ActionArgs) {
         name = name || path.basename(localPath);
 
         const file = Bun.file(localPath);
@@ -28,11 +28,15 @@ export class CommandPhotoUpload implements Command {
 
         const uploader = await photosSdk.getFileUploader(name, metadata);
 
-        console.log(`Uploading ${name} (${metadata.expectedSize || 'N/A'} bytes)`);
+        if (!json) {
+            console.log(`Uploading ${name} (${metadata.expectedSize || 'N/A'} bytes)`);
+        }
 
         const thumbnails: Thumbnail[] = []; // TODO
         const controller = await uploader.uploadFromStream(file.stream(), thumbnails, (writtenBytes) => {
-            console.log(`Uploaded ${writtenBytes} bytes`);
+            if (!json) {
+                console.log(`Uploaded ${writtenBytes} bytes`);
+            }
         });
 
         await controller.completion();

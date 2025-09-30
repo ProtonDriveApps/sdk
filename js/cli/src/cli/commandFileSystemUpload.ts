@@ -22,7 +22,7 @@ export class CommandFileSystemUpload implements Command {
         },
     };
 
-    async action({ sdk, paths, args: [localPath, parentPath], options: { name, newRevision } }: ActionArgs) {
+    async action({ sdk, paths, args: [localPath, parentPath], options: { json, name, newRevision } }: ActionArgs) {
         name = name || path.basename(localPath);
 
         const file = Bun.file(localPath);
@@ -42,11 +42,15 @@ export class CommandFileSystemUpload implements Command {
             uploader = await sdk.getFileUploader(parentNode, name, metadata);
         }
 
-        console.log(`Uploading ${name} (${metadata.expectedSize || 'N/A'} bytes)`);
+        if (!json) {
+            console.log(`Uploading ${name} (${metadata.expectedSize || 'N/A'} bytes)`);
+        }
 
         const thumbnails: Thumbnail[] = []; // TODO
         const controller = await uploader.uploadFromStream(file.stream(), thumbnails, (writtenBytes) => {
-            console.log(`Uploaded ${writtenBytes} bytes`);
+            if (!json) {
+                console.log(`Uploaded ${writtenBytes} bytes`);
+            }
         });
 
         await controller.completion();

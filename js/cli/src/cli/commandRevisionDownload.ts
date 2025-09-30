@@ -5,10 +5,13 @@ export class CommandRevisionDownload implements Command {
     name = 'download';
     args = ['revisionUid', 'localPath'];
 
-    async action({ sdk, args: [revisionUid, localPath] }: ActionArgs) {
+    async action({ sdk, args: [revisionUid, localPath], options: { json } }: ActionArgs) {
         const downloader = await sdk.getFileRevisionDownloader(revisionUid);
         const claimedSize = downloader.getClaimedSizeInBytes();
-        console.log(`Downloading revision (${claimedSize || 'N/A'} bytes) to ${localPath}`);
+
+        if (!json) {
+            console.log(`Downloading revision (${claimedSize || 'N/A'} bytes) to ${localPath}`);
+        }
 
         const file = Bun.file(localPath);
         const writer = file.writer();
@@ -20,7 +23,9 @@ export class CommandRevisionDownload implements Command {
         };
 
         const controller = downloader.downloadToStream(writableStream, (writtenBytes) => {
-            console.log(`Downloaded ${writtenBytes} bytes`);
+            if (!json) {
+                console.log(`Downloaded ${writtenBytes} bytes`);
+            }
         });
 
         await controller.completion();

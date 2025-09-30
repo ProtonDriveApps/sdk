@@ -1,3 +1,4 @@
+import { printIterable } from './formatters';
 import { Command, ActionArgs } from './interface';
 
 export class CommandFileSystemCopy implements Command {
@@ -13,12 +14,8 @@ export class CommandFileSystemCopy implements Command {
         const targetPath = paths.getPath(targetPathString);
         const targetNode = await targetPath.getNode();
 
-        for await (const result of sdk.copyNodes([sourceNode], targetNode)) {
-            if (json) {
-                console.log(JSON.stringify(result));
-            } else {
-                console.log(result.ok ? `✅ ${result.uid}` : `❌ ${result.uid}: ${result.error}`);
-            }
-        }
+        await printIterable(sdk.copyNodes([sourceNode], targetNode), json, (result) =>
+            console.log(result.ok ? `✅ ${result.uid}` : `❌ ${result.uid}: ${result.error}`),
+        );
     }
 }

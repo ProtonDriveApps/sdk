@@ -1,4 +1,5 @@
 import { Command, ActionArgs } from './interface';
+import { printObject } from './formatters';
 
 export class CommandDeviceRename implements Command {
     group = 'device';
@@ -7,10 +8,6 @@ export class CommandDeviceRename implements Command {
 
     async action({ sdk, args: [deviceUid, name], options: { json } }: ActionArgs) {
         const device = await sdk.renameDevice(deviceUid, name);
-        if (json) {
-            console.log(JSON.stringify(device));
-        } else {
-            console.log(device);
-        }
+        printObject(device, json);
     }
 }

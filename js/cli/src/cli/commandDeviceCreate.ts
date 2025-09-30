@@ -1,5 +1,6 @@
 import { ParseArgsConfig } from 'util';
 import { Command, ActionArgs } from './interface';
+import { printObject } from './formatters';
 
 export class CommandDeviceCreate implements Command {
     group = 'device';
@@ -14,10 +15,6 @@ export class CommandDeviceCreate implements Command {
 
     async action({ sdk, args: [name], options: { type, json } }: ActionArgs) {
         const device = await sdk.createDevice(name, type);
-        if (json) {
-            console.log(JSON.stringify(device));
-        } else {
-            console.log(device);
-        }
+        printObject(device, json);
     }
 }

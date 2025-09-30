@@ -5,8 +5,10 @@ export class CommandDeviceDelete implements Command {
     name = 'delete';
     args = ['deviceUid'];
 
-    async action({ sdk, args: [deviceUid] }: ActionArgs) {
+    async action({ sdk, args: [deviceUid], options: { json } }: ActionArgs) {
         await sdk.deleteDevice(deviceUid);
-        console.log(`Deleted device: ${deviceUid}`);
+        if (!json) {
+            console.log(`Deleted device: ${deviceUid}`);
+        }
     }
 }

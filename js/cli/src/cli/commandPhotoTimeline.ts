@@ -1,7 +1,7 @@
 import { ParseArgsConfig } from 'util';
 
 import { ProtonDrivePhotosClient } from '../../../sdk/src/protonDrivePhotosClient';
-import { formatReadableJson } from './formatters';
+import { printIterable } from './formatters';
 import { Command, ActionArgs } from './interface';
 
 export class CommandPhotoTimeline implements Command {
@@ -24,23 +24,11 @@ export class CommandPhotoTimeline implements Command {
     }
 
     async list(photosSdk: ProtonDrivePhotosClient, json: boolean) {
-        for await (const photo of photosSdk.iterateTimeline()) {
-            if (json) {
-                console.log(JSON.stringify(photo));
-            } else {
-                console.log(formatReadableJson(photo));
-            }
-        }
+        await printIterable(photosSdk.iterateTimeline(), json);
     }
 
     async listWithDetails(photosSdk: ProtonDrivePhotosClient, json: boolean) {
         const nodeUids = await Array.fromAsync(photosSdk.iterateTimeline(), (photo) => photo.nodeUid);
-        for await (const node of photosSdk.iterateNodes(nodeUids)) {
-            if (json) {
-                console.log(JSON.stringify(node));
-            } else {
-                console.log(formatReadableJson(node));
-            }
-        }
+        await printIterable(photosSdk.iterateNodes(nodeUids), json);
     }
 }

@@ -27,15 +27,7 @@ export class CommandPublicDownload implements Command {
         const claimedSize = downloader.getClaimedSizeInBytes();
         const localPath = path.join(localParentPath, name || getName(node));
 
-        if (json) {
-            console.log(
-                JSON.stringify({
-                    localPath: localPath,
-                    name: getName(node),
-                    claimedSize,
-                }),
-            );
-        } else {
+        if (!json) {
             console.log(`Downloading ${getName(node)} (${claimedSize || 'N/A'} bytes) to ${localPath}`);
         }
 

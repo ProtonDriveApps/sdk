@@ -2,6 +2,39 @@ import { inspect } from 'util';
 
 import { Author, MemberRole } from '../../../sdk/src';
 
+export function printObject(object: object | undefined, json: boolean) {
+    if (json) {
+        console.log(JSON.stringify(object));
+    } else {
+        console.log(object ? formatReadableJson(object) : 'N/A');
+    }
+}
+
+export async function printIterable<T extends object>(
+    iterable: AsyncIterable<T>,
+    json: boolean,
+    humanReadableWriter: (item: T) => void = (item) => console.log(formatReadableJson(item)),
+    jsonTransform: (item: T) => object = (json) => json,
+): Promise<void> {
+    if (json) {
+        // Output streaming JSON array format
+        process.stdout.write('[\n');
+        let isFirst = true;
+        for await (const item of iterable) {
+            if (!isFirst) {
+                process.stdout.write(',\n');
+            }
+            process.stdout.write(JSON.stringify(jsonTransform(item)));
+            isFirst = false;
+        }
+        process.stdout.write('\n]\n');
+    } else {
+        for await (const item of iterable) {
+            humanReadableWriter(item);
+        }
+    }
+}
+
 export function formatReadableJson(json: object) {
     // Prints the JSON in a readable format without the depth limit.
     return inspect(json, { showHidden: false, depth: null, colors: true });

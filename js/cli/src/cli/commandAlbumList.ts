@@ -1,4 +1,4 @@
-import { formatReadableJson } from './formatters';
+import { printIterable } from './formatters';
 import { Command, ActionArgs } from './interface';
 
 export class CommandAlbumList implements Command {
@@ -6,12 +6,6 @@ export class CommandAlbumList implements Command {
     name = 'list';
 
     async action({ photosSdk, options: { json } }: ActionArgs) {
-        for await (const album of photosSdk.iterateAlbums()) {
-            if (json) {
-                console.log(JSON.stringify(album));
-            } else {
-                console.log(formatReadableJson(album));
-            }
-        }
+        await printIterable(photosSdk.iterateAlbums(), json);
     }
 }

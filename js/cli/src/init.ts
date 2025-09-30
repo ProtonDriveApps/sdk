@@ -6,13 +6,7 @@ import { Api as CryptoApi } from './crypto/lib/worker/api';
 import { HTTPClient } from './httpClient';
 import { initTelemetry } from './telemetry';
 
-import {
-    ProtonDriveClient,
-    MemoryCache,
-    CachedCryptoMaterial,
-    OpenPGPCryptoWithCryptoProxy,
-    VERSION,
-} from '../../sdk/src';
+import { ProtonDriveClient, MemoryCache, CachedCryptoMaterial, OpenPGPCryptoWithCryptoProxy } from '../../sdk/src';
 import { ProtonDrivePhotosClient } from '../../sdk/src/protonDrivePhotosClient';
 import { initDiagnostic } from '../../sdk/src/diagnostic';
 
@@ -26,7 +20,6 @@ interface Config {
 }
 
 export async function init() {
-    console.log(`Proton Drive SDK for web v${VERSION}`);
     const cryptoApi = initCrypto();
     const config = getConfig();
     const account = await initAccount(cryptoApi, config);
