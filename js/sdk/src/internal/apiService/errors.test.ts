@@ -1,3 +1,4 @@
+import { AbortError } from '../../errors';
 import { apiErrorFactory } from './errors';
 import * as errors from './errors';
 import { ErrorCode } from './errorCodes';
@@ -17,6 +18,15 @@ function mockAPIResponseAndResult(options: {
 }
 
 describe('apiErrorFactory should return', () => {
+    it('AbortError on aborted error', () => {
+        const abortError = new Error('AbortError');
+        abortError.name = 'AbortError';
+
+        const error = apiErrorFactory({ response: new Response(), error: abortError });
+        expect(error).toBeInstanceOf(AbortError);
+        expect(error.message).toBe('Request aborted');
+    });
+
     it('generic APIHTTPError when there is no specifc body', () => {
         const response = new Response('', { status: 404, statusText: 'Not found' });
         const error = apiErrorFactory({ response });

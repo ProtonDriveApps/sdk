@@ -1,6 +1,6 @@
 import { c } from 'ttag';
 
-import { ServerError, ValidationError } from '../../errors';
+import { AbortError, ServerError, ValidationError } from '../../errors';
 import { ErrorCode, HTTPErrorCode } from './errorCodes';
 
 export function apiErrorFactory({
@@ -12,6 +12,10 @@ export function apiErrorFactory({
     result?: unknown;
     error?: unknown;
 }): ServerError {
+    if (error && error instanceof Error && error.name === 'AbortError') {
+        return new AbortError(c('Error').t`Request aborted`);
+    }
+
     // Backend responses with 404 both in the response and body code.
     // In such a case we want to stick to APIHTTPError to be very clear
     // it is not NotFoundAPIError.

@@ -1,3 +1,4 @@
+import { AbortError } from '../../errors';
 import { ProtonDriveHTTPClient, SDKEvent } from '../../interface';
 import { getMockTelemetry } from '../../tests/telemetry';
 import { SDKEvents } from '../sdkEvents';
@@ -112,6 +113,16 @@ describe('DriveAPIService', () => {
     });
 
     describe('should throw', () => {
+        it('AbortError on aborted error from the provided HTTP client', async () => {
+            const abortError = new Error('AbortError');
+            abortError.name = 'AbortError';
+
+            httpClient.fetchJson = jest.fn(() => Promise.reject(abortError));
+
+            await expect(api.get('test')).rejects.toThrow(new AbortError('Request aborted'));
+            expectSDKEvents();
+        });
+
         it('APIHTTPError on 4xx response without JSON body', async () => {
             httpClient.fetchJson = jest.fn(() =>
                 Promise.resolve(new Response('Not found', { status: 404, statusText: 'Not found' })),
