@@ -272,6 +272,7 @@ export class NodesAccess {
             encryptedNodesIterator,
             decryptNodeMapper,
             DECRYPTION_CONCURRENCY,
+            signal,
         );
         for await (const node of decryptedNodesIterator) {
             if (node.ok) {
