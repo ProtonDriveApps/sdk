@@ -2,6 +2,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Net;
 using System.Security.Cryptography;
+using Microsoft.Extensions.Logging;
 using Microsoft.IO;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
@@ -111,6 +112,12 @@ internal sealed class BlockUploader
 
                         await UploadBlobAsync(request, dataPacketStream, onBlockProgress, cancellationToken).ConfigureAwait(false);
 
+                        _client.Logger.LogDebug(
+                            "Uploaded blob for block #{BlockIndex} for revision {RevisionId} of file {FileUid}",
+                            index,
+                            revisionId,
+                            fileUid);
+
                         return sha256Digest;
                     }
                 }
@@ -184,6 +191,8 @@ internal sealed class BlockUploader
 
                 await UploadBlobAsync(request, dataPacketStream, onProgress, cancellationToken).ConfigureAwait(false);
 
+                _client.Logger.LogDebug("Uploaded thumbnail blob for revision {RevisionId} of node {FileUid}", revisionId, fileUid);
+
                 return sha256Digest;
             }
         }
@@ -223,6 +232,14 @@ internal sealed class BlockUploader
             }
             catch (Exception e) when ((UrlExpired(e) || BlobAlreadyUploaded(e)) && remainingNumberOfAttempts >= 2)
             {
+                _client.Logger.LogWarning(
+                    e,
+                    "Blob upload failed for block #{BlockIndex} for revision {RevisionId} of file {FileUid} (remaining attempts: {RemainingAttempts}",
+                    request.Blocks[0].Index,
+                    request.RevisionId,
+                    new NodeUid(request.VolumeId, request.LinkId),
+                    remainingNumberOfAttempts);
+
                 --remainingNumberOfAttempts;
             }
         }

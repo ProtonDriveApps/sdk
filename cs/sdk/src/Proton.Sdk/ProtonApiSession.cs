@@ -92,10 +92,13 @@ public sealed class ProtonApiSession
         CancellationToken cancellationToken)
     {
         var configuration = new ProtonClientConfiguration(appVersion, options);
+        var logger = configuration.LoggerFactory.CreateLogger<ProtonApiSession>();
 
         var authApiClient = ApiClientFactory.Instance.CreateAuthenticationApiClient(configuration.GetHttpClient(), configuration.RefreshRedirectUri);
 
         var sessionInitResponse = await authApiClient.InitiateSessionAsync(username, cancellationToken).ConfigureAwait(false);
+
+        logger.LogDebug("SRP session {SessionId} initiated", sessionInitResponse.SrpSessionId);
 
         var srpClient = SrpClient.Create(
             username,
@@ -108,6 +111,8 @@ public sealed class ProtonApiSession
 
         var authResponse = await authApiClient.AuthenticateAsync(sessionInitResponse, srpClientHandshake, username, cancellationToken)
             .ConfigureAwait(false);
+
+        logger.LogDebug("API session {SessionId} authenticated with password", authResponse.SessionId);
 
         var tokenCredential = new TokenCredential(
             authApiClient,
