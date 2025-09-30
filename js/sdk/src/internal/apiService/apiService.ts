@@ -219,7 +219,7 @@ export class DriveAPIService {
                 if (error instanceof ProtonDriveError) {
                     throw error;
                 }
-                throw apiErrorFactory({ response });
+                throw apiErrorFactory({ response, error });
             }
         }
         return response;
@@ -261,6 +261,11 @@ export class DriveAPIService {
             response = await callback();
         } catch (error: unknown) {
             if (error instanceof Error) {
+                if (error.name === 'AbortError') {
+                    this.logger.debug(`${request.method} ${request.url}: Aborted`);
+                    throw new AbortError(c('Error').t`Request aborted`);
+                }
+
                 if (error.name === 'OfflineError') {
                     this.logger.info(`${request.method} ${request.url}: Offline error, retrying`);
                     await waitSeconds(OFFLINE_RETRY_DELAY_SECONDS);
