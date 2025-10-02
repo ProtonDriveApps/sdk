@@ -30,9 +30,12 @@ internal static class InteropProtonDriveClient
             ? SqliteCacheRepository.OpenFile(request.SecretCachePath)
             : SqliteCacheRepository.OpenInMemory();
 
-        ILoggerProvider loggerProvider = request.LogAction != 0
-            ? new InteropLoggerProvider(bindingsHandle, new InteropAction<nint, InteropArray<byte>>(request.LogAction))
-            : NullLoggerProvider.Instance;
+        var loggerProvider = request.LoggerCase switch
+        {
+            DriveClientCreateRequest.LoggerOneofCase.LogAction => new InteropLoggerProvider(bindingsHandle, new InteropAction<nint, InteropArray<byte>>(request.LogAction)),
+            DriveClientCreateRequest.LoggerOneofCase.LoggerProviderHandle => Interop.GetFromHandle<ILoggerProvider>(request.LoggerProviderHandle),
+            DriveClientCreateRequest.LoggerOneofCase.None or _ => NullLoggerProvider.Instance,
+        };
 
         var loggerFactory = new LoggerFactory([loggerProvider]);
 
