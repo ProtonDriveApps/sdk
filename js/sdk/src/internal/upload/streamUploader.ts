@@ -112,7 +112,7 @@ export class StreamUploader {
         stream: ReadableStream,
         thumbnails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,
-    ): Promise<string> {
+    ): Promise<{ nodeRevisionUid: string, nodeUid: string }> {
         let failure = false;
 
         // File progress is tracked for telemetry - to track at what
@@ -155,7 +155,11 @@ export class StreamUploader {
             await this.onFinish(failure);
         }
 
-        return this.revisionDraft.nodeRevisionUid;
+        return {
+            nodeRevisionUid: this.revisionDraft.nodeRevisionUid,
+            nodeUid: this.revisionDraft.nodeUid
+        }
+
     }
 
     private async encryptAndUploadBlocks(

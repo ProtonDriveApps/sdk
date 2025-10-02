@@ -108,6 +108,7 @@ describe('StreamUploader', () => {
 
         revisionDraft = {
             nodeRevisionUid: 'revisionUid',
+            nodeUid: 'nodeUid',
             nodeKeys: {
                 signatureAddress: { addressId: 'addressId' },
             },
@@ -144,7 +145,12 @@ describe('StreamUploader', () => {
         let stream: ReadableStream<Uint8Array>;
 
         const verifySuccess = async () => {
-            await uploader.start(stream, thumbnails, onProgress);
+            const result = await uploader.start(stream, thumbnails, onProgress);
+            
+            expect(result).toEqual({
+                nodeRevisionUid: 'revisionUid',
+                nodeUid: 'nodeUid'
+            });
 
             const numberOfExpectedBlocks = Math.ceil(metadata.expectedSize / FILE_CHUNK_SIZE);
             expect(uploadManager.commitDraft).toHaveBeenCalledTimes(1);

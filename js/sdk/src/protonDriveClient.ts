@@ -791,7 +791,7 @@ export class ProtonDriveClient {
      * signalController.abort(); // to cancel
      * uploadController.pause(); // to pause
      * uploadController.resume(); // to resume
-     * const nodeUid = await uploadController.completion(); // to await completion
+     * const { nodeUid, nodeRevisionUid } = await uploadController.completion(); // to await completion
      * ```
      */
     async getFileUploader(

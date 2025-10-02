@@ -83,7 +83,7 @@ class Uploader {
         stream: ReadableStream,
         thumbnails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,
-    ): Promise<string> {
+    ): Promise<{ nodeRevisionUid: string, nodeUid: string }> {
         const uploader = await this.initStreamUploader();
         return uploader.start(stream, thumbnails, onProgress);
     }

@@ -79,5 +79,5 @@ export interface FileUploader extends FileRevisionUploader {
 export interface UploadController {
     pause(): void;
     resume(): void;
-    completion(): Promise<string>;
+    completion(): Promise<{ nodeRevisionUid: string, nodeUid: string }>;
 }
