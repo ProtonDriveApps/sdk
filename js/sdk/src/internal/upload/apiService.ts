@@ -110,6 +110,17 @@ export class UploadAPIService {
         nodeUid: string;
         nodeRevisionUid: string;
     }> {
+        // The client shouldn't send the clear text size of the file.
+        // The intented upload size is needed only for early validation that
+        // the file can fit in the remaining quota to avoid data transfer when
+        // the upload would be rejected. The backend will still validate
+        // the quota during block upload and revision commit.
+        const precision = 100_000; // bytes
+        const intendedUploadSize =
+            node.intendedUploadSize && node.intendedUploadSize > precision
+                ? Math.floor(node.intendedUploadSize / precision) * precision
+                : null;
+
         const { volumeId, nodeId: parentNodeId } = splitNodeUid(parentNodeUid);
         const result = await this.apiService.post<PostCreateDraftRequest, PostCreateDraftResponse>(
             `drive/v2/volumes/${volumeId}/files`,
@@ -119,7 +130,7 @@ export class UploadAPIService {
                 Hash: node.hash,
                 MIMEType: node.mediaType,
                 ClientUID: this.clientUid || null,
-                IntendedUploadSize: node.intendedUploadSize || null,
+                IntendedUploadSize: intendedUploadSize,
                 NodeKey: node.armoredNodeKey,
                 NodePassphrase: node.armoredNodePassphrase,
                 NodePassphraseSignature: node.armoredNodePassphraseSignature,
