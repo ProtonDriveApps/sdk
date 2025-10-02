@@ -185,7 +185,6 @@ internal sealed class RevisionWriter : IDisposable
 
         var request = GetRevisionUpdateRequest(contentStream, lastModificationTime, blockSizes, manifestSignature, signingEmailAddress);
 
-
         _client.Logger.LogDebug("Sealing revision {RevisionId} of file {FileUid}", _revisionId, _fileUid);
 
         await _client.Api.Files.UpdateRevisionAsync(_fileUid.VolumeId, _fileUid.LinkId, _revisionId, request, cancellationToken).ConfigureAwait(false);

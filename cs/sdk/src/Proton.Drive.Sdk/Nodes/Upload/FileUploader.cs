@@ -1,3 +1,5 @@
+using Proton.Sdk;
+
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
 public sealed class FileUploader : IDisposable
@@ -64,7 +66,7 @@ public sealed class FileUploader : IDisposable
     {
         var (draftRevisionUid, fileSecrets) = await _fileDraftProvider.GetDraftAsync(_client, cancellationToken).ConfigureAwait(false);
 
-        var fileNode = await UploadAsync(
+        await UploadAsync(
             draftRevisionUid,
             fileSecrets,
             contentStream,
@@ -73,7 +75,34 @@ public sealed class FileUploader : IDisposable
             onProgress,
             cancellationToken).ConfigureAwait(false);
 
-        return (fileNode.Uid, fileNode.ActiveRevision.Uid);
+        await UpdateActiveRevisionInCacheAsync(draftRevisionUid, contentStream.Length, cancellationToken).ConfigureAwait(false);
+
+        return (draftRevisionUid.NodeUid, draftRevisionUid);
+    }
+
+    private async ValueTask UpdateActiveRevisionInCacheAsync(RevisionUid revisionUid, long size, CancellationToken cancellationToken)
+    {
+        var cachedNodeInfo = await _client.Cache.Entities.TryGetNodeAsync(revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
+
+        if (cachedNodeInfo is not var (nodeProvisionResult, membershipShareId, nameHashDigest) || !nodeProvisionResult.TryGetValue(out var node) ||
+            node is not FileNode fileNode)
+        {
+            await _client.Cache.Entities.RemoveNodeAsync(revisionUid.NodeUid, cancellationToken);
+            return;
+        }
+
+        fileNode = fileNode with
+        {
+            ActiveRevision = fileNode.ActiveRevision with
+            {
+                Uid = revisionUid,
+                ClaimedSize = size,
+                ClaimedModificationTime = _lastModificationTime?.UtcDateTime,
+                // FIXME: update remaining metadata in cache, but this is not critical because this metadata will soon be invalidated by the event anyway
+            },
+        };
+
+        await _client.Cache.Entities.SetNodeAsync(fileNode.Uid, fileNode, membershipShareId, nameHashDigest, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<(NodeUid NodeUid, RevisionUid RevisionUid)> UploadFromFileAsync(
@@ -90,7 +119,7 @@ public sealed class FileUploader : IDisposable
         }
     }
 
-    private async ValueTask<FileNode> UploadAsync(
+    private async ValueTask UploadAsync(
         RevisionUid revisionUid,
         FileSecrets fileSecrets,
         Stream contentStream,
@@ -103,10 +132,6 @@ public sealed class FileUploader : IDisposable
             .ConfigureAwait(false);
 
         await revisionWriter.WriteAsync(contentStream, thumbnails, lastModificationTime, onProgress, cancellationToken).ConfigureAwait(false);
-
-        var nodeMetadata = await NodeOperations.GetNodeMetadataAsync(_client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
-
-        return (FileNode)nodeMetadata.Node;
     }
 
     private void ReleaseBlocks(int numberOfBlocks)
