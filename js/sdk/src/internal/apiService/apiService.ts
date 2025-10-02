@@ -41,6 +41,11 @@ const TOO_MANY_SUBSEQUENT_SERVER_ERRORS = 10;
 const TOO_MANY_SUBSEQUENT_SERVER_ERRORS_TIMEOUT_IN_SECONDS = 60;
 
 /**
+ * How many subsequent offline errors are allowed before we consider the client offline.
+ */
+const TOO_MANY_SUBSEQUENT_OFFLINE_ERRORS = 10;
+
+/**
  * After how long to re-try after 5xx or timeout error.
  */
 const SERVER_ERROR_RETRY_DELAY_SECONDS = 1;
@@ -87,6 +92,8 @@ export class DriveAPIService {
 
     private subsequentServerErrorsCounter = 0;
     private lastServerErrorAt?: number;
+
+    private subsequentOfflineErrorsCounter = 0;
 
     private logger: Logger;
 
@@ -267,6 +274,7 @@ export class DriveAPIService {
                 }
 
                 if (error.name === 'OfflineError') {
+                    this.offlineErrorHappened();
                     this.logger.info(`${request.method} ${request.url}: Offline error, retrying`);
                     await waitSeconds(OFFLINE_RETRY_DELAY_SECONDS);
                     return this.fetch(request, callback, attempt + 1);
@@ -286,6 +294,8 @@ export class DriveAPIService {
             this.logger.error(`${request.method} ${request.url}: failed`, error);
             throw error;
         }
+
+        this.clearSubsequentOfflineErrors();
 
         const end = Date.now();
         const duration = end - start;
@@ -347,7 +357,7 @@ export class DriveAPIService {
         // the client is very limited. This is generic event and it doesn't
         // take into account that various endpoints can be rate limited
         // independently.
-        if (this.subsequentTooManyRequestsCounter >= TOO_MANY_SUBSEQUENT_429_ERRORS) {
+        if (this.subsequentTooManyRequestsCounter === TOO_MANY_SUBSEQUENT_429_ERRORS) {
             this.sdkEvents.requestsThrottled();
         }
     }
@@ -377,5 +387,21 @@ export class DriveAPIService {
     private clearSubsequentServerErrors() {
         this.subsequentServerErrorsCounter = 0;
         this.lastServerErrorAt = undefined;
+    }
+
+    private offlineErrorHappened() {
+        this.subsequentOfflineErrorsCounter++;
+
+        if (this.subsequentOfflineErrorsCounter === TOO_MANY_SUBSEQUENT_OFFLINE_ERRORS) {
+            this.sdkEvents.transfersPaused();
+        }
+    }
+
+    private clearSubsequentOfflineErrors() {
+        if (this.subsequentOfflineErrorsCounter >= TOO_MANY_SUBSEQUENT_OFFLINE_ERRORS) {
+            this.sdkEvents.transfersResumed();
+        }
+
+        this.subsequentOfflineErrorsCounter = 0;
     }
 }

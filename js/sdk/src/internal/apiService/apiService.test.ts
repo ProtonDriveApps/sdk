@@ -325,5 +325,44 @@ describe('DriveAPIService', () => {
             expect(httpClient.fetchJson).toHaveBeenCalledTimes(35);
             expectSDKEvents();
         });
+
+        it('notify about offline error', async () => {
+            jest.useFakeTimers();
+            const offlineError = new Error('OfflineError');
+            offlineError.name = 'OfflineError';
+
+            let attempt = 0;
+            httpClient.fetchJson = jest.fn().mockImplementation(() => {
+                if (attempt++ >= 15) {
+                    return generateOkResponse();
+                }
+                throw offlineError;
+            });
+
+            const promise = api.get('test');
+
+            // First 9 calls (first is immediate, then 8 with 5 second delay), no events are sent yet
+            await jest.advanceTimersByTimeAsync(5 * 8 * 1000);
+            expect(httpClient.fetchJson).toHaveBeenCalledTimes(9);
+            expectSDKEvents();
+
+            // 10th call, service sends TransfersPaused event
+            await jest.advanceTimersByTimeAsync(5 * 1000);
+            expect(httpClient.fetchJson).toHaveBeenCalledTimes(10);
+            expectSDKEvents(SDKEvent.TransfersPaused);
+
+            // Next 5 calls, still offline, no more events are sent
+            await jest.advanceTimersByTimeAsync(5 * 5 * 1000);
+            expect(httpClient.fetchJson).toHaveBeenCalledTimes(15);
+            expectSDKEvents(SDKEvent.TransfersPaused);
+
+            // 16th call, mock returns OK response, service sends TransfersResumed event
+            await jest.advanceTimersByTimeAsync(5 * 1000);
+            expect(httpClient.fetchJson).toHaveBeenCalledTimes(16);
+            expectSDKEvents(SDKEvent.TransfersPaused, SDKEvent.TransfersResumed);
+
+            await promise;
+        });
+
     });
 });
