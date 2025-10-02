@@ -2,7 +2,7 @@
 
 namespace Proton.Drive.Sdk.Nodes;
 
-public sealed class Revision
+public sealed record Revision
 {
     public required RevisionUid Uid { get; init; }
     public required DateTime CreationTime { get; init; }
