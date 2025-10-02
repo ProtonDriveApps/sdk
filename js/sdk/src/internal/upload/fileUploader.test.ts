@@ -108,6 +108,7 @@ describe('FileUploader', () => {
 
         revisionDraft = {
             nodeRevisionUid: 'revisionUid',
+            nodeUid: 'nodeUid',
             nodeKeys: {
                 signatureAddress: { addressId: 'addressId' },
             },
@@ -131,7 +132,10 @@ describe('FileUploader', () => {
             abortController.signal,
         );
 
-        startUploadSpy = jest.spyOn(uploader as any, 'startUpload').mockReturnValue(Promise.resolve('revisionUid'));
+        startUploadSpy = jest.spyOn(uploader as any, 'startUpload').mockReturnValue(Promise.resolve({
+            nodeRevisionUid: 'revisionUid',
+            nodeUid: 'nodeUid'
+        }));
     });
 
     describe('uploadFromFile', () => {
@@ -190,6 +194,16 @@ describe('FileUploader', () => {
             await expect(uploader.uploadFromStream(stream, thumbnails, onProgress)).rejects.toThrow(
                 'Upload already started',
             );
+        });
+
+        it('should return correct nodeUid and nodeRevisionUid via controller completion', async () => {
+            const controller = await uploader.uploadFromStream(stream, thumbnails, onProgress);
+            const result = await controller.completion();
+
+            expect(result).toEqual({
+                nodeRevisionUid: 'revisionUid',
+                nodeUid: 'nodeUid'
+            });
         });
     });
 });
