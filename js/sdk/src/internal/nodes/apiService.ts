@@ -389,55 +389,49 @@ export class NodeAPIService {
         return makeNodeUid(volumeId, response.LinkID);
     }
 
-    // Improvement requested: split into multiple calls for many nodes.
     async *trashNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
-        const nodeIds = nodeUids.map(splitNodeUid);
-        const volumeId = assertAndGetSingleVolumeId(c('Operation').t`Trashing items`, nodeIds);
+        for (const { volumeId, batchNodeIds, batchNodeUids } of groupNodeUidsByVolumeAndIteratePerBatch(nodeUids)) {
+            const response = await this.apiService.post<PostTrashNodesRequest, PostTrashNodesResponse>(
+                `drive/v2/volumes/${volumeId}/trash_multiple`,
+                {
+                    LinkIDs: batchNodeIds,
+                },
+                signal,
+            );
 
-        const response = await this.apiService.post<PostTrashNodesRequest, PostTrashNodesResponse>(
-            `drive/v2/volumes/${volumeId}/trash_multiple`,
-            {
-                LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
-            },
-            signal,
-        );
-
-        // TODO: remove `as` when backend fixes OpenAPI schema.
-        yield* handleResponseErrors(nodeUids, volumeId, response.Responses as LinkResponse[]);
+            // TODO: remove `as` when backend fixes OpenAPI schema.
+            yield * handleResponseErrors(batchNodeUids, volumeId, response.Responses as LinkResponse[]);
+        }
     }
 
-    // Improvement requested: split into multiple calls for many nodes.
     async *restoreNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
-        const nodeIds = nodeUids.map(splitNodeUid);
-        const volumeId = assertAndGetSingleVolumeId(c('Operation').t`Restoring items`, nodeIds);
+        for (const { volumeId, batchNodeIds, batchNodeUids } of groupNodeUidsByVolumeAndIteratePerBatch(nodeUids)) {
+            const response = await this.apiService.put<PutRestoreNodesRequest, PutRestoreNodesResponse>(
+                `drive/v2/volumes/${volumeId}/trash/restore_multiple`,
+                {
+                    LinkIDs: batchNodeIds,
+                },
+                signal,
+            );
 
-        const response = await this.apiService.put<PutRestoreNodesRequest, PutRestoreNodesResponse>(
-            `drive/v2/volumes/${volumeId}/trash/restore_multiple`,
-            {
-                LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
-            },
-            signal,
-        );
-
-        // TODO: remove `as` when backend fixes OpenAPI schema.
-        yield* handleResponseErrors(nodeUids, volumeId, response.Responses as LinkResponse[]);
+            // TODO: remove `as` when backend fixes OpenAPI schema.
+            yield* handleResponseErrors(batchNodeUids, volumeId, response.Responses as LinkResponse[]);
+        }
     }
 
-    // Improvement requested: split into multiple calls for many nodes.
     async *deleteNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
-        const nodeIds = nodeUids.map(splitNodeUid);
-        const volumeId = assertAndGetSingleVolumeId(c('Operation').t`Deleting items`, nodeIds);
+        for (const { volumeId, batchNodeIds, batchNodeUids } of groupNodeUidsByVolumeAndIteratePerBatch(nodeUids)) {
+            const response = await this.apiService.post<PostDeleteNodesRequest, PostDeleteNodesResponse>(
+                `drive/v2/volumes/${volumeId}/trash/delete_multiple`,
+                {
+                    LinkIDs: batchNodeIds,
+                },
+                signal,
+            );
 
-        const response = await this.apiService.post<PostDeleteNodesRequest, PostDeleteNodesResponse>(
-            `drive/v2/volumes/${volumeId}/trash/delete_multiple`,
-            {
-                LinkIDs: nodeIds.map(({ nodeId }) => nodeId),
-            },
-            signal,
-        );
-
-        // TODO: remove `as` when backend fixes OpenAPI schema.
-        yield* handleResponseErrors(nodeUids, volumeId, response.Responses as LinkResponse[]);
+            // TODO: remove `as` when backend fixes OpenAPI schema.
+            yield* handleResponseErrors(batchNodeUids, volumeId, response.Responses as LinkResponse[]);
+        }
     }
 
     async createFolder(
@@ -511,15 +505,6 @@ export class NodeAPIService {
             `drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/${revisionId}`,
         );
     }
-}
-
-function assertAndGetSingleVolumeId(operationForErrorMessage: string, nodeIds: { volumeId: string }[]): string {
-    const uniqueVolumeIds = new Set(nodeIds.map(({ volumeId }) => volumeId));
-    if (uniqueVolumeIds.size !== 1) {
-        throw new ValidationError(c('Error').t`${operationForErrorMessage} from multiple sections is not allowed`);
-    }
-    const volumeId = nodeIds[0].volumeId;
-    return volumeId;
 }
 
 type LinkResponse = {
@@ -656,6 +641,34 @@ function linkToEncryptedNode(
 
     throw new Error(`Unknown node type: ${link.Link.Type}`);
 }
+
+export function* groupNodeUidsByVolumeAndIteratePerBatch(
+    nodeUids: string[],
+): Generator<{ volumeId: string; batchNodeIds: string[]; batchNodeUids: string[] }> {
+    const allNodeIds = nodeUids.map((nodeUid: string) => {
+        const { volumeId, nodeId } = splitNodeUid(nodeUid);
+        return { volumeId, nodeIds: { nodeId, nodeUid } };
+    });
+
+    const nodeIdsByVolumeId = new Map<string, { nodeId: string; nodeUid: string }[]>();
+    for (const { volumeId, nodeIds } of allNodeIds) {
+        if (!nodeIdsByVolumeId.has(volumeId)) {
+            nodeIdsByVolumeId.set(volumeId, []);
+        }
+        nodeIdsByVolumeId.get(volumeId)?.push(nodeIds);
+    }
+
+    for (const [volumeId, nodeIds] of nodeIdsByVolumeId.entries()) {
+        for (const nodeIdsBatch of batch(nodeIds, API_NODES_BATCH_SIZE)) {
+            yield {
+                volumeId,
+                batchNodeIds: nodeIdsBatch.map(({ nodeId }) => nodeId),
+                batchNodeUids: nodeIdsBatch.map(({ nodeUid }) => nodeUid),
+            };
+        }
+    }
+}
+
 
 function transformRevisionResponse(
     volumeId: string,

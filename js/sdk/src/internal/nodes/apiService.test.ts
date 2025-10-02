@@ -1,7 +1,7 @@
 import { MemberRole, NodeType } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
 import { DriveAPIService, ErrorCode, InvalidRequirementsAPIError } from '../apiService';
-import { NodeAPIService } from './apiService';
+import { NodeAPIService, groupNodeUidsByVolumeAndIteratePerBatch } from './apiService';
 import { NodeOutOfSyncError } from './errors';
 
 function generateAPIFileNode(linkOverrides = {}, overrides = {}) {
@@ -476,6 +476,44 @@ describe('nodeAPIService', () => {
                 { uid: 'volumeId~nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
             ]);
         });
+
+        it('should trash nodes in batches', async () => {
+            // @ts-expect-error Mocking for testing purposes
+            apiMock.post = jest.fn(async (_, { LinkIDs }) =>
+                Promise.resolve({
+                    Responses: LinkIDs.map((linkId: string) => ({
+                        LinkID: linkId,
+                        Response: {
+                            Code: ErrorCode.OK,
+                        },
+                    })),
+                }),
+            );
+
+            const nodeUids = Array.from({ length: 250 }, (_, i) => `volumeId1~nodeId${i}`);
+            const nodeIds = nodeUids.map((uid) => uid.split('~')[1]);
+
+            const results = await Array.fromAsync(api.trashNodes(nodeUids));
+            expect(results).toHaveLength(nodeUids.length);
+            expect(results.every((result) => result.ok)).toBe(true);
+
+            expect(apiMock.post).toHaveBeenCalledTimes(3);
+            expect(apiMock.post).toHaveBeenCalledWith(
+                'drive/v2/volumes/volumeId1/trash_multiple',
+                { LinkIDs: nodeIds.slice(0, 100) },
+                undefined,
+            );
+            expect(apiMock.post).toHaveBeenCalledWith(
+                'drive/v2/volumes/volumeId1/trash_multiple',
+                { LinkIDs: nodeIds.slice(100, 200) },
+                undefined,
+            );
+            expect(apiMock.post).toHaveBeenCalledWith(
+                'drive/v2/volumes/volumeId1/trash_multiple',
+                { LinkIDs: nodeIds.slice(200, 250) },
+                undefined,
+            );
+        });
     });
 
     describe('restoreNodes', () => {
@@ -517,17 +555,28 @@ describe('nodeAPIService', () => {
             ]);
         });
 
-        it('should fail restoring from multiple volumes', async () => {
-            try {
-                await Array.fromAsync(api.restoreNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2']));
-                throw new Error('Should have thrown');
-            } catch (error: any) {
-                expect(error.message).toEqual('Restoring items from multiple sections is not allowed');
-            }
+        it('should restore nodes from multiple volumes', async () => {
+            // @ts-expect-error Mocking for testing purposes
+            apiMock.put = jest.fn(async (_, { LinkIDs }) =>
+                Promise.resolve({
+                    Responses: LinkIDs.map((linkId: string) => ({
+                        LinkID: linkId,
+                        Response: {
+                            Code: ErrorCode.OK,
+                        },
+                    })),
+                }),
+            );
+
+            const result = await Array.fromAsync(api.restoreNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2']));
+            expect(result).toEqual([
+                { uid: 'volumeId1~nodeId1', ok: true },
+                { uid: 'volumeId2~nodeId2', ok: true },
+            ]);
         });
     });
 
-    describe('deleteNOdes', () => {
+    describe('deleteNodes', () => {
         it('should delete nodes', async () => {
             // @ts-expect-error Mocking for testing purposes
             apiMock.post = jest.fn(async () =>
@@ -557,13 +606,24 @@ describe('nodeAPIService', () => {
             ]);
         });
 
-        it('should fail deleting nodes from multiple volumes', async () => {
-            try {
-                await Array.fromAsync(api.deleteNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2']));
-                throw new Error('Should have thrown');
-            } catch (error: any) {
-                expect(error.message).toEqual('Deleting items from multiple sections is not allowed');
-            }
+        it('should delete nodes from multiple volumes', async () => {
+            // @ts-expect-error Mocking for testing purposes
+            apiMock.post = jest.fn(async (_, { LinkIDs }) =>
+                Promise.resolve({
+                    Responses: LinkIDs.map((linkId: string) => ({
+                        LinkID: linkId,
+                        Response: {
+                            Code: ErrorCode.OK,
+                        },
+                    })),
+                }),
+            );
+
+            const result = await Array.fromAsync(api.deleteNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2']));
+            expect(result).toEqual([
+                { uid: 'volumeId1~nodeId1', ok: true },
+                { uid: 'volumeId2~nodeId2', ok: true },
+            ]);
         });
     });
 
@@ -598,5 +658,128 @@ describe('nodeAPIService', () => {
                 ),
             ).rejects.toThrow(new NodeOutOfSyncError('Node is out of sync'));
         });
+    });
+});
+
+describe('groupNodeUidsByVolumeAndIteratePerBatch', () => {
+    it('should handle empty array', () => {
+        const result = Array.from(groupNodeUidsByVolumeAndIteratePerBatch([]));
+        expect(result).toEqual([]);
+    });
+
+    it('should handle single volume with nodes that fit in one batch', () => {
+        const nodeUids = ['volumeId1~nodeId1', 'volumeId1~nodeId2', 'volumeId1~nodeId3'];
+
+        const result = Array.from(groupNodeUidsByVolumeAndIteratePerBatch(nodeUids));
+
+        expect(result).toEqual([
+            {
+                volumeId: 'volumeId1',
+                batchNodeIds: ['nodeId1', 'nodeId2', 'nodeId3'],
+                batchNodeUids: ['volumeId1~nodeId1', 'volumeId1~nodeId2', 'volumeId1~nodeId3'],
+            },
+        ]);
+    });
+
+    it('should handle single volume with nodes that require multiple batches', () => {
+        // Create 250 node UIDs to test batching (API_NODES_BATCH_SIZE = 100)
+        const nodeUids = Array.from({ length: 250 }, (_, i) => `volumeId1~nodeId${i}`);
+
+        const result = Array.from(groupNodeUidsByVolumeAndIteratePerBatch(nodeUids));
+
+        expect(result).toHaveLength(3); // 100 + 100 + 50
+
+        // First batch
+        expect(result[0]).toEqual({
+            volumeId: 'volumeId1',
+            batchNodeIds: Array.from({ length: 100 }, (_, i) => `nodeId${i}`),
+            batchNodeUids: Array.from({ length: 100 }, (_, i) => `volumeId1~nodeId${i}`),
+        });
+
+        // Second batch
+        expect(result[1]).toEqual({
+            volumeId: 'volumeId1',
+            batchNodeIds: Array.from({ length: 100 }, (_, i) => `nodeId${i + 100}`),
+            batchNodeUids: Array.from({ length: 100 }, (_, i) => `volumeId1~nodeId${i + 100}`),
+        });
+
+        // Third batch
+        expect(result[2]).toEqual({
+            volumeId: 'volumeId1',
+            batchNodeIds: Array.from({ length: 50 }, (_, i) => `nodeId${i + 200}`),
+            batchNodeUids: Array.from({ length: 50 }, (_, i) => `volumeId1~nodeId${i + 200}`),
+        });
+    });
+
+    it('should handle multiple volumes with nodes distributed across them', () => {
+        const nodeUids = [
+            'volumeId1~nodeId1',
+            'volumeId2~nodeId2',
+            'volumeId1~nodeId3',
+            'volumeId3~nodeId4',
+            'volumeId2~nodeId5',
+        ];
+
+        const result = Array.from(groupNodeUidsByVolumeAndIteratePerBatch(nodeUids));
+
+        expect(result).toHaveLength(3); // One batch per volume
+
+        // Results should be grouped by volume
+        const volumeId1Batch = result.find((batch) => batch.volumeId === 'volumeId1');
+        const volumeId2Batch = result.find((batch) => batch.volumeId === 'volumeId2');
+        const volumeId3Batch = result.find((batch) => batch.volumeId === 'volumeId3');
+
+        expect(volumeId1Batch).toEqual({
+            volumeId: 'volumeId1',
+            batchNodeIds: ['nodeId1', 'nodeId3'],
+            batchNodeUids: ['volumeId1~nodeId1', 'volumeId1~nodeId3'],
+        });
+
+        expect(volumeId2Batch).toEqual({
+            volumeId: 'volumeId2',
+            batchNodeIds: ['nodeId2', 'nodeId5'],
+            batchNodeUids: ['volumeId2~nodeId2', 'volumeId2~nodeId5'],
+        });
+
+        expect(volumeId3Batch).toEqual({
+            volumeId: 'volumeId3',
+            batchNodeIds: ['nodeId4'],
+            batchNodeUids: ['volumeId3~nodeId4'],
+        });
+    });
+
+    it('should handle multiple volumes where some require multiple batches', () => {
+        // Volume 1: 150 nodes (2 batches)
+        // Volume 2: 50 nodes (1 batch)
+        // Volume 3: 200 nodes (2 batches)
+        const volume1Nodes = Array.from({ length: 150 }, (_, i) => `volumeId1~nodeId${i}`);
+        const volume2Nodes = Array.from({ length: 50 }, (_, i) => `volumeId2~nodeId${i}`);
+        const volume3Nodes = Array.from({ length: 200 }, (_, i) => `volumeId3~nodeId${i}`);
+
+        const nodeUids = [...volume1Nodes, ...volume2Nodes, ...volume3Nodes];
+
+        const result = Array.from(groupNodeUidsByVolumeAndIteratePerBatch(nodeUids));
+
+        expect(result).toHaveLength(5); // 2 + 1 + 2 batches
+
+        // Group results by volume
+        const volume1Batches = result.filter((batch) => batch.volumeId === 'volumeId1');
+        const volume2Batches = result.filter((batch) => batch.volumeId === 'volumeId2');
+        const volume3Batches = result.filter((batch) => batch.volumeId === 'volumeId3');
+
+        expect(volume1Batches).toHaveLength(2);
+        expect(volume2Batches).toHaveLength(1);
+        expect(volume3Batches).toHaveLength(2);
+
+        // Verify volume 1 batches
+        expect(volume1Batches[0].batchNodeIds).toHaveLength(100);
+        expect(volume1Batches[1].batchNodeIds).toHaveLength(50);
+
+        // Verify volume 2 batch
+        expect(volume2Batches[0].batchNodeIds).toHaveLength(50);
+
+        // Verify volume 3 batches
+        expect(volume3Batches[0].batchNodeIds).toHaveLength(100);
+        expect(volume3Batches[1].batchNodeIds).toHaveLength(100);
     });
 });
