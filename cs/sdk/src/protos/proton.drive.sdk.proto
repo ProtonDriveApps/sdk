@@ -72,8 +72,9 @@ message GetAddressPublicKeysRequest {
 // Drive - client
 
 enum ThumbnailType {
-    THUMBNAIL_TYPE_THUMBNAIL = 0;
-    THUMBNAIL_TYPE_PREVIEW = 1;
+    THUMBNAIL_TYPE_UNSPECIFIED = 0; // Invalid value
+    THUMBNAIL_TYPE_THUMBNAIL = 1;
+    THUMBNAIL_TYPE_PREVIEW = 2;
 }
 
 message FileRevision {
