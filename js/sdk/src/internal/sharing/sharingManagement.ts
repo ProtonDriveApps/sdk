@@ -286,7 +286,7 @@ export class SharingManagement {
 
         if (!settings) {
             this.logger.info(`Unsharing node ${nodeUid}`);
-            await this.deleteShare(currentSharing.share.shareId, nodeUid);
+            await this.deleteShareWithForce(currentSharing.share.shareId, nodeUid);
             return;
         }
 
@@ -348,7 +348,7 @@ export class SharingManagement {
             // update local state immediately.
             this.logger.info(`Deleting share ${currentSharing.share.shareId} for node ${nodeUid}`);
             try {
-                await this.deleteShare(currentSharing.share.shareId, nodeUid);
+                await this.deleteShareWithForce(currentSharing.share.shareId, nodeUid);
             } catch (error: unknown) {
                 // If deleting the share fails, we don't want to throw an error
                 // as it might be a race condition that other client updated
@@ -433,8 +433,11 @@ export class SharingManagement {
         };
     }
 
-    private async deleteShare(shareId: string, nodeUid: string): Promise<void> {
-        await this.apiService.deleteShare(shareId);
+    /**
+     * Deletes the share even if it is not empty.
+     */
+    private async deleteShareWithForce(shareId: string, nodeUid: string): Promise<void> {
+        await this.apiService.deleteShare(shareId, true);
         await this.nodesService.notifyNodeChanged(nodeUid);
         if (await this.cache.hasSharedByMeNodeUidsLoaded()) {
             await this.cache.removeSharedByMeNodeUid(nodeUid);
