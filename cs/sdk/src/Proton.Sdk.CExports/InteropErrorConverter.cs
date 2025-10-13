@@ -18,7 +18,11 @@ internal static class InteropErrorConverter
             case ProtonApiException ex:
                 error.Domain = ErrorDomain.Api;
                 error.PrimaryCode = (long)ex.Code;
-                error.SecondaryCode = ex.TransportCode;
+                if (ex.TransportCode is not null)
+                {
+                    error.SecondaryCode = ex.TransportCode.Value;
+                }
+
                 break;
 
             case SocketException ex:

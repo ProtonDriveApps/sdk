@@ -19,7 +19,7 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
             .ConfigureAwait(false);
     }
 
-    public async Task<RevisionCreationResponse> CreateRevisionAsync(
+    public async ValueTask<RevisionCreationResponse> CreateRevisionAsync(
         VolumeId volumeId,
         LinkId linkId,
         RevisionCreationRequest request,
@@ -72,5 +72,13 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
             .GetAsync(
                 $"v2/volumes/{volumeId}/files/{linkId}/revisions/{revisionId}?FromBlockIndex={fromBlockIndex}&PageSize={pageSize}&NoBlockUrls={(withoutBlockUrls ? 1 : 0)}",
                 cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask<ApiResponse> DeleteRevisionAsync(VolumeId volumeId, LinkId linkId, RevisionId revisionId, CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(DriveApiSerializerContext.Default.ApiResponse)
+            .DeleteAsync($"v2/volumes/{volumeId}/files/{linkId}/revisions/{revisionId}", cancellationToken)
+            .ConfigureAwait(false);
     }
 }
