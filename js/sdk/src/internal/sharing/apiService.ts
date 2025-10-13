@@ -347,8 +347,8 @@ export class SharingAPIService {
         return response.Share.ID;
     }
 
-    async deleteShare(shareId: string): Promise<void> {
-        await this.apiService.delete(`drive/shares/${shareId}?Force=1`);
+    async deleteShare(shareId: string, force: boolean = false): Promise<void> {
+        await this.apiService.delete(`drive/shares/${shareId}?Force=${force ? 1 : 0}`);
     }
 
     async inviteProtonUser(
