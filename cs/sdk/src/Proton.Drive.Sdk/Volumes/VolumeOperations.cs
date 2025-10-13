@@ -115,7 +115,7 @@ internal static class VolumeOperations
     {
         var volumeId = await GetMainVolumeIdAsync(client, cancellationToken).ConfigureAwait(false);
 
-        await client.Api.Volumes.EmptyTrashAsync(volumeId, cancellationToken).ConfigureAwait(false);
+        await client.Api.Trash.EmptyAsync(volumeId, cancellationToken).ConfigureAwait(false);
     }
 
     private static VolumeCreationRequest GetCreationRequest(

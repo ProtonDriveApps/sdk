@@ -87,7 +87,7 @@ public sealed class FileUploader : IDisposable
         if (cachedNodeInfo is not var (nodeProvisionResult, membershipShareId, nameHashDigest) || !nodeProvisionResult.TryGetValue(out var node) ||
             node is not FileNode fileNode)
         {
-            await _client.Cache.Entities.RemoveNodeAsync(revisionUid.NodeUid, cancellationToken);
+            await _client.Cache.Entities.RemoveNodeAsync(revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
             return;
         }
 

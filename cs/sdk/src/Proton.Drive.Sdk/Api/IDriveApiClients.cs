@@ -15,4 +15,5 @@ internal interface IDriveApiClients
     IFoldersApiClient Folders { get; }
     IFilesApiClient Files { get; }
     IStorageApiClient Storage { get; }
+    ITrashApiClient Trash { get; }
 }

@@ -49,17 +49,6 @@ internal sealed class LinksApiClient(HttpClient httpClient) : ILinksApiClient
             .ConfigureAwait(false);
     }
 
-    public async ValueTask<AggregateApiResponse<LinkIdResponsePair>> TrashMultipleAsync(
-        VolumeId volumeId,
-        MultipleLinksNullaryRequest request,
-        CancellationToken cancellationToken)
-    {
-        return await _httpClient
-            .Expecting(DriveApiSerializerContext.Default.AggregateApiResponseLinkIdResponsePair)
-            .PostAsync($"v2/volumes/{volumeId}/trash_multiple", request, DriveApiSerializerContext.Default.MultipleLinksNullaryRequest, cancellationToken)
-            .ConfigureAwait(false);
-    }
-
     public async ValueTask<AggregateApiResponse<LinkIdResponsePair>> DeleteMultipleAsync(
         VolumeId volumeId,
         MultipleLinksNullaryRequest request,
@@ -68,22 +57,7 @@ internal sealed class LinksApiClient(HttpClient httpClient) : ILinksApiClient
         return await _httpClient
             .Expecting(DriveApiSerializerContext.Default.AggregateApiResponseLinkIdResponsePair)
             .PostAsync(
-                $"v2/volumes/{volumeId}/trash/delete_multiple",
-                request,
-                DriveApiSerializerContext.Default.MultipleLinksNullaryRequest,
-                cancellationToken)
-            .ConfigureAwait(false);
-    }
-
-    public async ValueTask<AggregateApiResponse<LinkIdResponsePair>> RestoreMultipleAsync(
-        VolumeId volumeId,
-        MultipleLinksNullaryRequest request,
-        CancellationToken cancellationToken)
-    {
-        return await _httpClient
-            .Expecting(DriveApiSerializerContext.Default.AggregateApiResponseLinkIdResponsePair)
-            .PutAsync(
-                $"v2/volumes/{volumeId}/trash/restore_multiple",
+                $"v2/volumes/{volumeId}/delete_multiple",
                 request,
                 DriveApiSerializerContext.Default.MultipleLinksNullaryRequest,
                 cancellationToken)

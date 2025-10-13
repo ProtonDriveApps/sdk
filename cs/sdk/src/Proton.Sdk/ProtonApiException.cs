@@ -26,6 +26,12 @@ public class ProtonApiException : Exception
         TransportCode = (int)statusCode;
     }
 
+    internal ProtonApiException(ApiResponse response)
+        : this(response.ErrorMessage)
+    {
+        Code = response.Code;
+    }
+
     public ResponseCode Code { get; }
-    public int TransportCode { get; }
+    public int? TransportCode { get; }
 }

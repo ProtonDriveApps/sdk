@@ -288,7 +288,7 @@ internal static class NodeOperations
             {
                 var request = new MultipleLinksNullaryRequest { LinkIds = batch };
 
-                var aggregateResponse = await client.Api.Links.TrashMultipleAsync(uidGroup.Key, request, cancellationToken).ConfigureAwait(false);
+                var aggregateResponse = await client.Api.Trash.TrashMultipleAsync(uidGroup.Key, request, cancellationToken).ConfigureAwait(false);
 
                 foreach (var (linkId, response) in aggregateResponse.Responses)
                 {
@@ -319,14 +319,14 @@ internal static class NodeOperations
         return results;
     }
 
-    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<string?>>> DeleteAsync(
+    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> DeleteAsync(
         ProtonDriveClient client,
         IEnumerable<NodeUid> uids,
         CancellationToken cancellationToken)
     {
         var uidsByVolumeId = uids.GroupBy(x => x.VolumeId);
 
-        var results = new ConcurrentDictionary<NodeUid, Result<string?>>();
+        var results = new ConcurrentDictionary<NodeUid, Result<Exception>>();
 
         var tasks = uidsByVolumeId.Select(async uidGroup =>
         {
@@ -340,7 +340,7 @@ internal static class NodeOperations
                 {
                     var uid = new NodeUid(uidGroup.Key, linkId);
 
-                    var result = response.IsSuccess ? Result<string?>.Success : response.ErrorMessage;
+                    var result = response.IsSuccess ? Result<Exception>.Success : new ProtonApiException(response);
 
                     results.TryAdd(uid, result);
                 }
@@ -367,7 +367,7 @@ internal static class NodeOperations
             {
                 var request = new MultipleLinksNullaryRequest { LinkIds = batch };
 
-                var aggregateResponse = await client.Api.Links.RestoreMultipleAsync(uidGroup.Key, request, cancellationToken).ConfigureAwait(false);
+                var aggregateResponse = await client.Api.Trash.RestoreMultipleAsync(uidGroup.Key, request, cancellationToken).ConfigureAwait(false);
 
                 foreach (var (linkId, response) in aggregateResponse.Responses)
                 {

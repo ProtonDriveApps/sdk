@@ -1,11 +1,14 @@
 ﻿using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Sdk;
+using Proton.Sdk.Api;
 
 namespace Proton.Drive.Sdk.Nodes;
 
 internal static class FileOperations
 {
+    private const int MaxNumberOfDraftCreationAttempts = 3;
+
     public static async Task<(RevisionUid RevisionUid, FileSecrets FileSecrets)> CreateDraftAsync(
         ProtonDriveClient client,
         NodeUid parentUid,
@@ -53,6 +56,7 @@ internal static class FileOperations
         };
 
         FileCreationResponse? response = null;
+        var remainingNumberOfAttempts = MaxNumberOfDraftCreationAttempts;
 
         while (response is null)
         {
@@ -64,7 +68,24 @@ internal static class FileOperations
                 when (e.Response is { Conflict: { LinkId: { } linkId, RevisionId: null, DraftRevisionId: not null } }
                     && (e.Response.Conflict.DraftClientUid == client.Uid || overrideExistingDraftByOtherClient))
             {
-                await NodeOperations.DeleteAsync(client, [new NodeUid(parentUid.VolumeId, linkId)], cancellationToken).ConfigureAwait(false);
+                var uidOfNodeToDelete = new NodeUid(parentUid.VolumeId, linkId);
+
+                var deletionResults = await NodeOperations.DeleteAsync(client, [uidOfNodeToDelete], cancellationToken).ConfigureAwait(false);
+
+                if (!deletionResults.TryGetValue(uidOfNodeToDelete, out var deletionResult))
+                {
+                    throw new ProtonApiException("Missing deletion result in response");
+                }
+
+                if (deletionResult.TryGetError(out var deletionException) && deletionException is not ProtonApiException { Code: ResponseCode.DoesNotExist })
+                {
+                    throw deletionException;
+                }
+
+                if (--remainingNumberOfAttempts <= 0)
+                {
+                    throw;
+                }
             }
             catch (ProtonApiException<RevisionConflictResponse> e)
             {

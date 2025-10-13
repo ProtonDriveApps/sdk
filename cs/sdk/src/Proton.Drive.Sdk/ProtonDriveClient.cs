@@ -180,7 +180,7 @@ public sealed class ProtonDriveClient
         return NodeOperations.TrashAsync(this, uids, cancellationToken);
     }
 
-    public ValueTask<IReadOnlyDictionary<NodeUid, Result<string?>>> DeleteNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
+    public ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> DeleteNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
     {
         return NodeOperations.DeleteAsync(this, uids, cancellationToken);
     }

@@ -15,17 +15,7 @@ internal interface ILinksApiClient
 
     ValueTask<ApiResponse> RenameAsync(VolumeId volumeId, LinkId linkId, RenameLinkRequest request, CancellationToken cancellationToken);
 
-    ValueTask<AggregateApiResponse<LinkIdResponsePair>> TrashMultipleAsync(
-        VolumeId volumeId,
-        MultipleLinksNullaryRequest request,
-        CancellationToken cancellationToken);
-
     ValueTask<AggregateApiResponse<LinkIdResponsePair>> DeleteMultipleAsync(
-        VolumeId volumeId,
-        MultipleLinksNullaryRequest request,
-        CancellationToken cancellationToken);
-
-    ValueTask<AggregateApiResponse<LinkIdResponsePair>> RestoreMultipleAsync(
         VolumeId volumeId,
         MultipleLinksNullaryRequest request,
         CancellationToken cancellationToken);

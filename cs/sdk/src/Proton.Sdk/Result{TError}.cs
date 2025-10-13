@@ -30,7 +30,7 @@ public readonly struct Result<TError>
         return new Result<TError>(error);
     }
 
-    public bool TryGetError([MaybeNullWhen(true)] out TError error)
+    public bool TryGetError([MaybeNullWhen(false)] out TError error)
     {
         error = _error;
         return IsFailure;
