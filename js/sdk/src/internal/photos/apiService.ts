@@ -1,12 +1,9 @@
-import { c } from 'ttag';
-
-import { DriveAPIService, drivePaths, NotFoundAPIError } from '../apiService';
+import { DriveAPIService, drivePaths } from '../apiService';
 import { EncryptedRootShare, EncryptedShareCrypto, ShareType } from '../shares/interface';
 import { makeNodeUid } from '../uids';
 
-type GetVolumesResponse = drivePaths['/drive/volumes']['get']['responses']['200']['content']['application/json'];
-
-type GetShareResponse = drivePaths['/drive/shares/{shareID}']['get']['responses']['200']['content']['application/json'];
+type GetPhotoShareResponse =
+    drivePaths['/drive/v2/shares/photos']['get']['responses']['200']['content']['application/json'];
 
 type PostCreateVolumeRequest = Extract<
     drivePaths['/drive/photos/volumes']['post']['requestBody'],
@@ -34,33 +31,19 @@ export class PhotosAPIService {
     }
 
     async getPhotoShare(): Promise<EncryptedRootShare> {
-        // TODO: Switch to drive/v2/shares/photos once available.
-
-        const volumesResponse = await this.apiService.get<GetVolumesResponse>('drive/volumes');
-
-        const photoVolume = volumesResponse.Volumes.find((volume) => volume.Type === 2);
-
-        if (!photoVolume) {
-            throw new NotFoundAPIError(c('Error').t`Photo volume not found`);
-        }
-
-        const response = await this.apiService.get<GetShareResponse>(`drive/shares/${photoVolume.Share.ShareID}`);
-
-        if (!response.AddressID) {
-            throw new Error('Photo root share has not address ID set');
-        }
+        const response = await this.apiService.get<GetPhotoShareResponse>('drive/v2/shares/photos');
 
         return {
-            volumeId: response.VolumeID,
-            shareId: response.ShareID,
-            rootNodeId: response.LinkID,
-            creatorEmail: response.Creator,
+            volumeId: response.Volume.VolumeID,
+            shareId: response.Share.ShareID,
+            rootNodeId: response.Link.Link.LinkID,
+            creatorEmail: response.Share.CreatorEmail,
             encryptedCrypto: {
-                armoredKey: response.Key,
-                armoredPassphrase: response.Passphrase,
-                armoredPassphraseSignature: response.PassphraseSignature,
+                armoredKey: response.Share.Key,
+                armoredPassphrase: response.Share.Passphrase,
+                armoredPassphraseSignature: response.Share.PassphraseSignature,
             },
-            addressId: response.AddressID,
+            addressId: response.Share.AddressID,
             type: ShareType.Photo,
         };
     }
