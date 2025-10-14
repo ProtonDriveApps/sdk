@@ -35,16 +35,7 @@ message Request {
 
 // Account client interface
 
-message AccountClient {
-    // Pointer to C function that will be called:
-    // void account_client_request_action(long state, ByteArray http_request, long caller_state)
-    //   state: value that was passed as caller state when this message was sent, i.e. state of the bindings
-    //   http_request: Protobuf message of type proton.drive.sdk.AccountClientRequest carrying the request data
-    //   caller_state: value to provide as state during the response call
-    int64 request_action = 1;
-}
-
-message AccountClientRequest {
+message AccountRequest {
     oneof payload {
         GetAddressRequest get_address = 1;
         GetDefaultAddressRequest get_default_address = 2;
@@ -80,6 +71,12 @@ message GetAddressPublicKeysRequest {
 
 // Drive - client
 
+enum ThumbnailType {
+    THUMBNAIL_TYPE_UNSPECIFIED = 0; // Invalid value
+    THUMBNAIL_TYPE_THUMBNAIL = 1;
+    THUMBNAIL_TYPE_PREVIEW = 2;
+}
+
 message FileRevision {
     string uid = 1;
     google.protobuf.Timestamp creation_time = 2;
@@ -103,7 +100,7 @@ message ProgressUpdate {
 }
 
 message Thumbnail {
-    int32 type = 1;
+    ThumbnailType type = 1;
     int64 content_pointer = 2;
     int64 content_length = 3;
 }
@@ -119,16 +116,26 @@ message DriveClientCreateRequest {
     string bindings_language = 2; // Optional
 
     // Pointer to C function that will be called:
-    // void send_http_request_action(long state, ByteArray http_request, long caller_state)
-    //   state: value that was passed as caller state when this message was sent, i.e. state of the bindings
+    // void http_client_request(intptr_t bindings_handle, ByteArray http_request, intptr_t sdk_handle)
+    //   bindings_handle: handle for the bindings
     //   http_request: Protobuf message of type proton.sdk.HttpRequest carrying the HTTP request data
-    //   caller_state: value to provide as state during the response call
-    int64 send_http_request_action = 3;
+    //   sdk_handle: handle for the SDK
+    int64 http_client_request_action = 3;
+    
+    // Pointer to C function that will be called:
+    // void account_client_request(intptr_t bindings_handle, ByteArray http_request, intptr_t sdk_handle)
+    //   bindings_handle: handle for the bindings
+    //   account_request: Protobuf message of type proton.drive.sdk.AccountRequest carrying the request data
+    //   sdk_handle: handle for the SDK
+    int64 account_client_request_action = 4;
 
-    AccountClient account_client = 4;
     string entity_cache_path = 5; // Optional
     string secret_cache_path = 6; // Optional
-    int64 logger_provider_handle = 7;
+
+    oneof logger { // Optional
+        int64 log_action = 7; // See array_action in C header file for signature
+        int64 logger_provider_handle = 8;
+    }
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of ProtonDriveClient.
@@ -168,7 +175,7 @@ message DriveClientGetFileRevisionUploaderRequest {
 message UploadFromStreamRequest {
     int64 uploader_handle = 1;
     repeated Thumbnail thumbnails = 2;
-    int64 read_action = 3; // C signature: void on_stream_operation(const void* state, ByteArray buffer, const void* caller_state);
+    int64 read_action = 3; // C signature: void on_stream_operation(intptr_t bindings_handle, ByteArray buffer, intptr_t sdk_handle);
     int64 progress_action = 4; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 5;
 }
@@ -219,7 +226,7 @@ message DriveClientGetFileDownloaderRequest {
 // The response value must be an Int64Value carrying a handle to an instance of DownloadController.
 message DownloadToStreamRequest {
     int64 downloader_handle = 1;
-    int64 write_action = 2; // C signature: void on_stream_operation(const void* state, ByteArray buffer, const void* caller_state);
+    int64 write_action = 2; // C signature: void on_stream_operation(intptr_t bindings_handle, ByteArray buffer, intptr_t sdk_handle);
     int64 progress_action = 3; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 4;
 }

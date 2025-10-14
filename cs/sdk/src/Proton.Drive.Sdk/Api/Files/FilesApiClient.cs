@@ -28,7 +28,7 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
         return await _httpClient
             .Expecting(DriveApiSerializerContext.Default.RevisionCreationResponse, DriveApiSerializerContext.Default.RevisionConflictResponse)
             .PostAsync(
-                $"volumes/{volumeId}/files/{linkId}/revisions",
+                $"v2/volumes/{volumeId}/files/{linkId}/revisions",
                 request,
                 DriveApiSerializerContext.Default.RevisionCreationRequest,
                 cancellationToken)
