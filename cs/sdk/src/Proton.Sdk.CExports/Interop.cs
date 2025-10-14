@@ -63,6 +63,18 @@ internal static class Interop
             gcHandle.Free();
         }
 
-        return (T)(handleTarget ?? throw InvalidHandleException.Create<T>(GCHandle.ToIntPtr(gcHandle)));
+        if (handleTarget is null)
+        {
+            throw InvalidHandleException.Create<T>(GCHandle.ToIntPtr(gcHandle));
+        }
+
+        try
+        {
+            return (T)handleTarget;
+        }
+        catch (InvalidCastException e)
+        {
+            throw new InvalidHandleException($"Expected handle for object of type {typeof(T)} but object was of type {handleTarget.GetType()}", e);
+        }
     }
 }

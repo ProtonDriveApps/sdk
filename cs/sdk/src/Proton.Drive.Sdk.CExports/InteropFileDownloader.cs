@@ -7,25 +7,25 @@ namespace Proton.Drive.Sdk.CExports;
 
 internal static class InteropFileDownloader
 {
-    public static IMessage HandleDownloadToStream(DownloadToStreamRequest request, nint callerState)
+    public static IMessage HandleDownloadToStream(DownloadToStreamRequest request, nint bindingsHandle)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
         var downloader = Interop.GetFromHandle<FileDownloader>(request.DownloaderHandle);
 
-        var stream = new InteropStream(callerState, new InteropAction<nint, InteropArray<byte>, nint>(request.WriteAction));
+        var stream = new InteropStream(bindingsHandle, new InteropAction<nint, InteropArray<byte>, nint>(request.WriteAction));
 
         var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
 
         var downloadController = downloader.DownloadToStream(
             stream,
-            (completed, total) => progressAction.InvokeProgressUpdate(callerState, total, completed),
+            (completed, total) => progressAction.InvokeProgressUpdate(bindingsHandle, total, completed),
             cancellationToken);
 
         return new Int64Value { Value = Interop.AllocHandle(downloadController) };
     }
 
-    public static IMessage HandleDownloadToFile(DownloadToFileRequest request, nint callerState)
+    public static IMessage HandleDownloadToFile(DownloadToFileRequest request, nint bindingsHandle)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
@@ -35,7 +35,7 @@ internal static class InteropFileDownloader
 
         var downloadController = downloader.DownloadToFile(
             request.FilePath,
-            (completed, total) => progressAction.InvokeProgressUpdate(callerState, total, completed),
+            (completed, total) => progressAction.InvokeProgressUpdate(bindingsHandle, total, completed),
             cancellationToken);
 
         return new Int64Value { Value = Interop.AllocHandle(downloadController) };

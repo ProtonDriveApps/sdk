@@ -8,7 +8,7 @@ namespace Proton.Sdk.CExports;
 internal static class InteropMessageHandler
 {
     [UnmanagedCallersOnly(EntryPoint = "proton_sdk_handle_request", CallConvs = [typeof(CallConvCdecl)])]
-    public static async void OnRequestReceived(InteropArray<byte> requestBytes, nint callerState, InteropAction<nint, InteropArray<byte>> responseAction)
+    public static async void OnRequestReceived(InteropArray<byte> requestBytes, nint bindingsHandle, InteropAction<nint, InteropArray<byte>> responseAction)
     {
         try
         {
@@ -41,25 +41,25 @@ internal static class InteropMessageHandler
                     => ProtonApiSessionRequestHandler.HandleFree(request.SessionFree),
 
                 Request.PayloadOneofCase.SessionTokensRefreshedSubscribe
-                    => ProtonApiSessionRequestHandler.HandleSubscribeToTokensRefreshed(request.SessionTokensRefreshedSubscribe, callerState),
+                    => ProtonApiSessionRequestHandler.HandleSubscribeToTokensRefreshed(request.SessionTokensRefreshedSubscribe, bindingsHandle),
 
                 Request.PayloadOneofCase.SessionTokensRefreshedUnsubscribe
                     => ProtonApiSessionRequestHandler.HandleUnsubscribeFromTokensRefreshed(request.SessionTokensRefreshedUnsubscribe),
 
                 Request.PayloadOneofCase.LoggerProviderCreate
-                    => InteropLoggerProvider.HandleCreate(request.LoggerProviderCreate, callerState),
+                    => InteropLoggerProvider.HandleCreate(request.LoggerProviderCreate, bindingsHandle),
 
                 Request.PayloadOneofCase.None or _
                     => throw new ArgumentException($"Unknown request type: {request.PayloadCase}", nameof(requestBytes)),
             };
 
-            responseAction.InvokeWithMessage(callerState, response is not null ? new Response { Value = Any.Pack(response) } : new Response());
+            responseAction.InvokeWithMessage(bindingsHandle, response is not null ? new Response { Value = Any.Pack(response) } : new Response());
         }
         catch (Exception e)
         {
             var error = e.ToErrorMessage(InteropErrorConverter.SetDomainAndCodes);
 
-            responseAction.InvokeWithMessage(callerState, new Response { Error = error });
+            responseAction.InvokeWithMessage(bindingsHandle, new Response { Error = error });
         }
     }
 }

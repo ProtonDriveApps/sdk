@@ -123,13 +123,13 @@ internal static class ProtonApiSessionRequestHandler
         return null;
     }
 
-    public static unsafe IMessage HandleSubscribeToTokensRefreshed(SessionTokensRefreshedSubscribeRequest request, nint callerState)
+    public static unsafe IMessage HandleSubscribeToTokensRefreshed(SessionTokensRefreshedSubscribeRequest request, nint bindingsHandle)
     {
         var session = Interop.GetFromHandle<ProtonApiSession>((nint)request.SessionHandle);
 
         var tokenRefreshedAction = new InteropAction<nint, InteropArray<byte>>(request.TokensRefreshedAction);
 
-        var subscription = TokensRefreshedSubscription.Create(session, callerState, tokenRefreshedAction);
+        var subscription = TokensRefreshedSubscription.Create(session, bindingsHandle, tokenRefreshedAction);
 
         return new Int64Value { Value = Interop.AllocHandle(subscription) };
     }
@@ -153,25 +153,25 @@ internal static class ProtonApiSessionRequestHandler
     private sealed class TokensRefreshedSubscription : IDisposable
     {
         private readonly ProtonApiSession _session;
-        private readonly nint _callerState;
+        private readonly nint _bindingsHandle;
         private readonly InteropAction<nint, InteropArray<byte>> _tokensRefreshedAction;
 
         private TokensRefreshedSubscription(
             ProtonApiSession session,
-            nint callerState,
+            nint bindingsHandle,
             InteropAction<nint, InteropArray<byte>> tokensRefreshedAction)
         {
             _session = session;
-            _callerState = callerState;
+            _bindingsHandle = bindingsHandle;
             _tokensRefreshedAction = tokensRefreshedAction;
         }
 
         public static TokensRefreshedSubscription Create(
             ProtonApiSession session,
-            nint callerState,
+            nint bindingsHandle,
             InteropAction<nint, InteropArray<byte>> tokensRefreshedAction)
         {
-            var subscription = new TokensRefreshedSubscription(session, callerState, tokensRefreshedAction);
+            var subscription = new TokensRefreshedSubscription(session, bindingsHandle, tokensRefreshedAction);
 
             session.TokenCredential.TokensRefreshed += subscription.Handle;
 
@@ -189,7 +189,7 @@ internal static class ProtonApiSessionRequestHandler
 
             try
             {
-                _tokensRefreshedAction.Invoke(_callerState, tokensMessage);
+                _tokensRefreshedAction.Invoke(_bindingsHandle, tokensMessage);
             }
             finally
             {

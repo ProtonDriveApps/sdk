@@ -8,7 +8,7 @@ internal static class InteropActionExtensions
 {
     public static unsafe ValueTask<TResponse> SendRequestAsync<TResponse>(
         this InteropAction<nint, InteropArray<byte>, nint> interopAction,
-        nint state,
+        nint bindingsHandle,
         IMessage request)
         where TResponse : IMessage
     {
@@ -20,7 +20,7 @@ internal static class InteropActionExtensions
 
         fixed (byte* requestBytesPointer = requestBytes)
         {
-            interopAction.Invoke(state, new InteropArray<byte>(requestBytesPointer, requestBytes.Length), (nint)tcsHandle);
+            interopAction.Invoke(bindingsHandle, new InteropArray<byte>(requestBytesPointer, requestBytes.Length), (nint)tcsHandle);
         }
 
         return tcs.Task;
@@ -28,7 +28,7 @@ internal static class InteropActionExtensions
 
     public static unsafe ValueTask<TResponse> InvokeWithBufferAsync<TResponse>(
         this InteropAction<nint, InteropArray<byte>, nint> interopAction,
-        nint state,
+        nint bindingsHandle,
         Span<byte> buffer)
     {
         var tcs = new ValueTaskCompletionSource<TResponse>();
@@ -37,7 +37,7 @@ internal static class InteropActionExtensions
 
         fixed (byte* requestBytesPointer = buffer)
         {
-            interopAction.Invoke(state, new InteropArray<byte>(requestBytesPointer, buffer.Length), (nint)tcsHandle);
+            interopAction.Invoke(bindingsHandle, new InteropArray<byte>(requestBytesPointer, buffer.Length), (nint)tcsHandle);
         }
 
         return tcs.Task;
@@ -45,7 +45,7 @@ internal static class InteropActionExtensions
 
     public static unsafe ValueTask InvokeWithBufferAsync(
         this InteropAction<nint, InteropArray<byte>, nint> interopAction,
-        nint state,
+        nint bindingsHandle,
         ReadOnlySpan<byte> buffer)
     {
         var tcs = new ValueTaskCompletionSource();
@@ -54,13 +54,13 @@ internal static class InteropActionExtensions
 
         fixed (byte* requestBytesPointer = buffer)
         {
-            interopAction.Invoke(state, new InteropArray<byte>(requestBytesPointer, buffer.Length), (nint)tcsHandle);
+            interopAction.Invoke(bindingsHandle, new InteropArray<byte>(requestBytesPointer, buffer.Length), (nint)tcsHandle);
         }
 
         return tcs.Task;
     }
 
-    public static unsafe void InvokeProgressUpdate(this InteropAction<nint, InteropArray<byte>> interopAction, nint state, long total, long completed)
+    public static unsafe void InvokeProgressUpdate(this InteropAction<nint, InteropArray<byte>> interopAction, nint bindingsHandle, long total, long completed)
     {
         var progressUpdate = new ProgressUpdate
         {
@@ -72,7 +72,7 @@ internal static class InteropActionExtensions
 
         fixed (byte* requestBytesPointer = requestBytes)
         {
-            interopAction.Invoke(state, new InteropArray<byte>(requestBytesPointer, requestBytes.Length));
+            interopAction.Invoke(bindingsHandle, new InteropArray<byte>(requestBytesPointer, requestBytes.Length));
         }
     }
 }

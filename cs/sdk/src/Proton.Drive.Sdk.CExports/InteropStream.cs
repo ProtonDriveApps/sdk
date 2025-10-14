@@ -5,24 +5,24 @@ namespace Proton.Drive.Sdk.CExports;
 
 internal sealed class InteropStream : Stream
 {
-    private readonly nint _callerState;
+    private readonly nint _bindingsHandle;
     private readonly InteropAction<nint, InteropArray<byte>, nint>? _readAction;
     private readonly InteropAction<nint, InteropArray<byte>, nint>? _writeAction;
 
     private long _position;
     private long? _length;
 
-    public InteropStream(long length, nint callerState, InteropAction<nint, InteropArray<byte>, nint>? readAction)
+    public InteropStream(long length, nint bindingsHandle, InteropAction<nint, InteropArray<byte>, nint>? readAction)
     {
         _length = length;
-        _callerState = callerState;
+        _bindingsHandle = bindingsHandle;
         _readAction = readAction;
         _writeAction = null;
     }
 
-    public InteropStream(nint callerState, InteropAction<nint, InteropArray<byte>, nint>? writeAction)
+    public InteropStream(nint bindingsHandle, InteropAction<nint, InteropArray<byte>, nint>? writeAction)
     {
-        _callerState = callerState;
+        _bindingsHandle = bindingsHandle;
         _readAction = null;
         _writeAction = writeAction;
     }
@@ -61,7 +61,7 @@ internal sealed class InteropStream : Stream
 
         using var memoryHandle = buffer.Pin();
 
-        var response = await _readAction.Value.InvokeWithBufferAsync<Int32Value>(_callerState, buffer.Span).ConfigureAwait(false);
+        var response = await _readAction.Value.InvokeWithBufferAsync<Int32Value>(_bindingsHandle, buffer.Span).ConfigureAwait(false);
 
         if (response.Value < 0)
         {
@@ -102,7 +102,7 @@ internal sealed class InteropStream : Stream
 
         using var memoryHandle = buffer.Pin();
 
-        await _writeAction.Value.InvokeWithBufferAsync(_callerState, buffer.Span).ConfigureAwait(false);
+        await _writeAction.Value.InvokeWithBufferAsync(_bindingsHandle, buffer.Span).ConfigureAwait(false);
 
         _position += buffer.Length;
         _length = Math.Max(_length ?? 0, _position);

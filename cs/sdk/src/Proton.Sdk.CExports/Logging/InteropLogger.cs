@@ -5,9 +5,9 @@ using Microsoft.Extensions.Logging;
 namespace Proton.Sdk.CExports.Logging;
 
 [StructLayout(LayoutKind.Sequential)]
-internal sealed class InteropLogger(nint callerState, InteropAction<nint, InteropArray<byte>> logAction, string categoryName) : ILogger
+internal sealed class InteropLogger(nint bindingsHandle, InteropAction<nint, InteropArray<byte>> logAction, string categoryName) : ILogger
 {
-    private readonly nint _callerState = callerState;
+    private readonly nint _bindingsHandle = bindingsHandle;
     private readonly InteropAction<nint, InteropArray<byte>> _logAction = logAction;
     private readonly string _categoryName = categoryName;
 
@@ -27,7 +27,7 @@ internal sealed class InteropLogger(nint callerState, InteropAction<nint, Intero
 
         try
         {
-            _logAction.Invoke(_callerState, messageBytes);
+            _logAction.Invoke(_bindingsHandle, messageBytes);
         }
         finally
         {

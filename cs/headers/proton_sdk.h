@@ -9,7 +9,7 @@ typedef struct {
     size_t length;
 } ByteArray;
 
-typedef void array_action(const void* state, ByteArray array);
+typedef void array_action(intptr_t handle, ByteArray array);
 
 void override_native_library_name(
     ByteArray library_name,
@@ -18,7 +18,7 @@ void override_native_library_name(
 
 void proton_sdk_handle_request(
     ByteArray request,
-    const void* caller_state,
+    intptr_t bindings_handle,
     array_action response_action
 );
 

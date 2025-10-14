@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.IO;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
@@ -184,7 +185,12 @@ internal sealed class RevisionWriter : IDisposable
 
         var request = GetRevisionUpdateRequest(contentStream, lastModificationTime, blockSizes, manifestSignature, signingEmailAddress);
 
+
+        _client.Logger.LogDebug("Sealing revision {RevisionId} of file {FileUid}", _revisionId, _fileUid);
+
         await _client.Api.Files.UpdateRevisionAsync(_fileUid.VolumeId, _fileUid.LinkId, _revisionId, request, cancellationToken).ConfigureAwait(false);
+
+        _client.Logger.LogDebug("Revision {RevisionId} of file {FileUid} sealed", _revisionId, _fileUid);
     }
 
     public void Dispose()
