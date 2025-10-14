@@ -17,7 +17,7 @@ internal static class InteropMessageHandler
         Address.Descriptor);
 
     [UnmanagedCallersOnly(EntryPoint = "proton_drive_sdk_handle_request", CallConvs = [typeof(CallConvCdecl)])]
-    public static async void OnRequestReceived(InteropArray<byte> requestBytes, nint callerState, InteropAction<nint, InteropArray<byte>> responseAction)
+    public static async void OnRequestReceived(InteropArray<byte> requestBytes, nint bindingsHandle, InteropAction<nint, InteropArray<byte>> responseAction)
     {
         try
         {
@@ -26,7 +26,7 @@ internal static class InteropMessageHandler
             var response = request.PayloadCase switch
             {
                 Request.PayloadOneofCase.DriveClientCreate
-                    => InteropProtonDriveClient.HandleCreate(request.DriveClientCreate, callerState),
+                    => InteropProtonDriveClient.HandleCreate(request.DriveClientCreate, bindingsHandle),
 
                 Request.PayloadOneofCase.DriveClientCreateFromSession
                     => InteropProtonDriveClient.HandleCreate(request.DriveClientCreateFromSession),
@@ -44,10 +44,10 @@ internal static class InteropMessageHandler
                     => await InteropProtonDriveClient.HandleGetFileDownloaderAsync(request.DriveClientGetFileDownloader).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.UploadFromStream
-                    => InteropFileUploader.HandleUploadFromStream(request.UploadFromStream, callerState),
+                    => InteropFileUploader.HandleUploadFromStream(request.UploadFromStream, bindingsHandle),
 
                 Request.PayloadOneofCase.UploadFromFile
-                    => InteropFileUploader.HandleUploadFromFile(request.UploadFromFile, callerState),
+                    => InteropFileUploader.HandleUploadFromFile(request.UploadFromFile, bindingsHandle),
 
                 Request.PayloadOneofCase.FileUploaderFree
                     => InteropFileUploader.HandleFree(request.FileUploaderFree),
@@ -65,10 +65,10 @@ internal static class InteropMessageHandler
                     => InteropUploadController.HandleFree(request.UploadControllerFree),
 
                 Request.PayloadOneofCase.DownloadToStream
-                    => InteropFileDownloader.HandleDownloadToStream(request.DownloadToStream, callerState),
+                    => InteropFileDownloader.HandleDownloadToStream(request.DownloadToStream, bindingsHandle),
 
                 Request.PayloadOneofCase.DownloadToFile
-                    => InteropFileDownloader.HandleDownloadToFile(request.DownloadToFile, callerState),
+                    => InteropFileDownloader.HandleDownloadToFile(request.DownloadToFile, bindingsHandle),
 
                 Request.PayloadOneofCase.FileDownloaderFree
                     => InteropFileDownloader.HandleFree(request.FileDownloaderFree),
@@ -89,30 +89,30 @@ internal static class InteropMessageHandler
                     => throw new ArgumentException($"Unknown request type: {request.PayloadCase}", nameof(requestBytes)),
             };
 
-            responseAction.InvokeWithMessage(callerState, response is not null ? new Response { Value = Any.Pack(response) } : new Response());
+            responseAction.InvokeWithMessage(bindingsHandle, response is not null ? new Response { Value = Any.Pack(response) } : new Response());
         }
         catch (Exception e)
         {
             var error = e.ToErrorMessage(InteropDriveErrorConverter.SetDomainAndCodes);
 
-            responseAction.InvokeWithMessage(callerState, new Response { Error = error });
+            responseAction.InvokeWithMessage(bindingsHandle, new Response { Error = error });
         }
     }
 
     [UnmanagedCallersOnly(EntryPoint = "proton_drive_sdk_handle_response", CallConvs = [typeof(CallConvCdecl)])]
-    public static void OnResponseReceived(nint state, InteropArray<byte> responseBytes)
+    public static void OnResponseReceived(nint sdkHandle, InteropArray<byte> responseBytes)
     {
         var response = Response.Parser.ParseFrom(responseBytes.AsReadOnlySpan());
 
         if (response.Error is not null)
         {
-            SetException(state, response.Error.Message);
+            SetException(sdkHandle, response.Error.Message);
             return;
         }
 
         if (response.Value is null)
         {
-            SetResult(state);
+            SetResult(sdkHandle);
             return;
         }
 
@@ -121,27 +121,27 @@ internal static class InteropMessageHandler
         switch (responseValue)
         {
             case Int32Value value:
-                SetResult(state, value);
+                SetResult(sdkHandle, value);
                 break;
 
             case StringValue value:
-                SetResult(state, value);
+                SetResult(sdkHandle, value);
                 break;
 
             case BytesValue value:
-                SetResult(state, value);
+                SetResult(sdkHandle, value);
                 break;
 
             case RepeatedBytesValue value:
-                SetResult(state, value);
+                SetResult(sdkHandle, value);
                 break;
 
             case Address value:
-                SetResult(state, value);
+                SetResult(sdkHandle, value);
                 break;
 
             case HttpResponse value:
-                SetResult(state, value);
+                SetResult(sdkHandle, value);
                 break;
 
             default:
