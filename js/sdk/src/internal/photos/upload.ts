@@ -85,7 +85,25 @@ export class PhotoStreamUploader extends StreamUploader {
         controller: UploadController,
         signal?: AbortSignal,
     ) {
-        super(telemetry, apiService, cryptoService, uploadManager, blockVerifier, revisionDraft, metadata, onFinish, controller, signal);
+        const abortController = new AbortController();
+        if (signal) {
+            signal.addEventListener('abort', () => {
+                abortController.abort();
+            });
+        }
+
+        super(
+            telemetry,
+            apiService,
+            cryptoService,
+            uploadManager,
+            blockVerifier,
+            revisionDraft,
+            metadata,
+            onFinish,
+            controller,
+            abortController,
+        );
         this.photoUploadManager = uploadManager;
         this.photoMetadata = metadata;
     }

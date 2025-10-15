@@ -133,7 +133,7 @@ describe('StreamUploader', () => {
             metadata,
             onFinish,
             controller,
-            abortController.signal,
+            abortController,
         );
     });
 
@@ -146,10 +146,10 @@ describe('StreamUploader', () => {
 
         const verifySuccess = async () => {
             const result = await uploader.start(stream, thumbnails, onProgress);
-            
+
             expect(result).toEqual({
                 nodeRevisionUid: 'revisionUid',
-                nodeUid: 'nodeUid'
+                nodeUid: 'nodeUid',
             });
 
             const numberOfExpectedBlocks = Math.ceil(metadata.expectedSize / FILE_CHUNK_SIZE);
@@ -259,7 +259,7 @@ describe('StreamUploader', () => {
                 metadata,
                 onFinish,
                 controller,
-                abortController.signal,
+                abortController,
             );
 
             await verifySuccess();
@@ -288,7 +288,7 @@ describe('StreamUploader', () => {
                 metadata,
                 onFinish,
                 controller,
-                abortController.signal,
+                abortController,
             );
 
             await verifySuccess();
@@ -433,14 +433,6 @@ describe('StreamUploader', () => {
             await verifyOnProgress([1024, 4 * 1024 * 1024, 2 * 1024 * 1024, 4 * 1024 * 1024]);
         });
 
-        it('should handle abortion', async () => {
-            const error = new Error('Aborted');
-            const promise = uploader.start(stream, thumbnails, onProgress);
-            abortController.abort(error);
-            await promise;
-            expect(apiService.uploadBlock.mock.calls[0][4]?.aborted).toBe(true);
-        });
-
         describe('verifyIntegrity', () => {
             it('should report block verification error', async () => {
                 blockVerifier.verifyBlock = jest.fn().mockRejectedValue(new IntegrityError('Block verification error'));
@@ -473,7 +465,7 @@ describe('StreamUploader', () => {
                     } as UploadMetadata,
                     onFinish,
                     controller,
-                    abortController.signal,
+                    abortController,
                 );
 
                 await verifyFailure(
@@ -496,6 +488,46 @@ describe('StreamUploader', () => {
 
                 await verifyFailure('Some file bytes failed to upload', 10 * 1024 * 1024 + 1024);
             });
+        });
+    });
+
+    describe('abort', () => {
+        const thumbnails: Thumbnail[] = [];
+        let stream: ReadableStream<Uint8Array>;
+        let streamController: ReadableStreamDefaultController<Uint8Array>;
+
+        beforeEach(() => {
+            stream = new ReadableStream({
+                start(controller) {
+                    streamController = controller;
+                },
+            });
+        });
+
+        it('should abort at the start', async () => {
+            const promise = uploader.start(stream, thumbnails);
+            abortController.abort();
+            await expect(promise).rejects.toThrow('Operation aborted');
+        });
+
+        it('should abort when encrypting blocks', async () => {
+            const promise = uploader.start(stream, thumbnails);
+            streamController.enqueue(new Uint8Array(FILE_CHUNK_SIZE));
+            streamController.enqueue(new Uint8Array(FILE_CHUNK_SIZE));
+            streamController.enqueue(new Uint8Array(FILE_CHUNK_SIZE));
+            abortController.abort();
+            await expect(promise).rejects.toThrow('Operation aborted');
+        });
+
+        it('should abort when uploading block', async () => {
+            apiService.uploadBlock = jest.fn().mockImplementation(async function () {
+                abortController.abort();
+            });
+
+            const promise = uploader.start(stream, thumbnails);
+            streamController.enqueue(new Uint8Array(FILE_CHUNK_SIZE));
+
+            await expect(promise).rejects.toThrow('Operation aborted');
         });
     });
 });
