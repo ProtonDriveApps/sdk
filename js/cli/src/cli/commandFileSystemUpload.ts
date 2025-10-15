@@ -15,7 +15,7 @@ export class CommandFileSystemUpload implements Command {
             short: 'n',
             default: '',
         },
-        newRevision: {
+        'new-revision': {
             type: 'boolean',
             short: 'r',
             default: false,

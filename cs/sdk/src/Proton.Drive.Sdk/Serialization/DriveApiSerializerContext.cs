@@ -4,7 +4,6 @@ using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Api.Volumes;
-using Proton.Drive.Sdk.Nodes;
 using Proton.Sdk.Api;
 using Proton.Sdk.Serialization;
 
@@ -37,6 +36,8 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(FolderCreationResponse))]
 [JsonSerializable(typeof(FileCreationRequest))]
 [JsonSerializable(typeof(FileCreationResponse))]
+[JsonSerializable(typeof(NodeNameAvailabilityRequest))]
+[JsonSerializable(typeof(NodeNameAvailabilityResponse))]
 [JsonSerializable(typeof(RevisionCreationRequest))]
 [JsonSerializable(typeof(RevisionCreationResponse))]
 [JsonSerializable(typeof(RevisionConflictResponse))]

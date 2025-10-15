@@ -51,7 +51,7 @@ public sealed class TokenCredential
             {
                 try
                 {
-                    _logger.Log(LogLevel.Debug, "Refreshing token for {SessionId}", _sessionId);
+                    _logger.LogDebug("Refreshing token for {SessionId}", _sessionId);
                     var response = await _client.RefreshSessionAsync(_sessionId, currentAccessToken, currentRefreshToken, cancellationToken)
                         .ConfigureAwait(false);
 

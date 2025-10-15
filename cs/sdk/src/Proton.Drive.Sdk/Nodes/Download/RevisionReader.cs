@@ -11,9 +11,9 @@ internal sealed class RevisionReader : IDisposable
     public const int DefaultBlockPageSize = 10;
 
     private readonly ProtonDriveClient _client;
+    private readonly PgpPrivateKey _nodeKey;
     private readonly NodeUid _fileUid;
     private readonly RevisionId _revisionId;
-    private readonly PgpPrivateKey _fileKey;
     private readonly PgpSessionKey _contentKey;
     private readonly BlockListingRevisionDto _revisionDto;
     private readonly Action<int> _releaseBlockListingAction;
@@ -26,16 +26,16 @@ internal sealed class RevisionReader : IDisposable
     internal RevisionReader(
         ProtonDriveClient client,
         RevisionUid revisionUid,
-        PgpPrivateKey fileKey,
+        PgpPrivateKey nodeKey,
         PgpSessionKey contentKey,
         BlockListingRevisionDto revisionDto,
         Action<int> releaseBlockListingAction,
         int blockPageSize = DefaultBlockPageSize)
     {
         _client = client;
+        _nodeKey = nodeKey;
         _fileUid = revisionUid.NodeUid;
         _revisionId = revisionUid.RevisionId;
-        _fileKey = fileKey;
         _contentKey = contentKey;
         _revisionDto = revisionDto;
         _releaseBlockListingAction = releaseBlockListingAction;
@@ -278,12 +278,9 @@ internal sealed class RevisionReader : IDisposable
             return PgpVerificationStatus.NotSigned;
         }
 
-        if (string.IsNullOrEmpty(_revisionDto.SignatureEmailAddress))
-        {
-            return PgpVerificationStatus.NoVerifier;
-        }
-
-        var verificationKeys = await _client.Account.GetAddressPublicKeysAsync(_revisionDto.SignatureEmailAddress, cancellationToken).ConfigureAwait(false);
+        var verificationKeys = string.IsNullOrEmpty(_revisionDto.SignatureEmailAddress)
+            ? [_nodeKey.ToPublic()]
+            : await _client.Account.GetAddressPublicKeysAsync(_revisionDto.SignatureEmailAddress, cancellationToken).ConfigureAwait(false);
 
         if (verificationKeys.Count == 0)
         {

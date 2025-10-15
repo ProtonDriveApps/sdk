@@ -8,9 +8,13 @@ public abstract record DegradedNode
 
     public required NodeUid? ParentUid { get; init; }
 
+    public string TreeEventScopeId => Uid.VolumeId.ToString();
+
     public required Result<string, ProtonDriveError> Name { get; init; }
 
     public required Result<Author, SignatureVerificationError> NameAuthor { get; init; }
+
+    public required DateTime CreationTime { get; init; }
 
     public DateTime? TrashTime { get; init; }
 

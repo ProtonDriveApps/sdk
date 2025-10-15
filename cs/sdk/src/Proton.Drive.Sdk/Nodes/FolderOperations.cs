@@ -114,6 +114,7 @@ internal static class FolderOperations
             Name = name,
             NameAuthor = author,
             Author = author,
+            CreationTime = DateTime.UtcNow,
         };
 
         await client.Cache.Entities.SetNodeAsync(folderUid, folderNode, membershipShareId: null, nameHashDigest, cancellationToken).ConfigureAwait(false);

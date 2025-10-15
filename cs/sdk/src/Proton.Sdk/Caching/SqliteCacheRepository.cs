@@ -252,6 +252,8 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
 
     public void Dispose()
     {
+        SqliteConnection.ClearPool(_connection);
+        _connection.Close();
         _connection.Dispose();
     }
 

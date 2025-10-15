@@ -84,6 +84,7 @@ internal static class DtoToMetadataConverter
                 ParentUid = parentUid,
                 Name = nameResult,
                 NameAuthor = default,
+                CreationTime = linkDto.CreationTime,
                 TrashTime = linkDto.TrashTime,
                 Author = default,
                 Errors = null!, // FIXME
@@ -127,6 +128,7 @@ internal static class DtoToMetadataConverter
 
             // FIXME: combine with verification failure from name hash key
             Author = decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.AuthorshipVerificationFailure),
+            CreationTime = linkDto.CreationTime,
             TrashTime = linkDto.TrashTime,
         };
 
@@ -181,6 +183,7 @@ internal static class DtoToMetadataConverter
                 ParentUid = parentUid,
                 Name = nameResult,
                 NameAuthor = default,
+                CreationTime = linkDto.CreationTime,
                 TrashTime = linkDto.TrashTime,
                 Author = default,
                 MediaType = fileDto.MediaType,
@@ -223,6 +226,18 @@ internal static class DtoToMetadataConverter
 
         var extendedAttributes = extendedAttributesOutput.Data;
 
+        var activeRevision = new Revision
+        {
+            Uid = new RevisionUid(uid, activeRevisionDto.Id),
+            CreationTime = activeRevisionDto.CreationTime,
+            SizeOnCloudStorage = activeRevisionDto.StorageQuotaConsumption,
+            ClaimedSize = extendedAttributes?.Common?.Size,
+            ClaimedModificationTime = extendedAttributes?.Common?.ModificationTime,
+            ClaimedDigests = new FileContentDigests { Sha1 = extendedAttributes?.Common?.Digests?.Sha1 },
+            Thumbnails = [], // FIXME: thumbnails
+            ContentAuthor = decryptionResult.ContentAuthorshipClaim.ToAuthorshipResult(extendedAttributesOutput.AuthorshipVerificationFailure),
+        };
+
         var node = new FileNode
         {
             Uid = uid,
@@ -232,18 +247,10 @@ internal static class DtoToMetadataConverter
 
             // FIXME: combine with verification failure from name hash key
             Author = decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.AuthorshipVerificationFailure),
+            CreationTime = linkDto.CreationTime,
             TrashTime = linkDto.TrashTime,
             MediaType = fileDto.MediaType,
-            ActiveRevision = new Revision
-            {
-                Uid = new RevisionUid(uid, activeRevisionDto.Id),
-                CreationTime = activeRevisionDto.CreationTime,
-                SizeOnCloudStorage = activeRevisionDto.StorageQuotaConsumption,
-                ClaimedSize = extendedAttributes?.Common?.Size,
-                ClaimedModificationTime = extendedAttributes?.Common?.ModificationTime,
-                Thumbnails = [], // FIXME: thumbnails
-                ContentAuthor = decryptionResult.ContentAuthorshipClaim.ToAuthorshipResult(extendedAttributesOutput.AuthorshipVerificationFailure),
-            },
+            ActiveRevision = activeRevision,
             TotalSizeOnCloudStorage = fileDto.TotalStorageQuotaUsage,
         };
 
@@ -350,6 +357,7 @@ internal static class DtoToMetadataConverter
     }
 }
 
+// FIXME: remove this
 public sealed class TempDebugException : Exception
 {
     public TempDebugException(string message)
