@@ -1,7 +1,7 @@
 import { c } from 'ttag';
 
 import { Thumbnail, Logger, ThumbnailType, UploadMetadata } from '../../interface';
-import { IntegrityError } from '../../errors';
+import { AbortError, IntegrityError } from '../../errors';
 import { LoggerWithPrefix } from '../../telemetry';
 import { APIHTTPError, HTTPErrorCode, NotFoundAPIError } from '../apiService';
 import { getErrorMessage } from '../errors';
@@ -59,7 +59,6 @@ export class StreamUploader {
 
     protected digests: UploadDigests;
     protected controller: UploadController;
-    protected abortController: AbortController;
 
     protected encryptedThumbnails = new Map<ThumbnailType, EncryptedThumbnail>();
     protected encryptedBlocks = new Map<number, EncryptedBlock>();
@@ -75,6 +74,9 @@ export class StreamUploader {
     protected uploadedThumbnails: ({ type: ThumbnailType } & EncryptedBlockMetadata)[] = [];
     protected uploadedBlocks: ({ index: number } & EncryptedBlockMetadata)[] = [];
 
+    // Error of the whole upload - either encryption or upload error.
+    protected error: unknown | undefined;
+
     constructor(
         protected telemetry: UploadTelemetry,
         protected apiService: UploadAPIService,
@@ -85,7 +87,7 @@ export class StreamUploader {
         protected metadata: UploadMetadata,
         protected onFinish: (failure: boolean) => Promise<void>,
         protected uploadController: UploadController,
-        protected signal?: AbortSignal,
+        protected abortController: AbortController,
     ) {
         this.telemetry = telemetry;
         this.logger = telemetry.getLoggerForRevision(revisionDraft.nodeRevisionUid);
@@ -96,23 +98,16 @@ export class StreamUploader {
         this.metadata = metadata;
         this.onFinish = onFinish;
 
-        this.signal = signal;
-        this.abortController = new AbortController();
-        if (signal) {
-            signal.addEventListener('abort', () => {
-                this.abortController.abort();
-            });
-        }
-
         this.digests = new UploadDigests();
         this.controller = uploadController;
+        this.abortController = abortController;
     }
 
     async start(
         stream: ReadableStream,
         thumbnails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,
-    ): Promise<{ nodeRevisionUid: string, nodeUid: string }> {
+    ): Promise<{ nodeRevisionUid: string; nodeUid: string }> {
         let failure = false;
 
         // File progress is tracked for telemetry - to track at what
@@ -157,9 +152,8 @@ export class StreamUploader {
 
         return {
             nodeRevisionUid: this.revisionDraft.nodeRevisionUid,
-            nodeUid: this.revisionDraft.nodeUid
-        }
-
+            nodeUid: this.revisionDraft.nodeUid,
+        };
     }
 
     private async encryptAndUploadBlocks(
@@ -183,8 +177,8 @@ export class StreamUploader {
             void this.abortUpload(error);
         });
 
-        while (!encryptionError) {
-            await this.controller.waitIfPaused();
+        while (!this.isUploadAborted) {
+            await this.controller.waitWhilePaused();
             await this.waitForUploadCapacityAndBufferedBlocks();
 
             if (this.isEncryptionFullyFinished) {
@@ -196,6 +190,17 @@ export class StreamUploader {
             if (this.isEncryptionFullyFinished) {
                 break;
             }
+        }
+
+        // If the upload was aborted due to encryption or upload error, throw
+        // the original error (it is failing upload).
+        // If the upload was aborted due to abort signal, throw AbortError
+        // (it is aborted by the user).
+        if (this.error) {
+            throw this.error;
+        }
+        if (this.abortController.signal.aborted) {
+            throw new AbortError();
         }
 
         this.logger.debug(`All blocks uploading, waiting for them to finish`);
@@ -233,6 +238,10 @@ export class StreamUploader {
         }
 
         for (const thumbnail of thumbnails) {
+            if (this.isUploadAborted) {
+                break;
+            }
+
             this.logger.debug(`Encrypting thumbnail ${thumbnail.type}`);
             const encryptedThumbnail = await this.cryptoService.encryptThumbnail(
                 this.revisionDraft.nodeKeys,
@@ -251,8 +260,12 @@ export class StreamUploader {
 
                 this.digests.update(block);
 
-                await this.controller.waitIfPaused();
+                await this.controller.waitWhilePaused();
                 await this.waitForBufferCapacity();
+
+                if (this.isUploadAborted) {
+                    break;
+                }
 
                 this.logger.debug(`Encrypting block ${index}`);
                 let attempt = 0;
@@ -272,6 +285,11 @@ export class StreamUploader {
                             void this.telemetry.logBlockVerificationError(true);
                         }
                     } catch (error: unknown) {
+                        // Do not retry or report anything if the upload was aborted.
+                        if (error instanceof AbortError) {
+                            throw error;
+                        }
+
                         if (error instanceof IntegrityError) {
                             integrityError = true;
                         }
@@ -399,6 +417,11 @@ export class StreamUploader {
                 });
                 break;
             } catch (error: unknown) {
+                // Do not retry or report anything if the upload was aborted.
+                if (error instanceof AbortError) {
+                    throw error;
+                }
+
                 if (blockProgress !== 0) {
                     onProgress?.(-blockProgress);
                     blockProgress = 0;
@@ -461,6 +484,11 @@ export class StreamUploader {
                 });
                 break;
             } catch (error: unknown) {
+                // Do not retry or report anything if the upload was aborted.
+                if (error instanceof AbortError) {
+                    throw error;
+                }
+
                 if (blockProgress !== 0) {
                     onProgress?.(-blockProgress);
                     blockProgress = 0;
@@ -510,7 +538,17 @@ export class StreamUploader {
 
     private async waitForBufferCapacity() {
         if (this.encryptedBlocks.size >= MAX_BUFFERED_BLOCKS) {
-            await waitForCondition(() => this.encryptedBlocks.size < MAX_BUFFERED_BLOCKS);
+            try {
+                await waitForCondition(
+                    () => this.encryptedBlocks.size < MAX_BUFFERED_BLOCKS,
+                    this.abortController.signal,
+                );
+            } catch (error: unknown) {
+                if (error instanceof AbortError) {
+                    return;
+                }
+                throw error;
+            }
         }
     }
 
@@ -518,7 +556,17 @@ export class StreamUploader {
         while (this.ongoingUploads.size >= MAX_UPLOADING_BLOCKS) {
             await Promise.race(this.ongoingUploads.values().map(({ uploadPromise }) => uploadPromise));
         }
-        await waitForCondition(() => this.encryptedBlocks.size > 0 || this.encryptionFinished);
+        try {
+            await waitForCondition(
+                () => this.encryptedBlocks.size > 0 || this.encryptionFinished,
+                this.abortController.signal,
+            );
+        } catch (error: unknown) {
+            if (error instanceof AbortError) {
+                return;
+            }
+            throw error;
+        }
     }
 
     protected verifyIntegrity(thumbnails: Thumbnail[]) {
@@ -573,9 +621,14 @@ export class StreamUploader {
     }
 
     private async abortUpload(error: unknown) {
-        if (this.abortController.signal.aborted || this.signal?.aborted) {
+        if (this.isUploadAborted) {
             return;
         }
+        this.error = error;
         this.abortController.abort(error);
+    }
+
+    private get isUploadAborted(): boolean {
+        return !!this.error || this.abortController.signal.aborted;
     }
 }
