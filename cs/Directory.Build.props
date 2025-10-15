@@ -5,6 +5,9 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <IsPackable>false</IsPackable>
 
+    <!-- Without this property, building with AOT for some platforms will fail -->
+    <PublishAotUsingRuntimePack>true</PublishAotUsingRuntimePack>
+
     <Product>Proton Drive</Product>
     <Authors>Proton AG</Authors>
     <Company>Proton AG</Company>
