@@ -224,3 +224,6 @@ export type NodeOrUid = MaybeNode | NodeEntity | DegradedNode | string;
 export type RevisionOrUid = Revision | string;
 
 export type NodeResult = { uid: string; ok: true } | { uid: string; ok: false; error: string };
+export type NodeResultWithNewUid =
+    | { uid: string; newUid: string; ok: true }
+    | { uid: string; ok: false; error: string };

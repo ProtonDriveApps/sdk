@@ -7,6 +7,7 @@ import {
     MaybeNode,
     MaybeMissingNode,
     NodeResult,
+    NodeResultWithNewUid,
     Revision,
     RevisionOrUid,
     ShareNodeSettings,
@@ -408,7 +409,7 @@ export class ProtonDriveClient {
         nodeUids: NodeOrUid[],
         newParentNodeUid: NodeOrUid,
         signal?: AbortSignal,
-    ): AsyncGenerator<NodeResult> {
+    ): AsyncGenerator<NodeResultWithNewUid> {
         this.logger.info(`Copying ${nodeUids.length} nodes to ${getUid(newParentNodeUid)}`);
         yield* this.nodes.management.copyNodes(getUids(nodeUids), getUid(newParentNodeUid), signal);
     }
