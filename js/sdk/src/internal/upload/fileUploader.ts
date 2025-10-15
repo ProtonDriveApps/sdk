@@ -43,7 +43,7 @@ class Uploader {
             });
         }
 
-        this.controller = new UploadController();
+        this.controller = new UploadController(this.abortController.signal);
     }
 
     async uploadFromFile(
@@ -120,7 +120,7 @@ class Uploader {
             this.metadata,
             onFinish,
             this.controller,
-            this.signal,
+            this.abortController,
         );
     }
 

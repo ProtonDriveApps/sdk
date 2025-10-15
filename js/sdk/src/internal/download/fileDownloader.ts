@@ -1,4 +1,7 @@
+import { c } from 'ttag';
+
 import { PrivateKey, SessionKey, base64StringToUint8Array } from '../../crypto';
+import { AbortError } from '../../errors';
 import { Logger } from '../../interface';
 import { LoggerWithPrefix } from '../../telemetry';
 import { APIHTTPError, HTTPErrorCode } from '../apiService';
@@ -48,7 +51,7 @@ export class FileDownloader {
         this.revision = revision;
         this.signal = signal;
         this.onFinish = onFinish;
-        this.controller = new DownloadController();
+        this.controller = new DownloadController(this.signal);
     }
 
     getClaimedSizeInBytes(): number | undefined {
@@ -289,6 +292,10 @@ export class FileDownloader {
                 logger.debug(`Decrypting`);
                 decryptedBlock = await this.cryptoService.decryptBlock(encryptedBlock, cryptoKeys);
             } catch (error) {
+                if (this.signal?.aborted) {
+                    throw new AbortError(c('Error').t`Operation aborted`);
+                }
+
                 if (blockProgress !== 0) {
                     onProgress?.(-blockProgress);
                     blockProgress = 0;
