@@ -50,7 +50,7 @@ describe('NodesManagement', () => {
         apiService = {
             renameNode: jest.fn(),
             moveNode: jest.fn(),
-            copyNode: jest.fn(),
+            copyNode: jest.fn().mockResolvedValue('newCopiedNodeUid'),
             trashNodes: jest.fn(async function* (uids) {
                 yield* uids.map((uid) => ({ ok: true, uid }) as NodeResult);
             }),
@@ -251,6 +251,7 @@ describe('NodesManagement', () => {
 
         expect(newNode).toEqual({
             ...nodes.nodeUid,
+            uid: 'newCopiedNodeUid',
             parentUid: 'newParentNodeUid',
             encryptedName: 'copiedArmoredNodeName',
             hash: 'copiedHash',
@@ -307,6 +308,7 @@ describe('NodesManagement', () => {
         );
         expect(newNode).toEqual({
             ...nodes.anonymousNodeUid,
+            uid: 'newCopiedNodeUid',
             parentUid: 'newParentNodeUid',
             encryptedName: 'copiedArmoredNodeName',
             hash: 'copiedHash',
