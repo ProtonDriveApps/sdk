@@ -1,6 +1,6 @@
 import { c } from 'ttag';
 
-import { MemberRole, NodeType, NodeResult, resultOk } from '../../interface';
+import { MemberRole, NodeType, NodeResult, NodeResultWithNewUid, resultOk } from '../../interface';
 import { AbortError, ValidationError } from '../../errors';
 import { getErrorMessage } from '../errors';
 import { splitNodeUid } from '../uids';
@@ -182,16 +182,21 @@ export class NodesManagement {
         return newNode;
     }
 
-    // Improvement requested: copy nodes in parallel
-    async *copyNodes(nodeUids: string[], newParentNodeUid: string, signal?: AbortSignal): AsyncGenerator<NodeResult> {
+    // Improvement requested: copy nodes in parallel using copy_multiple endpoint
+    async *copyNodes(
+        nodeUids: string[],
+        newParentNodeUid: string,
+        signal?: AbortSignal,
+    ): AsyncGenerator<NodeResultWithNewUid> {
         for (const nodeUid of nodeUids) {
             if (signal?.aborted) {
                 throw new AbortError(c('Error').t`Copy operation aborted`);
             }
             try {
-                await this.copyNode(nodeUid, newParentNodeUid);
+                const { uid: newNodeUid } = await this.copyNode(nodeUid, newParentNodeUid);
                 yield {
                     uid: nodeUid,
+                    newUid: newNodeUid,
                     ok: true,
                 };
             } catch (error: unknown) {
@@ -237,7 +242,7 @@ export class NodesManagement {
                   signatureEmail: encryptedCrypto.signatureEmail,
                   armoredNodePassphraseSignature: encryptedCrypto.armoredNodePassphraseSignature,
               };
-        await this.apiService.copyNode(nodeUid, {
+        const newNodeUid = await this.apiService.copyNode(nodeUid, {
             ...keySignatureProperties,
             parentUid: newParentUid,
             armoredNodePassphrase: encryptedCrypto.armoredNodePassphrase,
@@ -247,6 +252,7 @@ export class NodesManagement {
         });
         const newNode: DecryptedNode = {
             ...node,
+            uid: newNodeUid,
             encryptedName: encryptedCrypto.encryptedName,
             parentUid: newParentUid,
             hash: encryptedCrypto.hash,
