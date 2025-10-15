@@ -8,4 +8,7 @@ internal sealed class FolderCreationRequest : NodeCreationRequest
 {
     [JsonPropertyName("NodeHashKey")]
     public required PgpArmoredMessage HashKey { get; init; }
+
+    [JsonPropertyName("SignatureEmail")]
+    public required string SignatureEmailAddress { get; init; }
 }

@@ -38,6 +38,7 @@ internal static class VolumeOperations
             Name = RootFolderName,
             NameAuthor = new Author { EmailAddress = defaultAddress.EmailAddress },
             Author = new Author { EmailAddress = defaultAddress.EmailAddress },
+            CreationTime = DateTime.UtcNow,
         };
 
         // The volume root folder never has siblings and does not need a name hash digest
@@ -72,7 +73,7 @@ internal static class VolumeOperations
 
         while (mustTryMoreResults)
         {
-            var response = await client.Api.Volumes.GetTrashAsync(volumeId, TrashPageSize, page, cancellationToken).ConfigureAwait(false);
+            var response = await client.Api.Trash.GetTrashAsync(volumeId, TrashPageSize, page, cancellationToken).ConfigureAwait(false);
 
             mustTryMoreResults = response.TrashByShare.Sum(x => x.LinkIds.Count) == TrashPageSize;
 

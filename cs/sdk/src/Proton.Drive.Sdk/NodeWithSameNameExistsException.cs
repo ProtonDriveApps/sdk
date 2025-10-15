@@ -30,11 +30,26 @@ public sealed class NodeWithSameNameExistsException : ProtonDriveException
         }
 
         ConflictingNodeIsFileDraft = response.Conflict is { RevisionId: null, DraftRevisionId: not null };
-        ConflictingNodeUid = response.Conflict.LinkId is not null
-            ? new NodeUid(volumeId, response.Conflict.LinkId.Value)
-            : null;
+
+        if (response.Conflict is { LinkId: { } linkId })
+        {
+            var conflictingNodeUid = new NodeUid(volumeId, linkId);
+
+            ConflictingNodeUid = conflictingNodeUid;
+
+            if (response.Conflict.RevisionId is { } revisionId)
+            {
+                ConflictingRevisionUid = new RevisionUid(conflictingNodeUid, revisionId);
+            }
+            else if (response.Conflict.DraftRevisionId is { } draftRevisionId)
+            {
+                ConflictingRevisionUid = new RevisionUid(conflictingNodeUid, draftRevisionId);
+                ConflictingNodeIsFileDraft = true;
+            }
+        }
     }
 
     public bool? ConflictingNodeIsFileDraft { get; }
     public NodeUid? ConflictingNodeUid { get; }
+    public RevisionUid? ConflictingRevisionUid { get; }
 }

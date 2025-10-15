@@ -114,6 +114,8 @@ public sealed class ProtonDriveClient
     internal BlockUploader BlockUploader { get; }
     internal BlockDownloader BlockDownloader { get; }
 
+    internal Func<string, IEnumerable<string>> GetAlternateFileNames { get; } = AlternateFileNameGenerator.GetNames;
+
     public ValueTask<FolderNode> GetMyFilesFolderAsync(CancellationToken cancellationToken)
     {
         return NodeOperations.GetMyFilesFolderAsync(this, cancellationToken);
@@ -159,6 +161,11 @@ public sealed class ProtonDriveClient
         await BlockListingSemaphore.EnterAsync(1, cancellationToken).ConfigureAwait(false);
 
         return new FileDownloader(this, revisionUid);
+    }
+
+    public ValueTask<string> GetAvailableNameAsync(NodeUid parentUid, string name, CancellationToken cancellationToken)
+    {
+        return NodeOperations.GetAvailableNameAsync(this, parentUid, name, cancellationToken);
     }
 
     public async ValueTask MoveNodesAsync(IEnumerable<NodeUid> uids, NodeUid newParentFolderUid, CancellationToken cancellationToken)

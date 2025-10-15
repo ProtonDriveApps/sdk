@@ -17,4 +17,7 @@ internal sealed class FileCreationRequest : NodeCreationRequest
     public string? ClientUid { get; init; }
 
     public long? IntendedUploadSize { get; init; }
+
+    [JsonPropertyName("SignatureAddress")]
+    public required string SignatureEmailAddress { get; init; }
 }

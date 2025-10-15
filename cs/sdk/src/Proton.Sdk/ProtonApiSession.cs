@@ -209,7 +209,7 @@ public sealed class ProtonApiSession
             passwordMode,
             configuration);
 
-        logger.Log(LogLevel.Information, "Session {SessionId} was resumed", session.SessionId);
+        logger.LogDebug("Session {SessionId} was resumed", session.SessionId);
 
         return session;
     }

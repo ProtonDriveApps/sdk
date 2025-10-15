@@ -19,4 +19,10 @@ internal interface ILinksApiClient
         VolumeId volumeId,
         MultipleLinksNullaryRequest request,
         CancellationToken cancellationToken);
+
+    ValueTask<NodeNameAvailabilityResponse> GetAvailableNames(
+        VolumeId volumeId,
+        LinkId folderId,
+        NodeNameAvailabilityRequest request,
+        CancellationToken cancellationToken);
 }

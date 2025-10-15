@@ -28,7 +28,7 @@ public sealed class FileUploader : IDisposable
     public UploadController UploadFromStream(
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
-        Action<long, long> onProgress,
+        Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
         var task = UploadFromStreamAsync(contentStream, thumbnails, onProgress, cancellationToken);
@@ -39,7 +39,7 @@ public sealed class FileUploader : IDisposable
     public UploadController UploadFromFile(
         string filePath,
         IEnumerable<Thumbnail> thumbnails,
-        Action<long, long> onProgress,
+        Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
         var task = UploadFromFileAsync(filePath, thumbnails, onProgress, cancellationToken);
@@ -61,7 +61,7 @@ public sealed class FileUploader : IDisposable
     private async Task<(NodeUid NodeUid, RevisionUid RevisionUid)> UploadFromStreamAsync(
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
-        Action<long, long> onProgress,
+        Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
         var (draftRevisionUid, fileSecrets) = await _fileDraftProvider.GetDraftAsync(_client, cancellationToken).ConfigureAwait(false);
@@ -98,6 +98,7 @@ public sealed class FileUploader : IDisposable
                 Uid = revisionUid,
                 ClaimedSize = size,
                 ClaimedModificationTime = _lastModificationTime?.UtcDateTime,
+
                 // FIXME: update remaining metadata in cache, but this is not critical because this metadata will soon be invalidated by the event anyway
             },
         };
@@ -108,7 +109,7 @@ public sealed class FileUploader : IDisposable
     private async Task<(NodeUid NodeUid, RevisionUid RevisionUid)> UploadFromFileAsync(
         string filePath,
         IEnumerable<Thumbnail> thumbnails,
-        Action<long, long> onProgress,
+        Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
         var contentStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
@@ -125,7 +126,7 @@ public sealed class FileUploader : IDisposable
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
         DateTimeOffset? lastModificationTime,
-        Action<long, long> onProgress,
+        Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
         using var revisionWriter = await RevisionOperations.OpenForWritingAsync(_client, revisionUid, fileSecrets, ReleaseBlocks, cancellationToken)

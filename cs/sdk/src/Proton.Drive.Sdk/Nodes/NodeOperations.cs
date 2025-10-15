@@ -383,8 +383,50 @@ internal static class NodeOperations
         await Task.WhenAll(tasks).ConfigureAwait(false);
 
         // FIXME: remove trash time from cache
-
         return results;
+    }
+
+    public static async ValueTask<string> GetAvailableNameAsync(ProtonDriveClient client, NodeUid parentUid, string name, CancellationToken cancellationToken)
+    {
+        const int batchSize = 10;
+
+        var folderSecrets = await FolderOperations.GetSecretsAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
+
+        var digestsToNamesMap = new Dictionary<string, string>(batchSize);
+
+        using var batchEnumerator = client.GetAlternateFileNames.Invoke(name).Prepend(name).Chunk(10).GetEnumerator();
+
+        string? availableName = null;
+
+        while (availableName is null)
+        {
+            digestsToNamesMap.Clear();
+
+            batchEnumerator.MoveNext();
+
+            foreach (var candidateName in batchEnumerator.Current)
+            {
+                var digest = Convert.ToHexStringLower(NodeCrypto.HashNodeName(candidateName, folderSecrets.HashKey.Span));
+                digestsToNamesMap[digest] = candidateName;
+            }
+
+            var nameAvailabilityRequest = new NodeNameAvailabilityRequest { ClientUid = [client.Uid], NameHashDigests = digestsToNamesMap.Keys };
+
+            var response = await client.Api.Links.GetAvailableNames(parentUid.VolumeId, parentUid.LinkId, nameAvailabilityRequest, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (response.AvailableNameHashDigests.Count == 0)
+            {
+                continue;
+            }
+
+            if (!digestsToNamesMap.TryGetValue(response.AvailableNameHashDigests[0], out availableName))
+            {
+                throw new KeyNotFoundException("Unknown name hash digest received");
+            }
+        }
+
+        return availableName;
     }
 
     public static async ValueTask<Address> GetMembershipAddressAsync(ProtonDriveClient client, NodeUid nodeUid, CancellationToken cancellationToken)

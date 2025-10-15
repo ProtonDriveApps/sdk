@@ -42,7 +42,7 @@ internal sealed class BlockUploader
         IBlockVerifier verifier,
         byte[] plainDataPrefix,
         int plainDataPrefixLength,
-        Action<long> onBlockProgress,
+        Action<long>? onBlockProgress,
         Action<int> releaseBlocksAction,
         CancellationToken cancellationToken)
     {

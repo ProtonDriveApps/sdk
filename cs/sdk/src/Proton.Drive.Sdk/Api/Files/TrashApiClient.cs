@@ -1,4 +1,5 @@
 using Proton.Drive.Sdk.Api.Links;
+using Proton.Drive.Sdk.Api.Volumes;
 using Proton.Drive.Sdk.Serialization;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk.Api;
@@ -10,6 +11,13 @@ namespace Proton.Drive.Sdk.Api.Files;
 internal sealed class TrashApiClient(HttpClient httpClient) : ITrashApiClient
 {
     private readonly HttpClient _httpClient = httpClient;
+
+    public async ValueTask<VolumeTrashResponse> GetTrashAsync(VolumeId volumeId, int pageSize, int page, CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(DriveApiSerializerContext.Default.VolumeTrashResponse)
+            .GetAsync($"volumes/{volumeId}/trash?pageSize={pageSize}&page={page}", cancellationToken).ConfigureAwait(false);
+    }
 
     public async ValueTask<AggregateApiResponse<LinkIdResponsePair>> TrashMultipleAsync(
         VolumeId volumeId,

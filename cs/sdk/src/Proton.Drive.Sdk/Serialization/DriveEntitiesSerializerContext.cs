@@ -8,6 +8,7 @@ namespace Proton.Drive.Sdk.Serialization;
 #pragma warning disable SA1114, SA1118 // Disable style analysis warnings due to attribute spanning multiple lines
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    PropertyNameCaseInsensitive = true,
     Converters =
     [
         typeof(RefResultJsonConverter<string, InvalidNameError>),
