@@ -21,11 +21,4 @@ internal sealed class VolumesApiClient(HttpClient httpClient) : IVolumesApiClien
             .Expecting(DriveApiSerializerContext.Default.VolumeResponse)
             .GetAsync($"volumes/{volumeId}", cancellationToken).ConfigureAwait(false);
     }
-
-    public async ValueTask<VolumeTrashResponse> GetTrashAsync(VolumeId volumeId, int pageSize, int page, CancellationToken cancellationToken)
-    {
-        return await _httpClient
-            .Expecting(DriveApiSerializerContext.Default.VolumeTrashResponse)
-            .GetAsync($"volumes/{volumeId}/trash?pageSize={pageSize}&page={page}", cancellationToken).ConfigureAwait(false);
-    }
 }

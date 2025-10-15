@@ -13,7 +13,11 @@ public abstract record Node
 
     public required NodeUid? ParentUid { get; init; }
 
+    public string TreeEventScopeId => Uid.VolumeId.ToString();
+
     public required string Name { get; init; }
+
+    public required DateTime CreationTime { get; init; }
 
     public DateTime? TrashTime { get; init; }
 

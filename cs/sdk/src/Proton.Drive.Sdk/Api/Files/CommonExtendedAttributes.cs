@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk.Nodes;
+﻿namespace Proton.Drive.Sdk.Api.Files;
 
 internal sealed class CommonExtendedAttributes
 {
@@ -7,4 +7,6 @@ internal sealed class CommonExtendedAttributes
     public DateTime? ModificationTime { get; init; }
 
     public IReadOnlyList<int>? BlockSizes { get; init; }
+
+    public FileContentDigestsDto? Digests { get; init; }
 }

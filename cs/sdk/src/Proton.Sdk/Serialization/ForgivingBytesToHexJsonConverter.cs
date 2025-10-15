@@ -38,6 +38,7 @@ internal sealed class ForgivingBytesToHexJsonConverter : JsonConverter<ReadOnlyM
     {
         if (value.Length == 0)
         {
+            writer.WriteNullValue();
             return;
         }
 

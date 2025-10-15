@@ -63,4 +63,20 @@ internal sealed class LinksApiClient(HttpClient httpClient) : ILinksApiClient
                 cancellationToken)
             .ConfigureAwait(false);
     }
+
+    public async ValueTask<NodeNameAvailabilityResponse> GetAvailableNames(
+        VolumeId volumeId,
+        LinkId folderId,
+        NodeNameAvailabilityRequest request,
+        CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(DriveApiSerializerContext.Default.NodeNameAvailabilityResponse)
+            .PostAsync(
+                $"v2/volumes/{volumeId}/links/{folderId}/checkAvailableHashes",
+                request,
+                DriveApiSerializerContext.Default.NodeNameAvailabilityRequest,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
 }

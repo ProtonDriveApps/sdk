@@ -14,7 +14,7 @@ public readonly record struct RevisionUid : ICompositeUid<RevisionUid>
         RevisionId = revisionId;
     }
 
-    public NodeUid NodeUid { get; }
+    internal NodeUid NodeUid { get; }
     internal RevisionId RevisionId { get; }
 
     public override string ToString()

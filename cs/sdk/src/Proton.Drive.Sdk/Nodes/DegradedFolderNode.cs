@@ -12,6 +12,7 @@ public sealed record DegradedFolderNode : DegradedNode
             ParentUid = ParentUid,
             Name = Name.TryGetValue(out var name) ? name : substituteName,
             NameAuthor = NameAuthor,
+            CreationTime = CreationTime,
             TrashTime = TrashTime,
             Author = Author,
         };
