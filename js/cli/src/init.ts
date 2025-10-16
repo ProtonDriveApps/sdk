@@ -44,7 +44,10 @@ function initCrypto() {
 
 function getConfig(): Config {
     return {
-        appVersion: 'web-drive-sdk-cli@5.0.999.999',
+        // App version must have two or three parts, no more or less, separated by dash.
+        // First part is platform name, second is product name, third is optional section.
+        // That's why we have sdkclijs instead of sdk-cli-js.
+        appVersion: 'external-drive-sdkclijs@5.0.999.999',
         baseUrl: process.env.PROTON_DRIVE_BASE_URL || 'drive-api.proton.me',
         cacheDir: process.env.PROTON_DRIVE_CACHE_DIR || process.cwd(),
         enableConsoleLog: process.env.PROTON_DRIVE_DISABLE_CONSOLE_LOG === undefined,
