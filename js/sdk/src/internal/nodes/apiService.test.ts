@@ -1,3 +1,4 @@
+import { NodeWithSameNameExistsValidationError, ValidationError } from '../../errors';
 import { MemberRole, NodeType } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
 import { DriveAPIService, ErrorCode, InvalidRequirementsAPIError } from '../apiService';
@@ -624,6 +625,69 @@ describe('nodeAPIService', () => {
                 { uid: 'volumeId1~nodeId1', ok: true },
                 { uid: 'volumeId2~nodeId2', ok: true },
             ]);
+        });
+    });
+
+    describe('createFolder', () => {
+        it('should create folder', async () => {
+            apiMock.post = jest.fn().mockResolvedValue({
+                Code: ErrorCode.OK,
+                Folder: {
+                    ID: 'newNodeId',
+                },
+            });
+
+            const result = await api.createFolder('volumeId~parentNodeId', {
+                armoredKey: 'armoredKey',
+                armoredHashKey: 'armoredHashKey',
+                armoredNodePassphrase: 'armoredNodePassphrase',
+                armoredNodePassphraseSignature: 'armoredNodePassphraseSignature',
+                signatureEmail: 'signatureEmail',
+                encryptedName: 'encryptedName',
+                hash: 'hash',
+                armoredExtendedAttributes: 'armoredExtendedAttributes',
+            });
+
+            expect(result).toEqual('volumeId~newNodeId');
+            expect(apiMock.post).toHaveBeenCalledWith('drive/v2/volumes/volumeId/folders', {
+                ParentLinkID: 'parentNodeId',
+                NodeKey: 'armoredKey',
+                NodeHashKey: 'armoredHashKey',
+                NodePassphrase: 'armoredNodePassphrase',
+                NodePassphraseSignature: 'armoredNodePassphraseSignature',
+                SignatureEmail: 'signatureEmail',
+                Name: 'encryptedName',
+                Hash: 'hash',
+                XAttr: 'armoredExtendedAttributes',
+            });
+        });
+
+        it('should throw NodeWithSameNameExistsValidationError if node already exists', async () => {
+            apiMock.post = jest.fn().mockRejectedValue(
+                new ValidationError('Node already exists', ErrorCode.ALREADY_EXISTS, {
+                    ConflictLinkID: 'existingNodeId',
+                }),
+            );
+
+            try {
+                await api.createFolder('volumeId~parentNodeId', {
+                    armoredKey: 'armoredKey',
+                    armoredHashKey: 'armoredHashKey',
+                    armoredNodePassphrase: 'armoredNodePassphrase',
+                    armoredNodePassphraseSignature: 'armoredNodePassphraseSignature',
+                    signatureEmail: 'signatureEmail',
+                    encryptedName: 'encryptedName',
+                    hash: 'hash',
+                    armoredExtendedAttributes: 'armoredExtendedAttributes',
+                });
+                expect(false).toBeTruthy();
+            } catch (error: unknown) {
+                expect(error).toBeInstanceOf(NodeWithSameNameExistsValidationError);
+                if (error instanceof NodeWithSameNameExistsValidationError) {
+                    expect(error.code).toEqual(ErrorCode.ALREADY_EXISTS);
+                    expect(error.existingNodeUid).toEqual('volumeId~existingNodeId');
+                }
+            }
         });
     });
 
