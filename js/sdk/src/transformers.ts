@@ -121,6 +121,14 @@ export function convertInternalNode(node: InternalPartialNode): PublicMaybeNode 
     } as PublicNodeEntity);
 }
 
+export async function* convertInternalRevisionIterator(
+    revisionIterator: AsyncGenerator<InternalRevision>,
+): AsyncGenerator<PublicRevision> {
+    for await (const revision of revisionIterator) {
+        yield convertInternalRevision(revision);
+    }
+}
+
 function convertInternalRevision(revision: InternalRevision): PublicRevision {
     return {
         uid: revision.uid,
