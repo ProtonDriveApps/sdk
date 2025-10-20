@@ -38,6 +38,7 @@ import {
     convertInternalNodeIterator,
     convertInternalMissingNodeIterator,
     convertInternalNode,
+    convertInternalRevisionIterator,
 } from './transformers';
 import { Telemetry } from './telemetry';
 import { DriveAPIService } from './internal/apiService';
@@ -524,7 +525,7 @@ export class ProtonDriveClient {
      */
     async *iterateRevisions(nodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<Revision> {
         this.logger.info(`Iterating revisions of ${getUid(nodeUid)}`);
-        yield* this.nodes.revisions.iterateRevisions(getUid(nodeUid), signal);
+        yield* convertInternalRevisionIterator(this.nodes.revisions.iterateRevisions(getUid(nodeUid), signal));
     }
 
     /**
