@@ -1,11 +1,12 @@
 import { c } from 'ttag';
 
-import { ProtonDriveError, ValidationError } from '../../errors';
+import { NodeWithSameNameExistsValidationError, ProtonDriveError, ValidationError } from '../../errors';
 import { Logger, NodeResult } from '../../interface';
 import { MemberRole, RevisionState } from '../../interface/nodes';
 import {
     DriveAPIService,
     drivePaths,
+    ErrorCode,
     InvalidRequirementsAPIError,
     isCodeOk,
     nodeTypeNumberToNodeType,
@@ -400,7 +401,7 @@ export class NodeAPIService {
             );
 
             // TODO: remove `as` when backend fixes OpenAPI schema.
-            yield * handleResponseErrors(batchNodeUids, volumeId, response.Responses as LinkResponse[]);
+            yield* handleResponseErrors(batchNodeUids, volumeId, response.Responses as LinkResponse[]);
         }
     }
 
@@ -449,21 +450,41 @@ export class NodeAPIService {
     ): Promise<string> {
         const { volumeId, nodeId: parentId } = splitNodeUid(parentUid);
 
-        const response = await this.apiService.post<PostCreateFolderRequest, PostCreateFolderResponse>(
-            `drive/v2/volumes/${volumeId}/folders`,
-            {
-                ParentLinkID: parentId,
-                NodeKey: newNode.armoredKey,
-                NodeHashKey: newNode.armoredHashKey,
-                NodePassphrase: newNode.armoredNodePassphrase,
-                NodePassphraseSignature: newNode.armoredNodePassphraseSignature,
-                SignatureEmail: newNode.signatureEmail,
-                Name: newNode.encryptedName,
-                Hash: newNode.hash,
-                // @ts-expect-error: XAttr is optional as undefined.
-                XAttr: newNode.armoredExtendedAttributes,
-            },
-        );
+        let response: PostCreateFolderResponse;
+        try {
+            response = await this.apiService.post<PostCreateFolderRequest, PostCreateFolderResponse>(
+                `drive/v2/volumes/${volumeId}/folders`,
+                {
+                    ParentLinkID: parentId,
+                    NodeKey: newNode.armoredKey,
+                    NodeHashKey: newNode.armoredHashKey,
+                    NodePassphrase: newNode.armoredNodePassphrase,
+                    NodePassphraseSignature: newNode.armoredNodePassphraseSignature,
+                    SignatureEmail: newNode.signatureEmail,
+                    Name: newNode.encryptedName,
+                    Hash: newNode.hash,
+                    // @ts-expect-error: XAttr is optional as undefined.
+                    XAttr: newNode.armoredExtendedAttributes,
+                },
+            );
+        } catch (error: unknown) {
+            if (error instanceof ValidationError) {
+                if (error.code === ErrorCode.ALREADY_EXISTS) {
+                    const typedDetails = error.details as
+                        | {
+                              ConflictLinkID: string;
+                          }
+                        | undefined;
+
+                    const existingNodeUid = typedDetails?.ConflictLinkID
+                        ? makeNodeUid(volumeId, typedDetails.ConflictLinkID)
+                        : undefined;
+
+                    throw new NodeWithSameNameExistsValidationError(error.message, error.code, existingNodeUid);
+                }
+            }
+            throw error;
+        }
 
         return makeNodeUid(volumeId, response.Folder.ID);
     }
