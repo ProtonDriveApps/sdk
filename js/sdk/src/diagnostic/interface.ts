@@ -9,6 +9,15 @@ export interface Diagnostic {
 export type DiagnosticOptions = {
     verifyContent?: boolean;
     verifyThumbnails?: boolean;
+    expectedStructure?: ExcpectedTreeNode;
+};
+
+// Tree structure of the expected node tree.
+export type ExcpectedTreeNode = {
+    name: string;
+    expectedSha1?: string;
+    expectedSizeInBytes?: number;
+    children?: ExcpectedTreeNode[];
 };
 
 export type DiagnosticResult =
@@ -23,6 +32,9 @@ export type DiagnosticResult =
     | ContentIntegrityErrorResult
     | ContentDownloadErrorResult
     | ThumbnailsErrorResult
+    | ExpectedStructureMissingNode
+    | ExpectedStructureUnexpectedNode
+    | ExpectedStructureIntegrityError
     | LogErrorResult
     | LogWarningResult
     | MetricResult;
@@ -119,6 +131,33 @@ export type ContentDownloadErrorResult = {
 export type ThumbnailsErrorResult = {
     type: 'thumbnails_error';
     error: unknown;
+} & NodeDetails;
+
+// Event representing that expected node is missing.
+// This will be reported for any node that is not found compared to
+// the expected structure.
+export type ExpectedStructureMissingNode = {
+    type: 'expected_structure_missing_node';
+    expectedNode: ExcpectedTreeNode;
+    parentNodeUid: string;
+};
+
+// Event representing that unexpected node is present.
+// This will be reported for any node that is found in the actual structure
+// but is not defined in the expected structure.
+export type ExpectedStructureUnexpectedNode = {
+    type: 'expected_structure_unexpected_node';
+} & NodeDetails;
+
+// Event representing that expected node is not matching the actual node.
+// This will be reported when claimed and expected values are different.
+// It doesn't check the real content - use content verification to verify
+// the claimed values with the real content.
+export type ExpectedStructureIntegrityError = {
+    type: 'expected_structure_integrity_error';
+    expectedNode: ExcpectedTreeNode;
+    claimedSha1?: string;
+    claimedSizeInBytes?: number;
 } & NodeDetails;
 
 // Event representing errors logged during the diagnostic.

@@ -1,6 +1,7 @@
 import { ParseArgsConfig } from 'util';
 
 import { Command, ActionArgs } from './interface';
+import { printObject } from './formatters';
 
 export class CommandDiagnosticTree implements Command {
     group = 'diagnostic';
@@ -24,22 +25,25 @@ export class CommandDiagnosticTree implements Command {
         },
     };
 
-    async action({ sdkDiagnostic, paths, args: [pathString], options: { json, content, thumbnails } }: ActionArgs) {
+    async action({
+        sdkDiagnostic,
+        paths,
+        args: [pathString],
+        options: { json, content, thumbnails, localStructure },
+    }: ActionArgs) {
         const nodePath = paths.getPath(pathString);
         const node = await nodePath.getNode();
+
+        const expectedStructure = localStructure ? JSON.parse(await Bun.file(localStructure).text()) : undefined;
 
         const options = {
             verifyContent: content,
             verifyThumbnails: thumbnails,
+            expectedStructure,
         };
 
         for await (const result of sdkDiagnostic.verifyNodeTree(node, options)) {
-            if (json) {
-                console.log(JSON.stringify(result));
-            } else {
-                // Empty string as first argument is a workaround to print deep structures with Bun.
-                console.log('', result);
-            }
+            printObject(result, json);
         }
     }
 }

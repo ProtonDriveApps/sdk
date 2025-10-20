@@ -1,10 +1,9 @@
 import { MemoryCache, NullCache } from '../cache';
 import { ProtonDriveClientContructorParameters } from '../interface';
 import { ProtonDriveClient } from '../protonDriveClient';
-import { DiagnosticHTTPClient } from './httpClient';
+import { Diagnostic as DiagnosticClass } from './diagnostic';
 import { Diagnostic } from './interface';
-import { SDKDiagnostic } from './sdkDiagnostic';
-import { FullSDKDiagnostic } from './sdkDiagnosticFull';
+import { DiagnosticHTTPClient } from './httpClient';
 import { DiagnosticTelemetry } from './telemetry';
 
 export type { Diagnostic, DiagnosticResult } from './interface';
@@ -35,6 +34,5 @@ export function initDiagnostic(
         telemetry,
     });
 
-    const diagnostic = new SDKDiagnostic(protonDriveClient);
-    return new FullSDKDiagnostic(diagnostic, telemetry, httpClient);
+    return new DiagnosticClass(telemetry, httpClient, protonDriveClient);
 }

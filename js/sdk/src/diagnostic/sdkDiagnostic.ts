@@ -1,6 +1,6 @@
 import { Author, FileDownloader, MaybeNode, NodeType, Revision, ThumbnailType } from '../interface';
 import { ProtonDriveClient } from '../protonDriveClient';
-import { Diagnostic, DiagnosticOptions, DiagnosticResult, NodeDetails } from './interface';
+import { DiagnosticOptions, DiagnosticResult, NodeDetails, ExcpectedTreeNode } from './interface';
 import { IntegrityVerificationStream } from './integrityVerificationStream';
 
 /**
@@ -10,7 +10,7 @@ import { IntegrityVerificationStream } from './integrityVerificationStream';
  * It produces only events that can be read by direct SDK invocation.
  * To get the full diagnostic, use {@link FullSDKDiagnostic}.
  */
-export class SDKDiagnostic implements Diagnostic {
+export class SDKDiagnostic {
     constructor(private protonDriveClient: ProtonDriveClient) {
         this.protonDriveClient = protonDriveClient;
     }
@@ -58,7 +58,7 @@ export class SDKDiagnostic implements Diagnostic {
             yield* this.verifyAuthor(activeRevision.contentAuthor, 'content', node);
         }
 
-        yield* this.verifyFileExtendedAttributes(node);
+        yield* this.verifyFileExtendedAttributes(node, options);
 
         if (options?.verifyContent) {
             yield* this.verifyContent(node);
@@ -80,12 +80,17 @@ export class SDKDiagnostic implements Diagnostic {
         }
     }
 
-    private async *verifyFileExtendedAttributes(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
+    private async *verifyFileExtendedAttributes(
+        node: MaybeNode,
+        options?: DiagnosticOptions,
+    ): AsyncGenerator<DiagnosticResult> {
         const activeRevision = getActiveRevision(node);
 
         const expectedAttributes = getNodeType(node) === NodeType.File;
 
         const claimedSha1 = activeRevision?.claimedDigests?.sha1;
+        const claimedSizeInBytes = activeRevision?.claimedSize;
+
         if (claimedSha1 && !/^[0-9a-f]{40}$/i.test(claimedSha1)) {
             yield {
                 type: 'extended_attributes_error',
@@ -101,6 +106,24 @@ export class SDKDiagnostic implements Diagnostic {
                 missingField: 'sha1',
                 ...getNodeDetails(node),
             };
+        }
+
+        if (options?.expectedStructure) {
+            const expectedSha1 = options.expectedStructure.expectedSha1;
+            const expectedSizeInBytes = options.expectedStructure.expectedSizeInBytes;
+
+            const wrongSha1 = expectedSha1 !== undefined && claimedSha1 !== expectedSha1;
+            const wrongSizeInBytes = expectedSizeInBytes !== undefined && claimedSizeInBytes !== expectedSizeInBytes;
+
+            if (wrongSha1 || wrongSizeInBytes) {
+                yield {
+                    type: 'expected_structure_integrity_error',
+                    claimedSha1,
+                    claimedSizeInBytes,
+                    expectedNode: getExpectedTreeNodeDetails(options.expectedStructure),
+                    ...getNodeDetails(node),
+                };
+            }
         }
     }
 
@@ -195,18 +218,72 @@ export class SDKDiagnostic implements Diagnostic {
         }
     }
 
-    private async *verifyNodeChildren(node: MaybeNode, options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
-        const nodeUid = node.ok ? node.value.uid : node.error.uid;
+    private async *verifyNodeChildren(
+        parentNode: MaybeNode,
+        options?: DiagnosticOptions,
+    ): AsyncGenerator<DiagnosticResult> {
+        const parentNodeUid = parentNode.ok ? parentNode.value.uid : parentNode.error.uid;
+        const children: MaybeNode[] = [];
+
         try {
-            for await (const child of this.protonDriveClient.iterateFolderChildren(node)) {
-                yield* this.verifyNodeTree(child, options);
+            for await (const child of this.protonDriveClient.iterateFolderChildren(parentNode)) {
+                if (options?.expectedStructure) {
+                    children.push(child);
+                }
+
+                yield *
+                    this.verifyNodeTree(child, {
+                        ...options,
+                        expectedStructure: options?.expectedStructure
+                            ? getTreeNodeChildByNodeName(options.expectedStructure, getNodeName(child))
+                            : undefined,
+                    });
             }
         } catch (error: unknown) {
             yield {
                 type: 'sdk_error',
-                call: `iterateFolderChildren(${nodeUid})`,
+                call: `iterateFolderChildren(${parentNodeUid})`,
                 error,
             };
+        }
+
+        if (options?.expectedStructure) {
+            yield* this.verifyExpectedNodeChildren(parentNodeUid, children, options);
+        }
+    }
+
+    private async *verifyExpectedNodeChildren(
+        parentNodeUid: string,
+        children: MaybeNode[],
+        options: DiagnosticOptions,
+    ): AsyncGenerator<DiagnosticResult> {
+        if (!options.expectedStructure) {
+            return;
+        }
+
+        const expectedNodes = options.expectedStructure.children ?? [];
+        const actualNodeNames = children.map((child) => getNodeName(child));
+
+        for (const expectedNode of expectedNodes) {
+            if (!actualNodeNames.includes(expectedNode.name)) {
+                yield {
+                    type: 'expected_structure_missing_node',
+                    expectedNode: getExpectedTreeNodeDetails(expectedNode),
+                    parentNodeUid,
+                };
+            }
+        }
+
+        for (const child of children) {
+            const childName = getNodeName(child);
+            const isExpected = expectedNodes.some((expectedNode) => expectedNode.name === childName);
+
+            if (!isExpected) {
+                yield {
+                    type: 'expected_structure_unexpected_node',
+                    ...getNodeDetails(child),
+                };
+            }
         }
     }
 }
@@ -274,4 +351,28 @@ function getActiveRevision(node: MaybeNode): Revision | undefined {
         return node.error.activeRevision.value;
     }
     return undefined;
+}
+
+function getNodeName(node: MaybeNode): string {
+    if (node.ok) {
+        return node.value.name;
+    }
+    if (node.error.name.ok) {
+        return node.error.name.value;
+    }
+    return 'N/A';
+}
+
+function getExpectedTreeNodeDetails(expectedNode: ExcpectedTreeNode): ExcpectedTreeNode {
+    return {
+        ...expectedNode,
+        children: undefined,
+    };
+}
+
+function getTreeNodeChildByNodeName(
+    expectedSubtree: ExcpectedTreeNode,
+    nodeName: string,
+): ExcpectedTreeNode | undefined {
+    return expectedSubtree.children?.find((expectedNode) => expectedNode.name === nodeName);
 }
