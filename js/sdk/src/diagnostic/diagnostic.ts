@@ -1,6 +1,8 @@
 import { MaybeNode } from '../interface';
+import { ProtonDriveClient } from '../protonDriveClient';
 import { DiagnosticHTTPClient } from './httpClient';
-import { Diagnostic, DiagnosticOptions, DiagnosticResult } from './interface';
+import { DiagnosticOptions, DiagnosticResult } from './interface';
+import { SDKDiagnostic } from './sdkDiagnostic';
 import { DiagnosticTelemetry } from './telemetry';
 import { zipGenerators } from './zipGenerators';
 
@@ -8,23 +10,25 @@ import { zipGenerators } from './zipGenerators';
  * Diagnostic tool that produces full diagnostic, including logs and metrics
  * by reading the events from the telemetry and HTTP client.
  */
-export class FullSDKDiagnostic implements Diagnostic {
+export class Diagnostic {
     constructor(
-        private diagnostic: Diagnostic,
         private telemetry: DiagnosticTelemetry,
         private httpClient: DiagnosticHTTPClient,
+        private protonDriveClient: ProtonDriveClient,
     ) {
-        this.diagnostic = diagnostic;
         this.telemetry = telemetry;
         this.httpClient = httpClient;
+        this.protonDriveClient = protonDriveClient;
     }
 
     async *verifyMyFiles(options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
-        yield* this.yieldEvents(this.diagnostic.verifyMyFiles(options));
+        const diagnostic = new SDKDiagnostic(this.protonDriveClient);
+        yield* this.yieldEvents(diagnostic.verifyMyFiles(options));
     }
 
     async *verifyNodeTree(node: MaybeNode, options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
-        yield* this.yieldEvents(this.diagnostic.verifyNodeTree(node, options));
+        const diagnostic = new SDKDiagnostic(this.protonDriveClient);
+        yield* this.yieldEvents(diagnostic.verifyNodeTree(node, options));
     }
 
     private async *yieldEvents(generator: AsyncGenerator<DiagnosticResult>): AsyncGenerator<DiagnosticResult> {
