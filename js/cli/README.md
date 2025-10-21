@@ -44,8 +44,7 @@ Run the executable without any parameter to get help.
 
 ## Environment variables
 
-| Name                     | Description                                                                 | Default Value               |
-|--------------------------|-----------------------------------------------------------------------------|-----------------------------|
-| `PROTON_DRIVE_BASE_URL`     | URL for the API.                                                           | `drive-api.proton.me`       |
-| `PROTON_DRIVE_CACHE_DIR`    | Directory where the SQLite and other caches, or logs, are stored.          | Current working directory   |
-| `PROTON_DRIVE_DISABLE_CONSOLE_LOG` | Option to turn off the logging to the stdout. Logs will always be available in the `proton-drive.log`, located in `PROTON_DRIVE_CACHE_DIR`. | None                        |
+| Name                     | Description                                                       | Default Value               |
+|--------------------------|-------------------------------------------------------------------|-----------------------------|
+| `PROTON_DRIVE_BASE_URL`  | URL for the API.                                                  | `drive-api.proton.me`       |
+| `PROTON_DRIVE_CACHE_DIR` | Directory where the SQLite and other caches, or logs, are stored. | Current working directory   |

@@ -21,7 +21,7 @@ validateCommandArguments(command, args, options);
 
 const debug = !options.json;
 
-const { account, sdk, photosSdk, sdkDiagnostic, paths } = await init();
+const { account, sdk, photosSdk, sdkDiagnostic, paths } = await init(debug);
 
 if (debug) {
     console.log(`Proton Drive SDK for web v${VERSION}`);
