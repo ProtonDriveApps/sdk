@@ -19,9 +19,9 @@ interface Config {
     accessToken?: string;
 }
 
-export async function init() {
+export async function init(debug: boolean) {
     const cryptoApi = initCrypto();
-    const config = getConfig();
+    const config = getConfig(debug);
     const account = await initAccount(cryptoApi, config);
     const srp = await initSrp(cryptoApi, config);
     const sdk = initSDK(cryptoApi, config, account, srp);
@@ -42,7 +42,7 @@ function initCrypto() {
     return new CryptoApi();
 }
 
-function getConfig(): Config {
+function getConfig(debug: boolean): Config {
     return {
         // App version must have two or three parts, no more or less, separated by dash.
         // First part is platform name, second is product name, third is optional section.
@@ -50,7 +50,7 @@ function getConfig(): Config {
         appVersion: 'external-drive-sdkclijs@5.0.999.999',
         baseUrl: process.env.PROTON_DRIVE_BASE_URL || 'drive-api.proton.me',
         cacheDir: process.env.PROTON_DRIVE_CACHE_DIR || process.cwd(),
-        enableConsoleLog: process.env.PROTON_DRIVE_DISABLE_CONSOLE_LOG === undefined,
+        enableConsoleLog: debug,
     };
 }
 
