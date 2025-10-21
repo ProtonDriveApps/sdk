@@ -14,13 +14,13 @@ internal static class ProtonApiSessionRequestHandler
 
         var telemetry = request.Options.Telemetry.ToTelemetry(bindingsHandle);
 
-        var secretCacheRepository = request.HasSecretCachePath
+        ICacheRepository secretCacheRepository = request.HasSecretCachePath
             ? SqliteCacheRepository.OpenFile(request.SecretCachePath)
-            : SqliteCacheRepository.OpenInMemory();
+            : new InMemoryCacheRepository();
 
-        var entityCacheRepository = request.Options.HasEntityCachePath
+        ICacheRepository entityCacheRepository = request.Options.HasEntityCachePath
             ? SqliteCacheRepository.OpenFile(request.Options.EntityCachePath)
-            : SqliteCacheRepository.OpenInMemory();
+            : new InMemoryCacheRepository();
 
         var options = new ProtonSessionOptions
         {
@@ -49,9 +49,9 @@ internal static class ProtonApiSessionRequestHandler
 
         var secretCacheRepository = SqliteCacheRepository.OpenFile(request.SecretCachePath);
 
-        var entityCacheRepository = request.Options.HasEntityCachePath
+        ICacheRepository entityCacheRepository = request.Options.HasEntityCachePath
             ? SqliteCacheRepository.OpenFile(request.Options.EntityCachePath)
-            : SqliteCacheRepository.OpenInMemory();
+            : new InMemoryCacheRepository();
 
         var options = new Proton.Sdk.ProtonClientOptions
         {

@@ -12,5 +12,5 @@ public interface ICacheRepository : IAsyncDisposable
 
     ValueTask<string?> TryGetAsync(string key, CancellationToken cancellationToken);
 
-    IAsyncEnumerable<(string Key, string Value)> GetByTagsAsync(IEnumerable<string> tags, CancellationToken cancellationToken);
+    IAsyncEnumerable<(string Key, string Value)> GetByTagsAsync(IEnumerable<string> tags, CancellationToken cancellationToken = default);
 }

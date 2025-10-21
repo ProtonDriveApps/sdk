@@ -28,13 +28,13 @@ internal static class InteropProtonDriveClient
 
         var accountClient = new InteropAccountClient(bindingsHandle, new InteropAction<nint, InteropArray<byte>, nint>(request.AccountRequestAction));
 
-        var entityCacheRepository = request.HasEntityCachePath
+        ICacheRepository entityCacheRepository = request.HasEntityCachePath
             ? SqliteCacheRepository.OpenFile(request.EntityCachePath)
-            : SqliteCacheRepository.OpenInMemory();
+            : new InMemoryCacheRepository();
 
-        var secretCacheRepository = request.HasSecretCachePath
+        ICacheRepository secretCacheRepository = request.HasSecretCachePath
             ? SqliteCacheRepository.OpenFile(request.SecretCachePath)
-            : SqliteCacheRepository.OpenInMemory();
+            : new InMemoryCacheRepository();
 
         ITelemetry telemetry = request.Telemetry.ToTelemetry(bindingsHandle) is { } interopTelemetry
             ? new DriveInteropTelemetryDecorator(interopTelemetry)
