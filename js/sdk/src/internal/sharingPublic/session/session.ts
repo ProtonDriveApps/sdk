@@ -1,6 +1,6 @@
 import { SRPModule } from '../../../crypto';
 import { SharingPublicSessionAPIService } from './apiService';
-import { PublicLinkInfo, PublicLinkSrpInfo } from './interface';
+import { EncryptedShareCrypto, PublicLinkInfo, PublicLinkSrpInfo } from './interface';
 
 /**
  * Session for a public link.
@@ -33,7 +33,7 @@ export class SharingPublicLinkSession {
         return this.apiService.initPublicLinkSession(this.token);
     }
 
-    async auth(srp: PublicLinkSrpInfo): Promise<void> {
+    async auth(srp: PublicLinkSrpInfo): Promise<{ encryptedShare: EncryptedShareCrypto; rootUid: string }> {
         const { expectedServerProof, clientProof, clientEphemeral } = await this.srpModule.getSrp(
             srp.version,
             srp.modulus,
@@ -48,12 +48,17 @@ export class SharingPublicLinkSession {
             srpSession: srp.srpSession,
         });
 
-        if (auth.serverProof !== expectedServerProof) {
+        if (auth.session.serverProof !== expectedServerProof) {
             throw new Error('Invalid server proof');
         }
 
-        this.sessionUid = auth.sessionUid;
-        this.sessionAccessToken = auth.sessionAccessToken;
+        this.sessionUid = auth.session.sessionUid;
+        this.sessionAccessToken = auth.session.sessionAccessToken;
+
+        return {
+            encryptedShare: auth.encryptedShare,
+            rootUid: auth.rootUid,
+        };
     }
 
     /**
