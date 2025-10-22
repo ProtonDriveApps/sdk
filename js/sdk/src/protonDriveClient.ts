@@ -703,6 +703,12 @@ export class ProtonDriveClient {
         return this.sharing.management.unshareNode(getUid(nodeUid), settings);
     }
 
+    /**
+     * Resend the invitation email to shared node.
+     *
+     * @param nodeUid - Node entity or its UID string.
+     * @param invitationUid - Invitation entity or its UID string.
+     */
     async resendInvitation(
         nodeUid: NodeOrUid,
         invitationUid: ProtonInvitationOrUid | NonProtonInvitationOrUid,

@@ -10,12 +10,20 @@ import {
     MaybeNode,
     ThumbnailType,
     ThumbnailResult,
+    ShareNodeSettings,
+    ShareResult,
+    UnshareNodeSettings,
+    ProtonInvitationOrUid,
+    NonProtonInvitationOrUid,
+    ProtonInvitationWithNode,
+    NodeResult,
 } from './interface';
 import { getConfig } from './config';
 import { DriveCrypto } from './crypto';
 import { Telemetry } from './telemetry';
 import {
     convertInternalMissingNodeIterator,
+    convertInternalNode,
     convertInternalNodeIterator,
     convertInternalNodePromise,
     getUid,
@@ -72,7 +80,7 @@ export class ProtonDrivePhotosClient {
         if (!telemetry) {
             telemetry = new Telemetry();
         }
-        this.logger = telemetry.getLogger('interface');
+        this.logger = telemetry.getLogger('photos-interface');
 
         const fullConfig = getConfig(config);
         this.sdkEvents = new SDKEvents(telemetry);
@@ -206,6 +214,16 @@ export class ProtonDrivePhotosClient {
     }
 
     /**
+     * Iterates the trashed nodes.
+     *
+     * See `ProtonDriveClient.iterateTrashedNodes` for more information.
+     */
+    async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+        this.logger.info('Iterating trashed nodes');
+        yield* convertInternalNodeIterator(this.nodes.access.iterateTrashedNodes(signal));
+    }
+
+    /**
      * Iterates the nodes by their UIDs.
      *
      * See `ProtonDriveClient.iterateNodes` for more information.
@@ -227,14 +245,163 @@ export class ProtonDrivePhotosClient {
     }
 
     /**
-     * Iterates the albums.
+     * Rename the node.
      *
-     * The output is not sorted and the order of the nodes is not guaranteed.
+     * See `ProtonDriveClient.renameNode` for more information.
      */
-    async *iterateAlbums(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
-        this.logger.info('Iterating albums');
-        // TODO: expose album type
-        yield* convertInternalNodeIterator(this.photos.albums.iterateAlbums(signal));
+    async renameNode(nodeUid: NodeOrUid, newName: string): Promise<MaybeNode> {
+        this.logger.info(`Renaming node ${getUid(nodeUid)}`);
+        return convertInternalNodePromise(this.nodes.management.renameNode(getUid(nodeUid), newName));
+    }
+
+    /**
+     * Trash the nodes.
+     *
+     * See `ProtonDriveClient.trashNodes` for more information.
+     */
+    async *trashNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
+        this.logger.info(`Trashing ${nodeUids.length} nodes`);
+        yield* this.nodes.management.trashNodes(getUids(nodeUids), signal);
+    }
+
+    /**
+     * Restore the nodes from the trash to their original place.
+     *
+     * See `ProtonDriveClient.restoreNodes` for more information.
+     */
+    async *restoreNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
+        this.logger.info(`Restoring ${nodeUids.length} nodes`);
+        yield* this.nodes.management.restoreNodes(getUids(nodeUids), signal);
+    }
+
+    /**
+     * Delete the nodes permanently.
+     *
+     * See `ProtonDriveClient.deleteNodes` for more information.
+     */
+    async *deleteNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
+        this.logger.info(`Deleting ${nodeUids.length} nodes`);
+        yield* this.nodes.management.deleteNodes(getUids(nodeUids), signal);
+    }
+
+    /**
+     * Empty the trash.
+     *
+     * See `ProtonDriveClient.emptyTrash` for more information.
+     */
+    async emptyTrash(): Promise<void> {
+        this.logger.info('Emptying trash');
+        throw new Error('Method not implemented');
+    }
+
+    /**
+     * Iterates the nodes shared by the user.
+     *
+     * See `ProtonDriveClient.iterateSharedNodes` for more information.
+     */
+    async *iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+        this.logger.info('Iterating shared nodes by me');
+        yield* convertInternalNodeIterator(this.sharing.access.iterateSharedNodes(signal));
+    }
+
+    /**
+     * Iterates the nodes shared with the user.
+     *
+     * See `ProtonDriveClient.iterateSharedNodesWithMe` for more information.
+     */
+    async *iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+        this.logger.info('Iterating shared nodes with me');
+
+        for await (const node of this.sharing.access.iterateSharedNodesWithMe(signal)) {
+            yield convertInternalNode(node);
+        }
+    }
+
+    /**
+     * Leave shared node that was previously shared with the user.
+     *
+     * See `ProtonDriveClient.leaveSharedNode` for more information.
+     */
+    async leaveSharedNode(nodeUid: NodeOrUid): Promise<void> {
+        this.logger.info(`Leaving shared node with me ${getUid(nodeUid)}`);
+        await this.sharing.access.removeSharedNodeWithMe(getUid(nodeUid));
+    }
+
+    /**
+     * Iterates the invitations to shared nodes.
+     *
+     * See `ProtonDriveClient.iterateInvitations` for more information.
+     */
+    async *iterateInvitations(signal?: AbortSignal): AsyncGenerator<ProtonInvitationWithNode> {
+        this.logger.info('Iterating invitations');
+        yield* this.sharing.access.iterateInvitations(signal);
+    }
+
+    /**
+     * Accept the invitation to the shared node.
+     *
+     * See `ProtonDriveClient.acceptInvitation` for more information.
+     */
+    async acceptInvitation(invitationUid: ProtonInvitationOrUid): Promise<void> {
+        this.logger.info(`Accepting invitation ${getUid(invitationUid)}`);
+        await this.sharing.access.acceptInvitation(getUid(invitationUid));
+    }
+
+    /**
+     * Reject the invitation to the shared node.
+     *
+     * See `ProtonDriveClient.rejectInvitation` for more information.
+     */
+    async rejectInvitation(invitationUid: ProtonInvitationOrUid): Promise<void> {
+        this.logger.info(`Rejecting invitation ${getUid(invitationUid)}`);
+        await this.sharing.access.rejectInvitation(getUid(invitationUid));
+    }
+
+    /**
+     * Get sharing info of the node.
+     *
+     * See `ProtonDriveClient.getSharingInfo` for more information.
+     */
+    async getSharingInfo(nodeUid: NodeOrUid): Promise<ShareResult | undefined> {
+        this.logger.info(`Getting sharing info for ${getUid(nodeUid)}`);
+        return this.sharing.management.getSharingInfo(getUid(nodeUid));
+    }
+
+    /**
+     * Share or update sharing of the node.
+     *
+     * See `ProtonDriveClient.shareNode` for more information.
+     */
+    async shareNode(nodeUid: NodeOrUid, settings: ShareNodeSettings): Promise<ShareResult> {
+        this.logger.info(`Sharing node ${getUid(nodeUid)}`);
+        return this.sharing.management.shareNode(getUid(nodeUid), settings);
+    }
+
+    /**
+     * Unshare the node, completely or partially.
+     *
+     * See `ProtonDriveClient.unshareNode` for more information.
+     */
+    async unshareNode(nodeUid: NodeOrUid, settings?: UnshareNodeSettings): Promise<ShareResult | undefined> {
+        if (!settings) {
+            this.logger.info(`Unsharing node ${getUid(nodeUid)}`);
+        } else {
+            this.logger.info(`Partially unsharing ${getUid(nodeUid)}`);
+        }
+        return this.sharing.management.unshareNode(getUid(nodeUid), settings);
+    }
+
+    /**
+     * Resend the invitation email to shared node.
+     *
+     * See `ProtonDriveClient.resendInvitation` for more information.
+     */
+    async resendInvitation(
+        nodeUid: NodeOrUid,
+        invitationUid: ProtonInvitationOrUid | NonProtonInvitationOrUid,
+    ): Promise<void> {
+        this.logger.info(`Resending invitation ${getUid(invitationUid)}`);
+        return this.sharing.management.resendInvitationEmail(getUid(nodeUid), getUid(invitationUid));
     }
 
     /**
@@ -279,5 +446,16 @@ export class ProtonDrivePhotosClient {
         this.logger.info(`Getting file uploader`);
         const parentFolderUid = await this.nodes.access.getVolumeRootFolder();
         return this.upload.getFileUploader(getUid(parentFolderUid), name, metadata, signal);
+    }
+
+    /**
+     * Iterates the albums.
+     *
+     * The output is not sorted and the order of the nodes is not guaranteed.
+     */
+    async *iterateAlbums(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+        this.logger.info('Iterating albums');
+        // TODO: expose album type
+        yield* convertInternalNodeIterator(this.photos.albums.iterateAlbums(signal));
     }
 }
