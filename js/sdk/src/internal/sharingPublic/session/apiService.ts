@@ -1,5 +1,7 @@
-import { DriveAPIService, drivePaths } from '../../apiService';
-import { PublicLinkInfo, PublicLinkSrpAuth } from './interface';
+import { Logger } from '../../../interface';
+import { DriveAPIService, drivePaths, permissionsToMemberRole } from '../../apiService';
+import { makeNodeUid } from '../../uids';
+import { PublicLinkInfo, PublicLinkSrpAuth, PublicLinkSession, EncryptedShareCrypto } from './interface';
 
 type GetPublicLinkInfoResponse =
     drivePaths['/drive/urls/{token}/info']['get']['responses']['200']['content']['application/json'];
@@ -18,7 +20,11 @@ type PostPublicLinkAuthResponse =
  * and vice versa. It should not contain any business logic.
  */
 export class SharingPublicSessionAPIService {
-    constructor(private apiService: DriveAPIService) {
+    constructor(
+        private logger: Logger,
+        private apiService: DriveAPIService,
+    ) {
+        this.logger = logger;
         this.apiService = apiService;
     }
 
@@ -38,6 +44,13 @@ export class SharingPublicSessionAPIService {
             isCustomPasswordProtected: (response.Flags & 1) === 1,
             isLegacy: response.Flags === 0 || response.Flags === 1,
             vendorType: response.VendorType,
+            directAccess: response.DirectAccess
+                ? {
+                      nodeUid: makeNodeUid(response.DirectAccess.VolumeID, response.DirectAccess.LinkID),
+                      directRole: permissionsToMemberRole(this.logger, response.DirectAccess.DirectPermissions),
+                      publicRole: permissionsToMemberRole(this.logger, response.DirectAccess.PublicPermissions),
+                  }
+                : undefined,
         };
     }
 
@@ -52,9 +65,9 @@ export class SharingPublicSessionAPIService {
         token: string,
         srp: PublicLinkSrpAuth,
     ): Promise<{
-        serverProof: string;
-        sessionUid: string;
-        sessionAccessToken?: string;
+        session: PublicLinkSession;
+        encryptedShare: EncryptedShareCrypto;
+        rootUid: string;
     }> {
         const response = await this.apiService.post<PostPublicLinkAuthRequest, PostPublicLinkAuthResponse>(
             `drive/urls/${token}/auth`,
@@ -66,9 +79,18 @@ export class SharingPublicSessionAPIService {
         );
 
         return {
-            serverProof: response.ServerProof,
-            sessionUid: response.UID,
-            sessionAccessToken: response.AccessToken,
+            session: {
+                serverProof: response.ServerProof,
+                sessionUid: response.UID,
+                sessionAccessToken: response.AccessToken,
+            },
+            encryptedShare: {
+                base64UrlPasswordSalt: response.Share.SharePasswordSalt,
+                armoredKey: response.Share.ShareKey,
+                armoredPassphrase: response.Share.SharePassphrase,
+                publicRole: permissionsToMemberRole(this.logger, response.Share.PublicPermissions),
+            },
+            rootUid: makeNodeUid(response.Share.VolumeID, response.Share.LinkID),
         };
     }
 }

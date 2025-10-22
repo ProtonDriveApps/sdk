@@ -569,7 +569,11 @@ describe('nodesAccess', () => {
         it('should get share parent keys', async () => {
             shareService.getSharePrivateKey = jest.fn(() => Promise.resolve('shareKey' as any as PrivateKey));
 
-            const result = await access.getParentKeys({ shareId: 'shareId', parentUid: undefined });
+            const result = await access.getParentKeys({
+                uid: 'volumeId~nodeId',
+                shareId: 'shareId',
+                parentUid: undefined,
+            });
             expect(result).toEqual({ key: 'shareKey' });
             expect(cryptoCache.getNodeKeys).not.toHaveBeenCalled();
         });
@@ -577,7 +581,11 @@ describe('nodesAccess', () => {
         it('should get node parent keys', async () => {
             cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
 
-            const result = await access.getParentKeys({ shareId: undefined, parentUid: 'volumeId~parentNodeid' });
+            const result = await access.getParentKeys({
+                uid: 'volumeId~nodeId',
+                shareId: undefined,
+                parentUid: 'volumeId~parentNodeid',
+            });
             expect(result).toEqual({ key: 'parentKey' });
             expect(shareService.getSharePrivateKey).not.toHaveBeenCalled();
         });
@@ -585,7 +593,11 @@ describe('nodesAccess', () => {
         it('should get node parent keys even if share is set', async () => {
             cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve({ key: 'parentKey' } as any as DecryptedNodeKeys));
 
-            const result = await access.getParentKeys({ shareId: 'shareId', parentUid: 'volume1~parentNodeid' });
+            const result = await access.getParentKeys({
+                uid: 'volume1~nodeId',
+                shareId: 'shareId',
+                parentUid: 'volume1~parentNodeid',
+            });
             expect(result).toEqual({ key: 'parentKey' });
             expect(shareService.getSharePrivateKey).not.toHaveBeenCalled();
         });
