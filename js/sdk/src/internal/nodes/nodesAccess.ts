@@ -367,7 +367,7 @@ export class NodesAccess {
     }
 
     async getParentKeys(
-        node: Pick<DecryptedNode, 'parentUid' | 'shareId'>,
+        node: Pick<DecryptedNode, 'uid' | 'parentUid' | 'shareId'>,
     ): Promise<Pick<DecryptedNodeKeys, 'key' | 'hashKey'>> {
         if (node.parentUid) {
             try {

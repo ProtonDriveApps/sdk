@@ -1,6 +1,6 @@
 import { MemoryCache } from './cache';
 import { getConfig } from './config';
-import { DriveCrypto, OpenPGPCrypto, SRPModule, SessionKey } from './crypto';
+import { DriveCrypto, OpenPGPCrypto, PrivateKey, SRPModule, SessionKey } from './crypto';
 import {
     ProtonDriveHTTPClient,
     ProtonDriveTelemetry,
@@ -74,7 +74,8 @@ export class ProtonDrivePublicLinkClient {
         telemetry,
         url,
         token,
-        password,
+        publicShareKey,
+        publicRootNodeUid,
     }: {
         httpClient: ProtonDriveHTTPClient;
         account: ProtonDriveAccount;
@@ -84,7 +85,8 @@ export class ProtonDrivePublicLinkClient {
         telemetry?: ProtonDriveTelemetry;
         url: string;
         token: string;
-        password: string;
+        publicShareKey: PrivateKey;
+        publicRootNodeUid: string;
     }) {
         if (!telemetry) {
             telemetry = new Telemetry();
@@ -115,7 +117,8 @@ export class ProtonDrivePublicLinkClient {
             account,
             url,
             token,
-            password,
+            publicShareKey,
+            publicRootNodeUid,
         );
         this.download = initDownloadModule(
             telemetry,

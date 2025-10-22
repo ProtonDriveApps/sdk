@@ -1,9 +1,6 @@
 import { PrivateKey } from '../../crypto';
 import { MetricVolumeType, ProtonDriveAccount } from '../../interface';
 import { splitNodeUid } from '../uids';
-import { SharingPublicAPIService } from './apiService';
-import { SharingPublicCryptoCache } from './cryptoCache';
-import { SharingPublicCryptoService } from './cryptoService';
 
 /**
  * Provides high-level actions for managing public link share.
@@ -12,57 +9,24 @@ import { SharingPublicCryptoService } from './cryptoService';
  * service so it can be used in the same way in various modules that use shares.
  */
 export class SharingPublicSharesManager {
-    private promisePublicLinkRoot?: Promise<{
-        rootIds: { volumeId: string; rootNodeId: string; rootNodeUid: string };
-        shareKey: PrivateKey;
-    }>;
-
     constructor(
-        private apiService: SharingPublicAPIService,
-        private cryptoCache: SharingPublicCryptoCache,
-        private cryptoService: SharingPublicCryptoService,
         private account: ProtonDriveAccount,
-        private token: string,
+        private publicShareKey: PrivateKey,
+        private publicRootNodeUid: string,
     ) {
-        this.apiService = apiService;
-        this.cryptoCache = cryptoCache;
-        this.cryptoService = cryptoService;
         this.account = account;
-        this.token = token;
+        this.publicShareKey = publicShareKey;
+        this.publicRootNodeUid = publicRootNodeUid;
     }
 
     // TODO: Rename to getRootIDs everywhere.
     async getOwnVolumeIDs(): Promise<{ volumeId: string; rootNodeId: string; rootNodeUid: string }> {
-        const { rootIds } = await this.getPublicLinkRoot();
-        return rootIds;
+        const { volumeId, nodeId: rootNodeId } = splitNodeUid(this.publicRootNodeUid);
+        return { volumeId, rootNodeId, rootNodeUid: this.publicRootNodeUid };
     }
 
     async getSharePrivateKey(): Promise<PrivateKey> {
-        const { shareKey } = await this.getPublicLinkRoot();
-        return shareKey;
-    }
-
-    private async getPublicLinkRoot(): Promise<{
-        rootIds: { volumeId: string; rootNodeId: string; rootNodeUid: string };
-        shareKey: PrivateKey;
-    }> {
-        if (!this.promisePublicLinkRoot) {
-            this.promisePublicLinkRoot = (async () => {
-                const { encryptedNode, encryptedShare } = await this.apiService.getPublicLinkRoot(this.token);
-
-                const { volumeId, nodeId: rootNodeId } = splitNodeUid(encryptedNode.uid);
-
-                const shareKey = await this.cryptoService.decryptPublicLinkShareKey(encryptedShare);
-                await this.cryptoCache.setShareKey(shareKey);
-
-                return {
-                    rootIds: { volumeId, rootNodeId, rootNodeUid: encryptedNode.uid },
-                    shareKey,
-                };
-            })();
-        }
-
-        return this.promisePublicLinkRoot;
+        return this.publicShareKey;
     }
 
     async getContextShareMemberEmailKey(): Promise<{

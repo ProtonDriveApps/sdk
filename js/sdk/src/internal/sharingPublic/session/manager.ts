@@ -1,9 +1,9 @@
-import { ProtonDriveHTTPClient } from '../../../interface';
-import { SRPModule } from '../../../crypto';
+import { MemberRole, ProtonDriveHTTPClient, ProtonDriveTelemetry } from '../../../interface';
+import { DriveCrypto, PrivateKey, SRPModule } from '../../../crypto';
 import { DriveAPIService } from '../../apiService';
 import { SharingPublicSessionAPIService } from './apiService';
 import { SharingPublicSessionHttpClient } from './httpClient';
-import { PublicLinkInfo } from './interface';
+import { EncryptedShareCrypto, PublicLinkInfo } from './interface';
 import { SharingPublicLinkSession } from './session';
 import { getTokenAndPasswordFromUrl } from './url';
 
@@ -18,14 +18,17 @@ export class SharingPublicSessionManager {
     private infosPerToken: Map<string, PublicLinkInfo> = new Map();
 
     constructor(
+        telemetry: ProtonDriveTelemetry,
         private httpClient: ProtonDriveHTTPClient,
-        apiService: DriveAPIService,
+        private driveCrypto: DriveCrypto,
         private srpModule: SRPModule,
+        apiService: DriveAPIService,
     ) {
         this.httpClient = httpClient;
+        this.driveCrypto = driveCrypto;
         this.srpModule = srpModule;
 
-        this.api = new SharingPublicSessionAPIService(apiService);
+        this.api = new SharingPublicSessionAPIService(telemetry.getLogger('sharingPublicSession'), apiService);
     }
 
     /**
@@ -42,6 +45,11 @@ export class SharingPublicSessionManager {
         isCustomPasswordProtected: boolean;
         isLegacy: boolean;
         vendorType: number;
+        directAccess?: {
+            nodeUid: string;
+            directRole: MemberRole;
+            publicRole: MemberRole;
+        };
     }> {
         const { token } = getTokenAndPasswordFromUrl(url);
 
@@ -52,6 +60,7 @@ export class SharingPublicSessionManager {
             isCustomPasswordProtected: info.isCustomPasswordProtected,
             isLegacy: info.isLegacy,
             vendorType: info.vendorType,
+            directAccess: info.directAccess,
         };
     }
 
@@ -73,8 +82,9 @@ export class SharingPublicSessionManager {
         customPassword?: string,
     ): Promise<{
         token: string;
-        password: string;
         httpClient: SharingPublicSessionHttpClient;
+        shareKey: PrivateKey;
+        rootUid: string;
     }> {
         const { token, password: urlPassword } = getTokenAndPasswordFromUrl(url);
 
@@ -86,12 +96,25 @@ export class SharingPublicSessionManager {
         const password = `${urlPassword}${customPassword || ''}`;
 
         const session = new SharingPublicLinkSession(this.api, this.srpModule, token, password);
-        await session.auth(info.srp);
+        const { encryptedShare, rootUid } = await session.auth(info.srp);
+
+        const shareKey = await this.decryptShareKey(encryptedShare, password);
 
         return {
             token,
-            password,
             httpClient: new SharingPublicSessionHttpClient(this.httpClient, session),
+            shareKey,
+            rootUid,
         };
+    }
+
+    private async decryptShareKey(encryptedShare: EncryptedShareCrypto, password: string): Promise<PrivateKey> {
+        const { key: shareKey } = await this.driveCrypto.decryptKeyWithSrpPassword(
+            password,
+            encryptedShare.base64UrlPasswordSalt,
+            encryptedShare.armoredKey,
+            encryptedShare.armoredPassphrase,
+        );
+        return shareKey;
     }
 }

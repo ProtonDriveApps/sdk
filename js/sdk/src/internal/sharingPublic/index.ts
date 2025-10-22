@@ -1,4 +1,4 @@
-import { DriveCrypto } from '../../crypto';
+import { DriveCrypto, PrivateKey } from '../../crypto';
 import {
     ProtonDriveCryptoCache,
     ProtonDriveTelemetry,
@@ -11,10 +11,7 @@ import { NodesCache } from '../nodes/cache';
 import { NodesCryptoCache } from '../nodes/cryptoCache';
 import { NodesCryptoService } from '../nodes/cryptoService';
 import { NodesRevisons } from '../nodes/nodesRevisions';
-import { SharingPublicAPIService } from './apiService';
-import { SharingPublicCryptoCache } from './cryptoCache';
 import { SharingPublicCryptoReporter } from './cryptoReporter';
-import { SharingPublicCryptoService } from './cryptoService';
 import { SharingPublicNodesAccess } from './nodes';
 import { SharingPublicSharesManager } from './shares';
 
@@ -38,12 +35,10 @@ export function initSharingPublicModule(
     account: ProtonDriveAccount,
     url: string,
     token: string,
-    password: string,
+    publicShareKey: PrivateKey,
+    publicRootNodeUid: string,
 ) {
-    const api = new SharingPublicAPIService(telemetry.getLogger('sharingPublic-api'), apiService);
-    const cryptoCache = new SharingPublicCryptoCache(telemetry.getLogger('sharingPublic-crypto'), driveCryptoCache);
-    const cryptoService = new SharingPublicCryptoService(driveCrypto, password);
-    const shares = new SharingPublicSharesManager(api, cryptoCache, cryptoService, account, token);
+    const shares = new SharingPublicSharesManager(account, publicShareKey, publicRootNodeUid);
     const nodes = initSharingPublicNodesModule(
         telemetry,
         apiService,
@@ -54,6 +49,8 @@ export function initSharingPublicModule(
         shares,
         url,
         token,
+        publicShareKey,
+        publicRootNodeUid,
     );
 
     return {
@@ -78,6 +75,8 @@ export function initSharingPublicNodesModule(
     sharesService: SharingPublicSharesManager,
     url: string,
     token: string,
+    publicShareKey: PrivateKey,
+    publicRootNodeUid: string,
 ) {
     const api = new NodeAPIService(telemetry.getLogger('nodes-api'), apiService);
     const cache = new NodesCache(telemetry.getLogger('nodes-cache'), driveEntitiesCache);
@@ -93,6 +92,8 @@ export function initSharingPublicNodesModule(
         sharesService,
         url,
         token,
+        publicShareKey,
+        publicRootNodeUid,
     );
     const nodesRevisions = new NodesRevisons(telemetry.getLogger('nodes'), api, cryptoService, nodesAccess);
 

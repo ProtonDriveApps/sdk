@@ -208,11 +208,11 @@ function parseBlockSizes(
         return undefined;
     }
     if (!Array.isArray(blockSizes)) {
-        logger.warn(`XAttr block sizes "${blockSizes}" is not valid`);
+        logger.warn(`XAttr block sizes "${JSON.stringify(blockSizes)}" is not valid`);
         return undefined;
     }
     if (blockSizes.some((size) => typeof size !== 'number' || size <= 0)) {
-        logger.warn(`XAttr block sizes "${blockSizes}" is not valid`);
+        logger.warn(`XAttr block sizes "${JSON.stringify(blockSizes)}" is not valid`);
         return undefined;
     }
     if (blockSizes.length === 0) {

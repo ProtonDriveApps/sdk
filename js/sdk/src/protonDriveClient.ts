@@ -29,6 +29,7 @@ import {
     ThumbnailResult,
     SDKEvent,
     NodeType,
+    MemberRole,
 } from './interface';
 import {
     getUid,
@@ -69,7 +70,7 @@ export class ProtonDriveClient {
     private download: ReturnType<typeof initDownloadModule>;
     private upload: ReturnType<typeof initUploadModule>;
     private devices: ReturnType<typeof initDevicesModule>;
-    private sessionManager: SharingPublicSessionManager;
+    private publicSessionManager: SharingPublicSessionManager;
 
     public experimental: {
         /**
@@ -94,6 +95,11 @@ export class ProtonDriveClient {
             isCustomPasswordProtected: boolean;
             isLegacy: boolean;
             vendorType: number;
+            directAccess?: {
+                nodeUid: string;
+                directRole: MemberRole;
+                publicRole: MemberRole;
+            };
         }>;
         /**
          * Experimental feature to authenticate a public link and
@@ -185,7 +191,13 @@ export class ProtonDriveClient {
             latestEventIdProvider,
         );
 
-        this.sessionManager = new SharingPublicSessionManager(httpClient, apiService, srpModule);
+        this.publicSessionManager = new SharingPublicSessionManager(
+            telemetry,
+            httpClient,
+            cryptoModule,
+            srpModule,
+            apiService,
+        );
 
         this.experimental = {
             getNodeUrl: async (nodeUid: NodeOrUid) => {
@@ -202,11 +214,14 @@ export class ProtonDriveClient {
             },
             getPublicLinkInfo: async (url: string) => {
                 this.logger.info(`Getting info for public link ${url}`);
-                return this.sessionManager.getInfo(url);
+                return this.publicSessionManager.getInfo(url);
             },
             authPublicLink: async (url: string, customPassword?: string) => {
                 this.logger.info(`Authenticating public link ${url}`);
-                const { httpClient, token, password } = await this.sessionManager.auth(url, customPassword);
+                const { httpClient, token, shareKey, rootUid } = await this.publicSessionManager.auth(
+                    url,
+                    customPassword,
+                );
                 return new ProtonDrivePublicLinkClient({
                     httpClient,
                     account,
@@ -216,7 +231,8 @@ export class ProtonDriveClient {
                     telemetry,
                     url,
                     token,
-                    password,
+                    publicShareKey: shareKey,
+                    publicRootNodeUid: rootUid,
                 });
             },
         };
