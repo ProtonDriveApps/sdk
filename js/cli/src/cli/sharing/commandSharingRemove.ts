@@ -1,0 +1,37 @@
+import { ParseArgsConfig } from 'util';
+
+import { Command, ActionArgs } from '../interface';
+import { printObject } from '../formatters';
+
+export class CommandSharingRemove implements Command {
+    group = 'sharing';
+    name = 'remove';
+    args = ['path'];
+    options: ParseArgsConfig['options'] = {
+        email: {
+            type: 'string',
+            short: 'e',
+            multiple: true,
+            default: [],
+        },
+        everyone: {
+            type: 'boolean',
+            short: 'a',
+            default: false,
+        },
+    };
+
+    async action({ paths, args: [pathString], options: { email: emails, everyone, json } }: ActionArgs) {
+        const nodePath = paths.getPath(pathString);
+        const node = await nodePath.getNode();
+
+        // FIXME: when supporting public links, everyone should keep it
+        const sharingInfo = everyone
+            ? await nodePath.sdk.unshareNode(node)
+            : await nodePath.sdk.unshareNode(node, {
+                  users: emails,
+              });
+
+        printObject(sharingInfo, json);
+    }
+}

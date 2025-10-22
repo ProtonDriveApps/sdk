@@ -1,51 +1,49 @@
 import { ParseArgsConfig } from 'util';
-import { CommandAlbumList } from './commandAlbumList';
-import { CommandAuthLogin } from './commandAuthLogin';
-import { CommandAuthLogout } from './commandAuthLogout';
-import { CommandDeviceCreate } from './commandDeviceCreate';
-import { CommandDeviceDelete } from './commandDeviceDelete';
-import { CommandDeviceRename } from './commandDeviceRename';
-import { CommandDiagnosticTree } from './CommandDiagnosticTree';
-import { CommandEventsDrive } from './commandEventsDrive';
-import { CommandEventsMyVolume } from './commandEventsMyVolume';
-import { CommandFileSystemCopy } from './commandFileSystemCopy';
-import { CommandFileSystemCreateFolder } from './commandFileSystemCreateFolder';
-import { CommandFileSystemDelete } from './commandFileSystemDelete';
-import { CommandFileSystemDownload } from './commandFileSystemDownload';
-import { CommandFileSystemDownloadSeeking } from './commandFileSystemDownloadSeeking';
-import { CommandFileSystemDownloadThumbnails } from './commandFileSystemDownloadThumbnails';
-import { CommandFileSystemGetAvailableName } from './commandFileSystemGetAvailableName';
-import { CommandFileSystemInfo } from './commandFileSystemInfo';
-import { CommandFileSystemList } from './commandFileSystemList';
-import { CommandFileSystemMove } from './commandFileSystemMove';
-import { CommandFileSystemRename } from './commandFileSystemRename';
-import { CommandFileSystemRestore } from './commandFileSystemRestore';
-import { CommandFileSystemUpload } from './commandFileSystemUpload';
-import { CommandFileSystemTrash } from './commandFileSystemTrash';
-import { CommandInvitationAccept } from './commandInvitationAccept';
-import { CommandInvitationList } from './commandInvitationList';
-import { CommandInvitationReject } from './commandInvitationReject';
-import { CommandPhotoDownload } from './commandPhotoDownload';
-import { CommandPhotoDownloadThumbnails } from './commandPhotoDownloadThumbnails';
-import { CommandPhotoTimeline } from './commandPhotoTimeline';
-import { CommandPhotoUpload } from './commandPhotoUpload';
-import { CommandRevisionDelete } from './commandRevisionDelete';
-import { CommandRevisionDownload } from './commandRevisionDownload';
-import { CommandRevisionList } from './commandRevisionList';
-import { CommandRevisionRestore } from './commandRevisionRestore';
-import { CommandSharingInvite } from './commandSharingInvite';
-import { CommandSharingRemove } from './commandSharingRemove';
-import { CommandSharingRemoveUrl } from './commandSharingRemoveUrl';
-import { CommandSharingSetUrl } from './commandSharingSetUrl';
-import { CommandSharingStatus } from './commandSharingStatus';
-import { Command } from './interface';
-import { CommandBookmarkRemove } from './commandBookmarkRemove';
-import { CommandBookmarkList } from './commandBookmarkList';
-import { CommandEventsPath } from './commandEventsPath';
+
+import { CommandAuthLogin } from './auth/commandAuthLogin';
+import { CommandAuthLogout } from './auth/commandAuthLogout';
+import { CommandBookmarkRemove } from './bookmark/commandBookmarkRemove';
+import { CommandBookmarkList } from './bookmark/commandBookmarkList';
+import { CommandDeviceCreate } from './device/commandDeviceCreate';
+import { CommandDeviceDelete } from './device/commandDeviceDelete';
+import { CommandDeviceRename } from './device/commandDeviceRename';
+import { CommandDiagnosticTree } from './diagnostic/commandDiagnosticTree';
+import { CommandEventsDrive } from './events/commandEventsDrive';
+import { CommandEventsMyVolume } from './events/commandEventsMyVolume';
+import { CommandEventsPath } from './events/commandEventsPath';
+import { CommandFileSystemCopy } from './fileSystem/commandFileSystemCopy';
+import { CommandFileSystemCreateFolder } from './fileSystem/commandFileSystemCreateFolder';
+import { CommandFileSystemDelete } from './fileSystem/commandFileSystemDelete';
+import { CommandFileSystemDownload } from './fileSystem/commandFileSystemDownload';
+import { CommandFileSystemDownloadSeeking } from './fileSystem/commandFileSystemDownloadSeeking';
+import { CommandFileSystemDownloadThumbnails } from './fileSystem/commandFileSystemDownloadThumbnails';
+import { CommandFileSystemGetAvailableName } from './fileSystem/commandFileSystemGetAvailableName';
+import { CommandFileSystemInfo } from './fileSystem/commandFileSystemInfo';
+import { CommandFileSystemList } from './fileSystem/commandFileSystemList';
+import { CommandFileSystemMove } from './fileSystem/commandFileSystemMove';
+import { CommandFileSystemRename } from './fileSystem/commandFileSystemRename';
+import { CommandFileSystemRestore } from './fileSystem/commandFileSystemRestore';
+import { CommandFileSystemUpload } from './fileSystem/commandFileSystemUpload';
+import { CommandFileSystemTrash } from './fileSystem/commandFileSystemTrash';
+import { CommandAlbumList } from './photos/commandAlbumList';
+import { CommandPhotoTimeline } from './photos/commandPhotoTimeline';
 import { CommandPublicDownload } from './public/commandPublicDownload';
 import { CommandPublicDownloadThumbnails } from './public/commandPublicDownloadThumbnails';
 import { CommandPublicInfo } from './public/commandPublicInfo';
 import { CommandPublicList } from './public/commandPublicList';
+import { CommandRevisionDelete } from './revision/commandRevisionDelete';
+import { CommandRevisionDownload } from './revision/commandRevisionDownload';
+import { CommandRevisionList } from './revision/commandRevisionList';
+import { CommandRevisionRestore } from './revision/commandRevisionRestore';
+import { CommandSharingInvite } from './sharing/commandSharingInvite';
+import { CommandSharingRemove } from './sharing/commandSharingRemove';
+import { CommandSharingRemoveUrl } from './sharing/commandSharingRemoveUrl';
+import { CommandSharingSetUrl } from './sharing/commandSharingSetUrl';
+import { CommandSharingStatus } from './sharing/commandSharingStatus';
+import { CommandInvitationAccept } from './sharing/commandInvitationAccept';
+import { CommandInvitationList } from './sharing/commandInvitationList';
+import { CommandInvitationReject } from './sharing/commandInvitationReject';
+import { Command } from './interface';
 
 const COMMANDS = [
     // CLI Account
@@ -93,9 +91,6 @@ const COMMANDS = [
     new CommandPublicDownloadThumbnails(),
     // ProtonDrivePhotosClient
     new CommandPhotoTimeline(),
-    new CommandPhotoDownload(),
-    new CommandPhotoDownloadThumbnails(),
-    new CommandPhotoUpload(),
     new CommandAlbumList(),
     // Diagnostic
     new CommandDiagnosticTree(),
