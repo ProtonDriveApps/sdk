@@ -11,6 +11,10 @@ export enum PathType {
     SharedByMe = 'shared-by-me',
     SharedWithMe = 'shared-with-me',
     Trash = 'trash',
+    Photos = 'photos',
+    PhotosSharedByMe = 'photos-shared-by-me',
+    PhotosSharedWithMe = 'photos-shared-with-me',
+    PhotosTrash = 'photos-trash',
 }
 
 export class Paths {
@@ -31,11 +35,7 @@ export class Paths {
     }
 
     getPath(path: string): Path {
-        return new Path(this.sdk, path);
-    }
-
-    getPhotoPath(path: string): PhotoPath {
-        return new PhotoPath(this.photosSdk, path);
+        return new Path(this.sdk, this.photosSdk, path);
     }
 
     getPublicLinkPath(path: string): PublicLinkPath {
@@ -59,10 +59,12 @@ export class Paths {
 
 export class Path {
     constructor(
-        private sdk: ProtonDriveClient,
+        private driveSdk: ProtonDriveClient,
+        private photosSdk: ProtonDrivePhotosClient,
         public fullPath: string,
     ) {
-        this.sdk = sdk;
+        this.driveSdk = driveSdk;
+        this.photosSdk = photosSdk;
         this.fullPath = fullPath;
     }
 
@@ -85,27 +87,52 @@ export class Path {
         if (this.fullPath.startsWith(`${path.sep}trash`)) {
             return PathType.Trash;
         }
+        if (this.fullPath.startsWith(`${path.sep}photos-shared-by-me`)) {
+            return PathType.PhotosSharedByMe;
+        }
+        if (this.fullPath.startsWith(`${path.sep}photos-shared-with-me`)) {
+            return PathType.PhotosSharedWithMe;
+        }
+        if (this.fullPath.startsWith(`${path.sep}photos-trash`)) {
+            return PathType.PhotosTrash;
+        }
+        if (this.fullPath.startsWith(`${path.sep}photos`)) {
+            return PathType.Photos;
+        }
         throw new Error(`Path "${this.fullPath}" not supported`);
     }
 
     get parentPath() {
-        return new Path(this.sdk, path.dirname(this.fullPath));
+        return new Path(this.driveSdk, this.photosSdk, path.dirname(this.fullPath));
     }
 
     get name() {
         return path.basename(this.fullPath);
     }
 
+    get sdk(): ProtonDriveClient | ProtonDrivePhotosClient {
+        const photoPaths = [
+            PathType.Photos,
+            PathType.PhotosSharedByMe,
+            PathType.PhotosSharedWithMe,
+            PathType.PhotosTrash,
+        ];
+        if (photoPaths.includes(this.type)) {
+            return this.photosSdk;
+        }
+        return this.sdk;
+    }
+
     async getNode(): Promise<MaybeNode> {
         if (this.type === PathType.MyFiles) {
-            const rootNode = await this.sdk.getMyFilesRootFolder();
+            const rootNode = await this.driveSdk.getMyFilesRootFolder();
             return this.getNodeByPath(rootNode, this.sectionPath);
         }
-        if (this.type === PathType.SharedWithMe) {
+        if (this.type === PathType.SharedWithMe || this.type === PathType.PhotosSharedWithMe) {
             const rootNodeName = await this.getSharedWithMeRootFolder();
             return this.getNodeByPath(rootNodeName, this.sectionPathWithoutRoot);
         }
-        if (this.type === PathType.Trash) {
+        if (this.type === PathType.Trash || this.type === PathType.PhotosTrash) {
             const parts = this.sectionPath.split(path.sep);
             if (parts.length > 1) {
                 throw new Error('Browsing trashed folders is not supported');
@@ -115,6 +142,9 @@ export class Path {
         if (this.type === PathType.Devices) {
             const rootNodeName = await this.getDevicesRootFolder();
             return this.getNodeByPath(rootNodeName, this.sectionPathWithoutRoot);
+        }
+        if (this.type === PathType.Photos) {
+            return this.getPhotoNodeByPath(this.sectionPath);
         }
         throw new Error('Not implemented');
     }
@@ -158,7 +188,7 @@ export class Path {
     }
 
     private async getDevicesRootFolder(): Promise<MaybeNode> {
-        for await (const device of this.sdk.iterateDevices()) {
+        for await (const device of this.driveSdk.iterateDevices()) {
             const name = device.name.ok ? device.name.value : device.name.error.name;
             if (name === this.sectionRootNodeName) {
                 const [maybeMissingNode] = await Array.fromAsync(this.sdk.iterateNodes([device.rootFolderUid]));
@@ -179,18 +209,43 @@ export class Path {
             if (part === '') {
                 continue;
             }
-            node = await this.getNodeByName(node, part);
+            if (isNodeUid(part)) {
+                node = await this.sdk.getNode(part);
+            } else {
+                node = await this.getNodeByName(node, part);
+            }
         }
         return node;
     }
 
     private async getNodeByName(parentNode: MaybeNode, name: string) {
-        for await (const maybeChild of this.sdk.iterateFolderChildren(parentNode)) {
+        for await (const maybeChild of this.driveSdk.iterateFolderChildren(parentNode)) {
             if (getName(maybeChild) === name) {
                 return maybeChild;
             }
         }
         throw new Error(`Node not found: ${name}`);
+    }
+
+    private async getPhotoNodeByPath(pathString: string): Promise<MaybeNode> {
+        if (isNodeUid(pathString)) {
+            return this.photosSdk.getNode(pathString);
+        }
+        return this.getPhotoByName(pathString);
+    }
+
+    private async getPhotoByName(name: string): Promise<MaybeNode> {
+        const photoNodeUids = await Array.fromAsync(this.photosSdk.iterateTimeline(), (photo) => photo.nodeUid);
+        for await (const maybeMissingNode of this.photosSdk.iterateNodes(photoNodeUids)) {
+            const maybeNode = getMaybeNodeAndIgnoreMissingNode(maybeMissingNode);
+            if (!maybeNode) {
+                continue;
+            }
+            if (getName(maybeNode) === name) {
+                return maybeNode;
+            }
+        }
+        throw new Error(`Photo not found: ${name}`);
     }
 }
 
@@ -204,7 +259,7 @@ export class PublicLinkPath {
     }
 
     async getNode(): Promise<MaybeNode> {
-        if (this.fullPath.includes('~')) {
+        if (isNodeUid(this.fullPath)) {
             const nodeUid = this.fullPath;
             return this.publicLinkSdk.getNode(nodeUid);
         }
@@ -235,37 +290,8 @@ export class PublicLinkPath {
     }
 }
 
-export class PhotoPath {
-    constructor(
-        private photosSdk: ProtonDrivePhotosClient,
-        public fullPath: string,
-    ) {
-        this.photosSdk = photosSdk;
-        this.fullPath = fullPath;
-    }
-
-    async getNode(): Promise<MaybeNode> {
-        if (this.fullPath.includes('~')) {
-            const nodeUid = this.fullPath;
-            return this.photosSdk.getNode(nodeUid);
-        }
-
-        return this.getNodeByName(this.fullPath);
-    }
-
-    private async getNodeByName(name: string): Promise<MaybeNode> {
-        const photoNodeUids = await Array.fromAsync(this.photosSdk.iterateTimeline(), (photo) => photo.nodeUid);
-        for await (const maybeMissingNode of this.photosSdk.iterateNodes(photoNodeUids)) {
-            const maybeNode = getMaybeNodeAndIgnoreMissingNode(maybeMissingNode);
-            if (!maybeNode) {
-                continue;
-            }
-            if (getName(maybeNode) === name) {
-                return maybeNode;
-            }
-        }
-        throw new Error(`Node not found: ${name}`);
-    }
+function isNodeUid(pathString: string): boolean {
+    return /^[a-zA-Z0-9=_-]{60,300}~[a-zA-Z0-9=_-]{60,300}$/.test(pathString);
 }
 
 function getMaybeNodeAndIgnoreMissingNode(maybeMissingNode: MaybeMissingNode): MaybeNode | undefined {
