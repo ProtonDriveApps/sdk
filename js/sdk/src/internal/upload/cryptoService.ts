@@ -40,15 +40,6 @@ export class UploadCryptoService {
         };
     }
 
-    async generateNameHashes(parentHashKey: Uint8Array, names: string[]): Promise<{ name: string; hash: string }[]> {
-        return Promise.all(
-            names.map(async (name) => ({
-                name,
-                hash: await this.driveCrypto.generateLookupHash(name, parentHashKey),
-            })),
-        );
-    }
-
     async encryptThumbnail(
         nodeRevisionDraftKeys: NodeRevisionDraftKeys,
         thumbnail: Thumbnail,

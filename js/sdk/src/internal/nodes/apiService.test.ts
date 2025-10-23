@@ -173,7 +173,7 @@ describe('nodeAPIService', () => {
             put: jest.fn(),
         };
 
-        api = new NodeAPIService(getMockLogger(), apiMock);
+        api = new NodeAPIService(getMockLogger(), apiMock, 'clientUid');
     });
 
     describe('getNode', () => {

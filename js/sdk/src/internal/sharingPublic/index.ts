@@ -78,7 +78,8 @@ export function initSharingPublicNodesModule(
     publicShareKey: PrivateKey,
     publicRootNodeUid: string,
 ) {
-    const api = new NodeAPIService(telemetry.getLogger('nodes-api'), apiService);
+    const clientUid = undefined; // No client UID for public context yet.
+    const api = new NodeAPIService(telemetry.getLogger('nodes-api'), apiService, clientUid);
     const cache = new NodesCache(telemetry.getLogger('nodes-cache'), driveEntitiesCache);
     const cryptoCache = new NodesCryptoCache(telemetry.getLogger('nodes-cache'), driveCryptoCache);
     const cryptoReporter = new SharingPublicCryptoReporter(telemetry);
