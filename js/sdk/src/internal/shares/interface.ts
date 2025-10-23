@@ -1,6 +1,15 @@
 import { PrivateKey, SessionKey } from '../../crypto';
 import { Result, UnverifiedAuthorError } from '../../interface';
 
+export enum ShareTargetType {
+    Root = 0,
+    Folder = 1,
+    File = 2,
+    Album = 3,
+    Photo = 4,
+    ProtonVendor = 5,
+}
+
 /**
  * Internal interface providing basic identification of volume and its root
  * share and node.

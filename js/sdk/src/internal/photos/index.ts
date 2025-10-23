@@ -24,6 +24,10 @@ import {
     PhotoUploadManager,
     PhotoUploadMetadata,
 } from './upload';
+import { ShareTargetType } from '../shares';
+
+// Only photos and albums can be shared in photos volume.
+export const PHOTOS_SHARE_TARGET_TYPES = [ShareTargetType.Photo, ShareTargetType.Album];
 
 /**
  * Provides facade for the whole photos module.

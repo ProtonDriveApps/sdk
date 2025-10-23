@@ -33,7 +33,12 @@ import { DriveAPIService } from './internal/apiService';
 import { initDownloadModule } from './internal/download';
 import { DriveEventsService, DriveListener, EventSubscription } from './internal/events';
 import { initNodesModule } from './internal/nodes';
-import { initPhotosModule, initPhotoSharesModule, initPhotoUploadModule } from './internal/photos';
+import {
+    PHOTOS_SHARE_TARGET_TYPES,
+    initPhotosModule,
+    initPhotoSharesModule,
+    initPhotoUploadModule,
+} from './internal/photos';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharesModule } from './internal/shares';
 import { initSharingModule } from './internal/sharing';
@@ -121,6 +126,7 @@ export class ProtonDrivePhotosClient {
             cryptoModule,
             this.photoShares,
             this.nodes.access,
+            PHOTOS_SHARE_TARGET_TYPES,
         );
         this.download = initDownloadModule(
             telemetry,
