@@ -32,7 +32,7 @@ export type UploadMetadata = {
     overrideExistingDraftByOtherClient?: boolean;
 };
 
-export interface FileRevisionUploader {
+export interface FileUploader {
     /**
      * Uploads a file from a stream.
      *
@@ -62,18 +62,6 @@ export interface FileRevisionUploader {
         thumnbails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,
     ): Promise<UploadController>;
-}
-
-export interface FileUploader extends FileRevisionUploader {
-    /**
-     * Returns the available name for the file.
-     *
-     * The function will return a name that includes the original name with the
-     * available index. The name is guaranteed to be unique in the parent folder.
-     *
-     * Example new name: `file (2).txt`.
-     */
-    getAvailableName(): Promise<string>;
 }
 
 export interface UploadController {

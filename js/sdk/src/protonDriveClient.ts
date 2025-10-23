@@ -24,7 +24,6 @@ import {
     UploadMetadata,
     FileDownloader,
     FileUploader,
-    FileRevisionUploader,
     ThumbnailType,
     ThumbnailResult,
     SDKEvent,
@@ -144,6 +143,7 @@ export class ProtonDriveClient {
             account,
             cryptoModule,
             this.shares,
+            fullConfig.clientUid,
         );
         this.sharing = initSharingModule(
             telemetry,
@@ -829,9 +829,22 @@ export class ProtonDriveClient {
         nodeUid: NodeOrUid,
         metadata: UploadMetadata,
         signal?: AbortSignal,
-    ): Promise<FileRevisionUploader> {
+    ): Promise<FileUploader> {
         this.logger.info(`Getting file revision uploader for ${getUid(nodeUid)}`);
         return this.upload.getFileRevisionUploader(getUid(nodeUid), metadata, signal);
+    }
+
+    /**
+     * Returns the available name for the file in the given parent folder.
+     *
+     * The function will return a name that includes the original name with the
+     * available index. The name is guaranteed to be unique in the parent folder.
+     *
+     * Example new name: `file (2).txt`.
+     */
+    async getAvailableName(parentFolderUid: NodeOrUid, name: string): Promise<string> {
+        this.logger.info(`Getting available name in folder ${getUid(parentFolderUid)}`);
+        return this.nodes.management.findAvailableName(getUid(parentFolderUid), name);
     }
 
     /**

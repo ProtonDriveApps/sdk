@@ -61,6 +61,10 @@ describe('NodesManagement', () => {
                 yield* uids.map((uid) => ({ ok: true, uid }) as NodeResult);
             }),
             createFolder: jest.fn(),
+            checkAvailableHashes: jest.fn().mockResolvedValue({
+                availableHashes: ['name1Hash'],
+                pendingHashes: [],
+            }),
         };
         // @ts-expect-error No need to implement all methods for mocking
         cryptoCache = {
@@ -75,6 +79,20 @@ describe('NodesManagement', () => {
             }),
             encryptNodeWithNewParent: jest.fn(),
             createFolder: jest.fn(),
+            generateNameHashes: jest.fn().mockResolvedValue([
+                {
+                    name: 'name1',
+                    hash: 'name1Hash',
+                },
+                {
+                    name: 'name2',
+                    hash: 'name2Hash',
+                },
+                {
+                    name: 'name3',
+                    hash: 'name3Hash',
+                },
+            ]),
         };
         // @ts-expect-error No need to implement all methods for mocking
         nodesAccess = {
@@ -339,5 +357,52 @@ describe('NodesManagement', () => {
         }
         expect(restored).toEqual(new Set(uids));
         expect(nodesAccess.notifyNodeChanged).toHaveBeenCalledTimes(2);
+    });
+
+    describe('findAvailableName', () => {
+        it('should find available name', async () => {
+            apiService.checkAvailableHashes = jest.fn().mockImplementation(() => {
+                return {
+                    availableHashes: ['name3Hash'],
+                    pendingHashes: [],
+                };
+            });
+
+            const result = await management.findAvailableName('parentUid', 'name');
+            expect(result).toBe('name3');
+            expect(apiService.checkAvailableHashes).toHaveBeenCalledTimes(1);
+            expect(apiService.checkAvailableHashes).toHaveBeenCalledWith('parentUid', [
+                'name1Hash',
+                'name2Hash',
+                'name3Hash',
+            ]);
+        });
+
+        it('should find available name with multiple pages', async () => {
+            let firstCall = false;
+            apiService.checkAvailableHashes = jest.fn().mockImplementation(() => {
+                if (!firstCall) {
+                    firstCall = true;
+                    return {
+                        // First page has no available hashes
+                        availableHashes: [],
+                        pendingHashes: [],
+                    };
+                }
+                return {
+                    availableHashes: ['name3Hash'],
+                    pendingHashes: [],
+                };
+            });
+
+            const result = await management.findAvailableName('parentUid', 'name');
+            expect(result).toBe('name3');
+            expect(apiService.checkAvailableHashes).toHaveBeenCalledTimes(2);
+            expect(apiService.checkAvailableHashes).toHaveBeenCalledWith('parentUid', [
+                'name1Hash',
+                'name2Hash',
+                'name3Hash',
+            ]);
+        });
     });
 });

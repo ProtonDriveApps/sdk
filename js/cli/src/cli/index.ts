@@ -14,6 +14,7 @@ import { CommandFileSystemDelete } from './commandFileSystemDelete';
 import { CommandFileSystemDownload } from './commandFileSystemDownload';
 import { CommandFileSystemDownloadSeeking } from './commandFileSystemDownloadSeeking';
 import { CommandFileSystemDownloadThumbnails } from './commandFileSystemDownloadThumbnails';
+import { CommandFileSystemGetAvailableName } from './commandFileSystemGetAvailableName';
 import { CommandFileSystemInfo } from './commandFileSystemInfo';
 import { CommandFileSystemList } from './commandFileSystemList';
 import { CommandFileSystemMove } from './commandFileSystemMove';
@@ -67,6 +68,7 @@ const COMMANDS = [
     new CommandFileSystemDownloadSeeking(),
     new CommandFileSystemDownloadThumbnails(),
     new CommandFileSystemUpload(),
+    new CommandFileSystemGetAvailableName(),
     new CommandRevisionList(),
     new CommandRevisionDownload(),
     new CommandRevisionRestore(),

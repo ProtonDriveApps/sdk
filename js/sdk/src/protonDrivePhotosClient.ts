@@ -102,6 +102,7 @@ export class ProtonDrivePhotosClient {
             account,
             cryptoModule,
             this.photoShares,
+            fullConfig.clientUid,
         );
         this.photos = initPhotosModule(apiService, this.photoShares, this.nodes.access);
         this.sharing = initSharingModule(

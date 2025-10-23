@@ -26,10 +26,6 @@ describe('UploadManager', () => {
                 nodeRevisionUid: 'newNode:nodeRevisionUid',
             }),
             deleteDraft: jest.fn(),
-            checkAvailableHashes: jest.fn().mockResolvedValue({
-                availalbleHashes: ['name1Hash'],
-                pendingHashes: [],
-            }),
             commitDraftRevision: jest.fn(),
         };
         // @ts-expect-error No need to implement all methods for mocking
@@ -58,20 +54,6 @@ describe('UploadManager', () => {
                     email: 'signatureEmail',
                 },
             }),
-            generateNameHashes: jest.fn().mockResolvedValue([
-                {
-                    name: 'name1',
-                    hash: 'name1Hash',
-                },
-                {
-                    name: 'name2',
-                    hash: 'name2Hash',
-                },
-                {
-                    name: 'name3',
-                    hash: 'name3Hash',
-                },
-            ]),
             commitFile: jest.fn().mockResolvedValue({
                 armoredManifestSignature: 'newNode:armoredManifestSignature',
                 signatureEmail: 'signatureEmail',
@@ -277,53 +259,6 @@ describe('UploadManager', () => {
                 expect(error.existingNodeUid).toBe('volumeId~existingLinkId');
             }
             expect(apiService.deleteDraft).toHaveBeenCalledTimes(1);
-        });
-    });
-
-    describe('findAvailableName', () => {
-        it('should find available name', async () => {
-            apiService.checkAvailableHashes = jest.fn().mockImplementation(() => {
-                return {
-                    availalbleHashes: ['name3Hash'],
-                    pendingHashes: [],
-                };
-            });
-
-            const result = await manager.findAvailableName('parentUid', 'name');
-            expect(result).toBe('name3');
-            expect(apiService.checkAvailableHashes).toHaveBeenCalledTimes(1);
-            expect(apiService.checkAvailableHashes).toHaveBeenCalledWith('parentUid', [
-                'name1Hash',
-                'name2Hash',
-                'name3Hash',
-            ]);
-        });
-
-        it('should find available name with multiple pages', async () => {
-            let firstCall = false;
-            apiService.checkAvailableHashes = jest.fn().mockImplementation(() => {
-                if (!firstCall) {
-                    firstCall = true;
-                    return {
-                        // First page has no available hashes
-                        availalbleHashes: [],
-                        pendingHashes: [],
-                    };
-                }
-                return {
-                    availalbleHashes: ['name3Hash'],
-                    pendingHashes: [],
-                };
-            });
-
-            const result = await manager.findAvailableName('parentUid', 'name');
-            expect(result).toBe('name3');
-            expect(apiService.checkAvailableHashes).toHaveBeenCalledTimes(2);
-            expect(apiService.checkAvailableHashes).toHaveBeenCalledWith('parentUid', [
-                'name1Hash',
-                'name2Hash',
-                'name3Hash',
-            ]);
         });
     });
 
