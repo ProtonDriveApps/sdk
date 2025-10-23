@@ -64,6 +64,7 @@ describe('nodesModules integration tests', () => {
             account,
             driveCrypto,
             sharesService,
+            'clientUid',
         );
 
         nodesCache = new NodesCache(getMockLogger(), driveEntitiesCache);

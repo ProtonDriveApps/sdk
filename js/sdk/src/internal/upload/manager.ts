@@ -173,43 +173,6 @@ export class UploadManager {
         }
     }
 
-    async findAvailableName(parentFolderUid: string, name: string): Promise<string> {
-        const { hashKey: parentHashKey } = await this.nodesService.getNodeKeys(parentFolderUid);
-        if (!parentHashKey) {
-            throw new ValidationError(c('Error').t`Creating files in non-folders is not allowed`);
-        }
-
-        const [namePart, extension] = splitExtension(name);
-
-        const batchSize = 10;
-        let startIndex = 1;
-        while (true) {
-            const namesToCheck = [];
-            for (let i = startIndex; i < startIndex + batchSize; i++) {
-                namesToCheck.push(joinNameAndExtension(namePart, i, extension));
-            }
-
-            const hashesToCheck = await this.cryptoService.generateNameHashes(parentHashKey, namesToCheck);
-
-            const { availalbleHashes } = await this.apiService.checkAvailableHashes(
-                parentFolderUid,
-                hashesToCheck.map(({ hash }) => hash),
-            );
-
-            if (!availalbleHashes.length) {
-                startIndex += batchSize;
-                continue;
-            }
-
-            const availableHash = hashesToCheck.find(({ hash }) => hash === availalbleHashes[0]);
-            if (!availableHash) {
-                throw Error('Backend returned unexpected hash');
-            }
-
-            return availableHash.name;
-        }
-    }
-
     async deleteDraftNode(nodeUid: string): Promise<void> {
         try {
             await this.apiService.deleteDraft(nodeUid);
@@ -293,31 +256,4 @@ export class UploadManager {
             await this.nodesService.notifyNodeChanged(nodeRevisionDraft.nodeUid);
         }
     }
-}
-
-/**
- * Split a filename into `[name, extension]`
- */
-function splitExtension(filename = ''): [string, string] {
-    const endIdx = filename.lastIndexOf('.');
-    if (endIdx === -1 || endIdx === filename.length - 1) {
-        return [filename, ''];
-    }
-    return [filename.slice(0, endIdx), filename.slice(endIdx + 1)];
-}
-
-/**
- * Join a filename into `name (index).extension`
- */
-function joinNameAndExtension(name: string, index: number, extension: string): string {
-    if (!name && !extension) {
-        return `(${index})`;
-    }
-    if (!name) {
-        return `(${index}).${extension}`;
-    }
-    if (!extension) {
-        return `${name} (${index})`;
-    }
-    return `${name} (${index}).${extension}`;
 }

@@ -102,6 +102,14 @@ type PostRestoreRevisionResponse =
 type DeleteRevisionResponse =
     drivePaths['/drive/v2/volumes/{volumeID}/files/{linkID}/revisions/{revisionID}']['delete']['responses']['200']['content']['application/json'];
 
+
+type PostCheckAvailableHashesRequest = Extract<
+    drivePaths['/drive/v2/volumes/{volumeID}/links/{linkID}/checkAvailableHashes']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostCheckAvailableHashesResponse =
+    drivePaths['/drive/v2/volumes/{volumeID}/links/{linkID}/checkAvailableHashes']['post']['responses']['200']['content']['application/json'];
+
 /**
  * Provides API communication for fetching and manipulating nodes metadata.
  *
@@ -112,9 +120,11 @@ export class NodeAPIService {
     constructor(
         private logger: Logger,
         private apiService: DriveAPIService,
+        private clientUid: string | undefined,
     ) {
         this.logger = logger;
         this.apiService = apiService;
+        this.clientUid = clientUid;
     }
 
     async getNode(nodeUid: string, ownVolumeId: string, signal?: AbortSignal): Promise<EncryptedNode> {
@@ -525,6 +535,38 @@ export class NodeAPIService {
         await this.apiService.delete<DeleteRevisionResponse>(
             `drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/${revisionId}`,
         );
+    }
+
+    async checkAvailableHashes(
+        parentNodeUid: string,
+        hashes: string[],
+    ): Promise<{
+        availableHashes: string[];
+        pendingHashes: {
+            hash: string;
+            nodeUid: string;
+            revisionUid: string;
+            clientUid?: string;
+        }[];
+    }> {
+        const { volumeId, nodeId: parentNodeId } = splitNodeUid(parentNodeUid);
+        const result = await this.apiService.post<PostCheckAvailableHashesRequest, PostCheckAvailableHashesResponse>(
+            `drive/v2/volumes/${volumeId}/links/${parentNodeId}/checkAvailableHashes`,
+            {
+                Hashes: hashes,
+                ClientUID: this.clientUid ? [this.clientUid] : null,
+            },
+        );
+
+        return {
+            availableHashes: result.AvailableHashes,
+            pendingHashes: result.PendingHashes.map((hash) => ({
+                hash: hash.Hash,
+                nodeUid: makeNodeUid(volumeId, hash.LinkID),
+                revisionUid: makeNodeRevisionUid(volumeId, hash.LinkID, hash.RevisionID),
+                clientUid: hash.ClientUID || undefined,
+            })),
+        };
     }
 }
 

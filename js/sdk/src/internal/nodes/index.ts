@@ -37,8 +37,9 @@ export function initNodesModule(
     account: ProtonDriveAccount,
     driveCrypto: DriveCrypto,
     sharesService: SharesService,
+    clientUid: string | undefined,
 ) {
-    const api = new NodeAPIService(telemetry.getLogger('nodes-api'), apiService);
+    const api = new NodeAPIService(telemetry.getLogger('nodes-api'), apiService, clientUid);
     const cache = new NodesCache(telemetry.getLogger('nodes-cache'), driveEntitiesCache);
     const cryptoCache = new NodesCryptoCache(telemetry.getLogger('nodes-cache'), driveCryptoCache);
     const cryptoReporter = new NodesCryptoReporter(telemetry, sharesService);

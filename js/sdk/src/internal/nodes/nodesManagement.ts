@@ -8,10 +8,14 @@ import { NodeAPIService } from './apiService';
 import { NodesCryptoCache } from './cryptoCache';
 import { NodesCryptoService } from './cryptoService';
 import { NodeOutOfSyncError } from './errors';
+import { generateFolderExtendedAttributes } from './extendedAttributes';
 import { DecryptedNode } from './interface';
+import { splitExtension, joinNameAndExtension } from './nodeName';
 import { NodesAccess } from './nodesAccess';
 import { validateNodeName } from './validations';
-import { generateFolderExtendedAttributes } from './extendedAttributes';
+
+const AVAILABLE_NAME_BATCH_SIZE = 10;
+const AVAILABLE_NAME_LIMIT = 1000;
 
 /**
  * Provides high-level actions for managing nodes.
@@ -348,5 +352,43 @@ export class NodesManagement {
 
         await this.cryptoCache.setNodeKeys(nodeUid, keys);
         return node;
+    }
+
+    async findAvailableName(parentFolderUid: string, name: string): Promise<string> {
+        const { hashKey: parentHashKey } = await this.nodesAccess.getNodeKeys(parentFolderUid);
+        if (!parentHashKey) {
+            throw new ValidationError(c('Error').t`Creating files in non-folders is not allowed`);
+        }
+
+        const [namePart, extension] = splitExtension(name);
+
+        let startIndex = 1;
+        while (startIndex < AVAILABLE_NAME_LIMIT) {
+            const namesToCheck = startIndex === 1 ? [name] : [];
+            for (let i = startIndex; i < startIndex + AVAILABLE_NAME_BATCH_SIZE; i++) {
+                namesToCheck.push(joinNameAndExtension(namePart, i, extension));
+            }
+
+            const hashesToCheck = await this.cryptoService.generateNameHashes(parentHashKey, namesToCheck);
+
+            const { availableHashes } = await this.apiService.checkAvailableHashes(
+                parentFolderUid,
+                hashesToCheck.map(({ hash }) => hash),
+            );
+
+            if (!availableHashes.length) {
+                startIndex += AVAILABLE_NAME_BATCH_SIZE;
+                continue;
+            }
+
+            const availableHash = hashesToCheck.find(({ hash }) => hash === availableHashes[0]);
+            if (!availableHash) {
+                throw Error('Backend returned unexpected hash');
+            }
+
+            return availableHash.name;
+        }
+
+        throw new ValidationError(c('Error').t`No available name found`);
     }
 }

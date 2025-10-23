@@ -6,13 +6,6 @@ import { splitNodeUid, makeNodeUid, splitNodeRevisionUid, makeNodeRevisionUid } 
 import { UploadTokens } from './interface';
 import { ThumbnailType } from '../../interface';
 
-type PostCheckAvailableHashesRequest = Extract<
-    drivePaths['/drive/v2/volumes/{volumeID}/links/{linkID}/checkAvailableHashes']['post']['requestBody'],
-    { content: object }
->['content']['application/json'];
-type PostCheckAvailableHashesResponse =
-    drivePaths['/drive/v2/volumes/{volumeID}/links/{linkID}/checkAvailableHashes']['post']['responses']['200']['content']['application/json'];
-
 type PostCreateDraftRequest = Extract<
     drivePaths['/drive/v2/volumes/{volumeID}/files']['post']['requestBody'],
     { content: object }
@@ -58,38 +51,6 @@ export class UploadAPIService {
     ) {
         this.apiService = apiService;
         this.clientUid = clientUid;
-    }
-
-    async checkAvailableHashes(
-        parentNodeUid: string,
-        hashes: string[],
-    ): Promise<{
-        availalbleHashes: string[];
-        pendingHashes: {
-            hash: string;
-            nodeUid: string;
-            revisionUid: string;
-            clientUid?: string;
-        }[];
-    }> {
-        const { volumeId, nodeId: parentNodeId } = splitNodeUid(parentNodeUid);
-        const result = await this.apiService.post<PostCheckAvailableHashesRequest, PostCheckAvailableHashesResponse>(
-            `drive/v2/volumes/${volumeId}/links/${parentNodeId}/checkAvailableHashes`,
-            {
-                Hashes: hashes,
-                ClientUID: this.clientUid ? [this.clientUid] : null,
-            },
-        );
-
-        return {
-            availalbleHashes: result.AvailableHashes,
-            pendingHashes: result.PendingHashes.map((hash) => ({
-                hash: hash.Hash,
-                nodeUid: makeNodeUid(volumeId, hash.LinkID),
-                revisionUid: makeNodeRevisionUid(volumeId, hash.LinkID, hash.RevisionID),
-                clientUid: hash.ClientUID || undefined,
-            })),
-        };
     }
 
     async createDraft(

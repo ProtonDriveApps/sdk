@@ -82,7 +82,7 @@ export type {
     MetricEvent,
 } from './telemetry';
 export { MetricVolumeType } from './telemetry';
-export type { FileUploader, FileRevisionUploader, UploadController, UploadMetadata } from './upload';
+export type { FileUploader, UploadController, UploadMetadata } from './upload';
 export type { Thumbnail, ThumbnailResult } from './thumbnail';
 export { ThumbnailType } from './thumbnail';
 

@@ -176,11 +176,6 @@ export class FileUploader extends Uploader {
             blockVerifier,
         };
     }
-
-    async getAvailableName(): Promise<string> {
-        const availableName = await this.manager.findAvailableName(this.parentFolderUid, this.name);
-        return availableName;
-    }
 }
 
 /**
