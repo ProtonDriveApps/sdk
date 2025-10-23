@@ -12,6 +12,7 @@ import { SharesCache } from './cache';
 import { SharesCryptoService } from './cryptoService';
 import { SharesManager } from './manager';
 
+export { ShareTargetType } from './interface';
 export type { EncryptedShare } from './interface';
 
 /**

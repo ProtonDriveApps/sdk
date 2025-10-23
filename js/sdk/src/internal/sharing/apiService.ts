@@ -7,6 +7,7 @@ import {
     permissionsToMemberRole,
     memberRoleToPermission,
 } from '../apiService';
+import { ShareTargetType } from '../shares';
 import {
     makeNodeUid,
     splitNodeUid,
@@ -119,14 +120,6 @@ type PutShareUrlRequest = Extract<
 type PutShareUrlResponse =
     drivePaths['/drive/shares/{shareID}/urls/{urlID}']['put']['responses']['200']['content']['application/json'];
 
-// We do not support photos and albums yet.
-const SUPPORTED_SHARE_TARGET_TYPES = [
-    0, // Root
-    1, // Folder
-    2, // File
-    5, // Proton vendor (documents and sheets)
-];
-
 /**
  * Provides API communication for fetching and managing sharing.
  *
@@ -137,9 +130,11 @@ export class SharingAPIService {
     constructor(
         private logger: Logger,
         private apiService: DriveAPIService,
+        private shareTargetTypes: ShareTargetType[],
     ) {
         this.logger = logger;
         this.apiService = apiService;
+        this.shareTargetTypes = shareTargetTypes;
     }
 
     async *iterateSharedNodeUids(volumeId: string, signal?: AbortSignal): AsyncGenerator<string> {
@@ -163,6 +158,7 @@ export class SharingAPIService {
     async *iterateSharedWithMeNodeUids(signal?: AbortSignal): AsyncGenerator<string> {
         let anchor = '';
         while (true) {
+            // TODO: Use ShareTargetTypes filter when it is supported by the API.
             const response = await this.apiService.get<GetSharedWithMeNodesResponse>(
                 `drive/v2/sharedwithme?${anchor ? `AnchorID=${anchor}` : ''}`,
                 signal,
@@ -170,8 +166,8 @@ export class SharingAPIService {
             for (const link of response.Links) {
                 const nodeUid = makeNodeUid(link.VolumeID, link.LinkID);
 
-                if (!SUPPORTED_SHARE_TARGET_TYPES.includes(link.ShareTargetType)) {
-                    this.logger.warn(`Unsupported share target type ${link.ShareTargetType} for node ${nodeUid}`);
+                if (!this.shareTargetTypes.includes(link.ShareTargetType)) {
+                    this.logger.debug(`Unsupported share target type ${link.ShareTargetType} for node ${nodeUid}`);
                     continue;
                 }
 
@@ -188,14 +184,21 @@ export class SharingAPIService {
     async *iterateInvitationUids(signal?: AbortSignal): AsyncGenerator<string> {
         let anchor = '';
         while (true) {
+            const params = new URLSearchParams();
+            this.shareTargetTypes.forEach((type) => {
+                params.append('ShareTargetTypes[]', type.toString());
+            });
+            if (anchor) {
+                params.append('AnchorID', anchor);
+            }
             const response = await this.apiService.get<GetInvitationsResponse>(
-                `drive/v2/shares/invitations?${anchor ? `AnchorID=${anchor}` : ''}`,
+                `drive/v2/shares/invitations?${params.toString()}`,
                 signal,
             );
             for (const invitation of response.Invitations) {
                 const invitationUid = makeInvitationUid(invitation.ShareID, invitation.InvitationID);
 
-                if (!SUPPORTED_SHARE_TARGET_TYPES.includes(invitation.ShareTargetType)) {
+                if (!this.shareTargetTypes.includes(invitation.ShareTargetType)) {
                     this.logger.warn(
                         `Unsupported share target type ${invitation.ShareTargetType} for invitation ${invitationUid}`,
                     );
