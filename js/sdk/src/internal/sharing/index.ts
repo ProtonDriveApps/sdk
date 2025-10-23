@@ -1,6 +1,7 @@
 import { ProtonDriveAccount, ProtonDriveEntitiesCache, ProtonDriveTelemetry } from '../../interface';
 import { DriveCrypto } from '../../crypto';
 import { DriveAPIService } from '../apiService';
+import { ShareTargetType } from '../shares';
 import { SharingAPIService } from './apiService';
 import { SharingCache } from './cache';
 import { SharingCryptoService } from './cryptoService';
@@ -8,6 +9,10 @@ import { SharingAccess } from './sharingAccess';
 import { SharingManagement } from './sharingManagement';
 import { SharesService, NodesService } from './interface';
 import { SharingEventHandler } from './events';
+
+// Root shares are not allowed to be shared.
+// Photos and Albums are not supported in main volume (core Drive).
+const DEFAULT_SHARE_TARGET_TYPES = [ShareTargetType.Folder, ShareTargetType.File, ShareTargetType.ProtonVendor];
 
 /**
  * Provides facade for the whole sharing module.
@@ -24,8 +29,9 @@ export function initSharingModule(
     crypto: DriveCrypto,
     sharesService: SharesService,
     nodesService: NodesService,
+    shareTargetTypes: ShareTargetType[] = DEFAULT_SHARE_TARGET_TYPES,
 ) {
-    const api = new SharingAPIService(telemetry.getLogger('sharing-api'), apiService);
+    const api = new SharingAPIService(telemetry.getLogger('sharing-api'), apiService, shareTargetTypes);
     const cache = new SharingCache(driveEntitiesCache);
     const cryptoService = new SharingCryptoService(telemetry, crypto, account, sharesService);
     const sharingAccess = new SharingAccess(api, cache, cryptoService, sharesService, nodesService);
