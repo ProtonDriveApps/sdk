@@ -10,7 +10,7 @@ export class CommandPublicInfo implements Command {
     args = ['path'];
     options: ParseArgsConfig['options'] = PUBLIC_OPTIONS;
 
-    async action({ paths, args: [pathString], options: { json, url, customPassword } }: ActionArgs) {
+    async action({ paths, args: [pathString], options: { json, url, 'custom-password': customPassword } }: ActionArgs) {
         await paths.authPublicLinkSession(url, customPassword);
         const path = paths.getPublicLinkPath(pathString);
         const node = await path.getNode();

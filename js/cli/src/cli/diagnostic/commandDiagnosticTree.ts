@@ -18,7 +18,7 @@ export class CommandDiagnosticTree implements Command {
             short: 't',
             default: false,
         },
-        localStructure: {
+        'local-structure': {
             type: 'string',
             short: 's',
             default: '',
@@ -29,7 +29,7 @@ export class CommandDiagnosticTree implements Command {
         sdkDiagnostic,
         paths,
         args: [pathString],
-        options: { json, content, thumbnails, localStructure },
+        options: { json, content, thumbnails, 'local-structure': localStructure },
     }: ActionArgs) {
         const nodePath = paths.getPath(pathString);
         const node = await nodePath.getNode();

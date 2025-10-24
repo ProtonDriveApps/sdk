@@ -8,14 +8,14 @@ export class CommandPhotoTimeline implements Command {
     group = 'photo';
     name = 'timeline';
     options: ParseArgsConfig['options'] = {
-        loadDetails: {
+        'load-details': {
             type: 'boolean',
             short: 'd',
             default: false,
         },
     };
 
-    async action({ photosSdk, options: { json, loadDetails } }: ActionArgs) {
+    async action({ photosSdk, options: { json, 'load-details': loadDetails } }: ActionArgs) {
         if (loadDetails) {
             await this.listWithDetails(photosSdk, json);
         } else {

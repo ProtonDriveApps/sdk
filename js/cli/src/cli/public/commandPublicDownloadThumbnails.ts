@@ -12,7 +12,7 @@ export class CommandPublicDownloadThumbnails implements Command {
     name = 'download-thumbnails';
     args = ['path', 'parentLocalPath'];
     options: ParseArgsConfig['options'] = {
-        thumbnailType: {
+        'thumbnail-type': {
             type: 'string',
             short: 't',
             default: ThumbnailType.Type1.toString(),
@@ -23,7 +23,7 @@ export class CommandPublicDownloadThumbnails implements Command {
     async action({
         paths,
         args: [pathString, parentLocalPath],
-        options: { json, thumbnailType, url, customPassword },
+        options: { json, 'thumbnail-type': thumbnailType, url, 'custom-password': customPassword },
     }: ActionArgs) {
         const client = await paths.authPublicLinkSession(url, customPassword);
         const nodePath = paths.getPublicLinkPath(pathString);
