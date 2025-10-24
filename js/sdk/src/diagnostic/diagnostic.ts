@@ -1,7 +1,7 @@
 import { MaybeNode } from '../interface';
 import { ProtonDriveClient } from '../protonDriveClient';
 import { DiagnosticHTTPClient } from './httpClient';
-import { DiagnosticOptions, DiagnosticResult } from './interface';
+import { DiagnosticOptions, DiagnosticProgressCallback, DiagnosticResult } from './interface';
 import { SDKDiagnostic } from './sdkDiagnostic';
 import { DiagnosticTelemetry } from './telemetry';
 import { zipGenerators } from './zipGenerators';
@@ -21,14 +21,21 @@ export class Diagnostic {
         this.protonDriveClient = protonDriveClient;
     }
 
-    async *verifyMyFiles(options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
-        const diagnostic = new SDKDiagnostic(this.protonDriveClient);
-        yield* this.yieldEvents(diagnostic.verifyMyFiles(options));
+    async *verifyMyFiles(
+        options?: DiagnosticOptions,
+        onProgress?: DiagnosticProgressCallback,
+    ): AsyncGenerator<DiagnosticResult> {
+        const diagnostic = new SDKDiagnostic(this.protonDriveClient, options, onProgress);
+        yield* this.yieldEvents(diagnostic.verifyMyFiles(options?.expectedStructure));
     }
 
-    async *verifyNodeTree(node: MaybeNode, options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
-        const diagnostic = new SDKDiagnostic(this.protonDriveClient);
-        yield* this.yieldEvents(diagnostic.verifyNodeTree(node, options));
+    async *verifyNodeTree(
+        node: MaybeNode,
+        options?: DiagnosticOptions,
+        onProgress?: DiagnosticProgressCallback,
+    ): AsyncGenerator<DiagnosticResult> {
+        const diagnostic = new SDKDiagnostic(this.protonDriveClient, options, onProgress);
+        yield* this.yieldEvents(diagnostic.verifyNodeTree(node, options?.expectedStructure));
     }
 
     private async *yieldEvents(generator: AsyncGenerator<DiagnosticResult>): AsyncGenerator<DiagnosticResult> {
