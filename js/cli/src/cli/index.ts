@@ -27,10 +27,12 @@ import { CommandFileSystemUpload } from './fileSystem/commandFileSystemUpload';
 import { CommandFileSystemTrash } from './fileSystem/commandFileSystemTrash';
 import { CommandAlbumList } from './photos/commandAlbumList';
 import { CommandPhotoTimeline } from './photos/commandPhotoTimeline';
+import { CommandPublicCreateFolder } from './public/commandPublicCreateFolder';
 import { CommandPublicDownload } from './public/commandPublicDownload';
 import { CommandPublicDownloadThumbnails } from './public/commandPublicDownloadThumbnails';
 import { CommandPublicInfo } from './public/commandPublicInfo';
 import { CommandPublicList } from './public/commandPublicList';
+import { CommandPublicUpload } from './public/commandPublicUpload';
 import { CommandRevisionDelete } from './revision/commandRevisionDelete';
 import { CommandRevisionDownload } from './revision/commandRevisionDownload';
 import { CommandRevisionList } from './revision/commandRevisionList';
@@ -87,8 +89,10 @@ const COMMANDS = [
     // ProtonDrivePublicLinkClient
     new CommandPublicList(),
     new CommandPublicInfo(),
+    new CommandPublicCreateFolder(),
     new CommandPublicDownload(),
     new CommandPublicDownloadThumbnails(),
+    new CommandPublicUpload(),
     // ProtonDrivePhotosClient
     new CommandPhotoTimeline(),
     new CommandAlbumList(),

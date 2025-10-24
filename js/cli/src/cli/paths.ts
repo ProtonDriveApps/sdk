@@ -268,6 +268,11 @@ export class PublicLinkPath {
         return this.getNodeByPath(rootNode, this.fullPath);
     }
 
+    async getChild(name: string) {
+        const node = await this.getNode();
+        return this.getNodeByName(node, name);
+    }
+
     private async getNodeByPath(parentNode: MaybeNode, pathString: string) {
         let node = parentNode;
         const pathParts = pathString.split(path.sep);
