@@ -15,6 +15,8 @@ import {
     FileDownloader,
     ThumbnailType,
     ThumbnailResult,
+    UploadMetadata,
+    FileUploader,
 } from './interface';
 import { Telemetry } from './telemetry';
 import {
@@ -28,6 +30,7 @@ import { DriveAPIService } from './internal/apiService';
 import { initDownloadModule } from './internal/download';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharingPublicModule } from './internal/sharingPublic';
+import { initUploadModule } from './internal/upload';
 
 /**
  * ProtonDrivePublicLinkClient is the interface for the public link client.
@@ -47,6 +50,7 @@ export class ProtonDrivePublicLinkClient {
     private sdkEvents: SDKEvents;
     private sharingPublic: ReturnType<typeof initSharingPublicModule>;
     private download: ReturnType<typeof initDownloadModule>;
+    private upload: ReturnType<typeof initUploadModule>;
 
     public experimental: {
         /**
@@ -91,7 +95,7 @@ export class ProtonDrivePublicLinkClient {
         if (!telemetry) {
             telemetry = new Telemetry();
         }
-        this.logger = telemetry.getLogger('interface');
+        this.logger = telemetry.getLogger('publicLink-interface');
 
         // Use only in memory cache for public link as there are no events to keep it up to date if persisted.
         const entitiesCache = new MemoryCache<string>();
@@ -128,6 +132,14 @@ export class ProtonDrivePublicLinkClient {
             this.sharingPublic.shares,
             this.sharingPublic.nodes.access,
             this.sharingPublic.nodes.revisions,
+        );
+        this.upload = initUploadModule(
+            telemetry,
+            apiService,
+            cryptoModule,
+            this.sharingPublic.shares,
+            this.sharingPublic.nodes.access,
+            fullConfig.clientUid,
         );
 
         this.experimental = {
@@ -194,6 +206,18 @@ export class ProtonDrivePublicLinkClient {
     }
 
     /**
+     * Create a new folder.
+     *
+     * See `ProtonDriveClient.createFolder` for more information.
+     */
+    async createFolder(parentNodeUid: NodeOrUid, name: string, modificationTime?: Date): Promise<MaybeNode> {
+        this.logger.info(`Creating folder in ${getUid(parentNodeUid)}`);
+        return convertInternalNodePromise(
+            this.sharingPublic.nodes.management.createFolder(getUid(parentNodeUid), name, modificationTime),
+        );
+    }
+
+    /**
      * Get the file downloader to download the node content.
      *
      * See `ProtonDriveClient.getFileDownloader` for more information.
@@ -215,5 +239,35 @@ export class ProtonDrivePublicLinkClient {
     ): AsyncGenerator<ThumbnailResult> {
         this.logger.info(`Iterating ${nodeUids.length} thumbnails`);
         yield* this.download.iterateThumbnails(getUids(nodeUids), thumbnailType, signal);
+    }
+
+    /**
+     * Get the file uploader to upload a new file. For uploading a new
+     * revision, use `getFileRevisionUploader` instead.
+     *
+     * See `ProtonDriveClient.getFileUploader` for more information.
+     */
+    async getFileUploader(
+        parentFolderUid: NodeOrUid,
+        name: string,
+        metadata: UploadMetadata,
+        signal?: AbortSignal,
+    ): Promise<FileUploader> {
+        this.logger.info(`Getting file uploader for parent ${getUid(parentFolderUid)}`);
+        return this.upload.getFileUploader(getUid(parentFolderUid), name, metadata, signal);
+    }
+
+    /**
+     * Same as `getFileUploader`, but for a uploading new revision of the file.
+     *
+     * See `ProtonDriveClient.getFileRevisionUploader` for more information.
+     */
+    async getFileRevisionUploader(
+        nodeUid: NodeOrUid,
+        metadata: UploadMetadata,
+        signal?: AbortSignal,
+    ): Promise<FileUploader> {
+        this.logger.info(`Getting file revision uploader for ${getUid(nodeUid)}`);
+        return this.upload.getFileRevisionUploader(getUid(nodeUid), metadata, signal);
     }
 }
