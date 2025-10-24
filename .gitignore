@@ -4,7 +4,8 @@
 # Docs
 __pycache__
 docs/build
-public
+/public
+js/public
 
 # JS
 node_modules

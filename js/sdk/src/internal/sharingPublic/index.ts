@@ -10,6 +10,7 @@ import { NodeAPIService } from '../nodes/apiService';
 import { NodesCache } from '../nodes/cache';
 import { NodesCryptoCache } from '../nodes/cryptoCache';
 import { NodesCryptoService } from '../nodes/cryptoService';
+import { NodesManagement } from '../nodes/nodesManagement';
 import { NodesRevisons } from '../nodes/nodesRevisions';
 import { SharingPublicCryptoReporter } from './cryptoReporter';
 import { SharingPublicNodesAccess } from './nodes';
@@ -96,10 +97,12 @@ export function initSharingPublicNodesModule(
         publicShareKey,
         publicRootNodeUid,
     );
+    const nodesManagement = new NodesManagement(api, cryptoCache, cryptoService, nodesAccess);
     const nodesRevisions = new NodesRevisons(telemetry.getLogger('nodes'), api, cryptoService, nodesAccess);
 
     return {
         access: nodesAccess,
+        management: nodesManagement,
         revisions: nodesRevisions,
     };
 }
