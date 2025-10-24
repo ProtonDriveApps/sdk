@@ -120,7 +120,7 @@ export class Path {
         if (photoPaths.includes(this.type)) {
             return this.photosSdk;
         }
-        return this.sdk;
+        return this.driveSdk;
     }
 
     async getNode(): Promise<MaybeNode> {

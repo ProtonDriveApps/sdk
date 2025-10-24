@@ -18,7 +18,11 @@ export class CommandPublicDownload implements Command {
         ...PUBLIC_OPTIONS,
     };
 
-    async action({ paths, args: [pathString, localParentPath], options: { name, json, url, customPassword } }: ActionArgs) {
+    async action({
+        paths,
+        args: [pathString, localParentPath],
+        options: { name, json, url, 'custom-password': customPassword },
+    }: ActionArgs) {
         const client = await paths.authPublicLinkSession(url, customPassword);
         const nodePath = paths.getPublicLinkPath(pathString);
         const node = await nodePath.getNode();

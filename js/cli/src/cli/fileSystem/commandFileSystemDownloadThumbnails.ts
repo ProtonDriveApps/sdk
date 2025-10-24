@@ -12,14 +12,18 @@ export class CommandFileSystemDownloadThumbnails implements Command {
     // FIXME: support download of multiple thumbnails
     args = ['path', 'parentLocalPath'];
     options: ParseArgsConfig['options'] = {
-        thumbnailType: {
+        'thumbnail-type': {
             type: 'string',
             short: 't',
             default: ThumbnailType.Type1.toString(),
         },
     };
 
-    async action({ paths, args: [pathString, parentLocalPath], options: { json, thumbnailType } }: ActionArgs) {
+    async action({
+        paths,
+        args: [pathString, parentLocalPath],
+        options: { json, 'thumbnail-type': thumbnailType },
+    }: ActionArgs) {
         const nodePath = paths.getPath(pathString);
         const node = await nodePath.getNode();
 

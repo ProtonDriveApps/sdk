@@ -24,7 +24,7 @@ export class CommandSharingInvite implements Command {
             short: 'm',
             default: '',
         },
-        includeNodeName: {
+        'include-node-name': {
             type: 'boolean',
             short: 'n',
             default: false,
@@ -34,7 +34,7 @@ export class CommandSharingInvite implements Command {
     async action({
         paths,
         args: [pathString],
-        options: { user: userEmails, role, message, includeNodeName, json },
+        options: { user: userEmails, role, message, 'include-node-name': includeNodeName, json },
     }: ActionArgs) {
         const nodePath = paths.getPath(pathString);
         const node = await nodePath.getNode();

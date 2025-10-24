@@ -5,7 +5,7 @@ export const PUBLIC_OPTIONS: ParseArgsConfig['options'] = {
         type: 'string',
         short: 'u',
     },
-    customPassword: {
+    'custom-password': {
         type: 'string',
         short: 'c',
         default: '',

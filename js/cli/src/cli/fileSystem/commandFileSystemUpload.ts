@@ -28,7 +28,7 @@ export class CommandFileSystemUpload implements Command {
         photosSdk,
         paths,
         args: [localPath, parentPath],
-        options: { json, name, newRevision },
+        options: { json, name, 'new-revision': newRevision },
     }: ActionArgs) {
         name = name || path.basename(localPath);
 
