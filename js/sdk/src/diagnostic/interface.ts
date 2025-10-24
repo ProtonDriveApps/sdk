@@ -2,8 +2,15 @@ import { Author, MaybeNode, MetricEvent, NodeType, AnonymousUser } from '../inte
 import { LogRecord } from '../telemetry';
 
 export interface Diagnostic {
-    verifyMyFiles(options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult>;
-    verifyNodeTree(node: MaybeNode, options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult>;
+    verifyMyFiles(
+        options?: DiagnosticOptions,
+        onProgress?: DiagnosticProgressCallback,
+    ): AsyncGenerator<DiagnosticResult>;
+    verifyNodeTree(
+        node: MaybeNode,
+        options?: DiagnosticOptions,
+        onProgress?: DiagnosticProgressCallback,
+    ): AsyncGenerator<DiagnosticResult>;
 }
 
 export type DiagnosticOptions = {
@@ -19,6 +26,12 @@ export type ExcpectedTreeNode = {
     expectedSizeInBytes?: number;
     children?: ExcpectedTreeNode[];
 };
+
+export type DiagnosticProgressCallback = (progress: {
+    allNodesLoaded: boolean;
+    loadedNodes: number;
+    checkedNodes: number;
+}) => void;
 
 export type DiagnosticResult =
     | FatalErrorResult

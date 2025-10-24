@@ -42,7 +42,9 @@ export class CommandDiagnosticTree implements Command {
             expectedStructure,
         };
 
-        for await (const result of sdkDiagnostic.verifyNodeTree(node, options)) {
+        for await (const result of sdkDiagnostic.verifyNodeTree(node, options, (progress) => {
+            printObject(progress, json);
+        })) {
             printObject(result, json);
         }
     }
