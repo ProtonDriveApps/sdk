@@ -6,7 +6,13 @@ import { Diagnostic } from './interface';
 import { DiagnosticHTTPClient } from './httpClient';
 import { DiagnosticTelemetry } from './telemetry';
 
-export type { Diagnostic, DiagnosticResult } from './interface';
+export type {
+    Diagnostic,
+    DiagnosticOptions,
+    ExcpectedTreeNode,
+    DiagnosticProgressCallback,
+    DiagnosticResult,
+} from './interface';
 
 /**
  * Initializes the diagnostic tool. It creates the instance of

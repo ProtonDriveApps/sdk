@@ -1,7 +1,16 @@
 import { Author, FileDownloader, MaybeNode, NodeType, Revision, ThumbnailType } from '../interface';
 import { ProtonDriveClient } from '../protonDriveClient';
-import { DiagnosticOptions, DiagnosticResult, NodeDetails, ExcpectedTreeNode } from './interface';
+import {
+    DiagnosticOptions,
+    DiagnosticResult,
+    NodeDetails,
+    ExcpectedTreeNode,
+    DiagnosticProgressCallback,
+} from './interface';
 import { IntegrityVerificationStream } from './integrityVerificationStream';
+import { zipGenerators } from './zipGenerators';
+
+const PROGRESS_REPORT_INTERVAL = 500;
 
 /**
  * Diagnostic tool that uses SDK to traverse the node tree and verify
@@ -11,11 +20,55 @@ import { IntegrityVerificationStream } from './integrityVerificationStream';
  * To get the full diagnostic, use {@link FullSDKDiagnostic}.
  */
 export class SDKDiagnostic {
-    constructor(private protonDriveClient: ProtonDriveClient) {
+    private options: Pick<DiagnosticOptions, 'verifyContent' | 'verifyThumbnails'>;
+
+    private onProgress?: DiagnosticProgressCallback;
+    private progressReportInterval: NodeJS.Timeout | undefined;
+
+    private nodesQueue: { node: MaybeNode; expected?: ExcpectedTreeNode }[] = [];
+    private allNodesLoaded: boolean = false;
+    private loadedNodes: number = 0;
+    private checkedNodes: number = 0;
+
+    constructor(
+        private protonDriveClient: ProtonDriveClient,
+        options?: Pick<DiagnosticOptions, 'verifyContent' | 'verifyThumbnails'>,
+        onProgress?: DiagnosticProgressCallback,
+    ) {
         this.protonDriveClient = protonDriveClient;
+        this.options = options || { verifyContent: false, verifyThumbnails: false };
+        this.onProgress = onProgress;
     }
 
-    async *verifyMyFiles(options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
+    private startProgress(): void {
+        this.allNodesLoaded = false;
+        this.loadedNodes = 0;
+        this.checkedNodes = 0;
+
+        this.reportProgress();
+        this.progressReportInterval = setInterval(() => {
+            this.reportProgress();
+        }, PROGRESS_REPORT_INTERVAL);
+    }
+
+    private finishProgress(): void {
+        if (this.progressReportInterval) {
+            clearInterval(this.progressReportInterval);
+            this.progressReportInterval = undefined;
+        }
+
+        this.reportProgress();
+    }
+
+    private reportProgress(): void {
+        this.onProgress?.({
+            allNodesLoaded: this.allNodesLoaded,
+            loadedNodes: this.loadedNodes,
+            checkedNodes: this.checkedNodes,
+        });
+    }
+
+    async *verifyMyFiles(expectedStructure?: ExcpectedTreeNode): AsyncGenerator<DiagnosticResult> {
         let myFilesRootFolder: MaybeNode;
 
         try {
@@ -29,20 +82,118 @@ export class SDKDiagnostic {
             return;
         }
 
-        yield* this.verifyNodeTree(myFilesRootFolder, options);
+        yield* this.verifyNodeTree(myFilesRootFolder, expectedStructure);
     }
 
-    async *verifyNodeTree(node: MaybeNode, options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
-        const isFolder = getNodeType(node) === NodeType.Folder;
+    async *verifyNodeTree(node: MaybeNode, expectedStructure?: ExcpectedTreeNode): AsyncGenerator<DiagnosticResult> {
+        this.startProgress();
+        this.nodesQueue.push({ node, expected: expectedStructure });
+        this.loadedNodes++;
+        yield* zipGenerators(this.loadNodeTree(node, expectedStructure), this.verifyNodesQueue());
+        this.finishProgress();
+    }
 
-        yield* this.verifyNode(node, options);
-
+    private async *loadNodeTree(
+        parentNode: MaybeNode,
+        expectedStructure?: ExcpectedTreeNode,
+    ): AsyncGenerator<DiagnosticResult> {
+        const isFolder = getNodeType(parentNode) === NodeType.Folder;
         if (isFolder) {
-            yield* this.verifyNodeChildren(node, options);
+            yield* this.loadNodeTreeRecursively(parentNode, expectedStructure);
+        }
+        this.allNodesLoaded = true;
+    }
+
+    private async *loadNodeTreeRecursively(
+        parentNode: MaybeNode,
+        expectedStructure?: ExcpectedTreeNode,
+    ): AsyncGenerator<DiagnosticResult> {
+        const parentNodeUid = parentNode.ok ? parentNode.value.uid : parentNode.error.uid;
+        const children: MaybeNode[] = [];
+
+        try {
+            for await (const child of this.protonDriveClient.iterateFolderChildren(parentNode)) {
+                children.push(child);
+                this.nodesQueue.push({
+                    node: child,
+                    expected: getTreeNodeChildByNodeName(expectedStructure, getNodeName(child)),
+                });
+                this.loadedNodes++;
+            }
+        } catch (error: unknown) {
+            yield {
+                type: 'sdk_error',
+                call: `iterateFolderChildren(${parentNodeUid})`,
+                error,
+            };
+        }
+
+        if (expectedStructure) {
+            yield* this.verifyExpectedNodeChildren(parentNodeUid, children, expectedStructure);
+        }
+
+        for (const child of children) {
+            if (getNodeType(child) === NodeType.Folder) {
+                yield* this.loadNodeTreeRecursively(
+                    child,
+                    getTreeNodeChildByNodeName(expectedStructure, getNodeName(child)),
+                );
+            }
         }
     }
 
-    private async *verifyNode(node: MaybeNode, options?: DiagnosticOptions): AsyncGenerator<DiagnosticResult> {
+    private async *verifyExpectedNodeChildren(
+        parentNodeUid: string,
+        children: MaybeNode[],
+        expectedStructure?: ExcpectedTreeNode,
+    ): AsyncGenerator<DiagnosticResult> {
+        if (!expectedStructure) {
+            return;
+        }
+
+        const expectedNodes = expectedStructure.children ?? [];
+        const actualNodeNames = children.map((child) => getNodeName(child));
+
+        for (const expectedNode of expectedNodes) {
+            if (!actualNodeNames.includes(expectedNode.name)) {
+                yield {
+                    type: 'expected_structure_missing_node',
+                    expectedNode: getExpectedTreeNodeDetails(expectedNode),
+                    parentNodeUid,
+                };
+            }
+        }
+
+        for (const child of children) {
+            const childName = getNodeName(child);
+            const isExpected = expectedNodes.some((expectedNode) => expectedNode.name === childName);
+
+            if (!isExpected) {
+                yield {
+                    type: 'expected_structure_unexpected_node',
+                    ...getNodeDetails(child),
+                };
+            }
+        }
+    }
+
+    private async *verifyNodesQueue(): AsyncGenerator<DiagnosticResult> {
+        while (this.nodesQueue.length > 0 || !this.allNodesLoaded) {
+            const result = this.nodesQueue.shift();
+            if (result) {
+                yield* this.verifyNode(result.node, result.expected);
+                this.checkedNodes++;
+            } else {
+                // Wait for 100ms before checking again.
+                await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+        }
+    }
+
+    private async *verifyNode(
+        node: MaybeNode,
+        expectedStructure?: ExcpectedTreeNode,
+    ): AsyncGenerator<DiagnosticResult> {
         if (!node.ok) {
             yield {
                 type: 'degraded_node',
@@ -58,12 +209,12 @@ export class SDKDiagnostic {
             yield* this.verifyAuthor(activeRevision.contentAuthor, 'content', node);
         }
 
-        yield* this.verifyFileExtendedAttributes(node, options);
+        yield* this.verifyFileExtendedAttributes(node, expectedStructure);
 
-        if (options?.verifyContent) {
+        if (this.options.verifyContent) {
             yield* this.verifyContent(node);
         }
-        if (options?.verifyThumbnails) {
+        if (this.options.verifyThumbnails) {
             yield* this.verifyThumbnails(node);
         }
     }
@@ -82,7 +233,7 @@ export class SDKDiagnostic {
 
     private async *verifyFileExtendedAttributes(
         node: MaybeNode,
-        options?: DiagnosticOptions,
+        expectedStructure?: ExcpectedTreeNode,
     ): AsyncGenerator<DiagnosticResult> {
         const activeRevision = getActiveRevision(node);
 
@@ -108,9 +259,9 @@ export class SDKDiagnostic {
             };
         }
 
-        if (options?.expectedStructure) {
-            const expectedSha1 = options.expectedStructure.expectedSha1;
-            const expectedSizeInBytes = options.expectedStructure.expectedSizeInBytes;
+        if (expectedStructure) {
+            const expectedSha1 = expectedStructure.expectedSha1;
+            const expectedSizeInBytes = expectedStructure.expectedSizeInBytes;
 
             const wrongSha1 = expectedSha1 !== undefined && claimedSha1 !== expectedSha1;
             const wrongSizeInBytes = expectedSizeInBytes !== undefined && claimedSizeInBytes !== expectedSizeInBytes;
@@ -120,7 +271,7 @@ export class SDKDiagnostic {
                     type: 'expected_structure_integrity_error',
                     claimedSha1,
                     claimedSizeInBytes,
-                    expectedNode: getExpectedTreeNodeDetails(options.expectedStructure),
+                    expectedNode: getExpectedTreeNodeDetails(expectedStructure),
                     ...getNodeDetails(node),
                 };
             }
@@ -217,75 +368,6 @@ export class SDKDiagnostic {
             };
         }
     }
-
-    private async *verifyNodeChildren(
-        parentNode: MaybeNode,
-        options?: DiagnosticOptions,
-    ): AsyncGenerator<DiagnosticResult> {
-        const parentNodeUid = parentNode.ok ? parentNode.value.uid : parentNode.error.uid;
-        const children: MaybeNode[] = [];
-
-        try {
-            for await (const child of this.protonDriveClient.iterateFolderChildren(parentNode)) {
-                if (options?.expectedStructure) {
-                    children.push(child);
-                }
-
-                yield *
-                    this.verifyNodeTree(child, {
-                        ...options,
-                        expectedStructure: options?.expectedStructure
-                            ? getTreeNodeChildByNodeName(options.expectedStructure, getNodeName(child))
-                            : undefined,
-                    });
-            }
-        } catch (error: unknown) {
-            yield {
-                type: 'sdk_error',
-                call: `iterateFolderChildren(${parentNodeUid})`,
-                error,
-            };
-        }
-
-        if (options?.expectedStructure) {
-            yield* this.verifyExpectedNodeChildren(parentNodeUid, children, options);
-        }
-    }
-
-    private async *verifyExpectedNodeChildren(
-        parentNodeUid: string,
-        children: MaybeNode[],
-        options: DiagnosticOptions,
-    ): AsyncGenerator<DiagnosticResult> {
-        if (!options.expectedStructure) {
-            return;
-        }
-
-        const expectedNodes = options.expectedStructure.children ?? [];
-        const actualNodeNames = children.map((child) => getNodeName(child));
-
-        for (const expectedNode of expectedNodes) {
-            if (!actualNodeNames.includes(expectedNode.name)) {
-                yield {
-                    type: 'expected_structure_missing_node',
-                    expectedNode: getExpectedTreeNodeDetails(expectedNode),
-                    parentNodeUid,
-                };
-            }
-        }
-
-        for (const child of children) {
-            const childName = getNodeName(child);
-            const isExpected = expectedNodes.some((expectedNode) => expectedNode.name === childName);
-
-            if (!isExpected) {
-                yield {
-                    type: 'expected_structure_unexpected_node',
-                    ...getNodeDetails(child),
-                };
-            }
-        }
-    }
 }
 
 function getNodeDetails(node: MaybeNode): NodeDetails {
@@ -371,8 +453,8 @@ function getExpectedTreeNodeDetails(expectedNode: ExcpectedTreeNode): ExcpectedT
 }
 
 function getTreeNodeChildByNodeName(
-    expectedSubtree: ExcpectedTreeNode,
+    expectedSubtree: ExcpectedTreeNode | undefined,
     nodeName: string,
 ): ExcpectedTreeNode | undefined {
-    return expectedSubtree.children?.find((expectedNode) => expectedNode.name === nodeName);
+    return expectedSubtree?.children?.find((expectedNode) => expectedNode.name === nodeName);
 }
