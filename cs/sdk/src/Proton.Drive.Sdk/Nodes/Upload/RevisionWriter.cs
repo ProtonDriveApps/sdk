@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IO;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
+using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Serialization;
 using Proton.Sdk.Addresses;
 
@@ -70,9 +71,9 @@ internal sealed class RevisionWriter : IDisposable
         ArraySegment<byte> manifestSignature;
         var blockSizes = new List<int>(8);
 
-        using var sha1 = SHA1.Create();
+        using var sha1 = IncrementalHash.CreateHash(HashAlgorithmName.SHA1);
 
-        var hashingContentStream = new CryptoStream(contentStream, sha1, CryptoStreamMode.Read, leaveOpen: true);
+        var hashingContentStream = new HashingReadStream(contentStream, sha1, leaveOpen: true);
 
         await using (hashingContentStream.ConfigureAwait(false))
         {
@@ -195,9 +196,7 @@ internal sealed class RevisionWriter : IDisposable
             }
         }
 
-        sha1.TransformFinalBlock([], 0, 0);
-
-        var request = GetRevisionUpdateRequest(contentStream, lastModificationTime, blockSizes, sha1.Hash, manifestSignature, signingEmailAddress);
+        var request = GetRevisionUpdateRequest(contentStream, lastModificationTime, blockSizes, sha1.GetCurrentHash(), manifestSignature, signingEmailAddress);
 
         _client.Logger.LogDebug("Sealing revision {RevisionId} of file {FileUid}", _revisionId, _fileUid);
 
