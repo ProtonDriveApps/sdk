@@ -9,7 +9,7 @@ import { DiagnosticTelemetry } from './telemetry';
 export type {
     Diagnostic,
     DiagnosticOptions,
-    ExcpectedTreeNode,
+    ExpectedTreeNode,
     DiagnosticProgressCallback,
     DiagnosticResult,
 } from './interface';
