@@ -3,9 +3,9 @@
 namespace Proton.Drive.Sdk;
 
 /// <summary>
-/// Acts as a semaphore that acts in a first in / first out manner, can increment and decrement its count by more than 1, and can be entered as long as the count before the increment is less than the maximum.
+/// Acts as a semaphore that operates in a first in / first out manner, can increment and decrement its count by more than 1, and can be entered as long as the count before the increment is less than the maximum.
 /// </summary>
-internal sealed class FifoFlexibleSemaphore
+internal sealed partial class FifoFlexibleSemaphore
 {
     private readonly ILogger _logger;
     private readonly int _maximumCount;
@@ -26,7 +26,7 @@ internal sealed class FifoFlexibleSemaphore
     {
         ArgumentOutOfRangeException.ThrowIfNegative(increment);
 
-        _logger.LogTrace($"FifoFlexibleSemaphore.EnterAsync called with {nameof(increment)} {{Increment}}", increment);
+        LogEnter(increment);
 
         TaskCompletionSource tcs;
         lock (_waitingQueue)
@@ -64,7 +64,7 @@ internal sealed class FifoFlexibleSemaphore
     {
         ArgumentOutOfRangeException.ThrowIfNegative(decrement);
 
-        _logger.LogTrace($"FifoFlexibleSemaphore.Release called with {nameof(decrement)} {{Decrement}}", decrement);
+        LogRelease(decrement);
 
         lock (_waitingQueue)
         {
@@ -86,4 +86,10 @@ internal sealed class FifoFlexibleSemaphore
             }
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Enter with increment of {Increment}")]
+    private partial void LogEnter(int increment);
+
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Release with decrement of {Decrement}")]
+    private partial void LogRelease(int decrement);
 }

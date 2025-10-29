@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using Proton.Sdk.Addresses;
 using Proton.Sdk.Cryptography;
 using Proton.Sdk.Serialization;
 
@@ -7,16 +8,16 @@ namespace Proton.Drive.Sdk.Api.Shares;
 internal sealed class ShareMembershipDto
 {
     [JsonPropertyName("MemberID")]
-    public required string MemberId { get; init; }
+    public required ShareMembershipId Id { get; init; }
 
     [JsonPropertyName("ShareID")]
-    public required string ShareId { get; init; }
+    public required ShareId ShareId { get; init; }
 
     [JsonPropertyName("AddressID")]
-    public required string AddressId { get; init; }
+    public required AddressId AddressId { get; init; }
 
     [JsonPropertyName("AddressKeyID")]
-    public required string AddressKeyId { get; init; }
+    public required AddressKeyId AddressKeyId { get; init; }
 
     [JsonPropertyName("Inviter")]
     public required string InviterEmailAddress { get; init; }
@@ -29,7 +30,7 @@ internal sealed class ShareMembershipDto
 
     public PgpArmoredSignature? SessionKeySignature { get; init; }
 
-    public required MemberState State { get; init; }
+    public required ShareMembershipState State { get; init; }
 
     [JsonPropertyName("Unlockable")]
     public bool? CanBeUnlocked { get; init; }

@@ -172,7 +172,7 @@ internal sealed class RevisionReader : IDisposable
         }
     }
 
-    private async Task<BlockDownloadResult> DownloadBlockAsync(Block block, Stream contentOutputStream, CancellationToken cancellationToken)
+    private async Task<BlockDownloadResult> DownloadBlockAsync(BlockDto block, Stream contentOutputStream, CancellationToken cancellationToken)
     {
         Stream blockOutputStream;
         bool isIntermediateStream;
@@ -188,19 +188,20 @@ internal sealed class RevisionReader : IDisposable
             isIntermediateStream = true;
         }
 
-        var hashDigest = await _client.BlockDownloader.DownloadAsync(block.Url, _contentKey, blockOutputStream, cancellationToken).ConfigureAwait(false);
+        var url = block.BareUrl + block.Token;
+        var hashDigest = await _client.BlockDownloader.DownloadAsync(url, _contentKey, blockOutputStream, cancellationToken).ConfigureAwait(false);
 
         return new BlockDownloadResult(block.Index, blockOutputStream, isIntermediateStream, hashDigest);
     }
 
-    private async IAsyncEnumerable<(Block Value, bool IsLast)> GetBlocksAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+    private async IAsyncEnumerable<(BlockDto Value, bool IsLast)> GetBlocksAsync([EnumeratorCancellation] CancellationToken cancellationToken)
     {
         try
         {
             var mustTryNextPageOfBlocks = true;
             var nextExpectedIndex = 1;
-            var outstandingBlock = default(Block);
-            var currentPageBlocks = new List<Block>(_blockPageSize);
+            var outstandingBlock = default(BlockDto);
+            var currentPageBlocks = new List<BlockDto>(_blockPageSize);
 
             var revisionDto = _revisionDto;
 

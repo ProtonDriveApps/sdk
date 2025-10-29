@@ -188,7 +188,7 @@ internal static class DtoToMetadataConverter
                 Author = default,
                 MediaType = fileDto.MediaType,
                 ActiveRevision = null,
-                TotalStorageQuotaUsage = fileDto.TotalStorageQuotaUsage,
+                TotalStorageQuotaUsage = fileDto.TotalSizeOnStorage,
                 Errors = null!,
             };
 
@@ -251,7 +251,7 @@ internal static class DtoToMetadataConverter
             TrashTime = linkDto.TrashTime,
             MediaType = fileDto.MediaType,
             ActiveRevision = activeRevision,
-            TotalSizeOnCloudStorage = fileDto.TotalStorageQuotaUsage,
+            TotalSizeOnCloudStorage = fileDto.TotalSizeOnStorage,
         };
 
         await client.Cache.Entities.SetNodeAsync(uid, node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken).ConfigureAwait(false);

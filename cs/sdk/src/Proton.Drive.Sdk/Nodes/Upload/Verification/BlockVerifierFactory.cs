@@ -6,7 +6,7 @@ namespace Proton.Drive.Sdk.Nodes.Upload.Verification;
 
 internal sealed class BlockVerifierFactory(HttpClient httpClient) : IBlockVerifierFactory
 {
-    private readonly IRevisionVerificationApiClient _apiClient = new RevisionVerificationApiClient(httpClient);
+    private readonly IBlockVerificationApiClient _apiClient = new BlockVerificationApiClient(httpClient);
 
     public async ValueTask<IBlockVerifier> CreateAsync(
         NodeUid fileUid,

@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using CommunityToolkit.HighPerformance.Buffers;
 
 namespace Proton.Sdk;
+
 internal static class MemoryProvider
 {
     private const int MaxStackBufferSize = 256;

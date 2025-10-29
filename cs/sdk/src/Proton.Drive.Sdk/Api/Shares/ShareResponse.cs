@@ -46,7 +46,7 @@ internal sealed class ShareResponse : ApiResponse
     public required PgpArmoredMessage Passphrase { get; init; }
 
     [JsonPropertyName("PassphraseSignature")]
-    public PgpArmoredSignature? PassphraseSignature { get; init; }
+    public required PgpArmoredSignature PassphraseSignature { get; init; }
 
     [JsonPropertyName("AddressID")]
     public required AddressId AddressId { get; init; }

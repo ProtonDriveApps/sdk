@@ -23,7 +23,7 @@ internal sealed class StorageApiClient(HttpClient httpClient) : IStorageApiClien
 
         using var multipartContent = new MultipartFormDataContent("-----------------------------" + Guid.NewGuid().ToString("N"))
         {
-            blobContent
+            blobContent,
         };
 
         using var requestMessage = HttpRequestMessageFactory.Create(HttpMethod.Post, baseUrl, multipartContent);

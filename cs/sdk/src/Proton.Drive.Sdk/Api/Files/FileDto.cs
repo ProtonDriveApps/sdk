@@ -8,7 +8,7 @@ internal sealed class FileDto
     public required string MediaType { get; init; }
 
     [JsonPropertyName("TotalEncryptedSize")]
-    public required long TotalStorageQuotaUsage { get; init; }
+    public required long TotalSizeOnStorage { get; init; }
 
     public required ReadOnlyMemory<byte> ContentKeyPacket { get; init; }
 

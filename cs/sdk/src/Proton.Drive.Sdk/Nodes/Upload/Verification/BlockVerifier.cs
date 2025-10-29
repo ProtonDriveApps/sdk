@@ -21,7 +21,7 @@ internal sealed class BlockVerifier : IBlockVerifier
     public int DataPacketPrefixMaxLength => _verificationCode.Length;
 
     public static async ValueTask<BlockVerifier> CreateAsync(
-        IRevisionVerificationApiClient apiClient,
+        IBlockVerificationApiClient apiClient,
         NodeUid fileUid,
         RevisionId revisionId,
         PgpPrivateKey key,
