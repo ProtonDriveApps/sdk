@@ -16,15 +16,15 @@ export interface Diagnostic {
 export type DiagnosticOptions = {
     verifyContent?: boolean;
     verifyThumbnails?: boolean;
-    expectedStructure?: ExcpectedTreeNode;
+    expectedStructure?: ExpectedTreeNode;
 };
 
 // Tree structure of the expected node tree.
-export type ExcpectedTreeNode = {
+export type ExpectedTreeNode = {
     name: string;
     expectedSha1?: string;
     expectedSizeInBytes?: number;
-    children?: ExcpectedTreeNode[];
+    children?: ExpectedTreeNode[];
 };
 
 export type DiagnosticProgressCallback = (progress: {
@@ -151,7 +151,7 @@ export type ThumbnailsErrorResult = {
 // the expected structure.
 export type ExpectedStructureMissingNode = {
     type: 'expected_structure_missing_node';
-    expectedNode: ExcpectedTreeNode;
+    expectedNode: ExpectedTreeNode;
     parentNodeUid: string;
 };
 
@@ -168,7 +168,7 @@ export type ExpectedStructureUnexpectedNode = {
 // the claimed values with the real content.
 export type ExpectedStructureIntegrityError = {
     type: 'expected_structure_integrity_error';
-    expectedNode: ExcpectedTreeNode;
+    expectedNode: ExpectedTreeNode;
     claimedSha1?: string;
     claimedSizeInBytes?: number;
 } & NodeDetails;

@@ -4,7 +4,7 @@ import {
     DiagnosticOptions,
     DiagnosticResult,
     NodeDetails,
-    ExcpectedTreeNode,
+    ExpectedTreeNode,
     DiagnosticProgressCallback,
 } from './interface';
 import { IntegrityVerificationStream } from './integrityVerificationStream';
@@ -25,7 +25,7 @@ export class SDKDiagnostic {
     private onProgress?: DiagnosticProgressCallback;
     private progressReportInterval: NodeJS.Timeout | undefined;
 
-    private nodesQueue: { node: MaybeNode; expected?: ExcpectedTreeNode }[] = [];
+    private nodesQueue: { node: MaybeNode; expected?: ExpectedTreeNode }[] = [];
     private allNodesLoaded: boolean = false;
     private loadedNodes: number = 0;
     private checkedNodes: number = 0;
@@ -68,7 +68,7 @@ export class SDKDiagnostic {
         });
     }
 
-    async *verifyMyFiles(expectedStructure?: ExcpectedTreeNode): AsyncGenerator<DiagnosticResult> {
+    async *verifyMyFiles(expectedStructure?: ExpectedTreeNode): AsyncGenerator<DiagnosticResult> {
         let myFilesRootFolder: MaybeNode;
 
         try {
@@ -85,7 +85,7 @@ export class SDKDiagnostic {
         yield* this.verifyNodeTree(myFilesRootFolder, expectedStructure);
     }
 
-    async *verifyNodeTree(node: MaybeNode, expectedStructure?: ExcpectedTreeNode): AsyncGenerator<DiagnosticResult> {
+    async *verifyNodeTree(node: MaybeNode, expectedStructure?: ExpectedTreeNode): AsyncGenerator<DiagnosticResult> {
         this.startProgress();
         this.nodesQueue.push({ node, expected: expectedStructure });
         this.loadedNodes++;
@@ -95,7 +95,7 @@ export class SDKDiagnostic {
 
     private async *loadNodeTree(
         parentNode: MaybeNode,
-        expectedStructure?: ExcpectedTreeNode,
+        expectedStructure?: ExpectedTreeNode,
     ): AsyncGenerator<DiagnosticResult> {
         const isFolder = getNodeType(parentNode) === NodeType.Folder;
         if (isFolder) {
@@ -106,7 +106,7 @@ export class SDKDiagnostic {
 
     private async *loadNodeTreeRecursively(
         parentNode: MaybeNode,
-        expectedStructure?: ExcpectedTreeNode,
+        expectedStructure?: ExpectedTreeNode,
     ): AsyncGenerator<DiagnosticResult> {
         const parentNodeUid = parentNode.ok ? parentNode.value.uid : parentNode.error.uid;
         const children: MaybeNode[] = [];
@@ -145,7 +145,7 @@ export class SDKDiagnostic {
     private async *verifyExpectedNodeChildren(
         parentNodeUid: string,
         children: MaybeNode[],
-        expectedStructure?: ExcpectedTreeNode,
+        expectedStructure?: ExpectedTreeNode,
     ): AsyncGenerator<DiagnosticResult> {
         if (!expectedStructure) {
             return;
@@ -192,7 +192,7 @@ export class SDKDiagnostic {
 
     private async *verifyNode(
         node: MaybeNode,
-        expectedStructure?: ExcpectedTreeNode,
+        expectedStructure?: ExpectedTreeNode,
     ): AsyncGenerator<DiagnosticResult> {
         if (!node.ok) {
             yield {
@@ -233,7 +233,7 @@ export class SDKDiagnostic {
 
     private async *verifyFileExtendedAttributes(
         node: MaybeNode,
-        expectedStructure?: ExcpectedTreeNode,
+        expectedStructure?: ExpectedTreeNode,
     ): AsyncGenerator<DiagnosticResult> {
         const activeRevision = getActiveRevision(node);
 
@@ -445,7 +445,7 @@ function getNodeName(node: MaybeNode): string {
     return 'N/A';
 }
 
-function getExpectedTreeNodeDetails(expectedNode: ExcpectedTreeNode): ExcpectedTreeNode {
+function getExpectedTreeNodeDetails(expectedNode: ExpectedTreeNode): ExpectedTreeNode {
     return {
         ...expectedNode,
         children: undefined,
@@ -453,8 +453,8 @@ function getExpectedTreeNodeDetails(expectedNode: ExcpectedTreeNode): ExcpectedT
 }
 
 function getTreeNodeChildByNodeName(
-    expectedSubtree: ExcpectedTreeNode | undefined,
+    expectedSubtree: ExpectedTreeNode | undefined,
     nodeName: string,
-): ExcpectedTreeNode | undefined {
+): ExpectedTreeNode | undefined {
     return expectedSubtree?.children?.find((expectedNode) => expectedNode.name === nodeName);
 }
