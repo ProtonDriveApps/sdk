@@ -72,8 +72,8 @@ public sealed class ProtonDriveClient
 
         var maxDegreeOfBlockProcessingParallelism = maxDegreeOfBlockTransferParallelism + Math.Min(Math.Max(maxDegreeOfBlockTransferParallelism / 2, 2), 4);
 
-        RevisionCreationSemaphore = new FifoFlexibleSemaphore(maxDegreeOfBlockProcessingParallelism, loggerFactory.CreateLogger<FifoFlexibleSemaphore>());
-        BlockListingSemaphore = new FifoFlexibleSemaphore(maxDegreeOfBlockProcessingParallelism, loggerFactory.CreateLogger<FifoFlexibleSemaphore>());
+        RevisionCreationSemaphore = new FifoFlexibleSemaphore(maxDegreeOfBlockProcessingParallelism, loggerFactory.CreateLogger("Revision creation semaphore"));
+        BlockListingSemaphore = new FifoFlexibleSemaphore(maxDegreeOfBlockProcessingParallelism, loggerFactory.CreateLogger("Block listing semaphore"));
 
         BlockUploader = new BlockUploader(this, maxDegreeOfBlockTransferParallelism);
         BlockDownloader = new BlockDownloader(this, maxDegreeOfBlockTransferParallelism);

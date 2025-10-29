@@ -2,5 +2,5 @@
 
 internal sealed class BlockListingRevisionDto : RevisionDto
 {
-    public required IReadOnlyList<Block> Blocks { get; init; }
+    public required IReadOnlyList<BlockDto> Blocks { get; init; }
 }
