@@ -9,7 +9,7 @@ import {
     MetricVolumeType,
 } from '../../interface';
 import { DriveCrypto, PrivateKey, VERIFICATION_STATUS } from '../../crypto';
-import { getVerificationMessage } from '../errors';
+import { getVerificationMessage, isNotApplicationError } from '../errors';
 import {
     EncryptedRootShare,
     DecryptedRootShare,
@@ -119,6 +119,10 @@ export class SharesCryptoService {
     }
 
     private reportDecryptionError(share: EncryptedRootShare, error?: unknown) {
+        if (isNotApplicationError(error)) {
+            return;
+        }
+
         if (this.reportedDecryptionErrors.has(share.shareId)) {
             return;
         }
