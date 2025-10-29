@@ -4,7 +4,7 @@ using Proton.Drive.Sdk.Volumes;
 
 namespace Proton.Drive.Sdk.Api.BlockVerification;
 
-internal interface IRevisionVerificationApiClient
+internal interface IBlockVerificationApiClient
 {
     public ValueTask<BlockVerificationInputResponse> GetVerificationInputAsync(
         VolumeId volumeId,

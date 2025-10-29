@@ -6,7 +6,7 @@ using Proton.Sdk.Http;
 
 namespace Proton.Drive.Sdk.Api.BlockVerification;
 
-internal sealed class RevisionVerificationApiClient(HttpClient httpClient) : IRevisionVerificationApiClient
+internal sealed class BlockVerificationApiClient(HttpClient httpClient) : IBlockVerificationApiClient
 {
     private readonly HttpClient _httpClient = httpClient;
 
