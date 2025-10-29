@@ -1,6 +1,7 @@
 import { c } from 'ttag';
 
 import { VERIFICATION_STATUS } from '../crypto';
+import { AbortError, ConnectionError, RateLimitedError, ValidationError } from '../errors';
 
 export function getErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : c('Error').t`Unknown error`;
@@ -35,4 +36,30 @@ export function getVerificationMessage(
     return signatureType
         ? c('Error').t`Signature verification for ${signatureType} failed`
         : c('Error').t`Signature verification failed`;
+}
+
+/**
+ * Returns true if the error is not an application error (it is for example
+ * a network error failing to fetch keys) and can be ignored for telemetry.
+ */
+export function isNotApplicationError(error?: unknown): boolean {
+    // SDK errors.
+    if (
+        error instanceof AbortError ||
+        error instanceof ValidationError ||
+        error instanceof RateLimitedError ||
+        error instanceof ConnectionError
+    ) {
+        return true;
+    }
+
+    // General errors that can come from the SDK dependencies (notably Account
+    // dependency which loads the keys for the crypto services).
+    if (error instanceof Error) {
+        if (error.name === 'AbortError' || error.name === 'OfflineError' || error.name === 'TimeoutError') {
+            return true;
+        }
+    }
+
+    return false;
 }

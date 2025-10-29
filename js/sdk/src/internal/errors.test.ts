@@ -1,5 +1,6 @@
 import { VERIFICATION_STATUS } from '../crypto';
-import { getVerificationMessage } from './errors';
+import { AbortError, ConnectionError, RateLimitedError, ValidationError } from '../errors';
+import { getVerificationMessage, isNotApplicationError } from './errors';
 
 describe('getVerificationMessage', () => {
     const testCases: [VERIFICATION_STATUS, Error[] | undefined, string | undefined, boolean, string][] = [
@@ -52,4 +53,64 @@ describe('getVerificationMessage', () => {
             expect(getVerificationMessage(status, errors, type, notAvailable)).toBe(expected);
         });
     }
+});
+
+describe('isNotApplicationError', () => {
+    describe('SDK errors that should be ignored', () => {
+        it('returns true for AbortError', () => {
+            const error = new AbortError('Operation aborted');
+            expect(isNotApplicationError(error)).toBe(true);
+        });
+
+        it('returns true for ValidationError', () => {
+            const error = new ValidationError('Validation failed');
+            expect(isNotApplicationError(error)).toBe(true);
+        });
+
+        it('returns true for RateLimitedError', () => {
+            const error = new RateLimitedError('Rate limited');
+            expect(isNotApplicationError(error)).toBe(true);
+        });
+
+        it('returns true for ConnectionError', () => {
+            const error = new ConnectionError('Connection failed');
+            expect(isNotApplicationError(error)).toBe(true);
+        });
+    });
+
+    describe('General errors with specific names that should be ignored', () => {
+        it('returns true for Error with name AbortError', () => {
+            const error = new Error('Aborted');
+            error.name = 'AbortError';
+            expect(isNotApplicationError(error)).toBe(true);
+        });
+
+        it('returns true for Error with name OfflineError', () => {
+            const error = new Error('Offline');
+            error.name = 'OfflineError';
+            expect(isNotApplicationError(error)).toBe(true);
+        });
+
+        it('returns true for Error with name TimeoutError', () => {
+            const error = new Error('Timeout');
+            error.name = 'TimeoutError';
+            expect(isNotApplicationError(error)).toBe(true);
+        });
+    });
+
+    describe('Errors that should not be ignored', () => {
+        it('returns false for regular Error', () => {
+            const error = new Error('Regular error');
+            expect(isNotApplicationError(error)).toBe(false);
+        });
+
+        it('returns false for undefined', () => {
+            expect(isNotApplicationError(undefined)).toBe(false);
+        });
+
+        it('returns false for non-Error object', () => {
+            const error = { message: 'Not an error' };
+            expect(isNotApplicationError(error)).toBe(false);
+        });
+    });
 });

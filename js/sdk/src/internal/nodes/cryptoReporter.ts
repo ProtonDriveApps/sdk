@@ -9,12 +9,9 @@ import {
     MetricsDecryptionErrorField,
     MetricVerificationErrorField,
 } from '../../interface';
-import { getVerificationMessage } from '../errors';
+import { getVerificationMessage, isNotApplicationError } from '../errors';
 import { splitNodeUid } from '../uids';
-import {
-    EncryptedNode,
-    SharesService,
-} from './interface';
+import { EncryptedNode, SharesService } from './interface';
 
 export class NodesCryptoReporter {
     private logger: Logger;
@@ -92,6 +89,10 @@ export class NodesCryptoReporter {
     }
 
     async reportDecryptionError(node: EncryptedNode, field: MetricsDecryptionErrorField, error: unknown) {
+        if (isNotApplicationError(error)) {
+            return;
+        }
+
         if (this.reportedDecryptionErrors.has(node.uid)) {
             return;
         }

@@ -1,7 +1,7 @@
 import { c } from 'ttag';
 
 import { VERIFICATION_STATUS } from '../../crypto';
-import { getVerificationMessage } from '../errors';
+import { getVerificationMessage, isNotApplicationError } from '../errors';
 import {
     resultOk,
     resultError,
@@ -49,6 +49,10 @@ export class SharingPublicCryptoReporter {
         field: MetricsDecryptionErrorField,
         error: unknown,
     ) {
+        if (isNotApplicationError(error)) {
+            return;
+        }
+
         const fromBefore2024 = node.creationTime < new Date('2024-01-01');
 
         this.logger.error(
