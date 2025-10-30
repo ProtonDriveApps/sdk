@@ -24,11 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="$(AssemblyName).Tests" />
-    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
-  </ItemGroup>
-
-  <ItemGroup>
     <!-- This includes the C exports for the account functions -->
     <IlcCompileInput Include="$(OutputPath)\$(NativeLibPrefix)proton_sdk.dll" />
   </ItemGroup>

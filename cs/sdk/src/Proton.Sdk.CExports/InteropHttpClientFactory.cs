@@ -2,6 +2,7 @@
 using System.Reflection;
 using Google.Protobuf;
 using Proton.Sdk.CExports.Tasks;
+using Proton.Sdk.Http;
 
 namespace Proton.Sdk.CExports;
 
@@ -39,7 +40,12 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
 
     public HttpClient CreateClient(string name)
     {
-        return new HttpClient(new InteropHttpMessageHandler(this))
+        var httpMessageHandler = new CryptographyTimeProvisionHandler
+        {
+            InnerHandler = new InteropHttpMessageHandler(this),
+        };
+
+        return new HttpClient(httpMessageHandler)
         {
             BaseAddress = new Uri(_baseUrl),
             DefaultRequestHeaders =
@@ -102,9 +108,16 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
                 Content = new ReadOnlyMemoryContent(interopHttpResponse.Content.Memory),
             };
 
-            foreach (var interopHttpResponseHeader in interopHttpResponse.Headers.Where(x => x.Name.StartsWith("content-", StringComparison.OrdinalIgnoreCase)))
+            foreach (var interopHttpResponseHeader in interopHttpResponse.Headers)
             {
-                response.Content.Headers.Add(interopHttpResponseHeader.Name, interopHttpResponseHeader.Values);
+                if (interopHttpResponseHeader.Name.StartsWith("content-", StringComparison.OrdinalIgnoreCase))
+                {
+                    response.Content.Headers.Add(interopHttpResponseHeader.Name, interopHttpResponseHeader.Values);
+                }
+                else
+                {
+                    response.Headers.Add(interopHttpResponseHeader.Name, interopHttpResponseHeader.Values);
+                }
             }
 
             return response;
