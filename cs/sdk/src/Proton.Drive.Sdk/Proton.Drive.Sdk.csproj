@@ -16,8 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="$(AssemblyName).Tests" />
-    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
     <InternalsVisibleTo Include="$(NativeLibPrefix)proton_drive_sdk" />
   </ItemGroup>
 
