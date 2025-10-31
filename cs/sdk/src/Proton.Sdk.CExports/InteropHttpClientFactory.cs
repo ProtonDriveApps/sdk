@@ -110,14 +110,16 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
 
             foreach (var interopHttpResponseHeader in interopHttpResponse.Headers)
             {
-                if (interopHttpResponseHeader.Name.StartsWith("content-", StringComparison.OrdinalIgnoreCase))
+                if ((interopHttpResponseHeader.Name.StartsWith("content-", StringComparison.OrdinalIgnoreCase)
+                    || interopHttpResponseHeader.Name.Equals("expires", StringComparison.OrdinalIgnoreCase)
+                    || interopHttpResponseHeader.Name.Equals("allow", StringComparison.OrdinalIgnoreCase)
+                    || interopHttpResponseHeader.Name.Equals("last-modified", StringComparison.OrdinalIgnoreCase))
+                    && response.Content.Headers.TryAddWithoutValidation(interopHttpResponseHeader.Name, interopHttpResponseHeader.Values))
                 {
-                    response.Content.Headers.Add(interopHttpResponseHeader.Name, interopHttpResponseHeader.Values);
+                    continue;
                 }
-                else
-                {
-                    response.Headers.Add(interopHttpResponseHeader.Name, interopHttpResponseHeader.Values);
-                }
+
+                response.Headers.TryAddWithoutValidation(interopHttpResponseHeader.Name, interopHttpResponseHeader.Values);
             }
 
             return response;
