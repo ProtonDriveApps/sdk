@@ -17,6 +17,7 @@ import {
     ThumbnailResult,
     UploadMetadata,
     FileUploader,
+    NodeResult,
 } from './interface';
 import { Telemetry } from './telemetry';
 import {
@@ -203,6 +204,26 @@ export class ProtonDrivePublicLinkClient {
     async getNode(nodeUid: NodeOrUid): Promise<MaybeNode> {
         this.logger.info(`Getting node ${getUid(nodeUid)}`);
         return convertInternalNodePromise(this.sharingPublic.nodes.access.getNode(getUid(nodeUid)));
+    }
+
+    /**
+     * Rename the node.
+     *
+     * See `ProtonDriveClient.renameNode` for more information.
+     */
+    async renameNode(nodeUid: NodeOrUid, newName: string): Promise<MaybeNode> {
+        this.logger.info(`Renaming node ${getUid(nodeUid)}`);
+        return convertInternalNodePromise(this.sharingPublic.nodes.management.renameNode(getUid(nodeUid), newName));
+    }
+
+    /**
+     * Delete the nodes permanently.
+     *
+     * See `ProtonDriveClient.deleteNodes` for more information.
+     */
+    async *deleteNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
+        this.logger.info(`Deleting ${nodeUids.length} nodes`);
+        yield* this.sharingPublic.nodes.management.deleteNodes(getUids(nodeUids), signal);
     }
 
     /**
