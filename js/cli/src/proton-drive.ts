@@ -27,10 +27,11 @@ if (debug) {
     console.log(`Proton Drive SDK for web v${VERSION}`);
 }
 
-if (!command.isAuthAction) {
-    if (!account.session) {
-        throw new Error('You need to login first');
-    }
+if (!command.isAuthAction && !command.isPublicAction && !account.session) {
+    throw new Error('You need to login first');
+}
+
+if (account.session) {
     if (debug) {
         console.time('Account initialization');
         console.log('Initializing user keys...');

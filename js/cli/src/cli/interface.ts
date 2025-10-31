@@ -9,6 +9,7 @@ export interface Command {
     group: string;
     name: string;
     isAuthAction?: boolean;
+    isPublicAction?: boolean;
     args?: string[];
     options?: ParseArgsConfig['options'];
 

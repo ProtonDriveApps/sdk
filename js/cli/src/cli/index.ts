@@ -28,10 +28,12 @@ import { CommandFileSystemTrash } from './fileSystem/commandFileSystemTrash';
 import { CommandAlbumList } from './photos/commandAlbumList';
 import { CommandPhotoTimeline } from './photos/commandPhotoTimeline';
 import { CommandPublicCreateFolder } from './public/commandPublicCreateFolder';
+import { CommandPublicDelete } from './public/commandPublicDelete';
 import { CommandPublicDownload } from './public/commandPublicDownload';
 import { CommandPublicDownloadThumbnails } from './public/commandPublicDownloadThumbnails';
 import { CommandPublicInfo } from './public/commandPublicInfo';
 import { CommandPublicList } from './public/commandPublicList';
+import { CommandPublicRename } from './public/commandPublicRename';
 import { CommandPublicUpload } from './public/commandPublicUpload';
 import { CommandRevisionDelete } from './revision/commandRevisionDelete';
 import { CommandRevisionDownload } from './revision/commandRevisionDownload';
@@ -90,6 +92,8 @@ const COMMANDS = [
     new CommandPublicList(),
     new CommandPublicInfo(),
     new CommandPublicCreateFolder(),
+    new CommandPublicRename(),
+    new CommandPublicDelete(),
     new CommandPublicDownload(),
     new CommandPublicDownloadThumbnails(),
     new CommandPublicUpload(),

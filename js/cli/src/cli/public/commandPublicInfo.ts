@@ -7,6 +7,7 @@ import { PUBLIC_OPTIONS } from './base';
 export class CommandPublicInfo implements Command {
     group = 'public';
     name = 'info';
+    isPublicAction = true;
     args = ['path'];
     options: ParseArgsConfig['options'] = PUBLIC_OPTIONS;
 
