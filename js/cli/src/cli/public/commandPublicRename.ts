@@ -4,24 +4,19 @@ import { printObject } from '../formatters';
 import { Command, ActionArgs } from '../interface';
 import { PUBLIC_OPTIONS } from './base';
 
-export class CommandPublicCreateFolder implements Command {
+export class CommandPublicRename implements Command {
     group = 'public';
-    name = 'create-folder';
+    name = 'rename';
     isPublicAction = true;
-    args = ['path', 'name'];
+    args = ['path', 'newName'];
     options: ParseArgsConfig['options'] = PUBLIC_OPTIONS;
 
-    async action({
-        paths,
-        args: [pathString, name],
-        options: { json, url, 'custom-password': customPassword },
-    }: ActionArgs) {
+    async action({ paths, args: [pathString, newName], options: { json, url, 'custom-password': customPassword } }: ActionArgs) {
         const client = await paths.authPublicLinkSession(url, customPassword);
         const nodePath = paths.getPublicLinkPath(pathString);
-        const parent = await nodePath.getNode();
+        const node = await nodePath.getNode();
+        const renamedNode = await client.renameNode(node, newName);
 
-        const folder = await client.createFolder(parent, name, new Date());
-
-        printObject(folder, json);
+        printObject(renamedNode, json);
     }
 }

@@ -8,6 +8,7 @@ import { PUBLIC_OPTIONS } from './base';
 export class CommandPublicDownload implements Command {
     group = 'public';
     name = 'download';
+    isPublicAction = true;
     args = ['path', 'localParentPath'];
     options: ParseArgsConfig['options'] = {
         name: {

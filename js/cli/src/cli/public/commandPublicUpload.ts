@@ -8,6 +8,7 @@ import { PUBLIC_OPTIONS } from './base';
 export class CommandPublicUpload implements Command {
     group = 'public';
     name = 'upload';
+    isPublicAction = true;
     // FIXME: support upload of multiple files
     args = ['localPath', 'parentPath'];
     options: ParseArgsConfig['options'] = {

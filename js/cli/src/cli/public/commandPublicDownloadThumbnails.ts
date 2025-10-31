@@ -10,6 +10,7 @@ import { ProtonDrivePublicLinkClient } from '../../../../sdk/src/protonDrivePubl
 export class CommandPublicDownloadThumbnails implements Command {
     group = 'public';
     name = 'download-thumbnails';
+    isPublicAction = true;
     args = ['path', 'parentLocalPath'];
     options: ParseArgsConfig['options'] = {
         'thumbnail-type': {

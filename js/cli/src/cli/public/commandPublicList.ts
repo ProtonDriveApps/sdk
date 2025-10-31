@@ -10,6 +10,7 @@ import { PUBLIC_OPTIONS } from './base';
 export class CommandPublicList implements Command {
     group = 'public';
     name = 'list';
+    isPublicAction = true;
     args = ['path'];
     options: ParseArgsConfig['options'] = PUBLIC_OPTIONS;
 
