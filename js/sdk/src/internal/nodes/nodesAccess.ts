@@ -61,7 +61,7 @@ export class NodesAccess {
         private cryptoService: NodesCryptoService,
         private shareService: Pick<
             SharesService,
-            'getOwnVolumeIDs' | 'getSharePrivateKey' | 'getContextShareMemberEmailKey'
+            'getRootIDs' | 'getSharePrivateKey' | 'getContextShareMemberEmailKey'
         >,
     ) {
         this.logger = telemetry.getLogger('nodes');
@@ -74,7 +74,7 @@ export class NodesAccess {
     }
 
     async getVolumeRootFolder() {
-        const { volumeId, rootNodeId } = await this.shareService.getOwnVolumeIDs();
+        const { volumeId, rootNodeId } = await this.shareService.getRootIDs();
         const nodeUid = makeNodeUid(volumeId, rootNodeId);
         return this.getNode(nodeUid);
     }
@@ -154,7 +154,7 @@ export class NodesAccess {
 
     // Improvement requested: keep status of loaded trash and leverage cache.
     async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
-        const { volumeId } = await this.shareService.getOwnVolumeIDs();
+        const { volumeId } = await this.shareService.getRootIDs();
         const batchLoading = new BatchLoading<string, DecryptedNode>({
             iterateItems: (nodeUids) => this.loadNodes(nodeUids, undefined, signal),
             batchSize: BATCH_LOADING_SIZE,
@@ -230,7 +230,7 @@ export class NodesAccess {
     private async loadNode(nodeUid: string): Promise<{ node: DecryptedNode; keys?: DecryptedNodeKeys }> {
         this.debouncer.loadingNode(nodeUid);
         try {
-            const { volumeId: ownVolumeId } = await this.shareService.getOwnVolumeIDs();
+            const { volumeId: ownVolumeId } = await this.shareService.getRootIDs();
             const encryptedNode = await this.apiService.getNode(nodeUid, ownVolumeId);
             return this.decryptNode(encryptedNode);
         } finally {
@@ -259,7 +259,7 @@ export class NodesAccess {
         const returnedNodeUids: string[] = [];
         const errors = [];
 
-        const { volumeId: ownVolumeId } = await this.shareService.getOwnVolumeIDs();
+        const { volumeId: ownVolumeId } = await this.shareService.getRootIDs();
 
         const apiNodesIterator = this.apiService.iterateNodes(nodeUids, ownVolumeId, filterOptions, signal);
 

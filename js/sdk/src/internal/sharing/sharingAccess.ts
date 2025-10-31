@@ -40,7 +40,7 @@ export class SharingAccess {
             const nodeUids = await this.cache.getSharedByMeNodeUids();
             yield* this.iterateSharedNodesFromCache(nodeUids, signal);
         } catch {
-            const { volumeId } = await this.sharesService.getOwnVolumeIDs();
+            const { volumeId } = await this.sharesService.getRootIDs();
             const nodeUidsIterator = this.apiService.iterateSharedNodeUids(volumeId, signal);
             yield* this.iterateSharedNodesFromAPI(
                 nodeUidsIterator,

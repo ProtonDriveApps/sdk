@@ -142,7 +142,7 @@ export interface PublicLinkWithCreatorEmail extends PublicLink {
  * Interface describing the dependencies to the shares module.
  */
 export interface SharesService {
-    getOwnVolumeIDs(): Promise<{ volumeId: string }>;
+    getRootIDs(): Promise<{ volumeId: string }>;
     loadEncryptedShare(shareId: string): Promise<EncryptedShare>;
     getMyFilesShareMemberEmailKey(): Promise<{
         email: string;

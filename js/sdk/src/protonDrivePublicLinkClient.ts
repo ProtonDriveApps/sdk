@@ -164,7 +164,7 @@ export class ProtonDrivePublicLinkClient {
      */
     async getRootNode(): Promise<MaybeNode> {
         this.logger.info(`Getting root node`);
-        const { rootNodeUid } = await this.sharingPublic.shares.getOwnVolumeIDs();
+        const { rootNodeUid } = await this.sharingPublic.shares.getRootIDs();
         return convertInternalNodePromise(this.sharingPublic.nodes.access.getNode(rootNodeUid));
     }
 

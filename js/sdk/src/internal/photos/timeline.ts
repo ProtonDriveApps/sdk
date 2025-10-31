@@ -18,7 +18,7 @@ export class PhotosTimeline {
         captureTime: Date;
         tags: number[];
     }> {
-        const { volumeId } = await this.photoShares.getOwnVolumeIDs();
+        const { volumeId } = await this.photoShares.getRootIDs();
         yield* this.apiService.iterateTimeline(volumeId, signal);
     }
 }

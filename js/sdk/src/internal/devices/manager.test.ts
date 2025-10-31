@@ -30,7 +30,7 @@ describe('DevicesManager', () => {
         };
         // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
-            getOwnVolumeIDs: jest.fn(),
+            getRootIDs: jest.fn(),
         };
         // @ts-expect-error No need to implement all methods for mocking
         nodesService = {};
@@ -74,13 +74,13 @@ describe('DevicesManager', () => {
             shareId: 'shareid',
         } as DeviceMetadata;
 
-        sharesService.getOwnVolumeIDs.mockResolvedValue({ volumeId });
+        sharesService.getRootIDs.mockResolvedValue({ volumeId });
         cryptoService.createDevice.mockResolvedValue({ address, shareKey, node });
         apiService.createDevice.mockResolvedValue(createdDevice);
 
         const result = await manager.createDevice(name, deviceType);
 
-        expect(sharesService.getOwnVolumeIDs).toHaveBeenCalled();
+        expect(sharesService.getRootIDs).toHaveBeenCalled();
         expect(cryptoService.createDevice).toHaveBeenCalledWith(name);
         expect(apiService.createDevice).toHaveBeenCalledWith(
             { volumeId, type: deviceType },

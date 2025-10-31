@@ -93,7 +93,7 @@ describe('SharingAccess', () => {
 
         // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
-            getOwnVolumeIDs: jest.fn().mockResolvedValue({ volumeId: 'volumeId' }),
+            getRootIDs: jest.fn().mockResolvedValue({ volumeId: 'volumeId' }),
             loadEncryptedShare: jest.fn().mockResolvedValue({
                 id: 'shareId',
                 membership: { memberUid: 'memberUid' },

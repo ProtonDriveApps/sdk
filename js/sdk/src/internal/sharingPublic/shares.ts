@@ -19,8 +19,7 @@ export class SharingPublicSharesManager {
         this.publicRootNodeUid = publicRootNodeUid;
     }
 
-    // TODO: Rename to getRootIDs everywhere.
-    async getOwnVolumeIDs(): Promise<{ volumeId: string; rootNodeId: string; rootNodeUid: string }> {
+    async getRootIDs(): Promise<{ volumeId: string; rootNodeId: string; rootNodeUid: string }> {
         const { volumeId, nodeId: rootNodeId } = splitNodeUid(this.publicRootNodeUid);
         return { volumeId, rootNodeId, rootNodeUid: this.publicRootNodeUid };
     }

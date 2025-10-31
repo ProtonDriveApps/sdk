@@ -34,7 +34,7 @@ export class PhotoSharesManager {
         this.sharesService = sharesService;
     }
 
-    async getOwnVolumeIDs(): Promise<VolumeShareNodeIDs> {
+    async getRootIDs(): Promise<VolumeShareNodeIDs> {
         if (this.photoRootIds) {
             return this.photoRootIds;
         }
@@ -113,7 +113,7 @@ export class PhotoSharesManager {
     }
 
     async isOwnVolume(volumeId: string): Promise<boolean> {
-        const { volumeId: myVolumeId } = await this.getOwnVolumeIDs();
+        const { volumeId: myVolumeId } = await this.getRootIDs();
         if (volumeId === myVolumeId) {
             return true;
         }
@@ -121,7 +121,7 @@ export class PhotoSharesManager {
     }
 
     async getVolumeMetricContext(volumeId: string): Promise<MetricVolumeType> {
-        const { volumeId: myVolumeId } = await this.getOwnVolumeIDs();
+        const { volumeId: myVolumeId } = await this.getRootIDs();
         if (volumeId === myVolumeId) {
             return MetricVolumeType.OwnVolume;
         }

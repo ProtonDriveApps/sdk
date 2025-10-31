@@ -4,7 +4,7 @@ import { DecryptedNode } from '../nodes';
 import { EncryptedShare } from '../shares';
 
 export interface SharesService {
-    getOwnVolumeIDs(): Promise<{ volumeId: string; rootNodeId: string }>;
+    getRootIDs(): Promise<{ volumeId: string; rootNodeId: string }>;
     loadEncryptedShare(shareId: string): Promise<EncryptedShare>;
     getSharePrivateKey(shareId: string): Promise<PrivateKey>;
     getMyFilesShareMemberEmailKey(): Promise<{

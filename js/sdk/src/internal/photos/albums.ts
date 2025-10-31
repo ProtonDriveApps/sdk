@@ -21,7 +21,7 @@ export class Albums {
     }
 
     async *iterateAlbums(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
-        const { volumeId } = await this.photoShares.getOwnVolumeIDs();
+        const { volumeId } = await this.photoShares.getRootIDs();
 
         const batchLoading = new BatchLoading<string, DecryptedNode>({
             iterateItems: (nodeUids) => this.iterateNodesAndIgnoreMissingOnes(nodeUids, signal),
