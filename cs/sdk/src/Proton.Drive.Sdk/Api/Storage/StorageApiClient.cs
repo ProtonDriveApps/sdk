@@ -39,9 +39,12 @@ internal sealed class StorageApiClient(HttpClient httpClient) : IStorageApiClien
         return response;
     }
 
-    public async ValueTask<Stream> GetBlobStreamAsync(string url, CancellationToken cancellationToken)
+    public async ValueTask<Stream> GetBlobStreamAsync(string baseUrl, string token, CancellationToken cancellationToken)
     {
-        var blobResponse = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        using var requestMessage = HttpRequestMessageFactory.Create(HttpMethod.Get, baseUrl);
+        requestMessage.Headers.Add("pm-storage-token", token);
+
+        var blobResponse = await _httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
 
         await blobResponse.EnsureApiSuccessAsync(ProtonApiSerializerContext.Default.ApiResponse, cancellationToken).ConfigureAwait(false);
 

@@ -188,8 +188,8 @@ internal sealed class RevisionReader : IDisposable
             isIntermediateStream = true;
         }
 
-        var url = block.BareUrl + block.Token;
-        var hashDigest = await _client.BlockDownloader.DownloadAsync(url, _contentKey, blockOutputStream, cancellationToken).ConfigureAwait(false);
+        var hashDigest = await _client.BlockDownloader.DownloadAsync(block.BareUrl, block.Token, _contentKey, blockOutputStream, cancellationToken)
+            .ConfigureAwait(false);
 
         return new BlockDownloadResult(block.Index, blockOutputStream, isIntermediateStream, hashDigest);
     }

@@ -19,11 +19,16 @@ internal sealed class BlockDownloader
     public SemaphoreSlim FileSemaphore { get; } = new(1, 1);
     public SemaphoreSlim BlockSemaphore { get; }
 
-    public async ValueTask<ReadOnlyMemory<byte>> DownloadAsync(string url, PgpSessionKey contentKey, Stream outputStream, CancellationToken cancellationToken)
+    public async ValueTask<ReadOnlyMemory<byte>> DownloadAsync(
+        string bareUrl,
+        string token,
+        PgpSessionKey contentKey,
+        Stream outputStream,
+        CancellationToken cancellationToken)
     {
         using var sha256 = SHA256.Create();
 
-        var blobStream = await _client.Api.Storage.GetBlobStreamAsync(url, cancellationToken).ConfigureAwait(false);
+        var blobStream = await _client.Api.Storage.GetBlobStreamAsync(bareUrl, token, cancellationToken).ConfigureAwait(false);
 
         var hashingStream = new CryptoStream(blobStream, sha256, CryptoStreamMode.Read);
 
