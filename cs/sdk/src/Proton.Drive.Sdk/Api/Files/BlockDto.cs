@@ -7,6 +7,7 @@ internal sealed class BlockDto
 {
     public required int Index { get; init; }
 
+    [JsonPropertyName("Hash")]
     [JsonConverter(typeof(ForgivingBytesToHexJsonConverter))]
     public required ReadOnlyMemory<byte> HashDigest { get; init; }
 
