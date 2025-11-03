@@ -163,6 +163,7 @@ public sealed class ProtonDriveClient
         return new FileDownloader(this, revisionUid);
     }
 
+    // FIXME: unit tests, including name collision cases
     public ValueTask<string> GetAvailableNameAsync(NodeUid parentUid, string name, CancellationToken cancellationToken)
     {
         return NodeOperations.GetAvailableNameAsync(this, parentUid, name, cancellationToken);

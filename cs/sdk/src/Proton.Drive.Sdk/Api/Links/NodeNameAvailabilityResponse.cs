@@ -9,5 +9,5 @@ internal sealed class NodeNameAvailabilityResponse : ApiResponse
     public required IReadOnlyList<string> AvailableNameHashDigests { get; init; }
 
     [JsonPropertyName("PendingHashes")]
-    public required IReadOnlyList<string> UnavailableNameHashDigests { get; init; }
+    public required IReadOnlyList<NameHashDigestUnavailabilityDto> UnavailableNameHashDigests { get; init; }
 }
