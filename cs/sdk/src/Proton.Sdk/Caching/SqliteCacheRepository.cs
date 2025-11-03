@@ -16,7 +16,7 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
     {
         var connectionStringBuilder = new SqliteConnectionStringBuilder
         {
-            DataSource = Guid.NewGuid().ToString(),
+            DataSource = ":memory:",
             Mode = SqliteOpenMode.Memory,
             Cache = SqliteCacheMode.Shared,
         };

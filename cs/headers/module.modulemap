@@ -1,4 +1,4 @@
-module ProtonDriveSdk {
-    umbrella header "proton_sdk.h"
+module CProtonDriveSDK {
+    umbrella header "proton_drive_sdk.h"
     export *
 }
