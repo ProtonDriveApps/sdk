@@ -123,7 +123,7 @@ internal static class ProtonApiSessionRequestHandler
         return null;
     }
 
-    public static unsafe IMessage HandleSubscribeToTokensRefreshed(SessionTokensRefreshedSubscribeRequest request, nint bindingsHandle)
+    public static IMessage HandleSubscribeToTokensRefreshed(SessionTokensRefreshedSubscribeRequest request, nint bindingsHandle)
     {
         var session = Interop.GetFromHandle<ProtonApiSession>((nint)request.SessionHandle);
 

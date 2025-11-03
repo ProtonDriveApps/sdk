@@ -1,0 +1,23 @@
+# .swiftlint.yml
+included:
+  - Sources
+  - Tests
+
+opt_in_rules:
+  - empty_count
+  - explicit_init
+  - force_unwrapping
+  - implicit_return
+  - prohibited_super_call
+  - implicit_optional_initialization
+
+# disabled_rules:
+
+identifier_name:
+  min_length: 2
+
+line_length:
+  warning: 160
+  error: 160
+
+# strict: true

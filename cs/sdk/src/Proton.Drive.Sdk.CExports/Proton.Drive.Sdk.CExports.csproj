@@ -38,4 +38,18 @@
     <PublishAotUsingRuntimePack>true</PublishAotUsingRuntimePack>
   </PropertyGroup>
 
+  <PropertyGroup Condition="$(RuntimeIdentifier.StartsWith('ios')) or $(RuntimeIdentifier.StartsWith('osx'))">
+    <NativeLib>Static</NativeLib>
+  </PropertyGroup>
+
+  <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('ios'))">
+    <LinkerArg Include="-isysroot $(iPhoneOSSdkPath)" /> <!-- passed from command line -->
+    <LinkerArg Include="-lc++" />
+  </ItemGroup>
+
+  <!-- Static-link the crypto library unless targeting Android -->
+  <ItemGroup Condition="!$(RuntimeIdentifier.StartsWith('linux-bionic'))">
+    <DirectPInvoke Include="proton_crypto" />
+  </ItemGroup>
+
 </Project>

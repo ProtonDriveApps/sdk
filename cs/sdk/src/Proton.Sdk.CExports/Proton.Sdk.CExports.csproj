@@ -24,4 +24,9 @@
     <InternalsVisibleTo Include="$(NativeLibPrefix)proton_drive_sdk" />
   </ItemGroup>
 
+  <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('ios'))">
+    <LinkerArg Include="-isysroot $(iPhoneOSSdkPath)" /> <!-- passed from command line -->
+    <LinkerArg Include="-lc++" />
+  </ItemGroup>
+
 </Project>

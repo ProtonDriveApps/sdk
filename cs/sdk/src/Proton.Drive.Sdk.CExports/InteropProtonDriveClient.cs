@@ -32,7 +32,9 @@ internal static class InteropProtonDriveClient
 
         var loggerProvider = request.LoggerCase switch
         {
-            DriveClientCreateRequest.LoggerOneofCase.LogAction => new InteropLoggerProvider(bindingsHandle, new InteropAction<nint, InteropArray<byte>>(request.LogAction)),
+            DriveClientCreateRequest.LoggerOneofCase.LogAction => new InteropLoggerProvider(
+                bindingsHandle,
+                new InteropAction<nint, InteropArray<byte>>(request.LogAction)),
             DriveClientCreateRequest.LoggerOneofCase.LoggerProviderHandle => Interop.GetFromHandle<ILoggerProvider>(request.LoggerProviderHandle),
             DriveClientCreateRequest.LoggerOneofCase.None or _ => NullLoggerProvider.Instance,
         };
