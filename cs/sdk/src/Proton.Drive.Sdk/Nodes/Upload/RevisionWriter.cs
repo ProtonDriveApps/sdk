@@ -23,12 +23,12 @@ internal sealed class RevisionWriter : IDisposable
     private readonly PgpPrivateKey _signingKey;
     private readonly Address _membershipAddress;
     private readonly Action<int> _releaseBlocksAction;
-    private readonly Action _releaseFileAction;
+    private readonly Action _releaseFileSemaphoreAction;
 
     private readonly int _targetBlockSize;
     private readonly int _maxBlockSize;
 
-    private bool _semaphoreReleased;
+    private bool _fileReleased;
 
     internal RevisionWriter(
         ProtonDriveClient client,
@@ -38,7 +38,7 @@ internal sealed class RevisionWriter : IDisposable
         PgpPrivateKey signingKey,
         Address membershipAddress,
         Action<int> releaseBlocksAction,
-        Action releaseFileAction,
+        Action releaseFileSemaphoreAction,
         int targetBlockSize = DefaultBlockSize,
         int maxBlockSize = DefaultBlockSize)
     {
@@ -49,7 +49,7 @@ internal sealed class RevisionWriter : IDisposable
         _signingKey = signingKey;
         _membershipAddress = membershipAddress;
         _releaseBlocksAction = releaseBlocksAction;
-        _releaseFileAction = releaseFileAction;
+        _releaseFileSemaphoreAction = releaseFileSemaphoreAction;
         _targetBlockSize = targetBlockSize;
         _maxBlockSize = maxBlockSize;
     }
@@ -165,8 +165,8 @@ internal sealed class RevisionWriter : IDisposable
                     }
                     finally
                     {
-                        _releaseFileAction.Invoke();
-                        _semaphoreReleased = true;
+                        _releaseFileSemaphoreAction.Invoke();
+                        _fileReleased = true;
                     }
 
                     while (uploadTasks.Count > 0)
@@ -207,9 +207,9 @@ internal sealed class RevisionWriter : IDisposable
 
     public void Dispose()
     {
-        if (!_semaphoreReleased)
+        if (!_fileReleased)
         {
-            _client.BlockUploader.FileSemaphore.Release();
+            _releaseFileSemaphoreAction.Invoke();
         }
     }
 

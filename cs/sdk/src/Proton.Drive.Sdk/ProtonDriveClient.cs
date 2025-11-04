@@ -72,8 +72,8 @@ public sealed class ProtonDriveClient
 
         var maxDegreeOfBlockProcessingParallelism = maxDegreeOfBlockTransferParallelism + Math.Min(Math.Max(maxDegreeOfBlockTransferParallelism / 2, 2), 4);
 
-        RevisionCreationSemaphore = new FifoFlexibleSemaphore(maxDegreeOfBlockProcessingParallelism, loggerFactory.CreateLogger("Revision creation semaphore"));
-        BlockListingSemaphore = new FifoFlexibleSemaphore(maxDegreeOfBlockProcessingParallelism, loggerFactory.CreateLogger("Block listing semaphore"));
+        RevisionCreationSemaphore = new FifoFlexibleSemaphore(maxDegreeOfBlockProcessingParallelism);
+        BlockListingSemaphore = new FifoFlexibleSemaphore(maxDegreeOfBlockProcessingParallelism);
 
         BlockUploader = new BlockUploader(this, maxDegreeOfBlockTransferParallelism);
         BlockDownloader = new BlockDownloader(this, maxDegreeOfBlockTransferParallelism);
@@ -158,9 +158,7 @@ public sealed class ProtonDriveClient
 
     public async ValueTask<FileDownloader> GetFileDownloaderAsync(RevisionUid revisionUid, CancellationToken cancellationToken)
     {
-        await BlockListingSemaphore.EnterAsync(1, cancellationToken).ConfigureAwait(false);
-
-        return new FileDownloader(this, revisionUid);
+        return await FileDownloader.CreateAsync(this, revisionUid, cancellationToken).ConfigureAwait(false);
     }
 
     // FIXME: unit tests, including name collision cases
@@ -171,7 +169,7 @@ public sealed class ProtonDriveClient
 
     public async ValueTask MoveNodesAsync(IEnumerable<NodeUid> uids, NodeUid newParentFolderUid, CancellationToken cancellationToken)
     {
-        // FIXME: finalize the implementation that uses the batch move endpoint, and use it instead of this naïve code
+        // FIXME: finalize the implementation that uses the batch move endpoint, and use it instead of this naÃ¯ve code
         foreach (var uid in uids)
         {
             await NodeOperations.MoveSingleAsync(this, uid, newParentFolderUid, newName: null, cancellationToken).ConfigureAwait(false);
@@ -214,10 +212,6 @@ public sealed class ProtonDriveClient
         DateTime? lastModificationTime,
         CancellationToken cancellationToken)
     {
-        var expectedNumberOfBlocks = (int)size.DivideAndRoundUp(RevisionWriter.DefaultBlockSize);
-
-        await RevisionCreationSemaphore.EnterAsync(expectedNumberOfBlocks, cancellationToken).ConfigureAwait(false);
-
-        return new FileUploader(this, fileDraftProvider, size, lastModificationTime, expectedNumberOfBlocks);
+        return await FileUploader.CreateAsync(this, fileDraftProvider, size, lastModificationTime, cancellationToken).ConfigureAwait(false);
     }
 }

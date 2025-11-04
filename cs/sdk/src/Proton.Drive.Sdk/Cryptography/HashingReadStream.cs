@@ -2,7 +2,7 @@
 
 namespace Proton.Drive.Sdk.Cryptography;
 
-public class HashingReadStream(Stream underlyingStream, IncrementalHash hash, bool leaveOpen = false) : Stream
+internal sealed class HashingReadStream(Stream underlyingStream, IncrementalHash hash, bool leaveOpen = false) : Stream
 {
     private readonly Stream _underlyingStream = underlyingStream ?? throw new ArgumentNullException(nameof(underlyingStream));
     private readonly IncrementalHash _hash = hash;
@@ -58,8 +58,6 @@ public class HashingReadStream(Stream underlyingStream, IncrementalHash hash, bo
     public override ValueTask DisposeAsync()
 #pragma warning restore CA2215 // Dispose methods should call base class dispose
     {
-        GC.SuppressFinalize(this);
-
         if (leaveOpen)
         {
             return ValueTask.CompletedTask;
