@@ -1,12 +1,14 @@
-﻿namespace Proton.Drive.Sdk.Nodes.Download;
+﻿using Microsoft.Extensions.Logging;
 
-public sealed class FileDownloader : IDisposable
+namespace Proton.Drive.Sdk.Nodes.Download;
+
+public sealed partial class FileDownloader : IDisposable
 {
     private readonly ProtonDriveClient _client;
     private readonly RevisionUid _revisionUid;
     private volatile int _remainingNumberOfBlocksToList;
 
-    internal FileDownloader(ProtonDriveClient client, RevisionUid revisionUid)
+    private FileDownloader(ProtonDriveClient client, RevisionUid revisionUid)
     {
         _client = client;
         _revisionUid = revisionUid;
@@ -28,14 +30,26 @@ public sealed class FileDownloader : IDisposable
 
     public void Dispose()
     {
-        if (_remainingNumberOfBlocksToList <= 0)
-        {
-            return;
-        }
-
-        _client.BlockListingSemaphore.Release(_remainingNumberOfBlocksToList);
-        _remainingNumberOfBlocksToList = 0;
+        ReleaseRemainingBlockListing();
     }
+
+    internal static async ValueTask<FileDownloader> CreateAsync(ProtonDriveClient client, RevisionUid revisionUid, CancellationToken cancellationToken)
+    {
+        LogEnteringBlockListingSemaphore(client.Logger, revisionUid, 1);
+        await client.BlockListingSemaphore.EnterAsync(1, cancellationToken).ConfigureAwait(false);
+        LogEnteredBlockListingSemaphore(client.Logger, revisionUid, 1);
+
+        return new FileDownloader(client, revisionUid);
+    }
+
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Trying to enter block listing semaphore for revision {RevisionUid} with {Increment}")]
+    private static partial void LogEnteringBlockListingSemaphore(ILogger logger, RevisionUid revisionUid, int increment);
+
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Entered block listing semaphore for revision {RevisionUid} with {Increment}")]
+    private static partial void LogEnteredBlockListingSemaphore(ILogger logger, RevisionUid revisionUid, int increment);
+
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Released {Decrement} from block listing semaphore for revision {RevisionUid}")]
+    private static partial void LogReleasedBlockListingSemaphore(ILogger logger, RevisionUid revisionUid, int decrement);
 
     private async Task DownloadToStreamAsync(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
     {
@@ -62,5 +76,19 @@ public sealed class FileDownloader : IDisposable
         var amountToRelease = Math.Max(newRemainingNumberOfBlocks >= 0 ? numberOfBlockListings : newRemainingNumberOfBlocks + numberOfBlockListings, 0);
 
         _client.BlockListingSemaphore.Release(amountToRelease);
+        LogReleasedBlockListingSemaphore(_client.Logger, _revisionUid, amountToRelease);
+    }
+
+    private void ReleaseRemainingBlockListing()
+    {
+        if (_remainingNumberOfBlocksToList <= 0)
+        {
+            return;
+        }
+
+        _client.BlockListingSemaphore.Release(_remainingNumberOfBlocksToList);
+        LogReleasedBlockListingSemaphore(_client.Logger, _revisionUid, _remainingNumberOfBlocksToList);
+
+        _remainingNumberOfBlocksToList = 0;
     }
 }

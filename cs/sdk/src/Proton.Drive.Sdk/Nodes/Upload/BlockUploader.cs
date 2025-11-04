@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IO;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
+using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Sdk;
 using Proton.Sdk.Addresses;
@@ -61,9 +62,9 @@ internal sealed class BlockUploader
 
                         await using (plainDataStream.ConfigureAwait(false))
                         {
-                            using var sha256 = SHA256.Create();
+                            using var sha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
 
-                            var hashingStream = new CryptoStream(dataPacketStream, sha256, CryptoStreamMode.Write, leaveOpen: true);
+                            var hashingStream = new HashingWriteStream(dataPacketStream, sha256, leaveOpen: true);
 
                             await using (hashingStream.ConfigureAwait(false))
                             {
@@ -80,7 +81,7 @@ internal sealed class BlockUploader
                                 }
                             }
 
-                            sha256Digest = sha256.Hash ?? [];
+                            sha256Digest = sha256.GetCurrentHash();
                         }
 
                         // The signature stream should not be closed until the signature is no longer needed, because the underlying buffer could be re-used,
@@ -198,7 +199,14 @@ internal sealed class BlockUploader
         }
         finally
         {
-            _client.RevisionCreationSemaphore.Release(1);
+            try
+            {
+                _client.RevisionCreationSemaphore.Release(1);
+            }
+            finally
+            {
+                BlockSemaphore.Release(1);
+            }
         }
     }
 

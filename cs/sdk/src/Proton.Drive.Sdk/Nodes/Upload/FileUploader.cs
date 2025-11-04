@@ -1,15 +1,16 @@
+using Microsoft.Extensions.Logging;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
-public sealed class FileUploader : IDisposable
+public sealed partial class FileUploader : IDisposable
 {
     private readonly ProtonDriveClient _client;
     private readonly IFileDraftProvider _fileDraftProvider;
     private readonly DateTimeOffset? _lastModificationTime;
     private volatile int _remainingNumberOfBlocks;
 
-    internal FileUploader(
+    private FileUploader(
         ProtonDriveClient client,
         IFileDraftProvider fileDraftProvider,
         long size,
@@ -49,14 +50,33 @@ public sealed class FileUploader : IDisposable
 
     public void Dispose()
     {
-        if (_remainingNumberOfBlocks <= 0)
-        {
-            return;
-        }
-
-        _client.RevisionCreationSemaphore.Release(_remainingNumberOfBlocks);
-        _remainingNumberOfBlocks = 0;
+        ReleaseRemainingBlocks();
     }
+
+    internal static async ValueTask<FileUploader> CreateAsync(
+        ProtonDriveClient client,
+        IFileDraftProvider fileDraftProvider,
+        long size,
+        DateTime? lastModificationTime,
+        CancellationToken cancellationToken)
+    {
+        var expectedNumberOfBlocks = (int)size.DivideAndRoundUp(RevisionWriter.DefaultBlockSize);
+
+        LogEnteredRevisionCreationSemaphore(client.Logger, expectedNumberOfBlocks);
+        await client.RevisionCreationSemaphore.EnterAsync(expectedNumberOfBlocks, cancellationToken).ConfigureAwait(false);
+        LogEnteredRevisionCreationSemaphore(client.Logger, expectedNumberOfBlocks);
+
+        return new FileUploader(client, fileDraftProvider, size, lastModificationTime, expectedNumberOfBlocks);
+    }
+
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Trying to enter revision creation semaphore with {Increment}")]
+    private static partial void LogEnteringRevisionCreationSemaphore(ILogger logger, int increment);
+
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Entered revision creation semaphore with {Increment}")]
+    private static partial void LogEnteredRevisionCreationSemaphore(ILogger logger, int increment);
+
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Released {Decrement} from revision creation semaphore")]
+    private static partial void LogReleasedRevisionCreationSemaphore(ILogger logger, int decrement);
 
     private async Task<(NodeUid NodeUid, RevisionUid RevisionUid)> UploadFromStreamAsync(
         Stream contentStream,
@@ -142,5 +162,19 @@ public sealed class FileUploader : IDisposable
         var amountToRelease = Math.Max(newRemainingNumberOfBlocks >= 0 ? numberOfBlocks : newRemainingNumberOfBlocks + numberOfBlocks, 0);
 
         _client.RevisionCreationSemaphore.Release(amountToRelease);
+        LogReleasedRevisionCreationSemaphore(_client.Logger, amountToRelease);
+    }
+
+    private void ReleaseRemainingBlocks()
+    {
+        if (_remainingNumberOfBlocks <= 0)
+        {
+            return;
+        }
+
+        _client.RevisionCreationSemaphore.Release(_remainingNumberOfBlocks);
+        LogReleasedRevisionCreationSemaphore(_client.Logger, _remainingNumberOfBlocks);
+
+        _remainingNumberOfBlocks = 0;
     }
 }

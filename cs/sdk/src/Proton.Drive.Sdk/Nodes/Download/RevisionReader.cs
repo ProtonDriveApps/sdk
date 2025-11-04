@@ -17,9 +17,10 @@ internal sealed class RevisionReader : IDisposable
     private readonly PgpSessionKey _contentKey;
     private readonly BlockListingRevisionDto _revisionDto;
     private readonly Action<int> _releaseBlockListingAction;
+    private readonly Action _releaseFileSemaphoreAction;
     private readonly int _blockPageSize;
 
-    private bool _semaphoreReleased;
+    private bool _fileSemaphoreReleased;
 
     private long _totalProgress;
 
@@ -30,6 +31,7 @@ internal sealed class RevisionReader : IDisposable
         PgpSessionKey contentKey,
         BlockListingRevisionDto revisionDto,
         Action<int> releaseBlockListingAction,
+        Action releaseFileSemaphoreAction,
         int blockPageSize = DefaultBlockPageSize)
     {
         _client = client;
@@ -39,6 +41,7 @@ internal sealed class RevisionReader : IDisposable
         _contentKey = contentKey;
         _revisionDto = revisionDto;
         _releaseBlockListingAction = releaseBlockListingAction;
+        _releaseFileSemaphoreAction = releaseFileSemaphoreAction;
         _blockPageSize = blockPageSize;
     }
 
@@ -81,8 +84,8 @@ internal sealed class RevisionReader : IDisposable
                 }
                 finally
                 {
-                    _client.BlockDownloader.FileSemaphore.Release();
-                    _semaphoreReleased = true;
+                    _releaseFileSemaphoreAction.Invoke();
+                    _fileSemaphoreReleased = true;
                 }
 
                 while (downloadTasks.Count > 0)
@@ -122,9 +125,9 @@ internal sealed class RevisionReader : IDisposable
 
     public void Dispose()
     {
-        if (!_semaphoreReleased)
+        if (!_fileSemaphoreReleased)
         {
-            _client.BlockDownloader.FileSemaphore.Release();
+            _releaseFileSemaphoreAction.Invoke();
         }
     }
 
