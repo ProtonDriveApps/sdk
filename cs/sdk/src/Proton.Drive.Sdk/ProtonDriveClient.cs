@@ -9,6 +9,7 @@ using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk;
 using Proton.Sdk.Caching;
+using Proton.Sdk.Http;
 
 namespace Proton.Drive.Sdk;
 
@@ -42,7 +43,7 @@ public sealed class ProtonDriveClient
         ILoggerFactory loggerFactory,
         string? uid = null)
         : this(
-            httpClientFactory.CreateClient(),
+            new SdkHttpClientFactoryDecorator(httpClientFactory).CreateClient(),
             accountClient,
             new DriveClientCache(entityCacheRepository, secretCacheRepository),
             loggerFactory,
