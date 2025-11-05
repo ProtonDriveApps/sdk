@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using System.Reflection;
 using Google.Protobuf;
 using Proton.Sdk.CExports.Tasks;
 using Proton.Sdk.Http;
@@ -9,8 +8,6 @@ namespace Proton.Sdk.CExports;
 internal sealed class InteropHttpClientFactory : IHttpClientFactory
 {
     private readonly string _baseUrl;
-    private readonly string _sdkVersion;
-    private readonly string _sdkTechnicalStack;
 
     public InteropHttpClientFactory(
         nint bindingsHandle,
@@ -21,18 +18,6 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
         _baseUrl = baseUrl;
         BindingsHandle = bindingsHandle;
         SendHttpRequestAction = sendHttpRequestAction;
-
-        var executingAssembly = Assembly.GetExecutingAssembly();
-        var versionAttribute = executingAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-        _sdkVersion = versionAttribute?.InformationalVersion
-            ?? executingAssembly.GetName().Version?.ToString(fieldCount: 3)
-            ?? "0.0.0";
-
-        var bindingsSuffix = bindingsLanguage is not null
-            ? "-" + bindingsLanguage.ToLowerInvariant()
-            : string.Empty;
-
-        _sdkTechnicalStack = "dotnet" + bindingsSuffix;
     }
 
     private nint BindingsHandle { get; }
@@ -45,14 +30,7 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
             InnerHandler = new InteropHttpMessageHandler(this),
         };
 
-        return new HttpClient(httpMessageHandler)
-        {
-            BaseAddress = new Uri(_baseUrl),
-            DefaultRequestHeaders =
-            {
-                { "x-pm-drive-sdk-version", $"{_sdkTechnicalStack}@{_sdkVersion}" },
-            },
-        };
+        return new HttpClient(httpMessageHandler) { BaseAddress = new Uri(_baseUrl) };
     }
 
     private sealed class InteropHttpMessageHandler(InteropHttpClientFactory owner) : HttpMessageHandler
