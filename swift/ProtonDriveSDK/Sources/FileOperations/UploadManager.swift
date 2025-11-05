@@ -77,8 +77,6 @@ public actor UploadManager {
             freeFileUploader(uploaderHandle)
         }
 
-        let progressAction: Int64 = 0
-
         let uploaderRequest = Proton_Drive_Sdk_UploadFromFileRequest.with {
             $0.uploaderHandle = Int64(uploaderHandle)
             $0.filePath = fileURL.path(percentEncoded: false)
@@ -96,7 +94,13 @@ public actor UploadManager {
             }
         }
 
-        let uploadControllerHandle: ObjectHandle = try await SDKRequestHandler.send(uploaderRequest, logger: logger)
+        let callbackState = ProgressCallbackWrapper(callback: progressCallback)
+        let uploadControllerHandle: ObjectHandle = try await SDKRequestHandler.send(
+            uploaderRequest,
+            state: WeakReference(value: callbackState),
+            includesLongLivedCallback: true,
+            logger: logger
+        )
         assert(uploadControllerHandle != 0)
 
         let uploadedNode = try await awaitUploadCompletion(uploadControllerHandle)
@@ -167,10 +171,3 @@ public actor UploadManager {
         }
     }
 }
-
-let cProgressCallback: CCallback = { state, byteArray in
-    guard let state else {
-        return
-    }
-}
-
