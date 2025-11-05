@@ -54,6 +54,10 @@ internal static class InteropErrorConverter
             case CryptographicException:
                 error.Domain = ErrorDomain.Cryptography;
                 break;
+
+            default:
+                error.Domain = ErrorDomain.Undefined;
+                break;
         }
     }
 }
