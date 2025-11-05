@@ -6,14 +6,9 @@ internal static class ExceptionExtensions
     {
         var error = new Error
         {
+            Type = exception.GetType().FullName ?? $"{nameof(System)}.{nameof(Exception)}",
             Message = exception.Message,
         };
-
-        var type = exception.GetType().FullName;
-        if (type is not null)
-        {
-            error.Type = type;
-        }
 
         var context = exception.StackTrace;
         if (context is not null)
