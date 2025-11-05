@@ -41,7 +41,13 @@ public actor DownloadManager {
             $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
         }
 
-        let downloadControllerHandle: ObjectHandle = try await SDKRequestHandler.send(downloaderRequest, logger: logger)
+        let callbackState = ProgressCallbackWrapper(callback: progressCallback)
+        let downloadControllerHandle: ObjectHandle = try await SDKRequestHandler.send(
+            downloaderRequest,
+            state: WeakReference(value: callbackState),
+            includesLongLivedCallback: true,
+            logger: logger
+        )
         assert(downloadControllerHandle != 0)
         defer {
             freeDownloadController(downloadControllerHandle)
