@@ -48,23 +48,6 @@ extension Data {
     }
 }
 
-// MARK: - Error extensions
-
-extension String: @retroactive Error {}
-
-extension Proton_Sdk_Error: Error {
-
-    var localizedDescription: String {
-        return "\(self.message)"
-    }
-
-    var nsError: NSError {
-        return NSError(domain: "ProtonDriveSDK", code: Int(primaryCode), userInfo: [
-            NSLocalizedDescriptionKey: message
-        ])
-    }
-}
-
 // MARK: - ByteArray extensions
 
 extension ByteArray: @unchecked @retroactive Sendable {}
