@@ -32,16 +32,16 @@ enum SDKRequestHandler {
         // Put the request in an envelope
         let envelopedRequestData = try request.packIntoRequest().serializedData()
         let isDriveRequest = request.isDriveRequest
-        logger?.trace("Sending SDK message with state: \(T.protoMessageName) - \(request)", category: .other("SDKRequestHandler"))
+        logger?.trace("Sending SDK message with state: \(T.protoMessageName) - \(request)", category: "SDKRequestHandler")
         
         let response: U = try await withCheckedThrowingContinuation { continuation in
             let requestArray = ByteArray(data: envelopedRequestData)
             defer {
-                logger?.trace("deferred deallocate of requestData", category: .other("SDKRequestHandler"))
+                logger?.trace("deferred deallocate of requestData", category: "SDKRequestHandler")
                 requestArray.deallocate()
             }
 
-            logger?.trace("Sending (\(isDriveRequest ? "Drive" : "non-Drive")) SDK request ", category: .other("SDKRequestHandler"))
+            logger?.trace("Sending (\(isDriveRequest ? "Drive" : "non-Drive")) SDK request ", category: "SDKRequestHandler")
 
             // Switch to InteropTypes.BoxedStateType once we use it for all requests
             let boxedState = BoxedContinuationWithState(continuation, state: state, context: envelopedRequestData)
@@ -54,10 +54,10 @@ enum SDKRequestHandler {
             }
             let bindingsHandle = Int(rawPointer: pointer.toOpaque())
             if isDriveRequest {
-                logger?.trace(" -> proton_drive_sdk_handle_request", category: .other("SDKRequestHandler"))
+                logger?.trace(" -> proton_drive_sdk_handle_request", category: "SDKRequestHandler")
                 proton_drive_sdk_handle_request(requestArray, bindingsHandle, sdkResponseCallbackWithState)
             } else {
-                logger?.trace(" -> proton_sdk_handle_request", category: .other("SDKRequestHandler"))
+                logger?.trace(" -> proton_sdk_handle_request", category: "SDKRequestHandler")
                 proton_sdk_handle_request(requestArray, bindingsHandle, sdkResponseCallbackWithState)
             }
         }
@@ -66,9 +66,8 @@ enum SDKRequestHandler {
 }
 
 /// C-compatible callback function for SDK responses.
-let sdkResponseCallbackWithState: CResponseCallback = { (sdkHandle: ObjectHandle, responseArray: ByteArray) in
-    
-    guard let sdkPointer = UnsafeRawPointer(bitPattern: UInt(sdkHandle)),
+let sdkResponseCallbackWithState: CCallback = { statePointer, responseArray in
+    guard let sdkPointer = UnsafeRawPointer(bitPattern: statePointer),
           let box = Unmanaged<AnyObject>.fromOpaque(sdkPointer).takeRetainedValue() as? any Resumable
     else {
         assertionFailure("If the pointer is not Resumable, we cannot get the continuation")

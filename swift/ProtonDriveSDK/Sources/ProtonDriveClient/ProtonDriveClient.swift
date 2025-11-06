@@ -33,7 +33,6 @@ public actor ProtonDriveClient: Sendable {
 
             $0.httpClientRequestAction = Int64(ObjectHandle(callback: cCompatibleHttpRequest))
             $0.accountClientRequestAction = Int64(ObjectHandle(callback: cCompatibleAccountClientRequest))
-
             $0.logAction = Int64(ObjectHandle(callback: cCompatibleLogCallback))
 
             if let entityCachePath {
@@ -51,7 +50,7 @@ public actor ProtonDriveClient: Sendable {
             clientCreateRequest, state: weakSelf, includesLongLivedCallback: true, logger: logger
         )
         self.clientHandle = ObjectHandle(handle)
-        logger.trace("client handle: \(clientHandle)", category: .other("ProtonDriveClient"))
+        logger.trace("client handle: \(clientHandle)", category: "ProtonDriveClient")
 
         self.uploadManager = UploadManager(clientHandle: clientHandle, logger: logger)
         self.downloadManager = DownloadManager(clientHandle: clientHandle, logger: logger)

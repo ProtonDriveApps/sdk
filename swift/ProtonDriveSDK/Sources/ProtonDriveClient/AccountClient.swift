@@ -10,12 +10,16 @@ public protocol AccountClientProtocol: Sendable {
     func getAddressPublicKeysRequest(emailAddress: String) -> [Data]
 }
 
-let cCompatibleAccountClientRequest: CCallbackWithReturnValue = { state, byteArray, callback in
-    let callbackPointer = Int(rawPointer: callback)
-    let statePointer = Unmanaged<BoxedContinuationWithState<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(state)
-    let weakDriveClient: WeakReference<ProtonDriveClient> = statePointer.takeUnretainedValue().state
+let cCompatibleAccountClientRequest: CCallbackWithReturnValue = { statePointer, byteArray, callbackPointer in
+    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
+        return
+    }
+    let stateTypedPointer = Unmanaged<BoxedContinuationWithState<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
+    let weakDriveClient: WeakReference<ProtonDriveClient> = stateTypedPointer.takeUnretainedValue().state
     
-    let driveClient = ProtonDriveClient.unbox(callbackPointer: callbackPointer, releaseBox: { statePointer.release() }, weakDriveClient: weakDriveClient)
+    let driveClient = ProtonDriveClient.unbox(
+        callbackPointer: callbackPointer, releaseBox: { stateTypedPointer.release() }, weakDriveClient: weakDriveClient
+    )
     guard let driveClient else { return }
 
     Task { [driveClient] in
