@@ -3,15 +3,15 @@ import Foundation
 public struct LogEvent: Sendable {
     public let level: LogLevel
     public let message: String
-    public let category: LogCategory
+    public let category: String
     public let timestamp: Date
 
-    public let thread: UInt?
+    public let thread: UInt
     public let file: String
     public let function: String
     public let line: UInt
 
-    public init(level: LogLevel, message: String, category: LogCategory, timestamp: Date = Date(), thread: UInt?, file: String, function: String, line: UInt) {
+    public init(level: LogLevel, message: String, category: String, timestamp: Date = .now, thread: UInt, file: String, function: String, line: UInt) {
         self.level = level
         self.message = message
         self.category = category
@@ -27,11 +27,11 @@ public struct LogEvent: Sendable {
         self.init(
             level: LogLevel(sdkLogEvent.level),
             message: sdkLogEvent.message,
-            category: LogCategory(sdkLogEvent.categoryName),
-            thread: 0,
-            // TODO: extract this from SDK error
-            file: "n/a",
-            function: "n/a",
+            category: sdkLogEvent.categoryName,
+            thread: Thread.current.number,
+            // this is not implemented on SDK side
+            file: "",
+            function: "",
             line: 0
         )
     }
@@ -49,23 +49,5 @@ public enum LogLevel: Int32, Sendable {
 
     public init(_ rawValue: Int32) {
         self = LogLevel(rawValue: rawValue) ?? .debug
-    }
-}
-
-public enum LogCategory: Sendable {
-    case other(String)
-    case upload
-    case download
-    case cancellation
-    case logging
-
-    init(_ categoryName: String) {
-        switch categoryName {
-        case "upload": self = .upload
-        case "download": self = .download
-        case "cancellation": self = .cancellation
-        case "logging": self = .logging
-        default: self = .other(categoryName)
-        }
     }
 }

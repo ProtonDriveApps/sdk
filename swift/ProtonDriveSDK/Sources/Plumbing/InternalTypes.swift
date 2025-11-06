@@ -17,11 +17,6 @@ extension ObjectHandle {
         let callbackAddress: UnsafeRawPointer = unsafeBitCast(callback, to: UnsafeRawPointer.self)
         self = ObjectHandle(bitPattern: callbackAddress)
     }
-    
-    init(callback: CResponseCallback) {
-        let callbackAddress: UnsafeRawPointer = unsafeBitCast(callback, to: UnsafeRawPointer.self)
-        self = ObjectHandle(bitPattern: callbackAddress)
-    }
 }
 
 extension ObjectHandle {
@@ -35,12 +30,9 @@ func address<T: AnyObject>(of object: T) -> ObjectHandle {
     return ObjectHandle(bitPattern: rawPointer)
 }
 
-/// C-compatible callback used to get response from the SDK
-typealias CResponseCallback = @convention(c) (Int, ByteArray) -> Void
-
 /// C-compatible callback used by SDK to pass data to the app
-typealias CCallback = @convention(c) (UnsafeMutableRawPointer?, ByteArray) -> Void
-typealias CCallbackWithReturnValue = @convention(c) (UnsafeMutableRawPointer, ByteArray, UnsafeMutableRawPointer) -> Void
+typealias CCallback = @convention(c) (Int, ByteArray) -> Void
+typealias CCallbackWithReturnValue = @convention(c) (Int, ByteArray, Int) -> Void
 
 extension Data {
     var dumptoString: String {

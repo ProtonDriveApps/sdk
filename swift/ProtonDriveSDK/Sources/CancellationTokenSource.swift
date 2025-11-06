@@ -8,11 +8,11 @@ actor CancellationTokenSource {
         let request = Proton_Sdk_CancellationTokenSourceCreateRequest()
         self.handle = try await SDKRequestHandler.sendInteropRequest(request, logger: logger)
 
-        logger?.trace("CancellationTokenSource.init, handle: \(String(describing: handle))", category: .cancellation)
+        logger?.trace("CancellationTokenSource.init, handle: \(String(describing: handle))", category: "Cancellation")
     }
 
     func cancel() async throws {
-        logger?.trace("CancellationTokenSource.cancel, handle: \(String(describing: handle))", category: .cancellation)
+        logger?.trace("CancellationTokenSource.cancel, handle: \(String(describing: handle))", category: "Cancellation")
 
         try await SDKRequestHandler.sendInteropRequest(
             Proton_Sdk_CancellationTokenSourceCancelRequest.with {
@@ -23,7 +23,7 @@ actor CancellationTokenSource {
     }
 
     nonisolated func free() {
-        logger?.trace("CancellationTokenSource.free, handle: \(String(describing: handle))", category: .cancellation)
+        logger?.trace("CancellationTokenSource.free, handle: \(String(describing: handle))", category: "Cancellation")
         let cancellationHandle = self.handle
         
         // CAUTION: Intentionally capturing `self` strongly here, because otherwise
@@ -34,13 +34,13 @@ actor CancellationTokenSource {
                 $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
             }
             try await SDKRequestHandler.sendInteropRequest(request, logger: logger) as Void
-            logger?.trace("CancellationTokenSource.free succeeded, handle: \(cancellationHandle) -> nil", category: .cancellation)
+            logger?.trace("CancellationTokenSource.free succeeded, handle: \(cancellationHandle) -> nil", category: "Cancellation")
             strongSelf = nil
         }
     }
 
     deinit {
-        logger?.trace("CancellationTokenSource.deinit, handle: \(String(describing: handle))", category: .cancellation)
+        logger?.trace("CancellationTokenSource.deinit, handle: \(String(describing: handle))", category: "Cancellation")
 //        // TODO(SDK): free handle in deinit
 //        free()
 //        logger?.trace("CancellationTokenSource.deinit, after handle: \(String(describing: cancellationHandle))", category: .cancellation)

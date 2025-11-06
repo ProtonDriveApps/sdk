@@ -3,7 +3,6 @@ import Foundation
 /// Callback for log events
 public typealias LogCallback = @Sendable (LogEvent) -> Void
 
-
 func logCallbackForTests(logEvent: LogEvent) {
     let timestamp = logEvent.timestamp.formatted(date: .abbreviated, time: .shortened)
 
@@ -26,17 +25,21 @@ extension LogLevel {
     }
 }
 
-let cCompatibleLogCallback: CCallback = { state, byteArray in
-    guard let state else {
+let cCompatibleLogCallback: CCallback = { statePointer, byteArray in
+    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
+        return
+    }
+    
+    let stateTypedPointer = Unmanaged<BoxedContinuationWithState<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
+    let weakDriveClient = stateTypedPointer.takeUnretainedValue().state
+    
+    guard let driveClient = weakDriveClient.value else {
+        stateTypedPointer.release()
         return
     }
 
-//    let logEvent = LogEvent(sdkLogEvent: Proton_Sdk_LogEvent(byteArray: byteArray))
-//
-//    let continuationBox = Unmanaged<BoxedContinuationWithState<Int, ProtonDriveClient>>.fromOpaque(state).takeUnretainedValue()
-//    let driveClient: ProtonDriveClient = continuationBox.state
-//
-//    driveClient.log(logEvent)
+    let logEvent = LogEvent(sdkLogEvent: Proton_Sdk_LogEvent(byteArray: byteArray))
+    driveClient.log(logEvent)
 }
 
 final class Logger: Sendable {
@@ -47,23 +50,23 @@ final class Logger: Sendable {
         self.logCallback = logCallback
     }
 
-    func trace(_ message: String, category: LogCategory, file: String = #file, function: String = #function, line: UInt = #line) {
-        self.log(level: .trace, message, category: category)
+    func trace(_ message: String, category: String, file: String = #file, function: String = #function, line: UInt = #line) {
+        self.log(level: .trace, message, category: category, file: file, function: function, line: line)
     }
 
-    func debug(_ message: String, category: LogCategory) {
-        self.log(level: .debug, message, category: category)
+    func debug(_ message: String, category: String, file: String = #file, function: String = #function, line: UInt = #line) {
+        self.log(level: .debug, message, category: category, file: file, function: function, line: line)
     }
 
-    func error(_ message: String, category: LogCategory) {
+    func error(_ message: String, category: String) {
         self.log(level: .error, message, category: category)
     }
 
-    func info(_ message: String, category: LogCategory) {
+    func info(_ message: String, category: String) {
         self.log(level: .info, message, category: category)
     }
 
-    func log(level: LogLevel, _ message: String, category: LogCategory, file: String = #file, function: String = #function, line: UInt = #line) {
+    func log(level: LogLevel, _ message: String, category: String, file: String = #file, function: String = #function, line: UInt = #line) {
         self.logCallback(
             LogEvent(level: level, message: message, category: category, thread: Thread.current.number, file: file, function: function, line: line)
         )
