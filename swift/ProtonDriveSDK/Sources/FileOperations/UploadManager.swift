@@ -116,7 +116,7 @@ public actor UploadManager {
 
         let uploadResult: Proton_Drive_Sdk_UploadResult = try await SDKRequestHandler.send(awaitUploadCompletionRequest, logger: logger)
         guard let result = FileNodeUploadResult(interopUploadResult: uploadResult) else {
-            throw "Wrong uid format in Proton_Drive_Sdk_UploadResult: \(uploadResult)"
+            throw ProtonDriveSDKError(interopError: .wrongResult(message: "Wrong uid format in Proton_Drive_Sdk_UploadResult: \(uploadResult)"))
         }
         return result
     }
