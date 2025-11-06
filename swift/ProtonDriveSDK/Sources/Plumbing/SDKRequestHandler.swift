@@ -81,7 +81,7 @@ let sdkResponseCallbackWithState: CResponseCallback = { (sdkHandle: ObjectHandle
         switch response.result {
         case nil: // empty response. Might be expected, might be not expected
             guard let voidBox = box as? Resumable<Void> else {
-                throw "Unexpected empty response received"
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unexpected empty response received"))
             }
             voidBox.resume()
             
@@ -93,21 +93,21 @@ let sdkResponseCallbackWithState: CResponseCallback = { (sdkHandle: ObjectHandle
             case let intBox as Resumable<Int>:
                 intBox.resume(returning: Int(unpackedValue))
             default:
-                throw "Unexpected SDK call response type: Google_Protobuf_Int64Value"
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unexpected SDK call response type: Google_Protobuf_Int64Value"))
             }
             
         case .value(let value) where value.isA(Proton_Drive_Sdk_UploadResult.self):
             let unpackedValue = try Proton_Drive_Sdk_UploadResult(unpackingAny: value)
             guard let uploadResultBox = box as? Resumable<Proton_Drive_Sdk_UploadResult> else {
-                throw "Unexpected SDK call response type: Proton_Drive_Sdk_UploadResult"
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unexpected SDK call response type: Proton_Drive_Sdk_UploadResult"))
             }
             uploadResultBox.resume(returning: unpackedValue)
             
         case .value: // unknown value type
-            throw "Unknown SDK call response value type"
+            throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unknown SDK call response value type"))
             
         case .error(let error):
-            throw error
+            throw ProtonDriveSDKError(protoError: error)
         }
 
     } catch {

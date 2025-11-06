@@ -5,11 +5,12 @@ import Foundation
 /// Create a single object of this class and use it to perform downloads, uploads and all other supported operations.
 public actor ProtonDriveClient: Sendable {
 
-    private var clientHandle: ObjectHandle?
-
-    private let logger: ProtonDriveSDK.Logger
+    private var clientHandle: ObjectHandle!
+    
     private var uploadManager: UploadManager!
     private var downloadManager: DownloadManager!
+    
+    private let logger: ProtonDriveSDK.Logger
 
     let httpClient: HttpClientProtocol
     let accountClient: AccountClientProtocol
@@ -50,10 +51,6 @@ public actor ProtonDriveClient: Sendable {
             clientCreateRequest, state: weakSelf, includesLongLivedCallback: true, logger: logger
         )
         self.clientHandle = ObjectHandle(handle)
-
-        guard let clientHandle else {
-            throw ProtonDriveSDKError.noHandle
-        }
         logger.trace("client handle: \(clientHandle)", category: .other("ProtonDriveClient"))
 
         self.uploadManager = UploadManager(clientHandle: clientHandle, logger: logger)

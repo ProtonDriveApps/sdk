@@ -100,7 +100,7 @@ extension Message {
 
         default:
             assertionFailure("Unknown request")
-            throw "Unknown request type: \(self)"
+            throw ProtonDriveSDKError(interopError: .wrongProto(message: "Unknown request type: \(self)"))
         }
     }
     
@@ -137,7 +137,7 @@ extension Message {
             }
         default:
             assertionFailure("Unknown response")
-            throw "Unknown response type: \(self)"
+            throw ProtonDriveSDKError(interopError: .wrongProto(message: "Unknown response type: \(self)"))
         }
     }
     
