@@ -101,7 +101,14 @@ let sdkResponseCallbackWithState: CCallback = { statePointer, responseArray in
                 throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unexpected SDK call response type: Proton_Drive_Sdk_UploadResult"))
             }
             uploadResultBox.resume(returning: unpackedValue)
-            
+
+        case .value(let value) where value.isA(Google_Protobuf_StringValue.self):
+            let unpackedValue = try Google_Protobuf_StringValue(unpackingAny: value)
+            guard let stringResultBox = box as? Resumable<String> else {
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unexpected SDK call response type: String"))
+            }
+            stringResultBox.resume(returning: unpackedValue.value)
+
         case .value: // unknown value type
             throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unknown SDK call response value type"))
             

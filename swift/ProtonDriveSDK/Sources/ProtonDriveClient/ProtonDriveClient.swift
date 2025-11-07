@@ -9,7 +9,7 @@ public actor ProtonDriveClient: Sendable {
     
     private var uploadManager: UploadManager!
     private var downloadManager: DownloadManager!
-    
+
     private let logger: ProtonDriveSDK.Logger
 
     let httpClient: HttpClientProtocol
@@ -93,7 +93,30 @@ public actor ProtonDriveClient: Sendable {
             progressCallback: progressCallback
         )
     }
-    
+
+    public func getAvailableName(
+        parentFolderUid: SDKNodeUid,
+        name: String
+    ) async throws -> String {
+        let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
+        defer {
+            // TODO: Should be done in deinit!
+            cancellationTokenSource.free()
+        }
+
+        let cancellationHandle = cancellationTokenSource.handle
+
+        let getAvailableNameRequest = Proton_Drive_Sdk_DriveClientGetAvailableNameRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.parentFolderUid = parentFolderUid.sdkCompatibleIdentifier
+            $0.name = name
+            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
+        }
+
+        let nameResult: String = try await SDKRequestHandler.send(getAvailableNameRequest, logger: logger)
+        return nameResult
+    }
+
     static func unbox(callbackPointer: Int, releaseBox: () -> Void, weakDriveClient: WeakReference<ProtonDriveClient>) -> ProtonDriveClient? {
         guard let driveClient = weakDriveClient.value else {
             releaseBox()

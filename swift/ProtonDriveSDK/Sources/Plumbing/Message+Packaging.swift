@@ -42,6 +42,11 @@ extension Message {
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .driveClientCreateFromSession(request)
             }
+        
+        case let request as Proton_Drive_Sdk_DriveClientGetAvailableNameRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .driveClientGetAvailableName(request)
+            }
 
         case let request as Proton_Drive_Sdk_DriveClientCreateRequest:
             Proton_Drive_Sdk_Request.with {

@@ -88,6 +88,20 @@ internal static class InteropProtonDriveClient
         return new Int64Value { Value = Interop.AllocHandle(fileUploader) };
     }
 
+    public static async ValueTask<IMessage> HandleGetAvailableNameAsync(DriveClientGetAvailableNameRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        var availableName = await client.GetAvailableNameAsync(
+            NodeUid.Parse(request.ParentFolderUid),
+            request.Name,
+            cancellationToken).ConfigureAwait(false);
+
+        return new StringValue { Value = availableName };;
+    }
+
     public static async ValueTask<IMessage> HandleGetFileDownloaderAsync(DriveClientGetFileDownloaderRequest request)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
