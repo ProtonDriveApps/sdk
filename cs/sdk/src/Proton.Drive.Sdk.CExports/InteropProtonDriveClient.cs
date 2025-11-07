@@ -1,12 +1,10 @@
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Sdk;
 using Proton.Sdk.Caching;
 using Proton.Sdk.CExports;
-using Proton.Sdk.CExports.Logging;
+using Proton.Sdk.Telemetry;
 
 namespace Proton.Drive.Sdk.CExports;
 
@@ -30,20 +28,16 @@ internal static class InteropProtonDriveClient
             ? SqliteCacheRepository.OpenFile(request.SecretCachePath)
             : SqliteCacheRepository.OpenInMemory();
 
-        var loggerProvider = request.LoggerCase switch
+        ITelemetry telemetry = request.Telemetry.ToTelemetry(bindingsHandle) is { } interopTelemetry
+            ? new DriveInteropTelemetryDecorator(interopTelemetry)
+            : NullTelemetry.Instance;
+
+        var client = new ProtonDriveClient(httpClientFactory, accountClient, entityCacheRepository, secretCacheRepository, telemetry);
+
+        return new Int64Value
         {
-            DriveClientCreateRequest.LoggerOneofCase.LogAction => new InteropLoggerProvider(
-                bindingsHandle,
-                new InteropAction<nint, InteropArray<byte>>(request.LogAction)),
-            DriveClientCreateRequest.LoggerOneofCase.LoggerProviderHandle => Interop.GetFromHandle<ILoggerProvider>(request.LoggerProviderHandle),
-            DriveClientCreateRequest.LoggerOneofCase.None or _ => NullLoggerProvider.Instance,
+            Value = Interop.AllocHandle(client),
         };
-
-        var loggerFactory = new LoggerFactory([loggerProvider]);
-
-        var client = new ProtonDriveClient(httpClientFactory, accountClient, entityCacheRepository, secretCacheRepository, loggerFactory);
-
-        return new Int64Value { Value = Interop.AllocHandle(client) };
     }
 
     public static IMessage HandleCreate(DriveClientCreateFromSessionRequest request)

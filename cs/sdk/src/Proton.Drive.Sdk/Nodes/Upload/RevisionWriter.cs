@@ -7,6 +7,7 @@ using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Serialization;
+using Proton.Drive.Sdk.Telemetry;
 using Proton.Sdk.Addresses;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
@@ -61,148 +62,180 @@ internal sealed class RevisionWriter : IDisposable
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
-        long numberOfBytesUploaded = 0;
-
-        var signingEmailAddress = _membershipAddress.EmailAddress;
-
-        var uploadTasks = new Queue<Task<byte[]>>(_client.BlockUploader.MaxDegreeOfParallelism);
-        var blockIndex = 0;
-
-        ArraySegment<byte> manifestSignature;
-        var blockSizes = new List<int>(8);
-
-        using var sha1 = IncrementalHash.CreateHash(HashAlgorithmName.SHA1);
-
-        var hashingContentStream = new HashingReadStream(contentStream, sha1, leaveOpen: true);
-
-        await using (hashingContentStream.ConfigureAwait(false))
+        var uploadEvent = new UploadEvent
         {
-            // TODO: provide capacity
-            var manifestStream = ProtonDriveClient.MemoryStreamManager.GetStream();
+            ExpectedSize = contentStream.Length,
+            UploadedSize = 0,
+            VolumeType = VolumeType.OwnVolume, // FIXME: figure out how to get the actual volume type
+        };
 
-            await using (manifestStream.ConfigureAwait(false))
+        try
+        {
+            long numberOfBytesUploaded = 0;
+
+            var signingEmailAddress = _membershipAddress.EmailAddress;
+
+            var uploadTasks = new Queue<Task<byte[]>>(_client.BlockUploader.MaxDegreeOfParallelism);
+            var blockIndex = 0;
+
+            ArraySegment<byte> manifestSignature;
+            var blockSizes = new List<int>(8);
+
+            using var sha1 = IncrementalHash.CreateHash(HashAlgorithmName.SHA1);
+
+            var hashingContentStream = new HashingReadStream(contentStream, sha1, leaveOpen: true);
+
+            await using (hashingContentStream.ConfigureAwait(false))
             {
-                var blockVerifier = await _client.BlockVerifierFactory.CreateAsync(_fileUid, _revisionId, _fileKey, cancellationToken).ConfigureAwait(false);
+                // TODO: provide capacity
+                var manifestStream = ProtonDriveClient.MemoryStreamManager.GetStream();
 
-                using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                var linkedCancellationToken = cancellationTokenSource.Token;
-
-                try
+                await using (manifestStream.ConfigureAwait(false))
                 {
+                    var blockVerifier = await _client.BlockVerifierFactory.CreateAsync(_fileUid, _revisionId, _fileKey, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    var linkedCancellationToken = cancellationTokenSource.Token;
+
                     try
                     {
-                        foreach (var thumbnail in thumbnails)
+                        try
                         {
-                            await WaitForBlockUploaderAsync(uploadTasks, manifestStream, linkedCancellationToken).ConfigureAwait(false);
-
-                            var uploadTask = _client.BlockUploader.UploadThumbnailAsync(
-                                _fileUid,
-                                _revisionId,
-                                _contentKey,
-                                _signingKey,
-                                _membershipAddress.Id,
-                                thumbnail,
-                                onProgress: null,
-                                cancellationTokenSource.Token);
-
-                            uploadTasks.Enqueue(uploadTask);
-                        }
-
-                        if (contentStream.Length > 0)
-                        {
-                            do
+                            foreach (var thumbnail in thumbnails)
                             {
-                                var plainDataPrefixBuffer = ArrayPool<byte>.Shared.Rent(blockVerifier.DataPacketPrefixMaxLength);
-                                try
+                                await WaitForBlockUploaderAsync(uploadTasks, manifestStream, linkedCancellationToken).ConfigureAwait(false);
+
+                                var uploadTask = _client.BlockUploader.UploadThumbnailAsync(
+                                    _fileUid,
+                                    _revisionId,
+                                    _contentKey,
+                                    _signingKey,
+                                    _membershipAddress.Id,
+                                    thumbnail,
+                                    onProgress: null,
+                                    cancellationTokenSource.Token);
+
+                                uploadTasks.Enqueue(uploadTask);
+                            }
+
+                            if (contentStream.Length > 0)
+                            {
+                                do
                                 {
-                                    var plainDataStream = ProtonDriveClient.MemoryStreamManager.GetStream();
+                                    var plainDataPrefixBuffer = ArrayPool<byte>.Shared.Rent(blockVerifier.DataPacketPrefixMaxLength);
+                                    try
+                                    {
+                                        var plainDataStream = ProtonDriveClient.MemoryStreamManager.GetStream();
 
-                                    var bytesCopied = await hashingContentStream.PartiallyCopyToAsync(
-                                        plainDataStream,
-                                        _targetBlockSize,
-                                        plainDataPrefixBuffer,
-                                        linkedCancellationToken).ConfigureAwait(false);
+                                        var bytesCopied = await hashingContentStream.PartiallyCopyToAsync(
+                                            plainDataStream,
+                                            _targetBlockSize,
+                                            plainDataPrefixBuffer,
+                                            linkedCancellationToken).ConfigureAwait(false);
 
-                                    blockSizes.Add((int)plainDataStream.Length);
+                                        blockSizes.Add((int)plainDataStream.Length);
 
-                                    await WaitForBlockUploaderAsync(uploadTasks, manifestStream, linkedCancellationToken).ConfigureAwait(false);
+                                        await WaitForBlockUploaderAsync(uploadTasks, manifestStream, linkedCancellationToken).ConfigureAwait(false);
 
-                                    plainDataStream.Seek(0, SeekOrigin.Begin);
+                                        plainDataStream.Seek(0, SeekOrigin.Begin);
 
-                                    var onBlockProgress = onProgress is not null
-                                        ? progress =>
-                                        {
-                                            numberOfBytesUploaded += progress;
-                                            onProgress(numberOfBytesUploaded, contentStream.Length);
-                                        }
-                                    : default(Action<long>?);
+                                        var onBlockProgress = onProgress is not null
+                                            ? progress =>
+                                            {
+                                                numberOfBytesUploaded += progress;
 
-                                    var uploadTask = _client.BlockUploader.UploadContentAsync(
-                                        _fileUid,
-                                        _revisionId,
-                                        ++blockIndex,
-                                        _contentKey,
-                                        _signingKey,
-                                        _membershipAddress.Id,
-                                        _fileKey,
-                                        plainDataStream,
-                                        blockVerifier,
-                                        plainDataPrefixBuffer,
-                                        Math.Min(blockVerifier.DataPacketPrefixMaxLength, bytesCopied),
-                                        onBlockProgress,
-                                        _releaseBlocksAction,
-                                        linkedCancellationToken);
+                                                // TODO: move this to a decorator, wrap the progress action
+                                                uploadEvent.UploadedSize = numberOfBytesUploaded;
 
-                                    uploadTasks.Enqueue(uploadTask);
-                                }
-                                catch
-                                {
-                                    ArrayPool<byte>.Shared.Return(plainDataPrefixBuffer);
-                                    throw;
-                                }
-                            } while (contentStream.Position < contentStream.Length);
+                                                onProgress(numberOfBytesUploaded, contentStream.Length);
+                                            }
+                                        : default(Action<long>?);
+
+                                        var uploadTask = _client.BlockUploader.UploadContentAsync(
+                                            _fileUid,
+                                            _revisionId,
+                                            ++blockIndex,
+                                            _contentKey,
+                                            _signingKey,
+                                            _membershipAddress.Id,
+                                            _fileKey,
+                                            plainDataStream,
+                                            blockVerifier,
+                                            plainDataPrefixBuffer,
+                                            Math.Min(blockVerifier.DataPacketPrefixMaxLength, bytesCopied),
+                                            onBlockProgress,
+                                            _releaseBlocksAction,
+                                            linkedCancellationToken);
+
+                                        uploadTasks.Enqueue(uploadTask);
+                                    }
+                                    catch
+                                    {
+                                        ArrayPool<byte>.Shared.Return(plainDataPrefixBuffer);
+                                        throw;
+                                    }
+                                } while (contentStream.Position < contentStream.Length);
+                            }
                         }
-                    }
-                    finally
-                    {
-                        _releaseFileSemaphoreAction.Invoke();
-                        _fileReleased = true;
-                    }
+                        finally
+                        {
+                            _releaseFileSemaphoreAction.Invoke();
+                            _fileReleased = true;
+                        }
 
-                    while (uploadTasks.Count > 0)
-                    {
-                        await AddNextBlockToManifestAsync(uploadTasks, manifestStream).ConfigureAwait(false);
-                    }
-                }
-                catch
-                {
-                    await cancellationTokenSource.CancelAsync().ConfigureAwait(false);
-
-                    try
-                    {
-                        await Task.WhenAll(uploadTasks).ConfigureAwait(false);
+                        while (uploadTasks.Count > 0)
+                        {
+                            await AddNextBlockToManifestAsync(uploadTasks, manifestStream).ConfigureAwait(false);
+                        }
                     }
                     catch
                     {
-                        // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
+                        await cancellationTokenSource.CancelAsync().ConfigureAwait(false);
+
+                        try
+                        {
+                            await Task.WhenAll(uploadTasks).ConfigureAwait(false);
+                        }
+                        catch
+                        {
+                            // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
+                        }
+
+                        throw;
                     }
 
-                    throw;
+                    manifestStream.Seek(0, SeekOrigin.Begin);
+
+                    manifestSignature = await _signingKey.SignAsync(manifestStream, cancellationTokenSource.Token).ConfigureAwait(false);
                 }
-
-                manifestStream.Seek(0, SeekOrigin.Begin);
-
-                manifestSignature = await _signingKey.SignAsync(manifestStream, cancellationTokenSource.Token).ConfigureAwait(false);
             }
+
+            var request = GetRevisionUpdateRequest(
+                contentStream,
+                lastModificationTime,
+                blockSizes,
+                sha1.GetCurrentHash(),
+                manifestSignature,
+                signingEmailAddress);
+
+            _client.Logger.LogDebug("Sealing revision {RevisionId} of file {FileUid}", _revisionId, _fileUid);
+
+            await _client.Api.Files.UpdateRevisionAsync(_fileUid.VolumeId, _fileUid.LinkId, _revisionId, request, cancellationToken).ConfigureAwait(false);
+
+            _client.Logger.LogDebug("Revision {RevisionId} of file {FileUid} sealed", _revisionId, _fileUid);
         }
-
-        var request = GetRevisionUpdateRequest(contentStream, lastModificationTime, blockSizes, sha1.GetCurrentHash(), manifestSignature, signingEmailAddress);
-
-        _client.Logger.LogDebug("Sealing revision {RevisionId} of file {FileUid}", _revisionId, _fileUid);
-
-        await _client.Api.Files.UpdateRevisionAsync(_fileUid.VolumeId, _fileUid.LinkId, _revisionId, request, cancellationToken).ConfigureAwait(false);
-
-        _client.Logger.LogDebug("Revision {RevisionId} of file {FileUid} sealed", _revisionId, _fileUid);
+        catch (Exception ex)
+        {
+            uploadEvent.Error = TelemetryErrorResolver.GetUploadErrorFromException(ex);
+            uploadEvent.OriginalError = ex.GetBaseException().ToString();
+            throw;
+        }
+        finally
+        {
+            // TODO: put this in a decorator
+            _client.Telemetry.RecordMetric(uploadEvent);
+        }
     }
 
     public void Dispose()

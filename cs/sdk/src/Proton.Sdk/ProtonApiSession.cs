@@ -5,6 +5,7 @@ using Proton.Sdk.Api.Authentication;
 using Proton.Sdk.Api.Keys;
 using Proton.Sdk.Authentication;
 using Proton.Sdk.Caching;
+using Proton.Sdk.Telemetry;
 using Proton.Sdk.Users;
 
 namespace Proton.Sdk;
@@ -92,7 +93,7 @@ public sealed class ProtonApiSession
         CancellationToken cancellationToken)
     {
         var configuration = new ProtonClientConfiguration(appVersion, options);
-        var logger = configuration.LoggerFactory.CreateLogger<ProtonApiSession>();
+        var logger = configuration.Telemetry.GetLogger<ProtonApiSession>();
 
         var authApiClient = ApiClientFactory.Instance.CreateAuthenticationApiClient(configuration.GetHttpClient(), configuration.RefreshRedirectUri);
 
@@ -119,7 +120,7 @@ public sealed class ProtonApiSession
             authResponse.SessionId,
             authResponse.AccessToken,
             authResponse.RefreshToken,
-            configuration.LoggerFactory.CreateLogger<TokenCredential>());
+            configuration.Telemetry.GetLogger<TokenCredential>());
 
         var session = new ProtonApiSession(
             authResponse.SessionId,
@@ -190,14 +191,14 @@ public sealed class ProtonApiSession
 
         var configuration = new ProtonClientConfiguration(appVersion, options);
 
-        var logger = configuration.LoggerFactory.CreateLogger<ProtonApiSession>();
+        var logger = configuration.Telemetry.GetLogger<ProtonApiSession>();
 
         var tokenCredential = new TokenCredential(
             ApiClientFactory.Instance.CreateAuthenticationApiClient(configuration.GetHttpClient(), configuration.RefreshRedirectUri),
             sessionId,
             accessToken,
             refreshToken,
-            configuration.LoggerFactory.CreateLogger<TokenCredential>());
+            configuration.Telemetry.GetLogger<TokenCredential>());
 
         var session = new ProtonApiSession(
             sessionId,
@@ -228,7 +229,7 @@ public sealed class ProtonApiSession
             sessionId,
             accessToken,
             refreshToken,
-            expiredSession.ClientConfiguration.LoggerFactory.CreateLogger<TokenCredential>());
+            expiredSession.ClientConfiguration.Telemetry.GetLogger<TokenCredential>());
 
         return new ProtonApiSession(
             sessionId,
