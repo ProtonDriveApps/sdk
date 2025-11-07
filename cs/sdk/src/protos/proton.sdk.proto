@@ -120,6 +120,11 @@ message LogEvent {
     string category_name = 3;
 }
 
+message MetricEvent {
+    string name = 1;
+    google.protobuf.Any payload = 2;
+}
+
 enum ProtonClientTlsPolicy {
     PROTON_CLIENT_TLS_POLICY_STRICT = 0;
     PROTON_CLIENT_TLS_POLICY_NO_CERTIFICATE_PINNING = 1;
@@ -147,12 +152,20 @@ enum UserType {
     USER_TYPE_EXTERNAL = 3;
 }
 
+message Telemetry {
+    oneof logger { // Optional
+        int64 log_action = 1; // See array_action in C header file for signature
+        int64 logger_provider_handle = 2;
+    }
+    int64 record_metric_action = 3; // Optional, see array_action in C header file for signature
+}
+
 message ProtonClientOptions {
     string base_url = 1; // Optional
     string user_agent = 2; // Optional
     string bindings_language = 3; // Optional
     ProtonClientTlsPolicy tls_policy = 4; // Optional
-    int64 logger_provider_handle = 5; // Optional
+    Telemetry telemetry = 5; // Optional
     string entity_cache_path = 6; // Optional
 }
 
@@ -216,4 +229,9 @@ message HttpResponse {
     int32 status_code = 1;
     repeated HttpHeader headers = 2;
     bytes content = 3; // Optional
+}
+ 
+message ApiRetrySucceededEventPayload {
+    string url = 1;
+    int32 failed_attempts = 2;
 }

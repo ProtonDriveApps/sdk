@@ -11,6 +11,7 @@ public actor ProtonDriveClient: Sendable {
     private var downloadManager: DownloadManager!
 
     private let logger: ProtonDriveSDK.Logger
+    private let recordMetricEventCallback: RecordMetricEventCallback
 
     let httpClient: HttpClientProtocol
     let accountClient: AccountClientProtocol
@@ -21,9 +22,11 @@ public actor ProtonDriveClient: Sendable {
         secretCachePath: String? = nil,
         httpClient: HttpClientProtocol,
         accountClient: AccountClientProtocol,
-        logCallback: @escaping LogCallback
+        logCallback: @escaping LogCallback,
+        recordMetricEventCallback: @escaping RecordMetricEventCallback
     ) async throws {
         self.logger = try await Logger(logCallback: logCallback)
+        self.recordMetricEventCallback = recordMetricEventCallback
 
         self.httpClient = httpClient
         self.accountClient = accountClient
@@ -33,7 +36,10 @@ public actor ProtonDriveClient: Sendable {
 
             $0.httpClientRequestAction = Int64(ObjectHandle(callback: cCompatibleHttpRequest))
             $0.accountClientRequestAction = Int64(ObjectHandle(callback: cCompatibleAccountClientRequest))
-            $0.logAction = Int64(ObjectHandle(callback: cCompatibleLogCallback))
+            $0.telemetry = Proton_Sdk_Telemetry.with {
+                $0.logAction = Int64(ObjectHandle(callback: cCompatibleLogCallback))
+                $0.recordMetricAction = Int64(ObjectHandle(callback: cCompatibleTelemetryRecordMetricCallback))
+            }
 
             if let entityCachePath {
                 $0.entityCachePath = entityCachePath
@@ -58,6 +64,10 @@ public actor ProtonDriveClient: Sendable {
 
     nonisolated func log(_ logEvent: LogEvent) {
         logger.logCallback(logEvent)
+    }
+    
+    nonisolated func record(_ metricEvent: MetricEvent) {
+        recordMetricEventCallback(metricEvent)
     }
 
     public func downloadFile(

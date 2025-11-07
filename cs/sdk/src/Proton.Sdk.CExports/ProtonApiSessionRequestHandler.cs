@@ -1,26 +1,18 @@
 using System.Text;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
-using Microsoft.Extensions.Logging;
 using Proton.Sdk.Authentication;
 using Proton.Sdk.Caching;
-using Proton.Sdk.CExports.Logging;
 
 namespace Proton.Sdk.CExports;
 
 internal static class ProtonApiSessionRequestHandler
 {
-    public static async ValueTask<IMessage?> HandleBeginAsync(SessionBeginRequest request)
+    public static async ValueTask<IMessage?> HandleBeginAsync(SessionBeginRequest request, nint bindingsHandle)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
-        ILoggerFactory? loggerFactory = null;
-
-        if (request.Options.HasLoggerProviderHandle)
-        {
-            var loggerProvider = Interop.GetFromHandle<InteropLoggerProvider>(request.Options.LoggerProviderHandle);
-            loggerFactory = new LoggerFactory([loggerProvider]);
-        }
+        var telemetry = request.Options.Telemetry.ToTelemetry(bindingsHandle);
 
         var secretCacheRepository = request.HasSecretCachePath
             ? SqliteCacheRepository.OpenFile(request.SecretCachePath)
@@ -35,7 +27,7 @@ internal static class ProtonApiSessionRequestHandler
             BaseUrl = new Uri(request.Options.BaseUrl),
             UserAgent = request.Options.UserAgent,
             BindingsLanguage = request.Options.BindingsLanguage,
-            LoggerFactory = loggerFactory,
+            Telemetry = telemetry,
             TlsPolicy = (Proton.Sdk.Http.ProtonClientTlsPolicy?)request.Options.TlsPolicy,
             EntityCacheRepository = entityCacheRepository,
             SecretCacheRepository = secretCacheRepository,
@@ -51,15 +43,9 @@ internal static class ProtonApiSessionRequestHandler
         return new Int64Value { Value = Interop.AllocHandle(session) };
     }
 
-    public static IMessage HandleResume(SessionResumeRequest request)
+    public static IMessage HandleResume(SessionResumeRequest request, nint bindingsHandle)
     {
-        ILoggerFactory? loggerFactory = null;
-
-        if (request.Options.HasLoggerProviderHandle)
-        {
-            var loggerProvider = Interop.GetFromHandle<InteropLoggerProvider>(request.Options.LoggerProviderHandle);
-            loggerFactory = new LoggerFactory([loggerProvider]);
-        }
+        var telemetry = request.Options.Telemetry.ToTelemetry(bindingsHandle);
 
         var secretCacheRepository = SqliteCacheRepository.OpenFile(request.SecretCachePath);
 
@@ -72,7 +58,7 @@ internal static class ProtonApiSessionRequestHandler
             BaseUrl = new Uri(request.Options.BaseUrl),
             UserAgent = request.Options.UserAgent,
             BindingsLanguage = request.Options.BindingsLanguage,
-            LoggerFactory = loggerFactory,
+            Telemetry = telemetry,
             TlsPolicy = (Proton.Sdk.Http.ProtonClientTlsPolicy?)request.Options.TlsPolicy,
             EntityCacheRepository = entityCacheRepository,
             SecretCacheRepository = secretCacheRepository,
@@ -183,17 +169,13 @@ internal static class ProtonApiSessionRequestHandler
             _session.TokenCredential.TokensRefreshed -= Handle;
         }
 
-        private void Handle(string accessToken, string refreshToken)
+        private unsafe void Handle(string accessToken, string refreshToken)
         {
-            var tokensMessage = InteropArray<byte>.AllocFromMemory(new SessionTokens { AccessToken = accessToken, RefreshToken = refreshToken }.ToByteArray());
+            var tokensMessageBytes = new SessionTokens { AccessToken = accessToken, RefreshToken = refreshToken }.ToByteArray();
 
-            try
+            fixed (byte* tokensMessagePointer = tokensMessageBytes)
             {
-                _tokensRefreshedAction.Invoke(_bindingsHandle, tokensMessage);
-            }
-            finally
-            {
-                tokensMessage.Free();
+                _tokensRefreshedAction.Invoke(_bindingsHandle, new InteropArray<byte>(tokensMessagePointer, tokensMessageBytes.Length));
             }
         }
     }

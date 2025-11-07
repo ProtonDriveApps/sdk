@@ -4,6 +4,7 @@ package proton.drive.sdk;
 option features.utf8_validation = NONE;
 option csharp_namespace = "Proton.Drive.Sdk.CExports";
 
+import "proton.sdk.proto";
 import "google/protobuf/timestamp.proto";
 
 message Request {
@@ -133,10 +134,7 @@ message DriveClientCreateRequest {
     string entity_cache_path = 5; // Optional
     string secret_cache_path = 6; // Optional
 
-    oneof logger { // Optional
-        int64 log_action = 7; // See array_action in C header file for signature
-        int64 logger_provider_handle = 8;
-    }
+    proton.sdk.Telemetry telemetry = 7; // Optional
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of ProtonDriveClient.
@@ -283,4 +281,77 @@ message StreamReadRequest {
 message StreamWriteRequest {
     int64 data_pointer = 1;
     int32 data_length = 2;
+}
+
+enum VolumeType {
+    VOLUME_TYPE_OWN_VOLUME = 0;
+    VOLUME_TYPE_SHARED = 1;
+    VOLUME_TYPE_SHARED_PUBLIC = 2;
+    VOLUME_TYPE_PHOTO = 3;
+}
+
+enum DownloadError {
+    DOWNLOAD_ERROR_SERVER_ERROR = 0;
+    DOWNLOAD_ERROR_NETWORK_ERROR = 1;
+    DOWNLOAD_ERROR_DECRYPTION_ERROR = 2;
+    DOWNLOAD_ERROR_INTEGRITY_ERROR = 3;
+    DOWNLOAD_ERROR_RATE_LIMITED = 4;
+    DOWNLOAD_ERROR_HTTP_CLIENT_SIDE_ERROR = 5;
+    DOWNLOAD_ERROR_UNKNOWN = 6;
+}
+
+enum UploadError {
+    UPLOAD_ERROR_SERVER_ERROR = 0;
+    UPLOAD_ERROR_NETWORK_ERROR = 1;
+    UPLOAD_ERROR_INTEGRITY_ERROR = 2;
+    UPLOAD_ERROR_RATE_LIMITED = 3;
+    UPLOAD_ERROR_HTTP_CLIENT_SIDE_ERROR = 4;
+    UPLOAD_ERROR_UNKNOWN = 5;
+}
+
+enum EncryptedField {
+    ENCRYPTED_FIELD_SHARE_KEY = 0;
+    ENCRYPTED_FIELD_NODE_KEY = 1;
+    ENCRYPTED_FIELD_NODE_NAME = 2;
+    ENCRYPTED_FIELD_NODE_HASH_KEY = 3;
+    ENCRYPTED_FIELD_NODE_EXTENDED_ATTRIBUTES = 4;
+    ENCRYPTED_FIELD_NODE_CONTENT_KEY = 5;
+    ENCRYPTED_FIELD_CONTENT = 6;
+}
+
+message UploadEventPayload {
+    VolumeType volume_type = 1;
+    int64 expected_size = 2;
+    int64 uploaded_size = 3;
+    UploadError error = 4; // Optional
+    string original_error = 5; // Optional
+} 
+
+message DownloadEventPayload {
+    VolumeType volume_type = 1;
+    int64 expected_size = 2;
+    int64 uploaded_size = 3;
+    DownloadError error = 4; // Optional
+    string original_error = 5; // Optional
+}
+ 
+message DecryptionErrorEventPayload {
+    VolumeType volume_type = 1;
+    EncryptedField field = 2;
+    bool from_before_2024 = 3;
+    string error = 4; // Optional
+    string uid = 5;
+}
+
+message VerificationErrorEventPayload {
+    VolumeType volume_type = 1;
+    EncryptedField field = 2;
+    bool from_before_2024 = 3;
+    bool address_matching_default_share = 4;
+    string error = 5; // Optional
+    string uid = 6;
+}
+ 
+message BlockVerificationErrorEventPayload {
+    bool retry_helped = 1;
 }

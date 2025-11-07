@@ -8,7 +8,7 @@ public sealed class TokenCredential
 {
     private readonly IAuthenticationApiClient _client;
     private readonly SessionId _sessionId;
-    private readonly ILogger<TokenCredential> _logger;
+    private readonly ILogger _logger;
 
     private Lazy<Task<(string AccessToken, string RefreshToken)>> _tokensTask;
 

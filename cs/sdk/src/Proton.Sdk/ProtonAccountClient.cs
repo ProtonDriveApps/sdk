@@ -3,6 +3,7 @@ using Proton.Cryptography.Pgp;
 using Proton.Sdk.Addresses;
 using Proton.Sdk.Api;
 using Proton.Sdk.Caching;
+using Proton.Sdk.Telemetry;
 
 namespace Proton.Sdk;
 
@@ -12,7 +13,7 @@ public sealed class ProtonAccountClient
         : this(
             new AccountApiClients(session.GetHttpClient()),
             new AccountClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository, session.SecretCache),
-            session.ClientConfiguration.LoggerFactory.CreateLogger<ProtonAccountClient>())
+            session.ClientConfiguration.Telemetry.GetLogger<ProtonAccountClient>())
     {
     }
 
@@ -27,7 +28,7 @@ public sealed class ProtonAccountClient
 
     internal IAccountClientCache Cache { get; }
 
-    internal ILogger<ProtonAccountClient> Logger { get; }
+    internal ILogger Logger { get; }
 
     public ValueTask<Address> GetAddressAsync(AddressId addressId, CancellationToken cancellationToken)
     {

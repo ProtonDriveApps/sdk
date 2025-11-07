@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
-using Proton.Sdk.Caching;
+﻿using Proton.Sdk.Caching;
 using Proton.Sdk.Http;
+using Proton.Sdk.Telemetry;
 
 namespace Proton.Sdk;
 
@@ -12,7 +12,7 @@ public record ProtonClientOptions
     public Func<DelegatingHandler>? CustomHttpMessageHandlerFactory { get; set; }
     public IHttpClientFactory? HttpClientFactory { get; set; }
     public ICacheRepository? EntityCacheRepository { get; set; }
-    public ILoggerFactory? LoggerFactory { get; set; }
+    public ITelemetry? Telemetry { get; set; }
     internal ICacheRepository? SecretCacheRepository { get; set; }
     internal Uri? RefreshRedirectUri { get; set; }
     internal string? BindingsLanguage { get; set; }

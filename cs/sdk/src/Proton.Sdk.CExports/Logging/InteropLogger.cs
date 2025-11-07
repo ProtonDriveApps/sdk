@@ -18,20 +18,16 @@ internal sealed class InteropLogger(nint bindingsHandle, InteropAction<nint, Int
         return new DummyDisposable();
     }
 
-    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+    public unsafe void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
         var message = formatter.Invoke(state, exception);
         var logEvent = new LogEvent { Level = (int)logLevel, Message = message, CategoryName = _categoryName };
 
-        var messageBytes = InteropArray<byte>.AllocFromMemory(logEvent.ToByteArray());
+        var messageBytes = logEvent.ToByteArray();
 
-        try
+        fixed (byte* messagePointer = messageBytes)
         {
-            _logAction.Invoke(_bindingsHandle, messageBytes);
-        }
-        finally
-        {
-            messageBytes.Free();
+            _logAction.Invoke(_bindingsHandle, new InteropArray<byte>(messagePointer, messageBytes.Length));
         }
     }
 
