@@ -26,10 +26,10 @@ internal static class InteropMessageHandler
                     => InteropCancellationTokenSource.HandleFree(request.CancellationTokenSourceFree),
 
                 Request.PayloadOneofCase.SessionBegin
-                    => await ProtonApiSessionRequestHandler.HandleBeginAsync(request.SessionBegin).ConfigureAwait(false),
+                    => await ProtonApiSessionRequestHandler.HandleBeginAsync(request.SessionBegin, bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.SessionResume
-                    => ProtonApiSessionRequestHandler.HandleResume(request.SessionResume),
+                    => ProtonApiSessionRequestHandler.HandleResume(request.SessionResume, bindingsHandle),
 
                 Request.PayloadOneofCase.SessionRenew
                     => ProtonApiSessionRequestHandler.HandleRenew(request.SessionRenew),

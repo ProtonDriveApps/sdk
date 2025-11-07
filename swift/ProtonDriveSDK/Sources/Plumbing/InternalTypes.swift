@@ -129,7 +129,9 @@ extension Proton_Sdk_ProtonClientOptions {
             }
 
             if let loggerProviderHandle = clientOptions.loggerProviderHandle {
-                $0.loggerProviderHandle = Int64(loggerProviderHandle)
+                $0.telemetry = Proton_Sdk_Telemetry.with {
+                    $0.loggerProviderHandle = Int64(loggerProviderHandle)
+                }
             }
 
             if let entityCachePath = clientOptions.entityCachePath {

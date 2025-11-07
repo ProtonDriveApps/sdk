@@ -1,7 +1,6 @@
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Proton.Sdk.Caching;
 using Proton.Sdk.Http;
+using Proton.Sdk.Telemetry;
 
 namespace Proton.Sdk;
 
@@ -19,7 +18,7 @@ internal sealed class ProtonClientConfiguration(string appVersion, ProtonClientO
     public Func<DelegatingHandler>? CustomHttpMessageHandlerFactory { get; } = options?.CustomHttpMessageHandlerFactory;
     public ICacheRepository SecretCacheRepository { get; } = options?.SecretCacheRepository ?? SqliteCacheRepository.OpenInMemory();
     public ICacheRepository EntityCacheRepository { get; } = options?.EntityCacheRepository ?? SqliteCacheRepository.OpenInMemory();
-    public ILoggerFactory LoggerFactory { get; } = options?.LoggerFactory ?? NullLoggerFactory.Instance;
+    public ITelemetry Telemetry { get; } = options?.Telemetry ?? NullTelemetry.Instance;
     public Uri RefreshRedirectUri { get; } = options?.RefreshRedirectUri ?? ProtonApiDefaults.RefreshRedirectUri;
     public string? BindingsLanguage { get; } = options?.BindingsLanguage;
 }
