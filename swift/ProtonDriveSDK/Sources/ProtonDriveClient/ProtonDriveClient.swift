@@ -22,6 +22,7 @@ public actor ProtonDriveClient: Sendable {
         secretCachePath: String? = nil,
         httpClient: HttpClientProtocol,
         accountClient: AccountClientProtocol,
+        clientUID: String?,
         logCallback: @escaping LogCallback,
         recordMetricEventCallback: @escaping RecordMetricEventCallback
     ) async throws {
@@ -46,6 +47,9 @@ public actor ProtonDriveClient: Sendable {
             }
             if let secretCachePath {
                 $0.secretCachePath = secretCachePath
+            }
+            if let clientUID {
+                $0.uid = clientUID
             }
         }
         
