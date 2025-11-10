@@ -142,8 +142,8 @@ public enum ProtonDriveSDKDataIntegrityError: LocalizedError {
     case nodeMetadata(message: String, part: NodeMetadataPart?, context: String?)
     case fileContents(message: String, context: String?)
     case uploadKeyMismatch(message: String, context: String?)
-    
-    public enum NodeMetadataPart: Int {
+
+    public enum NodeMetadataPart: Int, Sendable {
         case key = 0
         case passphrase = 1
         case name = 2
