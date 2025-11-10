@@ -135,6 +135,10 @@ message DriveClientCreateRequest {
     string secret_cache_path = 6; // Optional
 
     proton.sdk.Telemetry telemetry = 7; // Optional
+
+    // Client UID, optional 
+    // If a null value is provided, the SDK automatically generates a UUID during initialization
+    string uid = 8;
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of ProtonDriveClient.

@@ -32,7 +32,7 @@ internal static class InteropProtonDriveClient
             ? new DriveInteropTelemetryDecorator(interopTelemetry)
             : NullTelemetry.Instance;
 
-        var client = new ProtonDriveClient(httpClientFactory, accountClient, entityCacheRepository, secretCacheRepository, telemetry);
+        var client = new ProtonDriveClient(httpClientFactory, accountClient, entityCacheRepository, secretCacheRepository, telemetry, request.Uid);
 
         return new Int64Value
         {
