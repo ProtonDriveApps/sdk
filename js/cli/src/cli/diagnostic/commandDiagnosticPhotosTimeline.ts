@@ -3,10 +3,9 @@ import { ParseArgsConfig } from 'util';
 import { Command, ActionArgs } from '../interface';
 import { printObject } from '../formatters';
 
-export class CommandDiagnosticTree implements Command {
+export class CommandDiagnosticPhotosTimeline implements Command {
     group = 'diagnostic';
-    name = 'tree';
-    args = ['path'];
+    name = 'photos-timeline';
     options: ParseArgsConfig['options'] = {
         content: {
             type: 'boolean',
@@ -32,13 +31,8 @@ export class CommandDiagnosticTree implements Command {
 
     async action({
         sdkDiagnostic,
-        paths,
-        args: [pathString],
         options: { json, content, 'content-peak': contentPeak, thumbnails, 'local-structure': localStructure },
     }: ActionArgs) {
-        const nodePath = paths.getPath(pathString);
-        const node = await nodePath.getNode();
-
         const expectedStructure = localStructure ? JSON.parse(await Bun.file(localStructure).text()) : undefined;
 
         const options = {
@@ -47,7 +41,7 @@ export class CommandDiagnosticTree implements Command {
             expectedStructure,
         };
 
-        for await (const result of sdkDiagnostic.verifyNodeTree(node, options, (progress) => {
+        for await (const result of sdkDiagnostic.verifyPhotosTimeline(options, (progress) => {
             printObject(progress, json);
         })) {
             printObject(result, json);

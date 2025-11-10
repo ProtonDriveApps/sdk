@@ -11,10 +11,14 @@ export interface Diagnostic {
         options?: DiagnosticOptions,
         onProgress?: DiagnosticProgressCallback,
     ): AsyncGenerator<DiagnosticResult>;
+    verifyPhotosTimeline(
+        options?: DiagnosticOptions,
+        onProgress?: DiagnosticProgressCallback,
+    ): AsyncGenerator<DiagnosticResult>;
 }
 
 export type DiagnosticOptions = {
-    verifyContent?: boolean;
+    verifyContent?: boolean | 'peakOnly';
     verifyThumbnails?: boolean;
     expectedStructure?: ExpectedTreeNode;
 };
@@ -22,10 +26,17 @@ export type DiagnosticOptions = {
 // Tree structure of the expected node tree.
 export type ExpectedTreeNode = {
     name: string;
+    expectedMediaType?: string;
     expectedSha1?: string;
     expectedSizeInBytes?: number;
+    // If expectedAuthors is provided, it will be used to verify authors.
+    // If it's a string, it will be used to verify all authors match the same email.
+    // If it's an object, it will be used to verify specific authors by type.
+    expectedAuthors?: ExpectedAuthor | { key?: ExpectedAuthor; name?: ExpectedAuthor; content?: ExpectedAuthor };
     children?: ExpectedTreeNode[];
 };
+
+export type ExpectedAuthor = string | 'anonymous';
 
 export type DiagnosticProgressCallback = (progress: {
     allNodesLoaded: boolean;
@@ -194,11 +205,13 @@ export type MetricResult = {
 export type NodeDetails = {
     safeNodeDetails: {
         nodeUid: string;
-        revisionUid?: string;
+        revisionUid: string | undefined;
         nodeType: NodeType;
+        mediaType: string | undefined;
         nodeCreationTime: Date;
         keyAuthor: Author;
         nameAuthor: Author;
+        contentAuthor: Author | undefined;
         errors: {
             field: string;
             error: unknown;
