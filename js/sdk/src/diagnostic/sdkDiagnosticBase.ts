@@ -1,46 +1,53 @@
-import { Author, FileDownloader, MaybeNode, NodeType, Revision, ThumbnailType } from '../interface';
-import { ProtonDriveClient } from '../protonDriveClient';
+import { Author, FileDownloader, MaybeNode, NodeOrUid, NodeType, ThumbnailType, ThumbnailResult } from '../interface';
 import {
     DiagnosticOptions,
     DiagnosticResult,
-    NodeDetails,
     ExpectedTreeNode,
     DiagnosticProgressCallback,
 } from './interface';
 import { IntegrityVerificationStream } from './integrityVerificationStream';
-import { zipGenerators } from './zipGenerators';
+import {
+    getNodeType,
+    getNodeDetails,
+    getActiveRevision,
+    getMediaType,
+    getExpectedTreeNodeDetails,
+    getNodeName,
+} from './nodeUtils';
 
 const PROGRESS_REPORT_INTERVAL = 500;
 
+interface SDKClient {
+    getFileDownloader(nodeOrUid: NodeOrUid): Promise<FileDownloader>;
+    iterateThumbnails(nodeUids: string[], thumbnailType: ThumbnailType): AsyncGenerator<ThumbnailResult>;
+}
+
 /**
- * Diagnostic tool that uses SDK to traverse the node tree and verify
- * the integrity of the node tree.
- *
- * It produces only events that can be read by direct SDK invocation.
- * To get the full diagnostic, use {@link FullSDKDiagnostic}.
+ * Base class for all SDK diagnostic tools that verifies the integrity of
+ * the individual nodes.
  */
-export class SDKDiagnostic {
+export class SDKDiagnosticBase {
     private options: Pick<DiagnosticOptions, 'verifyContent' | 'verifyThumbnails'>;
 
     private onProgress?: DiagnosticProgressCallback;
     private progressReportInterval: NodeJS.Timeout | undefined;
 
-    private nodesQueue: { node: MaybeNode; expected?: ExpectedTreeNode }[] = [];
-    private allNodesLoaded: boolean = false;
-    private loadedNodes: number = 0;
-    private checkedNodes: number = 0;
+    protected nodesQueue: { node: MaybeNode; expected?: ExpectedTreeNode }[] = [];
+    protected allNodesLoaded: boolean = false;
+    protected loadedNodes: number = 0;
+    protected checkedNodes: number = 0;
 
     constructor(
-        private protonDriveClient: ProtonDriveClient,
+        private sdkClient: SDKClient,
         options?: Pick<DiagnosticOptions, 'verifyContent' | 'verifyThumbnails'>,
         onProgress?: DiagnosticProgressCallback,
     ) {
-        this.protonDriveClient = protonDriveClient;
+        this.sdkClient = sdkClient;
         this.options = options || { verifyContent: false, verifyThumbnails: false };
         this.onProgress = onProgress;
     }
 
-    private startProgress(): void {
+    protected startProgress(): void {
         this.allNodesLoaded = false;
         this.loadedNodes = 0;
         this.checkedNodes = 0;
@@ -51,7 +58,7 @@ export class SDKDiagnostic {
         }, PROGRESS_REPORT_INTERVAL);
     }
 
-    private finishProgress(): void {
+    protected finishProgress(): void {
         if (this.progressReportInterval) {
             clearInterval(this.progressReportInterval);
             this.progressReportInterval = undefined;
@@ -68,81 +75,7 @@ export class SDKDiagnostic {
         });
     }
 
-    async *verifyMyFiles(expectedStructure?: ExpectedTreeNode): AsyncGenerator<DiagnosticResult> {
-        let myFilesRootFolder: MaybeNode;
-
-        try {
-            myFilesRootFolder = await this.protonDriveClient.getMyFilesRootFolder();
-        } catch (error: unknown) {
-            yield {
-                type: 'fatal_error',
-                message: `Error getting my files root folder`,
-                error,
-            };
-            return;
-        }
-
-        yield* this.verifyNodeTree(myFilesRootFolder, expectedStructure);
-    }
-
-    async *verifyNodeTree(node: MaybeNode, expectedStructure?: ExpectedTreeNode): AsyncGenerator<DiagnosticResult> {
-        this.startProgress();
-        this.nodesQueue.push({ node, expected: expectedStructure });
-        this.loadedNodes++;
-        yield* zipGenerators(this.loadNodeTree(node, expectedStructure), this.verifyNodesQueue());
-        this.finishProgress();
-    }
-
-    private async *loadNodeTree(
-        parentNode: MaybeNode,
-        expectedStructure?: ExpectedTreeNode,
-    ): AsyncGenerator<DiagnosticResult> {
-        const isFolder = getNodeType(parentNode) === NodeType.Folder;
-        if (isFolder) {
-            yield* this.loadNodeTreeRecursively(parentNode, expectedStructure);
-        }
-        this.allNodesLoaded = true;
-    }
-
-    private async *loadNodeTreeRecursively(
-        parentNode: MaybeNode,
-        expectedStructure?: ExpectedTreeNode,
-    ): AsyncGenerator<DiagnosticResult> {
-        const parentNodeUid = parentNode.ok ? parentNode.value.uid : parentNode.error.uid;
-        const children: MaybeNode[] = [];
-
-        try {
-            for await (const child of this.protonDriveClient.iterateFolderChildren(parentNode)) {
-                children.push(child);
-                this.nodesQueue.push({
-                    node: child,
-                    expected: getTreeNodeChildByNodeName(expectedStructure, getNodeName(child)),
-                });
-                this.loadedNodes++;
-            }
-        } catch (error: unknown) {
-            yield {
-                type: 'sdk_error',
-                call: `iterateFolderChildren(${parentNodeUid})`,
-                error,
-            };
-        }
-
-        if (expectedStructure) {
-            yield* this.verifyExpectedNodeChildren(parentNodeUid, children, expectedStructure);
-        }
-
-        for (const child of children) {
-            if (getNodeType(child) === NodeType.Folder) {
-                yield* this.loadNodeTreeRecursively(
-                    child,
-                    getTreeNodeChildByNodeName(expectedStructure, getNodeName(child)),
-                );
-            }
-        }
-    }
-
-    private async *verifyExpectedNodeChildren(
+    protected async *verifyExpectedNodeChildren(
         parentNodeUid: string,
         children: MaybeNode[],
         expectedStructure?: ExpectedTreeNode,
@@ -177,7 +110,7 @@ export class SDKDiagnostic {
         }
     }
 
-    private async *verifyNodesQueue(): AsyncGenerator<DiagnosticResult> {
+    protected async *verifyNodesQueue(): AsyncGenerator<DiagnosticResult> {
         while (this.nodesQueue.length > 0 || !this.allNodesLoaded) {
             const result = this.nodesQueue.shift();
             if (result) {
@@ -190,10 +123,7 @@ export class SDKDiagnostic {
         }
     }
 
-    private async *verifyNode(
-        node: MaybeNode,
-        expectedStructure?: ExpectedTreeNode,
-    ): AsyncGenerator<DiagnosticResult> {
+    private async *verifyNode(node: MaybeNode, expectedStructure?: ExpectedTreeNode): AsyncGenerator<DiagnosticResult> {
         if (!node.ok) {
             yield {
                 type: 'degraded_node',
@@ -201,25 +131,48 @@ export class SDKDiagnostic {
             };
         }
 
-        yield* this.verifyAuthor(node.ok ? node.value.keyAuthor : node.error.keyAuthor, 'key', node);
-        yield* this.verifyAuthor(node.ok ? node.value.nameAuthor : node.error.nameAuthor, 'name', node);
+        yield* this.verifyAuthor(node.ok ? node.value.keyAuthor : node.error.keyAuthor, 'key', node, expectedStructure);
+        yield* this.verifyAuthor(
+            node.ok ? node.value.nameAuthor : node.error.nameAuthor,
+            'name',
+            node,
+            expectedStructure,
+        );
 
         const activeRevision = getActiveRevision(node);
         if (activeRevision) {
-            yield* this.verifyAuthor(activeRevision.contentAuthor, 'content', node);
+            yield* this.verifyAuthor(activeRevision.contentAuthor, 'content', node, expectedStructure);
         }
 
         yield* this.verifyFileExtendedAttributes(node, expectedStructure);
 
-        if (this.options.verifyContent) {
+        if (this.options.verifyContent === 'peakOnly') {
+            yield* this.verifyContentPeak(node);
+        } else if (this.options.verifyContent) {
             yield* this.verifyContent(node);
         }
         if (this.options.verifyThumbnails) {
             yield* this.verifyThumbnails(node);
         }
+
+        if (expectedStructure?.expectedMediaType) {
+            const mediaType = getMediaType(node);
+            if (mediaType !== expectedStructure.expectedMediaType) {
+                yield {
+                    type: 'expected_structure_integrity_error',
+                    expectedNode: getExpectedTreeNodeDetails(expectedStructure),
+                    ...getNodeDetails(node),
+                };
+            }
+        }
     }
 
-    private async *verifyAuthor(author: Author, authorType: string, node: MaybeNode): AsyncGenerator<DiagnosticResult> {
+    private async *verifyAuthor(
+        author: Author,
+        authorType: 'key' | 'name' | 'content',
+        node: MaybeNode,
+        expectedStructure?: ExpectedTreeNode,
+    ): AsyncGenerator<DiagnosticResult> {
         if (!author.ok) {
             yield {
                 type: 'unverified_author',
@@ -228,6 +181,26 @@ export class SDKDiagnostic {
                 error: author.error.error,
                 ...getNodeDetails(node),
             };
+        }
+
+        if (expectedStructure?.expectedAuthors) {
+            let expectedEmail: string | null | undefined =
+                typeof expectedStructure.expectedAuthors === 'string'
+                    ? expectedStructure.expectedAuthors
+                    : expectedStructure.expectedAuthors[authorType];
+
+            if (expectedEmail === 'anonymous') {
+                expectedEmail = null;
+            }
+
+            const email = author.ok ? author.value : author.error.claimedAuthor;
+            if (expectedEmail !== undefined && email !== expectedEmail) {
+                yield {
+                    type: 'expected_structure_integrity_error',
+                    expectedNode: getExpectedTreeNodeDetails(expectedStructure),
+                    ...getNodeDetails(node),
+                };
+            }
         }
     }
 
@@ -278,6 +251,42 @@ export class SDKDiagnostic {
         }
     }
 
+    private async *verifyContentPeak(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
+        if (getNodeType(node) !== NodeType.File) {
+            return;
+        }
+
+        let downloader: FileDownloader;
+        try {
+            downloader = await this.sdkClient.getFileDownloader(node);
+        } catch (error: unknown) {
+            yield {
+                type: 'sdk_error',
+                call: `getFileDownloader(${node.ok ? node.value.uid : node.error.uid})`,
+                error,
+            };
+            return;
+        }
+
+        try {
+            const stream = downloader.getSeekableStream();
+            const peak = await stream.read(1024);
+            if (peak.value.length === 0) {
+                yield {
+                    type: 'content_download_error',
+                    error: new Error('No data read'),
+                    ...getNodeDetails(node),
+                };
+            }
+        } catch (error: unknown) {
+            yield {
+                type: 'content_download_error',
+                error,
+                ...getNodeDetails(node),
+            };
+        }
+    }
+
     private async *verifyContent(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
         if (getNodeType(node) !== NodeType.File) {
             return;
@@ -293,11 +302,11 @@ export class SDKDiagnostic {
 
         let downloader: FileDownloader;
         try {
-            downloader = await this.protonDriveClient.getFileRevisionDownloader(activeRevision.uid);
+            downloader = await this.sdkClient.getFileDownloader(node);
         } catch (error: unknown) {
             yield {
                 type: 'sdk_error',
-                call: `getFileRevisionDownloader(${activeRevision.uid})`,
+                call: `getFileDownloader(${node.ok ? node.value.uid : node.error.uid})`,
                 error,
             };
             return;
@@ -341,9 +350,7 @@ export class SDKDiagnostic {
         const nodeUid = node.ok ? node.value.uid : node.error.uid;
 
         try {
-            const result = await Array.fromAsync(
-                this.protonDriveClient.iterateThumbnails([nodeUid], ThumbnailType.Type1),
-            );
+            const result = await Array.fromAsync(this.sdkClient.iterateThumbnails([nodeUid], ThumbnailType.Type1));
 
             if (result.length === 0) {
                 yield {
@@ -368,93 +375,4 @@ export class SDKDiagnostic {
             };
         }
     }
-}
-
-function getNodeDetails(node: MaybeNode): NodeDetails {
-    const errors: {
-        field: string;
-        error: unknown;
-    }[] = [];
-
-    if (!node.ok) {
-        const degradedNode = node.error;
-        if (!degradedNode.name.ok) {
-            errors.push({
-                field: 'name',
-                error: degradedNode.name.error,
-            });
-        }
-        if (degradedNode.activeRevision?.ok === false) {
-            errors.push({
-                field: 'activeRevision',
-                error: degradedNode.activeRevision.error,
-            });
-        }
-        for (const error of degradedNode.errors ?? []) {
-            if (error instanceof Error) {
-                errors.push({
-                    field: 'error',
-                    error,
-                });
-            }
-        }
-    }
-
-    return {
-        safeNodeDetails: {
-            ...getNodeUids(node),
-            nodeType: getNodeType(node),
-            nodeCreationTime: node.ok ? node.value.creationTime : node.error.creationTime,
-            keyAuthor: node.ok ? node.value.keyAuthor : node.error.keyAuthor,
-            nameAuthor: node.ok ? node.value.nameAuthor : node.error.nameAuthor,
-            errors,
-        },
-        sensitiveNodeDetails: node,
-    };
-}
-
-function getNodeUids(node: MaybeNode): { nodeUid: string; revisionUid?: string } {
-    const activeRevision = getActiveRevision(node);
-    return {
-        nodeUid: node.ok ? node.value.uid : node.error.uid,
-        revisionUid: activeRevision?.uid,
-    };
-}
-
-function getNodeType(node: MaybeNode): NodeType {
-    return node.ok ? node.value.type : node.error.type;
-}
-
-function getActiveRevision(node: MaybeNode): Revision | undefined {
-    if (node.ok) {
-        return node.value.activeRevision;
-    }
-    if (node.error.activeRevision?.ok) {
-        return node.error.activeRevision.value;
-    }
-    return undefined;
-}
-
-function getNodeName(node: MaybeNode): string {
-    if (node.ok) {
-        return node.value.name;
-    }
-    if (node.error.name.ok) {
-        return node.error.name.value;
-    }
-    return 'N/A';
-}
-
-function getExpectedTreeNodeDetails(expectedNode: ExpectedTreeNode): ExpectedTreeNode {
-    return {
-        ...expectedNode,
-        children: undefined,
-    };
-}
-
-function getTreeNodeChildByNodeName(
-    expectedSubtree: ExpectedTreeNode | undefined,
-    nodeName: string,
-): ExpectedTreeNode | undefined {
-    return expectedSubtree?.children?.find((expectedNode) => expectedNode.name === nodeName);
 }

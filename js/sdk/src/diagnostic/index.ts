@@ -5,6 +5,7 @@ import { Diagnostic as DiagnosticClass } from './diagnostic';
 import { Diagnostic } from './interface';
 import { DiagnosticHTTPClient } from './httpClient';
 import { DiagnosticTelemetry } from './telemetry';
+import { ProtonDrivePhotosClient } from '../protonDrivePhotosClient';
 
 export type {
     Diagnostic,
@@ -40,5 +41,13 @@ export function initDiagnostic(
         telemetry,
     });
 
-    return new DiagnosticClass(telemetry, httpClient, protonDriveClient);
+    const protonDrivePhotosClient = new ProtonDrivePhotosClient({
+        ...options,
+        httpClient,
+        entitiesCache: new NullCache(),
+        cryptoCache: new MemoryCache(),
+        telemetry,
+    });
+
+    return new DiagnosticClass(telemetry, httpClient, protonDriveClient, protonDrivePhotosClient);
 }
