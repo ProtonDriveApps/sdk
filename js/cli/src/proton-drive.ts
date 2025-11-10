@@ -31,7 +31,7 @@ if (!command.isAuthAction && !command.isPublicAction && !account.session) {
     throw new Error('You need to login first');
 }
 
-if (account.session) {
+if (!command.isAuthAction && account.session) {
     if (debug) {
         console.time('Account initialization');
         console.log('Initializing user keys...');
