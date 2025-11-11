@@ -2,29 +2,41 @@ import Foundation
 
 /// Handles file download operations for ProtonDrive
 public actor DownloadManager {
+    enum Error: Swift.Error {
+        case noCancellationTokenForIdentifier
+    }
 
     private let clientHandle: ObjectHandle
     private let logger: Logger?
-    private var downloads: [ObjectHandle: DownloadManager] = [:]
+    private var activeDownloads: [UUID: CancellationTokenSource] = [:]
 
     init(clientHandle: ObjectHandle, logger: Logger?) {
         self.clientHandle = clientHandle
         self.logger = logger
     }
 
+    deinit {
+        activeDownloads.values.forEach {
+            $0.free()
+        }
+    }
+
     /// Download file from file URL with complete download flow
     public func downloadFile(
         revisionUid: SDKRevisionUid,
         destinationUrl: URL,
+        cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws {
         let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
+        activeDownloads[cancellationToken] = cancellationTokenSource
+
         defer {
-            // TODO: Should be done in deinit!
+            activeDownloads[cancellationToken] = nil
             cancellationTokenSource.free()
         }
 
-        let downloaderHandle = try await startFileDownload(
+        let downloaderHandle = try await buildFileDownloader(
             revisionUid: revisionUid.sdkCompatibleIdentifier,
             fileURL: destinationUrl,
             cancellationHandle: cancellationTokenSource.handle
@@ -49,6 +61,7 @@ public actor DownloadManager {
             logger: logger
         )
         assert(downloadControllerHandle != 0)
+
         defer {
             freeDownloadController(downloadControllerHandle)
         }
@@ -56,8 +69,19 @@ public actor DownloadManager {
         try await awaitDownloadCompletion(downloadControllerHandle)
     }
 
+    func cancelDownload(with cancellationToken: UUID) async throws {
+        guard let downloadCancellationToken = activeDownloads[cancellationToken] else {
+            throw Error.noCancellationTokenForIdentifier
+        }
+
+        try await downloadCancellationToken.cancel()
+        try await downloadCancellationToken.free()
+
+        activeDownloads[cancellationToken] = nil
+    }
+
     /// Get a file downloader for downloading files from Drive
-    private func startFileDownload(
+    private func buildFileDownloader(
         revisionUid: String,
         fileURL: URL,
         cancellationHandle: ObjectHandle
@@ -81,39 +105,6 @@ public actor DownloadManager {
         }
 
         try await SDKRequestHandler.send(awaitDownloadCompletionRequest, logger: logger) as Void
-    }
-
-    /// Pause download controllers
-    public func pauseDownloads() async throws {
-        downloads.keys.forEach { downloadControllerHandle in
-            Task {
-                let pauseRequest = Proton_Drive_Sdk_DownloadControllerPauseRequest.with {
-                    $0.downloadControllerHandle = Int64(downloadControllerHandle)
-                }
-
-                try await SDKRequestHandler.send(pauseRequest, logger: logger) as Void
-            }
-        }
-    }
-
-    /// Resume download controllers
-    public func resumeDownloads() async throws {
-        downloads.keys.forEach { downloadControllerHandle in
-            Task {
-                let pauseRequest = Proton_Drive_Sdk_DownloadControllerResumeRequest.with {
-                    $0.downloadControllerHandle = Int64(downloadControllerHandle)
-                }
-
-                try await SDKRequestHandler.send(pauseRequest, logger: logger) as Void
-            }
-        }
-    }
-
-    /// Free download controller when no longer needed
-    private func freeDownloadControllers() {
-        downloads.keys.forEach { downloadControllerHandle in
-            freeDownloadController(downloadControllerHandle)
-        }
     }
 
     /// Free a file downloader when no longer needed
