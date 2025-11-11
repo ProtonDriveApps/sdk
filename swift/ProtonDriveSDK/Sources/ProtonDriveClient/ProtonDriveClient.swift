@@ -6,7 +6,7 @@ import Foundation
 public actor ProtonDriveClient: Sendable {
 
     private var clientHandle: ObjectHandle!
-    
+
     private var uploadManager: UploadManager!
     private var downloadManager: DownloadManager!
 
@@ -52,7 +52,7 @@ public actor ProtonDriveClient: Sendable {
                 $0.uid = clientUID
             }
         }
-        
+
         // we pass the weak reference as the state because we don't want the interop layer
         // to prolong the client object existence
         let weakSelf = WeakReference(value: self)
@@ -69,7 +69,7 @@ public actor ProtonDriveClient: Sendable {
     nonisolated func log(_ logEvent: LogEvent) {
         logger.logCallback(logEvent)
     }
-    
+
     nonisolated func record(_ metricEvent: MetricEvent) {
         recordMetricEventCallback(metricEvent)
     }
@@ -77,13 +77,19 @@ public actor ProtonDriveClient: Sendable {
     public func downloadFile(
         revisionUid: SDKRevisionUid,
         destinationUrl: URL,
+        cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws {
         try await downloadManager.downloadFile(
             revisionUid: revisionUid,
             destinationUrl: destinationUrl,
+            cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
+    }
+
+    public func cancelDownload(cancellationToken: UUID) async throws {
+        try await downloadManager.cancelDownload(with: cancellationToken)
     }
 
     public func uploadFile(
@@ -94,6 +100,7 @@ public actor ProtonDriveClient: Sendable {
         modificationDate: Date,
         mediaType: String,
         thumbnails: [ThumbnailData],
+        cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> FileNodeUploadResult {
         try await uploadManager.uploadFile(
@@ -104,6 +111,7 @@ public actor ProtonDriveClient: Sendable {
             modificationDate: modificationDate,
             mediaType: mediaType,
             thumbnails: thumbnails,
+            cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
     }
@@ -129,6 +137,10 @@ public actor ProtonDriveClient: Sendable {
 
         let nameResult: String = try await SDKRequestHandler.send(getAvailableNameRequest, logger: logger)
         return nameResult
+    }
+
+    public func cancelUpload(cancellationToken: UUID) async throws {
+        try await uploadManager.cancelUpload(with: cancellationToken)
     }
 
     static func unbox(callbackPointer: Int, releaseBox: () -> Void, weakDriveClient: WeakReference<ProtonDriveClient>) -> ProtonDriveClient? {

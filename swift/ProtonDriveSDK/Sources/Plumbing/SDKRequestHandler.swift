@@ -6,12 +6,12 @@ import SwiftProtobuf
 enum SDKRequestHandler {
 
     // MARK: - Simple requests (without state)
-    
+
     static func sendInteropRequest<T: Message & InteropRequest>(_ request: T, logger: Logger?) async throws -> T.CallResultType
     where T.StateType == Void {
         try await send(request, logger: logger)
     }
-    
+
     static func send<T: Message, U>(_ request: T, logger: Logger?) async throws -> U {
         try await send(request, state: (), logger: logger)
     }
@@ -25,7 +25,7 @@ enum SDKRequestHandler {
     ) async throws -> T.CallResultType {
         try await self.send(request, state: state, includesLongLivedCallback: includesLongLivedCallback, logger: logger)
     }
-    
+
     static func send<T: Message, U, V>(
         _ request: T, state: V, includesLongLivedCallback: Bool = false, logger: Logger?
     ) async throws -> U {
@@ -33,7 +33,7 @@ enum SDKRequestHandler {
         let envelopedRequestData = try request.packIntoRequest().serializedData()
         let isDriveRequest = request.isDriveRequest
         logger?.trace("Sending SDK message with state: \(T.protoMessageName) - \(request)", category: "SDKRequestHandler")
-        
+
         let response: U = try await withCheckedThrowingContinuation { continuation in
             let requestArray = ByteArray(data: envelopedRequestData)
             defer {
@@ -83,7 +83,7 @@ let sdkResponseCallbackWithState: CCallback = { statePointer, responseArray in
                 throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unexpected empty response received"))
             }
             voidBox.resume()
-            
+
         case .value(let value) where value.isA(Google_Protobuf_Int64Value.self):
             let unpackedValue = try Google_Protobuf_Int64Value(unpackingAny: value).value
             switch box {
@@ -94,7 +94,7 @@ let sdkResponseCallbackWithState: CCallback = { statePointer, responseArray in
             default:
                 throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unexpected SDK call response type: Google_Protobuf_Int64Value"))
             }
-            
+
         case .value(let value) where value.isA(Proton_Drive_Sdk_UploadResult.self):
             let unpackedValue = try Proton_Drive_Sdk_UploadResult(unpackingAny: value)
             guard let uploadResultBox = box as? any Resumable<Proton_Drive_Sdk_UploadResult> else {
@@ -104,14 +104,14 @@ let sdkResponseCallbackWithState: CCallback = { statePointer, responseArray in
 
         case .value(let value) where value.isA(Google_Protobuf_StringValue.self):
             let unpackedValue = try Google_Protobuf_StringValue(unpackingAny: value)
-            guard let stringResultBox = box as? Resumable<String> else {
+            guard let stringResultBox = box as? any Resumable<String> else {
                 throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unexpected SDK call response type: String"))
             }
             stringResultBox.resume(returning: unpackedValue.value)
 
         case .value: // unknown value type
             throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unknown SDK call response value type"))
-            
+
         case .error(let error):
             throw ProtonDriveSDKError(protoError: error)
         }
