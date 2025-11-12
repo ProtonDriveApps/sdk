@@ -15,6 +15,7 @@ import {
     ProtonDriveAccount,
     SharePublicLinkSettingsObject,
 } from '../../interface';
+import { ErrorCode } from '../apiService';
 import { splitNodeUid } from '../uids';
 import { getErrorMessage } from '../errors';
 import { SharingAPIService } from './apiService';
@@ -147,22 +148,40 @@ export class SharingManagement {
             throw new ValidationError(c('Error').t`Expiration date cannot be in the past`);
         }
 
-        let contextShareAddress: ContextShareAddress;
+        let contextShareAddress: ContextShareAddress | undefined;
         let currentSharing = await this.getInternalSharingInfo(nodeUid);
-        if (currentSharing) {
-            contextShareAddress = await this.nodesService.getRootNodeEmailKey(nodeUid);
-        } else {
+        if (!currentSharing) {
             const node = await this.nodesService.getNode(nodeUid);
-            const result = await this.createShare(nodeUid);
-            currentSharing = {
-                share: result.share,
-                nodeName: node.name.ok ? node.name.value : node.name.error.name,
-                protonInvitations: [],
-                nonProtonInvitations: [],
-                members: [],
-                publicLink: undefined,
-            };
-            contextShareAddress = result.contextShareAddress;
+            try {
+                const result = await this.createShare(nodeUid);
+                currentSharing = {
+                    share: result.share,
+                    nodeName: node.name.ok ? node.name.value : node.name.error.name,
+                    protonInvitations: [],
+                    nonProtonInvitations: [],
+                    members: [],
+                    publicLink: undefined,
+                };
+                contextShareAddress = result.contextShareAddress;
+            } catch (error: unknown) {
+                // If the share already exists, notify that the node has
+                // changed to force refresh and get the latest sharing info
+                // again.
+                if (error instanceof ValidationError && error.code === ErrorCode.ALREADY_EXISTS) {
+                    this.logger.debug(`Share already exists for node ${nodeUid}, refreshing node`);
+                    await this.nodesService.notifyNodeChanged(nodeUid);
+                    currentSharing = await this.getInternalSharingInfo(nodeUid);
+                } else {
+                    throw error;
+                }
+            }
+        }
+
+        if (!currentSharing) {
+            throw new ValidationError(c('Error').t`Failed to get sharing info for node ${nodeUid}`);
+        }
+        if (!contextShareAddress) {
+            contextShareAddress = await this.nodesService.getRootNodeEmailKey(nodeUid);
         }
 
         const emailOptions: EmailOptions = {
