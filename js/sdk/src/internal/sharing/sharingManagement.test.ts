@@ -1,5 +1,6 @@
 import { getMockLogger } from '../../tests/logger';
 import {
+    Logger,
     Member,
     MemberRole,
     NonProtonInvitation,
@@ -14,8 +15,11 @@ import { SharingCache } from './cache';
 import { SharingCryptoService } from './cryptoService';
 import { SharesService, NodesService } from './interface';
 import { SharingManagement } from './sharingManagement';
+import { ValidationError } from '../../errors';
+import { ErrorCode } from '../apiService';
 
 describe('SharingManagement', () => {
+    let logger: Logger;
     let apiService: SharingAPIService;
     let cache: SharingCache;
     let cryptoService: SharingCryptoService;
@@ -26,6 +30,8 @@ describe('SharingManagement', () => {
     let sharingManagement: SharingManagement;
 
     beforeEach(() => {
+        logger = getMockLogger();
+
         // @ts-expect-error No need to implement all methods for mocking
         apiService = {
             createStandardShare: jest.fn().mockReturnValue('newShareId'),
@@ -110,7 +116,7 @@ describe('SharingManagement', () => {
         };
 
         sharingManagement = new SharingManagement(
-            getMockLogger(),
+            logger,
             apiService,
             cache,
             cryptoService,
@@ -224,6 +230,58 @@ describe('SharingManagement', () => {
             expect(apiService.inviteProtonUser).toHaveBeenCalled();
             expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith(nodeUid);
             expect(cache.addSharedByMeNodeUid).toHaveBeenCalledWith(nodeUid);
+        });
+
+        it('should refresh node info if share already exists', async () => {
+            nodesService.getNode = jest
+                .fn()
+                .mockImplementationOnce((nodeUid) => ({
+                    nodeUid,
+                    parentUid: 'parentUid',
+                    name: { ok: true, value: 'name' },
+                }))
+                .mockImplementation((nodeUid) => ({
+                    nodeUid,
+                    shareId: 'shareId',
+                    parentUid: 'parentUid',
+                    name: { ok: true, value: 'name' },
+                }));
+            apiService.createStandardShare = jest
+                .fn()
+                .mockRejectedValue(new ValidationError('Share already exists', ErrorCode.ALREADY_EXISTS));
+
+            const sharingInfo = await sharingManagement.shareNode(nodeUid, { users: ['email'] });
+
+            expect(sharingInfo).toEqual({
+                protonInvitations: [
+                    {
+                        uid: 'created-invitation',
+                        addedByEmail: { ok: true, value: 'volume-email' },
+                        inviteeEmail: 'email',
+                        role: 'viewer',
+                    },
+                ],
+                nonProtonInvitations: [],
+                members: [],
+                publicLink: undefined,
+            });
+
+            expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith(nodeUid);
+            expect(logger.debug).toHaveBeenCalledWith(
+                'Share already exists for node volumeId~nodeUid, refreshing node',
+            );
+            expect(apiService.inviteProtonUser).toHaveBeenCalledWith(
+                'shareId',
+                {
+                    addedByEmail: 'volume-email',
+                    inviteeEmail: 'email',
+                    role: 'viewer',
+                },
+                {
+                    message: undefined,
+                    nodeName: undefined,
+                },
+            );
         });
     });
 
