@@ -12,6 +12,7 @@ public sealed partial class FileDownloader : IDisposable
     {
         _client = client;
         _revisionUid = revisionUid;
+        _remainingNumberOfBlocksToList = 1;
     }
 
     public DownloadController DownloadToStream(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
@@ -73,7 +74,11 @@ public sealed partial class FileDownloader : IDisposable
     {
         var newRemainingNumberOfBlocks = Interlocked.Add(ref _remainingNumberOfBlocksToList, -numberOfBlockListings);
 
-        var amountToRelease = Math.Max(newRemainingNumberOfBlocks >= 0 ? numberOfBlockListings : newRemainingNumberOfBlocks + numberOfBlockListings, 0);
+        var amountToRelease = Math.Max(
+            newRemainingNumberOfBlocks >= 0
+                ? numberOfBlockListings
+                : newRemainingNumberOfBlocks + numberOfBlockListings,
+            0);
 
         _client.BlockListingSemaphore.Release(amountToRelease);
         LogReleasedBlockListingSemaphore(_client.Logger, _revisionUid, amountToRelease);
