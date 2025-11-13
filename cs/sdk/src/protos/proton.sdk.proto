@@ -183,6 +183,7 @@ enum ErrorDomain {
     Serialization = 5;
     Cryptography = 6;
     DataIntegrity = 7;
+    BusinessLogic = 8;
 }
 
 message Error {
@@ -193,6 +194,7 @@ message Error {
     int64 secondary_code = 5; // Optional
     string context = 6; // Optional
     Error inner_error = 7; // Optional
+    google.protobuf.Any additional_data = 8; // Optional
 }
 
 message Address {
