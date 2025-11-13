@@ -12,6 +12,11 @@ internal static class InteropProtonDriveClient
 {
     public static IMessage HandleCreate(DriveClientCreateRequest request, nint bindingsHandle)
     {
+        if (!request.BaseUrl.EndsWith('/'))
+        {
+            throw new UriFormatException("Base URL must end with a '/'");
+        }
+
         var httpClientFactory = new InteropHttpClientFactory(
             bindingsHandle,
             request.BaseUrl,

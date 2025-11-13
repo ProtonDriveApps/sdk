@@ -14,7 +14,8 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
         case serialization
         case cryptography
         case dataIntegrity
-        
+        case businessLogic
+
         // Interop domains
         case interop
         
@@ -31,6 +32,8 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
             case .UNRECOGNIZED(let int):
                 assertionFailure("Received unexpected error domain value \(int)")
                 self = .undefined
+            case .businessLogic:
+                self = .businessLogic
             }
         }
     }
@@ -74,7 +77,8 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
     public let secondaryCode: Int?
     public let context: String?
     public var innerError: ProtonDriveSDKError? { innerErrorBox?.innerError }
-    
+    public let additionalErrorData: AdditionalErrorData?
+
     private let innerErrorBox: InnerErrorBox?
     
     init(protoError: Proton_Sdk_Error) {
@@ -88,6 +92,11 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
         self.secondaryCode = protoError.hasSecondaryCode ? Int(protoError.secondaryCode) : nil
         self.context = protoError.hasContext ? protoError.context : nil
         self.innerErrorBox = protoError.hasInnerError ? InnerErrorBox(protoError: protoError.innerError) : nil
+        if protoError.hasAdditionalData {
+            self.additionalErrorData = AdditionalErrorDataFactory().make(data: protoError.additionalData)
+        } else {
+            self.additionalErrorData = nil
+        }
     }
     
     init(interopError: InteropErrorTypes) {
@@ -98,6 +107,7 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
         self.secondaryCode = nil
         self.context = nil
         self.innerErrorBox = nil
+        self.additionalErrorData = nil
     }
 }
 

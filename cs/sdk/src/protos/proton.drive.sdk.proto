@@ -359,3 +359,9 @@ message VerificationErrorEventPayload {
 message BlockVerificationErrorEventPayload {
     bool retry_helped = 1;
 }
+
+message NodeNameConflictErrorData {
+    bool conflicting_node_is_file_draft = 1;
+    string conflicting_node_uid = 2;
+    string conflicting_revision_uid = 3;
+}

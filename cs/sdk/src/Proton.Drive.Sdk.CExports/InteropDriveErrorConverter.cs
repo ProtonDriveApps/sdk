@@ -1,4 +1,5 @@
-﻿using Proton.Drive.Sdk.Nodes.Download;
+﻿using Google.Protobuf.WellKnownTypes;
+using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Sdk.CExports;
 
@@ -31,6 +32,28 @@ internal static class InteropDriveErrorConverter
             case SessionKeyAndDataPacketMismatchException:
                 error.Domain = ErrorDomain.DataIntegrity;
                 error.PrimaryCode = UploadKeyMismatchErrorPrimaryCode;
+                break;
+
+            case NodeWithSameNameExistsException e:
+                error.Domain = ErrorDomain.BusinessLogic;
+
+                var additionalData = new NodeNameConflictErrorData();
+                if (e.ConflictingNodeIsFileDraft is { } conflictingNodeIsFileDraft)
+                {
+                    additionalData.ConflictingNodeIsFileDraft = conflictingNodeIsFileDraft;
+                }
+
+                if (e.ConflictingNodeUid is { } conflictingNodeUid)
+                {
+                    additionalData.ConflictingNodeUid = conflictingNodeUid.ToString();
+                }
+
+                if (e.ConflictingRevisionUid is { } conflictingRevisionUid)
+                {
+                    additionalData.ConflictingRevisionUid = conflictingRevisionUid.ToString();
+                }
+
+                error.AdditionalData = Any.Pack(additionalData);
                 break;
 
             default:

@@ -116,6 +116,24 @@ public actor ProtonDriveClient: Sendable {
         )
     }
 
+    public func uploadNewRevision(
+        currentActiveRevisionUid: SDKRevisionUid,
+        fileURL: URL,
+        fileSize: Int64,
+        modificationDate: Date,
+        thumbnails: [ThumbnailData],
+        progressCallback: @escaping ProgressCallback
+    ) async throws -> FileNodeUploadResult {
+        try await uploadManager.uploadNewRevision(
+            currentActiveRevisionUid: currentActiveRevisionUid,
+            fileURL: fileURL,
+            fileSize: fileSize,
+            modificationDate: modificationDate,
+            thumbnails: thumbnails,
+            progressCallback: progressCallback
+        )
+    }
+
     public func getAvailableName(
         parentFolderUid: SDKNodeUid,
         name: String
