@@ -117,7 +117,7 @@ export class ProtonDrivePhotosClient {
             this.photoShares,
             fullConfig.clientUid,
         );
-        this.photos = initPhotosModule(apiService, this.photoShares, this.nodes.access);
+        this.photos = initPhotosModule(telemetry, apiService, cryptoModule, this.photoShares, this.nodes.access);
         this.sharing = initSharingModule(
             telemetry,
             apiService,
@@ -452,6 +452,29 @@ export class ProtonDrivePhotosClient {
         this.logger.info(`Getting file uploader`);
         const parentFolderUid = await this.nodes.access.getVolumeRootFolder();
         return this.upload.getFileUploader(getUid(parentFolderUid), name, metadata, signal);
+    }
+
+    /**
+     * Check if the photo is a duplicate.
+     *
+     * For given photo name, find existing photos with the same name
+     * in the timeline and check if the photo content is also the same.
+     * Only the same name is not considered as duplicate photo because
+     * it is expected that there are photos with the same name (e.g.,
+     * date as a name from multiple cameras, or rolling number).
+     *
+     * The function accepts a callback to generate the SHA1 and it is
+     * called only when there is any matching node name hash to avoid
+     * computation for every node if its not necessary.
+     *
+     * @param name - The name of the photo to check for duplicates.
+     * @param generateSha1 - A callback to generate the hex string representation of the SHA1 of the photo content.
+     * @param signal - An optional abort signal to cancel the operation.
+     * @returns True if the photo already exists in the timeline, false otherwise.
+     */
+    async isDuplicatePhoto(name: string, generateSha1: () => Promise<string>, signal?: AbortSignal): Promise<boolean> {
+        this.logger.info(`Checking if photo is a duplicate`);
+        return this.photos.timeline.isDuplicatePhoto(name, generateSha1, signal);
     }
 
     /**

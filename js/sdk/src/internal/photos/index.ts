@@ -36,12 +36,20 @@ export const PHOTOS_SHARE_TARGET_TYPES = [ShareTargetType.Photo, ShareTargetType
  * including API communication, crypto, caching, and event handling.
  */
 export function initPhotosModule(
+    telemetry: ProtonDriveTelemetry,
     apiService: DriveAPIService,
+    driveCrypto: DriveCrypto,
     photoShares: PhotoSharesManager,
     nodesService: NodesService,
 ) {
     const api = new PhotosAPIService(apiService);
-    const timeline = new PhotosTimeline(api, photoShares);
+    const timeline = new PhotosTimeline(
+        telemetry.getLogger('photos-timeline'),
+        api,
+        driveCrypto,
+        photoShares,
+        nodesService,
+    );
     const albums = new Albums(api, photoShares, nodesService);
 
     return {
