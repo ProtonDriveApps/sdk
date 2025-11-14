@@ -18,6 +18,13 @@ type GetTimelineResponse =
 type GetAlbumsResponse =
     drivePaths['/drive/photos/volumes/{volumeID}/albums']['get']['responses']['200']['content']['application/json'];
 
+type PostPhotoDuplicateRequest = Extract<
+    drivePaths['/drive/volumes/{volumeID}/photos/duplicates']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostPhotoDuplicateResponse =
+    drivePaths['/drive/volumes/{volumeID}/photos/duplicates']['post']['responses']['200']['content']['application/json'];
+
 /**
  * Provides API communication for fetching and manipulating photos and albums
  * metadata.
@@ -147,5 +154,38 @@ export class PhotosAPIService {
             }
             anchor = response.AnchorID;
         }
+    }
+
+    async checkPhotoDuplicates(
+        volumeId: string,
+        nameHashes: string[],
+        signal?: AbortSignal,
+    ): Promise<
+        {
+            nameHash: string;
+            contentHash: string;
+            nodeUid: string;
+            clientUid?: string;
+        }[]
+    > {
+        const response = await this.apiService.post<PostPhotoDuplicateRequest, PostPhotoDuplicateResponse>(
+            `drive/volumes/${volumeId}/photos/duplicates`,
+            {
+                NameHashes: nameHashes,
+            },
+            signal,
+        );
+
+        return response.DuplicateHashes.map((duplicate) => {
+            if (!duplicate.Hash || !duplicate.ContentHash || duplicate.LinkState !== 1 /* Active */) {
+                return undefined;
+            }
+            return {
+                nameHash: duplicate.Hash,
+                contentHash: duplicate.ContentHash,
+                nodeUid: makeNodeUid(volumeId, duplicate.LinkID),
+                clientUid: duplicate.ClientUID || undefined,
+            };
+        }).filter((duplicate) => duplicate !== undefined);
     }
 }

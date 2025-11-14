@@ -49,11 +49,10 @@ export class CommandFileSystemUpload implements Command {
             uploader = await sdk.getFileRevisionUploader(node, metadata);
         } else {
             const parentNodePath = paths.getPath(parentPath);
-            const parentNode = await parentNodePath.getNode();
             uploader =
                 parentNodePath.type === PathType.Photos
                     ? await photosSdk.getFileUploader(name, metadata)
-                    : await sdk.getFileUploader(parentNode, name, metadata);
+                    : await sdk.getFileUploader(await parentNodePath.getNode(), name, metadata);
         }
 
         if (!json) {
