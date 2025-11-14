@@ -29,9 +29,17 @@ export class Paths {
     }
 
     get rootPaths(): string[] {
-        return [PathType.MyFiles, PathType.Devices, PathType.SharedByMe, PathType.SharedWithMe, PathType.Trash].map(
-            (path) => `/${path}`,
-        );
+        return [
+            PathType.MyFiles,
+            PathType.Devices,
+            PathType.SharedByMe,
+            PathType.SharedWithMe,
+            PathType.Trash,
+            PathType.Photos,
+            PathType.PhotosSharedByMe,
+            PathType.PhotosSharedWithMe,
+            PathType.PhotosTrash,
+        ].map((path) => `/${path}`);
     }
 
     getPath(path: string): Path {
