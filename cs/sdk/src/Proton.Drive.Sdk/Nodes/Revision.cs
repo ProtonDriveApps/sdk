@@ -11,5 +11,6 @@ public sealed record Revision
     public required FileContentDigests ClaimedDigests { get; init; }
     public DateTime? ClaimedModificationTime { get; init; }
     public required IReadOnlyList<ThumbnailHeader> Thumbnails { get; init; }
+    public required IReadOnlyList<AdditionalMetadataProperty>? AdditionalClaimedMetadata { get; init; }
     public Result<Author, SignatureVerificationError>? ContentAuthor { get; init; }
 }

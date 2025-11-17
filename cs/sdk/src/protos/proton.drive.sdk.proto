@@ -164,6 +164,11 @@ message DriveClientFreeRequest {
 
 // Drive - uploads
 
+message AdditionalMetadataProperty {
+    string name = 1;
+    bytes utf8_json_value = 2;
+}
+
 // The response value must be an Int64Value carrying a handle to an instance of FileUploader.
 message DriveClientGetFileUploaderRequest {
     int64 client_handle = 1;
@@ -172,8 +177,9 @@ message DriveClientGetFileUploaderRequest {
     string mediaType = 4;
     int64 size = 5;
     google.protobuf.Timestamp last_modification_time = 6;
-    bool override_existing_draft_by_other_client = 7;
-    int64 cancellation_token_source_handle = 8;
+    repeated AdditionalMetadataProperty additional_metadata = 7; // Optional
+    bool override_existing_draft_by_other_client = 8;
+    int64 cancellation_token_source_handle = 9;
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of FileUploader.
@@ -182,7 +188,8 @@ message DriveClientGetFileRevisionUploaderRequest {
     string current_active_revision_uid = 2;
     int64 size = 3;
     google.protobuf.Timestamp last_modification_time = 4;
-    int64 cancellation_token_source_handle = 5;
+    repeated AdditionalMetadataProperty additional_metadata = 5; // Optional
+    int64 cancellation_token_source_handle = 6;
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of UploadController.
