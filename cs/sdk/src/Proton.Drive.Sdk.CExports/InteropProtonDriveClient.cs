@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes;
@@ -60,12 +61,18 @@ internal static class InteropProtonDriveClient
 
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
 
+        var additionalMetadata = request.AdditionalMetadata.Count > 0
+            ? request.AdditionalMetadata.Select(x =>
+                new Proton.Drive.Sdk.Nodes.AdditionalMetadataProperty(x.Name, JsonDocument.Parse(x.Utf8JsonValue.Memory).RootElement))
+            : null;
+
         var fileUploader = await client.GetFileUploaderAsync(
             NodeUid.Parse(request.ParentFolderUid),
             request.Name,
             request.MediaType,
             request.Size,
             request.LastModificationTime.ToDateTime(),
+            additionalMetadata,
             request.OverrideExistingDraftByOtherClient,
             cancellationToken).ConfigureAwait(false);
 
@@ -78,10 +85,16 @@ internal static class InteropProtonDriveClient
 
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
 
+        var additionalMetadata = request.AdditionalMetadata.Count > 0
+            ? request.AdditionalMetadata.Select(x =>
+                new Proton.Drive.Sdk.Nodes.AdditionalMetadataProperty(x.Name, JsonDocument.Parse(x.Utf8JsonValue.Memory).RootElement))
+            : null;
+
         var fileUploader = await client.GetFileRevisionUploaderAsync(
             RevisionUid.Parse(request.CurrentActiveRevisionUid),
             request.Size,
             request.LastModificationTime.ToDateTime(),
+            additionalMetadata,
             cancellationToken).ConfigureAwait(false);
 
         return new Int64Value { Value = Interop.AllocHandle(fileUploader) };

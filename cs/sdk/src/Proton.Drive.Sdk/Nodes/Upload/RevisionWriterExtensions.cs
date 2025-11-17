@@ -6,20 +6,22 @@ internal static class RevisionWriterExtensions
         this RevisionWriter revisionWriter,
         Stream contentStream,
         DateTimeOffset? lastModificationTime,
+        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long, long> onProgress,
         CancellationToken cancellationToken)
     {
-        return revisionWriter.WriteAsync(contentStream, [], lastModificationTime, onProgress, cancellationToken);
+        return revisionWriter.WriteAsync(contentStream, [], lastModificationTime, additionalMetadata, onProgress, cancellationToken);
     }
 
     public static ValueTask WriteAsync(
         this RevisionWriter revisionWriter,
         Stream contentStream,
         DateTime lastModificationTime,
+        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long, long> onProgress,
         CancellationToken cancellationToken)
     {
-        return revisionWriter.WriteAsync(contentStream, [], new DateTimeOffset(lastModificationTime), onProgress, cancellationToken);
+        return revisionWriter.WriteAsync(contentStream, [], new DateTimeOffset(lastModificationTime), additionalMetadata, onProgress, cancellationToken);
     }
 
     public static ValueTask WriteAsync(
@@ -27,16 +29,18 @@ internal static class RevisionWriterExtensions
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
         DateTime lastModificationTime,
+        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long, long> onProgress,
         CancellationToken cancellationToken)
     {
-        return revisionWriter.WriteAsync(contentStream, thumbnails, new DateTimeOffset(lastModificationTime), onProgress, cancellationToken);
+        return revisionWriter.WriteAsync(contentStream, thumbnails, new DateTimeOffset(lastModificationTime), additionalMetadata, onProgress, cancellationToken);
     }
 
     public static async ValueTask WriteAsync(
         this RevisionWriter writer,
         string targetFilePath,
         DateTime lastModificationTime,
+        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long, long> onProgress,
         CancellationToken cancellationToken)
     {
@@ -44,7 +48,7 @@ internal static class RevisionWriterExtensions
 
         await using (fileStream)
         {
-            await WriteAsync(writer, fileStream, lastModificationTime, onProgress, cancellationToken).ConfigureAwait(false);
+            await WriteAsync(writer, fileStream, lastModificationTime, additionalMetadata, onProgress, cancellationToken).ConfigureAwait(false);
         }
     }
 }

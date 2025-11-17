@@ -8,6 +8,7 @@ public sealed partial class FileUploader : IDisposable
     private readonly ProtonDriveClient _client;
     private readonly IFileDraftProvider _fileDraftProvider;
     private readonly DateTimeOffset? _lastModificationTime;
+    private readonly IEnumerable<AdditionalMetadataProperty>? _additionalMetadata;
     private volatile int _remainingNumberOfBlocks;
 
     private FileUploader(
@@ -15,12 +16,14 @@ public sealed partial class FileUploader : IDisposable
         IFileDraftProvider fileDraftProvider,
         long size,
         DateTimeOffset? lastModificationTime,
+        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         int expectedNumberOfBlocks)
     {
         _client = client;
         _fileDraftProvider = fileDraftProvider;
         FileSize = size;
         _lastModificationTime = lastModificationTime;
+        _additionalMetadata = additionalMetadata;
         _remainingNumberOfBlocks = expectedNumberOfBlocks;
     }
 
@@ -29,10 +32,11 @@ public sealed partial class FileUploader : IDisposable
     public UploadController UploadFromStream(
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
+        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
-        var task = UploadFromStreamAsync(contentStream, thumbnails, onProgress, cancellationToken);
+        var task = UploadFromStreamAsync(contentStream, thumbnails, additionalMetadata, onProgress, cancellationToken);
 
         return new UploadController(task);
     }
@@ -40,10 +44,11 @@ public sealed partial class FileUploader : IDisposable
     public UploadController UploadFromFile(
         string filePath,
         IEnumerable<Thumbnail> thumbnails,
+        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
-        var task = UploadFromFileAsync(filePath, thumbnails, onProgress, cancellationToken);
+        var task = UploadFromFileAsync(filePath, thumbnails, additionalMetadata, onProgress, cancellationToken);
 
         return new UploadController(task);
     }
@@ -58,15 +63,16 @@ public sealed partial class FileUploader : IDisposable
         IFileDraftProvider fileDraftProvider,
         long size,
         DateTime? lastModificationTime,
+        IEnumerable<AdditionalMetadataProperty>? additionalExtendedAttributes,
         CancellationToken cancellationToken)
     {
         var expectedNumberOfBlocks = (int)size.DivideAndRoundUp(RevisionWriter.DefaultBlockSize);
 
-        LogEnteredRevisionCreationSemaphore(client.Logger, expectedNumberOfBlocks);
+        LogEnteringRevisionCreationSemaphore(client.Logger, expectedNumberOfBlocks);
         await client.RevisionCreationSemaphore.EnterAsync(expectedNumberOfBlocks, cancellationToken).ConfigureAwait(false);
         LogEnteredRevisionCreationSemaphore(client.Logger, expectedNumberOfBlocks);
 
-        return new FileUploader(client, fileDraftProvider, size, lastModificationTime, expectedNumberOfBlocks);
+        return new FileUploader(client, fileDraftProvider, size, lastModificationTime, additionalExtendedAttributes, expectedNumberOfBlocks);
     }
 
     [LoggerMessage(Level = LogLevel.Trace, Message = "Trying to enter revision creation semaphore with {Increment}")]
@@ -81,6 +87,7 @@ public sealed partial class FileUploader : IDisposable
     private async Task<(NodeUid NodeUid, RevisionUid RevisionUid)> UploadFromStreamAsync(
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
+        IEnumerable<AdditionalMetadataProperty>? additionalExtendedAttributes,
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
@@ -92,6 +99,7 @@ public sealed partial class FileUploader : IDisposable
             contentStream,
             thumbnails,
             _lastModificationTime,
+            additionalExtendedAttributes,
             onProgress,
             cancellationToken).ConfigureAwait(false);
 
@@ -129,6 +137,7 @@ public sealed partial class FileUploader : IDisposable
     private async Task<(NodeUid NodeUid, RevisionUid RevisionUid)> UploadFromFileAsync(
         string filePath,
         IEnumerable<Thumbnail> thumbnails,
+        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
@@ -136,7 +145,7 @@ public sealed partial class FileUploader : IDisposable
 
         await using (contentStream.ConfigureAwait(false))
         {
-            return await UploadFromStreamAsync(contentStream, thumbnails, onProgress, cancellationToken).ConfigureAwait(false);
+            return await UploadFromStreamAsync(contentStream, thumbnails, additionalMetadata, onProgress, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -146,13 +155,14 @@ public sealed partial class FileUploader : IDisposable
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
         DateTimeOffset? lastModificationTime,
+        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
         using var revisionWriter = await RevisionOperations.OpenForWritingAsync(_client, revisionUid, fileSecrets, ReleaseBlocks, cancellationToken)
             .ConfigureAwait(false);
 
-        await revisionWriter.WriteAsync(contentStream, thumbnails, lastModificationTime, onProgress, cancellationToken).ConfigureAwait(false);
+        await revisionWriter.WriteAsync(contentStream, thumbnails, lastModificationTime, additionalMetadata, onProgress, cancellationToken).ConfigureAwait(false);
     }
 
     private void ReleaseBlocks(int numberOfBlocks)

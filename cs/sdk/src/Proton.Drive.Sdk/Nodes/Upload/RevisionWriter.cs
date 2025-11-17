@@ -59,6 +59,7 @@ internal sealed class RevisionWriter : IDisposable
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
         DateTimeOffset? lastModificationTime,
+        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
@@ -81,7 +82,7 @@ internal sealed class RevisionWriter : IDisposable
             ArraySegment<byte> manifestSignature;
             var blockSizes = new List<int>(8);
 
-        var contentLength = contentStream.Length - contentStream.Position;
+            var contentLength = contentStream.Length - contentStream.Position;
 
             using var sha1 = IncrementalHash.CreateHash(HashAlgorithmName.SHA1);
 
@@ -219,7 +220,8 @@ internal sealed class RevisionWriter : IDisposable
                 blockSizes,
                 sha1.GetCurrentHash(),
                 manifestSignature,
-                signingEmailAddress);
+                signingEmailAddress,
+                additionalMetadata);
 
             _client.Logger.LogDebug("Sealing revision {RevisionId} of file {FileUid}", _revisionId, _fileUid);
 
@@ -274,7 +276,8 @@ internal sealed class RevisionWriter : IDisposable
         IReadOnlyList<int> blockSizes,
         byte[]? sha1Digest,
         ArraySegment<byte> manifestSignature,
-        string signingEmailAddress)
+        string signingEmailAddress,
+        IEnumerable<AdditionalMetadataProperty>? additionalMetadata)
     {
         var extendedAttributes = new ExtendedAttributes
         {
@@ -285,6 +288,7 @@ internal sealed class RevisionWriter : IDisposable
                 BlockSizes = blockSizes,
                 Digests = new FileContentDigestsDto { Sha1 = sha1Digest },
             },
+            AdditionalMetadata = additionalMetadata?.ToDictionary(x => x.Name, x => x.Value),
         };
 
         var extendedAttributesUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(extendedAttributes, DriveApiSerializerContext.Default.ExtendedAttributes);

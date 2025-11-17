@@ -1,6 +1,12 @@
-﻿namespace Proton.Drive.Sdk.Api.Files;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
-internal readonly struct ExtendedAttributes
+namespace Proton.Drive.Sdk.Api.Files;
+
+internal struct ExtendedAttributes
 {
     public CommonExtendedAttributes? Common { get; init; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalMetadata { get; set; }
 }
