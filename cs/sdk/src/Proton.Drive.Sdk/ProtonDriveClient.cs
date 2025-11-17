@@ -148,23 +148,25 @@ public sealed class ProtonDriveClient
         string mediaType,
         long size,
         DateTime? lastModificationTime,
+        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         bool overrideExistingDraftByOtherClient,
         CancellationToken cancellationToken)
     {
         var draftProvider = new NewFileDraftProvider(parentFolderUid, name, mediaType, overrideExistingDraftByOtherClient);
 
-        return await GetFileUploaderAsync(draftProvider, size, lastModificationTime, cancellationToken).ConfigureAwait(false);
+        return await GetFileUploaderAsync(draftProvider, size, lastModificationTime, additionalMetadata, cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<FileUploader> GetFileRevisionUploaderAsync(
         RevisionUid currentActiveRevisionUid,
         long size,
         DateTime? lastModificationTime,
+        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         CancellationToken cancellationToken)
     {
         var draftProvider = new NewRevisionDraftProvider(currentActiveRevisionUid.NodeUid, currentActiveRevisionUid.RevisionId);
 
-        return await GetFileUploaderAsync(draftProvider, size, lastModificationTime, cancellationToken).ConfigureAwait(false);
+        return await GetFileUploaderAsync(draftProvider, size, lastModificationTime, additionalMetadata, cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<FileDownloader> GetFileDownloaderAsync(RevisionUid revisionUid, CancellationToken cancellationToken)
@@ -221,8 +223,9 @@ public sealed class ProtonDriveClient
         IFileDraftProvider fileDraftProvider,
         long size,
         DateTime? lastModificationTime,
+        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         CancellationToken cancellationToken)
     {
-        return await FileUploader.CreateAsync(this, fileDraftProvider, size, lastModificationTime, cancellationToken).ConfigureAwait(false);
+        return await FileUploader.CreateAsync(this, fileDraftProvider, size, lastModificationTime, additionalMetadata, cancellationToken).ConfigureAwait(false);
     }
 }
