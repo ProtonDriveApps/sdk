@@ -46,6 +46,9 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DriveClientGetAvailableName
                     => await InteropProtonDriveClient.HandleGetAvailableNameAsync(request.DriveClientGetAvailableName).ConfigureAwait(false),
 
+                Request.PayloadOneofCase.DriveClientGetThumbnails
+                    => await InteropProtonDriveClient.HandleGetThumbnailsAsync(request.DriveClientGetThumbnails).ConfigureAwait(false),
+
                 Request.PayloadOneofCase.UploadFromStream
                     => InteropFileUploader.HandleUploadFromStream(request.UploadFromStream, bindingsHandle),
 

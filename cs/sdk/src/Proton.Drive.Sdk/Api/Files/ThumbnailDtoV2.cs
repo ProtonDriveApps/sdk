@@ -5,7 +5,7 @@ namespace Proton.Drive.Sdk.Api.Files;
 internal sealed class ThumbnailDtoV2
 {
     [JsonPropertyName("ThumbnailID")]
-    public string? Id { get; init; }
+    public required string Id { get; init; }
 
     public required ThumbnailType Type { get; init; }
 

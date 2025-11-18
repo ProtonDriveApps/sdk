@@ -109,6 +109,13 @@ let sdkResponseCallbackWithState: CCallback = { statePointer, responseArray in
             }
             stringResultBox.resume(returning: unpackedValue.value)
 
+        case .value(let value) where value.isA(Proton_Drive_Sdk_FileThumbnailList.self):
+            let unpackedValue = try Proton_Drive_Sdk_FileThumbnailList(unpackingAny: value)
+            guard let uploadResultBox = box as? any Resumable<Proton_Drive_Sdk_FileThumbnailList> else {
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unexpected SDK call response type: Proton_Drive_Sdk_FileThumbnailList"))
+            }
+            uploadResultBox.resume(returning: unpackedValue)
+
         case .value: // unknown value type
             throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unknown SDK call response value type"))
 

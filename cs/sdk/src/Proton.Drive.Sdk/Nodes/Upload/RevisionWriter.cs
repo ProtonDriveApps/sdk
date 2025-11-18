@@ -81,6 +81,8 @@ internal sealed class RevisionWriter : IDisposable
             ArraySegment<byte> manifestSignature;
             var blockSizes = new List<int>(8);
 
+        var contentLength = contentStream.Length - contentStream.Position;
+
             using var sha1 = IncrementalHash.CreateHash(HashAlgorithmName.SHA1);
 
             var hashingContentStream = new HashingReadStream(contentStream, sha1, leaveOpen: true);
@@ -119,7 +121,7 @@ internal sealed class RevisionWriter : IDisposable
                                 uploadTasks.Enqueue(uploadTask);
                             }
 
-                            if (contentStream.Length > 0)
+                            if (contentLength > 0)
                             {
                                 do
                                 {
@@ -148,7 +150,7 @@ internal sealed class RevisionWriter : IDisposable
                                                 // TODO: move this to a decorator, wrap the progress action
                                                 uploadEvent.UploadedSize = numberOfBytesUploaded;
 
-                                                onProgress(numberOfBytesUploaded, contentStream.Length);
+                                                onProgress(numberOfBytesUploaded, contentLength);
                                             }
                                         : default(Action<long>?);
 
@@ -212,7 +214,7 @@ internal sealed class RevisionWriter : IDisposable
             }
 
             var request = GetRevisionUpdateRequest(
-                contentStream,
+                contentLength,
                 lastModificationTime,
                 blockSizes,
                 sha1.GetCurrentHash(),
@@ -267,7 +269,7 @@ internal sealed class RevisionWriter : IDisposable
     }
 
     private RevisionUpdateRequest GetRevisionUpdateRequest(
-        Stream contentInputStream,
+        long contentLength,
         DateTimeOffset? lastModificationTime,
         IReadOnlyList<int> blockSizes,
         byte[]? sha1Digest,
@@ -278,7 +280,7 @@ internal sealed class RevisionWriter : IDisposable
         {
             Common = new CommonExtendedAttributes
             {
-                Size = contentInputStream.Length,
+                Size = contentLength,
                 ModificationTime = lastModificationTime?.UtcDateTime,
                 BlockSizes = blockSizes,
                 Digests = new FileContentDigestsDto { Sha1 = sha1Digest },

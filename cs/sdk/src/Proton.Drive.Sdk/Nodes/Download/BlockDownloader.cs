@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography;
 using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Cryptography;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 
@@ -26,11 +27,11 @@ internal sealed class BlockDownloader
         Stream outputStream,
         CancellationToken cancellationToken)
     {
-        using var sha256 = SHA256.Create();
+        using var sha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
 
         var blobStream = await _client.Api.Storage.GetBlobStreamAsync(bareUrl, token, cancellationToken).ConfigureAwait(false);
 
-        var hashingStream = new CryptoStream(blobStream, sha256, CryptoStreamMode.Read);
+        var hashingStream = new HashingReadStream(blobStream, sha256);
 
         try
         {
@@ -49,8 +50,6 @@ internal sealed class BlockDownloader
             throw new FileContentsDecryptionException(e);
         }
 
-        sha256.TransformFinalBlock([], 0, 0);
-
-        return sha256.Hash;
+        return sha256.GetCurrentHash();
     }
 }

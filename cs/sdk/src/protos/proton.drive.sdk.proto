@@ -16,6 +16,7 @@ message Request {
         DriveClientGetFileRevisionUploaderRequest drive_client_get_file_revision_uploader = 1004;
         DriveClientGetFileDownloaderRequest drive_client_get_file_downloader = 1005;
         DriveClientGetAvailableNameRequest drive_client_get_available_name = 1006;
+        DriveClientGetThumbnailsRequest drive_client_get_thumbnails = 1007;
 
         UploadFromStreamRequest upload_from_stream = 1100;
         UploadFromFileRequest upload_from_file = 1101;
@@ -103,8 +104,18 @@ message ProgressUpdate {
 
 message Thumbnail {
     ThumbnailType type = 1;
-    int64 content_pointer = 2;
-    int64 content_length = 3;
+    int64 data_pointer = 2;
+    int64 data_length = 3;
+}
+
+message FileThumbnail {
+    string file_uid = 1;
+    ThumbnailType type = 2;
+    bytes data = 3;
+}
+
+message FileThumbnailList {
+    repeated FileThumbnail thumbnails = 1;
 }
 
 message UploadResult {
@@ -223,6 +234,13 @@ message DriveClientGetAvailableNameRequest {
     string parent_folder_uid = 2;
     string name = 3;
     int64 cancellation_token_source_handle = 4;
+}
+
+// The response message must be of type FileThumbnailList.
+message DriveClientGetThumbnailsRequest {
+    int64 client_handle = 1;
+    repeated string file_uids = 2;
+    int64 cancellation_token_source_handle = 3;
 }
 
 // Drive - downloads

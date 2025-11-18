@@ -20,7 +20,7 @@ internal static class InteropFileUploader
             unsafe
             {
                 var thumbnailType = (Proton.Drive.Sdk.Nodes.ThumbnailType)t.Type;
-                return new Nodes.Thumbnail(thumbnailType, new InteropArray<byte>((byte*)t.ContentPointer, (nint)t.ContentLength).ToArray());
+                return new Nodes.Thumbnail(thumbnailType, new InteropArray<byte>((byte*)t.DataPointer, (nint)t.DataLength).ToArray());
             }
         });
 
@@ -46,7 +46,7 @@ internal static class InteropFileUploader
             unsafe
             {
                 var thumbnailType = (Proton.Drive.Sdk.Nodes.ThumbnailType)t.Type;
-                return new Nodes.Thumbnail(thumbnailType, new InteropArray<byte>((byte*)t.ContentPointer, (nint)t.ContentLength).ToArray());
+                return new Nodes.Thumbnail(thumbnailType, new InteropArray<byte>((byte*)t.DataPointer, (nint)t.DataLength).ToArray());
             }
         });
 

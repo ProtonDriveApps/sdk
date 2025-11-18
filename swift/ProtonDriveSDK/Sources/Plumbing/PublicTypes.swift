@@ -179,3 +179,32 @@ public struct FileOperationProgress {
         self.bytesTotal = bytesTotal
     }
 }
+
+/// Thumbnail with file id
+public struct ThumbnailDataWithId: Sendable {
+    public let fileUid: SDKNodeUid
+    public let thumbnail: ThumbnailData
+
+    init?(fileThumbnail: Proton_Drive_Sdk_FileThumbnail) {
+        guard let fileUid = SDKNodeUid(sdkCompatibleIdentifier: fileThumbnail.fileUid) else {
+            return nil
+        }
+        let type: ThumbnailData.ThumbnailType? = {
+            switch fileThumbnail.type {
+            case .unspecified:
+                return nil
+            case .thumbnail:
+                return .thumbnail
+            case .preview:
+                return .preview
+            case .UNRECOGNIZED(let int):
+                return nil
+            }
+        }()
+        guard let type else {
+            return nil
+        }
+        self.fileUid = fileUid
+        self.thumbnail = ThumbnailData(type: type, data: fileThumbnail.data)
+    }
+}

@@ -33,4 +33,11 @@ internal static class ShareOperations
 
         return new ShareAndKey(share, shareKey.Value);
     }
+
+    public static async ValueTask<ShareAndKey> GetContextShareAsync(ProtonDriveClient client, NodeUid nodeUid, CancellationToken cancellationToken)
+    {
+        var response = await client.Api.Links.GetContextShareAsync(nodeUid.VolumeId, nodeUid.LinkId, cancellationToken).ConfigureAwait(false);
+
+        return await GetShareAsync(client, response.ContextShareId, cancellationToken).ConfigureAwait(false);
+    }
 }

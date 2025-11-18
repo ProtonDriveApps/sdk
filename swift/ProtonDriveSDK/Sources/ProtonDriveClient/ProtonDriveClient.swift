@@ -9,6 +9,7 @@ public actor ProtonDriveClient: Sendable {
 
     private var uploadManager: UploadManager!
     private var downloadManager: DownloadManager!
+    private var thumbnailsManager: DownloadThumbnailsManager!
 
     private let logger: ProtonDriveSDK.Logger
     private let recordMetricEventCallback: RecordMetricEventCallback
@@ -64,6 +65,7 @@ public actor ProtonDriveClient: Sendable {
 
         self.uploadManager = UploadManager(clientHandle: clientHandle, logger: logger)
         self.downloadManager = DownloadManager(clientHandle: clientHandle, logger: logger)
+        self.thumbnailsManager = DownloadThumbnailsManager(clientHandle: clientHandle, logger: logger)
     }
 
     nonisolated func log(_ logEvent: LogEvent) {
@@ -173,5 +175,17 @@ public actor ProtonDriveClient: Sendable {
             return nil
         }
         return driveClient
+    }
+
+    public func downloadThumbnails(
+        fileUids: [SDKNodeUid],
+        type: ThumbnailData.ThumbnailType,
+        cancellationToken: UUID
+    ) async throws -> [ThumbnailDataWithId] {
+        try await thumbnailsManager.downloadThumbnails(
+            fileUids: fileUids,
+            type: type,
+            cancellationToken: cancellationToken
+        )
     }
 }

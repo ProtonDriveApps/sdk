@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using Proton.Cryptography.Pgp;
@@ -54,6 +55,37 @@ internal static class NodeOperations
         metadataResult ??= await GetFreshNodeMetadataAsync(client, uid, knownShareAndKey, cancellationToken).ConfigureAwait(false);
 
         return metadataResult.Value.GetValueOrThrow();
+    }
+
+    public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(
+        ProtonDriveClient client,
+        VolumeId volumeId,
+        IEnumerable<LinkId> linkIds,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var batchLoader = new NodeBatchLoader(client, volumeId);
+
+        foreach (var linkId in linkIds)
+        {
+            var cachedChildNodeInfo = await client.Cache.Entities.TryGetNodeAsync(new NodeUid(volumeId, linkId), cancellationToken).ConfigureAwait(false);
+
+            if (cachedChildNodeInfo is null)
+            {
+                foreach (var nodeResult in await batchLoader.QueueAndTryLoadBatchAsync(linkId, cancellationToken).ConfigureAwait(false))
+                {
+                    yield return nodeResult;
+                }
+            }
+            else
+            {
+                yield return cachedChildNodeInfo.Value.NodeProvisionResult;
+            }
+        }
+
+        foreach (var nodeResult in await batchLoader.LoadRemainingAsync(cancellationToken).ConfigureAwait(false))
+        {
+            yield return nodeResult;
+        }
     }
 
     public static void GetCommonCreationParameters(

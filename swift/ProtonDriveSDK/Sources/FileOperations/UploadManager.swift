@@ -181,11 +181,11 @@ extension UploadManager {
             $0.thumbnails = thumbnails.map { thumbnail in
                 Proton_Drive_Sdk_Thumbnail.with {
                     $0.type = thumbnail.type == .thumbnail ? .thumbnail : .preview
-                    $0.contentLength = Int64(thumbnail.data.count)
+                    $0.dataLength = Int64(thumbnail.data.count)
                     let dataHandle = thumbnail.data.withUnsafeBytes { (u8Ptr: UnsafePointer<UInt8>) in
                         return ObjectHandle(bitPattern: UnsafeRawPointer(u8Ptr))
                     }
-                    $0.contentPointer = Int64(dataHandle)
+                    $0.dataPointer = Int64(dataHandle)
                 }
             }
         }

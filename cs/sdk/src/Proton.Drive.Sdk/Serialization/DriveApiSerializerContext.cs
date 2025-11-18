@@ -46,6 +46,8 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(RevisionUpdateRequest))]
 [JsonSerializable(typeof(BlockVerificationInputResponse))]
 [JsonSerializable(typeof(RevisionResponse))]
+[JsonSerializable(typeof(ThumbnailBlockListRequest))]
+[JsonSerializable(typeof(ThumbnailBlockListResponse))]
 [JsonSerializable(typeof(MoveSingleLinkRequest))]
 [JsonSerializable(typeof(MoveMultipleLinksRequest))]
 [JsonSerializable(typeof(RenameLinkRequest))]
