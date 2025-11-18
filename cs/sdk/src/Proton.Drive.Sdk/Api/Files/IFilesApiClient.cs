@@ -23,7 +23,7 @@ internal interface IFilesApiClient
         RevisionUpdateRequest request,
         CancellationToken cancellationToken);
 
-    public ValueTask<RevisionResponse> GetRevisionAsync(
+    ValueTask<RevisionResponse> GetRevisionAsync(
         VolumeId volumeId,
         LinkId linkId,
         RevisionId revisionId,
@@ -31,6 +31,8 @@ internal interface IFilesApiClient
         int pageSize,
         bool withoutBlockUrls,
         CancellationToken cancellationToken);
+
+    ValueTask<ThumbnailBlockListResponse> GetThumbnailBlocksAsync(VolumeId volumeId, IEnumerable<string> thumbnailIds, CancellationToken cancellationToken);
 
     ValueTask<ApiResponse> DeleteRevisionAsync(VolumeId volumeId, LinkId linkId, RevisionId revisionId, CancellationToken cancellationToken);
 }

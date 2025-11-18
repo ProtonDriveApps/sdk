@@ -81,4 +81,19 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
             .DeleteAsync($"v2/volumes/{volumeId}/files/{linkId}/revisions/{revisionId}", cancellationToken)
             .ConfigureAwait(false);
     }
+
+    public async ValueTask<ThumbnailBlockListResponse> GetThumbnailBlocksAsync(
+        VolumeId volumeId,
+        IEnumerable<string> thumbnailIds,
+        CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(DriveApiSerializerContext.Default.ThumbnailBlockListResponse)
+            .PostAsync(
+                $"volumes/{volumeId}/thumbnails",
+                new ThumbnailBlockListRequest { ThumbnailIds = thumbnailIds },
+                DriveApiSerializerContext.Default.ThumbnailBlockListRequest,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
 }
