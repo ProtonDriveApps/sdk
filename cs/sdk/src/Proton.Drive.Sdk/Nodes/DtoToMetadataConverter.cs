@@ -226,6 +226,14 @@ internal static class DtoToMetadataConverter
 
         var extendedAttributes = extendedAttributesOutput.Data;
 
+        var thumbnails = activeRevisionDto.Thumbnails.Count > 0 ? new ThumbnailHeader[activeRevisionDto.Thumbnails.Count] : [];
+
+        for (var i = 0; i < activeRevisionDto.Thumbnails.Count; ++i)
+        {
+            var thumbnailDto = activeRevisionDto.Thumbnails[i];
+            thumbnails[i] = new ThumbnailHeader(thumbnailDto.Id, (ThumbnailType)thumbnailDto.Type);
+        }
+
         var activeRevision = new Revision
         {
             Uid = new RevisionUid(uid, activeRevisionDto.Id),
@@ -234,7 +242,7 @@ internal static class DtoToMetadataConverter
             ClaimedSize = extendedAttributes?.Common?.Size,
             ClaimedModificationTime = extendedAttributes?.Common?.ModificationTime,
             ClaimedDigests = new FileContentDigests { Sha1 = extendedAttributes?.Common?.Digests?.Sha1 },
-            Thumbnails = [], // FIXME: thumbnails
+            Thumbnails = thumbnails.AsReadOnly(),
             ContentAuthor = decryptionResult.ContentAuthorshipClaim.ToAuthorshipResult(extendedAttributesOutput.AuthorshipVerificationFailure),
         };
 

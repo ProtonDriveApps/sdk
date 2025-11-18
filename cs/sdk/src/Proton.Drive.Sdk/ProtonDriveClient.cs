@@ -80,6 +80,7 @@ public sealed class ProtonDriveClient
 
         BlockUploader = new BlockUploader(this, maxDegreeOfBlockTransferParallelism);
         BlockDownloader = new BlockDownloader(this, maxDegreeOfBlockTransferParallelism);
+        ThumbnailBlockDownloader = new BlockDownloader(this, 8);
     }
 
     private ProtonDriveClient(
@@ -117,6 +118,7 @@ public sealed class ProtonDriveClient
 
     internal BlockUploader BlockUploader { get; }
     internal BlockDownloader BlockDownloader { get; }
+    internal BlockDownloader ThumbnailBlockDownloader { get; }
 
     internal Func<string, IEnumerable<string>> GetAlternateFileNames { get; } = AlternateFileNameGenerator.GetNames;
 
@@ -133,6 +135,11 @@ public sealed class ProtonDriveClient
     public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateFolderChildrenAsync(NodeUid folderId, CancellationToken cancellationToken = default)
     {
         return FolderOperations.EnumerateChildrenAsync(this, folderId, cancellationToken);
+    }
+
+    public IAsyncEnumerable<FileThumbnail> EnumerateThumbnailsAsync(IEnumerable<NodeUid> fileUids, CancellationToken cancellationToken = default)
+    {
+        return FileOperations.EnumerateThumbnailsAsync(this, fileUids, cancellationToken);
     }
 
     public async ValueTask<FileUploader> GetFileUploaderAsync(
