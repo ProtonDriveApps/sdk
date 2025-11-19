@@ -29,7 +29,6 @@ internal static class InteropFileUploader
         var uploadController = uploader.UploadFromStream(
             stream,
             thumbnails,
-            additionalMetadata: null,
             (completed, total) => progressAction.InvokeProgressUpdate(bindingsHandle, total, completed),
             cancellationToken);
 
@@ -56,7 +55,6 @@ internal static class InteropFileUploader
         var uploadController = uploader.UploadFromFile(
             request.FilePath,
             thumbnails,
-            additionalMetadata: null,
             (completed, total) => progressAction.InvokeProgressUpdate(bindingsHandle, total, completed),
             cancellationToken);
 

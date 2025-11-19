@@ -32,11 +32,10 @@ public sealed partial class FileUploader : IDisposable
     public UploadController UploadFromStream(
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
-        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
-        var task = UploadFromStreamAsync(contentStream, thumbnails, additionalMetadata, onProgress, cancellationToken);
+        var task = UploadFromStreamAsync(contentStream, thumbnails, _additionalMetadata, onProgress, cancellationToken);
 
         return new UploadController(task);
     }
@@ -44,11 +43,10 @@ public sealed partial class FileUploader : IDisposable
     public UploadController UploadFromFile(
         string filePath,
         IEnumerable<Thumbnail> thumbnails,
-        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
-        var task = UploadFromFileAsync(filePath, thumbnails, additionalMetadata, onProgress, cancellationToken);
+        var task = UploadFromFileAsync(filePath, thumbnails, _additionalMetadata, onProgress, cancellationToken);
 
         return new UploadController(task);
     }
