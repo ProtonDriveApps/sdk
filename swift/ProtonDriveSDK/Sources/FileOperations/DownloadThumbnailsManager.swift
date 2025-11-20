@@ -2,9 +2,6 @@ import Foundation
 
 /// Handles file download operations for ProtonDrive
 public actor DownloadThumbnailsManager {
-    enum Error: Swift.Error {
-        case noCancellationTokenForIdentifier
-    }
 
     private let clientHandle: ObjectHandle
     private let logger: Logger?
@@ -31,8 +28,10 @@ public actor DownloadThumbnailsManager {
         activeDownloads[cancellationToken] = cancellationTokenSource
 
         defer {
-            activeDownloads[cancellationToken] = nil
-            cancellationTokenSource.free()
+            if let cancellationTokenSource = activeDownloads[cancellationToken] {
+                activeDownloads[cancellationToken] = nil
+                cancellationTokenSource.free()
+            }
         }
 
         // TODO(SDK): pass thumbnail type once SDK accepts it
@@ -53,7 +52,7 @@ public actor DownloadThumbnailsManager {
 
     func cancelDownload(with cancellationToken: UUID) async throws {
         guard let downloadCancellationToken = activeDownloads[cancellationToken] else {
-            throw Error.noCancellationTokenForIdentifier
+            throw ProtonDriveSDKError(interopError: .noCancellationTokenForIdentifier(operation: "thumbnails download"))
         }
 
         try await downloadCancellationToken.cancel()

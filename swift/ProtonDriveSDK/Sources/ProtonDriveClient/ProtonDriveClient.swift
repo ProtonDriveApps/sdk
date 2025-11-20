@@ -102,6 +102,7 @@ public actor ProtonDriveClient: Sendable {
         modificationDate: Date,
         mediaType: String,
         thumbnails: [ThumbnailData],
+        overrideExistingDraft: Bool,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> FileNodeUploadResult {
@@ -113,6 +114,7 @@ public actor ProtonDriveClient: Sendable {
             modificationDate: modificationDate,
             mediaType: mediaType,
             thumbnails: thumbnails,
+            overrideExistingDraft: overrideExistingDraft,
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
@@ -124,6 +126,7 @@ public actor ProtonDriveClient: Sendable {
         fileSize: Int64,
         modificationDate: Date,
         thumbnails: [ThumbnailData],
+        cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> FileNodeUploadResult {
         try await uploadManager.uploadNewRevision(
@@ -132,6 +135,7 @@ public actor ProtonDriveClient: Sendable {
             fileSize: fileSize,
             modificationDate: modificationDate,
             thumbnails: thumbnails,
+            cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
     }
