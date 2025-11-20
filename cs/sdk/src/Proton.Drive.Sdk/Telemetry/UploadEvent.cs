@@ -10,6 +10,8 @@ public sealed class UploadEvent : IMetricEvent
 
     public required long UploadedSize { get; set; }
 
+    public required long ApproximateUploadedSize { get; set; }
+
     public required long ExpectedSize { get; set; }
 
     public UploadError? Error { get; set; }
