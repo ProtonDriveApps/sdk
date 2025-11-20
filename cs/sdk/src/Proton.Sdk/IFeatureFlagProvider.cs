@@ -2,5 +2,5 @@ namespace Proton.Sdk;
 
 public interface IFeatureFlagProvider
 {
-    bool IsEnabled(string flagName);
+    Task<bool> IsEnabledAsync(string flagName, CancellationToken cancellationToken);
 }
