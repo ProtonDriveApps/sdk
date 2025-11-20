@@ -39,12 +39,14 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
     }
     
     public enum InteropErrorTypes: Sendable {
+        case noCancellationTokenForIdentifier(operation: String)
         case wrongProto(message: String)
         case wrongSDKResponse(message: String)
         case wrongResult(message: String)
         
         var typeName: String {
             switch self {
+            case .noCancellationTokenForIdentifier(let operation): return "NoCancellationTokenFor\(operation.capitalized.replacingOccurrences(of: " ", with: ""))"
             case .wrongProto: return "WrongProtoMessageType"
             case .wrongSDKResponse: return "WrongSDKResponseType"
             case .wrongResult: return "WrongSDKRequestResult"
@@ -53,6 +55,7 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
         
         var message: String {
             switch self {
+            case .noCancellationTokenForIdentifier(let operation): return "No cancellation token found for \(operation)"
             case .wrongProto(let message): return message
             case .wrongSDKResponse(let message): return message
             case .wrongResult(let message): return message

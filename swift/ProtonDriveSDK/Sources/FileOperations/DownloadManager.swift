@@ -2,9 +2,6 @@ import Foundation
 
 /// Handles file download operations for ProtonDrive
 public actor DownloadManager {
-    enum Error: Swift.Error {
-        case noCancellationTokenForIdentifier
-    }
 
     private let clientHandle: ObjectHandle
     private let logger: Logger?
@@ -32,8 +29,10 @@ public actor DownloadManager {
         activeDownloads[cancellationToken] = cancellationTokenSource
 
         defer {
-            activeDownloads[cancellationToken] = nil
-            cancellationTokenSource.free()
+            if let cancellationTokenSource = activeDownloads[cancellationToken] {
+                activeDownloads[cancellationToken] = nil
+                cancellationTokenSource.free()
+            }
         }
 
         let downloaderHandle = try await buildFileDownloader(
@@ -71,7 +70,7 @@ public actor DownloadManager {
 
     func cancelDownload(with cancellationToken: UUID) async throws {
         guard let downloadCancellationToken = activeDownloads[cancellationToken] else {
-            throw Error.noCancellationTokenForIdentifier
+            throw ProtonDriveSDKError(interopError: .noCancellationTokenForIdentifier(operation: "download"))
         }
 
         try await downloadCancellationToken.cancel()
