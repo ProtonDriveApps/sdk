@@ -67,6 +67,7 @@ internal sealed class RevisionWriter : IDisposable
         {
             ExpectedSize = contentStream.Length,
             UploadedSize = 0,
+            ApproximateUploadedSize = 0,
             VolumeType = VolumeType.OwnVolume, // FIXME: figure out how to get the actual volume type
         };
 
@@ -150,6 +151,7 @@ internal sealed class RevisionWriter : IDisposable
 
                                                 // TODO: move this to a decorator, wrap the progress action
                                                 uploadEvent.UploadedSize = numberOfBytesUploaded;
+                                                uploadEvent.ApproximateUploadedSize = ReduceSizePrecision(numberOfBytesUploaded);
 
                                                 onProgress(numberOfBytesUploaded, contentLength);
                                             }
@@ -248,6 +250,30 @@ internal sealed class RevisionWriter : IDisposable
         {
             _releaseFileSemaphoreAction.Invoke();
         }
+    }
+
+    private static long ReduceSizePrecision(long size)
+    {
+        const long precision = 100_000;
+
+        if (size == 0)
+        {
+            return 0;
+        }
+
+        // We care about very small files in metrics, thus we handle explicitely
+        // the very small files so they appear correctly in metrics.
+        if (size < 4096)
+        {
+            return 4095;
+        }
+
+        if (size < precision)
+        {
+            return precision;
+        }
+
+        return (size / precision) * precision;
     }
 
     private static async ValueTask AddNextBlockToManifestAsync(Queue<Task<byte[]>> uploadTasks, RecyclableMemoryStream manifestStream)
