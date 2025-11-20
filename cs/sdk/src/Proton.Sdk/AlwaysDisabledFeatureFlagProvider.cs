@@ -9,8 +9,10 @@ internal sealed class AlwaysDisabledFeatureFlagProvider : IFeatureFlagProvider
     public static readonly IFeatureFlagProvider Instance = new AlwaysDisabledFeatureFlagProvider();
 
     private AlwaysDisabledFeatureFlagProvider()
-    {
-    }
+    { }
 
-    public bool IsEnabled(string flagName) => false;
+    public Task<bool> IsEnabledAsync(string flagName, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(false);
+    }
 }
