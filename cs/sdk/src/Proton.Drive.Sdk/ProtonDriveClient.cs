@@ -31,6 +31,7 @@ public sealed class ProtonDriveClient
             session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ApiTimeoutSeconds)),
             new AccountClientAdapter(session),
             new DriveClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository),
+            session.ClientConfiguration.FeatureFlagProvider,
             session.ClientConfiguration.Telemetry,
             uid ?? Guid.NewGuid().ToString())
     {
@@ -41,12 +42,14 @@ public sealed class ProtonDriveClient
         IAccountClient accountClient,
         ICacheRepository entityCacheRepository,
         ICacheRepository secretCacheRepository,
+        IFeatureFlagProvider featureFlagProvider,
         ITelemetry telemetry,
         string? uid = null)
         : this(
             new SdkHttpClientFactoryDecorator(httpClientFactory).CreateClient(),
             accountClient,
             new DriveClientCache(entityCacheRepository, secretCacheRepository),
+            featureFlagProvider,
             telemetry,
             uid ?? Guid.NewGuid().ToString())
     {
@@ -57,6 +60,7 @@ public sealed class ProtonDriveClient
         IDriveApiClients apiClients,
         IDriveClientCache cache,
         IBlockVerifierFactory blockVerifierFactory,
+        IFeatureFlagProvider featureFlagProvider,
         ITelemetry telemetry,
         string uid)
     {
@@ -68,6 +72,7 @@ public sealed class ProtonDriveClient
         BlockVerifierFactory = blockVerifierFactory;
         Telemetry = telemetry;
         Logger = telemetry.GetLogger<ProtonDriveClient>();
+        FeatureFlagProvider = featureFlagProvider;
 
         var maxDegreeOfBlockTransferParallelism = Math.Max(
             Math.Min(Environment.ProcessorCount / 2, MaxDegreeOfBlockTransferParallelism),
@@ -87,6 +92,7 @@ public sealed class ProtonDriveClient
         HttpClient httpClient,
         IAccountClient accountClient,
         IDriveClientCache cache,
+        IFeatureFlagProvider featureFlagProvider,
         ITelemetry telemetry,
         string uid)
         : this(
@@ -94,6 +100,7 @@ public sealed class ProtonDriveClient
             new DriveApiClients(httpClient),
             cache,
             new BlockVerifierFactory(httpClient),
+            featureFlagProvider,
             telemetry,
             uid)
     {
@@ -109,6 +116,7 @@ public sealed class ProtonDriveClient
     internal IBlockVerifierFactory BlockVerifierFactory { get; }
     internal ITelemetry Telemetry { get; }
     internal ILogger Logger { get; }
+    internal IFeatureFlagProvider FeatureFlagProvider { get; }
 
     internal FifoFlexibleSemaphore RevisionCreationSemaphore { get; }
     internal FifoFlexibleSemaphore BlockListingSemaphore { get; }
