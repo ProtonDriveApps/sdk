@@ -3,9 +3,6 @@ import SwiftProtobuf
 
 /// Handles file upload operations for ProtonDrive
 public actor UploadManager {
-    enum Error: Swift.Error {
-        case noCancellationTokenForIdentifier
-    }
 
     private let clientHandle: ObjectHandle
     private let logger: Logger?
@@ -30,8 +27,8 @@ public actor UploadManager {
         fileSize: Int64,
         modificationDate: Date,
         mediaType: String,
-        thumbnails: [ThumbnailData] = [],
-        overrideExistingDraft: Bool = false,
+        thumbnails: [ThumbnailData],
+        overrideExistingDraft: Bool,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> FileNodeUploadResult {
@@ -39,8 +36,10 @@ public actor UploadManager {
         activeUploads[cancellationToken] = cancellationTokenSource
 
         defer {
-            activeUploads[cancellationToken] = cancellationTokenSource
-            cancellationTokenSource.free()
+            if let cancellationTokenSource = activeUploads[cancellationToken] {
+                activeUploads[cancellationToken] = nil
+                cancellationTokenSource.free()
+            }
         }
 
         let cancellationHandle = cancellationTokenSource.handle
@@ -52,7 +51,7 @@ public actor UploadManager {
             fileSize: fileSize,
             modificationDate: modificationDate,
             overrideExistingDraft: overrideExistingDraft,
-            cancellationHandle: cancellationTokenSource.handle,
+            cancellationHandle: cancellationHandle,
             logger: logger
         )
 
@@ -76,12 +75,17 @@ public actor UploadManager {
         fileSize: Int64,
         modificationDate: Date,
         thumbnails: [ThumbnailData],
+        cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> FileNodeUploadResult {
         let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
+        activeUploads[cancellationToken] = cancellationTokenSource
+
         defer {
-            // TODO: Should be done in deinit!
-            cancellationTokenSource.free()
+            if let cancellationTokenSource = activeUploads[cancellationToken] {
+                activeUploads[cancellationToken] = nil
+                cancellationTokenSource.free()
+            }
         }
 
         let cancellationHandle = cancellationTokenSource.handle
@@ -104,7 +108,7 @@ public actor UploadManager {
 
     func cancelUpload(with cancellationToken: UUID) async throws {
         guard let uploadCancellationToken = activeUploads[cancellationToken] else {
-            throw Error.noCancellationTokenForIdentifier
+            throw ProtonDriveSDKError(interopError: .noCancellationTokenForIdentifier(operation: "upload"))
         }
 
         try await uploadCancellationToken.cancel()
@@ -122,8 +126,8 @@ extension UploadManager {
         mediaType: String,
         fileSize: Int64,
         modificationDate: Date,
-        overrideExistingDraft: Bool = false,
-        cancellationHandle: ObjectHandle? = nil,
+        overrideExistingDraft: Bool,
+        cancellationHandle: ObjectHandle?,
         logger: Logger?
     ) async throws -> ObjectHandle {
         let uploaderRequest = Proton_Drive_Sdk_DriveClientGetFileUploaderRequest.with {
@@ -149,7 +153,7 @@ extension UploadManager {
         currentActiveRevisionUid: SDKRevisionUid,
         fileSize: Int64,
         modificationDate: Date,
-        cancellationHandle: ObjectHandle? = nil
+        cancellationHandle: ObjectHandle?
     ) async throws -> ObjectHandle {
         let uploaderRequest = Proton_Drive_Sdk_DriveClientGetFileRevisionUploaderRequest.with {
             $0.clientHandle = Int64(clientHandle)

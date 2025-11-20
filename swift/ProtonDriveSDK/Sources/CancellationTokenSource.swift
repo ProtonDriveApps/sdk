@@ -38,11 +38,4 @@ actor CancellationTokenSource {
             strongSelf = nil
         }
     }
-
-    deinit {
-        logger?.trace("CancellationTokenSource.deinit, handle: \(String(describing: handle))", category: "Cancellation")
-//        // TODO(SDK): free handle in deinit
-//        free()
-//        logger?.trace("CancellationTokenSource.deinit, after handle: \(String(describing: cancellationHandle))", category: .cancellation)
-    }
 }
