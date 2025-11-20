@@ -3,5 +3,5 @@
  * Applications must supply their own implementation.
  */
 export interface FeatureFlagProvider {
-    isEnabled(flagName: string): boolean;
+    isEnabled(flagName: string, signal?: AbortSignal): Promise<boolean>;
 }

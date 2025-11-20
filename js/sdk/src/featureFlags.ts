@@ -5,7 +5,7 @@ import { FeatureFlagProvider } from './interface/featureFlags';
  */
 export class NullFeatureFlagProvider implements FeatureFlagProvider {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    isEnabled(flagName: string): boolean {
-        return false;
+    isEnabled(flagName: string, signal?: AbortSignal): Promise<boolean> {
+        return Promise.resolve(false);
     }
 }
