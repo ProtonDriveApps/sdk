@@ -37,6 +37,7 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
         {
             VolumeType = (VolumeType)me.VolumeType,
             UploadedSize = me.UploadedSize,
+            ApproximateUploadedSize = me.ApproximateUploadedSize,
             ExpectedSize = me.ExpectedSize,
         };
 
