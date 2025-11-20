@@ -3,6 +3,7 @@ import { OpenPGPCrypto, PrivateKey, SessionKey, SRPModule } from '../crypto';
 import { LatestEventIdProvider } from '../internal/events/interface';
 import { ProtonDriveAccount } from './account';
 import { ProtonDriveConfig } from './config';
+import { FeatureFlagProvider } from './featureFlags';
 import { ProtonDriveHTTPClient } from './httpClient';
 import { Telemetry, MetricEvent } from './telemetry';
 
@@ -12,6 +13,7 @@ export type { ProtonDriveAccount, ProtonDriveAccountAddress } from './account';
 export type { Author, UnverifiedAuthorError, AnonymousUser } from './author';
 export type { ProtonDriveConfig } from './config';
 export type { Device, DeviceOrUid } from './devices';
+export type { FeatureFlagProvider } from './featureFlags';
 export { DeviceType } from './devices';
 export type { FileDownloader, DownloadController, SeekableReadableStream } from './download';
 export type {
@@ -117,5 +119,6 @@ export interface ProtonDriveClientContructorParameters {
     srpModule: SRPModule;
     config?: ProtonDriveConfig;
     telemetry?: ProtonDriveTelemetry;
+    featureFlagProvider?: FeatureFlagProvider;
     latestEventIdProvider?: LatestEventIdProvider;
 }
