@@ -9,6 +9,7 @@ export * from './cache';
 export * from './errors';
 export type { OpenPGPCrypto, OpenPGPCryptoProxy } from './crypto';
 export { OpenPGPCryptoWithCryptoProxy } from './crypto';
+export { NullFeatureFlagProvider } from './featureFlags';
 export { ProtonDriveClient } from './protonDriveClient';
 export { VERSION } from './version';
 

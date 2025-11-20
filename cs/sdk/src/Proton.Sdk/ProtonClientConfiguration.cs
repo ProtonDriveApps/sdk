@@ -19,6 +19,7 @@ internal sealed class ProtonClientConfiguration(string appVersion, ProtonClientO
     public ICacheRepository SecretCacheRepository { get; } = options?.SecretCacheRepository ?? SqliteCacheRepository.OpenInMemory();
     public ICacheRepository EntityCacheRepository { get; } = options?.EntityCacheRepository ?? SqliteCacheRepository.OpenInMemory();
     public ITelemetry Telemetry { get; } = options?.Telemetry ?? NullTelemetry.Instance;
+    public IFeatureFlagProvider FeatureFlagProvider { get; } = options?.FeatureFlagProvider ?? AlwaysDisabledFeatureFlagProvider.Instance;
     public Uri RefreshRedirectUri { get; } = options?.RefreshRedirectUri ?? ProtonApiDefaults.RefreshRedirectUri;
     public string? BindingsLanguage { get; } = options?.BindingsLanguage;
 }

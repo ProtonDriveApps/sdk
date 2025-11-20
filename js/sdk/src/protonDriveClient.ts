@@ -1,5 +1,6 @@
 import { getConfig } from './config';
 import { DriveCrypto, SessionKey } from './crypto';
+import { NullFeatureFlagProvider } from './featureFlags';
 import {
     Logger,
     ProtonDriveClientContructorParameters,
@@ -117,10 +118,14 @@ export class ProtonDriveClient {
         srpModule,
         config,
         telemetry,
+        featureFlagProvider,
         latestEventIdProvider,
     }: ProtonDriveClientContructorParameters) {
         if (!telemetry) {
             telemetry = new Telemetry();
+        }
+        if (!featureFlagProvider) {
+            featureFlagProvider = new NullFeatureFlagProvider();
         }
         this.logger = telemetry.getLogger('interface');
 
