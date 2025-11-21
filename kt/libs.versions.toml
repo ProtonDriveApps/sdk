@@ -1,0 +1,112 @@
+[versions]
+# AndroidX
+androidx-compose = "1.7.5"
+androidx-room = "2.7.2"
+androidx-test = "1.5.0"
+# Android tools
+android-tools = "1.1.5"
+core = "35.0.0"
+# Dagger
+dagger = "2.53.1"
+# Desugar
+desugar = "2.0.4"
+# Gradle
+android-gradle-plugin = "8.9.1"
+maven-publish-gradle-plugin = "0.33.0"
+proton-detekt-plugin = "1.3.0"
+protobuf-plugin = "0.9.4"
+# Kotlin
+kotlin = "2.0.21"
+coroutines = "1.8.0"
+okhttp = "4.10.0"
+retrofit = "2.9.0"
+# Test
+junit = "4.13.2"
+robolectric = "4.15.1"
+fusion = "0.9.97"
+testParameterInjector = "1.10"
+protobufKotlinLite = "4.29.2"
+protobufJavaLite = "4.29.2"
+
+[libraries]
+
+# Android tools
+desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "android-tools" }
+
+# AndroidX
+## Room
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "androidx-room" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidx-room" }
+
+# Core
+core-account-dagger = { module = "me.proton.core:account-dagger", version.ref = "core" }
+core-accountManager-dagger = { module = "me.proton.core:account-manager-dagger", version.ref = "core" }
+core-accountRecovery-dagger = { module = "me.proton.core:account-recovery-dagger", version.ref = "core" }
+core-auth-domain = { module = "me.proton.core:auth-domain", version.ref = "core" }
+core-crypto-dagger = { module = "me.proton.core:crypto-dagger", version.ref = "core" }
+core-crypto-android = { module = "me.proton.core:crypto-android", version.ref = "core" }
+core-dataRoom = { module = "me.proton.core:data-room", version.ref = "core" }
+core-domain = { module = "me.proton.core:domain", version.ref = "core" }
+core-featureFlag-dagger = { module = "me.proton.core:feature-flag-dagger", version.ref = "core" }
+core-key-dagger = { module = "me.proton.core:key-dagger", version.ref = "core" }
+core-network-data = { module = "me.proton.core:network-data", version.ref = "core" }
+core-observability-dagger = { module = "me.proton.core:observability-dagger", version.ref = "core" }
+core-plan-dagger = { module = "me.proton.core:plan-dagger", version.ref = "core" }
+core-test-kotlin = { module = "me.proton.core:test-kotlin", version.ref = "core" }
+core-test-quark = { module = "me.proton.core:test-quark", version.ref = "core" }
+core-test-rule = { module = "me.proton.core:test-rule", version.ref = "core" }
+core-user-dagger = { module = "me.proton.core:user-dagger", version.ref = "core" }
+core-user-domain = { module = "me.proton.core:user-domain", version.ref = "core" }
+core-userSettings-dagger = { module = "me.proton.core:user-settings-dagger", version.ref = "core" }
+core-utilAndroidDatetime = { module = "me.proton.core:util-android-datetime", version.ref = "core" }
+core-utilKotlin = { module = "me.proton.core:util-kotlin", version.ref = "core" }
+
+# Dagger
+dagger-hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "dagger" }
+dagger-hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "dagger" }
+dagger-hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "dagger" }
+dagger-hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "dagger" }
+
+# Desugar
+tools-desugar = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar" }
+
+# Kotlin
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+
+# Kotlinx
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+
+# Squareup
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+okhttpLoggingInterceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+
+# Test
+androidx-test-core-ktx = { module = "androidx.test:core-ktx", version.ref = "androidx-test" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test" }
+androidx-test-rules = { module = "androidx.test:rules", version.ref = "androidx-test" }
+coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+junit = { module = "junit:junit", version.ref = "junit" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric"}
+fusion = { module = "me.proton.test:fusion", version.ref = "fusion"}
+testParameterInjector = { module = "com.google.testparameterinjector:test-parameter-injector", version.ref = "testParameterInjector" }
+protobuf-kotlin-lite = { group = "com.google.protobuf", name = "protobuf-kotlin-lite", version.ref = "protobufKotlinLite" }
+protobuf-javalite = { group = "com.google.protobuf", name = "protobuf-javalite", version.ref = "protobufJavaLite" }
+
+[bundles]
+test-android = [
+    "junit",
+    "coroutines-test",
+    "androidx-test-core-ktx",
+    "androidx-test-runner",
+    "androidx-test-rules",
+]
+
+[plugins]
+android-library = { id = "com.android.library", version.ref = "android-gradle-plugin" }
+hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "dagger" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish-gradle-plugin" }
+proton-detekt = { id = "me.proton.core.gradle-plugins.detekt", version.ref = "proton-detekt-plugin" }
+protobuf = { id = "com.google.protobuf", version.ref = "protobuf-plugin" }

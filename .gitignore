@@ -23,6 +23,9 @@ cache*.sqlite
 # VS Code
 .vs
 
+# Intellij
+.idea
+
 # Tests
 tests/storage
 

@@ -62,7 +62,7 @@ internal static class InteropProtonDriveClient
 
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
 
-        var additionalMetadata = request.AdditionalMetadata.Count > 0
+        var additionalMetadata = request.AdditionalMetadata != null && request.AdditionalMetadata.Count > 0
             ? request.AdditionalMetadata.Select(x =>
                 new Proton.Drive.Sdk.Nodes.AdditionalMetadataProperty(x.Name, JsonDocument.Parse(x.Utf8JsonValue.Memory).RootElement))
             : null;
