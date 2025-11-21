@@ -5,34 +5,34 @@
 /// </summary>
 internal sealed class FifoFlexibleSemaphore
 {
-    private readonly int _maximumCount;
     private readonly Queue<(int Increment, TaskCompletionSource TaskCompletionSource)> _waitingQueue = new();
 
     public FifoFlexibleSemaphore(int maximumCount)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumCount);
 
-        _maximumCount = maximumCount;
-        CurrentCount = 0;
+        MaximumCount = maximumCount;
+        CurrentCount = maximumCount;
     }
 
+    public int MaximumCount { get; }
     public int CurrentCount { get; private set; }
 
-    public ValueTask EnterAsync(int increment, CancellationToken cancellationToken = default)
+    public ValueTask EnterAsync(int count, CancellationToken cancellationToken = default)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(increment);
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
 
         TaskCompletionSource tcs;
         lock (_waitingQueue)
         {
-            if (CurrentCount < _maximumCount)
+            if (CurrentCount > 0)
             {
-                CurrentCount += increment;
+                CurrentCount -= count;
                 return ValueTask.CompletedTask;
             }
 
             tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            _waitingQueue.Enqueue((increment, tcs));
+            _waitingQueue.Enqueue((count, tcs));
         }
 
         var cancellationTokenRegistration = cancellationToken.Register(() => tcs.TrySetCanceled());
@@ -54,26 +54,26 @@ internal sealed class FifoFlexibleSemaphore
         }
     }
 
-    public void Release(int decrement)
+    public void Release(int count)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(decrement);
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
 
         lock (_waitingQueue)
         {
-            CurrentCount -= decrement;
+            CurrentCount += count;
 
-            if (CurrentCount < 0)
+            if (CurrentCount > MaximumCount)
             {
-                CurrentCount = 0;
+                CurrentCount = MaximumCount;
             }
 
-            while (CurrentCount < _maximumCount && _waitingQueue.TryDequeue(out var queuedEntry))
+            while (CurrentCount > 0 && _waitingQueue.TryDequeue(out var queuedEntry))
             {
-                var (increment, taskCompletionSource) = queuedEntry;
+                var (countToDecrement, taskCompletionSource) = queuedEntry;
 
                 if (taskCompletionSource.TrySetResult())
                 {
-                    CurrentCount += increment;
+                    CurrentCount -= countToDecrement;
                 }
             }
         }

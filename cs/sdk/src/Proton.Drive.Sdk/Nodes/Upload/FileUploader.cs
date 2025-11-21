@@ -9,6 +9,8 @@ public sealed partial class FileUploader : IDisposable
     private readonly IFileDraftProvider _fileDraftProvider;
     private readonly DateTimeOffset? _lastModificationTime;
     private readonly IEnumerable<AdditionalMetadataProperty>? _additionalMetadata;
+    private readonly ILogger _logger;
+
     private volatile int _remainingNumberOfBlocks;
 
     private FileUploader(
@@ -17,7 +19,8 @@ public sealed partial class FileUploader : IDisposable
         long size,
         DateTimeOffset? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
-        int expectedNumberOfBlocks)
+        int expectedNumberOfBlocks,
+        ILogger logger)
     {
         _client = client;
         _fileDraftProvider = fileDraftProvider;
@@ -25,6 +28,7 @@ public sealed partial class FileUploader : IDisposable
         _lastModificationTime = lastModificationTime;
         _additionalMetadata = additionalMetadata;
         _remainingNumberOfBlocks = expectedNumberOfBlocks;
+        _logger = logger;
     }
 
     internal long FileSize { get; }
@@ -64,23 +68,27 @@ public sealed partial class FileUploader : IDisposable
         IEnumerable<AdditionalMetadataProperty>? additionalExtendedAttributes,
         CancellationToken cancellationToken)
     {
+        var logger = client.Telemetry.GetLogger("File uploader");
+
         var expectedNumberOfBlocks = (int)size.DivideAndRoundUp(RevisionWriter.DefaultBlockSize);
 
-        LogEnteringRevisionCreationSemaphore(client.Logger, expectedNumberOfBlocks);
-        await client.RevisionCreationSemaphore.EnterAsync(expectedNumberOfBlocks, cancellationToken).ConfigureAwait(false);
-        LogEnteredRevisionCreationSemaphore(client.Logger, expectedNumberOfBlocks);
+        LogAcquiringRevisionCreationSemaphore(logger, expectedNumberOfBlocks);
 
-        return new FileUploader(client, fileDraftProvider, size, lastModificationTime, additionalExtendedAttributes, expectedNumberOfBlocks);
+        await client.RevisionCreationSemaphore.EnterAsync(expectedNumberOfBlocks, cancellationToken).ConfigureAwait(false);
+
+        LogAcquiredRevisionCreationSemaphore(logger, expectedNumberOfBlocks);
+
+        return new FileUploader(client, fileDraftProvider, size, lastModificationTime, additionalExtendedAttributes, expectedNumberOfBlocks, logger);
     }
 
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Trying to enter revision creation semaphore with {Increment}")]
-    private static partial void LogEnteringRevisionCreationSemaphore(ILogger logger, int increment);
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Trying to acquire {Count} from revision creation semaphore")]
+    private static partial void LogAcquiringRevisionCreationSemaphore(ILogger logger, int count);
 
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Entered revision creation semaphore with {Increment}")]
-    private static partial void LogEnteredRevisionCreationSemaphore(ILogger logger, int increment);
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Acquired {Count} from revision creation semaphore")]
+    private static partial void LogAcquiredRevisionCreationSemaphore(ILogger logger, int count);
 
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Released {Decrement} from revision creation semaphore")]
-    private static partial void LogReleasedRevisionCreationSemaphore(ILogger logger, int decrement);
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Released {Count} from revision creation semaphore")]
+    private static partial void LogReleasedRevisionCreationSemaphore(ILogger logger, int count);
 
     private async Task<(NodeUid NodeUid, RevisionUid RevisionUid)> UploadFromStreamAsync(
         Stream contentStream,
@@ -170,7 +178,8 @@ public sealed partial class FileUploader : IDisposable
         var amountToRelease = Math.Max(newRemainingNumberOfBlocks >= 0 ? numberOfBlocks : newRemainingNumberOfBlocks + numberOfBlocks, 0);
 
         _client.RevisionCreationSemaphore.Release(amountToRelease);
-        LogReleasedRevisionCreationSemaphore(_client.Logger, amountToRelease);
+
+        LogReleasedRevisionCreationSemaphore(_logger, amountToRelease);
     }
 
     private void ReleaseRemainingBlocks()
@@ -181,7 +190,8 @@ public sealed partial class FileUploader : IDisposable
         }
 
         _client.RevisionCreationSemaphore.Release(_remainingNumberOfBlocks);
-        LogReleasedRevisionCreationSemaphore(_client.Logger, _remainingNumberOfBlocks);
+
+        LogReleasedRevisionCreationSemaphore(_logger, _remainingNumberOfBlocks);
 
         _remainingNumberOfBlocks = 0;
     }

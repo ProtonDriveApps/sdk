@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Proton.Drive.Sdk.Api.Files;
+using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Serialization;
+using Proton.Drive.Sdk.Volumes;
 
 namespace Proton.Drive.Sdk.Nodes;
 
@@ -11,6 +13,12 @@ public readonly record struct RevisionUid : ICompositeUid<RevisionUid>
     internal RevisionUid(NodeUid nodeUid, RevisionId revisionId)
     {
         NodeUid = nodeUid;
+        RevisionId = revisionId;
+    }
+
+    internal RevisionUid(VolumeId volumeId, LinkId linkId, RevisionId revisionId)
+    {
+        NodeUid = new NodeUid(volumeId, linkId);
         RevisionId = revisionId;
     }
 
