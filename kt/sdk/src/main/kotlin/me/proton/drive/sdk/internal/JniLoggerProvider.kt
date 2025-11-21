@@ -1,0 +1,78 @@
+/*
+ * Copyright (c) 2025 Proton AG.
+ * This file is part of Proton Core.
+ *
+ * Proton Core is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Proton Core is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Proton Core.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package me.proton.drive.sdk.internal
+
+import com.google.protobuf.InvalidProtocolBufferException
+import me.proton.drive.sdk.LoggerProvider
+import me.proton.drive.sdk.SdkLogger
+import me.proton.drive.sdk.extension.decodeToString
+import me.proton.drive.sdk.extension.toLongResponse
+import proton.sdk.ProtonSdk
+import proton.sdk.loggerProviderCreate
+import proton.sdk.request
+import java.nio.ByteBuffer
+
+class JniLoggerProvider internal constructor(
+    private val sdkLogger: SdkLogger,
+) : JniBaseProtonSdk() {
+
+    init {
+        globalSdkLogger = sdkLogger
+    }
+
+    suspend fun create(): Long = executePersistent(
+        clientBuilder = { continuation ->
+            ProtonSdkNativeClient(
+                method("create"),
+                continuation.toLongResponse(),
+                callback = ::onLog,
+            )
+        },
+        requestBuilder = { client ->
+            request {
+                loggerProviderCreate = loggerProviderCreate {
+                    logAction = client.getCallbackPointer()
+                }
+            }
+        }
+    )
+
+    fun onLog(logEventMessage: ByteBuffer) {
+        try {
+            val logEvent = ProtonSdk.LogEvent.parseFrom(logEventMessage)
+
+            val priority = when (logEvent.level) {
+                0 -> LoggerProvider.Level.VERBOSE
+                1 -> LoggerProvider.Level.DEBUG
+                2 -> LoggerProvider.Level.INFO
+                3 -> LoggerProvider.Level.WARN
+                4, 5 -> LoggerProvider.Level.ERROR
+                else -> return
+            }
+
+            sdkLogger(priority, logEvent.categoryName, logEvent.message)
+        } catch (error: InvalidProtocolBufferException) {
+            sdkLogger(
+                LoggerProvider.Level.ERROR,
+                "parsing",
+                error.message + "\n" + logEventMessage.decodeToString()
+            )
+        }
+    }
+}
