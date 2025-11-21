@@ -43,7 +43,9 @@ internal static class InteropFileDownloader
 
     public static IMessage? HandleFree(FileDownloaderFreeRequest request)
     {
-        Interop.FreeHandle<FileDownloader>(request.FileDownloaderHandle);
+        var fileDownloader = Interop.FreeHandle<FileDownloader>(request.FileDownloaderHandle);
+
+        fileDownloader.Dispose();
 
         return null;
     }

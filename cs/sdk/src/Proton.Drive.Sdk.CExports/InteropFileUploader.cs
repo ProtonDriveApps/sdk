@@ -63,7 +63,9 @@ internal static class InteropFileUploader
 
     public static IMessage? HandleFree(FileUploaderFreeRequest request)
     {
-        Interop.FreeHandle<FileUploader>(request.FileUploaderHandle);
+        var fileUploader = Interop.FreeHandle<FileUploader>(request.FileUploaderHandle);
+
+        fileUploader.Dispose();
 
         return null;
     }
