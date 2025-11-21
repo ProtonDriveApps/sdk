@@ -15,7 +15,7 @@ import { UploadTelemetry } from './telemetry';
  * This class is not meant to be used directly, but rather to be extended
  * by `FileUploader` and `FileRevisionUploader`.
  */
-class Uploader {
+abstract class Uploader {
     protected controller: UploadController;
     protected abortController: AbortController;
 
@@ -83,7 +83,7 @@ class Uploader {
         stream: ReadableStream,
         thumbnails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,
-    ): Promise<{ nodeRevisionUid: string, nodeUid: string }> {
+    ): Promise<{ nodeRevisionUid: string; nodeUid: string }> {
         const uploader = await this.initStreamUploader();
         return uploader.start(stream, thumbnails, onProgress);
     }
@@ -94,15 +94,11 @@ class Uploader {
         const onFinish = async (failure: boolean) => {
             this.onFinish();
             if (failure) {
-                await this.manager.deleteDraftNode(revisionDraft.nodeUid);
+                await this.deleteRevisionDraft(revisionDraft);
             }
         };
 
-        return this.newStreamUploader(
-            blockVerifier,
-            revisionDraft,
-            onFinish,
-        );
+        return this.newStreamUploader(blockVerifier, revisionDraft, onFinish);
     }
 
     protected async newStreamUploader(
@@ -124,9 +120,12 @@ class Uploader {
         );
     }
 
-    protected async createRevisionDraft(): Promise<{ revisionDraft: NodeRevisionDraft; blockVerifier: BlockVerifier }> {
-        throw new Error('Not implemented');
-    }
+    protected abstract createRevisionDraft(): Promise<{
+        revisionDraft: NodeRevisionDraft;
+        blockVerifier: BlockVerifier;
+    }>;
+
+    protected abstract deleteRevisionDraft(revisionDraft: NodeRevisionDraft): Promise<void>;
 }
 
 /**
@@ -176,6 +175,10 @@ export class FileUploader extends Uploader {
             blockVerifier,
         };
     }
+
+    protected async deleteRevisionDraft(revisionDraft: NodeRevisionDraft): Promise<void> {
+        await this.manager.deleteDraftNode(revisionDraft.nodeUid);
+    }
 }
 
 /**
@@ -222,5 +225,9 @@ export class FileRevisionUploader extends Uploader {
             revisionDraft,
             blockVerifier,
         };
+    }
+
+    protected async deleteRevisionDraft(revisionDraft: NodeRevisionDraft): Promise<void> {
+        await this.manager.deleteDraftRevision(revisionDraft.nodeRevisionUid);
     }
 }
