@@ -24,17 +24,19 @@ internal static class Interop
         return GetFromHandle<T>(handle, free: true);
     }
 
-    public static void FreeHandle<T>(long handle)
+    public static T FreeHandle<T>(long handle)
         where T : class
     {
         var gcHandle = GCHandle.FromIntPtr((nint)handle);
 
-        if (gcHandle.Target is not T)
+        if (gcHandle.Target is not T target)
         {
             throw InvalidHandleException.Create<T>((nint)handle);
         }
 
         gcHandle.Free();
+
+        return target;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
