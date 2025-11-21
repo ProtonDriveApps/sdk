@@ -30,6 +30,8 @@ internal static partial class FileOperations
         ThumbnailType thumbnailType,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        var logger = client.Telemetry.GetLogger("Thumbnail enumeration");
+
         // TODO: optimize parallelization for when UIDs are scattered over many volumes
         foreach (var volumeLinkIdGroup in fileUids.GroupBy(uid => uid.VolumeId, uid => uid.LinkId))
         {
@@ -45,7 +47,7 @@ internal static partial class FileOperations
                     var thumbnails = fileNode!.ActiveRevision.Thumbnails;
                     if (thumbnails.Count == 0)
                     {
-                        LogNoThumbnailOnNode(client.Logger, fileNode.Uid);
+                        LogNoThumbnailOnNode(logger, fileNode.Uid);
                     }
 
                     return thumbnails
@@ -68,14 +70,14 @@ internal static partial class FileOperations
             {
                 var fileNode = thumbnailIds[block.ThumbnailId];
 
-                if (!await client.ThumbnailBlockDownloader.BlockSemaphore.WaitAsync(0, cancellationToken).ConfigureAwait(false))
+                if (!client.ThumbnailBlockDownloader.Queue.TryStartBlock())
                 {
                     if (tasks.Count > 0)
                     {
                         yield return await tasks.Dequeue().ConfigureAwait(false);
                     }
 
-                    await client.ThumbnailBlockDownloader.BlockSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                    await client.ThumbnailBlockDownloader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
                 }
 
                 tasks.Enqueue(DownloadThumbnailAsync(client, fileNode.Uid, block, cancellationToken));
@@ -113,7 +115,7 @@ internal static partial class FileOperations
         }
         finally
         {
-            client.ThumbnailBlockDownloader.BlockSemaphore.Release();
+            client.ThumbnailBlockDownloader.Queue.FinishBlocks(1);
         }
     }
 

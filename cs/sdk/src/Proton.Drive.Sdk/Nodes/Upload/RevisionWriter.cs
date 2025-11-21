@@ -12,19 +12,19 @@ using Proton.Sdk.Addresses;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
-internal sealed class RevisionWriter : IDisposable
+internal sealed partial class RevisionWriter : IDisposable
 {
     public const int DefaultBlockSize = 1 << 22; // 4 MiB
 
     private readonly ProtonDriveClient _client;
-    private readonly NodeUid _fileUid;
-    private readonly RevisionId _revisionId;
+    private readonly RevisionUid _revisionUid;
     private readonly PgpPrivateKey _fileKey;
     private readonly PgpSessionKey _contentKey;
     private readonly PgpPrivateKey _signingKey;
     private readonly Address _membershipAddress;
     private readonly Action<int> _releaseBlocksAction;
     private readonly Action _releaseFileSemaphoreAction;
+    private readonly ILogger _logger;
 
     private readonly int _targetBlockSize;
     private readonly int _maxBlockSize;
@@ -44,7 +44,7 @@ internal sealed class RevisionWriter : IDisposable
         int maxBlockSize = DefaultBlockSize)
     {
         _client = client;
-        (_fileUid, _revisionId) = revisionUid;
+        _revisionUid = revisionUid;
         _fileKey = fileKey;
         _contentKey = contentKey;
         _signingKey = signingKey;
@@ -53,6 +53,7 @@ internal sealed class RevisionWriter : IDisposable
         _releaseFileSemaphoreAction = releaseFileSemaphoreAction;
         _targetBlockSize = targetBlockSize;
         _maxBlockSize = maxBlockSize;
+        _logger = client.Telemetry.GetLogger("Revision writer");
     }
 
     public async ValueTask WriteAsync(
@@ -77,7 +78,7 @@ internal sealed class RevisionWriter : IDisposable
 
             var signingEmailAddress = _membershipAddress.EmailAddress;
 
-            var uploadTasks = new Queue<Task<byte[]>>(_client.BlockUploader.MaxDegreeOfParallelism);
+            var uploadTasks = new Queue<Task<byte[]>>(_client.BlockUploader.Queue.Depth);
             var blockIndex = 0;
 
             ArraySegment<byte> manifestSignature;
@@ -94,7 +95,7 @@ internal sealed class RevisionWriter : IDisposable
 
                 await using (manifestStream.ConfigureAwait(false))
                 {
-                    var blockVerifier = await _client.BlockVerifierFactory.CreateAsync(_fileUid, _revisionId, _fileKey, cancellationToken)
+                    var blockVerifier = await _client.BlockVerifierFactory.CreateAsync(_revisionUid, _fileKey, cancellationToken)
                         .ConfigureAwait(false);
 
                     using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -109,8 +110,7 @@ internal sealed class RevisionWriter : IDisposable
                                 await WaitForBlockUploaderAsync(uploadTasks, manifestStream, linkedCancellationToken).ConfigureAwait(false);
 
                                 var uploadTask = _client.BlockUploader.UploadThumbnailAsync(
-                                    _fileUid,
-                                    _revisionId,
+                                    _revisionUid,
                                     _contentKey,
                                     _signingKey,
                                     _membershipAddress.Id,
@@ -148,8 +148,7 @@ internal sealed class RevisionWriter : IDisposable
                                     : default(Action<long>?);
 
                                     var uploadTask = _client.BlockUploader.UploadContentAsync(
-                                        _fileUid,
-                                        _revisionId,
+                                        _revisionUid,
                                         ++blockIndex,
                                         _contentKey,
                                         _signingKey,
@@ -213,11 +212,16 @@ internal sealed class RevisionWriter : IDisposable
                 signingEmailAddress,
                 additionalMetadata);
 
-            _client.Logger.LogDebug("Sealing revision {RevisionId} of file {FileUid}", _revisionId, _fileUid);
+            LogSealingRevision(_revisionUid);
 
-            await _client.Api.Files.UpdateRevisionAsync(_fileUid.VolumeId, _fileUid.LinkId, _revisionId, request, cancellationToken).ConfigureAwait(false);
+            await _client.Api.Files.UpdateRevisionAsync(
+                _revisionUid.NodeUid.VolumeId,
+                _revisionUid.NodeUid.LinkId,
+                _revisionUid.RevisionId,
+                request,
+                cancellationToken).ConfigureAwait(false);
 
-            _client.Logger.LogDebug("Revision {RevisionId} of file {FileUid} sealed", _revisionId, _fileUid);
+            LogRevisionSealed(_revisionUid);
         }
         catch (Exception ex)
         {
@@ -311,16 +315,22 @@ internal sealed class RevisionWriter : IDisposable
 
     private async ValueTask WaitForBlockUploaderAsync(Queue<Task<byte[]>> uploadTasks, RecyclableMemoryStream manifestStream, CancellationToken cancellationToken)
     {
-        if (!await _client.BlockUploader.BlockSemaphore.WaitAsync(0, cancellationToken).ConfigureAwait(false))
+        if (!_client.BlockUploader.Queue.TryStartBlock())
         {
             if (uploadTasks.Count > 0)
             {
                 await AddNextBlockToManifestAsync(uploadTasks, manifestStream).ConfigureAwait(false);
             }
 
-            await _client.BlockUploader.BlockSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+            await _client.BlockUploader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Sealing revision \"{RevisionUid}\"")]
+    private partial void LogSealingRevision(RevisionUid revisionUid);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Revision \"{RevisionUid}\" sealed")]
+    private partial void LogRevisionSealed(RevisionUid revisionUid);
 
     private RevisionUpdateRequest GetRevisionUpdateRequest(
         DateTimeOffset? lastModificationTime,

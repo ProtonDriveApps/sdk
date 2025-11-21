@@ -1,7 +1,6 @@
 using CommunityToolkit.HighPerformance;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.BlockVerification;
-using Proton.Drive.Sdk.Api.Files;
 
 namespace Proton.Drive.Sdk.Nodes.Upload.Verification;
 
@@ -22,13 +21,13 @@ internal sealed class BlockVerifier : IBlockVerifier
 
     public static async ValueTask<BlockVerifier> CreateAsync(
         IBlockVerificationApiClient apiClient,
-        NodeUid fileUid,
-        RevisionId revisionId,
+        RevisionUid revisionUid,
         PgpPrivateKey key,
         CancellationToken cancellationToken)
     {
         var verificationInput =
-            await apiClient.GetVerificationInputAsync(fileUid.VolumeId, fileUid.LinkId, revisionId, cancellationToken).ConfigureAwait(false);
+            await apiClient.GetVerificationInputAsync(revisionUid.NodeUid.VolumeId, revisionUid.NodeUid.LinkId, revisionUid.RevisionId, cancellationToken)
+                .ConfigureAwait(false);
 
         PgpSessionKey sessionKey;
         try

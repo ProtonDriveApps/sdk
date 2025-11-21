@@ -15,25 +15,23 @@ using Proton.Sdk.Drive;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
-internal sealed class BlockUploader
+internal sealed partial class BlockUploader
 {
     private readonly ProtonDriveClient _client;
+    private readonly ILogger _logger;
 
     internal BlockUploader(ProtonDriveClient client, int maxDegreeOfParallelism)
     {
         _client = client;
-        MaxDegreeOfParallelism = maxDegreeOfParallelism;
-        BlockSemaphore = new SemaphoreSlim(maxDegreeOfParallelism, maxDegreeOfParallelism);
+        _logger = client.Telemetry.GetLogger("Block uploader");
+
+        Queue = new TransferQueue(maxDegreeOfParallelism, client.Telemetry.GetLogger("Block uploader queue"));
     }
 
-    public int MaxDegreeOfParallelism { get; }
-
-    public SemaphoreSlim FileSemaphore { get; } = new(1, 1);
-    public SemaphoreSlim BlockSemaphore { get; }
+    public TransferQueue Queue { get; }
 
     public async Task<byte[]> UploadContentAsync(
-        NodeUid fileUid,
-        RevisionId revisionId,
+        RevisionUid revisionUid,
         int index,
         PgpSessionKey contentKey,
         PgpPrivateKey signingKey,
@@ -107,9 +105,9 @@ internal sealed class BlockUploader
 
                         var request = new BlockUploadPreparationRequest
                         {
-                            VolumeId = fileUid.VolumeId,
-                            LinkId = fileUid.LinkId,
-                            RevisionId = revisionId,
+                            VolumeId = revisionUid.NodeUid.VolumeId,
+                            LinkId = revisionUid.NodeUid.LinkId,
+                            RevisionId = revisionUid.RevisionId,
                             AddressId = membershipAddressId,
                             Blocks =
                             [
@@ -129,11 +127,7 @@ internal sealed class BlockUploader
 
                         onBlockProgress?.Invoke(plainDataLength);
 
-                        _client.Logger.LogDebug(
-                            "Uploaded blob for block #{BlockIndex} for revision {RevisionId} of file {FileUid}",
-                            index,
-                            revisionId,
-                            fileUid);
+                        LogContentBlobUploaded(index, revisionUid);
 
                         return sha256Digest;
                     }
@@ -143,7 +137,7 @@ internal sealed class BlockUploader
             {
                 try
                 {
-                    BlockSemaphore.Release();
+                    Queue.FinishBlocks(1);
                 }
                 finally
                 {
@@ -158,8 +152,7 @@ internal sealed class BlockUploader
     }
 
     public async Task<byte[]> UploadThumbnailAsync(
-        NodeUid fileUid,
-        RevisionId revisionId,
+        RevisionUid revisionUid,
         PgpSessionKey contentKey,
         PgpPrivateKey signingKey,
         AddressId membershipAddressId,
@@ -190,9 +183,9 @@ internal sealed class BlockUploader
 
                 var request = new BlockUploadPreparationRequest
                 {
-                    VolumeId = fileUid.VolumeId,
-                    LinkId = fileUid.LinkId,
-                    RevisionId = revisionId,
+                    VolumeId = revisionUid.NodeUid.VolumeId,
+                    LinkId = revisionUid.NodeUid.LinkId,
+                    RevisionId = revisionUid.RevisionId,
                     AddressId = membershipAddressId,
                     Blocks = [],
                     Thumbnails =
@@ -208,7 +201,7 @@ internal sealed class BlockUploader
 
                 await UploadBlobAsync(request, dataPacketStream, cancellationToken).ConfigureAwait(false);
 
-                _client.Logger.LogDebug("Uploaded thumbnail blob for revision {RevisionId} of node {FileUid}", revisionId, fileUid);
+                LogThumbnailBlobUploaded(revisionUid);
 
                 return sha256Digest;
             }
@@ -217,11 +210,11 @@ internal sealed class BlockUploader
         {
             try
             {
-                _client.RevisionCreationSemaphore.Release(1);
+                Queue.FinishBlocks(1);
             }
             finally
             {
-                BlockSemaphore.Release(1);
+                _client.RevisionCreationSemaphore.Release(1);
             }
         }
     }
@@ -255,13 +248,9 @@ internal sealed class BlockUploader
             }
             catch (Exception e) when ((UrlExpired(e) || BlobAlreadyUploaded(e)) && remainingNumberOfAttempts >= 2)
             {
-                _client.Logger.LogWarning(
-                    e,
-                    "Blob upload failed for block #{BlockIndex} for revision {RevisionId} of file {FileUid} (remaining attempts: {RemainingAttempts}",
-                    request.Blocks[0].Index,
-                    request.RevisionId,
-                    new NodeUid(request.VolumeId, request.LinkId),
-                    remainingNumberOfAttempts);
+                var revisionUid = new RevisionUid(request.VolumeId, request.LinkId, request.RevisionId);
+
+                LogBlobUploadFailure(e, request.Blocks[0].Index, revisionUid, remainingNumberOfAttempts);
 
                 --remainingNumberOfAttempts;
             }
@@ -278,4 +267,15 @@ internal sealed class BlockUploader
         // causing the back-end to reject the upload with this error.
         static bool BlobAlreadyUploaded(Exception e) => e is ProtonApiException { Code: ResponseCode.AlreadyExists };
     }
+
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Uploaded blob for content block #{BlockIndex} for revision \"{RevisionUid}\"")]
+    private partial void LogContentBlobUploaded(int blockIndex, RevisionUid revisionUid);
+
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Uploaded blob for thumbnail block of revision \"{RevisionUid}\"")]
+    private partial void LogThumbnailBlobUploaded(RevisionUid revisionUid);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Blob upload failed for block #{BlockIndex} for revision \"{RevisionUid}\" (remaining attempts: {RemainingAttempts}")]
+    private partial void LogBlobUploadFailure(Exception exception, int blockIndex, RevisionUid revisionUid, int remainingAttempts);
 }

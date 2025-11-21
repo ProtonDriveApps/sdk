@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Proton.Drive.Sdk.Api.Files;
+﻿using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Sdk;
@@ -54,9 +53,7 @@ internal static partial class RevisionOperations
         var membershipAddress = await NodeOperations.GetMembershipAddressAsync(client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
         var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
 
-        LogEnteringFileUploadSemaphore(client.Logger, revisionUid);
-        await client.BlockUploader.FileSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-        LogEnteredFileUploadSemaphore(client.Logger, revisionUid);
+        await client.BlockUploader.Queue.StartFileAsync(cancellationToken).ConfigureAwait(false);
 
         return new RevisionWriter(
             client,
@@ -66,11 +63,7 @@ internal static partial class RevisionOperations
             signingKey,
             membershipAddress,
             releaseBlocksAction,
-            () =>
-            {
-                var previousCount = client.BlockUploader.FileSemaphore.Release();
-                LogReleasedFileUploadSemaphore(client.Logger, revisionUid, previousCount);
-            },
+            () => client.BlockUploader.Queue.FinishFile(),
             client.TargetBlockSize,
             client.MaxBlockSize);
     }
@@ -94,9 +87,7 @@ internal static partial class RevisionOperations
             withoutBlockUrls: false,
             cancellationToken).ConfigureAwait(false);
 
-        LogEnteringFileDownloadSemaphore(client.Logger, revisionUid);
-        await client.BlockDownloader.FileSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-        LogEnteredFileDownloadSemaphore(client.Logger, revisionUid);
+        await client.BlockDownloader.Queue.StartFileAsync(cancellationToken).ConfigureAwait(false);
 
         return new RevisionReader(
             client,
@@ -105,28 +96,6 @@ internal static partial class RevisionOperations
             fileSecrets.ContentKey,
             revisionResponse.Revision,
             releaseBlockListingAction,
-            () =>
-            {
-                var previousCount = client.BlockDownloader.FileSemaphore.Release();
-                LogReleasedFileDownloadSemaphore(client.Logger, revisionUid, previousCount);
-            });
+            () => client.BlockDownloader.Queue.FinishFile());
     }
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Trying to enter file upload semaphore for revision {RevisionUid}")]
-    private static partial void LogEnteringFileUploadSemaphore(ILogger logger, RevisionUid revisionUid);
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Entered file upload semaphore for revision {RevisionUid}")]
-    private static partial void LogEnteredFileUploadSemaphore(ILogger logger, RevisionUid revisionUid);
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Releasing file upload semaphore for revision {RevisionUid}, previous count = {PreviousCount}")]
-    private static partial void LogReleasedFileUploadSemaphore(ILogger logger, RevisionUid revisionUid, int previousCount);
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Trying to enter file download semaphore for revision {RevisionUid}")]
-    private static partial void LogEnteringFileDownloadSemaphore(ILogger logger, RevisionUid revisionUid);
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Entered file download semaphore for revision {RevisionUid}")]
-    private static partial void LogEnteredFileDownloadSemaphore(ILogger logger, RevisionUid revisionUid);
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Releasing file download semaphore for revision {RevisionUid}, previous count = {PreviousCount}")]
-    private static partial void LogReleasedFileDownloadSemaphore(ILogger logger, RevisionUid revisionUid, int previousCount);
 }

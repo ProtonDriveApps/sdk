@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using Microsoft.IO;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api;
@@ -73,7 +72,6 @@ public sealed class ProtonDriveClient
         Cache = cache;
         BlockVerifierFactory = blockVerifierFactory;
         Telemetry = telemetry;
-        Logger = telemetry.GetLogger<ProtonDriveClient>();
         FeatureFlagProvider = featureFlagProvider;
 
         var maxDegreeOfBlockTransferParallelism = Math.Max(
@@ -119,7 +117,6 @@ public sealed class ProtonDriveClient
     internal IDriveClientCache Cache { get; }
     internal IBlockVerifierFactory BlockVerifierFactory { get; }
     internal ITelemetry Telemetry { get; }
-    internal ILogger Logger { get; }
     internal IFeatureFlagProvider FeatureFlagProvider { get; }
 
     internal FifoFlexibleSemaphore RevisionCreationSemaphore { get; }
