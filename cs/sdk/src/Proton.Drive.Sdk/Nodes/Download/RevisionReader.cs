@@ -5,7 +5,7 @@ using Proton.Drive.Sdk.Api.Files;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 
-internal sealed class RevisionReader : IDisposable
+internal sealed partial class RevisionReader : IDisposable
 {
     public const int MinBlockIndex = 1;
     public const int DefaultBlockPageSize = 10;
@@ -19,6 +19,7 @@ internal sealed class RevisionReader : IDisposable
     private readonly Action<int> _releaseBlockListingAction;
     private readonly Action _releaseFileSemaphoreAction;
     private readonly int _blockPageSize;
+    private readonly ILogger _logger;
 
     private bool _fileSemaphoreReleased;
 
@@ -43,11 +44,12 @@ internal sealed class RevisionReader : IDisposable
         _releaseBlockListingAction = releaseBlockListingAction;
         _releaseFileSemaphoreAction = releaseFileSemaphoreAction;
         _blockPageSize = blockPageSize;
+        _logger = client.Telemetry.GetLogger("Revision reader");
     }
 
     public async ValueTask ReadAsync(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
     {
-        var downloadTasks = new Queue<Task<BlockDownloadResult>>(_client.BlockDownloader.MaxDegreeOfParallelism);
+        var downloadTasks = new Queue<Task<BlockDownloadResult>>(_client.BlockDownloader.Queue.Depth);
         var manifestStream = ProtonDriveClient.MemoryStreamManager.GetStream();
 
         await using (manifestStream)
@@ -66,7 +68,7 @@ internal sealed class RevisionReader : IDisposable
                 {
                     await foreach (var (block, _) in GetBlocksAsync(cancellationToken).ConfigureAwait(false))
                     {
-                        if (!await _client.BlockDownloader.BlockSemaphore.WaitAsync(0, cancellationToken).ConfigureAwait(false))
+                        if (!_client.BlockDownloader.Queue.TryStartBlock())
                         {
                             if (downloadTasks.Count > 0)
                             {
@@ -74,7 +76,7 @@ internal sealed class RevisionReader : IDisposable
                                     .ConfigureAwait(false);
                             }
 
-                            await _client.BlockDownloader.BlockSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                            await _client.BlockDownloader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
                         }
 
                         var downloadTask = DownloadBlockAsync(block, contentOutputStream, cancellationToken);
@@ -101,7 +103,7 @@ internal sealed class RevisionReader : IDisposable
                 }
                 finally
                 {
-                    _client.BlockDownloader.BlockSemaphore.Release(downloadTasks.Count);
+                    _client.BlockDownloader.Queue.FinishBlocks(downloadTasks.Count);
                 }
 
                 throw;
@@ -113,10 +115,7 @@ internal sealed class RevisionReader : IDisposable
 
             if (manifestVerificationStatus is not PgpVerificationStatus.Ok)
             {
-                _client.Logger.LogError(
-                    "Manifest verification failed for file with UID \"{FileUid}\": {VerificationStatus}",
-                    _fileUid,
-                    manifestVerificationStatus);
+                LogFailedManifestVerification(_fileUid, manifestVerificationStatus);
 
                 throw new ProtonDriveException("File authenticity check failed");
             }
@@ -171,7 +170,7 @@ internal sealed class RevisionReader : IDisposable
         }
         finally
         {
-            _client.BlockDownloader.BlockSemaphore.Release();
+            _client.BlockDownloader.Queue.FinishBlocks(1);
         }
     }
 
@@ -236,7 +235,7 @@ internal sealed class RevisionReader : IDisposable
 
                     if (block.Index != nextExpectedIndex)
                     {
-                        _client.Logger.LogError("Missing block #{BlockIndex} on file with UID \"{FileUid}\"", block.Index, _fileUid);
+                        LogMissingBlock(block.Index, _fileUid);
 
                         throw new ProtonDriveException("File contents are incomplete");
                     }
@@ -295,6 +294,12 @@ internal sealed class RevisionReader : IDisposable
 
         return verificationResult.Status;
     }
+
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Missing block #{BlockIndex} on file with UID \"{FileUid}\"")]
+    private partial void LogMissingBlock(int blockIndex, NodeUid fileUid);
+
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Manifest verification failed for file with UID \"{FileUid}\": {VerificationStatus}")]
+    private partial void LogFailedManifestVerification(NodeUid fileUid, PgpVerificationStatus verificationStatus);
 
     private readonly struct BlockDownloadResult(int index, Stream stream, bool isIntermediateStream, ReadOnlyMemory<byte> sha256Digest)
     {
