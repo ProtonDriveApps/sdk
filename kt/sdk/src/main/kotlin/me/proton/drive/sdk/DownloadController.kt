@@ -29,5 +29,9 @@ class DownloadController internal constructor(
 
     suspend fun awaitCompletion() = bridge.awaitCompletion(handle)
 
+    suspend fun resume() = bridge.resume(handle)
+
+    suspend fun pause() = bridge.pause(handle)
+
     override fun close() = bridge.free(handle)
 }

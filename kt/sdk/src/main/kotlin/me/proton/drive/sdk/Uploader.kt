@@ -61,6 +61,7 @@ class Uploader internal constructor(
             handle = handle,
             bridge = JniUploadController(),
             cancellationTokenSource = source,
+            inputStream = inputStream,
         )
     }
 
