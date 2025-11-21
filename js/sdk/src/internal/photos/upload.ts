@@ -220,7 +220,7 @@ export class PhotoUploadAPIService extends UploadAPIService {
             XAttr: options.armoredExtendedAttributes || null,
             Photo: {
                 ContentHash: photo.contentHash,
-                CaptureTime: photo.captureTime?.getTime() || 0,
+                CaptureTime: photo.captureTime ? Math.floor(photo.captureTime?.getTime() /1000) : 0,
                 MainPhotoLinkID: photo.mainPhotoLinkID || null,
                 Tags: photo.tags || [],
                 Exif: null, // Deprecated field, not used.
