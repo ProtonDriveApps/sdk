@@ -78,7 +78,7 @@ class ProtonDriveSdkNativeClient internal constructor(
     external fun getWritePointer(): Long
     external fun getProgressPointer(): Long
     external fun getSendHttpRequestPointer(): Long
-    external fun getRequestPointer(): Long
+    external fun getAccountRequestPointer(): Long
     external fun getRecordMetricPointer(): Long
 
     @Suppress("unused") // Called by JNI
@@ -88,10 +88,12 @@ class ProtonDriveSdkNativeClient internal constructor(
     }
 
     @Suppress("unused") // Called by JNI
-    fun onProgress(data: ByteBuffer) = onCallback("progress") {
-        logger("progress for $name of size: ${data.capacity()}")
-        progress(ProtonDriveSdk.ProgressUpdate.parseFrom(data))
-    }
+    fun onProgress(data: ByteBuffer) = onCallback(
+        callback = "progress",
+        data = data,
+        parser = ProtonDriveSdk.ProgressUpdate::parseFrom,
+        block = progress,
+    )
 
     @Suppress("unused") // Called by JNI
     fun onRead(buffer: ByteBuffer, sdkHandle: Long) = onOperation("read", sdkHandle) {
@@ -109,8 +111,15 @@ class ProtonDriveSdkNativeClient internal constructor(
     }
 
     @Suppress("unused") // Called by JNI
-    fun onSendHttpRequest(data: ByteBuffer, sdkHandle: Long) = onOperation("http", sdkHandle) {
-        val httpRequest = ProtonSdk.HttpRequest.parseFrom(data)
+    fun onSendHttpRequest(
+        data: ByteBuffer,
+        sdkHandle: Long,
+    ) = onRequest(
+        operation = "http",
+        data = data,
+        sdkHandle = sdkHandle,
+        parser = ProtonSdk.HttpRequest::parseFrom,
+    ) { httpRequest ->
         logger("send http request for ${httpRequest.method} ${httpRequest.url} of size: ${data.capacity()}")
         val httpResponse = sendHttpRequest(httpRequest)
         logger("receive http response ${httpResponse.statusCode} for ${httpRequest.method} ${httpRequest.url}")
@@ -118,18 +127,27 @@ class ProtonDriveSdkNativeClient internal constructor(
     }
 
     @Suppress("unused") // Called by JNI
-    fun onRequest(data: ByteBuffer, sdkHandle: Long) = onOperation("request", sdkHandle) {
-        val clientRequest = ProtonDriveSdk.AccountRequest.parseFrom(data)
-        logger("request for ${clientRequest.payloadCase.name} of size: ${data.capacity()}")
-        val response = request(clientRequest)
+    fun onAccountRequest(
+        data: ByteBuffer,
+        sdkHandle: Long,
+    ) = onRequest(
+        operation = "request",
+        data = data,
+        sdkHandle = sdkHandle,
+        parser = ProtonDriveSdk.AccountRequest::parseFrom,
+    ) { accountRequest ->
+        logger("request for ${accountRequest.payloadCase.name} of size: ${data.capacity()}")
+        val response = request(accountRequest)
         response { value = response }
     }
 
     @Suppress("TooGenericExceptionCaught", "unused") // Called by JNI
-    fun onRecordMetric(data: ByteBuffer) = onCallback("recordMetric") {
-        logger("Record metric for $name of size: ${data.capacity()}")
-        recordMetric(ProtonSdk.MetricEvent.parseFrom(data))
-    }
+    fun onRecordMetric(data: ByteBuffer) = onCallback(
+        callback = "recordMetric",
+        data = data,
+        parser = ProtonSdk.MetricEvent::parseFrom,
+        block = recordMetric,
+    )
 
     @Suppress("TooGenericExceptionCaught")
     private fun onOperation(operation: String, sdkHandle: Long, block: suspend () -> Response) {
@@ -155,18 +173,53 @@ class ProtonDriveSdkNativeClient internal constructor(
     }
 
     @Suppress("TooGenericExceptionCaught")
-    private fun onCallback(callback: String, block: suspend () -> Unit) {
-        coroutineScope(callback).launch {
-            try {
-                block()
-            } catch (error: CancellationException) {
-                logger("Callback $callback was cancelled")
-                throw error
-            } catch (error: Throwable) {
-                logger("Error while $callback")
-                logger(error.stackTraceToString())
-            }
+    private fun <T> onRequest(
+        operation: String,
+        data: ByteBuffer,
+        sdkHandle: Long,
+        parser: (ByteBuffer) -> T,
+        block: suspend (T) -> Response
+    ) {
+        try {
+            // parsing of protobuf needs to be done serially
+            val request = parser(data)
+            onOperation(operation, sdkHandle) { block(request) }
+        } catch (error: Throwable) {
+            handleResponse(sdkHandle, response {
+                this@response.error = error.toProtonSdkError(
+                    "Error while parsing request for $operation"
+                )
+            })
         }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun <T> onCallback(
+        callback: String,
+        data: ByteBuffer,
+        parser: (ByteBuffer) -> T,
+        block: suspend (T) -> Unit
+    ) {
+        try {
+            logger("callback for $name of size: ${data.capacity()}")
+            // parsing of protobuf needs to be done serially
+            val value = parser(data)
+            coroutineScope(callback).launch {
+                try {
+                    block(value)
+                } catch (error: CancellationException) {
+                    logger("Callback $callback was cancelled")
+                    throw error
+                } catch (error: Throwable) {
+                    logger("Error while $callback")
+                    logger(error.stackTraceToString())
+                }
+            }
+        } catch (error: Throwable) {
+            logger("Error while parsing value for $callback")
+            logger(error.stackTraceToString())
+        }
+
     }
 
     private fun coroutineScope(operation: String): CoroutineScope {

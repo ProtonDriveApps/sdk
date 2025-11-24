@@ -47,7 +47,7 @@ class JniDriveClient internal constructor() : JniBaseProtonDriveSdk() {
             driveClientCreate = driveClientCreateRequest {
                 baseUrl = request.baseUrl
                 httpClientRequestAction = client.getSendHttpRequestPointer()
-                accountClientRequestAction = client.getRequestPointer()
+                accountClientRequestAction = client.getAccountRequestPointer()
                 entityCachePath = request.entityCachePath
                 secretCachePath = request.secretCachePath
                 telemetry = telemetry {
