@@ -121,11 +121,15 @@ internal static class InteropProtonDriveClient
 
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
 
-        var thumbnails = await client.EnumerateThumbnailsAsync(request.FileUids.Select(NodeUid.Parse), cancellationToken)
+        var thumbnailsEnumerable = client.EnumerateThumbnailsAsync(
+            request.FileUids.Select(NodeUid.Parse),
+            (Proton.Drive.Sdk.Nodes.ThumbnailType)request.Type,
+            cancellationToken);
+
+        var thumbnails = await thumbnailsEnumerable
             .Select(x => new FileThumbnail
             {
                 FileUid = x.FileUid.ToString(),
-                Type = (ThumbnailType)x.Type,
                 Data = ByteString.CopyFrom(x.Data.Span),
             })
             .ToListAsync(cancellationToken).ConfigureAwait(false);

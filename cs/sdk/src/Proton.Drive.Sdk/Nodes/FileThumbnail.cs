@@ -1,3 +1,3 @@
 namespace Proton.Drive.Sdk.Nodes;
 
-public sealed record FileThumbnail(NodeUid FileUid, ThumbnailType Type, ReadOnlyMemory<byte> Data);
+public sealed record FileThumbnail(NodeUid FileUid, ReadOnlyMemory<byte> Data);

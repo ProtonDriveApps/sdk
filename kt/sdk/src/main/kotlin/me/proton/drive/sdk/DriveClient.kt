@@ -20,7 +20,7 @@ package me.proton.drive.sdk
 
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
 import me.proton.drive.sdk.entity.ThumbnailType
-import me.proton.drive.sdk.extension.toEntity
+import me.proton.drive.sdk.extension.toProto
 import me.proton.drive.sdk.internal.JniDriveClient
 import proton.drive.sdk.driveClientGetAvailableNameRequest
 import proton.drive.sdk.driveClientGetThumbnailsRequest
@@ -48,18 +48,18 @@ class DriveClient internal constructor(
 
     suspend fun getThumbnails(
         fileUids: List<String>,
-        block: (String, ThumbnailType) -> OutputStream?,
+        type: ThumbnailType,
+        block: (String) -> OutputStream,
     ): Unit = cancellationTokenSource().let { source ->
         bridge.getThumbnails(
             driveClientGetThumbnailsRequest {
                 this.fileUids += fileUids
+                this.type = type.toProto()
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }
         ).thumbnailsList.forEach { fileThumbnail ->
-            fileThumbnail.type.toEntity()?.let { thumbnailType ->
-                block(fileThumbnail.fileUid, thumbnailType)
-            }?.use { outputStream ->
+            block(fileThumbnail.fileUid).use { outputStream ->
                 outputStream.write(fileThumbnail.data.toByteArray())
             }
         }
