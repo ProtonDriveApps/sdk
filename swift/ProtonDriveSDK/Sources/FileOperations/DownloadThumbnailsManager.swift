@@ -34,9 +34,9 @@ public actor DownloadThumbnailsManager {
             }
         }
 
-        // TODO(SDK): pass thumbnail type once SDK accepts it
         let thumbnailsRequest = Proton_Drive_Sdk_DriveClientGetThumbnailsRequest.with {
             $0.clientHandle = Int64(clientHandle)
+            $0.type = type.sdkType
             $0.fileUids = fileUids.map(\.sdkCompatibleIdentifier)
             $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
         }
@@ -59,5 +59,16 @@ public actor DownloadThumbnailsManager {
         try await downloadCancellationToken.free()
 
         activeDownloads[cancellationToken] = nil
+    }
+}
+
+private extension ThumbnailData.ThumbnailType {
+    var sdkType: Proton_Drive_Sdk_ThumbnailType {
+        switch self {
+        case .preview:
+            return .preview
+        case .thumbnail:
+            return .thumbnail
+        }
     }
 }

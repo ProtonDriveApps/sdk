@@ -27,6 +27,7 @@ internal static partial class FileOperations
     public static async IAsyncEnumerable<FileThumbnail> EnumerateThumbnailsAsync(
         ProtonDriveClient client,
         IEnumerable<NodeUid> fileUids,
+        ThumbnailType thumbnailType,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         // TODO: optimize parallelization for when UIDs are scattered over many volumes
@@ -47,9 +48,12 @@ internal static partial class FileOperations
                         LogNoThumbnailOnNode(client.Logger, fileNode.Uid);
                     }
 
-                    return thumbnails.Select(thumbnail => (thumbnail.Id, thumbnail.Type, Node: fileNode)).ToAsyncEnumerable();
+                    return thumbnails
+                        .Where(thumbnail => thumbnail.Type == thumbnailType)
+                        .Select(thumbnail => (thumbnail.Id, Node: fileNode))
+                        .ToAsyncEnumerable();
                 })
-                .ToDictionaryAsync(thumbnail => thumbnail.Id, thumbnail => (thumbnail.Type, NodeUid: thumbnail.Node), cancellationToken)
+                .ToDictionaryAsync(thumbnail => thumbnail.Id, thumbnail => thumbnail.Node, cancellationToken)
                 .ConfigureAwait(false);
 
             if (thumbnailIds.Count == 0)
@@ -62,7 +66,7 @@ internal static partial class FileOperations
             var tasks = new Queue<Task<FileThumbnail>>();
             foreach (var block in response.Blocks)
             {
-                var (type, fileNode) = thumbnailIds[block.ThumbnailId];
+                var fileNode = thumbnailIds[block.ThumbnailId];
 
                 if (!await client.ThumbnailBlockDownloader.BlockSemaphore.WaitAsync(0, cancellationToken).ConfigureAwait(false))
                 {
@@ -74,7 +78,7 @@ internal static partial class FileOperations
                     await client.ThumbnailBlockDownloader.BlockSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
                 }
 
-                tasks.Enqueue(DownloadThumbnailAsync(client, fileNode.Uid, type, block, cancellationToken));
+                tasks.Enqueue(DownloadThumbnailAsync(client, fileNode.Uid, block, cancellationToken));
             }
 
             while (tasks.TryDequeue(out var task))
@@ -87,7 +91,6 @@ internal static partial class FileOperations
     private static async Task<FileThumbnail> DownloadThumbnailAsync(
         ProtonDriveClient client,
         NodeUid fileUid,
-        ThumbnailType thumbnailType,
         ThumbnailBlock block,
         CancellationToken cancellationToken)
     {
@@ -105,7 +108,7 @@ internal static partial class FileOperations
 
                 var thumbnailData = outputStream.TryGetBuffer(out var outputBuffer) ? outputBuffer : outputStream.ToArray();
 
-                return new FileThumbnail(fileUid, thumbnailType, thumbnailData);
+                return new FileThumbnail(fileUid, thumbnailData);
             }
         }
         finally

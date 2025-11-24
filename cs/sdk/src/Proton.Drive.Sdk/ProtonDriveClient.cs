@@ -145,9 +145,12 @@ public sealed class ProtonDriveClient
         return FolderOperations.EnumerateChildrenAsync(this, folderId, cancellationToken);
     }
 
-    public IAsyncEnumerable<FileThumbnail> EnumerateThumbnailsAsync(IEnumerable<NodeUid> fileUids, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<FileThumbnail> EnumerateThumbnailsAsync(
+        IEnumerable<NodeUid> fileUids,
+        ThumbnailType type,
+        CancellationToken cancellationToken = default)
     {
-        return FileOperations.EnumerateThumbnailsAsync(this, fileUids, cancellationToken);
+        return FileOperations.EnumerateThumbnailsAsync(this, fileUids, type, cancellationToken);
     }
 
     public async ValueTask<FileUploader> GetFileUploaderAsync(

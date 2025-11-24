@@ -110,8 +110,7 @@ message Thumbnail {
 
 message FileThumbnail {
     string file_uid = 1;
-    ThumbnailType type = 2;
-    bytes data = 3;
+    bytes data = 2;
 }
 
 message FileThumbnailList {
@@ -247,7 +246,8 @@ message DriveClientGetAvailableNameRequest {
 message DriveClientGetThumbnailsRequest {
     int64 client_handle = 1;
     repeated string file_uids = 2;
-    int64 cancellation_token_source_handle = 3;
+    ThumbnailType type = 3;
+    int64 cancellation_token_source_handle = 4;
 }
 
 // Drive - downloads
