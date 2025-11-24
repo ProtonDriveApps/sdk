@@ -13,6 +13,7 @@ public actor ProtonDriveClient: Sendable {
 
     private let logger: ProtonDriveSDK.Logger
     private let recordMetricEventCallback: RecordMetricEventCallback
+    private let featureFlagProviderCallback: FeatureFlagProviderCallback
 
     let httpClient: HttpClientProtocol
     let accountClient: AccountClientProtocol
@@ -25,10 +26,12 @@ public actor ProtonDriveClient: Sendable {
         accountClient: AccountClientProtocol,
         clientUID: String?,
         logCallback: @escaping LogCallback,
-        recordMetricEventCallback: @escaping RecordMetricEventCallback
+        recordMetricEventCallback: @escaping RecordMetricEventCallback,
+        featureFlagProviderCallback: @escaping FeatureFlagProviderCallback
     ) async throws {
         self.logger = try await Logger(logCallback: logCallback)
         self.recordMetricEventCallback = recordMetricEventCallback
+        self.featureFlagProviderCallback = featureFlagProviderCallback
 
         self.httpClient = httpClient
         self.accountClient = accountClient
@@ -42,6 +45,8 @@ public actor ProtonDriveClient: Sendable {
                 $0.logAction = Int64(ObjectHandle(callback: cCompatibleLogCallback))
                 $0.recordMetricAction = Int64(ObjectHandle(callback: cCompatibleTelemetryRecordMetricCallback))
             }
+
+            $0.featureFlags = Int64(ObjectHandle(callback: cCompatibleFeatureFlagProviderCallback))
 
             if let entityCachePath {
                 $0.entityCachePath = entityCachePath
@@ -74,6 +79,11 @@ public actor ProtonDriveClient: Sendable {
 
     nonisolated func record(_ metricEvent: MetricEvent) {
         recordMetricEventCallback(metricEvent)
+    }
+
+    func isFlagEnabled(_ flagName: String) async -> Bool {
+        await featureFlagProviderCallback(flagName)
+    nonisolated func isFlagEnabled(_ flagName: String) async -> Bool {
     }
 
     public func downloadFile(

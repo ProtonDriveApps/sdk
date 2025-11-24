@@ -38,8 +38,11 @@ internal static class InteropProtonDriveClient
             ? new DriveInteropTelemetryDecorator(interopTelemetry)
             : NullTelemetry.Instance;
 
-        // FIXME add support for client to inject FF provider
-        var client = new ProtonDriveClient(httpClientFactory, accountClient, entityCacheRepository, secretCacheRepository, AlwaysDisabledFeatureFlagProvider.Instance, telemetry, request.Uid);
+        IFeatureFlagProvider featureFlagProvider = request.HasFeatureEnabledFunction
+            ? new InteropFeatureFlagProvider(bindingsHandle, new InteropFunction<nint, InteropArray<byte>, int>(request.FeatureEnabledFunction))
+            : AlwaysDisabledFeatureFlagProvider.Instance;
+
+        var client = new ProtonDriveClient(httpClientFactory, accountClient, entityCacheRepository, secretCacheRepository, featureFlagProvider, telemetry, request.Uid);
 
         return new Int64Value
         {

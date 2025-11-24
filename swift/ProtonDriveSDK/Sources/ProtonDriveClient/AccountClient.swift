@@ -10,7 +10,7 @@ public protocol AccountClientProtocol: Sendable {
     func getAddressPublicKeysRequest(emailAddress: String) -> [Data]
 }
 
-let cCompatibleAccountClientRequest: CCallbackWithReturnValue = { statePointer, byteArray, callbackPointer in
+let cCompatibleAccountClientRequest: CCallbackWithCallbackPointer = { statePointer, byteArray, callbackPointer in
     guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
         return
     }

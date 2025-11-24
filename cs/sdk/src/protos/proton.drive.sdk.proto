@@ -149,6 +149,13 @@ message DriveClientCreateRequest {
     // Client UID, optional 
     // If a null value is provided, the SDK automatically generates a UUID during initialization
     string uid = 8;
+
+    // Pointer to C function that will be called to check feature flags:
+    // int is_feature_flag_enabled(intptr_t bindings_handle, ByteArray flag_name)
+    //   bindings_handle: handle for the bindings
+    //   flag_name: UTF-8 encoded feature flag name
+    //   returns: 0 for disabled, non-zero for enabled
+    int64 feature_enabled_function = 9; // Optional
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of ProtonDriveClient.

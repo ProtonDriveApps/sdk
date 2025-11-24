@@ -13,7 +13,13 @@ extension ObjectHandle {
     }
 
     /// Returns the address of a callback as a number
-    init(callback: CCallbackWithReturnValue) {
+    init(callback: CCallbackWithCallbackPointer) {
+        let callbackAddress: UnsafeRawPointer = unsafeBitCast(callback, to: UnsafeRawPointer.self)
+        self = ObjectHandle(bitPattern: callbackAddress)
+    }
+
+    /// Returns the address of a callback with int return as a number
+    init(callback: CCallbackWithIntReturn) {
         let callbackAddress: UnsafeRawPointer = unsafeBitCast(callback, to: UnsafeRawPointer.self)
         self = ObjectHandle(bitPattern: callbackAddress)
     }
@@ -32,7 +38,8 @@ func address<T: AnyObject>(of object: T) -> ObjectHandle {
 
 /// C-compatible callback used by SDK to pass data to the app
 typealias CCallback = @convention(c) (Int, ByteArray) -> Void
-typealias CCallbackWithReturnValue = @convention(c) (Int, ByteArray, Int) -> Void
+typealias CCallbackWithCallbackPointer = @convention(c) (Int, ByteArray, Int) -> Void
+typealias CCallbackWithIntReturn = @convention(c) (Int, ByteArray) -> Int32
 
 extension Data {
     var dumptoString: String {
@@ -105,38 +112,6 @@ extension Proton_Sdk_ProtonClientTlsPolicy {
 
         case .noCertificateValidation:
             self = .noCertificateValidation
-        }
-    }
-}
-
-extension Proton_Sdk_ProtonClientOptions {
-    init(clientOptions: ClientOptions) {
-        self = Proton_Sdk_ProtonClientOptions.with {
-            if let baseUrl = clientOptions.baseUrl {
-                $0.baseURL = baseUrl
-            }
-
-            if let userAgent = clientOptions.userAgent {
-                $0.userAgent = userAgent
-            }
-
-            if let bindingsLanguage = clientOptions.bindingsLanguage {
-                $0.bindingsLanguage = bindingsLanguage
-            }
-
-            if let tlsPolicy = clientOptions.tlsPolicy {
-                $0.tlsPolicy = Proton_Sdk_ProtonClientTlsPolicy(tlsPolicy: tlsPolicy)
-            }
-
-            if let loggerProviderHandle = clientOptions.loggerProviderHandle {
-                $0.telemetry = Proton_Sdk_Telemetry.with {
-                    $0.loggerProviderHandle = Int64(loggerProviderHandle)
-                }
-            }
-
-            if let entityCachePath = clientOptions.entityCachePath {
-                $0.entityCachePath = entityCachePath
-            }
         }
     }
 }

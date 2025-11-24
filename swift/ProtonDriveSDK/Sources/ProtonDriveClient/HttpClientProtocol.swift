@@ -18,7 +18,7 @@ public protocol HttpClientProtocol: AnyObject, Sendable {
     func request(method: String, url: String, content: Data, headers: [(String, [String])]) async -> Result<HttpClientResponse, NSError>
 }
 
-let cCompatibleHttpRequest: CCallbackWithReturnValue = { statePointer, byteArray, callbackPointer in
+let cCompatibleHttpRequest: CCallbackWithCallbackPointer = { statePointer, byteArray, callbackPointer in
     guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
         return
     }
