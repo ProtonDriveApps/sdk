@@ -111,12 +111,12 @@ void onSendHttpRequest(
     pushDataAndLongToVoidMethod(bindings_handle, value, sdk_handle, "onSendHttpRequest");
 }
 
-void onRequest(
+void onAccountRequest(
         intptr_t bindings_handle,
         ByteArray value,
         intptr_t sdk_handle
 ) {
-    pushDataAndLongToVoidMethod(bindings_handle, value, sdk_handle, "onRequest");
+    pushDataAndLongToVoidMethod(bindings_handle, value, sdk_handle, "onAccountRequest");
 }
 
 void onRecordMetric(
@@ -155,11 +155,11 @@ jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getSendHttpRe
     return (jlong) (intptr_t) &onSendHttpRequest;
 }
 
-jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getRequestPointer(
+jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getAccountRequestPointer(
         JNIEnv *env,
         jobject obj
 ) {
-    return (jlong) (intptr_t) &onRequest;
+    return (jlong) (intptr_t) &onAccountRequest;
 }
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getRecordMetricPointer(
