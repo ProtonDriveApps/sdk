@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.IO;
+using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api;
 using Proton.Drive.Sdk.Caching;
+using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;
@@ -86,6 +88,7 @@ public sealed class ProtonDriveClient
         BlockUploader = new BlockUploader(this, maxDegreeOfBlockTransferParallelism);
         BlockDownloader = new BlockDownloader(this, maxDegreeOfBlockTransferParallelism);
         ThumbnailBlockDownloader = new BlockDownloader(this, 8);
+        PgpEnvironment.DefaultAeadStreamingChunkLength = PgpAeadStreamingChunkLength.ChunkLength;
     }
 
     private ProtonDriveClient(
@@ -106,7 +109,8 @@ public sealed class ProtonDriveClient
     {
     }
 
-    internal static RecyclableMemoryStreamManager MemoryStreamManager { get; } = new();
+    // use 132KiB to align and provide some padding for AEAD chunk size (128KiB + PGP headers)
+    internal static RecyclableMemoryStreamManager MemoryStreamManager { get; } = new(new RecyclableMemoryStreamManager.Options { BlockSize = 135168 });
 
     internal string Uid { get; }
 

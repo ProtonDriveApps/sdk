@@ -53,6 +53,7 @@ internal sealed class NewFileDraftProvider : IFileDraftProvider
         FolderSecrets parentSecrets,
         PgpPrivateKey signingKey,
         string membershipEmailAddress,
+        bool useAeadFeatureFlag,
         out PgpPrivateKey nodeKey,
         out PgpSessionKey passphraseSessionKey,
         out PgpSessionKey nameSessionKey,
@@ -63,6 +64,7 @@ internal sealed class NewFileDraftProvider : IFileDraftProvider
             parentSecrets.Key,
             parentSecrets.HashKey.Span,
             signingKey,
+            useAeadFeatureFlag,
             out nodeKey,
             out nameSessionKey,
             out passphraseSessionKey,
@@ -72,7 +74,7 @@ internal sealed class NewFileDraftProvider : IFileDraftProvider
             out var passphraseSignature,
             out var lockedKeyBytes);
 
-        contentKey = PgpSessionKey.Generate();
+        contentKey = useAeadFeatureFlag ? PgpSessionKey.GenerateForAead() : PgpSessionKey.Generate();
         var (contentKeyToken, _) = contentKey.Export();
 
         return new FileCreationRequest
@@ -102,6 +104,8 @@ internal sealed class NewFileDraftProvider : IFileDraftProvider
 
         (FileCreationResponse Response, FileSecrets FileSecrets)? result = null;
 
+        var useAeadFeatureFlag = await client.FeatureFlagProvider.IsEnabledAsync(FeatureFlags.DriveCryptoEncryptBlocksWithPgpAead, cancellationToken);
+
         while (result is null)
         {
             var request = GetFileCreationRequest(
@@ -112,6 +116,7 @@ internal sealed class NewFileDraftProvider : IFileDraftProvider
                 parentSecrets,
                 signingKey,
                 membershipEmailAddress,
+                useAeadFeatureFlag,
                 out var nodeKey,
                 out var passphraseSessionKey,
                 out var nameSessionKey,
