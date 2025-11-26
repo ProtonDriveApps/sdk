@@ -15,4 +15,9 @@ public sealed class SessionKeyAndDataPacketMismatchException : ProtonDriveExcept
     public SessionKeyAndDataPacketMismatchException()
     {
     }
+
+    public SessionKeyAndDataPacketMismatchException(Exception innerException)
+        : base(string.Empty, innerException)
+    {
+    }
 }

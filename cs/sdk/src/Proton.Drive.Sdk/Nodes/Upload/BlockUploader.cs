@@ -72,7 +72,8 @@ internal sealed class BlockUploader
 
                                 await using (signatureEncryptingStream.ConfigureAwait(false))
                                 {
-                                    var encryptingStream = contentKey.OpenEncryptingAndSigningStream(hashingStream, signatureEncryptingStream, signingKey);
+                                    var pgpProfile = contentKey.IsAead() ? PgpProfile.ProtonAead : PgpProfile.Proton;
+                                    var encryptingStream = contentKey.OpenEncryptingAndSigningStream(hashingStream, signatureEncryptingStream, signingKey, profile: pgpProfile, aeadStreamingChunkLength: PgpAeadStreamingChunkLength.ChunkLength);
 
                                     await using (encryptingStream.ConfigureAwait(false))
                                     {
@@ -89,7 +90,18 @@ internal sealed class BlockUploader
                         var signature = signatureStream.GetBuffer().AsMemory()[..(int)signatureStream.Length];
 
                         // FIXME: retry upon verification failure
-                        var verificationToken = verifier.VerifyBlock(dataPacketStream.GetFirstBytes(128), plainDataPrefix.AsSpan()[..plainDataPrefixLength]);
+
+                        const long AeadChunkSize =
+                            1 + // packet header: packet type
+                            1 + // packet header: partial length
+                            4 + // SEIPDv2 header: packet version, cipher ID, algo Id, chunk size
+                            32 + // SEIPDv2 header: salt
+                            PgpAeadStreamingChunkLength.ChunkLength +
+                            1 + // chunk size header
+                            36 + // end of chunk
+                            16; // Aead Tag
+
+                        var verificationToken = verifier.VerifyBlock(dataPacketStream.GetFirstBytes(AeadChunkSize), plainDataPrefix.AsSpan()[..plainDataPrefixLength]);
 
                         var request = new BlockUploadPreparationRequest
                         {
@@ -162,7 +174,8 @@ internal sealed class BlockUploader
 
                 await using (hashingStream.ConfigureAwait(false))
                 {
-                    var encryptingStream = contentKey.OpenEncryptingAndSigningStream(hashingStream, signingKey);
+                    var pgpProfile = contentKey.IsAead() ? PgpProfile.ProtonAead : PgpProfile.Proton;
+                    var encryptingStream = contentKey.OpenEncryptingAndSigningStream(hashingStream, signingKey, profile: pgpProfile, aeadStreamingChunkLength: PgpAeadStreamingChunkLength.ChunkLength);
 
                     await using (encryptingStream.ConfigureAwait(false))
                     {

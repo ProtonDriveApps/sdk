@@ -65,11 +65,14 @@ internal static class FolderOperations
 
         var hashKey = CryptoGenerator.GenerateFolderHashKey();
 
+        var useAeadFeatureFlag = await client.FeatureFlagProvider.IsEnabledAsync(FeatureFlags.DriveCryptoEncryptBlocksWithPgpAead, cancellationToken);
+
         NodeOperations.GetCommonCreationParameters(
             name,
             parentSecrets.Key,
             parentSecrets.HashKey.Span,
             signingKey,
+            useAeadFeatureFlag,
             out var key,
             out var nameSessionKey,
             out var passphraseSessionKey,
