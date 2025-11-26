@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.HighPerformance;
+using CommunityToolkit.HighPerformance;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.BlockVerification;
 using Proton.Drive.Sdk.Api.Files;
@@ -55,12 +55,12 @@ internal sealed class BlockVerifier : IBlockVerifier
             var numberOfBytesRead = decryptingStream.Read(buffer);
             if (!plainDataPrefix.StartsWith(buffer[..numberOfBytesRead]))
             {
-                throw new SessionKeyAndDataPacketMismatchException();
+                throw new SessionKeyAndDataPacketMismatchException("Mismatched plaintext verification");
             }
         }
-        catch
+        catch (Exception e)
         {
-            throw new SessionKeyAndDataPacketMismatchException();
+            throw new SessionKeyAndDataPacketMismatchException(e);
         }
 
         return VerificationToken.Create(_verificationCode.Span, dataPacketPrefix.Span);

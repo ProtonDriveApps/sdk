@@ -93,6 +93,7 @@ internal static class NodeOperations
         PgpPrivateKey parentFolderKey,
         ReadOnlySpan<byte> parentFolderHashKey,
         PgpPrivateKey signingKey,
+        bool useAeadFeatureFlag,
         out PgpPrivateKey key,
         out PgpSessionKey nameSessionKey,
         out PgpSessionKey passphraseSessionKey,
@@ -102,7 +103,8 @@ internal static class NodeOperations
         out ArraySegment<byte> passphraseSignature,
         out ArraySegment<byte> lockedKeyBytes)
     {
-        key = PgpPrivateKey.Generate("Drive key", "no-reply@proton.me", KeyGenerationAlgorithm.Default);
+        var pgpProfile = useAeadFeatureFlag ? PgpProfile.ProtonAead : PgpProfile.Proton;
+        key = PgpPrivateKey.Generate("Drive key", "no-reply@proton.me", KeyGenerationAlgorithm.Default, profile: pgpProfile);
         nameSessionKey = PgpSessionKey.Generate();
 
         Span<byte> passphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
