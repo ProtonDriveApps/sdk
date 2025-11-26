@@ -4,6 +4,11 @@ internal static class ExceptionExtensions
 {
     public static Error ToErrorMessage(this Exception exception, Action<Error, Exception> setDomainAndCodesFunction)
     {
+        if (exception is InteropErrorException { Error: not null } interopErrorException)
+        {
+            return interopErrorException.Error;
+        }
+
         var error = new Error
         {
             Type = exception.GetType().FullName ?? $"{nameof(System)}.{nameof(Exception)}",

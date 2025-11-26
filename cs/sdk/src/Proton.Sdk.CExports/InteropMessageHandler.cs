@@ -82,7 +82,7 @@ internal static class InteropMessageHandler
 
         if (response.Error is not null)
         {
-            SetException(sdkHandle, response.Error.Message);
+            SetException(sdkHandle, response.Error);
             return;
         }
 
@@ -143,10 +143,10 @@ internal static class InteropMessageHandler
         tcs.SetResult();
     }
 
-    private static void SetException(nint tcsHandle, string errorMessage)
+    private static void SetException(nint tcsHandle, Error error)
     {
         var tfs = Interop.GetFromHandleAndFree<IValueTaskFaultingSource>(tcsHandle);
 
-        tfs.SetException(new Exception(errorMessage));
+        tfs.SetException(new InteropErrorException(error));
     }
 }
