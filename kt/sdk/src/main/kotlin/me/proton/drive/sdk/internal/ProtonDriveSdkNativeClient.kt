@@ -162,9 +162,6 @@ class ProtonDriveSdkNativeClient internal constructor(
                 })
                 throw error
             } catch (error: Throwable) {
-                // loggers here could be removed
-                logger("Error while $operation")
-                logger(error.stackTraceToString())
                 handleResponse(sdkHandle, response {
                     this@response.error = error.toProtonSdkError("Error while $operation")
                 })
