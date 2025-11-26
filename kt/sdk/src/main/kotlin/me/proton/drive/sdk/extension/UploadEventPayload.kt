@@ -7,6 +7,7 @@ fun ProtonDriveSdk.UploadEventPayload.toEvent() = UploadEvent(
     volumeType = volumeType.toEnum(),
     expectedSize = expectedSize,
     uploadedSize = uploadedSize,
+    approximateUploadedSize = approximateUploadedSize,
     error = error.toEnum(),
     originalError = originalError,
 )
