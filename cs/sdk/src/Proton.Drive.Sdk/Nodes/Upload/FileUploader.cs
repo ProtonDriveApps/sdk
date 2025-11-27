@@ -35,7 +35,7 @@ public sealed partial class FileUploader : IDisposable
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
-        var task = UploadFromStreamAsync(contentStream, thumbnails, _additionalMetadata, onProgress, cancellationToken);
+        var task = UploadFromStreamAsync(contentStream, thumbnails, _additionalMetadata, progress => onProgress?.Invoke(progress, FileSize), cancellationToken);
 
         return new UploadController(task);
     }
@@ -46,7 +46,7 @@ public sealed partial class FileUploader : IDisposable
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
-        var task = UploadFromFileAsync(filePath, thumbnails, _additionalMetadata, onProgress, cancellationToken);
+        var task = UploadFromFileAsync(filePath, thumbnails, _additionalMetadata, progress => onProgress?.Invoke(progress, FileSize), cancellationToken);
 
         return new UploadController(task);
     }
@@ -86,7 +86,7 @@ public sealed partial class FileUploader : IDisposable
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
         IEnumerable<AdditionalMetadataProperty>? additionalExtendedAttributes,
-        Action<long, long>? onProgress,
+        Action<long>? onProgress,
         CancellationToken cancellationToken)
     {
         var (draftRevisionUid, fileSecrets) = await _fileDraftProvider.GetDraftAsync(_client, cancellationToken).ConfigureAwait(false);
@@ -136,7 +136,7 @@ public sealed partial class FileUploader : IDisposable
         string filePath,
         IEnumerable<Thumbnail> thumbnails,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
-        Action<long, long>? onProgress,
+        Action<long>? onProgress,
         CancellationToken cancellationToken)
     {
         var contentStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
@@ -154,7 +154,7 @@ public sealed partial class FileUploader : IDisposable
         IEnumerable<Thumbnail> thumbnails,
         DateTimeOffset? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
-        Action<long, long>? onProgress,
+        Action<long>? onProgress,
         CancellationToken cancellationToken)
     {
         using var revisionWriter = await RevisionOperations.OpenForWritingAsync(_client, revisionUid, fileSecrets, ReleaseBlocks, cancellationToken)

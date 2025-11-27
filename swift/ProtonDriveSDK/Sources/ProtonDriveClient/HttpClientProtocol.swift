@@ -2,9 +2,9 @@ import Foundation
 import SwiftProtobuf
 
 public struct HttpClientResponse {
-    let data: Data?
-    let headers: [(String, [String])]
-    let statusCode: Int
+    public let data: Data?
+    public let headers: [(String, [String])]
+    public let statusCode: Int
 
     public init(data: Data?, headers: [(String, [String])], statusCode: Int) {
         self.data = data
@@ -13,57 +13,48 @@ public struct HttpClientResponse {
     }
 }
 
-/// Protocol to be implemented by object making http requests.
-public protocol HttpClientProtocol: AnyObject, Sendable {
-    func request(method: String, url: String, content: Data, headers: [(String, [String])]) async -> Result<HttpClientResponse, NSError>
+public struct HttpClientStream {
+    public let stream: URLSession.AsyncBytes
+    public let headers: [(String, [String])]
+    public let statusCode: Int
+
+    public init(stream: URLSession.AsyncBytes, headers: [(String, [String])], statusCode: Int) {
+        self.stream = stream
+        self.headers = headers
+        self.statusCode = statusCode
+    }
 }
 
-let cCompatibleHttpRequest: CCallbackWithCallbackPointer = { statePointer, byteArray, callbackPointer in
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        return
-    }
-    let stateTypedPointer = Unmanaged<BoxedContinuationWithState<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
-    let weakDriveClient: WeakReference<ProtonDriveClient> = stateTypedPointer.takeUnretainedValue().state
-    
-    let driveClient = ProtonDriveClient.unbox(callbackPointer: callbackPointer, releaseBox: { stateTypedPointer.release() }, weakDriveClient: weakDriveClient)
-    guard let driveClient else { return }
+public enum RequestType {
+    case driveAPI(relativePath: String)
+    case uploadToStorage
+    case downloadFromStorage
+}
 
-    Task { [driveClient] in
-        let httpRequestData = Proton_Sdk_HttpRequest(byteArray: byteArray)
-        let headers: [(String, [String])] = httpRequestData.headers.map { header in
-            (header.name, header.values)
-        }
+/// Protocol to be implemented by object making http requests.
+public protocol HttpClientProtocol: AnyObject, Sendable {
+    func getRelativeDrivePath(url: String, method: String) -> RequestType
 
-        let result = await driveClient.httpClient.request(
-            method: httpRequestData.method,
-            url: httpRequestData.url,
-            content: httpRequestData.content,
-            headers: headers
-        )
+    /// Drive api calls (takes `/drive/...` path)
+    func requestDriveApi(
+        method: String,
+        relativePath: String,
+        content: Data,
+        headers: [(String, [String])]
+    ) async -> Result<HttpClientResponse, NSError>
 
-        switch result {
-        case .success(let response):
-            let httpResponse = Proton_Sdk_HttpResponse.with {
-                $0.headers = response.headers.map { header in
-                    Proton_Sdk_HttpHeader.with {
-                        $0.name = header.0
-                        $0.values = header.1
-                   }
-                }
-                if let data = response.data {
-                    $0.content = data
-                }
-                $0.statusCode = Int32(response.statusCode)
-            }
-            SDKResponseHandler.send(callbackPointer: callbackPointer, message: httpResponse)
-        case .failure(let error):
-            //TODO below we're just returning some rubbish
-            let error = Proton_Sdk_Error.with {
-                $0.type = "sdk error"
-                $0.domain = Proton_Sdk_ErrorDomain.api
-                $0.context = error.localizedDescription
-            }
-            SDKResponseHandler.send(callbackPointer: callbackPointer, message: error)
-        }
-    }
+    /// Raw request (takes whole url) - should be storage request
+    func requestUploadToStorage(
+        method: String,
+        url: String,
+        content: StreamForUpload,
+        headers: [(String, [String])]
+    ) async -> Result<HttpClientResponse, NSError>
+
+    func requestDownloadFromStorage(
+        method: String,
+        url: String,
+        content: Data,
+        headers: [(String, [String])]
+    ) async -> Result<HttpClientStream, NSError>
 }

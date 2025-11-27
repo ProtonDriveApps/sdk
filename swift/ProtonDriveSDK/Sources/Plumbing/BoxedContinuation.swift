@@ -14,70 +14,42 @@ extension Resumable where ReturnType == Void {
     }
 }
 
-/// Class containing a continuation - for when a continuation needs to be accessible by memory address
-final class BoxedContinuation<ResultType>: Resumable {
-    private var continuation: Continuation?
-    
-    let context: Any = Void()
+// Boxed completion
+final class BoxedCompletionBlock<ResultType, StateType>: Resumable {
+    typealias CompletionBlock = (Result<ResultType, Error>) -> Void
 
-    init(_ continuation: Continuation) {
-        self.continuation = continuation
-    }
-    
-    func resume(returning value: sending ResultType) {
-        guard let continuation else {
-            assertionFailure("Attempt at calling continuation twice, programmer's error, must fix")
-            return
-        }
-        continuation.resume(returning: value)
-        self.continuation = nil
-    }
-
-    func resume(throwing error: any Error) {
-        guard let continuation else {
-            assertionFailure("Attempt at calling continuation twice, programmer's error, must fix")
-            return
-        }
-        continuation.resume(throwing: error)
-        self.continuation = nil
-    }
-}
-
-final class BoxedContinuationWithState<ResultType, StateType>: Resumable {
-    typealias Continuation = CheckedContinuation<ResultType, any Error>
-
-    private var continuation: Continuation?
+    private var completionBlock: CompletionBlock?
     let state: StateType
     let context: Any
 
-    init(_ continuation: Continuation, state: StateType, context: Any) {
-        self.continuation = continuation
+    init(_ completionBlock: CompletionBlock?, state: StateType, context: Any) {
+        self.completionBlock = completionBlock
         self.state = state
         self.context = context
     }
-    
-    init<WeakStateType>(_ continuation: Continuation, weakState state: WeakStateType, context: Any)
+
+    init<WeakStateType>(_ completionBlock: CompletionBlock?, weakState state: WeakStateType, context: Any)
     where StateType == WeakReference<WeakStateType> {
-        self.continuation = continuation
+        self.completionBlock = completionBlock
         self.state = WeakReference(value: state)
         self.context = context
     }
-    
-    func resume(returning value: sending ResultType) {
-        guard let continuation else {
+
+    func resume(returning value: ResultType) {
+        guard let completionBlock else {
             assertionFailure("Attempt at calling continuation twice, programmer's error, must fix")
             return
         }
-        continuation.resume(returning: value)
-        self.continuation = nil
+        completionBlock(.success(value))
+        self.completionBlock = nil
     }
 
     func resume(throwing error: any Error) {
-        guard let continuation else {
+        guard let completionBlock else {
             assertionFailure("Attempt at calling continuation twice, programmer's error, must fix")
             return
         }
-        continuation.resume(throwing: error)
-        self.continuation = nil
+        completionBlock(.failure(error))
+        self.completionBlock = nil
     }
 }

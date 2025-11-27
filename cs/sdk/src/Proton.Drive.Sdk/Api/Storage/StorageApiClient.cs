@@ -14,7 +14,6 @@ internal sealed class StorageApiClient(HttpClient httpClient) : IStorageApiClien
         string baseUrl,
         string token,
         Stream stream,
-        Action<long>? onProgress,
         CancellationToken cancellationToken)
     {
         using var blobContent = new StreamContent(stream);
@@ -33,8 +32,6 @@ internal sealed class StorageApiClient(HttpClient httpClient) : IStorageApiClien
         var response = await _httpClient
             .Expecting(ProtonApiSerializerContext.Default.ApiResponse)
             .SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
-
-        onProgress?.Invoke(stream.Position);
 
         return response;
     }

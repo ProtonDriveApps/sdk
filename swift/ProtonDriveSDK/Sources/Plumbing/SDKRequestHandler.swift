@@ -7,34 +7,81 @@ enum SDKRequestHandler {
 
     // MARK: - Simple requests (without state)
 
-    static func sendInteropRequest<T: Message & InteropRequest>(_ request: T, logger: Logger?) async throws -> T.CallResultType
+    /// Async/await API for request without state for types with the generics documented via InteropRequest protocol.
+    // TODO(SDK): document generics (message and return types) via InteropRequest for all calls.
+    static func sendInteropRequest<T: Message & InteropRequest>(
+        _ request: T,
+        logger: Logger?
+    ) async throws -> T.CallResultType
     where T.StateType == Void {
         try await send(request, logger: logger)
     }
 
-    static func send<T: Message, U>(_ request: T, logger: Logger?) async throws -> U {
+    /// Async/await API for requests without state
+    static func send<T: Message, U: Sendable>(
+        _ request: T,
+        logger: Logger?
+    ) async throws -> U {
         try await send(request, state: (), logger: logger)
+    }
+
+    /// Completion block API for requests without state
+    static func send<T: Message, U>(
+        _ request: T,
+        logger: Logger?,
+        includesLongLivedCallback: Bool = false,
+        completionBlock: @escaping (Result<U, Error>) -> Void
+    ) {
+        send(request, state: (), logger: logger, includesLongLivedCallback: includesLongLivedCallback, completionBlock: completionBlock)
     }
 
     // MARK: - Requests with additional state
     // `includesLongLivedCallback` property is used to know whether we need keep the box for state alive longer
     // than just until this method finished
 
-    static func sendInteropRequest<T: Message & InteropRequest>(
-        _ request: T, state: T.StateType, includesLongLivedCallback: Bool = false, logger: Logger?
+    /// Async/await API for request with state for types with the generics documented via InteropRequest protocol.
+    static func sendInteropRequest<T: Message & InteropRequest & Sendable>(
+        _ request: T,
+        state: T.StateType,
+        includesLongLivedCallback: Bool = false,
+        logger: Logger?
     ) async throws -> T.CallResultType {
-        try await self.send(request, state: state, includesLongLivedCallback: includesLongLivedCallback, logger: logger)
+        try await send(request, state: state, includesLongLivedCallback: includesLongLivedCallback, logger: logger)
     }
 
-    static func send<T: Message, U, V>(
-        _ request: T, state: V, includesLongLivedCallback: Bool = false, logger: Logger?
+    /// Async/await API for requests with state
+    static func send<T: Message, U: Sendable, V>(
+        _ request: T,
+        state: V,
+        includesLongLivedCallback: Bool = false,
+        logger: Logger?
     ) async throws -> U {
-        // Put the request in an envelope
-        let envelopedRequestData = try request.packIntoRequest().serializedData()
-        let isDriveRequest = request.isDriveRequest
-        logger?.trace("Sending SDK message with state: \(T.protoMessageName) - \(request)", category: "SDKRequestHandler")
+        try await withCheckedThrowingContinuation { continuation in
+            send(request, state: state, logger: logger, includesLongLivedCallback: includesLongLivedCallback) { (result: Result<U, Error>) in
+                switch result {
+                case .success(let response):
+                    continuation.resume(returning: response)
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
 
-        let response: U = try await withCheckedThrowingContinuation { continuation in
+    /// Completion block API for requests with state
+    static func send<T: Message, U, V>(
+        _ request: T,
+        state: V,
+        logger: Logger?,
+        includesLongLivedCallback: Bool = false,
+        completionBlock: @escaping (Result<U, Error>) -> Void
+    ) {
+        do {
+            // Put the request in an envelope
+            let envelopedRequestData = try request.packIntoRequest().serializedData()
+            let isDriveRequest = request.isDriveRequest
+            logger?.trace("Sending SDK message with state: \(T.protoMessageName) - \(request)", category: "SDKRequestHandler")
+
             let requestArray = ByteArray(data: envelopedRequestData)
             defer {
                 logger?.trace("deferred deallocate of requestData", category: "SDKRequestHandler")
@@ -44,7 +91,7 @@ enum SDKRequestHandler {
             logger?.trace("Sending (\(isDriveRequest ? "Drive" : "non-Drive")) SDK request ", category: "SDKRequestHandler")
 
             // Switch to InteropTypes.BoxedStateType once we use it for all requests
-            let boxedState = BoxedContinuationWithState(continuation, state: state, context: envelopedRequestData)
+            let boxedState = BoxedCompletionBlock(completionBlock, state: state, context: envelopedRequestData)
             let pointer = Unmanaged.passRetained(boxedState)
             if includesLongLivedCallback {
                 // We double-retain to keep the box alive after the method finishes.
@@ -60,8 +107,9 @@ enum SDKRequestHandler {
                 logger?.trace(" -> proton_sdk_handle_request", category: "SDKRequestHandler")
                 proton_sdk_handle_request(requestArray, bindingsHandle, sdkResponseCallbackWithState)
             }
+        } catch {
+            completionBlock(.failure(error))
         }
-        return response
     }
 }
 
@@ -80,7 +128,7 @@ let sdkResponseCallbackWithState: CCallback = { statePointer, responseArray in
         switch response.result {
         case nil: // empty response. Might be expected, might be not expected
             guard let voidBox = box as? any Resumable<Void> else {
-                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unexpected empty response received"))
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Received unexpected state in the response. We expected Resumable<Google_Protobuf_Int64Value>, we got \(type(of: box))"))
             }
             voidBox.resume()
 
@@ -92,27 +140,38 @@ let sdkResponseCallbackWithState: CCallback = { statePointer, responseArray in
             case let intBox as any Resumable<Int>:
                 intBox.resume(returning: Int(unpackedValue))
             default:
-                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unexpected SDK call response type: Google_Protobuf_Int64Value"))
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Received unexpected state in the response. We expected Resumable<Google_Protobuf_Int64Value>, we got \(type(of: box))"))
+            }
+
+        case .value(let value) where value.isA(Google_Protobuf_Int32Value.self):
+            let unpackedValue = try Google_Protobuf_Int32Value(unpackingAny: value).value
+            switch box {
+            case let int32Box as any Resumable<Int32>:
+                int32Box.resume(returning: unpackedValue)
+            case let intBox as any Resumable<Int>:
+                intBox.resume(returning: Int(unpackedValue))
+            default:
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Received unexpected state in the response. We expected Resumable<Google_Protobuf_Int32Value>, we got \(type(of: box))"))
             }
 
         case .value(let value) where value.isA(Proton_Drive_Sdk_UploadResult.self):
             let unpackedValue = try Proton_Drive_Sdk_UploadResult(unpackingAny: value)
             guard let uploadResultBox = box as? any Resumable<Proton_Drive_Sdk_UploadResult> else {
-                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unexpected SDK call response type: Proton_Drive_Sdk_UploadResult"))
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Received unexpected state in the response. We expected Resumable<Proton_Drive_Sdk_UploadResult>, we got \(type(of: box))"))
             }
             uploadResultBox.resume(returning: unpackedValue)
 
         case .value(let value) where value.isA(Google_Protobuf_StringValue.self):
             let unpackedValue = try Google_Protobuf_StringValue(unpackingAny: value)
             guard let stringResultBox = box as? any Resumable<String> else {
-                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unexpected SDK call response type: String"))
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Received unexpected state in the response. We expected Resumable<String>, we got \(type(of: box))"))
             }
             stringResultBox.resume(returning: unpackedValue.value)
 
         case .value(let value) where value.isA(Proton_Drive_Sdk_FileThumbnailList.self):
             let unpackedValue = try Proton_Drive_Sdk_FileThumbnailList(unpackingAny: value)
             guard let uploadResultBox = box as? any Resumable<Proton_Drive_Sdk_FileThumbnailList> else {
-                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unexpected SDK call response type: Proton_Drive_Sdk_FileThumbnailList"))
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Received unexpected state in the response. We expected Resumable<Proton_Drive_Sdk_FileThumbnailList>, we got \(type(of: box))"))
             }
             uploadResultBox.resume(returning: unpackedValue)
 

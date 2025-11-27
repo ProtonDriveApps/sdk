@@ -22,9 +22,10 @@ internal static class InteropProtonDriveClient
             bindingsHandle,
             request.BaseUrl,
             request.BindingsLanguage,
-            new InteropAction<nint, InteropArray<byte>, nint>(request.HttpClientRequestAction));
+            new InteropAction<nint, InteropArray<byte>, nint>(request.HttpClientRequestAction),
+            new InteropAction<nint, InteropArray<byte>, nint>(request.HttpResponseReadAction));
 
-        var accountClient = new InteropAccountClient(bindingsHandle, new InteropAction<nint, InteropArray<byte>, nint>(request.AccountClientRequestAction));
+        var accountClient = new InteropAccountClient(bindingsHandle, new InteropAction<nint, InteropArray<byte>, nint>(request.AccountRequestAction));
 
         var entityCacheRepository = request.HasEntityCachePath
             ? SqliteCacheRepository.OpenFile(request.EntityCachePath)
@@ -65,7 +66,7 @@ internal static class InteropProtonDriveClient
 
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
 
-        var additionalMetadata = request.AdditionalMetadata != null && request.AdditionalMetadata.Count > 0
+        var additionalMetadata = request.AdditionalMetadata is { Count: > 0 }
             ? request.AdditionalMetadata.Select(x =>
                 new Proton.Drive.Sdk.Nodes.AdditionalMetadataProperty(x.Name, JsonDocument.Parse(x.Utf8JsonValue.Memory).RootElement))
             : null;

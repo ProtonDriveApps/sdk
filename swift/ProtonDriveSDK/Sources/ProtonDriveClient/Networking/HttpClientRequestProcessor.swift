@@ -1,0 +1,251 @@
+import Foundation
+
+enum HttpClientRequestProcessor {
+    
+    static let cCompatibleHttpRequest: CCallbackWithCallbackPointer = { statePointer, byteArray, callbackPointer in
+        Task {
+            do {
+                guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
+                    return
+                }
+                let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
+                let weakDriveClient: WeakReference<ProtonDriveClient> = stateTypedPointer.takeUnretainedValue().state
+                
+                let driveClient = ProtonDriveClient.unbox(callbackPointer: callbackPointer, releaseBox: { stateTypedPointer.release() }, weakDriveClient: weakDriveClient)
+                guard let driveClient else { return }
+                
+                
+                let httpRequestData = Proton_Sdk_HttpRequest(byteArray: byteArray)
+                try await HttpClientRequestProcessor.perform(client: driveClient, httpRequestData: httpRequestData, callbackPointer: callbackPointer)
+            } catch {
+                SDKResponseHandler.sendErrorToSDK(error, callbackPointer: callbackPointer)
+            }
+        }
+    }
+
+    
+    fileprivate static func perform(
+        client: ProtonDriveClient,
+        httpRequestData: Proton_Sdk_HttpRequest,
+        callbackPointer: Int
+    ) async throws {
+        let requestType = client.httpClient.getRelativeDrivePath(url: httpRequestData.url, method: httpRequestData.method)
+
+        switch requestType {
+        case .driveAPI(let driveRelativePath):
+            try await performDriveApi(
+                driveRelativePath: driveRelativePath,
+                client: client,
+                httpRequestData: httpRequestData,
+                callbackPointer: callbackPointer
+            )
+        case .uploadToStorage:
+            try await uploadToStorage(
+                client: client,
+                httpRequestData: httpRequestData,
+                callbackPointer: callbackPointer
+            )
+        case .downloadFromStorage:
+            try await downloadFromStorage(
+                client: client,
+                httpRequestData: httpRequestData,
+                callbackPointer: callbackPointer
+            )
+        }
+    }
+    
+    /// the API calls are performed in a non-streaming way. both request body and response data are buffered in memory
+    fileprivate static func performDriveApi(
+        driveRelativePath: String,
+        client: ProtonDriveClient,
+        httpRequestData: Proton_Sdk_HttpRequest,
+        callbackPointer: Int
+    ) async throws {
+        let headers: [(String, [String])] = httpRequestData.headers.map { header in
+            (header.name, header.values)
+        }
+        var contentData = Data()
+        if httpRequestData.hasSdkContentHandle {
+            // the API calls are performed in a non-streaming way,
+            // so we buffer all request data in-memory before making a call
+            let bufferLength = client.configuration.httpTransferBufferSize
+            var buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: bufferLength, alignment: MemoryLayout<UInt8>.alignment)
+            let baseAddress = buffer.baseAddress!
+
+            while true {
+                let streamReadRequest = Proton_Sdk_StreamReadRequest.with {
+                    $0.bufferLength = Int32(buffer.count)
+                    $0.bufferPointer = Int64(ObjectHandle(rawPointer: UnsafeRawPointer(baseAddress)))
+                    $0.streamHandle = httpRequestData.sdkContentHandle
+                }
+                let read: Int32 = try await SDKRequestHandler.send(streamReadRequest, logger: client.logger)
+                let dataFromThisRead = Data(bytes: baseAddress, count: Int(read))
+                contentData.append(dataFromThisRead)
+                if read == 0 {
+                    break
+                }
+            }
+            buffer.deallocate()
+        }
+
+        let result = await client.httpClient.requestDriveApi(
+            method: httpRequestData.method,
+            relativePath: driveRelativePath,
+            content: contentData,
+            headers: headers
+        )
+
+        switch result {
+        case .success(let response):
+            // the API calls are performed in a non-streaming way, we have whole data cached in-memory,
+            // so we prepare a buffer that holds everything and wrap it into offset-keeping box
+            let bindingsHandle: Int?
+            if let data = response.data, !data.isEmpty {
+                let uploadBuffer = BoxedRawBuffer(bufferSize: data.count, logger: client.logger)
+                await uploadBuffer.copyBytes(from: data)
+                let bytesOrStream = BoxedStreamingData(uploadBuffer: uploadBuffer, logger: client.logger)
+                let pointer = Unmanaged.passRetained(bytesOrStream)
+                bindingsHandle = Int(rawPointer: pointer.toOpaque())
+            } else {
+                bindingsHandle = nil
+            }
+            let httpResponse = Proton_Sdk_HttpResponse.with {
+                $0.headers = response.headers.map { header in
+                    Proton_Sdk_HttpHeader.with {
+                        $0.name = header.0
+                        $0.values = header.1
+                    }
+                }
+                if let bindingsHandle {
+                    $0.bindingsContentHandle = Int64(bindingsHandle)
+                }
+                $0.statusCode = Int32(response.statusCode)
+            }
+            SDKResponseHandler.send(callbackPointer: callbackPointer, message: httpResponse)
+        case .failure(let error):
+            SDKResponseHandler.sendErrorToSDK(error, callbackPointer: callbackPointer)
+        }
+    }
+
+    /// the storage upload calls are using stream to upload request body, but cache the whole response in memory
+    fileprivate static func uploadToStorage(
+        client: ProtonDriveClient,
+        httpRequestData: Proton_Sdk_HttpRequest,
+        callbackPointer: Int
+    ) async throws {
+        let headers: [(String, [String])] = httpRequestData.headers.map { header in
+            (header.name, header.values)
+        }
+
+        guard httpRequestData.hasSdkContentHandle else {
+            assertionFailure("Should never happen for uploads, we must have data for uploading")
+            SDKResponseHandler.sendInteropErrorToSDK(
+                message: "Proton_Sdk_HttpRequest.sdk_content_handle is missing",
+                callbackPointer: callbackPointer
+            )
+            return
+        }
+
+        let bufferLength = client.configuration.httpTransferBufferSize
+        let stream = try StreamForUpload(
+            bufferLength: bufferLength, sdkContentHandle: httpRequestData.sdkContentHandle, logger: client.logger
+        )
+
+        let result = await client.httpClient.requestUploadToStorage(
+            method: httpRequestData.method,
+            url: httpRequestData.url,
+            content: stream,
+            headers: headers
+        )
+
+        switch result {
+        case .success(let response):
+            let bindingsHandle: Int?
+            if let data = response.data, !data.isEmpty {
+                let uploadBuffer = BoxedRawBuffer(bufferSize: data.count, logger: client.logger)
+                await uploadBuffer.copyBytes(from: data)
+                let bytesOrStream = BoxedStreamingData(uploadBuffer: uploadBuffer, logger: client.logger)
+                let pointer = Unmanaged.passRetained(bytesOrStream)
+                bindingsHandle = Int(rawPointer: pointer.toOpaque())
+            } else {
+                bindingsHandle = nil
+            }
+            let httpResponse = Proton_Sdk_HttpResponse.with {
+                $0.headers = response.headers.map { header in
+                    Proton_Sdk_HttpHeader.with {
+                        $0.name = header.0
+                        $0.values = header.1
+                    }
+                }
+                if let bindingsHandle {
+                    $0.bindingsContentHandle = Int64(bindingsHandle)
+                }
+                $0.statusCode = Int32(response.statusCode)
+            }
+            SDKResponseHandler.send(callbackPointer: callbackPointer, message: httpResponse)
+        case .failure(let error):
+            SDKResponseHandler.sendErrorToSDK(error, callbackPointer: callbackPointer)
+        }
+    }
+
+    /// the download upload calls are caching the whole request body in-memory, but stream the response data
+    fileprivate static func downloadFromStorage(
+        client: ProtonDriveClient,
+        httpRequestData: Proton_Sdk_HttpRequest,
+        callbackPointer: Int
+    ) async throws {
+        let headers: [(String, [String])] = httpRequestData.headers.map { header in
+            (header.name, header.values)
+        }
+
+        var contentData = Data()
+        if httpRequestData.hasSdkContentHandle {
+            // We expect that request data to be small, we need to fetch them whole
+            let bufferLength = client.configuration.httpTransferBufferSize
+            var buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: bufferLength, alignment: MemoryLayout<UInt8>.alignment)
+            let baseAddress = buffer.baseAddress!
+
+            while true {
+                let streamReadRequest = Proton_Sdk_StreamReadRequest.with {
+                    $0.bufferLength = Int32(buffer.count)
+                    $0.bufferPointer = Int64(ObjectHandle(rawPointer: UnsafeRawPointer(baseAddress)))
+                    $0.streamHandle = httpRequestData.sdkContentHandle
+                }
+                let read: Int32 = try await SDKRequestHandler.send(streamReadRequest, logger: client.logger)
+                let dataFromThisRead = Data(bytes: baseAddress, count: Int(read))
+                contentData.append(dataFromThisRead)
+                if read == 0 {
+                    break
+                }
+            }
+            buffer.deallocate()
+        }
+
+        let result = await client.httpClient.requestDownloadFromStorage(
+            method: httpRequestData.method,
+            url: httpRequestData.url,
+            content: contentData,
+            headers: headers
+        )
+
+        switch result {
+        case .success(let response):
+            let httpResponse = Proton_Sdk_HttpResponse.with {
+                $0.headers = response.headers.map { header in
+                    Proton_Sdk_HttpHeader.with {
+                        $0.name = header.0
+                        $0.values = header.1
+                    }
+                }
+                let bytesOrStream = BoxedStreamingData(downloadStream: response.stream, logger: client.logger)
+                let pointer = Unmanaged.passRetained(bytesOrStream)
+                let bindingsHandle = Int(rawPointer: pointer.toOpaque())
+                $0.bindingsContentHandle = Int64(bindingsHandle)
+                $0.statusCode = Int32(response.statusCode)
+            }
+            SDKResponseHandler.send(callbackPointer: callbackPointer, message: httpResponse)
+        case .failure(let error):
+            SDKResponseHandler.sendErrorToSDK(error, callbackPointer: callbackPointer)
+        }
+    }
+}

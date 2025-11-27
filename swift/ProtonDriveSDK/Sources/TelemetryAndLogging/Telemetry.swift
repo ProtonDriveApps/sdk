@@ -5,7 +5,7 @@ let cCompatibleTelemetryRecordMetricCallback: CCallback = { statePointer, byteAr
         return
     }
     
-    let stateTypedPointer = Unmanaged<BoxedContinuationWithState<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
+    let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
     let weakDriveClient = stateTypedPointer.takeUnretainedValue().state
     
     guard let driveClient = weakDriveClient.value else {

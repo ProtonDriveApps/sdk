@@ -12,15 +12,17 @@ message Request {
         CancellationTokenSourceCancelRequest cancellation_token_source_cancel = 101;
         CancellationTokenSourceFreeRequest cancellation_token_source_free = 102;
 
-        SessionBeginRequest session_begin = 200;
-        SessionResumeRequest session_resume = 201;
-        SessionRenewRequest session_renew = 202;
-        SessionEndRequest session_end = 203;
-        SessionTokensRefreshedSubscribeRequest session_tokens_refreshed_subscribe = 204;
-        SessionTokensRefreshedUnsubscribeRequest session_tokens_refreshed_unsubscribe = 205;
-        SessionFreeRequest session_free = 206;
+        StreamReadRequest stream_read = 200;
 
-        LoggerProviderCreate logger_provider_create = 300;
+        SessionBeginRequest session_begin = 300;
+        SessionResumeRequest session_resume = 301;
+        SessionRenewRequest session_renew = 302;
+        SessionEndRequest session_end = 303;
+        SessionTokensRefreshedSubscribeRequest session_tokens_refreshed_subscribe = 304;
+        SessionTokensRefreshedUnsubscribeRequest session_tokens_refreshed_unsubscribe = 305;
+        SessionFreeRequest session_free = 306;
+
+        LoggerProviderCreate logger_provider_create = 400;
     };
 }
 
@@ -214,6 +216,13 @@ message AddressKey {
     bool is_allowed_for_verification = 5;
 }
 
+// The response value must be an Int32Value carrying the number of bytes read into the buffer. That number must not be negative.
+message StreamReadRequest {
+    int64 stream_handle = 1;
+    int64 buffer_pointer = 2;
+    int32 buffer_length = 3;
+}
+
 message HttpHeader {
     string name = 1;
     repeated string values = 2;
@@ -224,13 +233,13 @@ message HttpRequest {
     string url = 1;
     string method = 2;
     repeated HttpHeader headers = 3;
-    bytes content = 4; // Optional
+    int64 sdk_content_handle = 4; // Optional, to be used with StreamReadRequest
 }
 
 message HttpResponse {
     int32 status_code = 1;
     repeated HttpHeader headers = 2;
-    bytes content = 3; // Optional
+    int64 bindings_content_handle = 3; // Optional
 }
  
 message ApiRetrySucceededEventPayload {

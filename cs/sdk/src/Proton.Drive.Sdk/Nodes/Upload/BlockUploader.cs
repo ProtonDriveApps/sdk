@@ -51,6 +51,8 @@ internal sealed class BlockUploader
         {
             try
             {
+                var plainDataLength = plainDataStream.Length;
+
                 var dataPacketStream = ProtonDriveClient.MemoryStreamManager.GetStream();
                 await using (dataPacketStream.ConfigureAwait(false))
                 {
@@ -123,7 +125,9 @@ internal sealed class BlockUploader
                             Thumbnails = [],
                         };
 
-                        await UploadBlobAsync(request, dataPacketStream, onBlockProgress, cancellationToken).ConfigureAwait(false);
+                        await UploadBlobAsync(request, dataPacketStream, cancellationToken).ConfigureAwait(false);
+
+                        onBlockProgress?.Invoke(plainDataLength);
 
                         _client.Logger.LogDebug(
                             "Uploaded blob for block #{BlockIndex} for revision {RevisionId} of file {FileUid}",
@@ -160,7 +164,6 @@ internal sealed class BlockUploader
         PgpPrivateKey signingKey,
         AddressId membershipAddressId,
         Thumbnail thumbnail,
-        Action<long>? onProgress,
         CancellationToken cancellationToken)
     {
         try
@@ -203,7 +206,7 @@ internal sealed class BlockUploader
                     ],
                 };
 
-                await UploadBlobAsync(request, dataPacketStream, onProgress, cancellationToken).ConfigureAwait(false);
+                await UploadBlobAsync(request, dataPacketStream, cancellationToken).ConfigureAwait(false);
 
                 _client.Logger.LogDebug("Uploaded thumbnail blob for revision {RevisionId} of node {FileUid}", revisionId, fileUid);
 
@@ -226,7 +229,6 @@ internal sealed class BlockUploader
     private async ValueTask UploadBlobAsync(
         BlockUploadPreparationRequest request,
         RecyclableMemoryStream dataPacketStream,
-        Action<long>? onProgress,
         CancellationToken cancellationToken)
     {
 #pragma warning disable S3236 // FP: https://community.sonarsource.com/t/false-positive-on-s3236-when-calling-debug-assert-with-message/138761/6
@@ -246,7 +248,7 @@ internal sealed class BlockUploader
 
                 dataPacketStream.Seek(0, SeekOrigin.Begin);
 
-                await _client.Api.Storage.UploadBlobAsync(uploadTarget.BareUrl, uploadTarget.Token, dataPacketStream, onProgress, cancellationToken)
+                await _client.Api.Storage.UploadBlobAsync(uploadTarget.BareUrl, uploadTarget.Token, dataPacketStream, cancellationToken)
                     .ConfigureAwait(false);
 
                 remainingNumberOfAttempts = 0;

@@ -38,3 +38,24 @@ jlong Java_me_proton_drive_sdk_internal_ProtonSdkNativeClient_getCallbackPointer
 ) {
     return (jlong) (intptr_t) &onCallback;
 }
+
+jlong Java_me_proton_drive_sdk_internal_ProtonSdkNativeClient_getBufferPointer(
+        JNIEnv *env,
+        jobject obj,
+        jobject buffer
+) {
+    void *ptr = (*env)->GetDirectBufferAddress(env, buffer);
+    if (ptr == NULL) {
+        return 0;
+    }
+    return (jlong) (intptr_t) ptr;
+}
+
+
+jlong Java_me_proton_drive_sdk_internal_ProtonSdkNativeClient_getBufferSize(
+        JNIEnv *env,
+        jobject obj,
+        jobject buffer
+) {
+    return (*env)->GetDirectBufferCapacity(env, buffer);
+}

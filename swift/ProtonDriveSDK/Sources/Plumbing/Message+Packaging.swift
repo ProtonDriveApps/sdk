@@ -111,6 +111,10 @@ extension Message {
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .driveClientGetThumbnails(request)
             }
+        case let request as Proton_Sdk_StreamReadRequest:
+            Proton_Sdk_Request.with {
+                $0.payload = .streamRead(request)
+            }
 
         default:
             assertionFailure("Unknown request")
@@ -149,8 +153,18 @@ extension Message {
             return Proton_Sdk_Response.with {
                 $0.error = error
             }
+        case let intValue as Google_Protobuf_Int64Value:
+            let value = try Google_Protobuf_Any.init(message: intValue)
+            return Proton_Sdk_Response.with {
+                $0.value = value
+            }
+        case let intValue as Google_Protobuf_Int32Value:
+            let value = try Google_Protobuf_Any.init(message: intValue)
+            return Proton_Sdk_Response.with {
+                $0.value = value
+            }
         default:
-            assertionFailure("Unknown response")
+            assertionFailure("Unknown response type: \(self)")
             throw ProtonDriveSDKError(interopError: .wrongProto(message: "Unknown response type: \(self)"))
         }
     }

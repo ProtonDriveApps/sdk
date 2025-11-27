@@ -14,7 +14,7 @@ let cCompatibleAccountClientRequest: CCallbackWithCallbackPointer = { statePoint
     guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
         return
     }
-    let stateTypedPointer = Unmanaged<BoxedContinuationWithState<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
+    let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
     let weakDriveClient: WeakReference<ProtonDriveClient> = stateTypedPointer.takeUnretainedValue().state
     
     let driveClient = ProtonDriveClient.unbox(

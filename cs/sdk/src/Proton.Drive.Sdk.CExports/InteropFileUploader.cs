@@ -29,7 +29,7 @@ internal static class InteropFileUploader
         var uploadController = uploader.UploadFromStream(
             stream,
             thumbnails,
-            (completed, total) => progressAction.InvokeProgressUpdate(bindingsHandle, total, completed),
+            (progress, total) => progressAction.InvokeProgressUpdate(bindingsHandle, progress, total),
             cancellationToken);
 
         return new Int64Value { Value = Interop.AllocHandle(uploadController) };
@@ -55,7 +55,7 @@ internal static class InteropFileUploader
         var uploadController = uploader.UploadFromFile(
             request.FilePath,
             thumbnails,
-            (completed, total) => progressAction.InvokeProgressUpdate(bindingsHandle, total, completed),
+            (progress, total) => progressAction.InvokeProgressUpdate(bindingsHandle, progress, total),
             cancellationToken);
 
         return new Int64Value { Value = Interop.AllocHandle(uploadController) };
