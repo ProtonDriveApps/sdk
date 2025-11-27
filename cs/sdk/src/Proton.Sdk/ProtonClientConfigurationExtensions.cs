@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http.Resilience;
 using Polly;
 using Proton.Sdk.Authentication;
 using Proton.Sdk.Http;
@@ -74,14 +73,12 @@ internal static class ProtonClientConfigurationExtensions
                             options.CircuitBreaker.SamplingDuration = options.AttemptTimeout.Timeout * 2;
                         }
 
+                        options.Retry.ShouldHandle += arguments => ValueTask.FromResult(arguments.Context.GetRequestMessage()?.GetRetryIsDisabled() != true);
                         options.Retry.ShouldRetryAfterHeader = true;
                         options.Retry.Delay = TimeSpan.FromSeconds(2);
                         options.Retry.BackoffType = DelayBackoffType.Exponential;
                         options.Retry.UseJitter = true;
                         options.Retry.MaxRetryAttempts = 1;
-
-                        var totalTimeout = (options.AttemptTimeout.Timeout + options.Retry.Delay) * options.Retry.MaxRetryAttempts * 1.5;
-                        options.TotalRequestTimeout = new HttpTimeoutStrategyOptions { Timeout = totalTimeout };
 
                         options.CircuitBreaker.FailureRatio = 0.5;
                     });
