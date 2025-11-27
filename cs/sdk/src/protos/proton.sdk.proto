@@ -234,6 +234,7 @@ message HttpRequest {
     string method = 2;
     repeated HttpHeader headers = 3;
     int64 sdk_content_handle = 4; // Optional, to be used with StreamReadRequest
+    bool disable_retry = 5;
 }
 
 message HttpResponse {

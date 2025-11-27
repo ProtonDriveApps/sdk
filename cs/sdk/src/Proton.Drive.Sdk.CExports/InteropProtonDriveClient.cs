@@ -39,11 +39,19 @@ internal static class InteropProtonDriveClient
             ? new DriveInteropTelemetryDecorator(interopTelemetry)
             : NullTelemetry.Instance;
 
-        IFeatureFlagProvider featureFlagProvider = request.HasFeatureEnabledFunction
+        var featureFlagProvider = request.HasFeatureEnabledFunction
             ? new InteropFeatureFlagProvider(bindingsHandle, new InteropFunction<nint, InteropArray<byte>, int>(request.FeatureEnabledFunction))
             : AlwaysDisabledFeatureFlagProvider.Instance;
 
-        var client = new ProtonDriveClient(httpClientFactory, accountClient, entityCacheRepository, secretCacheRepository, featureFlagProvider, telemetry, request.Uid);
+        var client = new ProtonDriveClient(
+            httpClientFactory,
+            accountClient,
+            entityCacheRepository,
+            secretCacheRepository,
+            featureFlagProvider,
+            telemetry,
+            request.BindingsLanguage,
+            request.Uid);
 
         return new Int64Value
         {
