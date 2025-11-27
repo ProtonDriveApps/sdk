@@ -1,0 +1,4 @@
+-keep class com.google.protobuf.** { *; }
+-dontwarn com.google.protobuf.**
+-keep class proton.sdk.** { *; }
+-keep class proton.drive.sdk.** { *; }

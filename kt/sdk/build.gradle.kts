@@ -33,6 +33,9 @@ android {
                 arguments("BUILD_DIR=${layout.buildDirectory.asFile.get().path}")
             }
         }
+        defaultConfig {
+            consumerProguardFiles("proguard-rules.pro")
+        }
     }
     sourceSets {
         getByName("main") {
