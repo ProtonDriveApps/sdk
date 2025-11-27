@@ -9,18 +9,19 @@ fun Throwable.toProtonSdkError(defaultMessage: String) = proton.sdk.error {
     val exception = this@toProtonSdkError
     type = javaClass.name
     this.message = exception.message ?: defaultMessage
-    domain = when (exception) {
-        is CancellationException -> ProtonSdk.ErrorDomain.SuccessfulCancellation
-        is ApiException -> {
-            when (exception.error) {
-                is ApiResult.Error.Http -> ProtonSdk.ErrorDomain.Api
-                is ApiResult.Error.Timeout -> ProtonSdk.ErrorDomain.Transport
-                is ApiResult.Error.Connection -> ProtonSdk.ErrorDomain.Network
-                is ApiResult.Error.Parse -> ProtonSdk.ErrorDomain.Serialization
-            }
-        }
-
-        else -> ProtonSdk.ErrorDomain.Undefined
-    }
+    domain = exception.domain()
     context = stackTraceToString()
+}
+
+private fun Throwable.domain(): ProtonSdk.ErrorDomain = when (this) {
+    is CancellationException -> ProtonSdk.ErrorDomain.SuccessfulCancellation
+
+    is ApiException -> when (error) {
+        is ApiResult.Error.Http -> ProtonSdk.ErrorDomain.Api
+        is ApiResult.Error.Timeout -> ProtonSdk.ErrorDomain.Transport
+        is ApiResult.Error.Connection -> ProtonSdk.ErrorDomain.Network
+        is ApiResult.Error.Parse -> ProtonSdk.ErrorDomain.Serialization
+    }
+
+    else -> ProtonSdk.ErrorDomain.Undefined
 }
