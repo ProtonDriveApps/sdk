@@ -7,7 +7,7 @@ internal static class RevisionWriterExtensions
         Stream contentStream,
         DateTimeOffset? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
-        Action<long, long> onProgress,
+        Action<long> onProgress,
         CancellationToken cancellationToken)
     {
         return revisionWriter.WriteAsync(contentStream, [], lastModificationTime, additionalMetadata, onProgress, cancellationToken);
@@ -18,7 +18,7 @@ internal static class RevisionWriterExtensions
         Stream contentStream,
         DateTime lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
-        Action<long, long> onProgress,
+        Action<long> onProgress,
         CancellationToken cancellationToken)
     {
         return revisionWriter.WriteAsync(contentStream, [], new DateTimeOffset(lastModificationTime), additionalMetadata, onProgress, cancellationToken);
@@ -30,7 +30,7 @@ internal static class RevisionWriterExtensions
         IEnumerable<Thumbnail> thumbnails,
         DateTime lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
-        Action<long, long> onProgress,
+        Action<long> onProgress,
         CancellationToken cancellationToken)
     {
         return revisionWriter.WriteAsync(contentStream, thumbnails, new DateTimeOffset(lastModificationTime), additionalMetadata, onProgress, cancellationToken);
@@ -41,7 +41,7 @@ internal static class RevisionWriterExtensions
         string targetFilePath,
         DateTime lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
-        Action<long, long> onProgress,
+        Action<long> onProgress,
         CancellationToken cancellationToken)
     {
         var fileStream = File.Open(targetFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);

@@ -60,7 +60,7 @@ internal sealed class RevisionWriter : IDisposable
         IEnumerable<Thumbnail> thumbnails,
         DateTimeOffset? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
-        Action<long, long>? onProgress,
+        Action<long>? onProgress,
         CancellationToken cancellationToken)
     {
         var uploadEvent = new UploadEvent
@@ -82,8 +82,6 @@ internal sealed class RevisionWriter : IDisposable
 
             ArraySegment<byte> manifestSignature;
             var blockSizes = new List<int>(8);
-
-            var contentLength = contentStream.Length - contentStream.Position;
 
             using var sha1 = IncrementalHash.CreateHash(HashAlgorithmName.SHA1);
 
@@ -117,70 +115,61 @@ internal sealed class RevisionWriter : IDisposable
                                     _signingKey,
                                     _membershipAddress.Id,
                                     thumbnail,
-                                    onProgress: null,
                                     cancellationTokenSource.Token);
 
                                 uploadTasks.Enqueue(uploadTask);
                             }
 
-                            if (contentLength > 0)
+                            while (
+                                await TryGetBlockPlainDataStreamAsync(
+                                    hashingContentStream,
+                                    blockVerifier.DataPacketPrefixMaxLength,
+                                    linkedCancellationToken).ConfigureAwait(false) is var (plainDataStream, plainDataPrefixBuffer))
                             {
-                                do
+                                try
                                 {
-                                    var plainDataPrefixBuffer = ArrayPool<byte>.Shared.Rent(blockVerifier.DataPacketPrefixMaxLength);
-                                    try
-                                    {
-                                        var plainDataStream = ProtonDriveClient.MemoryStreamManager.GetStream();
+                                    blockSizes.Add((int)plainDataStream.Length);
 
-                                        var bytesCopied = await hashingContentStream.PartiallyCopyToAsync(
-                                            plainDataStream,
-                                            _targetBlockSize,
-                                            plainDataPrefixBuffer,
-                                            linkedCancellationToken).ConfigureAwait(false);
+                                    await WaitForBlockUploaderAsync(uploadTasks, manifestStream, linkedCancellationToken).ConfigureAwait(false);
 
-                                        blockSizes.Add((int)plainDataStream.Length);
+                                    plainDataStream.Seek(0, SeekOrigin.Begin);
 
-                                        await WaitForBlockUploaderAsync(uploadTasks, manifestStream, linkedCancellationToken).ConfigureAwait(false);
+                                    var onBlockProgress = onProgress is not null
+                                        ? progress =>
+                                        {
+                                            numberOfBytesUploaded += progress;
 
-                                        plainDataStream.Seek(0, SeekOrigin.Begin);
+                                            // TODO: move this to a decorator, wrap the progress action
+                                            uploadEvent.UploadedSize = numberOfBytesUploaded;
+                                            uploadEvent.ApproximateUploadedSize = ReduceSizePrecision(numberOfBytesUploaded);
 
-                                        var onBlockProgress = onProgress is not null
-                                            ? progress =>
-                                            {
-                                                numberOfBytesUploaded += progress;
+                                            onProgress(numberOfBytesUploaded);
+                                        }
+                                    : default(Action<long>?);
 
-                                                // TODO: move this to a decorator, wrap the progress action
-                                                uploadEvent.UploadedSize = numberOfBytesUploaded;
-                                                uploadEvent.ApproximateUploadedSize = ReduceSizePrecision(numberOfBytesUploaded);
+                                    var uploadTask = _client.BlockUploader.UploadContentAsync(
+                                        _fileUid,
+                                        _revisionId,
+                                        ++blockIndex,
+                                        _contentKey,
+                                        _signingKey,
+                                        _membershipAddress.Id,
+                                        _fileKey,
+                                        plainDataStream,
+                                        blockVerifier,
+                                        plainDataPrefixBuffer,
+                                        (int)Math.Min(blockVerifier.DataPacketPrefixMaxLength, plainDataStream.Length),
+                                        onBlockProgress,
+                                        _releaseBlocksAction,
+                                        linkedCancellationToken);
 
-                                                onProgress(numberOfBytesUploaded, contentLength);
-                                            }
-                                        : default(Action<long>?);
-
-                                        var uploadTask = _client.BlockUploader.UploadContentAsync(
-                                            _fileUid,
-                                            _revisionId,
-                                            ++blockIndex,
-                                            _contentKey,
-                                            _signingKey,
-                                            _membershipAddress.Id,
-                                            _fileKey,
-                                            plainDataStream,
-                                            blockVerifier,
-                                            plainDataPrefixBuffer,
-                                            Math.Min(blockVerifier.DataPacketPrefixMaxLength, bytesCopied),
-                                            onBlockProgress,
-                                            _releaseBlocksAction,
-                                            linkedCancellationToken);
-
-                                        uploadTasks.Enqueue(uploadTask);
-                                    }
-                                    catch
-                                    {
-                                        ArrayPool<byte>.Shared.Return(plainDataPrefixBuffer);
-                                        throw;
-                                    }
-                                } while (contentStream.Position < contentStream.Length);
+                                    uploadTasks.Enqueue(uploadTask);
+                                }
+                                catch
+                                {
+                                    ArrayPool<byte>.Shared.Return(plainDataPrefixBuffer);
+                                    throw;
+                                }
                             }
                         }
                         finally
@@ -217,7 +206,6 @@ internal sealed class RevisionWriter : IDisposable
             }
 
             var request = GetRevisionUpdateRequest(
-                contentLength,
                 lastModificationTime,
                 blockSizes,
                 sha1.GetCurrentHash(),
@@ -283,6 +271,44 @@ internal sealed class RevisionWriter : IDisposable
         await manifestStream.WriteAsync(sha256Digest).ConfigureAwait(false);
     }
 
+    private async ValueTask<(Stream Stream, byte[] Prefix)?> TryGetBlockPlainDataStreamAsync(
+        Stream contentStream,
+        int prefixLength,
+        CancellationToken cancellationToken)
+    {
+        var plainDataPrefixBuffer = ArrayPool<byte>.Shared.Rent(prefixLength);
+        try
+        {
+            var plainDataStream = ProtonDriveClient.MemoryStreamManager.GetStream();
+
+            try
+            {
+                var bytesCopied = await contentStream.PartiallyCopyToAsync(
+                    plainDataStream,
+                    _targetBlockSize,
+                    plainDataPrefixBuffer,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (bytesCopied == 0)
+                {
+                    return null;
+                }
+
+                return (plainDataStream, plainDataPrefixBuffer);
+            }
+            catch
+            {
+                await plainDataStream.DisposeAsync().ConfigureAwait(false);
+                throw;
+            }
+        }
+        catch
+        {
+            ArrayPool<byte>.Shared.Return(plainDataPrefixBuffer);
+            throw;
+        }
+    }
+
     private async ValueTask WaitForBlockUploaderAsync(Queue<Task<byte[]>> uploadTasks, RecyclableMemoryStream manifestStream, CancellationToken cancellationToken)
     {
         if (!await _client.BlockUploader.BlockSemaphore.WaitAsync(0, cancellationToken).ConfigureAwait(false))
@@ -297,7 +323,6 @@ internal sealed class RevisionWriter : IDisposable
     }
 
     private RevisionUpdateRequest GetRevisionUpdateRequest(
-        long contentLength,
         DateTimeOffset? lastModificationTime,
         IReadOnlyList<int> blockSizes,
         byte[]? sha1Digest,
@@ -309,7 +334,7 @@ internal sealed class RevisionWriter : IDisposable
         {
             Common = new CommonExtendedAttributes
             {
-                Size = contentLength,
+                Size = blockSizes.Sum(x => (long)x),
                 ModificationTime = lastModificationTime?.UtcDateTime,
                 BlockSizes = blockSizes,
                 Digests = new FileContentDigestsDto { Sha1 = sha1Digest },

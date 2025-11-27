@@ -162,11 +162,12 @@ public typealias ProgressCallback = @Sendable (FileOperationProgress) -> Void
 
 /// Progress information for upload/download operations
 public struct FileOperationProgress {
-    public let bytesCompleted: Int64
-    public let bytesTotal: Int64
+    public let bytesCompleted: Int64?
+    public let bytesTotal: Int64?
 
     /// Progress percentage (0.0 to 1.0)
     public var fractionCompleted: Double {
+        guard let bytesTotal, let bytesCompleted else { return 0.0 }
         guard bytesTotal > 0 else { return 0.0 }
         let value = Double(bytesCompleted) / Double(bytesTotal)
         return min(1.0, value)
@@ -174,7 +175,7 @@ public struct FileOperationProgress {
 
     public var isCompleted: Bool { fractionCompleted == 1.0 }
 
-    public init(bytesCompleted: Int64, bytesTotal: Int64) {
+    public init(bytesCompleted: Int64?, bytesTotal: Int64?) {
         self.bytesCompleted = bytesCompleted
         self.bytesTotal = bytesTotal
     }

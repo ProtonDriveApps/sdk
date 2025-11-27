@@ -13,6 +13,7 @@ import me.proton.drive.sdk.internal.JniDriveClient
 import me.proton.drive.sdk.internal.JniLoggerProvider
 import me.proton.drive.sdk.internal.JniNativeLibrary
 import me.proton.drive.sdk.internal.JniSession
+import me.proton.drive.sdk.internal.ProtonDriveSdkNativeClient
 
 object ProtonDriveSdk {
     init {
@@ -53,8 +54,13 @@ object ProtonDriveSdk {
             create(
                 coroutineScope = coroutineScope,
                 request = request,
-                onSendHttpRequest = ApiProviderBridge(userId, apiProvider),
-                onRequest = AccountClientBridge(userAddressResolver, publicAddressResolver),
+                httpResponseReadPointer = ProtonDriveSdkNativeClient.getHttpResponseReadPointer(),
+                onHttpClientRequest = ApiProviderBridge(
+                    userId = userId,
+                    apiProvider = apiProvider,
+                    coroutineScope = coroutineScope,
+                ),
+                onAccountRequest = AccountClientBridge(userAddressResolver, publicAddressResolver),
                 onRecordMetric = metricCallback?.let(::TelemetryBridge) ?: {},
             ), this
         )

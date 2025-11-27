@@ -11,12 +11,13 @@ public actor ProtonDriveClient: Sendable {
     private var downloadManager: DownloadManager!
     private var thumbnailsManager: DownloadThumbnailsManager!
 
-    private let logger: ProtonDriveSDK.Logger
+    let logger: ProtonDriveSDK.Logger
     private let recordMetricEventCallback: RecordMetricEventCallback
     private let featureFlagProviderCallback: FeatureFlagProviderCallback
 
     let httpClient: HttpClientProtocol
     let accountClient: AccountClientProtocol
+    let configuration: ProtonDriveClientConfiguration
 
     public init(
         baseURL: String,
@@ -25,6 +26,7 @@ public actor ProtonDriveClient: Sendable {
         httpClient: HttpClientProtocol,
         accountClient: AccountClientProtocol,
         clientUID: String?,
+        configuration: ProtonDriveClientConfiguration = .default,
         logCallback: @escaping LogCallback,
         recordMetricEventCallback: @escaping RecordMetricEventCallback,
         featureFlagProviderCallback: @escaping FeatureFlagProviderCallback
@@ -35,18 +37,22 @@ public actor ProtonDriveClient: Sendable {
 
         self.httpClient = httpClient
         self.accountClient = accountClient
+        self.configuration = configuration
 
         let clientCreateRequest = Proton_Drive_Sdk_DriveClientCreateRequest.with {
             $0.baseURL = baseURL
 
-            $0.httpClientRequestAction = Int64(ObjectHandle(callback: cCompatibleHttpRequest))
-            $0.accountClientRequestAction = Int64(ObjectHandle(callback: cCompatibleAccountClientRequest))
+            $0.accountRequestAction = Int64(ObjectHandle(callback: cCompatibleAccountClientRequest))
+            
+            $0.httpClientRequestAction = Int64(ObjectHandle(callback: HttpClientRequestProcessor.cCompatibleHttpRequest))
+            $0.httpResponseReadAction = Int64(ObjectHandle(callback: HttpClientResponseProcessor.cCompatibleHttpResponseRead))
+            
             $0.telemetry = Proton_Sdk_Telemetry.with {
                 $0.logAction = Int64(ObjectHandle(callback: cCompatibleLogCallback))
                 $0.recordMetricAction = Int64(ObjectHandle(callback: cCompatibleTelemetryRecordMetricCallback))
             }
 
-            $0.featureFlags = Int64(ObjectHandle(callback: cCompatibleFeatureFlagProviderCallback))
+            $0.featureEnabledFunction = Int64(ObjectHandle(callback: cCompatibleFeatureFlagProviderCallback))
 
             if let entityCachePath {
                 $0.entityCachePath = entityCachePath
@@ -81,9 +87,21 @@ public actor ProtonDriveClient: Sendable {
         recordMetricEventCallback(metricEvent)
     }
 
-    func isFlagEnabled(_ flagName: String) async -> Bool {
-        await featureFlagProviderCallback(flagName)
-    nonisolated func isFlagEnabled(_ flagName: String) async -> Bool {
+//    nonisolated func isFlagEnabled(_ flagName: String) async -> Bool {
+//        await featureFlagProviderCallback(flagName)
+//    }
+    
+    nonisolated func isFlagEnabled(_ flagName: String) -> Bool {
+        // Since the C# callback expects a synchronous return but our Swift callback has completion block,
+        // we need to block and wait for the async result using a semaphore
+        let semaphore = DispatchSemaphore(value: 0)
+        var result = false
+        featureFlagProviderCallback(flagName) { resultValue in
+            result = resultValue
+            semaphore.signal()
+        }
+        semaphore.wait()
+        return result
     }
 
     public func downloadFile(

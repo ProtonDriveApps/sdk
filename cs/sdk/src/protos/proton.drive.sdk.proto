@@ -128,34 +128,36 @@ message DriveClientCreateRequest {
     string bindings_language = 2; // Optional
 
     // Pointer to C function that will be called:
-    // void http_client_request(intptr_t bindings_handle, ByteArray http_request, intptr_t sdk_handle)
+    // void handle_http_request(intptr_t bindings_handle, ByteArray http_request, intptr_t sdk_handle)
     //   bindings_handle: handle for the bindings
     //   http_request: Protobuf message of type proton.sdk.HttpRequest carrying the HTTP request data
     //   sdk_handle: handle for the SDK
     int64 http_client_request_action = 3;
+
+    int64 http_response_read_action = 4; // C signature: void handle_http_response_read(intptr_t bindings_handle, ByteArray buffer, intptr_t sdk_handle);
     
     // Pointer to C function that will be called:
-    // void account_client_request(intptr_t bindings_handle, ByteArray http_request, intptr_t sdk_handle)
+    // void handle_account_request(intptr_t bindings_handle, ByteArray http_request, intptr_t sdk_handle)
     //   bindings_handle: handle for the bindings
     //   account_request: Protobuf message of type proton.drive.sdk.AccountRequest carrying the request data
     //   sdk_handle: handle for the SDK
-    int64 account_client_request_action = 4;
+    int64 account_request_action = 5;
 
-    string entity_cache_path = 5; // Optional
-    string secret_cache_path = 6; // Optional
+    string entity_cache_path = 6; // Optional
+    string secret_cache_path = 7; // Optional
 
-    proton.sdk.Telemetry telemetry = 7; // Optional
+    proton.sdk.Telemetry telemetry = 8; // Optional
 
     // Client UID, optional 
     // If a null value is provided, the SDK automatically generates a UUID during initialization
-    string uid = 8;
+    string uid = 9;
 
     // Pointer to C function that will be called to check feature flags:
     // int is_feature_flag_enabled(intptr_t bindings_handle, ByteArray flag_name)
     //   bindings_handle: handle for the bindings
     //   flag_name: UTF-8 encoded feature flag name
     //   returns: 0 for disabled, non-zero for enabled
-    int64 feature_enabled_function = 9; // Optional
+    int64 feature_enabled_function = 10; // Optional
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of ProtonDriveClient.
@@ -202,7 +204,7 @@ message DriveClientGetFileRevisionUploaderRequest {
 message UploadFromStreamRequest {
     int64 uploader_handle = 1;
     repeated Thumbnail thumbnails = 2;
-    int64 read_action = 3; // C signature: void on_stream_operation(intptr_t bindings_handle, ByteArray buffer, intptr_t sdk_handle);
+    int64 read_action = 3; // C signature: void handle_stream_operation(intptr_t bindings_handle, ByteArray buffer, intptr_t sdk_handle);
     int64 progress_action = 4; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 5;
 }
@@ -305,18 +307,6 @@ message DownloadControllerResumeRequest {
 // The reponse must not have a value.
 message DownloadControllerFreeRequest {
     int64 download_controller_handle = 1;
-}
-
-// The response value must be an Int32Value carrying the number of bytes read into the buffer. That number must not be negative.
-message StreamReadRequest {
-    int64 buffer_pointer = 1;
-    int32 buffer_length = 2;
-}
-
-// The reponse must not have a value.
-message StreamWriteRequest {
-    int64 data_pointer = 1;
-    int32 data_length = 2;
 }
 
 enum VolumeType {
