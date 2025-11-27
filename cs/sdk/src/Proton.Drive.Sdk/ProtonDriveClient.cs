@@ -45,9 +45,10 @@ public sealed class ProtonDriveClient
         ICacheRepository secretCacheRepository,
         IFeatureFlagProvider featureFlagProvider,
         ITelemetry telemetry,
+        string? bindingsLanguage = null,
         string? uid = null)
         : this(
-            new SdkHttpClientFactoryDecorator(httpClientFactory).CreateClient(),
+            new SdkHttpClientFactoryDecorator(httpClientFactory, bindingsLanguage).CreateClient(),
             accountClient,
             new DriveClientCache(entityCacheRepository, secretCacheRepository),
             featureFlagProvider,
