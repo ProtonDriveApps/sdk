@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using Google.Protobuf;
 using Proton.Sdk.CExports.Tasks;
 using Proton.Sdk.Http;
 
@@ -13,15 +12,18 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
         nint bindingsHandle,
         string baseUrl,
         string? bindingsLanguage,
-        InteropAction<nint, InteropArray<byte>, nint> sendHttpRequestAction)
+        InteropAction<nint, InteropArray<byte>, nint> httpRequestAction,
+        InteropAction<nint, InteropArray<byte>, nint> httpResponseReadAction)
     {
         _baseUrl = baseUrl;
         BindingsHandle = bindingsHandle;
-        SendHttpRequestAction = sendHttpRequestAction;
+        HttpRequestAction = httpRequestAction;
+        HttpResponseReadAction = httpResponseReadAction;
     }
 
     private nint BindingsHandle { get; }
-    private InteropAction<nint, InteropArray<byte>, nint> SendHttpRequestAction { get; }
+    private InteropAction<nint, InteropArray<byte>, nint> HttpRequestAction { get; }
+    private InteropAction<IntPtr, InteropArray<byte>, IntPtr> HttpResponseReadAction { get; }
 
     public HttpClient CreateClient(string name)
     {
@@ -44,11 +46,21 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
 
             var interopHttpRequest = await ConvertHttpRequestToInteropAsync(request, cancellationToken).ConfigureAwait(false);
 
-            _owner.SendHttpRequestAction.InvokeWithMessage(_owner.BindingsHandle, interopHttpRequest, (nint)taskCompletionSourceHandle);
+            try
+            {
+                _owner.HttpRequestAction.InvokeWithMessage(_owner.BindingsHandle, interopHttpRequest, (nint)taskCompletionSourceHandle);
 
-            var interopHttpResponse = await taskCompletionSource.Task.ConfigureAwait(false);
+                var interopHttpResponse = await taskCompletionSource.Task.ConfigureAwait(false);
 
-            return ConvertHttpResponseFromInterop(interopHttpResponse);
+                return ConvertHttpResponseFromInterop(interopHttpResponse);
+            }
+            finally
+            {
+                if (interopHttpRequest.HasSdkContentHandle)
+                {
+                    Interop.FreeHandle<Stream>(interopHttpRequest.SdkContentHandle);
+                }
+            }
         }
 
         private static async ValueTask<HttpRequest> ConvertHttpRequestToInteropAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -63,9 +75,9 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
             {
                 headers = headers.Concat(request.Content.Headers);
 
-                interopHttpRequest.Content = await ByteString.FromStreamAsync(
-                    await request.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false),
-                    cancellationToken).ConfigureAwait(false);
+                var contentStream = await request.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+
+                interopHttpRequest.SdkContentHandle = Interop.AllocHandle(contentStream);
             }
 
             interopHttpRequest.Headers.AddRange(
@@ -79,12 +91,14 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
             return interopHttpRequest;
         }
 
-        private static HttpResponseMessage ConvertHttpResponseFromInterop(HttpResponse interopHttpResponse)
+        private HttpResponseMessage ConvertHttpResponseFromInterop(HttpResponse interopHttpResponse)
         {
-            var response = new HttpResponseMessage((HttpStatusCode)interopHttpResponse.StatusCode)
+            var response = new HttpResponseMessage((HttpStatusCode)interopHttpResponse.StatusCode);
+
+            if (interopHttpResponse.HasBindingsContentHandle)
             {
-                Content = new ReadOnlyMemoryContent(interopHttpResponse.Content.Memory),
-            };
+                response.Content = new StreamContent(new InteropStream(null, (nint)interopHttpResponse.BindingsContentHandle, _owner.HttpResponseReadAction));
+            }
 
             foreach (var interopHttpResponseHeader in interopHttpResponse.Headers)
             {

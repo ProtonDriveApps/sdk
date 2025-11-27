@@ -40,7 +40,7 @@ void Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_handleResponse
     byteArray.pointer = (const uint8_t *) bufferElems;
     byteArray.length = (*env)->GetArrayLength(env, response);
 
-    proton_drive_sdk_handle_response(
+    proton_sdk_handle_response(
             (intptr_t) sdk_handle,
             byteArray
     );
@@ -111,6 +111,14 @@ void onSendHttpRequest(
     pushDataAndLongToVoidMethod(bindings_handle, value, sdk_handle, "onSendHttpRequest");
 }
 
+void onHttpResponseRead(
+        intptr_t bindings_handle,
+        ByteArray value,
+        intptr_t sdk_handle
+) {
+    pushDataAndLongToVoidMethod(bindings_handle, value, sdk_handle, "onHttpResponseRead");
+}
+
 void onAccountRequest(
         intptr_t bindings_handle,
         ByteArray value,
@@ -148,11 +156,18 @@ jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getProgressPo
     return (jlong) (intptr_t) &onProgress;
 }
 
-jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getSendHttpRequestPointer(
+jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getHttpClientRequestPointer(
         JNIEnv *env,
         jobject obj
 ) {
     return (jlong) (intptr_t) &onSendHttpRequest;
+}
+
+jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getHttpResponseReadPointer(
+        JNIEnv *env,
+        jclass clazz
+) {
+    return (jlong) (intptr_t) &onHttpResponseRead;
 }
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getAccountRequestPointer(
@@ -167,4 +182,9 @@ jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getRecordMetr
         jobject obj
 ) {
     return (jlong) (intptr_t) &onRecordMetric;
+}
+
+jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_createWeakRef(JNIEnv* env, jobject obj) {
+    jweak weakRef = (*env)->NewWeakGlobalRef(env, obj);
+    return (jlong)(intptr_t) weakRef;
 }

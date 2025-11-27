@@ -20,8 +20,9 @@ class ProtonDriveSdkNativeClient internal constructor(
     val response: ResponseCallback = { error("response not configured for $name") },
     val read: suspend (ByteBuffer) -> Int = { error("read not configured for $name") },
     val write: suspend (ByteBuffer) -> Unit = { error("write not configured for $name") },
-    val sendHttpRequest: suspend (ProtonSdk.HttpRequest) -> HttpResponse = { error("sendHttpRequest not configured for $name") },
-    val request: suspend (ProtonDriveSdk.AccountRequest) -> Any = { error("request not configured for $name") },
+    val httpClientRequest: suspend (ProtonSdk.HttpRequest) -> HttpResponse = { error("httpClientRequest not configured for $name") },
+    val readHttpBody: suspend (ByteBuffer) -> Int = { error("readHttpBody not configured for $name") },
+    val accountRequest: suspend (ProtonDriveSdk.AccountRequest) -> Any = { error("accountRequest not configured for $name") },
     val progress: suspend (ProtonDriveSdk.ProgressUpdate) -> Unit = { error("progress not configured for $name") },
     val recordMetric: suspend (ProtonSdk.MetricEvent) -> Unit = { error("recordMetric not configured for $name") },
     val logger: (String) -> Unit = {},
@@ -77,9 +78,10 @@ class ProtonDriveSdkNativeClient internal constructor(
     external fun getReadPointer(): Long
     external fun getWritePointer(): Long
     external fun getProgressPointer(): Long
-    external fun getSendHttpRequestPointer(): Long
+    external fun getHttpClientRequestPointer(): Long
     external fun getAccountRequestPointer(): Long
     external fun getRecordMetricPointer(): Long
+    external fun createWeakRef(): Long
 
     @Suppress("unused") // Called by JNI
     fun onResponse(data: ByteBuffer) {
@@ -121,9 +123,19 @@ class ProtonDriveSdkNativeClient internal constructor(
         parser = ProtonSdk.HttpRequest::parseFrom,
     ) { httpRequest ->
         logger("send http request for ${httpRequest.method} ${httpRequest.url} of size: ${data.capacity()}")
-        val httpResponse = sendHttpRequest(httpRequest)
+        val httpResponse = httpClientRequest(httpRequest)
         logger("receive http response ${httpResponse.statusCode} for ${httpRequest.method} ${httpRequest.url}")
         response { value = httpResponse.asAny("proton.sdk.HttpResponse") }
+    }
+
+    @Suppress("unused") // Called by JNI
+    fun onHttpResponseRead(buffer: ByteBuffer, sdkHandle: Long) {
+        onOperation("read", sdkHandle) {
+            logger("http response read for $name of size: ${buffer.capacity()}")
+            val bytesRead = readHttpBody(buffer).takeUnless { it < 0 } ?: 0
+            logger("$bytesRead bytes read for http response $name")
+            response { value = Int32Value.of(bytesRead).asAny("google.protobuf.Int32Value") }
+        }
     }
 
     @Suppress("unused") // Called by JNI
@@ -137,7 +149,7 @@ class ProtonDriveSdkNativeClient internal constructor(
         parser = ProtonDriveSdk.AccountRequest::parseFrom,
     ) { accountRequest ->
         logger("request for ${accountRequest.payloadCase.name} of size: ${data.capacity()}")
-        val response = request(accountRequest)
+        val response = accountRequest(accountRequest)
         response { value = response }
     }
 
@@ -227,5 +239,10 @@ class ProtonDriveSdkNativeClient internal constructor(
             logger("CoroutineScope not active for $operation")
         }
         return coroutineScope
+    }
+
+    companion object{
+        @JvmStatic
+        external fun getHttpResponseReadPointer(): Long
     }
 }

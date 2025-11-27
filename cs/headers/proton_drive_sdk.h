@@ -12,9 +12,4 @@ void proton_drive_sdk_handle_request(
     array_action response_action
 );
 
-void proton_drive_sdk_handle_response(
-    intptr_t sdk_handle,
-    ByteArray response
-);
-
 #endif // PROTON_DRIVE_SDK_H

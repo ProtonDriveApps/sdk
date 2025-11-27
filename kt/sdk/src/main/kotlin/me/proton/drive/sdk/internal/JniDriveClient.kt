@@ -29,15 +29,16 @@ class JniDriveClient internal constructor() : JniBaseProtonDriveSdk() {
     suspend fun create(
         coroutineScope: CoroutineScope,
         request: ClientCreateRequest,
-        onSendHttpRequest: suspend (ProtonSdk.HttpRequest) -> HttpResponse,
-        onRequest: suspend (ProtonDriveSdk.AccountRequest) -> Any,
+        httpResponseReadPointer: Long,
+        onHttpClientRequest: suspend (ProtonSdk.HttpRequest) -> HttpResponse,
+        onAccountRequest: suspend (ProtonDriveSdk.AccountRequest) -> Any,
         onRecordMetric: suspend (ProtonSdk.MetricEvent) -> Unit,
     ) = executePersistent(clientBuilder = { continuation ->
         ProtonDriveSdkNativeClient(
             method("create"),
             continuation.toLongResponse(),
-            sendHttpRequest = onSendHttpRequest,
-            request = onRequest,
+            httpClientRequest = onHttpClientRequest,
+            accountRequest = onAccountRequest,
             logger = logger,
             recordMetric = onRecordMetric,
             coroutineScope = coroutineScope,
@@ -46,8 +47,9 @@ class JniDriveClient internal constructor() : JniBaseProtonDriveSdk() {
         request {
             driveClientCreate = driveClientCreateRequest {
                 baseUrl = request.baseUrl
-                httpClientRequestAction = client.getSendHttpRequestPointer()
-                accountClientRequestAction = client.getAccountRequestPointer()
+                httpClientRequestAction = client.getHttpClientRequestPointer()
+                httpResponseReadAction = httpResponseReadPointer
+                accountRequestAction = client.getAccountRequestPointer()
                 entityCachePath = request.entityCachePath
                 secretCachePath = request.secretCachePath
                 telemetry = telemetry {

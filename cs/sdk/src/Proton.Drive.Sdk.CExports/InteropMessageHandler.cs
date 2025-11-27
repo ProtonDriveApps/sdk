@@ -1,21 +1,12 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Google.Protobuf.Reflection;
 using Google.Protobuf.WellKnownTypes;
 using Proton.Sdk.CExports;
-using Proton.Sdk.CExports.Tasks;
 
 namespace Proton.Drive.Sdk.CExports;
 
 internal static class InteropMessageHandler
 {
-    private static readonly TypeRegistry ResponseTypeRegistry = TypeRegistry.FromMessages(
-        Int32Value.Descriptor,
-        StringValue.Descriptor,
-        BytesValue.Descriptor,
-        RepeatedBytesValue.Descriptor,
-        Address.Descriptor);
-
     [UnmanagedCallersOnly(EntryPoint = "proton_drive_sdk_handle_request", CallConvs = [typeof(CallConvCdecl)])]
     public static async void OnRequestReceived(InteropArray<byte> requestBytes, nint bindingsHandle, InteropAction<nint, InteropArray<byte>> responseAction)
     {
@@ -103,76 +94,5 @@ internal static class InteropMessageHandler
 
             responseAction.InvokeWithMessage(bindingsHandle, new Response { Error = error });
         }
-    }
-
-    [UnmanagedCallersOnly(EntryPoint = "proton_drive_sdk_handle_response", CallConvs = [typeof(CallConvCdecl)])]
-    public static void OnResponseReceived(nint sdkHandle, InteropArray<byte> responseBytes)
-    {
-        var response = Response.Parser.ParseFrom(responseBytes.AsReadOnlySpan());
-
-        if (response.Error is not null)
-        {
-            SetException(sdkHandle, response.Error.Message);
-            return;
-        }
-
-        if (response.Value is null)
-        {
-            SetResult(sdkHandle);
-            return;
-        }
-
-        var responseValue = response.Value.Unpack(ResponseTypeRegistry);
-
-        switch (responseValue)
-        {
-            case Int32Value value:
-                SetResult(sdkHandle, value);
-                break;
-
-            case StringValue value:
-                SetResult(sdkHandle, value);
-                break;
-
-            case BytesValue value:
-                SetResult(sdkHandle, value);
-                break;
-
-            case RepeatedBytesValue value:
-                SetResult(sdkHandle, value);
-                break;
-
-            case Address value:
-                SetResult(sdkHandle, value);
-                break;
-
-            case HttpResponse value:
-                SetResult(sdkHandle, value);
-                break;
-
-            default:
-                throw new ArgumentException($"Unknown response value type: {responseValue.Descriptor.Name}", nameof(responseBytes));
-        }
-    }
-
-    private static void SetResult<T>(nint tcsHandle, T value)
-    {
-        var tcs = Interop.GetFromHandleAndFree<ValueTaskCompletionSource<T>>(tcsHandle);
-
-        tcs.SetResult(value);
-    }
-
-    private static void SetResult(nint tcsHandle)
-    {
-        var tcs = Interop.GetFromHandleAndFree<ValueTaskCompletionSource>(tcsHandle);
-
-        tcs.SetResult();
-    }
-
-    private static void SetException(nint tcsHandle, string errorMessage)
-    {
-        var tfs = Interop.GetFromHandleAndFree<IValueTaskFaultingSource>(tcsHandle);
-
-        tfs.SetException(new Exception(errorMessage));
     }
 }

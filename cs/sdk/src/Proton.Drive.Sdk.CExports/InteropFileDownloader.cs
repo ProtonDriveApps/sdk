@@ -19,7 +19,7 @@ internal static class InteropFileDownloader
 
         var downloadController = downloader.DownloadToStream(
             stream,
-            (completed, total) => progressAction.InvokeProgressUpdate(bindingsHandle, total, completed),
+            (bytesCompleted, bytesInTotal) => progressAction.InvokeProgressUpdate(bindingsHandle, bytesCompleted, bytesInTotal),
             cancellationToken);
 
         return new Int64Value { Value = Interop.AllocHandle(downloadController) };
@@ -35,7 +35,7 @@ internal static class InteropFileDownloader
 
         var downloadController = downloader.DownloadToFile(
             request.FilePath,
-            (completed, total) => progressAction.InvokeProgressUpdate(bindingsHandle, total, completed),
+            (bytesCompleted, bytesInTotal) => progressAction.InvokeProgressUpdate(bindingsHandle, bytesCompleted, bytesInTotal),
             cancellationToken);
 
         return new Int64Value { Value = Interop.AllocHandle(downloadController) };

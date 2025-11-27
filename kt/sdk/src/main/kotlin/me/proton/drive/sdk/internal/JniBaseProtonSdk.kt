@@ -35,6 +35,15 @@ abstract class JniBaseProtonSdk : JniBase() {
         nativeClient.handleRequest(request(block))
     }
 
+    suspend fun <T> executeOnce(
+        clientBuilder: (CancellableContinuation<T>) -> ProtonSdkNativeClient,
+        requestBuilder: (ProtonSdkNativeClient) -> Request,
+    ): T = suspendCancellableCoroutine { continuation ->
+        val nativeClient = clientBuilder(continuation)
+        continuation.invokeOnCancellation { nativeClient.release() }
+        nativeClient.handleRequest(requestBuilder(nativeClient))
+    }
+
     suspend fun <T> executePersistent(
         clientBuilder: (CancellableContinuation<T>) -> ProtonSdkNativeClient,
         requestBuilder: (ProtonSdkNativeClient) -> Request,

@@ -1,10 +1,10 @@
 protocol InteropRequest {
-    associatedtype CallResultType
+    associatedtype CallResultType: Sendable
     associatedtype StateType
 }
 
 extension InteropRequest {
-    typealias BoxedStateType = BoxedContinuationWithState<CallResultType, StateType>
+    typealias BoxedStateType = BoxedCompletionBlock<CallResultType, StateType>
 }
 
 extension Proton_Drive_Sdk_DriveClientCreateRequest: InteropRequest {

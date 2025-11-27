@@ -10,11 +10,11 @@ final class ProgressCallbackWrapper {
 }
 
 let cProgressCallback: CCallback = { statePointer, byteArray in
-    typealias BoxType = BoxedContinuationWithState<Int, WeakReference<ProgressCallbackWrapper>>
+    typealias BoxType = BoxedCompletionBlock<Int, WeakReference<ProgressCallbackWrapper>>
     let progressUpdate = Proton_Drive_Sdk_ProgressUpdate(byteArray: byteArray)
     let progress = FileOperationProgress(
-        bytesCompleted: progressUpdate.bytesCompleted,
-        bytesTotal: progressUpdate.bytesInTotal
+        bytesCompleted: progressUpdate.hasBytesCompleted ? progressUpdate.bytesCompleted : nil,
+        bytesTotal: progressUpdate.hasBytesInTotal ? progressUpdate.bytesInTotal : nil
     )
 
     guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else { return }
@@ -22,8 +22,8 @@ let cProgressCallback: CCallback = { statePointer, byteArray in
     let weakWrapper: WeakReference<ProgressCallbackWrapper> = stateTypedPointer.takeUnretainedValue().state
     weakWrapper.value?.callback(progress)
 
-    // TODO: also release pointer when task is cancelled
-    if progress.isCompleted {
-        stateTypedPointer.release()
-    }
+    // TODO: release pointer when task is cancelled or completed
+    // if progress.isCompleted {
+    //     stateTypedPointer.release()
+    // }
 }
