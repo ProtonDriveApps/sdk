@@ -22,7 +22,8 @@ class JniHttpStream internal constructor(
         name = method("write"),
         readHttpBody = { buffer ->
             Channels.newChannel(inputStream).read(buffer).also { numberOfByteRead ->
-                if (numberOfByteRead == 0) {
+                if (numberOfByteRead == -1) {
+                    inputStream.close()
                     onBodyRead?.invoke()
                 }
             }
