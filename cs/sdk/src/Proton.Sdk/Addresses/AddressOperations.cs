@@ -239,6 +239,11 @@ internal static class AddressOperations
         var userKeyRing = new PgpPrivateKeyRing(userKeys);
         using var decryptingStream = PgpDecryptingStream.Open(token, userKeyRing, signature, userKeyRing);
 
+        if (decryptingStream.GetVerificationResult().Status is not PgpVerificationStatus.Ok)
+        {
+            throw new ProtonAccountException("Invalid account address key passphrase signature");
+        }
+
         using var passphraseStream = new MemoryStream();
         decryptingStream.CopyTo(passphraseStream);
 
