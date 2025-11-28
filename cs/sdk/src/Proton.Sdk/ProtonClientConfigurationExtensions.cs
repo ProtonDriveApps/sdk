@@ -73,7 +73,8 @@ internal static class ProtonClientConfigurationExtensions
                             options.CircuitBreaker.SamplingDuration = options.AttemptTimeout.Timeout * 2;
                         }
 
-                        options.Retry.ShouldHandle += arguments => ValueTask.FromResult(arguments.Context.GetRequestMessage()?.GetRetryIsDisabled() != true);
+                        options.Retry.ShouldHandle += arguments =>
+                            ValueTask.FromResult(arguments.Context.GetRequestMessage()?.GetRequestType() != HttpRequestType.RegularApi);
                         options.Retry.ShouldRetryAfterHeader = true;
                         options.Retry.Delay = TimeSpan.FromSeconds(2);
                         options.Retry.BackoffType = DelayBackoffType.Exponential;

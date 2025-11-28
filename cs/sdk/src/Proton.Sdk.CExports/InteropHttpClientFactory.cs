@@ -67,7 +67,7 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
         {
             var url = request.RequestUri?.AbsoluteUri ?? throw new InvalidOperationException($"Missing URL for HTTP request: {request.RequestUri}");
 
-            var interopHttpRequest = new HttpRequest { Url = url, Method = request.Method.Method, DisableRetry = request.GetRetryIsDisabled() };
+            var interopHttpRequest = new HttpRequest { Url = url, Method = request.Method.Method, Type = (HttpRequestType)request.GetRequestType() };
 
             var headers = request.Headers.AsEnumerable();
 

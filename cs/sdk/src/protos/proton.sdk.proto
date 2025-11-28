@@ -223,6 +223,12 @@ message StreamReadRequest {
     int32 buffer_length = 3;
 }
 
+enum HttpRequestType {
+    HTTP_REQUEST_TYPE_REGULAR_API = 0;
+    HTTP_REQUEST_TYPE_STORAGE_DOWNLOAD = 1;
+    HTTP_REQUEST_TYPE_STORAGE_UPLOAD = 2;
+}
+
 message HttpHeader {
     string name = 1;
     repeated string values = 2;
@@ -230,11 +236,11 @@ message HttpHeader {
 
 // The response value must be an HttpResponse.
 message HttpRequest {
-    string url = 1;
-    string method = 2;
-    repeated HttpHeader headers = 3;
-    int64 sdk_content_handle = 4; // Optional, to be used with StreamReadRequest
-    bool disable_retry = 5;
+    HttpRequestType type = 1;
+    string url = 2;
+    string method = 3;
+    repeated HttpHeader headers = 4;
+    int64 sdk_content_handle = 5; // Optional, to be used with StreamReadRequest
 }
 
 message HttpResponse {
