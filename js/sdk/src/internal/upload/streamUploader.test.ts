@@ -312,8 +312,9 @@ describe('StreamUploader', () => {
                 throw new Error('Failed to encrypt block');
             });
 
-            // Encrypting thumbnails is before blocks, thus it can be uploaded before failure.
-            await verifyFailure('Failed to encrypt block', 1024);
+            // Thumbnail are uploaded with the first content block. If the
+            // content block fails to encrypt, nothing is uploaded.
+            await verifyFailure('Failed to encrypt block', 0);
             // 1 block + 1 retry, others are skipped
             expect(cryptoService.encryptBlock).toHaveBeenCalledTimes(2);
         });
@@ -436,7 +437,7 @@ describe('StreamUploader', () => {
         describe('verifyIntegrity', () => {
             it('should report block verification error', async () => {
                 blockVerifier.verifyBlock = jest.fn().mockRejectedValue(new IntegrityError('Block verification error'));
-                await verifyFailure('Block verification error', 1024);
+                await verifyFailure('Block verification error', 0);
                 expect(telemetry.logBlockVerificationError).toHaveBeenCalledWith(false);
             });
 
