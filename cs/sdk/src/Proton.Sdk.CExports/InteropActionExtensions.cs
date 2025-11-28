@@ -27,6 +27,21 @@ internal static class InteropActionExtensions
         }
     }
 
+    public static unsafe nint InvokeWithMessage<T>(
+        this InteropFunction<nint, InteropArray<byte>, nint, nint> function,
+        nint bindingsHandle,
+        T message,
+        nint sdkHandle)
+        where T : IMessage
+    {
+        var responseBytes = message.ToByteArray();
+
+        fixed (byte* responsePointer = responseBytes)
+        {
+            return function.Invoke(bindingsHandle, new InteropArray<byte>(responsePointer, responseBytes.Length), sdkHandle);
+        }
+    }
+
     public static unsafe ValueTask<TResponse> SendRequestAsync<TResponse>(
         this InteropAction<nint, InteropArray<byte>, nint> interopAction,
         nint bindingsHandle,
