@@ -18,6 +18,12 @@ extension ObjectHandle {
         self = ObjectHandle(bitPattern: callbackAddress)
     }
 
+    /// Returns the address of a callback as a number
+    init(callback: CCallbackWithCallbackPointerAndIntReturn) {
+        let callbackAddress: UnsafeRawPointer = unsafeBitCast(callback, to: UnsafeRawPointer.self)
+        self = ObjectHandle(bitPattern: callbackAddress)
+    }
+
     /// Returns the address of a callback with int return as a number
     init(callback: CCallbackWithIntReturn) {
         let callbackAddress: UnsafeRawPointer = unsafeBitCast(callback, to: UnsafeRawPointer.self)
@@ -39,6 +45,7 @@ func address<T: AnyObject>(of object: T) -> ObjectHandle {
 /// C-compatible callback used by SDK to pass data to the app
 typealias CCallback = @convention(c) (Int, ByteArray) -> Void
 typealias CCallbackWithCallbackPointer = @convention(c) (Int, ByteArray, Int) -> Void
+typealias CCallbackWithCallbackPointerAndIntReturn = @convention(c) (Int, ByteArray, Int) -> Int
 typealias CCallbackWithIntReturn = @convention(c) (Int, ByteArray) -> Int32
 
 extension Data {

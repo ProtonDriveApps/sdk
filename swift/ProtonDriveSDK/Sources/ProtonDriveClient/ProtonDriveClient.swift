@@ -43,10 +43,13 @@ public actor ProtonDriveClient: Sendable {
             $0.baseURL = baseURL
 
             $0.accountRequestAction = Int64(ObjectHandle(callback: cCompatibleAccountClientRequest))
-            
-            $0.httpClientRequestAction = Int64(ObjectHandle(callback: HttpClientRequestProcessor.cCompatibleHttpRequest))
-            $0.httpResponseReadAction = Int64(ObjectHandle(callback: HttpClientResponseProcessor.cCompatibleHttpResponseRead))
-            
+
+            $0.httpClient = Proton_Drive_Sdk_HttpClient.with { httpClient in
+                httpClient.requestFunction = Int64(ObjectHandle(callback: HttpClientRequestProcessor.cCompatibleHttpRequest))
+                httpClient.responseContentReadAction = Int64(ObjectHandle(callback: HttpClientResponseProcessor.cCompatibleHttpResponseRead))
+                httpClient.cancellationAction = Int64(ObjectHandle(callback: HttpClientRequestProcessor.cCompatibleHttpCancellationAction))
+            }
+
             $0.telemetry = Proton_Sdk_Telemetry.with {
                 $0.logAction = Int64(ObjectHandle(callback: cCompatibleLogCallback))
                 $0.recordMetricAction = Int64(ObjectHandle(callback: cCompatibleTelemetryRecordMetricCallback))

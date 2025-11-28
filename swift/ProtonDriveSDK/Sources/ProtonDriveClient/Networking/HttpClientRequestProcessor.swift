@@ -1,29 +1,54 @@
 import Foundation
 
 enum HttpClientRequestProcessor {
-    
-    static let cCompatibleHttpRequest: CCallbackWithCallbackPointer = { statePointer, byteArray, callbackPointer in
-        Task {
-            do {
-                guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-                    return
-                }
-                let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
-                let weakDriveClient: WeakReference<ProtonDriveClient> = stateTypedPointer.takeUnretainedValue().state
-                
-                let driveClient = ProtonDriveClient.unbox(callbackPointer: callbackPointer, releaseBox: { stateTypedPointer.release() }, weakDriveClient: weakDriveClient)
-                guard let driveClient else { return }
-                
-                
-                let httpRequestData = Proton_Sdk_HttpRequest(byteArray: byteArray)
-                try await HttpClientRequestProcessor.perform(client: driveClient, httpRequestData: httpRequestData, callbackPointer: callbackPointer)
-            } catch {
-                SDKResponseHandler.sendErrorToSDK(error, callbackPointer: callbackPointer)
-            }
+    static let cCompatibleHttpRequest: CCallbackWithCallbackPointerAndIntReturn = { statePointer, byteArray, callbackPointer in
+        guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
+            return 0
         }
+        let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
+        let weakDriveClient: WeakReference<ProtonDriveClient> = stateTypedPointer.takeUnretainedValue().state
+
+        let driveClient = ProtonDriveClient.unbox(callbackPointer: callbackPointer, releaseBox: { stateTypedPointer.release() }, weakDriveClient: weakDriveClient)
+        guard let driveClient else { return 0 }
+
+        // Create a boxed task with the HTTP work
+        let taskBox = BoxedCancellableTask { [driveClient] in
+            let httpRequestData = Proton_Sdk_HttpRequest(byteArray: byteArray)
+            try await HttpClientRequestProcessor.perform(
+                client: driveClient,
+                httpRequestData: httpRequestData,
+                callbackPointer: callbackPointer
+            )
+        }
+        
+        // Retain the task box and return its address as the cancellation handle
+        let unmanaged = Unmanaged.passRetained(taskBox)
+        let handle = Int(bitPattern: unmanaged.toOpaque())
+
+        // Set completion handler to release the Unmanaged reference when done
+        taskBox.setCompletionHandler {
+            unmanaged.release()
+        }
+        
+        return handle
+    }
+    
+    static let cCompatibleHttpCancellationAction: CCallback = { handle, _ in
+        // Convert the address back to the task box
+        guard let pointer = UnsafeRawPointer(bitPattern: Int(handle)) else {
+            print("Invalid cancellation handle: \(handle)")
+            return
+        }
+
+        // Get the task box and cancel it
+        let unmanaged = Unmanaged<BoxedCancellableTask>.fromOpaque(pointer)
+        let taskBox = unmanaged.takeUnretainedValue()
+        taskBox.cancel()
+        
+        // Release our reference (matching the passRetained in cCompatibleHttpRequest)
+        unmanaged.release()
     }
 
-    
     fileprivate static func perform(
         client: ProtonDriveClient,
         httpRequestData: Proton_Sdk_HttpRequest,
@@ -33,7 +58,7 @@ enum HttpClientRequestProcessor {
 
         switch requestType {
         case .driveAPI(let driveRelativePath):
-            try await performDriveApi(
+            try await callDriveApi(
                 driveRelativePath: driveRelativePath,
                 client: client,
                 httpRequestData: httpRequestData,
@@ -55,7 +80,7 @@ enum HttpClientRequestProcessor {
     }
     
     /// the API calls are performed in a non-streaming way. both request body and response data are buffered in memory
-    fileprivate static func performDriveApi(
+    fileprivate static func callDriveApi(
         driveRelativePath: String,
         client: ProtonDriveClient,
         httpRequestData: Proton_Sdk_HttpRequest,

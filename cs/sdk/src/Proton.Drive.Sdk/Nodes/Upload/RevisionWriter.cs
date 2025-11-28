@@ -126,8 +126,6 @@ internal sealed partial class RevisionWriter : IDisposable
                             {
                                 await WaitForBlockUploaderAsync(uploadTasks, blockUploadResults, linkedCancellationToken).ConfigureAwait(false);
 
-                                plainDataStream.Seek(0, SeekOrigin.Begin);
-
                                 var onBlockProgress = onProgress is not null
                                     ? progress =>
                                     {
@@ -287,6 +285,8 @@ internal sealed partial class RevisionWriter : IDisposable
                 {
                     return null;
                 }
+
+                plainDataStream.Seek(0, SeekOrigin.Begin);
 
                 return (plainDataStream, plainDataPrefixBuffer);
             }
