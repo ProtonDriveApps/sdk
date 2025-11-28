@@ -204,7 +204,7 @@ public actor ProtonDriveClient: Sendable {
             let error = Proton_Sdk_Error.with {
                 $0.type = "sdk_error"
                 $0.domain = Proton_Sdk_ErrorDomain.api
-                $0.context = "account client callback called after the proton client object was deallocated"
+                $0.message = "account client callback called after the proton client object was deallocated"
             }
             SDKResponseHandler.send(callbackPointer: callbackPointer, message: error)
             return nil

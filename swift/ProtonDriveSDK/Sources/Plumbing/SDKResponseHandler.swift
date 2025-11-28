@@ -22,7 +22,7 @@ enum SDKResponseHandler {
         let error = Proton_Sdk_Error.with {
             $0.type = "interop"
             $0.domain = Proton_Sdk_ErrorDomain.businessLogic
-            $0.context = message
+            $0.message = message
         }
         SDKResponseHandler.send(callbackPointer: callbackPointer, message: error)
     }
@@ -32,7 +32,7 @@ enum SDKResponseHandler {
         let error = Proton_Sdk_Error.with {
             $0.type = "sdk error"
             $0.domain = Proton_Sdk_ErrorDomain.api
-            $0.context = error.localizedDescription
+            $0.message = error.localizedDescription
         }
         SDKResponseHandler.send(callbackPointer: callbackPointer, message: error)
     }
