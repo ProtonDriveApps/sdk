@@ -45,6 +45,11 @@ internal sealed class NewFileDraftProvider : IFileDraftProvider
         return (draftRevisionUid, fileSecrets);
     }
 
+    public async ValueTask DeleteDraftAsync(ProtonDriveClient client, RevisionUid revisionUid, CancellationToken cancellationToken)
+    {
+        await client.Api.Links.DeleteMultipleAsync(revisionUid.NodeUid.VolumeId, [revisionUid.NodeUid.LinkId], cancellationToken).ConfigureAwait(false);
+    }
+
     private static FileCreationRequest GetFileCreationRequest(
         string clientUid,
         NodeUid parentUid,

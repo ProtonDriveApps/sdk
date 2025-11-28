@@ -17,7 +17,7 @@ internal interface ILinksApiClient
 
     ValueTask<AggregateApiResponse<LinkIdResponsePair>> DeleteMultipleAsync(
         VolumeId volumeId,
-        MultipleLinksNullaryRequest request,
+        IEnumerable<LinkId> linkIds,
         CancellationToken cancellationToken);
 
     ValueTask<NodeNameAvailabilityResponse> GetAvailableNames(

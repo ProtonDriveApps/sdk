@@ -51,14 +51,14 @@ internal sealed class LinksApiClient(HttpClient httpClient) : ILinksApiClient
 
     public async ValueTask<AggregateApiResponse<LinkIdResponsePair>> DeleteMultipleAsync(
         VolumeId volumeId,
-        MultipleLinksNullaryRequest request,
+        IEnumerable<LinkId> linkIds,
         CancellationToken cancellationToken)
     {
         return await _httpClient
             .Expecting(DriveApiSerializerContext.Default.AggregateApiResponseLinkIdResponsePair)
             .PostAsync(
                 $"v2/volumes/{volumeId}/delete_multiple",
-                request,
+                new MultipleLinksNullaryRequest { LinkIds = linkIds },
                 DriveApiSerializerContext.Default.MultipleLinksNullaryRequest,
                 cancellationToken)
             .ConfigureAwait(false);
