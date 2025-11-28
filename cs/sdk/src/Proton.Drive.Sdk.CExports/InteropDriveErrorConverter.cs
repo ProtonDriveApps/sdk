@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes.Download;
+using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Sdk.CExports;
 
@@ -32,6 +33,10 @@ internal static class InteropDriveErrorConverter
             case SessionKeyAndDataPacketMismatchException:
                 error.Domain = ErrorDomain.DataIntegrity;
                 error.PrimaryCode = UploadKeyMismatchErrorPrimaryCode;
+                break;
+
+            case IntegrityException:
+                error.Domain = ErrorDomain.DataIntegrity;
                 break;
 
             case NodeWithSameNameExistsException e:

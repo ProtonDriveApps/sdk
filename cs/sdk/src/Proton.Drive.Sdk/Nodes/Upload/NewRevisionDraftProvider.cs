@@ -21,4 +21,10 @@ internal sealed class NewRevisionDraftProvider : IFileDraftProvider
     {
         return await RevisionOperations.CreateDraftAsync(client, _fileUid, _lastKnownRevisionId, cancellationToken).ConfigureAwait(false);
     }
+
+    public async ValueTask DeleteDraftAsync(ProtonDriveClient client, RevisionUid revisionUid, CancellationToken cancellationToken)
+    {
+        await client.Api.Files.DeleteRevisionAsync(revisionUid.NodeUid.VolumeId, revisionUid.NodeUid.LinkId, revisionUid.RevisionId, cancellationToken)
+            .ConfigureAwait(false);
+    }
 }
