@@ -30,7 +30,7 @@ internal sealed partial class BlockUploader
 
     public TransferQueue Queue { get; }
 
-    public async Task<byte[]> UploadContentAsync(
+    public async Task<BlockUploadResult> UploadContentAsync(
         RevisionUid revisionUid,
         int index,
         PgpSessionKey contentKey,
@@ -58,7 +58,7 @@ internal sealed partial class BlockUploader
 
                     await using (signatureStream.ConfigureAwait(false))
                     {
-                        byte[] sha256Digest;
+                        BlockUploadResult result;
 
                         await using (plainDataStream.ConfigureAwait(false))
                         {
@@ -82,7 +82,9 @@ internal sealed partial class BlockUploader
                                 }
                             }
 
-                            sha256Digest = sha256.GetCurrentHash();
+                            var sha256Digest = sha256.GetCurrentHash();
+
+                            result = new BlockUploadResult((int)plainDataStream.Length, sha256Digest, IsFileContent: true);
                         }
 
                         // The signature stream should not be closed until the signature is no longer needed, because the underlying buffer could be re-used,
@@ -115,7 +117,7 @@ internal sealed partial class BlockUploader
                                 {
                                     Index = index,
                                     Size = (int)dataPacketStream.Length,
-                                    HashDigest = sha256Digest,
+                                    HashDigest = result.Sha256Digest,
                                     EncryptedSignature = signature,
                                     VerificationOutput = new BlockVerificationOutput { Token = verificationToken.AsReadOnlyMemory() },
                                 },
@@ -129,7 +131,7 @@ internal sealed partial class BlockUploader
 
                         LogContentBlobUploaded(index, revisionUid);
 
-                        return sha256Digest;
+                        return result;
                     }
                 }
             }
@@ -151,7 +153,7 @@ internal sealed partial class BlockUploader
         }
     }
 
-    public async Task<byte[]> UploadThumbnailAsync(
+    public async Task<BlockUploadResult> UploadThumbnailAsync(
         RevisionUid revisionUid,
         PgpSessionKey contentKey,
         PgpPrivateKey signingKey,
@@ -203,7 +205,7 @@ internal sealed partial class BlockUploader
 
                 LogThumbnailBlobUploaded(revisionUid);
 
-                return sha256Digest;
+                return new BlockUploadResult(0, sha256Digest, IsFileContent: false);
             }
         }
         finally

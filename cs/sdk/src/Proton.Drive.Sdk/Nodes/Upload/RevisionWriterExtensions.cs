@@ -5,35 +5,52 @@ internal static class RevisionWriterExtensions
     public static ValueTask WriteAsync(
         this RevisionWriter revisionWriter,
         Stream contentStream,
+        long expectedContentLength,
         DateTimeOffset? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long> onProgress,
         CancellationToken cancellationToken)
     {
-        return revisionWriter.WriteAsync(contentStream, [], lastModificationTime, additionalMetadata, onProgress, cancellationToken);
+        return revisionWriter.WriteAsync(contentStream, expectedContentLength, [], lastModificationTime, additionalMetadata, onProgress, cancellationToken);
     }
 
     public static ValueTask WriteAsync(
         this RevisionWriter revisionWriter,
         Stream contentStream,
+        long expectedContentLength,
         DateTime lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long> onProgress,
         CancellationToken cancellationToken)
     {
-        return revisionWriter.WriteAsync(contentStream, [], new DateTimeOffset(lastModificationTime), additionalMetadata, onProgress, cancellationToken);
+        return revisionWriter.WriteAsync(
+            contentStream,
+            expectedContentLength,
+            [],
+            new DateTimeOffset(lastModificationTime),
+            additionalMetadata,
+            onProgress,
+            cancellationToken);
     }
 
     public static ValueTask WriteAsync(
         this RevisionWriter revisionWriter,
         Stream contentStream,
+        long expectedContentLength,
         IEnumerable<Thumbnail> thumbnails,
         DateTime lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long> onProgress,
         CancellationToken cancellationToken)
     {
-        return revisionWriter.WriteAsync(contentStream, thumbnails, new DateTimeOffset(lastModificationTime), additionalMetadata, onProgress, cancellationToken);
+        return revisionWriter.WriteAsync(
+            contentStream,
+            expectedContentLength,
+            thumbnails,
+            new DateTimeOffset(lastModificationTime),
+            additionalMetadata,
+            onProgress,
+            cancellationToken);
     }
 
     public static async ValueTask WriteAsync(
@@ -48,7 +65,8 @@ internal static class RevisionWriterExtensions
 
         await using (fileStream)
         {
-            await WriteAsync(writer, fileStream, lastModificationTime, additionalMetadata, onProgress, cancellationToken).ConfigureAwait(false);
+            await WriteAsync(writer, fileStream, fileStream.Length, lastModificationTime, additionalMetadata, onProgress, cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 }

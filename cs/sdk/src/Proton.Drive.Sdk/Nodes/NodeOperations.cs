@@ -368,7 +368,7 @@ internal static class NodeOperations
             {
                 var request = new MultipleLinksNullaryRequest { LinkIds = batch };
 
-                var aggregateResponse = await client.Api.Links.DeleteMultipleAsync(uidGroup.Key, request, cancellationToken).ConfigureAwait(false);
+                var aggregateResponse = await client.Api.Links.DeleteMultipleAsync(uidGroup.Key, request.LinkIds, cancellationToken).ConfigureAwait(false);
 
                 foreach (var (linkId, response) in aggregateResponse.Responses)
                 {

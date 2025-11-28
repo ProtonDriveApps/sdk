@@ -90,6 +90,9 @@ public sealed partial class FileUploader : IDisposable
     [LoggerMessage(Level = LogLevel.Trace, Message = "Released {Count} from revision creation semaphore")]
     private static partial void LogReleasedRevisionCreationSemaphore(ILogger logger, int count);
 
+    [LoggerMessage(Level = LogLevel.Error, Message = "Draft deletion failed for revision {RevisionUid}")]
+    private static partial void LogDraftDeletionFailure(ILogger logger, Exception exception, RevisionUid revisionUid);
+
     private async Task<(NodeUid NodeUid, RevisionUid RevisionUid)> UploadFromStreamAsync(
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
@@ -168,7 +171,23 @@ public sealed partial class FileUploader : IDisposable
         using var revisionWriter = await RevisionOperations.OpenForWritingAsync(_client, revisionUid, fileSecrets, ReleaseBlocks, cancellationToken)
             .ConfigureAwait(false);
 
-        await revisionWriter.WriteAsync(contentStream, thumbnails, lastModificationTime, additionalMetadata, onProgress, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await revisionWriter.WriteAsync(contentStream, FileSize, thumbnails, lastModificationTime, additionalMetadata, onProgress, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            try
+            {
+                await _fileDraftProvider.DeleteDraftAsync(_client, revisionUid, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                LogDraftDeletionFailure(_client.Telemetry.GetLogger("Upload"), ex, revisionUid);
+            }
+
+            throw;
+        }
     }
 
     private void ReleaseBlocks(int numberOfBlocks)
