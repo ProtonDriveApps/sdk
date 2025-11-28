@@ -16,10 +16,10 @@ public static class NativeLibraryResolver
     private static void OverrideNativeLibraryName(InteropArray<byte> libraryNameBytes, InteropArray<byte> overridingLibraryNameBytes)
     {
         var libraryName = Encoding.UTF8.GetString(libraryNameBytes.AsReadOnlySpan());
-        var overridingLibraryName = Encoding.UTF8.GetString(overridingLibraryNameBytes.AsReadOnlySpan());
 
-        LibraryNameMap[libraryName] = overridingLibraryName;
+        LibraryNameMap[libraryName] = Encoding.UTF8.GetString(overridingLibraryNameBytes.AsReadOnlySpan());
 
+        AssemblyLoadContext.Default.ResolvingUnmanagedDll -= Resolve;
         AssemblyLoadContext.Default.ResolvingUnmanagedDll += Resolve;
     }
 
