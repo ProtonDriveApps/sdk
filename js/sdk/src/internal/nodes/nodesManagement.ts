@@ -28,10 +28,10 @@ const AVAILABLE_NAME_LIMIT = 1000;
  */
 export class NodesManagement {
     constructor(
-        private apiService: NodeAPIService,
-        private cryptoCache: NodesCryptoCache,
-        private cryptoService: NodesCryptoService,
-        private nodesAccess: NodesAccess,
+        protected apiService: NodeAPIService,
+        protected cryptoCache: NodesCryptoCache,
+        protected cryptoService: NodesCryptoService,
+        protected nodesAccess: NodesAccess,
     ) {
         this.apiService = apiService;
         this.cryptoCache = cryptoCache;
@@ -49,7 +49,7 @@ export class NodesManagement {
         const node = await this.nodesAccess.getNode(nodeUid);
         const { nameSessionKey: nodeNameSessionKey } = await this.nodesAccess.getNodePrivateAndSessionKeys(nodeUid);
         const parentKeys = await this.nodesAccess.getParentKeys(node);
-        const address = await this.nodesAccess.getRootNodeEmailKey(nodeUid);
+        const signingKeys = await this.nodesAccess.getNodeSigningKeys({ nodeUid, parentNodeUid: node.parentUid });
 
         if (!options.allowRenameRootNode && (!node.hash || !parentKeys.hashKey)) {
             throw new ValidationError(c('Error').t`Renaming root item is not allowed`);
@@ -58,7 +58,7 @@ export class NodesManagement {
         const { signatureEmail, armoredNodeName, hash } = await this.cryptoService.encryptNewName(
             parentKeys,
             nodeNameSessionKey,
-            address,
+            signingKeys,
             newName,
         );
 
@@ -95,7 +95,7 @@ export class NodesManagement {
             ...node,
             name: resultOk(newName),
             encryptedName: armoredNodeName,
-            nameAuthor: resultOk(signatureEmail),
+            nameAuthor: resultOk(signatureEmail || null),
             hash,
         };
         return newNode;
@@ -124,14 +124,12 @@ export class NodesManagement {
     }
 
     async moveNode(nodeUid: string, newParentUid: string): Promise<DecryptedNode> {
-        const [node, address] = await Promise.all([
-            this.nodesAccess.getNode(nodeUid),
-            this.nodesAccess.getRootNodeEmailKey(newParentUid),
-        ]);
+        const node = await this.nodesAccess.getNode(nodeUid);
 
-        const [keys, newParentKeys] = await Promise.all([
+        const [keys, newParentKeys, signingKeys] = await Promise.all([
             this.nodesAccess.getNodePrivateAndSessionKeys(nodeUid),
             this.nodesAccess.getNodeKeys(newParentUid),
+            this.nodesAccess.getNodeSigningKeys({ nodeUid, parentNodeUid: newParentUid }),
         ]);
 
         if (!node.hash) {
@@ -145,7 +143,7 @@ export class NodesManagement {
             node,
             keys,
             { key: newParentKeys.key, hashKey: newParentKeys.hashKey },
-            address,
+            signingKeys,
         );
 
         // Node could be uploaded or renamed by anonymous user and thus have
@@ -214,14 +212,12 @@ export class NodesManagement {
     }
 
     async copyNode(nodeUid: string, newParentUid: string): Promise<DecryptedNode> {
-        const [node, address] = await Promise.all([
-            this.nodesAccess.getNode(nodeUid),
-            this.nodesAccess.getRootNodeEmailKey(newParentUid),
-        ]);
+        const node = await this.nodesAccess.getNode(nodeUid);
 
-        const [keys, newParentKeys] = await Promise.all([
+        const [keys, newParentKeys, signingKeys] = await Promise.all([
             this.nodesAccess.getNodePrivateAndSessionKeys(nodeUid),
             this.nodesAccess.getNodeKeys(newParentUid),
+            this.nodesAccess.getNodeSigningKeys({ nodeUid, parentNodeUid: newParentUid }),
         ]);
 
         if (!newParentKeys.hashKey) {
@@ -232,7 +228,7 @@ export class NodesManagement {
             node,
             keys,
             { key: newParentKeys.key, hashKey: newParentKeys.hashKey },
-            address,
+            signingKeys,
         );
 
         // Node could be uploaded or renamed by anonymous user and thus have
@@ -286,7 +282,7 @@ export class NodesManagement {
     }
 
     async *deleteNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
-        for await (const result of this.apiService.deleteNodes(nodeUids, signal)) {
+        for await (const result of this.apiService.deleteTrashedNodes(nodeUids, signal)) {
             if (result.ok) {
                 await this.nodesAccess.notifyNodeDeleted(result.uid);
             }
@@ -303,12 +299,12 @@ export class NodesManagement {
             throw new ValidationError(c('Error').t`Creating folders in non-folders is not allowed`);
         }
 
-        const address = await this.nodesAccess.getRootNodeEmailKey(parentNodeUid);
+        const signingKeys = await this.nodesAccess.getNodeSigningKeys({ parentNodeUid });
         const extendedAttributes = generateFolderExtendedAttributes(modificationTime);
 
         const { encryptedCrypto, keys } = await this.cryptoService.createFolder(
             { key: parentKeys.key, hashKey: parentKeys.hashKey },
-            address,
+            signingKeys,
             folderName,
             extendedAttributes,
         );
@@ -344,8 +340,8 @@ export class NodesManagement {
 
             // Decrypted metadata
             isStale: false,
-            keyAuthor: resultOk(encryptedCrypto.signatureEmail),
-            nameAuthor: resultOk(encryptedCrypto.signatureEmail),
+            keyAuthor: resultOk(encryptedCrypto.signatureEmail || null),
+            nameAuthor: resultOk(encryptedCrypto.signatureEmail || null),
             name: resultOk(folderName),
             treeEventScopeId: splitNodeUid(nodeUid).volumeId,
         };

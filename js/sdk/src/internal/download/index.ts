@@ -21,6 +21,7 @@ export function initDownloadModule(
     sharesService: SharesService,
     nodesService: NodesService,
     revisionsService: RevisionsService,
+    ignoreManifestVerification = false,
 ) {
     const queue = new DownloadQueue();
     const api = new DownloadAPIService(apiService);
@@ -63,6 +64,7 @@ export function initDownloadModule(
             node.activeRevision.value,
             signal,
             onFinish,
+            ignoreManifestVerification,
         );
     }
 
@@ -102,6 +104,7 @@ export function initDownloadModule(
             revision,
             signal,
             onFinish,
+            ignoreManifestVerification,
         );
     }
 

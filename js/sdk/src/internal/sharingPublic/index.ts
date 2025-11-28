@@ -10,13 +10,13 @@ import { NodeAPIService } from '../nodes/apiService';
 import { NodesCache } from '../nodes/cache';
 import { NodesCryptoCache } from '../nodes/cryptoCache';
 import { NodesCryptoService } from '../nodes/cryptoService';
-import { NodesManagement } from '../nodes/nodesManagement';
 import { NodesRevisons } from '../nodes/nodesRevisions';
 import { SharingPublicCryptoReporter } from './cryptoReporter';
-import { SharingPublicNodesAccess } from './nodes';
+import { SharingPublicNodesAccess, SharingPublicNodesManagement } from './nodes';
 import { SharingPublicSharesManager } from './shares';
 
 export { SharingPublicSessionManager } from './session/manager';
+export { UnauthDriveAPIService } from './unauthApiService';
 
 /**
  * Provides facade for the whole sharing public module.
@@ -38,6 +38,7 @@ export function initSharingPublicModule(
     token: string,
     publicShareKey: PrivateKey,
     publicRootNodeUid: string,
+    isAnonymousContext: boolean,
 ) {
     const shares = new SharingPublicSharesManager(account, publicShareKey, publicRootNodeUid);
     const nodes = initSharingPublicNodesModule(
@@ -52,6 +53,7 @@ export function initSharingPublicModule(
         token,
         publicShareKey,
         publicRootNodeUid,
+        isAnonymousContext,
     );
 
     return {
@@ -78,6 +80,7 @@ export function initSharingPublicNodesModule(
     token: string,
     publicShareKey: PrivateKey,
     publicRootNodeUid: string,
+    isAnonymousContext: boolean,
 ) {
     const clientUid = undefined; // No client UID for public context yet.
     const api = new NodeAPIService(telemetry.getLogger('nodes-api'), apiService, clientUid);
@@ -96,8 +99,9 @@ export function initSharingPublicNodesModule(
         token,
         publicShareKey,
         publicRootNodeUid,
+        isAnonymousContext,
     );
-    const nodesManagement = new NodesManagement(api, cryptoCache, cryptoService, nodesAccess);
+    const nodesManagement = new SharingPublicNodesManagement(api, cryptoCache, cryptoService, nodesAccess);
     const nodesRevisions = new NodesRevisons(telemetry.getLogger('nodes'), api, cryptoService, nodesAccess);
 
     return {

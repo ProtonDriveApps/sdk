@@ -110,7 +110,7 @@ describe('FileUploader', () => {
             nodeRevisionUid: 'revisionUid',
             nodeUid: 'nodeUid',
             nodeKeys: {
-                signatureAddress: { addressId: 'addressId' },
+                signingKeys: { addressId: 'addressId' },
             },
         } as NodeRevisionDraft;
 

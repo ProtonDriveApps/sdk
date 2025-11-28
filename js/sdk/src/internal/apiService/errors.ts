@@ -30,7 +30,7 @@ export function apiErrorFactory({
         Code?: number;
         Error?: string;
         Details?: object;
-        exception?: string;
+        Exception?: string;
         message?: string;
         file?: string;
         line?: number;
@@ -43,9 +43,10 @@ export function apiErrorFactory({
         typedResult.Details,
     ];
 
-    const debug = typedResult.exception
+    const debug = typedResult.Exception
         ? {
-              exception: typedResult.exception,
+              details: typedResult.Details,
+              exception: typedResult.Exception,
               message: typedResult.message,
               file: typedResult.file,
               line: typedResult.line,
@@ -82,7 +83,7 @@ export function apiErrorFactory({
         case ErrorCode.INSUFFICIENT_BOOKMARKS_QUOTA:
             return new ValidationError(message, code, details);
         default:
-            return new APICodeError(message, code, debug);
+            return new APICodeError(message, code, debug || details);
     }
 }
 

@@ -27,10 +27,9 @@ import {
     convertInternalMissingNodeIterator,
     getUids,
 } from './transformers';
-import { DriveAPIService } from './internal/apiService';
 import { initDownloadModule } from './internal/download';
 import { SDKEvents } from './internal/sdkEvents';
-import { initSharingPublicModule } from './internal/sharingPublic';
+import { initSharingPublicModule, UnauthDriveAPIService } from './internal/sharingPublic';
 import { initUploadModule } from './internal/upload';
 
 /**
@@ -81,6 +80,7 @@ export class ProtonDrivePublicLinkClient {
         token,
         publicShareKey,
         publicRootNodeUid,
+        isAnonymousContext,
     }: {
         httpClient: ProtonDriveHTTPClient;
         account: ProtonDriveAccount;
@@ -92,6 +92,7 @@ export class ProtonDrivePublicLinkClient {
         token: string;
         publicShareKey: PrivateKey;
         publicRootNodeUid: string;
+        isAnonymousContext: boolean;
     }) {
         if (!telemetry) {
             telemetry = new Telemetry();
@@ -105,7 +106,7 @@ export class ProtonDrivePublicLinkClient {
         const fullConfig = getConfig(config);
         this.sdkEvents = new SDKEvents(telemetry);
 
-        const apiService = new DriveAPIService(
+        const apiService = new UnauthDriveAPIService(
             telemetry,
             this.sdkEvents,
             httpClient,
@@ -124,6 +125,7 @@ export class ProtonDrivePublicLinkClient {
             token,
             publicShareKey,
             publicRootNodeUid,
+            isAnonymousContext,
         );
         this.download = initDownloadModule(
             telemetry,
@@ -133,6 +135,9 @@ export class ProtonDrivePublicLinkClient {
             this.sharingPublic.shares,
             this.sharingPublic.nodes.access,
             this.sharingPublic.nodes.revisions,
+            // Ignore manifest integrity verifications for public links.
+            // Anonymous user on public page cannot load public keys of other users (yet).
+            true,
         );
         this.upload = initUploadModule(
             telemetry,

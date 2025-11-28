@@ -24,6 +24,7 @@ import {
     DecryptedNodeKeys,
     EncryptedRevision,
     DecryptedUnparsedRevision,
+    NodeSigningKeys,
 } from './interface';
 
 export interface NodesCryptoReporter {
@@ -33,7 +34,7 @@ export interface NodesCryptoReporter {
         signatureType: string,
         verified: VERIFICATION_STATUS,
         verificationErrors?: Error[],
-        claimedAuthor?: string,
+        claimedAuthor?: string | AnonymousUser,
         notAvailableVerificationKeys?: boolean,
     ): Promise<Author>;
     reportDecryptionError(node: NodesCryptoReporterNode, field: MetricsDecryptionErrorField, error: unknown): void;
@@ -506,7 +507,7 @@ export class NodesCryptoService {
         encryptedExtendedAttributes: string | undefined,
         nodeKey: PrivateKey,
         addressKeys: PublicKey[],
-        signatureEmail?: string,
+        signatureEmail?: string | AnonymousUser,
     ): Promise<{
         extendedAttributes?: string;
         author: Author;
@@ -538,31 +539,44 @@ export class NodesCryptoService {
 
     async createFolder(
         parentKeys: { key: PrivateKey; hashKey: Uint8Array },
-        address: { email: string; addressKey: PrivateKey },
+        signingKeys: NodeSigningKeys,
         name: string,
         extendedAttributes?: string,
     ): Promise<{
-        encryptedCrypto: EncryptedNodeFolderCrypto & {
+        encryptedCrypto: Omit<EncryptedNodeFolderCrypto, 'signatureEmail' | 'nameSignatureEmail'> & {
+            signatureEmail: string | AnonymousUser;
+            nameSignatureEmail: string | AnonymousUser;
             armoredNodePassphraseSignature: string;
-            // signatureEmail and nameSignatureEmail are not optional.
-            signatureEmail: string;
-            nameSignatureEmail: string;
             encryptedName: string;
             hash: string;
         };
         keys: DecryptedNodeKeys;
     }> {
-        const { email, addressKey } = address;
+        const email = signingKeys.type === 'userAddress' ? signingKeys.email : null;
+        const nameAndPassprhaseSigningKey =
+            signingKeys.type === 'userAddress' ? signingKeys.key : signingKeys.parentNodeKey;
+        if (!nameAndPassprhaseSigningKey) {
+            // This is a bug within the SDK.
+            throw new Error('Cannot create new node without a name and passphrase signing key');
+        }
+
         const [nodeKeys, { armoredNodeName }, hash] = await Promise.all([
-            this.driveCrypto.generateKey([parentKeys.key], addressKey),
-            this.driveCrypto.encryptNodeName(name, undefined, parentKeys.key, addressKey),
+            this.driveCrypto.generateKey([parentKeys.key], nameAndPassprhaseSigningKey),
+            this.driveCrypto.encryptNodeName(name, undefined, parentKeys.key, nameAndPassprhaseSigningKey),
             this.driveCrypto.generateLookupHash(name, parentKeys.hashKey),
         ]);
 
         const { armoredHashKey, hashKey } = await this.driveCrypto.generateHashKey(nodeKeys.decrypted.key);
 
+        const extendedAttributesSigningKey =
+            signingKeys.type === 'userAddress' ? signingKeys.key : signingKeys.nodeKey || nodeKeys.decrypted.key;
+
         const { armoredExtendedAttributes } = extendedAttributes
-            ? await this.driveCrypto.encryptExtendedAttributes(extendedAttributes, nodeKeys.decrypted.key, addressKey)
+            ? await this.driveCrypto.encryptExtendedAttributes(
+                  extendedAttributes,
+                  nodeKeys.decrypted.key,
+                  extendedAttributesSigningKey,
+              )
             : { armoredExtendedAttributes: undefined };
 
         return {
@@ -591,20 +605,25 @@ export class NodesCryptoService {
     async encryptNewName(
         parentKeys: { key: PrivateKey; hashKey?: Uint8Array },
         nodeNameSessionKey: SessionKey,
-        address: { email: string; addressKey: PrivateKey },
+        signingKeys: NodeSigningKeys,
         newName: string,
     ): Promise<{
-        signatureEmail: string;
+        signatureEmail: string | AnonymousUser;
         armoredNodeName: string;
         hash?: string;
     }> {
-        const { email, addressKey } = address;
+        const email = signingKeys.type === 'userAddress' ? signingKeys.email : null;
+        const nameSigningKey = signingKeys.type === 'userAddress' ? signingKeys.key : signingKeys.parentNodeKey;
+        if (!nameSigningKey) {
+            // This is a bug within the SDK.
+            throw new Error('Cannot encrypt new node name without a name signing key');
+        }
 
         const { armoredNodeName } = await this.driveCrypto.encryptNodeName(
             newName,
             nodeNameSessionKey,
             parentKeys.key,
-            addressKey,
+            nameSigningKey,
         );
 
         const hash = parentKeys.hashKey
@@ -621,14 +640,14 @@ export class NodesCryptoService {
         node: Pick<DecryptedNode, 'name'>,
         keys: { passphrase: string; passphraseSessionKey: SessionKey; nameSessionKey: SessionKey },
         parentKeys: { key: PrivateKey; hashKey: Uint8Array },
-        address: { email: string; addressKey: PrivateKey },
+        signingKeys: NodeSigningKeys,
     ): Promise<{
         encryptedName: string;
         hash: string;
         armoredNodePassphrase: string;
         armoredNodePassphraseSignature: string;
-        signatureEmail: string;
-        nameSignatureEmail: string;
+        signatureEmail: string | AnonymousUser;
+        nameSignatureEmail: string | AnonymousUser;
     }> {
         if (!parentKeys.hashKey) {
             throw new ValidationError('Moving item to a non-folder is not allowed');
@@ -637,19 +656,25 @@ export class NodesCryptoService {
             throw new ValidationError('Cannot move item without a valid name, please rename the item first');
         }
 
-        const { email, addressKey } = address;
+        const email = signingKeys.type === 'userAddress' ? signingKeys.email : null;
+        const nameAndPassprhaseSigningKey = signingKeys.type === 'userAddress' ? signingKeys.key : signingKeys.nodeKey;
+        if (!nameAndPassprhaseSigningKey) {
+            // This is a bug within the SDK.
+            throw new Error('Cannot re-encrypt node without a name and passphrase signing key');
+        }
+
         const { armoredNodeName } = await this.driveCrypto.encryptNodeName(
             node.name.value,
             keys.nameSessionKey,
             parentKeys.key,
-            addressKey,
+            nameAndPassprhaseSigningKey,
         );
         const hash = await this.driveCrypto.generateLookupHash(node.name.value, parentKeys.hashKey);
         const { armoredPassphrase, armoredPassphraseSignature } = await this.driveCrypto.encryptPassphrase(
             keys.passphrase,
             keys.passphraseSessionKey,
             [parentKeys.key],
-            addressKey,
+            nameAndPassprhaseSigningKey,
         );
 
         return {
@@ -673,7 +698,7 @@ export class NodesCryptoService {
 }
 
 function getClaimedAuthor(
-    claimedAuthor?: string,
+    claimedAuthor?: string | AnonymousUser,
     notAvailableVerificationKeys = false,
 ): string | AnonymousUser | undefined {
     if (!claimedAuthor && notAvailableVerificationKeys) {

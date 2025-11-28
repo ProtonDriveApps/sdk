@@ -2,8 +2,15 @@ import { c } from 'ttag';
 
 import { DriveCrypto, PrivateKey, SessionKey } from '../../crypto';
 import { IntegrityError } from '../../errors';
-import { Thumbnail } from '../../interface';
-import { EncryptedBlock, EncryptedThumbnail, NodeCrypto, NodeRevisionDraftKeys, NodesService } from './interface';
+import { Thumbnail, AnonymousUser } from '../../interface';
+import {
+    EncryptedBlock,
+    EncryptedThumbnail,
+    NodeCrypto,
+    NodeCryptoSigningKeys,
+    NodeRevisionDraftKeys,
+    NodesService,
+} from './interface';
 
 export class UploadCryptoService {
     constructor(
@@ -19,11 +26,15 @@ export class UploadCryptoService {
         parentKeys: { key: PrivateKey; hashKey: Uint8Array },
         name: string,
     ): Promise<NodeCrypto> {
-        const signatureAddress = await this.nodesService.getRootNodeEmailKey(parentUid);
+        const signingKeys = await this.getSigningKeys({ parentNodeUid: parentUid });
+
+        if (!signingKeys.nameAndPassphraseSigningKey) {
+            throw new Error('Cannot create new node without a name and passphrase signing key');
+        }
 
         const [nodeKeys, { armoredNodeName }, hash] = await Promise.all([
-            this.driveCrypto.generateKey([parentKeys.key], signatureAddress.addressKey),
-            this.driveCrypto.encryptNodeName(name, undefined, parentKeys.key, signatureAddress.addressKey),
+            this.driveCrypto.generateKey([parentKeys.key], signingKeys.nameAndPassphraseSigningKey),
+            this.driveCrypto.encryptNodeName(name, undefined, parentKeys.key, signingKeys.nameAndPassphraseSigningKey),
             this.driveCrypto.generateLookupHash(name, parentKeys.hashKey),
         ]);
 
@@ -36,7 +47,57 @@ export class UploadCryptoService {
                 encryptedName: armoredNodeName,
                 hash,
             },
-            signatureAddress,
+            signingKeys: {
+                email: signingKeys.email,
+                addressId: signingKeys.addressId,
+                nameAndPassphraseSigningKey: signingKeys.nameAndPassphraseSigningKey,
+                contentSigningKey: signingKeys.contentSigningKey || nodeKeys.decrypted.key,
+            },
+        };
+    }
+
+    async getSigningKeysForExistingNode(uids: {
+        nodeUid: string;
+        parentNodeUid?: string;
+    }): Promise<NodeCryptoSigningKeys> {
+        const signingKeys = await this.getSigningKeys(uids);
+
+        if (!signingKeys.nameAndPassphraseSigningKey) {
+            throw new Error('Cannot get name and passphrase signing key for existing node');
+        }
+        if (!signingKeys.contentSigningKey) {
+            throw new Error('Cannot get content signing key for existing node');
+        }
+
+        return {
+            email: signingKeys.email,
+            addressId: signingKeys.addressId,
+            nameAndPassphraseSigningKey: signingKeys.nameAndPassphraseSigningKey,
+            contentSigningKey: signingKeys.contentSigningKey,
+        };
+    }
+
+    private async getSigningKeys(
+        uids: { nodeUid: string; parentNodeUid?: string } | { nodeUid?: string; parentNodeUid: string },
+    ): Promise<
+        Omit<NodeCryptoSigningKeys, 'nameAndPassphraseSigningKey' | 'contentSigningKey'> & {
+            nameAndPassphraseSigningKey?: PrivateKey;
+            contentSigningKey?: PrivateKey;
+        }
+    > {
+        const signingKeys = await this.nodesService.getNodeSigningKeys(uids);
+
+        const email = signingKeys.type === 'userAddress' ? signingKeys.email : null;
+        const addressId = signingKeys.type === 'userAddress' ? signingKeys.addressId : null;
+        const nameAndPassphraseSigningKey =
+            signingKeys.type === 'userAddress' ? signingKeys.key : signingKeys.parentNodeKey;
+        const contentSigningKey = signingKeys.type === 'userAddress' ? signingKeys.key : signingKeys.nodeKey;
+
+        return {
+            email,
+            addressId,
+            nameAndPassphraseSigningKey,
+            contentSigningKey,
         };
     }
 
@@ -47,7 +108,7 @@ export class UploadCryptoService {
         const { encryptedData } = await this.driveCrypto.encryptThumbnailBlock(
             thumbnail.thumbnail,
             nodeRevisionDraftKeys.contentKeyPacketSessionKey,
-            nodeRevisionDraftKeys.signatureAddress.addressKey,
+            nodeRevisionDraftKeys.signingKeys.contentSigningKey,
         );
 
         const digest = await crypto.subtle.digest('SHA-256', encryptedData);
@@ -71,7 +132,7 @@ export class UploadCryptoService {
             block,
             nodeRevisionDraftKeys.key,
             nodeRevisionDraftKeys.contentKeyPacketSessionKey,
-            nodeRevisionDraftKeys.signatureAddress.addressKey,
+            nodeRevisionDraftKeys.signingKeys.contentSigningKey,
         );
 
         const digest = await crypto.subtle.digest('SHA-256', encryptedData);
@@ -94,25 +155,25 @@ export class UploadCryptoService {
         extendedAttributes?: string,
     ): Promise<{
         armoredManifestSignature: string;
-        signatureEmail: string;
+        signatureEmail: string | AnonymousUser;
         armoredExtendedAttributes?: string;
     }> {
         const { armoredManifestSignature } = await this.driveCrypto.signManifest(
             manifest,
-            nodeRevisionDraftKeys.signatureAddress.addressKey,
+            nodeRevisionDraftKeys.signingKeys.contentSigningKey,
         );
 
         const { armoredExtendedAttributes } = extendedAttributes
             ? await this.driveCrypto.encryptExtendedAttributes(
                   extendedAttributes,
                   nodeRevisionDraftKeys.key,
-                  nodeRevisionDraftKeys.signatureAddress.addressKey,
+                  nodeRevisionDraftKeys.signingKeys.contentSigningKey,
               )
             : { armoredExtendedAttributes: undefined };
 
         return {
             armoredManifestSignature,
-            signatureEmail: nodeRevisionDraftKeys.signatureAddress.email,
+            signatureEmail: nodeRevisionDraftKeys.signingKeys.email,
             armoredExtendedAttributes,
         };
     }

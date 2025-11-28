@@ -1,6 +1,6 @@
 import { PrivateKey, SessionKey } from '../../crypto';
 
-import { MetricVolumeType, ThumbnailType, Result, Revision } from '../../interface';
+import { MetricVolumeType, ThumbnailType, Result, Revision, AnonymousUser } from '../../interface';
 import { DecryptedNode } from '../nodes';
 
 export type NodeRevisionDraft = {
@@ -22,7 +22,7 @@ export type NodeRevisionDraft = {
 export type NodeRevisionDraftKeys = {
     key: PrivateKey;
     contentKeyPacketSessionKey: SessionKey;
-    signatureAddress: NodeCryptoSignatureAddress;
+    signingKeys: NodeCryptoSigningKeys;
 };
 
 export type NodeCrypto = {
@@ -51,13 +51,14 @@ export type NodeCrypto = {
         encryptedName: string;
         hash: string;
     };
-    signatureAddress: NodeCryptoSignatureAddress;
+    signingKeys: NodeCryptoSigningKeys;
 };
 
-export type NodeCryptoSignatureAddress = {
-    email: string;
-    addressId: string;
-    addressKey: PrivateKey;
+export type NodeCryptoSigningKeys = {
+    email: string | AnonymousUser;
+    addressId: string | AnonymousUser;
+    nameAndPassphraseSigningKey: PrivateKey;
+    contentSigningKey: PrivateKey;
 };
 
 export type EncryptedBlockMetadata = {
@@ -102,12 +103,9 @@ export interface NodesService {
         contentKeyPacketSessionKey?: SessionKey;
         hashKey?: Uint8Array;
     }>;
-    getRootNodeEmailKey(nodeUid: string): Promise<{
-        email: string;
-        addressId: string;
-        addressKey: PrivateKey;
-        addressKeyId: string;
-    }>;
+    getNodeSigningKeys(
+        uids: { nodeUid: string; parentNodeUid?: string } | { nodeUid?: string; parentNodeUid: string },
+    ): Promise<NodeSigningKeys>;
     notifyChildCreated(nodeUid: string): Promise<void>;
     notifyNodeChanged(nodeUid: string): Promise<void>;
 }
@@ -125,6 +123,19 @@ export interface NodesServiceNode {
     parentUid?: string;
     activeRevision?: Result<Revision, Error>;
 }
+
+export type NodeSigningKeys =
+    | {
+          type: 'userAddress';
+          email: string;
+          addressId: string;
+          key: PrivateKey;
+      }
+    | {
+          type: 'nodeKey';
+          nodeKey?: PrivateKey;
+          parentNodeKey?: PrivateKey;
+      };
 
 /**
  * Interface describing the dependencies to the shares module.

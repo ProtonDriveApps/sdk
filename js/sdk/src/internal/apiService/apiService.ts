@@ -136,7 +136,7 @@ export class DriveAPIService {
         return this.makeRequest(url, 'DELETE', undefined, signal);
     }
 
-    private async makeRequest<RequestPayload, ResponsePayload>(
+    protected async makeRequest<RequestPayload, ResponsePayload>(
         url: string,
         method = 'GET',
         data?: RequestPayload,
@@ -194,7 +194,7 @@ export class DriveAPIService {
         await this.makeStorageRequest('POST', baseUrl, token, data, onProgress, signal);
     }
 
-    private async makeStorageRequest(
+    protected async makeStorageRequest(
         method: 'GET' | 'POST',
         url: string,
         token: string,

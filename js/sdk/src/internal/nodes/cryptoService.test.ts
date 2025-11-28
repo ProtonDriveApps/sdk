@@ -1,7 +1,14 @@
 import { DriveCrypto, PrivateKey, SessionKey, VERIFICATION_STATUS } from '../../crypto';
 import { MemberRole, ProtonDriveAccount, ProtonDriveTelemetry, RevisionState } from '../../interface';
 import { getMockTelemetry } from '../../tests/telemetry';
-import { DecryptedNode, DecryptedNodeKeys, DecryptedUnparsedNode, EncryptedNode, SharesService } from './interface';
+import {
+    DecryptedNode,
+    DecryptedNodeKeys,
+    DecryptedUnparsedNode,
+    EncryptedNode,
+    NodeSigningKeys,
+    SharesService,
+} from './interface';
 import { NodesCryptoService } from './cryptoService';
 import { NodesCryptoReporter } from './cryptoReporter';
 
@@ -1069,23 +1076,238 @@ describe('nodesCryptoService', () => {
         });
     });
 
+    describe('createFolder', () => {
+        let parentKeys: any;
+
+        beforeEach(() => {
+            parentKeys = {
+                key: 'parentKey' as any,
+                hashKey: new Uint8Array([1, 2, 3]),
+            };
+            driveCrypto.generateKey = jest.fn().mockResolvedValue({
+                encrypted: {
+                    armoredKey: 'encryptedNodeKey',
+                    armoredPassphrase: 'encryptedPassphrase',
+                    armoredPassphraseSignature: 'passphraseSignature',
+                },
+                decrypted: {
+                    key: 'nodeKey' as any,
+                    passphrase: 'nodePassphrase',
+                    passphraseSessionKey: 'passphraseSessionKey' as any,
+                },
+            });
+            driveCrypto.encryptNodeName = jest.fn().mockResolvedValue({
+                armoredNodeName: 'encryptedNodeName',
+            });
+            driveCrypto.generateLookupHash = jest.fn().mockResolvedValue('lookupHash');
+            driveCrypto.generateHashKey = jest.fn().mockResolvedValue({
+                armoredHashKey: 'encryptedHashKey',
+                hashKey: new Uint8Array([4, 5, 6]),
+            });
+            driveCrypto.encryptExtendedAttributes = jest.fn().mockResolvedValue({
+                armoredExtendedAttributes: 'encryptedAttributes',
+            });
+        });
+
+        it('should encrypt new folder with account key', async () => {
+            const signingKeys: NodeSigningKeys = {
+                type: 'userAddress',
+                email: 'test@example.com',
+                addressId: 'addressId',
+                key: 'addressKey' as any,
+            };
+
+            const result = await cryptoService.createFolder(
+                parentKeys,
+                signingKeys,
+                'New Folder',
+                '{"modificationTime": 1234567890}',
+            );
+
+            expect(result).toEqual({
+                encryptedCrypto: {
+                    encryptedName: 'encryptedNodeName',
+                    hash: 'lookupHash',
+                    armoredKey: 'encryptedNodeKey',
+                    armoredNodePassphrase: 'encryptedPassphrase',
+                    armoredNodePassphraseSignature: 'passphraseSignature',
+                    folder: {
+                        armoredExtendedAttributes: 'encryptedAttributes',
+                        armoredHashKey: 'encryptedHashKey',
+                    },
+                    signatureEmail: 'test@example.com',
+                    nameSignatureEmail: 'test@example.com',
+                },
+                keys: {
+                    passphrase: 'nodePassphrase',
+                    key: 'nodeKey',
+                    passphraseSessionKey: 'passphraseSessionKey',
+                    hashKey: new Uint8Array([4, 5, 6]),
+                },
+            });
+
+            expect(driveCrypto.generateKey).toHaveBeenCalledWith([parentKeys.key], signingKeys.key);
+            expect(driveCrypto.encryptNodeName).toHaveBeenCalledWith(
+                'New Folder',
+                undefined,
+                parentKeys.key,
+                signingKeys.key,
+            );
+            expect(driveCrypto.generateLookupHash).toHaveBeenCalledWith('New Folder', parentKeys.hashKey);
+            expect(driveCrypto.generateHashKey).toHaveBeenCalledWith('nodeKey');
+            expect(driveCrypto.encryptExtendedAttributes).toHaveBeenCalledWith(
+                '{"modificationTime": 1234567890}',
+                'nodeKey',
+                signingKeys.key,
+            );
+        });
+
+        it('should encrypt new folder with node key', async () => {
+            const signingKeys: NodeSigningKeys = {
+                type: 'nodeKey',
+                nodeKey: 'nodeSigningKey' as any,
+                parentNodeKey: 'parentNodeKey' as any,
+            };
+
+            const result = await cryptoService.createFolder(
+                parentKeys,
+                signingKeys,
+                'New Folder',
+                '{"modificationTime": 1234567890}',
+            );
+
+            expect(result).toEqual({
+                encryptedCrypto: {
+                    encryptedName: 'encryptedNodeName',
+                    hash: 'lookupHash',
+                    armoredKey: 'encryptedNodeKey',
+                    armoredNodePassphrase: 'encryptedPassphrase',
+                    armoredNodePassphraseSignature: 'passphraseSignature',
+                    folder: {
+                        armoredExtendedAttributes: 'encryptedAttributes',
+                        armoredHashKey: 'encryptedHashKey',
+                    },
+                    signatureEmail: null,
+                    nameSignatureEmail: null,
+                },
+                keys: {
+                    passphrase: 'nodePassphrase',
+                    key: 'nodeKey',
+                    passphraseSessionKey: 'passphraseSessionKey',
+                    hashKey: new Uint8Array([4, 5, 6]),
+                },
+            });
+
+            expect(driveCrypto.generateKey).toHaveBeenCalledWith([parentKeys.key], signingKeys.parentNodeKey);
+            expect(driveCrypto.encryptNodeName).toHaveBeenCalledWith(
+                'New Folder',
+                undefined,
+                parentKeys.key,
+                signingKeys.parentNodeKey,
+            );
+            expect(driveCrypto.generateLookupHash).toHaveBeenCalledWith('New Folder', parentKeys.hashKey);
+            expect(driveCrypto.generateHashKey).toHaveBeenCalledWith('nodeKey');
+            expect(driveCrypto.encryptExtendedAttributes).toHaveBeenCalledWith(
+                '{"modificationTime": 1234567890}',
+                'nodeKey',
+                signingKeys.nodeKey,
+            );
+        });
+    });
+
+    describe('encryptNewName', () => {
+        let parentKeys: any;
+        let nodeNameSessionKey: SessionKey;
+
+        beforeEach(() => {
+            parentKeys = {
+                key: 'parentKey' as any,
+                hashKey: new Uint8Array([1, 2, 3]),
+            };
+            nodeNameSessionKey = 'nameSessionKey' as any;
+            driveCrypto.encryptNodeName = jest.fn().mockResolvedValue({
+                armoredNodeName: 'encryptedNewNodeName',
+            });
+            driveCrypto.generateLookupHash = jest.fn().mockResolvedValue('newHash');
+        });
+
+        it('should encrypt new name with account key', async () => {
+            const signingKeys: NodeSigningKeys = {
+                type: 'userAddress',
+                email: 'test@example.com',
+                addressId: 'addressId',
+                key: 'addressKey' as any,
+            };
+
+            const result = await cryptoService.encryptNewName(
+                parentKeys,
+                nodeNameSessionKey,
+                signingKeys,
+                'Renamed File.txt',
+            );
+
+            expect(result).toEqual({
+                signatureEmail: 'test@example.com',
+                armoredNodeName: 'encryptedNewNodeName',
+                hash: 'newHash',
+            });
+
+            expect(driveCrypto.encryptNodeName).toHaveBeenCalledWith(
+                'Renamed File.txt',
+                nodeNameSessionKey,
+                parentKeys.key,
+                signingKeys.key,
+            );
+            expect(driveCrypto.generateLookupHash).toHaveBeenCalledWith('Renamed File.txt', parentKeys.hashKey);
+        });
+
+        it('should encrypt new name with node key', async () => {
+            const signingKeys: NodeSigningKeys = {
+                type: 'nodeKey',
+                nodeKey: 'nodeSigningKey' as any,
+                parentNodeKey: 'parentNodeKey' as any,
+            };
+
+            const result = await cryptoService.encryptNewName(
+                parentKeys,
+                nodeNameSessionKey,
+                signingKeys,
+                'Renamed File.txt',
+            );
+
+            expect(result).toEqual({
+                signatureEmail: null,
+                armoredNodeName: 'encryptedNewNodeName',
+                hash: 'newHash',
+            });
+
+            expect(driveCrypto.encryptNodeName).toHaveBeenCalledWith(
+                'Renamed File.txt',
+                nodeNameSessionKey,
+                parentKeys.key,
+                signingKeys.parentNodeKey,
+            );
+            expect(driveCrypto.generateLookupHash).toHaveBeenCalledWith('Renamed File.txt', parentKeys.hashKey);
+        });
+    });
+
     describe('encryptNodeWithNewParent', () => {
-        it('should encrypt node data for move operation', async () => {
-            const node = {
+        let node: DecryptedNode;
+        let keys: any;
+        let parentKeys: any;
+
+        beforeEach(() => {
+            node = {
                 name: { ok: true, value: 'testFile.txt' },
             } as DecryptedNode;
-            const keys = {
+            keys = {
                 passphrase: 'nodePassphrase',
                 passphraseSessionKey: 'nodePassphraseSessionKey',
                 nameSessionKey: 'nameSessionKey' as any,
             };
-            const parentKeys = {
+            parentKeys = {
                 key: 'newParentKey' as any,
                 hashKey: new Uint8Array([1, 2, 3]),
-            };
-            const address = {
-                email: 'test@example.com',
-                addressKey: 'addressKey' as any,
             };
             driveCrypto.encryptNodeName = jest.fn().mockResolvedValue({
                 armoredNodeName: 'encryptedNodeName',
@@ -1095,8 +1317,17 @@ describe('nodesCryptoService', () => {
                 armoredPassphrase: 'encryptedPassphrase',
                 armoredPassphraseSignature: 'passphraseSignature',
             });
+        });
 
-            const result = await cryptoService.encryptNodeWithNewParent(node, keys as any, parentKeys, address);
+        it('should encrypt node data for move operation with account key (logged in context)', async () => {
+            const signingKeys: NodeSigningKeys = {
+                type: 'userAddress',
+                email: 'test@example.com',
+                addressId: 'addressId',
+                key: 'addressKey' as any,
+            };
+
+            const result = await cryptoService.encryptNodeWithNewParent(node, keys as any, parentKeys, signingKeys);
 
             expect(result).toEqual({
                 encryptedName: 'encryptedNodeName',
@@ -1111,14 +1342,47 @@ describe('nodesCryptoService', () => {
                 'testFile.txt',
                 keys.nameSessionKey,
                 parentKeys.key,
-                address.addressKey,
+                signingKeys.key,
             );
             expect(driveCrypto.generateLookupHash).toHaveBeenCalledWith('testFile.txt', parentKeys.hashKey);
             expect(driveCrypto.encryptPassphrase).toHaveBeenCalledWith(
                 keys.passphrase,
                 keys.passphraseSessionKey,
                 [parentKeys.key],
-                address.addressKey,
+                signingKeys.key,
+            );
+        });
+
+        it('should encrypt node data for move operation with node key (anonymous context)', async () => {
+            const signingKeys: NodeSigningKeys = {
+                type: 'nodeKey',
+                nodeKey: 'addressKey' as any,
+                parentNodeKey: 'parentNodeKey' as any,
+            };
+
+            const result = await cryptoService.encryptNodeWithNewParent(node, keys as any, parentKeys, signingKeys);
+
+            expect(result).toEqual({
+                encryptedName: 'encryptedNodeName',
+                hash: 'newHash',
+                armoredNodePassphrase: 'encryptedPassphrase',
+                armoredNodePassphraseSignature: 'passphraseSignature',
+                signatureEmail: null,
+                nameSignatureEmail: null,
+            });
+
+            expect(driveCrypto.encryptNodeName).toHaveBeenCalledWith(
+                'testFile.txt',
+                keys.nameSessionKey,
+                parentKeys.key,
+                signingKeys.nodeKey,
+            );
+            expect(driveCrypto.generateLookupHash).toHaveBeenCalledWith('testFile.txt', parentKeys.hashKey);
+            expect(driveCrypto.encryptPassphrase).toHaveBeenCalledWith(
+                keys.passphrase,
+                keys.passphraseSessionKey,
+                [parentKeys.key],
+                signingKeys.nodeKey,
             );
         });
 
@@ -1135,13 +1399,15 @@ describe('nodesCryptoService', () => {
                 key: 'newParentKey' as any,
                 hashKey: undefined,
             } as any;
-            const address = {
+            const signingKeys: NodeSigningKeys = {
+                type: 'userAddress',
                 email: 'test@example.com',
-                addressKey: 'addressKey' as any,
+                addressId: 'addressId',
+                key: 'addressKey' as any,
             };
 
             await expect(
-                cryptoService.encryptNodeWithNewParent(node, keys as any, parentKeys, address),
+                cryptoService.encryptNodeWithNewParent(node, keys as any, parentKeys, signingKeys),
             ).rejects.toThrow('Moving item to a non-folder is not allowed');
         });
 
@@ -1158,13 +1424,15 @@ describe('nodesCryptoService', () => {
                 key: 'newParentKey' as any,
                 hashKey: new Uint8Array([1, 2, 3]),
             };
-            const address = {
+            const signingKeys: NodeSigningKeys = {
+                type: 'userAddress',
                 email: 'test@example.com',
-                addressKey: 'addressKey' as any,
+                addressId: 'addressId',
+                key: 'addressKey' as any,
             };
 
             await expect(
-                cryptoService.encryptNodeWithNewParent(node, keys as any, parentKeys, address),
+                cryptoService.encryptNodeWithNewParent(node, keys as any, parentKeys, signingKeys),
             ).rejects.toThrow('Cannot move item without a valid name, please rename the item first');
         });
     });

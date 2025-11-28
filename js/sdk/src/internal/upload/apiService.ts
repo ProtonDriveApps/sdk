@@ -1,6 +1,7 @@
 import { c } from 'ttag';
 
 import { base64StringToUint8Array, uint8ArrayToBase64String } from '../../crypto';
+import { AnonymousUser } from '../../interface';
 import { APICodeError, DriveAPIService, drivePaths, isCodeOk } from '../apiService';
 import { splitNodeUid, makeNodeUid, splitNodeRevisionUid, makeNodeRevisionUid } from '../uids';
 import { UploadTokens } from './interface';
@@ -65,7 +66,7 @@ export class UploadAPIService {
             armoredNodePassphraseSignature: string;
             base64ContentKeyPacket: string;
             armoredContentKeyPacketSignature: string;
-            signatureEmail: string;
+            signatureEmail: string | AnonymousUser;
         },
     ): Promise<{
         nodeUid: string;
@@ -150,7 +151,7 @@ export class UploadAPIService {
 
     async requestBlockUpload(
         draftNodeRevisionUid: string,
-        addressId: string,
+        addressId: string | AnonymousUser,
         blocks: {
             contentBlocks: {
                 index: number;
@@ -211,7 +212,7 @@ export class UploadAPIService {
         draftNodeRevisionUid: string,
         options: {
             armoredManifestSignature: string;
-            signatureEmail: string;
+            signatureEmail: string | AnonymousUser;
             armoredExtendedAttributes?: string;
         },
     ): Promise<void> {
