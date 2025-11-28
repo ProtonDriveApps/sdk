@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.core.user.domain)
     implementation(libs.core.network.data)
+    testImplementation(libs.bundles.test.jvm)
     androidTestImplementation(libs.coroutines.test)
     androidTestImplementation(libs.androidx.test.core.ktx)
     androidTestImplementation(libs.androidx.test.runner)
