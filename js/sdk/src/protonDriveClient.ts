@@ -106,7 +106,11 @@ export class ProtonDriveClient {
          * Experimental feature to authenticate a public link and
          * return the client for the public link to access it.
          */
-        authPublicLink: (url: string, customPassword?: string) => Promise<ProtonDrivePublicLinkClient>;
+        authPublicLink: (
+            url: string,
+            customPassword?: string,
+            isAnonymousContext?: boolean,
+        ) => Promise<ProtonDrivePublicLinkClient>;
     };
 
     constructor({
@@ -222,7 +226,7 @@ export class ProtonDriveClient {
                 this.logger.info(`Getting info for public link ${url}`);
                 return this.publicSessionManager.getInfo(url);
             },
-            authPublicLink: async (url: string, customPassword?: string) => {
+            authPublicLink: async (url: string, customPassword?: string, isAnonymousContext: boolean = false) => {
                 this.logger.info(`Authenticating public link ${url}`);
                 const { httpClient, token, shareKey, rootUid } = await this.publicSessionManager.auth(
                     url,
@@ -239,6 +243,7 @@ export class ProtonDriveClient {
                     token,
                     publicShareKey: shareKey,
                     publicRootNodeUid: rootUid,
+                    isAnonymousContext,
                 });
             },
         };

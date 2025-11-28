@@ -10,6 +10,7 @@ import {
     MetricVolumeType,
     Revision,
     RevisionState,
+    AnonymousUser,
 } from '../../interface';
 
 export type FilterOptions = {
@@ -57,8 +58,8 @@ export interface EncryptedNode extends BaseNode {
 }
 
 export interface EncryptedNodeCrypto {
-    signatureEmail?: string;
-    nameSignatureEmail?: string;
+    signatureEmail?: string | AnonymousUser;
+    nameSignatureEmail?: string | AnonymousUser;
     armoredKey: string;
     armoredNodePassphrase: string;
     armoredNodePassphraseSignature?: string;
@@ -87,6 +88,19 @@ export interface EncryptedNodeFolderCrypto extends EncryptedNodeCrypto {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface EncryptedNodeAlbumCrypto extends EncryptedNodeCrypto {}
+
+export type NodeSigningKeys =
+    | {
+          type: 'userAddress';
+          email: string;
+          addressId: string;
+          key: PrivateKey;
+      }
+    | {
+          type: 'nodeKey';
+          nodeKey?: PrivateKey;
+          parentNodeKey?: PrivateKey;
+      };
 
 /**
  * Interface used only internally in the nodes module.

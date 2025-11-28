@@ -577,8 +577,8 @@ describe('nodeAPIService', () => {
         });
     });
 
-    describe('deleteNodes', () => {
-        it('should delete nodes', async () => {
+    describe('deleteTrashedNodes', () => {
+        it('should delete trashed nodes', async () => {
             // @ts-expect-error Mocking for testing purposes
             apiMock.post = jest.fn(async () =>
                 Promise.resolve({
@@ -600,14 +600,14 @@ describe('nodeAPIService', () => {
                 }),
             );
 
-            const result = await Array.fromAsync(api.deleteNodes(['volumeId~nodeId1', 'volumeId~nodeId2']));
+            const result = await Array.fromAsync(api.deleteTrashedNodes(['volumeId~nodeId1', 'volumeId~nodeId2']));
             expect(result).toEqual([
                 { uid: 'volumeId~nodeId1', ok: true },
                 { uid: 'volumeId~nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
             ]);
         });
 
-        it('should delete nodes from multiple volumes', async () => {
+        it('should delete trashed nodes from multiple volumes', async () => {
             // @ts-expect-error Mocking for testing purposes
             apiMock.post = jest.fn(async (_, { LinkIDs }) =>
                 Promise.resolve({
@@ -620,7 +620,7 @@ describe('nodeAPIService', () => {
                 }),
             );
 
-            const result = await Array.fromAsync(api.deleteNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2']));
+            const result = await Array.fromAsync(api.deleteTrashedNodes(['volumeId1~nodeId1', 'volumeId2~nodeId2']));
             expect(result).toEqual([
                 { uid: 'volumeId1~nodeId1', ok: true },
                 { uid: 'volumeId2~nodeId2', ok: true },

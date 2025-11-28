@@ -27,7 +27,7 @@ export class DownloadCryptoService {
         nodeKey: { key: PrivateKey; contentKeyPacketSessionKey: SessionKey },
         revision: Revision,
     ): Promise<RevisionKeys> {
-        const verificationKeys = await this.getRevisionVerificationKeys(revision);
+        const verificationKeys = await this.getRevisionVerificationKeys(revision, nodeKey.key);
         return {
             ...nodeKey,
             verificationKeys,
@@ -90,23 +90,30 @@ export class DownloadCryptoService {
         allBlockHashes: Uint8Array[],
         armoredManifestSignature?: string,
     ): Promise<void> {
-        const verificationKeys = (await this.getRevisionVerificationKeys(revision)) || nodeKey;
+        const verificationKeys = await this.getRevisionVerificationKeys(revision, nodeKey);
         const hash = mergeUint8Arrays(allBlockHashes);
 
         if (!armoredManifestSignature) {
             throw new IntegrityError(c('Error').t`Missing integrity signature`);
         }
 
-        const { verified } = await this.driveCrypto.verifyManifest(hash, armoredManifestSignature, verificationKeys);
+        const { verified, verificationErrors } = await this.driveCrypto.verifyManifest(
+            hash,
+            armoredManifestSignature,
+            verificationKeys,
+        );
+
         if (verified !== VERIFICATION_STATUS.SIGNED_AND_VALID) {
-            throw new IntegrityError(c('Error').t`Data integrity check failed`);
+            throw new IntegrityError(c('Error').t`Data integrity check failed`, {
+                verificationErrors,
+            });
         }
     }
 
-    private async getRevisionVerificationKeys(revision: Revision): Promise<PublicKey[] | undefined> {
+    private async getRevisionVerificationKeys(revision: Revision, nodeKey: PrivateKey): Promise<PublicKey[]> {
         const signatureEmail = revision.contentAuthor.ok
             ? revision.contentAuthor.value
             : revision.contentAuthor.error.claimedAuthor;
-        return signatureEmail ? await this.account.getPublicKeys(signatureEmail) : undefined;
+        return signatureEmail ? await this.account.getPublicKeys(signatureEmail) : [nodeKey];
     }
 }

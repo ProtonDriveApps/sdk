@@ -57,7 +57,7 @@ export class UploadManager {
             nodeKeys: {
                 key: generatedNodeCrypto.nodeKeys.decrypted.key,
                 contentKeyPacketSessionKey: generatedNodeCrypto.contentKey.decrypted.contentKeyPacketSessionKey,
-                signatureAddress: generatedNodeCrypto.signatureAddress,
+                signingKeys: generatedNodeCrypto.signingKeys,
             },
             parentNodeKeys: {
                 hashKey: parentKeys.hashKey,
@@ -93,7 +93,7 @@ export class UploadManager {
                 base64ContentKeyPacket: generatedNodeCrypto.contentKey.encrypted.base64ContentKeyPacket,
                 armoredContentKeyPacketSignature:
                     generatedNodeCrypto.contentKey.encrypted.armoredContentKeyPacketSignature,
-                signatureEmail: generatedNodeCrypto.signatureAddress.email,
+                signatureEmail: generatedNodeCrypto.signingKeys.email,
             });
             return result;
         } catch (error: unknown) {
@@ -192,7 +192,10 @@ export class UploadManager {
             throw new ValidationError(c('Error').t`Creating revisions in non-files is not allowed`);
         }
 
-        const signatureAddress = await this.nodesService.getRootNodeEmailKey(nodeUid);
+        const signingKeys = await this.cryptoService.getSigningKeysForExistingNode({
+            nodeUid,
+            parentNodeUid: node.parentUid,
+        });
 
         const { nodeRevisionUid } = await this.apiService.createDraftRevision(nodeUid, {
             currentRevisionUid: node.activeRevision.value.uid,
@@ -205,7 +208,7 @@ export class UploadManager {
             nodeKeys: {
                 key: nodeKeys.key,
                 contentKeyPacketSessionKey: nodeKeys.contentKeyPacketSessionKey,
-                signatureAddress: signatureAddress,
+                signingKeys,
             },
         };
     }

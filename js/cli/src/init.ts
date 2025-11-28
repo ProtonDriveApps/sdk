@@ -27,7 +27,7 @@ export async function init(debug: boolean) {
     const sdk = initSDK(cryptoApi, config, account, srp);
     const photosSdk = initPhotosSDK(cryptoApi, config, account, srp);
     const sdkDiagnostic = initSDKDiagnostic(cryptoApi, config, account, srp);
-    const paths = new Paths(sdk, photosSdk);
+    const paths = new Paths(sdk, photosSdk, account);
     return {
         account,
         sdk,

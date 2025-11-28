@@ -1,8 +1,7 @@
 import { c } from 'ttag';
 
 import { NodeWithSameNameExistsValidationError, ProtonDriveError, ValidationError } from '../../errors';
-import { Logger, NodeResult } from '../../interface';
-import { MemberRole, RevisionState } from '../../interface/nodes';
+import { Logger, NodeResult, MemberRole, RevisionState, AnonymousUser } from '../../interface';
 import {
     DriveAPIService,
     drivePaths,
@@ -101,7 +100,6 @@ type PostRestoreRevisionResponse =
 
 type DeleteRevisionResponse =
     drivePaths['/drive/v2/volumes/{volumeID}/files/{linkID}/revisions/{revisionID}']['delete']['responses']['200']['content']['application/json'];
-
 
 type PostCheckAvailableHashesRequest = Extract<
     drivePaths['/drive/v2/volumes/{volumeID}/links/{linkID}/checkAvailableHashes']['post']['requestBody'],
@@ -292,7 +290,7 @@ export class NodeAPIService {
         },
         newNode: {
             encryptedName: string;
-            nameSignatureEmail: string;
+            nameSignatureEmail: string | AnonymousUser;
             hash?: string;
         },
         signal?: AbortSignal,
@@ -332,9 +330,9 @@ export class NodeAPIService {
             parentUid: string;
             armoredNodePassphrase: string;
             armoredNodePassphraseSignature?: string;
-            signatureEmail?: string;
+            signatureEmail?: string | AnonymousUser;
             encryptedName: string;
-            nameSignatureEmail?: string;
+            nameSignatureEmail?: string | AnonymousUser;
             hash: string;
             contentHash?: string;
         },
@@ -369,9 +367,9 @@ export class NodeAPIService {
             parentUid: string;
             armoredNodePassphrase: string;
             armoredNodePassphraseSignature?: string;
-            signatureEmail?: string;
+            signatureEmail?: string | AnonymousUser;
             encryptedName: string;
-            nameSignatureEmail?: string;
+            nameSignatureEmail?: string | AnonymousUser;
             hash: string;
         },
         signal?: AbortSignal,
@@ -430,10 +428,25 @@ export class NodeAPIService {
         }
     }
 
-    async *deleteNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
+    async *deleteTrashedNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         for (const { volumeId, batchNodeIds, batchNodeUids } of groupNodeUidsByVolumeAndIteratePerBatch(nodeUids)) {
             const response = await this.apiService.post<PostDeleteNodesRequest, PostDeleteNodesResponse>(
                 `drive/v2/volumes/${volumeId}/trash/delete_multiple`,
+                {
+                    LinkIDs: batchNodeIds,
+                },
+                signal,
+            );
+
+            // TODO: remove `as` when backend fixes OpenAPI schema.
+            yield* handleResponseErrors(batchNodeUids, volumeId, response.Responses as LinkResponse[]);
+        }
+    }
+
+    async *deleteExistingNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
+        for (const { volumeId, batchNodeIds, batchNodeUids } of groupNodeUidsByVolumeAndIteratePerBatch(nodeUids)) {
+            const response = await this.apiService.post<PostDeleteNodesRequest, PostDeleteNodesResponse>(
+                `drive/v2/volumes/${volumeId}/delete_multiple`,
                 {
                     LinkIDs: batchNodeIds,
                 },
@@ -452,7 +465,7 @@ export class NodeAPIService {
             armoredHashKey: string;
             armoredNodePassphrase: string;
             armoredNodePassphraseSignature: string;
-            signatureEmail: string;
+            signatureEmail: string | AnonymousUser;
             encryptedName: string;
             hash: string;
             armoredExtendedAttributes?: string;

@@ -1,5 +1,5 @@
 import { DriveCrypto } from '../../crypto';
-import { ProtonDriveTelemetry, UploadMetadata, Thumbnail } from '../../interface';
+import { ProtonDriveTelemetry, UploadMetadata, Thumbnail, AnonymousUser } from '../../interface';
 import { DriveAPIService, drivePaths } from '../apiService';
 import { generateFileExtendedAttributes } from '../nodes';
 import { splitNodeRevisionUid } from '../uids';
@@ -198,7 +198,7 @@ export class PhotoUploadAPIService extends UploadAPIService {
         draftNodeRevisionUid: string,
         options: {
             armoredManifestSignature: string;
-            signatureEmail: string;
+            signatureEmail: string | AnonymousUser;
             armoredExtendedAttributes?: string;
         },
         photo: {
@@ -220,7 +220,7 @@ export class PhotoUploadAPIService extends UploadAPIService {
             XAttr: options.armoredExtendedAttributes || null,
             Photo: {
                 ContentHash: photo.contentHash,
-                CaptureTime: photo.captureTime ? Math.floor(photo.captureTime?.getTime() /1000) : 0,
+                CaptureTime: photo.captureTime ? Math.floor(photo.captureTime?.getTime() / 1000) : 0,
                 MainPhotoLinkID: photo.mainPhotoLinkID || null,
                 Tags: photo.tags || [],
                 Exif: null, // Deprecated field, not used.

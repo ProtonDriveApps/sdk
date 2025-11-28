@@ -50,7 +50,7 @@ describe('UploadManager', () => {
                     encryptedName: 'newNode:encryptedName',
                     hash: 'newNode:hash',
                 },
-                signatureAddress: {
+                signingKeys: {
                     email: 'signatureEmail',
                 },
             }),
@@ -69,7 +69,8 @@ describe('UploadManager', () => {
                 hashKey: 'parentNode:hashKey',
                 key: 'parentNode:nodekey',
             }),
-            getRootNodeEmailKey: jest.fn().mockResolvedValue({
+            getNodeSigningKeys: jest.fn().mockResolvedValue({
+                type: 'userAddress',
                 email: 'signatureEmail',
                 addressId: 'addressId',
             }),
@@ -100,7 +101,7 @@ describe('UploadManager', () => {
                 nodeKeys: {
                     key: 'newNode:key',
                     contentKeyPacketSessionKey: 'newNode:ContentKeyPacketSessionKey',
-                    signatureAddress: {
+                    signingKeys: {
                         email: 'signatureEmail',
                     },
                 },
@@ -153,7 +154,7 @@ describe('UploadManager', () => {
                 nodeKeys: {
                     key: 'newNode:key',
                     contentKeyPacketSessionKey: 'newNode:ContentKeyPacketSessionKey',
-                    signatureAddress: {
+                    signingKeys: {
                         email: 'signatureEmail',
                     },
                 },

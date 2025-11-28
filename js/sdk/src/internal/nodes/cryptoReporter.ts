@@ -34,7 +34,7 @@ export class NodesCryptoReporter {
         signatureType: string,
         verified: VERIFICATION_STATUS,
         verificationErrors?: Error[],
-        claimedAuthor?: string,
+        claimedAuthor?: string | AnonymousUser,
         notAvailableVerificationKeys = false,
     ): Promise<Author> {
         const author = handleClaimedAuthor(
@@ -54,7 +54,7 @@ export class NodesCryptoReporter {
         node: { uid: string; creationTime: Date },
         field: MetricVerificationErrorField,
         verificationErrors?: Error[],
-        claimedAuthor?: string,
+        claimedAuthor?: string | AnonymousUser,
     ) {
         if (this.reportedVerificationErrors.has(node.uid)) {
             return;
@@ -128,7 +128,7 @@ function handleClaimedAuthor(
     signatureType: string,
     verified: VERIFICATION_STATUS,
     verificationErrors?: Error[],
-    claimedAuthor?: string,
+    claimedAuthor?: string | AnonymousUser,
     notAvailableVerificationKeys = false,
 ): Author {
     if (!claimedAuthor && notAvailableVerificationKeys) {
