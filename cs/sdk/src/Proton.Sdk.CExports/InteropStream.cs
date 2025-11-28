@@ -55,8 +55,6 @@ internal sealed class InteropStream : Stream
     {
     }
 
-    //add more overrides
-
     public override Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
     {
         Console.WriteLine("IteropStream.CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)");
@@ -69,12 +67,6 @@ internal sealed class InteropStream : Stream
         return base.BeginRead(buffer, offset, count, callback, state);
     }
 
-    public override int Read(Span<byte> buffer)
-    {
-        Console.WriteLine("IteropStream.Read(Span<byte> buffer)");
-        return base.Read(buffer);
-    }
-
     public override int ReadByte()
     {
         Console.WriteLine("IteropStream.ReadByte()");
@@ -85,6 +77,12 @@ internal sealed class InteropStream : Stream
     {
         Console.WriteLine("IteropStream.Read(byte[] buffer, int offset, int count)");
         return ReadAsync(buffer.AsMemory(offset, count)).AsTask().GetAwaiter().GetResult();
+    }
+
+    public override int Read(Span<byte> buffer)
+    {
+        Console.WriteLine("IteropStream.Read(Span<byte> buffer)");
+        return base.Read(buffer);
     }
 
     public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)

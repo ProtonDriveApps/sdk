@@ -27,7 +27,7 @@ internal sealed class StorageApiClient(HttpClient httpClient) : IStorageApiClien
 
         using var requestMessage = HttpRequestMessageFactory.Create(HttpMethod.Post, baseUrl, multipartContent);
         requestMessage.Headers.Add("pm-storage-token", token);
-        requestMessage.DisableRetry();
+        requestMessage.SetRequestType(HttpRequestType.StorageUpload);
 
         // TODO: investigate what happens with the stream in case of a retry after a failure, is there a seek back to its beginning?
         return await _httpClient
@@ -39,7 +39,7 @@ internal sealed class StorageApiClient(HttpClient httpClient) : IStorageApiClien
     {
         using var requestMessage = HttpRequestMessageFactory.Create(HttpMethod.Get, baseUrl);
         requestMessage.Headers.Add("pm-storage-token", token);
-        requestMessage.DisableRetry();
+        requestMessage.SetRequestType(HttpRequestType.StorageDownload);
 
         var blobResponse = await _httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
 
