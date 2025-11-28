@@ -27,6 +27,7 @@ fusion = "0.9.97"
 testParameterInjector = "1.10"
 protobufKotlinLite = "4.29.2"
 protobufJavaLite = "4.29.2"
+mockk = "1.13.9"
 
 [libraries]
 
@@ -92,6 +93,7 @@ fusion = { module = "me.proton.test:fusion", version.ref = "fusion"}
 testParameterInjector = { module = "com.google.testparameterinjector:test-parameter-injector", version.ref = "testParameterInjector" }
 protobuf-kotlin-lite = { group = "com.google.protobuf", name = "protobuf-kotlin-lite", version.ref = "protobufKotlinLite" }
 protobuf-javalite = { group = "com.google.protobuf", name = "protobuf-javalite", version.ref = "protobufJavaLite" }
+mockk-jvm = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 [bundles]
 test-android = [
@@ -100,6 +102,12 @@ test-android = [
     "androidx-test-core-ktx",
     "androidx-test-runner",
     "androidx-test-rules",
+]
+test-jvm = [
+    "junit",
+    "mockk-jvm",
+    "coroutines-test",
+    "androidx-test-core-ktx",
 ]
 
 [plugins]
