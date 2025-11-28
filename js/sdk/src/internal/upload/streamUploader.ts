@@ -340,6 +340,12 @@ export class StreamUploader {
             },
         );
 
+        // If the upload was aborted while requesting next upload tokens,
+        // do not schedule any next upload.
+        if (this.isUploadAborted) {
+            throw this.error || new AbortError();
+        }
+
         for (const thumbnailToken of uploadTokens.thumbnailTokens) {
             let encryptedThumbnail = this.encryptedThumbnails.get(thumbnailToken.type);
             if (!encryptedThumbnail) {
@@ -418,7 +424,7 @@ export class StreamUploader {
                 break;
             } catch (error: unknown) {
                 // Do not retry or report anything if the upload was aborted.
-                if (error instanceof AbortError) {
+                if (error instanceof AbortError || this.isUploadAborted) {
                     throw error;
                 }
 
@@ -485,7 +491,7 @@ export class StreamUploader {
                 break;
             } catch (error: unknown) {
                 // Do not retry or report anything if the upload was aborted.
-                if (error instanceof AbortError) {
+                if (error instanceof AbortError || this.isUploadAborted) {
                     throw error;
                 }
 
