@@ -44,6 +44,9 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
         self.output = output
         self.buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: bufferLength, alignment: MemoryLayout<UInt8>.alignment)
         super.init()
+    }
+    
+    public func openOutputStream() {
         output.delegate = self
         output.schedule(in: RunLoop.main, forMode: .default)
         output.open()
