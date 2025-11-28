@@ -129,8 +129,7 @@ void onAccountRequest(
 
 void onRecordMetric(
         intptr_t bindings_handle,
-        ByteArray value,
-        intptr_t sdk_handle
+        ByteArray value
 ) {
     pushDataToVoidMethod(bindings_handle, value, "onRecordMetric");
 }
