@@ -250,6 +250,48 @@ describe('nodesCryptoService', () => {
                 });
             });
 
+            it('on older node name ignores NOT_SIGNED', async () => {
+                encryptedNode.creationTime = new Date('2020-12-31');
+                driveCrypto.decryptNodeName = jest.fn(async () =>
+                    Promise.resolve({
+                        name: 'name',
+                        verified: VERIFICATION_STATUS.NOT_SIGNED,
+                        verificationErrors: [new Error('missing signature')],
+                    }),
+                );
+
+                const result = await cryptoService.decryptNode(encryptedNode, parentKey);
+                verifyResult(result, {
+                    nameAuthor: {
+                        ok: true,
+                        value: 'nameSignatureEmail',
+                    },
+                });
+                expect(telemetry.recordMetric).not.toHaveBeenCalled();
+            });
+
+            it('on newer node name does not ignore NOT_SIGNED', async () => {
+                encryptedNode.creationTime = new Date('2021-01-01');
+                driveCrypto.decryptNodeName = jest.fn(async () =>
+                    Promise.resolve({
+                        name: 'name',
+                        verified: VERIFICATION_STATUS.NOT_SIGNED,
+                        verificationErrors: [new Error('missing signature')],
+                    }),
+                );
+
+                const result = await cryptoService.decryptNode(encryptedNode, parentKey);
+                verifyResult(result, {
+                    nameAuthor: {
+                        ok: false,
+                        error: {
+                            claimedAuthor: 'nameSignatureEmail',
+                            error: 'Missing signature for name',
+                        },
+                    },
+                });
+            });
+
             it('on hash key', async () => {
                 driveCrypto.decryptNodeHashKey = jest.fn(async () =>
                     Promise.resolve({
@@ -272,6 +314,48 @@ describe('nodesCryptoService', () => {
                 verifyLogEventVerificationError({
                     field: 'nodeHashKey',
                     error: 'verification error',
+                });
+            });
+
+            it('on older node hash key ignores NOT_SIGNED', async () => {
+                encryptedNode.creationTime = new Date('2021-07-31');
+                driveCrypto.decryptNodeHashKey = jest.fn(async () =>
+                    Promise.resolve({
+                        hashKey: new Uint8Array(),
+                        verified: VERIFICATION_STATUS.NOT_SIGNED,
+                        verificationErrors: [new Error('missing signature')],
+                    }),
+                );
+
+                const result = await cryptoService.decryptNode(encryptedNode, parentKey);
+                verifyResult(result, {
+                    keyAuthor: {
+                        ok: true,
+                        value: 'signatureEmail',
+                    },
+                });
+                expect(telemetry.recordMetric).not.toHaveBeenCalled();
+            });
+
+            it('on newer node hash key does not ignore NOT_SIGNED', async () => {
+                encryptedNode.creationTime = new Date('2021-08-01');
+                driveCrypto.decryptNodeHashKey = jest.fn(async () =>
+                    Promise.resolve({
+                        hashKey: new Uint8Array(),
+                        verified: VERIFICATION_STATUS.NOT_SIGNED,
+                        verificationErrors: [new Error('missing signature')],
+                    }),
+                );
+
+                const result = await cryptoService.decryptNode(encryptedNode, parentKey);
+                verifyResult(result, {
+                    keyAuthor: {
+                        ok: false,
+                        error: {
+                            claimedAuthor: 'signatureEmail',
+                            error: 'Missing signature for hash key',
+                        },
+                    },
                 });
             });
 

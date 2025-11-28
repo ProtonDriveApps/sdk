@@ -336,11 +336,19 @@ export class NodesCryptoService {
         const nameSignatureEmail = node.encryptedCrypto.nameSignatureEmail;
 
         try {
-            const { name, verified, verificationErrors } = await this.driveCrypto.decryptNodeName(
-                node.encryptedName,
-                parentKey,
-                verificationKeys,
-            );
+            const {
+                name,
+                verified: verificationStatus,
+                verificationErrors,
+            } = await this.driveCrypto.decryptNodeName(node.encryptedName, parentKey, verificationKeys);
+
+            let verified = verificationStatus;
+            // The name was not signed until Drive web Beta 3.
+            // It is decided to ignore this and consider it signed.
+            // The problem will be gone with migration to new crypto model.
+            if (verificationStatus === VERIFICATION_STATUS.NOT_SIGNED && node.creationTime < new Date(2021, 0, 1)) {
+                verified = VERIFICATION_STATUS.SIGNED_AND_VALID;
+            }
 
             return {
                 name: resultOk(name),
@@ -438,11 +446,19 @@ export class NodesCryptoService {
             throw new Error('Node is not a folder');
         }
 
-        const { hashKey, verified, verificationErrors } = await this.driveCrypto.decryptNodeHashKey(
-            node.encryptedCrypto.folder.armoredHashKey,
-            nodeKey,
-            addressKeys,
-        );
+        const {
+            hashKey,
+            verified: verificationStatus,
+            verificationErrors,
+        } = await this.driveCrypto.decryptNodeHashKey(node.encryptedCrypto.folder.armoredHashKey, nodeKey, addressKeys);
+
+        let verified = verificationStatus;
+        // The hash was not signed until Drive web Beta 17.
+        // It is decided to ignore this and consider it signed.
+        // The problem will be gone with migration to new crypto model.
+        if (verificationStatus === VERIFICATION_STATUS.NOT_SIGNED && node.creationTime < new Date(2021, 7, 1)) {
+            verified = VERIFICATION_STATUS.SIGNED_AND_VALID;
+        }
 
         return {
             hashKey,
