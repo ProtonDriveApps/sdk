@@ -10,6 +10,7 @@ import me.proton.core.network.domain.ApiResult
 import me.proton.drive.sdk.HttpSdkApi
 import me.proton.drive.sdk.extension.read
 import okhttp3.ResponseBody
+import proton.sdk.ProtonSdk
 import proton.sdk.ProtonSdk.HttpRequest
 import proton.sdk.ProtonSdk.HttpResponse
 import proton.sdk.httpHeader
@@ -27,10 +28,13 @@ internal class ApiProviderBridge(
 
     override suspend fun invoke(request: HttpRequest): HttpResponse {
         val httpStream = createHttpStream()
-        val apiResult = apiProvider.get<HttpSdkApi>(userId).invoke {
-            execute(request, httpStream)
+        val apiResult = RetryAfterDelay(isEnabled = request.isRetryEnabled) {
+            apiProvider.get<HttpSdkApi>(userId).invoke(
+                forceNoRetryOnConnectionErrors = true
+            ) {
+                execute(request, httpStream)
+            }
         }
-
         if (apiResult is ApiResult.Error) {
             val error = apiResult.cause
             if (error is ProtonErrorException) {
@@ -68,11 +72,14 @@ internal class ApiProviderBridge(
         }
     }
 
-    private fun HttpRequest.isUploadBlock(): Boolean =
-        method == "POST" && url.contains("/storage/blocks")
+    private val HttpRequest.isUploadBlock: Boolean get() =
+        type == ProtonSdk.HttpRequestType.HTTP_REQUEST_TYPE_STORAGE_UPLOAD
 
-    private fun HttpRequest.isDownloadBlock(): Boolean =
-        method == "GET" && url.contains("/storage/blocks")
+    private val HttpRequest.isDownloadBlock: Boolean get() =
+        type == ProtonSdk.HttpRequestType.HTTP_REQUEST_TYPE_STORAGE_DOWNLOAD
+
+    private val HttpRequest.isRetryEnabled get() =
+        type == ProtonSdk.HttpRequestType.HTTP_REQUEST_TYPE_REGULAR_API
 
     private suspend fun createHttpStream(): HttpStream {
         val jniHttpStream = JniHttpStream()
@@ -100,7 +107,7 @@ internal class ApiProviderBridge(
         val headers = request.headersList.associate { header ->
             header.name to header.valuesList.joinToString(",")
         }
-        val body = if (request.isUploadBlock()) {
+        val body = if (request.isUploadBlock) {
             httpStream.read(request)
             // TODO: no working yet request is seen in the log but not send
             //httpStream.readAsStream(request)
@@ -108,7 +115,7 @@ internal class ApiProviderBridge(
             httpStream.read(request)
         }
         return when (method.uppercase()) {
-            "GET" -> if (request.isDownloadBlock()) {
+            "GET" -> if (request.isDownloadBlock) {
                 getStreaming(url, headers)
             } else {
                 get(url, headers)
@@ -121,3 +128,4 @@ internal class ApiProviderBridge(
         }
     }
 }
+
