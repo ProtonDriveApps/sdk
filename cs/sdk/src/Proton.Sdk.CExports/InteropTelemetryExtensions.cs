@@ -10,8 +10,8 @@ internal static class InteropTelemetryExtensions
         var loggerFactory = GetLoggerFactory(telemetry, bindingsHandle);
 
         var recordMetricAction = telemetry.HasRecordMetricAction
-            ? new InteropAction<IntPtr, InteropArray<byte>>(telemetry.RecordMetricAction)
-            : default(InteropAction<IntPtr, InteropArray<byte>>?);
+            ? new InteropAction<nint, InteropArray<byte>>(telemetry.RecordMetricAction)
+            : default(InteropAction<nint, InteropArray<byte>>?);
 
         if (loggerFactory is null && recordMetricAction is null)
         {
@@ -31,7 +31,7 @@ internal static class InteropTelemetryExtensions
 
         if (telemetry.HasLogAction)
         {
-            var logAction = new InteropAction<IntPtr, InteropArray<byte>>(telemetry.LogAction);
+            var logAction = new InteropAction<nint, InteropArray<byte>>(telemetry.LogAction);
             return new LoggerFactory([new InteropLoggerProvider(bindingsHandle, logAction)]);
         }
 

@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 
@@ -57,43 +57,36 @@ internal sealed class InteropStream : Stream
 
     public override Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
     {
-        Console.WriteLine("IteropStream.CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)");
         return base.CopyToAsync(destination, bufferSize, cancellationToken);
     }
 
     public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)
     {
-        Console.WriteLine("IteropStream.BeginRead(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)");
         return base.BeginRead(buffer, offset, count, callback, state);
     }
 
     public override int ReadByte()
     {
-        Console.WriteLine("IteropStream.ReadByte()");
         return base.ReadByte();
     }
 
     public override int Read(byte[] buffer, int offset, int count)
     {
-        Console.WriteLine("IteropStream.Read(byte[] buffer, int offset, int count)");
         return ReadAsync(buffer.AsMemory(offset, count)).AsTask().GetAwaiter().GetResult();
     }
 
     public override int Read(Span<byte> buffer)
     {
-        Console.WriteLine("IteropStream.Read(Span<byte> buffer)");
         return base.Read(buffer);
     }
 
     public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
-        Console.WriteLine("IteropStream.ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)");
         return ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
     }
 
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        Console.WriteLine("IteropStream.ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)");
         if (_readAction is null)
         {
             throw new NotSupportedException("Reading not supported");

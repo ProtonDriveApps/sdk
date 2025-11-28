@@ -7,13 +7,13 @@ using Proton.Drive.Sdk.Api.Volumes;
 
 namespace Proton.Drive.Sdk.Api;
 
-internal sealed class DriveApiClients(HttpClient httpClient) : IDriveApiClients
+internal sealed class DriveApiClients(HttpClient defaultHttpClient, HttpClient storageHttpClient) : IDriveApiClients
 {
-    public IVolumesApiClient Volumes { get; } = new VolumesApiClient(httpClient);
-    public ISharesApiClient Shares { get; } = new SharesApiClient(httpClient);
-    public ILinksApiClient Links { get; } = new LinksApiClient(httpClient);
-    public IFoldersApiClient Folders { get; } = new FoldersApiClient(httpClient);
-    public IFilesApiClient Files { get; } = new FilesApiClient(httpClient);
-    public IStorageApiClient Storage { get; } = new StorageApiClient(httpClient);
-    public ITrashApiClient Trash { get; } = new TrashApiClient(httpClient);
+    public IVolumesApiClient Volumes { get; } = new VolumesApiClient(defaultHttpClient);
+    public ISharesApiClient Shares { get; } = new SharesApiClient(defaultHttpClient);
+    public ILinksApiClient Links { get; } = new LinksApiClient(defaultHttpClient);
+    public IFoldersApiClient Folders { get; } = new FoldersApiClient(defaultHttpClient);
+    public IFilesApiClient Files { get; } = new FilesApiClient(defaultHttpClient);
+    public IStorageApiClient Storage { get; } = new StorageApiClient(storageHttpClient);
+    public ITrashApiClient Trash { get; } = new TrashApiClient(defaultHttpClient);
 }

@@ -12,18 +12,21 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
         nint bindingsHandle,
         string baseUrl,
         string? bindingsLanguage,
-        InteropAction<nint, InteropArray<byte>, nint> httpRequestAction,
-        InteropAction<nint, InteropArray<byte>, nint> httpResponseReadAction)
+        InteropFunction<nint, InteropArray<byte>, nint, nint> requestFunction,
+        InteropAction<nint, InteropArray<byte>, nint> responseContentReadAction,
+        InteropAction<nint> cancellationAction)
     {
         _baseUrl = baseUrl;
         BindingsHandle = bindingsHandle;
-        HttpRequestAction = httpRequestAction;
-        HttpResponseReadAction = httpResponseReadAction;
+        RequestFunction = requestFunction;
+        ResponseContentReadAction = responseContentReadAction;
+        CancellationAction = cancellationAction;
     }
 
     private nint BindingsHandle { get; }
-    private InteropAction<nint, InteropArray<byte>, nint> HttpRequestAction { get; }
-    private InteropAction<IntPtr, InteropArray<byte>, IntPtr> HttpResponseReadAction { get; }
+    private InteropFunction<nint, InteropArray<byte>, nint, nint> RequestFunction { get; }
+    private InteropAction<nint, InteropArray<byte>, nint> ResponseContentReadAction { get; }
+    private InteropAction<nint> CancellationAction { get; }
 
     public HttpClient CreateClient(string name)
     {
@@ -48,11 +51,17 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
 
             try
             {
-                _owner.HttpRequestAction.InvokeWithMessage(_owner.BindingsHandle, interopHttpRequest, (nint)taskCompletionSourceHandle);
+                var foreignCancellationHandle = _owner.RequestFunction.InvokeWithMessage(
+                    _owner.BindingsHandle,
+                    interopHttpRequest,
+                    (nint)taskCompletionSourceHandle);
 
-                var interopHttpResponse = await taskCompletionSource.Task.ConfigureAwait(false);
+                await using (cancellationToken.Register(x => ((InteropHttpClientFactory)x!).CancellationAction.Invoke(foreignCancellationHandle), _owner))
+                {
+                    var interopHttpResponse = await taskCompletionSource.Task.ConfigureAwait(false);
 
-                return ConvertHttpResponseFromInterop(interopHttpResponse);
+                    return ConvertHttpResponseFromInterop(interopHttpResponse);
+                }
             }
             finally
             {
@@ -97,7 +106,8 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
 
             if (interopHttpResponse.HasBindingsContentHandle)
             {
-                response.Content = new StreamContent(new InteropStream(null, (nint)interopHttpResponse.BindingsContentHandle, _owner.HttpResponseReadAction));
+                response.Content = new StreamContent(
+                    new InteropStream(null, (nint)interopHttpResponse.BindingsContentHandle, _owner.ResponseContentReadAction));
             }
 
             foreach (var interopHttpResponseHeader in interopHttpResponse.Headers)
