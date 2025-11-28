@@ -29,6 +29,7 @@ import {
     DecryptedNode,
     DecryptedNodeKeys,
     FilterOptions,
+    NodeSigningKeys,
 } from './interface';
 import { validateNodeName } from './validations';
 import { isProtonDocument, isProtonSheet } from './mediaTypes';
@@ -422,6 +423,22 @@ export class NodesAccess {
             passphraseSessionKey,
             contentKeyPacketSessionKey,
             nameSessionKey,
+        };
+    }
+
+    async getNodeSigningKeys(
+        uids: { nodeUid: string; parentNodeUid?: string } | { nodeUid?: string; parentNodeUid: string },
+    ): Promise<NodeSigningKeys> {
+        const contextNodeUid = uids.nodeUid || uids.parentNodeUid;
+        if (!contextNodeUid) {
+            throw new Error('Context node UID is required for signing keys');
+        }
+        const address = await this.getRootNodeEmailKey(contextNodeUid);
+        return {
+            type: 'userAddress',
+            email: address.email,
+            addressId: address.addressId,
+            key: address.addressKey,
         };
     }
 

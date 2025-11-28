@@ -110,7 +110,9 @@ describe('StreamUploader', () => {
             nodeRevisionUid: 'revisionUid',
             nodeUid: 'nodeUid',
             nodeKeys: {
-                signatureAddress: { addressId: 'addressId' },
+                signingKeys: {
+                    addressId: 'addressId',
+                },
             },
         } as NodeRevisionDraft;
 
@@ -416,7 +418,7 @@ describe('StreamUploader', () => {
             expect(apiService.requestBlockUpload).toHaveBeenCalledTimes(2);
             expect(apiService.requestBlockUpload).toHaveBeenCalledWith(
                 revisionDraft.nodeRevisionUid,
-                revisionDraft.nodeKeys.signatureAddress.addressId,
+                revisionDraft.nodeKeys.signingKeys.addressId,
                 {
                     contentBlocks: [
                         {

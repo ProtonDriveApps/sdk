@@ -46,15 +46,26 @@ if (debug) {
     console.time('Command execution');
 }
 
-await command.action({
-    account,
-    sdk,
-    photosSdk,
-    sdkDiagnostic,
-    paths,
-    args,
-    options,
-});
+try {
+    await command.action({
+        account,
+        sdk,
+        photosSdk,
+        sdkDiagnostic,
+        paths,
+        args,
+        options,
+    });
+} catch (error: unknown) {
+    console.error('===============================================');
+    console.trace(error);
+
+    // Get all the object properties and convert through JSON to avoid custom object interpretation.
+    console.debug('Error details:');
+    console.debug(JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(error as object)))));
+
+    process.exit(1);
+}
 
 if (debug) {
     console.timeEnd('Command execution');

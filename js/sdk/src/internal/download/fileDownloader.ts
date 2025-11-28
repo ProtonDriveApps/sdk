@@ -42,6 +42,7 @@ export class FileDownloader {
         private revision: DecryptedRevision,
         private signal?: AbortSignal,
         private onFinish?: () => void,
+        private ignoreManifestVerification = false,
     ) {
         this.telemetry = telemetry;
         this.logger = telemetry.getLoggerForRevision(revision.uid);
@@ -51,6 +52,7 @@ export class FileDownloader {
         this.revision = revision;
         this.signal = signal;
         this.onFinish = onFinish;
+        this.ignoreManifestVerification = ignoreManifestVerification;
         this.controller = new DownloadController(this.signal);
     }
 
@@ -219,7 +221,7 @@ export class FileDownloader {
                 throw new Error(`Some blocks were not downloaded`);
             }
 
-            if (ignoreIntegrityErrors) {
+            if (ignoreIntegrityErrors || this.ignoreManifestVerification) {
                 this.logger.warn('Skipping manifest check');
             } else {
                 this.logger.debug(`Verifying manifest`);
@@ -237,7 +239,7 @@ export class FileDownloader {
         } catch (error: unknown) {
             this.logger.error(`Download failed`, error);
             void this.telemetry.downloadFailed(this.revision.uid, error, fileProgress, this.getClaimedSizeInBytes());
-            await writer.abort();
+            await writer.abort?.();
             throw error;
         } finally {
             this.logger.debug(`Download cleanup`);

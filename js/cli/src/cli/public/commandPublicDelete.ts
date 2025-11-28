@@ -8,16 +8,16 @@ export class CommandPublicDelete implements Command {
     group = 'public';
     name = 'delete';
     isPublicAction = true;
-    args = ['nodeUid'];
+    args = ['path'];
     options: ParseArgsConfig['options'] = PUBLIC_OPTIONS;
 
-    async action({ paths, args: [nodeUid], options: { json, url, 'custom-password': customPassword } }: ActionArgs) {
+    async action({ paths, args: [pathString], options: { json, url, 'custom-password': customPassword } }: ActionArgs) {
         const client = await paths.authPublicLinkSession(url, customPassword);
-        const nodePath = paths.getPublicLinkPath(nodeUid);
+        const nodePath = paths.getPublicLinkPath(pathString);
         const node = await nodePath.getNode();
 
         await printIterable(client.deleteNodes([node]), json, (result) =>
             console.log(result.ok ? `✅ Deleted ${result.uid}` : `❌ Failed to delete ${result.uid}: ${result.error}`),
-            );
+        );
     }
 }

@@ -319,7 +319,7 @@ export class StreamUploader {
         this.logger.info(`Requesting upload tokens for ${this.encryptedBlocks.size} blocks`);
         const uploadTokens = await this.apiService.requestBlockUpload(
             this.revisionDraft.nodeRevisionUid,
-            this.revisionDraft.nodeKeys.signatureAddress.addressId,
+            this.revisionDraft.nodeKeys.signingKeys.addressId,
             {
                 contentBlocks: Array.from(
                     this.encryptedBlocks.values().map((block) => ({
@@ -507,7 +507,7 @@ export class StreamUploader {
                     logger.warn(`Token expired, fetching new token and retrying`);
                     const uploadTokens = await this.apiService.requestBlockUpload(
                         this.revisionDraft.nodeRevisionUid,
-                        this.revisionDraft.nodeKeys.signatureAddress.addressId,
+                        this.revisionDraft.nodeKeys.signingKeys.addressId,
                         {
                             contentBlocks: [
                                 {

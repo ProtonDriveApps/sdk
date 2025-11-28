@@ -57,7 +57,7 @@ describe('NodesManagement', () => {
             restoreNodes: jest.fn(async function* (uids) {
                 yield* uids.map((uid) => ({ ok: true, uid }) as NodeResult);
             }),
-            deleteNodes: jest.fn(async function* (uids) {
+            deleteTrashedNodes: jest.fn(async function* (uids) {
                 yield* uids.map((uid) => ({ ok: true, uid }) as NodeResult);
             }),
             createFolder: jest.fn(),
@@ -117,7 +117,12 @@ describe('NodesManagement', () => {
                     nameSessionKey: `${uid}-nameSessionKey`,
                 }),
             ),
-            getRootNodeEmailKey: jest.fn().mockResolvedValue({ email: 'root-email', addressKey: 'root-key' }),
+            getNodeSigningKeys: jest.fn().mockResolvedValue({
+                type: 'userAddress',
+                email: 'root-email',
+                addressId: 'root-addressId',
+                key: 'root-key',
+            }),
             notifyNodeChanged: jest.fn(),
             notifyNodeDeleted: jest.fn(),
             notifyChildCreated: jest.fn(),
@@ -136,11 +141,11 @@ describe('NodesManagement', () => {
             nameAuthor: { ok: true, value: 'newSignatureEmail' },
             hash: 'newHash',
         });
-        expect(nodesAccess.getRootNodeEmailKey).toHaveBeenCalledWith('nodeUid');
+        expect(nodesAccess.getNodeSigningKeys).toHaveBeenCalledWith({ nodeUid: 'nodeUid', parentNodeUid: 'parentUid' });
         expect(cryptoService.encryptNewName).toHaveBeenCalledWith(
             { key: 'parentUid-key', hashKey: 'parentUid-hashKey' },
             'nodeUid-nameSessionKey',
-            { email: 'root-email', addressKey: 'root-key' },
+            { type: 'userAddress', email: 'root-email', addressId: 'root-addressId', key: 'root-key' },
             'new name',
         );
         expect(apiService.renameNode).toHaveBeenCalledWith(
@@ -181,7 +186,10 @@ describe('NodesManagement', () => {
             keyAuthor: { ok: true, value: 'movedSignatureEmail' },
             nameAuthor: { ok: true, value: 'movedNameSignatureEmail' },
         });
-        expect(nodesAccess.getRootNodeEmailKey).toHaveBeenCalledWith('newParentNodeUid');
+        expect(nodesAccess.getNodeSigningKeys).toHaveBeenCalledWith({
+            nodeUid: 'nodeUid',
+            parentNodeUid: 'newParentNodeUid',
+        });
         expect(cryptoService.encryptNodeWithNewParent).toHaveBeenCalledWith(
             nodes.nodeUid,
             expect.objectContaining({
@@ -192,7 +200,7 @@ describe('NodesManagement', () => {
                 nameSessionKey: 'nodeUid-nameSessionKey',
             }),
             expect.objectContaining({ key: 'newParentNodeUid-key', hashKey: 'newParentNodeUid-hashKey' }),
-            { email: 'root-email', addressKey: 'root-key' },
+            { type: 'userAddress', email: 'root-email', addressId: 'root-addressId', key: 'root-key' },
         );
         expect(apiService.moveNode).toHaveBeenCalledWith(
             'nodeUid',
@@ -232,7 +240,7 @@ describe('NodesManagement', () => {
                 nameSessionKey: 'anonymousNodeUid-nameSessionKey',
             }),
             expect.objectContaining({ key: 'newParentNodeUid-key', hashKey: 'newParentNodeUid-hashKey' }),
-            { email: 'root-email', addressKey: 'root-key' },
+            { type: 'userAddress', email: 'root-email', addressId: 'root-addressId', key: 'root-key' },
         );
         expect(newNode).toEqual({
             ...nodes.anonymousNodeUid,
@@ -276,7 +284,10 @@ describe('NodesManagement', () => {
             keyAuthor: { ok: true, value: 'copiedSignatureEmail' },
             nameAuthor: { ok: true, value: 'copiedNameSignatureEmail' },
         });
-        expect(nodesAccess.getRootNodeEmailKey).toHaveBeenCalledWith('newParentNodeUid');
+        expect(nodesAccess.getNodeSigningKeys).toHaveBeenCalledWith({
+            nodeUid: 'nodeUid',
+            parentNodeUid: 'newParentNodeUid',
+        });
         expect(cryptoService.encryptNodeWithNewParent).toHaveBeenCalledWith(
             nodes.nodeUid,
             expect.objectContaining({
@@ -287,7 +298,7 @@ describe('NodesManagement', () => {
                 nameSessionKey: 'nodeUid-nameSessionKey',
             }),
             expect.objectContaining({ key: 'newParentNodeUid-key', hashKey: 'newParentNodeUid-hashKey' }),
-            { email: 'root-email', addressKey: 'root-key' },
+            { type: 'userAddress', email: 'root-email', addressId: 'root-addressId', key: 'root-key' },
         );
         expect(apiService.copyNode).toHaveBeenCalledWith('nodeUid', {
             parentUid: 'newParentNodeUid',
@@ -322,7 +333,7 @@ describe('NodesManagement', () => {
                 nameSessionKey: 'anonymousNodeUid-nameSessionKey',
             }),
             expect.objectContaining({ key: 'newParentNodeUid-key', hashKey: 'newParentNodeUid-hashKey' }),
-            { email: 'root-email', addressKey: 'root-key' },
+            { type: 'userAddress', email: 'root-email', addressId: 'root-addressId', key: 'root-key' },
         );
         expect(newNode).toEqual({
             ...nodes.anonymousNodeUid,
