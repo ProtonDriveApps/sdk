@@ -16,7 +16,7 @@ internal static class ProtonClientConfigurationExtensions
         this ProtonClientConfiguration config,
         ProtonApiSession? session = null,
         string? baseRoutePath = null,
-        TimeSpan? attemptTimeout = null)
+        TimeSpan? timeout = null)
     {
         var baseAddress = config.BaseUrl + (baseRoutePath ?? string.Empty);
 
@@ -67,19 +67,22 @@ internal static class ProtonClientConfigurationExtensions
                 builder.AddStandardResilienceHandler(
                     options =>
                     {
-                        if (attemptTimeout is not null)
+                        if (timeout is not null)
                         {
-                            options.AttemptTimeout.Timeout = attemptTimeout.Value;
+                            options.TotalRequestTimeout.Timeout = timeout.Value;
                             options.CircuitBreaker.SamplingDuration = options.AttemptTimeout.Timeout * 2;
                         }
 
-                        options.Retry.ShouldHandle += arguments =>
-                            ValueTask.FromResult(arguments.Context.GetRequestMessage()?.GetRequestType() != HttpRequestType.RegularApi);
+                        var defaultShouldHandleRetry = options.Retry.ShouldHandle;
+
+                        options.Retry.ShouldHandle = async args => await defaultShouldHandleRetry(args).ConfigureAwait(false)
+                            && args.Context.GetRequestMessage()?.GetRequestType() is HttpRequestType.RegularApi;
+
                         options.Retry.ShouldRetryAfterHeader = true;
-                        options.Retry.Delay = TimeSpan.FromSeconds(2);
+                        options.Retry.Delay = TimeSpan.FromSeconds(1.75);
                         options.Retry.BackoffType = DelayBackoffType.Exponential;
-                        options.Retry.UseJitter = true;
-                        options.Retry.MaxRetryAttempts = 1;
+                        options.Retry.UseJitter = false;
+                        options.Retry.MaxRetryAttempts = 4;
 
                         options.CircuitBreaker.FailureRatio = 0.5;
                     });
