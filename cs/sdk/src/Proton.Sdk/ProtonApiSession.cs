@@ -302,11 +302,11 @@ public sealed class ProtonApiSession
         return _isEnded;
     }
 
-    internal HttpClient GetHttpClient(string? baseRoutePath = null, TimeSpan? attemptTimeout = null)
+    internal HttpClient GetHttpClient(string? baseRoutePath = null, TimeSpan? timeout = null)
     {
-        return baseRoutePath is null && attemptTimeout is null
+        return baseRoutePath is null && timeout is null
             ? _httpClient
-            : ClientConfiguration.GetHttpClient(this, baseRoutePath, attemptTimeout);
+            : ClientConfiguration.GetHttpClient(this, baseRoutePath, timeout);
     }
 
     private static ReadOnlyMemory<byte> DeriveSecretFromPassword(ReadOnlySpan<byte> password, ReadOnlySpan<byte> salt)
