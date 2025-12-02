@@ -8,11 +8,11 @@ public sealed class DownloadEvent : IMetricEvent
 
     public required VolumeType VolumeType { get; init; }
 
-    public required long DownloadedSize { get; init; }
+    public long DownloadedSize { get; set; }
 
-    public long? ClaimedFileSize { get; init; }
+    public long ClaimedFileSize { get; set; }
 
-    public DownloadError? Error { get; init; }
+    public DownloadError? Error { get; set; }
 
-    public string? OriginalError { get; init; }
+    public string? OriginalError { get; set; }
 }
