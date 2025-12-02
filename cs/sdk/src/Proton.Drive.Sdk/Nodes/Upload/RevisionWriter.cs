@@ -64,6 +64,9 @@ internal sealed partial class RevisionWriter : IDisposable
         Action<long>? onProgress,
         CancellationToken cancellationToken)
     {
+        using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var linkedCancellationToken = cancellationTokenSource.Token;
+
         var uploadEvent = new UploadEvent
         {
             ExpectedSize = contentStream.Length,
@@ -91,9 +94,6 @@ internal sealed partial class RevisionWriter : IDisposable
             await using (hashingContentStream.ConfigureAwait(false))
             {
                 var blockVerifier = await _client.BlockVerifierFactory.CreateAsync(_revisionUid, _fileKey, cancellationToken).ConfigureAwait(false);
-
-                using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                var linkedCancellationToken = cancellationTokenSource.Token;
 
                 try
                 {
@@ -207,11 +207,11 @@ internal sealed partial class RevisionWriter : IDisposable
                 _revisionUid.NodeUid.LinkId,
                 _revisionUid.RevisionId,
                 request,
-                cancellationToken).ConfigureAwait(false);
+                linkedCancellationToken).ConfigureAwait(false);
 
             LogRevisionSealed(_revisionUid);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (!linkedCancellationToken.IsCancellationRequested)
         {
             uploadEvent.Error = TelemetryErrorResolver.GetUploadErrorFromException(ex);
             uploadEvent.OriginalError = ex.GetBaseException().ToString();
@@ -219,8 +219,18 @@ internal sealed partial class RevisionWriter : IDisposable
         }
         finally
         {
-            // TODO: put this in a decorator
-            _client.Telemetry.RecordMetric(uploadEvent);
+            if (!linkedCancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    // TODO: put this in a decorator
+                    _client.Telemetry.RecordMetric(uploadEvent);
+                }
+                catch
+                {
+                    // Ignore telemetry errors
+                }
+            }
         }
     }
 
