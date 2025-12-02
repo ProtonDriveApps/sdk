@@ -134,6 +134,13 @@ void onRecordMetric(
     pushDataToVoidMethod(bindings_handle, value, "onRecordMetric");
 }
 
+long onFeatureEnabled(
+        intptr_t bindings_handle,
+        ByteArray value
+) {
+    return pushDataToLongMethod(bindings_handle, value, "onFeatureEnabled");
+}
+
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getReadPointer(
         JNIEnv *env,
         jobject obj
@@ -181,6 +188,13 @@ jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getRecordMetr
         jobject obj
 ) {
     return (jlong) (intptr_t) &onRecordMetric;
+}
+
+jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getFeatureEnabledPointer(
+        JNIEnv *env,
+        jobject obj
+) {
+    return (jlong) (intptr_t) &onFeatureEnabled;
 }
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_createWeakRef(JNIEnv* env, jobject obj) {

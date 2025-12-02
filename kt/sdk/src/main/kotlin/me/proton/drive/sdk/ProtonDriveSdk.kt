@@ -49,6 +49,7 @@ object ProtonDriveSdk {
         userAddressResolver: UserAddressResolver,
         publicAddressResolver: PublicAddressResolver,
         metricCallback: MetricCallback? = null,
+        featureEnabled: suspend (String) -> Boolean = { false },
     ): DriveClient = JniDriveClient().run {
         DriveClient(
             create(
@@ -62,6 +63,7 @@ object ProtonDriveSdk {
                 ),
                 onAccountRequest = AccountClientBridge(userAddressResolver, publicAddressResolver),
                 onRecordMetric = metricCallback?.let(::TelemetryBridge) ?: {},
+                onFeatureEnabled = featureEnabled
             ), this
         )
     }

@@ -12,6 +12,12 @@ void pushDataToVoidMethod(
         const char *name
 );
 
+long pushDataToLongMethod(
+        intptr_t bindings_handle,
+        ByteArray value,
+        const char *name
+);
+
 void pushDataAndLongToVoidMethod(
         intptr_t bindings_handle,
         ByteArray value,

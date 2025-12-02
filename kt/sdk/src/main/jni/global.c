@@ -57,6 +57,40 @@ void pushDataToVoidMethod(
     }
 }
 
+long pushDataToLongMethod(
+        intptr_t bindings_handle,
+        ByteArray value,
+        const char *name
+) {
+    JNIEnv *env = getJNIEnv();
+    jobject obj = (*env)->NewLocalRef(env, (jweak) bindings_handle);
+    if ((*env)->IsSameObject(env, obj, NULL)) {
+        __android_log_print(
+                ANDROID_LOG_FATAL,
+                "drive.sdk.internal",
+                "Object was recycled for: %s %ld", name, bindings_handle
+        );
+        return 0;
+    } else {
+        jclass cls = (*env)->GetObjectClass(env, obj);
+        jmethodID mid = (*env)->GetMethodID(env, cls, name, "(Ljava/nio/ByteBuffer;)L");
+        if (mid == 0) {
+            __android_log_print(
+                    ANDROID_LOG_FATAL,
+                    "drive.sdk.internal",
+                    "Cannot found method: %s", name
+            );
+            return 0;
+        }
+        jobject buffer = (*env)->NewDirectByteBuffer(
+                env,
+                (void *) value.pointer,
+                (jlong) value.length
+        );
+        return (*env)->CallLongMethod(env, obj, mid, buffer);
+    }
+}
+
 void pushDataAndLongToVoidMethod(
         intptr_t bindings_handle,
         ByteArray value,
