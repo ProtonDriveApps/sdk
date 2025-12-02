@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
+using Proton.Drive.Sdk.Telemetry;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 
@@ -49,75 +50,107 @@ internal sealed partial class RevisionReader : IDisposable
 
     public async ValueTask ReadAsync(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
     {
-        var downloadTasks = new Queue<Task<BlockDownloadResult>>(_client.BlockDownloader.Queue.Depth);
-        var manifestStream = ProtonDriveClient.MemoryStreamManager.GetStream();
-
-        await using (manifestStream)
+        var downloadEvent = new DownloadEvent
         {
-            if (_revisionDto.Thumbnails is { } thumbnails)
-            {
-                foreach (var sha256Digest in thumbnails.Select(x => x.HashDigest))
-                {
-                    manifestStream.Write(sha256Digest.Span);
-                }
-            }
+            ClaimedFileSize = -1,
+            VolumeType = VolumeType.OwnVolume,
+        };
 
-            try
+        try
+        {
+            var downloadTasks = new Queue<Task<BlockDownloadResult>>(_client.BlockDownloader.Queue.Depth);
+            var manifestStream = ProtonDriveClient.MemoryStreamManager.GetStream();
+
+            await using (manifestStream)
             {
-                try
+                if (_revisionDto.Thumbnails is { } thumbnails)
                 {
-                    await foreach (var (block, _) in GetBlocksAsync(cancellationToken).ConfigureAwait(false))
+                    foreach (var sha256Digest in thumbnails.Select(x => x.HashDigest))
                     {
-                        if (!_client.BlockDownloader.Queue.TryStartBlock())
-                        {
-                            if (downloadTasks.Count > 0)
-                            {
-                                await WriteNextBlockToOutputAsync(downloadTasks, contentOutputStream, manifestStream, onProgress, cancellationToken)
-                                    .ConfigureAwait(false);
-                            }
-
-                            await _client.BlockDownloader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
-                        }
-
-                        var downloadTask = DownloadBlockAsync(block, contentOutputStream, cancellationToken);
-
-                        downloadTasks.Enqueue(downloadTask);
+                        manifestStream.Write(sha256Digest.Span);
                     }
                 }
-                finally
+
+                try
                 {
-                    _releaseFileSemaphoreAction.Invoke();
-                    _fileSemaphoreReleased = true;
+                    try
+                    {
+                        await foreach (var (block, _) in GetBlocksAsync(cancellationToken).ConfigureAwait(false))
+                        {
+                            if (!_client.BlockDownloader.Queue.TryStartBlock())
+                            {
+                                if (downloadTasks.Count > 0)
+                                {
+                                    await WriteNextBlockToOutputAsync(downloadTasks, contentOutputStream, manifestStream, onProgress, cancellationToken)
+                                        .ConfigureAwait(false);
+                                }
+
+                                await _client.BlockDownloader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
+                            }
+
+                            var downloadTask = DownloadBlockAsync(block, contentOutputStream, cancellationToken);
+
+                            downloadTasks.Enqueue(downloadTask);
+                        }
+                    }
+                    finally
+                    {
+                        _releaseFileSemaphoreAction.Invoke();
+                        _fileSemaphoreReleased = true;
+                    }
+
+                    while (downloadTasks.Count > 0)
+                    {
+                        await WriteNextBlockToOutputAsync(downloadTasks, contentOutputStream, manifestStream, onProgress, cancellationToken)
+                            .ConfigureAwait(false);
+                    }
+                }
+                catch when (downloadTasks.Count > 0)
+                {
+                    try
+                    {
+                        await Task.WhenAll(downloadTasks).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        _client.BlockDownloader.Queue.FinishBlocks(downloadTasks.Count);
+                    }
+
+                    throw;
                 }
 
-                while (downloadTasks.Count > 0)
+                manifestStream.Seek(0, SeekOrigin.Begin);
+
+                var manifestVerificationStatus = await VerifyManifestAsync(manifestStream, cancellationToken).ConfigureAwait(false);
+
+                if (manifestVerificationStatus is not PgpVerificationStatus.Ok)
                 {
-                    await WriteNextBlockToOutputAsync(downloadTasks, contentOutputStream, manifestStream, onProgress, cancellationToken).ConfigureAwait(false);
+                    LogFailedManifestVerification(_fileUid, manifestVerificationStatus);
+
+                    throw new ProtonDriveException("File authenticity check failed");
                 }
             }
-            catch when (downloadTasks.Count > 0)
+        }
+        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            downloadEvent.Error = TelemetryErrorResolver.GetDownloadErrorFromException(ex);
+            downloadEvent.OriginalError = ex.GetBaseException().ToString();
+            throw;
+        }
+        finally
+        {
+            if (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    await Task.WhenAll(downloadTasks).ConfigureAwait(false);
+                    downloadEvent.ClaimedFileSize = contentOutputStream.Length; // FIXME: try to report actual claimed size from metadata
+                    downloadEvent.DownloadedSize = contentOutputStream.Length;
+                    _client.Telemetry.RecordMetric(downloadEvent);
                 }
-                finally
+                catch
                 {
-                    _client.BlockDownloader.Queue.FinishBlocks(downloadTasks.Count);
+                    // Ignore telemetry errors
                 }
-
-                throw;
-            }
-
-            manifestStream.Seek(0, SeekOrigin.Begin);
-
-            var manifestVerificationStatus = await VerifyManifestAsync(manifestStream, cancellationToken).ConfigureAwait(false);
-
-            if (manifestVerificationStatus is not PgpVerificationStatus.Ok)
-            {
-                LogFailedManifestVerification(_fileUid, manifestVerificationStatus);
-
-                throw new ProtonDriveException("File authenticity check failed");
             }
         }
     }

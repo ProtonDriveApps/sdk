@@ -362,8 +362,8 @@ message UploadEventPayload {
 
 message DownloadEventPayload {
     VolumeType volume_type = 1;
-    int64 expected_size = 2;
-    int64 uploaded_size = 3;
+    int64 claimed_file_size = 2; // -1 if unknown
+    int64 downloaded_size = 3;
     DownloadError error = 4; // Optional
     string original_error = 5; // Optional
 }
