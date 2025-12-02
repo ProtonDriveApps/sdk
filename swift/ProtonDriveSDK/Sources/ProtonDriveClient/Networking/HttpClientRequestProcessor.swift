@@ -43,10 +43,8 @@ enum HttpClientRequestProcessor {
         // Get the task box and cancel it
         let unmanaged = Unmanaged<BoxedCancellableTask>.fromOpaque(pointer)
         let taskBox = unmanaged.takeUnretainedValue()
+        // Release of the task box is wrapped in completionBlock (see `cCompatibleHttpRequest`), which is called in `cancel`
         taskBox.cancel()
-        
-        // Release our reference (matching the passRetained in cCompatibleHttpRequest)
-        unmanaged.release()
     }
 
     fileprivate static func perform(
