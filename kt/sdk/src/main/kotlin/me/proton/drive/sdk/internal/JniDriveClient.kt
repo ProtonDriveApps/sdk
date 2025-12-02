@@ -33,6 +33,7 @@ class JniDriveClient internal constructor() : JniBaseProtonDriveSdk() {
         onHttpClientRequest: suspend (ProtonSdk.HttpRequest) -> HttpResponse,
         onAccountRequest: suspend (ProtonDriveSdk.AccountRequest) -> Any,
         onRecordMetric: suspend (ProtonSdk.MetricEvent) -> Unit,
+        onFeatureEnabled: suspend (String) -> Boolean,
     ) = executePersistent(clientBuilder = { continuation ->
         ProtonDriveSdkNativeClient(
             method("create"),
@@ -41,6 +42,7 @@ class JniDriveClient internal constructor() : JniBaseProtonDriveSdk() {
             accountRequest = onAccountRequest,
             logger = logger,
             recordMetric = onRecordMetric,
+            featureEnabled = onFeatureEnabled,
             coroutineScope = coroutineScope,
         )
     }, requestBuilder = { client ->
@@ -56,6 +58,7 @@ class JniDriveClient internal constructor() : JniBaseProtonDriveSdk() {
                     loggerProviderHandle = request.loggerProvider.handle
                     recordMetricAction = client.getRecordMetricPointer()
                 }
+                featureEnabledFunction = client.getFeatureEnabledPointer()
                 request.bindingsLanguage?.let { bindingsLanguage = it }
                 request.uid?.let { uid = it }
             }

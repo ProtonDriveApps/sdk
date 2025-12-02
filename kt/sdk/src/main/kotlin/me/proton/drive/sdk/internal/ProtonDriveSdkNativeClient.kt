@@ -2,10 +2,13 @@ package me.proton.drive.sdk.internal
 
 import com.google.protobuf.Any
 import com.google.protobuf.Int32Value
+import com.google.protobuf.StringValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import me.proton.drive.sdk.extension.asAny
 import me.proton.drive.sdk.extension.toProtonSdkError
 import proton.drive.sdk.ProtonDriveSdk
@@ -25,6 +28,7 @@ class ProtonDriveSdkNativeClient internal constructor(
     val accountRequest: suspend (ProtonDriveSdk.AccountRequest) -> Any = { error("accountRequest not configured for $name") },
     val progress: suspend (ProtonDriveSdk.ProgressUpdate) -> Unit = { error("progress not configured for $name") },
     val recordMetric: suspend (ProtonSdk.MetricEvent) -> Unit = { error("recordMetric not configured for $name") },
+    val featureEnabled: suspend (String) -> Boolean = { error("featureEnabled not configured for $name") },
     val logger: (String) -> Unit = {},
     private val coroutineScope: CoroutineScope? = null,
 ) {
@@ -81,6 +85,7 @@ class ProtonDriveSdkNativeClient internal constructor(
     external fun getHttpClientRequestPointer(): Long
     external fun getAccountRequestPointer(): Long
     external fun getRecordMetricPointer(): Long
+    external fun getFeatureEnabledPointer(): Long
     external fun createWeakRef(): Long
 
     @Suppress("unused") // Called by JNI
@@ -160,6 +165,32 @@ class ProtonDriveSdkNativeClient internal constructor(
         parser = ProtonSdk.MetricEvent::parseFrom,
         block = recordMetric,
     )
+
+    @Suppress("TooGenericExceptionCaught", "unused") // Called by JNI
+    fun onFeatureEnabled(data: ByteBuffer): Long = onFunction(
+        operation = "featureEnabled",
+        data = data,
+        parser = StringValue::parseFrom,
+    ) { value ->
+        val name = value.value
+        runCatching {
+            if (featureEnabled(name)) 1L else 0L
+        }.getOrElse { error ->
+            logger("Cannot get feature flag $name")
+            logger(error.stackTraceToString())
+            0L
+        }
+    }
+
+    private fun <T, R> onFunction(
+        operation: String,
+        data: ByteBuffer,
+        parser: (ByteBuffer) -> T,
+        block: suspend (T) -> R
+    ): R = runBlocking {
+        val value = parser(data)
+        coroutineScope(operation).async { block(value) }.await()
+    }
 
     @Suppress("TooGenericExceptionCaught")
     private fun onOperation(operation: String, sdkHandle: Long, block: suspend () -> Response) {
@@ -241,7 +272,7 @@ class ProtonDriveSdkNativeClient internal constructor(
         return coroutineScope
     }
 
-    companion object{
+    companion object {
         @JvmStatic
         external fun getHttpResponseReadPointer(): Long
     }
