@@ -5,8 +5,8 @@ import proton.drive.sdk.ProtonDriveSdk
 
 fun ProtonDriveSdk.DownloadEventPayload.toEvent() = DownloadEvent(
     volumeType = volumeType.toEnum(),
-    expectedSize = expectedSize,
-    uploadedSize = uploadedSize,
+    claimedFileSize = claimedFileSize,
+    downloadedSize = downloadedSize,
     error = error.toEnum(),
     originalError = originalError,
 )
