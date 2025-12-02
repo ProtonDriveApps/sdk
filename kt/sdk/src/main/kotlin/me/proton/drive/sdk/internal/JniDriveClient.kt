@@ -11,6 +11,7 @@ import proton.drive.sdk.ProtonDriveSdk
 import proton.drive.sdk.driveClientCreateFromSessionRequest
 import proton.drive.sdk.driveClientCreateRequest
 import proton.drive.sdk.driveClientFreeRequest
+import proton.drive.sdk.httpClient
 import proton.drive.sdk.request
 import proton.sdk.ProtonSdk
 import proton.sdk.ProtonSdk.HttpResponse
@@ -49,8 +50,11 @@ class JniDriveClient internal constructor() : JniBaseProtonDriveSdk() {
         request {
             driveClientCreate = driveClientCreateRequest {
                 baseUrl = request.baseUrl
-                httpClientRequestAction = client.getHttpClientRequestPointer()
-                httpResponseReadAction = httpResponseReadPointer
+                httpClient = httpClient {
+                    requestFunction = client.getHttpClientRequestPointer()
+                    responseContentReadAction = httpResponseReadPointer
+                    cancellationAction = client.getHttpClientCancellationPointer()
+                }
                 accountRequestAction = client.getAccountRequestPointer()
                 entityCachePath = request.entityCachePath
                 secretCachePath = request.secretCachePath

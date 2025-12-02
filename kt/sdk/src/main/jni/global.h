@@ -25,4 +25,11 @@ void pushDataAndLongToVoidMethod(
         const char *name
 );
 
+long pushDataAndLongToLongMethod(
+        intptr_t bindings_handle,
+        ByteArray value,
+        intptr_t sdk_handle,
+        const char *name
+);
+
 #endif //PROTONDRIVE_GLOBAL_H
