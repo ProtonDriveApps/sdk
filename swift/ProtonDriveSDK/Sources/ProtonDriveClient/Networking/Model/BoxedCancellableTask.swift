@@ -10,10 +10,20 @@ final class BoxedCancellableTask: @unchecked Sendable {
     init(work: @escaping @Sendable () async throws -> Void) {
         task = Task { [weak self] in
             defer {
-                self?.onComplete?()
+                self?.complete()
             }
             try? await work()
         }
+    }
+
+    private func complete() {
+        lock.lock()
+        let completionHandler = onComplete
+        task = nil
+        onComplete = nil
+        lock.unlock()
+        // Call completion handler since we're done with this task box (to release it)
+        completionHandler?()
     }
 
     func setCompletionHandler(_ handler: @escaping () -> Void) {
