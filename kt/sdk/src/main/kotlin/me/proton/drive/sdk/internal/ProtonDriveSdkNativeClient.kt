@@ -5,6 +5,7 @@ import com.google.protobuf.Int32Value
 import com.google.protobuf.StringValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -83,6 +84,7 @@ class ProtonDriveSdkNativeClient internal constructor(
     external fun getWritePointer(): Long
     external fun getProgressPointer(): Long
     external fun getHttpClientRequestPointer(): Long
+    external fun getHttpClientCancellationPointer(): Long
     external fun getAccountRequestPointer(): Long
     external fun getRecordMetricPointer(): Long
     external fun getFeatureEnabledPointer(): Long
@@ -103,25 +105,29 @@ class ProtonDriveSdkNativeClient internal constructor(
     )
 
     @Suppress("unused") // Called by JNI
-    fun onRead(buffer: ByteBuffer, sdkHandle: Long) = onOperation("read", sdkHandle) {
-        logger("read for $name of size: ${buffer.capacity()}")
-        val bytesRead = read(buffer).takeUnless { it < 0 } ?: 0
-        logger("$bytesRead bytes read for $name")
-        response { value = Int32Value.of(bytesRead).asAny("google.protobuf.Int32Value") }
+    fun onRead(buffer: ByteBuffer, sdkHandle: Long) {
+        onOperation("read", sdkHandle) {
+            logger("read for $name of size: ${buffer.capacity()}")
+            val bytesRead = read(buffer).takeUnless { it < 0 } ?: 0
+            logger("$bytesRead bytes read for $name")
+            response { value = Int32Value.of(bytesRead).asAny("google.protobuf.Int32Value") }
+        }
     }
 
     @Suppress("unused") // Called by JNI
-    fun onWrite(data: ByteBuffer, sdkHandle: Long) = onOperation("write", sdkHandle) {
-        logger("write for $name of size: ${data.capacity()}")
-        write(data)
-        response {}
+    fun onWrite(data: ByteBuffer, sdkHandle: Long) {
+        onOperation("write", sdkHandle) {
+            logger("write for $name of size: ${data.capacity()}")
+            write(data)
+            response {}
+        }
     }
 
     @Suppress("unused") // Called by JNI
     fun onSendHttpRequest(
         data: ByteBuffer,
         sdkHandle: Long,
-    ) = onRequest(
+    ): Long = onRequest(
         operation = "http",
         data = data,
         sdkHandle = sdkHandle,
@@ -131,7 +137,9 @@ class ProtonDriveSdkNativeClient internal constructor(
         val httpResponse = httpClientRequest(httpRequest)
         logger("receive http response ${httpResponse.statusCode} for ${httpRequest.method} ${httpRequest.url}")
         response { value = httpResponse.asAny("proton.sdk.HttpResponse") }
-    }
+    }?.let { job ->
+        createJobWeakRef(job)
+    } ?: 0
 
     @Suppress("unused") // Called by JNI
     fun onHttpResponseRead(buffer: ByteBuffer, sdkHandle: Long) {
@@ -147,15 +155,17 @@ class ProtonDriveSdkNativeClient internal constructor(
     fun onAccountRequest(
         data: ByteBuffer,
         sdkHandle: Long,
-    ) = onRequest(
-        operation = "request",
-        data = data,
-        sdkHandle = sdkHandle,
-        parser = ProtonDriveSdk.AccountRequest::parseFrom,
-    ) { accountRequest ->
-        logger("request for ${accountRequest.payloadCase.name} of size: ${data.capacity()}")
-        val response = accountRequest(accountRequest)
-        response { value = response }
+    ) {
+        onRequest(
+            operation = "request",
+            data = data,
+            sdkHandle = sdkHandle,
+            parser = ProtonDriveSdk.AccountRequest::parseFrom,
+        ) { accountRequest ->
+            logger("request for ${accountRequest.payloadCase.name} of size: ${data.capacity()}")
+            val response = accountRequest(accountRequest)
+            response { value = response }
+        }
     }
 
     @Suppress("TooGenericExceptionCaught", "unused") // Called by JNI
@@ -193,22 +203,24 @@ class ProtonDriveSdkNativeClient internal constructor(
     }
 
     @Suppress("TooGenericExceptionCaught")
-    private fun onOperation(operation: String, sdkHandle: Long, block: suspend () -> Response) {
-        coroutineScope(operation).launch {
-            try {
-                handleResponse(sdkHandle, block())
-            } catch (error: CancellationException) {
-                logger("Operation $operation was cancelled")
-                handleResponse(sdkHandle, response {
-                    this@response.error =
-                        error.toProtonSdkError("Operation $operation was cancelled")
-                })
-                throw error
-            } catch (error: Throwable) {
-                handleResponse(sdkHandle, response {
-                    this@response.error = error.toProtonSdkError("Error while $operation")
-                })
-            }
+    private fun onOperation(
+        operation: String,
+        sdkHandle: Long,
+        block: suspend () -> Response,
+    ): Job = coroutineScope(operation).launch {
+        try {
+            handleResponse(sdkHandle, block())
+        } catch (error: CancellationException) {
+            logger("Operation $operation was cancelled")
+            handleResponse(sdkHandle, response {
+                this@response.error =
+                    error.toProtonSdkError("Operation $operation was cancelled")
+            })
+            throw error
+        } catch (error: Throwable) {
+            handleResponse(sdkHandle, response {
+                this@response.error = error.toProtonSdkError("Error while $operation")
+            })
         }
     }
 
@@ -219,18 +231,17 @@ class ProtonDriveSdkNativeClient internal constructor(
         sdkHandle: Long,
         parser: (ByteBuffer) -> T,
         block: suspend (T) -> Response
-    ) {
-        try {
-            // parsing of protobuf needs to be done serially
-            val request = parser(data)
-            onOperation(operation, sdkHandle) { block(request) }
-        } catch (error: Throwable) {
-            handleResponse(sdkHandle, response {
-                this@response.error = error.toProtonSdkError(
-                    "Error while parsing request for $operation"
-                )
-            })
-        }
+    ): Job? = try {
+        // parsing of protobuf needs to be done serially
+        val request = parser(data)
+        onOperation(operation, sdkHandle) { block(request) }
+    } catch (error: Throwable) {
+        handleResponse(sdkHandle, response {
+            this@response.error = error.toProtonSdkError(
+                "Error while parsing request for $operation"
+            )
+        })
+        null
     }
 
     @Suppress("TooGenericExceptionCaught")
@@ -275,5 +286,8 @@ class ProtonDriveSdkNativeClient internal constructor(
     companion object {
         @JvmStatic
         external fun getHttpResponseReadPointer(): Long
+        @JvmStatic
+        external fun createJobWeakRef(job: Job): Long
+
     }
 }
