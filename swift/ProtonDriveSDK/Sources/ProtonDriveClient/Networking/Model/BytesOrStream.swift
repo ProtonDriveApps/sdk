@@ -1,6 +1,6 @@
 import Foundation
 
-final class BoxedStreamingData: Sendable {
+final class BoxedStreamingData {
     let uploadBuffer: BoxedRawBuffer?
     let downloadStream: BoxedDownloadStream?
     
