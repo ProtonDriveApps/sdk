@@ -40,7 +40,7 @@ allprojects {
         }
     }
     group = "me.proton.drive"
-    version = "0.6.0-alpha.3"
+    version = providers.environmentVariable("VERSION").getOrElse("0.0.0-SNAPSHOT")
 
     afterEvaluate {
         configurations.all {
