@@ -85,15 +85,15 @@ public struct DecryptionErrorEventPayload: Sendable {
 public struct DownloadEventPayload: Sendable {
     
     public let volumeType: VolumeType
-    public let expectedSize: Int64
+    public let claimedFileSize: Int64
     public let downloadedSize: Int64
     public let error: DownloadError?
     public let originalError: String?
     
     init(sdkDownloadEventPayload: Proton_Drive_Sdk_DownloadEventPayload) {
         self.volumeType = .init(sdkVolumeType: sdkDownloadEventPayload.volumeType)
-        self.expectedSize = sdkDownloadEventPayload.expectedSize
-        self.downloadedSize = sdkDownloadEventPayload.uploadedSize
+        self.claimedFileSize = sdkDownloadEventPayload.claimedFileSize
+        self.downloadedSize = sdkDownloadEventPayload.downloadedSize
         self.error = sdkDownloadEventPayload.hasError ? .init(sdkDownloadError: sdkDownloadEventPayload.error) : nil
         self.originalError = sdkDownloadEventPayload.hasOriginalError ? sdkDownloadEventPayload.originalError : nil
     }

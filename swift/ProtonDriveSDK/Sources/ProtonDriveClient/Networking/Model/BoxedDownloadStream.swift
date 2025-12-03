@@ -1,6 +1,6 @@
 import Foundation
 
-actor BoxedDownloadStream: Sendable {
+final class BoxedDownloadStream {
     private let stream: URLSession.AsyncBytes
     private var iterator: URLSession.AsyncBytes.AsyncIterator
     
@@ -12,10 +12,20 @@ actor BoxedDownloadStream: Sendable {
         self.logger = logger
     }
     
-    func next() async throws -> UInt8? {
-        var localIterator = self.iterator
-        defer { self.iterator = localIterator }
-        return try await localIterator.next()
+    func read(upTo bufferSize: Int) async throws -> (Data, Int) {
+        let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+        var receivedBytes = 0
+        while let byte = try await self.iterator.next() {
+            pointer[receivedBytes] = byte
+            receivedBytes += 1
+            if receivedBytes == bufferSize {
+                break
+            }
+        }
+        
+        let data = Data(bytesNoCopy: pointer, count: receivedBytes,
+                        deallocator: .custom { _, _ in pointer.deallocate() })
+        return (data, receivedBytes)
     }
     
     deinit {
