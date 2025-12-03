@@ -1,6 +1,6 @@
 import Foundation
 
-actor BoxedRawBuffer: Sendable {
+final class BoxedRawBuffer {
     private let buffer: UnsafeMutableRawBufferPointer
     private let address: UnsafeMutableRawPointer
     private let count: Int

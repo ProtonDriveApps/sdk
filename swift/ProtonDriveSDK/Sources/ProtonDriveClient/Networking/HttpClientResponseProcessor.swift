@@ -61,15 +61,7 @@ enum HttpClientResponseProcessor {
         callbackPointer: Int,
         releaseBox: () -> Void
     ) async throws {
-        var data = Data(capacity: bufferSize)
-        var receivedBytes = 0
-        while let byte = try await boxedDownloadStream.next() {
-            data.append(byte)
-            receivedBytes += 1
-            if receivedBytes == bufferSize {
-                break
-            }
-        }
+        let (data, receivedBytes) = try await boxedDownloadStream.read(upTo: bufferSize)
         data.copyBytes(to: buffer, count: receivedBytes)
         let message = Google_Protobuf_Int32Value.with {
             $0.value = Int32(receivedBytes)
