@@ -166,3 +166,7 @@ tasks.register<Copy>("copyProto") {
 tasks.named { name ->
     name.matches("generate.*Proto".toRegex())
 }.configureEach { dependsOn("copyProto") }
+
+tasks.named { name -> name == "javaDocReleaseGeneration" }.configureEach {
+    enabled = false
+}
