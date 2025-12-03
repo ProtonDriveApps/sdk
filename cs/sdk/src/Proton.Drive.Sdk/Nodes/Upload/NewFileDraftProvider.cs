@@ -109,7 +109,7 @@ internal sealed class NewFileDraftProvider : IFileDraftProvider
 
         (FileCreationResponse Response, FileSecrets FileSecrets)? result = null;
 
-        var useAeadFeatureFlag = await client.FeatureFlagProvider.IsEnabledAsync(FeatureFlags.DriveCryptoEncryptBlocksWithPgpAead, cancellationToken);
+        var useAeadFeatureFlag = await client.FeatureFlagProvider.IsEnabledAsync(FeatureFlags.DriveCryptoEncryptBlocksWithPgpAead, cancellationToken).ConfigureAwait(false);
 
         while (result is null)
         {

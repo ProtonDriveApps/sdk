@@ -126,7 +126,7 @@ internal static class NodeCrypto
     {
         try
         {
-            var passphrase = DecryptMessage(encryptedPassphrase, signature, parentNodeKey, authorshipClaim, out var sessionKey, out var author);
+            var passphrase = DecryptMessage(encryptedPassphrase, signature, parentNodeKey, authorshipClaim.GetKeyRing(parentNodeKey), out var sessionKey, out var author);
 
             return new PhasedDecryptionOutput<ReadOnlyMemory<byte>>(sessionKey, passphrase, author);
         }
@@ -160,7 +160,7 @@ internal static class NodeCrypto
     {
         try
         {
-            var nameUtf8Bytes = DecryptMessage(encryptedName, detachedSignature: null, parentNodeKey, authorshipClaim, out var sessionKey, out var author);
+            var nameUtf8Bytes = DecryptMessage(encryptedName, detachedSignature: null, parentNodeKey, authorshipClaim.GetKeyRing(parentNodeKey), out var sessionKey, out var author);
 
             var name = Encoding.UTF8.GetString(nameUtf8Bytes);
 
@@ -189,14 +189,26 @@ internal static class NodeCrypto
 
         try
         {
-            var hashKey = DecryptMessage(encryptedHashKey.Value, detachedSignature: null, nodeKey.Value, authorshipClaim, out _, out var author);
-
+            var verificationKeyRing = GetContentKeyAndHashKeyVerificationKeyRing(nodeKey.Value, authorshipClaim);
+            var hashKey = DecryptMessage(encryptedHashKey.Value, detachedSignature: null, nodeKey.Value, verificationKeyRing, out _, out var author);
             return new DecryptionOutput<ReadOnlyMemory<byte>>(hashKey, author);
         }
         catch (Exception e)
         {
             return e.Message;
         }
+    }
+
+    private static PgpKeyRing GetContentKeyAndHashKeyVerificationKeyRing(PgpPrivateKey nodeKey, AuthorshipClaim authorshipClaim)
+    {
+        var keys = new List<PgpKey>([nodeKey]);
+        if (authorshipClaim.Author != Author.Anonymous)
+        {
+            keys.AddRange(authorshipClaim.Keys.AsEnumerable().Select(k => new PgpKey(k)));
+        }
+
+        var keyRing = new PgpKeyRing(keys);
+        return keyRing;
     }
 
     private static Result<DecryptionOutput<PgpSessionKey>, string?> DecryptContentKey(
@@ -220,7 +232,7 @@ internal static class NodeCrypto
             return e.Message;
         }
 
-        var verificationKeyRing = nodeAuthorshipClaim.GetKeyRing(nodeKey.Value);
+        var verificationKeyRing = GetContentKeyAndHashKeyVerificationKeyRing(nodeKey.Value, nodeAuthorshipClaim);
 
         AuthorshipVerificationFailure? verificationFailure;
         try
@@ -260,7 +272,7 @@ internal static class NodeCrypto
                 encryptedExtendedAttributes.Value,
                 detachedSignature: null,
                 nodeKey.Value,
-                authorshipClaim,
+                authorshipClaim.GetKeyRing(nodeKey.Value),
                 out _,
                 out var author);
 
@@ -285,13 +297,11 @@ internal static class NodeCrypto
         PgpArmoredMessage encryptedMessage,
         PgpArmoredSignature? detachedSignature,
         PgpPrivateKey decryptionKey,
-        AuthorshipClaim authorshipClaim,
+        PgpKeyRing verificationKeyRing,
         out PgpSessionKey sessionKey,
         out AuthorshipVerificationFailure? authorshipVerificationFailure)
     {
         sessionKey = decryptionKey.DecryptSessionKey(encryptedMessage);
-
-        var verificationKeyRing = authorshipClaim.GetKeyRing(anonymousFallbackKey: decryptionKey);
 
         var plaintext = detachedSignature is not null
             ? sessionKey.DecryptAndVerify(encryptedMessage.Bytes.Span, detachedSignature.Value.Bytes.Span, verificationKeyRing, out var verificationResult)

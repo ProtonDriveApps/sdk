@@ -4,7 +4,7 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal readonly struct AuthorshipClaim(Author author, IReadOnlyList<PgpPublicKey> keys, string? keyRetrievalErrorMessage = null)
 {
-    private readonly IReadOnlyList<PgpPublicKey> _keys = keys;
+    public readonly IReadOnlyList<PgpPublicKey> Keys { get; } = keys;
 
     public Author Author { get; } = author;
 
@@ -34,6 +34,6 @@ internal readonly struct AuthorshipClaim(Author author, IReadOnlyList<PgpPublicK
 
     public PgpKeyRing GetKeyRing(PgpPrivateKey anonymousFallbackKey)
     {
-        return Author != Author.Anonymous ? new PgpKeyRing(_keys) : anonymousFallbackKey;
+        return Author != Author.Anonymous ? new PgpKeyRing(Keys) : anonymousFallbackKey;
     }
 }
