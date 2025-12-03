@@ -72,25 +72,49 @@ internal static class DtoToMetadataConverter
 
         var decryptionResult = await NodeCrypto.DecryptFolderAsync(client, linkDto, folderDto, parentKeyResult, cancellationToken).ConfigureAwait(false);
 
-        if (!NodeOperations.ValidateName(decryptionResult.Link.Name, out var nameOutput, out var nameResult, out var nameSessionKey)
-            || !decryptionResult.Link.NodeKey.TryGetValue(out var nodeKey)
-            || !decryptionResult.Link.Passphrase.TryGetValue(out var passphraseOutput)
-            || !decryptionResult.HashKey.TryGetValue(out var hashKeyOutput))
+        var nameIsInvalid = !NodeOperations.ValidateName(decryptionResult.Link.Name, out var nameOutput, out var nameResult, out var nameSessionKey);
+        var nodeKeyIsInvalid = !decryptionResult.Link.NodeKey.TryGetValue(out var nodeKey);
+        var passphraseIsInvalid = !decryptionResult.Link.Passphrase.TryGetValue(out var passphraseOutput);
+        var hashKeyIsInvalid = !decryptionResult.HashKey.TryGetValue(out var hashKeyOutput);
+
+        var nameAuthor = !nameIsInvalid && nameOutput.HasValue
+            ? decryptionResult.Link.NameAuthorshipClaim.ToAuthorshipResult(nameOutput.Value.AuthorshipVerificationFailure)
+            : default;
+        var nodeAuthor = !passphraseIsInvalid && !hashKeyIsInvalid
+            ? decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.AuthorshipVerificationFailure ?? hashKeyOutput.AuthorshipVerificationFailure)
+            : default;
+
+        if (
+            nameIsInvalid || nameSessionKey is null || nameOutput is null
+            || passphraseIsInvalid || nodeKeyIsInvalid || hashKeyIsInvalid)
         {
-            // FIXME: complete degraded node and cache it
+            var errors = new List<ProtonDriveError>();
+
+            if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
+            {
+                errors.Add(new DecryptionError(passphraseError ?? "Failed to decrypt passphrase"));
+            }
+            else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
+            {
+                errors.Add(new DecryptionError(nodeKeyError ?? "Failed to decrypt node key"));
+            }
+            else if (decryptionResult.HashKey.TryGetError(out var hashKeyError))
+            {
+                errors.Add(new DecryptionError(hashKeyError ?? "Failed to decrypt hash key"));
+            }
+
             var degradedNode = new DegradedFolderNode
             {
                 Uid = uid,
                 ParentUid = parentUid,
                 Name = nameResult,
-                NameAuthor = default,
+                NameAuthor = nameAuthor,
                 CreationTime = linkDto.CreationTime,
                 TrashTime = linkDto.TrashTime,
-                Author = default,
-                Errors = null!, // FIXME
+                Author = nodeAuthor,
+                Errors = errors,
             };
 
-            // FIXME: cache secrets
             var degradedSecrets = new DegradedFolderSecrets
             {
                 Key = decryptionResult.Link.NodeKey.GetValueOrDefault(),
@@ -99,13 +123,11 @@ internal static class DtoToMetadataConverter
                 HashKey = decryptionResult.HashKey.Merge(x => (ReadOnlyMemory<byte>?)x.Data, _ => null),
             };
 
-            var nameOrError = decryptionResult.Link.Name.TryGetValueElseError(out var nameValue, out var error) ? nameValue.Data : error;
-            var name = (NodeOperations.ValidateName(decryptionResult.Link.Name, out _, out _, out _) ? "✅ " : "❌ ") + $"(\"{nameOrError}\")";
-            var nk = decryptionResult.Link.NodeKey.TryGetValueElseError(out _, out var nkError) ? "✅" : $"❌ (\"{nkError}\")";
-            var pp = decryptionResult.Link.Passphrase.TryGetValueElseError(out _, out var ppError) ? "✅" : $"❌ (\"{ppError}\")";
-            var hk = decryptionResult.HashKey.TryGetValueElseError(out _, out var hkError) ? "✅" : $"❌ (\"{hkError}\")";
+            await client.Cache.Secrets.SetFolderSecretsAsync(uid, degradedSecrets, cancellationToken).ConfigureAwait(false);
 
-            throw new TempDebugException($"Name: {name}, Node key: {nk}, Passphrase: {pp}, Hash Key: {hk}");
+            // FIXME: remove entity cache or cache degraded node
+
+            return new DegradedFolderMetadata(degradedNode, degradedSecrets, membershipDto?.ShareId, linkDto.NameHashDigest);
         }
 
         var secrets = new FolderSecrets
@@ -124,10 +146,8 @@ internal static class DtoToMetadataConverter
             Uid = uid,
             ParentUid = parentUid,
             Name = nameOutput.Value.Data,
-            NameAuthor = decryptionResult.Link.NameAuthorshipClaim.ToAuthorshipResult(nameOutput.Value.AuthorshipVerificationFailure),
-
-            // FIXME: combine with verification failure from name hash key
-            Author = decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.AuthorshipVerificationFailure),
+            NameAuthor = nameAuthor,
+            Author = nodeAuthor,
             CreationTime = linkDto.CreationTime,
             TrashTime = linkDto.TrashTime,
         };
@@ -170,59 +190,23 @@ internal static class DtoToMetadataConverter
         var decryptionResult = await NodeCrypto.DecryptFileAsync(client, linkDto, fileDto, activeRevisionDto, parentKeyResult, cancellationToken)
             .ConfigureAwait(false);
 
-        if (!NodeOperations.ValidateName(decryptionResult.Link.Name, out var nameOutput, out var nameResult, out var nameSessionKey)
-            || !decryptionResult.Link.NodeKey.TryGetValue(out var nodeKey)
-            || !decryptionResult.Link.Passphrase.TryGetValue(out var passphraseOutput)
-            || !decryptionResult.ExtendedAttributes.TryGetValue(out var extendedAttributesOutput)
-            || !decryptionResult.ContentKey.TryGetValue(out var contentKeyOutput))
-        {
-            // FIXME: complete degraded node and cache it
-            var degradedNode = new DegradedFileNode
-            {
-                Uid = uid,
-                ParentUid = parentUid,
-                Name = nameResult,
-                NameAuthor = default,
-                CreationTime = linkDto.CreationTime,
-                TrashTime = linkDto.TrashTime,
-                Author = default,
-                MediaType = fileDto.MediaType,
-                ActiveRevision = null,
-                TotalStorageQuotaUsage = fileDto.TotalSizeOnStorage,
-                Errors = null!,
-            };
+        var nameIsInvalid = !NodeOperations.ValidateName(decryptionResult.Link.Name, out var nameOutput, out var nameResult, out var nameSessionKey);
+        var nodeKeyIsInvalid = !decryptionResult.Link.NodeKey.TryGetValue(out var nodeKey);
+        var passphraseIsInvalid = !decryptionResult.Link.Passphrase.TryGetValue(out var passphraseOutput);
+        var extendedAttributesIsInvalid = !decryptionResult.ExtendedAttributes.TryGetValue(out var extendedAttributesOutput);
+        var contentKeyIsInvalid = !decryptionResult.ContentKey.TryGetValue(out var contentKeyOutput);
 
-            // FIXME: cache secrets
-            var degradedSecrets = new DegradedFileSecrets
-            {
-                Key = decryptionResult.Link.NodeKey.GetValueOrDefault(),
-                PassphraseSessionKey = decryptionResult.Link.Passphrase.Merge(x => (PgpSessionKey?)x.SessionKey, _ => null),
-                NameSessionKey = nameSessionKey,
-                ContentKey = decryptionResult.ContentKey.Merge(x => (PgpSessionKey?)x.Data, _ => null),
-            };
+        var nameAuthor = !nameIsInvalid && nameOutput.HasValue
+            ? decryptionResult.Link.NameAuthorshipClaim.ToAuthorshipResult(nameOutput.Value.AuthorshipVerificationFailure)
+            : default;
 
-            var nameOrError = decryptionResult.Link.Name.TryGetValueElseError(out var nameValue, out var error) ? nameValue.Data : error;
-            var name = (NodeOperations.ValidateName(decryptionResult.Link.Name, out _, out _, out _) ? "✅ " : "❌ ") + $"(\"{nameOrError}\")";
-            var nk = decryptionResult.Link.NodeKey.TryGetValueElseError(out _, out var nkError) ? "✅" : $"❌ (\"{nkError}\")";
-            var pp = decryptionResult.Link.Passphrase.TryGetValueElseError(out _, out var ppError) ? "✅" : $"❌ (\"{ppError}\")";
-            var ea = decryptionResult.ExtendedAttributes.TryGetValueElseError(out _, out var eaError) ? "✅" : $"❌ (\"{eaError}\")";
-            var ck = decryptionResult.ContentKey.TryGetValueElseError(out _, out var ckError) ? "✅" : $"❌ (\"{ckError}\")";
+        var nodeAuthor = !passphraseIsInvalid
+            ? decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.AuthorshipVerificationFailure ?? contentKeyOutput.AuthorshipVerificationFailure)
+            : default;
 
-            throw new TempDebugException($"Name: {name}, Node key: {nk}, Passphrase: {pp}, Extended Attributes: {ea}, Content Key: {ck}");
-        }
-
-        var secrets = new FileSecrets
-        {
-            Key = nodeKey,
-            PassphraseSessionKey = passphraseOutput.SessionKey,
-            NameSessionKey = nameSessionKey.Value,
-            ContentKey = contentKeyOutput.Data,
-            PassphraseForAnonymousMove = decryptionResult.Link.NodeAuthorshipClaim.Author == Author.Anonymous
-                ? passphraseOutput.Data
-                : (ReadOnlyMemory<byte>?)null,
-        };
-
-        await client.Cache.Secrets.SetFileSecretsAsync(uid, secrets, cancellationToken).ConfigureAwait(false);
+        var contentAuthor = !extendedAttributesIsInvalid
+            ? decryptionResult.ContentAuthorshipClaim.ToAuthorshipResult(extendedAttributesOutput.AuthorshipVerificationFailure)
+            : default;
 
         var extendedAttributes = extendedAttributesOutput.Data;
 
@@ -236,6 +220,83 @@ internal static class DtoToMetadataConverter
             thumbnails[i] = new ThumbnailHeader(thumbnailDto.Id, (ThumbnailType)thumbnailDto.Type);
         }
 
+        if (
+            nameIsInvalid || (nameSessionKey is null) || nameOutput is null
+            || passphraseIsInvalid
+            || nodeKeyIsInvalid
+            || extendedAttributesIsInvalid
+            || contentKeyIsInvalid)
+        {
+            var errors = new List<ProtonDriveError>();
+            if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
+            {
+                errors.Add(new DecryptionError(passphraseError ?? "Failed to decrypt passphrase"));
+            }
+            else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
+            {
+                errors.Add(new DecryptionError(nodeKeyError ?? "Failed to decrypt node key"));
+            }
+
+            var revisionErrors = new List<ProtonDriveError>();
+            if (decryptionResult.ExtendedAttributes.TryGetError(out var extendedAttributesError))
+            {
+                revisionErrors.Add(new DecryptionError(extendedAttributesError ?? "Failed to decrypt extended attributes key"));
+            }
+
+            var degradedRevision = new DegradedRevision
+            {
+                Uid = new RevisionUid(uid, activeRevisionDto.Id),
+                CreationTime = activeRevisionDto.CreationTime,
+                SizeOnCloudStorage = activeRevisionDto.StorageQuotaConsumption,
+                ClaimedSize = extendedAttributes?.Common?.Size,
+                ClaimedModificationTime = extendedAttributes?.Common?.ModificationTime,
+                ClaimedDigests = new FileContentDigests { Sha1 = extendedAttributes?.Common?.Digests?.Sha1 },
+                Thumbnails = thumbnails.AsReadOnly(),
+                AdditionalClaimedMetadata = additionalMetadata,
+                ContentAuthor = contentAuthor,
+                Errors = (IReadOnlyList<ProtonDriveError>)revisionErrors,
+            };
+
+            var degradedNode = new DegradedFileNode
+            {
+                Uid = uid,
+                ParentUid = parentUid,
+                Name = nameResult,
+                NameAuthor = nameAuthor,
+                CreationTime = linkDto.CreationTime,
+                TrashTime = linkDto.TrashTime,
+                Author = nodeAuthor,
+                MediaType = fileDto.MediaType,
+                ActiveRevision = degradedRevision,
+                TotalStorageQuotaUsage = fileDto.TotalSizeOnStorage,
+                Errors = errors,
+            };
+
+            var degradedSecrets = new DegradedFileSecrets
+            {
+                Key = decryptionResult.Link.NodeKey.GetValueOrDefault(),
+                PassphraseSessionKey = decryptionResult.Link.Passphrase.Merge(x => (PgpSessionKey?)x.SessionKey, _ => null),
+                NameSessionKey = nameSessionKey,
+                ContentKey = decryptionResult.ContentKey.Merge(x => (PgpSessionKey?)x.Data, _ => null),
+            };
+
+            await client.Cache.Secrets.SetFileSecretsAsync(uid, degradedSecrets, cancellationToken).ConfigureAwait(false);
+            // FIXME: remove entity cache or cache degraded node
+
+            return new DegradedFileMetadata(degradedNode, degradedSecrets, membershipDto?.ShareId, linkDto.NameHashDigest);
+        }
+
+        var secrets = new FileSecrets
+        {
+            Key = nodeKey,
+            PassphraseSessionKey = passphraseOutput.SessionKey,
+            NameSessionKey = nameSessionKey.Value,
+            ContentKey = contentKeyOutput.Data,
+            PassphraseForAnonymousMove = decryptionResult.Link.NodeAuthorshipClaim.Author == Author.Anonymous
+                ? passphraseOutput.Data
+                : (ReadOnlyMemory<byte>?)null,
+        };
+
         var activeRevision = new Revision
         {
             Uid = new RevisionUid(uid, activeRevisionDto.Id),
@@ -246,7 +307,7 @@ internal static class DtoToMetadataConverter
             ClaimedDigests = new FileContentDigests { Sha1 = extendedAttributes?.Common?.Digests?.Sha1 },
             Thumbnails = thumbnails.AsReadOnly(),
             AdditionalClaimedMetadata = additionalMetadata,
-            ContentAuthor = decryptionResult.ContentAuthorshipClaim.ToAuthorshipResult(extendedAttributesOutput.AuthorshipVerificationFailure),
+            ContentAuthor = contentAuthor,
         };
 
         var node = new FileNode
@@ -254,16 +315,16 @@ internal static class DtoToMetadataConverter
             Uid = uid,
             ParentUid = parentUid,
             Name = nameOutput.Value.Data,
-            NameAuthor = decryptionResult.Link.NameAuthorshipClaim.ToAuthorshipResult(nameOutput.Value.AuthorshipVerificationFailure),
-
-            // FIXME: combine with verification failure from name hash key
-            Author = decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.AuthorshipVerificationFailure),
+            NameAuthor = nameAuthor,
+            Author = nodeAuthor,
             CreationTime = linkDto.CreationTime,
             TrashTime = linkDto.TrashTime,
             MediaType = fileDto.MediaType,
             ActiveRevision = activeRevision,
             TotalSizeOnCloudStorage = fileDto.TotalSizeOnStorage,
         };
+
+        await client.Cache.Secrets.SetFileSecretsAsync(uid, secrets, cancellationToken).ConfigureAwait(false);
 
         await client.Cache.Entities.SetNodeAsync(uid, node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken).ConfigureAwait(false);
 
@@ -365,23 +426,5 @@ internal static class DtoToMetadataConverter
         }
 
         return currentParentKey;
-    }
-}
-
-// FIXME: remove this
-public sealed class TempDebugException : Exception
-{
-    public TempDebugException(string message)
-        : base(message)
-    {
-    }
-
-    public TempDebugException(string message, Exception innerException)
-        : base(message, innerException)
-    {
-    }
-
-    public TempDebugException()
-    {
     }
 }
