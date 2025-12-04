@@ -237,7 +237,7 @@ internal static class NodeCrypto
         AuthorshipVerificationFailure? verificationFailure;
         try
         {
-            var verificationResult = verificationKeyRing.Verify(contentKey.Export().Token, contentKeySignature);
+            var verificationResult = verificationKeyRing.Verify(contentKey.Export(), contentKeySignature);
 
             verificationFailure = verificationResult.Status is not PgpVerificationStatus.Ok
                 ? new AuthorshipVerificationFailure(verificationResult.Status)
