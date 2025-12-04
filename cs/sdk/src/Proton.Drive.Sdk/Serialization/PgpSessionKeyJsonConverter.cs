@@ -24,7 +24,7 @@ internal sealed class PgpSessionKeyJsonConverter : JsonConverter<PgpSessionKey>
     public override void Write(Utf8JsonWriter writer, PgpSessionKey value, JsonSerializerOptions options)
     {
         var pkeskVersion = value.IsAead() ? AeadVersion : NonAeadVersion;
-        var (token, _) = value.Export();
+        var token = value.Export();
         Span<byte> versionedValue = stackalloc byte[token.Length + 1];
         versionedValue[0] = pkeskVersion;
         token.CopyTo(versionedValue[1..]);

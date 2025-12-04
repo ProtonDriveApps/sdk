@@ -80,7 +80,7 @@ internal sealed class NewFileDraftProvider : IFileDraftProvider
             out var lockedKeyBytes);
 
         contentKey = useAeadFeatureFlag ? PgpSessionKey.GenerateForAead() : PgpSessionKey.Generate();
-        var (contentKeyToken, _) = contentKey.Export();
+        var contentKeyToken = contentKey.Export();
 
         return new FileCreationRequest
         {
