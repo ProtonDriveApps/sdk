@@ -40,7 +40,7 @@ allprojects {
         }
     }
     group = "me.proton.drive"
-    version = "0.6.0-alpha.1"
+    version = "0.6.0-alpha.3"
 
     afterEvaluate {
         configurations.all {
