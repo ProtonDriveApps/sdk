@@ -137,11 +137,6 @@ void onHttpCancellation(
             );
             return;
         }
-        __android_log_print(
-                ANDROID_LOG_FATAL,
-                "drive.sdk.internal",
-                "Calling found method: %s", "cancel"
-        );
         (*env)->CallVoidMethod(env, obj, mid);
     }
 }
