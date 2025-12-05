@@ -1327,7 +1327,12 @@ describe('nodesCryptoService', () => {
                 key: 'addressKey' as any,
             };
 
-            const result = await cryptoService.encryptNodeWithNewParent(node, keys as any, parentKeys, signingKeys);
+            const result = await cryptoService.encryptNodeWithNewParent(
+                node.name,
+                keys as any,
+                parentKeys,
+                signingKeys,
+            );
 
             expect(result).toEqual({
                 encryptedName: 'encryptedNodeName',
@@ -1360,7 +1365,12 @@ describe('nodesCryptoService', () => {
                 parentNodeKey: 'parentNodeKey' as any,
             };
 
-            const result = await cryptoService.encryptNodeWithNewParent(node, keys as any, parentKeys, signingKeys);
+            const result = await cryptoService.encryptNodeWithNewParent(
+                node.name,
+                keys as any,
+                parentKeys,
+                signingKeys,
+            );
 
             expect(result).toEqual({
                 encryptedName: 'encryptedNodeName',
@@ -1407,7 +1417,7 @@ describe('nodesCryptoService', () => {
             };
 
             await expect(
-                cryptoService.encryptNodeWithNewParent(node, keys as any, parentKeys, signingKeys),
+                cryptoService.encryptNodeWithNewParent(node.name, keys as any, parentKeys, signingKeys),
             ).rejects.toThrow('Moving item to a non-folder is not allowed');
         });
 

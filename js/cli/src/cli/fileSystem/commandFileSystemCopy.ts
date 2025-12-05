@@ -1,3 +1,5 @@
+import { ParseArgsConfig } from 'node:util';
+
 import { printIterable } from '../formatters';
 import { Command, ActionArgs } from '../interface';
 import { PathType } from '../paths';
@@ -7,8 +9,15 @@ export class CommandFileSystemCopy implements Command {
     name = 'copy';
     // FIXME: support copy of multiple files
     args = ['sourcePath', 'targetPath'];
+    options: ParseArgsConfig['options'] = {
+        name: {
+            type: 'string',
+            short: 'n',
+            default: '',
+        },
+    };
 
-    async action({ sdk, paths, args: [sourcePathString, targetPathString], options: { json } }: ActionArgs) {
+    async action({ sdk, paths, args: [sourcePathString, targetPathString], options: { name, json } }: ActionArgs) {
         const sourcePath = paths.getPath(sourcePathString);
         const sourceNode = await sourcePath.getNode();
 
@@ -19,7 +28,10 @@ export class CommandFileSystemCopy implements Command {
             throw new Error('Copying photos is not supported');
         }
 
-        await printIterable(sdk.copyNodes([sourceNode], targetNode), json, (result) =>
+        const nodeUid = sourceNode.ok ? sourceNode.value.uid : sourceNode.error.uid;
+        const param = name ? { uid: nodeUid, name } : sourceNode;
+
+        await printIterable(sdk.copyNodes([param], targetNode), json, (result) =>
             console.log(result.ok ? `✅ ${result.uid}` : `❌ ${result.uid}: ${result.error}`),
         );
     }

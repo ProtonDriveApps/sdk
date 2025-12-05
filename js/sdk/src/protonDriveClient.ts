@@ -424,6 +424,12 @@ export class ProtonDriveClient {
      * The operation is performed node by node and the results are yielded
      * as they are available. Order of the results is not guaranteed.
      *
+     * The `nodeUids` can be a list of node entities or their UIDs, or a list
+     * of objects with `uid` and `name` properties where the name is the new
+     * name of the copied node. By default, the name is the same as the
+     * original node. Use `getAvailableName` to get the available name for the
+     * new node in the target parent node in case of a name conflict.
+     *
      * If one of the nodes fails to copy, the operation continues with the
      * rest of the nodes. Use `NodeResult` to check the status of the action.
      *
@@ -433,12 +439,23 @@ export class ProtonDriveClient {
      * @returns An async generator of the results of the copy operation
      */
     async *copyNodes(
-        nodeUids: NodeOrUid[],
+        nodesOrNodeUidsOrWithNames: (NodeOrUid | { uid: string; name: string })[],
         newParentNodeUid: NodeOrUid,
         signal?: AbortSignal,
     ): AsyncGenerator<NodeResultWithNewUid> {
-        this.logger.info(`Copying ${nodeUids.length} nodes to ${getUid(newParentNodeUid)}`);
-        yield* this.nodes.management.copyNodes(getUids(nodeUids), getUid(newParentNodeUid), signal);
+        this.logger.info(`Copying ${nodesOrNodeUidsOrWithNames.length} nodes to ${getUid(newParentNodeUid)}`);
+
+        const nodeUidsOrWithNames = nodesOrNodeUidsOrWithNames.map((param) => {
+            if (typeof param === 'string') {
+                return param;
+            }
+            if ('uid' in param && 'name' in param && typeof param.uid === 'string' && typeof param.name === 'string') {
+                return { uid: param.uid, name: param.name };
+            }
+            return getUid(param);
+        });
+
+        yield* this.nodes.management.copyNodes(nodeUidsOrWithNames, getUid(newParentNodeUid), signal);
     }
 
     /**
