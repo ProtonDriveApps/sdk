@@ -648,6 +648,7 @@ function linkToEncryptedNode(
         parentUid: link.Link.ParentLinkID ? makeNodeUid(volumeId, link.Link.ParentLinkID) : undefined,
         type: nodeTypeNumberToNodeType(logger, link.Link.Type),
         creationTime: new Date(link.Link.CreateTime * 1000),
+        modificationTime: new Date(link.Link.ModifyTime * 1000),
         trashTime: link.Link.TrashTime ? new Date(link.Link.TrashTime * 1000) : undefined,
 
         // Sharing node metadata

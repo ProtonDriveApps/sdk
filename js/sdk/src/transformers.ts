@@ -1,7 +1,6 @@
 import {
     MaybeNode as PublicMaybeNode,
     MaybeMissingNode as PublicMaybeMissingNode,
-    NodeEntity as PublicNodeEntity,
     DegradedNode as PublicDegradedNode,
     Revision as PublicRevision,
     Result,
@@ -25,6 +24,7 @@ type InternalPartialNode = Pick<
     | 'isShared'
     | 'isSharedPublicly'
     | 'creationTime'
+    | 'modificationTime'
     | 'trashTime'
     | 'activeRevision'
     | 'folder'
@@ -93,6 +93,7 @@ export function convertInternalNode(node: InternalPartialNode): PublicMaybeNode 
         isShared: node.isShared,
         isSharedPublicly: node.isSharedPublicly,
         creationTime: node.creationTime,
+        modificationTime: node.modificationTime,
         trashTime: node.trashTime,
         totalStorageSize: node.totalStorageSize,
         folder: node.folder,
@@ -118,7 +119,7 @@ export function convertInternalNode(node: InternalPartialNode): PublicMaybeNode 
         ...baseNodeMetadata,
         name: name.value,
         activeRevision: activeRevision?.ok ? convertInternalRevision(activeRevision.value) : undefined,
-    } as PublicNodeEntity);
+    });
 }
 
 export async function* convertInternalRevisionIterator(

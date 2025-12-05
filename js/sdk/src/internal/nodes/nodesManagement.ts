@@ -340,6 +340,7 @@ export class NodesManagement {
             type: NodeType.Folder,
             mediaType: 'Folder',
             creationTime: new Date(),
+            modificationTime: new Date(),
 
             // Share node metadata
             isShared: false,
