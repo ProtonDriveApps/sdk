@@ -308,7 +308,7 @@ export class PublicLinkPath {
 }
 
 function isNodeUid(pathString: string): boolean {
-    return /^[a-zA-Z0-9=_-]{60,300}~[a-zA-Z0-9=_-]{60,300}$/.test(pathString);
+    return /^([a-zA-Z0-9=_-]{88,108}|[a-zA-Z0-9_-]{22})~([a-zA-Z0-9=_-]{88,108}|[a-zA-Z0-9_-]{22})$/.test(pathString);
 }
 
 function getMaybeNodeAndIgnoreMissingNode(maybeMissingNode: MaybeMissingNode): MaybeNode | undefined {
