@@ -6,6 +6,7 @@ import { DecryptedNode } from './interface';
 import { NodesManagement } from './nodesManagement';
 import { NodeResult } from '../../interface';
 import { NodeOutOfSyncError } from './errors';
+import { ValidationError } from '../../errors';
 
 describe('NodesManagement', () => {
     let apiService: NodeAPIService;
@@ -191,7 +192,7 @@ describe('NodesManagement', () => {
             parentNodeUid: 'newParentNodeUid',
         });
         expect(cryptoService.encryptNodeWithNewParent).toHaveBeenCalledWith(
-            nodes.nodeUid,
+            nodes.nodeUid.name,
             expect.objectContaining({
                 key: 'nodeUid-key',
                 passphrase: 'nodeUid-passphrase',
@@ -231,7 +232,7 @@ describe('NodesManagement', () => {
         const newNode = await management.moveNode('anonymousNodeUid', 'newParentNodeUid');
 
         expect(cryptoService.encryptNodeWithNewParent).toHaveBeenCalledWith(
-            nodes.anonymousNodeUid,
+            nodes.anonymousNodeUid.name,
             expect.objectContaining({
                 key: 'anonymousNodeUid-key',
                 passphrase: 'anonymousNodeUid-passphrase',
@@ -289,7 +290,7 @@ describe('NodesManagement', () => {
             parentNodeUid: 'newParentNodeUid',
         });
         expect(cryptoService.encryptNodeWithNewParent).toHaveBeenCalledWith(
-            nodes.nodeUid,
+            nodes.nodeUid.name,
             expect.objectContaining({
                 key: 'nodeUid-key',
                 passphrase: 'nodeUid-passphrase',
@@ -324,7 +325,7 @@ describe('NodesManagement', () => {
         const newNode = await management.copyNode('anonymousNodeUid', 'newParentNodeUid');
 
         expect(cryptoService.encryptNodeWithNewParent).toHaveBeenCalledWith(
-            nodes.anonymousNodeUid,
+            nodes.anonymousNodeUid.name,
             expect.objectContaining({
                 key: 'anonymousNodeUid-key',
                 passphrase: 'anonymousNodeUid-passphrase',
@@ -348,6 +349,49 @@ describe('NodesManagement', () => {
             parentUid: 'newParentNodeUid',
             ...encryptedCrypto,
         });
+    });
+
+    it('copyNode manages copy of node with new name', async () => {
+        const encryptedCrypto = {
+            encryptedName: 'copiedArmoredNodeName',
+            hash: 'copiedHash',
+            armoredNodePassphrase: 'copiedArmoredNodePassphrase',
+            armoredNodePassphraseSignature: 'copiedArmoredNodePassphraseSignature',
+            signatureEmail: 'copiedSignatureEmail',
+            nameSignatureEmail: 'copiedNameSignatureEmail',
+        };
+        cryptoService.encryptNodeWithNewParent = jest.fn().mockResolvedValue(encryptedCrypto);
+
+        const newName = 'new name';
+        const newNode = await management.copyNode('nodeUid', 'newParentNodeUid', newName);
+
+        expect(newNode).toEqual({
+            ...nodes.nodeUid,
+            name: { ok: true, value: newName },
+            uid: 'newCopiedNodeUid',
+            parentUid: 'newParentNodeUid',
+            encryptedName: 'copiedArmoredNodeName',
+            hash: 'copiedHash',
+            keyAuthor: { ok: true, value: 'copiedSignatureEmail' },
+            nameAuthor: { ok: true, value: 'copiedNameSignatureEmail' },
+        });
+        expect(cryptoService.encryptNodeWithNewParent).toHaveBeenCalledWith(
+            { ok: true, value: newName },
+            expect.objectContaining({
+                key: 'nodeUid-key',
+                passphrase: 'nodeUid-passphrase',
+                passphraseSessionKey: 'nodeUid-passphraseSessionKey',
+                contentKeyPacketSessionKey: 'nodeUid-contentKeyPacketSessionKey',
+                nameSessionKey: 'nodeUid-nameSessionKey',
+            }),
+            expect.objectContaining({ key: 'newParentNodeUid-key', hashKey: 'newParentNodeUid-hashKey' }),
+            { type: 'userAddress', email: 'root-email', addressId: 'root-addressId', key: 'root-key' },
+        );
+    });
+
+    it('copyNode throws error if name is invalid', async () => {
+        const promise = management.copyNode('nodeUid', 'newParentNodeUid', 'invalid/name');
+        await expect(promise).rejects.toThrow(ValidationError);
     });
 
     it('trashes node and updates cache', async () => {

@@ -223,7 +223,6 @@ export enum RevisionState {
 export type NodeOrUid = MaybeNode | NodeEntity | DegradedNode | string;
 export type RevisionOrUid = Revision | string;
 
+// TODO: Remove string from the result and use Error instead to be compatible with the NodeResultWithNewUid.
 export type NodeResult = { uid: string; ok: true } | { uid: string; ok: false; error: string };
-export type NodeResultWithNewUid =
-    | { uid: string; newUid: string; ok: true }
-    | { uid: string; ok: false; error: string };
+export type NodeResultWithNewUid = { uid: string; newUid: string; ok: true } | { uid: string; ok: false; error: Error };

@@ -341,24 +341,29 @@ export class NodeAPIService {
         const { volumeId, nodeId } = splitNodeUid(nodeUid);
         const { nodeId: newParentNodeId } = splitNodeUid(newNode.parentUid);
 
-        await this.apiService.put<Omit<PutMoveNodeRequest, 'SignatureAddress' | 'MIMEType'>, PutMoveNodeResponse>(
-            `drive/v2/volumes/${volumeId}/links/${nodeId}/move`,
-            {
-                ParentLinkID: newParentNodeId,
-                NodePassphrase: newNode.armoredNodePassphrase,
-                // @ts-expect-error: API accepts NodePassphraseSignature as optional.
-                NodePassphraseSignature: newNode.armoredNodePassphraseSignature,
-                // @ts-expect-error: API accepts SignatureEmail as optional.
-                SignatureEmail: newNode.signatureEmail,
-                Name: newNode.encryptedName,
-                // @ts-expect-error: API accepts NameSignatureEmail as optional.
-                NameSignatureEmail: newNode.nameSignatureEmail,
-                Hash: newNode.hash,
-                OriginalHash: oldNode.hash,
-                ContentHash: newNode.contentHash || null,
-            },
-            signal,
-        );
+        try {
+            await this.apiService.put<Omit<PutMoveNodeRequest, 'SignatureAddress' | 'MIMEType'>, PutMoveNodeResponse>(
+                `drive/v2/volumes/${volumeId}/links/${nodeId}/move`,
+                {
+                    ParentLinkID: newParentNodeId,
+                    NodePassphrase: newNode.armoredNodePassphrase,
+                    // @ts-expect-error: API accepts NodePassphraseSignature as optional.
+                    NodePassphraseSignature: newNode.armoredNodePassphraseSignature,
+                    // @ts-expect-error: API accepts SignatureEmail as optional.
+                    SignatureEmail: newNode.signatureEmail,
+                    Name: newNode.encryptedName,
+                    // @ts-expect-error: API accepts NameSignatureEmail as optional.
+                    NameSignatureEmail: newNode.nameSignatureEmail,
+                    Hash: newNode.hash,
+                    OriginalHash: oldNode.hash,
+                    ContentHash: newNode.contentHash || null,
+                },
+                signal,
+            );
+        } catch (error: unknown) {
+            handleNodeWithSameNameExistsValidationError(volumeId, error);
+            throw error;
+        }
     }
 
     async copyNode(
@@ -377,23 +382,29 @@ export class NodeAPIService {
         const { volumeId, nodeId } = splitNodeUid(nodeUid);
         const { volumeId: parentVolumeId, nodeId: parentNodeId } = splitNodeUid(newNode.parentUid);
 
-        const response = await this.apiService.post<PostCopyNodeRequest, PostCopyNodeResponse>(
-            `drive/volumes/${volumeId}/links/${nodeId}/copy`,
-            {
-                TargetVolumeID: parentVolumeId,
-                TargetParentLinkID: parentNodeId,
-                NodePassphrase: newNode.armoredNodePassphrase,
-                // @ts-expect-error: API accepts NodePassphraseSignature as optional.
-                NodePassphraseSignature: newNode.armoredNodePassphraseSignature,
-                // @ts-expect-error: API accepts SignatureEmail as optional.
-                SignatureEmail: newNode.signatureEmail,
-                Name: newNode.encryptedName,
-                // @ts-expect-error: API accepts NameSignatureEmail as optional.
-                NameSignatureEmail: newNode.nameSignatureEmail,
-                Hash: newNode.hash,
-            },
-            signal,
-        );
+        let response: PostCopyNodeResponse;
+        try {
+            response = await this.apiService.post<PostCopyNodeRequest, PostCopyNodeResponse>(
+                `drive/volumes/${volumeId}/links/${nodeId}/copy`,
+                {
+                    TargetVolumeID: parentVolumeId,
+                    TargetParentLinkID: parentNodeId,
+                    NodePassphrase: newNode.armoredNodePassphrase,
+                    // @ts-expect-error: API accepts NodePassphraseSignature as optional.
+                    NodePassphraseSignature: newNode.armoredNodePassphraseSignature,
+                    // @ts-expect-error: API accepts SignatureEmail as optional.
+                    SignatureEmail: newNode.signatureEmail,
+                    Name: newNode.encryptedName,
+                    // @ts-expect-error: API accepts NameSignatureEmail as optional.
+                    NameSignatureEmail: newNode.nameSignatureEmail,
+                    Hash: newNode.hash,
+                },
+                signal,
+            );
+        } catch (error: unknown) {
+            handleNodeWithSameNameExistsValidationError(volumeId, error);
+            throw error;
+        }
 
         return makeNodeUid(volumeId, response.LinkID);
     }
@@ -491,21 +502,7 @@ export class NodeAPIService {
                 },
             );
         } catch (error: unknown) {
-            if (error instanceof ValidationError) {
-                if (error.code === ErrorCode.ALREADY_EXISTS) {
-                    const typedDetails = error.details as
-                        | {
-                              ConflictLinkID: string;
-                          }
-                        | undefined;
-
-                    const existingNodeUid = typedDetails?.ConflictLinkID
-                        ? makeNodeUid(volumeId, typedDetails.ConflictLinkID)
-                        : undefined;
-
-                    throw new NodeWithSameNameExistsValidationError(error.message, error.code, existingNodeUid);
-                }
-            }
+            handleNodeWithSameNameExistsValidationError(volumeId, error);
             throw error;
         }
 
@@ -611,6 +608,24 @@ function* handleResponseErrors(
             yield { uid, ok: false, error };
         } else {
             yield { uid, ok: true };
+        }
+    }
+}
+
+function handleNodeWithSameNameExistsValidationError(volumeId: string, error: unknown): void {
+    if (error instanceof ValidationError) {
+        if (error.code === ErrorCode.ALREADY_EXISTS) {
+            const typedDetails = error.details as
+                | {
+                      ConflictLinkID: string;
+                  }
+                | undefined;
+
+            const existingNodeUid = typedDetails?.ConflictLinkID
+                ? makeNodeUid(volumeId, typedDetails.ConflictLinkID)
+                : undefined;
+
+            throw new NodeWithSameNameExistsValidationError(error.message, error.code, existingNodeUid);
         }
     }
 }

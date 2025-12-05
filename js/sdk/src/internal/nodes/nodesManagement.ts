@@ -1,8 +1,8 @@
 import { c } from 'ttag';
 
-import { MemberRole, NodeType, NodeResult, NodeResultWithNewUid, resultOk } from '../../interface';
+import { MemberRole, NodeType, NodeResult, NodeResultWithNewUid, resultOk, InvalidNameError } from '../../interface';
 import { AbortError, ValidationError } from '../../errors';
-import { getErrorMessage } from '../errors';
+import { createErrorFromUnknown, getErrorMessage } from '../errors';
 import { splitNodeUid } from '../uids';
 import { NodeAPIService } from './apiService';
 import { NodesCryptoCache } from './cryptoCache';
@@ -140,7 +140,7 @@ export class NodesManagement {
         }
 
         const encryptedCrypto = await this.cryptoService.encryptNodeWithNewParent(
-            node,
+            node.name,
             keys,
             { key: newParentKeys.key, hashKey: newParentKeys.hashKey },
             signingKeys,
@@ -186,16 +186,18 @@ export class NodesManagement {
 
     // Improvement requested: copy nodes in parallel using copy_multiple endpoint
     async *copyNodes(
-        nodeUids: string[],
+        nodeUidsOrWithNames: (string | { uid: string; name: string })[],
         newParentNodeUid: string,
         signal?: AbortSignal,
     ): AsyncGenerator<NodeResultWithNewUid> {
-        for (const nodeUid of nodeUids) {
+        for (const nodeUidOrWithName of nodeUidsOrWithNames) {
             if (signal?.aborted) {
                 throw new AbortError(c('Error').t`Copy operation aborted`);
             }
+            const nodeUid = typeof nodeUidOrWithName === 'string' ? nodeUidOrWithName : nodeUidOrWithName.uid;
+            const name = typeof nodeUidOrWithName === 'string' ? undefined : nodeUidOrWithName.name;
             try {
-                const { uid: newNodeUid } = await this.copyNode(nodeUid, newParentNodeUid);
+                const { uid: newNodeUid } = await this.copyNode(nodeUid, newParentNodeUid, name);
                 yield {
                     uid: nodeUid,
                     newUid: newNodeUid,
@@ -205,14 +207,19 @@ export class NodesManagement {
                 yield {
                     uid: nodeUid,
                     ok: false,
-                    error: getErrorMessage(error),
+                    error: createErrorFromUnknown(error),
                 };
             }
         }
     }
 
-    async copyNode(nodeUid: string, newParentUid: string): Promise<DecryptedNode> {
+    async copyNode(nodeUid: string, newParentUid: string, name?: string): Promise<DecryptedNode> {
+        if (name) {
+            validateNodeName(name);
+        }
+
         const node = await this.nodesAccess.getNode(nodeUid);
+        const nodeName = name ? resultOk<string, Error | InvalidNameError>(name) : node.name;
 
         const [keys, newParentKeys, signingKeys] = await Promise.all([
             this.nodesAccess.getNodePrivateAndSessionKeys(nodeUid),
@@ -225,7 +232,7 @@ export class NodesManagement {
         }
 
         const encryptedCrypto = await this.cryptoService.encryptNodeWithNewParent(
-            node,
+            nodeName,
             keys,
             { key: newParentKeys.key, hashKey: newParentKeys.hashKey },
             signingKeys,
@@ -252,6 +259,7 @@ export class NodesManagement {
         });
         const newNode: DecryptedNode = {
             ...node,
+            name: nodeName,
             uid: newNodeUid,
             encryptedName: encryptedCrypto.encryptedName,
             parentUid: newParentUid,

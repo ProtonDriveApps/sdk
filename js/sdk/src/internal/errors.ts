@@ -3,6 +3,10 @@ import { c } from 'ttag';
 import { VERIFICATION_STATUS } from '../crypto';
 import { AbortError, ConnectionError, RateLimitedError, ValidationError } from '../errors';
 
+export function createErrorFromUnknown(error: unknown): Error {
+    return error instanceof Error ? error : new Error(getErrorMessage(error), { cause: error });
+}
+
 export function getErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : c('Error').t`Unknown error`;
 }

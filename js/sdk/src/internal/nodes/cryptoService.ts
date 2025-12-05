@@ -637,7 +637,7 @@ export class NodesCryptoService {
     }
 
     async encryptNodeWithNewParent(
-        node: Pick<DecryptedNode, 'name'>,
+        nodeName: DecryptedNode['name'],
         keys: { passphrase: string; passphraseSessionKey: SessionKey; nameSessionKey: SessionKey },
         parentKeys: { key: PrivateKey; hashKey: Uint8Array },
         signingKeys: NodeSigningKeys,
@@ -652,7 +652,7 @@ export class NodesCryptoService {
         if (!parentKeys.hashKey) {
             throw new ValidationError('Moving item to a non-folder is not allowed');
         }
-        if (!node.name.ok) {
+        if (!nodeName.ok) {
             throw new ValidationError('Cannot move item without a valid name, please rename the item first');
         }
 
@@ -664,12 +664,12 @@ export class NodesCryptoService {
         }
 
         const { armoredNodeName } = await this.driveCrypto.encryptNodeName(
-            node.name.value,
+            nodeName.value,
             keys.nameSessionKey,
             parentKeys.key,
             nameAndPassprhaseSigningKey,
         );
-        const hash = await this.driveCrypto.generateLookupHash(node.name.value, parentKeys.hashKey);
+        const hash = await this.driveCrypto.generateLookupHash(nodeName.value, parentKeys.hashKey);
         const { armoredPassphrase, armoredPassphraseSignature } = await this.driveCrypto.encryptPassphrase(
             keys.passphrase,
             keys.passphraseSessionKey,
