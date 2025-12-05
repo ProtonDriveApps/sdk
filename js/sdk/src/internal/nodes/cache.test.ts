@@ -23,6 +23,7 @@ function generateNode(
         isShared: false,
         isSharedPublicly: false,
         creationTime: new Date(),
+        modificationTime: new Date(),
         trashTime: undefined,
         volumeId: 'volumeId',
         isStale: false,

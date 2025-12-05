@@ -65,6 +65,7 @@ function generateAPINode() {
             ParentLinkID: 'parentLinkId',
             NameHash: 'nameHash',
             CreateTime: 123456789,
+            ModifyTime: 1234567890,
             TrashTime: 0,
 
             Name: 'encName',
@@ -140,6 +141,7 @@ function generateNode() {
         uid: 'volumeId~linkId',
         parentUid: 'volumeId~parentLinkId',
         creationTime: new Date(123456789000),
+        modificationTime: new Date(1234567890000),
         trashTime: undefined,
 
         shareId: undefined,

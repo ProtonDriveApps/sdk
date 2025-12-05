@@ -33,6 +33,7 @@ interface BaseNode {
     type: NodeType;
     mediaType?: string;
     creationTime: Date; // created on the server
+    modificationTime: Date; // modified on server
     trashTime?: Date;
     totalStorageSize?: number;
 

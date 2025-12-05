@@ -92,6 +92,10 @@ export type NodeEntity = {
      * Created on server date.
      */
     creationTime: Date;
+    /**
+     * Modified on server (renamed, moved, etc.).
+     */
+    modificationTime: Date;
     trashTime?: Date;
     /**
      * Total size of all revisions, encrypted size on the server.
@@ -208,6 +212,9 @@ export type Revision = {
      * Raw size of the revision, as stored in extended attributes.
      */
     claimedSize?: number;
+    /**
+     * Modification time on the file system.
+     */
     claimedModificationTime?: Date;
     claimedDigests?: {
         sha1?: string;
