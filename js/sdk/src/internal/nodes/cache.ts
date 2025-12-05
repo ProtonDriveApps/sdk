@@ -263,6 +263,7 @@ function deserialiseNode(nodeData: string): DecryptedNode {
         typeof node.isShared !== 'boolean' ||
         !node.creationTime ||
         typeof node.creationTime !== 'string' ||
+        typeof node.modificationTime !== 'string' ||
         (typeof node.trashTime !== 'string' && node.trashTime !== undefined) ||
         (typeof node.folder !== 'object' && node.folder !== undefined) ||
         (typeof node.folder?.claimedModificationTime !== 'string' && node.folder?.claimedModificationTime !== undefined)
@@ -272,6 +273,7 @@ function deserialiseNode(nodeData: string): DecryptedNode {
     return {
         ...node,
         creationTime: new Date(node.creationTime),
+        modificationTime: new Date(node.modificationTime),
         trashTime: node.trashTime ? new Date(node.trashTime) : undefined,
         activeRevision: node.activeRevision ? deserialiseRevision(node.activeRevision) : undefined,
         membership: node.membership

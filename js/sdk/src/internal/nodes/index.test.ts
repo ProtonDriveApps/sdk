@@ -26,6 +26,7 @@ function generateNode(uid: string, parentUid = 'volumeId~root', params: Partial<
         isShared: false,
         isSharedPublicly: false,
         creationTime: new Date(),
+        modificationTime: new Date(),
         trashTime: undefined,
         isStale: false,
         ...params,
