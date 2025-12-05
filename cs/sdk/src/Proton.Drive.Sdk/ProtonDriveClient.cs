@@ -33,7 +33,7 @@ public sealed class ProtonDriveClient
     public ProtonDriveClient(ProtonApiSession session, string? uid = null)
         : this(
             session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(DefaultApiTimeoutSeconds)),
-            session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(StorageApiTimeoutSeconds)),
+            session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(StorageApiTimeoutSeconds), TimeSpan.FromSeconds(StorageApiTimeoutSeconds)),
             new AccountClientAdapter(session),
             new DriveClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository),
             session.ClientConfiguration.FeatureFlagProvider,
