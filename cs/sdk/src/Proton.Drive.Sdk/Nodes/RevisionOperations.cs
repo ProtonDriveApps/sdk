@@ -19,7 +19,12 @@ internal static partial class RevisionOperations
             ClientId = client.Uid,
         };
 
-        var fileSecrets = await FileOperations.GetSecretsAsync(client, fileUid, cancellationToken).ConfigureAwait(false);
+        var fileSecretsResult = await FileOperations.GetSecretsAsync(client, fileUid, cancellationToken).ConfigureAwait(false);
+
+        if (!fileSecretsResult.TryGetValueElseError(out var fileSecrets, out _))
+        {
+            throw new InvalidOperationException($"Cannot create draft for file {fileUid} with degraded secrets");
+        }
 
         RevisionId revisionId;
         try
@@ -74,7 +79,12 @@ internal static partial class RevisionOperations
         Action<int> releaseBlockListingAction,
         CancellationToken cancellationToken)
     {
-        var fileSecrets = await FileOperations.GetSecretsAsync(client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
+        var fileSecretsResult = await FileOperations.GetSecretsAsync(client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
+
+        var (key, contentKey) = fileSecretsResult.TryGetValueElseError(out var fileSecrets, out var degradedFileSecrets)
+            ? (fileSecrets.Key, fileSecrets.ContentKey)
+            : (degradedFileSecrets.Key ?? throw new InvalidOperationException($"Node key not available for file {revisionUid.NodeUid}"),
+               degradedFileSecrets.ContentKey ?? throw new InvalidOperationException($"Content key not available for file {revisionUid.NodeUid}"));
 
         var (fileUid, revisionId) = revisionUid;
 
@@ -92,8 +102,8 @@ internal static partial class RevisionOperations
         return new RevisionReader(
             client,
             revisionUid,
-            fileSecrets.Key,
-            fileSecrets.ContentKey,
+            key,
+            contentKey,
             revisionResponse.Revision,
             releaseBlockListingAction,
             () => client.BlockDownloader.Queue.FinishFile());
