@@ -18,6 +18,7 @@ import {
     UploadMetadata,
     FileUploader,
     NodeResult,
+    SDKEvent,
 } from './interface';
 import { Telemetry } from './telemetry';
 import {
@@ -162,6 +163,16 @@ export class ProtonDrivePublicLinkClient {
                 return keys.contentKeyPacketSessionKey;
             },
         };
+    }
+
+    /**
+     * Subscribes to the general SDK events.
+     *
+     * See `ProtonDriveClient.onMessage` for more information.
+     */
+    onMessage(eventName: SDKEvent, callback: () => void): () => void {
+        this.logger.debug(`Subscribing to event ${eventName}`);
+        return this.sdkEvents.addListener(eventName, callback);
     }
 
     /**
