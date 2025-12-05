@@ -13,8 +13,7 @@ internal sealed partial class RevisionReader : IDisposable
 
     private readonly ProtonDriveClient _client;
     private readonly PgpPrivateKey _nodeKey;
-    private readonly NodeUid _fileUid;
-    private readonly RevisionId _revisionId;
+    private readonly RevisionUid _revisionUid;
     private readonly PgpSessionKey _contentKey;
     private readonly BlockListingRevisionDto _revisionDto;
     private readonly Action<int> _releaseBlockListingAction;
@@ -38,8 +37,7 @@ internal sealed partial class RevisionReader : IDisposable
     {
         _client = client;
         _nodeKey = nodeKey;
-        _fileUid = revisionUid.NodeUid;
-        _revisionId = revisionUid.RevisionId;
+        _revisionUid = revisionUid;
         _contentKey = contentKey;
         _revisionDto = revisionDto;
         _releaseBlockListingAction = releaseBlockListingAction;
@@ -125,7 +123,7 @@ internal sealed partial class RevisionReader : IDisposable
 
                 if (manifestVerificationStatus is not PgpVerificationStatus.Ok)
                 {
-                    LogFailedManifestVerification(_fileUid, manifestVerificationStatus);
+                    LogFailedManifestVerification(_revisionUid, manifestVerificationStatus);
 
                     throw new ProtonDriveException("File authenticity check failed");
                 }
@@ -223,8 +221,14 @@ internal sealed partial class RevisionReader : IDisposable
             isIntermediateStream = true;
         }
 
-        var hashDigest = await _client.BlockDownloader.DownloadAsync(block.BareUrl, block.Token, _contentKey, blockOutputStream, cancellationToken)
-            .ConfigureAwait(false);
+        var hashDigest = await _client.BlockDownloader.DownloadAsync(
+            _revisionUid,
+            block.Index,
+            block.BareUrl,
+            block.Token,
+            _contentKey,
+            blockOutputStream,
+            cancellationToken).ConfigureAwait(false);
 
         return new BlockDownloadResult(block.Index, blockOutputStream, isIntermediateStream, hashDigest);
     }
@@ -268,7 +272,7 @@ internal sealed partial class RevisionReader : IDisposable
 
                     if (block.Index != nextExpectedIndex)
                     {
-                        LogMissingBlock(block.Index, _fileUid);
+                        LogMissingBlock(block.Index, _revisionUid);
 
                         throw new ProtonDriveException("File contents are incomplete");
                     }
@@ -282,9 +286,9 @@ internal sealed partial class RevisionReader : IDisposable
                 {
                     var revisionResponse =
                         await _client.Api.Files.GetRevisionAsync(
-                            _fileUid.VolumeId,
-                            _fileUid.LinkId,
-                            _revisionId,
+                            _revisionUid.NodeUid.VolumeId,
+                            _revisionUid.NodeUid.LinkId,
+                            _revisionUid.RevisionId,
                             lastKnownIndex + 1,
                             _blockPageSize,
                             false,
@@ -328,11 +332,11 @@ internal sealed partial class RevisionReader : IDisposable
         return verificationResult.Status;
     }
 
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Missing block #{BlockIndex} on file with UID \"{FileUid}\"")]
-    private partial void LogMissingBlock(int blockIndex, NodeUid fileUid);
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Missing block #{BlockIndex} on revision \"{RevisionUid}\"")]
+    private partial void LogMissingBlock(int blockIndex, RevisionUid revisionUid);
 
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Manifest verification failed for file with UID \"{FileUid}\": {VerificationStatus}")]
-    private partial void LogFailedManifestVerification(NodeUid fileUid, PgpVerificationStatus verificationStatus);
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Manifest verification failed for revision \"{RevisionUid}\": {VerificationStatus}")]
+    private partial void LogFailedManifestVerification(RevisionUid revisionUid, PgpVerificationStatus verificationStatus);
 
     private readonly struct BlockDownloadResult(int index, Stream stream, bool isIntermediateStream, ReadOnlyMemory<byte> sha256Digest)
     {

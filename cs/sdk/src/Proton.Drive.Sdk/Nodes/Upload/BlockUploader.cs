@@ -1,16 +1,17 @@
 using System.Buffers;
 using System.Diagnostics;
-using System.Net;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
 using Microsoft.IO;
+using Polly;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Cryptography;
+using Proton.Drive.Sdk.Http;
+using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
-using Proton.Sdk;
+using Proton.Drive.Sdk.Resilience;
 using Proton.Sdk.Addresses;
-using Proton.Sdk.Api;
 using Proton.Sdk.Drive;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
@@ -230,44 +231,36 @@ internal sealed partial class BlockUploader
         Debug.Assert(request.Thumbnails.Count + request.Blocks.Count == 1, "Block upload request should be for only one block, content or thumbnail");
 #pragma warning restore S3236 // Caller information arguments should not be provided explicitly
 
-        var remainingNumberOfAttempts = 2;
-
-        while (remainingNumberOfAttempts >= 1)
+        var nonDisposableDataPacketStream = new NonDisposingStreamWrapper(dataPacketStream);
+        await using (nonDisposableDataPacketStream.ConfigureAwait(false))
         {
-            try
-            {
-                // FIXME: request multiple blocks at once
-                var uploadRequestResponse = await _client.Api.Files.PrepareBlockUploadAsync(request, cancellationToken).ConfigureAwait(false);
-
-                var uploadTarget = request.Thumbnails.Count == 0 ? uploadRequestResponse.UploadTargets[0] : uploadRequestResponse.ThumbnailUploadTargets[0];
-
-                dataPacketStream.Seek(0, SeekOrigin.Begin);
-
-                await _client.Api.Storage.UploadBlobAsync(uploadTarget.BareUrl, uploadTarget.Token, dataPacketStream, cancellationToken)
-                    .ConfigureAwait(false);
-
-                remainingNumberOfAttempts = 0;
-            }
-            catch (Exception e) when ((UrlExpired(e) || BlobAlreadyUploaded(e)) && remainingNumberOfAttempts >= 2)
-            {
-                var revisionUid = new RevisionUid(request.VolumeId, request.LinkId, request.RevisionId);
-
-                LogBlobUploadFailure(e, request.Blocks[0].Index, revisionUid, remainingNumberOfAttempts);
-
-                --remainingNumberOfAttempts;
-            }
+            await Policy
+                .Handle<Exception>(ex => ex is not FileContentsDecryptionException)
+                .WaitAndRetryAsync(
+                    retryCount: 4,
+                    sleepDurationProvider: RetryPolicy.GetAttemptDelay,
+                    onRetry: (exception, _, retryNumber, _) =>
+                    {
+                        var revisionUid = new RevisionUid(request.VolumeId, request.LinkId, request.RevisionId);
+                        LogBlobUploadFailure(exception, request.Blocks[0].Index, revisionUid, retryNumber);
+                    })
+                .ExecuteAsync(ExecuteUploadAsync).ConfigureAwait(false);
         }
 
         return;
 
-        static bool UrlExpired(Exception e) => e is HttpRequestException { StatusCode: HttpStatusCode.NotFound };
+        async Task ExecuteUploadAsync()
+        {
+            // FIXME: request multiple blocks at once
+            var uploadRequestResponse = await _client.Api.Files.PrepareBlockUploadAsync(request, cancellationToken).ConfigureAwait(false);
 
-        // This can happen if the previous successful upload response was not received/processed,
-        // which could happen for instance if the connection was interrupted just as the success was being sent back.
-        // The HTTP client's resilience logic will kick in and retry the blob upload at the same URL
-        // without handing control back to register a new block at the same index with its own new URL,
-        // causing the back-end to reject the upload with this error.
-        static bool BlobAlreadyUploaded(Exception e) => e is ProtonApiException { Code: ResponseCode.AlreadyExists };
+            var uploadTarget = request.Thumbnails.Count == 0 ? uploadRequestResponse.UploadTargets[0] : uploadRequestResponse.ThumbnailUploadTargets[0];
+
+            nonDisposableDataPacketStream.Seek(0, SeekOrigin.Begin);
+
+            await _client.Api.Storage.UploadBlobAsync(uploadTarget.BareUrl, uploadTarget.Token, nonDisposableDataPacketStream, cancellationToken)
+                .ConfigureAwait(false);
+        }
     }
 
     [LoggerMessage(Level = LogLevel.Trace, Message = "Uploaded blob for content block #{BlockIndex} for revision \"{RevisionUid}\"")]
@@ -277,7 +270,7 @@ internal sealed partial class BlockUploader
     private partial void LogThumbnailBlobUploaded(RevisionUid revisionUid);
 
     [LoggerMessage(
-        Level = LogLevel.Warning,
-        Message = "Blob upload failed for block #{BlockIndex} for revision \"{RevisionUid}\" (remaining attempts: {RemainingAttempts}")]
-    private partial void LogBlobUploadFailure(Exception exception, int blockIndex, RevisionUid revisionUid, int remainingAttempts);
+        Level = LogLevel.Information,
+        Message = "Blob upload failed for block #{BlockIndex} for revision \"{RevisionUid}\" (retry number: {RetryNumber})")]
+    private partial void LogBlobUploadFailure(Exception exception, int blockIndex, RevisionUid revisionUid, int retryNumber);
 }

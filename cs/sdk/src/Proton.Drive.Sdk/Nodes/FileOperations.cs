@@ -80,7 +80,7 @@ internal static partial class FileOperations
                     await client.ThumbnailBlockDownloader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
                 }
 
-                tasks.Enqueue(DownloadThumbnailAsync(client, fileNode.Uid, block, cancellationToken));
+                tasks.Enqueue(DownloadThumbnailAsync(client, fileNode.ActiveRevision.Uid, block, cancellationToken));
             }
 
             while (tasks.TryDequeue(out var task))
@@ -92,7 +92,7 @@ internal static partial class FileOperations
 
     private static async Task<FileThumbnail> DownloadThumbnailAsync(
         ProtonDriveClient client,
-        NodeUid fileUid,
+        RevisionUid revisionUid,
         ThumbnailBlock block,
         CancellationToken cancellationToken)
     {
@@ -103,14 +103,20 @@ internal static partial class FileOperations
             var outputStream = new MemoryStream(initialBufferLength);
             await using (outputStream.ConfigureAwait(false))
             {
-                var fileSecrets = await GetSecretsAsync(client, fileUid, cancellationToken).ConfigureAwait(false);
+                var fileSecrets = await GetSecretsAsync(client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
 
-                await client.ThumbnailBlockDownloader.DownloadAsync(block.BareUrl, block.Token, fileSecrets.ContentKey, outputStream, cancellationToken)
-                    .ConfigureAwait(false);
+                await client.ThumbnailBlockDownloader.DownloadAsync(
+                    revisionUid,
+                    index: 0,
+                    block.BareUrl,
+                    block.Token,
+                    fileSecrets.ContentKey,
+                    outputStream,
+                    cancellationToken).ConfigureAwait(false);
 
                 var thumbnailData = outputStream.TryGetBuffer(out var outputBuffer) ? outputBuffer : outputStream.ToArray();
 
-                return new FileThumbnail(fileUid, thumbnailData);
+                return new FileThumbnail(revisionUid.NodeUid, thumbnailData);
             }
         }
         finally

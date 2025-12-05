@@ -16,7 +16,8 @@ internal static class ProtonClientConfigurationExtensions
         this ProtonClientConfiguration config,
         ProtonApiSession? session = null,
         string? baseRoutePath = null,
-        TimeSpan? timeout = null)
+        TimeSpan? attemptTimeout = null,
+        TimeSpan? totalTimeout = null)
     {
         var baseAddress = config.BaseUrl + (baseRoutePath ?? string.Empty);
 
@@ -67,10 +68,15 @@ internal static class ProtonClientConfigurationExtensions
                 builder.AddStandardResilienceHandler(
                     options =>
                     {
-                        if (timeout is not null)
+                        if (attemptTimeout is not null)
                         {
-                            options.TotalRequestTimeout.Timeout = timeout.Value;
+                            options.AttemptTimeout.Timeout = attemptTimeout.Value;
                             options.CircuitBreaker.SamplingDuration = options.AttemptTimeout.Timeout * 2;
+                        }
+
+                        if (totalTimeout is not null)
+                        {
+                            options.TotalRequestTimeout.Timeout = totalTimeout.Value;
                         }
 
                         var defaultShouldHandleRetry = options.Retry.ShouldHandle;

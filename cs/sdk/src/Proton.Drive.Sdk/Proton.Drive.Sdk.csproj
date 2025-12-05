@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" />
+    <PackageReference Include="Polly" />
     <PackageReference Include="Proton.Cryptography" PrivateAssets="compile" />
     <PackageReference Include="System.Numerics.Tensors" />
   </ItemGroup>
