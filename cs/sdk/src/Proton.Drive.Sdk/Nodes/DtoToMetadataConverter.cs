@@ -254,6 +254,7 @@ internal static class DtoToMetadataConverter
                 Thumbnails = thumbnails.AsReadOnly(),
                 AdditionalClaimedMetadata = additionalMetadata,
                 ContentAuthor = contentAuthor,
+                CanDecrypt = !contentKeyIsInvalid,
                 Errors = (IReadOnlyList<ProtonDriveError>)revisionErrors,
             };
 

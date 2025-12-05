@@ -38,16 +38,26 @@ internal static class NodeMetadataResultExtensions
         return folderSecrets;
     }
 
-    public static FileSecrets GetFileSecretsOrThrow(this Result<NodeMetadata, DegradedNodeMetadata> metadataResult)
+    public static Result<FileSecrets, DegradedFileSecrets> GetFileSecretsOrThrow(this Result<NodeMetadata, DegradedNodeMetadata> metadataResult)
     {
-        var metadata = metadataResult.GetValueOrThrow();
-
-        if (!metadata.TryGetFileElseFolder(out _, out var fileSecrets, out var folderNode, out _))
+        if (metadataResult.TryGetValueElseError(out var metadata, out var degradedMetadata))
         {
-            throw new InvalidNodeTypeException(folderNode.Uid, LinkType.Folder);
-        }
+            if (!metadata.TryGetFileElseFolder(out _, out var fileSecrets, out var folderNode, out _))
+            {
+                throw new InvalidNodeTypeException(folderNode.Uid, LinkType.Folder);
+            }
 
-        return fileSecrets;
+            return fileSecrets;
+        }
+        else
+        {
+            if (!degradedMetadata.TryGetFileElseFolder(out _, out var degradedFileSecrets, out var folderNode, out _))
+            {
+                throw new InvalidNodeTypeException(folderNode.Uid, LinkType.Folder);
+            }
+
+            return degradedFileSecrets;
+        }
     }
 
     public static bool TryGetFolderKeyElseError(

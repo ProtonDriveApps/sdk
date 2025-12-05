@@ -5,13 +5,16 @@ export function getNode(maybeNode: MaybeNode): NodeEntity | DegradedNode {
 }
 
 export function getName(maybeNode: MaybeNode): string {
+    let name;
+    let uid;
     if (maybeNode.ok) {
-        return maybeNode.value.name;
+        name = maybeNode.value.name;
+        uid = maybeNode.value.uid;
+    } else {
+        name = maybeNode.error.name.ok ? maybeNode.error.name.value : maybeNode.error.name.error.name;
+        uid = maybeNode.error.uid;
     }
-    if (maybeNode.error.name.ok) {
-        return maybeNode.error.name.value;
-    }
-    return maybeNode.error.name.error.name || maybeNode.error.uid;
+    return validateName(name) ? name : uid;
 }
 
 export function getClaimedSize(maybeNode: MaybeNode): number | undefined {
@@ -21,4 +24,11 @@ export function getClaimedSize(maybeNode: MaybeNode): number | undefined {
     if (maybeNode.error.activeRevision?.ok) {
         return maybeNode.error.activeRevision.value.claimedSize;
     }
+}
+
+function validateName(name: string): boolean {
+    if (name.length == 0 || name.includes('/')) {
+        return false;
+    }
+    return true;
 }

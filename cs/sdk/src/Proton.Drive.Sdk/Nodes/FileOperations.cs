@@ -7,21 +7,20 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal static partial class FileOperations
 {
-    public static async ValueTask<FileSecrets> GetSecretsAsync(ProtonDriveClient client, NodeUid fileUid, CancellationToken cancellationToken)
+    public static async ValueTask<Result<FileSecrets, DegradedFileSecrets>> GetSecretsAsync(ProtonDriveClient client, NodeUid fileUid, CancellationToken cancellationToken)
     {
         var fileSecretsResult = await client.Cache.Secrets.TryGetFileSecretsAsync(fileUid, cancellationToken).ConfigureAwait(false);
 
-        var fileSecrets = fileSecretsResult?.GetValueOrDefault();
-
-        if (fileSecrets is null)
+        if (fileSecretsResult is null)
         {
             var metadataResult = await NodeOperations.GetFreshNodeMetadataAsync(client, fileUid, knownShareAndKey: null, cancellationToken)
                 .ConfigureAwait(false);
 
-            fileSecrets = metadataResult.GetFileSecretsOrThrow();
+            fileSecretsResult = metadataResult.GetFileSecretsOrThrow();
+
         }
 
-        return fileSecrets;
+        return (Result<FileSecrets, DegradedFileSecrets>)fileSecretsResult;
     }
 
     public static async IAsyncEnumerable<FileThumbnail> EnumerateThumbnailsAsync(
@@ -103,17 +102,20 @@ internal static partial class FileOperations
             var outputStream = new MemoryStream(initialBufferLength);
             await using (outputStream.ConfigureAwait(false))
             {
-                var fileSecrets = await GetSecretsAsync(client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
+                var fileSecretsResult = await GetSecretsAsync(client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
+
+                var contentKey = fileSecretsResult.TryGetValueElseError(out var fileSecrets, out var degradedFileSecrets)
+                    ? fileSecrets.ContentKey
+                    : degradedFileSecrets.ContentKey ?? throw new InvalidOperationException($"Content key not available for file {revisionUid.NodeUid}");
 
                 await client.ThumbnailBlockDownloader.DownloadAsync(
                     revisionUid,
                     index: 0,
                     block.BareUrl,
                     block.Token,
-                    fileSecrets.ContentKey,
+                    contentKey,
                     outputStream,
                     cancellationToken).ConfigureAwait(false);
-
                 var thumbnailData = outputStream.TryGetBuffer(out var outputBuffer) ? outputBuffer : outputStream.ToArray();
 
                 return new FileThumbnail(revisionUid.NodeUid, thumbnailData);
