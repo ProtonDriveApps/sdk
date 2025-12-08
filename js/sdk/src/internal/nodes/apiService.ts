@@ -114,18 +114,21 @@ type PostCheckAvailableHashesResponse =
  * The service is responsible for transforming local objects to API payloads
  * and vice versa. It should not contain any business logic.
  */
-export class NodeAPIService {
+export abstract class NodeAPIServiceBase<
+    T extends EncryptedNode = EncryptedNode,
+    TMetadataResponseLink extends { Link: { LinkID: string } } = { Link: { LinkID: string } },
+> {
     constructor(
-        private logger: Logger,
-        private apiService: DriveAPIService,
-        private clientUid: string | undefined,
+        protected logger: Logger,
+        protected apiService: DriveAPIService,
+        protected clientUid: string | undefined,
     ) {
         this.logger = logger;
         this.apiService = apiService;
         this.clientUid = clientUid;
     }
 
-    async getNode(nodeUid: string, ownVolumeId: string, signal?: AbortSignal): Promise<EncryptedNode> {
+    async getNode(nodeUid: string, ownVolumeId: string, signal?: AbortSignal): Promise<T> {
         const nodesGenerator = this.iterateNodes([nodeUid], ownVolumeId, undefined, signal);
         const result = await nodesGenerator.next();
         if (!result.value) {
@@ -140,7 +143,7 @@ export class NodeAPIService {
         ownVolumeId: string | undefined,
         filterOptions?: FilterOptions,
         signal?: AbortSignal,
-    ): AsyncGenerator<EncryptedNode> {
+    ): AsyncGenerator<T> {
         const allNodeIds = nodeUids.map(splitNodeUid);
 
         const nodeIdsByVolumeId = new Map<string, string[]>();
@@ -184,27 +187,21 @@ export class NodeAPIService {
         }
     }
 
-    private async *iterateNodesPerVolume(
+    protected async *iterateNodesPerVolume(
         volumeId: string,
         nodeIds: string[],
         isOwnVolumeId: boolean,
         filterOptions?: FilterOptions,
         signal?: AbortSignal,
-    ): AsyncGenerator<EncryptedNode, unknown[]> {
+    ): AsyncGenerator<T, unknown[]> {
         const errors: unknown[] = [];
 
         for (const nodeIdsBatch of batch(nodeIds, API_NODES_BATCH_SIZE)) {
-            const response = await this.apiService.post<PostLoadLinksMetadataRequest, PostLoadLinksMetadataResponse>(
-                `drive/v2/volumes/${volumeId}/links`,
-                {
-                    LinkIDs: nodeIdsBatch,
-                },
-                signal,
-            );
+            const responseLinks = await this.fetchNodeMetadata(volumeId, nodeIdsBatch, signal);
 
-            for (const link of response.Links) {
+            for (const link of responseLinks) {
                 try {
-                    const encryptedNode = linkToEncryptedNode(this.logger, volumeId, link, isOwnVolumeId);
+                    const encryptedNode = this.linkToEncryptedNode(volumeId, link, isOwnVolumeId);
                     if (filterOptions?.type && encryptedNode.type !== filterOptions.type) {
                         continue;
                     }
@@ -218,6 +215,14 @@ export class NodeAPIService {
 
         return errors;
     }
+
+    protected abstract fetchNodeMetadata(
+        volumeId: string,
+        linkIds: string[],
+        signal?: AbortSignal,
+    ): Promise<TMetadataResponseLink[]>;
+
+    protected abstract linkToEncryptedNode(volumeId: string, link: TMetadataResponseLink, isOwnVolumeId: boolean): T;
 
     // Improvement requested: load next page sooner before all IDs are yielded.
     async *iterateChildrenNodeUids(
@@ -580,6 +585,35 @@ export class NodeAPIService {
     }
 }
 
+export class NodeAPIService extends NodeAPIServiceBase {
+    constructor(logger: Logger, apiService: DriveAPIService, clientUid: string | undefined) {
+        super(logger, apiService, clientUid);
+    }
+
+    protected async fetchNodeMetadata(
+        volumeId: string,
+        linkIds: string[],
+        signal?: AbortSignal,
+    ): Promise<PostLoadLinksMetadataResponse['Links']> {
+        const response = await this.apiService.post<PostLoadLinksMetadataRequest, PostLoadLinksMetadataResponse>(
+            `drive/v2/volumes/${volumeId}/links`,
+            {
+                LinkIDs: linkIds,
+            },
+            signal,
+        );
+        return response.Links;
+    }
+
+    protected linkToEncryptedNode(
+        volumeId: string,
+        link: PostLoadLinksMetadataResponse['Links'][0],
+        isOwnVolumeId: boolean,
+    ): EncryptedNode {
+        return linkToEncryptedNode(this.logger, volumeId, link, isOwnVolumeId);
+    }
+}
+
 type LinkResponse = {
     LinkID: string;
     Response: {
@@ -630,12 +664,82 @@ function handleNodeWithSameNameExistsValidationError(volumeId: string, error: un
     }
 }
 
-function linkToEncryptedNode(
+export function linkToEncryptedNode(
     logger: Logger,
     volumeId: string,
-    link: PostLoadLinksMetadataResponse['Links'][0],
+    link: Pick<PostLoadLinksMetadataResponse['Links'][0], 'Link' | 'Membership' | 'Sharing' | 'Folder' | 'File'>,
     isAdmin: boolean,
 ): EncryptedNode {
+    const { baseNodeMetadata, baseCryptoNodeMetadata } = linkToEncryptedNodeBaseMetadata(
+        logger,
+        volumeId,
+        link,
+        isAdmin,
+    );
+
+    if (link.Link.Type === 1 && link.Folder) {
+        return {
+            ...baseNodeMetadata,
+            encryptedCrypto: {
+                ...baseCryptoNodeMetadata,
+                folder: {
+                    armoredExtendedAttributes: link.Folder.XAttr || undefined,
+                    armoredHashKey: link.Folder.NodeHashKey as string,
+                },
+            },
+        };
+    }
+
+    if (link.Link.Type === 2 && link.File && link.File.ActiveRevision) {
+        return {
+            ...baseNodeMetadata,
+            totalStorageSize: link.File.TotalEncryptedSize,
+            mediaType: link.File.MediaType || undefined,
+            encryptedCrypto: {
+                ...baseCryptoNodeMetadata,
+                file: {
+                    base64ContentKeyPacket: link.File.ContentKeyPacket,
+                    armoredContentKeyPacketSignature: link.File.ContentKeyPacketSignature || undefined,
+                },
+                activeRevision: {
+                    uid: makeNodeRevisionUid(volumeId, link.Link.LinkID, link.File.ActiveRevision.RevisionID),
+                    state: RevisionState.Active,
+                    creationTime: new Date(link.File.ActiveRevision.CreateTime * 1000),
+                    storageSize: link.File.ActiveRevision.EncryptedSize,
+                    signatureEmail: link.File.ActiveRevision.SignatureEmail || undefined,
+                    armoredExtendedAttributes: link.File.ActiveRevision.XAttr || undefined,
+                    thumbnails:
+                        link.File.ActiveRevision.Thumbnails?.map((thumbnail) =>
+                            transformThumbnail(volumeId, link.Link.LinkID, thumbnail),
+                        ) || [],
+                },
+            },
+        };
+    }
+
+    // TODO: Remove this once client do not use main SDK for photos.
+    // At the beginning, the client used main SDK for some photo actions.
+    // This was a temporary solution before the Photos SDK was implemented.
+    // Now the client must use Photos SDK for all photo-related actions.
+    // Knowledge of albums in main SDK is deprecated and will be removed.
+    if (link.Link.Type === 3) {
+        return {
+            ...baseNodeMetadata,
+            encryptedCrypto: {
+                ...baseCryptoNodeMetadata,
+            },
+        };
+    }
+
+    throw new Error(`Unknown node type: ${link.Link.Type}`);
+}
+
+export function linkToEncryptedNodeBaseMetadata(
+    logger: Logger,
+    volumeId: string,
+    link: Pick<PostLoadLinksMetadataResponse['Links'][0], 'Link' | 'Membership' | 'Sharing'>,
+    isAdmin: boolean,
+) {
     const membershipRole = permissionsToMemberRole(logger, link.Membership?.Permissions);
 
     const baseNodeMetadata = {
@@ -682,56 +786,10 @@ function linkToEncryptedNode(
             : undefined,
     };
 
-    if (link.Link.Type === 1 && link.Folder) {
-        return {
-            ...baseNodeMetadata,
-            encryptedCrypto: {
-                ...baseCryptoNodeMetadata,
-                folder: {
-                    armoredExtendedAttributes: link.Folder.XAttr || undefined,
-                    armoredHashKey: link.Folder.NodeHashKey as string,
-                },
-            },
-        };
-    }
-
-    if (link.Link.Type === 2 && link.File && link.File.ActiveRevision) {
-        return {
-            ...baseNodeMetadata,
-            totalStorageSize: link.File.TotalEncryptedSize,
-            mediaType: link.File.MediaType || undefined,
-            encryptedCrypto: {
-                ...baseCryptoNodeMetadata,
-                file: {
-                    base64ContentKeyPacket: link.File.ContentKeyPacket,
-                    armoredContentKeyPacketSignature: link.File.ContentKeyPacketSignature || undefined,
-                },
-                activeRevision: {
-                    uid: makeNodeRevisionUid(volumeId, link.Link.LinkID, link.File.ActiveRevision.RevisionID),
-                    state: RevisionState.Active,
-                    creationTime: new Date(link.File.ActiveRevision.CreateTime * 1000),
-                    storageSize: link.File.ActiveRevision.EncryptedSize,
-                    signatureEmail: link.File.ActiveRevision.SignatureEmail || undefined,
-                    armoredExtendedAttributes: link.File.ActiveRevision.XAttr || undefined,
-                    thumbnails:
-                        link.File.ActiveRevision.Thumbnails?.map((thumbnail) =>
-                            transformThumbnail(volumeId, link.Link.LinkID, thumbnail),
-                        ) || [],
-                },
-            },
-        };
-    }
-
-    if (link.Link.Type === 3) {
-        return {
-            ...baseNodeMetadata,
-            encryptedCrypto: {
-                ...baseCryptoNodeMetadata,
-            },
-        };
-    }
-
-    throw new Error(`Unknown node type: ${link.Link.Type}`);
+    return {
+        baseNodeMetadata,
+        baseCryptoNodeMetadata,
+    };
 }
 
 export function* groupNodeUidsByVolumeAndIteratePerBatch(
@@ -760,7 +818,6 @@ export function* groupNodeUidsByVolumeAndIteratePerBatch(
         }
     }
 }
-
 
 function transformRevisionResponse(
     volumeId: string,

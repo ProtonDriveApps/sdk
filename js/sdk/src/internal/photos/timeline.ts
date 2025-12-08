@@ -2,7 +2,7 @@ import { DriveCrypto } from '../../crypto';
 import { Logger } from '../../interface';
 import { makeNodeUid } from '../uids';
 import { PhotosAPIService } from './apiService';
-import { NodesService } from './interface';
+import { PhotosNodesAccess } from './nodes';
 import { PhotoSharesManager } from './shares';
 
 /**
@@ -14,7 +14,7 @@ export class PhotosTimeline {
         private apiService: PhotosAPIService,
         private driveCrypto: DriveCrypto,
         private photoShares: PhotoSharesManager,
-        private nodesService: NodesService,
+        private nodesService: PhotosNodesAccess,
     ) {
         this.logger = logger;
         this.apiService = apiService;

@@ -9,7 +9,9 @@ export enum CACHE_TAG_KEYS {
     Roots = 'nodeRoot',
 }
 
-type DecryptedNodeResult = { uid: string; ok: true; node: DecryptedNode } | { uid: string; ok: false; error: string };
+type DecryptedNodeResult<T extends DecryptedNode> =
+    | { uid: string; ok: true; node: T }
+    | { uid: string; ok: false; error: string };
 
 /**
  * Provides caching for nodes metadata.
@@ -19,7 +21,7 @@ type DecryptedNodeResult = { uid: string; ok: true; node: DecryptedNode } | { ui
  *
  * The cache of node metadata should not contain any crypto material.
  */
-export class NodesCache {
+export abstract class NodesCacheBase<T extends DecryptedNode = DecryptedNode> {
     constructor(
         private logger: Logger,
         private driveCache: ProtonDriveEntitiesCache,
@@ -28,9 +30,9 @@ export class NodesCache {
         this.driveCache = driveCache;
     }
 
-    async setNode(node: DecryptedNode): Promise<void> {
+    async setNode(node: T): Promise<void> {
         const key = getCacheUid(node.uid);
-        const nodeData = serialiseNode(node);
+        const nodeData = this.serialiseNode(node);
         const { volumeId } = splitNodeUid(node.uid);
 
         const tags = [`volume:${volumeId}`];
@@ -46,11 +48,11 @@ export class NodesCache {
         await this.driveCache.setEntity(key, nodeData, tags);
     }
 
-    async getNode(nodeUid: string): Promise<DecryptedNode> {
+    async getNode(nodeUid: string): Promise<T> {
         const key = getCacheUid(nodeUid);
         const nodeData = await this.driveCache.getEntity(key);
         try {
-            return deserialiseNode(nodeData);
+            return this.deserialiseNode(nodeData);
         } catch (error: unknown) {
             await this.removeCorruptedNode({ nodeUid }, error);
             throw new Error(`Failed to deserialise node: ${error instanceof Error ? error.message : error}`, {
@@ -58,6 +60,10 @@ export class NodesCache {
             });
         }
     }
+
+    protected abstract serialiseNode(node: T): string;
+
+    protected abstract deserialiseNode(nodeData: string): T;
 
     /**
      * Set all nodes on given node as stale. This is useful when we
@@ -146,7 +152,7 @@ export class NodesCache {
         return cacheUids;
     }
 
-    async *iterateNodes(nodeUids: string[]): AsyncGenerator<DecryptedNodeResult> {
+    async *iterateNodes(nodeUids: string[]): AsyncGenerator<DecryptedNodeResult<T>> {
         const cacheUids = nodeUids.map(getCacheUid);
         for await (const result of this.driveCache.iterateEntities(cacheUids)) {
             const node = await this.convertCacheResult(result);
@@ -156,7 +162,7 @@ export class NodesCache {
         }
     }
 
-    async *iterateChildren(parentNodeUid: string): AsyncGenerator<DecryptedNodeResult> {
+    async *iterateChildren(parentNodeUid: string): AsyncGenerator<DecryptedNodeResult<T>> {
         for await (const result of this.driveCache.iterateEntitiesByTag(
             `${CACHE_TAG_KEYS.ParentUid}:${parentNodeUid}`,
         )) {
@@ -171,7 +177,7 @@ export class NodesCache {
         yield* this.driveCache.iterateEntitiesByTag(`${CACHE_TAG_KEYS.Roots}:${volumeId}`);
     }
 
-    async *iterateTrashedNodes(): AsyncGenerator<DecryptedNodeResult> {
+    async *iterateTrashedNodes(): AsyncGenerator<DecryptedNodeResult<T>> {
         for await (const result of this.driveCache.iterateEntitiesByTag(CACHE_TAG_KEYS.Trashed)) {
             const node = await this.convertCacheResult(result);
             if (node) {
@@ -184,7 +190,7 @@ export class NodesCache {
      * Converts result from the cache with cache UID and data to result of node
      * with node UID and DecryptedNode.
      */
-    private async convertCacheResult(result: EntityResult<string>): Promise<DecryptedNodeResult | null> {
+    private async convertCacheResult(result: EntityResult<string>): Promise<DecryptedNodeResult<T> | null> {
         let nodeUid;
         try {
             nodeUid = getNodeUid(result.key);
@@ -195,7 +201,7 @@ export class NodesCache {
         if (result.ok) {
             let node;
             try {
-                node = deserialiseNode(result.value);
+                node = this.deserialiseNode(result.value);
             } catch (error: unknown) {
                 await this.removeCorruptedNode({ nodeUid }, error);
                 return null;
@@ -232,6 +238,16 @@ export class NodesCache {
     }
 }
 
+export class NodesCache extends NodesCacheBase<DecryptedNode> {
+    protected serialiseNode(node: DecryptedNode): string {
+        return serialiseNode(node);
+    }
+
+    protected deserialiseNode(nodeData: string): DecryptedNode {
+        return deserialiseNode(nodeData);
+    }
+}
+
 function getCacheUid(nodeUid: string) {
     return `node-${nodeUid}`;
 }
@@ -243,11 +259,12 @@ function getNodeUid(cacheUid: string) {
     return cacheUid.substring(5);
 }
 
-function serialiseNode(node: DecryptedNode) {
+export function serialiseNode(node: DecryptedNode) {
     return JSON.stringify(node);
 }
 
-function deserialiseNode(nodeData: string): DecryptedNode {
+// TODO: use better deserialisation with validation
+export function deserialiseNode(nodeData: string): DecryptedNode {
     const node = JSON.parse(nodeData);
     if (
         !node ||

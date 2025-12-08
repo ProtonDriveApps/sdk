@@ -4,14 +4,14 @@ import { MemberRole, NodeType, NodeResult, NodeResultWithNewUid, resultOk, Inval
 import { AbortError, ValidationError } from '../../errors';
 import { createErrorFromUnknown, getErrorMessage } from '../errors';
 import { splitNodeUid } from '../uids';
-import { NodeAPIService } from './apiService';
+import { NodeAPIServiceBase } from './apiService';
 import { NodesCryptoCache } from './cryptoCache';
 import { NodesCryptoService } from './cryptoService';
 import { NodeOutOfSyncError } from './errors';
 import { generateFolderExtendedAttributes } from './extendedAttributes';
-import { DecryptedNode } from './interface';
+import { DecryptedNode, EncryptedNode } from './interface';
 import { splitExtension, joinNameAndExtension } from './nodeName';
-import { NodesAccess } from './nodesAccess';
+import { NodesAccessBase } from './nodesAccess';
 import { validateNodeName } from './validations';
 
 const AVAILABLE_NAME_BATCH_SIZE = 10;
@@ -26,12 +26,16 @@ const AVAILABLE_NAME_LIMIT = 1000;
  * This module uses other modules providing low-level operations, such
  * as API service, cache, crypto service, etc.
  */
-export class NodesManagement {
+export abstract class NodesManagementBase<
+    TEncryptedNode extends EncryptedNode = EncryptedNode,
+    TDecryptedNode extends DecryptedNode = DecryptedNode,
+    TNodesCryptoService extends NodesCryptoService = NodesCryptoService,
+> {
     constructor(
-        protected apiService: NodeAPIService,
+        protected apiService: NodeAPIServiceBase<TEncryptedNode>,
         protected cryptoCache: NodesCryptoCache,
         protected cryptoService: NodesCryptoService,
-        protected nodesAccess: NodesAccess,
+        protected nodesAccess: NodesAccessBase<TEncryptedNode, TDecryptedNode, TNodesCryptoService>,
     ) {
         this.apiService = apiService;
         this.cryptoCache = cryptoCache;
@@ -43,7 +47,7 @@ export class NodesManagement {
         nodeUid: string,
         newName: string,
         options = { allowRenameRootNode: false },
-    ): Promise<DecryptedNode> {
+    ): Promise<TDecryptedNode> {
         validateNodeName(newName);
 
         const node = await this.nodesAccess.getNode(nodeUid);
@@ -91,7 +95,7 @@ export class NodesManagement {
         }
 
         await this.nodesAccess.notifyNodeChanged(nodeUid);
-        const newNode: DecryptedNode = {
+        const newNode: TDecryptedNode = {
             ...node,
             name: resultOk(newName),
             encryptedName: armoredNodeName,
@@ -123,7 +127,7 @@ export class NodesManagement {
         }
     }
 
-    async moveNode(nodeUid: string, newParentUid: string): Promise<DecryptedNode> {
+    async moveNode(nodeUid: string, newParentUid: string): Promise<TDecryptedNode> {
         const node = await this.nodesAccess.getNode(nodeUid);
 
         const [keys, newParentKeys, signingKeys] = await Promise.all([
@@ -172,7 +176,7 @@ export class NodesManagement {
                 // TODO: When moving photos, we need to pass content hash.
             },
         );
-        const newNode: DecryptedNode = {
+        const newNode: TDecryptedNode = {
             ...node,
             encryptedName: encryptedCrypto.encryptedName,
             parentUid: newParentUid,
@@ -213,7 +217,7 @@ export class NodesManagement {
         }
     }
 
-    async copyNode(nodeUid: string, newParentUid: string, name?: string): Promise<DecryptedNode> {
+    async copyNode(nodeUid: string, newParentUid: string, name?: string): Promise<TDecryptedNode> {
         if (name) {
             validateNodeName(name);
         }
@@ -257,7 +261,7 @@ export class NodesManagement {
             nameSignatureEmail: encryptedCrypto.nameSignatureEmail,
             hash: encryptedCrypto.hash,
         });
-        const newNode: DecryptedNode = {
+        const newNode: TDecryptedNode = {
             ...node,
             name: nodeName,
             uid: newNodeUid,
@@ -299,7 +303,7 @@ export class NodesManagement {
     }
 
     // FIXME create test for create folder
-    async createFolder(parentNodeUid: string, folderName: string, modificationTime?: Date): Promise<DecryptedNode> {
+    async createFolder(parentNodeUid: string, folderName: string, modificationTime?: Date): Promise<TDecryptedNode> {
         validateNodeName(folderName);
 
         const parentKeys = await this.nodesAccess.getNodeKeys(parentNodeUid);
@@ -328,8 +332,33 @@ export class NodesManagement {
         });
 
         await this.nodesAccess.notifyChildCreated(parentNodeUid);
+        const node = this.generateNodeFolder(nodeUid, parentNodeUid, folderName, encryptedCrypto);
+        await this.cryptoCache.setNodeKeys(nodeUid, keys);
+        return node;
+    }
 
-        const node: DecryptedNode = {
+    protected abstract generateNodeFolder(
+        nodeUid: string,
+        parentUid: string,
+        name: string,
+        encryptedCrypto: {
+            hash: string;
+            encryptedName: string;
+            signatureEmail: string | null;
+        },
+    ): TDecryptedNode;
+
+    protected generateNodeFolderBase(
+        nodeUid: string,
+        parentNodeUid: string,
+        name: string,
+        encryptedCrypto: {
+            hash: string;
+            encryptedName: string;
+            signatureEmail: string | null;
+        },
+    ): DecryptedNode {
+        return {
             // Internal metadata
             hash: encryptedCrypto.hash,
             encryptedName: encryptedCrypto.encryptedName,
@@ -351,12 +380,9 @@ export class NodesManagement {
             isStale: false,
             keyAuthor: resultOk(encryptedCrypto.signatureEmail || null),
             nameAuthor: resultOk(encryptedCrypto.signatureEmail || null),
-            name: resultOk(folderName),
+            name: resultOk(name),
             treeEventScopeId: splitNodeUid(nodeUid).volumeId,
         };
-
-        await this.cryptoCache.setNodeKeys(nodeUid, keys);
-        return node;
     }
 
     async findAvailableName(parentFolderUid: string, name: string): Promise<string> {
@@ -395,5 +421,20 @@ export class NodesManagement {
         }
 
         throw new ValidationError(c('Error').t`No available name found`);
+    }
+}
+
+export class NodesManagement extends NodesManagementBase {
+    protected generateNodeFolder(
+        nodeUid: string,
+        parentNodeUid: string,
+        name: string,
+        encryptedCrypto: {
+            hash: string;
+            encryptedName: string;
+            signatureEmail: string | null;
+        },
+    ): DecryptedNode {
+        return this.generateNodeFolderBase(nodeUid, parentNodeUid, name, encryptedCrypto);
     }
 }
