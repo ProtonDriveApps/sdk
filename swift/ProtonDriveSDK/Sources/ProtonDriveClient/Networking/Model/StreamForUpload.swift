@@ -60,11 +60,24 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
         }
 
         if eventCode.contains(.errorOccurred) {
-            onStreamError(aStream.streamError ?? ProtonDriveSDKError(interopError: .wrongResult(message: "Stream error")))
-            closeAndCleanUp()
+            invokeStreamError(aStream.streamError, fallbackMessage: "Stream error")
         }
     }
-    
+
+    private func makeError(_ error: Error?, fallbackMessage: String) -> Error {
+        return error ?? ProtonDriveSDKError(interopError: .wrongResult(message: fallbackMessage))
+    }
+
+    private func invokeStreamError(_ error: Error?, fallbackMessage: String) {
+        let error = makeError(error, fallbackMessage: fallbackMessage)
+        invokeStreamError(error)
+    }
+
+    private func invokeStreamError(_ error: Error) {
+        onStreamError(error)
+        closeAndCleanUp()
+    }
+
     private func receivedHasSpaceAvailableEvent() {
         stateQueue.sync {
             switch state {
@@ -99,52 +112,67 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
     private func writeToOutputStream() {
         writingQueue.async { [weak self] in
             guard let self else { return }
-            do {
-                guard self.remainingBytes.isEmpty else {
-                    self.remainingBytes.withUnsafeBufferPointer { buffer in
-                        let bytesWritten = self.output.write(buffer.baseAddress!, maxLength: remainingBytes.count)
-                        if bytesWritten < remainingBytes.count {
-                            // We have bytes in the memory from the last time
-                            // we were writing to the stream. We use them instead of asking the SDK.
-                            // Once all the remaining bytes are written, ask the SDK for more
-                            self.remainingBytes = Array(remainingBytes[bytesWritten...])
-                        } else {
-                            self.remainingBytes = []
-                        }
-                    }
-                    hasFinishedWriting()
-                    return
-                }
-                
-                let baseAddress = buffer.baseAddress!
-                let streamReadRequest = Proton_Sdk_StreamReadRequest.with {
-                    $0.bufferLength = Int32(buffer.count)
-                    $0.bufferPointer = Int64(ObjectHandle(rawPointer: UnsafeRawPointer(baseAddress)))
-                    $0.streamHandle = sdkContentHandle
-                }
-                SDKRequestHandler.send(streamReadRequest, logger: logger) { (result: Result<Int32, Error>) in
-                    switch result {
-                    case .success(let read):
-                        if read == 0 {
-                            self.output.close()
-                        } else {
-                            let bytesWritten = self.output.write(baseAddress, maxLength: Int(read))
-                            if bytesWritten < Int(read) {
-                                // Keep the remaining, unwritten bytes in the memory.
-                                // On the next .hasSpaceAvailable event, we will write
-                                // these bytes from the memory instead of asking the SDK.
-                                self.remainingBytes = Array(self.buffer[bytesWritten...])
-                            }
-                        }
-                    case .failure(let error):
-                        self.onStreamError(error)
-                    }
-                    self.hasFinishedWriting()
-                }
-            } catch {
-                onStreamError(error)
-                hasFinishedWriting()
+            guard self.remainingBytes.isEmpty else {
+                processRemainingBytes()
+                return
             }
+
+            let baseAddress = buffer.baseAddress!
+            let streamReadRequest = Proton_Sdk_StreamReadRequest.with {
+                $0.bufferLength = Int32(buffer.count)
+                $0.bufferPointer = Int64(ObjectHandle(rawPointer: UnsafeRawPointer(baseAddress)))
+                $0.streamHandle = sdkContentHandle
+            }
+            SDKRequestHandler.send(streamReadRequest, logger: logger) { (result: Result<Int32, Error>) in
+                self.handleReadResult(result, baseAddress: baseAddress)
+            }
+        }
+    }
+
+    private func processRemainingBytes() {
+        do {
+            try remainingBytes.withUnsafeBufferPointer { buffer in
+                let bytesWritten = output.write(buffer.baseAddress!, maxLength: remainingBytes.count)
+                if bytesWritten < 0 {
+                    throw makeError(output.streamError, fallbackMessage: "Failed to append stream data")
+                } else if bytesWritten < remainingBytes.count {
+                    // We have bytes in the memory from the last time
+                    // we were writing to the stream. We use them instead of asking the SDK.
+                    // Once all the remaining bytes are written, ask the SDK for more
+                    remainingBytes = Array(remainingBytes[bytesWritten...])
+                } else {
+                    remainingBytes = []
+                }
+            }
+            hasFinishedWriting()
+        } catch {
+            invokeStreamError(error)
+        }
+    }
+
+    private func handleReadResult(_ result: Result<Int32, Error>, baseAddress: UnsafeMutableRawPointer) {
+        do {
+            switch result {
+            case .success(let read):
+                if read == 0 {
+                    output.close()
+                } else {
+                    let bytesWritten = output.write(baseAddress, maxLength: Int(read))
+                    if bytesWritten < 0 {
+                        throw makeError(output.streamError, fallbackMessage: "Failed to write stream data")
+                    } else if bytesWritten < Int(read) {
+                        // Keep the remaining, unwritten bytes in the memory.
+                        // On the next .hasSpaceAvailable event, we will write
+                        // these bytes from the memory instead of asking the SDK.
+                        remainingBytes = Array(self.buffer[bytesWritten...])
+                    }
+                }
+            case .failure(let error):
+                throw error
+            }
+            hasFinishedWriting()
+        } catch {
+            invokeStreamError(error)
         }
     }
 
