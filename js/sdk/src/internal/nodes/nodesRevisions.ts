@@ -1,6 +1,6 @@
 import { Logger } from '../../interface';
 import { makeNodeUidFromRevisionUid } from '../uids';
-import { NodeAPIService } from './apiService';
+import { NodeAPIServiceBase } from './apiService';
 import { NodesCryptoService } from './cryptoService';
 import { NodesAccess } from './nodesAccess';
 import { parseFileExtendedAttributes } from './extendedAttributes';
@@ -12,9 +12,9 @@ import { DecryptedRevision } from './interface';
 export class NodesRevisons {
     constructor(
         private logger: Logger,
-        private apiService: NodeAPIService,
+        private apiService: NodeAPIServiceBase,
         private cryptoService: NodesCryptoService,
-        private nodesAccess: NodesAccess,
+        private nodesAccess: Pick<NodesAccess, 'getNodeKeys'>,
     ) {
         this.logger = logger;
         this.apiService = apiService;

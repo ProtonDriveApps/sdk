@@ -2,12 +2,12 @@ import {
     Logger,
     ProtonDriveClientContructorParameters,
     NodeOrUid,
-    MaybeMissingNode,
+    MaybeMissingPhotoNode,
     UploadMetadata,
     FileDownloader,
     FileUploader,
     SDKEvent,
-    MaybeNode,
+    MaybePhotoNode,
     ThumbnailType,
     ThumbnailResult,
     ShareNodeSettings,
@@ -22,22 +22,22 @@ import { getConfig } from './config';
 import { DriveCrypto } from './crypto';
 import { Telemetry } from './telemetry';
 import {
-    convertInternalMissingNodeIterator,
-    convertInternalNode,
-    convertInternalNodeIterator,
-    convertInternalNodePromise,
+    convertInternalMissingPhotoNodeIterator,
+    convertInternalPhotoNode,
+    convertInternalPhotoNodeIterator,
+    convertInternalPhotoNodePromise,
     getUid,
     getUids,
 } from './transformers';
 import { DriveAPIService } from './internal/apiService';
 import { initDownloadModule } from './internal/download';
 import { DriveEventsService, DriveListener, EventSubscription } from './internal/events';
-import { initNodesModule } from './internal/nodes';
 import {
     PHOTOS_SHARE_TARGET_TYPES,
     initPhotosModule,
     initPhotoSharesModule,
     initPhotoUploadModule,
+    initPhotosNodesModule,
 } from './internal/photos';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharesModule } from './internal/shares';
@@ -56,7 +56,7 @@ export class ProtonDrivePhotosClient {
     private sdkEvents: SDKEvents;
     private events: DriveEventsService;
     private photoShares: ReturnType<typeof initPhotoSharesModule>;
-    private nodes: ReturnType<typeof initNodesModule>;
+    private nodes: ReturnType<typeof initPhotosNodesModule>;
     private sharing: ReturnType<typeof initSharingModule>;
     private download: ReturnType<typeof initDownloadModule>;
     private upload: ReturnType<typeof initPhotoUploadModule>;
@@ -107,7 +107,7 @@ export class ProtonDrivePhotosClient {
             cryptoModule,
             coreShares,
         );
-        this.nodes = initNodesModule(
+        this.nodes = initPhotosNodesModule(
             telemetry,
             apiService,
             entitiesCache,
@@ -224,9 +224,9 @@ export class ProtonDrivePhotosClient {
      *
      * See `ProtonDriveClient.iterateTrashedNodes` for more information.
      */
-    async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+    async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<MaybePhotoNode> {
         this.logger.info('Iterating trashed nodes');
-        yield* convertInternalNodeIterator(this.nodes.access.iterateTrashedNodes(signal));
+        yield * convertInternalPhotoNodeIterator(this.nodes.access.iterateTrashedNodes(signal));
     }
 
     /**
@@ -234,10 +234,10 @@ export class ProtonDrivePhotosClient {
      *
      * See `ProtonDriveClient.iterateNodes` for more information.
      */
-    async *iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<MaybeMissingNode> {
+    async *iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<MaybeMissingPhotoNode> {
         this.logger.info(`Iterating ${nodeUids.length} nodes`);
         // TODO: expose photo type
-        yield* convertInternalMissingNodeIterator(this.nodes.access.iterateNodes(getUids(nodeUids), signal));
+        yield * convertInternalMissingPhotoNodeIterator(this.nodes.access.iterateNodes(getUids(nodeUids), signal));
     }
 
     /**
@@ -245,9 +245,9 @@ export class ProtonDrivePhotosClient {
      *
      * See `ProtonDriveClient.getNode` for more information.
      */
-    async getNode(nodeUid: NodeOrUid): Promise<MaybeNode> {
+    async getNode(nodeUid: NodeOrUid): Promise<MaybePhotoNode> {
         this.logger.info(`Getting node ${getUid(nodeUid)}`);
-        return convertInternalNodePromise(this.nodes.access.getNode(getUid(nodeUid)));
+        return convertInternalPhotoNodePromise(this.nodes.access.getNode(getUid(nodeUid)));
     }
 
     /**
@@ -255,9 +255,9 @@ export class ProtonDrivePhotosClient {
      *
      * See `ProtonDriveClient.renameNode` for more information.
      */
-    async renameNode(nodeUid: NodeOrUid, newName: string): Promise<MaybeNode> {
+    async renameNode(nodeUid: NodeOrUid, newName: string): Promise<MaybePhotoNode> {
         this.logger.info(`Renaming node ${getUid(nodeUid)}`);
-        return convertInternalNodePromise(this.nodes.management.renameNode(getUid(nodeUid), newName));
+        return convertInternalPhotoNodePromise(this.nodes.management.renameNode(getUid(nodeUid), newName));
     }
 
     /**
@@ -305,9 +305,9 @@ export class ProtonDrivePhotosClient {
      *
      * See `ProtonDriveClient.iterateSharedNodes` for more information.
      */
-    async *iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+    async *iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<MaybePhotoNode> {
         this.logger.info('Iterating shared nodes by me');
-        yield* convertInternalNodeIterator(this.sharing.access.iterateSharedNodes(signal));
+        yield * convertInternalPhotoNodeIterator(this.sharing.access.iterateSharedNodes(signal));
     }
 
     /**
@@ -315,11 +315,11 @@ export class ProtonDrivePhotosClient {
      *
      * See `ProtonDriveClient.iterateSharedNodesWithMe` for more information.
      */
-    async *iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+    async *iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<MaybePhotoNode> {
         this.logger.info('Iterating shared nodes with me');
 
         for await (const node of this.sharing.access.iterateSharedNodesWithMe(signal)) {
-            yield convertInternalNode(node);
+            yield convertInternalPhotoNode(node);
         }
     }
 
@@ -482,9 +482,9 @@ export class ProtonDrivePhotosClient {
      *
      * The output is not sorted and the order of the nodes is not guaranteed.
      */
-    async *iterateAlbums(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+    async *iterateAlbums(signal?: AbortSignal): AsyncGenerator<MaybePhotoNode> {
         this.logger.info('Iterating albums');
         // TODO: expose album type
-        yield* convertInternalNodeIterator(this.photos.albums.iterateAlbums(signal));
+        yield * convertInternalPhotoNodeIterator(this.photos.albums.iterateAlbums(signal));
     }
 }

@@ -16,8 +16,8 @@ import { asyncIteratorMap } from '../asyncIteratorMap';
 import { getErrorMessage } from '../errors';
 import { BatchLoading } from '../batchLoading';
 import { makeNodeUid, splitNodeUid } from '../uids';
-import { NodeAPIService } from './apiService';
-import { NodesCache } from './cache';
+import { NodeAPIServiceBase } from './apiService';
+import { NodesCacheBase } from './cache';
 import { NodesCryptoCache } from './cryptoCache';
 import { NodesCryptoService } from './cryptoService';
 import { NodesDebouncer } from './debouncer';
@@ -50,17 +50,21 @@ const DECRYPTION_CONCURRENCY = 30;
  * The node access module is responsible for fetching, decrypting and caching
  * nodes metadata.
  */
-export class NodesAccess {
-    private logger: Logger;
-    private debouncer: NodesDebouncer;
+export abstract class NodesAccessBase<
+    TEncryptedNode extends EncryptedNode = EncryptedNode,
+    TDecryptedNode extends DecryptedNode = DecryptedNode,
+    TCryptoService extends NodesCryptoService = NodesCryptoService,
+> {
+    protected logger: Logger;
+    protected debouncer: NodesDebouncer;
 
     constructor(
-        private telemetry: ProtonDriveTelemetry,
-        private apiService: NodeAPIService,
-        private cache: NodesCache,
-        private cryptoCache: NodesCryptoCache,
-        private cryptoService: NodesCryptoService,
-        private shareService: Pick<
+        protected telemetry: ProtonDriveTelemetry,
+        protected apiService: NodeAPIServiceBase<TEncryptedNode>,
+        protected cache: NodesCacheBase<TDecryptedNode>,
+        protected cryptoCache: NodesCryptoCache,
+        protected cryptoService: TCryptoService,
+        protected shareService: Pick<
             SharesService,
             'getRootIDs' | 'getSharePrivateKey' | 'getContextShareMemberEmailKey'
         >,
@@ -80,7 +84,7 @@ export class NodesAccess {
         return this.getNode(nodeUid);
     }
 
-    async getNode(nodeUid: string): Promise<DecryptedNode> {
+    async getNode(nodeUid: string): Promise<TDecryptedNode> {
         let cachedNode;
         try {
             await this.debouncer.waitForLoadingNode(nodeUid);
@@ -101,11 +105,11 @@ export class NodesAccess {
         parentNodeUid: string,
         filterOptions?: FilterOptions,
         signal?: AbortSignal,
-    ): AsyncGenerator<DecryptedNode> {
+    ): AsyncGenerator<TDecryptedNode> {
         // Ensure the parent is loaded and up-to-date.
         const parentNode = await this.getNode(parentNodeUid);
 
-        const batchLoading = new BatchLoading<string, DecryptedNode>({
+        const batchLoading = new BatchLoading<string, TDecryptedNode>({
             iterateItems: (nodeUids) => this.loadNodes(nodeUids, filterOptions, signal),
             batchSize: BATCH_LOADING_SIZE,
         });
@@ -154,9 +158,9 @@ export class NodesAccess {
     }
 
     // Improvement requested: keep status of loaded trash and leverage cache.
-    async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
+    async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<TDecryptedNode> {
         const { volumeId } = await this.shareService.getRootIDs();
-        const batchLoading = new BatchLoading<string, DecryptedNode>({
+        const batchLoading = new BatchLoading<string, TDecryptedNode>({
             iterateItems: (nodeUids) => this.loadNodes(nodeUids, undefined, signal),
             batchSize: BATCH_LOADING_SIZE,
         });
@@ -177,8 +181,8 @@ export class NodesAccess {
         yield* batchLoading.loadRest();
     }
 
-    async *iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode | MissingNode> {
-        const batchLoading = new BatchLoading<string, DecryptedNode | MissingNode>({
+    async *iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<TDecryptedNode | MissingNode> {
+        const batchLoading = new BatchLoading<string, TDecryptedNode | MissingNode>({
             iterateItems: (nodeUids) => this.loadNodesWithMissingReport(nodeUids, undefined, signal),
             batchSize: BATCH_LOADING_SIZE,
         });
@@ -228,7 +232,7 @@ export class NodesAccess {
         await this.cache.removeNodes([nodeUid]);
     }
 
-    private async loadNode(nodeUid: string): Promise<{ node: DecryptedNode; keys?: DecryptedNodeKeys }> {
+    private async loadNode(nodeUid: string): Promise<{ node: TDecryptedNode; keys?: DecryptedNodeKeys }> {
         this.debouncer.loadingNode(nodeUid);
         try {
             const { volumeId: ownVolumeId } = await this.shareService.getRootIDs();
@@ -243,7 +247,7 @@ export class NodesAccess {
         nodeUids: string[],
         filterOptions?: FilterOptions,
         signal?: AbortSignal,
-    ): AsyncGenerator<DecryptedNode> {
+    ): AsyncGenerator<TDecryptedNode> {
         for await (const result of this.loadNodesWithMissingReport(nodeUids, filterOptions, signal)) {
             if ('missingUid' in result) {
                 continue;
@@ -256,7 +260,7 @@ export class NodesAccess {
         nodeUids: string[],
         filterOptions?: FilterOptions,
         signal?: AbortSignal,
-    ): AsyncGenerator<DecryptedNode | MissingNode> {
+    ): AsyncGenerator<TDecryptedNode | MissingNode> {
         const returnedNodeUids: string[] = [];
         const errors = [];
 
@@ -264,13 +268,13 @@ export class NodesAccess {
 
         const apiNodesIterator = this.apiService.iterateNodes(nodeUids, ownVolumeId, filterOptions, signal);
 
-        const debouncedNodeMapper = async (encryptedNode: EncryptedNode): Promise<EncryptedNode> => {
+        const debouncedNodeMapper = async (encryptedNode: TEncryptedNode): Promise<TEncryptedNode> => {
             this.debouncer.loadingNode(encryptedNode.uid);
             return encryptedNode;
         };
         const encryptedNodesIterator = asyncIteratorMap(apiNodesIterator, debouncedNodeMapper, 1);
 
-        const decryptNodeMapper = async (encryptedNode: EncryptedNode): Promise<Result<DecryptedNode, unknown>> => {
+        const decryptNodeMapper = async (encryptedNode: TEncryptedNode): Promise<Result<TDecryptedNode, unknown>> => {
             returnedNodeUids.push(encryptedNode.uid);
             try {
                 const { node } = await this.decryptNode(encryptedNode);
@@ -310,8 +314,8 @@ export class NodesAccess {
     }
 
     private async decryptNode(
-        encryptedNode: EncryptedNode,
-    ): Promise<{ node: DecryptedNode; keys?: DecryptedNodeKeys }> {
+        encryptedNode: TEncryptedNode,
+    ): Promise<{ node: TDecryptedNode; keys?: DecryptedNodeKeys }> {
         let parentKey;
         try {
             const parentKeys = await this.getParentKeys(encryptedNode);
@@ -319,38 +323,14 @@ export class NodesAccess {
         } catch (error: unknown) {
             if (error instanceof DecryptionError) {
                 return {
-                    node: {
-                        ...encryptedNode,
-                        isStale: false,
-                        name: resultError(error),
-                        keyAuthor: resultError({
-                            claimedAuthor: encryptedNode.encryptedCrypto.signatureEmail,
-                            error: getErrorMessage(error),
-                        }),
-                        nameAuthor: resultError({
-                            claimedAuthor: encryptedNode.encryptedCrypto.nameSignatureEmail,
-                            error: getErrorMessage(error),
-                        }),
-                        membership: encryptedNode.membership
-                            ? {
-                                  role: encryptedNode.membership.role,
-                                  inviteTime: encryptedNode.membership.inviteTime,
-                                  sharedBy: resultError({
-                                      claimedAuthor: encryptedNode.encryptedCrypto.membership?.inviterEmail,
-                                      error: getErrorMessage(error),
-                                  }),
-                              }
-                            : undefined,
-                        errors: [error],
-                        treeEventScopeId: splitNodeUid(encryptedNode.uid).volumeId,
-                    },
+                    node: this.getDegradedUndecryptableNode(encryptedNode, error),
                 };
             }
             throw error;
         }
 
         const { node: unparsedNode, keys } = await this.cryptoService.decryptNode(encryptedNode, parentKey);
-        const node = await parseNode(this.logger, unparsedNode);
+        const node = this.parseNode(unparsedNode);
         try {
             await this.cache.setNode(node);
         } catch (error: unknown) {
@@ -367,8 +347,45 @@ export class NodesAccess {
         return { node, keys };
     }
 
+    protected abstract getDegradedUndecryptableNode(
+        encryptedNode: TEncryptedNode,
+        error: DecryptionError,
+    ): TDecryptedNode;
+
+    protected getDegradedUndecryptableNodeBase(encryptedNode: EncryptedNode, error: DecryptionError): DecryptedNode {
+        return {
+            ...encryptedNode,
+            isStale: false,
+            name: resultError(error),
+            keyAuthor: resultError({
+                claimedAuthor: encryptedNode.encryptedCrypto.signatureEmail,
+                error: getErrorMessage(error),
+            }),
+            nameAuthor: resultError({
+                claimedAuthor: encryptedNode.encryptedCrypto.nameSignatureEmail,
+                error: getErrorMessage(error),
+            }),
+            membership: encryptedNode.membership
+                ? {
+                      role: encryptedNode.membership.role,
+                      inviteTime: encryptedNode.membership.inviteTime,
+                      sharedBy: resultError({
+                          claimedAuthor: encryptedNode.encryptedCrypto.membership?.inviterEmail,
+                          error: getErrorMessage(error),
+                      }),
+                  }
+                : undefined,
+            errors: [error],
+            treeEventScopeId: splitNodeUid(encryptedNode.uid).volumeId,
+        };
+    }
+
+    protected abstract parseNode(
+        unparsedNode: Awaited<ReturnType<TCryptoService['decryptNode']>>['node'],
+    ): TDecryptedNode;
+
     async getParentKeys(
-        node: Pick<DecryptedNode, 'uid' | 'parentUid' | 'shareId'>,
+        node: Pick<TDecryptedNode, 'uid' | 'parentUid' | 'shareId'>,
     ): Promise<Pick<DecryptedNodeKeys, 'key' | 'hashKey'>> {
         if (node.parentUid) {
             try {
@@ -473,13 +490,23 @@ export class NodesAccess {
         return `https://drive.proton.me/${rootNode.shareId}/${type}/${nodeId}`;
     }
 
-    private async getRootNode(nodeUid: string): Promise<DecryptedNode> {
+    private async getRootNode(nodeUid: string): Promise<TDecryptedNode> {
         const node = await this.getNode(nodeUid);
         return node.parentUid ? this.getRootNode(node.parentUid) : node;
     }
 }
 
-export async function parseNode(logger: Logger, unparsedNode: DecryptedUnparsedNode): Promise<DecryptedNode> {
+export class NodesAccess extends NodesAccessBase {
+    protected getDegradedUndecryptableNode(encryptedNode: EncryptedNode, error: DecryptionError): DecryptedNode {
+        return this.getDegradedUndecryptableNodeBase(encryptedNode, error);
+    }
+
+    protected parseNode(unparsedNode: DecryptedUnparsedNode): DecryptedNode {
+        return parseNode(this.logger, unparsedNode);
+    }
+}
+
+export function parseNode(logger: Logger, unparsedNode: DecryptedUnparsedNode): DecryptedNode {
     let nodeName: Result<string, Error | InvalidNameError> = unparsedNode.name;
     if (unparsedNode.name.ok) {
         try {
@@ -526,6 +553,7 @@ export async function parseNode(logger: Logger, unparsedNode: DecryptedUnparsedN
     const extendedAttributes = unparsedNode.folder?.extendedAttributes
         ? parseFolderExtendedAttributes(logger, unparsedNode.folder.extendedAttributes)
         : undefined;
+
     return {
         ...unparsedNode,
         name: nodeName,

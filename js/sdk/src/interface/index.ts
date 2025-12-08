@@ -47,6 +47,7 @@ export type {
     Membership,
 } from './nodes';
 export { NodeType, MemberRole, RevisionState } from './nodes';
+export type { MaybePhotoNode, MaybeMissingPhotoNode, PhotoNode, DegradedPhotoNode, PhotoAttributes } from './photos';
 export type {
     ProtonInvitation,
     ProtonInvitationWithNode,

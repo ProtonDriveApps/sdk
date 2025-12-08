@@ -2,7 +2,7 @@ import { getMockLogger } from '../../tests/logger';
 import { DriveCrypto } from '../../crypto';
 import { makeNodeUid } from '../uids';
 import { PhotosAPIService } from './apiService';
-import { NodesService } from './interface';
+import { PhotosNodesAccess } from './nodes';
 import { PhotoSharesManager } from './shares';
 import { PhotosTimeline } from './timeline';
 
@@ -11,7 +11,7 @@ describe('PhotosTimeline', () => {
     let apiService: PhotosAPIService;
     let driveCrypto: DriveCrypto;
     let photoShares: PhotoSharesManager;
-    let nodesService: NodesService;
+    let nodesService: PhotosNodesAccess;
     let timeline: PhotosTimeline;
 
     const volumeId = 'volumeId';
