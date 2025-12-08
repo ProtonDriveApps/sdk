@@ -86,7 +86,7 @@ internal sealed partial class RevisionReader : IDisposable
                                 await _client.BlockDownloader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
                             }
 
-                            var downloadTask = DownloadBlockAsync(block, contentOutputStream, cancellationToken);
+                            var downloadTask = DownloadBlockAsync(block, cancellationToken);
 
                             downloadTasks.Enqueue(downloadTask);
                         }
@@ -180,12 +180,9 @@ internal sealed partial class RevisionReader : IDisposable
             {
                 manifestStream.Write(downloadResult.Sha256Digest.Span);
 
-                if (downloadResult.IsIntermediateStream)
-                {
-                    downloadedStream.Seek(0, SeekOrigin.Begin);
+                downloadedStream.Seek(0, SeekOrigin.Begin);
 
-                    await downloadedStream.CopyToAsync(outputStream, cancellationToken).ConfigureAwait(false);
-                }
+                await downloadedStream.CopyToAsync(outputStream, cancellationToken).ConfigureAwait(false);
 
                 _totalProgress += downloadedStream.Length;
 
@@ -193,10 +190,7 @@ internal sealed partial class RevisionReader : IDisposable
             }
             finally
             {
-                if (downloadResult.IsIntermediateStream)
-                {
-                    await downloadedStream.DisposeAsync().ConfigureAwait(false);
-                }
+                await downloadedStream.DisposeAsync().ConfigureAwait(false);
             }
         }
         finally
@@ -205,21 +199,9 @@ internal sealed partial class RevisionReader : IDisposable
         }
     }
 
-    private async Task<BlockDownloadResult> DownloadBlockAsync(BlockDto block, Stream contentOutputStream, CancellationToken cancellationToken)
+    private async Task<BlockDownloadResult> DownloadBlockAsync(BlockDto block, CancellationToken cancellationToken)
     {
-        Stream blockOutputStream;
-        bool isIntermediateStream;
-
-        if (block.Index == 1)
-        {
-            blockOutputStream = contentOutputStream;
-            isIntermediateStream = false;
-        }
-        else
-        {
-            blockOutputStream = ProtonDriveClient.MemoryStreamManager.GetStream();
-            isIntermediateStream = true;
-        }
+        var blockOutputStream = ProtonDriveClient.MemoryStreamManager.GetStream();
 
         var hashDigest = await _client.BlockDownloader.DownloadAsync(
             _revisionUid,
@@ -230,7 +212,7 @@ internal sealed partial class RevisionReader : IDisposable
             blockOutputStream,
             cancellationToken).ConfigureAwait(false);
 
-        return new BlockDownloadResult(block.Index, blockOutputStream, isIntermediateStream, hashDigest);
+        return new BlockDownloadResult(block.Index, blockOutputStream, hashDigest);
     }
 
     private async IAsyncEnumerable<(BlockDto Value, bool IsLast)> GetBlocksAsync([EnumeratorCancellation] CancellationToken cancellationToken)
@@ -338,11 +320,10 @@ internal sealed partial class RevisionReader : IDisposable
     [LoggerMessage(Level = LogLevel.Trace, Message = "Manifest verification failed for revision \"{RevisionUid}\": {VerificationStatus}")]
     private partial void LogFailedManifestVerification(RevisionUid revisionUid, PgpVerificationStatus verificationStatus);
 
-    private readonly struct BlockDownloadResult(int index, Stream stream, bool isIntermediateStream, ReadOnlyMemory<byte> sha256Digest)
+    private readonly struct BlockDownloadResult(int index, Stream stream, ReadOnlyMemory<byte> sha256Digest)
     {
         public int Index { get; } = index;
         public Stream Stream { get; } = stream;
-        public bool IsIntermediateStream { get; } = isIntermediateStream;
         public ReadOnlyMemory<byte> Sha256Digest { get; } = sha256Digest;
     }
 }
