@@ -1,6 +1,6 @@
 import { PrivateKey } from '../../crypto';
-import { MissingNode, MetricVolumeType } from '../../interface';
-import { DecryptedNode } from '../nodes';
+import { MetricVolumeType, PhotoAttributes } from '../../interface';
+import { DecryptedNode, EncryptedNode, DecryptedUnparsedNode } from '../nodes/interface';
 import { EncryptedShare } from '../shares';
 
 export interface SharesService {
@@ -23,10 +23,22 @@ export interface SharesService {
     getVolumeMetricContext(volumeId: string): Promise<MetricVolumeType>;
 }
 
-export interface NodesService {
-    getNode(nodeUid: string): Promise<DecryptedNode>;
-    iterateNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<DecryptedNode | MissingNode>;
-    getNodeKeys(nodeUid: string): Promise<{
-        hashKey?: Uint8Array;
-    }>;
-}
+export type EncryptedPhotoNode = EncryptedNode & {
+    photo?: EcnryptedPhotoAttributes;
+};
+
+export type DecryptedUnparsedPhotoNode = DecryptedUnparsedNode & {
+    photo?: PhotoAttributes;
+};
+
+export type DecryptedPhotoNode = DecryptedNode & {
+    photo?: PhotoAttributes;
+};
+
+export type EcnryptedPhotoAttributes = Omit<PhotoAttributes, 'albums'> & {
+    contentHash?: string;
+    albums: (PhotoAttributes['albums'][0] & {
+        nameHash?: string;
+        contentHash?: string;
+    })[];
+};

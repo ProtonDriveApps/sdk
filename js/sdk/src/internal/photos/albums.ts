@@ -1,7 +1,7 @@
 import { BatchLoading } from '../batchLoading';
 import { DecryptedNode } from '../nodes';
 import { PhotosAPIService } from './apiService';
-import { NodesService } from './interface';
+import { PhotosNodesAccess } from './nodes';
 import { PhotoSharesManager } from './shares';
 
 const BATCH_LOADING_SIZE = 10;
@@ -13,7 +13,7 @@ export class Albums {
     constructor(
         private apiService: PhotosAPIService,
         private photoShares: PhotoSharesManager,
-        private nodesService: NodesService,
+        private nodesService: PhotosNodesAccess,
     ) {
         this.apiService = apiService;
         this.photoShares = photoShares;

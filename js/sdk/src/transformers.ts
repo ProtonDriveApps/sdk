@@ -7,8 +7,13 @@ import {
     resultOk,
     resultError,
     MissingNode,
+    MaybePhotoNode as PublicMaybePhotoNode,
+    MaybeMissingPhotoNode as PublicMaybeMissingPhotoNode,
+    PhotoNode as PublicPhotoNode,
+    DegradedPhotoNode as PublicDegradedPhotoNode,
 } from './interface';
 import { DecryptedNode as InternalNode, DecryptedRevision as InternalRevision } from './internal/nodes';
+import { DecryptedPhotoNode as InternalPartialPhotoNode } from './internal/photos';
 
 type InternalPartialNode = Pick<
     InternalNode,
@@ -120,6 +125,47 @@ export function convertInternalNode(node: InternalPartialNode): PublicMaybeNode 
         name: name.value,
         activeRevision: activeRevision?.ok ? convertInternalRevision(activeRevision.value) : undefined,
     });
+}
+
+export async function* convertInternalPhotoNodeIterator(
+    photoNodeIterator: AsyncGenerator<InternalPartialPhotoNode>,
+): AsyncGenerator<PublicMaybePhotoNode> {
+    for await (const photoNode of photoNodeIterator) {
+        yield convertInternalPhotoNode(photoNode);
+    }
+}
+
+export async function* convertInternalMissingPhotoNodeIterator(
+    photoNodeIterator: AsyncGenerator<InternalPartialPhotoNode | MissingNode>,
+): AsyncGenerator<PublicMaybeMissingPhotoNode> {
+    for await (const photoNode of photoNodeIterator) {
+        if ('missingUid' in photoNode) {
+            yield resultError(photoNode);
+        } else {
+            yield convertInternalPhotoNode(photoNode);
+        }
+    }
+}
+
+export async function convertInternalPhotoNodePromise(
+    photoNodePromise: Promise<InternalPartialPhotoNode>,
+): Promise<PublicMaybePhotoNode> {
+    const photoNode = await photoNodePromise;
+    return convertInternalPhotoNode(photoNode);
+}
+
+export function convertInternalPhotoNode(photoNode: InternalPartialPhotoNode): PublicMaybePhotoNode {
+    const node = convertInternalNode(photoNode);
+    if (node.ok) {
+        return resultOk({
+            ...node.value,
+            photo: photoNode.photo,
+        } as PublicPhotoNode);
+    }
+    return resultError({
+        ...node.error,
+        photo: photoNode.photo,
+    } as PublicDegradedPhotoNode);
 }
 
 export async function* convertInternalRevisionIterator(
