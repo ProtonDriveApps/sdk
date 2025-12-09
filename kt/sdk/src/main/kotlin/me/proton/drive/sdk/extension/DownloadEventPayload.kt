@@ -7,6 +7,6 @@ fun ProtonDriveSdk.DownloadEventPayload.toEvent() = DownloadEvent(
     volumeType = volumeType.toEnum(),
     claimedFileSize = claimedFileSize,
     downloadedSize = downloadedSize,
-    error = error.toEnum(),
-    originalError = originalError,
+    error = takeIf { hasError() }?.error?.toEnum(),
+    originalError = takeIf { hasOriginalError() }?.originalError,
 )

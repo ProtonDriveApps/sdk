@@ -8,6 +8,6 @@ fun ProtonDriveSdk.VerificationErrorEventPayload.toEvent() = VerificationErrorEv
     field = field.toEnum(),
     fromBefore2024 = fromBefore2024,
     addressMatchingDefaultShare = addressMatchingDefaultShare,
-    error = error,
+    error = takeIf { hasError() }?.error,
     uid = uid,
 )
