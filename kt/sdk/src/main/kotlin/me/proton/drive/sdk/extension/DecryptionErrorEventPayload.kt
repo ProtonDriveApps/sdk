@@ -7,6 +7,6 @@ fun ProtonDriveSdk.DecryptionErrorEventPayload.toEvent() = DecryptionErrorEvent(
     volumeType = volumeType.toEnum(),
     field = field.toEnum(),
     fromBefore2024 = fromBefore2024,
-    error = error,
+    error = takeIf { hasError() }?.error,
     uid = uid,
 )
