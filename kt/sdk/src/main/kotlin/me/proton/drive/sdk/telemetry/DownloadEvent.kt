@@ -4,6 +4,6 @@ data class DownloadEvent(
     val volumeType: VolumeType,
     val claimedFileSize: Long,
     val downloadedSize: Long,
-    val error: DownloadError?,
-    val originalError: String?,
+    val error: DownloadError? = null,
+    val originalError: String? = null,
 )
