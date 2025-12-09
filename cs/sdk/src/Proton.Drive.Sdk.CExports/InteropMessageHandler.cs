@@ -49,6 +49,9 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.FileUploaderFree
                     => InteropFileUploader.HandleFree(request.FileUploaderFree),
 
+                Request.PayloadOneofCase.UploadControllerIsPaused
+                    => InteropUploadController.HandleIsPaused(request.UploadControllerIsPaused),
+
                 Request.PayloadOneofCase.UploadControllerAwaitCompletion
                     => await InteropUploadController.HandleAwaitCompletion(request.UploadControllerAwaitCompletion).ConfigureAwait(false),
 
@@ -69,6 +72,9 @@ internal static class InteropMessageHandler
 
                 Request.PayloadOneofCase.FileDownloaderFree
                     => InteropFileDownloader.HandleFree(request.FileDownloaderFree),
+
+                Request.PayloadOneofCase.DownloadControllerIsPaused
+                    => InteropDownloadController.HandleIsPaused(request.DownloadControllerIsPaused),
 
                 Request.PayloadOneofCase.DownloadControllerAwaitCompletion
                     => await InteropDownloadController.HandleAwaitCompletion(request.DownloadControllerAwaitCompletion).ConfigureAwait(false),
