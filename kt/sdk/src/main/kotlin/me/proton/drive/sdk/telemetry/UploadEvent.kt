@@ -5,6 +5,6 @@ data class UploadEvent(
     val expectedSize: Long,
     val uploadedSize: Long,
     val approximateUploadedSize: Long,
-    val error: UploadError?,
-    val originalError: String?,
+    val error: UploadError? = null,
+    val originalError: String? = null,
 )
