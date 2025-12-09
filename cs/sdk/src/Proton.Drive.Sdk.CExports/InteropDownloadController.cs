@@ -1,4 +1,5 @@
 ﻿using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Sdk.CExports;
 
@@ -6,6 +7,13 @@ namespace Proton.Drive.Sdk.CExports;
 
 internal static class InteropDownloadController
 {
+    public static IMessage HandleIsPaused(DownloadControllerIsPausedRequest request)
+    {
+        var downloadController = Interop.GetFromHandle<DownloadController>(request.DownloadControllerHandle);
+
+        return new BoolValue { Value = downloadController.IsPaused };
+    }
+
     public static async ValueTask<IMessage?> HandleAwaitCompletion(DownloadControllerAwaitCompletionRequest request)
     {
         var downloadController = Interop.GetFromHandle<DownloadController>(request.DownloadControllerHandle);

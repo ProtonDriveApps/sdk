@@ -1,4 +1,5 @@
 ﻿using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Sdk.CExports;
 
@@ -6,6 +7,13 @@ namespace Proton.Drive.Sdk.CExports;
 
 internal static class InteropUploadController
 {
+    public static IMessage HandleIsPaused(UploadControllerIsPausedRequest request)
+    {
+        var uploadController = Interop.GetFromHandle<UploadController>(request.UploadControllerHandle);
+
+        return new BoolValue { Value = uploadController.IsPaused };
+    }
+
     public static async ValueTask<IMessage?> HandleAwaitCompletion(UploadControllerAwaitCompletionRequest request)
     {
         var uploadController = Interop.GetFromHandle<UploadController>(request.UploadControllerHandle);

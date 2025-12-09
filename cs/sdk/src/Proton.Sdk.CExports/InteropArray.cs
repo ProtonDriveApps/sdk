@@ -13,20 +13,6 @@ internal readonly unsafe struct InteropArray<T>(T* pointer, nint length)
 
     public bool IsNullOrEmpty => Pointer is null || Length == 0;
 
-    public static InteropArray<T> AllocFromMemory(ReadOnlyMemory<T> memory)
-    {
-        if (memory.Length == 0)
-        {
-            return Null;
-        }
-
-        var interopBytes = NativeMemory.Alloc((nuint)memory.Length);
-
-        memory.Span.CopyTo(new Span<T>(interopBytes, memory.Length));
-
-        return new InteropArray<T>((T*)interopBytes, memory.Length);
-    }
-
     public T[] ToArray()
     {
         return !IsNullOrEmpty ? new ReadOnlySpan<T>(Pointer, (int)Length).ToArray() : [];

@@ -2,6 +2,9 @@
 
 public sealed class DownloadController(Task downloadTask)
 {
+    // FIXME
+    public bool IsPaused { get; }
+
     public Task Completion { get; } = downloadTask;
 
     public void Pause()

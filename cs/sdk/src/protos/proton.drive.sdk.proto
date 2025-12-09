@@ -21,18 +21,20 @@ message Request {
         UploadFromStreamRequest upload_from_stream = 1100;
         UploadFromFileRequest upload_from_file = 1101;
         FileUploaderFreeRequest file_uploader_free = 1102;
-        UploadControllerAwaitCompletionRequest upload_controller_await_completion = 1103;
-        UploadControllerPauseRequest upload_controller_pause = 1104;
-        UploadControllerResumeRequest upload_controller_resume = 1105;
-        UploadControllerFreeRequest upload_controller_free = 1106;
+        UploadControllerIsPausedRequest upload_controller_is_paused = 1103;
+        UploadControllerAwaitCompletionRequest upload_controller_await_completion = 1104;
+        UploadControllerPauseRequest upload_controller_pause = 1105;
+        UploadControllerResumeRequest upload_controller_resume = 1106;
+        UploadControllerFreeRequest upload_controller_free = 1107;
 
         DownloadToStreamRequest download_to_stream = 1200;
         DownloadToFileRequest download_to_file = 1201;
         FileDownloaderFreeRequest file_downloader_free = 1202;
-        DownloadControllerAwaitCompletionRequest download_controller_await_completion = 1203;
-        DownloadControllerPauseRequest download_controller_pause = 1204;
-        DownloadControllerResumeRequest download_controller_resume = 1205;
-        DownloadControllerFreeRequest download_controller_free = 1206;
+        DownloadControllerIsPausedRequest download_controller_is_paused = 1203;
+        DownloadControllerAwaitCompletionRequest download_controller_await_completion = 1204;
+        DownloadControllerPauseRequest download_controller_pause = 1205;
+        DownloadControllerResumeRequest download_controller_resume = 1206;
+        DownloadControllerFreeRequest download_controller_free = 1207;
     };
 }
 
@@ -229,6 +231,11 @@ message FileUploaderFreeRequest {
     int64 file_uploader_handle = 1;
 }
 
+// The reponse message must be of type BoolValue.
+message UploadControllerIsPausedRequest {
+    int64 upload_controller_handle = 1;
+}
+
 // The response message must be of type UploadResult.
 message UploadControllerAwaitCompletionRequest {
     int64 upload_controller_handle = 1;
@@ -293,6 +300,11 @@ message DownloadToFileRequest {
 // The reponse must not have a value.
 message FileDownloaderFreeRequest  {
     int64 file_downloader_handle = 1;
+}
+
+// The reponse message must be of type BoolValue.
+message DownloadControllerIsPausedRequest {
+    int64 download_controller_handle = 1;
 }
 
 // The reponse must not have a value.
