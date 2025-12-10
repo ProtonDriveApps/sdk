@@ -15,11 +15,17 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 }
 
 JNIEnv *getJNIEnv() {
-    JNIEnv *env;
-    (*g_vm)->GetEnv(g_vm, (void **) &env, JNI_VERSION_1_6 /*version*/);
-    if (env == NULL) {
-        (*g_vm)->AttachCurrentThread(g_vm, &env, NULL);
+    JNIEnv* env = NULL;
+    jint status = (*g_vm)->GetEnv(g_vm, (void**)&env, JNI_VERSION_1_6);
+
+    if (status == JNI_EDETACHED) {
+        if ((*g_vm)->AttachCurrentThread(g_vm, &env, NULL) != 0) {
+            return NULL;
+        }
+    } else if (status == JNI_EVERSION) {
+        return NULL;
     }
+
     return env;
 }
 
