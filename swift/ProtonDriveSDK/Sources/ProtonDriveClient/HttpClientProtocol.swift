@@ -99,7 +99,7 @@ public struct AnyAsyncIterator<Element>: AsyncIteratorProtocol {
             if #available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *) {
                 try await box.iterator.next(isolation: $0)
             } else {
-                try await box.iterator.next()
+                fatalError("This method is not available on older OS versions.")
             }
         }
     }
