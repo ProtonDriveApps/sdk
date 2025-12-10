@@ -143,7 +143,7 @@ public struct FileRevision: Sendable {
     }
 }
 
-public struct FileNodeUploadResult: Sendable {
+public struct UploadedFileIdentifiers: Sendable {
     public let nodeUid: SDKNodeUid
     public let revisionUid: SDKRevisionUid
     

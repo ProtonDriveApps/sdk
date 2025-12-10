@@ -1,7 +1,7 @@
 import Foundation
 
 /// Handles file download operations for ProtonDrive
-public actor DownloadThumbnailsManager {
+actor DownloadThumbnailsManager {
 
     private let clientHandle: ObjectHandle
     private let logger: Logger?
@@ -19,7 +19,7 @@ public actor DownloadThumbnailsManager {
     }
 
     /// Download thumbnails for file UIDs
-    public func downloadThumbnails(
+    func downloadThumbnails(
         fileUids: [SDKNodeUid],
         type: ThumbnailData.ThumbnailType,
         cancellationToken: UUID
