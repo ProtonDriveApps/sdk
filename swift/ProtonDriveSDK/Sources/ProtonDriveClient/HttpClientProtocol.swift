@@ -3,8 +3,6 @@ import SwiftProtobuf
 
 /// Protocol to be implemented by object making http requests.
 public protocol HttpClientProtocol: AnyObject, Sendable {
-    func identifyRequestType(url: String, method: String) -> RequestType
-
     /// Drive api calls (takes `/drive/...` path)
     func requestDriveApi(
         method: String,
@@ -28,12 +26,6 @@ public protocol HttpClientProtocol: AnyObject, Sendable {
         headers: [(String, [String])],
         downloadStreamCreator: @Sendable @escaping (URLSession.AsyncBytes) -> AnyAsyncSequence<UInt8>
     ) async -> Result<HttpClientStream, NSError>
-}
-
-public enum RequestType {
-    case driveAPI(relativePath: String)
-    case uploadToStorage
-    case downloadFromStorage
 }
 
 public struct HttpClientResponse {

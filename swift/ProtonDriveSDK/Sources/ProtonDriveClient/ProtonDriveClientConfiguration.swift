@@ -26,6 +26,9 @@ public struct ProtonDriveClientConfiguration: Sendable {
     let clientUID: String
     let httpTransferBufferSize: Int // Used for establishing buffer for http streams
     
+    let downloadOperationalResilience: OperationalResilience
+    let uploadOperationalResilience: OperationalResilience
+    
     let entityCachePath: String?
     let secretCachePath: String?
     
@@ -36,6 +39,8 @@ public struct ProtonDriveClientConfiguration: Sendable {
         baseURL: String,
         clientUID: String,
         httpTransferBufferSize: Int = defaultHttpTransportBufferSize,
+        downloadOperationalResilience: OperationalResilience = BasicOperationalResilience.default,
+        uploadOperationalResilience: OperationalResilience = BasicOperationalResilience.default,
         boundStreamsCreator: @Sendable @escaping () throws -> (InputStream, OutputStream, Int) = defaultBoundStreamsCreator,
         downloadStreamCreator: @Sendable @escaping (URLSession.AsyncBytes) -> AnyAsyncSequence<UInt8> = defaultDownloadStreamCreator,
         entityCachePath: String? = nil,
@@ -44,6 +49,8 @@ public struct ProtonDriveClientConfiguration: Sendable {
         self.baseURL = baseURL
         self.clientUID = clientUID
         self.httpTransferBufferSize = httpTransferBufferSize
+        self.downloadOperationalResilience = downloadOperationalResilience
+        self.uploadOperationalResilience = uploadOperationalResilience
         self.boundStreamsCreator = boundStreamsCreator
         self.downloadStreamCreator = downloadStreamCreator
         self.entityCachePath = entityCachePath
