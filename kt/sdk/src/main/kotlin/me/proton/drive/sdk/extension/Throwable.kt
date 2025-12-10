@@ -7,8 +7,8 @@ import proton.sdk.ProtonSdk
 
 fun Throwable.toProtonSdkError(defaultMessage: String) = proton.sdk.error {
     val exception = this@toProtonSdkError
-    type = javaClass.name
-    this.message = exception.message ?: defaultMessage
+    type = exception.javaClass.name
+    message = exception.message ?: defaultMessage
     domain = exception.domain()
     context = stackTraceToString()
 }
