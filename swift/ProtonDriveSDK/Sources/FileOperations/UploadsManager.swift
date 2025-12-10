@@ -2,7 +2,7 @@ import Foundation
 import SwiftProtobuf
 
 /// Handles file upload operations for ProtonDrive
-public actor UploadManager {
+actor UploadsManager {
 
     private let clientHandle: ObjectHandle
     private let logger: Logger?
@@ -18,9 +18,8 @@ public actor UploadManager {
             $0.free()
         }
     }
-
-    /// Upload file from file URL with complete upload flow
-    public func uploadFile(
+    
+    func uploadFileOperation(
         parentFolderUid: SDKNodeUid,
         name: String,
         fileURL: URL,
@@ -31,16 +30,9 @@ public actor UploadManager {
         overrideExistingDraft: Bool,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
-    ) async throws -> FileNodeUploadResult {
+    ) async throws -> UploadOperation {
         let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
         activeUploads[cancellationToken] = cancellationTokenSource
-
-        defer {
-            if let cancellationTokenSource = activeUploads[cancellationToken] {
-                activeUploads[cancellationToken] = nil
-                cancellationTokenSource.free()
-            }
-        }
 
         let cancellationHandle = cancellationTokenSource.handle
 
@@ -55,21 +47,18 @@ public actor UploadManager {
             logger: logger
         )
 
-        defer {
-            freeFileUploader(uploaderHandle)
-        }
-
-        let uploadedNode = try await uploadFromFile(
-            uploaderHandle: uploaderHandle,
+        let uploadController = try await uploadFromFile(
+            fileUploaderHandle: uploaderHandle,
             fileURL: fileURL,
             progressCallback: progressCallback,
+            cancellationToken: cancellationToken,
             cancellationHandle: cancellationHandle,
             thumbnails: thumbnails
         )
-        return uploadedNode
+        return uploadController
     }
-
-    public func uploadNewRevision(
+   
+    func uploadNewRevisionOperation(
         currentActiveRevisionUid: SDKRevisionUid,
         fileURL: URL,
         fileSize: Int64,
@@ -77,16 +66,9 @@ public actor UploadManager {
         thumbnails: [ThumbnailData],
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
-    ) async throws -> FileNodeUploadResult {
+    ) async throws -> UploadOperation {
         let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
         activeUploads[cancellationToken] = cancellationTokenSource
-
-        defer {
-            if let cancellationTokenSource = activeUploads[cancellationToken] {
-                activeUploads[cancellationToken] = nil
-                cancellationTokenSource.free()
-            }
-        }
 
         let cancellationHandle = cancellationTokenSource.handle
 
@@ -97,34 +79,38 @@ public actor UploadManager {
             cancellationHandle: cancellationHandle
         )
         
-        defer {
-            freeFileUploader(uploaderHandle)
-        }
-        
-        let uploadedNode = try await uploadFromFile(
-            uploaderHandle: uploaderHandle,
+        let uploadController = try await uploadFromFile(
+            fileUploaderHandle: uploaderHandle,
             fileURL: fileURL,
             progressCallback: progressCallback,
+            cancellationToken: cancellationToken,
             cancellationHandle: cancellationHandle,
             thumbnails: thumbnails
         )
-        return uploadedNode
+        return uploadController
     }
 
+    // API to cancel operation when the client does not use the UploadOperation
     func cancelUpload(with cancellationToken: UUID) async throws {
         guard let uploadCancellationToken = activeUploads[cancellationToken] else {
             throw ProtonDriveSDKError(interopError: .noCancellationTokenForIdentifier(operation: "upload"))
         }
 
         try await uploadCancellationToken.cancel()
-        try await uploadCancellationToken.free()
-
+        
         activeUploads[cancellationToken] = nil
+        uploadCancellationToken.free()
+    }
+    
+    private func freeCancellationTokenSourceIfNeeded(cancellationToken: UUID) {
+        guard let cancellationTokenSource = activeUploads[cancellationToken] else { return }
+        activeUploads[cancellationToken] = nil
+        cancellationTokenSource.free()
     }
 }
 
 // MARK: - Revision uploader
-extension UploadManager {
+extension UploadsManager {
     private func buildFileUploader(
         parentFolderUid: String,
         name: String,
@@ -176,14 +162,15 @@ extension UploadManager {
     }
 
     private func uploadFromFile(
-        uploaderHandle: ObjectHandle,
+        fileUploaderHandle: ObjectHandle,
         fileURL: URL,
         progressCallback: @escaping ProgressCallback,
+        cancellationToken: UUID,
         cancellationHandle: ObjectHandle,
         thumbnails: [ThumbnailData]
-    ) async throws -> FileNodeUploadResult {
+    ) async throws -> UploadOperation {
         let uploaderRequest = Proton_Drive_Sdk_UploadFromFileRequest.with {
-            $0.uploaderHandle = Int64(uploaderHandle)
+            $0.uploaderHandle = Int64(fileUploaderHandle)
             $0.filePath = fileURL.path(percentEncoded: false)
             $0.progressAction = Int64(ObjectHandle(callback: cProgressCallback))
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
@@ -206,58 +193,20 @@ extension UploadManager {
             includesLongLivedCallback: true,
             logger: logger
         )
-        assert(uploadControllerHandle != 0)
         
-        defer {
-            freeFileUploadController(uploadControllerHandle)
-        }
-
-        let uploadedNode = try await awaitUploadCompletion(uploadControllerHandle)
-        return uploadedNode
-    }
-
-    /// Free a file uploader when no longer needed
-    private func freeFileUploader(_ fileUploaderHandle: ObjectHandle) {
-        Task {
-            let freeRequest = Proton_Drive_Sdk_FileUploaderFreeRequest.with {
-                $0.fileUploaderHandle = Int64(fileUploaderHandle)
+        return UploadOperation(
+            fileUploaderHandle: fileUploaderHandle,
+            uploadControllerHandle: uploadControllerHandle,
+            progressCallbackWrapper: callbackState,
+            logger: logger,
+            onOperationCancel: { [weak self] in
+                guard let self else { return }
+                try await self.cancelUpload(with: cancellationToken)
+            },
+            onOperationDispose: { [weak self] in
+                guard let self else { return }
+                await self.freeCancellationTokenSourceIfNeeded(cancellationToken: cancellationToken)
             }
-            do {
-                try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
-            } catch {
-                // If the request to free the file uploader failed, we have a memory leak, but not much else can be done.
-                // It's not gonna break the app's functionality, so we just log the issue and continue.
-                logger?.error("Proton_Drive_Sdk_FileUploaderFreeRequest failed: \(error)", category: "UploadManager.freeFileUploader")
-            }
-        }
-    }
-    
-    private func freeFileUploadController(_ fileUploadControllerHandle: ObjectHandle) {
-        Task {
-            let freeRequest = Proton_Drive_Sdk_UploadControllerFreeRequest.with {
-                $0.uploadControllerHandle = Int64(fileUploadControllerHandle)
-            }
-            do {
-                try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
-            } catch {
-                // If the request to free the file upload controller failed, we have a memory leak, but not much else can be done.
-                // It's not gonna break the app's functionality, so we just log the issue and continue.
-                logger?.error("Proton_Drive_Sdk_UploadControllerFreeRequest failed: \(error)", category: "UploadManager.freeFileUploadController")
-            }
-        }
-    }
-
-    /// Wait for upload completion
-    private func awaitUploadCompletion(_ uploadControllerHandle: ObjectHandle) async throws -> FileNodeUploadResult {
-        assert(uploadControllerHandle != 0)
-        let awaitUploadCompletionRequest = Proton_Drive_Sdk_UploadControllerAwaitCompletionRequest.with {
-            $0.uploadControllerHandle = Int64(uploadControllerHandle)
-        }
-
-        let uploadResult: Proton_Drive_Sdk_UploadResult = try await SDKRequestHandler.send(awaitUploadCompletionRequest, logger: logger)
-        guard let result = FileNodeUploadResult(interopUploadResult: uploadResult) else {
-            throw ProtonDriveSDKError(interopError: .wrongResult(message: "Wrong uid format in Proton_Drive_Sdk_UploadResult: \(uploadResult)"))
-        }
-        return result
+        )
     }
 }

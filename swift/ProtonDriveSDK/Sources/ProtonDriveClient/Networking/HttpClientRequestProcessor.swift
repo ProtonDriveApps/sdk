@@ -60,28 +60,32 @@ enum HttpClientRequestProcessor {
         httpRequestData: Proton_Sdk_HttpRequest,
         callbackPointer: Int
     ) async throws {
-        let requestType = client.httpClient.identifyRequestType(url: httpRequestData.url, method: httpRequestData.method)
 
-        switch requestType {
-        case .driveAPI(let driveRelativePath):
+        switch httpRequestData.type {
+        case .regularApi:
+            guard let relativeApiPath = httpRequestData.url.split(separator: "/drive/").last else {
+                fatalError("The regular API calls must always have the '/drive/' prefix in the path")
+            }
             try await callDriveApi(
-                driveRelativePath: driveRelativePath,
+                driveRelativePath: "/drive/" + relativeApiPath,
                 client: client,
                 httpRequestData: httpRequestData,
                 callbackPointer: callbackPointer
             )
-        case .uploadToStorage:
+        case .storageUpload:
             try await uploadToStorage(
                 client: client,
                 httpRequestData: httpRequestData,
                 callbackPointer: callbackPointer
             )
-        case .downloadFromStorage:
+        case .storageDownload:
             try await downloadFromStorage(
                 client: client,
                 httpRequestData: httpRequestData,
                 callbackPointer: callbackPointer
             )
+        case .UNRECOGNIZED(let int):
+            fatalError("Unknown HttpRequestType: \(int)")
         }
     }
     

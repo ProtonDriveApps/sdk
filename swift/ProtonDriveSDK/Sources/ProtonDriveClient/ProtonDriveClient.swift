@@ -5,10 +5,10 @@ import Foundation
 /// Create a single object of this class and use it to perform downloads, uploads and all other supported operations.
 public actor ProtonDriveClient: Sendable {
 
-    private var clientHandle: ObjectHandle!
+    private var clientHandle: ObjectHandle = 0
 
-    private var uploadManager: UploadManager!
-    private var downloadManager: DownloadManager!
+    private var uploadsManager: UploadsManager!
+    private var downloadsManager: DownloadsManager!
     private var thumbnailsManager: DownloadThumbnailsManager!
 
     let logger: ProtonDriveSDK.Logger
@@ -69,11 +69,12 @@ public actor ProtonDriveClient: Sendable {
         let handle: Proton_Drive_Sdk_DriveClientCreateRequest.CallResultType = try await SDKRequestHandler.sendInteropRequest(
             clientCreateRequest, state: weakSelf, includesLongLivedCallback: true, logger: logger
         )
+        assert(handle != 0)
         self.clientHandle = ObjectHandle(handle)
         logger.trace("client handle: \(clientHandle)", category: "ProtonDriveClient")
 
-        self.uploadManager = UploadManager(clientHandle: clientHandle, logger: logger)
-        self.downloadManager = DownloadManager(clientHandle: clientHandle, logger: logger)
+        self.uploadsManager = UploadsManager(clientHandle: clientHandle, logger: logger)
+        self.downloadsManager = DownloadsManager(clientHandle: clientHandle, logger: logger)
         self.thumbnailsManager = DownloadThumbnailsManager(clientHandle: clientHandle, logger: logger)
     }
 
@@ -98,13 +99,48 @@ public actor ProtonDriveClient: Sendable {
         return result
     }
 
+    /// Convenience API for when you don't need a more granular control over the download (pause, resume etc.)
     public func downloadFile(
         revisionUid: SDKRevisionUid,
         destinationUrl: URL,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws {
-        try await downloadManager.downloadFile(
+        let operation = try await downloadFileOperation(
+            revisionUid: revisionUid,
+            destinationUrl: destinationUrl,
+            cancellationToken: cancellationToken,
+            progressCallback: progressCallback
+        )
+        return try await awaitDownloadCompletion(operation: operation, retryCounter: 0)
+    }
+    
+    private func awaitDownloadCompletion(
+        operation: DownloadOperation, retryCounter: UInt
+    ) async throws {
+        let result = try await operation.awaitDownloadCompletion()
+        switch result {
+        case .succeeded:
+            return
+        
+        case .failed(let error):
+            throw error
+        
+        case .pausedOnError(let error):
+            return try await configuration.downloadOperationalResilience.performRetry(retryCounter, error) {
+                try await operation.resume()
+                return try await awaitDownloadCompletion(operation: operation, retryCounter: $0)
+            }
+        }
+    }
+    
+    public func downloadFileOperation(
+        revisionUid: SDKRevisionUid,
+        destinationUrl: URL,
+        cancellationToken: UUID,
+        progressCallback: @escaping ProgressCallback
+    ) async throws -> DownloadOperation {
+        try await downloadsManager.downloadFileOperation(
             revisionUid: revisionUid,
             destinationUrl: destinationUrl,
             cancellationToken: cancellationToken,
@@ -113,9 +149,10 @@ public actor ProtonDriveClient: Sendable {
     }
 
     public func cancelDownload(cancellationToken: UUID) async throws {
-        try await downloadManager.cancelDownload(with: cancellationToken)
+        try await downloadsManager.cancelDownload(with: cancellationToken)
     }
 
+    /// Convenience API for when you don't need a more granular control over the upload (pause, resume etc.)
     public func uploadFile(
         parentFolderUid: SDKNodeUid,
         name: String,
@@ -127,8 +164,55 @@ public actor ProtonDriveClient: Sendable {
         overrideExistingDraft: Bool,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
-    ) async throws -> FileNodeUploadResult {
-        try await uploadManager.uploadFile(
+    ) async throws -> UploadedFileIdentifiers {
+        let operation = try await uploadFileOperation(
+            parentFolderUid: parentFolderUid,
+            name: name,
+            url: url,
+            fileSize: fileSize,
+            modificationDate: modificationDate,
+            mediaType: mediaType,
+            thumbnails: thumbnails,
+            overrideExistingDraft: overrideExistingDraft,
+            cancellationToken: cancellationToken,
+            progressCallback: progressCallback
+        )
+        
+        return try await awaitUploadCompletion(operation: operation, retryCounter: 0)
+    }
+    
+    private func awaitUploadCompletion(
+        operation: UploadOperation, retryCounter: UInt
+    ) async throws -> UploadedFileIdentifiers {
+        let result = try await operation.awaitUploadCompletion()
+        switch result {
+        case .succeeded(let uploadResult):
+            return uploadResult
+        
+        case .failed(let error):
+            throw error
+        
+        case .pausedOnError(let error):
+            return try await configuration.uploadOperationalResilience.performRetry(retryCounter, error) {
+                try await operation.resume()
+                return try await awaitUploadCompletion(operation: operation, retryCounter: $0)
+            }
+        }
+    }
+    
+    public func uploadFileOperation(
+        parentFolderUid: SDKNodeUid,
+        name: String,
+        url: URL,
+        fileSize: Int64,
+        modificationDate: Date,
+        mediaType: String,
+        thumbnails: [ThumbnailData],
+        overrideExistingDraft: Bool,
+        cancellationToken: UUID,
+        progressCallback: @escaping ProgressCallback
+    ) async throws -> UploadOperation {
+        try await uploadsManager.uploadFileOperation(
             parentFolderUid: parentFolderUid,
             name: name,
             fileURL: url,
@@ -142,6 +226,7 @@ public actor ProtonDriveClient: Sendable {
         )
     }
 
+    /// Convenience API for when you don't need a more granular control over the upload (pause, resume etc.)
     public func uploadNewRevision(
         currentActiveRevisionUid: SDKRevisionUid,
         fileURL: URL,
@@ -150,8 +235,8 @@ public actor ProtonDriveClient: Sendable {
         thumbnails: [ThumbnailData],
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
-    ) async throws -> FileNodeUploadResult {
-        try await uploadManager.uploadNewRevision(
+    ) async throws -> UploadedFileIdentifiers {
+        let operation = try await uploadNewRevisionOperation(
             currentActiveRevisionUid: currentActiveRevisionUid,
             fileURL: fileURL,
             fileSize: fileSize,
@@ -160,6 +245,32 @@ public actor ProtonDriveClient: Sendable {
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
+        
+        return try await awaitUploadCompletion(operation: operation, retryCounter: 0)
+    }
+    
+    public func uploadNewRevisionOperation(
+        currentActiveRevisionUid: SDKRevisionUid,
+        fileURL: URL,
+        fileSize: Int64,
+        modificationDate: Date,
+        thumbnails: [ThumbnailData],
+        cancellationToken: UUID,
+        progressCallback: @escaping ProgressCallback
+    ) async throws -> UploadOperation {
+        return try await uploadsManager.uploadNewRevisionOperation(
+            currentActiveRevisionUid: currentActiveRevisionUid,
+            fileURL: fileURL,
+            fileSize: fileSize,
+            modificationDate: modificationDate,
+            thumbnails: thumbnails,
+            cancellationToken: cancellationToken,
+            progressCallback: progressCallback
+        )
+    }
+    
+    public func cancelUpload(cancellationToken: UUID) async throws {
+        try await uploadsManager.cancelUpload(with: cancellationToken)
     }
 
     public func getAvailableName(
@@ -184,10 +295,6 @@ public actor ProtonDriveClient: Sendable {
         return nameResult
     }
 
-    public func cancelUpload(cancellationToken: UUID) async throws {
-        try await uploadManager.cancelUpload(with: cancellationToken)
-    }
-
     static func unbox(callbackPointer: Int, releaseBox: () -> Void, weakDriveClient: WeakReference<ProtonDriveClient>) -> ProtonDriveClient? {
         guard let driveClient = weakDriveClient.value else {
             releaseBox()
@@ -208,5 +315,24 @@ public actor ProtonDriveClient: Sendable {
             type: type,
             cancellationToken: cancellationToken
         )
+    }
+    
+    deinit {
+        guard clientHandle != 0 else { return }
+        Self.freeProtonDriveClient(Int64(clientHandle), logger)
+    }
+    
+    private static func freeProtonDriveClient(_ clientHandle: Int64, _ logger: Logger?) {
+        Task {
+            let freeRequest = Proton_Drive_Sdk_DriveClientFreeRequest.with {
+                $0.clientHandle = clientHandle
+            }
+            do {
+                try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
+            } catch {
+                // If the request to free the client failed, we have a memory leak, but not much else can be done.
+                logger?.error("Proton_Drive_Sdk_DriveClientFreeRequest failed: \(error)", category: "ProtonDriveClient.freeProtonDriveClient")
+            }
+        }
     }
 }

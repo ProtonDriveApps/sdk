@@ -1,7 +1,7 @@
 import Foundation
 import CProtonDriveSDK
 
-final class ProgressCallbackWrapper {
+final class ProgressCallbackWrapper: Sendable {
     let callback: ProgressCallback
 
     init(callback: @escaping ProgressCallback) {
