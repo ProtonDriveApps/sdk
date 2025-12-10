@@ -15,26 +15,88 @@ enum SDKResponseHandler {
     }
     
     static func sendErrorToSDK(_ error: Error, callbackPointer: Int) {
-        sendErrorToSDK(error as NSError, callbackPointer: callbackPointer)
+        let sdkError = Proton_Sdk_Error.from(nsError: error as NSError)
+        SDKResponseHandler.send(callbackPointer: callbackPointer, message: sdkError)
     }
     
+    /// A helper method to send an interop error from Swift bindings by providing just the message.
+    /// The examples of interop errors are: unable to serialize/deserialize protobuf, unable to use a provide pointer etc.
     static func sendInteropErrorToSDK(message: String, callbackPointer: Int) {
-        let error = Proton_Sdk_Error.with {
-            $0.type = "interop"
+        assertionFailure(message)
+        let sdkError = Proton_Sdk_Error.with {
+            $0.type = "Swift bindings"
             $0.domain = Proton_Sdk_ErrorDomain.businessLogic
             $0.message = message
         }
-        SDKResponseHandler.send(callbackPointer: callbackPointer, message: error)
+        SDKResponseHandler.send(callbackPointer: callbackPointer, message: sdkError)
     }
+}
 
-    static func sendErrorToSDK(_ error: NSError, callbackPointer: Int) {
-        // TODO(SDK): below we're just returning some rubbish
-        let error = Proton_Sdk_Error.with {
-            $0.type = "sdk error"
-            $0.domain = Proton_Sdk_ErrorDomain.api
-            $0.message = error.localizedDescription
+extension Proton_Sdk_Error {
+    
+    private static let encoder = JSONEncoder()
+    
+    static func from(nsError: NSError) -> Proton_Sdk_Error {
+        let type: String
+        let domain: Proton_Sdk_ErrorDomain
+        let message: String
+        var primaryCode: Int? = nil
+        var secondaryCode: Int? = nil
+        var context: String? = nil
+        var innerError: Proton_Sdk_Error? = nil
+        var additionalData: Codable? = nil
+
+        switch nsError {
+        case let sdkError as Proton_Sdk_Error:
+            return sdkError
+
+        case let protonDriveSDKError as ProtonDriveSDKError:
+            return protonDriveSDKError.asProton_Sdk_Error
+            
+        case let cocoaError as CocoaError where cocoaError.code == .userCancelled:
+            type = NSURLErrorDomain
+            domain = .successfulCancellation
+            message = cocoaError.localizedDescription
+            
+        case let urlError as URLError where urlError.code == .cancelled:
+            type = NSURLErrorDomain
+            domain = .successfulCancellation
+            message = urlError.localizedDescription
+            
+        case let urlError as URLError:
+            type = NSURLErrorDomain
+            domain = .network
+            message = urlError.localizedDescription
+            primaryCode = urlError.code.rawValue
+        
+        default:
+            type = nsError.domain
+            domain = .undefined
+            message = nsError.localizedDescription
+            primaryCode = nsError.code
         }
-        SDKResponseHandler.send(callbackPointer: callbackPointer, message: error)
+        
+        return Proton_Sdk_Error.with {
+            $0.type = type
+            $0.domain = domain
+            $0.message = message
+            if let primaryCode {
+                $0.primaryCode = Int64(primaryCode)
+            }
+            if let secondaryCode {
+                $0.secondaryCode = Int64(secondaryCode)
+            }
+            if let context {
+                $0.context = context
+            }
+            if let innerError {
+                $0.innerError = innerError
+            }
+            if let additionalData,
+               let jsonData = try? encoder.encode(additionalData),
+               let protobufData = try? Google_Protobuf_Any.init(jsonUTF8Data: jsonData) {
+                $0.additionalData = protobufData
+            }
+        }
     }
-
 }

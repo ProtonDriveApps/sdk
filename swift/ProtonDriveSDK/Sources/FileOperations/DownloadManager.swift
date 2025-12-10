@@ -113,7 +113,13 @@ public actor DownloadManager {
                 $0.fileDownloaderHandle = Int64(fileDownloaderHandle)
             }
 
-            try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
+            do {
+                try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
+            } catch {
+                // If the request to free the downloader failed, we have a memory leak, but not much else can be done.
+                // It's not gonna break the app's functionality, so we just log the issue and continue.
+                logger?.error("Proton_Drive_Sdk_FileDownloaderFreeRequest failed: \(error)", category: "DownloadManager.freeDownloader")
+            }
         }
     }
 
@@ -124,7 +130,13 @@ public actor DownloadManager {
                 $0.downloadControllerHandle = Int64(downloadControllerHandle)
             }
 
-            try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
+            do {
+                try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
+            } catch {
+                // If the request to free the download controller failed, we have a memory leak, but not much else can be done.
+                // It's not gonna break the app's functionality, so we just log the issue and continue.
+                logger?.error("Proton_Drive_Sdk_DownloadControllerFreeRequest failed: \(error)", category: "DownloadManager.freeDownloadController")
+            }
         }
     }
 }

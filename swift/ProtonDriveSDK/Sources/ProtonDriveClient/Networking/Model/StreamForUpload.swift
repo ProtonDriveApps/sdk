@@ -3,11 +3,12 @@ import Foundation
 public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendable {
 
     public let input: InputStream
-    public let output: OutputStream
+    let output: OutputStream
+    
+    public var onStreamError: (Error) -> Void = { _ in }
 
     let sdkContentHandle: Int64
     let logger: Logger
-    public var onStreamError: (Error) -> Void = { _ in }
     let buffer: UnsafeMutableRawBufferPointer
     let bufferLength: Int
     
@@ -21,27 +22,16 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
     
     private var state: State = .initialized
     private let stateQueue = DispatchQueue(label: "StreamForUpload.StateQueue", qos: .userInitiated)
-    public var hasStartedWriting: Bool {
-        stateQueue.sync { state != .initialized }
-    }
     
     private var remainingBytes: [UInt8] = []
     private let writingQueue = DispatchQueue(label: "StreamForUpload.WritingQueue", qos: .userInitiated)
 
-    init(bufferLength: Int, sdkContentHandle: Int64, logger: Logger) throws {
-        var inputOrNil: InputStream? = nil
-        var outputOrNil: OutputStream? = nil
-        Stream.getBoundStreams(withBufferSize: bufferLength,
-                               inputStream: &inputOrNil,
-                               outputStream: &outputOrNil)
-        guard let input = inputOrNil, let output = outputOrNil else {
-            throw ProtonDriveSDKError(interopError: .wrongResult(message: "Cannot make stream"))
-        }
+    init(inputStream: InputStream, outputStream: OutputStream, bufferLength: Int, sdkContentHandle: Int64, logger: Logger) throws {
         self.bufferLength = bufferLength
         self.sdkContentHandle = sdkContentHandle
         self.logger = logger
-        self.input = input
-        self.output = output
+        self.input = inputStream
+        self.output = outputStream
         self.buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: bufferLength, alignment: MemoryLayout<UInt8>.alignment)
         super.init()
     }
@@ -53,7 +43,7 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
     }
 
     public func stream(_ aStream: Stream, handle eventCode: Stream.Event) {
-        guard aStream == output else { return }
+        guard aStream == output.outputStream else { return }
 
         if eventCode.contains(.hasSpaceAvailable) {
             receivedHasSpaceAvailableEvent()
@@ -191,4 +181,8 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
         closeAndCleanUp()
         buffer.deallocate()
     }
+}
+
+extension OutputStream {
+    @objc open var outputStream: OutputStream { self }
 }

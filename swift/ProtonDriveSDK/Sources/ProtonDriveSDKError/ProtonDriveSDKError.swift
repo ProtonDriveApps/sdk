@@ -1,10 +1,11 @@
 import Foundation
+import SwiftProtobuf
 
 // MARK: - Swift Types (hiding protobuf implementation)
 
 public struct ProtonDriveSDKError: LocalizedError, Sendable {
     
-    public enum Domain: Sendable {
+    public enum Domain: Sendable, Equatable {
         // SDK domains
         case undefined
         case successfulCancellation
@@ -18,6 +19,21 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
 
         // Interop domains
         case interop
+        
+        var toProton_Sdk_ErrorDomain: Proton_Sdk_ErrorDomain {
+            switch self {
+            case .undefined: return .undefined
+            case .successfulCancellation: return .successfulCancellation
+            case .api: return .api
+            case .network: return .network
+            case .transport: return .transport
+            case .serialization: return .serialization
+            case .cryptography: return .cryptography
+            case .dataIntegrity: return .dataIntegrity
+            case .businessLogic: return .businessLogic
+            case .interop: return .undefined
+            }
+        }
         
         init(interopErrorDomain: Proton_Sdk_ErrorDomain) {
             switch interopErrorDomain {
@@ -83,6 +99,43 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
     public let additionalErrorData: AdditionalErrorData?
 
     private let innerErrorBox: InnerErrorBox?
+    
+    var asProton_Sdk_Error: Proton_Sdk_Error {
+        Proton_Sdk_Error.with {
+            $0.type = type
+            $0.domain = domain.toProton_Sdk_ErrorDomain
+            $0.message = message
+            if let primaryCode {
+                $0.primaryCode = Int64(primaryCode)
+            }
+            if let secondaryCode {
+                $0.secondaryCode = Int64(secondaryCode)
+            }
+            if let context {
+                $0.context = context
+            }
+            if let innerError = innerErrorBox?.innerError.asProton_Sdk_Error {
+                $0.innerError = innerError
+            }
+            switch additionalErrorData {
+            case .some(let data as NodeNameConflictErrorData):
+                let errorData = Proton_Drive_Sdk_NodeNameConflictErrorData.with {
+                    $0.conflictingNodeIsFileDraft = data.isFileDraft
+                    if let conflictingNodeId = data.nodeUID {
+                        $0.conflictingNodeUid = conflictingNodeId.sdkCompatibleIdentifier
+                    }
+                    if let conflictingRevisionUid = data.revisionUID {
+                        $0.conflictingRevisionUid = conflictingRevisionUid.sdkCompatibleIdentifier
+                    }
+                }
+                if let additionalData = try? Google_Protobuf_Any(message: errorData) {
+                    $0.additionalData = additionalData
+                }
+                
+            case .some, nil: break
+            }
+        }
+    }
     
     init(protoError: Proton_Sdk_Error) {
         if !(protoError.hasMessage && protoError.hasType && protoError.hasDomain) {

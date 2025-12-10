@@ -96,6 +96,11 @@ public actor UploadManager {
             modificationDate: modificationDate,
             cancellationHandle: cancellationHandle
         )
+        
+        defer {
+            freeFileUploader(uploaderHandle)
+        }
+        
         let uploadedNode = try await uploadFromFile(
             uploaderHandle: uploaderHandle,
             fileURL: fileURL,
@@ -202,6 +207,10 @@ extension UploadManager {
             logger: logger
         )
         assert(uploadControllerHandle != 0)
+        
+        defer {
+            freeFileUploadController(uploadControllerHandle)
+        }
 
         let uploadedNode = try await awaitUploadCompletion(uploadControllerHandle)
         return uploadedNode
@@ -209,12 +218,32 @@ extension UploadManager {
 
     /// Free a file uploader when no longer needed
     private func freeFileUploader(_ fileUploaderHandle: ObjectHandle) {
-        let freeRequest = Proton_Drive_Sdk_FileUploaderFreeRequest.with {
-            $0.fileUploaderHandle = Int64(fileUploaderHandle)
-        }
-
         Task {
-            try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
+            let freeRequest = Proton_Drive_Sdk_FileUploaderFreeRequest.with {
+                $0.fileUploaderHandle = Int64(fileUploaderHandle)
+            }
+            do {
+                try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
+            } catch {
+                // If the request to free the file uploader failed, we have a memory leak, but not much else can be done.
+                // It's not gonna break the app's functionality, so we just log the issue and continue.
+                logger?.error("Proton_Drive_Sdk_FileUploaderFreeRequest failed: \(error)", category: "UploadManager.freeFileUploader")
+            }
+        }
+    }
+    
+    private func freeFileUploadController(_ fileUploadControllerHandle: ObjectHandle) {
+        Task {
+            let freeRequest = Proton_Drive_Sdk_UploadControllerFreeRequest.with {
+                $0.uploadControllerHandle = Int64(fileUploadControllerHandle)
+            }
+            do {
+                try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
+            } catch {
+                // If the request to free the file upload controller failed, we have a memory leak, but not much else can be done.
+                // It's not gonna break the app's functionality, so we just log the issue and continue.
+                logger?.error("Proton_Drive_Sdk_UploadControllerFreeRequest failed: \(error)", category: "UploadManager.freeFileUploadController")
+            }
         }
     }
 

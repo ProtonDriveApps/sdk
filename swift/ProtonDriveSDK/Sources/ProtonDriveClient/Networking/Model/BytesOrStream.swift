@@ -12,7 +12,7 @@ final class BoxedStreamingData {
         self.logger = logger
     }
 
-    init(downloadStream stream: URLSession.AsyncBytes, logger: Logger) {
+    init(downloadStream stream: AnyAsyncSequence<UInt8>, logger: Logger) {
         self.uploadBuffer = nil
         self.downloadStream = BoxedDownloadStream(stream: stream, logger: logger)
         self.logger = logger

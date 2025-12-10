@@ -17,7 +17,12 @@ let cProgressCallback: CCallback = { statePointer, byteArray in
         bytesTotal: progressUpdate.hasBytesInTotal ? progressUpdate.bytesInTotal : nil
     )
 
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else { return }
+    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
+        let message = "cProgressCallback.statePointer is nil"
+        assertionFailure(message)
+        // there is no way we can inform the SDK back about the issue
+        return
+    }
     let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
     let weakWrapper: WeakReference<ProgressCallbackWrapper> = stateTypedPointer.takeUnretainedValue().state
     weakWrapper.value?.callback(progress)

@@ -20,13 +20,9 @@ public actor ProtonDriveClient: Sendable {
     let configuration: ProtonDriveClientConfiguration
 
     public init(
-        baseURL: String,
-        entityCachePath: String? = nil,
-        secretCachePath: String? = nil,
+        configuration: ProtonDriveClientConfiguration,
         httpClient: HttpClientProtocol,
         accountClient: AccountClientProtocol,
-        clientUID: String?,
-        configuration: ProtonDriveClientConfiguration = .default,
         logCallback: @escaping LogCallback,
         recordMetricEventCallback: @escaping RecordMetricEventCallback,
         featureFlagProviderCallback: @escaping FeatureFlagProviderCallback
@@ -40,7 +36,9 @@ public actor ProtonDriveClient: Sendable {
         self.configuration = configuration
 
         let clientCreateRequest = Proton_Drive_Sdk_DriveClientCreateRequest.with {
-            $0.baseURL = baseURL
+            $0.baseURL = configuration.baseURL
+            
+            $0.uid = configuration.clientUID
 
             $0.accountRequestAction = Int64(ObjectHandle(callback: cCompatibleAccountClientRequest))
 
@@ -57,14 +55,11 @@ public actor ProtonDriveClient: Sendable {
 
             $0.featureEnabledFunction = Int64(ObjectHandle(callback: cCompatibleFeatureFlagProviderCallback))
 
-            if let entityCachePath {
+            if let entityCachePath = configuration.entityCachePath {
                 $0.entityCachePath = entityCachePath
             }
-            if let secretCachePath {
+            if let secretCachePath = configuration.secretCachePath {
                 $0.secretCachePath = secretCachePath
-            }
-            if let clientUID {
-                $0.uid = clientUID
             }
         }
 
@@ -90,10 +85,6 @@ public actor ProtonDriveClient: Sendable {
         recordMetricEventCallback(metricEvent)
     }
 
-//    nonisolated func isFlagEnabled(_ flagName: String) async -> Bool {
-//        await featureFlagProviderCallback(flagName)
-//    }
-    
     nonisolated func isFlagEnabled(_ flagName: String) -> Bool {
         // Since the C# callback expects a synchronous return but our Swift callback has completion block,
         // we need to block and wait for the async result using a semaphore
@@ -177,7 +168,6 @@ public actor ProtonDriveClient: Sendable {
     ) async throws -> String {
         let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
         defer {
-            // TODO: Should be done in deinit!
             cancellationTokenSource.free()
         }
 
@@ -201,12 +191,8 @@ public actor ProtonDriveClient: Sendable {
     static func unbox(callbackPointer: Int, releaseBox: () -> Void, weakDriveClient: WeakReference<ProtonDriveClient>) -> ProtonDriveClient? {
         guard let driveClient = weakDriveClient.value else {
             releaseBox()
-            let error = Proton_Sdk_Error.with {
-                $0.type = "sdk_error"
-                $0.domain = Proton_Sdk_ErrorDomain.api
-                $0.message = "account client callback called after the proton client object was deallocated"
-            }
-            SDKResponseHandler.send(callbackPointer: callbackPointer, message: error)
+            let message = "account client callback called after the proton client object was deallocated"
+            SDKResponseHandler.sendInteropErrorToSDK(message: message, callbackPointer: callbackPointer)
             return nil
         }
         return driveClient

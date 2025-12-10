@@ -7,12 +7,12 @@ final class BoxedCancellableTask: @unchecked Sendable {
     private var task: Task<Void, Never>?
     private var onComplete: (() -> Void)?
 
-    init(work: @escaping @Sendable () async throws -> Void) {
-        task = Task { [weak self] in
+    init(work: @escaping @Sendable () async -> Void) {
+        self.task = Task { [weak self] in
             defer {
                 self?.complete()
             }
-            try? await work()
+            await work()
         }
     }
 
