@@ -186,6 +186,7 @@ export class PhotosNodesAccess extends NodesAccessBase<EncryptedPhotoNode, Decry
             return {
                 ...node,
                 photo: unparsedNode.photo,
+                type: NodeType.Photo,
             };
         }
 
