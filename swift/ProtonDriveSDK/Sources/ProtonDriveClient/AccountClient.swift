@@ -12,6 +12,8 @@ public protocol AccountClientProtocol: Sendable {
 
 let cCompatibleAccountClientRequest: CCallbackWithCallbackPointer = { statePointer, byteArray, callbackPointer in
     guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
+        SDKResponseHandler.sendInteropErrorToSDK(message: "cCompatibleAccountClientRequest.statePointer is null",
+                                                 callbackPointer: callbackPointer)
         return
     }
     let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
@@ -55,7 +57,8 @@ let cCompatibleAccountClientRequest: CCallbackWithCallbackPointer = { statePoint
             }
             SDKResponseHandler.send(callbackPointer: callbackPointer, message: repeatedBytes)
         case nil:
-            fatalError()
+            let message = "cCompatibleAccountClientRequest.Proton_Drive_Sdk_AccountRequest.payload is null"
+            SDKResponseHandler.sendInteropErrorToSDK(message: message, callbackPointer: callbackPointer)
         }
     }
 }

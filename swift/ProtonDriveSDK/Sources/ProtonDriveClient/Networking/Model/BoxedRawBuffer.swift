@@ -26,7 +26,13 @@ final class BoxedRawBuffer {
     }
     
     func copyBytes(from data: Data) {
-        data.copyBytes(to: buffer)
+        let copiedBytes = data.copyBytes(to: buffer)
+        guard copiedBytes == data.count else {
+            assertionFailure("We should copy all the bytes")
+            logger.error("[BoxedRawBuffer.copyBytes] Failed to copy all the bytes",
+                         category: "BoxedRawBuffer.copyBytes")
+            return
+        }
     }
     
     func copyBytes(to buffer: UnsafeMutablePointer<UInt8>, count bufferSize: Int) -> Int {

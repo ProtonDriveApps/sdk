@@ -7,25 +7,7 @@ typealias ObjectHandle = Int
 
 extension ObjectHandle {
     /// Returns the address of a callback as a number
-    init(callback: CCallback) {
-        let callbackAddress: UnsafeRawPointer = unsafeBitCast(callback, to: UnsafeRawPointer.self)
-        self = ObjectHandle(bitPattern: callbackAddress)
-    }
-
-    /// Returns the address of a callback as a number
-    init(callback: CCallbackWithCallbackPointer) {
-        let callbackAddress: UnsafeRawPointer = unsafeBitCast(callback, to: UnsafeRawPointer.self)
-        self = ObjectHandle(bitPattern: callbackAddress)
-    }
-
-    /// Returns the address of a callback as a number
-    init(callback: CCallbackWithCallbackPointerAndIntReturn) {
-        let callbackAddress: UnsafeRawPointer = unsafeBitCast(callback, to: UnsafeRawPointer.self)
-        self = ObjectHandle(bitPattern: callbackAddress)
-    }
-
-    /// Returns the address of a callback with int return as a number
-    init(callback: CCallbackWithIntReturn) {
+    init<T>(callback: T) {
         let callbackAddress: UnsafeRawPointer = unsafeBitCast(callback, to: UnsafeRawPointer.self)
         self = ObjectHandle(bitPattern: callbackAddress)
     }
@@ -42,17 +24,16 @@ func address<T: AnyObject>(of object: T) -> ObjectHandle {
     return ObjectHandle(bitPattern: rawPointer)
 }
 
-/// C-compatible callback used by SDK to pass data to the app
-typealias CCallback = @convention(c) (Int, ByteArray) -> Void
-typealias CCallbackWithCallbackPointer = @convention(c) (Int, ByteArray, Int) -> Void
-typealias CCallbackWithCallbackPointerAndIntReturn = @convention(c) (Int, ByteArray, Int) -> Int
-typealias CCallbackWithIntReturn = @convention(c) (Int, ByteArray) -> Int32
+/// C-compatible callback used by SDK to pass data to the app and back
+/// `statePointer` is pointer to the state we create on the app side and pass to the SDK in the request that is causing the callback to be called. SDK does not interact with the state at all, it just passes it back to the app. It's app's responsibility to maintain the lifecycle of the state (deallocate when appropriate). It's always passed, in every callback variant.
+/// `byteArray` is a pointer and the count struct describing the memory allocated by the SDK, and passed to the callback to enable it to perform its operation. It is either the protobuf message created by the SDK that contains all the necessary information, or it's a memory buffer from which/into which the callback is supposed to read/write. The app does not maintain the lifecycle of the byteArray, it's SDK's responsibility. It's passed on the callback variants that require it for their work.
+/// `callbackPointer` is a pointer to the callback created on the SDK side that keeps the SDK's async operation waiting. It's app's responsibility to make a response call (using `proton_sdk_handle_response`) and pass the operation result (be it success or error). If the app fails to do it, the operation might hang indefinitely. The lifecycle of the object under `callbackPointer` is SDK's responsibility. It's passed in the callbacks that are represented as async operations on the SDK side.
 
-extension Data {
-    var dumptoString: String {
-        String(data: self, encoding: .isoLatin2).map { String($0) } ?? "n/a"
-    }
-}
+typealias CCallback = @convention(c) (_ statePointer: Int, _ byteArray: ByteArray) -> Void
+typealias CCallbackWithoutByteArray = @convention(c) (_ statePointer: Int) -> Void
+typealias CCallbackWithIntReturn = @convention(c) (_ statePointer: Int, _ byteArray: ByteArray) -> Int32
+typealias CCallbackWithCallbackPointer = @convention(c) (_ statePointer: Int, _ byteArray: ByteArray, _ callbackPointer: Int) -> Void
+typealias CCallbackWithCallbackPointerAndObjectPointerReturn = @convention(c) (_ statePointer: Int, _ byteArray: ByteArray, _ callbackPointer: Int) -> Int
 
 // MARK: - ByteArray extensions
 
@@ -87,6 +68,13 @@ extension Data {
     }
 }
 
+// helper for debugging — makes inspecting data in the debugger easier
+extension Data {
+    var dumpToString: String {
+        String(data: self, encoding: .isoLatin2).map { String($0) } ?? "n/a"
+    }
+}
+
 // MARK: - Protobuf extensions
 
 extension SwiftProtobuf.Message {
@@ -103,6 +91,7 @@ extension SwiftProtobuf.Message {
         do {
             try self.init(serializedBytes: data)
         } catch {
+            assertionFailure("The protobuf message could not be created")
             self.init()
         }
     }

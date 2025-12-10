@@ -1,12 +1,12 @@
 import Foundation
 
 final class BoxedDownloadStream {
-    private let stream: URLSession.AsyncBytes
-    private var iterator: URLSession.AsyncBytes.AsyncIterator
+    private let stream: AnyAsyncSequence<UInt8>
+    private var iterator: AnyAsyncIterator<UInt8>
     
     private let logger: Logger
     
-    init(stream: URLSession.AsyncBytes, logger: Logger) {
+    init(stream: AnyAsyncSequence<UInt8>, logger: Logger) {
         self.stream = stream
         self.iterator = stream.makeAsyncIterator()
         self.logger = logger

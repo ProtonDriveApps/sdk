@@ -4,6 +4,9 @@ public typealias FeatureFlagProviderCallback = @Sendable (String, (Bool) -> Void
 
 let cCompatibleFeatureFlagProviderCallback: CCallbackWithIntReturn = { statePointer, byteArray in
     guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
+        let message = "cCompatibleFeatureFlagProviderCallback.statePointer is nil"
+        assertionFailure(message)
+        // there is no way we can inform the SDK back about the issue
         return 0
     }
 
