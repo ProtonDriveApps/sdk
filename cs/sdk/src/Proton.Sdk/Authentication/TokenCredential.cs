@@ -61,9 +61,10 @@ public sealed class TokenCredential
                 {
                     throw;
                 }
-                catch
+                catch (Exception ex)
                 {
                     // Return expired access token to allow refreshing again later
+                    _logger.LogDebug(ex, "Failed to refresh token for {SessionId}", _sessionId);
                     return (currentAccessToken, currentRefreshToken);
                 }
             });

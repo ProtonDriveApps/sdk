@@ -138,10 +138,9 @@ public sealed class ProtonApiSession
             {
                 await session.ApplyDataPasswordAsync(password, cancellationToken).ConfigureAwait(false);
             }
-            catch
+            catch (Exception ex)
             {
-                // Ignore
-                // FIXME: log that
+                logger.LogWarning(ex, "Failed to apply data password");
             }
         }
 

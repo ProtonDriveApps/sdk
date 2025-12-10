@@ -145,9 +145,9 @@ internal sealed partial class RevisionReader : IDisposable
                     downloadEvent.DownloadedSize = contentOutputStream.Length;
                     _client.Telemetry.RecordMetric(downloadEvent);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore telemetry errors
+                    _logger.LogWarning(ex, "Failed to record metric for download event");
                 }
             }
         }

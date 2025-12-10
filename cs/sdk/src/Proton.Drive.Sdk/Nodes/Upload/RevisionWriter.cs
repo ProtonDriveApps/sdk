@@ -226,9 +226,9 @@ internal sealed partial class RevisionWriter : IDisposable
                     // TODO: put this in a decorator
                     _client.Telemetry.RecordMetric(uploadEvent);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore telemetry errors
+                    _logger.LogWarning(ex, "Failed to record metric for upload event");
                 }
             }
         }
