@@ -252,7 +252,7 @@ class ProtonDriveSdkNativeClient internal constructor(
         block: suspend (T) -> Unit
     ) {
         try {
-            logger("callback for $name of size: ${data.capacity()}")
+            logger("$callback for $name of size: ${data.capacity()}")
             // parsing of protobuf needs to be done serially
             val value = parser(data)
             coroutineScope(callback).launch {
