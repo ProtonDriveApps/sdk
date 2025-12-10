@@ -198,6 +198,14 @@ export class ProtonDrivePhotosClient {
     }
 
     /**
+     * @returns The root folder to Photos section of the user.
+     */
+    async getMyPhotosRootFolder(): Promise<MaybePhotoNode> {
+        this.logger.info('Getting my photos root folder');
+        return convertInternalPhotoNodePromise(this.nodes.access.getVolumeRootFolder());
+    }
+
+    /**
      * Iterates all the photos for the timeline view.
      *
      * The output includes only necessary information to quickly prepare
