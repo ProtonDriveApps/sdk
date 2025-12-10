@@ -197,9 +197,9 @@ internal static class AddressOperations
 
                 unlockedKeys.Add(unlockedKey);
             }
-            catch
+            catch (Exception ex)
             {
-                // FIXME: log that
+                client.Logger.LogWarning(ex, "Failed to import and unlock address key {UserKeyId}", keyDto.Id);
                 continue;
             }
 
