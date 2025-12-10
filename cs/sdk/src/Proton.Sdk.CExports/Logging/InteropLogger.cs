@@ -21,6 +21,10 @@ internal sealed class InteropLogger(nint bindingsHandle, InteropAction<nint, Int
     public unsafe void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
         var message = formatter.Invoke(state, exception);
+        if (exception != null)
+        {
+            message = message + Environment.NewLine + exception.ToString();
+        }
         var logEvent = new LogEvent { Level = (int)logLevel, Message = message, CategoryName = _categoryName };
 
         var messageBytes = logEvent.ToByteArray();
