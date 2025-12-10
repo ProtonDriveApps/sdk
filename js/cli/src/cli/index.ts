@@ -28,6 +28,7 @@ import { CommandFileSystemUpload } from './fileSystem/commandFileSystemUpload';
 import { CommandFileSystemTrash } from './fileSystem/commandFileSystemTrash';
 import { CommandAlbumList } from './photos/commandAlbumList';
 import { CommandPhotoDuplicate } from './photos/commandPhotoDuplicate';
+import { CommandPhotoRoot } from './photos/commandPhotoRoot';
 import { CommandPhotoTimeline } from './photos/commandPhotoTimeline';
 import { CommandPublicCreateFolder } from './public/commandPublicCreateFolder';
 import { CommandPublicDelete } from './public/commandPublicDelete';
@@ -100,6 +101,7 @@ const COMMANDS = [
     new CommandPublicDownloadThumbnails(),
     new CommandPublicUpload(),
     // ProtonDrivePhotosClient
+    new CommandPhotoRoot(),
     new CommandPhotoTimeline(),
     new CommandPhotoDuplicate(),
     new CommandAlbumList(),
