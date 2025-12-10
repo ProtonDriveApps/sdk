@@ -33,8 +33,12 @@ actor CancellationTokenSource {
             let request = Proton_Sdk_CancellationTokenSourceFreeRequest.with {
                 $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
             }
-            try await SDKRequestHandler.sendInteropRequest(request, logger: logger) as Void
-            logger?.trace("CancellationTokenSource.free succeeded, handle: \(cancellationHandle) -> nil", category: "Cancellation")
+            do {
+                try await SDKRequestHandler.sendInteropRequest(request, logger: logger) as Void
+                logger?.trace("CancellationTokenSource.free succeeded, handle: \(cancellationHandle) -> nil", category: "Cancellation")
+            } catch {
+                logger?.error("CancellationTokenSource.free failed, error: \(error)", category: "Cancellation")
+            }
             strongSelf = nil
         }
     }
