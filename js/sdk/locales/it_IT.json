@@ -5,14 +5,20 @@
   },
   "contexts": {
     "Error": {
-      "${ operationForErrorMessage } from multiple sections is not allowed": [
-        "Non è consentito ${ operationForErrorMessage } da più sezioni"
+      "Bookmark password is not available": [
+        "La password del segnalibro non è disponibile."
       ],
       "Cannot download a folder": [
         "Impossibile scaricare una cartella"
       ],
       "Cannot share root folder": [
         "Impossibile condividere la cartella principale"
+      ],
+      "Copy operation aborted": [
+        "Copia interrotta"
+      ],
+      "Copying item to a non-folder is not allowed": [
+        "Non è consentito copiare l'elemento in un elemento che non è una cartella."
       ],
       "Creating files in non-folders is not allowed": [
         "Non è consentito creare file in elementi che non sono cartelle."
@@ -41,6 +47,15 @@
       "Failed to decrypt block: ${ message }": [
         "Impossibile decriptare il blocco: ${ message }"
       ],
+      "Failed to decrypt bookmark key: ${ message }": [
+        "Impossibile decriptare la chiave del segnalibro: ${ message }"
+      ],
+      "Failed to decrypt bookmark name: ${ message }": [
+        "Impossibile decriptare il nome segnalibro: ${ message }"
+      ],
+      "Failed to decrypt bookmark password: ${ message }": [
+        "Impossibile decriptare la password segnalibro: ${ message }"
+      ],
       "Failed to decrypt content key: ${ message }": [
         "Impossibile decriptare la chiave di contenuto: ${ message }"
       ],
@@ -56,8 +71,17 @@
       "Failed to decrypt thumbnail: ${ message }": [
         "Impossibile decriptare la miniatura: ${ message }"
       ],
+      "Failed to get inviter keys": [
+        "Recupero delle chiavi dell'invitante non riuscito"
+      ],
+      "Failed to get sharing info for node ${ nodeUid }": [
+        "Impossibile ottenere le informazioni di condivisione per il nodo ${ nodeUid }"
+      ],
       "Failed to load some nodes": [
         "Impossibile caricare alcuni nodi"
+      ],
+      "Failed to verify invitation": [
+        "Impossibile verificare l'invito"
       ],
       "File download failed due to empty response": [
         "Scaricamento del file fallito a causa di una risposta vuota."
@@ -68,6 +92,9 @@
       "File has no content key": [
         "Il file non ha una chiave di contenuto"
       ],
+      "Invalid URL": [
+        "URL non valido"
+      ],
       "Invitation not found": [
         "Invito non trovato"
       ],
@@ -77,11 +104,11 @@
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Il link pubblico obsoleto non può essere aggiornato. Per favore, ricrea un nuovo link pubblico."
       ],
-      "Loading thumbnails from multiple sections is not allowed": [
-        "Non è consentito caricare miniature da più sezioni"
-      ],
       "Missing integrity signature": [
         "Firma di integrità mancante"
+      ],
+      "Missing inviter email": [
+        "Non è stata inserita l’email dell’invitante"
       ],
       "Missing signature": [
         "Firma mancante"
@@ -107,6 +134,9 @@
       ],
       "Name must not contain the character '/'": [
         "Il nome non deve contenere il carattere '/'"
+      ],
+      "No available name found": [
+        "Non è stato trovato nessun nome disponibile"
       ],
       "Node has no thumbnail": [
         "Il nodo non ha alcuna miniatura"
@@ -135,11 +165,20 @@
       "Request aborted": [
         "Richiesta interrotta"
       ],
+      "Signature is missing": [
+        "Firma non presente"
+      ],
       "Signature verification failed": [
         "Verifica della firma non riuscita"
       ],
+      "Signature verification failed: ${ errorMessage }": [
+        "Verifica della firma non riuscita: ${ errorMessage }"
+      ],
       "Signature verification for ${ signatureType } failed": [
         "Verifica della firma per ${ signatureType } non riuscita"
+      ],
+      "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
+        "Verifica della firma per ${ signatureType } non riuscita: ${ errorMessage }"
       ],
       "Some file bytes failed to upload": [
         "Alcuni byte del file non sono stati caricati"
@@ -175,15 +214,9 @@
         "Puoi lasciare solo l'elemento che è condiviso con te"
       ]
     },
-    "Operation": {
-      "Deleting items": [
-        "Eliminazione elementi"
-      ],
-      "Restoring items": [
-        "Ripristino elementi"
-      ],
-      "Trashing items": [
-        "Cancellazione elementi"
+    "Info": {
+      "Author is not provided on public link": [
+        "L'autore non è fornito sul link pubblico."
       ]
     },
     "Property": {
@@ -198,6 +231,9 @@
       ],
       "key": [
         "chiave"
+      ],
+      "membership": [
+        "abbonamento"
       ],
       "name": [
         "nome"

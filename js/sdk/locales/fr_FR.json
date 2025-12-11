@@ -5,14 +5,20 @@
   },
   "contexts": {
     "Error": {
-      "${ operationForErrorMessage } from multiple sections is not allowed": [
-        "${ operationForErrorMessage } à partir de plusieurs sections n'est pas autorisé."
+      "Bookmark password is not available": [
+        "Le mot de passe du favori n'est pas disponible."
       ],
       "Cannot download a folder": [
         "Le téléchargement d'un dossier n'a pas abouti."
       ],
       "Cannot share root folder": [
         "Le partager du dossier principal n'a pas abouti."
+      ],
+      "Copy operation aborted": [
+        "L'opération de copie a été annulée."
+      ],
+      "Copying item to a non-folder is not allowed": [
+        "La copie d'un élément vers un élément qui n'est pas un dossier n'est pas autorisée."
       ],
       "Creating files in non-folders is not allowed": [
         "La création de fichiers dans des éléments qui ne sont pas des dossiers n'est pas autorisée."
@@ -41,6 +47,15 @@
       "Failed to decrypt block: ${ message }": [
         "Le déchiffrement du bloc n'a pas abouti : ${ message }"
       ],
+      "Failed to decrypt bookmark key: ${ message }": [
+        "Le déchiffrement de la clé du favori n'a pas abouti : ${ message }"
+      ],
+      "Failed to decrypt bookmark name: ${ message }": [
+        "Le déchiffrement du nom du favori n'a pas abouti : ${ message }"
+      ],
+      "Failed to decrypt bookmark password: ${ message }": [
+        "Le déchiffrement du mot de passe du favori n'a pas abouti : ${ message }"
+      ],
       "Failed to decrypt content key: ${ message }": [
         "Le déchiffrement de la clé de contenu n'a pas abouti : ${ message }"
       ],
@@ -56,8 +71,17 @@
       "Failed to decrypt thumbnail: ${ message }": [
         "Le déchiffrement de la vignette n'a pas abouti : ${ message }"
       ],
+      "Failed to get inviter keys": [
+        "La récupération des clés de l'invitant n'a pas abouti"
+      ],
+      "Failed to get sharing info for node ${ nodeUid }": [
+        "La récupération des informations de partage pour le nœud ${ nodeUid } n'a pas abouti"
+      ],
       "Failed to load some nodes": [
         "Le chargement de certains nœuds n'a pas abouti."
+      ],
+      "Failed to verify invitation": [
+        "La vérification de l'invitation n'a pas abouti."
       ],
       "File download failed due to empty response": [
         "Le téléchargement du fichier n'a pas abouti en raison d'une réponse vide."
@@ -68,6 +92,9 @@
       "File has no content key": [
         "Le fichier n'a pas de clé de contenu."
       ],
+      "Invalid URL": [
+        "L'URL n'est pas valide."
+      ],
       "Invitation not found": [
         "L'invitation est introuvable."
       ],
@@ -77,11 +104,11 @@
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "L'ancien lien public ne peut pas être mis à jour. Veuillez recréer un nouveau lien public."
       ],
-      "Loading thumbnails from multiple sections is not allowed": [
-        "Le chargement de vignettes depuis plusieurs sections n'est pas autorisé"
-      ],
       "Missing integrity signature": [
         "Il manque la signature d'intégrité."
+      ],
+      "Missing inviter email": [
+        "L'adresse de l'expéditeur est manquante"
       ],
       "Missing signature": [
         "Il manque la signature."
@@ -107,6 +134,9 @@
       ],
       "Name must not contain the character '/'": [
         "Le nom ne doit pas contenir le caractère « / »."
+      ],
+      "No available name found": [
+        "Aucun nom disponible trouvé"
       ],
       "Node has no thumbnail": [
         "Le nœud n'a pas de vignette."
@@ -135,11 +165,20 @@
       "Request aborted": [
         "La requête a été annulée."
       ],
+      "Signature is missing": [
+        "La signature est manquante"
+      ],
       "Signature verification failed": [
         "La signature n'a pas pu être vérifiée."
       ],
+      "Signature verification failed: ${ errorMessage }": [
+        "La signature de vérification n'a pas abouti : ${ errorMessage }"
+      ],
       "Signature verification for ${ signatureType } failed": [
         "La vérification de la signature pour ${ signatureType } n'a pas abouti."
+      ],
+      "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
+        "La vérification de la signature destinée à ${ signatureType } n'a pas été aboutie :${ errorMessage }"
       ],
       "Some file bytes failed to upload": [
         "Certains octets de fichier n'ont pas pu être importés."
@@ -175,15 +214,9 @@
         "Vous pouvez seulement quitter l'élément partagé avec vous."
       ]
     },
-    "Operation": {
-      "Deleting items": [
-        "Suppression des éléments"
-      ],
-      "Restoring items": [
-        "Restauration des éléments"
-      ],
-      "Trashing items": [
-        "Suppression des éléments"
+    "Info": {
+      "Author is not provided on public link": [
+        "L'auteur n'est pas indiqué sur le lien public"
       ]
     },
     "Property": {
@@ -198,6 +231,9 @@
       ],
       "key": [
         "clé"
+      ],
+      "membership": [
+        "abonnement"
       ],
       "name": [
         "nom"
