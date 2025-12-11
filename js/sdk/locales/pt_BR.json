@@ -5,14 +5,20 @@
   },
   "contexts": {
     "Error": {
-      "${ operationForErrorMessage } from multiple sections is not allowed": [
-        "${ operationForErrorMessage } de várias seções não é permitido."
+      "Bookmark password is not available": [
+        "A senha do marcador não está disponível."
       ],
       "Cannot download a folder": [
         "Não é possível baixar uma pasta."
       ],
       "Cannot share root folder": [
         "Não é possível compartilhar a pasta raiz"
+      ],
+      "Copy operation aborted": [
+        "A cópia foi cancelado."
+      ],
+      "Copying item to a non-folder is not allowed": [
+        "Não é permitido copiar um item para um item que não seja uma pasta."
       ],
       "Creating files in non-folders is not allowed": [
         "Não é permitido criar arquivos em itens que não sejam pastas."
@@ -41,6 +47,15 @@
       "Failed to decrypt block: ${ message }": [
         "Falha ao descriptografar bloco: ${ message }"
       ],
+      "Failed to decrypt bookmark key: ${ message }": [
+        "Erro ao descriptografar a chave do favorito: ${ message }"
+      ],
+      "Failed to decrypt bookmark name: ${ message }": [
+        "Erro ao descriptografar o nome do favorito: ${ message }"
+      ],
+      "Failed to decrypt bookmark password: ${ message }": [
+        "Erro ao descriptografar a senha do favorito: ${ message }"
+      ],
       "Failed to decrypt content key: ${ message }": [
         "Falha ao descriptografar a chave de conteúdo: ${ message }"
       ],
@@ -56,8 +71,14 @@
       "Failed to decrypt thumbnail: ${ message }": [
         "Erro ao descriptografar a miniatura: ${ message }"
       ],
+      "Failed to get inviter keys": [
+        "Falha ao obter chaves do convidante"
+      ],
       "Failed to load some nodes": [
         "Erro ao carregar alguns nós"
+      ],
+      "Failed to verify invitation": [
+        "Erro ao verificar o convite"
       ],
       "File download failed due to empty response": [
         "Erro ao baixar o arquivo devido a uma resposta vazia"
@@ -68,6 +89,9 @@
       "File has no content key": [
         "O arquivo não tem chave de conteúdo."
       ],
+      "Invalid URL": [
+        "O URL não é válido."
+      ],
       "Invitation not found": [
         "Convite não encontrado"
       ],
@@ -77,11 +101,11 @@
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "O link público antigo não pode ser atualizado. Crie um novo link público."
       ],
-      "Loading thumbnails from multiple sections is not allowed": [
-        "Não é permitido carregar miniaturas de várias secções."
-      ],
       "Missing integrity signature": [
         "Assinatura de integridade ausente"
+      ],
+      "Missing inviter email": [
+        "E-mail do convidante ausente"
       ],
       "Missing signature": [
         "Assinatura ausente"
@@ -107,6 +131,9 @@
       ],
       "Name must not contain the character '/'": [
         "O nome não pode conter o caractere \"/\""
+      ],
+      "No available name found": [
+        "Nenhum nome disponível encontrado"
       ],
       "Node has no thumbnail": [
         "Nó não tem miniatura"
@@ -135,11 +162,20 @@
       "Request aborted": [
         "Solicitação cancelada"
       ],
+      "Signature is missing": [
+        "Assinatura ausente"
+      ],
       "Signature verification failed": [
         "Erro na verificação da assinatura"
       ],
+      "Signature verification failed: ${ errorMessage }": [
+        "Erro na verificação da verificação: ${ errorMessage }"
+      ],
       "Signature verification for ${ signatureType } failed": [
         "Verificação de assinatura para ${ signatureType } falhou"
+      ],
+      "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
+        "Verificação de assinatura para ${ signatureType } falhou: ${ errorMessage }"
       ],
       "Some file bytes failed to upload": [
         "Alguns bytes do arquivo falharam ao enviar"
@@ -175,15 +211,9 @@
         "Você pode sair apenas do item que é compartilhado com você"
       ]
     },
-    "Operation": {
-      "Deleting items": [
-        "Excluindo itens"
-      ],
-      "Restoring items": [
-        "Restaurando itens"
-      ],
-      "Trashing items": [
-        "Movendo itens para a lixeira"
+    "Info": {
+      "Author is not provided on public link": [
+        "Autor não fornecido no link público"
       ]
     },
     "Property": {
@@ -198,6 +228,9 @@
       ],
       "key": [
         "chave"
+      ],
+      "membership": [
+        "subscrição"
       ],
       "name": [
         "nome"

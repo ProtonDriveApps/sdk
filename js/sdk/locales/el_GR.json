@@ -5,14 +5,20 @@
   },
   "contexts": {
     "Error": {
-      "${ operationForErrorMessage } from multiple sections is not allowed": [
-        "${ operationForErrorMessage } από πολλαπλές ενότητες δεν επιτρέπεται"
+      "Bookmark password is not available": [
+        "Η σελιδοδείκτηση κωδικού δεν είναι διαθέσιμη"
       ],
       "Cannot download a folder": [
         "Δεν είναι δυνατή η λήψη ενός φακέλου"
       ],
       "Cannot share root folder": [
         "Δεν είναι δυνατή η κοινοποίηση του κεντρικού φακέλου"
+      ],
+      "Copy operation aborted": [
+        "Η αντιγραφή ακυρώθηκε"
+      ],
+      "Copying item to a non-folder is not allowed": [
+        "Δεν επιτρέπεται η αντιγραφή στοιχείου σε μη-φάκελο"
       ],
       "Creating files in non-folders is not allowed": [
         "Δεν επιτρέπεται η δημιουργία αρχείων σε μη-φακέλους."
@@ -41,6 +47,15 @@
       "Failed to decrypt block: ${ message }": [
         "Αποτυχία αποκρυπτογράφησης μπλοκ: ${ message }"
       ],
+      "Failed to decrypt bookmark key: ${ message }": [
+        "Αποτυχία αποκρυπτογράφησης κλειδιού σελιδοδείκτη: ${ message }"
+      ],
+      "Failed to decrypt bookmark name: ${ message }": [
+        "Αποτυχία αποκρυπτογράφησης ονόματος σελιδοδείκτη: ${ message }"
+      ],
+      "Failed to decrypt bookmark password: ${ message }": [
+        "Αποτυχία αποκρυπτογράφησης κωδικού σελιδοδείκτη: ${ message }"
+      ],
       "Failed to decrypt content key: ${ message }": [
         "Αποτυχία αποκρυπτογράφησης κλειδιού περιεχομένου: ${ message }"
       ],
@@ -56,8 +71,17 @@
       "Failed to decrypt thumbnail: ${ message }": [
         "Αποτυχία αποκρυπτογράφησης μικρογραφίας: ${ message }"
       ],
+      "Failed to get inviter keys": [
+        "Αποτυχία λήψης κλειδιών προσκαλούντος"
+      ],
+      "Failed to get sharing info for node ${ nodeUid }": [
+        "Δεν ήταν δυνατή η λήψη πληροφοριών κοινοποίησης για τον κόμβο ${ nodeUid }"
+      ],
       "Failed to load some nodes": [
         "Αποτυχία φόρτωσης κάποιων κόμβων"
+      ],
+      "Failed to verify invitation": [
+        "Αποτυχία επαλήθευσης πρόσκλησης"
       ],
       "File download failed due to empty response": [
         "Η λήψη αρχείου απέτυχε λόγω κενής απόκρισης"
@@ -68,6 +92,9 @@
       "File has no content key": [
         "Το αρχείο δεν έχει κλειδί περιεχομένου"
       ],
+      "Invalid URL": [
+        "Μη έγκυρη διεύθυνση URL"
+      ],
       "Invitation not found": [
         "Η πρόσκληση δεν βρέθηκε"
       ],
@@ -77,11 +104,11 @@
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Ο παλαιού τύπου δημόσιος σύνδεσμος δεν μπορεί να ενημερωθεί. Παρακαλούμε δημιουργήστε εκ νέου έναν νέο δημόσιο σύνδεσμο."
       ],
-      "Loading thumbnails from multiple sections is not allowed": [
-        "Δεν επιτρέπεται η φόρτωση μικρογραφιών από πολλαπλές ενότητες."
-      ],
       "Missing integrity signature": [
         "Λείπει η υπογραφή ακεραιότητας"
+      ],
+      "Missing inviter email": [
+        "Λείπει η ηλεκτρονική διεύθυνση του προσκαλούντος"
       ],
       "Missing signature": [
         "Λείπει η υπογραφή"
@@ -107,6 +134,9 @@
       ],
       "Name must not contain the character '/'": [
         "Το όνομα δεν πρέπει να περιέχει τον χαρακτήρα '/'"
+      ],
+      "No available name found": [
+        "Δεν βρέθηκε διαθέσιμο όνομα"
       ],
       "Node has no thumbnail": [
         "Ο κόμβος δεν έχει μικρογραφία"
@@ -135,11 +165,20 @@
       "Request aborted": [
         "Το αίτημα ακυρώθηκε"
       ],
+      "Signature is missing": [
+        "Η υπογραφή λείπει"
+      ],
       "Signature verification failed": [
         "Η επαλήθευση υπογραφής απέτυχε"
       ],
+      "Signature verification failed: ${ errorMessage }": [
+        "Αποτυχία επαλήθευσης υπογραφής: ${ errorMessage }"
+      ],
       "Signature verification for ${ signatureType } failed": [
         "Αποτυχία επαλήθευσης υπογραφής για ${ signatureType }"
+      ],
+      "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
+        "Αποτυχία επαλήθευσης υπογραφής για ${ signatureType }: ${ errorMessage }"
       ],
       "Some file bytes failed to upload": [
         "Κάποια byte αρχείου απέτυχαν να μεταφορτωθούν"
@@ -175,15 +214,9 @@
         "Μπορείτε να αποχωρήσετε μόνο από το στοιχείο που έχει κοινοποιηθεί σε εσάς."
       ]
     },
-    "Operation": {
-      "Deleting items": [
-        "Διαγραφή στοιχείων"
-      ],
-      "Restoring items": [
-        "Επαναφορά στοιχείων"
-      ],
-      "Trashing items": [
-        "Μετακίνηση στοιχείων στα Διαγραμμένα"
+    "Info": {
+      "Author is not provided on public link": [
+        "Ο συγγραφέας δεν παρέχεται στον δημόσιο σύνδεσμο."
       ]
     },
     "Property": {
@@ -198,6 +231,9 @@
       ],
       "key": [
         "κλειδί"
+      ],
+      "membership": [
+        "συνδρομή"
       ],
       "name": [
         "ονομα"

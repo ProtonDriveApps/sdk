@@ -5,14 +5,20 @@
   },
   "contexts": {
     "Error": {
-      "${ operationForErrorMessage } from multiple sections is not allowed": [
-        "${ operationForErrorMessage } din secțiuni multiple nu este permisă."
+      "Bookmark password is not available": [
+        "Parola semnului de carte nu este disponibilă."
       ],
       "Cannot download a folder": [
         "Nu se poate descărca un folder."
       ],
       "Cannot share root folder": [
         "Nu se poate partaja folderul rădăcină."
+      ],
+      "Copy operation aborted": [
+        "Copierea a fost anulată."
+      ],
+      "Copying item to a non-folder is not allowed": [
+        "Copierea articolului în alt loc decât un folder nu este permisă."
       ],
       "Creating files in non-folders is not allowed": [
         "Crearea fișierelor în non-foldere nu este permisă."
@@ -41,6 +47,15 @@
       "Failed to decrypt block: ${ message }": [
         "Nu s-a reușit decriptarea blocului: ${ message }"
       ],
+      "Failed to decrypt bookmark key: ${ message }": [
+        "Nu s-a reușit decriptarea cheii semnului de carte: ${ message }"
+      ],
+      "Failed to decrypt bookmark name: ${ message }": [
+        "Nu s-a reușit decriptarea numelui semnului de carte: ${ message }"
+      ],
+      "Failed to decrypt bookmark password: ${ message }": [
+        "Nu s-a reușit decriptarea parolei semnului de carte: ${ message }"
+      ],
       "Failed to decrypt content key: ${ message }": [
         "Nu s-a reușit decriptarea cheii de conținut: ${ message }"
       ],
@@ -56,8 +71,17 @@
       "Failed to decrypt thumbnail: ${ message }": [
         "Nu s-a reușit decriptarea miniaturii: ${ message }"
       ],
+      "Failed to get inviter keys": [
+        "Preluarea cheilor de invitare a eșuat."
+      ],
+      "Failed to get sharing info for node ${ nodeUid }": [
+        "Nu s-au putut obține informații de partajare pentru nodul ${ nodeUid }."
+      ],
       "Failed to load some nodes": [
         "Nu s-a reușit încărcarea unor noduri."
+      ],
+      "Failed to verify invitation": [
+        "Eșuare verificare invitație."
       ],
       "File download failed due to empty response": [
         "Descărcarea fișierului a eșuat din cauza unui răspuns gol."
@@ -68,6 +92,9 @@
       "File has no content key": [
         "Fișierul nu are nicio cheie de conținut."
       ],
+      "Invalid URL": [
+        "Adresă URL nevalidă."
+      ],
       "Invitation not found": [
         "Invitația nu a fost găsită."
       ],
@@ -77,11 +104,11 @@
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Vechea legătură web publică nu poate fi actualizată. Recreați o nouă legătură web publică."
       ],
-      "Loading thumbnails from multiple sections is not allowed": [
-        "Încărcarea miniaturilor din secțiuni multiple nu este permisă."
-      ],
       "Missing integrity signature": [
         "Lipsește semnătura de integritate"
+      ],
+      "Missing inviter email": [
+        "Adresa de e-mail al invitantului lipsește."
       ],
       "Missing signature": [
         "Semnătură lipsă."
@@ -108,6 +135,9 @@
       ],
       "Name must not contain the character '/'": [
         "Numele nu trebuie să conțină caracterul „/”."
+      ],
+      "No available name found": [
+        "Nu a fost găsit niciun nume disponibil."
       ],
       "Node has no thumbnail": [
         "Nodul nu are miniatură."
@@ -136,11 +166,20 @@
       "Request aborted": [
         "Solicitare anulată."
       ],
+      "Signature is missing": [
+        "Semnătura lipsește"
+      ],
       "Signature verification failed": [
         "Eșuare verificare semnătură."
       ],
+      "Signature verification failed: ${ errorMessage }": [
+        "Verificarea semnăturii a eșuat: ${ errorMessage }"
+      ],
       "Signature verification for ${ signatureType } failed": [
         "Verificarea semnăturii pentru ${ signatureType } a eșuat."
+      ],
+      "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
+        "Verificarea semnăturii pentru ${ signatureType } a eșuat: ${ errorMessage }"
       ],
       "Some file bytes failed to upload": [
         "Unii octeți ai fișierului nu s-au încărcat."
@@ -176,15 +215,9 @@
         "Puteți părăsi doar articolul care vi s-a partajat."
       ]
     },
-    "Operation": {
-      "Deleting items": [
-        "Ștergerea articolelor"
-      ],
-      "Restoring items": [
-        "Restaurare elemente"
-      ],
-      "Trashing items": [
-        "Se pun în gunoi articolele"
+    "Info": {
+      "Author is not provided on public link": [
+        "Autorul nu este furnizat pentru legătura publică."
       ]
     },
     "Property": {
@@ -199,6 +232,9 @@
       ],
       "key": [
         "cheie"
+      ],
+      "membership": [
+        "apartenență"
       ],
       "name": [
         "nume"

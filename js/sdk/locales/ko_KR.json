@@ -5,14 +5,20 @@
   },
   "contexts": {
     "Error": {
-      "${ operationForErrorMessage } from multiple sections is not allowed": [
-        "다중 섹션으로 부터의 ${ operationForErrorMessage }은(는) 허락되지 않습니다."
+      "Bookmark password is not available": [
+        "북마크 비밀번호를 사용할 수 없습니다"
       ],
       "Cannot download a folder": [
         "폴더를 다운로드할 수 없음"
       ],
       "Cannot share root folder": [
         "상위 폴더를 공유할 수 없습니다"
+      ],
+      "Copy operation aborted": [
+        "복사 작업 중단됨"
+      ],
+      "Copying item to a non-folder is not allowed": [
+        "폴더가 아닌 곳으로 항목을 복사할 수 없습니다"
       ],
       "Creating files in non-folders is not allowed": [
         "폴더가 아닌 곳에 폴더를 생성할 수 없습니다"
@@ -41,6 +47,15 @@
       "Failed to decrypt block: ${ message }": [
         "블록을 복호화할 수 없음: ${ message }"
       ],
+      "Failed to decrypt bookmark key: ${ message }": [
+        "북마크 키를 복호화할 수 없음: ${ message }"
+      ],
+      "Failed to decrypt bookmark name: ${ message }": [
+        "북마크 이름을 복호화할 수 없음: ${ message }"
+      ],
+      "Failed to decrypt bookmark password: ${ message }": [
+        "북마크 비밀번호를 복호화할 수 없음: ${ message }"
+      ],
       "Failed to decrypt content key: ${ message }": [
         "콘텐츠 키 복호화 실패: ${ message }"
       ],
@@ -56,8 +71,17 @@
       "Failed to decrypt thumbnail: ${ message }": [
         "섬내일 복호화 실패: ${ message }"
       ],
+      "Failed to get inviter keys": [
+        "초대자 키를 가져오는 데 실패했습니다"
+      ],
+      "Failed to get sharing info for node ${ nodeUid }": [
+        "노드 ${ nodeUid }에 대한 공유 정보를 가져오지 못했습니다"
+      ],
       "Failed to load some nodes": [
         "일부 로드 불러오기 실패"
+      ],
+      "Failed to verify invitation": [
+        "초대 확인 실패"
       ],
       "File download failed due to empty response": [
         "빈 응답으로 인하여 다운로드에 실패했습니다"
@@ -68,6 +92,9 @@
       "File has no content key": [
         "파일에 콘텐츠 키가 없습니다"
       ],
+      "Invalid URL": [
+        "잘못된 URL"
+      ],
       "Invitation not found": [
         "초대를 찾을 수 없음"
       ],
@@ -77,11 +104,11 @@
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "레거시 공개 링크는 업데이트가 불가능합니다. 새로운 공개 링크를 다시 생성해 주세요."
       ],
-      "Loading thumbnails from multiple sections is not allowed": [
-        "여러 섹션에서 섬네일 로드는 허용되지 않습니다."
-      ],
       "Missing integrity signature": [
         "무결성 서명 없음"
+      ],
+      "Missing inviter email": [
+        "초대자 이메일 누락"
       ],
       "Missing signature": [
         "서명 누락"
@@ -106,6 +133,9 @@
       ],
       "Name must not contain the character '/'": [
         "이름에 문자 '/'을 포함할 수 없습니다"
+      ],
+      "No available name found": [
+        "사용 가능한 이름을 찾을 수 없음"
       ],
       "Node has no thumbnail": [
         "노드에 섬내일이 없습니다"
@@ -134,11 +164,20 @@
       "Request aborted": [
         "요청 중단됨"
       ],
+      "Signature is missing": [
+        "서명이 누락되었습니다"
+      ],
       "Signature verification failed": [
         "서명 인증 실패"
       ],
+      "Signature verification failed: ${ errorMessage }": [
+        "서명 검증 실패: ${ errorMessage }"
+      ],
       "Signature verification for ${ signatureType } failed": [
         "${ signatureType }의 서명 확인에 실패했습니다"
+      ],
+      "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
+        "${ signatureType }의 서명 확인에 실패했습니다: ${ errorMessage }"
       ],
       "Some file bytes failed to upload": [
         "일부 파일 바이트 업로드에 실패했습니다"
@@ -174,18 +213,15 @@
         "나와 공유된 항목에서만 나갈 수 있습니다."
       ]
     },
-    "Operation": {
-      "Deleting items": [
-        "항목 삭제 중"
-      ],
-      "Restoring items": [
-        "항목 복원 중"
-      ],
-      "Trashing items": [
-        "항목을 휴지통에 이동 중"
+    "Info": {
+      "Author is not provided on public link": [
+        "공개 링크에는 작성자가 제공되지 않습니다"
       ]
     },
     "Property": {
+      "attributes": [
+        "속성"
+      ],
       "content key": [
         "콘텐츠 키"
       ],
@@ -194,6 +230,9 @@
       ],
       "key": [
         "키"
+      ],
+      "membership": [
+        "멤버십"
       ],
       "name": [
         "이름"
