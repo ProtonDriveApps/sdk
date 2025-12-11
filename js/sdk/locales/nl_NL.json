@@ -5,8 +5,8 @@
   },
   "contexts": {
     "Error": {
-      "${ operationForErrorMessage } from multiple sections is not allowed": [
-        "${ operationForErrorMessage } uit meerdere secties is niet toegestaan"
+      "Bookmark password is not available": [
+        "Bladwijzerwachtwoord is niet beschikbaar"
       ],
       "Cannot download a folder": [
         "Kan geen map downloaden"
@@ -41,6 +41,15 @@
       "Failed to decrypt block: ${ message }": [
         "Fout bij het ontsleutelen van blok: ${ message }"
       ],
+      "Failed to decrypt bookmark key: ${ message }": [
+        "Fout bij het ontsleutelen van de bladwijzersleutel: ${ message }"
+      ],
+      "Failed to decrypt bookmark name: ${ message }": [
+        "Fout bij het ontsleutelen van bladwijzernaam: ${ message }"
+      ],
+      "Failed to decrypt bookmark password: ${ message }": [
+        "Fout bij het ontsleutelen van bladwijzerwachtwoord: ${ message }"
+      ],
       "Failed to decrypt content key: ${ message }": [
         "Fout bij het ontsleutelen van de inhoudssleutel: ${ message }"
       ],
@@ -56,8 +65,14 @@
       "Failed to decrypt thumbnail: ${ message }": [
         "Fout bij het ontsleutelen van de miniatuur: ${ message }"
       ],
+      "Failed to get inviter keys": [
+        "Ophalen van de sleutels van de uitnodiger is niet gelukt."
+      ],
       "Failed to load some nodes": [
         "Fout bij het laden van sommige nodes"
+      ],
+      "Failed to verify invitation": [
+        "Verificatie van de uitnodiging is mislukt"
       ],
       "File download failed due to empty response": [
         "Het downloaden van het bestand is mislukt door een leeg antwoord"
@@ -68,6 +83,9 @@
       "File has no content key": [
         "Bestand heeft geen inhoudssleutel"
       ],
+      "Invalid URL": [
+        "Ongeldige URL"
+      ],
       "Invitation not found": [
         "Uitnodiging niet gevonden"
       ],
@@ -77,11 +95,11 @@
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "De verouderde openbare koppeling kan niet worden bijgewerkt. Maak opnieuw een openbare koppeling aan."
       ],
-      "Loading thumbnails from multiple sections is not allowed": [
-        "Laden van miniaturen uit meerdere secties is niet toegestaan"
-      ],
       "Missing integrity signature": [
         "Integriteitshandtekening ontbreekt"
+      ],
+      "Missing inviter email": [
+        "E-mailadres van uitnodiger ontbreekt"
       ],
       "Missing signature": [
         "Handtekening ontbreekt"
@@ -107,6 +125,9 @@
       ],
       "Name must not contain the character '/'": [
         "Naam mag het teken '/' niet bevatten"
+      ],
+      "No available name found": [
+        "Geen beschikbare naam gevonden"
       ],
       "Node has no thumbnail": [
         "Node heeft geen miniatuur"
@@ -135,11 +156,20 @@
       "Request aborted": [
         "Verzoek afgebroken"
       ],
+      "Signature is missing": [
+        "Handtekening ontbreekt"
+      ],
       "Signature verification failed": [
         "Controle van handtekening mislukt"
       ],
+      "Signature verification failed: ${ errorMessage }": [
+        "Verificatie van handtekening is mislukt: ${ errorMessage }"
+      ],
       "Signature verification for ${ signatureType } failed": [
         "Verificatie van de handtekening voor ${ signatureType } is mislukt"
+      ],
+      "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
+        "Verificatie van de handtekening voor ${ signatureType } is mislukt: ${ errorMessage }"
       ],
       "Some file bytes failed to upload": [
         "Sommige bestandsbytes konden niet worden geüpload"
@@ -175,17 +205,6 @@
         "U kunt alleen een item verlaten dat met u wordt gedeeld"
       ]
     },
-    "Operation": {
-      "Deleting items": [
-        "Items verwijderen"
-      ],
-      "Restoring items": [
-        "Herstellen van items"
-      ],
-      "Trashing items": [
-        "Items verwijderen"
-      ]
-    },
     "Property": {
       "attributes": [
         "attributen"
@@ -198,6 +217,9 @@
       ],
       "key": [
         "sleutel"
+      ],
+      "membership": [
+        "lidmaatschap"
       ],
       "name": [
         "naam"

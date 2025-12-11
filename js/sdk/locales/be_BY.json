@@ -5,8 +5,8 @@
   },
   "contexts": {
     "Error": {
-      "${ operationForErrorMessage } from multiple sections is not allowed": [
-        "${ operationForErrorMessage } з некалькіх раздзелаў забаронена"
+      "Bookmark password is not available": [
+        "Пароль закладкі недаступны"
       ],
       "Cannot download a folder": [
         "Немагчыма спампаваць папку"
@@ -14,11 +14,17 @@
       "Cannot share root folder": [
         "Немагчыма абагуліць каранёвую папку"
       ],
+      "Copy operation aborted": [
+        "Аперацыя капіявання перарвана"
+      ],
+      "Copying item to a non-folder is not allowed": [
+        "Капіяванне элементаў у асяроддзі, якое не належыць папкам забаронена"
+      ],
       "Creating files in non-folders is not allowed": [
-        "Забаронена ствараць файлы ў папках, якія не з'яўляюцца папкамі"
+        "Стварэнне файлаў у асяроддзі, якое не належыць папкам забаронена"
       ],
       "Creating folders in non-folders is not allowed": [
-        "Забаронена ствараць папкі у элементах, якія не з'яўляюцца папкамі"
+        "Стварэнне папак у асяроддзі, якое не належыць папкам забаронена"
       ],
       "Creating revisions in non-files is not allowed": [
         "Забаронена ствараць рэдакцыі ў файлах, якія не з'яўляюцца файламі"
@@ -41,6 +47,15 @@
       "Failed to decrypt block: ${ message }": [
         "Не ўдалося расшыфраваць блок: ${ message }"
       ],
+      "Failed to decrypt bookmark key: ${ message }": [
+        "Не ўдалося расшыфраваць ключ закладкі: ${ message }"
+      ],
+      "Failed to decrypt bookmark name: ${ message }": [
+        "Не ўдалося расшыфраваць назву закладкі: ${ message }"
+      ],
+      "Failed to decrypt bookmark password: ${ message }": [
+        "Не ўдалося расшыфраваць пароль закладкі: ${ message }"
+      ],
       "Failed to decrypt content key: ${ message }": [
         "Не ўдалося расшыфраваць ключ змесціва: ${ message }"
       ],
@@ -56,8 +71,17 @@
       "Failed to decrypt thumbnail: ${ message }": [
         "Не ўдалося расшыфраваць мініяцюру: ${ message }"
       ],
+      "Failed to get inviter keys": [
+        "Не ўдалося атрымаць ключы запрашальніка"
+      ],
+      "Failed to get sharing info for node ${ nodeUid }": [
+        "Не ўдалося атрымаць звесткі аб абагульванні для вузла ${ nodeUid }"
+      ],
       "Failed to load some nodes": [
         "Не ўдалося загрузіць некаторыя вузлы"
+      ],
+      "Failed to verify invitation": [
+        "Не ўдалося спраўдзіць запрашэнне"
       ],
       "File download failed due to empty response": [
         "Спампоўка файла не атрымалася па прычыне пустога адказу"
@@ -68,6 +92,9 @@
       "File has no content key": [
         "Файл не мае ключа змесціва"
       ],
+      "Invalid URL": [
+        "Памылковы URL-адрас"
+      ],
       "Invitation not found": [
         "Запрашэнне не знойдзена"
       ],
@@ -75,13 +102,13 @@
         "Немагчыма расшыфраваць элемент"
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
-        "Немагчыма абнавіць старую публічную спасылку. Калі ласка, стварыце новую публічную спасылку."
-      ],
-      "Loading thumbnails from multiple sections is not allowed": [
-        "Загрузка мініяцюр з некалькіх раздзелаў забаронена"
+        "Немагчыма абнавіць старую публічную спасылку. Стварыце новую публічную спасылку."
       ],
       "Missing integrity signature": [
         "Адсутнічае подпіс цэласнасці"
+      ],
+      "Missing inviter email": [
+        "Адсутнічае адрас электроннай пошты запрашальніка"
       ],
       "Missing signature": [
         "Адсутнічае подпіс"
@@ -93,7 +120,7 @@
         "Аперацыя перамяшчэння перарвана"
       ],
       "Moving item to a non-folder is not allowed": [
-        "Забаронена перамяшчаць элементы ў папкі, якія не з'яўляюцца папкамі"
+        "Перамяшчэнне элементаў у асяроддзі, якое не належыць папка забаронена"
       ],
       "Moving root item is not allowed": [
         "Перамяшчаць каранёвы элемент забаронена"
@@ -109,6 +136,9 @@
       ],
       "Name must not contain the character '/'": [
         "Назва не павінна змяшчаць сімвал '/'"
+      ],
+      "No available name found": [
+        "Даступная назва не знойдзена"
       ],
       "Node has no thumbnail": [
         "У вузла адсутнічае мініяцюра"
@@ -137,11 +167,20 @@
       "Request aborted": [
         "Запыт перарваны"
       ],
+      "Signature is missing": [
+        "Подпіс адсутнічае"
+      ],
       "Signature verification failed": [
-        "Не ўдалося праверыць подпіс"
+        "Не ўдалося спраўдзіць подпіс"
+      ],
+      "Signature verification failed: ${ errorMessage }": [
+        "Не ўдалося спраўдзіць подпіс: ${ errorMessage }"
       ],
       "Signature verification for ${ signatureType } failed": [
-        "Збой праверкі подпісу для ${ signatureType }"
+        "Збой спраўджання подпісу для ${ signatureType }"
+      ],
+      "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
+        "Збой спраўджання подпісу для ${ signatureType }: ${ errorMessage }"
       ],
       "Some file bytes failed to upload": [
         "Збой запампоўвання некаторых байтаў файла"
@@ -168,24 +207,18 @@
         "Невядомая памылка ${ response.Response.Code }"
       ],
       "Verification keys are not available": [
-        "Ключы праверкі недаступны"
+        "Ключы спраўджання недаступны"
       ],
       "Verification keys for ${ signatureType } are not available": [
-        "Ключы праверкі для ${ signatureType } недаступны"
+        "Ключы спраўджання для ${ signatureType } недаступны"
       ],
       "You can leave only item that is shared with you": [
         "Вы можаце пакінуць толькі элемент, які абагулены з вамі"
       ]
     },
-    "Operation": {
-      "Deleting items": [
-        "Выдаленне элементаў"
-      ],
-      "Restoring items": [
-        "Аднаўленне элементаў"
-      ],
-      "Trashing items": [
-        "Выдаленыя элементы"
+    "Info": {
+      "Author is not provided on public link": [
+        "Аўтар не пазначаны ў публічнай спасылцы"
       ]
     },
     "Property": {
@@ -200,6 +233,9 @@
       ],
       "key": [
         "ключ"
+      ],
+      "membership": [
+        "членства"
       ],
       "name": [
         "назва"

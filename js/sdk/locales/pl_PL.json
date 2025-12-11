@@ -5,14 +5,17 @@
   },
   "contexts": {
     "Error": {
-      "${ operationForErrorMessage } from multiple sections is not allowed": [
-        "${ operationForErrorMessage } z wielu sekcji nie jest dozwolone"
+      "Bookmark password is not available": [
+        "Hasło zakładki nie jest dostępne"
       ],
       "Cannot download a folder": [
         "Nie można pobrać folderu"
       ],
       "Cannot share root folder": [
         "Nie można udostępnić folderu głównego"
+      ],
+      "Copy operation aborted": [
+        "Operacja kopiowania została przerwana"
       ],
       "Creating files in non-folders is not allowed": [
         "Tworzenie plików poza folderami nie jest dozwolone"
@@ -41,6 +44,15 @@
       "Failed to decrypt block: ${ message }": [
         "Nie udało się odszyfrować bloku: ${ message }"
       ],
+      "Failed to decrypt bookmark key: ${ message }": [
+        "Nie udało się odszyfrować klucza zakładki: ${ message }"
+      ],
+      "Failed to decrypt bookmark name: ${ message }": [
+        "Nie udało się odszyfrować nazwy zakładki: ${ message }"
+      ],
+      "Failed to decrypt bookmark password: ${ message }": [
+        "Nie udało się odszyfrować hasła zakładki: ${ message }"
+      ],
       "Failed to decrypt content key: ${ message }": [
         "Nie udało się odszyfrować klucza zawartości: ${ message }"
       ],
@@ -56,8 +68,14 @@
       "Failed to decrypt thumbnail: ${ message }": [
         "Nie udało się odszyfrować podglądu: ${ message }"
       ],
+      "Failed to get inviter keys": [
+        "Nie udało się pobrać kluczy zapraszającego"
+      ],
       "Failed to load some nodes": [
         "Nie udało się załadować niektórych węzłów"
+      ],
+      "Failed to verify invitation": [
+        "Nie udało się zweryfikować zaproszenia"
       ],
       "File download failed due to empty response": [
         "Pobieranie pliku nie powiodło się z powodu pustej odpowiedzi"
@@ -68,6 +86,9 @@
       "File has no content key": [
         "Plik nie ma klucza zawartości"
       ],
+      "Invalid URL": [
+        "Adres URL jest nieprawidłowy"
+      ],
       "Invitation not found": [
         "Zaproszenie nie zostało znalezione"
       ],
@@ -77,11 +98,11 @@
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Starszy typ linku nie może zostać zaktualizowany. Utwórz ponownie nowy link."
       ],
-      "Loading thumbnails from multiple sections is not allowed": [
-        "Ładowanie podglądów z wielu sekcji nie jest dozwolone"
-      ],
       "Missing integrity signature": [
         "Brak podpisu integralności"
+      ],
+      "Missing inviter email": [
+        "Brak adresu e-mail nadawcy zaproszenia"
       ],
       "Missing signature": [
         "Brak podpisu"
@@ -137,11 +158,20 @@
       "Request aborted": [
         "Żądanie zostało anulowane"
       ],
+      "Signature is missing": [
+        "Brak podpisu"
+      ],
       "Signature verification failed": [
         "Weryfikacja podpisu nie powiodła się"
       ],
+      "Signature verification failed: ${ errorMessage }": [
+        "Weryfikacja podpisu nie powiodła się: ${ errorMessage }"
+      ],
       "Signature verification for ${ signatureType } failed": [
         "Weryfikacja podpisu dla ${ signatureType } nie powiodła się"
+      ],
+      "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
+        "Weryfikacja podpisu dla ${ signatureType } nie powiodła się: ${ errorMessage }"
       ],
       "Some file bytes failed to upload": [
         "Nie udało się przesłać niektórych bajtów pliku"
@@ -177,15 +207,9 @@
         "Możesz opuścić tylko element, który został Ci udostępniony"
       ]
     },
-    "Operation": {
-      "Deleting items": [
-        "Usuwanie elementów"
-      ],
-      "Restoring items": [
-        "Przywracanie elementów"
-      ],
-      "Trashing items": [
-        "Przenoszenie elementów do kosza"
+    "Info": {
+      "Author is not provided on public link": [
+        "Autor nie jest podany w publicznym linku"
       ]
     },
     "Property": {
@@ -200,6 +224,9 @@
       ],
       "key": [
         "klucz"
+      ],
+      "membership": [
+        "członkostwo"
       ],
       "name": [
         "nazwa"

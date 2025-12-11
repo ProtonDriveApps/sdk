@@ -5,8 +5,8 @@
   },
   "contexts": {
     "Error": {
-      "${ operationForErrorMessage } from multiple sections is not allowed": [
-        "${ operationForErrorMessage } de várias seções não é permitido."
+      "Bookmark password is not available": [
+        "A palavra-passe do marcador não se encontra disponível."
       ],
       "Cannot download a folder": [
         "Não é possível transferir uma pasta."
@@ -40,6 +40,15 @@
       ],
       "Failed to decrypt block: ${ message }": [
         "Erro ao desencriptar o bloco: ${ message }"
+      ],
+      "Failed to decrypt bookmark key: ${ message }": [
+        "Erro ao desencriptar a chave do marcador: ${ message }"
+      ],
+      "Failed to decrypt bookmark name: ${ message }": [
+        "Erro ao desencriptar o nome do marcador: ${ message }"
+      ],
+      "Failed to decrypt bookmark password: ${ message }": [
+        "Erro ao desencriptar a palavra-passe do marcador: ${ message }"
       ],
       "Failed to decrypt content key: ${ message }": [
         "Erro ao desencriptar a chave de conteúdo: ${ message }"
@@ -76,9 +85,6 @@
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Não é possível atualizar a ligação pública antiga. Cria uma nova ligação pública."
-      ],
-      "Loading thumbnails from multiple sections is not allowed": [
-        "Não é permitido carregar miniaturas de várias secções."
       ],
       "Missing integrity signature": [
         "Assinatura de integridade ausente"
@@ -173,17 +179,6 @@
       ],
       "You can leave only item that is shared with you": [
         "Só pode deixar o item partilhado consigo."
-      ]
-    },
-    "Operation": {
-      "Deleting items": [
-        "A eliminar itens"
-      ],
-      "Restoring items": [
-        "A restaurae itens"
-      ],
-      "Trashing items": [
-        "A eliminar itens"
       ]
     },
     "Property": {

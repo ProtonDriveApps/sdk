@@ -5,14 +5,20 @@
   },
   "contexts": {
     "Error": {
-      "${ operationForErrorMessage } from multiple sections is not allowed": [
-        "No es permet ${ operationForErrorMessage } des de diverses seccions"
+      "Bookmark password is not available": [
+        "La contrasenya d'adreces d'interès no està disponible."
       ],
       "Cannot download a folder": [
         "No es pot descarregar una carpeta"
       ],
       "Cannot share root folder": [
         "No es pot compartir la carpeta arrel"
+      ],
+      "Copy operation aborted": [
+        "S'ha cancel·lat l'operació de còpia"
+      ],
+      "Copying item to a non-folder is not allowed": [
+        "No està permès copiar un element a un lloc que no és una carpeta"
       ],
       "Creating files in non-folders is not allowed": [
         "No es permet crear carpetes en llocs que no són carpetes"
@@ -41,6 +47,15 @@
       "Failed to decrypt block: ${ message }": [
         "No s'ha pogut desxifrar el bloc: ${ message }"
       ],
+      "Failed to decrypt bookmark key: ${ message }": [
+        "No s'ha pogut desxifrar la clau d'adreces d'interès: ${ message }"
+      ],
+      "Failed to decrypt bookmark name: ${ message }": [
+        "No s'ha pogut desxifrar el nom de l'adreça d'interès: ${ message }"
+      ],
+      "Failed to decrypt bookmark password: ${ message }": [
+        "No s'ha pogut desxifrar la contrasenya d'adreces d'interès: ${ message }"
+      ],
       "Failed to decrypt content key: ${ message }": [
         "No s'ha pogut desxifrar la clau de contingut: ${ message }"
       ],
@@ -56,8 +71,17 @@
       "Failed to decrypt thumbnail: ${ message }": [
         "No s'ha pogut desxifrar la miniatura: ${ message }"
       ],
+      "Failed to get inviter keys": [
+        "No s'han pogut obtenir les claus de qui us convida"
+      ],
+      "Failed to get sharing info for node ${ nodeUid }": [
+        "No s'ha pogut obtenir la informació de compartició per al node ${ nodeUid }"
+      ],
       "Failed to load some nodes": [
         "No s'han pogut carregar alguns nodes"
+      ],
+      "Failed to verify invitation": [
+        "No s'ha pogut verificar la invitació"
       ],
       "File download failed due to empty response": [
         "La descàrrega del fitxer ha fallat a causa d'una resposta buida."
@@ -68,20 +92,23 @@
       "File has no content key": [
         "El fitxer no té clau de contingut"
       ],
+      "Invalid URL": [
+        "L'URL no és vàlid"
+      ],
       "Invitation not found": [
-        "No s'ha pogut trobar la invitació"
+        "No s'ha trobat la invitació"
       ],
       "Item cannot be decrypted": [
         "No s'ha pogut desxifrar l'element"
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
-        "L'enllaç públic heretat no es pot actualitzar. Torneu a crear-ne un de nou."
-      ],
-      "Loading thumbnails from multiple sections is not allowed": [
-        "No està permès carregar miniatures de diverses seccions"
+        "L'enllaç públic antic no es pot actualitzar. Torneu a crear-ne un de nou."
       ],
       "Missing integrity signature": [
         "No s'ha trobat la signatura d'integritat"
+      ],
+      "Missing inviter email": [
+        "Falta el correu electrònic de qui us convida"
       ],
       "Missing signature": [
         "No s'ha pogut trobar la signatura"
@@ -108,23 +135,26 @@
       "Name must not contain the character '/'": [
         "El nom no pot contenir el caràcter '/'"
       ],
+      "No available name found": [
+        "No s'ha trobat cap nom disponible"
+      ],
       "Node has no thumbnail": [
         "Aquest node no té miniatura"
       ],
       "Node is not a file": [
-        "Aquest node no és un fitxer"
+        "El node no és un fitxer"
       ],
       "Node is not accessible": [
         "Aquest node no és accessible"
       ],
       "Node is not shared": [
-        "Aquest node no ha estat compartit"
+        "Node no compartit"
       ],
       "Node not found": [
         "No s'ha pogut trobar el node"
       ],
       "Operation aborted": [
-        "L'operació s'ha cancel·lat"
+        "S'ha interromput l'operació"
       ],
       "Parent cannot be decrypted": [
         "L'element principal no es pot desxifrar"
@@ -133,13 +163,22 @@
         "No està permès canviar el nom d'un element arrel"
       ],
       "Request aborted": [
-        "S'ha cancel·lat la sol·licitud"
+        "Sol·licitud cancel·lada"
+      ],
+      "Signature is missing": [
+        "Hi manca la signatura"
       ],
       "Signature verification failed": [
         "No s'ha pogut verificar la signatura."
       ],
+      "Signature verification failed: ${ errorMessage }": [
+        "Hi ha hagut un error en la verificació de la signatura: ${ errorMessage }"
+      ],
       "Signature verification for ${ signatureType } failed": [
         "No s'ha pogut verificar la signatura per a ${ signatureType }"
+      ],
+      "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
+        "No s'ha pogut verificar la signatura per a ${ signatureType }: ${ errorMessage }"
       ],
       "Some file bytes failed to upload": [
         "Alguns bytes del fitxer no s'han pogut carregar"
@@ -151,7 +190,7 @@
         "No s'ha trobat la miniatura"
       ],
       "Too many server errors, please try again later": [
-        "Hi ha hagut massa errors del servidor. Torneu-ho a provar més tard."
+        "Massa errors del servidor. Torneu-ho a provar més tard"
       ],
       "Too many server requests, please try again later": [
         "Hi ha hagut massa peticions del servidor. Torneu-ho a provar més tard."
@@ -175,15 +214,9 @@
         "Només podeu abandonar un element que us hagi estat compartit."
       ]
     },
-    "Operation": {
-      "Deleting items": [
-        "S'estan eliminant els elements"
-      ],
-      "Restoring items": [
-        "S'estan restaurant els elements"
-      ],
-      "Trashing items": [
-        "S'estan movent els elements a la paperera"
+    "Info": {
+      "Author is not provided on public link": [
+        "L'autor no es proporciona a l'enllaç públic"
       ]
     },
     "Property": {
@@ -198,6 +231,9 @@
       ],
       "key": [
         "clau"
+      ],
+      "membership": [
+        "subscripció"
       ],
       "name": [
         "nom"

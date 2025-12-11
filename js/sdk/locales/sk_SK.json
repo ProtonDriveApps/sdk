@@ -5,14 +5,20 @@
   },
   "contexts": {
     "Error": {
-      "${ operationForErrorMessage } from multiple sections is not allowed": [
-        "${ operationForErrorMessage } z viacerých sekcií nie je povolené"
+      "Bookmark password is not available": [
+        "Heslo záložky nie je dostupné"
       ],
       "Cannot download a folder": [
         "Nie je možné stiahnuť priečinok"
       ],
       "Cannot share root folder": [
         "Nie je možné zdieľať koreňový priečinok"
+      ],
+      "Copy operation aborted": [
+        "Operácia kopírovania bola prerušená"
+      ],
+      "Copying item to a non-folder is not allowed": [
+        "Kopírovanie položky mimo priečinka nie je povolené."
       ],
       "Creating files in non-folders is not allowed": [
         "Vytváranie súborov mimo priečinkov nie je povolené."
@@ -41,6 +47,15 @@
       "Failed to decrypt block: ${ message }": [
         "Nepodarilo sa dešifrovať blok: ${ message }"
       ],
+      "Failed to decrypt bookmark key: ${ message }": [
+        "Nepodarilo sa dešifrovať kľúč záložky: ${ message }"
+      ],
+      "Failed to decrypt bookmark name: ${ message }": [
+        "Nepodarilo sa dešifrovať názov záložky: ${ message }"
+      ],
+      "Failed to decrypt bookmark password: ${ message }": [
+        "Nepodarilo sa dešifrovať heslo záložky: ${ message }"
+      ],
       "Failed to decrypt content key: ${ message }": [
         "Nepodarilo sa dešifrovať kľúč obsahu: ${ message }"
       ],
@@ -56,8 +71,17 @@
       "Failed to decrypt thumbnail: ${ message }": [
         "Nepodarilo sa dešifrovať miniatúru: ${ message }"
       ],
+      "Failed to get inviter keys": [
+        "Nepodarilo sa získať pozývacie kľúče"
+      ],
+      "Failed to get sharing info for node ${ nodeUid }": [
+        "Nepodarilo sa získať informácie o zdieľaní pre uzol ${ nodeUid }"
+      ],
       "Failed to load some nodes": [
         "Nepodarilo sa načítať niektoré uzly"
+      ],
+      "Failed to verify invitation": [
+        "Nepodarilo sa overiť pozvánku"
       ],
       "File download failed due to empty response": [
         "Stiahnutie súboru zlyhalo z dôvodu prázdnej odpovede."
@@ -68,6 +92,9 @@
       "File has no content key": [
         "Súbor nemá kľúč obsahu"
       ],
+      "Invalid URL": [
+        "Neplatná URL"
+      ],
       "Invitation not found": [
         "Pozvánka nenájdená"
       ],
@@ -77,11 +104,11 @@
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Starý verejný odkaz sa nedá aktualizovať. Vytvorte nový verejný odkaz, prosím."
       ],
-      "Loading thumbnails from multiple sections is not allowed": [
-        "Načítavanie miniatúr z viacerých sekcií nie je povolené"
-      ],
       "Missing integrity signature": [
         "Chýbajúci podpis integrity"
+      ],
+      "Missing inviter email": [
+        "Chýba email odosielateľa pozvánky"
       ],
       "Missing signature": [
         "Chýbajúci podpis"
@@ -110,6 +137,9 @@
       "Name must not contain the character '/'": [
         "Názov nesmie obsahovať znak '/'"
       ],
+      "No available name found": [
+        "Nenašiel sa žiadny dostupný názov"
+      ],
       "Node has no thumbnail": [
         "Uzol nemá miniatúru"
       ],
@@ -137,11 +167,20 @@
       "Request aborted": [
         "Požiadavka prerušená"
       ],
+      "Signature is missing": [
+        "Chýbajúci podpis"
+      ],
       "Signature verification failed": [
         "Overenie podpisu zlyhalo"
       ],
+      "Signature verification failed: ${ errorMessage }": [
+        "Overenie podpisu zlyhalo: ${ errorMessage }"
+      ],
       "Signature verification for ${ signatureType } failed": [
         "Overenie podpisu pre ${ signatureType } zlyhalo"
+      ],
+      "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
+        "Overenie podpisu pre ${ signatureType } zlyhalo: ${ errorMessage }"
       ],
       "Some file bytes failed to upload": [
         "Niektoré bajty súboru sa nepodarilo nahrať"
@@ -177,15 +216,9 @@
         "Môžete opustiť iba položku, ktorá je s vami zdieľaná."
       ]
     },
-    "Operation": {
-      "Deleting items": [
-        "Vymazávanie položiek"
-      ],
-      "Restoring items": [
-        "Obnovovanie položiek"
-      ],
-      "Trashing items": [
-        "Presúvanie položiek do koša"
+    "Info": {
+      "Author is not provided on public link": [
+        "Autor nie je uvedený na verejnom odkaze."
       ]
     },
     "Property": {
@@ -200,6 +233,9 @@
       ],
       "key": [
         "kľúč"
+      ],
+      "membership": [
+        "členstvo"
       ],
       "name": [
         "názov"

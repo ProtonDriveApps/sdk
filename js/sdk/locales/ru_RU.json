@@ -5,8 +5,8 @@
   },
   "contexts": {
     "Error": {
-      "${ operationForErrorMessage } from multiple sections is not allowed": [
-        "${ operationForErrorMessage } из нескольких разделов не допускается"
+      "Bookmark password is not available": [
+        "Пароль закладки недоступен"
       ],
       "Cannot download a folder": [
         "Невозможно скачать папку"
@@ -41,6 +41,15 @@
       "Failed to decrypt block: ${ message }": [
         "Не удалось расшифровать блок: ${ message }"
       ],
+      "Failed to decrypt bookmark key: ${ message }": [
+        "Не удалось расшифровать ключ закладки: ${ message }"
+      ],
+      "Failed to decrypt bookmark name: ${ message }": [
+        "Не удалось расшифровать имя закладки: ${ message }"
+      ],
+      "Failed to decrypt bookmark password: ${ message }": [
+        "Не удалось расшифровать пароль закладки: ${ message }"
+      ],
       "Failed to decrypt content key: ${ message }": [
         "Не удалось расшифровать ключ содержимого: ${ message }"
       ],
@@ -56,8 +65,14 @@
       "Failed to decrypt thumbnail: ${ message }": [
         "Не удалось расшифровать значок: ${ message }"
       ],
+      "Failed to get inviter keys": [
+        "Не удалось получить ключи пригласившего"
+      ],
       "Failed to load some nodes": [
         "Не удалось загрузить некоторые узлы"
+      ],
+      "Failed to verify invitation": [
+        "Не удалось проверить приглашение"
       ],
       "File download failed due to empty response": [
         "Не удалось скачать файл из-за пустого ответа"
@@ -77,11 +92,11 @@
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Устаревшую публичную ссылку невозможно обновить. Создайте новую публичную ссылку."
       ],
-      "Loading thumbnails from multiple sections is not allowed": [
-        "Загрузка значков из нескольких разделов не допускается"
-      ],
       "Missing integrity signature": [
         "Отсутствует подпись целостности"
+      ],
+      "Missing inviter email": [
+        "Отсутствует адрес электронной почты пригласившего"
       ],
       "Missing signature": [
         "Подпись отсутствует"
@@ -140,8 +155,14 @@
       "Signature verification failed": [
         "Проверка подписи не удалась"
       ],
+      "Signature verification failed: ${ errorMessage }": [
+        "Проверка подписи не удалась: ${ errorMessage }"
+      ],
       "Signature verification for ${ signatureType } failed": [
         "Проверка подписи для ${ signatureType } не удалась"
+      ],
+      "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
+        "Проверка подписи для ${ signatureType } не удалась: ${ errorMessage }"
       ],
       "Some file bytes failed to upload": [
         "Не удалось загрузить некоторые байты файла"
@@ -177,17 +198,6 @@
         "Вы можете покинуть только тот элемент, к которому вам предоставили доступ"
       ]
     },
-    "Operation": {
-      "Deleting items": [
-        "Удаление элементов"
-      ],
-      "Restoring items": [
-        "Восстановление элементов"
-      ],
-      "Trashing items": [
-        "Перемещение элементов в корзину"
-      ]
-    },
     "Property": {
       "attributes": [
         "атрибуты"
@@ -200,6 +210,9 @@
       ],
       "key": [
         "ключ"
+      ],
+      "membership": [
+        "членство"
       ],
       "name": [
         "название"

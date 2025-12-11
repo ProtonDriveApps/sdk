@@ -5,83 +5,110 @@
   },
   "contexts": {
     "Error": {
-      "${ operationForErrorMessage } from multiple sections is not allowed": [
-        "Birden fazla bölümden ${ operationForErrorMessage } işlemine izin verilmiyor"
+      "Bookmark password is not available": [
+        "Yer imi parolası kullanılamıyor"
       ],
       "Cannot download a folder": [
-        "Klasör indirilemez"
+        "Bir klasör indirilemedi"
       ],
       "Cannot share root folder": [
-        "Kök klasör paylaşılamıyor"
+        "Kök klasör paylaşılamaz"
+      ],
+      "Copy operation aborted": [
+        "Kopyalama işlemi iptal edildi"
+      ],
+      "Copying item to a non-folder is not allowed": [
+        "Öge klasör olmayan bir yere kopyalanamaz"
       ],
       "Creating files in non-folders is not allowed": [
-        "Klasör olmayan yerlerde dosya oluşturulmasına izin verilmemektedir."
+        "Klasör olmayanlar içinde dosya oluşturulamaz"
       ],
       "Creating folders in non-folders is not allowed": [
-        "Klasör olmayan yerlerde klasör oluşturulmasına izin verilmemektedir."
+        "Klasör olmayanlar içinde klasör oluşturulamaz"
       ],
       "Creating revisions in non-files is not allowed": [
-        "Dosya olmayanlarda revizyon oluşturulmasına izin verilmemektedir."
+        "Dosya olmayanlar içinde sürüm oluşturulamaz"
       ],
       "Data integrity check failed": [
-        "Veri bütünlüğü kontrolü başarısız oldu"
+        "Veri bütünlüğü denetlenemedi"
       ],
       "Data integrity check of one part failed": [
-        "Bir parçanın veri bütünlüğü kontrolü başarısız oldu"
+        "Bir parçanın veri bütünlüğü denetlenemedi"
       ],
       "Device not found": [
         "Aygıt bulunamadı"
       ],
       "Expiration date cannot be in the past": [
-        "Geçerlilik süresi geçmiş bir tarih olamaz"
+        "Geçerlilik süresi geçmişte bir tarih olamaz"
       ],
       "Failed to decrypt active revision: ${ message }": [
-        "Etkin düzeltmenin şifresi çözülemedi: ${ message }"
+        "Etkin sürümün şifresi çözülemedi: ${ message }"
       ],
       "Failed to decrypt block: ${ message }": [
         "Blok şifresi çözülemedi: ${ message }"
+      ],
+      "Failed to decrypt bookmark key: ${ message }": [
+        "Yer imi anahtarının şifresi çözülemedi: ${ message }"
+      ],
+      "Failed to decrypt bookmark name: ${ message }": [
+        "Yer imi adının şifresi çözülemedi: ${ message }"
+      ],
+      "Failed to decrypt bookmark password: ${ message }": [
+        "Yer imi parolasının şifresi çözülemedi: ${ message }"
       ],
       "Failed to decrypt content key: ${ message }": [
         "İçerik anahtarının şifresi çözülemedi: ${ message }"
       ],
       "Failed to decrypt item name: ${ message }": [
-        "Öğe adının şifresi çözülemedi: ${ message }"
+        "Öge adının şifresi çözülemedi: ${ message }"
       ],
       "Failed to decrypt node key: ${ message }": [
         "Düğüm anahtarının şifresi çözülemedi: ${ message }"
       ],
       "Failed to decrypt some nodes": [
-        "Bazı düğümlerin şifresi çözülemedi."
+        "Bazı düğümlerin şifresi çözülemedi"
       ],
       "Failed to decrypt thumbnail: ${ message }": [
         "Küçük görselin şifresi çözülemedi: ${ message }"
       ],
+      "Failed to get inviter keys": [
+        "Davet edenin anahtarları alınamadı"
+      ],
+      "Failed to get sharing info for node ${ nodeUid }": [
+        "${ nodeUid } düğümünün paylaşım bilgileri alınamadı"
+      ],
       "Failed to load some nodes": [
         "Bazı düğümler yüklenemedi"
       ],
+      "Failed to verify invitation": [
+        "Davet doğrulanamadı"
+      ],
       "File download failed due to empty response": [
-        "Boş yanıt nedeniyle dosya indirme başarısız oldu."
+        "Boş yanıt nedeniyle dosya indirilemedi"
       ],
       "File has no active revision": [
-        "Dosyanın aktif revizyonu bulunmamaktadır."
+        "Dosyanın etkin bir sürümü yok"
       ],
       "File has no content key": [
-        "Dosyanın içerik anahtarı yok."
+        "Dosyanın içerik anahtarı yok"
+      ],
+      "Invalid URL": [
+        "Adres geçersiz"
       ],
       "Invitation not found": [
         "Davet bulunamadı"
       ],
       "Item cannot be decrypted": [
-        "Öğenin şifresi çözülemez"
+        "Ögenin şifresi çözülemedi"
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
-        "Eski herkese açık bağlantı güncellenemez. Lütfen yeni bir herkese açık bağlantı oluşturun."
-      ],
-      "Loading thumbnails from multiple sections is not allowed": [
-        "Birden fazla bölümden küçük görsellerin yüklenmesine izin verilmemektedir."
+        "Eski herkese açık bağlantı güncellenemedi. Lütfen yeni bir herkese açık bağlantı oluşturun."
       ],
       "Missing integrity signature": [
         "Bütünlük imzası eksik"
+      ],
+      "Missing inviter email": [
+        "Davet edenin e-posta adresi eksik"
       ],
       "Missing signature": [
         "İmza eksik"
@@ -93,10 +120,10 @@
         "Taşıma işlemi iptal edildi"
       ],
       "Moving item to a non-folder is not allowed": [
-        "Öğenin klasör olmayan bir yere taşınmasına izin verilmemektedir."
+        "Öge klasör olmayan bir yere taşınamaz"
       ],
       "Moving root item is not allowed": [
-        "Kök öğenin taşınmasına izin verilmiyor"
+        "Kök öge taşınamaz"
       ],
       "Name must be ${ MAX_NODE_NAME_LENGTH } character long at most": [
         "Ad en fazla ${ MAX_NODE_NAME_LENGTH } karakter uzunluğunda olmalıdır.",
@@ -106,10 +133,13 @@
         "Ad boş olamaz"
       ],
       "Name must not contain the character '/'": [
-        "Ad \"/\" karakterini içermemelidir."
+        "Ad içinde \"/\" karakteri bulunamaz."
+      ],
+      "No available name found": [
+        "Kullanılabilecek bir ad bulunamadı"
       ],
       "Node has no thumbnail": [
-        "Düğümün küçük resmi yok"
+        "Düğümün küçük görseli yok"
       ],
       "Node is not a file": [
         "Düğüm bir dosya değil"
@@ -127,31 +157,40 @@
         "İşlem iptal edildi"
       ],
       "Parent cannot be decrypted": [
-        "Üst öğenin şifresi çözülemez"
+        "Üst ögenin şifresi çözülemedi"
       ],
       "Renaming root item is not allowed": [
-        "Kök öğenin yeniden adlandırılmasına izin verilmiyor."
+        "Kök öge yeniden adlandırılamaz"
       ],
       "Request aborted": [
         "İstek iptal edildi"
       ],
+      "Signature is missing": [
+        "İmza eksik"
+      ],
       "Signature verification failed": [
-        "İmza doğrulaması başarısız oldu"
+        "İmza doğrulanamadı"
+      ],
+      "Signature verification failed: ${ errorMessage }": [
+        "İmza doğrulanamadı: ${ errorMessage }"
       ],
       "Signature verification for ${ signatureType } failed": [
-        "${ signatureType } için imza doğrulama başarısız oldu."
+        "${ signatureType } için imza doğrulanamadı"
+      ],
+      "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
+        "${ signatureType } için imza doğrulanamadı: ${ errorMessage }"
       ],
       "Some file bytes failed to upload": [
-        "Bazı dosya baytları yüklenemedi."
+        "Bazı dosya baytları yüklenemedi"
       ],
       "Some file parts failed to upload": [
-        "Bazı dosya parçaları yüklenemedi."
+        "Bazı dosya parçaları yüklenemedi"
       ],
       "Thumbnail not found": [
-        "Küçük resim bulunamadı"
+        "Küçük görsel bulunamadı"
       ],
       "Too many server errors, please try again later": [
-        "Çok fazla sunucu hatası oluştu, lütfen daha sonra yeniden deneyin"
+        "Çok fazla sayıda sunucu sorunu çıktı. Lütfen bir süre sonra yeniden deneyin."
       ],
       "Too many server requests, please try again later": [
         "Çok fazla sayıda sunucu isteği yapıldı. Lütfen bir süre sonra yeniden deneyin."
@@ -166,29 +205,23 @@
         "Bilinmeyen hata ${ response.Response.Code }"
       ],
       "Verification keys are not available": [
-        "Doğrulama anahtarları mevcut değil"
+        "Doğrulama anahtarları kullanılamıyor"
       ],
       "Verification keys for ${ signatureType } are not available": [
-        "${ signatureType } için doğrulama anahtarları mevcut değil"
+        "${ signatureType } için doğrulama anahtarları kullanılamıyor"
       ],
       "You can leave only item that is shared with you": [
-        "Sadece sizinle paylaşılan öğeyi bırakabilirsiniz"
+        "Yalnızca sizinle paylaşılan bir ögeden ayrılabilirsiniz"
       ]
     },
-    "Operation": {
-      "Deleting items": [
-        "Öğeler siliniyor"
-      ],
-      "Restoring items": [
-        "Öğeler geri yükleniyor"
-      ],
-      "Trashing items": [
-        "Öğeler çöpe atılıyor"
+    "Info": {
+      "Author is not provided on public link": [
+        "Yazar herkese açık bağlantıda belirtilmemiş"
       ]
     },
     "Property": {
       "attributes": [
-        "özellikler"
+        "öznitelikler"
       ],
       "content key": [
         "içerik anahtarı"
@@ -198,6 +231,9 @@
       ],
       "key": [
         "anahtar"
+      ],
+      "membership": [
+        "üyelik"
       ],
       "name": [
         "ad"
