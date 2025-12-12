@@ -8,6 +8,12 @@ export interface ProtonDriveAccount {
      */
     getOwnPrimaryAddress(): Promise<ProtonDriveAccountAddress>;
     /**
+     * Get all own addresses.
+     *
+     * @throws Error If there are no addresses.
+     */
+    getOwnAddresses(): Promise<ProtonDriveAccountAddress[]>;
+    /**
      * Get own address by email or addressId.
      *
      * @throws Error If there is no address with given email or addressId.

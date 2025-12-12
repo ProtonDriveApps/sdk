@@ -20,6 +20,9 @@ describe('nodesCryptoService', () => {
 
     let cryptoService: NodesCryptoService;
 
+    const publicAddressKey = { _idx: 21312 };
+    const ownPrivateAddressKey = { id: 'id', key: 'key' as unknown as PrivateKey };
+
     beforeEach(() => {
         jest.clearAllMocks();
 
@@ -71,7 +74,15 @@ describe('nodesCryptoService', () => {
         };
         account = {
             // @ts-expect-error No need to implement all methods for mocking
-            getPublicKeys: jest.fn(async () => [{ _idx: 21312 }]),
+            getPublicKeys: jest.fn(async () => [publicAddressKey]),
+            getOwnAddresses: jest.fn(async () => [
+                {
+                    email: 'email',
+                    addressId: 'addressId',
+                    primaryKeyIndex: 0,
+                    keys: [ownPrivateAddressKey],
+                },
+            ]),
         };
         // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
@@ -576,6 +587,7 @@ describe('nodesCryptoService', () => {
                 armoredNodePassphraseSignature: 'armoredNodePassphraseSignature',
                 file: {
                     base64ContentKeyPacket: 'base64ContentKeyPacket',
+                    armoredContentKeyPacketSignature: 'armoredContentKeyPacketSignature',
                 },
                 activeRevision: {
                     uid: 'revisionUid',
@@ -764,7 +776,7 @@ describe('nodesCryptoService', () => {
                 });
             });
 
-            it('on content key packet', async () => {
+            it('on content key packet without fallback verification', async () => {
                 driveCrypto.decryptAndVerifySessionKey = jest.fn(
                     async () =>
                         Promise.resolve({
@@ -787,6 +799,105 @@ describe('nodesCryptoService', () => {
                 verifyLogEventVerificationError({
                     field: 'nodeContentKey',
                     error: 'verification error',
+                });
+            });
+
+            it('on content key packet with successful fallback verification', async () => {
+                driveCrypto.decryptAndVerifySessionKey = jest
+                    .fn()
+                    .mockImplementationOnce(
+                        async () =>
+                            Promise.resolve({
+                                sessionKey: 'contentKeyPacketSessionKey',
+                                verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                                verificationErrors: [new Error('verification error')],
+                            }) as any,
+                    )
+                    .mockImplementationOnce(
+                        async () =>
+                            Promise.resolve({
+                                sessionKey: 'contentKeyPacketSessionKey',
+                                verified: VERIFICATION_STATUS.SIGNED_AND_VALID,
+                            }) as any,
+                    );
+
+                const result = await cryptoService.decryptNode(
+                    {
+                        ...encryptedNode,
+                        creationTime: new Date('2022-01-01'),
+                    },
+                    parentKey,
+                );
+                verifyResult(result);
+                expect(driveCrypto.decryptAndVerifySessionKey).toHaveBeenCalledTimes(2);
+                expect(driveCrypto.decryptAndVerifySessionKey).toHaveBeenCalledWith(
+                    'base64ContentKeyPacket',
+                    'armoredContentKeyPacketSignature',
+                    'decryptedKey',
+                    ['decryptedKey', publicAddressKey],
+                );
+                expect(driveCrypto.decryptAndVerifySessionKey).toHaveBeenCalledWith(
+                    'base64ContentKeyPacket',
+                    'armoredContentKeyPacketSignature',
+                    'decryptedKey',
+                    [ownPrivateAddressKey.key],
+                );
+                expect(telemetry.recordMetric).not.toHaveBeenCalled();
+            });
+
+            it('on content key packet with failed fallback verification', async () => {
+                driveCrypto.decryptAndVerifySessionKey = jest
+                    .fn()
+                    .mockImplementationOnce(
+                        async () =>
+                            Promise.resolve({
+                                sessionKey: 'contentKeyPacketSessionKey',
+                                verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                                verificationErrors: [new Error('verification error')],
+                            }) as any,
+                    )
+                    .mockImplementationOnce(
+                        async () =>
+                            Promise.resolve({
+                                sessionKey: 'contentKeyPacketSessionKey',
+                                verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                                verificationErrors: [new Error('fallback verification error')],
+                            }) as any,
+                    );
+
+                const result = await cryptoService.decryptNode(
+                    {
+                        ...encryptedNode,
+                        creationTime: new Date('2022-01-01'),
+                    },
+                    parentKey,
+                );
+                verifyResult(result, {
+                    keyAuthor: {
+                        ok: false,
+                        error: {
+                            claimedAuthor: 'signatureEmail',
+                            error: 'Signature verification for content key failed: verification error',
+                        },
+                    },
+                });
+                expect(driveCrypto.decryptAndVerifySessionKey).toHaveBeenCalledTimes(2);
+                expect(driveCrypto.decryptAndVerifySessionKey).toHaveBeenCalledWith(
+                    'base64ContentKeyPacket',
+                    'armoredContentKeyPacketSignature',
+                    'decryptedKey',
+                    ['decryptedKey', publicAddressKey],
+                );
+                expect(driveCrypto.decryptAndVerifySessionKey).toHaveBeenCalledWith(
+                    'base64ContentKeyPacket',
+                    'armoredContentKeyPacketSignature',
+                    'decryptedKey',
+                    [ownPrivateAddressKey.key],
+                );
+                verifyLogEventVerificationError({
+                    field: 'nodeContentKey',
+                    error: 'verification error',
+                    fromBefore2024: true,
                 });
             });
         });
