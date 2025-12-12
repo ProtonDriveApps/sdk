@@ -26,7 +26,7 @@ export class CommandPhotoDuplicate implements Command {
             return arrayToHexString(sha1Hash);
         }
 
-        const isDuplicate = await photosSdk.isDuplicatePhoto(name, getSha1)
-        printObject({ isDuplicate }, json);
+        const duplicates = await photosSdk.findPhotoDuplicates(name, getSha1)
+        printObject({ duplicates }, json);
     }
 }
