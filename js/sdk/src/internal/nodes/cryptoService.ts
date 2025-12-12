@@ -25,6 +25,7 @@ import {
     EncryptedRevision,
     DecryptedUnparsedRevision,
     NodeSigningKeys,
+    EncryptedNodeFileCrypto,
 } from './interface';
 
 export interface NodesCryptoReporter {
@@ -200,14 +201,7 @@ export class NodesCryptoService {
         if ('file' in node.encryptedCrypto) {
             const [activeRevisionPromise, contentKeyPacketSessionKeyPromise] = [
                 this.decryptRevision(node.uid, node.encryptedCrypto.activeRevision, key),
-                this.driveCrypto.decryptAndVerifySessionKey(
-                    node.encryptedCrypto.file.base64ContentKeyPacket,
-                    node.encryptedCrypto.file.armoredContentKeyPacketSignature,
-                    key,
-                    // Content key packet is signed with the node key, but
-                    // in the past some clients signed with the address key.
-                    [key, ...keyVerificationKeys],
-                ),
+                this.decryptContentKeyPacket(node, node.encryptedCrypto, key, keyVerificationKeys),
             ];
 
             try {
@@ -500,6 +494,57 @@ export class NodesCryptoService {
             extendedAttributes,
             thumbnails: encryptedRevision.thumbnails,
         };
+    }
+
+    private async decryptContentKeyPacket(
+        node: EncryptedNode,
+        encryptedCrypto: EncryptedNodeFileCrypto,
+        key: PrivateKey,
+        keyVerificationKeys: PublicKey[],
+    ): Promise<{
+        sessionKey: SessionKey;
+        verified?: VERIFICATION_STATUS;
+        verificationErrors?: Error[];
+    }> {
+        const result = await this.driveCrypto.decryptAndVerifySessionKey(
+            encryptedCrypto.file.base64ContentKeyPacket,
+            encryptedCrypto.file.armoredContentKeyPacketSignature,
+            key,
+            // Content key packet is signed with the node key, but
+            // in the past some clients signed with the address key.
+            [key, ...keyVerificationKeys],
+        );
+
+        // Return right away if the verification is signed or not signed.
+        // If the verification is failing and the file is before 2023, try
+        // to decrypt with all owners keys. Because of the old nodes signed
+        // with address key instead of node key, when the node was renamed
+        // or moved, it could change the address but without updating the
+        // content key packet, which is now failing.
+        if (result.verified !== VERIFICATION_STATUS.SIGNED_AND_INVALID || node.creationTime > new Date(2023, 0, 1)) {
+            return result;
+        }
+
+        const allAddresses = await this.account.getOwnAddresses();
+        const allKeys = allAddresses.flatMap((address) => address.keys.map(({ key }) => key));
+
+        const resultWithAllKeys = await this.driveCrypto.decryptAndVerifySessionKey(
+            encryptedCrypto.file.base64ContentKeyPacket,
+            encryptedCrypto.file.armoredContentKeyPacketSignature,
+            key,
+            // Content key packet is signed with the node key, but
+            // in the past some clients signed with the address key.
+            allKeys,
+        );
+
+        // Return original result with original error if the fallback verification also fails.
+        if (resultWithAllKeys.verified === VERIFICATION_STATUS.SIGNED_AND_VALID) {
+            this.logger.warn(
+                'Content key packet signature verification failed, but fallback to all addresses succeeded',
+            );
+            return resultWithAllKeys;
+        }
+        return result;
     }
 
     private async decryptExtendedAttributes(
