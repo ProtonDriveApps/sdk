@@ -141,6 +141,7 @@ export interface OpenPGPCrypto {
         sessionKey: SessionKey | undefined,
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
+        options?: { compress?: boolean },
     ) => Promise<{
         armoredData: string;
     }>;

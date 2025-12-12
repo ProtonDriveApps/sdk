@@ -26,6 +26,7 @@ export interface OpenPGPCryptoProxy {
         encryptionKeys: PrivateKey[];
         signingKeys?: PrivateKey;
         detached?: boolean;
+        compress?: boolean;
     }) => Promise<{
         message: string | Uint8Array;
         signature?: string | Uint8Array;
@@ -166,6 +167,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         sessionKey: SessionKey | undefined,
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
+        options: { compress?: boolean } = {},
     ) {
         const { message: armoredData } = await this.cryptoProxy.encryptMessage({
             binaryData: data,
@@ -173,6 +175,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             sessionKey,
             signingKeys: signingKey,
             detached: false,
+            compress: options.compress || false,
         });
         return {
             armoredData: armoredData as string,
