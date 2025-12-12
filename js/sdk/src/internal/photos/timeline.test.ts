@@ -45,15 +45,15 @@ describe('PhotosTimeline', () => {
         timeline = new PhotosTimeline(logger, apiService, driveCrypto, photoShares, nodesService);
     });
 
-    describe('isDuplicatePhoto', () => {
+    describe('findPhotoDuplicates', () => {
         it('should not call sha1 callback when there is no name hash match', async () => {
             const generateSha1 = jest.fn();
             apiService.checkPhotoDuplicates = jest.fn().mockResolvedValue([]);
             driveCrypto.generateLookupHash = jest.fn().mockResolvedValue(nameHash);
 
-            const result = await timeline.isDuplicatePhoto(name, generateSha1);
+            const result = await timeline.findPhotoDuplicates(name, generateSha1);
 
-            expect(result).toBe(false);
+            expect(result).toEqual([]);
             expect(generateSha1).not.toHaveBeenCalled();
             expect(photoShares.getRootIDs).toHaveBeenCalled();
             expect(nodesService.getNodeKeys).toHaveBeenCalledWith(rootNodeUid);
@@ -76,9 +76,9 @@ describe('PhotosTimeline', () => {
                 .mockResolvedValueOnce(nameHash)
                 .mockResolvedValueOnce(contentHash);
 
-            const result = await timeline.isDuplicatePhoto(name, generateSha1);
+            const result = await timeline.findPhotoDuplicates(name, generateSha1);
 
-            expect(result).toBe(false);
+            expect(result).toEqual([]);
             expect(generateSha1).toHaveBeenCalledTimes(1);
             expect(driveCrypto.generateLookupHash).toHaveBeenCalledTimes(2);
             expect(driveCrypto.generateLookupHash).toHaveBeenNthCalledWith(1, name, hashKey);
@@ -102,13 +102,45 @@ describe('PhotosTimeline', () => {
                 .mockResolvedValueOnce(nameHash)
                 .mockResolvedValueOnce(contentHash);
 
-            const result = await timeline.isDuplicatePhoto(name, generateSha1);
+            const result = await timeline.findPhotoDuplicates(name, generateSha1);
 
-            expect(result).toBe(true);
+            expect(result).toEqual([nodeUid1]);
             expect(generateSha1).toHaveBeenCalledTimes(1);
             expect(logger.debug).toHaveBeenCalledTimes(1);
             expect(logger.debug).toHaveBeenCalledWith(
                 `Duplicate photo found: name hash: ${nameHash}, content hash: ${contentHash}, node uids: ${nodeUid1}`,
+            );
+        });
+
+        it('should return multiple node UIDs when multiple duplicates match', async () => {
+            const generateSha1 = jest.fn().mockResolvedValue(sha1);
+            const nodeUid1 = 'volumeId~node1';
+            const nodeUid2 = 'volumeId~node2';
+            const duplicates = [
+                {
+                    nameHash: nameHash,
+                    contentHash: contentHash,
+                    nodeUid: nodeUid1,
+                },
+                {
+                    nameHash: nameHash,
+                    contentHash: contentHash,
+                    nodeUid: nodeUid2,
+                },
+            ];
+            apiService.checkPhotoDuplicates = jest.fn().mockResolvedValue(duplicates);
+            driveCrypto.generateLookupHash = jest
+                .fn()
+                .mockResolvedValueOnce(nameHash)
+                .mockResolvedValueOnce(contentHash);
+
+            const result = await timeline.findPhotoDuplicates(name, generateSha1);
+
+            expect(result).toEqual([nodeUid1, nodeUid2]);
+            expect(generateSha1).toHaveBeenCalledTimes(1);
+            expect(logger.debug).toHaveBeenCalledTimes(1);
+            expect(logger.debug).toHaveBeenCalledWith(
+                `Duplicate photo found: name hash: ${nameHash}, content hash: ${contentHash}, node uids: ${nodeUid1},${nodeUid2}`,
             );
         });
     });
