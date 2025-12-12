@@ -32,7 +32,7 @@ export class PhotosTimeline {
         yield* this.apiService.iterateTimeline(volumeId, signal);
     }
 
-    async isDuplicatePhoto(name: string, generateSha1: () => Promise<string>, signal?: AbortSignal): Promise<boolean> {
+    async findPhotoDuplicates(name: string, generateSha1: () => Promise<string>, signal?: AbortSignal): Promise<string[]> {
         const { volumeId, rootNodeId } = await this.photoShares.getRootIDs();
         const rootNodeUid = makeNodeUid(volumeId, rootNodeId);
         const { hashKey } = await this.nodesService.getNodeKeys(rootNodeUid);
@@ -44,7 +44,7 @@ export class PhotosTimeline {
         const duplicates = await this.apiService.checkPhotoDuplicates(volumeId, [nameHash], signal);
 
         if (duplicates.length === 0) {
-            return false;
+            return [];
         }
 
         // Generate the SHA1 only when there is any matching node hash to avoid
@@ -57,13 +57,13 @@ export class PhotosTimeline {
         );
 
         if (matchingDuplicates.length === 0) {
-            return false;
+            return [];
         }
 
         const nodeUids = matchingDuplicates.map((duplicate) => duplicate.nodeUid);
         this.logger.debug(
             `Duplicate photo found: name hash: ${nameHash}, content hash: ${contentHash}, node uids: ${nodeUids}`,
         );
-        return true;
+        return nodeUids;
     }
 }
