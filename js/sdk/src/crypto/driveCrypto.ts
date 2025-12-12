@@ -499,6 +499,7 @@ export class DriveCrypto {
             undefined,
             [encryptionKey],
             signingKey,
+            { compress: true },
         );
         return {
             armoredExtendedAttributes,
