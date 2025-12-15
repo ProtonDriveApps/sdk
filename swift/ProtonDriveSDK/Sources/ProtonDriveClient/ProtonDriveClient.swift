@@ -118,7 +118,7 @@ public actor ProtonDriveClient: Sendable {
     private func awaitDownloadCompletion(
         operation: DownloadOperation, retryCounter: UInt
     ) async throws {
-        let result = try await operation.awaitDownloadCompletion()
+        let result = await operation.awaitDownloadCompletion()
         switch result {
         case .succeeded:
             return
@@ -184,7 +184,7 @@ public actor ProtonDriveClient: Sendable {
     private func awaitUploadCompletion(
         operation: UploadOperation, retryCounter: UInt
     ) async throws -> UploadedFileIdentifiers {
-        let result = try await operation.awaitUploadCompletion()
+        let result = await operation.awaitUploadCompletion()
         switch result {
         case .succeeded(let uploadResult):
             return uploadResult
