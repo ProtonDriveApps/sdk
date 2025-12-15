@@ -9,7 +9,7 @@ include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := proton_drive_sdk_jni
-LOCAL_SRC_FILES := global.c native_library.c proton_drive_sdk.c proton_sdk.c
+LOCAL_SRC_FILES := global.c byte_array.c buffer.c native_library.c proton_drive_sdk.c proton_sdk.c
 LOCAL_SHARED_LIBRARIES := proton_drive_sdk
 LOCAL_C_INCLUDES += $(BUILD_DIR)/cs/includes
 LOCAL_LDLIBS := -llog

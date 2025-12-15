@@ -74,7 +74,7 @@ object ProtonDriveSdk {
         }
 
     private fun overrideName() {
-        JniNativeLibrary().overrideName(
+        JniNativeLibrary.overrideName(
             libraryName = "proton_crypto".toByteArray(),
             overridingLibraryName = "gojni".toByteArray()
         )

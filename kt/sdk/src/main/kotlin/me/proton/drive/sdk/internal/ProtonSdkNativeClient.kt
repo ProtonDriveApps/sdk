@@ -26,12 +26,6 @@ class ProtonSdkNativeClient internal constructor(
         request: ByteArray,
     )
 
-    external fun getCallbackPointer(): Long
-
-    external fun getBufferPointer(buffer: ByteBuffer): Long
-
-    external fun getBufferSize(buffer: ByteBuffer): Long
-
     fun onResponse(data: ByteBuffer) {
         logger("response for $name of size: ${data.capacity()}")
         response(data)
@@ -40,5 +34,10 @@ class ProtonSdkNativeClient internal constructor(
     fun onCallback(data: ByteBuffer) {
         logger("callback for $name of size: ${data.capacity()}")
         callback(data)
+    }
+
+    companion object {
+        @JvmStatic
+        external fun getCallbackPointer(): Long
     }
 }
