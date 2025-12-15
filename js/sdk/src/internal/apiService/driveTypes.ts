@@ -491,7 +491,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Delete children
+         * Delete drafts from folder
+         * @deprecated
          * @description Permanently delete children from folder, skipping trash. Can only be done for draft links.
          */
         post: operations["post_drive-shares-{shareID}-folders-{linkID}-delete_multiple"];
@@ -531,8 +532,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Trash children
-         * @description Send children to trash
+         * Trash children from folder
+         * @deprecated
          */
         post: operations["post_drive-shares-{shareID}-folders-{linkID}-trash_multiple"];
         delete?: never;
@@ -672,8 +673,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Delete multiple (v2)
-         * @description Permanently delete links, skipping trash. Can only be done for draft links.
+         * Delete drafts
+         * @description Permanently delete files, skipping trash. Can only be done for draft links.
          */
         post: operations["post_drive-v2-volumes-{volumeID}-delete_multiple"];
         delete?: never;
@@ -815,6 +816,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drive/v2/volumes/{volumeID}/remove-mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Remove my nodes skipping trash
+         * @description This is called by Web SDK on public sharing to remove active nodes created by the same user
+         *     as a way to delete wrongly uploaded files without going to trash. It's supported on the following conditions:
+         *     - anonymous users must have created the node in their own session
+         *     - for authenticated users the signature email must match
+         *     - file/folder must have been created within the last 1 hour
+         *     - folders must be empty
+         *     - files must have all revisions created by this user
+         */
+        post: operations["post_drive-v2-volumes-{volumeID}-remove-mine"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drive/v2/volumes/{volumeID}/links/{linkID}/rename": {
         parameters: {
             query?: never;
@@ -829,6 +856,11 @@ export interface paths {
          *
          *     Clients renaming a file or folder MUST reuse the existing session key
          *     for the name as it is also used by shares pointing to the link.
+         *
+         *     Users with access only through a public sharing URL (no editor membership) are limited to renaming
+         *     their own files and folders:
+         *     - Unauthenticated users must have created them in their session
+         *     - Authenticated users' email must match the signature email on the node for folders or active revision for files
          */
         put: operations["put_drive-v2-volumes-{volumeID}-links-{linkID}-rename"];
         post?: never;
@@ -852,6 +884,11 @@ export interface paths {
          *
          *     Clients renaming a file or folder MUST reuse the existing session key
          *     for the name as it is also used by shares pointing to the link.
+         *
+         *     Users with access only through a public sharing URL (no editor membership) are limited to renaming
+         *     their own files and folders:
+         *     - Unauthenticated users must have created them in their session
+         *     - Authenticated users' email must match the signature email on the node for folders or active revision for files
          */
         put: operations["put_drive-shares-{shareID}-links-{linkID}-rename"];
         post?: never;
@@ -2227,7 +2264,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Delete multiple (v2)
+         * Delete drafts
          * @description See /drive/v2/volumes/{volumeID}/delete_multiple for full documentation
          */
         post: operations["post_drive-unauth-v2-volumes-{volumeID}-delete_multiple"];
@@ -2291,6 +2328,26 @@ export interface paths {
          * @description See /drive/v2/volumes/{volumeID}/links for full documentation
          */
         post: operations["post_drive-unauth-v2-volumes-{volumeID}-links"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/unauth/v2/volumes/{volumeID}/remove-mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Remove my nodes skipping trash
+         * @description See /drive/v2/volumes/{volumeID}/remove-mine for full documentation
+         */
+        post: operations["post_drive-unauth-v2-volumes-{volumeID}-remove-mine"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2972,6 +3029,30 @@ export interface paths {
          */
         put: operations["put_drive-me-settings"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/organization/volumes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Organization volume
+         * @description Only allowed to Org administrators
+         *
+         *     This new volume would have:
+         *      + OwnerOrgID filled with the orgID of the request
+         *      + specific membership for the owner (OrgAdmin to true)
+         */
+        post: operations["post_drive-organization-volumes"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4852,6 +4933,31 @@ export interface components {
             /** @description Order and visibility of Photo Tags, tags not in the list should not be shown; Use defaults when NULL; Show no tags if empty array. */
             PhotoTags?: components["schemas"]["TagType"][] | null;
         };
+        CreateOrgVolumeRequestDto: {
+            AddressID: components["schemas"]["AddressID"];
+            /** @description XX's encrypted AddressKeyID. Must be the primary key from the AddressID */
+            AddressKeyID: string;
+            ShareKey: components["schemas"]["PGPPrivateKey"];
+            SharePassphrase: components["schemas"]["PGPMessage"];
+            SharePassphraseSignature: components["schemas"]["PGPSignature"];
+            FolderName: components["schemas"]["PGPMessage"];
+            FolderKey: components["schemas"]["PGPPrivateKey"];
+            FolderPassphrase: components["schemas"]["PGPMessage"];
+            FolderPassphraseSignature: components["schemas"]["PGPSignature"];
+            FolderHashKey: components["schemas"]["PGPMessage"];
+            OrganizationID: components["schemas"]["Id"];
+            /** @description Name of the org. volume. It's plain text so that name can be displayed in UI menu */
+            VolumeName: string;
+        };
+        GetVolumeResponseDto: {
+            Volume: components["schemas"]["VolumeResponseDto"];
+            /**
+             * ProtonResponseCode
+             * @example 1000
+             * @enum {integer}
+             */
+            Code: 1000;
+        };
         CreateVolumeRequestDto: {
             AddressID: components["schemas"]["AddressID"];
             ShareKey: components["schemas"]["PGPPrivateKey"];
@@ -4874,15 +4980,6 @@ export interface components {
              * @default null
              */
             ShareName: string | null;
-        };
-        GetVolumeResponseDto: {
-            Volume: components["schemas"]["VolumeResponseDto"];
-            /**
-             * ProtonResponseCode
-             * @example 1000
-             * @enum {integer}
-             */
-            Code: 1000;
         };
         ListVolumesResponseDto: {
             Volumes: components["schemas"]["VolumeResponseDto"][];
@@ -6213,20 +6310,20 @@ export interface components {
             Album: null | null;
         };
         /**
-         * @description <p>1=Main, 2=Standard, 3=Device, 4=Photo</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Name</th><th>Description</th></tr><tr><td>1</td><td>Main</td><td>* Root share for my files</td></tr><tr><td>2</td><td>Standard</td><td>* Collaborative share anywhere in the link tree (but not at the root folder as it cannot be shared)</td></tr><tr><td>3</td><td>Device</td><td>* Root share of devices</td></tr><tr><td>4</td><td>Photo</td><td>* Root share for photos</td></tr></table></details></details>
+         * @description <p>1=Main, 2=Standard, 3=Device, 4=Photo</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Name</th><th>Description</th></tr><tr><td>1</td><td>Main</td><td>* Root share for my files</td></tr><tr><td>2</td><td>Standard</td><td>* Collaborative share anywhere in the link tree (but not at the root folder as it cannot be shared)</td></tr><tr><td>3</td><td>Device</td><td>* Root share of devices</td></tr><tr><td>4</td><td>Photo</td><td>* Root share for photos</td></tr><tr><td>5</td><td>Organization</td><td>* Root share for organization</td></tr></table></details></details>
          * @enum {integer}
          */
-        ShareType: 1 | 2 | 3 | 4;
+        ShareType: 1 | 2 | 3 | 4 | 5;
         /**
          * @description <p>1=Active, 3=Restored</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Active</td></tr><tr><td>2</td><td>Deleted</td></tr><tr><td>3</td><td>Restored</td></tr><tr><td>6</td><td>Locked</td></tr></table></details></details>
          * @enum {integer}
          */
         ShareState: 1 | 2 | 3 | 6;
         /**
-         * @description <p>1=Regular, 2=Photo</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Regular</td></tr><tr><td>2</td><td>Photo</td></tr></table></details></details>
+         * @description <p>1=Regular, 2=Photo</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Regular</td></tr><tr><td>2</td><td>Photo</td></tr><tr><td>3</td><td>Organization</td></tr></table></details></details>
          * @enum {integer}
          */
-        VolumeType: 1 | 2;
+        VolumeType: 1 | 2 | 3;
         /**
          * @description <p>1=folder, 2=file</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Folder</td></tr><tr><td>2</td><td>File</td></tr><tr><td>3</td><td>Album</td></tr></table></details></details>
          * @enum {integer}
@@ -6776,10 +6873,10 @@ export interface components {
             LinkID: components["schemas"]["Id2"];
         };
         /**
-         * @description <details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Regular</td></tr><tr><td>2</td><td>Photo</td></tr></table></details></details>
+         * @description <details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>1</td><td>Regular</td></tr><tr><td>2</td><td>Photo</td></tr><tr><td>3</td><td>Organization</td></tr></table></details></details>
          * @enum {integer}
          */
-        VolumeType2: 1 | 2;
+        VolumeType2: 1 | 2 | 3;
         /**
          * @description <p>Can be null if the Link was deleted</p><details><summary>See values descriptions</summary><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>0</td><td>Draft</td></tr><tr><td>1</td><td>Active</td></tr><tr><td>2</td><td>Trashed</td></tr></table></details></details>
          * @enum {integer}
@@ -9115,6 +9212,36 @@ export interface operations {
                         /** @description Error message */
                         Error?: string;
                     } | components["schemas"]["ConflictErrorResponseDto"];
+                };
+            };
+        };
+    };
+    "post_drive-v2-volumes-{volumeID}-remove-mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["LinkIDsRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Ok */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {integer} */
+                        Code?: 1001;
+                        Responses?: components["schemas"]["MultiDeleteTransformer"][];
+                    };
                 };
             };
         };
@@ -12150,6 +12277,29 @@ export interface operations {
             };
         };
     };
+    "post_drive-unauth-v2-volumes-{volumeID}-remove-mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["LinkIDsRequestDto"];
+            };
+        };
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     "put_drive-unauth-v2-volumes-{volumeID}-links-{linkID}-rename": {
         parameters: {
             query?: never;
@@ -12404,7 +12554,7 @@ export interface operations {
                 /** @description Show disabled shares as well, i.e. Shares where the ShareMemberShip for the user is non-active (locked), otherwise only return with active Membership */
                 ShowAll?: 0 | 1;
                 /** @description Filter on Share Type */
-                ShareType?: 1 | 2 | 3 | 4;
+                ShareType?: 1 | 2 | 3 | 4 | 5;
             };
             header?: never;
             path?: never;
@@ -13473,6 +13623,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SettingsResponse"];
+                };
+            };
+        };
+    };
+    "post_drive-organization-volumes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CreateOrgVolumeRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetVolumeResponseDto"];
                 };
             };
         };

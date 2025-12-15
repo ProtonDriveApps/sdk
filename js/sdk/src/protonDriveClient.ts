@@ -495,7 +495,7 @@ export class ProtonDriveClient {
     }
 
     /**
-     * Delete the nodes permanently.
+     * Delete the trashed nodes permanently. Only the owner can do that.
      *
      * The operation is performed in batches and the results are yielded
      * as they are available. Order of the results is not guaranteed.
@@ -509,7 +509,7 @@ export class ProtonDriveClient {
      */
     async *deleteNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         this.logger.info(`Deleting ${nodeUids.length} nodes`);
-        yield* this.nodes.management.deleteNodes(getUids(nodeUids), signal);
+        yield* this.nodes.management.deleteTrashedNodes(getUids(nodeUids), signal);
     }
 
     async emptyTrash(): Promise<void> {
