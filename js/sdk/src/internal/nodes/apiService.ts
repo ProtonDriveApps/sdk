@@ -71,12 +71,19 @@ type PutRestoreNodesRequest = Extract<
 type PutRestoreNodesResponse =
     drivePaths['/drive/v2/volumes/{volumeID}/trash/restore_multiple']['put']['responses']['200']['content']['application/json'];
 
-type PostDeleteNodesRequest = Extract<
+type PostDeleteTrashedNodesRequest = Extract<
     drivePaths['/drive/v2/volumes/{volumeID}/trash/delete_multiple']['post']['requestBody'],
     { content: object }
 >['content']['application/json'];
-type PostDeleteNodesResponse =
+type PostDeleteTrashedNodesResponse =
     drivePaths['/drive/v2/volumes/{volumeID}/trash/delete_multiple']['post']['responses']['200']['content']['application/json'];
+
+type PostDeleteMyNodesRequest = Extract<
+    drivePaths['/drive/v2/volumes/{volumeID}/remove-mine']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostDeleteMyNodesResponse =
+    drivePaths['/drive/v2/volumes/{volumeID}/remove-mine']['post']['responses']['200']['content']['application/json'];
 
 type PostCreateFolderRequest = Extract<
     drivePaths['/drive/v2/volumes/{volumeID}/folders']['post']['requestBody'],
@@ -446,7 +453,7 @@ export abstract class NodeAPIServiceBase<
 
     async *deleteTrashedNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         for (const { volumeId, batchNodeIds, batchNodeUids } of groupNodeUidsByVolumeAndIteratePerBatch(nodeUids)) {
-            const response = await this.apiService.post<PostDeleteNodesRequest, PostDeleteNodesResponse>(
+            const response = await this.apiService.post<PostDeleteTrashedNodesRequest, PostDeleteTrashedNodesResponse>(
                 `drive/v2/volumes/${volumeId}/trash/delete_multiple`,
                 {
                     LinkIDs: batchNodeIds,
@@ -459,10 +466,10 @@ export abstract class NodeAPIServiceBase<
         }
     }
 
-    async *deleteExistingNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
+    async *deleteMyNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         for (const { volumeId, batchNodeIds, batchNodeUids } of groupNodeUidsByVolumeAndIteratePerBatch(nodeUids)) {
-            const response = await this.apiService.post<PostDeleteNodesRequest, PostDeleteNodesResponse>(
-                `drive/v2/volumes/${volumeId}/delete_multiple`,
+            const response = await this.apiService.post<PostDeleteMyNodesRequest, PostDeleteMyNodesResponse>(
+                `drive/v2/volumes/${volumeId}/remove-mine`,
                 {
                     LinkIDs: batchNodeIds,
                 },

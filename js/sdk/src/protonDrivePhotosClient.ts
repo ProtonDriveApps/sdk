@@ -295,7 +295,7 @@ export class ProtonDrivePhotosClient {
      */
     async *deleteNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         this.logger.info(`Deleting ${nodeUids.length} nodes`);
-        yield* this.nodes.management.deleteNodes(getUids(nodeUids), signal);
+        yield * this.nodes.management.deleteTrashedNodes(getUids(nodeUids), signal);
     }
 
     /**
