@@ -21,7 +21,7 @@
     <Deterministic>true</Deterministic>
     <!--<TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>-->
 
-    <NativeLibPrefix Condition="$(RuntimeIdentifier.StartsWith('linux')) or $(RuntimeIdentifier.StartsWith('android'))">lib</NativeLibPrefix>
+    <NativeLibPrefix Condition="!$(RuntimeIdentifier.StartsWith('win'))">lib</NativeLibPrefix>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

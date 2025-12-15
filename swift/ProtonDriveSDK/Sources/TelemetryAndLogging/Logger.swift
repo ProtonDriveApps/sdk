@@ -6,7 +6,7 @@ public typealias LogCallback = @Sendable (LogEvent) -> Void
 func logCallbackForTests(logEvent: LogEvent) {
     let timestamp = logEvent.timestamp.formatted(date: .abbreviated, time: .shortened)
 
-    let prefix = "\(logEvent.level.symbol)[\(String(describing: logEvent.level).prefix(1).capitalized)][\(logEvent.thread ?? 0)]"
+    let prefix = "\(logEvent.level.symbol)[\(String(describing: logEvent.level).prefix(1).capitalized)][\(logEvent.thread)]"
     let logLine = "\(prefix)\(timestamp) \(logEvent.category): \(logEvent.message)"
     print(logLine)
 }

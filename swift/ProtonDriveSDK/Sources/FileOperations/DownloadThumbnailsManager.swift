@@ -56,7 +56,7 @@ actor DownloadThumbnailsManager {
         }
 
         try await downloadCancellationToken.cancel()
-        try await downloadCancellationToken.free()
+        downloadCancellationToken.free()
 
         activeDownloads[cancellationToken] = nil
     }

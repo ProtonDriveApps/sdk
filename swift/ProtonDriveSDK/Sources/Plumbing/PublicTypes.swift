@@ -148,7 +148,6 @@ public struct UploadedFileIdentifiers: Sendable {
     public let revisionUid: SDKRevisionUid
     
     init?(interopUploadResult: Proton_Drive_Sdk_UploadResult) {
-        interopUploadResult.nodeUid
         guard let nodeUid = SDKNodeUid(sdkCompatibleIdentifier: interopUploadResult.nodeUid),
               let revisionUid = SDKRevisionUid(sdkCompatibleIdentifier: interopUploadResult.revisionUid)
         else { return nil }

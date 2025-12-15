@@ -104,7 +104,7 @@ enum HttpClientRequestProcessor {
             // the API calls are performed in a non-streaming way,
             // so we buffer all request data in-memory before making a call
             let bufferLength = client.configuration.httpTransferBufferSize
-            var buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: bufferLength, alignment: MemoryLayout<UInt8>.alignment)
+            let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: bufferLength, alignment: MemoryLayout<UInt8>.alignment)
             let baseAddress = buffer.baseAddress!
 
             while true {
@@ -135,7 +135,7 @@ enum HttpClientRequestProcessor {
         let bindingsHandle: Int?
         if let data = response.data, !data.isEmpty {
             let uploadBuffer = BoxedRawBuffer(bufferSize: data.count, logger: client.logger)
-            await uploadBuffer.copyBytes(from: data)
+            uploadBuffer.copyBytes(from: data)
             let bytesOrStream = BoxedStreamingData(uploadBuffer: uploadBuffer, logger: client.logger)
             let pointer = Unmanaged.passRetained(bytesOrStream)
             bindingsHandle = Int(rawPointer: pointer.toOpaque())
@@ -194,7 +194,7 @@ enum HttpClientRequestProcessor {
         let bindingsHandle: Int?
         if let data = response.data, !data.isEmpty {
             let uploadBuffer = BoxedRawBuffer(bufferSize: data.count, logger: client.logger)
-            await uploadBuffer.copyBytes(from: data)
+            uploadBuffer.copyBytes(from: data)
             let bytesOrStream = BoxedStreamingData(uploadBuffer: uploadBuffer, logger: client.logger)
             let pointer = Unmanaged.passRetained(bytesOrStream)
             bindingsHandle = Int(rawPointer: pointer.toOpaque())
@@ -230,7 +230,7 @@ enum HttpClientRequestProcessor {
         if httpRequestData.hasSdkContentHandle {
             // We expect that request data to be small, we need to fetch them whole
             let bufferLength = client.configuration.httpTransferBufferSize
-            var buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: bufferLength, alignment: MemoryLayout<UInt8>.alignment)
+            let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: bufferLength, alignment: MemoryLayout<UInt8>.alignment)
             let baseAddress = buffer.baseAddress!
             
             while true {

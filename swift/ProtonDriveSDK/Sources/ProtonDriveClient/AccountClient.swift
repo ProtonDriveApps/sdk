@@ -25,7 +25,7 @@ let cCompatibleAccountClientRequest: CCallbackWithCallbackPointer = { statePoint
     guard let driveClient else { return }
 
     Task { [driveClient] in
-        let accountClient = await driveClient.accountClient
+        let accountClient = driveClient.accountClient
 
         let request = Proton_Drive_Sdk_AccountRequest(byteArray: byteArray)
 

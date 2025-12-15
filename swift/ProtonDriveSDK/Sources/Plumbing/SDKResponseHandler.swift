@@ -41,14 +41,12 @@ extension Proton_Sdk_Error {
         let domain: Proton_Sdk_ErrorDomain
         let message: String
         var primaryCode: Int? = nil
-        var secondaryCode: Int? = nil
-        var context: String? = nil
-        var innerError: Proton_Sdk_Error? = nil
-        var additionalData: Codable? = nil
+        let secondaryCode: Int? = nil
+        let context: String? = nil
+        let innerError: Proton_Sdk_Error? = nil
+        let additionalData: Codable? = nil
 
         switch nsError {
-        case let sdkError as Proton_Sdk_Error:
-            return sdkError
 
         case let protonDriveSDKError as ProtonDriveSDKError:
             return protonDriveSDKError.asProton_Sdk_Error
