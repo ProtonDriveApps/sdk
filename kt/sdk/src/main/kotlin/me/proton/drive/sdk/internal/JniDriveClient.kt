@@ -53,7 +53,7 @@ class JniDriveClient internal constructor() : JniBaseProtonDriveSdk() {
                 httpClient = httpClient {
                     requestFunction = ProtonDriveSdkNativeClient.getHttpClientRequestPointer()
                     responseContentReadAction = httpResponseReadPointer
-                    cancellationAction = ProtonDriveSdkNativeClient.getHttpClientCancellationPointer()
+                    cancellationAction = JniJob.getCancelPointer()
                 }
                 accountRequestAction = ProtonDriveSdkNativeClient.getAccountRequestPointer()
                 entityCachePath = request.entityCachePath
