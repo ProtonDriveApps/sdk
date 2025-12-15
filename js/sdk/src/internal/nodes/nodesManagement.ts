@@ -293,7 +293,7 @@ export abstract class NodesManagementBase<
         }
     }
 
-    async *deleteNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
+    async *deleteTrashedNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         for await (const result of this.apiService.deleteTrashedNodes(nodeUids, signal)) {
             if (result.ok) {
                 await this.nodesAccess.notifyNodeDeleted(result.uid);

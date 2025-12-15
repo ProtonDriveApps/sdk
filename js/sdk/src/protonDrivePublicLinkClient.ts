@@ -233,13 +233,15 @@ export class ProtonDrivePublicLinkClient {
     }
 
     /**
-     * Delete the nodes permanently.
+     * Delete own nodes permanently. It skips the trash and allows to delete
+     * only nodes that are owned by the user. For anonymous files, this method
+     * allows to delete them only in the same session.
      *
      * See `ProtonDriveClient.deleteNodes` for more information.
      */
     async *deleteNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         this.logger.info(`Deleting ${nodeUids.length} nodes`);
-        yield* this.sharingPublic.nodes.management.deleteNodes(getUids(nodeUids), signal);
+        yield* this.sharingPublic.nodes.management.deleteMyNodes(getUids(nodeUids), signal);
     }
 
     /**

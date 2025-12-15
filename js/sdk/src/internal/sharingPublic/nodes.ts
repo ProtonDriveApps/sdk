@@ -87,10 +87,10 @@ export class SharingPublicNodesManagement extends NodesManagement {
         super(apiService, cryptoCache, cryptoService, nodesAccess);
     }
 
-    async *deleteNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
+    async *deleteMyNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         // Public link does not support trashing and deleting trashed nodes.
         // Instead, if user is owner, API allows directly deleting existing nodes.
-        for await (const result of this.apiService.deleteExistingNodes(nodeUids, signal)) {
+        for await (const result of this.apiService.deleteMyNodes(nodeUids, signal)) {
             if (result.ok) {
                 await this.nodesAccess.notifyNodeDeleted(result.uid);
             }

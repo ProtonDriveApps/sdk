@@ -173,7 +173,7 @@ function convertSharePayload(response: GetShareResponse): EncryptedShare {
     };
 }
 
-function convertShareTypeNumberToEnum(type: 1 | 2 | 3 | 4): ShareType {
+function convertShareTypeNumberToEnum(type: 1 | 2 | 3 | 4 | 5): ShareType {
     switch (type) {
         case 1:
             return ShareType.Main;
@@ -183,5 +183,7 @@ function convertShareTypeNumberToEnum(type: 1 | 2 | 3 | 4): ShareType {
             return ShareType.Device;
         case 4:
             return ShareType.Photo;
+        case 5:
+            throw new Error('Organization shares are not supported yet');
     }
 }
