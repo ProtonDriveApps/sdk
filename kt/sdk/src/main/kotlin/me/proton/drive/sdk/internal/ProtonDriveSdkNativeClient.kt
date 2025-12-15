@@ -34,12 +34,10 @@ class ProtonDriveSdkNativeClient internal constructor(
     private val coroutineScope: CoroutineScope? = null,
 ) {
 
-    private var pointers = emptyList<Long>()
+    private val byteArrayPointers = ByteArrayPointers()
 
     fun release() {
-        pointers.forEach { pointer ->
-            releaseByteArray(pointer)
-        }
+        byteArrayPointers.releaseAll()
     }
 
     fun handleRequest(
@@ -68,26 +66,8 @@ class ProtonDriveSdkNativeClient internal constructor(
         handleResponse(sdkHandle, response.toByteArray())
     }
 
-    external fun handleResponse(
-        sdkHandle: Long,
-        response: ByteArray,
-    )
+    fun getByteArrayPointer(data: ByteArray): Long = byteArrayPointers.allocate(data)
 
-    fun getByteArrayPointer(data: ByteArray): Long = getByteArray(data).also { pointer ->
-        pointers += pointer
-    }
-
-    external fun getByteArray(data: ByteArray): Long
-    external fun releaseByteArray(pointer: Long)
-
-    external fun getReadPointer(): Long
-    external fun getWritePointer(): Long
-    external fun getProgressPointer(): Long
-    external fun getHttpClientRequestPointer(): Long
-    external fun getHttpClientCancellationPointer(): Long
-    external fun getAccountRequestPointer(): Long
-    external fun getRecordMetricPointer(): Long
-    external fun getFeatureEnabledPointer(): Long
     external fun createWeakRef(): Long
 
     @Suppress("unused") // Called by JNI
@@ -285,9 +265,36 @@ class ProtonDriveSdkNativeClient internal constructor(
 
     companion object {
         @JvmStatic
+        external fun handleResponse(sdkHandle: Long, response: ByteArray)
+
+        @JvmStatic
+        external fun getReadPointer(): Long
+
+        @JvmStatic
+        external fun getWritePointer(): Long
+
+        @JvmStatic
+        external fun getProgressPointer(): Long
+
+        @JvmStatic
+        external fun getHttpClientRequestPointer(): Long
+
+        @JvmStatic
+        external fun getHttpClientCancellationPointer(): Long
+
+        @JvmStatic
         external fun getHttpResponseReadPointer(): Long
+
+        @JvmStatic
+        external fun getAccountRequestPointer(): Long
+
+        @JvmStatic
+        external fun getRecordMetricPointer(): Long
+
+        @JvmStatic
+        external fun getFeatureEnabledPointer(): Long
+
         @JvmStatic
         external fun createJobWeakRef(job: Job): Long
-
     }
 }

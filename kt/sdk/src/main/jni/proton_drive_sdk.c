@@ -1,7 +1,6 @@
 #include <string.h>
 #include <jni.h>
 #include <android/log.h>
-#include <malloc.h>
 #include "proton_drive_sdk.h"
 #include "global.h"
 
@@ -31,7 +30,7 @@ void Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_handleRequest(
 
 void Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_handleResponse(
         JNIEnv *env,
-        jobject obj,
+        jclass clazz,
         jlong sdk_handle,
         jbyteArray response
 ) {
@@ -47,41 +46,6 @@ void Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_handleResponse
 
     (*env)->ReleaseByteArrayElements(env, response, bufferElems, 0);
 }
-
-jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getByteArray(
-        JNIEnv *env,
-        jobject obj,
-        jbyteArray array
-) {
-    jsize length = (*env)->GetArrayLength(env, array);
-    jbyte *data = (*env)->GetByteArrayElements(env, array, NULL);
-
-    // Allocate native memory
-    jbyte *buffer = (jbyte *) malloc(length);
-    if (buffer == NULL) {
-        (*env)->ReleaseByteArrayElements(env, array, data, JNI_ABORT);
-        return 0; // OOM
-    }
-
-    // Copy into native memory
-    memcpy(buffer, data, length);
-
-    (*env)->ReleaseByteArrayElements(env, array, data, JNI_ABORT);
-
-    // Return as jlong handle
-    return (jlong) buffer;
-}
-
-void Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_releaseByteArray(
-        JNIEnv *env,
-        jobject obj,
-        jlong ptr
-) {
-    if (ptr != 0) {
-        free((void *) ptr);
-    }
-}
-
 
 void onRead(
         intptr_t bindings_handle,
@@ -173,35 +137,35 @@ long onFeatureEnabled(
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getReadPointer(
         JNIEnv *env,
-        jobject obj
+        jclass clazz
 ) {
     return (jlong) (intptr_t) &onRead;
 }
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getWritePointer(
         JNIEnv *env,
-        jobject obj
+        jclass clazz
 ) {
     return (jlong) (intptr_t) &onWrite;
 }
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getProgressPointer(
         JNIEnv *env,
-        jobject obj
+        jclass clazz
 ) {
     return (jlong) (intptr_t) &onProgress;
 }
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getHttpClientRequestPointer(
         JNIEnv *env,
-        jobject obj
+        jclass clazz
 ) {
     return (jlong) (intptr_t) &onSendHttpRequest;
 }
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getHttpClientCancellationPointer(
         JNIEnv *env,
-        jobject obj
+        jclass clazz
 ) {
     return (jlong) (intptr_t) &onHttpCancellation;
 }
@@ -215,21 +179,21 @@ jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getHttpRespon
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getAccountRequestPointer(
         JNIEnv *env,
-        jobject obj
+        jclass clazz
 ) {
     return (jlong) (intptr_t) &onAccountRequest;
 }
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getRecordMetricPointer(
         JNIEnv *env,
-        jobject obj
+        jclass clazz
 ) {
     return (jlong) (intptr_t) &onRecordMetric;
 }
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getFeatureEnabledPointer(
         JNIEnv *env,
-        jobject obj
+        jclass clazz
 ) {
     return (jlong) (intptr_t) &onFeatureEnabled;
 }

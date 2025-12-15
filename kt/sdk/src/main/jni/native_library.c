@@ -6,7 +6,7 @@
 
 void Java_me_proton_drive_sdk_internal_JniNativeLibrary_overrideName(
         JNIEnv *env,
-        jobject obj,
+        jclass clazz,
         jbyteArray name,
         jbyteArray overridingName
 ) {

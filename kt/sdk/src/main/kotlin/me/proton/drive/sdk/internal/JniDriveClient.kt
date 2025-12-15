@@ -51,18 +51,18 @@ class JniDriveClient internal constructor() : JniBaseProtonDriveSdk() {
             driveClientCreate = driveClientCreateRequest {
                 baseUrl = request.baseUrl
                 httpClient = httpClient {
-                    requestFunction = client.getHttpClientRequestPointer()
+                    requestFunction = ProtonDriveSdkNativeClient.getHttpClientRequestPointer()
                     responseContentReadAction = httpResponseReadPointer
-                    cancellationAction = client.getHttpClientCancellationPointer()
+                    cancellationAction = ProtonDriveSdkNativeClient.getHttpClientCancellationPointer()
                 }
-                accountRequestAction = client.getAccountRequestPointer()
+                accountRequestAction = ProtonDriveSdkNativeClient.getAccountRequestPointer()
                 entityCachePath = request.entityCachePath
                 secretCachePath = request.secretCachePath
                 telemetry = telemetry {
                     loggerProviderHandle = request.loggerProvider.handle
-                    recordMetricAction = client.getRecordMetricPointer()
+                    recordMetricAction = ProtonDriveSdkNativeClient.getRecordMetricPointer()
                 }
-                featureEnabledFunction = client.getFeatureEnabledPointer()
+                featureEnabledFunction = ProtonDriveSdkNativeClient.getFeatureEnabledPointer()
                 request.bindingsLanguage?.let { bindingsLanguage = it }
                 request.uid?.let { uid = it }
             }

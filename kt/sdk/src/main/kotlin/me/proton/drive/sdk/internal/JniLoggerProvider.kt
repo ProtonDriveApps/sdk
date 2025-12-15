@@ -29,7 +29,7 @@ class JniLoggerProvider internal constructor(
         requestBuilder = { client ->
             request {
                 loggerProviderCreate = loggerProviderCreate {
-                    logAction = client.getCallbackPointer()
+                    logAction = ProtonSdkNativeClient.getCallbackPointer()
                 }
             }
         }

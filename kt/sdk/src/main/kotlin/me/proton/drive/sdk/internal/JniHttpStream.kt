@@ -47,8 +47,8 @@ class JniHttpStream internal constructor(
         request {
             streamRead = streamReadRequest {
                 streamHandle = handle
-                bufferPointer = client.getBufferPointer(buffer)
-                bufferLength = client.getBufferSize(buffer).toInt()
+                bufferPointer = JniBuffer.getBufferPointer(buffer)
+                bufferLength = JniBuffer.getBufferSize(buffer).toInt()
             }
         }
     })
