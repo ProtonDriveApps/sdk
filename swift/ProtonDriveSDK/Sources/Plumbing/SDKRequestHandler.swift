@@ -97,7 +97,7 @@ enum SDKRequestHandler {
                 // We double-retain to keep the box alive after the method finishes.
                 // Currently, the reference to the box will not be kept anywhere,
                 // so the deallocation must be done in the long-lived callback. Improve if necessary.
-                pointer.retain()
+                _ = pointer.retain() // fixes "result of call to 'retain()' is unused" warning
             }
             let bindingsHandle = Int(rawPointer: pointer.toOpaque())
             if isDriveRequest {

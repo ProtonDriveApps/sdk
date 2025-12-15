@@ -1,6 +1,6 @@
 import Foundation
 
-public enum DownloadOperationResult {
+public enum DownloadOperationResult: Sendable {
     case succeeded
     case pausedOnError(Error)
     case failed(Error)

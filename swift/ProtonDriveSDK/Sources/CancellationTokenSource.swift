@@ -39,6 +39,7 @@ actor CancellationTokenSource {
             } catch {
                 logger?.error("CancellationTokenSource.free failed, error: \(error)", category: "Cancellation")
             }
+            _ = strongSelf // fixes "variable 'strongSelf' was written to, but never read" warning
             strongSelf = nil
         }
     }

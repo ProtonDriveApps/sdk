@@ -1,6 +1,6 @@
 import Foundation
 
-public enum UploadOperationResult {
+public enum UploadOperationResult: Sendable {
     case succeeded(UploadedFileIdentifiers)
     case pausedOnError(Error)
     case failed(Error)

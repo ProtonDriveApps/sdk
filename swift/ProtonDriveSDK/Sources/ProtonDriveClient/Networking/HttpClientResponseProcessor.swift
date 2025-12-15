@@ -81,7 +81,7 @@ enum HttpClientResponseProcessor {
         callbackPointer: Int,
         releaseBox: () -> Void
     ) async {
-        let copiedBytesCount = await boxedRawBuffer.copyBytes(to: buffer, count: bufferSize)
+        let copiedBytesCount = boxedRawBuffer.copyBytes(to: buffer, count: bufferSize)
 
         let message = Google_Protobuf_Int32Value.with {
             $0.value = Int32(copiedBytesCount)
