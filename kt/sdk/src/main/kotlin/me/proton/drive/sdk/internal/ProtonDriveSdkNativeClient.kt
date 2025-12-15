@@ -117,9 +117,7 @@ class ProtonDriveSdkNativeClient internal constructor(
         val httpResponse = httpClientRequest(httpRequest)
         logger("receive http response ${httpResponse.statusCode} for ${httpRequest.method} ${httpRequest.url}")
         response { value = httpResponse.asAny("proton.sdk.HttpResponse") }
-    }?.let { job ->
-        createJobWeakRef(job)
-    } ?: 0
+    }?.createWeakRef() ?: 0
 
     @Suppress("unused") // Called by JNI
     fun onHttpResponseRead(buffer: ByteBuffer, sdkHandle: Long) {
@@ -280,9 +278,6 @@ class ProtonDriveSdkNativeClient internal constructor(
         external fun getHttpClientRequestPointer(): Long
 
         @JvmStatic
-        external fun getHttpClientCancellationPointer(): Long
-
-        @JvmStatic
         external fun getHttpResponseReadPointer(): Long
 
         @JvmStatic
@@ -293,8 +288,5 @@ class ProtonDriveSdkNativeClient internal constructor(
 
         @JvmStatic
         external fun getFeatureEnabledPointer(): Long
-
-        @JvmStatic
-        external fun createJobWeakRef(job: Job): Long
     }
 }
