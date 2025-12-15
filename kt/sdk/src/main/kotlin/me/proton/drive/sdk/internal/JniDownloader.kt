@@ -46,8 +46,8 @@ class JniDownloader internal constructor() : JniBaseProtonDriveSdk() {
                 downloadToStream = downloadToStreamRequest {
                     this.downloaderHandle = handle
                     this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
-                    writeAction = client.getWritePointer()
-                    progressAction = client.getProgressPointer()
+                    writeAction = ProtonDriveSdkNativeClient.getWritePointer()
+                    progressAction = ProtonDriveSdkNativeClient.getProgressPointer()
                 }
             }
         }

@@ -59,8 +59,8 @@ class JniUploader internal constructor() : JniBaseProtonDriveSdk() {
                 uploadFromStream = uploadFromStreamRequest {
                     this.uploaderHandle = uploaderHandle
                     this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
-                    readAction = nativeClient.getReadPointer()
-                    progressAction = nativeClient.getProgressPointer()
+                    readAction = ProtonDriveSdkNativeClient.getReadPointer()
+                    progressAction = ProtonDriveSdkNativeClient.getProgressPointer()
                     thumbnails.forEach { (type, data) ->
                         this.thumbnails.add(thumbnail {
                             this.type = when (type) {
