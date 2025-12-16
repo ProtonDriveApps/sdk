@@ -242,7 +242,8 @@ internal sealed partial class BlockUploader
                     onRetry: (exception, _, retryNumber, _) =>
                     {
                         var revisionUid = new RevisionUid(request.VolumeId, request.LinkId, request.RevisionId);
-                        LogBlobUploadFailure(exception, request.Blocks[0].Index, revisionUid, retryNumber);
+                        var blockIndex = request.Blocks.Count > 0 ? request.Blocks[0].Index : 0;
+                        LogBlobUploadFailure(exception, blockIndex, revisionUid, retryNumber);
                     })
                 .ExecuteAsync(ExecuteUploadAsync).ConfigureAwait(false);
         }
