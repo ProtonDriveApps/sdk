@@ -9,6 +9,9 @@ internal sealed class VolumeCreationRequest
     [JsonPropertyName("AddressID")]
     public required AddressId AddressId { get; init; }
 
+    [JsonPropertyName("AddressKeyID")]
+    public required AddressKeyId AddressKeyId { get; init; }
+
     public required PgpArmoredPrivateKey ShareKey { get; init; }
 
     public required PgpArmoredMessage SharePassphrase { get; init; }
