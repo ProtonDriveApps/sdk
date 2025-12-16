@@ -181,7 +181,7 @@ export class StreamUploader {
             await this.controller.waitWhilePaused();
             await this.waitForUploadCapacityAndBufferedBlocks();
 
-            if (this.isEncryptionFullyFinished) {
+            if (this.isEncryptionFullyFinished || this.isUploadAborted) {
                 break;
             }
 
