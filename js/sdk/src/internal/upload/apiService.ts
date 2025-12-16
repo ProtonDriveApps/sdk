@@ -45,6 +45,13 @@ type PostDeleteNodesRequest = Extract<
 type PostDeleteNodesResponse =
     drivePaths['/drive/v2/volumes/{volumeID}/delete_multiple']['post']['responses']['200']['content']['application/json'];
 
+type PostLoadLinksMetadataRequest = Extract<
+    drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostLoadLinksMetadataResponse =
+    drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['responses']['200']['content']['application/json'];
+
 export class UploadAPIService {
     constructor(
         protected apiService: DriveAPIService,
@@ -261,5 +268,23 @@ export class UploadAPIService {
         formData.append('Block', new Blob([block]), 'blob');
 
         await this.apiService.postBlockStream(url, token, formData, onProgress, signal);
+    }
+
+    async isRevisionUploaded(nodeRevisionUid: string): Promise<boolean> {
+        const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(nodeRevisionUid);
+        const result = await this.apiService.post<PostLoadLinksMetadataRequest, PostLoadLinksMetadataResponse>(
+            `drive/v2/volumes/${volumeId}/links`,
+            {
+                LinkIDs: [nodeId],
+            },
+        );
+        if (result.Links.length === 0) {
+            return false;
+        }
+        const link = result.Links[0];
+        return (
+            link.Link.State === 1 && // ACTIVE state
+            link.File?.ActiveRevision?.RevisionID === revisionId
+        );
     }
 }

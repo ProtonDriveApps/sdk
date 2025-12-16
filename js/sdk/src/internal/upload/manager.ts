@@ -246,7 +246,23 @@ export class UploadManager {
             manifest,
             generatedExtendedAttributes,
         );
-        await this.apiService.commitDraftRevision(nodeRevisionDraft.nodeRevisionUid, nodeCommitCrypto);
+        try {
+            await this.apiService.commitDraftRevision(nodeRevisionDraft.nodeRevisionUid, nodeCommitCrypto);
+        } catch (error: unknown) {
+            // Commit might be sent but due to network error no response is
+            // received. In this case, API service automatically retries the
+            // request. If the first attempt passed, it will fail on the second
+            // attempt. We need to check if the revision was actually committed.
+            try {
+                const isRevisionUploaded = await this.apiService.isRevisionUploaded(nodeRevisionDraft.nodeRevisionUid);
+                if (!isRevisionUploaded) {
+                    throw error;
+                }
+            } catch {
+                throw error; // Throw original error, not the checking one.
+            }
+            this.logger.warn(`Node commit failed but node was committed successfully ${nodeRevisionDraft.nodeUid}`);
+        }
         await this.notifyNodeUploaded(nodeRevisionDraft);
     }
 
