@@ -53,12 +53,17 @@ internal static partial class RevisionOperations
         RevisionUid revisionUid,
         FileSecrets fileSecrets,
         Action<int> releaseBlocksAction,
-        CancellationToken cancellationToken)
+        TaskControl<UploadResult> taskControl)
     {
-        var membershipAddress = await NodeOperations.GetMembershipAddressAsync(client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
-        var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
+        var (membershipAddress, signingKey) = await taskControl.HandlePauseAsync(async ct =>
+        {
+            var membershipAddress = await NodeOperations.GetMembershipAddressAsync(client, revisionUid.NodeUid, ct).ConfigureAwait(false);
+            var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, ct).ConfigureAwait(false);
 
-        await client.BlockUploader.Queue.StartFileAsync(cancellationToken).ConfigureAwait(false);
+            return (membershipAddress, signingKey);
+        }).ConfigureAwait(false);
+
+        await client.BlockUploader.Queue.StartFileAsync(taskControl.CancellationToken).ConfigureAwait(false);
 
         return new RevisionWriter(
             client,

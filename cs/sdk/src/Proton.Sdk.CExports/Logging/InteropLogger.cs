@@ -1,10 +1,8 @@
-using System.Runtime.InteropServices;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 
 namespace Proton.Sdk.CExports.Logging;
 
-[StructLayout(LayoutKind.Sequential)]
 internal sealed class InteropLogger(nint bindingsHandle, InteropAction<nint, InteropArray<byte>> logAction, string categoryName) : ILogger
 {
     private readonly nint _bindingsHandle = bindingsHandle;
@@ -44,7 +42,7 @@ internal sealed class InteropLogger(nint bindingsHandle, InteropAction<nint, Int
     {
         public void Dispose()
         {
-            // do nothing intentionally
+            // Nothing to do
         }
     }
 }

@@ -39,9 +39,16 @@ public sealed partial class FileUploader : IDisposable
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
-        var task = UploadFromStreamAsync(contentStream, thumbnails, _additionalMetadata, progress => onProgress?.Invoke(progress, FileSize), cancellationToken);
+        var taskControl = new TaskControl<UploadResult>(cancellationToken);
 
-        return new UploadController(task);
+        var uploadTask = UploadFromStreamAsync(
+            contentStream,
+            thumbnails,
+            _additionalMetadata,
+            progress => onProgress?.Invoke(progress, FileSize),
+            taskControl);
+
+        return new UploadController(uploadTask, taskControl);
     }
 
     public UploadController UploadFromFile(
@@ -50,9 +57,16 @@ public sealed partial class FileUploader : IDisposable
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
-        var task = UploadFromFileAsync(filePath, thumbnails, _additionalMetadata, progress => onProgress?.Invoke(progress, FileSize), cancellationToken);
+        var taskControl = new TaskControl<UploadResult>(cancellationToken);
 
-        return new UploadController(task);
+        var task = UploadFromFileAsync(
+            filePath,
+            thumbnails,
+            _additionalMetadata,
+            progress => onProgress?.Invoke(progress, FileSize),
+            taskControl);
+
+        return new UploadController(task, taskControl);
     }
 
     public void Dispose()
@@ -93,14 +107,14 @@ public sealed partial class FileUploader : IDisposable
     [LoggerMessage(Level = LogLevel.Error, Message = "Draft deletion failed for revision {RevisionUid}")]
     private static partial void LogDraftDeletionFailure(ILogger logger, Exception exception, RevisionUid revisionUid);
 
-    private async Task<(NodeUid NodeUid, RevisionUid RevisionUid)> UploadFromStreamAsync(
+    private async Task<UploadResult> UploadFromStreamAsync(
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
         IEnumerable<AdditionalMetadataProperty>? additionalExtendedAttributes,
         Action<long>? onProgress,
-        CancellationToken cancellationToken)
+        TaskControl<UploadResult> taskControl)
     {
-        var (draftRevisionUid, fileSecrets) = await _fileDraftProvider.GetDraftAsync(_client, cancellationToken).ConfigureAwait(false);
+        var (draftRevisionUid, fileSecrets) = await taskControl.HandlePauseAsync(ct => _fileDraftProvider.GetDraftAsync(_client, ct)).ConfigureAwait(false);
 
         await UploadAsync(
             draftRevisionUid,
@@ -110,11 +124,11 @@ public sealed partial class FileUploader : IDisposable
             _lastModificationTime,
             additionalExtendedAttributes,
             onProgress,
-            cancellationToken).ConfigureAwait(false);
+            taskControl).ConfigureAwait(false);
 
-        await UpdateActiveRevisionInCacheAsync(draftRevisionUid, contentStream.Length, cancellationToken).ConfigureAwait(false);
+        await UpdateActiveRevisionInCacheAsync(draftRevisionUid, contentStream.Length, taskControl.CancellationToken).ConfigureAwait(false);
 
-        return (draftRevisionUid.NodeUid, draftRevisionUid);
+        return new UploadResult(draftRevisionUid.NodeUid, draftRevisionUid);
     }
 
     private async ValueTask UpdateActiveRevisionInCacheAsync(RevisionUid revisionUid, long size, CancellationToken cancellationToken)
@@ -143,18 +157,23 @@ public sealed partial class FileUploader : IDisposable
         await _client.Cache.Entities.SetNodeAsync(fileNode.Uid, fileNode, membershipShareId, nameHashDigest, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<(NodeUid NodeUid, RevisionUid RevisionUid)> UploadFromFileAsync(
+    private async Task<UploadResult> UploadFromFileAsync(
         string filePath,
         IEnumerable<Thumbnail> thumbnails,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long>? onProgress,
-        CancellationToken cancellationToken)
+        TaskControl<UploadResult> taskControl)
     {
         var contentStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
 
         await using (contentStream.ConfigureAwait(false))
         {
-            return await UploadFromStreamAsync(contentStream, thumbnails, additionalMetadata, onProgress, cancellationToken).ConfigureAwait(false);
+            return await UploadFromStreamAsync(
+                contentStream,
+                thumbnails,
+                additionalMetadata,
+                onProgress,
+                taskControl).ConfigureAwait(false);
         }
     }
 
@@ -166,20 +185,25 @@ public sealed partial class FileUploader : IDisposable
         DateTimeOffset? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long>? onProgress,
-        CancellationToken cancellationToken)
+        TaskControl<UploadResult> taskControl)
     {
-        using var revisionWriter = await RevisionOperations.OpenForWritingAsync(_client, revisionUid, fileSecrets, ReleaseBlocks, cancellationToken)
-            .ConfigureAwait(false);
+        using var revisionWriter = await RevisionOperations.OpenForWritingAsync(
+            _client,
+            revisionUid,
+            fileSecrets,
+            ReleaseBlocks,
+            taskControl).ConfigureAwait(false);
 
         try
         {
-            await revisionWriter.WriteAsync(contentStream, FileSize, thumbnails, lastModificationTime, additionalMetadata, onProgress, cancellationToken).ConfigureAwait(false);
+            await revisionWriter.WriteAsync(contentStream, FileSize, thumbnails, lastModificationTime, additionalMetadata, onProgress, taskControl)
+                .ConfigureAwait(false);
         }
         catch
         {
             try
             {
-                await _fileDraftProvider.DeleteDraftAsync(_client, revisionUid, cancellationToken).ConfigureAwait(false);
+                await _fileDraftProvider.DeleteDraftAsync(_client, revisionUid, CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

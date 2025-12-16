@@ -43,7 +43,9 @@ internal static class InteropUploadController
 
     public static IMessage? HandleFree(UploadControllerFreeRequest request)
     {
-        Interop.FreeHandle<UploadController>(request.UploadControllerHandle);
+        var uploadController = Interop.FreeHandle<UploadController>(request.UploadControllerHandle);
+
+        uploadController.Dispose();
 
         return null;
     }
