@@ -1,4 +1,3 @@
-using System.Buffers;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
@@ -31,7 +30,7 @@ internal sealed partial class BlockUploader
 
     public TransferQueue Queue { get; }
 
-    public async Task<BlockUploadResult> UploadContentAsync(
+    public async ValueTask<BlockUploadResult> UploadContentAsync(
         RevisionUid revisionUid,
         int index,
         PgpSessionKey contentKey,
@@ -43,78 +42,68 @@ internal sealed partial class BlockUploader
         byte[] plainDataPrefix,
         int plainDataPrefixLength,
         Action<long>? onBlockProgress,
-        Action<int> releaseBlocksAction,
         CancellationToken cancellationToken)
     {
-        try
+        var plainDataLength = plainDataStream.Length;
+
+        var dataPacketStream = ProtonDriveClient.MemoryStreamManager.GetStream();
+        await using (dataPacketStream.ConfigureAwait(false))
         {
-            try
+            var signatureStream = ProtonDriveClient.MemoryStreamManager.GetStream();
+
+            await using (signatureStream.ConfigureAwait(false))
             {
-                var plainDataLength = plainDataStream.Length;
+                using var sha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
 
-                var dataPacketStream = ProtonDriveClient.MemoryStreamManager.GetStream();
-                await using (dataPacketStream.ConfigureAwait(false))
+                var hashingStream = new HashingWriteStream(dataPacketStream, sha256, leaveOpen: true);
+
+                await using (hashingStream.ConfigureAwait(false))
                 {
-                    var signatureStream = ProtonDriveClient.MemoryStreamManager.GetStream();
+                    var signatureEncryptingStream = signatureEncryptionKey.OpenEncryptingStream(signatureStream);
 
-                    await using (signatureStream.ConfigureAwait(false))
+                    await using (signatureEncryptingStream.ConfigureAwait(false))
                     {
-                        BlockUploadResult result;
+                        var pgpProfile = contentKey.IsAead() ? PgpProfile.ProtonAead : PgpProfile.Proton;
+                        var encryptingStream = contentKey.OpenEncryptingAndSigningStream(hashingStream, signatureEncryptingStream, signingKey, profile: pgpProfile, aeadStreamingChunkLength: PgpAeadStreamingChunkLength.ChunkLength);
 
-                        await using (plainDataStream.ConfigureAwait(false))
+                        await using (encryptingStream.ConfigureAwait(false))
                         {
-                            using var sha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-
-                            var hashingStream = new HashingWriteStream(dataPacketStream, sha256, leaveOpen: true);
-
-                            await using (hashingStream.ConfigureAwait(false))
-                            {
-                                var signatureEncryptingStream = signatureEncryptionKey.OpenEncryptingStream(signatureStream);
-
-                                await using (signatureEncryptingStream.ConfigureAwait(false))
-                                {
-                                    var pgpProfile = contentKey.IsAead() ? PgpProfile.ProtonAead : PgpProfile.Proton;
-                                    var encryptingStream = contentKey.OpenEncryptingAndSigningStream(hashingStream, signatureEncryptingStream, signingKey, profile: pgpProfile, aeadStreamingChunkLength: PgpAeadStreamingChunkLength.ChunkLength);
-
-                                    await using (encryptingStream.ConfigureAwait(false))
-                                    {
-                                        await plainDataStream.CopyToAsync(encryptingStream, cancellationToken).ConfigureAwait(false);
-                                    }
-                                }
-                            }
-
-                            var sha256Digest = sha256.GetCurrentHash();
-
-                            result = new BlockUploadResult((int)plainDataStream.Length, sha256Digest, IsFileContent: true);
+                            await plainDataStream.CopyToAsync(encryptingStream, cancellationToken).ConfigureAwait(false);
                         }
+                    }
+                }
 
-                        // The signature stream should not be closed until the signature is no longer needed, because the underlying buffer could be re-used,
-                        // leading to a garbage signature.
-                        var signature = signatureStream.GetBuffer().AsMemory()[..(int)signatureStream.Length];
+                var sha256Digest = sha256.GetCurrentHash();
 
-                        // FIXME: retry upon verification failure
+                var result = new BlockUploadResult((int)plainDataStream.Length, sha256Digest, IsFileContent: true);
 
-                        const long AeadChunkSize =
-                            1 + // packet header: packet type
-                            1 + // packet header: partial length
-                            4 + // SEIPDv2 header: packet version, cipher ID, algo Id, chunk size
-                            32 + // SEIPDv2 header: salt
-                            PgpAeadStreamingChunkLength.ChunkLength +
-                            1 + // chunk size header
-                            36 + // end of chunk
-                            16; // Aead Tag
+                // The signature stream should not be closed until the signature is no longer needed, because the underlying buffer could be re-used,
+                // leading to a garbage signature.
+                var signature = signatureStream.GetBuffer().AsMemory()[..(int)signatureStream.Length];
 
-                        var verificationToken = verifier.VerifyBlock(dataPacketStream.GetFirstBytes(AeadChunkSize), plainDataPrefix.AsSpan()[..plainDataPrefixLength]);
+                // FIXME: retry upon verification failure
 
-                        var request = new BlockUploadPreparationRequest
-                        {
-                            VolumeId = revisionUid.NodeUid.VolumeId,
-                            LinkId = revisionUid.NodeUid.LinkId,
-                            RevisionId = revisionUid.RevisionId,
-                            AddressId = membershipAddressId,
-                            Blocks =
-                            [
-                                new BlockCreationRequest
+                const long AeadChunkSize =
+                    1 + // packet header: packet type
+                    1 + // packet header: partial length
+                    4 + // SEIPDv2 header: packet version, cipher ID, algo Id, chunk size
+                    32 + // SEIPDv2 header: salt
+                    PgpAeadStreamingChunkLength.ChunkLength +
+                    1 + // chunk size header
+                    36 + // end of chunk
+                    16; // Aead Tag
+
+                var verificationToken = verifier.VerifyBlock(dataPacketStream.GetFirstBytes(AeadChunkSize), plainDataPrefix.AsSpan()[..plainDataPrefixLength]);
+
+                var request = new BlockUploadPreparationRequest
+                {
+                    VolumeId = revisionUid.NodeUid.VolumeId,
+                    LinkId = revisionUid.NodeUid.LinkId,
+                    RevisionId = revisionUid.RevisionId,
+                    AddressId = membershipAddressId,
+                    Blocks =
+                    [
+                        new BlockCreationRequest
                                 {
                                     Index = index,
                                     Size = (int)dataPacketStream.Length,
@@ -123,38 +112,21 @@ internal sealed partial class BlockUploader
                                     VerificationOutput = new BlockVerificationOutput { Token = verificationToken.AsReadOnlyMemory() },
                                 },
                             ],
-                            Thumbnails = [],
-                        };
+                    Thumbnails = [],
+                };
 
-                        await UploadBlobAsync(request, dataPacketStream, cancellationToken).ConfigureAwait(false);
+                await UploadBlobAsync(request, dataPacketStream, cancellationToken).ConfigureAwait(false);
 
-                        onBlockProgress?.Invoke(plainDataLength);
+                onBlockProgress?.Invoke(plainDataLength);
 
-                        LogContentBlobUploaded(index, revisionUid);
+                LogContentBlobUploaded(index, revisionUid);
 
-                        return result;
-                    }
-                }
+                return result;
             }
-            finally
-            {
-                try
-                {
-                    Queue.FinishBlocks(1);
-                }
-                finally
-                {
-                    releaseBlocksAction.Invoke(1);
-                }
-            }
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(plainDataPrefix);
         }
     }
 
-    public async Task<BlockUploadResult> UploadThumbnailAsync(
+    public async ValueTask<BlockUploadResult> UploadThumbnailAsync(
         RevisionUid revisionUid,
         PgpSessionKey contentKey,
         PgpPrivateKey signingKey,
@@ -162,63 +134,49 @@ internal sealed partial class BlockUploader
         Thumbnail thumbnail,
         CancellationToken cancellationToken)
     {
-        try
+        var dataPacketStream = ProtonDriveClient.MemoryStreamManager.GetStream();
+        await using (dataPacketStream.ConfigureAwait(false))
         {
-            var dataPacketStream = ProtonDriveClient.MemoryStreamManager.GetStream();
-            await using (dataPacketStream.ConfigureAwait(false))
+            using var sha256 = SHA256.Create();
+
+            var hashingStream = new CryptoStream(dataPacketStream, sha256, CryptoStreamMode.Write, leaveOpen: true);
+
+            await using (hashingStream.ConfigureAwait(false))
             {
-                using var sha256 = SHA256.Create();
+                var pgpProfile = contentKey.IsAead() ? PgpProfile.ProtonAead : PgpProfile.Proton;
+                var encryptingStream = contentKey.OpenEncryptingAndSigningStream(hashingStream, signingKey, profile: pgpProfile, aeadStreamingChunkLength: PgpAeadStreamingChunkLength.ChunkLength);
 
-                var hashingStream = new CryptoStream(dataPacketStream, sha256, CryptoStreamMode.Write, leaveOpen: true);
-
-                await using (hashingStream.ConfigureAwait(false))
+                await using (encryptingStream.ConfigureAwait(false))
                 {
-                    var pgpProfile = contentKey.IsAead() ? PgpProfile.ProtonAead : PgpProfile.Proton;
-                    var encryptingStream = contentKey.OpenEncryptingAndSigningStream(hashingStream, signingKey, profile: pgpProfile, aeadStreamingChunkLength: PgpAeadStreamingChunkLength.ChunkLength);
-
-                    await using (encryptingStream.ConfigureAwait(false))
-                    {
-                        await encryptingStream.WriteAsync(thumbnail.Content, cancellationToken).ConfigureAwait(false);
-                    }
+                    await encryptingStream.WriteAsync(thumbnail.Content, cancellationToken).ConfigureAwait(false);
                 }
+            }
 
-                var sha256Digest = sha256.Hash ?? [];
+            var sha256Digest = sha256.Hash ?? [];
 
-                var request = new BlockUploadPreparationRequest
-                {
-                    VolumeId = revisionUid.NodeUid.VolumeId,
-                    LinkId = revisionUid.NodeUid.LinkId,
-                    RevisionId = revisionUid.RevisionId,
-                    AddressId = membershipAddressId,
-                    Blocks = [],
-                    Thumbnails =
-                    [
-                        new ThumbnailCreationRequest
+            var request = new BlockUploadPreparationRequest
+            {
+                VolumeId = revisionUid.NodeUid.VolumeId,
+                LinkId = revisionUid.NodeUid.LinkId,
+                RevisionId = revisionUid.RevisionId,
+                AddressId = membershipAddressId,
+                Blocks = [],
+                Thumbnails =
+                [
+                    new ThumbnailCreationRequest
                         {
                             Size = (int)dataPacketStream.Length,
                             Type = (Api.Files.ThumbnailType)thumbnail.Type,
                             HashDigest = sha256Digest,
                         },
                     ],
-                };
+            };
 
-                await UploadBlobAsync(request, dataPacketStream, cancellationToken).ConfigureAwait(false);
+            await UploadBlobAsync(request, dataPacketStream, cancellationToken).ConfigureAwait(false);
 
-                LogThumbnailBlobUploaded(revisionUid);
+            LogThumbnailBlobUploaded(revisionUid);
 
-                return new BlockUploadResult(0, sha256Digest, IsFileContent: false);
-            }
-        }
-        finally
-        {
-            try
-            {
-                Queue.FinishBlocks(1);
-            }
-            finally
-            {
-                _client.RevisionCreationSemaphore.Release(1);
-            }
+            return new BlockUploadResult(0, sha256Digest, IsFileContent: false);
         }
     }
 
@@ -235,9 +193,9 @@ internal sealed partial class BlockUploader
         await using (nonDisposableDataPacketStream.ConfigureAwait(false))
         {
             await Policy
-                .Handle<Exception>(ex => ex is not FileContentsDecryptionException)
+                .Handle<Exception>(ex => !cancellationToken.IsCancellationRequested && ex is not FileContentsDecryptionException)
                 .WaitAndRetryAsync(
-                    retryCount: 4,
+                    retryCount: 1,
                     sleepDurationProvider: RetryPolicy.GetAttemptDelay,
                     onRetry: (exception, _, retryNumber, _) =>
                     {
