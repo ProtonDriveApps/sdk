@@ -69,9 +69,17 @@ public sealed class ProtonPhotosClient : IDisposable
         return PhotosNodeOperations.EnumeratePhotosAsync(this, uid, cancellationToken);
     }
 
-    public async ValueTask<PhotoDownloader> GetPhotoDownloaderAsync(NodeUid photoUid, CancellationToken cancellationToken)
+    public async ValueTask<PhotosDownloader> GetPhotosDownloaderAsync(NodeUid photoUid, CancellationToken cancellationToken)
     {
-        return await PhotoDownloader.CreateAsync(this, photoUid, cancellationToken).ConfigureAwait(false);
+        return await PhotosDownloader.CreateAsync(this, photoUid, cancellationToken).ConfigureAwait(false);
+    }
+
+    public IAsyncEnumerable<FileThumbnail> EnumeratePhotosThumbnailsAsync(
+        IEnumerable<NodeUid> photoUids,
+        ThumbnailType thumbnailType = ThumbnailType.Thumbnail,
+        CancellationToken cancellationToken = default)
+    {
+        return FileOperations.EnumerateThumbnailsAsync(DriveClient, photoUids, thumbnailType, cancellationToken);
     }
 
     public void Dispose()
