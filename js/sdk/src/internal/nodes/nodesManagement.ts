@@ -127,6 +127,12 @@ export abstract class NodesManagementBase<
         }
     }
 
+    async emptyTrash(): Promise<void> {
+        const node = await this.nodesAccess.getVolumeRootFolder();
+        const { volumeId } = splitNodeUid(node.uid);
+        await this.apiService.emptyTrash(volumeId);
+    }
+
     async moveNode(nodeUid: string, newParentUid: string): Promise<TDecryptedNode> {
         const node = await this.nodesAccess.getNode(nodeUid);
 

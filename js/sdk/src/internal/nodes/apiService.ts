@@ -57,6 +57,9 @@ type PostCopyNodeRequest = Extract<
 type PostCopyNodeResponse =
     drivePaths['/drive/volumes/{volumeID}/links/{linkID}/copy']['post']['responses']['200']['content']['application/json'];
 
+type EmptyTrashResponse =
+    drivePaths['/drive/volumes/{volumeID}/trash']['delete']['responses']['200']['content']['application/json'];
+
 type PostTrashNodesRequest = Extract<
     drivePaths['/drive/v2/volumes/{volumeID}/trash_multiple']['post']['requestBody'],
     { content: object }
@@ -434,6 +437,10 @@ export abstract class NodeAPIServiceBase<
             // TODO: remove `as` when backend fixes OpenAPI schema.
             yield* handleResponseErrors(batchNodeUids, volumeId, response.Responses as LinkResponse[]);
         }
+    }
+
+    async emptyTrash(volumeId: string): Promise<void> {
+        await this.apiService.delete<EmptyTrashResponse>(`drive/volumes/${volumeId}/trash`);
     }
 
     async *restoreNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
