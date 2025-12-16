@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+      <IsPackable>true</IsPackable>
+      <PackageTags>Cloud Storage Volume Photo Album</PackageTags>
+      <Description>Provides the means to interact with the Proton Photos services.</Description>
+      <EmbedAllSources>true</EmbedAllSources>
+      <IncludeSymbols>true</IncludeSymbols>
+      <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Proton.Cryptography" PrivateAssets="compile" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Proton.Drive.Sdk\Proton.Drive.Sdk.csproj" />
+  </ItemGroup>
+
+</Project>

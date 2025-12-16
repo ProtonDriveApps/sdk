@@ -14,6 +14,8 @@ internal sealed class VolumeDto
 
     public required VolumeState State { get; init; }
 
+    public required VolumeType Type { get; init; }
+
     [JsonPropertyName("Share")]
     public required VolumeRootDto Root { get; init; }
 }

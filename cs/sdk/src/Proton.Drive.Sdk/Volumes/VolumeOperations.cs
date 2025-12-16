@@ -23,7 +23,9 @@ internal static class VolumeOperations
 
         var addressKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(defaultAddress.Id, cancellationToken).ConfigureAwait(false);
 
-        var request = GetCreationRequest(defaultAddress.Id, addressKey, out var rootShareKey, out var rootFolderSecrets);
+        var addressKeyId = defaultAddress.GetPrimaryKey().AddressKeyId;
+
+        var request = GetCreationRequest(defaultAddress.Id, addressKeyId, addressKey, out var rootShareKey, out var rootFolderSecrets);
 
         var response = await client.Api.Volumes.CreateVolumeAsync(request, cancellationToken).ConfigureAwait(false);
 
@@ -121,6 +123,7 @@ internal static class VolumeOperations
 
     private static VolumeCreationRequest GetCreationRequest(
         AddressId addressId,
+        AddressKeyId addressKeyId,
         PgpPrivateKey addressKey,
         out PgpPrivateKey rootShareKey,
         out FolderSecrets rootFolderSecrets)
@@ -160,6 +163,7 @@ internal static class VolumeOperations
         return new VolumeCreationRequest
         {
             AddressId = addressId,
+            AddressKeyId = addressKeyId,
             ShareKey = lockedShareKey.ToBytes(),
             SharePassphrase = encryptedSharePassphrase,
             SharePassphraseSignature = sharePassphraseSignature,
