@@ -2,7 +2,7 @@
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 
-public sealed partial class FileDownloader : IDisposable
+public sealed partial class FileDownloader : IFileDownloader
 {
     private readonly ProtonDriveClient _client;
     private readonly RevisionUid _revisionUid;
