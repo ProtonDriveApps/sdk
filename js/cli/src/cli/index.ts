@@ -18,6 +18,7 @@ import { CommandFileSystemDelete } from './fileSystem/commandFileSystemDelete';
 import { CommandFileSystemDownload } from './fileSystem/commandFileSystemDownload';
 import { CommandFileSystemDownloadSeeking } from './fileSystem/commandFileSystemDownloadSeeking';
 import { CommandFileSystemDownloadThumbnails } from './fileSystem/commandFileSystemDownloadThumbnails';
+import { CommandFileSystemEmptyTrash } from './fileSystem/commandFileSystemEmptyTrash';
 import { CommandFileSystemGetAvailableName } from './fileSystem/commandFileSystemGetAvailableName';
 import { CommandFileSystemInfo } from './fileSystem/commandFileSystemInfo';
 import { CommandFileSystemList } from './fileSystem/commandFileSystemList';
@@ -69,6 +70,7 @@ const COMMANDS = [
     new CommandFileSystemTrash(),
     new CommandFileSystemDelete(),
     new CommandFileSystemRestore(),
+    new CommandFileSystemEmptyTrash(),
     new CommandFileSystemDownload(),
     new CommandFileSystemDownloadSeeking(),
     new CommandFileSystemDownloadThumbnails(),

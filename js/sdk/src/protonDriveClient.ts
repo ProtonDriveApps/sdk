@@ -514,7 +514,7 @@ export class ProtonDriveClient {
 
     async emptyTrash(): Promise<void> {
         this.logger.info('Emptying trash');
-        throw new Error('Method not implemented');
+        return this.nodes.management.emptyTrash();
     }
 
     /**
