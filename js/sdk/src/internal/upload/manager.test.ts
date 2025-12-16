@@ -327,5 +327,42 @@ describe('UploadManager', () => {
             expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('parentUid');
             expect(nodesService.notifyNodeChanged).not.toHaveBeenCalled();
         });
+
+        it('should ignore error if revision was committed successfully', async () => {
+            apiService.commitDraftRevision = jest
+                .fn()
+                .mockRejectedValue(new Error('Revision to commit must be a draft'));
+            apiService.isRevisionUploaded = jest.fn().mockResolvedValue(true);
+
+            await manager.commitDraft(nodeRevisionDraft as any, manifest, extendedAttributes);
+
+            expect(apiService.commitDraftRevision).toHaveBeenCalledWith(
+                nodeRevisionDraft.nodeRevisionUid,
+                expect.anything(),
+            );
+            expect(nodesService.notifyNodeChanged).toHaveBeenCalled();
+        });
+
+        it('should throw error if revision was not committed successfully', async () => {
+            apiService.commitDraftRevision = jest
+                .fn()
+                .mockRejectedValue(new Error('Revision to commit must be a draft'));
+            apiService.isRevisionUploaded = jest.fn().mockResolvedValue(false);
+
+            await expect(manager.commitDraft(nodeRevisionDraft as any, manifest, extendedAttributes)).rejects.toThrow(
+                'Revision to commit must be a draft',
+            );
+            expect(nodesService.notifyNodeChanged).not.toHaveBeenCalled();
+        });
+
+        it('should throw original error if revision cannot be verified', async () => {
+            apiService.commitDraftRevision = jest.fn().mockRejectedValue(new Error('Failed to commit revision'));
+            apiService.isRevisionUploaded = jest.fn().mockRejectedValue(new Error('Failed to verify revision'));
+
+            await expect(manager.commitDraft(nodeRevisionDraft as any, manifest, extendedAttributes)).rejects.toThrow(
+                'Failed to commit revision',
+            );
+            expect(nodesService.notifyNodeChanged).not.toHaveBeenCalled();
+        });
     });
 });
