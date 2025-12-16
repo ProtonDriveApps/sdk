@@ -79,10 +79,13 @@ internal static class ProtonClientConfigurationExtensions
                             options.TotalRequestTimeout.Timeout = totalTimeout.Value;
                         }
 
-                        var defaultShouldHandleRetry = options.Retry.ShouldHandle;
+                        var defaultShouldHandleRetryPredicate = options.Retry.ShouldHandle;
 
-                        options.Retry.ShouldHandle = async args => await defaultShouldHandleRetry(args).ConfigureAwait(false)
-                            && args.Context.GetRequestMessage()?.GetRequestType() is HttpRequestType.RegularApi;
+                        options.Retry.ShouldHandle = async args =>
+                        {
+                            var defaultShouldHandleRetry = await defaultShouldHandleRetryPredicate(args).ConfigureAwait(false);
+                            return defaultShouldHandleRetry && args.Context.GetRequestMessage()?.GetRequestType() is HttpRequestType.RegularApi;
+                        };
 
                         options.Retry.ShouldRetryAfterHeader = true;
                         options.Retry.Delay = TimeSpan.FromSeconds(1.75);
