@@ -1,6 +1,6 @@
 ﻿namespace Proton.Drive.Sdk.Nodes;
 
-public sealed record FileNode : FileOrFileDraftNode
+public record FileNode : FileOrFileDraftNode
 {
     public required Revision ActiveRevision { get; init; }
 
