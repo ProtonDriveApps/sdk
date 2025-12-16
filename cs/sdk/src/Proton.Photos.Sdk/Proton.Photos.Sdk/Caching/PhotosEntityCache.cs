@@ -61,6 +61,15 @@ internal sealed class PhotosEntityCache(ICacheRepository repository) : IPhotosEn
         return _repository.SetAsync(GetNodeCacheKey(nodeId), serializedValue, cancellationToken);
     }
 
+    public async ValueTask<CachedNodeInfo?> TryGetNodeAsync(NodeUid nodeId, CancellationToken cancellationToken)
+    {
+        var serializedValue = await _repository.TryGetAsync(GetNodeCacheKey(nodeId), cancellationToken).ConfigureAwait(false);
+
+        return serializedValue is not null
+            ? JsonSerializer.Deserialize(serializedValue, DriveEntitiesSerializerContext.Default.CachedNodeInfo)
+            : null;
+    }
+
     private static string GetShareCacheKey(ShareId shareId)
     {
         return $"share:{shareId}";

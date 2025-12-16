@@ -1,7 +1,9 @@
+using System.Runtime.CompilerServices;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Shares;
+using Proton.Photos.Sdk.Api.Photos;
 using Proton.Photos.Sdk.Volumes;
 using Proton.Sdk;
 using Proton.Sdk.Api;
@@ -10,6 +12,8 @@ namespace Proton.Photos.Sdk.Nodes;
 
 internal static class PhotosNodeOperations
 {
+    private const int PhotosPageSize = 500;
+
     public static async ValueTask<FolderNode> GetPhotosFolderAsync(ProtonPhotosClient client, CancellationToken cancellationToken)
     {
         var shareId = await client.Cache.Entities.TryGetPhotosShareIdAsync(cancellationToken).ConfigureAwait(false);
@@ -20,9 +24,33 @@ internal static class PhotosNodeOperations
 
         var shareAndKey = await ShareOperations.GetShareAsync(client.DriveClient, shareId.Value, cancellationToken).ConfigureAwait(false);
 
-        var metadata = await NodeOperations.GetNodeMetadataAsync(client.DriveClient, shareAndKey.Share.RootFolderId, shareAndKey, cancellationToken).ConfigureAwait(false);
+        var metadata = await NodeOperations.GetNodeMetadataAsync(client.DriveClient, shareAndKey.Share.RootFolderId, shareAndKey, cancellationToken)
+            .ConfigureAwait(false);
 
         return (FolderNode)metadata.Node;
+    }
+
+    public static async IAsyncEnumerable<PhotosTimelineItem> EnumeratePhotosAsync(
+        ProtonPhotosClient client,
+        NodeUid folderUid,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var anchorLinkId = default(LinkId?);
+
+        do
+        {
+            var request = new PhotoTimelineRequest { VolumeId = folderUid.VolumeId, PreviousPageLastLinkId = anchorLinkId };
+            var response = await client.PhotosApi.GetPhotosTimelineAsync(request, cancellationToken).ConfigureAwait(false);
+
+            anchorLinkId = response.Photos.Count == PhotosPageSize ? response.Photos[^1].Id : null;
+
+            foreach (var photo in response.Photos)
+            {
+                var photoUid = new NodeUid(folderUid.VolumeId, photo.Id);
+
+                yield return new PhotosTimelineItem(photoUid, photo.CaptureTime);
+            }
+        } while (anchorLinkId is not null);
     }
 
     private static async ValueTask<FolderNode> GetFreshPhotosFolderAsync(ProtonPhotosClient photosClient, CancellationToken cancellationToken)

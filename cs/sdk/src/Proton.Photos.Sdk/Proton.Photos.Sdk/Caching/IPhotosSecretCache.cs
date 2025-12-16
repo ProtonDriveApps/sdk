@@ -13,4 +13,6 @@ internal interface IPhotosSecretCache
         NodeUid nodeId,
         Result<FolderSecrets, DegradedFolderSecrets> secretsProvisionResult,
         CancellationToken cancellationToken);
+
+    ValueTask<Result<FolderSecrets, DegradedFolderSecrets>?> TryGetFolderSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken);
 }

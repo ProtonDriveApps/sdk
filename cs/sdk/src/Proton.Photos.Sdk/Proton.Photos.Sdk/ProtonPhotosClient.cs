@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Proton.Drive.Sdk;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Photos.Sdk.Api;
@@ -56,17 +57,21 @@ public sealed class ProtonPhotosClient : IDisposable
 
     internal ProtonDriveClient DriveClient { get; }
 
-    [Obsolete("Used internally for testing purposes")]
+    [Experimental("Photos")]
     public ValueTask<FolderNode> GetPhotosRootAsync(CancellationToken cancellationToken)
     {
         return PhotosNodeOperations.GetPhotosFolderAsync(this, cancellationToken);
     }
 
-#pragma warning disable S2325
-    public IAsyncEnumerable<Result<Node, DegradedNode>> EnumeratePhotosTimelineAsync(NodeUid uid, CancellationToken cancellationToken)
-#pragma warning restore S2325
+    [Experimental("Photos")]
+    public IAsyncEnumerable<PhotosTimelineItem> EnumeratePhotosTimelineAsync(NodeUid uid, CancellationToken cancellationToken)
     {
-        throw new NotSupportedException();
+        return PhotosNodeOperations.EnumeratePhotosAsync(this, uid, cancellationToken);
+    }
+
+    public async ValueTask<PhotoDownloader> GetPhotoDownloaderAsync(NodeUid photoUid, CancellationToken cancellationToken)
+    {
+        return await PhotoDownloader.CreateAsync(this, photoUid, cancellationToken).ConfigureAwait(false);
     }
 
     public void Dispose()

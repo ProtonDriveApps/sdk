@@ -24,4 +24,13 @@ internal sealed class PhotosApiClient(HttpClient httpClient) : IPhotosApiClient
             .Expecting(DriveApiSerializerContext.Default.ShareResponseV2)
             .GetAsync("v2/shares/photos", cancellationToken).ConfigureAwait(false);
     }
+
+    public async ValueTask<PhotoListResponse> GetPhotosTimelineAsync(PhotoTimelineRequest request, CancellationToken cancellationToken)
+    {
+        var query = request.PreviousPageLastLinkId is not null ? $"?PreviousPageLastLinkID={request.PreviousPageLastLinkId}" : string.Empty;
+
+        return await _httpClient
+            .Expecting(PhotosApiSerializerContext.Default.PhotoListResponse)
+            .GetAsync($"volumes/{request.VolumeId}/photos{query}", cancellationToken).ConfigureAwait(false);
+    }
 }

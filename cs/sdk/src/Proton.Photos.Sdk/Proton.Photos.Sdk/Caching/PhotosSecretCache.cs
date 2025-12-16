@@ -30,6 +30,15 @@ internal sealed class PhotosSecretCache(ICacheRepository repository) : IPhotosSe
         return _repository.SetAsync(GetFolderSecretsCacheKey(nodeId), serializedValue, cancellationToken);
     }
 
+    public async ValueTask<Result<FolderSecrets, DegradedFolderSecrets>?> TryGetFolderSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken)
+    {
+        var serializedValue = await _repository.TryGetAsync(GetFolderSecretsCacheKey(nodeId), cancellationToken).ConfigureAwait(false);
+
+        return serializedValue is not null
+            ? JsonSerializer.Deserialize(serializedValue, DriveSecretsSerializerContext.Default.NullableResultFolderSecretsDegradedFolderSecrets)
+            : null;
+    }
+
     private static string GetShareKeyCacheKey(ShareId shareId)
     {
         return $"share:{shareId}:key";
