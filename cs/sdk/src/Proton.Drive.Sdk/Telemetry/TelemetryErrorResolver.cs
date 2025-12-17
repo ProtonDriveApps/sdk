@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Sdk;
@@ -13,7 +14,9 @@ internal static class TelemetryErrorResolver
         {
             NodeKeyAndSessionKeyMismatchException or SessionKeyAndDataPacketMismatchException => DownloadError.IntegrityError,
             CryptographicException => DownloadError.DecryptionError,
-            HttpRequestException { HttpRequestError: HttpRequestError.ConnectionError } => DownloadError.NetworkError,
+            HttpRequestException { HttpRequestError: HttpRequestError.NameResolutionError or HttpRequestError.ConnectionError or HttpRequestError.ProxyTunnelError } => DownloadError.NetworkError,
+            HttpRequestException { HttpRequestError: HttpRequestError.InvalidResponse or HttpRequestError.ResponseEnded } => DownloadError.ServerError,
+            ProtonApiException { TransportCode: (int)HttpStatusCode.RequestTimeout } => DownloadError.ServerError,
             ProtonApiException { TransportCode: (int)HttpStatusCode.TooManyRequests } => DownloadError.RateLimited,
             ProtonApiException { TransportCode: >= 400 and < 500 } => DownloadError.HttpClientSideError,
             ProtonApiException { TransportCode: >= 500 and < 600 } => DownloadError.ServerError,
@@ -26,7 +29,9 @@ internal static class TelemetryErrorResolver
         return exception switch
         {
             NodeKeyAndSessionKeyMismatchException or SessionKeyAndDataPacketMismatchException => UploadError.IntegrityError,
-            HttpRequestException { HttpRequestError: HttpRequestError.ConnectionError } => UploadError.NetworkError,
+            HttpRequestException { HttpRequestError: HttpRequestError.NameResolutionError or HttpRequestError.ConnectionError or HttpRequestError.ProxyTunnelError } => UploadError.NetworkError,
+            HttpRequestException { HttpRequestError: HttpRequestError.InvalidResponse or HttpRequestError.ResponseEnded } => UploadError.ServerError,
+            ProtonApiException { TransportCode: (int)HttpStatusCode.RequestTimeout } => UploadError.ServerError,
             ProtonApiException { TransportCode: (int)HttpStatusCode.TooManyRequests } => UploadError.RateLimited,
             ProtonApiException { TransportCode: >= 400 and < 500 } => UploadError.HttpClientSideError,
             ProtonApiException { TransportCode: >= 500 and < 600 } => UploadError.ServerError,
