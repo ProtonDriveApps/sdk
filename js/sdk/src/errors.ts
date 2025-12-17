@@ -170,8 +170,8 @@ export class IntegrityError extends ProtonDriveError {
 
     public readonly debug?: object;
 
-    constructor(message: string, debug?: object) {
-        super(message);
+    constructor(message: string, debug?: object, options?: ErrorOptions) {
+        super(message, options);
         this.debug = debug;
     }
 }

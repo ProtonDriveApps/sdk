@@ -12,7 +12,7 @@ import { ProtonDriveAccount, Revision } from '../../interface';
 import { DecryptionError, IntegrityError } from '../../errors';
 import { getErrorMessage } from '../errors';
 import { mergeUint8Arrays } from '../utils';
-import { RevisionKeys } from './interface';
+import { RevisionKeys, SignatureVerificationError } from './interface';
 
 export class DownloadCryptoService {
     constructor(
@@ -90,11 +90,21 @@ export class DownloadCryptoService {
         allBlockHashes: Uint8Array[],
         armoredManifestSignature?: string,
     ): Promise<void> {
-        const verificationKeys = await this.getRevisionVerificationKeys(revision, nodeKey);
         const hash = mergeUint8Arrays(allBlockHashes);
 
         if (!armoredManifestSignature) {
             throw new IntegrityError(c('Error').t`Missing integrity signature`);
+        }
+
+        let verificationKeys;
+        try {
+            verificationKeys = await this.getRevisionVerificationKeys(revision, nodeKey);
+        } catch (error: unknown) {
+            throw new SignatureVerificationError(
+                c('Error').t`Failed to get verification keys`,
+                { revisionUid: revision.uid, contentAuthor: revision.contentAuthor },
+                { cause: error },
+            );
         }
 
         const { verified, verificationErrors } = await this.driveCrypto.verifyManifest(
@@ -104,7 +114,7 @@ export class DownloadCryptoService {
         );
 
         if (verified !== VERIFICATION_STATUS.SIGNED_AND_VALID) {
-            throw new IntegrityError(c('Error').t`Data integrity check failed`, {
+            throw new SignatureVerificationError(c('Error').t`Data integrity check failed`, {
                 verificationErrors,
             });
         }

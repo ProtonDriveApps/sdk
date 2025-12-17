@@ -1,7 +1,7 @@
 import { c } from 'ttag';
 
 import { PrivateKey, SessionKey, base64StringToUint8Array } from '../../crypto';
-import { AbortError } from '../../errors';
+import { AbortError, IntegrityError } from '../../errors';
 import { Logger } from '../../interface';
 import { LoggerWithPrefix } from '../../telemetry';
 import { APIHTTPError, HTTPErrorCode } from '../apiService';
@@ -10,7 +10,7 @@ import { DownloadAPIService } from './apiService';
 import { getBlockIndex } from './blockIndex';
 import { DownloadController } from './controller';
 import { DownloadCryptoService } from './cryptoService';
-import { BlockMetadata, RevisionKeys } from './interface';
+import { BlockMetadata, RevisionKeys, SignatureVerificationError } from './interface';
 import { BufferedSeekableStream } from './seekableStream';
 import { DownloadTelemetry } from './telemetry';
 
@@ -233,13 +233,17 @@ export class FileDownloader {
                 );
             }
 
-            await writer.close();
             void this.telemetry.downloadFinished(this.revision.uid, fileProgress);
             this.logger.info(`Download succeeded`);
         } catch (error: unknown) {
-            this.logger.error(`Download failed`, error);
+            if (error instanceof SignatureVerificationError) {
+                this.logger.warn(`Download finished with signature verification issues`);
+                this.controller.setIsDownloadCompleteWithSignatureIssues(true);
+                error = new IntegrityError(error.message, error.debug, { cause: error });
+            } else {
+                this.logger.error(`Download failed`, error);
+            }
             void this.telemetry.downloadFailed(this.revision.uid, error, fileProgress, this.getClaimedSizeInBytes());
-            await writer.abort?.();
             throw error;
         } finally {
             this.logger.debug(`Download cleanup`);
