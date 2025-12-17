@@ -60,7 +60,23 @@ export interface FileDownloader {
 export interface DownloadController {
     pause(): void;
     resume(): void;
+
+    /**
+     * Wait for the download to complete.
+     *
+     * Throws if the download fails. In some cases, the download can complete
+     * anyway, such as when the signature verification fails at the end of the
+     * download. See `isDownloadCompleteWithSignatureIssues` for more details.
+     */
     completion(): Promise<void>;
+
+    /**
+     * The download can throw at completion() call, but the download is still
+     * completed. The client is responsible for showing warning to the user
+     * and asking for confirmation to save the file anyway or abort and clean
+     * up the file.
+     */
+    isDownloadCompleteWithSignatureIssues(): boolean;
 }
 
 export interface SeekableReadableStream extends ReadableStream<Uint8Array> {
