@@ -2,6 +2,7 @@ import path from 'node:path';
 import { ParseArgsConfig } from 'util';
 
 import { Command, ActionArgs } from '../interface';
+import { download } from '../downloader';
 import { getName } from '../node';
 import { PUBLIC_OPTIONS } from './base';
 
@@ -29,28 +30,11 @@ export class CommandPublicDownload implements Command {
         const node = await nodePath.getNode();
         const downloader = await client.getFileDownloader(node);
 
-        const claimedSize = downloader.getClaimedSizeInBytes();
-        const localPath = path.join(localParentPath, name || getName(node));
-
-        if (!json) {
-            console.log(`Downloading ${getName(node)} (${claimedSize || 'N/A'} bytes) to ${localPath}`);
-        }
-
-        const file = Bun.file(localPath);
-        const writer = file.writer();
-        const writableStream: WritableStream = {
-            getWriter: () => writer,
-            close: () => writer.end(),
-            abort: () => writer.end(),
-            locked: false,
-        };
-
-        const controller = downloader.downloadToStream(writableStream, (writtenBytes) => {
-            if (!json) {
-                console.log(`Downloaded ${writtenBytes} bytes`);
-            }
+        await download({
+            downloader,
+            downloadingName: getName(node),
+            localPath: path.join(localParentPath, name || getName(node)),
+            json,
         });
-
-        await controller.completion();
     }
 }

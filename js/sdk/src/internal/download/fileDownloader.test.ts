@@ -4,6 +4,8 @@ import { FileDownloader } from './fileDownloader';
 import { DownloadTelemetry } from './telemetry';
 import { DownloadAPIService } from './apiService';
 import { DownloadCryptoService } from './cryptoService';
+import { SignatureVerificationError } from './interface';
+import { IntegrityError } from '../..';
 
 function mockBlockDownload(_: string, token: string, onProgress: (downloadedBytes: number) => void) {
     const index = parseInt(token.slice(5, 6));
@@ -94,8 +96,6 @@ describe('FileDownloader', () => {
 
             expect(apiService.iterateRevisionBlocks).toHaveBeenCalledWith('revisionUid', undefined);
             expect(cryptoService.verifyManifest).toHaveBeenCalledTimes(1);
-            expect(writer.close).toHaveBeenCalledTimes(1);
-            expect(writer.abort).not.toHaveBeenCalled();
             expect(telemetry.downloadFinished).toHaveBeenCalledTimes(1);
             expect(telemetry.downloadFinished).toHaveBeenCalledWith('revisionUid', fileProgress);
             expect(telemetry.downloadFailed).not.toHaveBeenCalled();
@@ -108,8 +108,6 @@ describe('FileDownloader', () => {
             await expect(controller.completion()).rejects.toThrow(error);
 
             expect(apiService.iterateRevisionBlocks).toHaveBeenCalledWith('revisionUid', undefined);
-            expect(writer.close).not.toHaveBeenCalled();
-            expect(writer.abort).toHaveBeenCalledTimes(1);
             expect(telemetry.downloadFinished).not.toHaveBeenCalled();
             expect(telemetry.downloadFailed).toHaveBeenCalledTimes(1);
             expect(telemetry.downloadFailed).toHaveBeenCalledWith(
@@ -119,6 +117,8 @@ describe('FileDownloader', () => {
                 revision.claimedSize,
             );
             expect(onFinish).toHaveBeenCalledTimes(1);
+
+            return controller;
         };
 
         const verifyOnProgress = async (downloadedBytes: number[]) => {
@@ -137,8 +137,6 @@ describe('FileDownloader', () => {
             // @ts-expect-error Mocking WritableStreamDefaultWriter
             writer = {
                 write: jest.fn(),
-                close: jest.fn(),
-                abort: jest.fn(),
             };
             // @ts-expect-error Mocking WritableStream
             stream = {
@@ -338,12 +336,22 @@ describe('FileDownloader', () => {
             await verifyOnProgress([1, 2, 3]);
         });
 
-        it('should handle failure when verifying manifest', async () => {
+        it('should handle failure when verifying manifest with non-recoverable integrity error', async () => {
             cryptoService.verifyManifest = jest.fn().mockImplementation(async function () {
-                throw new Error('Failed to verify manifest');
+                throw new IntegrityError('Failed to verify manifest');
             });
 
-            await verifyFailure('Failed to verify manifest', 6); // All blocks of length 1, 2, 3.
+            const controller = await verifyFailure('Failed to verify manifest', 6); // All blocks of length 1, 2, 3.
+            expect(controller.isDownloadCompleteWithSignatureIssues()).toBe(false);
+        });
+
+        it('should handle failure when verifying manifest with recoverable signature verification error', async () => {
+            cryptoService.verifyManifest = jest.fn().mockImplementation(async function () {
+                throw new SignatureVerificationError('Failed to verify manifest');
+            });
+
+            const controller = await verifyFailure('Failed to verify manifest', 6); // All blocks of length 1, 2, 3.
+            expect(controller.isDownloadCompleteWithSignatureIssues()).toBe(true);
         });
     });
 
@@ -389,8 +397,6 @@ describe('FileDownloader', () => {
             expect(apiService.downloadBlock).toHaveBeenCalledTimes(3);
             expect(cryptoService.verifyBlockIntegrity).not.toHaveBeenCalled();
             expect(cryptoService.decryptBlock).toHaveBeenCalledTimes(3);
-            expect(writer.close).toHaveBeenCalledTimes(1);
-            expect(writer.abort).not.toHaveBeenCalled();
             expect(telemetry.downloadFinished).toHaveBeenCalledTimes(1);
             expect(telemetry.downloadFinished).toHaveBeenCalledWith('revisionUid', 6); // 3 blocks of length 1, 2, 3.
             expect(telemetry.downloadFailed).not.toHaveBeenCalled();
