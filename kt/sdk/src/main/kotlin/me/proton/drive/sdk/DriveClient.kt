@@ -1,9 +1,9 @@
 package me.proton.drive.sdk
 
-import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toProto
 import me.proton.drive.sdk.internal.JniDriveClient
+import me.proton.drive.sdk.internal.cancellationCoroutineScope
 import proton.drive.sdk.driveClientGetAvailableNameRequest
 import proton.drive.sdk.driveClientGetThumbnailsRequest
 import java.io.OutputStream
@@ -17,7 +17,7 @@ class DriveClient internal constructor(
     suspend fun getAvailableName(
         parentFolderUid: String,
         name: String,
-    ): String = cancellationTokenSource().let { source ->
+    ): String = cancellationCoroutineScope { source ->
         bridge.getAvailableName(
             driveClientGetAvailableNameRequest {
                 this.parentFolderUid = parentFolderUid
@@ -32,7 +32,7 @@ class DriveClient internal constructor(
         fileUids: List<String>,
         type: ThumbnailType,
         block: (String) -> OutputStream,
-    ): Unit = cancellationTokenSource().let { source ->
+    ): Unit = cancellationCoroutineScope { source ->
         bridge.getThumbnails(
             driveClientGetThumbnailsRequest {
                 this.fileUids += fileUids
