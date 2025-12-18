@@ -184,4 +184,39 @@ describe('BufferedSeekableStream', () => {
         const result4 = await stream.read(2);
         expect(result4).toEqual({ value: new Uint8Array([10]), done: true });
     });
+
+    it('should catch and ignore TypeError from releaseLock during seek', async () => {
+        const stream = new BufferedSeekableStream({
+            pull: pullMock,
+            seek: jest.fn(),
+        });
+
+        await stream.read(2);
+
+        const reader = (stream as any).reader;
+        const originalReleaseLock = reader.releaseLock.bind(reader);
+        jest.spyOn(reader, 'releaseLock').mockImplementation(() => {
+            originalReleaseLock();
+            throw new TypeError('Reader has pending read requests');
+        });
+
+        await expect(stream.seek(0)).resolves.not.toThrow();
+    });
+
+    it('should re-throw non-TypeError errors from releaseLock during seek', async () => {
+        const stream = new BufferedSeekableStream({
+            pull: pullMock,
+            seek: jest.fn(),
+        });
+
+        await stream.read(2);
+
+        const reader = (stream as any).reader;
+        const customError = new Error('Custom error');
+        jest.spyOn(reader, 'releaseLock').mockImplementation(() => {
+            throw customError;
+        });
+
+        await expect(stream.seek(0)).rejects.toThrow(customError);
+    });
 });
