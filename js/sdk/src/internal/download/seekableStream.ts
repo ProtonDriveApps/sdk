@@ -173,7 +173,26 @@ export class BufferedSeekableStream extends SeekableReadableStream {
         await super.seek(position);
 
         if (this.reader) {
-            this.reader.releaseLock();
+            try {
+                this.reader.releaseLock();
+            } catch (error) {
+                // Streams API spec-compliant behavior: releaseLock() only throws TypeError when
+                // there are pending read requests. This can occur due to timing differences between
+                // when read() promises resolve on the client side vs when the browser's internal
+                // stream mechanism fully completes.
+                //
+                // This manifests more frequently in Firefox than Chrome due to implementation
+                // timing differences, but both are following the spec correctly.
+                //
+                // References:
+                // - https://github.com/whatwg/streams/issues/1000
+                // - https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader/releaseLock
+                //
+                // Safe to ignore since we're acquiring a new reader immediately after.
+                if (!(error instanceof TypeError)) {
+                    throw error;
+                }
+            }
         }
         this.reader = super.getReader();
         this.streamClosed = false;
