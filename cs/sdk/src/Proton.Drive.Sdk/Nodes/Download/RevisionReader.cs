@@ -63,7 +63,7 @@ internal sealed partial class RevisionReader : IDisposable
             {
                 if (_revisionDto.Thumbnails is { } thumbnails)
                 {
-                    foreach (var sha256Digest in thumbnails.Select(x => x.HashDigest))
+                    foreach (var sha256Digest in thumbnails.OrderBy(t => t.Type).Select(x => x.HashDigest))
                     {
                         manifestStream.Write(sha256Digest.Span);
                     }
@@ -125,7 +125,7 @@ internal sealed partial class RevisionReader : IDisposable
                 {
                     LogFailedManifestVerification(_revisionUid, manifestVerificationStatus);
 
-                    throw new ProtonDriveException("File authenticity check failed");
+                    throw new CompletedDownloadManifestVerificationException("File authenticity check failed");
                 }
             }
         }
