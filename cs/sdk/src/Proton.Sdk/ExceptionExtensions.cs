@@ -7,8 +7,8 @@ public static class ExceptionExtensions
         var previousMessage = string.Empty;
 
         return string.Join(
-            " ---> ",
-            ThisAndInnerExceptions(exception)
+            " → ",
+            EnumerateExceptionHierarchy(exception)
                 .Select(ex => ex.Message)
                 .Where(m =>
                 {
@@ -22,9 +22,9 @@ public static class ExceptionExtensions
                 }));
     }
 
-    private static IEnumerable<Exception> ThisAndInnerExceptions(Exception? e)
+    private static IEnumerable<Exception> EnumerateExceptionHierarchy(Exception outermostException)
     {
-        for (; e != null; e = e.InnerException)
+        for (var e = outermostException; e != null; e = e.InnerException)
         {
             yield return e;
         }

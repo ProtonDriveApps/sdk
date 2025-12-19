@@ -17,6 +17,8 @@ class UploadController internal constructor(
 
     suspend fun pause() = bridge.pause(handle)
 
+    suspend fun dispose() = bridge.dispose(handle)
+
     override fun close() {
         inputStream.close()
         bridge.free(handle)

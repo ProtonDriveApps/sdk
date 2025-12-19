@@ -109,6 +109,11 @@ extension Message {
                 $0.payload = .uploadControllerResume(request)
             }
 
+        case let request as Proton_Drive_Sdk_UploadControllerDisposeRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .uploadControllerDispose(request)
+            }
+
         case let request as Proton_Drive_Sdk_UploadControllerFreeRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .uploadControllerFree(request)

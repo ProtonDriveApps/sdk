@@ -25,7 +25,8 @@ message Request {
         UploadControllerAwaitCompletionRequest upload_controller_await_completion = 1104;
         UploadControllerPauseRequest upload_controller_pause = 1105;
         UploadControllerResumeRequest upload_controller_resume = 1106;
-        UploadControllerFreeRequest upload_controller_free = 1107;
+        UploadControllerDisposeRequest upload_controller_dispose = 1107;
+        UploadControllerFreeRequest upload_controller_free = 1108;
 
         DownloadToStreamRequest download_to_stream = 1200;
         DownloadToFileRequest download_to_file = 1201;
@@ -248,6 +249,11 @@ message UploadControllerPauseRequest {
 
 // The reponse must not have a value.
 message UploadControllerResumeRequest {
+    int64 upload_controller_handle = 1;
+}
+
+// The reponse must not have a value.
+message UploadControllerDisposeRequest {
     int64 upload_controller_handle = 1;
 }
 
