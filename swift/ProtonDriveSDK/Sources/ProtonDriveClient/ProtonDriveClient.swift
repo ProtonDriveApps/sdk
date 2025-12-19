@@ -104,7 +104,8 @@ public actor ProtonDriveClient: Sendable {
         revisionUid: SDKRevisionUid,
         destinationUrl: URL,
         cancellationToken: UUID,
-        progressCallback: @escaping ProgressCallback
+        progressCallback: @escaping ProgressCallback,
+        onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
     ) async throws {
         let operation = try await downloadFileOperation(
             revisionUid: revisionUid,
@@ -112,26 +113,10 @@ public actor ProtonDriveClient: Sendable {
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
-        return try await awaitDownloadCompletion(operation: operation, retryCounter: 0)
-    }
-    
-    private func awaitDownloadCompletion(
-        operation: DownloadOperation, retryCounter: UInt
-    ) async throws {
-        let result = await operation.awaitDownloadCompletion()
-        switch result {
-        case .succeeded:
-            return
-        
-        case .failed(let error):
-            throw error
-        
-        case .pausedOnError(let error):
-            return try await configuration.downloadOperationalResilience.performRetry(retryCounter, error) {
-                try await operation.resume()
-                return try await awaitDownloadCompletion(operation: operation, retryCounter: $0)
-            }
-        }
+        return try await operation.awaitDownloadWithResilience(
+            operationalResilience: configuration.downloadOperationalResilience,
+            onRetriableErrorReceived: onRetriableErrorReceived
+        )
     }
     
     public func downloadFileOperation(
@@ -163,7 +148,8 @@ public actor ProtonDriveClient: Sendable {
         thumbnails: [ThumbnailData],
         overrideExistingDraft: Bool,
         cancellationToken: UUID,
-        progressCallback: @escaping ProgressCallback
+        progressCallback: @escaping ProgressCallback,
+        onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
     ) async throws -> UploadedFileIdentifiers {
         let operation = try await uploadFileOperation(
             parentFolderUid: parentFolderUid,
@@ -178,28 +164,11 @@ public actor ProtonDriveClient: Sendable {
             progressCallback: progressCallback
         )
         
-        return try await awaitUploadCompletion(operation: operation, retryCounter: 0)
+        return try await operation.awaitUploadWithResilience(
+            operationalResilience: configuration.uploadOperationalResilience, onRetriableErrorReceived: onRetriableErrorReceived
+        )
     }
-    
-    private func awaitUploadCompletion(
-        operation: UploadOperation, retryCounter: UInt
-    ) async throws -> UploadedFileIdentifiers {
-        let result = await operation.awaitUploadCompletion()
-        switch result {
-        case .succeeded(let uploadResult):
-            return uploadResult
-        
-        case .failed(let error):
-            throw error
-        
-        case .pausedOnError(let error):
-            return try await configuration.uploadOperationalResilience.performRetry(retryCounter, error) {
-                try await operation.resume()
-                return try await awaitUploadCompletion(operation: operation, retryCounter: $0)
-            }
-        }
-    }
-    
+
     public func uploadFileOperation(
         parentFolderUid: SDKNodeUid,
         name: String,
@@ -234,7 +203,8 @@ public actor ProtonDriveClient: Sendable {
         modificationDate: Date,
         thumbnails: [ThumbnailData],
         cancellationToken: UUID,
-        progressCallback: @escaping ProgressCallback
+        progressCallback: @escaping ProgressCallback,
+        onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
     ) async throws -> UploadedFileIdentifiers {
         let operation = try await uploadNewRevisionOperation(
             currentActiveRevisionUid: currentActiveRevisionUid,
@@ -246,7 +216,9 @@ public actor ProtonDriveClient: Sendable {
             progressCallback: progressCallback
         )
         
-        return try await awaitUploadCompletion(operation: operation, retryCounter: 0)
+        return try await operation.awaitUploadWithResilience(
+            operationalResilience: configuration.uploadOperationalResilience, onRetriableErrorReceived: onRetriableErrorReceived
+        )
     }
     
     public func uploadNewRevisionOperation(
@@ -298,8 +270,8 @@ public actor ProtonDriveClient: Sendable {
     static func unbox(callbackPointer: Int, releaseBox: () -> Void, weakDriveClient: WeakReference<ProtonDriveClient>) -> ProtonDriveClient? {
         guard let driveClient = weakDriveClient.value else {
             releaseBox()
-            let message = "account client callback called after the proton client object was deallocated"
-            SDKResponseHandler.sendInteropErrorToSDK(message: message, callbackPointer: callbackPointer)
+            let message = "callback called after the proton client object was deallocated"
+            SDKResponseHandler.sendInteropErrorToSDK(message: message, callbackPointer: callbackPointer, assert: false)
             return nil
         }
         return driveClient

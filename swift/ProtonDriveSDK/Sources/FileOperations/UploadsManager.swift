@@ -169,19 +169,28 @@ extension UploadsManager {
         cancellationHandle: ObjectHandle,
         thumbnails: [ThumbnailData]
     ) async throws -> UploadOperation {
+        let thumbnails = thumbnails.map {
+            let count = $0.data.count
+            let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: count)
+            $0.data.copyBytes(to: buffer, count: count)
+            return ($0.type, ObjectHandle(bitPattern: buffer), count)
+        }
+        let deallocateBuffers: @Sendable () -> Void = {
+            thumbnails.forEach { _, handle, count in
+                let pointer = UnsafeMutableRawPointer(bitPattern: handle)
+                UnsafeMutableRawBufferPointer(start: pointer, count: count).deallocate()
+            }
+        }
         let uploaderRequest = Proton_Drive_Sdk_UploadFromFileRequest.with {
             $0.uploaderHandle = Int64(fileUploaderHandle)
             $0.filePath = fileURL.path(percentEncoded: false)
             $0.progressAction = Int64(ObjectHandle(callback: cProgressCallback))
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
-            $0.thumbnails = thumbnails.map { thumbnail in
+            $0.thumbnails = thumbnails.map { type, handle, count in
                 Proton_Drive_Sdk_Thumbnail.with {
-                    $0.type = thumbnail.type == .thumbnail ? .thumbnail : .preview
-                    $0.dataLength = Int64(thumbnail.data.count)
-                    let dataHandle = thumbnail.data.withUnsafeBytes { (u8Ptr: UnsafePointer<UInt8>) in
-                        return ObjectHandle(bitPattern: UnsafeRawPointer(u8Ptr))
-                    }
-                    $0.dataPointer = Int64(dataHandle)
+                    $0.type = type == .thumbnail ? .thumbnail : .preview
+                    $0.dataPointer = Int64(handle)
+                    $0.dataLength = Int64(count)
                 }
             }
         }
@@ -205,6 +214,7 @@ extension UploadsManager {
             },
             onOperationDispose: { [weak self] in
                 guard let self else { return }
+                deallocateBuffers()
                 await self.freeCancellationTokenSourceIfNeeded(cancellationToken: cancellationToken)
             }
         )
