@@ -203,7 +203,7 @@ internal sealed partial class BlockUploader
                     {
                         var revisionUid = new RevisionUid(request.VolumeId, request.LinkId, request.RevisionId);
                         var blockIndex = request.Blocks.Count > 0 ? request.Blocks[0].Index : 0;
-                        LogBlobUploadFailure(blockIndex, revisionUid, retryNumber, exception.FlattenMessage());
+                        LogBlobUploadRetry(blockIndex, revisionUid, retryNumber, exception.FlattenMessage());
                     })
                 .ExecuteAsync(ExecuteUploadAsync).ConfigureAwait(false);
         }
@@ -232,6 +232,6 @@ internal sealed partial class BlockUploader
 
     [LoggerMessage(
         Level = LogLevel.Information,
-        Message = "Retrying blob upload for block #{BlockIndex} for revision \"{RevisionUid}\" (retry number: {RetryNumber}). Previous attempt failed: {ErrorMessage}")]
-    private partial void LogBlobUploadFailure(int blockIndex, RevisionUid revisionUid, int retryNumber, string errorMessage);
+        Message = "Retrying blob upload for block #{BlockIndex} of revision \"{RevisionUid}\" (retry number: {RetryNumber}). Previous attempt error: {ErrorMessage}")]
+    private partial void LogBlobUploadRetry(int blockIndex, RevisionUid revisionUid, int retryNumber, string errorMessage);
 }

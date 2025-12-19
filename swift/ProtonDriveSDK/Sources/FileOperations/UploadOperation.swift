@@ -134,6 +134,17 @@ public final class UploadOperation: Sendable {
         }
     }
     
+    private static func disposeFileUploadController(_ uploadControllerHandle: Int64, logger: Logger?) async {
+        let disposeRequest = Proton_Drive_Sdk_UploadControllerDisposeRequest.with {
+            $0.uploadControllerHandle = uploadControllerHandle
+        }
+        do {
+            try await SDKRequestHandler.send(disposeRequest, logger: logger) as Void
+        } catch {
+            logger?.error("Proton_Drive_Sdk_UploadControllerDisposeRequest failed: \(error)", category: "UploadController.disposeFileUploadController")
+        }
+    }
+
     private static func freeFileUploadController(_ uploadControllerHandle: Int64, logger: Logger?) async {
         let freeRequest = Proton_Drive_Sdk_UploadControllerFreeRequest.with {
             $0.uploadControllerHandle = uploadControllerHandle

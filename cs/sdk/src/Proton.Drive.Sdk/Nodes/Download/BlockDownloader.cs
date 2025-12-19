@@ -76,6 +76,6 @@ internal sealed partial class BlockDownloader
 
     [LoggerMessage(
             Level = LogLevel.Information,
-            Message = "Retrying blob download for block #{BlockIndex} for revision \"{RevisionUid}\" (retry number: {RetryNumber}). Previous attempt failed: {ErrorMessage}")]
+            Message = "Retrying blob download for block #{BlockIndex} of revision \"{RevisionUid}\" (retry number: {RetryNumber}). Previous attempt error: {ErrorMessage}")]
     private partial void LogBlobDownloadRetry(int blockIndex, RevisionUid revisionUid, int retryNumber, string errorMessage);
 }

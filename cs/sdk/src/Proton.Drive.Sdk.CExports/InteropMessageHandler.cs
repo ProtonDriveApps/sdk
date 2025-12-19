@@ -61,6 +61,9 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.UploadControllerResume
                     => InteropUploadController.HandleResume(request.UploadControllerResume),
 
+                Request.PayloadOneofCase.UploadControllerDispose
+                    => await InteropUploadController.HandleDisposeAsync(request.UploadControllerDispose).ConfigureAwait(false),
+
                 Request.PayloadOneofCase.UploadControllerFree
                     => InteropUploadController.HandleFree(request.UploadControllerFree),
 
