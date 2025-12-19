@@ -33,7 +33,43 @@ public final class DownloadOperation: Sendable {
         self.onOperationDispose = onOperationDispose
     }
     
-    /// Wait for download completion
+    // Wait for download completion and uses operational resilience to retry if needed
+    public func awaitDownloadWithResilience(
+        operationalResilience: OperationalResilience,
+        onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
+    ) async throws {
+        try await awaitDownloadWithResilience(
+            retryCounter: 0, operationalResilience: operationalResilience, onPauseErrorReceived: onRetriableErrorReceived
+        )
+    }
+    
+    private func awaitDownloadWithResilience(
+        retryCounter: UInt,
+        operationalResilience: OperationalResilience,
+        onPauseErrorReceived: @Sendable @escaping (Error) -> Void
+    ) async throws {
+        let result = await awaitDownloadCompletion()
+        switch result {
+        case .succeeded:
+            return
+        
+        case .failed(let error):
+            throw error
+        
+        case .pausedOnError(let error):
+            onPauseErrorReceived(error)
+            return try await operationalResilience.performRetry(retryCounter, error) {
+                try await resume()
+                return try await awaitDownloadWithResilience(
+                    retryCounter: $0,
+                    operationalResilience: operationalResilience,
+                    onPauseErrorReceived: onPauseErrorReceived
+                )
+            }
+        }
+    }
+    
+    /// Wait for download completion, no retries
     public func awaitDownloadCompletion() async -> DownloadOperationResult {
         do {
             let awaitDownloadCompletionRequest = Proton_Drive_Sdk_DownloadControllerAwaitCompletionRequest.with {
@@ -42,11 +78,17 @@ public final class DownloadOperation: Sendable {
             
             try await SDKRequestHandler.send(awaitDownloadCompletionRequest, logger: logger) as Void
             return .succeeded
-        } catch {
-            if let isPaused = try? await isPaused(), isPaused {
-                // if the operation is paused, we can try recovering from the error
-                return .pausedOnError(error)
-            } else {
+        } catch let error {
+            do {
+                let isPaused = try await isPaused()
+                if isPaused {
+                    // if the operation is paused, we can try recovering from the error
+                    return .pausedOnError(error)
+                } else {
+                    return .failed(error)
+                }
+            } catch let isPausedError {
+                logger?.info("Checking isPaused status failed with: \(isPausedError.localizedDescription)", category: "DownloadOperation")
                 return .failed(error)
             }
         }

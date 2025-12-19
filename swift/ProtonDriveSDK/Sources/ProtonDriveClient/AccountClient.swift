@@ -20,7 +20,10 @@ let cCompatibleAccountClientRequest: CCallbackWithCallbackPointer = { statePoint
     let weakDriveClient: WeakReference<ProtonDriveClient> = stateTypedPointer.takeUnretainedValue().state
     
     let driveClient = ProtonDriveClient.unbox(
-        callbackPointer: callbackPointer, releaseBox: { stateTypedPointer.release() }, weakDriveClient: weakDriveClient
+        callbackPointer: callbackPointer, releaseBox: {
+            // we don't release the stateTypedPointer by design — there might be some calls coming from the SDK racing with the client deallocation
+//            stateTypedPointer.release()
+        }, weakDriveClient: weakDriveClient
     )
     guard let driveClient else { return }
 

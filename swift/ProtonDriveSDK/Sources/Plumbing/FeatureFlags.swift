@@ -14,7 +14,8 @@ let cCompatibleFeatureFlagProviderCallback: CCallbackWithIntReturn = { statePoin
     let weakDriveClient = stateTypedPointer.takeUnretainedValue().state
 
     guard let driveClient = weakDriveClient.value else {
-        stateTypedPointer.release()
+        // we don't release the stateTypedPointer by design — there might be some calls coming from the SDK racing with the client deallocation
+//        stateTypedPointer.release()
         return 0
     }
 

@@ -91,7 +91,7 @@ enum SDKRequestHandler {
             logger?.trace("Sending (\(isDriveRequest ? "Drive" : "non-Drive")) SDK request ", category: "SDKRequestHandler")
 
             // Switch to InteropTypes.BoxedStateType once we use it for all requests
-            let boxedState = BoxedCompletionBlock(completionBlock, state: state, context: envelopedRequestData)
+            let boxedState = BoxedCompletionBlock(completionBlock, state: state)
             let pointer = Unmanaged.passRetained(boxedState)
             if includesLongLivedCallback {
                 // We double-retain to keep the box alive after the method finishes.

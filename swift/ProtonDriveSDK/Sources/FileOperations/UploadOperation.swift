@@ -32,6 +32,37 @@ public final class UploadOperation: Sendable {
         self.onOperationDispose = onOperationDispose
     }
     
+    public func awaitUploadWithResilience(
+        operationalResilience: OperationalResilience,
+        onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
+    ) async throws -> UploadedFileIdentifiers {
+        try await awaitUploadWithResilience(
+            retryCounter: 0, operationalResilience: operationalResilience, onPauseErrorReceived: onRetriableErrorReceived
+        )
+    }
+    
+    private func awaitUploadWithResilience(
+        retryCounter: UInt, operationalResilience: OperationalResilience, onPauseErrorReceived: @Sendable @escaping (Error) -> Void
+    ) async throws -> UploadedFileIdentifiers {
+        let result = await awaitUploadCompletion()
+        switch result {
+        case .succeeded(let uploadResult):
+            return uploadResult
+
+        case .failed(let error):
+            throw error
+
+        case .pausedOnError(let error):
+            onPauseErrorReceived(error)
+            return try await operationalResilience.performRetry(retryCounter, error) {
+                try await resume()
+                return try await awaitUploadWithResilience(
+                    retryCounter: $0, operationalResilience: operationalResilience, onPauseErrorReceived: onPauseErrorReceived
+                )
+            }
+        }
+    }
+    
     /// Wait for upload completion
     public func awaitUploadCompletion() async -> UploadOperationResult {
         let awaitUploadCompletionRequest = Proton_Drive_Sdk_UploadControllerAwaitCompletionRequest.with {
@@ -45,9 +76,16 @@ public final class UploadOperation: Sendable {
             }
             return .succeeded(result)
         } catch {
-            if let isPaused = try? await isPaused(), isPaused {
-                return .pausedOnError(error)
-            } else {
+            do {
+                let isPaused = try await isPaused()
+                if isPaused {
+                    // if the operation is paused, we can try recovering from the error
+                    return .pausedOnError(error)
+                } else {
+                    return .failed(error)
+                }
+            } catch let isPausedError {
+                logger?.info("Checking isPaused status failed with: \(isPausedError.localizedDescription)", category: "DownloadOperation")
                 return .failed(error)
             }
         }
