@@ -17,19 +17,48 @@ void onCancel(
                 "Object was recycled for: %s %ld", "cancel", (long) bindings_operation_handle
         );
         return;
-    } else {
-        jclass jobClass = (*env)->GetObjectClass(env, obj);
-        jmethodID mid = (*env)->GetMethodID(env, jobClass, "cancel", "()V");
-        if (mid == 0) {
-            __android_log_print(
-                    ANDROID_LOG_FATAL,
-                    "drive.sdk.internal",
-                    "Cannot found method: %s", "cancel"
-            );
-            return;
-        }
-        (*env)->CallVoidMethod(env, obj, mid);
     }
+
+    /* --- Build CancellationException(String) --- */
+
+    jclass ceClass = (*env)->FindClass(env, "java/util/concurrent/CancellationException");
+    if (ceClass == NULL) {
+        return; // exception pending
+    }
+
+    jmethodID ceCtor = (*env)->GetMethodID(env, ceClass, "<init>", "(Ljava/lang/String;)V");
+    if (ceCtor == NULL) {
+        return;
+    }
+
+    jstring message = (*env)->NewStringUTF(env, "Operation cancelled by sdk");
+    jobject cancellationException = (*env)->NewObject(env, ceClass, ceCtor, message);
+
+    /* --- Call cancel(CancellationException) --- */
+
+    jclass jobClass = (*env)->GetObjectClass(env, obj);
+
+    char *signature = "(Ljava/util/concurrent/CancellationException;)V";
+    jmethodID mid = (*env)->GetMethodID(env, jobClass, "cancel", signature);
+
+    if (mid == 0) {
+        __android_log_print(
+                ANDROID_LOG_FATAL,
+                "drive.sdk.internal",
+                "Cannot find method: cancel(CancellationException)"
+        );
+        return;
+    }
+
+    (*env)->CallVoidMethod(env, obj, mid, cancellationException);
+
+    /* --- Cleanup local references --- */
+
+    (*env)->DeleteLocalRef(env, message);
+    (*env)->DeleteLocalRef(env, cancellationException);
+    (*env)->DeleteLocalRef(env, ceClass);
+    (*env)->DeleteLocalRef(env, jobClass);
+    (*env)->DeleteLocalRef(env, obj);
 }
 
 jlong Java_me_proton_drive_sdk_internal_JniJob_getCancelPointer(
@@ -45,5 +74,5 @@ jlong Java_me_proton_drive_sdk_internal_JniJob_createWeakRef(
         jobject obj
 ) {
     jweak weakRef = (*env)->NewWeakGlobalRef(env, obj);
-    return (jlong)(intptr_t) weakRef;
+    return (jlong) (intptr_t) weakRef;
 }
