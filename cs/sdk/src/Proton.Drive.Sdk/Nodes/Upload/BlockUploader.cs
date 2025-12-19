@@ -10,6 +10,7 @@ using Proton.Drive.Sdk.Http;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Drive.Sdk.Resilience;
+using Proton.Sdk;
 using Proton.Sdk.Addresses;
 using Proton.Sdk.Drive;
 
@@ -193,6 +194,7 @@ internal sealed partial class BlockUploader
         await using (nonDisposableDataPacketStream.ConfigureAwait(false))
         {
             await Policy
+                // TODO: add unit tests to verify the retry conditions
                 .Handle<Exception>(ex => !cancellationToken.IsCancellationRequested && ex is not FileContentsDecryptionException)
                 .WaitAndRetryAsync(
                     retryCount: 1,
@@ -201,7 +203,7 @@ internal sealed partial class BlockUploader
                     {
                         var revisionUid = new RevisionUid(request.VolumeId, request.LinkId, request.RevisionId);
                         var blockIndex = request.Blocks.Count > 0 ? request.Blocks[0].Index : 0;
-                        LogBlobUploadFailure(exception, blockIndex, revisionUid, retryNumber);
+                        LogBlobUploadFailure(blockIndex, revisionUid, retryNumber, exception.FlattenMessage());
                     })
                 .ExecuteAsync(ExecuteUploadAsync).ConfigureAwait(false);
         }
@@ -230,6 +232,6 @@ internal sealed partial class BlockUploader
 
     [LoggerMessage(
         Level = LogLevel.Information,
-        Message = "Blob upload failed for block #{BlockIndex} for revision \"{RevisionUid}\" (retry number: {RetryNumber})")]
-    private partial void LogBlobUploadFailure(Exception exception, int blockIndex, RevisionUid revisionUid, int retryNumber);
+        Message = "Retrying blob upload for block #{BlockIndex} for revision \"{RevisionUid}\" (retry number: {RetryNumber}). Previous attempt failed: {ErrorMessage}")]
+    private partial void LogBlobUploadFailure(int blockIndex, RevisionUid revisionUid, int retryNumber, string errorMessage);
 }
