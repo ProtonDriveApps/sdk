@@ -4,6 +4,7 @@ using Polly;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Resilience;
+using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 
@@ -32,13 +33,14 @@ internal sealed partial class BlockDownloader
         CancellationToken cancellationToken)
     {
         return await Policy
-            .Handle<Exception>(ex => ex is not FileContentsDecryptionException)
+            // TODO: add unit tests to verify the retry conditions
+            .Handle<Exception>(ex => !cancellationToken.IsCancellationRequested && ex is not FileContentsDecryptionException)
             .WaitAndRetryAsync(
                 retryCount: 4,
                 sleepDurationProvider: RetryPolicy.GetAttemptDelay,
                 onRetry: (exception, _, retryNumber, _) =>
                 {
-                    LogBlobDownloadFailure(exception, index, revisionUid, retryNumber);
+                    LogBlobDownloadRetry(index, revisionUid, retryNumber, exception.FlattenMessage());
                     outputStream.Seek(0, SeekOrigin.Begin);
                 })
             .ExecuteAsync(ExecuteDownloadAsync).ConfigureAwait(false);
@@ -74,6 +76,6 @@ internal sealed partial class BlockDownloader
 
     [LoggerMessage(
             Level = LogLevel.Information,
-            Message = "Blob download failed for block #{BlockIndex} for revision \"{RevisionUid}\" (retry number: {RetryNumber})")]
-    private partial void LogBlobDownloadFailure(Exception exception, int blockIndex, RevisionUid revisionUid, int retryNumber);
+            Message = "Retrying blob download for block #{BlockIndex} for revision \"{RevisionUid}\" (retry number: {RetryNumber}). Previous attempt failed: {ErrorMessage}")]
+    private partial void LogBlobDownloadRetry(int blockIndex, RevisionUid revisionUid, int retryNumber, string errorMessage);
 }
