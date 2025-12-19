@@ -21,8 +21,10 @@ enum SDKResponseHandler {
     
     /// A helper method to send an interop error from Swift bindings by providing just the message.
     /// The examples of interop errors are: unable to serialize/deserialize protobuf, unable to use a provide pointer etc.
-    static func sendInteropErrorToSDK(message: String, callbackPointer: Int) {
-        assertionFailure(message)
+    static func sendInteropErrorToSDK(message: String, callbackPointer: Int, assert: Bool = true) {
+        if assert {
+            assertionFailure(message)
+        }
         let sdkError = Proton_Sdk_Error.with {
             $0.type = "Swift bindings"
             $0.domain = Proton_Sdk_ErrorDomain.businessLogic

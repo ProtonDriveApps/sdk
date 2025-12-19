@@ -5,18 +5,22 @@ enum HttpClientRequestProcessor {
         guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
             SDKResponseHandler.sendInteropErrorToSDK(message: "cCompatibleHttpRequest.statePointer was nil",
                                                      callbackPointer: callbackPointer)
-            return 0
+            return -1
         }
         let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
         let weakDriveClient: WeakReference<ProtonDriveClient> = stateTypedPointer.takeUnretainedValue().state
 
-        let driveClient = ProtonDriveClient.unbox(callbackPointer: callbackPointer, releaseBox: { stateTypedPointer.release() }, weakDriveClient: weakDriveClient)
-        guard let driveClient else { return 0 }
-
+        let driveClient = ProtonDriveClient.unbox(callbackPointer: callbackPointer, releaseBox: {
+            // we don't release the stateTypedPointer by design — there might be some calls coming from the SDK racing with the client deallocation
+//            stateTypedPointer.release()
+        }, weakDriveClient: weakDriveClient)
+        guard let driveClient else { return -1 }
+        
+        let httpRequestData = Proton_Sdk_HttpRequest(byteArray: byteArray)
+        
         // Create a boxed task with the HTTP work
-        let taskBox = BoxedCancellableTask { [driveClient] in
+        let taskBox = BoxedCancellableTask {
             do {
-                let httpRequestData = Proton_Sdk_HttpRequest(byteArray: byteArray)
                 try await HttpClientRequestProcessor.perform(
                     client: driveClient,
                     httpRequestData: httpRequestData,
@@ -40,6 +44,8 @@ enum HttpClientRequestProcessor {
     }
     
     static let cCompatibleHttpCancellationAction: CCallbackWithoutByteArray = { statePointer in
+        // if statePointer is -1, it means we've early returned from cCompatibleHttpRequest
+        guard statePointer != -1 else { return }
         // Convert the address back to the task box
         guard let pointer = UnsafeRawPointer(bitPattern: statePointer) else {
             let message = "cCompatibleHttpCancellationAction.statePointer is nil"
@@ -88,7 +94,7 @@ enum HttpClientRequestProcessor {
             fatalError("Unknown HttpRequestType: \(int)")
         }
     }
-    
+
     /// the API calls are performed in a non-streaming way. both request body and response data are buffered in memory
     fileprivate static func callDriveApi(
         driveRelativePath: String,

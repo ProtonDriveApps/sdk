@@ -4,8 +4,6 @@ protocol Resumable<ReturnType>: AnyObject {
 
     func resume(returning value: sending ReturnType)
     func resume(throwing error: Error)
-    
-    var context: Any { get }
 }
 
 extension Resumable where ReturnType == Void {
@@ -20,19 +18,10 @@ final class BoxedCompletionBlock<ResultType, StateType>: Resumable {
 
     private var completionBlock: CompletionBlock?
     let state: StateType
-    let context: Any
 
-    init(_ completionBlock: CompletionBlock?, state: StateType, context: Any) {
+    init(_ completionBlock: CompletionBlock?, state: StateType) {
         self.completionBlock = completionBlock
         self.state = state
-        self.context = context
-    }
-
-    init<WeakStateType>(_ completionBlock: CompletionBlock?, weakState state: WeakStateType, context: Any)
-    where StateType == WeakReference<WeakStateType> {
-        self.completionBlock = completionBlock
-        self.state = WeakReference(value: state)
-        self.context = context
     }
 
     func resume(returning value: ResultType) {

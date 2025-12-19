@@ -19,11 +19,6 @@ extension ObjectHandle {
     }
 }
 
-func address<T: AnyObject>(of object: T) -> ObjectHandle {
-    let rawPointer = Unmanaged.passUnretained(object).toOpaque()
-    return ObjectHandle(bitPattern: rawPointer)
-}
-
 /// C-compatible callback used by SDK to pass data to the app and back
 /// `statePointer` is pointer to the state we create on the app side and pass to the SDK in the request that is causing the callback to be called. SDK does not interact with the state at all, it just passes it back to the app. It's app's responsibility to maintain the lifecycle of the state (deallocate when appropriate). It's always passed, in every callback variant.
 /// `byteArray` is a pointer and the count struct describing the memory allocated by the SDK, and passed to the callback to enable it to perform its operation. It is either the protobuf message created by the SDK that contains all the necessary information, or it's a memory buffer from which/into which the callback is supposed to read/write. The app does not maintain the lifecycle of the byteArray, it's SDK's responsibility. It's passed on the callback variants that require it for their work.
@@ -114,5 +109,7 @@ extension Proton_Sdk_ProtonClientTlsPolicy {
 
 final class WeakReference<T> where T: AnyObject {
     private(set) weak var value: T?
-    init(value: T) { self.value = value }
+    init(value: T) {
+        self.value = value
+    }
 }
