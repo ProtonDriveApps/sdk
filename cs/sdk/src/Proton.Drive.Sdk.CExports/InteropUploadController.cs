@@ -41,11 +41,18 @@ internal static class InteropUploadController
         return null;
     }
 
+    public static async ValueTask<IMessage?> HandleDisposeAsync(UploadControllerDisposeRequest request)
+    {
+        var uploadController = Interop.GetFromHandle<UploadController>(request.UploadControllerHandle);
+
+        await uploadController.DisposeAsync().ConfigureAwait(false);
+
+        return null;
+    }
+
     public static IMessage? HandleFree(UploadControllerFreeRequest request)
     {
-        var uploadController = Interop.FreeHandle<UploadController>(request.UploadControllerHandle);
-
-        uploadController.Dispose();
+        Interop.FreeHandle<UploadController>(request.UploadControllerHandle);
 
         return null;
     }

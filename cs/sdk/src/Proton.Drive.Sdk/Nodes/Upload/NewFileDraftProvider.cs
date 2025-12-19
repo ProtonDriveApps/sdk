@@ -1,4 +1,5 @@
 using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Api;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Sdk;
 using Proton.Sdk.Api;
@@ -45,9 +46,9 @@ internal sealed class NewFileDraftProvider : IFileDraftProvider
         return (draftRevisionUid, fileSecrets);
     }
 
-    public async ValueTask DeleteDraftAsync(ProtonDriveClient client, RevisionUid revisionUid, CancellationToken cancellationToken)
+    public async ValueTask DeleteDraftAsync(IDriveApiClients apiClients, RevisionUid revisionUid, CancellationToken cancellationToken)
     {
-        await client.Api.Links.DeleteMultipleAsync(revisionUid.NodeUid.VolumeId, [revisionUid.NodeUid.LinkId], cancellationToken).ConfigureAwait(false);
+        await apiClients.Links.DeleteMultipleAsync(revisionUid.NodeUid.VolumeId, [revisionUid.NodeUid.LinkId], cancellationToken).ConfigureAwait(false);
     }
 
     private static FileCreationRequest GetFileCreationRequest(
@@ -143,7 +144,8 @@ internal sealed class NewFileDraftProvider : IFileDraftProvider
             }
             catch (ProtonApiException<RevisionConflictResponse> e)
                 when (e.Response is { Conflict: { LinkId: { } conflictingLinkId, RevisionId: null, DraftRevisionId: not null } }
-                    && (e.Response.Conflict.DraftClientUid == client.Uid || _overrideExistingDraftByOtherClient))
+                    && (e.Response.Conflict.DraftClientUid == client.Uid || _overrideExistingDraftByOtherClient)
+                    && remainingNumberOfAttempts-- > 0)
             {
                 var conflictingNodeUid = new NodeUid(_parentUid.VolumeId, conflictingLinkId);
 
@@ -157,11 +159,6 @@ internal sealed class NewFileDraftProvider : IFileDraftProvider
                 if (deletionResult.TryGetError(out var deletionException) && deletionException is not ProtonApiException { Code: ResponseCode.DoesNotExist })
                 {
                     throw deletionException;
-                }
-
-                if (--remainingNumberOfAttempts <= 0)
-                {
-                    throw;
                 }
             }
             catch (ProtonApiException<RevisionConflictResponse> e)

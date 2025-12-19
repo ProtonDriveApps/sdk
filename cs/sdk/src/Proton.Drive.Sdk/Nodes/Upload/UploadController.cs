@@ -1,14 +1,31 @@
+using Microsoft.Extensions.Logging;
+using Proton.Drive.Sdk.Api;
+
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
-public sealed class UploadController : IDisposable
+public sealed partial class UploadController : IAsyncDisposable
 {
+    private readonly IDriveApiClients _apiClients;
+    private readonly IFileDraftProvider _fileDraftProvider;
+    private readonly Task<RevisionUid> _revisionUidTask;
     private readonly Task<UploadResult> _uploadTask;
     private readonly ITaskControl<UploadResult> _taskControl;
+    private readonly ILogger _logger;
 
-    internal UploadController(Task<UploadResult> uploadTask, ITaskControl<UploadResult> taskControl)
+    internal UploadController(
+        IDriveApiClients apiClients,
+        IFileDraftProvider fileDraftProvider,
+        Task<RevisionUid> revisionUidTask,
+        Task<UploadResult> uploadTask,
+        ITaskControl<UploadResult> taskControl,
+        ILogger logger)
     {
+        _apiClients = apiClients;
+        _fileDraftProvider = fileDraftProvider;
+        _revisionUidTask = revisionUidTask;
         _uploadTask = uploadTask;
         _taskControl = taskControl;
+        _logger = logger;
 
         Completion = Task.WhenAny(_taskControl.PauseExceptionSignal, _uploadTask).Unwrap();
     }
@@ -35,8 +52,33 @@ public sealed class UploadController : IDisposable
         }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        _taskControl.Dispose();
+        try
+        {
+            var draftExists = _revisionUidTask.IsCompletedSuccessfully;
+            if (!draftExists)
+            {
+                return;
+            }
+
+            var revisionUid = _revisionUidTask.Result;
+
+            try
+            {
+                await _fileDraftProvider.DeleteDraftAsync(_apiClients, revisionUid, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                LogDraftDeletionFailure(ex, revisionUid);
+            }
+        }
+        finally
+        {
+            _taskControl.Dispose();
+        }
     }
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Draft deletion failed for revision {RevisionUid}")]
+    private partial void LogDraftDeletionFailure(Exception exception, RevisionUid revisionUid);
 }

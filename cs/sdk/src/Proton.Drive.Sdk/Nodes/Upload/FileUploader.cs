@@ -41,14 +41,17 @@ public sealed partial class FileUploader : IDisposable
     {
         var taskControl = new TaskControl<UploadResult>(cancellationToken);
 
+        var revisionUidTaskCompletionSource = new TaskCompletionSource<RevisionUid>();
+
         var uploadTask = UploadFromStreamAsync(
             contentStream,
             thumbnails,
             _additionalMetadata,
             progress => onProgress?.Invoke(progress, FileSize),
+            revisionUidTaskCompletionSource,
             taskControl);
 
-        return new UploadController(uploadTask, taskControl);
+        return new UploadController(_client.Api, _fileDraftProvider, revisionUidTaskCompletionSource.Task, uploadTask, taskControl, _logger);
     }
 
     public UploadController UploadFromFile(
@@ -59,14 +62,17 @@ public sealed partial class FileUploader : IDisposable
     {
         var taskControl = new TaskControl<UploadResult>(cancellationToken);
 
-        var task = UploadFromFileAsync(
+        var revisionUidTaskCompletionSource = new TaskCompletionSource<RevisionUid>();
+
+        var uploadTask = UploadFromFileAsync(
             filePath,
             thumbnails,
             _additionalMetadata,
             progress => onProgress?.Invoke(progress, FileSize),
+            revisionUidTaskCompletionSource,
             taskControl);
 
-        return new UploadController(task, taskControl);
+        return new UploadController(_client.Api, _fileDraftProvider, revisionUidTaskCompletionSource.Task, uploadTask, taskControl, _logger);
     }
 
     public void Dispose()
@@ -104,31 +110,40 @@ public sealed partial class FileUploader : IDisposable
     [LoggerMessage(Level = LogLevel.Trace, Message = "Released {Count} from revision creation semaphore")]
     private static partial void LogReleasedRevisionCreationSemaphore(ILogger logger, int count);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "Draft deletion failed for revision {RevisionUid}")]
-    private static partial void LogDraftDeletionFailure(ILogger logger, Exception exception, RevisionUid revisionUid);
-
     private async Task<UploadResult> UploadFromStreamAsync(
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
         IEnumerable<AdditionalMetadataProperty>? additionalExtendedAttributes,
         Action<long>? onProgress,
+        TaskCompletionSource<RevisionUid> revisionUidTaskCompletionSource,
         TaskControl<UploadResult> taskControl)
     {
-        var (draftRevisionUid, fileSecrets) = await taskControl.HandlePauseAsync(ct => _fileDraftProvider.GetDraftAsync(_client, ct)).ConfigureAwait(false);
+        try
+        {
+            var (draftRevisionUid, fileSecrets) = await taskControl.HandlePauseAsync(ct => _fileDraftProvider.GetDraftAsync(_client, ct)).ConfigureAwait(false);
 
-        await UploadAsync(
-            draftRevisionUid,
-            fileSecrets,
-            contentStream,
-            thumbnails,
-            _lastModificationTime,
-            additionalExtendedAttributes,
-            onProgress,
-            taskControl).ConfigureAwait(false);
+            revisionUidTaskCompletionSource.SetResult(draftRevisionUid);
 
-        await UpdateActiveRevisionInCacheAsync(draftRevisionUid, contentStream.Length, taskControl.CancellationToken).ConfigureAwait(false);
+            await UploadAsync(
+                draftRevisionUid,
+                fileSecrets,
+                contentStream,
+                thumbnails,
+                _lastModificationTime,
+                additionalExtendedAttributes,
+                onProgress,
+                taskControl).ConfigureAwait(false);
 
-        return new UploadResult(draftRevisionUid.NodeUid, draftRevisionUid);
+            await UpdateActiveRevisionInCacheAsync(draftRevisionUid, contentStream.Length, taskControl.CancellationToken).ConfigureAwait(false);
+
+            return new UploadResult(draftRevisionUid.NodeUid, draftRevisionUid);
+        }
+        catch
+        {
+            // This will set it to canceled only if the result was not already set above
+            revisionUidTaskCompletionSource.TrySetCanceled();
+            throw;
+        }
     }
 
     private async ValueTask UpdateActiveRevisionInCacheAsync(RevisionUid revisionUid, long size, CancellationToken cancellationToken)
@@ -162,6 +177,7 @@ public sealed partial class FileUploader : IDisposable
         IEnumerable<Thumbnail> thumbnails,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long>? onProgress,
+        TaskCompletionSource<RevisionUid> revisionUidTaskCompletionSource,
         TaskControl<UploadResult> taskControl)
     {
         var contentStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
@@ -173,6 +189,7 @@ public sealed partial class FileUploader : IDisposable
                 thumbnails,
                 additionalMetadata,
                 onProgress,
+                revisionUidTaskCompletionSource,
                 taskControl).ConfigureAwait(false);
         }
     }
@@ -194,24 +211,8 @@ public sealed partial class FileUploader : IDisposable
             ReleaseBlocks,
             taskControl).ConfigureAwait(false);
 
-        try
-        {
-            await revisionWriter.WriteAsync(contentStream, FileSize, thumbnails, lastModificationTime, additionalMetadata, onProgress, taskControl)
-                .ConfigureAwait(false);
-        }
-        catch
-        {
-            try
-            {
-                await _fileDraftProvider.DeleteDraftAsync(_client, revisionUid, CancellationToken.None).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                LogDraftDeletionFailure(_client.Telemetry.GetLogger("Upload"), ex, revisionUid);
-            }
-
-            throw;
-        }
+        await revisionWriter.WriteAsync(contentStream, FileSize, thumbnails, lastModificationTime, additionalMetadata, onProgress, taskControl)
+            .ConfigureAwait(false);
     }
 
     private void ReleaseBlocks(int numberOfBlocks)
