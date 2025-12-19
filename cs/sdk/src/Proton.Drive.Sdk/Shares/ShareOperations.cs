@@ -19,7 +19,7 @@ internal static class ShareOperations
 
             var rootFolderId = new NodeUid(response.VolumeId, response.RootLinkId);
 
-            (_, shareKey) = await ShareCrypto.DecryptShareAsync(
+            (share, shareKey) = await ShareCrypto.DecryptShareAsync(
                 client,
                 shareId,
                 response.Key,
@@ -28,7 +28,8 @@ internal static class ShareOperations
                 rootFolderId,
                 cancellationToken).ConfigureAwait(false);
 
-            share = new Share(shareId, new NodeUid(response.VolumeId, response.RootLinkId), response.AddressId);
+            await client.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
+            await client.Cache.Secrets.SetShareKeyAsync(shareId, shareKey.Value, cancellationToken).ConfigureAwait(false);
         }
 
         return new ShareAndKey(share, shareKey.Value);
