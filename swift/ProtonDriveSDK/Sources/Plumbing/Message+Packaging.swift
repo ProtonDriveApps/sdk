@@ -5,11 +5,11 @@ extension Message {
     func serializedIntoRequest() throws -> ByteArray {
         try packIntoRequest().serialisedByteArray()
     }
-    
+
     func serializedIntoResponse() throws -> ByteArray {
         try packIntoResponse().serialisedByteArray()
     }
-    
+
     /// Packs any request into a Proton_Sdk_Request or Proton_Drive_Sdk_Request.
     func packIntoRequest() throws -> Message {
         switch self {
@@ -159,7 +159,7 @@ extension Message {
             throw ProtonDriveSDKError(interopError: .wrongProto(message: "Unknown request type: \(self)"))
         }
     }
-    
+
     private func packIntoResponse() throws -> Message {
         if let error = self as? Proton_Sdk_Error {
             return Proton_Sdk_Response.with {
@@ -206,7 +206,7 @@ extension Message {
             throw ProtonDriveSDKError(interopError: .wrongProto(message: "Unknown response type: \(self)"))
         }
     }
-    
+
     private func serialisedByteArray() throws -> ByteArray {
         ByteArray(data: try serializedData())
     }

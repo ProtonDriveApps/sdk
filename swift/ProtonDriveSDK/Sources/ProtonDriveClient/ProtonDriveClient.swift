@@ -37,7 +37,7 @@ public actor ProtonDriveClient: Sendable {
 
         let clientCreateRequest = Proton_Drive_Sdk_DriveClientCreateRequest.with {
             $0.baseURL = configuration.baseURL
-            
+
             $0.uid = configuration.clientUID
 
             $0.accountRequestAction = Int64(ObjectHandle(callback: cCompatibleAccountClientRequest))
@@ -118,7 +118,7 @@ public actor ProtonDriveClient: Sendable {
             onRetriableErrorReceived: onRetriableErrorReceived
         )
     }
-    
+
     public func downloadFileOperation(
         revisionUid: SDKRevisionUid,
         destinationUrl: URL,
@@ -163,9 +163,10 @@ public actor ProtonDriveClient: Sendable {
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
-        
+
         return try await operation.awaitUploadWithResilience(
-            operationalResilience: configuration.uploadOperationalResilience, onRetriableErrorReceived: onRetriableErrorReceived
+            operationalResilience: configuration.uploadOperationalResilience,
+            onRetriableErrorReceived: onRetriableErrorReceived
         )
     }
 
@@ -215,12 +216,13 @@ public actor ProtonDriveClient: Sendable {
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
-        
+
         return try await operation.awaitUploadWithResilience(
-            operationalResilience: configuration.uploadOperationalResilience, onRetriableErrorReceived: onRetriableErrorReceived
+            operationalResilience: configuration.uploadOperationalResilience,
+            onRetriableErrorReceived: onRetriableErrorReceived
         )
     }
-    
+
     public func uploadNewRevisionOperation(
         currentActiveRevisionUid: SDKRevisionUid,
         fileURL: URL,
@@ -240,7 +242,7 @@ public actor ProtonDriveClient: Sendable {
             progressCallback: progressCallback
         )
     }
-    
+
     public func cancelUpload(cancellationToken: UUID) async throws {
         try await uploadsManager.cancelUpload(with: cancellationToken)
     }
@@ -263,15 +265,21 @@ public actor ProtonDriveClient: Sendable {
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
         }
 
-        let nameResult: String = try await SDKRequestHandler.send(getAvailableNameRequest, logger: logger)
+        let nameResult: String = try await SDKRequestHandler.send(getAvailableNameRequest,
+                                                                  logger: logger)
         return nameResult
     }
 
-    static func unbox(callbackPointer: Int, releaseBox: () -> Void, weakDriveClient: WeakReference<ProtonDriveClient>) -> ProtonDriveClient? {
+    static func unbox(
+        callbackPointer: Int, releaseBox: () -> Void,
+        weakDriveClient: WeakReference<ProtonDriveClient>
+    ) -> ProtonDriveClient? {
         guard let driveClient = weakDriveClient.value else {
             releaseBox()
             let message = "callback called after the proton client object was deallocated"
-            SDKResponseHandler.sendInteropErrorToSDK(message: message, callbackPointer: callbackPointer, assert: false)
+            SDKResponseHandler.sendInteropErrorToSDK(message: message,
+                                                     callbackPointer: callbackPointer,
+                                                     assert: false)
             return nil
         }
         return driveClient
@@ -288,12 +296,12 @@ public actor ProtonDriveClient: Sendable {
             cancellationToken: cancellationToken
         )
     }
-    
+
     deinit {
         guard clientHandle != 0 else { return }
         Self.freeProtonDriveClient(Int64(clientHandle), logger)
     }
-    
+
     private static func freeProtonDriveClient(_ clientHandle: Int64, _ logger: Logger?) {
         Task {
             let freeRequest = Proton_Drive_Sdk_DriveClientFreeRequest.with {
@@ -303,7 +311,8 @@ public actor ProtonDriveClient: Sendable {
                 try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
             } catch {
                 // If the request to free the client failed, we have a memory leak, but not much else can be done.
-                logger?.error("Proton_Drive_Sdk_DriveClientFreeRequest failed: \(error)", category: "ProtonDriveClient.freeProtonDriveClient")
+                logger?.error("Proton_Drive_Sdk_DriveClientFreeRequest failed: \(error)",
+                              category: "ProtonDriveClient.freeProtonDriveClient")
             }
         }
     }

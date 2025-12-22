@@ -13,9 +13,9 @@ public final class UploadOperation: Sendable {
     private let logger: Logger?
     private let onOperationCancel: @Sendable () async throws -> Void
     private let onOperationDispose: @Sendable () async -> Void
-    
+
     private var uploadControllerHandleForProto: Int64 { Int64(uploadControllerHandle) }
-    
+
     init(fileUploaderHandle: ObjectHandle,
          uploadControllerHandle: ObjectHandle,
          progressCallbackWrapper: ProgressCallbackWrapper,
@@ -31,7 +31,7 @@ public final class UploadOperation: Sendable {
         self.onOperationCancel = onOperationCancel
         self.onOperationDispose = onOperationDispose
     }
-    
+
     public func awaitUploadWithResilience(
         operationalResilience: OperationalResilience,
         onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
@@ -40,11 +40,11 @@ public final class UploadOperation: Sendable {
             retryCounter: 0, operationalResilience: operationalResilience, onPauseErrorReceived: onRetriableErrorReceived
         )
     }
-    
+
     private func awaitUploadWithResilience(
         retryCounter: UInt, operationalResilience: OperationalResilience, onPauseErrorReceived: @Sendable @escaping (Error) -> Void
     ) async throws -> UploadedFileIdentifiers {
-        let result = await awaitUploadCompletion()
+        let result = await awaitUploadCompletion(cleanUpTemporaryState: true)
         switch result {
         case .succeeded(let uploadResult):
             return uploadResult
@@ -53,26 +53,39 @@ public final class UploadOperation: Sendable {
             throw error
 
         case .pausedOnError(let error):
-            onPauseErrorReceived(error)
-            return try await operationalResilience.performRetry(retryCounter, error) {
-                try await resume()
-                return try await awaitUploadWithResilience(
-                    retryCounter: $0, operationalResilience: operationalResilience, onPauseErrorReceived: onPauseErrorReceived
-                )
+            do {
+                onPauseErrorReceived(error)
+                return try await operationalResilience.performRetry(retryCounter, error) {
+                    try await resume()
+                    return try await awaitUploadWithResilience(
+                        retryCounter: $0, operationalResilience: operationalResilience, onPauseErrorReceived: onPauseErrorReceived
+                    )
+                }
+            } catch {
+                // if the retry throws, it means the operation cannot be recovered from anymore
+                // in this case, we clean up the temporary state
+                try? await cleanUpTemporaryState()
+                throw error
             }
         }
     }
-    
+
     /// Wait for upload completion
-    public func awaitUploadCompletion() async -> UploadOperationResult {
+    public func awaitUploadCompletion(cleanUpTemporaryState: Bool = true) async -> UploadOperationResult {
         let awaitUploadCompletionRequest = Proton_Drive_Sdk_UploadControllerAwaitCompletionRequest.with {
             $0.uploadControllerHandle = uploadControllerHandleForProto
         }
 
         do {
-            let uploadResult: Proton_Drive_Sdk_UploadResult = try await SDKRequestHandler.send(awaitUploadCompletionRequest, logger: logger)
+            let uploadResult: Proton_Drive_Sdk_UploadResult = try await SDKRequestHandler.send(awaitUploadCompletionRequest,
+                                                                                               logger: logger)
             guard let result = UploadedFileIdentifiers(interopUploadResult: uploadResult) else {
-                throw ProtonDriveSDKError(interopError: .wrongResult(message: "Wrong uid format in Proton_Drive_Sdk_UploadResult: \(uploadResult)"))
+                throw ProtonDriveSDKError(
+                    interopError: .wrongResult(message: "Wrong uid format in Proton_Drive_Sdk_UploadResult: \(uploadResult)")
+                )
+            }
+            if cleanUpTemporaryState {
+                try? await self.cleanUpTemporaryState()
             }
             return .succeeded(result)
         } catch {
@@ -80,47 +93,72 @@ public final class UploadOperation: Sendable {
                 let isPaused = try await isPaused()
                 if isPaused {
                     // if the operation is paused, we can try recovering from the error
+                    // this is why this is the only scenario in which we do NOT clean up the temporary state
+                    // the resume relies on that temporary state to be there
                     return .pausedOnError(error)
                 } else {
+                    if cleanUpTemporaryState {
+                        try? await self.cleanUpTemporaryState()
+                    }
                     return .failed(error)
                 }
             } catch let isPausedError {
-                logger?.info("Checking isPaused status failed with: \(isPausedError.localizedDescription)", category: "DownloadOperation")
+                logger?.info("Checking isPaused status failed with: \(isPausedError.localizedDescription)",
+                             category: "DownloadOperation")
+                if cleanUpTemporaryState {
+                    try? await self.cleanUpTemporaryState()
+                }
                 return .failed(error)
             }
         }
     }
-    
+
     public func pause() async throws {
         let pauseRequest = Proton_Drive_Sdk_UploadControllerPauseRequest.with {
             $0.uploadControllerHandle = uploadControllerHandleForProto
         }
         try await SDKRequestHandler.send(pauseRequest, logger: logger) as Void
     }
-    
+
     public func resume() async throws {
         let resumeRequest = Proton_Drive_Sdk_UploadControllerResumeRequest.with {
             $0.uploadControllerHandle = uploadControllerHandleForProto
         }
         try await SDKRequestHandler.send(resumeRequest, logger: logger) as Void
     }
-    
+
     public func isPaused() async throws -> Bool {
         let isPausedRequest = Proton_Drive_Sdk_UploadControllerIsPausedRequest.with {
             $0.uploadControllerHandle = uploadControllerHandleForProto
         }
         return try await SDKRequestHandler.send(isPausedRequest, logger: logger)
     }
-    
+
     // a convenience API allowing for cancelling the operation through UploadOperation instance
     public func cancel() async throws {
         try await onOperationCancel()
     }
-    
+
+    // allows the manual cleanup of temporary state on BE, like the draft being created there
+    public func cleanUpTemporaryState() async throws {
+        do {
+            let disposeRequest = Proton_Drive_Sdk_UploadControllerDisposeRequest.with {
+                $0.uploadControllerHandle = uploadControllerHandleForProto
+            }
+            try await SDKRequestHandler.send(disposeRequest, logger: logger) as Void
+        } catch {
+            // If the request to dispose the file upload controller failed, we have some BE state not cleaned up properly.
+            // This might manifest in some user-visible errors on retry, but there is no clear way of handling the error, so we propagate it up.
+            logger?.error("Proton_Drive_Sdk_UploadControllerDisposeRequest failed: \(error)",
+                          category: "UploadController.disposeFileUploadController")
+            throw error
+        }
+    }
+
     deinit {
         Self.freeSDKObjects(uploadControllerHandle, fileUploaderHandle, logger, onOperationDispose)
     }
-    
+
     private static func freeSDKObjects(
         _ uploadControllerHandle: ObjectHandle,
         _ fileUploaderHandle: ObjectHandle,
@@ -133,17 +171,6 @@ public final class UploadOperation: Sendable {
             await freeFileUploader(Int64(fileUploaderHandle), logger)
         }
     }
-    
-    private static func disposeFileUploadController(_ uploadControllerHandle: Int64, logger: Logger?) async {
-        let disposeRequest = Proton_Drive_Sdk_UploadControllerDisposeRequest.with {
-            $0.uploadControllerHandle = uploadControllerHandle
-        }
-        do {
-            try await SDKRequestHandler.send(disposeRequest, logger: logger) as Void
-        } catch {
-            logger?.error("Proton_Drive_Sdk_UploadControllerDisposeRequest failed: \(error)", category: "UploadController.disposeFileUploadController")
-        }
-    }
 
     private static func freeFileUploadController(_ uploadControllerHandle: Int64, logger: Logger?) async {
         let freeRequest = Proton_Drive_Sdk_UploadControllerFreeRequest.with {
@@ -154,7 +181,8 @@ public final class UploadOperation: Sendable {
         } catch {
             // If the request to free the file upload controller failed, we have a memory leak, but not much else can be done.
             // It's not gonna break the app's functionality, so we just log the issue and continue.
-            logger?.error("Proton_Drive_Sdk_UploadControllerFreeRequest failed: \(error)", category: "UploadController.freeFileUploadController")
+            logger?.error("Proton_Drive_Sdk_UploadControllerFreeRequest failed: \(error)",
+                          category: "UploadController.freeFileUploadController")
         }
     }
 
@@ -168,7 +196,8 @@ public final class UploadOperation: Sendable {
         } catch {
             // If the request to free the file uploader failed, we have a memory leak, but not much else can be done.
             // It's not gonna break the app's functionality, so we just log the issue and continue.
-            logger?.error("Proton_Drive_Sdk_FileUploaderFreeRequest failed: \(error)", category: "UploadManager.freeFileUploader")
+            logger?.error("Proton_Drive_Sdk_FileUploaderFreeRequest failed: \(error)",
+                          category: "UploadManager.freeFileUploader")
         }
     }
 }
