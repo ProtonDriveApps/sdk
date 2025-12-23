@@ -14,6 +14,6 @@ internal sealed class DriveApiClients(HttpClient defaultHttpClient, HttpClient s
     public ILinksApiClient Links { get; } = new LinksApiClient(defaultHttpClient);
     public IFoldersApiClient Folders { get; } = new FoldersApiClient(defaultHttpClient);
     public IFilesApiClient Files { get; } = new FilesApiClient(defaultHttpClient);
-    public IStorageApiClient Storage { get; } = new StorageApiClient(storageHttpClient);
+    public IStorageApiClient Storage { get; } = new StorageApiClient(defaultHttpClient, storageHttpClient);
     public ITrashApiClient Trash { get; } = new TrashApiClient(defaultHttpClient);
 }
