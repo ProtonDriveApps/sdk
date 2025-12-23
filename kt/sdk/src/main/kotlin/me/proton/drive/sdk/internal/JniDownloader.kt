@@ -37,7 +37,7 @@ class JniDownloader internal constructor() : JniBaseProtonDriveSdk() {
                 continuation.toLongResponse(),
                 write = onWrite,
                 progress = onProgress,
-                logger = logger,
+                logger = internalLogger,
                 coroutineScope = coroutineScope,
             )
         },
