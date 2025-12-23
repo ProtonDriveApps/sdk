@@ -18,21 +18,24 @@ class JniHttpStream internal constructor(
     fun write(
         coroutineScope: CoroutineScope,
         inputStream: InputStream,
-    ): Long = ProtonDriveSdkNativeClient(
-        name = method("write"),
-        readHttpBody = { buffer ->
-            Channels.newChannel(inputStream).read(buffer).also { numberOfByteRead ->
-                if (numberOfByteRead == -1) {
-                    inputStream.close()
-                    onBodyRead?.invoke()
+    ): Long {
+        val channel = Channels.newChannel(inputStream)
+        return ProtonDriveSdkNativeClient(
+            name = method("write"),
+            readHttpBody = { buffer ->
+                channel.read(buffer).also { numberOfByteRead ->
+                    if (numberOfByteRead == -1) {
+                        inputStream.close()
+                        onBodyRead?.invoke()
+                    }
                 }
-            }
-        },
-        coroutineScope = coroutineScope,
-        logger = internalLogger
-    ).also {
-        client = it
-    }.createWeakRef()
+            },
+            coroutineScope = coroutineScope,
+            logger = internalLogger
+        ).also {
+            client = it
+        }.createWeakRef()
+    }
 
     suspend fun read(
         handle: Long,

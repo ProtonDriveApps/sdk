@@ -24,12 +24,11 @@ class Downloader internal constructor(
         progress: suspend (Long, Long) -> Unit = { _, _ -> },
     ): DownloadController = cancellationTokenSource().let { cancellationTokenSource ->
         log(INFO, "downloadToStream")
+        val channel = Channels.newChannel(outputStream)
         val handle = bridge.downloadToStream(
             handle = handle,
             cancellationTokenSourceHandle = cancellationTokenSource.handle,
-            onWrite = { byteBuffer: ByteBuffer ->
-                Channels.newChannel(outputStream).write(byteBuffer)
-            },
+            onWrite = channel::write,
             onProgress = { progressUpdate ->
                 with(progressUpdate) {
                     bridge.internalLogger(DEBUG, "progress: $bytesCompleted/$bytesInTotal")
