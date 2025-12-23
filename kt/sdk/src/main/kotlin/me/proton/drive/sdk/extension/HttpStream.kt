@@ -18,6 +18,7 @@ internal suspend fun HttpStream.read(
     val outputStream = ByteArrayOutputStream()
     if (request.hasSdkContentHandle()) {
         val buffer = ByteBuffer.allocateDirect(64 * 1024)
+        val channel = Channels.newChannel(outputStream)
 
         while (true) {
             buffer.clear()
@@ -29,7 +30,7 @@ internal suspend fun HttpStream.read(
             buffer.flip()
 
             // Write directly from ByteBuffer to okio
-            Channels.newChannel(outputStream).write(buffer)
+            channel.write(buffer)
         }
     }
 

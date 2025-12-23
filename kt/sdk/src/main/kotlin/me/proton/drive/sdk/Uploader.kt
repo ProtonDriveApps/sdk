@@ -28,13 +28,12 @@ class Uploader internal constructor(
         progress: suspend (Long, Long) -> Unit = { _, _ -> },
     ): UploadController = cancellationTokenSource().let { source ->
         log(INFO, "uploadFromStream")
+        val channel = Channels.newChannel(inputStream)
         val handle = bridge.uploadFromStream(
             uploaderHandle = handle,
             cancellationTokenSourceHandle = source.handle,
             thumbnails = thumbnails,
-            onRead = { buffer: ByteBuffer ->
-                Channels.newChannel(inputStream).read(buffer)
-            },
+            onRead = channel::read,
             onProgress = { progressUpdate ->
                 with(progressUpdate) {
                     log(DEBUG, "progress: bytesCompleted/bytesInTotal")
