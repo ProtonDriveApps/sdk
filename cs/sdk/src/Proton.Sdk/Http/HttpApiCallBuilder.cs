@@ -82,11 +82,18 @@ internal readonly struct HttpApiCallBuilder<TSuccess, TFailure>
 
     public async ValueTask<TSuccess> SendAsync(HttpRequestMessage requestMessage, CancellationToken cancellationToken)
     {
-        var responseMessage = await _httpClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var responseMessage = await _httpClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
 
-        await responseMessage.EnsureApiSuccessAsync(_failureTypeInfo, cancellationToken).ConfigureAwait(false);
+            await responseMessage.EnsureApiSuccessAsync(_failureTypeInfo, cancellationToken).ConfigureAwait(false);
 
-        return await responseMessage.Content.ReadFromJsonAsync(_successTypeInfo, cancellationToken)
-            .ConfigureAwait(false) ?? throw new JsonException();
+            return await responseMessage.Content.ReadFromJsonAsync(_successTypeInfo, cancellationToken)
+                .ConfigureAwait(false) ?? throw new JsonException();
+        }
+        catch (OperationCanceledException e) when (e.InnerException is TimeoutException)
+        {
+            throw new TimeoutException("HTTP request timed out", e);
+        }
     }
 }

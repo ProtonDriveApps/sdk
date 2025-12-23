@@ -4,7 +4,6 @@ using Polly;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Resilience;
-using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 
