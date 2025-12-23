@@ -29,7 +29,7 @@ class JniHttpStream internal constructor(
             }
         },
         coroutineScope = coroutineScope,
-        logger = logger
+        logger = internalLogger
     ).also {
         client = it
     }.createWeakRef()
@@ -41,7 +41,7 @@ class JniHttpStream internal constructor(
         ProtonSdkNativeClient(
             name = method("read"),
             response = continuation.toIntResponse(),
-            logger = logger,
+            logger = internalLogger,
         )
     }, requestBuilder = { client ->
         request {

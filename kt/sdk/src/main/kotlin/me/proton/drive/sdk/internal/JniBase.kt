@@ -1,7 +1,6 @@
 package me.proton.drive.sdk.internal
 
-import me.proton.drive.sdk.LoggerProvider
-import me.proton.drive.sdk.LoggerProvider.Level.VERBOSE
+import me.proton.drive.sdk.LoggerProvider.Level
 import me.proton.drive.sdk.SdkLogger
 import java.nio.ByteBuffer
 
@@ -9,7 +8,13 @@ typealias ResponseCallback = (ByteBuffer) -> Unit
 
 abstract class JniBase {
 
-    open val logger: (String) -> Unit = { message -> globalSdkLogger(VERBOSE, "internal", message) }
+    open val internalLogger: (Level, String) -> Unit = { level, message ->
+        globalSdkLogger(level, "internal", message)
+    }
+
+    open val clientLogger: (Level, String) -> Unit = { level, message ->
+        globalSdkLogger(level, "client", message)
+    }
 
     internal fun method(name: String) = "${this.javaClass.simpleName}::$name"
 

@@ -10,6 +10,11 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import me.proton.drive.sdk.LoggerProvider.Level
+import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
+import me.proton.drive.sdk.LoggerProvider.Level.ERROR
+import me.proton.drive.sdk.LoggerProvider.Level.VERBOSE
+import me.proton.drive.sdk.LoggerProvider.Level.WARN
 import me.proton.drive.sdk.extension.asAny
 import me.proton.drive.sdk.extension.toProtonSdkError
 import proton.drive.sdk.ProtonDriveSdk
@@ -30,7 +35,7 @@ class ProtonDriveSdkNativeClient internal constructor(
     val progress: suspend (ProtonDriveSdk.ProgressUpdate) -> Unit = { error("progress not configured for $name") },
     val recordMetric: suspend (ProtonSdk.MetricEvent) -> Unit = { error("recordMetric not configured for $name") },
     val featureEnabled: suspend (String) -> Boolean = { error("featureEnabled not configured for $name") },
-    val logger: (String) -> Unit = {},
+    val logger: (Level, String) -> Unit = { _, _ -> },
     private val coroutineScope: CoroutineScope? = null,
 ) {
 
@@ -43,7 +48,7 @@ class ProtonDriveSdkNativeClient internal constructor(
     fun handleRequest(
         request: ProtonDriveSdk.Request,
     ) {
-        logger("handle request ${request.payloadCase.name} for $name")
+        logger(DEBUG, "handle request ${request.payloadCase.name} for $name")
         handleRequest(request.toByteArray())
     }
 
@@ -56,11 +61,12 @@ class ProtonDriveSdkNativeClient internal constructor(
         response: Response,
     ) {
         if (response.hasValue()) {
-            logger("handle response value: ${response.value.typeUrl} for $name")
+            logger(VERBOSE, "handle response value: ${response.value.typeUrl} for $name")
         } else {
-            logger("handle response ${response.resultCase.name} for $name")
             if (response.resultCase == Response.ResultCase.ERROR) {
-                logger(response.error.context)
+                logger(VERBOSE, "handle response ${response.resultCase.name} for $name (${response.error.message})")
+            } else {
+                logger(VERBOSE, "handle response ${response.resultCase.name} for $name")
             }
         }
         handleResponse(sdkHandle, response.toByteArray())
@@ -72,7 +78,7 @@ class ProtonDriveSdkNativeClient internal constructor(
 
     @Suppress("unused") // Called by JNI
     fun onResponse(data: ByteBuffer) {
-        logger("response for $name of size: ${data.capacity()}")
+        logger(DEBUG, "response for $name of size: ${data.capacity()}")
         response(data)
     }
 
@@ -87,9 +93,9 @@ class ProtonDriveSdkNativeClient internal constructor(
     @Suppress("unused") // Called by JNI
     fun onRead(buffer: ByteBuffer, sdkHandle: Long) {
         onOperation("read", sdkHandle) {
-            logger("read for $name of size: ${buffer.capacity()}")
+            logger(VERBOSE, "read for $name of size: ${buffer.capacity()}")
             val bytesRead = read(buffer).takeUnless { it < 0 } ?: 0
-            logger("$bytesRead bytes read for $name")
+            logger(VERBOSE, "$bytesRead bytes read for $name")
             response { value = Int32Value.of(bytesRead).asAny("google.protobuf.Int32Value") }
         }
     }
@@ -97,7 +103,7 @@ class ProtonDriveSdkNativeClient internal constructor(
     @Suppress("unused") // Called by JNI
     fun onWrite(data: ByteBuffer, sdkHandle: Long) {
         onOperation("write", sdkHandle) {
-            logger("write for $name of size: ${data.capacity()}")
+            logger(VERBOSE, "write for $name of size: ${data.capacity()}")
             write(data)
             response {}
         }
@@ -113,18 +119,24 @@ class ProtonDriveSdkNativeClient internal constructor(
         sdkHandle = sdkHandle,
         parser = ProtonSdk.HttpRequest::parseFrom,
     ) { httpRequest ->
-        logger("send http request for ${httpRequest.method} ${httpRequest.url} of size: ${data.capacity()}")
+        logger(
+            DEBUG,
+            "send http request for ${httpRequest.method} ${httpRequest.url} of size: ${data.capacity()}"
+        )
         val httpResponse = httpClientRequest(httpRequest)
-        logger("receive http response ${httpResponse.statusCode} for ${httpRequest.method} ${httpRequest.url}")
+        logger(
+            DEBUG,
+            "receive http response ${httpResponse.statusCode} for ${httpRequest.method} ${httpRequest.url}"
+        )
         response { value = httpResponse.asAny("proton.sdk.HttpResponse") }
     }?.createWeakRef() ?: 0
 
     @Suppress("unused") // Called by JNI
     fun onHttpResponseRead(buffer: ByteBuffer, sdkHandle: Long) {
         onOperation("read", sdkHandle) {
-            logger("http response read for $name of size: ${buffer.capacity()}")
+            logger(VERBOSE, "http response read for $name of size: ${buffer.capacity()}")
             val bytesRead = readHttpBody(buffer).takeUnless { it < 0 } ?: 0
-            logger("$bytesRead bytes read for http response $name")
+            logger(VERBOSE, "$bytesRead bytes read for http response $name")
             response { value = Int32Value.of(bytesRead).asAny("google.protobuf.Int32Value") }
         }
     }
@@ -140,7 +152,7 @@ class ProtonDriveSdkNativeClient internal constructor(
             sdkHandle = sdkHandle,
             parser = ProtonDriveSdk.AccountRequest::parseFrom,
         ) { accountRequest ->
-            logger("request for ${accountRequest.payloadCase.name} of size: ${data.capacity()}")
+            logger(VERBOSE, "request for ${accountRequest.payloadCase.name} of size: ${data.capacity()}")
             val response = accountRequest(accountRequest)
             response { value = response }
         }
@@ -164,8 +176,8 @@ class ProtonDriveSdkNativeClient internal constructor(
         runCatching {
             if (featureEnabled(name)) 1L else 0L
         }.getOrElse { error ->
-            logger("Cannot get feature flag $name")
-            logger(error.stackTraceToString())
+            logger(WARN, "Cannot get feature flag $name")
+            logger(WARN, error.stackTraceToString())
             0L
         }
     }
@@ -189,7 +201,7 @@ class ProtonDriveSdkNativeClient internal constructor(
         try {
             handleResponse(sdkHandle, block())
         } catch (error: CancellationException) {
-            logger("Operation $operation was cancelled")
+            logger(DEBUG, "Operation $operation was cancelled")
             handleResponse(sdkHandle, response {
                 this@response.error =
                     error.toProtonSdkError("Operation $operation was cancelled")
@@ -230,23 +242,23 @@ class ProtonDriveSdkNativeClient internal constructor(
         block: suspend (T) -> Unit
     ) {
         try {
-            logger("$callback for $name of size: ${data.capacity()}")
+            logger(VERBOSE, "$callback for $name of size: ${data.capacity()}")
             // parsing of protobuf needs to be done serially
             val value = parser(data)
             coroutineScope(callback).launch {
                 try {
                     block(value)
                 } catch (error: CancellationException) {
-                    logger("Callback $callback was cancelled")
+                    logger(DEBUG, "Callback $callback was cancelled")
                     throw error
                 } catch (error: Throwable) {
-                    logger("Error while $callback")
-                    logger(error.stackTraceToString())
+                    logger(WARN, "Error while $callback")
+                    logger(WARN, error.stackTraceToString())
                 }
             }
         } catch (error: Throwable) {
-            logger("Error while parsing value for $callback")
-            logger(error.stackTraceToString())
+            logger(ERROR, "Error while parsing value for $callback")
+            logger(ERROR, error.stackTraceToString())
         }
 
     }
@@ -256,7 +268,7 @@ class ProtonDriveSdkNativeClient internal constructor(
             "No coroutineScope was provided to ${javaClass.simpleName}, cannot execute $operation"
         }
         if (!coroutineScope.isActive) {
-            logger("CoroutineScope not active for $operation")
+            logger(DEBUG, "CoroutineScope not active for $operation")
         }
         return coroutineScope
     }

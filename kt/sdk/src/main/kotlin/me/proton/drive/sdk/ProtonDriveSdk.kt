@@ -3,6 +3,7 @@ package me.proton.drive.sdk
 import kotlinx.coroutines.CoroutineScope
 import me.proton.core.domain.entity.UserId
 import me.proton.core.network.data.ApiProvider
+import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.entity.ClientCreateRequest
 import me.proton.drive.sdk.entity.SessionBeginRequest
 import me.proton.drive.sdk.entity.SessionResumeRequest
@@ -29,6 +30,7 @@ object ProtonDriveSdk {
         request: SessionBeginRequest,
     ): Session = cancellationTokenSource().let { source ->
         JniSession().run {
+            clientLogger(DEBUG, "ProtonDriveSdk sessionBegin")
             Session(begin(source.handle, request), this, source)
         }
     }
@@ -37,6 +39,7 @@ object ProtonDriveSdk {
         request: SessionResumeRequest,
     ): Session = cancellationTokenSource().let { source ->
         JniSession().run {
+            clientLogger(DEBUG, "ProtonDriveSdk sessionResume")
             Session(resume(request), this, source)
         }
     }
@@ -51,6 +54,7 @@ object ProtonDriveSdk {
         metricCallback: MetricCallback? = null,
         featureEnabled: suspend (String) -> Boolean = { false },
     ): DriveClient = JniDriveClient().run {
+        clientLogger(DEBUG, "ProtonDriveSdk driveClientCreate(${userId.id.take(8)})")
         DriveClient(
             create(
                 coroutineScope = coroutineScope,

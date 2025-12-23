@@ -2,6 +2,8 @@ package me.proton.drive.sdk.internal
 
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
+import me.proton.drive.sdk.LoggerProvider.Level
+import me.proton.drive.sdk.LoggerProvider.Level.VERBOSE
 import proton.drive.sdk.ProtonDriveSdk.Request
 import proton.drive.sdk.RequestKt
 import proton.drive.sdk.request
@@ -19,7 +21,7 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
         val nativeClient = ProtonDriveSdkNativeClient(
             method(name),
             IgnoredIntegerOrErrorResponse(),
-            logger = logger,
+            logger = internalLogger,
         )
         nativeClient.handleRequest(request(block))
     }
@@ -33,7 +35,7 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
         val nativeClient = ProtonDriveSdkNativeClient(
             name = method(name),
             response = callback(continuation),
-            logger = logger,
+            logger = internalLogger,
         )
         continuation.invokeOnCancellation { nativeClient.release() }
         nativeClient.handleRequest(request(block))
@@ -50,7 +52,7 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
     }
 
     fun releaseAll() {
-        logger("Releasing all for ${javaClass.simpleName}")
+        internalLogger(VERBOSE, "Releasing all for ${javaClass.simpleName}")
         released = true
         clients.forEach { client -> client.release() }
         clients = emptyList()

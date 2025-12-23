@@ -41,7 +41,7 @@ class JniDriveClient internal constructor() : JniBaseProtonDriveSdk() {
             continuation.toLongResponse(),
             httpClientRequest = onHttpClientRequest,
             accountRequest = onAccountRequest,
-            logger = logger,
+            logger = internalLogger,
             recordMetric = onRecordMetric,
             featureEnabled = onFeatureEnabled,
             coroutineScope = coroutineScope,

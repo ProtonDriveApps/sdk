@@ -50,7 +50,7 @@ class JniUploader internal constructor() : JniBaseProtonDriveSdk() {
                 continuation.toLongResponse(),
                 read = onRead,
                 progress = onProgress,
-                logger = logger,
+                logger = internalLogger,
                 coroutineScope = coroutineScope,
             )
         },

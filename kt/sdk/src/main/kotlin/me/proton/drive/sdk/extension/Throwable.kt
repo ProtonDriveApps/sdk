@@ -5,10 +5,12 @@ import me.proton.core.network.domain.ApiException
 import me.proton.core.network.domain.ApiResult
 import proton.sdk.ProtonSdk
 
-fun Throwable.toProtonSdkError(defaultMessage: String) = proton.sdk.error {
+fun Throwable.toProtonSdkError(message: String) = proton.sdk.error {
     val exception = this@toProtonSdkError
     type = exception.javaClass.name
-    message = exception.message ?: defaultMessage
+    this.message = exception.message?.let {
+        "$message, caused by ${exception.message}"
+    } ?: message
     domain = exception.domain()
     context = stackTraceToString()
 }

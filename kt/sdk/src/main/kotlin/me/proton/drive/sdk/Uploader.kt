@@ -1,12 +1,15 @@
 package me.proton.drive.sdk
 
 import kotlinx.coroutines.CoroutineScope
+import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
+import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
 import me.proton.drive.sdk.entity.FileRevisionUploaderRequest
 import me.proton.drive.sdk.entity.FileUploaderRequest
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.internal.JniUploadController
 import me.proton.drive.sdk.internal.JniUploader
+import me.proton.drive.sdk.internal.toLogId
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
@@ -24,6 +27,7 @@ class Uploader internal constructor(
         thumbnails: Map<ThumbnailType, ByteArray> = emptyMap(),
         progress: suspend (Long, Long) -> Unit = { _, _ -> },
     ): UploadController = cancellationTokenSource().let { source ->
+        log(INFO, "uploadFromStream")
         val handle = bridge.uploadFromStream(
             uploaderHandle = handle,
             cancellationTokenSourceHandle = source.handle,
@@ -33,6 +37,7 @@ class Uploader internal constructor(
             },
             onProgress = { progressUpdate ->
                 with(progressUpdate) {
+                    log(DEBUG, "progress: bytesCompleted/bytesInTotal")
                     progress(bytesCompleted, bytesInTotal)
                 }
             },
@@ -48,6 +53,15 @@ class Uploader internal constructor(
     }
 
     override fun close() = bridge.free(handle)
+
+    override suspend fun cancel() {
+        log(INFO, "cancel")
+        super.cancel()
+    }
+
+    private fun log(level: LoggerProvider.Level, message: String) {
+        bridge.clientLogger(level, "FileUploader(${handle.toLogId()}) $message")
+    }
 }
 
 suspend fun DriveClient.uploader(

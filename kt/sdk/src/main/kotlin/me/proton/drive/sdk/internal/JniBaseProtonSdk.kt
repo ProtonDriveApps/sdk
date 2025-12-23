@@ -29,7 +29,7 @@ abstract class JniBaseProtonSdk : JniBase() {
         val nativeClient = ProtonSdkNativeClient(
             name = method(name),
             response = callback(continuation),
-            logger = logger,
+            logger = internalLogger,
         )
         continuation.invokeOnCancellation { nativeClient.release() }
         nativeClient.handleRequest(request(block))

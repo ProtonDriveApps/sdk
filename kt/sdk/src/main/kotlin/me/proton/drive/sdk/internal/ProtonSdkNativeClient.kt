@@ -1,5 +1,8 @@
 package me.proton.drive.sdk.internal
 
+import me.proton.drive.sdk.LoggerProvider.Level
+import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
+import me.proton.drive.sdk.LoggerProvider.Level.VERBOSE
 import proton.sdk.ProtonSdk.Request
 import java.nio.ByteBuffer
 
@@ -7,7 +10,7 @@ class ProtonSdkNativeClient internal constructor(
     val name: String,
     val response: ResponseCallback = { error("response not configured for $name") },
     val callback: (ByteBuffer) -> Unit = { error("callback not configured for $name") },
-    val logger: (String) -> Unit = {}
+    val logger: (Level, String) -> Unit = { _, _ -> }
 ) {
 
     fun release() {
@@ -18,7 +21,7 @@ class ProtonSdkNativeClient internal constructor(
     fun handleRequest(
         request: Request,
     ) {
-        logger("handle request ${request.payloadCase.name} for $name")
+        logger(DEBUG, "handle request ${request.payloadCase.name} for $name")
         handleRequest(request.toByteArray())
     }
 
@@ -27,12 +30,12 @@ class ProtonSdkNativeClient internal constructor(
     )
 
     fun onResponse(data: ByteBuffer) {
-        logger("response for $name of size: ${data.capacity()}")
+        logger(DEBUG, "response for $name of size: ${data.capacity()}")
         response(data)
     }
 
     fun onCallback(data: ByteBuffer) {
-        logger("callback for $name of size: ${data.capacity()}")
+        logger(VERBOSE, "callback for $name of size: ${data.capacity()}")
         callback(data)
     }
 
