@@ -51,7 +51,7 @@ internal sealed partial class RevisionReader : IDisposable
         var downloadEvent = new DownloadEvent
         {
             ClaimedFileSize = -1,
-            VolumeType = VolumeType.OwnVolume,
+            VolumeType = VolumeType.OwnVolume,  // FIXME: figure out how to get the actual volume type
         };
 
         try
@@ -129,10 +129,10 @@ internal sealed partial class RevisionReader : IDisposable
                 }
             }
         }
-        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+        catch (Exception ex) when (TelemetryErrorResolver.GetDownloadErrorFromException(ex) is { } error)
         {
-            downloadEvent.Error = TelemetryErrorResolver.GetDownloadErrorFromException(ex);
-            downloadEvent.OriginalError = ex.GetBaseException().ToString();
+            downloadEvent.Error = error;
+            downloadEvent.OriginalError = ex.FlattenMessageWithExceptionType();
             throw;
         }
         finally
@@ -314,10 +314,10 @@ internal sealed partial class RevisionReader : IDisposable
         return verificationResult.Status;
     }
 
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Missing block #{BlockIndex} on revision \"{RevisionUid}\"")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Missing block #{BlockIndex} on revision \"{RevisionUid}\"")]
     private partial void LogMissingBlock(int blockIndex, RevisionUid revisionUid);
 
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Manifest verification failed for revision \"{RevisionUid}\": {VerificationStatus}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Manifest verification failed for revision \"{RevisionUid}\": {VerificationStatus}")]
     private partial void LogFailedManifestVerification(RevisionUid revisionUid, PgpVerificationStatus verificationStatus);
 
     private readonly struct BlockDownloadResult(int index, Stream stream, ReadOnlyMemory<byte> sha256Digest)

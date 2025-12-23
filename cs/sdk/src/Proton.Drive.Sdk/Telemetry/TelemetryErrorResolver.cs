@@ -1,6 +1,6 @@
 ﻿using System.Net;
-using System.Net.Sockets;
 using System.Security.Cryptography;
+using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Sdk;
 
@@ -12,7 +12,13 @@ internal static class TelemetryErrorResolver
     {
         return exception switch
         {
+            // Not reported as download error
+            OperationCanceledException => null,
+            CompletedDownloadManifestVerificationException => null,
+
+            // Download errors
             NodeKeyAndSessionKeyMismatchException or SessionKeyAndDataPacketMismatchException => DownloadError.IntegrityError,
+            FileContentsDecryptionException => DownloadError.DecryptionError,
             CryptographicException => DownloadError.DecryptionError,
             HttpRequestException { HttpRequestError: HttpRequestError.NameResolutionError or HttpRequestError.ConnectionError or HttpRequestError.ProxyTunnelError } => DownloadError.NetworkError,
             HttpRequestException { HttpRequestError: HttpRequestError.InvalidResponse or HttpRequestError.ResponseEnded } => DownloadError.ServerError,
@@ -20,6 +26,7 @@ internal static class TelemetryErrorResolver
             ProtonApiException { TransportCode: (int)HttpStatusCode.TooManyRequests } => DownloadError.RateLimited,
             ProtonApiException { TransportCode: >= 400 and < 500 } => DownloadError.HttpClientSideError,
             ProtonApiException { TransportCode: >= 500 and < 600 } => DownloadError.ServerError,
+            TimeoutException => DownloadError.ServerError,
             _ => DownloadError.Unknown,
         };
     }
