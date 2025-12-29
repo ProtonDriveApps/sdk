@@ -74,6 +74,9 @@
       "Failed to get inviter keys": [
         "Falha ao obter chaves do convidante"
       ],
+      "Failed to get verification keys": [
+        "Não foi possível obter a chave de verificação"
+      ],
       "Failed to load some nodes": [
         "Erro ao carregar alguns nós"
       ],

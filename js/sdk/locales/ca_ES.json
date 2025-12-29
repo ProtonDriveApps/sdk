@@ -77,6 +77,9 @@
       "Failed to get sharing info for node ${ nodeUid }": [
         "No s'ha pogut obtenir la informació de compartició per al node ${ nodeUid }"
       ],
+      "Failed to get verification keys": [
+        "No s'han pogut obtenir les claus de verificació"
+      ],
       "Failed to load some nodes": [
         "No s'han pogut carregar alguns nodes"
       ],
@@ -87,7 +90,7 @@
         "La descàrrega del fitxer ha fallat a causa d'una resposta buida."
       ],
       "File has no active revision": [
-        "Aquest fitxer no té cap revisió activa."
+        "El fitxer no té revisió activa."
       ],
       "File has no content key": [
         "El fitxer no té clau de contingut"
@@ -111,7 +114,7 @@
         "Falta el correu electrònic de qui us convida"
       ],
       "Missing signature": [
-        "No s'ha pogut trobar la signatura"
+        "No s'ha trobat la signatura"
       ],
       "Missing signature for ${ signatureType }": [
         "Falta la signatura per a ${ signatureType }"
@@ -139,7 +142,7 @@
         "No s'ha trobat cap nom disponible"
       ],
       "Node has no thumbnail": [
-        "Aquest node no té miniatura"
+        "El node no té miniatura"
       ],
       "Node is not a file": [
         "El node no és un fitxer"
@@ -151,7 +154,7 @@
         "Node no compartit"
       ],
       "Node not found": [
-        "No s'ha pogut trobar el node"
+        "No s'ha trobat el node"
       ],
       "Operation aborted": [
         "S'ha interromput l'operació"
@@ -166,10 +169,10 @@
         "Sol·licitud cancel·lada"
       ],
       "Signature is missing": [
-        "Hi manca la signatura"
+        "Falta la signatura"
       ],
       "Signature verification failed": [
-        "No s'ha pogut verificar la signatura."
+        "Ha fallat la verificació de la signatura"
       ],
       "Signature verification failed: ${ errorMessage }": [
         "Hi ha hagut un error en la verificació de la signatura: ${ errorMessage }"

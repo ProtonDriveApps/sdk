@@ -77,6 +77,9 @@
       "Failed to get sharing info for node ${ nodeUid }": [
         "Nepodarilo sa získať informácie o zdieľaní pre uzol ${ nodeUid }"
       ],
+      "Failed to get verification keys": [
+        "Získanie overovacích kľúčov zlyhalo"
+      ],
       "Failed to load some nodes": [
         "Nepodarilo sa načítať niektoré uzly"
       ],

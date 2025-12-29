@@ -77,6 +77,9 @@
       "Failed to get sharing info for node ${ nodeUid }": [
         "No se pudo obtener la información para compartir del nodo ${ nodeUid }"
       ],
+      "Failed to get verification keys": [
+        "Error al obtener las claves de verificación"
+      ],
       "Failed to load some nodes": [
         "Error al cargar algunos nodos"
       ],
