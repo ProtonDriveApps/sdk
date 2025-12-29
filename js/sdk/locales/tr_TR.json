@@ -77,6 +77,9 @@
       "Failed to get sharing info for node ${ nodeUid }": [
         "${ nodeUid } düğümünün paylaşım bilgileri alınamadı"
       ],
+      "Failed to get verification keys": [
+        "Doğrulama anahtarları alınamadı"
+      ],
       "Failed to load some nodes": [
         "Bazı düğümler yüklenemedi"
       ],

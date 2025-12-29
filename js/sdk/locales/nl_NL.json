@@ -14,6 +14,12 @@
       "Cannot share root folder": [
         "Kan hoofdmap niet delen"
       ],
+      "Copy operation aborted": [
+        "Kopieeractie afgebroken"
+      ],
+      "Copying item to a non-folder is not allowed": [
+        "Het kopiëren van een item naar een niet-map is niet toegestaan"
+      ],
       "Creating files in non-folders is not allowed": [
         "Het aanmaken van bestanden in niet-mappen is niet toegestaan"
       ],
@@ -67,6 +73,12 @@
       ],
       "Failed to get inviter keys": [
         "Ophalen van de sleutels van de uitnodiger is niet gelukt."
+      ],
+      "Failed to get sharing info for node ${ nodeUid }": [
+        "Kon de deel informatie voor node ${ nodeUid } niet ophalen."
+      ],
+      "Failed to get verification keys": [
+        "Fout bij het ophalen van verificatiesleutels"
       ],
       "Failed to load some nodes": [
         "Fout bij het laden van sommige nodes"
@@ -203,6 +215,11 @@
       ],
       "You can leave only item that is shared with you": [
         "U kunt alleen een item verlaten dat met u wordt gedeeld"
+      ]
+    },
+    "Info": {
+      "Author is not provided on public link": [
+        "Auteur is niet opgegeven op openbare link"
       ]
     },
     "Property": {
