@@ -317,3 +317,25 @@ public actor ProtonDriveClient: Sendable {
         }
     }
 }
+
+// MARK: - Node action
+extension ProtonDriveClient {
+    public func rename(nodeUid: SDKNodeUid, newName: String, newMediaType: String?) async throws {
+        let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
+        defer {
+            cancellationTokenSource.free()
+        }
+
+        let cancellationHandle = cancellationTokenSource.handle
+        let renameRequest = Proton_Drive_Sdk_DriveClientRenameRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.nodeUid = nodeUid.sdkCompatibleIdentifier
+            $0.newName = newName
+            if let newMediaType {
+                $0.newMediaType = newMediaType
+            }
+            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
+        }
+        let result: Void = try await SDKRequestHandler.send(renameRequest, logger: logger)
+    }
+}
