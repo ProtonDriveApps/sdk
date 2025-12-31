@@ -131,7 +131,13 @@ let sdkResponseCallbackWithState: CCallback = { statePointer, responseArray in
                 throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Received unexpected state in the response. We expected Resumable<Google_Protobuf_Int64Value>, we got \(type(of: box))"))
             }
             voidBox.resume()
-        
+
+        case .value(let value) where value.isA(Google_Protobuf_Empty.self):
+            guard let voidResultBox = box as? any Resumable<Void> else {
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Received unexpected state in the response. We expected Resumable<Void>, we got \(type(of: box))"))
+            }
+            voidResultBox.resume(returning: ())
+
         case .value(let value) where value.isA(Google_Protobuf_BoolValue.self):
             let unpackedValue = try Google_Protobuf_BoolValue(unpackingAny: value)
             guard let boolResultBox = box as? any Resumable<Bool> else {
