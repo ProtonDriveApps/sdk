@@ -6,3 +6,5 @@ edition = "2024"
 [dependencies]
 tokio = "1.48.0"
 chrono = "0.4.42"
+base64 = "0.22.1"
+rand = "0.10.0-rc.5"
