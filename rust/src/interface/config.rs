@@ -2,12 +2,12 @@ struct ProtonDriveConfig {
     /// The base URL for the Proton Drive (without schema).
     ///
     /// If not provided, defaults to 'drive-api.proton.me'.
-    base_url: &'static str,
+    base_url: String,
 
     /// The language to use for error messages.
     ///
     /// If not provided, defaults to 'en'.
-    language: &'static str,
+    language: String,
 
     /// Client UID is used to identify the client for the upload.
     ///
@@ -15,15 +15,15 @@ struct ProtonDriveConfig {
     /// existing draft and start a new upload. If the client UID doesn't match, the SDK throws, and
     /// then you need to explicitly ask the user to override the existing draft. You can force the
     /// upload by setting up `overrideExistingDraftByOtherClient` to true.
-    client_uuid: &'static str,
+    client_uuid: String,
 }
 
 impl Default for ProtonDriveConfig {
     fn default() -> Self {
         ProtonDriveConfig {
-            base_url: "drive-api.proton.me",
-            language: "en",
-            client_uuid: "",
+            base_url: String::from("drive-api.proton.me"),
+            language: String::from("en"),
+            client_uuid: String::new(),
         }
     }
 }

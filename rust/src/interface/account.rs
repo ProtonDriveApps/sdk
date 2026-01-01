@@ -1,15 +1,15 @@
 use crate::crypto::interface::*;
 
-struct KeyListEntry<'t> {
-    id: &'t str,
-    key: &'t dyn Key,
+struct KeyListEntry {
+    id: String,
+    key: &'static dyn Key,
 }
 
 struct ProtonDriveAccountAddress {
     email: String,
     address_id: String,
     primary_key_index: u64,
-    keys: Vec<KeyListEntry<'static>>,
+    keys: Vec<KeyListEntry>,
 }
 
 impl<'t> ProtonDriveAccountAddress {
@@ -27,7 +27,9 @@ trait ProtonDriveAccount {
     fn get_own_primary_address() -> Result<ProtonDriveAccountAddress, &'static str> {
         Err("address not set")
     }
-    fn get_own_address(email_or_address_id: &'static str) -> Option<ProtonDriveAccountAddress> {None}
+    fn get_own_address(email_or_address_id: String) -> Option<ProtonDriveAccountAddress> {
+        None
+    }
     fn has_proton_account(email: &str) -> bool {
         true
     }
@@ -35,7 +37,6 @@ trait ProtonDriveAccount {
         Vec::new()
     }
 }
-
 
 struct ManagedAccount {}
 impl ProtonDriveAccount for ManagedAccount {

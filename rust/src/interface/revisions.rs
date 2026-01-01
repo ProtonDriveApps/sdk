@@ -9,8 +9,8 @@ pub enum RevisionState {
 impl RevisionState {
     pub fn to_string(&self) -> &'static str {
         match self {
-            RevisionState::Active => "active",
-            RevisionState::Superseded => "superseded",
+            Self::Active => "active",
+            Self::Superseded => "superseded",
         }
     }
 }

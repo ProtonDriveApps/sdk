@@ -1,8 +1,10 @@
-struct Device<'t> {
-    uid: &'t str,
+use std::error::Error;
+
+struct Device {
+    uid: String,
     device_type: DeviceType,
-    name: Result<&'t str, Option<&'static str>>, // Err | InvalidNameError
-    root_folder_u_id: &'t str,
+    name: Result<String, Option<&'static dyn Error>>,
+    root_folder_u_id: String,
     creation_time: chrono::DateTime<chrono::Utc>,
     last_sync_date: chrono::DateTime<chrono::Utc>,
 }
