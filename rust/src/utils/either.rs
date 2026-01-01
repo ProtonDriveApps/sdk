@@ -3,7 +3,7 @@ pub(crate) enum Either<L, R> {
     Right(R),
 }
 
-impl<L,R> Either<L,R> {
+impl<L, R> Either<L, R> {
     pub fn value(&self) -> Result<&L, &R> {
         match self {
             Self::Left(t) => Ok(t),

@@ -1,10 +1,12 @@
-use std::error::Error;
 use super::author::Author;
 use super::member::{MemberRole, Membership};
 use super::revisions::Revision;
 use crate::utils::either::Either;
+use std::error::Error;
 
-struct FolderInfo {claimed_modification_time: chrono::DateTime<chrono::offset::Utc>}
+struct FolderInfo {
+    claimed_modification_time: chrono::DateTime<chrono::offset::Utc>,
+}
 
 struct NodeDetails {
     uid: String,
@@ -24,7 +26,6 @@ struct NodeDetails {
     tree_event_scope_id: String,
 }
 
-
 /// Node representing a file or folder in the system.
 ///
 /// This is a happy path representation of the node. It is used in the SDK to
@@ -40,7 +41,6 @@ struct NodeEntity {
     name: String,
     active_revision: Option<Revision>,
 }
-
 
 /// Degraded node representing a file or folder in the system.
 ///
@@ -61,14 +61,14 @@ struct DegradedNode {
     name: Result<String, &'static dyn Error>,
     active_revision: Result<Revision, &'static dyn Error>,
 
-   /// If the error is not related to any specific field, it is set here.
-   ///
-   /// For example, if the node has issue decrypting the name, the name will be
-   /// set as `Error` while this will be empty.
-   ///
-   /// On the other hand, if the node has issue decrypting the node key, but
-   /// the name is still working, this will include the node key error, while
-   /// the name will be set to the decrypted value.
+    /// If the error is not related to any specific field, it is set here.
+    ///
+    /// For example, if the node has issue decrypting the name, the name will be
+    /// set as `Error` while this will be empty.
+    ///
+    /// On the other hand, if the node has issue decrypting the node key, but
+    /// the name is still working, this will include the node key error, while
+    /// the name will be set to the decrypted value.
     errors: Option<Vec<String>>,
 }
 
@@ -80,9 +80,8 @@ struct DegradedNode {
 type MaybeNode = Either<NodeEntity, DegradedNode>;
 
 struct MissingNode {
-    uid: String
+    uid: String,
 }
-
 
 /// Node representing a file or folder in the system, or missing node.
 ///
@@ -97,14 +96,14 @@ type MaybeMissingNode = Either<NodeEntity, MissingNode>;
 enum NodeType {
     File,
     Folder,
-   /// Album is a special type available only in Photos section.
-   ///
-   /// The SDK does not support any album-specific actions, but it can load
-   /// the node and do general operations on it, such as sharing. However,
-   /// you should not rely on that anything can work. It is not guaranteed that
-   /// and in the future specific Photos SDK will support albums.
-   ///
-   /// @deprecated This type is not part of the public API.
+    /// Album is a special type available only in Photos section.
+    ///
+    /// The SDK does not support any album-specific actions, but it can load
+    /// the node and do general operations on it, such as sharing. However,
+    /// you should not rely on that anything can work. It is not guaranteed that
+    /// and in the future specific Photos SDK will support albums.
+    ///
+    /// @deprecated This type is not part of the public API.
     Album,
 }
 impl NodeType {
@@ -120,14 +119,16 @@ impl NodeType {
 /// Invalid name error represents node name that includes invalid characters.
 #[derive(Debug)]
 struct InvalidNameError {
-   /// Placeholder instead of node name that client can use to display.
+    /// Placeholder instead of node name that client can use to display.
     name: String,
     error: String,
 }
 impl std::fmt::Display for InvalidNameError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("InvalidNameError: {} {}", self.error, self.name))
+        f.write_fmt(format_args!(
+            "InvalidNameError: {} {}",
+            self.error, self.name
+        ))
     }
 }
 impl Error for InvalidNameError {}
-

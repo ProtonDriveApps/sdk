@@ -1,5 +1,5 @@
-use chrono::{DateTime, Utc};
 use crate::utils::either::Either;
+use chrono::{DateTime, Utc};
 
 pub(crate) trait Key {
     fn get_version(&self) -> u64;

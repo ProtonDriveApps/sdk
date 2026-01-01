@@ -9,7 +9,10 @@ pub struct UnverifiedAuthorError {
 
 impl std::fmt::Display for UnverifiedAuthorError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.write_fmt(format_args!("Unverified Author: {} {}", self.error, self.claimed_author))
+        f.write_fmt(format_args!(
+            "Unverified Author: {} {}",
+            self.error, self.claimed_author
+        ))
     }
 }
 
