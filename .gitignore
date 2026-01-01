@@ -22,6 +22,12 @@ cache*.sqlite
 # VS Code
 .vs
 
+# JetBrains
+.idea
+
+# Ignore build directory
+rust/target
+
 # Tests
 tests/storage
 
