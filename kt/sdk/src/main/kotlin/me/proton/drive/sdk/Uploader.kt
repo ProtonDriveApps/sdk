@@ -36,7 +36,7 @@ class Uploader internal constructor(
             onRead = channel::read,
             onProgress = { progressUpdate ->
                 with(progressUpdate) {
-                    log(DEBUG, "progress: bytesCompleted/bytesInTotal")
+                    log(DEBUG, "progress: $bytesCompleted/$bytesInTotal")
                     progress(bytesCompleted, bytesInTotal)
                 }
             },
