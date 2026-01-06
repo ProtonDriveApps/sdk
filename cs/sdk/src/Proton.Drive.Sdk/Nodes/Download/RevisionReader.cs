@@ -107,7 +107,8 @@ internal sealed partial class RevisionReader : IDisposable
                 {
                     try
                     {
-                        await Task.WhenAll(downloadTasks).ConfigureAwait(false);
+                        // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
+                        await Task.WhenAll(downloadTasks).ContinueWith(task => task.Exception?.Handle(_ => true), TaskContinuationOptions.NotOnRanToCompletion).ConfigureAwait(false);
                     }
                     finally
                     {
@@ -129,7 +130,7 @@ internal sealed partial class RevisionReader : IDisposable
                 }
             }
         }
-        catch (Exception ex) when (TelemetryErrorResolver.GetDownloadErrorFromException(ex) is { } error)
+        catch (Exception ex) when (!cancellationToken.IsCancellationRequested && TelemetryErrorResolver.GetDownloadErrorFromException(ex) is { } error)
         {
             downloadEvent.Error = error;
             downloadEvent.OriginalError = ex.FlattenMessageWithExceptionType();
