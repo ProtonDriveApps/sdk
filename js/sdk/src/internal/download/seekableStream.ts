@@ -1,4 +1,4 @@
-interface UnderlyingSeekableSource extends UnderlyingDefaultSource<Uint8Array> {
+export interface UnderlyingSeekableSource extends UnderlyingDefaultSource<Uint8Array> {
     seek: (position: number) => void | Promise<void>;
 }
 
@@ -22,7 +22,10 @@ interface UnderlyingSeekableSource extends UnderlyingDefaultSource<Uint8Array> {
 export class SeekableReadableStream extends ReadableStream<Uint8Array> {
     private seekCallback: (position: number) => void | Promise<void>;
 
-    constructor({ seek, ...underlyingSource }: UnderlyingSeekableSource, queuingStrategy?: QueuingStrategy<Uint8Array>) {
+    constructor(
+        { seek, ...underlyingSource }: UnderlyingSeekableSource,
+        queuingStrategy?: QueuingStrategy<Uint8Array>,
+    ) {
         super(underlyingSource, queuingStrategy);
         this.seekCallback = seek;
     }
@@ -160,42 +163,41 @@ export class BufferedSeekableStream extends SeekableReadableStream {
     async seek(position: number): Promise<void> {
         const endOfBufferPosition = this.currentPosition + (this.buffer.length - this.bufferPosition);
 
-        if (position > endOfBufferPosition) {
+        if (position > endOfBufferPosition || position < this.currentPosition) {
             this.buffer = new Uint8Array(0);
             this.bufferPosition = 0;
-        } else if (position < this.currentPosition) {
-            this.buffer = new Uint8Array(0);
-            this.bufferPosition = 0;
+
+            await super.seek(position);
+
+            if (this.reader) {
+                try {
+                    this.reader.releaseLock();
+                } catch (error) {
+                    // Streams API spec-compliant behavior: releaseLock() only throws TypeError when
+                    // there are pending read requests. This can occur due to timing differences between
+                    // when read() promises resolve on the client side vs when the browser's internal
+                    // stream mechanism fully completes.
+                    //
+                    // This manifests more frequently in Firefox than Chrome due to implementation
+                    // timing differences, but both are following the spec correctly.
+                    //
+                    // References:
+                    // - https://github.com/whatwg/streams/issues/1000
+                    // - https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader/releaseLock
+                    //
+                    // Safe to ignore since we're acquiring a new reader immediately after.
+                    if (!(error instanceof TypeError)) {
+                        throw error;
+                    }
+                }
+            }
+            this.reader = super.getReader();
+            this.streamClosed = false;
         } else {
+            // Position is within buffer range, just update buffer position.
             this.bufferPosition += position - this.currentPosition;
         }
 
-        await super.seek(position);
-
-        if (this.reader) {
-            try {
-                this.reader.releaseLock();
-            } catch (error) {
-                // Streams API spec-compliant behavior: releaseLock() only throws TypeError when
-                // there are pending read requests. This can occur due to timing differences between
-                // when read() promises resolve on the client side vs when the browser's internal
-                // stream mechanism fully completes.
-                //
-                // This manifests more frequently in Firefox than Chrome due to implementation
-                // timing differences, but both are following the spec correctly.
-                //
-                // References:
-                // - https://github.com/whatwg/streams/issues/1000
-                // - https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader/releaseLock
-                //
-                // Safe to ignore since we're acquiring a new reader immediately after.
-                if (!(error instanceof TypeError)) {
-                    throw error;
-                }
-            }
-        }
-        this.reader = super.getReader();
-        this.streamClosed = false;
         this.currentPosition = position;
     }
 }
