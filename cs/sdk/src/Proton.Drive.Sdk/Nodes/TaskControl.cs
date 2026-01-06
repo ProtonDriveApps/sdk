@@ -7,6 +7,7 @@ internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITas
     private TaskCompletionSource? _resumeSignalSource;
     private TaskCompletionSource<T> _pauseExceptionSignalSource = new();
     private CancellationTokenSource _pauseCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+    private bool _isDisposed;
 
     public bool IsPaused => _resumeSignalSource is { Task.IsCompleted: false } && !IsCanceled;
     public bool IsCanceled => CancellationToken.IsCancellationRequested;
@@ -18,6 +19,11 @@ internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITas
 
     public void Pause()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         if (IsPaused)
         {
             return;
@@ -25,6 +31,11 @@ internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITas
 
         lock (_pauseLock)
         {
+            if (_isDisposed)
+            {
+                return;
+            }
+
             if (IsPaused)
             {
                 return;
@@ -54,6 +65,11 @@ internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITas
 
     public void Resume()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         if (!IsPaused)
         {
             return;
@@ -61,6 +77,11 @@ internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITas
 
         lock (_pauseLock)
         {
+            if (_isDisposed)
+            {
+                return;
+            }
+
             if (!IsPaused)
             {
                 return;
@@ -103,7 +124,7 @@ internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITas
             {
                 await WaitWhilePausedAsync().ConfigureAwait(false);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (CancellationToken.IsCancellationRequested)
             {
                 throw;
             }
@@ -117,6 +138,27 @@ internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITas
 
     public void Dispose()
     {
-        _pauseCancellationTokenSource.Dispose();
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        lock (_pauseLock)
+        {
+            var pauseExceptionSignal = _pauseExceptionSignalSource.Task;
+
+            if (pauseExceptionSignal.IsFaulted && pauseExceptionSignal.Exception.InnerException is { } innerException)
+            {
+                _resumeSignalSource?.TrySetException(innerException);
+            }
+            else
+            {
+                _resumeSignalSource?.TrySetCanceled();
+            }
+
+            _pauseCancellationTokenSource.Dispose();
+
+            _isDisposed = true;
+        }
     }
 }

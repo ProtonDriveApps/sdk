@@ -160,17 +160,10 @@ internal sealed partial class RevisionWriter : IDisposable
                         await RegisterNextCompletedBlockAsync(uploadTasks, blockUploadResults).ConfigureAwait(false);
                     }
                 }
-                catch
+                catch when (uploadTasks.Count > 0)
                 {
-                    try
-                    {
-                        await Task.WhenAll(uploadTasks).ConfigureAwait(false);
-                    }
-                    catch
-                    {
-                        // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
-                    }
-
+                    // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
+                    await Task.WhenAll(uploadTasks).ContinueWith(task => task.Exception?.Handle(_ => true), TaskContinuationOptions.NotOnRanToCompletion).ConfigureAwait(false);
                     throw;
                 }
             }
@@ -199,8 +192,14 @@ internal sealed partial class RevisionWriter : IDisposable
         }
         catch (Exception ex) when (!taskControl.IsCanceled)
         {
-            uploadEvent.Error = TelemetryErrorResolver.GetUploadErrorFromException(ex);
-            uploadEvent.OriginalError = ex.GetBaseException().ToString();
+            var exception = taskControl.PauseExceptionSignal.Exception?.InnerException ?? ex;
+
+            if (TelemetryErrorResolver.GetUploadErrorFromException(exception) is { } uploadError)
+            {
+                uploadEvent.Error = uploadError;
+                uploadEvent.OriginalError = ex.FlattenMessageWithExceptionType();
+            }
+
             throw;
         }
         finally
@@ -237,7 +236,7 @@ internal sealed partial class RevisionWriter : IDisposable
             return 0;
         }
 
-        // We care about very small files in metrics, thus we handle explicitely
+        // We care about very small files in metrics, thus we handle explicitly
         // the very small files so they appear correctly in metrics.
         if (size < 4096)
         {
@@ -257,6 +256,13 @@ internal sealed partial class RevisionWriter : IDisposable
         var blockUploadResult = await uploadTasks.Dequeue().ConfigureAwait(false);
 
         blockUploadResults.Add(blockUploadResult);
+    }
+
+    private static bool IsResumableError(Exception ex)
+    {
+        return ex is not ProtonApiException { TransportCode: >= 400 and < 500 }
+            and not NodeKeyAndSessionKeyMismatchException
+            and not SessionKeyAndDataPacketMismatchException;
     }
 
     private async ValueTask<BlockUploadResult> UploadContentBlockAsync(
@@ -306,13 +312,6 @@ internal sealed partial class RevisionWriter : IDisposable
                 }
             }
         }
-
-        static bool IsResumableError(Exception ex)
-        {
-            return ex is not ProtonApiException { TransportCode: > 400 and < 500 }
-                and not NodeKeyAndSessionKeyMismatchException
-                and not SessionKeyAndDataPacketMismatchException;
-        }
     }
 
     private async ValueTask<BlockUploadResult> UploadThumbnailBlockAsync(Thumbnail thumbnail, TaskControl<UploadResult> taskControl)
@@ -327,7 +326,7 @@ internal sealed partial class RevisionWriter : IDisposable
                     _membershipAddress.Id,
                     thumbnail,
                     ct),
-                exceptionTriggersPause: _ => true).ConfigureAwait(false);
+                exceptionTriggersPause: IsResumableError).ConfigureAwait(false);
         }
         finally
         {
@@ -347,6 +346,10 @@ internal sealed partial class RevisionWriter : IDisposable
         int prefixLength,
         TaskControl<UploadResult> taskControl)
     {
+        // Prevent reading source content stream while paused. If pausing happens when execution has already passed further,
+        // content stream might be read after pausing is signaled to the external observer.
+        await taskControl.WaitWhilePausedAsync().ConfigureAwait(false);
+
         var plainDataPrefixBuffer = ArrayPool<byte>.Shared.Rent(prefixLength);
         try
         {

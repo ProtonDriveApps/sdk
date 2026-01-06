@@ -56,7 +56,7 @@ public sealed partial class UploadController : IAsyncDisposable
     {
         try
         {
-            var draftExists = _revisionUidTask.IsCompletedSuccessfully;
+            var draftExists = _revisionUidTask.IsCompletedSuccessfully && !_uploadTask.IsCompletedSuccessfully;
             if (!draftExists)
             {
                 return;
@@ -75,7 +75,24 @@ public sealed partial class UploadController : IAsyncDisposable
         }
         finally
         {
+            var uploadTaskIsCompleted = _uploadTask.IsCompleted;
+
             _taskControl.Dispose();
+
+            // If the upload task is not yet completed, disposal of task control unblocks it from being paused.
+            // The unblocked upload task will complete unsuccessfully (either in faulted or cancelled state).
+            if (!uploadTaskIsCompleted)
+            {
+                try
+                {
+                    await _uploadTask.ConfigureAwait(false);
+                }
+                catch
+                {
+                    // Upon upload controller disposal, the upload task is not expected to be observed,
+                    // so we catch here to prevent escalation of unhandled exception.
+                }
+            }
         }
     }
 

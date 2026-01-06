@@ -12,20 +12,24 @@ internal static class TelemetryErrorResolver
     {
         return exception switch
         {
-            // Not reported as download error
-            OperationCanceledException => null,
+            // Reported as download success
             CompletedDownloadManifestVerificationException => null,
 
             // Download errors
             NodeKeyAndSessionKeyMismatchException or SessionKeyAndDataPacketMismatchException => DownloadError.IntegrityError,
             FileContentsDecryptionException => DownloadError.DecryptionError,
             CryptographicException => DownloadError.DecryptionError,
+
             HttpRequestException { HttpRequestError: HttpRequestError.NameResolutionError or HttpRequestError.ConnectionError or HttpRequestError.ProxyTunnelError } => DownloadError.NetworkError,
             HttpRequestException { HttpRequestError: HttpRequestError.InvalidResponse or HttpRequestError.ResponseEnded } => DownloadError.ServerError,
-            ProtonApiException { TransportCode: (int)HttpStatusCode.RequestTimeout } => DownloadError.ServerError,
+            HttpRequestException { StatusCode: HttpStatusCode.RequestTimeout } => DownloadError.ServerError,
+            HttpRequestException { StatusCode: >= (HttpStatusCode)400 and < (HttpStatusCode)500 } => DownloadError.HttpClientSideError,
+            HttpRequestException { StatusCode: >= (HttpStatusCode)500 and < (HttpStatusCode)600 } => DownloadError.ServerError,
+
             ProtonApiException { TransportCode: (int)HttpStatusCode.TooManyRequests } => DownloadError.RateLimited,
             ProtonApiException { TransportCode: >= 400 and < 500 } => DownloadError.HttpClientSideError,
-            ProtonApiException { TransportCode: >= 500 and < 600 } => DownloadError.ServerError,
+
+            // TODO: How to better distinguish network errors, that were subject to retry in the HTTP request handler, but resulted in TimeoutException?
             TimeoutException => DownloadError.ServerError,
             _ => DownloadError.Unknown,
         };
@@ -35,13 +39,20 @@ internal static class TelemetryErrorResolver
     {
         return exception switch
         {
+            // Upload errors
             NodeKeyAndSessionKeyMismatchException or SessionKeyAndDataPacketMismatchException => UploadError.IntegrityError,
+
             HttpRequestException { HttpRequestError: HttpRequestError.NameResolutionError or HttpRequestError.ConnectionError or HttpRequestError.ProxyTunnelError } => UploadError.NetworkError,
             HttpRequestException { HttpRequestError: HttpRequestError.InvalidResponse or HttpRequestError.ResponseEnded } => UploadError.ServerError,
-            ProtonApiException { TransportCode: (int)HttpStatusCode.RequestTimeout } => UploadError.ServerError,
+            HttpRequestException { StatusCode: HttpStatusCode.RequestTimeout } => UploadError.ServerError,
+            HttpRequestException { StatusCode: >= (HttpStatusCode)400 and < (HttpStatusCode)500 } => UploadError.HttpClientSideError,
+            HttpRequestException { StatusCode: >= (HttpStatusCode)500 and < (HttpStatusCode)600 } => UploadError.ServerError,
+
             ProtonApiException { TransportCode: (int)HttpStatusCode.TooManyRequests } => UploadError.RateLimited,
             ProtonApiException { TransportCode: >= 400 and < 500 } => UploadError.HttpClientSideError,
-            ProtonApiException { TransportCode: >= 500 and < 600 } => UploadError.ServerError,
+
+            // TODO: How to better distinguish network errors, that were subject to retry in the HTTP request handler, but resulted in TimeoutException?
+            TimeoutException => UploadError.ServerError,
             _ => UploadError.Unknown,
         };
     }

@@ -37,7 +37,7 @@ internal static class InteropErrorConverter
                 error.SecondaryCode = ex.StatusCode is not null ? (long)ex.StatusCode : 0;
                 break;
 
-            case TimeoutRejectedException:
+            case TimeoutException or TimeoutRejectedException:
                 error.Domain = ErrorDomain.Transport;
                 error.PrimaryCode = (long)HttpRequestError.ConnectionError;
                 break;

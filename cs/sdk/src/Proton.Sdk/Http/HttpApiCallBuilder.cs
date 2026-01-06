@@ -1,4 +1,6 @@
-﻿using System.Net.Http.Json;
+﻿using System;
+using System.Net.Http.Json;
+using System.Runtime.ExceptionServices;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Proton.Sdk.Api;
@@ -91,9 +93,10 @@ internal readonly struct HttpApiCallBuilder<TSuccess, TFailure>
             return await responseMessage.Content.ReadFromJsonAsync(_successTypeInfo, cancellationToken)
                 .ConfigureAwait(false) ?? throw new JsonException();
         }
-        catch (OperationCanceledException e) when (e.InnerException is TimeoutException)
+        catch (OperationCanceledException e) when (e.InnerException is TimeoutException timeoutException)
         {
-            throw new TimeoutException("HTTP request timed out", e);
+            ExceptionDispatchInfo.Capture(timeoutException).Throw();
+            throw;  // This line is never reached
         }
     }
 }
