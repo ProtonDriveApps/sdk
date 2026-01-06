@@ -13,6 +13,8 @@ internal static class InteropDriveErrorConverter
     private const int NodeMetadataDecryptionErrorPrimaryCode = 2;
     private const int FileContentsDecryptionErrorPrimaryCode = 3;
     private const int UploadKeyMismatchErrorPrimaryCode = 4;
+    private const int ManifestSignatureVerificationErrorPrimaryCode = 5;
+    private const int ContentUploadIntegrityErrorPrimaryCode = 6;
 
     public static void SetDomainAndCodes(Error error, Exception exception)
     {
@@ -35,8 +37,14 @@ internal static class InteropDriveErrorConverter
                 error.PrimaryCode = UploadKeyMismatchErrorPrimaryCode;
                 break;
 
+            case DataIntegrityException:
+                error.Domain = ErrorDomain.DataIntegrity;
+                error.PrimaryCode = ManifestSignatureVerificationErrorPrimaryCode;
+                break;
+
             case IntegrityException:
                 error.Domain = ErrorDomain.DataIntegrity;
+                error.PrimaryCode = ContentUploadIntegrityErrorPrimaryCode;
                 break;
 
             case NodeWithSameNameExistsException e:
