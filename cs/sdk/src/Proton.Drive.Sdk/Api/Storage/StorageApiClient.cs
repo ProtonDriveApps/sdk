@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Mime;
+using System.Runtime.ExceptionServices;
 using Proton.Sdk.Api;
 using Proton.Sdk.Http;
 using Proton.Sdk.Serialization;
@@ -51,9 +52,10 @@ internal sealed class StorageApiClient(HttpClient defaultHttpClient, HttpClient 
 
             return await blobResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException e) when (e.InnerException is TimeoutException)
+        catch (OperationCanceledException e) when (e.InnerException is TimeoutException timeoutException)
         {
-            throw new TimeoutException("HTTP request timed out", e);
+            ExceptionDispatchInfo.Capture(timeoutException).Throw();
+            throw;  // This line is never reached
         }
     }
 }
