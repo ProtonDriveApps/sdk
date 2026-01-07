@@ -7,15 +7,16 @@ enum HttpClientRequestProcessor {
                                                      callbackPointer: callbackPointer)
             return -1
         }
-        let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
-        let weakDriveClient: WeakReference<ProtonDriveClient> = stateTypedPointer.takeUnretainedValue().state
+        let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, SDKClientProvider>>.fromOpaque(stateRawPointer)
+        let provider: SDKClientProvider = stateTypedPointer.takeUnretainedValue().state
 
-        let driveClient = ProtonDriveClient.unbox(callbackPointer: callbackPointer, releaseBox: {
-            // we don't release the stateTypedPointer by design — there might be some calls coming from the SDK racing with the client deallocation
-//            stateTypedPointer.release()
-        }, weakDriveClient: weakDriveClient)
-        guard let driveClient else { return -1 }
-        
+        guard
+            let driveClient = provider.get(callbackPointer: callbackPointer, releaseBox: {
+                // we don't release the stateTypedPointer by design — there might be some calls coming from the SDK racing with the client deallocation
+                // stateTypedPointer.release()
+            })
+        else { return -1 }
+
         let httpRequestData = Proton_Sdk_HttpRequest(byteArray: byteArray)
         
         // Create a boxed task with the HTTP work
@@ -62,7 +63,7 @@ enum HttpClientRequestProcessor {
     }
 
     fileprivate static func perform(
-        client: ProtonDriveClient,
+        client: ProtonSDKClient,
         httpRequestData: Proton_Sdk_HttpRequest,
         callbackPointer: Int
     ) async throws {
@@ -98,7 +99,7 @@ enum HttpClientRequestProcessor {
     /// the API calls are performed in a non-streaming way. both request body and response data are buffered in memory
     fileprivate static func callDriveApi(
         driveRelativePath: String,
-        client: ProtonDriveClient,
+        client: ProtonSDKClient,
         httpRequestData: Proton_Sdk_HttpRequest,
         callbackPointer: Int
     ) async throws {
@@ -165,7 +166,7 @@ enum HttpClientRequestProcessor {
 
     /// the storage upload calls are using stream to upload request body, but cache the whole response in memory
     fileprivate static func uploadToStorage(
-        client: ProtonDriveClient,
+        client: ProtonSDKClient,
         httpRequestData: Proton_Sdk_HttpRequest,
         callbackPointer: Int
     ) async throws {
@@ -224,7 +225,7 @@ enum HttpClientRequestProcessor {
 
     /// the download upload calls are caching the whole request body in-memory, but stream the response data
     fileprivate static func downloadFromStorage(
-        client: ProtonDriveClient,
+        client: ProtonSDKClient,
         httpRequestData: Proton_Sdk_HttpRequest,
         callbackPointer: Int
     ) async throws {

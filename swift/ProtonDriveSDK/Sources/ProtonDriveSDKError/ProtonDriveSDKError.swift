@@ -59,13 +59,15 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
         case wrongProto(message: String)
         case wrongSDKResponse(message: String)
         case wrongResult(message: String)
-        
+        case incorrectIDFormat(id: String)
+
         var typeName: String {
             switch self {
             case .noCancellationTokenForIdentifier(let operation): return "NoCancellationTokenFor\(operation.capitalized.replacingOccurrences(of: " ", with: ""))"
             case .wrongProto: return "WrongProtoMessageType"
             case .wrongSDKResponse: return "WrongSDKResponseType"
             case .wrongResult: return "WrongSDKRequestResult"
+            case .incorrectIDFormat: return "IncorrectIDFormat"
             }
         }
         
@@ -75,6 +77,7 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
             case .wrongProto(let message): return message
             case .wrongSDKResponse(let message): return message
             case .wrongResult(let message): return message
+            case .incorrectIDFormat(let id): return "ID \(id) is not in the correct format"
             }
         }
     }
