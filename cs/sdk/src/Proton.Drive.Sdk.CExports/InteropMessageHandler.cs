@@ -97,6 +97,36 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DownloadControllerFree
                     => InteropDownloadController.HandleFree(request.DownloadControllerFree),
 
+                Request.PayloadOneofCase.DrivePhotosClientCreate
+                    => InteropProtonPhotosClient.HandleCreate(request.DrivePhotosClientCreate, bindingsHandle),
+
+                Request.PayloadOneofCase.DrivePhotosClientCreateFromSession
+                    => InteropProtonPhotosClient.HandleCreate(request.DrivePhotosClientCreateFromSession),
+
+                Request.PayloadOneofCase.DrivePhotosClientFree
+                    => InteropProtonPhotosClient.HandleFree(request.DrivePhotosClientFree),
+
+                Request.PayloadOneofCase.DrivePhotosClientGetPhotosRoot
+                    => await InteropProtonPhotosClient.HandleGetPhotosRootAsync(request.DrivePhotosClientGetPhotosRoot).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientEnumeratePhotosThumbnails
+                    => await InteropProtonPhotosClient.HandleEnumeratePhotosThumbnailsAsync(request.DrivePhotosClientEnumeratePhotosThumbnails).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientEnumeratePhotosTimeline
+                    => await InteropProtonPhotosClient.HandleEnumeratePhotosTimelineAsync(request.DrivePhotosClientEnumeratePhotosTimeline).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientGetPhotoDownloader
+                    => await InteropProtonPhotosClient.HandleGetPhotosDownloaderAsync(request.DrivePhotosClientGetPhotoDownloader).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientDownloadToStream
+                    => InteropPhotosDownloader.HandleDownloadToStream(request.DrivePhotosClientDownloadToStream, bindingsHandle),
+
+                Request.PayloadOneofCase.DrivePhotosClientDownloadToFile
+                    => InteropPhotosDownloader.HandleDownloadToFile(request.DrivePhotosClientDownloadToFile, bindingsHandle),
+
+                Request.PayloadOneofCase.DrivePhotosClientDownloaderFree
+                    => InteropPhotosDownloader.HandleFree(request.DrivePhotosClientDownloaderFree),
+
                 Request.PayloadOneofCase.None or _
                     => throw new ArgumentException($"Unknown request type: {request.PayloadCase}", nameof(requestBytes)),
             };

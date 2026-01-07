@@ -163,6 +163,56 @@ extension Message {
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .downloadControllerFree(request)
             }
+        
+        case let request as Proton_Drive_Sdk_DrivePhotosClientCreateRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientCreate(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientCreateFromSessionRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientCreateFromSession(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientFreeRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientFree(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientGetPhotosRootRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientGetPhotosRoot(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientEnumeratePhotosThumbnailsRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientEnumeratePhotosThumbnails(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientEnumeratePhotosTimelineRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientEnumeratePhotosTimeline(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientGetPhotoDownloaderRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientGetPhotoDownloader(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientDownloadToFileRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientDownloadToFile(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientDownloadToStreamRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientDownloadToStream(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientDownloaderFreeRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientDownloaderFree(request)
+            }
 
         default:
             assertionFailure("Unknown request")

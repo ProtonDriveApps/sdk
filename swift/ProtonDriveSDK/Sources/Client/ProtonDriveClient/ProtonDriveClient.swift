@@ -3,7 +3,7 @@ import Foundation
 /// Main entry point for all SDK functionality.
 ///
 /// Create a single object of this class and use it to perform downloads, uploads and all other supported operations.
-public actor ProtonDriveClient: Sendable {
+public actor ProtonDriveClient: Sendable, ProtonSDKClient {
 
     private var clientHandle: ObjectHandle = 0
 
@@ -12,8 +12,8 @@ public actor ProtonDriveClient: Sendable {
     private var thumbnailsManager: DownloadThumbnailsManager!
 
     let logger: ProtonDriveSDK.Logger
-    private let recordMetricEventCallback: RecordMetricEventCallback
-    private let featureFlagProviderCallback: FeatureFlagProviderCallback
+    let recordMetricEventCallback: RecordMetricEventCallback
+    let featureFlagProviderCallback: FeatureFlagProviderCallback
 
     let httpClient: HttpClientProtocol
     let accountClient: AccountClientProtocol
@@ -65,9 +65,9 @@ public actor ProtonDriveClient: Sendable {
 
         // we pass the weak reference as the state because we don't want the interop layer
         // to prolong the client object existence
-        let weakSelf = WeakReference(value: self)
+        let provider = SDKClientProvider(client: self)
         let handle: Proton_Drive_Sdk_DriveClientCreateRequest.CallResultType = try await SDKRequestHandler.sendInteropRequest(
-            clientCreateRequest, state: weakSelf, includesLongLivedCallback: true, logger: logger
+            clientCreateRequest, state: provider, includesLongLivedCallback: true, logger: logger
         )
         assert(handle != 0)
         self.clientHandle = ObjectHandle(handle)
@@ -76,27 +76,6 @@ public actor ProtonDriveClient: Sendable {
         self.uploadsManager = UploadsManager(clientHandle: clientHandle, logger: logger)
         self.downloadsManager = DownloadsManager(clientHandle: clientHandle, logger: logger)
         self.thumbnailsManager = DownloadThumbnailsManager(clientHandle: clientHandle, logger: logger)
-    }
-
-    nonisolated func log(_ logEvent: LogEvent) {
-        logger.logCallback(logEvent)
-    }
-
-    nonisolated func record(_ metricEvent: MetricEvent) {
-        recordMetricEventCallback(metricEvent)
-    }
-
-    nonisolated func isFlagEnabled(_ flagName: String) -> Bool {
-        // Since the C# callback expects a synchronous return but our Swift callback has completion block,
-        // we need to block and wait for the async result using a semaphore
-        let semaphore = DispatchSemaphore(value: 0)
-        var result = false
-        featureFlagProviderCallback(flagName) { resultValue in
-            result = resultValue
-            semaphore.signal()
-        }
-        semaphore.wait()
-        return result
     }
 
     /// Convenience API for when you don't need a more granular control over the download (pause, resume etc.).

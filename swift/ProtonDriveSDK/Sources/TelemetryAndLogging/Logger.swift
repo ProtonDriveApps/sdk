@@ -33,12 +33,12 @@ let cCompatibleLogCallback: CCallback = { statePointer, byteArray in
         return
     }
     
-    let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
-    let weakDriveClient = stateTypedPointer.takeUnretainedValue().state
-    
-    guard let driveClient = weakDriveClient.value else {
+    let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, SDKClientProvider>>.fromOpaque(stateRawPointer)
+    let provider = stateTypedPointer.takeUnretainedValue().state
+
+    guard let driveClient = provider.get() else {
         // we don't release the stateTypedPointer by design — there might be some calls coming from the SDK racing with the client deallocation
-//        stateTypedPointer.release()
+        // stateTypedPointer.release()
         return
     }
 

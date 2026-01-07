@@ -38,6 +38,17 @@ message Request {
         DownloadControllerPauseRequest download_controller_pause = 1206;
         DownloadControllerResumeRequest download_controller_resume = 1207;
         DownloadControllerFreeRequest download_controller_free = 1208;
+
+        DrivePhotosClientCreateRequest drive_photos_client_create = 1300;
+        DrivePhotosClientCreateFromSessionRequest drive_photos_client_create_from_session = 1301;
+        DrivePhotosClientFreeRequest drive_photos_client_free = 1302;
+        DrivePhotosClientGetPhotosRootRequest drive_photos_client_get_photos_root = 1303;
+        DrivePhotosClientEnumeratePhotosThumbnailsRequest drive_photos_client_enumerate_photos_thumbnails = 1304;
+        DrivePhotosClientGetPhotoDownloaderRequest drive_photos_client_get_photo_downloader = 1305;
+        DrivePhotosClientDownloadToStreamRequest drive_photos_client_download_to_stream = 1306;
+        DrivePhotosClientDownloadToFileRequest drive_photos_client_download_to_file = 1307;
+        DrivePhotosClientDownloaderFreeRequest drive_photos_client_downloader_free = 1308;
+        DrivePhotosClientEnumeratePhotosTimelineRequest drive_photos_client_enumerate_photos_timeline = 1309;
     };
 }
 
@@ -100,6 +111,26 @@ message FileNode {
     string media_type = 4;
     int64 total_size_on_cloud_storage = 5;
     FileRevision active_revision = 6;
+}
+
+message FolderNode {
+    string uid = 1;
+    string parent_uid = 2; // optional 
+    string tree_event_scope_id = 3;
+    string name = 4;
+    google.protobuf.Timestamp creation_time = 5;
+    google.protobuf.Timestamp trash_time = 6; // optional
+    AuthorResult name_author = 7;
+    AuthorResult author = 8;
+}
+
+message AuthorResult {
+    Author author = 1;
+    string signature_verification_error = 2;
+}
+
+message Author {
+    string email_address = 1; // optional 
 }
 
 message ProgressUpdate {
@@ -346,6 +377,111 @@ message DownloadControllerResumeRequest {
 // The response must not have a value.
 message DownloadControllerFreeRequest {
     int64 download_controller_handle = 1;
+}
+
+// Drive - Photos client 
+
+message DrivePhotosClientCreateRequest {
+    string base_url = 1;
+    string bindings_language = 2; // Optional
+
+    HttpClient http_client = 3;
+    
+    // Pointer to C function that will be called:
+    // void handle_account_request(intptr_t bindings_handle, ByteArray http_request, intptr_t sdk_handle)
+    //   bindings_handle: handle for the bindings
+    //   account_request: Protobuf message of type proton.drive.sdk.AccountRequest carrying the request data
+    //   sdk_handle: handle for the SDK
+    int64 account_request_action = 6;
+
+    string entity_cache_path = 7; // Optional
+    string secret_cache_path = 8; // Optional
+
+    proton.sdk.Telemetry telemetry = 9; // Optional
+
+    // Client UID, optional 
+    // If a null value is provided, the SDK automatically generates a UUID during initialization
+    string uid = 10;
+
+    // Pointer to C function that will be called to check feature flags:
+    // int is_feature_flag_enabled(intptr_t bindings_handle, ByteArray flag_name)
+    //   bindings_handle: handle for the bindings
+    //   flag_name: UTF-8 encoded feature flag name
+    //   returns: 0 for disabled, non-zero for enabled
+    int64 feature_enabled_function = 11; // Optional
+}
+
+message DrivePhotosClientCreateFromSessionRequest {
+    int64 session_handle = 1;
+
+    // Client UID, optional 
+    // If a null value is provided, the SDK automatically generates a UUID during initialization
+    string uid = 2;
+}
+
+// The response must not have a value.
+message DrivePhotosClientFreeRequest {
+    int64 client_handle = 1;
+}
+
+// The response message must be of type FolderNode
+message DrivePhotosClientGetPhotosRootRequest {
+    int64 client_handle = 1;
+    int64 cancellation_token_source_handle = 2;
+}
+
+// The response message must be of type FileThumbnailList.
+message  DrivePhotosClientEnumeratePhotosThumbnailsRequest {
+    int64 client_handle = 1;
+    repeated string photo_uids = 2;
+    ThumbnailType type = 3;
+    int64 cancellation_token_source_handle = 4;
+}
+
+// The response message must be of type PhotosTimelineList.
+message DrivePhotosClientEnumeratePhotosTimelineRequest {
+    int64 client_handle = 1;
+    string folder_uid = 2;
+    int64 cancellation_token_source_handle = 3;
+}
+
+message PhotosTimelineList {
+  repeated PhotosTimelineItem items = 1;
+}
+
+message PhotosTimelineItem {
+    string node_uid = 1;
+    google.protobuf.Timestamp capture_time = 2;
+}
+
+// The response value must be an Int64Value carrying a handle to an instance of PhotosDownloader.
+message DrivePhotosClientGetPhotoDownloaderRequest {
+    int64 client_handle = 1;
+    string photo_uid = 2;
+    int64 cancellation_token_source_handle = 3;
+}
+
+// Photo downloader 
+
+// The response value must be an Int64Value carrying a handle to an instance of DownloadController.
+message DrivePhotosClientDownloadToStreamRequest {
+    int64 downloader_handle = 1;
+    int64 write_action = 2; // C signature: void on_stream_operation(intptr_t bindings_handle, ByteArray buffer, intptr_t sdk_handle);
+    int64 progress_action = 3; // See array_action in C header file for signature
+    int64 cancellation_token_source_handle = 4;
+}
+
+// The response value must be an Int64Value carrying a handle to an instance of DownloadController.
+message DrivePhotosClientDownloadToFileRequest {
+    int64 downloader_handle = 1;
+    string file_path = 2;
+    int64 progress_action = 3; // See array_action in C header file for signature
+    int64 cancellation_token_source_handle = 4;
+}
+
+// The response must not have a value.
+message DrivePhotosClientDownloaderFreeRequest  {
+    int64 file_downloader_handle = 1;
 }
 
 enum VolumeType {

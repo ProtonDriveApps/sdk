@@ -188,6 +188,20 @@ let sdkResponseCallbackWithState: CCallback = { statePointer, responseArray in
             }
             uploadResultBox.resume(returning: unpackedValue)
 
+        case .value(let value) where value.isA(Proton_Drive_Sdk_PhotosTimelineList.self):
+            let unpackedValue = try Proton_Drive_Sdk_PhotosTimelineList(unpackingAny: value)
+            guard let uploadResultBox = box as? any Resumable<Proton_Drive_Sdk_PhotosTimelineList> else {
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Received unexpected state in the response. We expected Resumable<Proton_Drive_Sdk_PhotosTimelineList>, we got \(type(of: box))"))
+            }
+            uploadResultBox.resume(returning: unpackedValue)
+
+        case .value(let value) where value.isA(Proton_Drive_Sdk_FolderNode.self):
+            let unpackedValue = try Proton_Drive_Sdk_FolderNode(unpackingAny: value)
+            guard let resultBox = box as? any Resumable<Proton_Drive_Sdk_FolderNode> else {
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Received unexpected state in the response. We expected Resumable<Proton_Drive_Sdk_FolderNode>, we got \(type(of: box))"))
+            }
+            resultBox.resume(returning: unpackedValue)
+
         case .value: // unknown value type
             throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unknown SDK call response value type"))
 
