@@ -41,6 +41,13 @@ internal static class InteropDownloadController
         return null;
     }
 
+    public static IMessage? HandleIsDownloadCompleteWithVerificationIssue(DownloadControllerIsDownloadCompleteWithVerificationIssueRequest request)
+    {
+        var downloadController = Interop.GetFromHandle<DownloadController>(request.DownloadControllerHandle);
+
+        return new BoolValue { Value = downloadController.GetIsDownloadCompleteWithVerificationIssue() };
+    }
+
     public static IMessage? HandleFree(DownloadControllerFreeRequest request)
     {
         Interop.FreeHandle<DownloadController>(request.DownloadControllerHandle);

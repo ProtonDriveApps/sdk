@@ -82,6 +82,9 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DownloadControllerIsPaused
                     => InteropDownloadController.HandleIsPaused(request.DownloadControllerIsPaused),
 
+                Request.PayloadOneofCase.DownloadControllerIsDownloadCompleteWithVerificationIssue
+                    => InteropDownloadController.HandleIsDownloadCompleteWithVerificationIssue(request.DownloadControllerIsDownloadCompleteWithVerificationIssue),
+
                 Request.PayloadOneofCase.DownloadControllerAwaitCompletion
                     => await InteropDownloadController.HandleAwaitCompletion(request.DownloadControllerAwaitCompletion).ConfigureAwait(false),
 

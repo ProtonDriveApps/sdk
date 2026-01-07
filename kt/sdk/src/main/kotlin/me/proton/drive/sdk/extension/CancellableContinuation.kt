@@ -1,6 +1,7 @@
 package me.proton.drive.sdk.extension
 
 import kotlinx.coroutines.CancellableContinuation
+import me.proton.drive.sdk.converter.BooleanConverter
 import me.proton.drive.sdk.converter.FileThumbnailListConverter
 import me.proton.drive.sdk.converter.IntConverter
 import me.proton.drive.sdk.converter.LongConverter
@@ -23,6 +24,12 @@ fun CancellableContinuation<Int>.toIntResponse(): ResponseCallback =
 
 val IntResponseCallback: (CancellableContinuation<Int>) -> ResponseCallback =
     CancellableContinuation<Int>::toIntResponse
+
+fun CancellableContinuation<Boolean>.toBooleanResponse(): ResponseCallback =
+    ContinuationValueOrErrorResponse(this, BooleanConverter())
+
+val BooleanResponseCallback: (CancellableContinuation<Boolean>) -> ResponseCallback =
+    CancellableContinuation<Boolean>::toBooleanResponse
 
 fun CancellableContinuation<Long>.toLongResponse(): ResponseCallback =
     ContinuationValueOrErrorResponse(this, LongConverter())
