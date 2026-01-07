@@ -23,6 +23,7 @@ internal sealed class InteropStream : Stream
 
     public InteropStream(nint bindingsHandle, InteropAction<nint, InteropArray<byte>, nint>? writeAction)
     {
+        _length = 0;
         _bindingsHandle = bindingsHandle;
         _readAction = null;
         _writeAction = writeAction;
@@ -51,33 +52,11 @@ internal sealed class InteropStream : Stream
         return new Int32Value { Value = bytesRead };
     }
 
-    public override void Flush()
-    {
-    }
-
-    public override Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
-    {
-        return base.CopyToAsync(destination, bufferSize, cancellationToken);
-    }
-
-    public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)
-    {
-        return base.BeginRead(buffer, offset, count, callback, state);
-    }
-
-    public override int ReadByte()
-    {
-        return base.ReadByte();
-    }
+    public override void Flush() { }
 
     public override int Read(byte[] buffer, int offset, int count)
     {
         return ReadAsync(buffer.AsMemory(offset, count)).AsTask().GetAwaiter().GetResult();
-    }
-
-    public override int Read(Span<byte> buffer)
-    {
-        return base.Read(buffer);
     }
 
     public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
