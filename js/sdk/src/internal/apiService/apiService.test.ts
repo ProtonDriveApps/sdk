@@ -97,7 +97,7 @@ describe('DriveAPIService', () => {
             // @ts-expect-error: Fetch is mock.
             const request = httpClient.fetchBlob.mock.calls[0][0];
             expect(request.method).toEqual(method);
-            expect(request.timeoutMs).toEqual(90000);
+            expect(request.timeoutMs).toEqual(600_000);
             expect(Array.from(request.headers.entries())).toEqual(
                 Array.from(
                     new Headers({
@@ -250,6 +250,17 @@ describe('DriveAPIService', () => {
     });
 
     describe('should handle subsequent errors', () => {
+        it('limit timeout errors', async () => {
+            const error = new Error('TimeoutError');
+            error.name = 'TimeoutError';
+
+            httpClient.fetchJson = jest.fn().mockRejectedValue(error);
+
+            await expect(api.get('test')).rejects.toThrow(error);
+            expect(httpClient.fetchJson).toHaveBeenCalledTimes(3);
+            expectSDKEvents();
+        });
+
         it('limit 429 errors', async () => {
             httpClient.fetchJson = jest
                 .fn()
@@ -363,6 +374,5 @@ describe('DriveAPIService', () => {
 
             await promise;
         });
-
     });
 });

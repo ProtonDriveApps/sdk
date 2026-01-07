@@ -13,13 +13,12 @@ export class UploadTelemetry {
         private sharesService: SharesService,
     ) {
         this.telemetry = telemetry;
-        this.logger = this.telemetry.getLogger('download');
+        this.logger = this.telemetry.getLogger('upload');
         this.sharesService = sharesService;
     }
 
     getLoggerForRevision(revisionUid: string) {
-        const logger = this.telemetry.getLogger('upload');
-        return new LoggerWithPrefix(logger, `revision ${revisionUid}`);
+        return new LoggerWithPrefix(this.logger, `revision ${revisionUid}`);
     }
 
     logBlockVerificationError(retryHelped: boolean) {
