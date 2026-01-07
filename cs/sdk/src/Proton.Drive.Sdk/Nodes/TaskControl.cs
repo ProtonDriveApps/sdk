@@ -43,7 +43,6 @@ internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITas
 
             _resumeSignalSource = new TaskCompletionSource();
 
-            // TODO: write unit test to verify that we reset the pause exception signal if and only if the previous one is faulted
             if (PauseExceptionSignal.IsFaulted)
             {
                 _pauseExceptionSignalSource = new TaskCompletionSource<T>();
@@ -55,7 +54,6 @@ internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITas
 
     public void PauseOnError(Exception ex)
     {
-        // TODO: write unit test to check that we don't use the new signal source set by the Pause() call
         var pauseExceptionSignalSource = _pauseExceptionSignalSource;
 
         Pause();
@@ -87,7 +85,6 @@ internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITas
                 return;
             }
 
-            // TODO: write unit test to justify that the fields must be set to the new state before signaling resume
             _pauseCancellationTokenSource.Dispose();
             _pauseCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(CancellationToken);
 
