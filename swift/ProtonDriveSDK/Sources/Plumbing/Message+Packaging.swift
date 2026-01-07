@@ -139,6 +139,11 @@ extension Message {
                 $0.payload = .downloadControllerIsPaused(request)
             }
 
+        case let request as Proton_Drive_Sdk_DownloadControllerIsDownloadCompleteWithVerificationIssueRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .downloadControllerIsDownloadCompleteWithVerificationIssue(request)
+            }
+
         case let request as Proton_Drive_Sdk_DownloadControllerAwaitCompletionRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .downloadControllerAwaitCompletion(request)

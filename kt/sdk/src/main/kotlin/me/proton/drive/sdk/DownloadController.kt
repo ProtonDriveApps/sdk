@@ -32,6 +32,11 @@ class DownloadController internal constructor(
         bridge.pause(handle)
     }
 
+    suspend fun isDownloadCompleteWithVerificationIssue(): Boolean {
+        log(DEBUG, "isDownloadCompleteWithVerificationIssue")
+        return bridge.isDownloadCompleteWithVerificationIssue(handle)
+    }
+
     override fun close() {
         log(DEBUG, "close")
         bridge.free(handle)

@@ -99,14 +99,17 @@ public actor ProtonDriveClient: Sendable {
         return result
     }
 
-    /// Convenience API for when you don't need a more granular control over the download (pause, resume etc.)
+    /// Convenience API for when you don't need a more granular control over the download (pause, resume etc.).
+    /// Returns `nil` in case of successful completed download.
+    /// Returns `VerificationIssue` object if the download completed, but could not be verified.
+    /// Throws error in case the download has not completed.
     public func downloadFile(
         revisionUid: SDKRevisionUid,
         destinationUrl: URL,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback,
         onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
-    ) async throws {
+    ) async throws -> VerificationIssue? {
         let operation = try await downloadFileOperation(
             revisionUid: revisionUid,
             destinationUrl: destinationUrl,

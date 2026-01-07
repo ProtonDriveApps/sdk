@@ -1,8 +1,10 @@
 package me.proton.drive.sdk.internal
 
+import me.proton.drive.sdk.extension.BooleanResponseCallback
 import me.proton.drive.sdk.extension.UnitResponseCallback
 import proton.drive.sdk.downloadControllerAwaitCompletionRequest
 import proton.drive.sdk.downloadControllerFreeRequest
+import proton.drive.sdk.downloadControllerIsDownloadCompleteWithVerificationIssueRequest
 import proton.drive.sdk.downloadControllerPauseRequest
 import proton.drive.sdk.downloadControllerResumeRequest
 
@@ -26,6 +28,14 @@ class JniDownloadController internal constructor() : JniBaseProtonDriveSdk() {
             downloadControllerHandle = handle
         }
     }
+
+    suspend fun isDownloadCompleteWithVerificationIssue(handle: Long): Boolean =
+        executeOnce("isDownloadCompleteWithVerificationIssue", BooleanResponseCallback) {
+            downloadControllerIsDownloadCompleteWithVerificationIssue =
+                downloadControllerIsDownloadCompleteWithVerificationIssueRequest {
+                    downloadControllerHandle = handle
+                }
+        }
 
     fun free(handle: Long) {
         dispatch("free") {

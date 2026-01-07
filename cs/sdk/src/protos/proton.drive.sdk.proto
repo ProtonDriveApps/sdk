@@ -33,10 +33,11 @@ message Request {
         DownloadToFileRequest download_to_file = 1201;
         FileDownloaderFreeRequest file_downloader_free = 1202;
         DownloadControllerIsPausedRequest download_controller_is_paused = 1203;
-        DownloadControllerAwaitCompletionRequest download_controller_await_completion = 1204;
-        DownloadControllerPauseRequest download_controller_pause = 1205;
-        DownloadControllerResumeRequest download_controller_resume = 1206;
-        DownloadControllerFreeRequest download_controller_free = 1207;
+        DownloadControllerIsDownloadCompleteWithVerificationIssueRequest download_controller_is_download_complete_with_verification_issue = 1204;
+        DownloadControllerAwaitCompletionRequest download_controller_await_completion = 1205;
+        DownloadControllerPauseRequest download_controller_pause = 1206;
+        DownloadControllerResumeRequest download_controller_resume = 1207;
+        DownloadControllerFreeRequest download_controller_free = 1208;
     };
 }
 
@@ -175,7 +176,7 @@ message DriveClientCreateFromSessionRequest {
     int64 session_handle = 1;
 }
 
-// The reponse must not have a value.
+// The response must not have a value.
 message DriveClientFreeRequest {
     int64 client_handle = 1;
 }
@@ -228,12 +229,12 @@ message UploadFromFileRequest {
     int64 cancellation_token_source_handle = 5;
 }
 
-// The reponse must not have a value.
+// The response must not have a value.
 message FileUploaderFreeRequest {
     int64 file_uploader_handle = 1;
 }
 
-// The reponse message must be of type BoolValue.
+// The response message must be of type BoolValue.
 message UploadControllerIsPausedRequest {
     int64 upload_controller_handle = 1;
 }
@@ -243,22 +244,22 @@ message UploadControllerAwaitCompletionRequest {
     int64 upload_controller_handle = 1;
 }
 
-// The reponse must not have a value.
+// The response must not have a value.
 message UploadControllerPauseRequest {
     int64 upload_controller_handle = 1;
 }
 
-// The reponse must not have a value.
+// The response must not have a value.
 message UploadControllerResumeRequest {
     int64 upload_controller_handle = 1;
 }
 
-// The reponse must not have a value.
+// The response must not have a value.
 message UploadControllerDisposeRequest {
     int64 upload_controller_handle = 1;
 }
 
-// The reponse must not have a value.
+// The response must not have a value.
 message UploadControllerFreeRequest {
     int64 upload_controller_handle = 1;
 }
@@ -312,32 +313,37 @@ message DownloadToFileRequest {
     int64 cancellation_token_source_handle = 4;
 }
 
-// The reponse must not have a value.
+// The response must not have a value.
 message FileDownloaderFreeRequest  {
     int64 file_downloader_handle = 1;
 }
 
-// The reponse message must be of type BoolValue.
+// The response message must be of type BoolValue.
 message DownloadControllerIsPausedRequest {
     int64 download_controller_handle = 1;
 }
 
-// The reponse must not have a value.
+// The response message must be of type BoolValue.
+message DownloadControllerIsDownloadCompleteWithVerificationIssueRequest {
+    int64 download_controller_handle = 1;
+}
+
+// The response must not have a value.
 message DownloadControllerAwaitCompletionRequest {
     int64 download_controller_handle = 1;
 }
 
-// The reponse must not have a value.
+// The response must not have a value.
 message DownloadControllerPauseRequest {
     int64 download_controller_handle = 1;
 }
 
-// The reponse must not have a value.
+// The response must not have a value.
 message DownloadControllerResumeRequest {
     int64 download_controller_handle = 1;
 }
 
-// The reponse must not have a value.
+// The response must not have a value.
 message DownloadControllerFreeRequest {
     int64 download_controller_handle = 1;
 }
