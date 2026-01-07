@@ -1,7 +1,10 @@
 import Foundation
 
+public typealias VerificationIssue = ProtonDriveSDKDataIntegrityError
+
 public enum DownloadOperationResult: Sendable {
     case succeeded
+    case completedWithVerificationError(VerificationIssue)
     case pausedOnError(Error)
     case failed(Error)
 }
@@ -33,11 +36,14 @@ public final class DownloadOperation: Sendable {
         self.onOperationDispose = onOperationDispose
     }
     
-    // Wait for download completion and uses operational resilience to retry if needed
+    // Wait for download completion and uses operational resilience to retry if needed.
+    /// Returns `nil` in case of successful completed download.
+    /// Returns `VerificationIssue` object if the download completed, but could not be verified.
+    /// Throws error in case the download has not completed.
     public func awaitDownloadWithResilience(
         operationalResilience: OperationalResilience,
         onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
-    ) async throws {
+    ) async throws -> VerificationIssue? {
         try await awaitDownloadWithResilience(
             retryCounter: 0, operationalResilience: operationalResilience, onPauseErrorReceived: onRetriableErrorReceived
         )
@@ -47,11 +53,14 @@ public final class DownloadOperation: Sendable {
         retryCounter: UInt,
         operationalResilience: OperationalResilience,
         onPauseErrorReceived: @Sendable @escaping (Error) -> Void
-    ) async throws {
+    ) async throws -> VerificationIssue? {
         let result = await awaitDownloadCompletion()
         switch result {
         case .succeeded:
-            return
+            return nil
+            
+        case .completedWithVerificationError(let error):
+            return error
         
         case .failed(let error):
             throw error
@@ -75,22 +84,39 @@ public final class DownloadOperation: Sendable {
             let awaitDownloadCompletionRequest = Proton_Drive_Sdk_DownloadControllerAwaitCompletionRequest.with {
                 $0.downloadControllerHandle = downloadControllerHandleForProtos
             }
-            
+
             try await SDKRequestHandler.send(awaitDownloadCompletionRequest, logger: logger) as Void
             return .succeeded
-        } catch let error {
-            do {
-                let isPaused = try await isPaused()
-                if isPaused {
-                    // if the operation is paused, we can try recovering from the error
-                    return .pausedOnError(error)
-                } else {
-                    return .failed(error)
-                }
-            } catch let isPausedError {
-                logger?.info("Checking isPaused status failed with: \(isPausedError.localizedDescription)", category: "DownloadOperation")
+        } catch {
+            return await processDownloadError(error)
+        }
+    }
+    
+    private func processDownloadError(_ error: Error) async -> DownloadOperationResult {
+        // handle the special case of the successful download of file that has not passed verification check
+        if let sdkError = error as? ProtonDriveSDKError,
+           let dataIntegrityError = sdkError.underlyingDataIntegrityError,
+           let isDownloadCompleteWithVerificationIssue = try? await isDownloadCompleteWithVerificationIssue() {
+            if isDownloadCompleteWithVerificationIssue {
+                logger?.info("DownloadCompleteWithVerificationIssue: \(dataIntegrityError.localizedDescription)",
+                             category: "DownloadOperation")
+                return .completedWithVerificationError(dataIntegrityError)
+            }
+        }
+
+        // check if operation can be resumed as the recovery flow
+        do {
+            guard try await isPaused() else {
+                // If the operation is not paused, we consider the operation failed. If we want to retry later, we will need a new operation.
                 return .failed(error)
             }
+            // If the operation is paused, we can try recovering from the error by resuming the operation
+            return .pausedOnError(error)
+
+        } catch let isPausedError {
+            logger?.info("Checking isPaused status failed with: \(isPausedError.localizedDescription)",
+                         category: "DownloadOperation")
+            return .failed(error)
         }
     }
     
@@ -113,6 +139,13 @@ public final class DownloadOperation: Sendable {
             $0.downloadControllerHandle = downloadControllerHandleForProtos
         }
         return try await SDKRequestHandler.send(isPausedRequest, logger: logger)
+    }
+    
+    public func isDownloadCompleteWithVerificationIssue() async throws -> Bool {
+        let isDownloadCompleteWithVerificationIssueRequest = Proton_Drive_Sdk_DownloadControllerIsDownloadCompleteWithVerificationIssueRequest.with {
+            $0.downloadControllerHandle = downloadControllerHandleForProtos
+        }
+        return try await SDKRequestHandler.send(isDownloadCompleteWithVerificationIssueRequest, logger: logger)
     }
     
     // a convenience API allowing for cancelling the operation through DownloadOperation instance

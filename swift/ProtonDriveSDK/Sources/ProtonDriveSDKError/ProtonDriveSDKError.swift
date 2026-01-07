@@ -179,6 +179,8 @@ public extension ProtonDriveSDKError {
         let nodeMetadataDecryptionErrorPrimaryCode = 2
         let fileContentsDecryptionErrorPrimaryCode = 3
         let uploadKeyMismatchErrorPrimaryCode = 4
+        let manifestSignatureVerificationErrorPrimaryCode = 5
+        let contentUploadIntegrityErrorPrimaryCode = 6
         switch primaryCode {
         case shareMetadataDecryptionErrorPrimaryCode:
             return .shareMetadata(message: message, context: context)
@@ -190,6 +192,10 @@ public extension ProtonDriveSDKError {
             return .fileContents(message: message, context: context)
         case uploadKeyMismatchErrorPrimaryCode:
             return .uploadKeyMismatch(message: message, context: context)
+        case manifestSignatureVerificationErrorPrimaryCode:
+            return .manifestSignatureVerification(message: message, context: context)
+        case contentUploadIntegrityErrorPrimaryCode:
+            return .contentUploadIntegrity(message: message, context: context)
         case unknownDecryptionErrorPrimaryCode:
             return .unknown(message: message, context: context)
         default:
@@ -208,6 +214,8 @@ public enum ProtonDriveSDKDataIntegrityError: LocalizedError {
     case nodeMetadata(message: String, part: NodeMetadataPart?, context: String?)
     case fileContents(message: String, context: String?)
     case uploadKeyMismatch(message: String, context: String?)
+    case manifestSignatureVerification(message: String, context: String?)
+    case contentUploadIntegrity(message: String, context: String?)
 
     public enum NodeMetadataPart: Int, Sendable {
         case key = 0
@@ -218,6 +226,14 @@ public enum ProtonDriveSDKDataIntegrityError: LocalizedError {
         case hashKey = 5
         case blockSignature = 6
         case thumbnail = 7
+    }
+
+    public var errorDescription: String? {
+        switch self {
+        case .unknown(let message, _), .shareMetadata(let message, _), .nodeMetadata(let message, _, _), .fileContents(let message, _),
+             .uploadKeyMismatch(let message, _), .manifestSignatureVerification(let message, _), .contentUploadIntegrity(let message, _):
+            return message
+        }
     }
 }
 
