@@ -55,6 +55,8 @@ const MAX_BLOCK_UPLOAD_RETRIES = 3;
  * that the upload process is efficient and does not overload the server.
  */
 export class StreamUploader {
+    protected maxUploadingBlocks = MAX_UPLOADING_BLOCKS;
+
     protected logger: Logger;
 
     protected digests: UploadDigests;
@@ -67,6 +69,7 @@ export class StreamUploader {
     protected ongoingUploads = new Map<
         string,
         {
+            index?: number;
             uploadPromise: Promise<void>;
             encryptedBlock: EncryptedBlock | EncryptedThumbnail;
         }
@@ -376,6 +379,7 @@ export class StreamUploader {
 
             const uploadKey = `block:${blockToken.index}`;
             this.ongoingUploads.set(uploadKey, {
+                index: blockToken.index,
                 uploadPromise: this.uploadBlock(blockToken, encryptedBlock, onProgress).finally(() => {
                     this.ongoingUploads.delete(uploadKey);
 
@@ -500,6 +504,13 @@ export class StreamUploader {
                     blockProgress = 0;
                 }
 
+                if (error instanceof Error && error.name === 'TimeoutError') {
+                    logger.warn(`Upload timeout, limiting upload capacity to 1 block`);
+                    await this.limitUploadCapacity(uploadToken.index);
+                    logger.warn(`Upload timeout, retrying`);
+                    continue;
+                }
+
                 if (
                     (error instanceof APIHTTPError && error.statusCode === HTTPErrorCode.NOT_FOUND) ||
                     error instanceof NotFoundAPIError
@@ -542,6 +553,27 @@ export class StreamUploader {
         logger.info(`Uploaded`);
     }
 
+    private async limitUploadCapacity(index: number) {
+        this.maxUploadingBlocks = 1;
+
+        // This ensures that when the upload is downscaled, all ongoing block
+        // uploads are waiting for their turn one by one.
+        try {
+            await waitForCondition(() => {
+                const ongoingIndexes = Array.from(this.ongoingUploads.values())
+                    .map(({ index: ongoingIndex }) => ongoingIndex)
+                    .filter((ongoingIndex) => ongoingIndex !== undefined);
+                ongoingIndexes.sort((a, b) => a - b);
+                return ongoingIndexes[0] === index;
+            }, this.abortController.signal);
+        } catch (error: unknown) {
+            if (error instanceof AbortError) {
+                return;
+            }
+            throw error;
+        }
+    }
+
     private async waitForBufferCapacity() {
         if (this.encryptedBlocks.size >= MAX_BUFFERED_BLOCKS) {
             try {
@@ -559,7 +591,7 @@ export class StreamUploader {
     }
 
     private async waitForUploadCapacityAndBufferedBlocks() {
-        while (this.ongoingUploads.size >= MAX_UPLOADING_BLOCKS) {
+        while (this.ongoingUploads.size >= this.maxUploadingBlocks) {
             await Promise.race(this.ongoingUploads.values().map(({ uploadPromise }) => uploadPromise));
         }
         try {

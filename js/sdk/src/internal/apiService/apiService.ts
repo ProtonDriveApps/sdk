@@ -16,7 +16,12 @@ const DEFAULT_TIMEOUT_MS = 30000;
 /**
  * The default timeout in milliseconds for all storage requests (file content).
  */
-const DEFAULT_STORAGE_TIMEOUT_MS = 90000;
+const DEFAULT_STORAGE_TIMEOUT_MS = 600_000;
+
+/**
+ * Maximum number of retry attempts for a timeout error.
+ */
+const MAX_TIMEOUT_ERROR_RETRY_ATTEMPTS = 3;
 
 /**
  * How many subsequent 429 errors are allowed before we stop further requests.
@@ -280,7 +285,7 @@ export class DriveAPIService {
                     return this.fetch(request, callback, attempt + 1);
                 }
 
-                if (error.name === 'TimeoutError') {
+                if (error.name === 'TimeoutError' && attempt + 1 < MAX_TIMEOUT_ERROR_RETRY_ATTEMPTS) {
                     this.logger.warn(`${request.method} ${request.url}: Timeout error, retrying`);
                     await waitSeconds(SERVER_ERROR_RETRY_DELAY_SECONDS);
                     return this.fetch(request, callback, attempt + 1);

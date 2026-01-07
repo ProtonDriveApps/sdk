@@ -159,10 +159,10 @@ export function initPhotoUploadModule(
         metadata: PhotoUploadMetadata,
         signal?: AbortSignal,
     ): Promise<PhotoFileUploader> {
-        await queue.waitForCapacity(signal);
+        await queue.waitForCapacity(metadata.expectedSize, signal);
 
         const onFinish = () => {
-            queue.releaseCapacity();
+            queue.releaseCapacity(metadata.expectedSize);
         };
 
         return new PhotoFileUploader(
