@@ -10,7 +10,9 @@ using Proton.Drive.Sdk.Http;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Drive.Sdk.Resilience;
+using Proton.Sdk;
 using Proton.Sdk.Addresses;
+using Proton.Sdk.Api;
 using Proton.Sdk.Drive;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
@@ -193,21 +195,52 @@ internal sealed partial class BlockUploader
         await using (nonDisposableDataPacketStream.ConfigureAwait(false))
         {
             await Policy
-                // TODO: add unit tests to verify the retry conditions
-                .Handle<Exception>(ex => !cancellationToken.IsCancellationRequested && ex is not FileContentsDecryptionException)
+                .Handle<Exception>(IsExceptionHandledByRetry)
                 .WaitAndRetryAsync(
                     retryCount: 1,
                     sleepDurationProvider: RetryPolicy.GetAttemptDelay,
-                    onRetry: (exception, _, retryNumber, _) =>
+                    onRetryAsync: async (exception, _, retryNumber, _) =>
                     {
-                        var revisionUid = new RevisionUid(request.VolumeId, request.LinkId, request.RevisionId);
-                        var blockIndex = request.Blocks.Count > 0 ? request.Blocks[0].Index : 0;
-                        LogBlobUploadRetry(blockIndex, revisionUid, retryNumber, exception.FlattenMessage());
+                        await WaitOnRetryAfterIfNeeded(exception).ConfigureAwait(false);
+
+                        var blockInfo = GetBlockInfoForRequest();
+                        LogBlobUploadRetry(blockInfo.BlockIndex, blockInfo.RevisionUid, retryNumber, exception.FlattenMessage());
                     })
                 .ExecuteAsync(ExecuteUploadAsync).ConfigureAwait(false);
         }
 
         return;
+
+        (int BlockIndex, RevisionUid RevisionUid) GetBlockInfoForRequest()
+        {
+            var blockIndex = request.Blocks.Count > 0 ? request.Blocks[0].Index : 0;
+            var revisionUid = new RevisionUid(request.VolumeId, request.LinkId, request.RevisionId);
+
+            return (blockIndex, revisionUid);
+        }
+
+        bool IsExceptionHandledByRetry(Exception ex)
+        {
+            return !cancellationToken.IsCancellationRequested
+                && ex is not FileContentsDecryptionException;
+        }
+
+        async Task WaitOnRetryAfterIfNeeded(Exception ex)
+        {
+            if (ex is TooManyRequestsException exception)
+            {
+                var currentTime = DateTimeOffset.UtcNow;
+
+                if (exception.RetryAfter is { } retryAfter && retryAfter > currentTime)
+                {
+                    var delayDuration = retryAfter - currentTime;
+                    var blockInfo = GetBlockInfoForRequest();
+
+                    LogBlobUploadWaitingForRetryAfter(blockInfo.BlockIndex, blockInfo.RevisionUid, delayDuration);
+                    await Task.Delay(delayDuration, cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
 
         async Task ExecuteUploadAsync()
         {
@@ -233,4 +266,9 @@ internal sealed partial class BlockUploader
         Level = LogLevel.Information,
         Message = "Retrying blob upload for block #{BlockIndex} of revision \"{RevisionUid}\" (retry number: {RetryNumber}). Previous attempt error: {ErrorMessage}")]
     private partial void LogBlobUploadRetry(int blockIndex, RevisionUid revisionUid, int retryNumber, string errorMessage);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Waiting {DelayDuration} before retrying blob upload for block #{BlockIndex} of revision \"{RevisionUid}\" due to 429 response")]
+    private partial void LogBlobUploadWaitingForRetryAfter(int blockIndex, RevisionUid revisionUid, TimeSpan delayDuration);
 }
