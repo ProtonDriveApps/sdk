@@ -9,7 +9,12 @@ extension InteropRequest {
 
 extension Proton_Drive_Sdk_DriveClientCreateRequest: InteropRequest {
     typealias CallResultType = ObjectHandle
-    typealias StateType = WeakReference<ProtonDriveClient>
+    typealias StateType = SDKClientProvider
+}
+
+extension Proton_Drive_Sdk_DrivePhotosClientCreateRequest: InteropRequest {
+    typealias CallResultType = ObjectHandle
+    typealias StateType = SDKClientProvider
 }
 
 extension Proton_Sdk_CancellationTokenSourceCreateRequest: InteropRequest {

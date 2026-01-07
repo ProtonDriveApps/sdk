@@ -16,16 +16,15 @@ let cCompatibleAccountClientRequest: CCallbackWithCallbackPointer = { statePoint
                                                  callbackPointer: callbackPointer)
         return
     }
-    let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, WeakReference<ProtonDriveClient>>>.fromOpaque(stateRawPointer)
-    let weakDriveClient: WeakReference<ProtonDriveClient> = stateTypedPointer.takeUnretainedValue().state
-    
-    let driveClient = ProtonDriveClient.unbox(
-        callbackPointer: callbackPointer, releaseBox: {
+    let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, SDKClientProvider>>.fromOpaque(stateRawPointer)
+    let provider: SDKClientProvider = stateTypedPointer.takeUnretainedValue().state
+
+    guard
+        let driveClient = provider.get(callbackPointer: callbackPointer, releaseBox: {
             // we don't release the stateTypedPointer by design — there might be some calls coming from the SDK racing with the client deallocation
-//            stateTypedPointer.release()
-        }, weakDriveClient: weakDriveClient
-    )
-    guard let driveClient else { return }
+            // stateTypedPointer.release()
+        })
+    else { return }
 
     Task { [driveClient] in
         let accountClient = driveClient.accountClient

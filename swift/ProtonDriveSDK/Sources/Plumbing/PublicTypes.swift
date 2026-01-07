@@ -109,6 +109,39 @@ public struct ThumbnailData: Sendable {
     }
 }
 
+public struct FolderNode: Sendable {
+    public let uid: SDKNodeUid
+    public let parentUid: SDKNodeUid?
+    public let name: String
+    public let creationTime: Double
+    public let trashTime: Double?
+    public let nameAuthor: Author
+    public let author: Author
+
+    init(sdkFolderNode: Proton_Drive_Sdk_FolderNode) throws {
+        guard let uid = SDKNodeUid(sdkCompatibleIdentifier: sdkFolderNode.uid) else {
+            throw ProtonDriveSDKError(interopError: .incorrectIDFormat(id: sdkFolderNode.uid))
+        }
+        self.uid = uid
+        self.parentUid = sdkFolderNode.parentUid == nil ? nil : .init(sdkCompatibleIdentifier: sdkFolderNode.parentUid)
+        self.name = sdkFolderNode.name
+        self.creationTime = sdkFolderNode.creationTime.timeIntervalSince1970
+        self.trashTime = sdkFolderNode.trashTime.timeIntervalSince1970
+        self.nameAuthor = Author(result: sdkFolderNode.nameAuthor)
+        self.author = Author(result: sdkFolderNode.author)
+    }
+}
+
+public struct Author: Sendable {
+    let emailAddress: String?
+    let signatureVerificationError: String?
+
+    init(result: Proton_Drive_Sdk_AuthorResult) {
+        self.emailAddress = result.author.emailAddress
+        self.signatureVerificationError = result.hasSignatureVerificationError ? result.signatureVerificationError : nil
+    }
+}
+
 public struct FileNode: Sendable {
     let uid: String
     let parentUid: String
@@ -153,6 +186,17 @@ public struct UploadedFileIdentifiers: Sendable {
         else { return nil }
         self.nodeUid = nodeUid
         self.revisionUid = revisionUid
+    }
+}
+
+public struct PhotoTimelineItem: Sendable {
+    public let nodeUid: SDKNodeUid
+    public let captureTime: Double
+
+    init?(item: Proton_Drive_Sdk_PhotosTimelineItem) {
+        guard let nodeUid = SDKNodeUid(sdkCompatibleIdentifier: item.nodeUid) else { return nil }
+        self.nodeUid = nodeUid
+        self.captureTime = item.captureTime.timeIntervalSince1970
     }
 }
 
