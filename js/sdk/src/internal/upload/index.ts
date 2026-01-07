@@ -45,10 +45,10 @@ export function initUploadModule(
         metadata: UploadMetadata,
         signal?: AbortSignal,
     ): Promise<FileUploader> {
-        await queue.waitForCapacity(signal);
+        await queue.waitForCapacity(metadata.expectedSize, signal);
 
         const onFinish = () => {
-            queue.releaseCapacity();
+            queue.releaseCapacity(metadata.expectedSize);
         };
 
         return new FileUploader(
@@ -76,10 +76,10 @@ export function initUploadModule(
         metadata: UploadMetadata,
         signal?: AbortSignal,
     ): Promise<FileRevisionUploader> {
-        await queue.waitForCapacity(signal);
+        await queue.waitForCapacity(metadata.expectedSize, signal);
 
         const onFinish = () => {
-            queue.releaseCapacity();
+            queue.releaseCapacity(metadata.expectedSize);
         };
 
         return new FileRevisionUploader(

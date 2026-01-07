@@ -1,5 +1,6 @@
-import { Thumbnail, ThumbnailType, UploadMetadata } from '../../interface';
+import { Logger, Thumbnail, ThumbnailType, UploadMetadata } from '../../interface';
 import { IntegrityError } from '../../errors';
+import { getMockLogger } from '../../tests/logger';
 import { APIHTTPError, HTTPErrorCode } from '../apiService';
 import { FILE_CHUNK_SIZE, StreamUploader } from './streamUploader';
 import { UploadTelemetry } from './telemetry';
@@ -40,6 +41,7 @@ function mockUploadBlock(
 }
 
 describe('StreamUploader', () => {
+    let logger: Logger;
     let telemetry: UploadTelemetry;
     let apiService: jest.Mocked<UploadAPIService>;
     let cryptoService: UploadCryptoService;
@@ -54,14 +56,11 @@ describe('StreamUploader', () => {
     let uploader: StreamUploader;
 
     beforeEach(() => {
+        logger = getMockLogger();
+
         // @ts-expect-error No need to implement all methods for mocking
         telemetry = {
-            getLoggerForRevision: jest.fn().mockReturnValue({
-                debug: jest.fn(),
-                info: jest.fn(),
-                warn: jest.fn(),
-                error: jest.fn(),
-            }),
+            getLoggerForRevision: jest.fn().mockReturnValue(logger),
             logBlockVerificationError: jest.fn(),
             uploadFailed: jest.fn(),
             uploadFinished: jest.fn(),
@@ -401,6 +400,80 @@ describe('StreamUploader', () => {
             // 3 blocks + 1 retry + 1 thumbnail
             expect(apiService.uploadBlock).toHaveBeenCalledTimes(5);
             await verifyOnProgress([1024, 4 * 1024 * 1024, 2 * 1024 * 1024, 4 * 1024 * 1024]);
+        });
+
+        it('should handle timeout when uploading block', async () => {
+            const error = new Error('TimeoutError');
+            error.name = 'TimeoutError';
+
+            let count = 0;
+            apiService.uploadBlock = jest.fn().mockImplementation(async function (bareUrl, token, block, onProgress) {
+                if (token === 'token/block:1' && count === 0) {
+                    count++;
+                    throw error;
+                }
+                return mockUploadBlock(bareUrl, token, block, onProgress);
+            });
+
+            expect((uploader as any).maxUploadingBlocks).toEqual(5);
+            await verifySuccess();
+            expect(apiService.requestBlockUpload).toHaveBeenCalledTimes(1);
+            // 3 blocks + 1 timeout retry + 1 thumbnail
+            expect(apiService.uploadBlock).toHaveBeenCalledTimes(5);
+            expect(logger.warn).toHaveBeenCalledTimes(2);
+            expect(logger.warn).toHaveBeenCalledWith(
+                'block 1:token/block:1: Upload timeout, limiting upload capacity to 1 block',
+            );
+            expect(logger.warn).toHaveBeenCalledWith('block 1:token/block:1: Upload timeout, retrying');
+            expect((uploader as any).maxUploadingBlocks).toEqual(1);
+        });
+
+        it('limitUploadCapacity should wait for the previous blocks to finish', async () => {
+            const error = new Error('TimeoutError');
+            error.name = 'TimeoutError';
+
+            const events: string[] = [];
+            let block1Resolver: (() => void) | undefined;
+            let block2FirstAttempt = true;
+
+            apiService.uploadBlock = jest.fn().mockImplementation(async function (bareUrl, token, block, onProgress) {
+                if (token === 'token/block:1') {
+                    events.push('block1:upload:start');
+                    await new Promise<void>((resolve) => {
+                        block1Resolver = resolve;
+                    });
+                    events.push('block1:upload:end');
+                    return mockUploadBlock(bareUrl, token, block, onProgress);
+                }
+                if (token === 'token/block:2') {
+                    if (block2FirstAttempt) {
+                        block2FirstAttempt = false;
+                        events.push('block2:timeout');
+                        // Resolve block 1 after a small delay to simulate real-world conditions
+                        setTimeout(() => block1Resolver?.(), 100);
+                        throw error;
+                    }
+                    events.push('block2:retry');
+                    return mockUploadBlock(bareUrl, token, block, onProgress);
+                }
+                // Block 3 and thumbnails proceed normally
+                return mockUploadBlock(bareUrl, token, block, onProgress);
+            });
+
+            await verifySuccess();
+
+            expect(events).toMatchObject([
+                'block1:upload:start',
+                'block2:timeout',
+                'block1:upload:end',
+                'block2:retry',
+            ]);
+
+            // Also verify the warning messages were logged
+            expect(logger.warn).toHaveBeenCalledWith(
+                'block 2:token/block:2: Upload timeout, limiting upload capacity to 1 block',
+            );
+            expect(logger.warn).toHaveBeenCalledWith('block 2:token/block:2: Upload timeout, retrying');
         });
 
         it('should handle expired token when uploading block', async () => {
