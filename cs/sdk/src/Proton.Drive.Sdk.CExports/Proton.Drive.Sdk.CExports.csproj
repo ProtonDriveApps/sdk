@@ -6,6 +6,7 @@
     <PublishAot>true</PublishAot>
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
     <NativeCryptoLibName>proton_crypto</NativeCryptoLibName>
+    <NoWarn>Photos</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
