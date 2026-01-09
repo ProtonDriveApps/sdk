@@ -88,7 +88,7 @@ export class SharingPublicSessionAPIService {
                 base64UrlPasswordSalt: response.Share.SharePasswordSalt,
                 armoredKey: response.Share.ShareKey,
                 armoredPassphrase: response.Share.SharePassphrase,
-                publicRole: permissionsToMemberRole(this.logger, response.Share.PublicPermissions),
+                publicPermissions: response.Share.PublicPermissions,
             },
             rootUid: makeNodeUid(response.Share.VolumeID, response.Share.LinkID),
         };

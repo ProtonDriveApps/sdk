@@ -235,7 +235,7 @@ export abstract class NodesAccessBase<
     private async loadNode(nodeUid: string): Promise<{ node: TDecryptedNode; keys?: DecryptedNodeKeys }> {
         this.debouncer.loadingNode(nodeUid);
         try {
-            const { volumeId: ownVolumeId } = await this.shareService.getRootIDs();
+            const ownVolumeId = await this.getOwnVolumeId();
             const encryptedNode = await this.apiService.getNode(nodeUid, ownVolumeId);
             return this.decryptNode(encryptedNode);
         } finally {
@@ -256,6 +256,11 @@ export abstract class NodesAccessBase<
         }
     }
 
+    protected async getOwnVolumeId(): Promise<string | undefined> {
+        const { volumeId } = await this.shareService.getRootIDs();
+        return volumeId;
+    }
+
     private async *loadNodesWithMissingReport(
         nodeUids: string[],
         filterOptions?: FilterOptions,
@@ -264,7 +269,7 @@ export abstract class NodesAccessBase<
         const returnedNodeUids: string[] = [];
         const errors = [];
 
-        const { volumeId: ownVolumeId } = await this.shareService.getRootIDs();
+        const ownVolumeId = await this.getOwnVolumeId();
 
         const apiNodesIterator = this.apiService.iterateNodes(nodeUids, ownVolumeId, filterOptions, signal);
 

@@ -4,9 +4,10 @@ import {
     ProtonDriveTelemetry,
     ProtonDriveAccount,
     ProtonDriveEntitiesCache,
+    MemberRole,
 } from '../../interface';
 import { DriveAPIService } from '../apiService';
-import { NodeAPIService } from '../nodes/apiService';
+import { SharingPublicNodesAPIService } from './nodes';
 import { NodesCache } from '../nodes/cache';
 import { NodesCryptoCache } from '../nodes/cryptoCache';
 import { NodesCryptoService } from '../nodes/cryptoService';
@@ -38,6 +39,7 @@ export function initSharingPublicModule(
     token: string,
     publicShareKey: PrivateKey,
     publicRootNodeUid: string,
+    publicRole: MemberRole,
     isAnonymousContext: boolean,
 ) {
     const shares = new SharingPublicSharesManager(account, publicShareKey, publicRootNodeUid);
@@ -53,6 +55,7 @@ export function initSharingPublicModule(
         token,
         publicShareKey,
         publicRootNodeUid,
+        publicRole,
         isAnonymousContext,
     );
 
@@ -80,10 +83,17 @@ export function initSharingPublicNodesModule(
     token: string,
     publicShareKey: PrivateKey,
     publicRootNodeUid: string,
+    publicRole: MemberRole,
     isAnonymousContext: boolean,
 ) {
     const clientUid = undefined; // No client UID for public context yet.
-    const api = new NodeAPIService(telemetry.getLogger('nodes-api'), apiService, clientUid);
+    const api = new SharingPublicNodesAPIService(
+        telemetry.getLogger('nodes-api'),
+        apiService,
+        clientUid,
+        publicRootNodeUid,
+        publicRole,
+    );
     const cache = new NodesCache(telemetry.getLogger('nodes-cache'), driveEntitiesCache);
     const cryptoCache = new NodesCryptoCache(telemetry.getLogger('nodes-cache'), driveCryptoCache);
     const cryptoReporter = new SharingPublicCryptoReporter(telemetry);

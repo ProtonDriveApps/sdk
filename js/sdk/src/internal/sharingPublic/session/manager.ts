@@ -1,6 +1,6 @@
-import { MemberRole, ProtonDriveHTTPClient, ProtonDriveTelemetry } from '../../../interface';
+import { Logger, MemberRole, ProtonDriveHTTPClient, ProtonDriveTelemetry } from '../../../interface';
 import { DriveCrypto, PrivateKey, SRPModule } from '../../../crypto';
-import { DriveAPIService } from '../../apiService';
+import { DriveAPIService, permissionsToMemberRole } from '../../apiService';
 import { SharingPublicSessionAPIService } from './apiService';
 import { SharingPublicSessionHttpClient } from './httpClient';
 import { EncryptedShareCrypto, PublicLinkInfo } from './interface';
@@ -17,6 +17,8 @@ export class SharingPublicSessionManager {
 
     private infosPerToken: Map<string, PublicLinkInfo> = new Map();
 
+    private logger: Logger;
+
     constructor(
         telemetry: ProtonDriveTelemetry,
         private httpClient: ProtonDriveHTTPClient,
@@ -24,6 +26,7 @@ export class SharingPublicSessionManager {
         private srpModule: SRPModule,
         apiService: DriveAPIService,
     ) {
+        this.logger = telemetry.getLogger('sharingPublicSession');
         this.httpClient = httpClient;
         this.driveCrypto = driveCrypto;
         this.srpModule = srpModule;
@@ -85,6 +88,7 @@ export class SharingPublicSessionManager {
         httpClient: SharingPublicSessionHttpClient;
         shareKey: PrivateKey;
         rootUid: string;
+        publicRole: MemberRole;
     }> {
         const { token, password: urlPassword } = getTokenAndPasswordFromUrl(url);
 
@@ -105,6 +109,7 @@ export class SharingPublicSessionManager {
             httpClient: new SharingPublicSessionHttpClient(this.httpClient, session),
             shareKey,
             rootUid,
+            publicRole: permissionsToMemberRole(this.logger, encryptedShare.publicPermissions),
         };
     }
 

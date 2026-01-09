@@ -138,7 +138,7 @@ export abstract class NodeAPIServiceBase<
         this.clientUid = clientUid;
     }
 
-    async getNode(nodeUid: string, ownVolumeId: string, signal?: AbortSignal): Promise<T> {
+    async getNode(nodeUid: string, ownVolumeId: string | undefined, signal?: AbortSignal): Promise<T> {
         const nodesGenerator = this.iterateNodes([nodeUid], ownVolumeId, undefined, signal);
         const result = await nodesGenerator.next();
         if (!result.value) {
