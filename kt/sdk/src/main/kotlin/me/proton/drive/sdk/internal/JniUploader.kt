@@ -1,6 +1,5 @@
 package me.proton.drive.sdk.internal
 
-import kotlinx.coroutines.CoroutineScope
 import me.proton.drive.sdk.entity.FileRevisionUploaderRequest
 import me.proton.drive.sdk.entity.FileUploaderRequest
 import me.proton.drive.sdk.entity.ThumbnailType
@@ -42,7 +41,7 @@ class JniUploader internal constructor() : JniBaseProtonDriveSdk() {
         thumbnails: Map<ThumbnailType, ByteArray>,
         onRead: (ByteBuffer) -> Int,
         onProgress: suspend (ProtonDriveSdk.ProgressUpdate) -> Unit,
-        coroutineScope: CoroutineScope
+        coroutineScopeProvider: CoroutineScopeProvider,
     ): Long = executePersistent(
         clientBuilder = { continuation ->
             ProtonDriveSdkNativeClient(
@@ -51,7 +50,7 @@ class JniUploader internal constructor() : JniBaseProtonDriveSdk() {
                 read = onRead,
                 progress = onProgress,
                 logger = internalLogger,
-                coroutineScope = coroutineScope,
+                coroutineScopeProvider = coroutineScopeProvider,
             )
         },
         requestBuilder = { nativeClient ->

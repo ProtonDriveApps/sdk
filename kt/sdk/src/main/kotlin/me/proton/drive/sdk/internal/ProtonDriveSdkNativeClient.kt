@@ -36,7 +36,7 @@ class ProtonDriveSdkNativeClient internal constructor(
     val recordMetric: suspend (ProtonSdk.MetricEvent) -> Unit = { error("recordMetric not configured for $name") },
     val featureEnabled: suspend (String) -> Boolean = { error("featureEnabled not configured for $name") },
     val logger: (Level, String) -> Unit = { _, _ -> },
-    private val coroutineScope: CoroutineScope? = null,
+    private val coroutineScopeProvider: CoroutineScopeProvider = { null },
 ) {
 
     private val byteArrayPointers = ByteArrayPointers()
@@ -48,7 +48,7 @@ class ProtonDriveSdkNativeClient internal constructor(
     fun handleRequest(
         request: ProtonDriveSdk.Request,
     ) {
-        logger(DEBUG, "handle request ${request.payloadCase.name} for $name")
+        logger(VERBOSE, "handle request ${request.payloadCase.name} for $name")
         handleRequest(request.toByteArray())
     }
 
@@ -78,7 +78,7 @@ class ProtonDriveSdkNativeClient internal constructor(
 
     @Suppress("unused") // Called by JNI
     fun onResponse(data: ByteBuffer) {
-        logger(DEBUG, "response for $name of size: ${data.capacity()}")
+        logger(VERBOSE, "response for $name of size: ${data.capacity()}")
         response(data)
     }
 
@@ -114,7 +114,7 @@ class ProtonDriveSdkNativeClient internal constructor(
         data: ByteBuffer,
         sdkHandle: Long,
     ): Long = onRequest(
-        operation = "http",
+        operation = "http-request",
         data = data,
         sdkHandle = sdkHandle,
         parser = ProtonSdk.HttpRequest::parseFrom,
@@ -133,7 +133,7 @@ class ProtonDriveSdkNativeClient internal constructor(
 
     @Suppress("unused") // Called by JNI
     fun onHttpResponseRead(buffer: ByteBuffer, sdkHandle: Long) {
-        onOperation("read", sdkHandle) {
+        onOperation("http-response", sdkHandle) {
             logger(VERBOSE, "http response read for $name of size: ${buffer.capacity()}")
             val bytesRead = readHttpBody(buffer).takeUnless { it < 0 } ?: 0
             logger(VERBOSE, "$bytesRead bytes read for http response $name")
@@ -272,13 +272,14 @@ class ProtonDriveSdkNativeClient internal constructor(
     }
 
     private fun coroutineScope(operation: String): CoroutineScope {
-        checkNotNull(coroutineScope) {
+        val scope = coroutineScopeProvider()
+        checkNotNull(scope) {
             "No coroutineScope was provided to ${javaClass.simpleName}, cannot execute $operation"
         }
-        if (!coroutineScope.isActive) {
+        if (!scope.isActive) {
             logger(DEBUG, "CoroutineScope not active for $operation")
         }
-        return coroutineScope
+        return scope
     }
 
     companion object {

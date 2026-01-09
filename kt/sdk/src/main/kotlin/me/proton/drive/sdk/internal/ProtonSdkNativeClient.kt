@@ -21,7 +21,7 @@ class ProtonSdkNativeClient internal constructor(
     fun handleRequest(
         request: Request,
     ) {
-        logger(DEBUG, "handle request ${request.payloadCase.name} for $name")
+        logger(VERBOSE, "handle request ${request.payloadCase.name} for $name")
         handleRequest(request.toByteArray())
     }
 
@@ -30,7 +30,7 @@ class ProtonSdkNativeClient internal constructor(
     )
 
     fun onResponse(data: ByteBuffer) {
-        logger(DEBUG, "response for $name of size: ${data.capacity()}")
+        logger(VERBOSE, "response for $name of size: ${data.capacity()}")
         response(data)
     }
 

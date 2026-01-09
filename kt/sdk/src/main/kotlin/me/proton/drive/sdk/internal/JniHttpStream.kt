@@ -30,7 +30,7 @@ class JniHttpStream internal constructor(
                     }
                 }
             },
-            coroutineScope = coroutineScope,
+            coroutineScopeProvider = { coroutineScope },
             logger = internalLogger
         ).also {
             client = it

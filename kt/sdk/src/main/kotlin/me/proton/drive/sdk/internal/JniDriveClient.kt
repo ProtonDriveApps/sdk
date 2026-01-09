@@ -45,7 +45,7 @@ class JniDriveClient internal constructor() : JniBaseProtonDriveSdk() {
             logger = internalLogger,
             recordMetric = onRecordMetric,
             featureEnabled = onFeatureEnabled,
-            coroutineScope = coroutineScope,
+            coroutineScopeProvider = { coroutineScope },
         )
     }, requestBuilder = { client ->
         request {
