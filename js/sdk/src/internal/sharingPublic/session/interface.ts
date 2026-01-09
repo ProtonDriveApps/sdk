@@ -36,5 +36,5 @@ export type EncryptedShareCrypto = {
     base64UrlPasswordSalt: string;
     armoredKey: string;
     armoredPassphrase: string;
-    publicRole: MemberRole;
+    publicPermissions?: number;
 };
