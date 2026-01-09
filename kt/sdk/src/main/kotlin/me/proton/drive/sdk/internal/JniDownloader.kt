@@ -1,6 +1,5 @@
 package me.proton.drive.sdk.internal
 
-import kotlinx.coroutines.CoroutineScope
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.toLongResponse
 import proton.drive.sdk.ProtonDriveSdk
@@ -29,7 +28,7 @@ class JniDownloader internal constructor() : JniBaseProtonDriveSdk() {
         cancellationTokenSourceHandle: Long,
         onWrite: suspend (ByteBuffer) -> Unit,
         onProgress: suspend (ProtonDriveSdk.ProgressUpdate) -> Unit,
-        coroutineScope: CoroutineScope
+        coroutineScopeProvider: CoroutineScopeProvider,
     ): Long = executePersistent(
         clientBuilder = { continuation ->
             ProtonDriveSdkNativeClient(
@@ -38,7 +37,7 @@ class JniDownloader internal constructor() : JniBaseProtonDriveSdk() {
                 write = onWrite,
                 progress = onProgress,
                 logger = internalLogger,
-                coroutineScope = coroutineScope,
+                coroutineScopeProvider = coroutineScopeProvider,
             )
         },
         requestBuilder = { client ->

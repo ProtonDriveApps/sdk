@@ -8,8 +8,8 @@ import me.proton.drive.sdk.internal.JniDownloadController
 import me.proton.drive.sdk.internal.JniDownloader
 import me.proton.drive.sdk.internal.toLogId
 import java.io.OutputStream
-import java.nio.ByteBuffer
 import java.nio.channels.Channels
+import java.util.concurrent.atomic.AtomicReference
 
 class Downloader internal constructor(
     client: DriveClient,
@@ -24,6 +24,7 @@ class Downloader internal constructor(
         progress: suspend (Long, Long) -> Unit = { _, _ -> },
     ): DownloadController = cancellationTokenSource().let { cancellationTokenSource ->
         log(INFO, "downloadToStream")
+        val coroutineScopeReference = AtomicReference(coroutineScope)
         val channel = Channels.newChannel(outputStream)
         val handle = bridge.downloadToStream(
             handle = handle,
@@ -35,13 +36,14 @@ class Downloader internal constructor(
                     progress(bytesCompleted, bytesInTotal)
                 }
             },
-            coroutineScope = coroutineScope,
+            coroutineScopeProvider = coroutineScopeReference::get,
         )
         DownloadController(
             downloader = this@Downloader,
             handle = handle,
             bridge = JniDownloadController(),
             cancellationTokenSource = cancellationTokenSource,
+            coroutineScopeConsumer = coroutineScopeReference::set,
         )
     }
 
