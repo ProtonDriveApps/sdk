@@ -1,15 +1,61 @@
-import { NodeResult, ProtonDriveTelemetry } from '../../interface';
-import { NodeAPIService } from '../nodes/apiService';
+import { type Logger, MemberRole, NodeResult, ProtonDriveTelemetry } from '../../interface';
+import { NodeAPIService, linkToEncryptedNode } from '../nodes/apiService';
 import { NodesCache } from '../nodes/cache';
 import { NodesCryptoCache } from '../nodes/cryptoCache';
 import { NodesCryptoService } from '../nodes/cryptoService';
 import { NodesAccess } from '../nodes/nodesAccess';
 import { NodesManagement } from '../nodes/nodesManagement';
 import { isProtonDocument, isProtonSheet } from '../nodes/mediaTypes';
-import { splitNodeUid } from '../uids';
+import { makeNodeUid, splitNodeUid } from '../uids';
 import { SharingPublicSharesManager } from './shares';
-import { DecryptedNode, DecryptedNodeKeys, NodeSigningKeys } from '../nodes/interface';
+import { DecryptedNode, DecryptedNodeKeys, NodeSigningKeys, EncryptedNode } from '../nodes/interface';
 import { PrivateKey } from '../../crypto';
+import { type DriveAPIService, drivePaths } from '../apiService';
+
+type PostLoadLinksMetadataResponse =
+    drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['responses']['200']['content']['application/json'];
+
+/**
+ * Custom API service for public links that handles permission injection.
+ *
+ * TEMPORARY: This is a workaround for the backend sending DirectPermissions as null
+ * for public requests.
+ *
+ * The service injects publicPermissions into the root node's directRole to ensure
+ * correct permission handling throughout the SDK.
+ */
+export class SharingPublicNodesAPIService extends NodeAPIService {
+    constructor(
+        logger: Logger,
+        apiService: DriveAPIService,
+        clientUid: string | undefined,
+        private publicRootNodeUid: string,
+        private publicRole: MemberRole,
+    ) {
+        super(logger, apiService, clientUid);
+        this.publicRootNodeUid = publicRootNodeUid;
+        this.publicRole = publicRole;
+    }
+
+    protected linkToEncryptedNode(
+        volumeId: string,
+        link: PostLoadLinksMetadataResponse['Links'][0],
+        isOwnVolumeId: boolean,
+    ): EncryptedNode {
+        const nodeUid = makeNodeUid(volumeId, link.Link.LinkID);
+        const encryptedNode = linkToEncryptedNode(this.logger, volumeId, link, isOwnVolumeId);
+
+        // TEMPORARY: Inject public permissions for the root node only.
+        // This ensures the root node has the correct directRole instead of
+        // incorrectly falling back to 'admin' due to null DirectPermissions.
+        // May be fixed by backend later.
+        if (this.publicRootNodeUid === nodeUid) {
+            encryptedNode.directRole = this.publicRole;
+        }
+
+        return encryptedNode;
+    }
+}
 
 export class SharingPublicNodesAccess extends NodesAccess {
     constructor(
@@ -30,6 +76,19 @@ export class SharingPublicNodesAccess extends NodesAccess {
         this.publicShareKey = publicShareKey;
         this.publicRootNodeUid = publicRootNodeUid;
         this.isAnonymousContext = isAnonymousContext;
+    }
+
+    /**
+     * Returns undefined for public link context to prevent incorrect volume ownership detection.
+     *
+     * TEMPORARY: When requesting nodes in public link context, we need to ensure nodes are not
+     * incorrectly marked as owned by the user. In public context (especially for anonymous users),
+     * there is no "own volume", so we return undefined to prevent the SDK from comparing
+     * volumeId === ownVolumeId and incorrectly granting admin permissions.
+     * May be fixed by backend later.
+     */
+    protected async getOwnVolumeId(): Promise<undefined> {
+        return undefined;
     }
 
     async getParentKeys(

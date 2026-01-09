@@ -19,6 +19,7 @@ import {
     FileUploader,
     NodeResult,
     SDKEvent,
+    MemberRole,
 } from './interface';
 import { Telemetry } from './telemetry';
 import {
@@ -82,6 +83,7 @@ export class ProtonDrivePublicLinkClient {
         publicShareKey,
         publicRootNodeUid,
         isAnonymousContext,
+        publicRole,
     }: {
         httpClient: ProtonDriveHTTPClient;
         account: ProtonDriveAccount;
@@ -94,6 +96,7 @@ export class ProtonDrivePublicLinkClient {
         publicShareKey: PrivateKey;
         publicRootNodeUid: string;
         isAnonymousContext: boolean;
+        publicRole: MemberRole;
     }) {
         if (!telemetry) {
             telemetry = new Telemetry();
@@ -126,6 +129,7 @@ export class ProtonDrivePublicLinkClient {
             token,
             publicShareKey,
             publicRootNodeUid,
+            publicRole,
             isAnonymousContext,
         );
         this.download = initDownloadModule(

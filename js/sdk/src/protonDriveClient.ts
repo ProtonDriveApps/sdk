@@ -228,7 +228,7 @@ export class ProtonDriveClient {
             },
             authPublicLink: async (url: string, customPassword?: string, isAnonymousContext: boolean = false) => {
                 this.logger.info(`Authenticating public link ${url}`);
-                const { httpClient, token, shareKey, rootUid } = await this.publicSessionManager.auth(
+                const { httpClient, token, shareKey, rootUid, publicRole } = await this.publicSessionManager.auth(
                     url,
                     customPassword,
                 );
@@ -244,6 +244,7 @@ export class ProtonDriveClient {
                     publicShareKey: shareKey,
                     publicRootNodeUid: rootUid,
                     isAnonymousContext,
+                    publicRole,
                 });
             },
         };
