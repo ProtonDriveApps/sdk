@@ -1,8 +1,8 @@
 package me.proton.drive.sdk
 
+import kotlinx.coroutines.flow.MutableStateFlow
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
-import me.proton.drive.sdk.LoggerProvider.Level.WARN
 import me.proton.drive.sdk.entity.UploadResult
 import me.proton.drive.sdk.internal.JniUploadController
 import me.proton.drive.sdk.internal.toLogId
@@ -16,24 +16,33 @@ class UploadController internal constructor(
     override val cancellationTokenSource: CancellationTokenSource,
 ) : SdkNode(uploader), AutoCloseable, Cancellable {
 
+    val isPausedFlow = MutableStateFlow(false)
+
     suspend fun awaitCompletion(): UploadResult {
         log(DEBUG, "await completion")
         return runCatching {
+            isPaused()
             bridge.awaitCompletion(handle)
-        }.onSuccess { log(INFO, "completed") }
-            .onFailure { log(INFO, "cancelled or failed") }
-            .getOrThrow()
+        }.onSuccess {
+            log(INFO, "completed")
+        }.onFailure {
+            log(INFO, "cancelled or failed")
+            isPaused()
+        }.getOrThrow()
     }
 
     suspend fun resume() {
         log(INFO, "resume")
-        bridge.resume(handle)
+        bridge.resume(handle).also { isPaused() }
     }
 
     suspend fun pause() {
         log(INFO, "pause")
-        bridge.pause(handle)
+        bridge.pause(handle).also { isPaused() }
     }
+
+    suspend fun isPaused() = bridge.isPaused(handle)
+        .also { isPausedFlow.emit(it) }
 
     suspend fun dispose() = bridge.dispose(handle)
 

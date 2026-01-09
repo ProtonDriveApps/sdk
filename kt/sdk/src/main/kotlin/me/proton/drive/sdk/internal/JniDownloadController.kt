@@ -5,6 +5,7 @@ import me.proton.drive.sdk.extension.UnitResponseCallback
 import proton.drive.sdk.downloadControllerAwaitCompletionRequest
 import proton.drive.sdk.downloadControllerFreeRequest
 import proton.drive.sdk.downloadControllerIsDownloadCompleteWithVerificationIssueRequest
+import proton.drive.sdk.downloadControllerIsPausedRequest
 import proton.drive.sdk.downloadControllerPauseRequest
 import proton.drive.sdk.downloadControllerResumeRequest
 
@@ -25,6 +26,12 @@ class JniDownloadController internal constructor() : JniBaseProtonDriveSdk() {
 
     suspend fun resume(handle: Long) = executeOnce("resume", UnitResponseCallback) {
         downloadControllerResume = downloadControllerResumeRequest {
+            downloadControllerHandle = handle
+        }
+    }
+
+    suspend fun isPaused(handle: Long) = executeOnce("isPaused", BooleanResponseCallback) {
+        downloadControllerIsPaused = downloadControllerIsPausedRequest {
             downloadControllerHandle = handle
         }
     }
