@@ -1,6 +1,7 @@
 ﻿using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Shares;
+using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Nodes.Cryptography;
 using Proton.Drive.Sdk.Shares;
 using Proton.Drive.Sdk.Volumes;
@@ -40,11 +41,25 @@ internal static class DtoToMetadataConverter
         return linkType switch
         {
             LinkType.Folder =>
-                (await ConvertDtoToFolderMetadataAsync(client, volumeId, linkDetailsDto, parentKeyResult, cancellationToken).ConfigureAwait(false))
+                (await ConvertDtoToFolderMetadataAsync(
+                    client.Account,
+                    client.Cache.Entities,
+                    client.Cache.Secrets,
+                    volumeId,
+                    linkDetailsDto,
+                    parentKeyResult,
+                    cancellationToken).ConfigureAwait(false))
                 .Convert(NodeMetadata.FromFolder, DegradedNodeMetadata.FromFolder),
 
             LinkType.File =>
-                (await ConvertDtoToFileMetadataAsync(client, volumeId, linkDetailsDto, parentKeyResult, cancellationToken).ConfigureAwait(false))
+                (await ConvertDtoToFileMetadataAsync(
+                    client.Account,
+                    client.Cache.Entities,
+                    client.Cache.Secrets,
+                    volumeId,
+                    linkDetailsDto,
+                    parentKeyResult,
+                    cancellationToken).ConfigureAwait(false))
                 .Convert(NodeMetadata.FromFile, DegradedNodeMetadata.FromFile),
 
             // FIXME: handle other existing node types, and determine a way for forward compatibility or degraded result in case a new node type is introduced
@@ -53,13 +68,17 @@ internal static class DtoToMetadataConverter
     }
 
     public static async ValueTask<Result<FolderMetadata, DegradedFolderMetadata>> ConvertDtoToFolderMetadataAsync(
-        ProtonDriveClient client,
+        IAccountClient accountClient,
+        IEntityCache entityCache,
+        IDriveSecretCache secretCache,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
         Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
         CancellationToken cancellationToken)
     {
-        var (linkDto, folderDto, _, _, membershipDto) = linkDetailsDto;
+        var linkDto = linkDetailsDto.Link;
+        var folderDto = linkDetailsDto.Folder;
+        var membershipDto = linkDetailsDto.Membership;
 
         if (folderDto is null)
         {
@@ -70,7 +89,7 @@ internal static class DtoToMetadataConverter
         var uid = new NodeUid(volumeId, linkDto.Id);
         var parentUid = linkDto.ParentId is not null ? (NodeUid?)new NodeUid(uid.VolumeId, linkDto.ParentId.Value) : null;
 
-        var decryptionResult = await NodeCrypto.DecryptFolderAsync(client, linkDto, folderDto, parentKeyResult, cancellationToken).ConfigureAwait(false);
+        var decryptionResult = await NodeCrypto.DecryptFolderAsync(accountClient, linkDto, folderDto.HashKey, parentKeyResult, cancellationToken).ConfigureAwait(false);
 
         var nameIsInvalid = !NodeOperations.ValidateName(decryptionResult.Link.Name, out var nameOutput, out var nameResult, out var nameSessionKey);
         var nodeKeyIsInvalid = !decryptionResult.Link.NodeKey.TryGetValue(out var nodeKey);
@@ -123,7 +142,7 @@ internal static class DtoToMetadataConverter
                 HashKey = decryptionResult.HashKey.Merge(x => (ReadOnlyMemory<byte>?)x.Data, _ => null),
             };
 
-            await client.Cache.Secrets.SetFolderSecretsAsync(uid, degradedSecrets, cancellationToken).ConfigureAwait(false);
+            await secretCache.SetFolderSecretsAsync(uid, degradedSecrets, cancellationToken).ConfigureAwait(false);
 
             // FIXME: remove entity cache or cache degraded node
 
@@ -139,7 +158,7 @@ internal static class DtoToMetadataConverter
             PassphraseForAnonymousMove = decryptionResult.Link.NodeAuthorshipClaim.Author == Author.Anonymous ? passphraseOutput.Data : null,
         };
 
-        await client.Cache.Secrets.SetFolderSecretsAsync(uid, secrets, cancellationToken).ConfigureAwait(false);
+        await secretCache.SetFolderSecretsAsync(uid, secrets, cancellationToken).ConfigureAwait(false);
 
         var node = new FolderNode
         {
@@ -152,19 +171,23 @@ internal static class DtoToMetadataConverter
             TrashTime = linkDto.TrashTime,
         };
 
-        await client.Cache.Entities.SetNodeAsync(uid, node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken).ConfigureAwait(false);
+        await entityCache.SetNodeAsync(uid, node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken).ConfigureAwait(false);
 
         return new FolderMetadata(node, secrets, membershipDto?.ShareId, linkDto.NameHashDigest);
     }
 
     public static async Task<Result<FileMetadata, DegradedFileMetadata>> ConvertDtoToFileMetadataAsync(
-        ProtonDriveClient client,
+        IAccountClient accountClient,
+        IEntityCache entityCache,
+        IDriveSecretCache secretCache,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
         Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
         CancellationToken cancellationToken)
     {
-        var (linkDto, _, fileDto, _, membershipDto) = linkDetailsDto;
+        var linkDto = linkDetailsDto.Link;
+        var fileDto = linkDetailsDto.File;
+        var membershipDto = linkDetailsDto.Membership;
 
         if (fileDto is null)
         {
@@ -187,7 +210,7 @@ internal static class DtoToMetadataConverter
         var uid = new NodeUid(volumeId, linkDto.Id);
         var parentUid = linkDto.ParentId is not null ? (NodeUid?)new NodeUid(uid.VolumeId, linkDto.ParentId.Value) : null;
 
-        var decryptionResult = await NodeCrypto.DecryptFileAsync(client, linkDto, fileDto, activeRevisionDto, parentKeyResult, cancellationToken)
+        var decryptionResult = await NodeCrypto.DecryptFileAsync(accountClient, linkDto, fileDto, activeRevisionDto, parentKeyResult, cancellationToken)
             .ConfigureAwait(false);
 
         var nameIsInvalid = !NodeOperations.ValidateName(decryptionResult.Link.Name, out var nameOutput, out var nameResult, out var nameSessionKey);
@@ -281,7 +304,7 @@ internal static class DtoToMetadataConverter
                 ContentKey = decryptionResult.ContentKey.Merge(x => (PgpSessionKey?)x.Data, _ => null),
             };
 
-            await client.Cache.Secrets.SetFileSecretsAsync(uid, degradedSecrets, cancellationToken).ConfigureAwait(false);
+            await secretCache.SetFileSecretsAsync(uid, degradedSecrets, cancellationToken).ConfigureAwait(false);
             // FIXME: remove entity cache or cache degraded node
 
             return new DegradedFileMetadata(degradedNode, degradedSecrets, membershipDto?.ShareId, linkDto.NameHashDigest);
@@ -325,9 +348,9 @@ internal static class DtoToMetadataConverter
             TotalSizeOnCloudStorage = fileDto.TotalSizeOnStorage,
         };
 
-        await client.Cache.Secrets.SetFileSecretsAsync(uid, secrets, cancellationToken).ConfigureAwait(false);
+        await secretCache.SetFileSecretsAsync(uid, secrets, cancellationToken).ConfigureAwait(false);
 
-        await client.Cache.Entities.SetNodeAsync(uid, node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken).ConfigureAwait(false);
+        await entityCache.SetNodeAsync(uid, node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken).ConfigureAwait(false);
 
         return new FileMetadata(node, secrets, membershipDto?.ShareId, linkDto.NameHashDigest);
     }
@@ -338,6 +361,8 @@ internal static class DtoToMetadataConverter
         LinkId? parentId,
         ShareAndKey? shareAndKeyToUse,
         ShareId? childShareId,
+        IDriveSecretCache secretCache,
+        Func<IEnumerable<LinkId>, CancellationToken, Task<LinkDetailsDto>> getLinkDetails,
         CancellationToken cancellationToken)
     {
         if (childShareId is not null && childShareId == shareAndKeyToUse?.Share.Id)
@@ -362,8 +387,9 @@ internal static class DtoToMetadataConverter
                     break;
                 }
 
-                var folderSecretsResult = await client.Cache.Secrets.TryGetFolderSecretsAsync(new NodeUid(volumeId, currentId.Value), cancellationToken)
-                    .ConfigureAwait(false);
+                var nodeUid = new NodeUid(volumeId, currentId.Value);
+
+                var folderSecretsResult = await secretCache.TryGetFolderSecretsAsync(nodeUid, cancellationToken).ConfigureAwait(false);
 
                 var folderKey = folderSecretsResult?.Merge(x => x.Key, x => x.Key);
 
@@ -373,17 +399,13 @@ internal static class DtoToMetadataConverter
                     break;
                 }
 
-                var linkDetailsResponse = await client.Api.Links.GetDetailsAsync(volumeId, [currentId.Value], cancellationToken).ConfigureAwait(false);
-
-                var linkDetails = linkDetailsResponse.Links[0];
+                var linkDetails = await getLinkDetails([currentId.Value], cancellationToken).ConfigureAwait(false);
 
                 linkAncestry.Push(linkDetails);
 
-                var (link, _, _, sharing, _) = linkDetails;
+                currentShareId = linkDetails.Sharing?.ShareId;
 
-                currentShareId = sharing?.ShareId;
-
-                currentId = link.ParentId;
+                currentId = linkDetails.Link.ParentId;
             }
         }
         catch (Exception e)
@@ -427,5 +449,23 @@ internal static class DtoToMetadataConverter
         }
 
         return currentParentKey;
+    }
+
+    private static async ValueTask<Result<PgpPrivateKey, ProtonDriveError>> GetParentKeyAsync(
+        ProtonDriveClient client,
+        VolumeId volumeId,
+        LinkId? parentId,
+        ShareAndKey? shareAndKeyToUse,
+        ShareId? childShareId,
+        CancellationToken cancellationToken)
+    {
+        return await GetParentKeyAsync(client, volumeId, parentId, shareAndKeyToUse, childShareId, client.Cache.Secrets, GetLinkDetailsAsync, cancellationToken)
+            .ConfigureAwait(false);
+
+        async Task<LinkDetailsDto> GetLinkDetailsAsync(IEnumerable<LinkId> links, CancellationToken ct)
+        {
+            var response = await client.Api.Links.GetDetailsAsync(volumeId, links, ct).ConfigureAwait(false);
+            return response.Links[0];
+        }
     }
 }

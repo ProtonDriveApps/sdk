@@ -4,7 +4,7 @@ using Proton.Drive.Sdk.Volumes;
 
 namespace Proton.Photos.Sdk.Api.Photos;
 
-internal sealed class PhotoTimelineRequest
+internal sealed class TimelinePhotoListRequest
 {
     public required VolumeId VolumeId { get; init; }
 

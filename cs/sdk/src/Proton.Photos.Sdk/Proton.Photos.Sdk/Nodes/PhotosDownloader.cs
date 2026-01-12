@@ -68,7 +68,11 @@ public sealed partial class PhotosDownloader : IFileDownloader
             throw new ProtonDriveException($"Revision not found for photo with ID {_photoUid}");
         }
 
-        using var revisionReader = await RevisionOperations.OpenForReadingAsync(_client.DriveClient, fileNode.ActiveRevision.Uid, ReleaseBlockListing, cancellationToken)
+        using var revisionReader = await RevisionOperations.OpenForReadingAsync(
+                _client.DriveClient,
+                fileNode.ActiveRevision.Uid,
+                ReleaseBlockListing,
+                cancellationToken)
             .ConfigureAwait(false);
 
         await revisionReader.ReadAsync(contentOutputStream, onProgress, cancellationToken).ConfigureAwait(false);

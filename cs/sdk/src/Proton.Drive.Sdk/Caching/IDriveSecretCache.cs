@@ -8,6 +8,7 @@ namespace Proton.Drive.Sdk.Caching;
 internal interface IDriveSecretCache
 {
     ValueTask SetShareKeyAsync(ShareId shareId, PgpPrivateKey shareKey, CancellationToken cancellationToken);
+
     ValueTask<PgpPrivateKey?> TryGetShareKeyAsync(ShareId shareId, CancellationToken cancellationToken);
 
     ValueTask SetFolderSecretsAsync(
@@ -18,5 +19,6 @@ internal interface IDriveSecretCache
     ValueTask<Result<FolderSecrets, DegradedFolderSecrets>?> TryGetFolderSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken);
 
     ValueTask SetFileSecretsAsync(NodeUid nodeId, Result<FileSecrets, DegradedFileSecrets> secretsProvisionResult, CancellationToken cancellationToken);
+
     ValueTask<Result<FileSecrets, DegradedFileSecrets>?> TryGetFileSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken);
 }

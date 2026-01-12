@@ -63,10 +63,18 @@ public sealed class ProtonPhotosClient : IDisposable
         return PhotosNodeOperations.GetPhotosFolderAsync(this, cancellationToken);
     }
 
+    public ValueTask<Result<Node, DegradedNode>?> GetNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
+    {
+        return PhotosNodeOperations
+            .EnumerateNodesAsync(this, nodeUid.VolumeId, [nodeUid.LinkId], cancellationToken)
+            .Select(x => (Result<Node, DegradedNode>?)x)
+            .FirstOrDefaultAsync(cancellationToken: cancellationToken);
+    }
+
     [Experimental("Photos")]
     public IAsyncEnumerable<PhotosTimelineItem> EnumeratePhotosTimelineAsync(NodeUid uid, CancellationToken cancellationToken)
     {
-        return PhotosNodeOperations.EnumeratePhotosAsync(this, uid, cancellationToken);
+        return PhotosNodeOperations.EnumeratePhotosTimelineAsync(this, uid, cancellationToken);
     }
 
     public async ValueTask<PhotosDownloader> GetPhotosDownloaderAsync(NodeUid photoUid, CancellationToken cancellationToken)
