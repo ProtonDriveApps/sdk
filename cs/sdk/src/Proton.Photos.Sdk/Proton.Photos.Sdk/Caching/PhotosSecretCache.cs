@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Shares;
+using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Serialization;
 using Proton.Sdk;
@@ -9,7 +10,7 @@ using Proton.Sdk.Serialization;
 
 namespace Proton.Photos.Sdk.Caching;
 
-internal sealed class PhotosSecretCache(ICacheRepository repository) : IPhotosSecretCache
+internal sealed class PhotosSecretCache(ICacheRepository repository) : IDriveSecretCache
 {
     private readonly ICacheRepository _repository = repository;
 
@@ -18,6 +19,11 @@ internal sealed class PhotosSecretCache(ICacheRepository repository) : IPhotosSe
         var serializedValue = JsonSerializer.Serialize(shareKey, SecretsSerializerContext.Default.PgpPrivateKey);
 
         return _repository.SetAsync(GetShareKeyCacheKey(shareId), serializedValue, cancellationToken);
+    }
+
+    public ValueTask<PgpPrivateKey?> TryGetShareKeyAsync(ShareId shareId, CancellationToken cancellationToken)
+    {
+        throw new NotSupportedException();
     }
 
     public ValueTask SetFolderSecretsAsync(
@@ -39,6 +45,21 @@ internal sealed class PhotosSecretCache(ICacheRepository repository) : IPhotosSe
             : null;
     }
 
+    public ValueTask SetFileSecretsAsync(
+        NodeUid nodeId,
+        Result<FileSecrets, DegradedFileSecrets> secretsProvisionResult,
+        CancellationToken cancellationToken)
+    {
+        var serializedValue = JsonSerializer.Serialize(secretsProvisionResult, DriveSecretsSerializerContext.Default.ResultFileSecretsDegradedFileSecrets);
+
+        return _repository.SetAsync(GetFileSecretsCacheKey(nodeId), serializedValue, cancellationToken);
+    }
+
+    public ValueTask<Result<FileSecrets, DegradedFileSecrets>?> TryGetFileSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken)
+    {
+        throw new NotSupportedException();
+    }
+
     private static string GetShareKeyCacheKey(ShareId shareId)
     {
         return $"share:{shareId}:key";
@@ -47,5 +68,10 @@ internal sealed class PhotosSecretCache(ICacheRepository repository) : IPhotosSe
     private static string GetFolderSecretsCacheKey(NodeUid nodeId)
     {
         return $"folder:{nodeId}:secrets";
+    }
+
+    private static string GetFileSecretsCacheKey(NodeUid nodeId)
+    {
+        return $"file:{nodeId}:secrets";
     }
 }

@@ -1,12 +1,13 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Shares;
+using Proton.Drive.Sdk.Volumes;
 using Proton.Photos.Sdk.Api.Photos;
-using Proton.Photos.Sdk.Volumes;
 using Proton.Sdk;
 using Proton.Sdk.Api;
+using VolumeOperations = Proton.Photos.Sdk.Volumes.VolumeOperations;
 
 namespace Proton.Photos.Sdk.Nodes;
 
@@ -30,7 +31,38 @@ internal static class PhotosNodeOperations
         return (FolderNode)metadata.Node;
     }
 
-    public static async IAsyncEnumerable<PhotosTimelineItem> EnumeratePhotosAsync(
+    public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(
+        ProtonPhotosClient client,
+        VolumeId volumeId,
+        IEnumerable<LinkId> linkIds,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var batchLoader = new PhotoNodeBatchLoader(client, volumeId);
+
+        foreach (var linkId in linkIds)
+        {
+            var cachedChildNodeInfo = await client.Cache.Entities.TryGetNodeAsync(new NodeUid(volumeId, linkId), cancellationToken).ConfigureAwait(false);
+
+            if (cachedChildNodeInfo is null)
+            {
+                foreach (var nodeResult in await batchLoader.QueueAndTryLoadBatchAsync(linkId, cancellationToken).ConfigureAwait(false))
+                {
+                    yield return nodeResult;
+                }
+            }
+            else
+            {
+                yield return cachedChildNodeInfo.Value.NodeProvisionResult;
+            }
+        }
+
+        foreach (var nodeResult in await batchLoader.LoadRemainingAsync(cancellationToken).ConfigureAwait(false))
+        {
+            yield return nodeResult;
+        }
+    }
+
+    public static async IAsyncEnumerable<PhotosTimelineItem> EnumeratePhotosTimelineAsync(
         ProtonPhotosClient client,
         NodeUid folderUid,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -39,8 +71,8 @@ internal static class PhotosNodeOperations
 
         do
         {
-            var request = new PhotoTimelineRequest { VolumeId = folderUid.VolumeId, PreviousPageLastLinkId = anchorLinkId };
-            var response = await client.PhotosApi.GetPhotosTimelineAsync(request, cancellationToken).ConfigureAwait(false);
+            var request = new TimelinePhotoListRequest { VolumeId = folderUid.VolumeId, PreviousPageLastLinkId = anchorLinkId };
+            var response = await client.PhotosApi.GetTimelinePhotosAsync(request, cancellationToken).ConfigureAwait(false);
 
             anchorLinkId = response.Photos.Count == PhotosPageSize ? response.Photos[^1].Id : null;
 
@@ -85,7 +117,9 @@ internal static class PhotosNodeOperations
         await photosClient.DriveClient.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
 
         var metadataResult = await DtoToMetadataConverter.ConvertDtoToFolderMetadataAsync(
-                photosClient.DriveClient,
+                photosClient.DriveClient.Account,
+                photosClient.Cache.Entities,
+                photosClient.Cache.Secrets,
                 volumeDto.Id,
                 linkDetailsDto,
                 shareKey,

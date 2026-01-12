@@ -3,7 +3,7 @@ using Proton.Sdk.Cryptography;
 
 namespace Proton.Drive.Sdk.Api.Files;
 
-internal sealed class FileDto
+internal class FileDto
 {
     public required string MediaType { get; init; }
 

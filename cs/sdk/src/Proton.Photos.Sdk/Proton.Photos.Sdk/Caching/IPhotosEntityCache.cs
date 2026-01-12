@@ -1,12 +1,12 @@
 ﻿using Proton.Drive.Sdk.Api.Shares;
+using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Shares;
 using Proton.Drive.Sdk.Volumes;
-using Proton.Sdk;
 
 namespace Proton.Photos.Sdk.Caching;
 
-internal interface IPhotosEntityCache
+internal interface IPhotosEntityCache : IEntityCache
 {
     ValueTask SetPhotosVolumeIdAsync(VolumeId volumeId, CancellationToken cancellationToken);
 
@@ -15,13 +15,6 @@ internal interface IPhotosEntityCache
     ValueTask<ShareId?> TryGetPhotosShareIdAsync(CancellationToken cancellationToken);
 
     ValueTask SetShareAsync(Share share, CancellationToken cancellationToken);
-
-    ValueTask SetNodeAsync(
-        NodeUid nodeId,
-        Result<Node, DegradedNode> nodeProvisionResult,
-        ShareId? membershipShareId,
-        ReadOnlyMemory<byte> nameHashDigest,
-        CancellationToken cancellationToken);
 
     ValueTask<CachedNodeInfo?> TryGetNodeAsync(NodeUid nodeId, CancellationToken cancellationToken);
 }

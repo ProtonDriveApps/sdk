@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
-using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Serialization;
 using Proton.Sdk;
@@ -14,15 +13,15 @@ namespace Proton.Drive.Sdk.Nodes.Cryptography;
 internal static class NodeCrypto
 {
     public static async ValueTask<FolderDecryptionResult> DecryptFolderAsync(
-        ProtonDriveClient client,
+        IAccountClient accountClient,
         LinkDto link,
-        FolderDto folder,
+        PgpArmoredMessage folderHashKey,
         Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
         CancellationToken cancellationToken)
     {
-        var linkDecryptionResult = await DecryptLinkAsync(client, link, parentKeyResult, cancellationToken).ConfigureAwait(false);
+        var linkDecryptionResult = await DecryptLinkAsync(accountClient, link, parentKeyResult, cancellationToken).ConfigureAwait(false);
 
-        var hashKeyResult = DecryptHashKey(folder.HashKey, linkDecryptionResult.NodeKey.GetValueOrDefault(), linkDecryptionResult.NodeAuthorshipClaim);
+        var hashKeyResult = DecryptHashKey(folderHashKey, linkDecryptionResult.NodeKey.GetValueOrDefault(), linkDecryptionResult.NodeAuthorshipClaim);
 
         return new FolderDecryptionResult
         {
@@ -32,7 +31,7 @@ internal static class NodeCrypto
     }
 
     public static async ValueTask<FileDecryptionResult> DecryptFileAsync(
-        ProtonDriveClient client,
+        IAccountClient accountClient,
         LinkDto linkDto,
         FileDto fileDto,
         ActiveRevisionDto activeRevisionDto,
@@ -40,9 +39,9 @@ internal static class NodeCrypto
         CancellationToken cancellationToken)
     {
         var contentAuthorshipClaim =
-            await AuthorshipClaim.CreateAsync(client, activeRevisionDto.SignatureEmailAddress, cancellationToken).ConfigureAwait(false);
+            await AuthorshipClaim.CreateAsync(accountClient, activeRevisionDto.SignatureEmailAddress, cancellationToken).ConfigureAwait(false);
 
-        var linkDecryptionResult = await DecryptLinkAsync(client, linkDto, parentKeyResult, cancellationToken).ConfigureAwait(false);
+        var linkDecryptionResult = await DecryptLinkAsync(accountClient, linkDto, parentKeyResult, cancellationToken).ConfigureAwait(false);
 
         var nodeKey = linkDecryptionResult.NodeKey.GetValueOrDefault();
 
@@ -80,15 +79,15 @@ internal static class NodeCrypto
     }
 
     private static async ValueTask<LinkDecryptionResult> DecryptLinkAsync(
-        ProtonDriveClient client,
+        IAccountClient accountClient,
         LinkDto link,
         Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
         CancellationToken cancellationToken)
     {
-        var nodeAuthorshipClaim = await AuthorshipClaim.CreateAsync(client, link.SignatureEmailAddress, cancellationToken).ConfigureAwait(false);
+        var nodeAuthorshipClaim = await AuthorshipClaim.CreateAsync(accountClient, link.SignatureEmailAddress, cancellationToken).ConfigureAwait(false);
 
         var nameAuthorshipClaim = link.NameSignatureEmailAddress != link.SignatureEmailAddress
-            ? await AuthorshipClaim.CreateAsync(client, link.NameSignatureEmailAddress, cancellationToken).ConfigureAwait(false)
+            ? await AuthorshipClaim.CreateAsync(accountClient, link.NameSignatureEmailAddress, cancellationToken).ConfigureAwait(false)
             : nodeAuthorshipClaim;
 
         Result<PhasedDecryptionOutput<string>, string> nameResult;

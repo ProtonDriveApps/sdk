@@ -539,7 +539,7 @@ internal static class NodeOperations
         await client.Cache.Secrets.SetShareKeyAsync(share.Id, shareKey, cancellationToken).ConfigureAwait(false);
         await client.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
 
-        var metadataResult = await DtoToMetadataConverter.ConvertDtoToFolderMetadataAsync(client, volumeDto.Id, linkDetailsDto, shareKey, cancellationToken)
+        var metadataResult = await DtoToMetadataConverter.ConvertDtoToFolderMetadataAsync(client.Account, client.Cache.Entities, client.Cache.Secrets, volumeDto.Id, linkDetailsDto, shareKey, cancellationToken)
             .ConfigureAwait(false);
 
         return metadataResult.GetValueOrThrow().Node;
