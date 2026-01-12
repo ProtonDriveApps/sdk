@@ -69,6 +69,31 @@ internal static class InteropProtonDriveClient
         return new Int64Value { Value = Interop.AllocHandle(client) };
     }
 
+    public static async ValueTask<IMessage> HandleCreateFolderAsync(DriveClientCreateFolderRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        var createdFolder = await client.CreateFolderAsync(
+            NodeUid.Parse(request.ParentFolderUid),
+            request.FolderName,
+            request.LastModificationTime.Seconds != 0 ? request.LastModificationTime.ToDateTime() : null,
+            cancellationToken).ConfigureAwait(false);
+
+        return new FolderNode
+        {
+            Uid = createdFolder.Uid.ToString(),
+            ParentUid = createdFolder.ParentUid.ToString(),
+            TreeEventScopeId = createdFolder.TreeEventScopeId,
+            Name = createdFolder.Name,
+            CreationTime = createdFolder.CreationTime.ToUniversalTime().ToTimestamp(),
+            TrashTime = createdFolder.TrashTime?.ToUniversalTime().ToTimestamp(),
+            NameAuthor = ParseAuthorResult(createdFolder.NameAuthor),
+            Author = ParseAuthorResult(createdFolder.Author),
+        };
+    }
+
     public static async ValueTask<IMessage> HandleGetFileUploaderAsync(DriveClientGetFileUploaderRequest request)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
@@ -180,5 +205,22 @@ internal static class InteropProtonDriveClient
         Interop.FreeHandle<ProtonDriveClient>(request.ClientHandle);
 
         return null;
+    }
+
+    public static AuthorResult ParseAuthorResult(Result<Proton.Drive.Sdk.Author, Proton.Drive.Sdk.Nodes.SignatureVerificationError> result)
+    {
+        var authorResult = new AuthorResult();
+
+        if (result.TryGetValueElseError(out var author, out var error))
+        {
+            authorResult.Author = new Proton.Drive.Sdk.CExports.Author { EmailAddress = author.EmailAddress };
+        }
+        else
+        {
+            authorResult.Author = new Proton.Drive.Sdk.CExports.Author { EmailAddress = error.ClaimedAuthor.EmailAddress };
+            authorResult.SignatureVerificationError = error.Message;
+        }
+
+        return authorResult;
     }
 }
