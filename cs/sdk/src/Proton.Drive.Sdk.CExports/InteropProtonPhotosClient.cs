@@ -90,8 +90,8 @@ internal static class InteropProtonPhotosClient
             Name = folderNode.Name,
             CreationTime = folderNode.CreationTime.ToUniversalTime().ToTimestamp(),
             TrashTime = folderNode.TrashTime?.ToUniversalTime().ToTimestamp(),
-            NameAuthor = ParseAuthorResult(folderNode.NameAuthor),
-            Author = ParseAuthorResult(folderNode.Author),
+            NameAuthor = InteropProtonDriveClient.ParseAuthorResult(folderNode.NameAuthor),
+            Author = InteropProtonDriveClient.ParseAuthorResult(folderNode.Author),
         };
     }
 
@@ -146,22 +146,5 @@ internal static class InteropProtonPhotosClient
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new FileThumbnailList { Thumbnails = { thumbnails } };
-    }
-
-    private static AuthorResult ParseAuthorResult(Result<Proton.Drive.Sdk.Author, Proton.Drive.Sdk.Nodes.SignatureVerificationError> result)
-    {
-        var authorResult = new AuthorResult();
-
-        if (result.TryGetValueElseError(out var author, out var error))
-        {
-            authorResult.Author = new Proton.Drive.Sdk.CExports.Author { EmailAddress = author.EmailAddress };
-        }
-        else
-        {
-            authorResult.Author = new Proton.Drive.Sdk.CExports.Author { EmailAddress = error.ClaimedAuthor.EmailAddress };
-            authorResult.SignatureVerificationError = error.Message;
-        }
-
-        return authorResult;
     }
 }
