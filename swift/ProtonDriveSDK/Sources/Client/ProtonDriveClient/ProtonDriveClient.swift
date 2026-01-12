@@ -1,4 +1,5 @@
 import Foundation
+import SwiftProtobuf
 
 /// Main entry point for all SDK functionality.
 ///
@@ -18,6 +19,22 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
     let httpClient: HttpClientProtocol
     let accountClient: AccountClientProtocol
     let configuration: ProtonDriveClientConfiguration
+    
+    private enum OperationIdentifier: Hashable {
+        case createFolder(UUID)
+        case rename(UUID)
+        case getAvailableName(UUID)
+        
+        var operationName: String {
+            switch self {
+            case .createFolder: return "createFolder"
+            case .rename: return "rename"
+            case .getAvailableName: return "getAvailableName"
+            }
+        }
+    }
+    
+    private var activeOperations: [OperationIdentifier: CancellationTokenSource] = [:]
 
     public init(
         configuration: ProtonDriveClientConfiguration,
@@ -229,29 +246,6 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         try await uploadsManager.cancelUpload(with: cancellationToken)
     }
 
-    public func getAvailableName(
-        parentFolderUid: SDKNodeUid,
-        name: String
-    ) async throws -> String {
-        let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
-        defer {
-            cancellationTokenSource.free()
-        }
-
-        let cancellationHandle = cancellationTokenSource.handle
-
-        let getAvailableNameRequest = Proton_Drive_Sdk_DriveClientGetAvailableNameRequest.with {
-            $0.clientHandle = Int64(clientHandle)
-            $0.parentFolderUid = parentFolderUid.sdkCompatibleIdentifier
-            $0.name = name
-            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
-        }
-
-        let nameResult: String = try await SDKRequestHandler.send(getAvailableNameRequest,
-                                                                  logger: logger)
-        return nameResult
-    }
-
     static func unbox(
         callbackPointer: Int, releaseBox: () -> Void,
         weakDriveClient: WeakReference<ProtonDriveClient>
@@ -283,6 +277,29 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         guard clientHandle != 0 else { return }
         Self.freeProtonDriveClient(Int64(clientHandle), logger)
     }
+    
+    private func cancelOperation(identifier: OperationIdentifier) async throws {
+        guard let cancellationToken = activeOperations[identifier] else {
+            throw ProtonDriveSDKError(interopError: .noCancellationTokenForIdentifier(operation: identifier.operationName))
+        }
+
+        try await cancellationToken.cancel()
+        
+        activeOperations[identifier] = nil
+        cancellationToken.free()
+    }
+    
+    private func createCancellationTokenSource(_ operationIdentifier: OperationIdentifier, _ logger: Logger) async throws -> CancellationTokenSource {
+        let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
+        activeOperations[operationIdentifier] = cancellationTokenSource
+        return cancellationTokenSource
+    }
+    
+    private func freeCancellationTokenSourceIfNeeded(identifier: OperationIdentifier) {
+        guard let cancellationTokenSource = activeOperations[identifier] else { return }
+        activeOperations[identifier] = nil
+        cancellationTokenSource.free()
+    }
 
     private static func freeProtonDriveClient(_ clientHandle: Int64, _ logger: Logger?) {
         Task {
@@ -302,10 +319,68 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
 
 // MARK: - Node action
 extension ProtonDriveClient {
-    public func rename(nodeUid: SDKNodeUid, newName: String, newMediaType: String?) async throws {
-        let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
+    
+    public func createFolder(
+        parentFolderUid: SDKNodeUid,
+        folderName: String,
+        lastModificationTime: Date,
+        cancellationToken: UUID
+    ) async throws -> FolderNode {
+        let cancellationTokenSource = try await createCancellationTokenSource(.createFolder(cancellationToken), logger)
         defer {
-            cancellationTokenSource.free()
+            freeCancellationTokenSourceIfNeeded(identifier: .createFolder(cancellationToken))
+        }
+        
+        let cancellationHandle = cancellationTokenSource.handle
+        
+        let createFolderRequest = Proton_Drive_Sdk_DriveClientCreateFolderRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.parentFolderUid = parentFolderUid.sdkCompatibleIdentifier
+            $0.folderName = folderName
+            $0.lastModificationTime = Google_Protobuf_Timestamp(date: lastModificationTime)
+            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
+        }
+        
+        let sdkFolderNode: Proton_Drive_Sdk_FolderNode = try await SDKRequestHandler.send(createFolderRequest, logger: logger)
+        return try FolderNode(sdkFolderNode: sdkFolderNode)
+    }
+    
+    public func cancelCreateFolder(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .createFolder(cancellationToken))
+    }
+
+    public func getAvailableName(
+        parentFolderUid: SDKNodeUid,
+        name: String,
+        cancellationToken: UUID
+    ) async throws -> String {
+        let cancellationTokenSource = try await createCancellationTokenSource(.getAvailableName(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .getAvailableName(cancellationToken))
+        }
+
+        let cancellationHandle = cancellationTokenSource.handle
+
+        let getAvailableNameRequest = Proton_Drive_Sdk_DriveClientGetAvailableNameRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.parentFolderUid = parentFolderUid.sdkCompatibleIdentifier
+            $0.name = name
+            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
+        }
+
+        let nameResult: String = try await SDKRequestHandler.send(getAvailableNameRequest,
+                                                                  logger: logger)
+        return nameResult
+    }
+    
+    public func cancelGetAvailableName(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .getAvailableName(cancellationToken))
+    }
+    
+    public func rename(nodeUid: SDKNodeUid, newName: String, newMediaType: String?, cancellationToken: UUID) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.rename(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .rename(cancellationToken))
         }
 
         let cancellationHandle = cancellationTokenSource.handle
@@ -319,5 +394,9 @@ extension ProtonDriveClient {
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
         }
         let result: Void = try await SDKRequestHandler.send(renameRequest, logger: logger)
+    }
+    
+    public func cancelRename(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .rename(cancellationToken))
     }
 }

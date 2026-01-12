@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Sdk.Cryptography;
 
@@ -11,4 +12,7 @@ internal sealed class FolderCreationRequest : NodeCreationRequest
 
     [JsonPropertyName("SignatureEmail")]
     public required string SignatureEmailAddress { get; init; }
+
+    [JsonPropertyName("XAttr")]
+    public PgpArmoredMessage? ExtendedAttributes { get; init; }
 }

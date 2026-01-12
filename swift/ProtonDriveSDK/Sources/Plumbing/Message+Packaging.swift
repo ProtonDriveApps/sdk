@@ -53,6 +53,11 @@ extension Message {
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .driveClientFree(request)
             }
+            
+        case let request as Proton_Drive_Sdk_DriveClientCreateFolderRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .driveClientCreateFolder(request)
+            }
 
         case let request as Proton_Drive_Sdk_DriveClientGetFileUploaderRequest:
             Proton_Drive_Sdk_Request.with {

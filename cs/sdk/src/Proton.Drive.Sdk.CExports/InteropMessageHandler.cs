@@ -40,6 +40,9 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DriveClientRename
                     => await InteropProtonDriveClient.HandleRenameAsync(request.DriveClientRename).ConfigureAwait(false),
 
+                Request.PayloadOneofCase.DriveClientCreateFolder
+                    => await InteropProtonDriveClient.HandleCreateFolderAsync(request.DriveClientCreateFolder).ConfigureAwait(false),
+
                 Request.PayloadOneofCase.DriveClientGetThumbnails
                     => await InteropProtonDriveClient.HandleGetThumbnailsAsync(request.DriveClientGetThumbnails).ConfigureAwait(false),
 

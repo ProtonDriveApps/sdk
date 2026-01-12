@@ -1,8 +1,11 @@
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Cryptography;
+using Proton.Drive.Sdk.Serialization;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
@@ -55,7 +58,7 @@ internal static class FolderOperations
         }
     }
 
-    public static async ValueTask<FolderNode> CreateAsync(ProtonDriveClient client, NodeUid parentUid, string name, CancellationToken cancellationToken)
+    public static async ValueTask<FolderNode> CreateAsync(ProtonDriveClient client, NodeUid parentUid, string name, DateTimeOffset? lastModificationTime, CancellationToken cancellationToken)
     {
         var parentSecrets = await GetSecretsAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
 
@@ -82,6 +85,18 @@ internal static class FolderOperations
             out var keyPassphraseSignature,
             out var armoredKey);
 
+        var extendedAttributes = new ExtendedAttributes
+        {
+            Common = new CommonExtendedAttributes
+            {
+                ModificationTime = lastModificationTime?.UtcDateTime,
+            }
+        };
+
+        var extendedAttributesUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(extendedAttributes, DriveApiSerializerContext.Default.ExtendedAttributes);
+
+        var encryptedExtendedAttributes = key.EncryptAndSign(extendedAttributesUtf8Bytes, signingKey, outputCompression: PgpCompression.Default);
+
         var request = new FolderCreationRequest
         {
             Name = encryptedName,
@@ -92,6 +107,7 @@ internal static class FolderOperations
             SignatureEmailAddress = membershipAddress.EmailAddress,
             Key = armoredKey,
             HashKey = key.EncryptAndSign(hashKey, key),
+            ExtendedAttributes = encryptedExtendedAttributes,
         };
 
         var response = await client.Api.Folders.CreateFolderAsync(parentUid.VolumeId, request, cancellationToken).ConfigureAwait(false);
