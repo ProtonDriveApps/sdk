@@ -12,4 +12,4 @@ public enum PhotoTag
     Bursts = 7,
     Panoramas = 8,
     Raw = 9,
-};
+}

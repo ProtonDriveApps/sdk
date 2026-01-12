@@ -1,6 +1,8 @@
-﻿using Proton.Drive.Sdk.Api.Shares;
+﻿using Proton.Drive.Sdk.Api.Links;
+using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Api.Volumes;
 using Proton.Drive.Sdk.Serialization;
+using Proton.Drive.Sdk.Volumes;
 using Proton.Photos.Sdk.Api.Photos;
 using Proton.Photos.Sdk.Serialization;
 using Proton.Sdk.Http;
@@ -25,12 +27,20 @@ internal sealed class PhotosApiClient(HttpClient httpClient) : IPhotosApiClient
             .GetAsync("v2/shares/photos", cancellationToken).ConfigureAwait(false);
     }
 
-    public async ValueTask<PhotoListResponse> GetPhotosTimelineAsync(PhotoTimelineRequest request, CancellationToken cancellationToken)
+    public async ValueTask<TimelinePhotoListResponse> GetTimelinePhotosAsync(TimelinePhotoListRequest request, CancellationToken cancellationToken)
     {
         var query = request.PreviousPageLastLinkId is not null ? $"?PreviousPageLastLinkID={request.PreviousPageLastLinkId}" : string.Empty;
 
         return await _httpClient
-            .Expecting(PhotosApiSerializerContext.Default.PhotoListResponse)
+            .Expecting(PhotosApiSerializerContext.Default.TimelinePhotoListResponse)
             .GetAsync($"volumes/{request.VolumeId}/photos{query}", cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask<PhotoDetailsResponse> GetDetailsAsync(VolumeId volumeId, IEnumerable<LinkId> linkIds, CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(PhotosApiSerializerContext.Default.PhotoDetailsResponse)
+            .PostAsync($"photos/volumes/{volumeId}/links", new LinkDetailsRequest(linkIds), DriveApiSerializerContext.Default.LinkDetailsRequest, cancellationToken)
+            .ConfigureAwait(false);
     }
 }

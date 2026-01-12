@@ -11,7 +11,7 @@ internal readonly struct AuthorshipClaim(Author author, IReadOnlyList<PgpPublicK
     public string? KeyRetrievalErrorMessage { get; } = keyRetrievalErrorMessage;
 
     public static async ValueTask<AuthorshipClaim> CreateAsync(
-        ProtonDriveClient client,
+        IAccountClient accountClient,
         string? claimedAuthorEmailAddress,
         CancellationToken cancellationToken)
     {
@@ -22,7 +22,7 @@ internal readonly struct AuthorshipClaim(Author author, IReadOnlyList<PgpPublicK
 
         try
         {
-            var keys = await client.Account.GetAddressPublicKeysAsync(claimedAuthorEmailAddress, cancellationToken).ConfigureAwait(false);
+            var keys = await accountClient.GetAddressPublicKeysAsync(claimedAuthorEmailAddress, cancellationToken).ConfigureAwait(false);
 
             return new AuthorshipClaim(new Author { EmailAddress = claimedAuthorEmailAddress }, keys);
         }

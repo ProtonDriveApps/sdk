@@ -1,7 +1,9 @@
-﻿namespace Proton.Photos.Sdk.Caching;
+﻿using Proton.Drive.Sdk.Caching;
+
+namespace Proton.Photos.Sdk.Caching;
 
 internal interface IPhotosClientCache
 {
     IPhotosEntityCache Entities { get; }
-    IPhotosSecretCache Secrets { get; }
+    IDriveSecretCache Secrets { get; }
 }
