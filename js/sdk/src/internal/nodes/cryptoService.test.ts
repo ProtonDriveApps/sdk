@@ -72,8 +72,8 @@ describe('nodesCryptoService', () => {
                 }),
             ),
         };
+        // @ts-expect-error No need to implement all methods for mocking
         account = {
-            // @ts-expect-error No need to implement all methods for mocking
             getPublicKeys: jest.fn(async () => [publicAddressKey]),
             getOwnAddresses: jest.fn(async () => [
                 {
