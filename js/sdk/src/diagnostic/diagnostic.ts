@@ -2,7 +2,7 @@ import { MaybeNode } from '../interface';
 import { ProtonDriveClient } from '../protonDriveClient';
 import { ProtonDrivePhotosClient } from '../protonDrivePhotosClient';
 import { DiagnosticHTTPClient } from './httpClient';
-import { DiagnosticOptions, DiagnosticProgressCallback, DiagnosticResult } from './interface';
+import { DiagnosticOptions, DiagnosticProgressCallback, DiagnosticResult, TreeNode } from './interface';
 import { SDKDiagnosticMain } from './sdkDiagnosticMain';
 import { SDKDiagnosticPhotos } from './sdkDiagnosticPhotos';
 import { DiagnosticTelemetry } from './telemetry';
@@ -56,5 +56,15 @@ export class Diagnostic {
 
     private async *internalGenerator(): AsyncGenerator<DiagnosticResult> {
         yield* zipGenerators(this.telemetry.iterateEvents(), this.httpClient.iterateEvents());
+    }
+
+    async getNodeTreeStructure(node: MaybeNode): Promise<TreeNode> {
+        const diagnostic = new SDKDiagnosticMain(this.protonDriveClient);
+        return diagnostic.getStructure(node);
+    }
+
+    async getPhotosTimelineStructure(): Promise<TreeNode> {
+        const diagnostic = new SDKDiagnosticPhotos(this.protonDrivePhotosClient);
+        return diagnostic.getStructure();
     }
 }

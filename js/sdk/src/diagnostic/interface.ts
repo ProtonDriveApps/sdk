@@ -15,6 +15,8 @@ export interface Diagnostic {
         options?: DiagnosticOptions,
         onProgress?: DiagnosticProgressCallback,
     ): AsyncGenerator<DiagnosticResult>;
+    getNodeTreeStructure(node: MaybeNode): Promise<TreeNode>;
+    getPhotosTimelineStructure(): Promise<TreeNode>;
 }
 
 export type DiagnosticOptions = {
@@ -34,6 +36,17 @@ export type ExpectedTreeNode = {
     // If it's an object, it will be used to verify specific authors by type.
     expectedAuthors?: ExpectedAuthor | { key?: ExpectedAuthor; name?: ExpectedAuthor; content?: ExpectedAuthor };
     children?: ExpectedTreeNode[];
+};
+
+export type TreeNode = {
+    uid: string;
+    type: NodeType;
+    // If node is degraded, error will be set.
+    error?: unknown;
+    name: string;
+    claimedSha1?: string;
+    claimedSizeInBytes?: number;
+    children?: TreeNode[];
 };
 
 export type ExpectedAuthor = string | 'anonymous';
