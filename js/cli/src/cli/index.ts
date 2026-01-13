@@ -9,6 +9,7 @@ import { CommandDeviceDelete } from './device/commandDeviceDelete';
 import { CommandDeviceRename } from './device/commandDeviceRename';
 import { CommandDiagnosticPhotosTimeline } from './diagnostic/commandDiagnosticPhotosTimeline';
 import { CommandDiagnosticTree } from './diagnostic/commandDiagnosticTree';
+import { CommandDiagnosticGetTreeStructure } from './diagnostic/commandDiagnosticGetTreeStructure';
 import { CommandEventsDrive } from './events/commandEventsDrive';
 import { CommandEventsMyVolume } from './events/commandEventsMyVolume';
 import { CommandEventsPath } from './events/commandEventsPath';
@@ -110,6 +111,7 @@ const COMMANDS = [
     // Diagnostic
     new CommandDiagnosticTree(),
     new CommandDiagnosticPhotosTimeline(),
+    new CommandDiagnosticGetTreeStructure(),
 ].map((command: Command) => {
     command.options = command.options || {};
     command.options['help'] = {
