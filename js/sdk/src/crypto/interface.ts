@@ -2,35 +2,6 @@
 export interface PublicKey {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     readonly _idx: any;
-    readonly _keyContentHash: [string, string];
-
-    getVersion(): number;
-    getFingerprint(): string;
-    getSHA256Fingerprints(): string[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getKeyID(): any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getKeyIDs(): any[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getAlgorithmInfo(): any;
-    getCreationTime(): Date;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    isPrivate: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    isPrivateKeyV4: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    isPrivateKeyV6: any;
-    getExpirationTime(): Date | number | null;
-    getUserIDs(): string[];
-    isWeak(): boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    equals(otherKey: any, ignoreOtherCerts?: boolean): boolean;
-    subkeys: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        getAlgorithmInfo(): any;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        getKeyID(): any;
-    }[];
 }
 
 export interface PrivateKey extends PublicKey {
@@ -39,10 +10,6 @@ export interface PrivateKey extends PublicKey {
 
 export interface SessionKey {
     data: Uint8Array;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    algorithm: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    aeadAlgorithm?: any;
 }
 
 export enum VERIFICATION_STATUS {
@@ -93,7 +60,7 @@ export interface OpenPGPCrypto {
      */
     generatePassphrase: () => string;
 
-    generateSessionKey: (encryptionKeys: PrivateKey[]) => Promise<SessionKey>;
+    generateSessionKey: (encryptionKeys: PublicKey[]) => Promise<SessionKey>;
 
     encryptSessionKey: (
         sessionKey: SessionKey,
@@ -121,7 +88,7 @@ export interface OpenPGPCrypto {
 
     encryptArmored: (
         data: Uint8Array,
-        encryptionKeys: PrivateKey[],
+        encryptionKeys: PublicKey[],
         sessionKey?: SessionKey,
     ) => Promise<{
         armoredData: string;
@@ -130,7 +97,7 @@ export interface OpenPGPCrypto {
     encryptAndSign: (
         data: Uint8Array,
         sessionKey: SessionKey,
-        encryptionKeys: PrivateKey[],
+        encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
     ) => Promise<{
         encryptedData: Uint8Array;
@@ -139,7 +106,7 @@ export interface OpenPGPCrypto {
     encryptAndSignArmored: (
         data: Uint8Array,
         sessionKey: SessionKey | undefined,
-        encryptionKeys: PrivateKey[],
+        encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
         options?: { compress?: boolean },
     ) => Promise<{
@@ -149,7 +116,7 @@ export interface OpenPGPCrypto {
     encryptAndSignDetached: (
         data: Uint8Array,
         sessionKey: SessionKey,
-        encryptionKeys: PrivateKey[],
+        encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
     ) => Promise<{
         encryptedData: Uint8Array;
@@ -159,7 +126,7 @@ export interface OpenPGPCrypto {
     encryptAndSignDetachedArmored: (
         data: Uint8Array,
         sessionKey: SessionKey,
-        encryptionKeys: PrivateKey[],
+        encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
     ) => Promise<{
         armoredData: string;

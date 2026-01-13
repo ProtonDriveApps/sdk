@@ -23,5 +23,5 @@ export interface ActionArgs {
     sdkDiagnostic: Diagnostic;
     paths: Paths;
     args: string[];
-    options: { [name: string]: any };
+    options: { [name: string]: unknown };
 }
