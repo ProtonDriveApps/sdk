@@ -186,7 +186,7 @@ internal static class InteropProtonDriveClient
         return new Int64Value { Value = Interop.AllocHandle(fileUploader) };
     }
 
-    public static async ValueTask<IMessage> HandleRenameAsync(DriveClientRenameRequest request)
+    public static async ValueTask<IMessage?> HandleRenameAsync(DriveClientRenameRequest request)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
@@ -197,7 +197,7 @@ internal static class InteropProtonDriveClient
             request.NewName,
             request.NewMediaType,
             cancellationToken).ConfigureAwait(false);
-        return new Empty();
+        return null;
     }
 
     public static IMessage? HandleFree(DriveClientFreeRequest request)

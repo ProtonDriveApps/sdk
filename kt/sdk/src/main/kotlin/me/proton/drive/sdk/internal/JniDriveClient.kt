@@ -6,6 +6,7 @@ import me.proton.drive.sdk.entity.ClientCreateRequest
 import me.proton.drive.sdk.extension.FileThumbnailListResponseCallback
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.StringResponseCallback
+import me.proton.drive.sdk.extension.UnitResponseCallback
 import me.proton.drive.sdk.extension.toLongResponse
 import proton.drive.sdk.ProtonDriveSdk
 import proton.drive.sdk.driveClientCreateFromSessionRequest
@@ -73,6 +74,12 @@ class JniDriveClient internal constructor() : JniBaseProtonDriveSdk() {
         request: ProtonDriveSdk.DriveClientGetAvailableNameRequest,
     ): String = executeOnce("getAvailableName", StringResponseCallback) {
         driveClientGetAvailableName = request
+    }
+
+    suspend fun rename(
+        request: ProtonDriveSdk.DriveClientRenameRequest,
+    ): Unit = executeOnce("rename", UnitResponseCallback) {
+        driveClientRename = request
     }
 
     suspend fun getThumbnails(
