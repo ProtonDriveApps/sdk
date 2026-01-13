@@ -1,8 +1,14 @@
 import { MaybeNode } from '../interface';
 import { ProtonDrivePhotosClient } from '../protonDrivePhotosClient';
-import { DiagnosticOptions, DiagnosticProgressCallback, DiagnosticResult, ExpectedTreeNode } from './interface';
+import {
+    DiagnosticOptions,
+    DiagnosticProgressCallback,
+    DiagnosticResult,
+    ExpectedTreeNode,
+    TreeNode,
+} from './interface';
 import { zipGenerators } from './zipGenerators';
-import { getNodeName, getTreeNodeChildByNodeName } from './nodeUtils';
+import { getNodeName, getTreeNodeChildByNodeName, getActiveRevision, getNodeType } from './nodeUtils';
 import { SDKDiagnosticBase } from './sdkDiagnosticBase';
 
 /**
@@ -66,5 +72,44 @@ export class SDKDiagnosticPhotos extends SDKDiagnosticBase {
         }
 
         this.allNodesLoaded = true;
+    }
+
+    async getStructure(): Promise<TreeNode> {
+        const myPhotosRootFolder = await this.protonDrivePhotosClient.getMyPhotosRootFolder();
+
+        const treeNode: TreeNode = {
+            uid: myPhotosRootFolder.ok ? myPhotosRootFolder.value.uid : myPhotosRootFolder.error.uid,
+            type: getNodeType(myPhotosRootFolder),
+            name: getNodeName(myPhotosRootFolder),
+        };
+        const children = [];
+
+        const results = await Array.fromAsync(this.protonDrivePhotosClient.iterateTimeline());
+        const nodeUids = results.map((result) => result.nodeUid);
+
+        for await (const maybeMissingNode of this.protonDrivePhotosClient.iterateNodes(nodeUids)) {
+            if (!maybeMissingNode.ok && 'missingUid' in maybeMissingNode.error) {
+                continue;
+            }
+            const node = maybeMissingNode as MaybeNode;
+
+            const activeRevision = getActiveRevision(node);
+            const childNode: TreeNode = {
+                uid: node.ok ? node.value.uid : node.error.uid,
+                name: getNodeName(node),
+                type: getNodeType(node),
+                claimedSha1: activeRevision?.claimedDigests?.sha1,
+                claimedSizeInBytes: activeRevision?.claimedSize,
+            };
+
+            if (!node.ok) {
+                childNode.error = node.error || 'degraded node';
+            }
+
+            children.push(childNode);
+        }
+
+        treeNode.children = children;
+        return treeNode;
     }
 }

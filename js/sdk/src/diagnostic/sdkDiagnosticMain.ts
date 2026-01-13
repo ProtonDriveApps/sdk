@@ -1,8 +1,14 @@
 import { MaybeNode, NodeType } from '../interface';
 import { ProtonDriveClient } from '../protonDriveClient';
-import { DiagnosticOptions, DiagnosticProgressCallback, DiagnosticResult, ExpectedTreeNode } from './interface';
+import {
+    DiagnosticOptions,
+    DiagnosticProgressCallback,
+    DiagnosticResult,
+    ExpectedTreeNode,
+    TreeNode,
+} from './interface';
 import { zipGenerators } from './zipGenerators';
-import { getNodeType, getNodeName, getTreeNodeChildByNodeName } from './nodeUtils';
+import { getNodeType, getNodeName, getTreeNodeChildByNodeName, getActiveRevision } from './nodeUtils';
 import { SDKDiagnosticBase } from './sdkDiagnosticBase';
 
 /**
@@ -91,5 +97,38 @@ export class SDKDiagnosticMain extends SDKDiagnosticBase {
                 );
             }
         }
+    }
+
+    async getStructure(node: MaybeNode): Promise<TreeNode> {
+        const nodeType = getNodeType(node);
+        const treeNode: TreeNode = {
+            uid: node.ok ? node.value.uid : node.error.uid,
+            type: nodeType,
+            name: getNodeName(node),
+        };
+
+        if (!node.ok) {
+            treeNode.error = node.error || 'degraded node';
+        }
+
+        if (nodeType === NodeType.Folder) {
+            const children = [];
+
+            for await (const child of this.protonDriveClient.iterateFolderChildren(node)) {
+                children.push(child);
+            }
+
+            treeNode.children = [];
+            for (const child of children) {
+                const childStructure = await this.getStructure(child);
+                treeNode.children.push(childStructure);
+            }
+        } else if (nodeType === NodeType.File) {
+            const activeRevision = getActiveRevision(node);
+            treeNode.claimedSha1 = activeRevision?.claimedDigests?.sha1;
+            treeNode.claimedSizeInBytes = activeRevision?.claimedSize;
+        }
+
+        return treeNode;
     }
 }
