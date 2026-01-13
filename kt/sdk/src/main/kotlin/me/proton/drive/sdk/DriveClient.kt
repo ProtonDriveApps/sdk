@@ -9,6 +9,7 @@ import me.proton.drive.sdk.internal.cancellationCoroutineScope
 import me.proton.drive.sdk.internal.toLogId
 import proton.drive.sdk.driveClientGetAvailableNameRequest
 import proton.drive.sdk.driveClientGetThumbnailsRequest
+import proton.drive.sdk.driveClientRenameRequest
 import java.io.OutputStream
 
 class DriveClient internal constructor(
@@ -50,6 +51,25 @@ class DriveClient internal constructor(
                 outputStream.write(fileThumbnail.data.toByteArray())
             }
         }
+    }
+
+    suspend fun rename(
+        nodeUid: String,
+        name: String,
+        mediaType: String? = null,
+    ): Unit = cancellationCoroutineScope { source ->
+        log(DEBUG, "rename")
+        bridge.rename(
+            driveClientRenameRequest {
+                this.nodeUid = nodeUid
+                newName = name
+                mediaType?.let {
+                    newMediaType = mediaType
+                }
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        )
     }
 
     override fun close() {
