@@ -147,7 +147,7 @@ export function getCommand(groupName: string, commandName: string): Command {
     throw new Error(`Command not found`);
 }
 
-export function validateCommandArguments(command: Command, args: string[], values: { [name: string]: any }) {
+export function validateCommandArguments(command: Command, args: string[], values: { [name: string]: unknown }) {
     if (command.args) {
         if (args.length !== command.args.length) {
             printCommandUsage(command);
