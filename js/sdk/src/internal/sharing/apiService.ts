@@ -1,5 +1,5 @@
 import { SRPVerifier } from '../../crypto';
-import { NodeType, MemberRole, NonProtonInvitationState, Logger } from '../../interface';
+import { MemberRole, NonProtonInvitationState, Logger } from '../../interface';
 import {
     DriveAPIService,
     drivePaths,
@@ -235,7 +235,7 @@ export class SharingAPIService {
             },
             node: {
                 uid: makeNodeUid(response.Share.VolumeID, response.Link.LinkID),
-                type: nodeTypeNumberToNodeType(this.logger, response.Link.Type),
+                type: nodeTypeNumberToNodeType(this.logger, response.Link.Type, response.Share.ShareTargetType),
                 mediaType: response.Link.MIMEType || undefined,
                 encryptedName: response.Link.Name,
             },
@@ -272,7 +272,15 @@ export class SharingAPIService {
                     base64SharePasswordSalt: bookmark.Token.SharePasswordSalt,
                 },
                 node: {
-                    type: bookmark.Token.LinkType === 1 ? NodeType.Folder : NodeType.File,
+                    // FIXME: Bookmarked directly shared photo from Photos
+                    // section will be wrongly detected as file. The reason
+                    // is that on the backend photo is file type and there
+                    // is no ShareTargetType available.
+                    // It is not crucial as only web client supports bookmarks
+                    // and it simply opens the public link. Also, the plan
+                    // is to remove bookmarks in the future in favor of copy
+                    // to own volume.
+                    type: nodeTypeNumberToNodeType(this.logger, bookmark.Token.LinkType),
                     mediaType: bookmark.Token.MIMEType,
                     encryptedName: bookmark.Token.Name,
                     armoredKey: bookmark.Token.NodeKey,
