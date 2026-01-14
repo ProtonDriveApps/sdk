@@ -1,6 +1,7 @@
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Proton.Photos.Sdk.Nodes;
+using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Sdk.CExports;
 
 namespace Proton.Drive.Sdk.CExports;
@@ -46,6 +47,15 @@ internal static class InteropPhotosDownloader
         var fileDownloader = Interop.FreeHandle<PhotosDownloader>(request.FileDownloaderHandle);
 
         fileDownloader.Dispose();
+
+        return null;
+    }
+
+    public static async ValueTask<IMessage?> HandleAwaitCompletion(DrivePhotosClientAwaitDownloadCompletionRequest request)
+    {
+        var downloadController = Interop.GetFromHandle<DownloadController>(request.DownloadControllerHandle);
+
+        await downloadController.Completion.ConfigureAwait(false);
 
         return null;
     }

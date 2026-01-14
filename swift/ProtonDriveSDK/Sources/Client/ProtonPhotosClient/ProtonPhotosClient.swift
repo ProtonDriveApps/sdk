@@ -174,7 +174,7 @@ extension ProtonPhotosClient {
         destinationUrl: URL,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
-    ) async throws -> DownloadOperation {
+    ) async throws -> PhotoDownloadOperation {
         try await downloadsManager.downloadPhotoOperation(
             photoUid: photoUid,
             destinationUrl: destinationUrl,
