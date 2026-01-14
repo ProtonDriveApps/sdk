@@ -21,7 +21,9 @@ internal static class InteropCancellationTokenSource
 
     public static IMessage? HandleFree(CancellationTokenSourceFreeRequest request)
     {
-        Interop.FreeHandle<CancellationTokenSource>(request.CancellationTokenSourceHandle);
+        var cancellationTokenSource = Interop.FreeHandle<CancellationTokenSource>(request.CancellationTokenSourceHandle);
+
+        cancellationTokenSource.Dispose();
 
         return null;
     }

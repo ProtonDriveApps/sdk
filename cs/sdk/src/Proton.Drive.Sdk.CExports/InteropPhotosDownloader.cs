@@ -40,7 +40,7 @@ internal static class InteropPhotosDownloader
 
         return new Int64Value { Value = Interop.AllocHandle(downloadController) };
     }
-    
+
     public static IMessage? HandleFree(DrivePhotosClientDownloaderFreeRequest request)
     {
         var fileDownloader = Interop.FreeHandle<PhotosDownloader>(request.FileDownloaderHandle);

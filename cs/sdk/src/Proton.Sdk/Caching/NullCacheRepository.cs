@@ -29,7 +29,7 @@ internal sealed class NullCacheRepository : ICacheRepository
         return ValueTask.FromResult(default(string?));
     }
 
-    public IAsyncEnumerable<(string Key, string Value)> GetByTagsAsync(IEnumerable<string> tags, CancellationToken cancellationToken)
+    public IAsyncEnumerable<(string Key, string Value)> GetByTagsAsync(IEnumerable<string> tags, CancellationToken cancellationToken = default)
     {
         return AsyncEnumerable.Empty<(string, string)>();
     }

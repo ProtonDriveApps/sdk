@@ -7,32 +7,18 @@ internal static class RevisionOperations
 {
     public static async ValueTask<RevisionWriter> OpenForWritingAsync(
         ProtonDriveClient client,
-        RevisionUid revisionUid,
-        FileSecrets fileSecrets,
+        RevisionDraft draft,
         Action<int> releaseBlocksAction,
-        TaskControl<UploadResult> taskControl)
+        CancellationToken cancellationToken)
     {
-        var (membershipAddress, signingKey) = await taskControl.HandlePauseAsync(async ct =>
-        {
-            var membershipAddress = await NodeOperations.GetMembershipAddressAsync(client, revisionUid.NodeUid, ct).ConfigureAwait(false);
-            var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, ct).ConfigureAwait(false);
-
-            return (membershipAddress, signingKey);
-        }).ConfigureAwait(false);
-
-        await client.BlockUploader.Queue.StartFileAsync(taskControl.CancellationToken).ConfigureAwait(false);
+        await client.BlockUploader.Queue.StartFileAsync(cancellationToken).ConfigureAwait(false);
 
         return new RevisionWriter(
             client,
-            revisionUid,
-            fileSecrets.Key,
-            fileSecrets.ContentKey,
-            signingKey,
-            membershipAddress,
+            draft,
             releaseBlocksAction,
             () => client.BlockUploader.Queue.FinishFile(),
-            client.TargetBlockSize,
-            client.MaxBlockSize);
+            client.TargetBlockSize);
     }
 
     internal static async ValueTask<RevisionReader> OpenForReadingAsync(

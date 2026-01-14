@@ -27,8 +27,8 @@ internal interface IFilesApiClient
         VolumeId volumeId,
         LinkId linkId,
         RevisionId revisionId,
-        int fromBlockIndex,
-        int pageSize,
+        int? fromBlockIndex,
+        int? pageSize,
         bool withoutBlockUrls,
         CancellationToken cancellationToken);
 

@@ -17,7 +17,6 @@ internal static partial class FileOperations
                 .ConfigureAwait(false);
 
             fileSecretsResult = metadataResult.GetFileSecretsOrThrow();
-
         }
 
         return (Result<FileSecrets, DegradedFileSecrets>)fileSecretsResult;
