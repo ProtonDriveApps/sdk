@@ -1,13 +1,12 @@
 namespace Proton.Drive.Sdk.Nodes;
 
-internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITaskControl<T>
+internal sealed class TaskControl(CancellationToken cancellationToken) : IDisposable
 {
     private readonly Lock _pauseLock = new();
 
-    private TaskCompletionSource? _resumeSignalSource;
-    private TaskCompletionSource<T> _pauseExceptionSignalSource = new();
-    private CancellationTokenSource _pauseCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
     private bool _isDisposed;
+    private TaskCompletionSource? _resumeSignalSource;
+    private CancellationTokenSource _pauseCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
     public bool IsPaused => _resumeSignalSource is { Task.IsCompleted: false } && !IsCanceled;
     public bool IsCanceled => CancellationToken.IsCancellationRequested;
@@ -15,15 +14,8 @@ internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITas
     public CancellationToken CancellationToken { get; } = cancellationToken;
     public CancellationToken PauseOrCancellationToken => _pauseCancellationTokenSource.Token;
 
-    public Task<T> PauseExceptionSignal => _pauseExceptionSignalSource.Task;
-
     public void Pause()
     {
-        if (_isDisposed)
-        {
-            return;
-        }
-
         if (IsPaused)
         {
             return;
@@ -31,11 +23,6 @@ internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITas
 
         lock (_pauseLock)
         {
-            if (_isDisposed)
-            {
-                return;
-            }
-
             if (IsPaused)
             {
                 return;
@@ -43,94 +30,34 @@ internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITas
 
             _resumeSignalSource = new TaskCompletionSource();
 
-            if (PauseExceptionSignal.IsFaulted)
-            {
-                _pauseExceptionSignalSource = new TaskCompletionSource<T>();
-            }
-
             _pauseCancellationTokenSource.Cancel();
         }
     }
 
-    public void PauseOnError(Exception ex)
+    public bool TryResume()
     {
-        var pauseExceptionSignalSource = _pauseExceptionSignalSource;
-
-        Pause();
-
-        pauseExceptionSignalSource.TrySetException(ex);
-    }
-
-    public void Resume()
-    {
-        if (_isDisposed)
-        {
-            return;
-        }
-
         if (!IsPaused)
         {
-            return;
+            return false;
         }
 
         lock (_pauseLock)
         {
-            if (_isDisposed)
-            {
-                return;
-            }
-
             if (!IsPaused)
             {
-                return;
+                return false;
             }
 
             _pauseCancellationTokenSource.Dispose();
             _pauseCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(CancellationToken);
-
-            _pauseExceptionSignalSource = new TaskCompletionSource<T>();
 
             var resumeSignalSource = _resumeSignalSource;
             _resumeSignalSource = null;
 
             resumeSignalSource?.SetResult();
         }
-    }
 
-    public async ValueTask WaitWhilePausedAsync()
-    {
-        var resumeTask = _resumeSignalSource?.Task;
-
-        if (resumeTask is not null)
-        {
-            await resumeTask.WaitAsync(CancellationToken).ConfigureAwait(false);
-        }
-    }
-
-    public async ValueTask<T2> HandlePauseAsync<T2>(Func<CancellationToken, ValueTask<T2>> function, Func<Exception, bool>? exceptionTriggersPause = null)
-    {
-        await WaitWhilePausedAsync().ConfigureAwait(false);
-
-        while (true)
-        {
-            try
-            {
-                return await function.Invoke(PauseOrCancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) when (IsPaused)
-            {
-                await WaitWhilePausedAsync().ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) when (CancellationToken.IsCancellationRequested)
-            {
-                throw;
-            }
-            catch (Exception ex) when (exceptionTriggersPause?.Invoke(ex) == true)
-            {
-                PauseOnError(ex);
-                await WaitWhilePausedAsync().ConfigureAwait(false);
-            }
-        }
+        return true;
     }
 
     public void Dispose()
@@ -140,22 +67,10 @@ internal sealed class TaskControl<T>(CancellationToken cancellationToken) : ITas
             return;
         }
 
-        lock (_pauseLock)
-        {
-            var pauseExceptionSignal = _pauseExceptionSignalSource.Task;
+        _resumeSignalSource?.TrySetCanceled();
 
-            if (pauseExceptionSignal.IsFaulted && pauseExceptionSignal.Exception.InnerException is { } innerException)
-            {
-                _resumeSignalSource?.TrySetException(innerException);
-            }
-            else
-            {
-                _resumeSignalSource?.TrySetCanceled();
-            }
+        _pauseCancellationTokenSource.Dispose();
 
-            _pauseCancellationTokenSource.Dispose();
-
-            _isDisposed = true;
-        }
+        _isDisposed = true;
     }
 }

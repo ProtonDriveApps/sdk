@@ -130,7 +130,6 @@ public sealed class ProtonDriveClient
     internal FifoFlexibleSemaphore BlockListingSemaphore { get; }
 
     internal int TargetBlockSize { get; set; } = RevisionWriter.DefaultBlockSize;
-    internal int MaxBlockSize { get; set; } = RevisionWriter.DefaultBlockSize * 3 / 2;
 
     internal BlockUploader BlockUploader { get; }
     internal BlockDownloader BlockDownloader { get; }
@@ -145,7 +144,9 @@ public sealed class ProtonDriveClient
 
     public ValueTask<Result<Node, DegradedNode>?> GetNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
     {
-        return NodeOperations.EnumerateNodesAsync(this, nodeUid.VolumeId, [nodeUid.LinkId], cancellationToken).Select(x => (Result<Node, DegradedNode>?)x).FirstOrDefaultAsync();
+        return NodeOperations.EnumerateNodesAsync(this, nodeUid.VolumeId, [nodeUid.LinkId], cancellationToken)
+            .Select(x => (Result<Node, DegradedNode>?)x)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public ValueTask<FolderNode> CreateFolderAsync(NodeUid parentId, string name, DateTime? lastModificationTime, CancellationToken cancellationToken)
@@ -176,7 +177,7 @@ public sealed class ProtonDriveClient
         bool overrideExistingDraftByOtherClient,
         CancellationToken cancellationToken)
     {
-        var draftProvider = new NewFileDraftProvider(parentFolderUid, name, mediaType, overrideExistingDraftByOtherClient);
+        var draftProvider = new NewFileDraftProvider(this, parentFolderUid, name, mediaType, overrideExistingDraftByOtherClient);
 
         return await GetFileUploaderAsync(draftProvider, size, lastModificationTime, additionalMetadata, cancellationToken).ConfigureAwait(false);
     }
@@ -188,7 +189,7 @@ public sealed class ProtonDriveClient
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         CancellationToken cancellationToken)
     {
-        var draftProvider = new NewRevisionDraftProvider(currentActiveRevisionUid.NodeUid, currentActiveRevisionUid.RevisionId);
+        var draftProvider = new NewRevisionDraftProvider(this, currentActiveRevisionUid.NodeUid, currentActiveRevisionUid.RevisionId);
 
         return await GetFileUploaderAsync(draftProvider, size, lastModificationTime, additionalMetadata, cancellationToken).ConfigureAwait(false);
     }
@@ -244,12 +245,12 @@ public sealed class ProtonDriveClient
     }
 
     private async ValueTask<FileUploader> GetFileUploaderAsync(
-        IFileDraftProvider fileDraftProvider,
+        IRevisionDraftProvider revisionDraftProvider,
         long size,
         DateTime? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         CancellationToken cancellationToken)
     {
-        return await FileUploader.CreateAsync(this, fileDraftProvider, size, lastModificationTime, additionalMetadata, cancellationToken).ConfigureAwait(false);
+        return await FileUploader.CreateAsync(this, revisionDraftProvider, size, lastModificationTime, additionalMetadata, cancellationToken).ConfigureAwait(false);
     }
 }

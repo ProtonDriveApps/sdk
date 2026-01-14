@@ -76,7 +76,7 @@ internal static class ExceptionExtensions
             : typeName;
     }
 
-    public static bool TryGetRelevantFormattedErrorCode(this Exception ex, [MaybeNullWhen(false)] out string formattedErrorCode)
+    private static bool TryGetRelevantFormattedErrorCode(this Exception ex, [MaybeNullWhen(false)] out string formattedErrorCode)
     {
         return ex switch
         {
