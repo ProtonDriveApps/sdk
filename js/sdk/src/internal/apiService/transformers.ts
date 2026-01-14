@@ -1,10 +1,26 @@
 import { Logger, NodeType, MemberRole } from '../../interface';
 
-export function nodeTypeNumberToNodeType(logger: Logger, nodeTypeNumber: number): NodeType {
+enum ShareTargetType {
+    Root = 0,
+    Folder = 1,
+    File = 2,
+    Album = 3,
+    Photo = 4,
+    ProtonVendor = 5,
+}
+
+export function nodeTypeNumberToNodeType(
+    logger: Logger,
+    nodeTypeNumber: number,
+    shareTargetType?: ShareTargetType,
+): NodeType {
     switch (nodeTypeNumber) {
         case 1:
             return NodeType.Folder;
         case 2:
+            if (shareTargetType === ShareTargetType.Album || shareTargetType === ShareTargetType.Photo) {
+                return NodeType.Photo;
+            }
             return NodeType.File;
         case 3:
             return NodeType.Album;
