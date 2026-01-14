@@ -1,12 +1,17 @@
 package me.proton.drive.sdk
 
+import com.google.protobuf.timestamp
+import com.google.protobuf.value
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
+import me.proton.drive.sdk.entity.FolderNode
 import me.proton.drive.sdk.entity.ThumbnailType
+import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toProto
 import me.proton.drive.sdk.internal.JniDriveClient
 import me.proton.drive.sdk.internal.cancellationCoroutineScope
 import me.proton.drive.sdk.internal.toLogId
+import proton.drive.sdk.driveClientCreateFolderRequest
 import proton.drive.sdk.driveClientGetAvailableNameRequest
 import proton.drive.sdk.driveClientGetThumbnailsRequest
 import proton.drive.sdk.driveClientRenameRequest
@@ -70,6 +75,25 @@ class DriveClient internal constructor(
                 cancellationTokenSourceHandle = source.handle
             }
         )
+    }
+
+    suspend fun createFolder(
+        parentFolderUid: String,
+        name: String,
+        lastModification: Long? = null,
+    ): FolderNode = cancellationCoroutineScope { source ->
+        log(DEBUG, "createFolder")
+        bridge.createFolder(
+            driveClientCreateFolderRequest {
+                this.parentFolderUid = parentFolderUid
+                folderName = name
+                lastModification?.let {
+                    lastModificationTime = timestamp { seconds = lastModification}
+                }
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        ).toEntity()
     }
 
     override fun close() {

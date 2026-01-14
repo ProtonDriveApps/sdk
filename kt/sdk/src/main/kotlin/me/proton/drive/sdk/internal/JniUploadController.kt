@@ -1,9 +1,10 @@
 package me.proton.drive.sdk.internal
 
+import me.proton.drive.sdk.converter.UploadResultConverter
 import me.proton.drive.sdk.entity.UploadResult
 import me.proton.drive.sdk.extension.BooleanResponseCallback
 import me.proton.drive.sdk.extension.UnitResponseCallback
-import me.proton.drive.sdk.extension.UploadResultResponseCallback
+import me.proton.drive.sdk.extension.asCallback
 import me.proton.drive.sdk.extension.toEntity
 import proton.drive.sdk.uploadControllerAwaitCompletionRequest
 import proton.drive.sdk.uploadControllerDisposeRequest
@@ -15,7 +16,7 @@ import proton.drive.sdk.uploadControllerResumeRequest
 class JniUploadController internal constructor() : JniBaseProtonDriveSdk() {
 
     suspend fun awaitCompletion(handle: Long): UploadResult =
-        executeOnce("awaitCompletion", UploadResultResponseCallback) {
+        executeOnce("awaitCompletion", UploadResultConverter().asCallback) {
             uploadControllerAwaitCompletion = uploadControllerAwaitCompletionRequest {
                 uploadControllerHandle = handle
             }
