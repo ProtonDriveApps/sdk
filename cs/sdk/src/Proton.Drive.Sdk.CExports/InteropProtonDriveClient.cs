@@ -78,7 +78,7 @@ internal static class InteropProtonDriveClient
         var createdFolder = await client.CreateFolderAsync(
             NodeUid.Parse(request.ParentFolderUid),
             request.FolderName,
-            request.LastModificationTime.Seconds != 0 ? request.LastModificationTime.ToDateTime() : null,
+            request.LastModificationTime?.ToDateTime(),
             cancellationToken).ConfigureAwait(false);
 
         return new FolderNode

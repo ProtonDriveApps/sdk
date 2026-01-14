@@ -2,11 +2,13 @@ package me.proton.drive.sdk.internal
 
 import com.google.protobuf.Any
 import kotlinx.coroutines.CoroutineScope
+import me.proton.drive.sdk.converter.FileThumbnailListConverter
+import me.proton.drive.sdk.converter.FolderNodeConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
-import me.proton.drive.sdk.extension.FileThumbnailListResponseCallback
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.StringResponseCallback
 import me.proton.drive.sdk.extension.UnitResponseCallback
+import me.proton.drive.sdk.extension.asCallback
 import me.proton.drive.sdk.extension.toLongResponse
 import proton.drive.sdk.ProtonDriveSdk
 import proton.drive.sdk.driveClientCreateFromSessionRequest
@@ -85,9 +87,15 @@ class JniDriveClient internal constructor() : JniBaseProtonDriveSdk() {
     suspend fun getThumbnails(
         request: ProtonDriveSdk.DriveClientGetThumbnailsRequest,
     ): ProtonDriveSdk.FileThumbnailList =
-        executeOnce("getThumbnails", FileThumbnailListResponseCallback) {
+        executeOnce("getThumbnails", FileThumbnailListConverter().asCallback) {
             driveClientGetThumbnails = request
         }
+
+    suspend fun createFolder(
+        request: ProtonDriveSdk.DriveClientCreateFolderRequest,
+    ): ProtonDriveSdk.FolderNode = executeOnce("createFolder", FolderNodeConverter().asCallback) {
+        driveClientCreateFolder = request
+    }
 
     fun free(handle: Long) {
         dispatch("free") {
