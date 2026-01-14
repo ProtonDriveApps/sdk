@@ -50,6 +50,7 @@ message Request {
         DrivePhotosClientDownloadToFileRequest drive_photos_client_download_to_file = 1307;
         DrivePhotosClientDownloaderFreeRequest drive_photos_client_downloader_free = 1308;
         DrivePhotosClientEnumeratePhotosTimelineRequest drive_photos_client_enumerate_photos_timeline = 1309;
+        DrivePhotosClientAwaitDownloadCompletionRequest drive_photos_client_await_download_completion = 1310;
     };
 }
 
@@ -493,6 +494,11 @@ message DrivePhotosClientDownloadToFileRequest {
 // The response must not have a value.
 message DrivePhotosClientDownloaderFreeRequest  {
     int64 file_downloader_handle = 1;
+}
+
+// The response must not have a value.
+message DrivePhotosClientAwaitDownloadCompletionRequest {
+    int64 download_controller_handle = 1;
 }
 
 enum VolumeType {

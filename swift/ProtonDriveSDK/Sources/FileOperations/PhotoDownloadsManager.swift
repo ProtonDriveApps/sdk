@@ -23,7 +23,7 @@ actor PhotoDownloadsManager {
         destinationUrl: URL,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
-    ) async throws -> DownloadOperation {
+    ) async throws -> PhotoDownloadOperation {
         let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
         activeDownloads[cancellationToken] = cancellationTokenSource
 
@@ -48,8 +48,8 @@ actor PhotoDownloadsManager {
             logger: logger
         )
 
-        return DownloadOperation(
-            fileDownloaderHandle: downloaderHandle,
+        return PhotoDownloadOperation(
+            photoDownloaderHandle: downloaderHandle,
             downloadControllerHandle: downloadControllerHandle,
             progressCallbackWrapper: callbackState,
             logger: logger,

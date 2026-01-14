@@ -130,6 +130,9 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DrivePhotosClientDownloaderFree
                     => InteropPhotosDownloader.HandleFree(request.DrivePhotosClientDownloaderFree),
 
+                Request.PayloadOneofCase.DrivePhotosClientAwaitDownloadCompletion
+                    => await InteropPhotosDownloader.HandleAwaitCompletion(request.DrivePhotosClientAwaitDownloadCompletion).ConfigureAwait(false),
+
                 Request.PayloadOneofCase.None or _
                     => throw new ArgumentException($"Unknown request type: {request.PayloadCase}", nameof(requestBytes)),
             };
