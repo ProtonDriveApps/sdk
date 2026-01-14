@@ -5,6 +5,7 @@
   <ItemGroup>
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="9.0.10" />
     <PackageVersion Include="Microsoft.Data.Sqlite.Core" Version="9.0.10" />
+    <PackageVersion Include="morelinq" Version="4.4.0" />
     <PackageVersion Include="Polly" Version="8.6.5" />
     <PackageVersion Include="SQLitePCLRaw.bundle_sqlite3" Version="2.1.10" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.10" />

@@ -1,3 +1,4 @@
+using System.Text;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Serialization;
 using Proton.Drive.Sdk.Volumes;
@@ -62,16 +63,30 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
         VolumeId volumeId,
         LinkId linkId,
         RevisionId revisionId,
-        int fromBlockIndex,
-        int pageSize,
+        int? fromBlockIndex,
+        int? pageSize,
         bool withoutBlockUrls,
         CancellationToken cancellationToken)
     {
+        var routeBuilder = new StringBuilder();
+
+        routeBuilder.Append($"v2/volumes/{volumeId}/files/{linkId}/revisions/{revisionId}?");
+
+        if (fromBlockIndex is not null)
+        {
+            routeBuilder.Append($"FromBlockIndex={fromBlockIndex}&");
+        }
+
+        if (pageSize is not null)
+        {
+            routeBuilder.Append($"PageSize={pageSize}&");
+        }
+
+        routeBuilder.Append($"NoBlockUrls={(withoutBlockUrls ? 1 : 0)}");
+
         return await _httpClient
             .Expecting(DriveApiSerializerContext.Default.RevisionResponse)
-            .GetAsync(
-                $"v2/volumes/{volumeId}/files/{linkId}/revisions/{revisionId}?FromBlockIndex={fromBlockIndex}&PageSize={pageSize}&NoBlockUrls={(withoutBlockUrls ? 1 : 0)}",
-                cancellationToken).ConfigureAwait(false);
+            .GetAsync(routeBuilder.ToString(), cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<ApiResponse> DeleteRevisionAsync(VolumeId volumeId, LinkId linkId, RevisionId revisionId, CancellationToken cancellationToken)

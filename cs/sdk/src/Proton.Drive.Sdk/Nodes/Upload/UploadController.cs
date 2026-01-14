@@ -1,101 +1,134 @@
-using Microsoft.Extensions.Logging;
-using Proton.Drive.Sdk.Api;
+using Proton.Drive.Sdk.Nodes.Upload.Verification;
+using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
-public sealed partial class UploadController : IAsyncDisposable
+public sealed class UploadController : IAsyncDisposable
 {
-    private readonly IDriveApiClients _apiClients;
-    private readonly IFileDraftProvider _fileDraftProvider;
-    private readonly Task<RevisionUid> _revisionUidTask;
-    private readonly Task<UploadResult> _uploadTask;
-    private readonly ITaskControl<UploadResult> _taskControl;
-    private readonly ILogger _logger;
+    private readonly Task<RevisionDraft> _revisionDraftTask;
+    private readonly Func<CancellationToken, Task<UploadResult>> _resumeFunction;
+    private readonly TaskControl _taskControl;
+    private readonly Stream? _sourceStreamToDispose;
+
+    private bool _isDisposed;
 
     internal UploadController(
-        IDriveApiClients apiClients,
-        IFileDraftProvider fileDraftProvider,
-        Task<RevisionUid> revisionUidTask,
+        Task<RevisionDraft> revisionDraftTask,
         Task<UploadResult> uploadTask,
-        ITaskControl<UploadResult> taskControl,
-        ILogger logger)
+        Func<CancellationToken, Task<UploadResult>> resumeFunction,
+        Stream? sourceStreamToDispose,
+        TaskControl taskControl)
     {
-        _apiClients = apiClients;
-        _fileDraftProvider = fileDraftProvider;
-        _revisionUidTask = revisionUidTask;
-        _uploadTask = uploadTask;
+        _revisionDraftTask = revisionDraftTask;
+        _resumeFunction = resumeFunction;
         _taskControl = taskControl;
-        _logger = logger;
+        _sourceStreamToDispose = sourceStreamToDispose;
 
-        Completion = Task.WhenAny(_taskControl.PauseExceptionSignal, _uploadTask).Unwrap();
+        Completion = PauseOnResumableErrorAsync(uploadTask);
     }
+
+    internal event Action<Exception>? UploadFailed;
+    internal event Action<long>? UploadSucceeded;
 
     public bool IsPaused => _taskControl.IsPaused;
 
-    // FIXME: Add unit test to ensure that the revision UID is of the new active revision
     public Task<UploadResult> Completion { get; private set; }
 
     public void Pause()
     {
         _taskControl.Pause();
-
-        Completion = Task.WhenAny(_taskControl.PauseExceptionSignal, _uploadTask).Unwrap();
     }
 
     public void Resume()
     {
-        _taskControl.Resume();
-
-        if (Completion.IsFaulted)
+        if (!_taskControl.TryResume())
         {
-            Completion = Task.WhenAny(_taskControl.PauseExceptionSignal, _uploadTask).Unwrap();
+            return;
         }
+
+        Completion = PauseOnResumableErrorAsync(_resumeFunction.Invoke(_taskControl.PauseOrCancellationToken));
     }
 
     public async ValueTask DisposeAsync()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+
         try
         {
-            var draftExists = _revisionUidTask.IsCompletedSuccessfully && !_uploadTask.IsCompletedSuccessfully;
-            if (!draftExists)
-            {
-                return;
-            }
-
-            var revisionUid = _revisionUidTask.Result;
-
             try
             {
-                await _fileDraftProvider.DeleteDraftAsync(_apiClients, revisionUid, CancellationToken.None).ConfigureAwait(false);
+                if (Completion.IsCompletedSuccessfully)
+                {
+                    return;
+                }
+
+                if (Completion.IsFaulted)
+                {
+                    UploadFailed?.Invoke(Completion.Exception.Flatten().InnerException ?? Completion.Exception);
+                }
+
+                var draftExists = _revisionDraftTask.IsCompletedSuccessfully;
+                if (!draftExists)
+                {
+                    return;
+                }
+
+                await _revisionDraftTask.Result.DisposeAsync().ConfigureAwait(false);
             }
-            catch (Exception ex)
+            finally
             {
-                LogDraftDeletionFailure(ex, revisionUid);
+                _taskControl.Dispose();
             }
         }
         finally
         {
-            var uploadTaskIsCompleted = _uploadTask.IsCompleted;
-
-            _taskControl.Dispose();
-
-            // If the upload task is not yet completed, disposal of task control unblocks it from being paused.
-            // The unblocked upload task will complete unsuccessfully (either in faulted or cancelled state).
-            if (!uploadTaskIsCompleted)
+            if (_sourceStreamToDispose is not null)
             {
-                try
-                {
-                    await _uploadTask.ConfigureAwait(false);
-                }
-                catch
-                {
-                    // Upon upload controller disposal, the upload task is not expected to be observed,
-                    // so we catch here to prevent escalation of unhandled exception.
-                }
+                await _sourceStreamToDispose.DisposeAsync().ConfigureAwait(false);
             }
         }
     }
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "Draft deletion failed for revision {RevisionUid}")]
-    private partial void LogDraftDeletionFailure(Exception exception, RevisionUid revisionUid);
+    private static bool IsResumableError(Exception ex)
+    {
+        return ex is not ProtonApiException { TransportCode: > 400 and < 500 }
+            and not NodeKeyAndSessionKeyMismatchException
+            and not SessionKeyAndDataPacketMismatchException
+            and not UnreadableContentException
+            and not NodeWithSameNameExistsException;
+    }
+
+    private async Task<UploadResult> PauseOnResumableErrorAsync(Task<UploadResult> uploadTask)
+    {
+        try
+        {
+            var result = await uploadTask.ConfigureAwait(false);
+
+            await RaiseUploadSucceededAsync().ConfigureAwait(false);
+
+            return result;
+        }
+        catch (Exception ex) when (IsResumableError(ex))
+        {
+            _taskControl.Pause();
+            throw;
+        }
+    }
+
+    private async ValueTask RaiseUploadSucceededAsync()
+    {
+        var onSucceededHandler = UploadSucceeded;
+        if (onSucceededHandler is null)
+        {
+            return;
+        }
+
+        var revisionDraft = await _revisionDraftTask.ConfigureAwait(false);
+        onSucceededHandler.Invoke(revisionDraft.NumberOfPlainBytesDone);
+    }
 }

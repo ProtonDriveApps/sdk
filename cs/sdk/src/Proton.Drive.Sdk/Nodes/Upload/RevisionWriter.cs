@@ -5,11 +5,9 @@ using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Cryptography;
-using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Drive.Sdk.Serialization;
-using Proton.Drive.Sdk.Telemetry;
 using Proton.Sdk;
-using Proton.Sdk.Addresses;
+using Proton.Sdk.Api;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
@@ -18,42 +16,27 @@ internal sealed partial class RevisionWriter : IDisposable
     public const int DefaultBlockSize = 1 << 22; // 4 MiB
 
     private readonly ProtonDriveClient _client;
-    private readonly RevisionUid _revisionUid;
-    private readonly PgpPrivateKey _fileKey;
-    private readonly PgpSessionKey _contentKey;
-    private readonly PgpPrivateKey _signingKey;
-    private readonly Address _membershipAddress;
+    private readonly RevisionDraft _draft;
     private readonly Action<int> _releaseBlocksAction;
     private readonly Action _releaseFileSemaphoreAction;
     private readonly ILogger _logger;
 
     private readonly int _targetBlockSize;
-    private readonly int _maxBlockSize;
 
     private bool _fileReleased;
 
     internal RevisionWriter(
         ProtonDriveClient client,
-        RevisionUid revisionUid,
-        PgpPrivateKey fileKey,
-        PgpSessionKey contentKey,
-        PgpPrivateKey signingKey,
-        Address membershipAddress,
+        RevisionDraft draft,
         Action<int> releaseBlocksAction,
         Action releaseFileSemaphoreAction,
-        int targetBlockSize = DefaultBlockSize,
-        int maxBlockSize = DefaultBlockSize)
+        int targetBlockSize = DefaultBlockSize)
     {
         _client = client;
-        _revisionUid = revisionUid;
-        _fileKey = fileKey;
-        _contentKey = contentKey;
-        _signingKey = signingKey;
-        _membershipAddress = membershipAddress;
+        _draft = draft;
         _releaseBlocksAction = releaseBlocksAction;
         _releaseFileSemaphoreAction = releaseFileSemaphoreAction;
         _targetBlockSize = targetBlockSize;
-        _maxBlockSize = maxBlockSize;
         _logger = client.Telemetry.GetLogger("Revision writer");
     }
 
@@ -64,159 +47,87 @@ internal sealed partial class RevisionWriter : IDisposable
         DateTimeOffset? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long>? onProgress,
-        TaskControl<UploadResult> taskControl)
+        CancellationToken cancellationToken)
     {
-        var uploadEvent = new UploadEvent
+        var uploadTasks = new Queue<Task<BlockUploadResult>>(_client.BlockUploader.Queue.Depth);
+
+        var signingEmailAddress = _draft.MembershipAddress.EmailAddress;
+
+        var expectedThumbnailBlockCount = 0;
+
+        var hashingContentStream = new HashingReadStream(contentStream, _draft.Sha1, leaveOpen: true);
+
+        await using (hashingContentStream.ConfigureAwait(false))
         {
-            ExpectedSize = contentStream.Length,
-            UploadedSize = 0,
-            ApproximateUploadedSize = 0,
-            VolumeType = VolumeType.OwnVolume, // FIXME: figure out how to get the actual volume type
-        };
-
-        try
-        {
-            var uploadTasks = new Queue<Task<BlockUploadResult>>(_client.BlockUploader.Queue.Depth);
-            var blockUploadResults = new List<BlockUploadResult>(8);
-
-            var signingEmailAddress = _membershipAddress.EmailAddress;
-
-            var blockIndex = 0;
-            long numberOfBytesUploaded = 0;
-            var expectedThumbnailBlockCount = 0;
-
-            using var sha1 = IncrementalHash.CreateHash(HashAlgorithmName.SHA1);
-
-            var hashingContentStream = new HashingReadStream(contentStream, sha1, leaveOpen: true);
-
-            await using (hashingContentStream.ConfigureAwait(false))
+            try
             {
-                var blockVerifier = await taskControl.HandlePauseAsync(ct => _client.BlockVerifierFactory.CreateAsync(_revisionUid, _fileKey, ct))
-                    .ConfigureAwait(false);
-
                 try
+                {
+                    expectedThumbnailBlockCount = await UploadThumbnailBlocksAsync(thumbnails, uploadTasks, cancellationToken).ConfigureAwait(false);
+
+                    await UploadContentBlocksAsync(onProgress, hashingContentStream, uploadTasks, cancellationToken).ConfigureAwait(false);
+                }
+                finally
+                {
+                    _releaseFileSemaphoreAction.Invoke();
+                    _fileReleased = true;
+                }
+
+                while (uploadTasks.TryDequeue(out var uploadTask))
+                {
+                    await uploadTask.ConfigureAwait(false);
+                }
+            }
+            catch when (uploadTasks.Count > 0)
+            {
+                foreach (var uploadTask in uploadTasks)
                 {
                     try
                     {
-                        foreach (var thumbnail in thumbnails)
-                        {
-                            ++expectedThumbnailBlockCount;
-
-                            await WaitForBlockUploaderAsync(uploadTasks, blockUploadResults, taskControl).ConfigureAwait(false);
-
-                            var uploadTask = UploadThumbnailBlockAsync(thumbnail, taskControl).AsTask();
-
-                            uploadTasks.Enqueue(uploadTask);
-                        }
-
-                        while (
-                            await TryGetBlockPlainDataStreamAsync(
-                                hashingContentStream,
-                                blockVerifier.DataPacketPrefixMaxLength,
-                                taskControl).ConfigureAwait(false) is var (plainDataStream, plainDataPrefixBuffer))
-                        {
-                            try
-                            {
-                                await WaitForBlockUploaderAsync(uploadTasks, blockUploadResults, taskControl).ConfigureAwait(false);
-
-                                var onBlockProgress = onProgress is not null
-                                    ? progress =>
-                                    {
-                                        numberOfBytesUploaded += progress;
-
-                                        // TODO: move this to a decorator, wrap the progress action
-                                        uploadEvent.UploadedSize = numberOfBytesUploaded;
-                                        uploadEvent.ApproximateUploadedSize = ReduceSizePrecision(numberOfBytesUploaded);
-
-                                        onProgress(numberOfBytesUploaded);
-                                    }
-                                : default(Action<long>?);
-
-                                var uploadTask = UploadContentBlockAsync(
-                                    ++blockIndex,
-                                    plainDataStream,
-                                    blockVerifier,
-                                    plainDataPrefixBuffer,
-                                    onBlockProgress,
-                                    taskControl).AsTask();
-
-                                uploadTasks.Enqueue(uploadTask);
-                            }
-                            catch
-                            {
-                                ArrayPool<byte>.Shared.Return(plainDataPrefixBuffer);
-                                throw;
-                            }
-                        }
+                        await uploadTask.ConfigureAwait(false);
                     }
-                    finally
+                    catch
                     {
-                        _releaseFileSemaphoreAction.Invoke();
-                        _fileReleased = true;
-                    }
-
-                    while (uploadTasks.Count > 0)
-                    {
-                        await RegisterNextCompletedBlockAsync(uploadTasks, blockUploadResults).ConfigureAwait(false);
+                        // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
                     }
                 }
-                catch when (uploadTasks.Count > 0)
-                {
-                    // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
-                    await Task.WhenAll(uploadTasks).ContinueWith(task => task.Exception?.Handle(_ => true), TaskContinuationOptions.NotOnRanToCompletion).ConfigureAwait(false);
-                    throw;
-                }
+
+                throw;
             }
+        }
 
-            await taskControl.WaitWhilePausedAsync().ConfigureAwait(false);
+        var request = CreateRevisionUpdateRequest(
+            lastModificationTime,
+            expectedContentLength,
+            expectedThumbnailBlockCount,
+            _draft.Sha1.GetCurrentHash(),
+            signingEmailAddress,
+            additionalMetadata);
 
-            var request = GetRevisionUpdateRequest(
-                lastModificationTime,
-                blockUploadResults,
-                expectedContentLength,
-                expectedThumbnailBlockCount,
-                sha1.GetCurrentHash(),
-                signingEmailAddress,
-                additionalMetadata);
+        LogSealingRevision(_draft.Uid);
 
-            LogSealingRevision(_revisionUid);
-
+        try
+        {
             await _client.Api.Files.UpdateRevisionAsync(
-                _revisionUid.NodeUid.VolumeId,
-                _revisionUid.NodeUid.LinkId,
-                _revisionUid.RevisionId,
+                _draft.Uid.NodeUid.VolumeId,
+                _draft.Uid.NodeUid.LinkId,
+                _draft.Uid.RevisionId,
                 request,
-                taskControl.CancellationToken).ConfigureAwait(false);
-
-            LogRevisionSealed(_revisionUid);
+                cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception ex) when (!taskControl.IsCanceled)
+        catch (ProtonApiException ex) when (ex.Code is ResponseCode.IncompatibleState)
         {
-            var exception = taskControl.PauseExceptionSignal.Exception?.InnerException ?? ex;
-
-            if (TelemetryErrorResolver.GetUploadErrorFromException(exception) is { } uploadError)
+            // The revision might have been previously sealed without getting the response back due to a cancellation.
+            // Throw only if the revision is still not sealed.
+            if (!(await RevisionIsSealedAsync(cancellationToken).ConfigureAwait(false)))
             {
-                uploadEvent.Error = uploadError;
-                uploadEvent.OriginalError = ex.FlattenMessageWithExceptionType();
-            }
-
-            throw;
-        }
-        finally
-        {
-            if (!taskControl.IsCanceled)
-            {
-                try
-                {
-                    // TODO: put this in a decorator
-                    _client.Telemetry.RecordMetric(uploadEvent);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to record metric for upload event");
-                }
+                throw;
             }
         }
+
+        LogRevisionSealed(_draft.Uid);
+
+        _draft.IsCompleted = true;
     }
 
     public void Dispose()
@@ -227,72 +138,22 @@ internal sealed partial class RevisionWriter : IDisposable
         }
     }
 
-    private static long ReduceSizePrecision(long size)
-    {
-        const long precision = 100_000;
-
-        if (size == 0)
-        {
-            return 0;
-        }
-
-        // We care about very small files in metrics, thus we handle explicitly
-        // the very small files so they appear correctly in metrics.
-        if (size < 4096)
-        {
-            return 4095;
-        }
-
-        if (size < precision)
-        {
-            return precision;
-        }
-
-        return (size / precision) * precision;
-    }
-
-    private static async ValueTask RegisterNextCompletedBlockAsync(Queue<Task<BlockUploadResult>> uploadTasks, List<BlockUploadResult> blockUploadResults)
-    {
-        var blockUploadResult = await uploadTasks.Dequeue().ConfigureAwait(false);
-
-        blockUploadResults.Add(blockUploadResult);
-    }
-
-    private static bool IsResumableError(Exception ex)
-    {
-        return ex is not ProtonApiException { TransportCode: >= 400 and < 500 }
-            and not NodeKeyAndSessionKeyMismatchException
-            and not SessionKeyAndDataPacketMismatchException;
-    }
-
     private async ValueTask<BlockUploadResult> UploadContentBlockAsync(
-        int index,
-        Stream plainDataStream,
-        IBlockVerifier blockVerifier,
-        byte[] plainDataPrefix,
+        int blockNumber,
+        BlockUploadPlainData plainData,
         Action<long>? onBlockProgress,
-        TaskControl<UploadResult> taskControl)
+        CancellationToken cancellationToken)
     {
         try
         {
-            await using (plainDataStream.ConfigureAwait(false))
-            {
-                return await taskControl.HandlePauseAsync(
-                    ct => _client.BlockUploader.UploadContentAsync(
-                        _revisionUid,
-                        index,
-                        _contentKey,
-                        _signingKey,
-                        _membershipAddress.Id,
-                        _fileKey,
-                        plainDataStream,
-                        blockVerifier,
-                        plainDataPrefix,
-                        (int)Math.Min(blockVerifier.DataPacketPrefixMaxLength, plainDataStream.Length),
-                        onBlockProgress,
-                        ct),
-                    exceptionTriggersPause: IsResumableError).ConfigureAwait(false);
-            }
+            var result = await _client.BlockUploader.UploadContentAsync(_draft, blockNumber, plainData, onBlockProgress, cancellationToken)
+                .ConfigureAwait(false);
+
+            _draft.SetContentBlockUploadResult(blockNumber, result);
+
+            await plainData.DisposeAsync().ConfigureAwait(false);
+
+            return result;
         }
         finally
         {
@@ -302,31 +163,46 @@ internal sealed partial class RevisionWriter : IDisposable
             }
             finally
             {
-                try
-                {
-                    ArrayPool<byte>.Shared.Return(plainDataPrefix);
-                }
-                finally
-                {
-                    _releaseBlocksAction.Invoke(1);
-                }
+                _releaseBlocksAction.Invoke(1);
             }
         }
     }
 
-    private async ValueTask<BlockUploadResult> UploadThumbnailBlockAsync(Thumbnail thumbnail, TaskControl<UploadResult> taskControl)
+    private async ValueTask<int> UploadThumbnailBlocksAsync(
+        IEnumerable<Thumbnail> thumbnails,
+        Queue<Task<BlockUploadResult>> uploadTasks,
+        CancellationToken cancellationToken)
+    {
+        var blockCount = 0;
+
+        foreach (var thumbnail in thumbnails)
+        {
+            ++blockCount;
+
+            if (_draft.ThumbnailBlockWasAlreadyUploaded(thumbnail.Type))
+            {
+                continue;
+            }
+
+            await WaitForBlockUploaderAsync(uploadTasks, cancellationToken).ConfigureAwait(false);
+
+            var uploadTask = UploadThumbnailBlockAsync(thumbnail, cancellationToken).AsTask();
+
+            uploadTasks.Enqueue(uploadTask);
+        }
+
+        return blockCount;
+    }
+
+    private async ValueTask<BlockUploadResult> UploadThumbnailBlockAsync(Thumbnail thumbnail, CancellationToken cancellationToken)
     {
         try
         {
-            return await taskControl.HandlePauseAsync(
-                ct => _client.BlockUploader.UploadThumbnailAsync(
-                    _revisionUid,
-                    _contentKey,
-                    _signingKey,
-                    _membershipAddress.Id,
-                    thumbnail,
-                    ct),
-                exceptionTriggersPause: IsResumableError).ConfigureAwait(false);
+            var result = await _client.BlockUploader.UploadThumbnailAsync(_draft, thumbnail, cancellationToken).ConfigureAwait(false);
+
+            _draft.SetThumbnailUploadResult(thumbnail.Type, result);
+
+            return result;
         }
         finally
         {
@@ -341,14 +217,48 @@ internal sealed partial class RevisionWriter : IDisposable
         }
     }
 
-    private async ValueTask<(Stream Stream, byte[] Prefix)?> TryGetBlockPlainDataStreamAsync(
-        Stream contentStream,
-        int prefixLength,
-        TaskControl<UploadResult> taskControl)
+    private async ValueTask UploadContentBlocksAsync(
+        Action<long>? onProgress,
+        HashingReadStream hashingContentStream,
+        Queue<Task<BlockUploadResult>> uploadTasks,
+        CancellationToken cancellationToken)
     {
-        // Prevent reading source content stream while paused. If pausing happens when execution has already passed further,
-        // content stream might be read after pausing is signaled to the external observer.
-        await taskControl.WaitWhilePausedAsync().ConfigureAwait(false);
+        var contentBlockNumber = _draft.GetFirstNonUploadedContentBlockNumber();
+
+        while (
+            await TryGetBlockPlainDataAsync(
+                contentBlockNumber,
+                hashingContentStream,
+                _draft.BlockVerifier.DataPacketPrefixMaxLength).ConfigureAwait(false) is { } plainData)
+        {
+            await WaitForBlockUploaderAsync(uploadTasks, cancellationToken).ConfigureAwait(false);
+
+            var onBlockProgress = onProgress is not null
+                ? progress =>
+                {
+                    _draft.NumberOfPlainBytesDone += progress;
+                    onProgress(_draft.NumberOfPlainBytesDone);
+                }
+            : default(Action<long>?);
+
+            var uploadTask = UploadContentBlockAsync(contentBlockNumber, plainData, onBlockProgress, cancellationToken).AsTask();
+
+            uploadTasks.Enqueue(uploadTask);
+
+            ++contentBlockNumber;
+        }
+    }
+
+    private async ValueTask<BlockUploadPlainData?> TryGetBlockPlainDataAsync(
+        int blockNumber,
+        Stream contentStream,
+        int prefixLength)
+    {
+        if (_draft.TryGetContentBlockPlainData(blockNumber, out var plainData))
+        {
+            plainData.Value.Stream.Seek(0, SeekOrigin.Begin);
+            return plainData;
+        }
 
         var plainDataPrefixBuffer = ArrayPool<byte>.Shared.Rent(prefixLength);
         try
@@ -357,11 +267,13 @@ internal sealed partial class RevisionWriter : IDisposable
 
             try
             {
+                // Do not cancel reading from the content stream for now, to avoid leaving it in an unusable state for resuming
+                // TODO: allow cancellation while reading block plain data
                 var bytesCopied = await contentStream.PartiallyCopyToAsync(
                     plainDataStream,
                     _targetBlockSize,
                     plainDataPrefixBuffer,
-                    taskControl.CancellationToken).ConfigureAwait(false);
+                    CancellationToken.None).ConfigureAwait(false);
 
                 if (bytesCopied == 0)
                 {
@@ -370,12 +282,17 @@ internal sealed partial class RevisionWriter : IDisposable
 
                 plainDataStream.Seek(0, SeekOrigin.Begin);
 
-                return (plainDataStream, plainDataPrefixBuffer);
+                plainData = new BlockUploadPlainData(plainDataStream, plainDataPrefixBuffer);
+
+                _draft.SetContentBlockPlainData(blockNumber, plainData.Value);
+
+                return plainData;
             }
-            catch
+            catch (Exception ex)
             {
                 await plainDataStream.DisposeAsync().ConfigureAwait(false);
-                throw;
+
+                throw new UnreadableContentException("Reading block content for upload failed", ex);
             }
         }
         catch
@@ -385,54 +302,59 @@ internal sealed partial class RevisionWriter : IDisposable
         }
     }
 
-    private async ValueTask WaitForBlockUploaderAsync(
-        Queue<Task<BlockUploadResult>> uploadTasks,
-        List<BlockUploadResult> blockUploadResults,
-        TaskControl<UploadResult> taskControl)
+    private async ValueTask WaitForBlockUploaderAsync(Queue<Task<BlockUploadResult>> uploadTasks, CancellationToken cancellationToken)
     {
-        await taskControl.WaitWhilePausedAsync().ConfigureAwait(false);
-
         if (!_client.BlockUploader.Queue.TryStartBlock())
         {
-            if (uploadTasks.Count > 0)
+            if (uploadTasks.TryDequeue(out var uploadTask))
             {
-                await RegisterNextCompletedBlockAsync(uploadTasks, blockUploadResults).ConfigureAwait(false);
+                await uploadTask.ConfigureAwait(false);
             }
 
-            await _client.BlockUploader.Queue.StartBlockAsync(taskControl.CancellationToken).ConfigureAwait(false);
+            await _client.BlockUploader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Sealing revision \"{RevisionUid}\"")]
-    private partial void LogSealingRevision(RevisionUid revisionUid);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Revision \"{RevisionUid}\" sealed")]
-    private partial void LogRevisionSealed(RevisionUid revisionUid);
-
-    private RevisionUpdateRequest GetRevisionUpdateRequest(
+    private RevisionUpdateRequest CreateRevisionUpdateRequest(
         DateTimeOffset? lastModificationTime,
-        List<BlockUploadResult> blockUploadResults,
         long expectedContentLength,
         int expectedThumbnailBlockCount,
         byte[]? sha1Digest,
         string signingEmailAddress,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata)
     {
-        var manifest = new byte[blockUploadResults.Count * SHA256.HashSizeInBytes];
+        var manifest = new byte[(_draft.ThumbnailUploadResults.Count + _draft.ContentBlockStates.Count) * SHA256.HashSizeInBytes];
         using var manifestStream = new MemoryStream(manifest);
 
-        var contentBlockSizes = new List<int>(blockUploadResults.Count);
+        var contentBlockSizes = new List<int>(_draft.ContentBlockStates.Count);
         var uploadedContentSize = 0L;
 
-        foreach (var (plaintextSize, sha256Digest, isFileContent) in blockUploadResults)
+        var contentBlockUploadResults = _draft.ContentBlockStates
+            .Select((blockState, i) =>
+            {
+                var blockNumber = i + 1;
+
+                return blockState.TryGetFirstElseSecond(out var uploadResult, out _)
+                    ? (Number: blockNumber, Value: uploadResult)
+                    : throw new IntegrityException($"Missing content block #{blockNumber}");
+            });
+
+        var blockUploadResults = _draft.ThumbnailUploadResults.Values.Select(x => (Number: 0, x)).Concat(contentBlockUploadResults);
+
+        foreach (var (blockNumber, blockUploadResult) in blockUploadResults)
         {
+            var (plaintextSize, sha256Digest) = blockUploadResult;
+
             manifestStream.Write(sha256Digest);
 
-            if (isFileContent)
+            if (blockNumber == 0)
             {
-                contentBlockSizes.Add(plaintextSize);
-                uploadedContentSize += plaintextSize;
+                // Not a content block
+                continue;
             }
+
+            contentBlockSizes.Add(plaintextSize);
+            uploadedContentSize += plaintextSize;
         }
 
         if (uploadedContentSize != expectedContentLength)
@@ -440,7 +362,7 @@ internal sealed partial class RevisionWriter : IDisposable
             throw new IntegrityException("Mismatch between uploaded size and expected size");
         }
 
-        if (expectedThumbnailBlockCount != blockUploadResults.Count - contentBlockSizes.Count)
+        if (expectedThumbnailBlockCount != _draft.ThumbnailUploadResults.Count)
         {
             throw new IntegrityException("Unexpected number of thumbnail blocks");
         }
@@ -459,13 +381,36 @@ internal sealed partial class RevisionWriter : IDisposable
 
         var extendedAttributesUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(extendedAttributes, DriveApiSerializerContext.Default.ExtendedAttributes);
 
-        var encryptedExtendedAttributes = _fileKey.EncryptAndSign(extendedAttributesUtf8Bytes, _signingKey, outputCompression: PgpCompression.Default);
+        var encryptedExtendedAttributes = _draft.FileKey.EncryptAndSign(
+            extendedAttributesUtf8Bytes,
+            _draft.SigningKey,
+            outputCompression: PgpCompression.Default);
 
         return new RevisionUpdateRequest
         {
-            ManifestSignature = _signingKey.Sign(manifest),
+            ManifestSignature = _draft.SigningKey.Sign(manifest),
             SignatureEmailAddress = signingEmailAddress,
             ExtendedAttributes = encryptedExtendedAttributes,
         };
     }
+
+    private async ValueTask<bool> RevisionIsSealedAsync(CancellationToken cancellationToken)
+    {
+        var revisionResponse = await _client.Api.Files.GetRevisionAsync(
+            _draft.Uid.NodeUid.VolumeId,
+            _draft.Uid.NodeUid.LinkId,
+            _draft.Uid.RevisionId,
+            fromBlockIndex: null,
+            pageSize: null,
+            false,
+            cancellationToken).ConfigureAwait(false);
+
+        return revisionResponse.Revision.State is RevisionState.Active or RevisionState.Superseded;
+    }
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Sealing revision \"{RevisionUid}\"")]
+    private partial void LogSealingRevision(RevisionUid revisionUid);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Revision \"{RevisionUid}\" sealed")]
+    private partial void LogRevisionSealed(RevisionUid revisionUid);
 }

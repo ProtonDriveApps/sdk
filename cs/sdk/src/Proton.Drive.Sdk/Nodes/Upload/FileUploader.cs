@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Proton.Drive.Sdk.Telemetry;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
@@ -6,7 +7,7 @@ namespace Proton.Drive.Sdk.Nodes.Upload;
 public sealed partial class FileUploader : IDisposable
 {
     private readonly ProtonDriveClient _client;
-    private readonly IFileDraftProvider _fileDraftProvider;
+    private readonly IRevisionDraftProvider _revisionDraftProvider;
     private readonly DateTimeOffset? _lastModificationTime;
     private readonly IEnumerable<AdditionalMetadataProperty>? _additionalMetadata;
     private readonly ILogger _logger;
@@ -15,7 +16,7 @@ public sealed partial class FileUploader : IDisposable
 
     private FileUploader(
         ProtonDriveClient client,
-        IFileDraftProvider fileDraftProvider,
+        IRevisionDraftProvider revisionDraftProvider,
         long size,
         DateTimeOffset? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
@@ -23,7 +24,7 @@ public sealed partial class FileUploader : IDisposable
         ILogger logger)
     {
         _client = client;
-        _fileDraftProvider = fileDraftProvider;
+        _revisionDraftProvider = revisionDraftProvider;
         FileSize = size;
         _lastModificationTime = lastModificationTime;
         _additionalMetadata = additionalMetadata;
@@ -39,19 +40,7 @@ public sealed partial class FileUploader : IDisposable
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
-        var taskControl = new TaskControl<UploadResult>(cancellationToken);
-
-        var revisionUidTaskCompletionSource = new TaskCompletionSource<RevisionUid>();
-
-        var uploadTask = UploadFromStreamAsync(
-            contentStream,
-            thumbnails,
-            _additionalMetadata,
-            progress => onProgress?.Invoke(progress, FileSize),
-            revisionUidTaskCompletionSource,
-            taskControl);
-
-        return new UploadController(_client.Api, _fileDraftProvider, revisionUidTaskCompletionSource.Task, uploadTask, taskControl, _logger);
+        return UploadFromStream(contentStream, ownsContentStream: false, thumbnails, onProgress, cancellationToken);
     }
 
     public UploadController UploadFromFile(
@@ -60,19 +49,14 @@ public sealed partial class FileUploader : IDisposable
         Action<long, long>? onProgress,
         CancellationToken cancellationToken)
     {
-        var taskControl = new TaskControl<UploadResult>(cancellationToken);
+        var contentStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
 
-        var revisionUidTaskCompletionSource = new TaskCompletionSource<RevisionUid>();
-
-        var uploadTask = UploadFromFileAsync(
-            filePath,
+        return UploadFromStream(
+            contentStream,
+            ownsContentStream: true,
             thumbnails,
-            _additionalMetadata,
-            progress => onProgress?.Invoke(progress, FileSize),
-            revisionUidTaskCompletionSource,
-            taskControl);
-
-        return new UploadController(_client.Api, _fileDraftProvider, revisionUidTaskCompletionSource.Task, uploadTask, taskControl, _logger);
+            onProgress,
+            cancellationToken);
     }
 
     public void Dispose()
@@ -82,7 +66,7 @@ public sealed partial class FileUploader : IDisposable
 
     internal static async ValueTask<FileUploader> CreateAsync(
         ProtonDriveClient client,
-        IFileDraftProvider fileDraftProvider,
+        IRevisionDraftProvider revisionDraftProvider,
         long size,
         DateTime? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalExtendedAttributes,
@@ -98,7 +82,7 @@ public sealed partial class FileUploader : IDisposable
 
         LogAcquiredRevisionCreationSemaphore(logger, expectedNumberOfBlocks);
 
-        return new FileUploader(client, fileDraftProvider, size, lastModificationTime, additionalExtendedAttributes, expectedNumberOfBlocks, logger);
+        return new FileUploader(client, revisionDraftProvider, size, lastModificationTime, additionalExtendedAttributes, expectedNumberOfBlocks, logger);
     }
 
     [LoggerMessage(Level = LogLevel.Trace, Message = "Trying to acquire {Count} from revision creation semaphore")]
@@ -110,40 +94,91 @@ public sealed partial class FileUploader : IDisposable
     [LoggerMessage(Level = LogLevel.Trace, Message = "Released {Count} from revision creation semaphore")]
     private static partial void LogReleasedRevisionCreationSemaphore(ILogger logger, int count);
 
+    private UploadController UploadFromStream(
+        Stream contentStream,
+        bool ownsContentStream,
+        IEnumerable<Thumbnail> thumbnails,
+        Action<long, long>? onProgress,
+        CancellationToken cancellationToken)
+    {
+        var taskControl = new TaskControl(cancellationToken);
+
+        var revisionDraftTaskCompletionSource = new TaskCompletionSource<RevisionDraft>();
+
+        var uploadEvent = new UploadEvent
+        {
+            ExpectedSize = contentStream.Length,
+            UploadedSize = 0,
+            ApproximateUploadedSize = 0,
+            VolumeType = VolumeType.OwnVolume, // FIXME: figure out how to get the actual volume type
+        };
+
+        var uploadFunction = (CancellationToken ct) => UploadFromStreamAsync(
+            contentStream,
+            thumbnails,
+            _additionalMetadata,
+            progress => onProgress?.Invoke(progress, FileSize),
+            revisionDraftTaskCompletionSource,
+            ct);
+
+        var uploadController = new UploadController(
+            revisionDraftTaskCompletionSource.Task,
+            uploadFunction.Invoke(taskControl.PauseOrCancellationToken),
+            uploadFunction,
+            ownsContentStream ? contentStream : null,
+            taskControl);
+
+        uploadController.UploadFailed += ex =>
+        {
+            if (ex is NodeWithSameNameExistsException)
+            {
+                return;
+            }
+
+            uploadEvent.Error = TelemetryErrorResolver.GetUploadErrorFromException(ex);
+            uploadEvent.OriginalError = ex.GetBaseException().ToString();
+            RaiseTelemetryEvent(uploadEvent);
+        };
+
+        uploadController.UploadSucceeded += uploadedByteCount =>
+        {
+            // TODO: deprecate UploadedSize in favor of ApproximateUploadedSize
+            uploadEvent.UploadedSize = uploadedByteCount;
+            uploadEvent.ApproximateUploadedSize = Privacy.ReduceSizePrecision(uploadedByteCount);
+            RaiseTelemetryEvent(uploadEvent);
+        };
+
+        return uploadController;
+    }
+
     private async Task<UploadResult> UploadFromStreamAsync(
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
         IEnumerable<AdditionalMetadataProperty>? additionalExtendedAttributes,
         Action<long>? onProgress,
-        TaskCompletionSource<RevisionUid> revisionUidTaskCompletionSource,
-        TaskControl<UploadResult> taskControl)
+        TaskCompletionSource<RevisionDraft> revisionDraftTaskCompletionSource,
+        CancellationToken cancellationToken)
     {
-        try
+        if (!revisionDraftTaskCompletionSource.Task.IsCompletedSuccessfully)
         {
-            var (draftRevisionUid, fileSecrets) = await taskControl.HandlePauseAsync(ct => _fileDraftProvider.GetDraftAsync(_client, ct)).ConfigureAwait(false);
-
-            revisionUidTaskCompletionSource.SetResult(draftRevisionUid);
-
-            await UploadAsync(
-                draftRevisionUid,
-                fileSecrets,
-                contentStream,
-                thumbnails,
-                _lastModificationTime,
-                additionalExtendedAttributes,
-                onProgress,
-                taskControl).ConfigureAwait(false);
-
-            await UpdateActiveRevisionInCacheAsync(draftRevisionUid, contentStream.Length, taskControl.CancellationToken).ConfigureAwait(false);
-
-            return new UploadResult(draftRevisionUid.NodeUid, draftRevisionUid);
+            revisionDraftTaskCompletionSource.SetResult(
+                await _revisionDraftProvider.GetDraftAsync(cancellationToken).ConfigureAwait(false));
         }
-        catch
-        {
-            // This will set it to canceled only if the result was not already set above
-            revisionUidTaskCompletionSource.TrySetCanceled();
-            throw;
-        }
+
+        var revisionDraft = revisionDraftTaskCompletionSource.Task.Result;
+
+        await UploadAsync(
+            revisionDraftTaskCompletionSource.Task.Result,
+            contentStream,
+            thumbnails,
+            _lastModificationTime,
+            additionalExtendedAttributes,
+            onProgress,
+            cancellationToken).ConfigureAwait(false);
+
+        await UpdateActiveRevisionInCacheAsync(revisionDraft.Uid, contentStream.Length, cancellationToken).ConfigureAwait(false);
+
+        return new UploadResult(revisionDraft.Uid.NodeUid, revisionDraft.Uid);
     }
 
     private async ValueTask UpdateActiveRevisionInCacheAsync(RevisionUid revisionUid, long size, CancellationToken cancellationToken)
@@ -172,47 +207,25 @@ public sealed partial class FileUploader : IDisposable
         await _client.Cache.Entities.SetNodeAsync(fileNode.Uid, fileNode, membershipShareId, nameHashDigest, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<UploadResult> UploadFromFileAsync(
-        string filePath,
-        IEnumerable<Thumbnail> thumbnails,
-        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
-        Action<long>? onProgress,
-        TaskCompletionSource<RevisionUid> revisionUidTaskCompletionSource,
-        TaskControl<UploadResult> taskControl)
-    {
-        var contentStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-
-        await using (contentStream.ConfigureAwait(false))
-        {
-            return await UploadFromStreamAsync(
-                contentStream,
-                thumbnails,
-                additionalMetadata,
-                onProgress,
-                revisionUidTaskCompletionSource,
-                taskControl).ConfigureAwait(false);
-        }
-    }
-
     private async ValueTask UploadAsync(
-        RevisionUid revisionUid,
-        FileSecrets fileSecrets,
+        RevisionDraft revisionDraft,
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
         DateTimeOffset? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long>? onProgress,
-        TaskControl<UploadResult> taskControl)
+        CancellationToken cancellationToken)
     {
-        using var revisionWriter = await RevisionOperations.OpenForWritingAsync(
-            _client,
-            revisionUid,
-            fileSecrets,
-            ReleaseBlocks,
-            taskControl).ConfigureAwait(false);
+        using var revisionWriter = await RevisionOperations.OpenForWritingAsync(_client, revisionDraft, ReleaseBlocks, cancellationToken).ConfigureAwait(false);
 
-        await revisionWriter.WriteAsync(contentStream, FileSize, thumbnails, lastModificationTime, additionalMetadata, onProgress, taskControl)
-            .ConfigureAwait(false);
+        await revisionWriter.WriteAsync(
+            contentStream,
+            FileSize,
+            thumbnails,
+            lastModificationTime,
+            additionalMetadata,
+            onProgress,
+            cancellationToken).ConfigureAwait(false);
     }
 
     private void ReleaseBlocks(int numberOfBlocks)
@@ -238,5 +251,17 @@ public sealed partial class FileUploader : IDisposable
         LogReleasedRevisionCreationSemaphore(_logger, _remainingNumberOfBlocks);
 
         _remainingNumberOfBlocks = 0;
+    }
+
+    private void RaiseTelemetryEvent(UploadEvent uploadEvent)
+    {
+        try
+        {
+            _client.Telemetry.RecordMetric(uploadEvent);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to record metric for upload event");
+        }
     }
 }
