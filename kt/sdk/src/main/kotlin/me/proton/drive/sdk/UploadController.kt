@@ -46,8 +46,10 @@ class UploadController internal constructor(
         coroutineScopeConsumer(null)
     }
 
-    suspend fun isPaused() = bridge.isPaused(handle)
-        .also { isPausedFlow.emit(it) }
+    suspend fun isPaused() = bridge.isPaused(handle).also { paused ->
+        log(DEBUG, "isPaused: $paused")
+        isPausedFlow.emit(paused)
+    }
 
     suspend fun dispose() = bridge.dispose(handle)
 
