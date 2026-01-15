@@ -21,6 +21,11 @@ message Request {
         DriveClientCreateFolderRequest drive_client_create_folder = 1009;
         DriveClientTrashNodesRequest drive_client_trash_nodes = 1010;
 
+        // These are also in the DriveClient but we aim to remove them in the future,
+        // so they have a significant gap to not disturb other payload numbers.
+        DriveClientClearSecretsRequest drive_client_clear_secrets = 1030;
+        DriveClientClearEntityCacheRequest drive_client_clear_entity_cache = 1031;
+
         UploadFromStreamRequest upload_from_stream = 1100;
         UploadFromFileRequest upload_from_file = 1101;
         FileUploaderFreeRequest file_uploader_free = 1102;
@@ -117,7 +122,7 @@ message FileNode {
 
 message FolderNode {
     string uid = 1;
-    string parent_uid = 2; // optional 
+    string parent_uid = 2; // optional
     string tree_event_scope_id = 3;
     string name = 4;
     google.protobuf.Timestamp creation_time = 5;
@@ -132,7 +137,7 @@ message AuthorResult {
 }
 
 message Author {
-    string email_address = 1; // optional 
+    string email_address = 1; // optional
 }
 
 message ProgressUpdate {
@@ -179,7 +184,7 @@ message DriveClientCreateRequest {
     string bindings_language = 2; // Optional
 
     HttpClient http_client = 3;
-    
+
     // Pointer to C function that will be called:
     // void handle_account_request(intptr_t bindings_handle, ByteArray http_request, intptr_t sdk_handle)
     //   bindings_handle: handle for the bindings
@@ -192,7 +197,7 @@ message DriveClientCreateRequest {
 
     proton.sdk.Telemetry telemetry = 9; // Optional
 
-    // Client UID, optional 
+    // Client UID, optional
     // If a null value is provided, the SDK automatically generates a UUID during initialization
     string uid = 10;
 
@@ -202,6 +207,8 @@ message DriveClientCreateRequest {
     //   flag_name: UTF-8 encoded feature flag name
     //   returns: 0 for disabled, non-zero for enabled
     int64 feature_enabled_function = 11; // Optional
+
+    bytes secret_cache_encryption_key = 12; // Optional
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of ProtonDriveClient.
@@ -321,6 +328,17 @@ message DriveClientCreateFolderRequest {
     string folder_name = 3;
     google.protobuf.Timestamp last_modification_time = 4; // Optional
     int64 cancellation_token_source_handle = 5;
+
+// The response must not have a value.
+message DriveClientClearSecretsRequest {
+    int64 client_handle = 1;
+    int64 cancellation_token_source_handle = 2;
+}
+
+// The response must not have a value.
+message DriveClientClearEntityCacheRequest {
+    int64 client_handle = 1;
+    int64 cancellation_token_source_handle = 2;
 }
 
 // The response message must be of type TrashNodesResponse
@@ -407,14 +425,14 @@ message DownloadControllerFreeRequest {
     int64 download_controller_handle = 1;
 }
 
-// Drive - Photos client 
+// Drive - Photos client
 
 message DrivePhotosClientCreateRequest {
     string base_url = 1;
     string bindings_language = 2; // Optional
 
     HttpClient http_client = 3;
-    
+
     // Pointer to C function that will be called:
     // void handle_account_request(intptr_t bindings_handle, ByteArray http_request, intptr_t sdk_handle)
     //   bindings_handle: handle for the bindings
@@ -427,7 +445,7 @@ message DrivePhotosClientCreateRequest {
 
     proton.sdk.Telemetry telemetry = 9; // Optional
 
-    // Client UID, optional 
+    // Client UID, optional
     // If a null value is provided, the SDK automatically generates a UUID during initialization
     string uid = 10;
 
@@ -442,7 +460,7 @@ message DrivePhotosClientCreateRequest {
 message DrivePhotosClientCreateFromSessionRequest {
     int64 session_handle = 1;
 
-    // Client UID, optional 
+    // Client UID, optional
     // If a null value is provided, the SDK automatically generates a UUID during initialization
     string uid = 2;
 }
@@ -489,7 +507,7 @@ message DrivePhotosClientGetPhotoDownloaderRequest {
     int64 cancellation_token_source_handle = 3;
 }
 
-// Photo downloader 
+// Photo downloader
 
 // The response value must be an Int64Value carrying a handle to an instance of DownloadController.
 message DrivePhotosClientDownloadToStreamRequest {
@@ -555,7 +573,7 @@ message UploadEventPayload {
     int64 approximate_uploaded_size = 4; // To be used when exact size must not be communicated in order to prevent fingerprinting
     UploadError error = 5; // Optional
     string original_error = 6; // Optional
-} 
+}
 
 message DownloadEventPayload {
     VolumeType volume_type = 1;
@@ -564,7 +582,7 @@ message DownloadEventPayload {
     DownloadError error = 4; // Optional
     string original_error = 5; // Optional
 }
- 
+
 message DecryptionErrorEventPayload {
     VolumeType volume_type = 1;
     EncryptedField field = 2;
@@ -581,7 +599,7 @@ message VerificationErrorEventPayload {
     string error = 5; // Optional
     string uid = 6;
 }
- 
+
 message BlockVerificationErrorEventPayload {
     bool retry_helped = 1;
 }

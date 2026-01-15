@@ -81,4 +81,9 @@ internal sealed class DriveSecretCache(ICacheRepository repository) : IDriveSecr
     {
         return $"file:{nodeId}:secrets";
     }
+
+    public ValueTask ClearAsync()
+    {
+        return _repository.ClearAsync();
+    }
 }
