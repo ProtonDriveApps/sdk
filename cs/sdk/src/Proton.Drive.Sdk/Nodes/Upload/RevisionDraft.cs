@@ -20,7 +20,7 @@ internal sealed partial class RevisionDraft(
     ILogger logger) : IAsyncDisposable
 {
     private readonly Dictionary<ThumbnailType, BlockUploadResult> _thumbnailUploadResults = [];
-    private readonly List<Either<BlockUploadResult, BlockUploadPlainData>> _contentBlockStates = [];
+    private readonly List<Either<BlockUploadPlainData, BlockUploadResult>> _contentBlockStates = [];
 
     private readonly Lock _blockUploadStatesLock = new();
     private readonly ILogger _logger = logger;
@@ -35,7 +35,7 @@ internal sealed partial class RevisionDraft(
     public IncrementalHash Sha1 { get; } = IncrementalHash.CreateHash(HashAlgorithmName.SHA1);
 
     public IReadOnlyDictionary<ThumbnailType, BlockUploadResult> ThumbnailUploadResults => _thumbnailUploadResults;
-    public IReadOnlyList<Either<BlockUploadResult, BlockUploadPlainData>> ContentBlockStates => _contentBlockStates;
+    public IReadOnlyList<Either<BlockUploadPlainData, BlockUploadResult>> ContentBlockStates => _contentBlockStates;
 
     public bool IsCompleted { get; set; }
     public long NumberOfPlainBytesDone { get; set; }
@@ -86,24 +86,28 @@ internal sealed partial class RevisionDraft(
         }
     }
 
-    public int GetFirstNonUploadedContentBlockNumber()
+    public int GetNewContentBlockNumber()
     {
-        return _contentBlockStates.TakeWhile(x => x.IsFirst).Count() + 1;
+        return ContentBlockStates.Count + 1;
     }
 
-    public bool TryGetContentBlockPlainData(int blockNumber, [NotNullWhen(true)] out BlockUploadPlainData? blockPlainData)
+    public bool TryGetNextContentBlockPlainData(
+        int? currentBlockNumber,
+        [NotNullWhen(true)] out (int BlockNumber, BlockUploadPlainData PlainData)? result)
     {
-        var blockStateIndex = blockNumber - 1;
-
-        if (blockStateIndex >= _contentBlockStates.Count
-            || _contentBlockStates[blockStateIndex].TryGetFirstElseSecond(out _, out var result))
+        lock (_blockUploadStatesLock)
         {
-            blockPlainData = null;
-            return false;
-        }
+            var offset = currentBlockNumber ?? 0;
 
-        blockPlainData = result;
-        return true;
+            result = _contentBlockStates
+                .Skip(offset)
+                .Select((x, i) => x.TryGetFirst(out var plainData)
+                    ? (offset + i + 1, plainData)
+                    : default((int BlockNumber, BlockUploadPlainData PlainData)?))
+                .FirstOrDefault(x => x is not null);
+
+            return result is not null;
+        }
     }
 
     public async ValueTask DisposeAsync()
@@ -114,7 +118,7 @@ internal sealed partial class RevisionDraft(
         Sha1.Dispose();
 
         var dataItemsToDispose = ContentBlockStates
-            .Select(x => !x.TryGetFirstElseSecond(out _, out var data) ? data : (BlockUploadPlainData?)null)
+            .Select(x => x.TryGetFirst(out var data) ? data : (BlockUploadPlainData?)null)
             .Where(task => task is not null)
             .Select(task => task!.Value);
 
