@@ -10,7 +10,6 @@ module.exports = {
     '^.+\\.mjs$': '@swc/jest',
   },
   moduleNameMapper: {
-    '^@openpgp/noble-hashes/esm/(.*)$': '<rootDir>/node_modules/@openpgp/noble-hashes/esm/$1.js',
     '^@openpgp/web-stream-tools$': '<rootDir>/node_modules/@openpgp/web-stream-tools/lib/index.js',
   },
   reporters: ['default'],
