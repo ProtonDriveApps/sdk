@@ -15,6 +15,7 @@ import proton.drive.sdk.driveClientCreateFromSessionRequest
 import proton.drive.sdk.driveClientCreateRequest
 import proton.drive.sdk.driveClientFreeRequest
 import proton.drive.sdk.httpClient
+import proton.drive.sdk.protonDriveClientOptions
 import proton.drive.sdk.request
 import proton.sdk.ProtonSdk
 import proton.sdk.ProtonSdk.HttpResponse
@@ -66,8 +67,12 @@ class JniDriveClient internal constructor() : JniBaseProtonDriveSdk() {
                     recordMetricAction = ProtonDriveSdkNativeClient.getRecordMetricPointer()
                 }
                 featureEnabledFunction = ProtonDriveSdkNativeClient.getFeatureEnabledPointer()
-                request.bindingsLanguage?.let { bindingsLanguage = it }
-                request.uid?.let { uid = it }
+                clientOptions = protonDriveClientOptions {
+                    request.bindingsLanguage?.let { bindingsLanguage = it }
+                    request.uid?.let { uid = it }
+                    request.apiCallTimeout?.let { apiCallTimeout = it }
+                    request.storageCallTimeout?.let { storageCallTimeout = it }
+                }
             }
         }
     })
