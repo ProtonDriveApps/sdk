@@ -82,6 +82,17 @@ internal static class PhotoDtoToMetadataConverter
                     cancellationToken).ConfigureAwait(false))
                 .Convert(NodeMetadata.FromFolder, DegradedNodeMetadata.FromFolder),
 
+            LinkType.Folder =>
+                (await DtoToMetadataConverter.ConvertDtoToFolderMetadataAsync(
+                    client.DriveClient.Account,
+                    client.Cache.Entities,
+                    client.Cache.Secrets,
+                    volumeId,
+                    linkDetailsDto,
+                    parentKeyResult,
+                    cancellationToken).ConfigureAwait(false))
+                .Convert(NodeMetadata.FromFolder, DegradedNodeMetadata.FromFolder),
+
             _ => throw new NotSupportedException($"Link type {linkType} is not supported."),
         };
     }

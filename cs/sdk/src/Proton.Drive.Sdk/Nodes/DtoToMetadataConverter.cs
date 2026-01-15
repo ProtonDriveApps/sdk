@@ -82,8 +82,8 @@ internal static class DtoToMetadataConverter
 
         if (folderDto is null)
         {
-            // FIXME: handle missing file information with degraded node
-            throw new InvalidOperationException("Node is a file, but file properties are missing");
+            // FIXME: handle missing folder information with degraded node
+            throw new InvalidOperationException("Node is a folder, but folder properties are missing");
         }
 
         var uid = new NodeUid(volumeId, linkDto.Id);
