@@ -20,7 +20,6 @@ public sealed class ProtonDriveClient
 {
     private const int MinDegreeOfBlockTransferParallelism = 2;
     private const int MaxDegreeOfBlockTransferParallelism = 6;
-
     private const int DefaultApiTimeoutSeconds = 30;
     private const int StorageApiTimeoutSeconds = 300;
 
@@ -69,7 +68,8 @@ public sealed class ProtonDriveClient
         IBlockVerifierFactory blockVerifierFactory,
         IFeatureFlagProvider featureFlagProvider,
         ITelemetry telemetry,
-        string uid)
+        string uid,
+        int? blockTransferDegreeOfParallelism = null)
     {
         Uid = uid;
 
@@ -80,9 +80,8 @@ public sealed class ProtonDriveClient
         Telemetry = telemetry;
         FeatureFlagProvider = featureFlagProvider;
 
-        var maxDegreeOfBlockTransferParallelism = Math.Max(
-            Math.Min(Environment.ProcessorCount / 2, MaxDegreeOfBlockTransferParallelism),
-            MinDegreeOfBlockTransferParallelism);
+        var maxDegreeOfBlockTransferParallelism = blockTransferDegreeOfParallelism
+            ?? Math.Max(Math.Min(Environment.ProcessorCount / 2, MaxDegreeOfBlockTransferParallelism), MinDegreeOfBlockTransferParallelism);
 
         var maxDegreeOfBlockProcessingParallelism = maxDegreeOfBlockTransferParallelism + Math.Min(Math.Max(maxDegreeOfBlockTransferParallelism / 2, 2), 4);
 
