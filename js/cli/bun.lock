@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "proton-drive-cli",
@@ -31,6 +32,9 @@
         "vite-plugin-dts": "^4.2.4",
       },
     },
+  },
+  "patchedDependencies": {
+    "@protontech/pmcrypto@8.8.1": "patches/@protontech%2Fpmcrypto@8.8.1.patch",
   },
   "packages": {
     "@ampproject/remapping": ["@ampproject/remapping@2.3.0", "", { "dependencies": { "@jridgewell/gen-mapping": "^0.3.5", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw=="],
