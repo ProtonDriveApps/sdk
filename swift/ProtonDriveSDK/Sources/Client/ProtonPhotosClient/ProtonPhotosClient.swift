@@ -14,9 +14,9 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
     let featureFlagProviderCallback: FeatureFlagProviderCallback
 
     public init(
-        accountClient: AccountClientProtocol,
         configuration: ProtonDriveClientConfiguration,
         httpClient: HttpClientProtocol,
+        accountClient: AccountClientProtocol,
         logCallback: @escaping LogCallback,
         featureFlagProviderCallback: @escaping FeatureFlagProviderCallback,
         recordMetricEventCallback: @escaping RecordMetricEventCallback
@@ -51,9 +51,17 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
                 $0.recordMetricAction = Int64(ObjectHandle(callback: cCompatibleTelemetryRecordMetricCallback))
             }
 
-            $0.uid = configuration.clientUID
-
             $0.featureEnabledFunction = Int64(ObjectHandle(callback: cCompatibleFeatureFlagProviderCallback))
+            
+            $0.clientOptions = Proton_Drive_Sdk_ProtonDriveClientOptions.with {
+                $0.uid = configuration.clientUID
+                if let httpApiCallsTimeout = configuration.httpApiCallsTimeout {
+                    $0.apiCallTimeout = httpApiCallsTimeout
+                }
+                if let httpStorageCallsTimeout = configuration.httpStorageCallsTimeout {
+                    $0.storageCallTimeout = httpStorageCallsTimeout
+                }
+            }
         }
 
         // we pass the weak reference as the state because we don't want the interop layer

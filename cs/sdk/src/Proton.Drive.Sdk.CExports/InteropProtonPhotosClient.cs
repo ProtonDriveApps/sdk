@@ -18,10 +18,16 @@ internal static class InteropProtonPhotosClient
             throw new UriFormatException("Base URL must end with a '/'");
         }
 
+        var protonDriveClientOptions = new Sdk.ProtonDriveClientOptions(
+            request.ClientOptions.HasBindingsLanguage ? request.ClientOptions.BindingsLanguage : null,
+            request.ClientOptions.HasUid ? request.ClientOptions.Uid : null,
+            request.ClientOptions.HasApiCallTimeout ? request.ClientOptions.ApiCallTimeout : null,
+            request.ClientOptions.HasStorageCallTimeout ? request.ClientOptions.StorageCallTimeout : null);
+
         var httpClientFactory = new InteropHttpClientFactory(
             bindingsHandle,
             request.BaseUrl,
-            request.BindingsLanguage,
+            protonDriveClientOptions.BindingsLanguage,
             new InteropFunction<nint, InteropArray<byte>, nint, nint>(request.HttpClient.RequestFunction),
             new InteropAction<nint, InteropArray<byte>, nint>(request.HttpClient.ResponseContentReadAction),
             new InteropAction<nint>(request.HttpClient.CancellationAction));
@@ -43,7 +49,7 @@ internal static class InteropProtonPhotosClient
         var featureFlagProvider = request.HasFeatureEnabledFunction
             ? new InteropFeatureFlagProvider(bindingsHandle, new InteropFunction<nint, InteropArray<byte>, int>(request.FeatureEnabledFunction))
             : AlwaysDisabledFeatureFlagProvider.Instance;
-
+        
         var client = new ProtonPhotosClient(
             httpClientFactory,
             accountClient,
@@ -51,7 +57,7 @@ internal static class InteropProtonPhotosClient
             secretCacheRepository,
             featureFlagProvider,
             telemetry,
-            request.Uid);
+            protonDriveClientOptions);
 
         return new Int64Value
         {
