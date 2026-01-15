@@ -9,4 +9,6 @@ data class ClientCreateRequest(
     val loggerProvider: LoggerProvider,
     val bindingsLanguage: String? = null,
     val uid: String? = null,
+    val apiCallTimeout: Int? = null,
+    val storageCallTimeout: Int? = null,
 )
