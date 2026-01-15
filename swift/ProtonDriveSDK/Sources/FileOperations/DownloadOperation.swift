@@ -9,21 +9,30 @@ public enum DownloadOperationResult: Sendable {
     case failed(Error)
 }
 
+/// Represents the type of downloader used for a download operation.
+/// Determines which cleanup function is called when the operation is disposed.
+public enum DownloaderType: Sendable {
+    case file
+    case photo
+}
+
 public final class DownloadOperation: Sendable {
     
     private let fileDownloaderHandle: ObjectHandle
     private let downloadControllerHandle: ObjectHandle
     private let logger: Logger?
+    private let downloaderType: DownloaderType
     private let progressCallbackWrapper: ProgressCallbackWrapper
     private let onOperationCancel: @Sendable () async throws -> Void
     private let onOperationDispose: @Sendable () async -> Void
     
     private var downloadControllerHandleForProtos: Int64 { Int64(downloadControllerHandle) }
-    
+
     init(fileDownloaderHandle: ObjectHandle,
          downloadControllerHandle: ObjectHandle,
          progressCallbackWrapper: ProgressCallbackWrapper,
          logger: Logger?,
+         downloaderType: DownloaderType,
          onOperationCancel: @Sendable @escaping () async throws -> Void,
          onOperationDispose: @Sendable @escaping () async -> Void) {
         assert(fileDownloaderHandle != 0)
@@ -32,6 +41,7 @@ public final class DownloadOperation: Sendable {
         self.downloadControllerHandle = downloadControllerHandle
         self.progressCallbackWrapper = progressCallbackWrapper
         self.logger = logger
+        self.downloaderType = downloaderType
         self.onOperationCancel = onOperationCancel
         self.onOperationDispose = onOperationDispose
     }
@@ -154,19 +164,25 @@ public final class DownloadOperation: Sendable {
     }
     
     deinit {
-        Self.freeSDKObjects(downloadControllerHandle, fileDownloaderHandle, logger, onOperationDispose)
+        Self.freeSDKObjects(downloadControllerHandle, fileDownloaderHandle, logger, downloaderType, onOperationDispose)
     }
     
     private static func freeSDKObjects(
         _ downloadControllerHandle: ObjectHandle,
         _ fileDownloaderHandle: ObjectHandle,
         _ logger: Logger?,
+        _ downloaderType: DownloaderType,
         _ onOperationDispose: @Sendable @escaping () async -> Void
     ) {
         Task {
             await onOperationDispose()
             await freeDownloadController(Int64(downloadControllerHandle), logger)
-            await freeFileDownloader(Int64(fileDownloaderHandle), logger)
+            switch downloaderType {
+            case .file:
+                await freeFileDownloader(Int64(fileDownloaderHandle), logger)
+            case .photo:
+                await freePhotoDownloader(Int64(fileDownloaderHandle), logger)
+            }
         }
     }
     
@@ -184,7 +200,22 @@ public final class DownloadOperation: Sendable {
             logger?.error("Proton_Drive_Sdk_FileDownloaderFreeRequest failed: \(error)", category: "DownloadManager.freeDownloader")
         }
     }
-    
+
+    /// Free a photo downloader when no longer needed
+    private static func freePhotoDownloader(_ photoDownloaderHandle: Int64, _ logger: Logger?) async {
+        let freeRequest = Proton_Drive_Sdk_DrivePhotosClientDownloaderFreeRequest.with {
+            $0.fileDownloaderHandle = photoDownloaderHandle
+        }
+
+        do {
+            try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
+        } catch {
+            // If the request to free the downloader failed, we have a memory leak, but not much else can be done.
+            // It's not gonna break the app's functionality, so we just log the issue and continue.
+            logger?.error("Proton_Drive_Sdk_DrivePhotosClientDownloaderFreeRequest failed: \(error)", category: "DownloadManager.freeDownloader")
+        }
+    }
+
     /// Free a file download controller when no longer needed
     private static func freeDownloadController(_ downloadControllerHandle: Int64, _ logger: Logger?) async {
         let freeRequest = Proton_Drive_Sdk_DownloadControllerFreeRequest.with {
