@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Proton.Drive.Sdk;
+using Proton.Drive.Sdk.Http;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Photos.Sdk.Api;
 using Proton.Photos.Sdk.Caching;
@@ -13,15 +14,13 @@ namespace Proton.Photos.Sdk;
 
 public sealed class ProtonPhotosClient : IDisposable
 {
-    private const int ApiTimeoutSeconds = 20;
-
     private readonly HttpClient _httpClient;
 
     public ProtonPhotosClient(ProtonApiSession session, string? uid = null)
     {
         DriveClient = new ProtonDriveClient(session, uid);
 
-        _httpClient = session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ApiTimeoutSeconds));
+        _httpClient = session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonDriveDefaults.DefaultApiTimeoutSeconds));
 
         Cache = new PhotosClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository);
         PhotosApi = new PhotosApiClient(_httpClient);
@@ -34,7 +33,7 @@ public sealed class ProtonPhotosClient : IDisposable
         ICacheRepository secretCacheRepository,
         IFeatureFlagProvider featureFlagProvider,
         ITelemetry telemetry,
-        string? uid = null)
+        ProtonDriveClientOptions? creationParameters = null)
     {
         DriveClient = new ProtonDriveClient(
             httpClientFactory,
@@ -43,9 +42,9 @@ public sealed class ProtonPhotosClient : IDisposable
             secretCacheRepository,
             featureFlagProvider,
             telemetry,
-            uid);
+            creationParameters);
 
-        _httpClient = new SdkHttpClientFactoryDecorator(httpClientFactory).CreateClient();
+        _httpClient = new SdkHttpClientFactoryDecorator(httpClientFactory).CreateClientWithTimeout(creationParameters?.OverrideDefaultApiTimeoutSeconds ?? ProtonDriveDefaults.DefaultApiTimeoutSeconds);
 
         Cache = new PhotosClientCache(entityCacheRepository, secretCacheRepository);
         PhotosApi = new PhotosApiClient(_httpClient);
