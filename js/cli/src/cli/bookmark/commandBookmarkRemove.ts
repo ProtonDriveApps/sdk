@@ -1,4 +1,4 @@
-import { Command, ActionArgs } from './interface';
+import { Command, ActionArgs } from '../interface';
 
 export class CommandBookmarkRemove implements Command {
     group = 'bookmark';

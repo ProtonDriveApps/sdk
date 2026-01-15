@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "main": "dist/main.js",
     "scripts": {
-        "build": "bun build --compile ./src/proton-drive.ts --minify-identifiers",
+        "build": "bun build --compile ./src/proton-drive.ts --minify-identifiers --conditions=browser",
         "check-types": "tsc --noEmit",
         "generate-types": "bunx openapi-typescript ../../api/openapi-core.json -o ./src/account/api-core-types.ts && bunx openapi-typescript ../../api/openapi-auth.json -o ./src/account/api-auth-types.ts",
         "lint": "eslint src integration-tests --ext .ts --cache --ignore-pattern '**/account/*-types.ts'",
@@ -33,7 +33,7 @@
     "dependencies": {
         "@noble/hashes": "^1.8.0",
         "@openpgp/noble-hashes": "^1.3.3",
-        "@protontech/pmcrypto": "^7.20.0",
+        "@protontech/pmcrypto": "^8.8.1",
         "bcryptjs": "^2.4.3",
         "comlink": "^4.4.2",
         "ky": "^1.7.2",
