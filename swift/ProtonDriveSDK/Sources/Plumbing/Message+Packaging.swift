@@ -219,11 +219,6 @@ extension Message {
                 $0.payload = .drivePhotosClientDownloaderFree(request)
             }
 
-        case let request as Proton_Drive_Sdk_DrivePhotosClientAwaitDownloadCompletionRequest:
-            Proton_Drive_Sdk_Request.with {
-                $0.payload = .drivePhotosClientAwaitDownloadCompletion(request)
-            }
-
         default:
             assertionFailure("Unknown request")
             throw ProtonDriveSDKError(interopError: .wrongProto(message: "Unknown request type: \(self)"))

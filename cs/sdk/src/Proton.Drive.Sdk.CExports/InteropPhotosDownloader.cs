@@ -50,13 +50,4 @@ internal static class InteropPhotosDownloader
 
         return null;
     }
-
-    public static async ValueTask<IMessage?> HandleAwaitCompletion(DrivePhotosClientAwaitDownloadCompletionRequest request)
-    {
-        var downloadController = Interop.GetFromHandle<DownloadController>(request.DownloadControllerHandle);
-
-        await downloadController.Completion.ConfigureAwait(false);
-
-        return null;
-    }
 }
