@@ -22,4 +22,6 @@ internal interface IDriveEntityCache : IEntityCache
     ValueTask<CachedNodeInfo?> TryGetNodeAsync(NodeUid nodeId, CancellationToken cancellationToken);
 
     ValueTask RemoveNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken);
+
+    ValueTask ClearAsync();
 }

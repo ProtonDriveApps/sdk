@@ -21,4 +21,6 @@ internal interface IDriveSecretCache
     ValueTask SetFileSecretsAsync(NodeUid nodeId, Result<FileSecrets, DegradedFileSecrets> secretsProvisionResult, CancellationToken cancellationToken);
 
     ValueTask<Result<FileSecrets, DegradedFileSecrets>?> TryGetFileSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken);
+
+    ValueTask ClearAsync();
 }

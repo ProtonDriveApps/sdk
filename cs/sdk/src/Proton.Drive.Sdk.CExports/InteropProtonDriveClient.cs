@@ -36,6 +36,13 @@ internal static class InteropProtonDriveClient
             ? SqliteCacheRepository.OpenFile(request.SecretCachePath)
             : new InMemoryCacheRepository();
 
+        if (request.HasSecretCacheEncryptionKey)
+        {
+            secretCacheRepository = new EncryptedCacheRepository(
+                secretCacheRepository,
+                request.SecretCacheEncryptionKey.ToByteArray());
+        }
+
         ITelemetry telemetry = request.Telemetry.ToTelemetry(bindingsHandle) is { } interopTelemetry
             ? new DriveInteropTelemetryDecorator(interopTelemetry)
             : NullTelemetry.Instance;
@@ -198,6 +205,26 @@ internal static class InteropProtonDriveClient
             request.NewMediaType,
             cancellationToken).ConfigureAwait(false);
         return null;
+    }
+
+    public static async ValueTask<IMessage> HandleClearSecretsAsync(DriveClientClearSecretsRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+        await client.ClearSecretsAsync(cancellationToken).ConfigureAwait(false);
+
+        return new Empty();
+    }
+
+    public static async ValueTask<IMessage> HandleClearEntityCacheAsync(DriveClientClearEntityCacheRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+        await client.ClearEntityCacheAsync(cancellationToken).ConfigureAwait(false);
+
+        return new Empty();
     }
 
     public static async ValueTask<IMessage> HandleTrashNodesAsync(DriveClientTrashNodesRequest request)
