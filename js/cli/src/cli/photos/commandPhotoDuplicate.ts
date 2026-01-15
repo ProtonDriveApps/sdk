@@ -2,7 +2,6 @@ import path from 'node:path';
 
 import { sha1 } from '@noble/hashes/sha1';
 
-import { arrayToHexString } from '../../crypto/cryptoUtils';
 import { printObject } from '../formatters';
 import { Command, ActionArgs } from '../interface';
 
@@ -23,7 +22,7 @@ export class CommandPhotoDuplicate implements Command {
             sha1Instance.update(fileBytes);
             const sha1Hash = sha1Instance.digest() as Uint8Array<ArrayBuffer>;
 
-            return arrayToHexString(sha1Hash);
+            return sha1Hash.toHex();
         }
 
         const duplicates = await photosSdk.findPhotoDuplicates(name, getSha1)
