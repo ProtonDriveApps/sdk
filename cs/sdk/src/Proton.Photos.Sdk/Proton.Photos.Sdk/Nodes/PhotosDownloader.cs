@@ -61,7 +61,7 @@ public sealed partial class PhotosDownloader : IFileDownloader
 
     private async Task DownloadToStreamAsync(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
     {
-        var result = await _client.DriveClient.GetNodeAsync(_photoUid, cancellationToken).ConfigureAwait(false);
+        var result = await _client.GetNodeAsync(_photoUid, cancellationToken).ConfigureAwait(false);
 
         if (result is null || !result.Value.TryGetValueElseError(out var node, out _) || node is not FileNode fileNode)
         {
