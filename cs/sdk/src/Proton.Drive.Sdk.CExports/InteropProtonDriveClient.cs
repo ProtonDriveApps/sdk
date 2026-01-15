@@ -200,6 +200,36 @@ internal static class InteropProtonDriveClient
         return null;
     }
 
+    public static async ValueTask<IMessage> HandleTrashNodesAsync(DriveClientTrashNodesRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        var results = await client.TrashNodesAsync(
+            request.NodeUids.Select(NodeUid.Parse),
+            cancellationToken).ConfigureAwait(false);
+
+        var response = new TrashNodesResponse
+        {
+            Results =
+            {
+                results.Select(pair =>
+                {
+                    var result = new NodeResultPair();
+                    result.NodeUid = pair.Key.ToString();
+                    if (pair.Value.TryGetError(out var error))
+                    {
+                        result.Error = error;
+                    }
+                    return result;
+                })
+            }
+        };
+
+        return response;
+    }
+
     public static IMessage? HandleFree(DriveClientFreeRequest request)
     {
         Interop.FreeHandle<ProtonDriveClient>(request.ClientHandle);

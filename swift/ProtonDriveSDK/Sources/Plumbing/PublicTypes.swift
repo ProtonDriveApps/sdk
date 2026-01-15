@@ -200,6 +200,11 @@ public struct PhotoTimelineItem: Sendable {
     }
 }
 
+public struct TrashNodeResult: Sendable {
+    public let nodeUid: SDKNodeUid
+    public let error: String?
+}
+
 /// Callback for progress updates
 public typealias ProgressCallback = @Sendable (FileOperationProgress) -> Void
 
