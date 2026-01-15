@@ -53,7 +53,7 @@ internal sealed partial class RevisionWriter : IDisposable
 
         var signingEmailAddress = _draft.MembershipAddress.EmailAddress;
 
-        var expectedThumbnailBlockCount = 0;
+        int expectedThumbnailBlockCount;
 
         var hashingContentStream = new HashingReadStream(contentStream, _draft.Sha1, leaveOpen: true);
 
@@ -223,14 +223,16 @@ internal sealed partial class RevisionWriter : IDisposable
         Queue<Task<BlockUploadResult>> uploadTasks,
         CancellationToken cancellationToken)
     {
-        var contentBlockNumber = _draft.GetFirstNonUploadedContentBlockNumber();
+        int? currentBlockNumber = null;
 
         while (
-            await TryGetBlockPlainDataAsync(
-                contentBlockNumber,
+            await TryGetNextContentBlockPlainDataAsync(
+                currentBlockNumber,
                 hashingContentStream,
-                _draft.BlockVerifier.DataPacketPrefixMaxLength).ConfigureAwait(false) is { } plainData)
+                _draft.BlockVerifier.DataPacketPrefixMaxLength).ConfigureAwait(false) is var (newBlockNumber, plainData))
         {
+            currentBlockNumber = newBlockNumber;
+
             await WaitForBlockUploaderAsync(uploadTasks, cancellationToken).ConfigureAwait(false);
 
             var onBlockProgress = onProgress is not null
@@ -241,24 +243,24 @@ internal sealed partial class RevisionWriter : IDisposable
                 }
             : default(Action<long>?);
 
-            var uploadTask = UploadContentBlockAsync(contentBlockNumber, plainData, onBlockProgress, cancellationToken).AsTask();
+            var uploadTask = UploadContentBlockAsync(currentBlockNumber.Value, plainData, onBlockProgress, cancellationToken).AsTask();
 
             uploadTasks.Enqueue(uploadTask);
-
-            ++contentBlockNumber;
         }
     }
 
-    private async ValueTask<BlockUploadPlainData?> TryGetBlockPlainDataAsync(
-        int blockNumber,
+    private async ValueTask<(int BlockNumber, BlockUploadPlainData PlainData)?> TryGetNextContentBlockPlainDataAsync(
+        int? currentBlockNumber,
         Stream contentStream,
         int prefixLength)
     {
-        if (_draft.TryGetContentBlockPlainData(blockNumber, out var plainData))
+        if (_draft.TryGetNextContentBlockPlainData(currentBlockNumber, out var result))
         {
-            plainData.Value.Stream.Seek(0, SeekOrigin.Begin);
-            return plainData;
+            result.Value.PlainData.Stream.Seek(0, SeekOrigin.Begin);
+            return result;
         }
+
+        currentBlockNumber = _draft.GetNewContentBlockNumber();
 
         var plainDataPrefixBuffer = ArrayPool<byte>.Shared.Rent(prefixLength);
         try
@@ -282,11 +284,11 @@ internal sealed partial class RevisionWriter : IDisposable
 
                 plainDataStream.Seek(0, SeekOrigin.Begin);
 
-                plainData = new BlockUploadPlainData(plainDataStream, plainDataPrefixBuffer);
+                var plainData = new BlockUploadPlainData(plainDataStream, plainDataPrefixBuffer);
 
-                _draft.SetContentBlockPlainData(blockNumber, plainData.Value);
+                _draft.SetContentBlockPlainData(currentBlockNumber.Value, plainData);
 
-                return plainData;
+                return (currentBlockNumber.Value, plainData);
             }
             catch (Exception ex)
             {
@@ -334,7 +336,7 @@ internal sealed partial class RevisionWriter : IDisposable
             {
                 var blockNumber = i + 1;
 
-                return blockState.TryGetFirstElseSecond(out var uploadResult, out _)
+                return blockState.TryGetSecond(out var uploadResult)
                     ? (Number: blockNumber, Value: uploadResult)
                     : throw new IntegrityException($"Missing content block #{blockNumber}");
             });

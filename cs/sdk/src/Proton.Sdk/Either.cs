@@ -32,4 +32,16 @@ internal readonly struct Either<T1, T2>
         second = _second;
         return IsFirst;
     }
+
+    public bool TryGetFirst([NotNullWhen(true)] out T1? first)
+    {
+        first = _first;
+        return IsFirst;
+    }
+
+    public bool TryGetSecond([NotNullWhen(true)] out T2? second)
+    {
+        second = _second;
+        return IsSecond;
+    }
 }
