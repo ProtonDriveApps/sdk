@@ -6,7 +6,15 @@ import { Api as CryptoApi } from './crypto/lib/worker/api';
 import { HTTPClient } from './httpClient';
 import { initTelemetry } from './telemetry';
 
-import { ProtonDriveClient, MemoryCache, CachedCryptoMaterial, OpenPGPCryptoWithCryptoProxy } from '../../sdk/src';
+import {
+    ProtonDriveClient,
+    MemoryCache,
+    CachedCryptoMaterial,
+    OpenPGPCryptoWithCryptoProxy,
+    MetricEvent,
+    Logger,
+} from '../../sdk/src';
+import { Telemetry } from '../../sdk/src/telemetry';
 import { ProtonDrivePhotosClient } from '../../sdk/src/protonDrivePhotosClient';
 import { initDiagnostic } from '../../sdk/src/diagnostic';
 
@@ -22,10 +30,11 @@ interface Config {
 export async function init(debug: boolean) {
     const cryptoApi = initCrypto();
     const config = getConfig(debug);
-    const account = await initAccount(cryptoApi, config);
+    const telemetry = initTelemetry(config.cacheDir, config.enableConsoleLog);
+    const account = await initAccount(cryptoApi, config, telemetry.getLogger('account'));
     const srp = await initSrp(cryptoApi, config);
-    const sdk = initSDK(cryptoApi, config, account, srp);
-    const photosSdk = initPhotosSDK(cryptoApi, config, account, srp);
+    const sdk = initSDK(cryptoApi, config, account, srp, telemetry);
+    const photosSdk = initPhotosSDK(cryptoApi, config, account, srp, telemetry);
     const sdkDiagnostic = initSDKDiagnostic(cryptoApi, config, account, srp);
     const paths = new Paths(sdk, photosSdk, account);
     return {
@@ -54,8 +63,8 @@ function getConfig(debug: boolean): Config {
     };
 }
 
-async function initAccount(cryptoApi: CryptoApi, config: Config) {
-    const account = new Account(cryptoApi, config);
+async function initAccount(cryptoApi: CryptoApi, config: Config, logger: Logger) {
+    const account = new Account(cryptoApi, config, logger);
     await account.loadSession();
     return account;
 }
@@ -64,8 +73,8 @@ async function initSrp(cryptoApi: CryptoApi, config: Config) {
     return new Srp(cryptoApi, config);
 }
 
-function initSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Srp) {
-    const { httpClient, entitiesCache, cryptoCache, telemetry, openPGPCryptoModule, latestEventIdProvider } =
+function initSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Srp, telemetry: Telemetry<MetricEvent>) {
+    const { httpClient, entitiesCache, cryptoCache, openPGPCryptoModule, latestEventIdProvider } =
         createSDKDependencies(config, account, cryptoApi);
 
     const sdk = new ProtonDriveClient({
@@ -85,8 +94,14 @@ function initSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Sr
     return sdk;
 }
 
-function initPhotosSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Srp) {
-    const { httpClient, entitiesCache, cryptoCache, telemetry, openPGPCryptoModule, latestEventIdProvider } =
+function initPhotosSDK(
+    cryptoApi: CryptoApi,
+    config: Config,
+    account: Account,
+    srp: Srp,
+    telemetry: Telemetry<MetricEvent>,
+) {
+    const { httpClient, entitiesCache, cryptoCache, openPGPCryptoModule, latestEventIdProvider } =
         createSDKDependencies(config, account, cryptoApi);
 
     return new ProtonDrivePhotosClient({
@@ -126,7 +141,6 @@ function createSDKDependencies(config: Config, account: Account, cryptoApi: Cryp
         }),
         entitiesCache: new SQLiteEntititesCache(config.cacheDir),
         cryptoCache: new MemoryCache<CachedCryptoMaterial>(),
-        telemetry: initTelemetry(config.cacheDir, config.enableConsoleLog),
         openPGPCryptoModule: new OpenPGPCryptoWithCryptoProxy(cryptoApi),
         latestEventIdProvider: new NoLatestEventIdProvider(),
     };
