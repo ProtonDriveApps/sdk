@@ -84,6 +84,11 @@ extension Message {
                 $0.payload = .driveClientRename(request)
             }
 
+        case let request as Proton_Drive_Sdk_DriveClientTrashNodesRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .driveClientTrashNodes(request)
+            }
+
         case let request as Proton_Drive_Sdk_DriveClientGetThumbnailsRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .driveClientGetThumbnails(request)

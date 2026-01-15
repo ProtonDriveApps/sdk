@@ -19,6 +19,7 @@ message Request {
         DriveClientGetThumbnailsRequest drive_client_get_thumbnails = 1007;
         DriveClientRenameRequest drive_client_rename = 1008;
         DriveClientCreateFolderRequest drive_client_create_folder = 1009;
+        DriveClientTrashNodesRequest drive_client_trash_nodes = 1010;
 
         UploadFromStreamRequest upload_from_stream = 1100;
         UploadFromFileRequest upload_from_file = 1101;
@@ -320,6 +321,22 @@ message DriveClientCreateFolderRequest {
     string folder_name = 3;
     google.protobuf.Timestamp last_modification_time = 4; // Optional
     int64 cancellation_token_source_handle = 5;
+}
+
+// The response message must be of type TrashNodesResponse
+message DriveClientTrashNodesRequest {
+    int64 client_handle = 1;
+    repeated string node_uids = 2;
+    int64 cancellation_token_source_handle = 3;
+}
+
+message NodeResultPair {
+  string node_uid = 1;
+  string error = 2;
+}
+
+message TrashNodesResponse {
+  repeated NodeResultPair results = 1;
 }
 
 // The response message must be of type FileThumbnailList.

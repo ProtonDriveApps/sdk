@@ -37,6 +37,9 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DriveClientGetAvailableName
                     => await InteropProtonDriveClient.HandleGetAvailableNameAsync(request.DriveClientGetAvailableName).ConfigureAwait(false),
 
+                Request.PayloadOneofCase.DriveClientTrashNodes
+                    => await InteropProtonDriveClient.HandleTrashNodesAsync(request.DriveClientTrashNodes).ConfigureAwait(false),
+
                 Request.PayloadOneofCase.DriveClientRename
                     => await InteropProtonDriveClient.HandleRenameAsync(request.DriveClientRename).ConfigureAwait(false),
 

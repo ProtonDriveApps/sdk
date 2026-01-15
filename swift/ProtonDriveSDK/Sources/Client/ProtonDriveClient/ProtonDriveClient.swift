@@ -24,12 +24,14 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         case createFolder(UUID)
         case rename(UUID)
         case getAvailableName(UUID)
-        
+        case trash(UUID)
+
         var operationName: String {
             switch self {
             case .createFolder: return "createFolder"
             case .rename: return "rename"
             case .getAvailableName: return "getAvailableName"
+            case .trash: return "trash"
             }
         }
     }
@@ -398,5 +400,30 @@ extension ProtonDriveClient {
     
     public func cancelRename(cancellationToken: UUID) async throws {
         try await cancelOperation(identifier: .rename(cancellationToken))
+    }
+
+    public func trash(nodes: [SDKNodeUid], cancellationToken: UUID) async throws -> [TrashNodeResult] {
+        let cancellationTokenSource = try await createCancellationTokenSource(.trash(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .trash(cancellationToken))
+        }
+
+        let cancellationHandle = cancellationTokenSource.handle
+        let trashRequest = Proton_Drive_Sdk_DriveClientTrashNodesRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.nodeUids = nodes.map { $0.sdkCompatibleIdentifier }
+            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
+        }
+        let result: Proton_Drive_Sdk_TrashNodesResponse = try await SDKRequestHandler.send(trashRequest, logger: logger)
+        let results: [TrashNodeResult] = result.results.compactMap { result in
+            guard let id = SDKNodeUid(sdkCompatibleIdentifier: result.nodeUid) else { return nil }
+            let error: String? = result.hasError ? result.error : nil
+            return TrashNodeResult(nodeUid: id, error: error)
+        }
+        return results
+    }
+
+    public func cancelTrash(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .trash(cancellationToken))
     }
 }
