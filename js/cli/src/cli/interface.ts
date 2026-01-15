@@ -23,5 +23,5 @@ export interface ActionArgs {
     sdkDiagnostic: Diagnostic;
     paths: Paths;
     args: string[];
-    options: { [name: string]: unknown };
+    options: { [name: string]: any }; // eslint-disable-line @typescript-eslint/no-explicit-any
 }

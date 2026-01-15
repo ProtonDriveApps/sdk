@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import { sha1 } from '@noble/hashes/sha1';
 
-import { arrayToHexString } from '../../crypto/lib/utils';
+import { arrayToHexString } from '../../crypto/cryptoUtils';
 import { printObject } from '../formatters';
 import { Command, ActionArgs } from '../interface';
 

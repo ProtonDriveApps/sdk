@@ -4,7 +4,7 @@
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "incremental": true,
-        "module": "commonjs",
+        "module": "esnext",
         "moduleResolution": "node",
         "noEmit": false,
         "noImplicitAny": true,
@@ -26,6 +26,7 @@
     ],
     "exclude": [
         "**/node_modules/*",
+        "**/api-core-types.ts",
         "dist/**/*"
     ]
 }
