@@ -104,4 +104,9 @@ internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEnti
     {
         return $"node:{nodeId}";
     }
+
+    public ValueTask ClearAsync()
+    {
+        return _repository.ClearAsync();
+    }
 }
