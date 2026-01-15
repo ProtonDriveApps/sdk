@@ -4,6 +4,7 @@ using Polly;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Resilience;
+using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 
@@ -32,17 +33,23 @@ internal sealed partial class BlockDownloader
         CancellationToken cancellationToken)
     {
         return await Policy
-            // TODO: add unit tests to verify the retry conditions
-            .Handle<Exception>(ex => !cancellationToken.IsCancellationRequested && ex is not FileContentsDecryptionException)
+            .Handle<Exception>(ex => !cancellationToken.IsCancellationRequested && IsExceptionRetriable(ex))
             .WaitAndRetryAsync(
                 retryCount: 4,
                 sleepDurationProvider: RetryPolicy.GetAttemptDelay,
-                onRetry: (exception, _, retryNumber, _) =>
+                onRetryAsync: async (exception, _, retryNumber, _) =>
                 {
+                    await WaitOnRetryAfterIfNeededAsync(exception, cancellationToken).ConfigureAwait(false);
+
                     LogBlobDownloadRetry(index, revisionUid, retryNumber, exception.FlattenMessage());
                     outputStream.Seek(0, SeekOrigin.Begin);
                 })
             .ExecuteAsync(ExecuteDownloadAsync).ConfigureAwait(false);
+
+        static bool IsExceptionRetriable(Exception ex)
+        {
+            return ex is not FileContentsDecryptionException;
+        }
 
         async Task<byte[]> ExecuteDownloadAsync()
         {
@@ -73,8 +80,30 @@ internal sealed partial class BlockDownloader
         }
     }
 
+    private async Task WaitOnRetryAfterIfNeededAsync(Exception ex, CancellationToken cancellationToken)
+    {
+        if (ex is TooManyRequestsException exception)
+        {
+            var currentTime = DateTimeOffset.UtcNow;
+
+            if (exception.RetryAfter is { } retryAfter && retryAfter > currentTime)
+            {
+                var delayDuration = retryAfter - currentTime;
+
+                LogBlobDownloadWaitingForRetryAfter(delayDuration);
+                await Task.Delay(delayDuration, cancellationToken).ConfigureAwait(false);
+            }
+        }
+    }
+
     [LoggerMessage(
             Level = LogLevel.Information,
             Message = "Retrying blob download for block #{BlockIndex} of revision \"{RevisionUid}\" (retry number: {RetryNumber}). Previous attempt error: {ErrorMessage}")]
     private partial void LogBlobDownloadRetry(int blockIndex, RevisionUid revisionUid, int retryNumber, string errorMessage);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Waiting {DelayDuration} before retrying blob download due to 429 response")]
+    private partial void LogBlobDownloadWaitingForRetryAfter(TimeSpan delayDuration);
+
 }
