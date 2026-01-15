@@ -44,7 +44,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         accountClient: AccountClientProtocol,
         logCallback: @escaping LogCallback,
         recordMetricEventCallback: @escaping RecordMetricEventCallback,
-        featureFlagProviderCallback: @escaping FeatureFlagProviderCallback
+        featureFlagProviderCallback: @escaping FeatureFlagProviderCallback,
     ) async throws {
         self.logger = try await Logger(logCallback: logCallback)
         self.recordMetricEventCallback = recordMetricEventCallback
@@ -56,8 +56,6 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
 
         let clientCreateRequest = Proton_Drive_Sdk_DriveClientCreateRequest.with {
             $0.baseURL = configuration.baseURL
-
-            $0.uid = configuration.clientUID
 
             $0.accountRequestAction = Int64(ObjectHandle(callback: cCompatibleAccountClientRequest))
 
@@ -79,6 +77,16 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             }
             if let secretCachePath = configuration.secretCachePath {
                 $0.secretCachePath = secretCachePath
+            }
+
+            $0.clientOptions = Proton_Drive_Sdk_ProtonDriveClientOptions.with {
+                $0.uid = configuration.clientUID
+                if let httpApiCallsTimeout = configuration.httpApiCallsTimeout {
+                    $0.apiCallTimeout = httpApiCallsTimeout
+                }
+                if let httpStorageCallsTimeout = configuration.httpStorageCallsTimeout {
+                    $0.storageCallTimeout = httpStorageCallsTimeout
+                }
             }
         }
 

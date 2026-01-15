@@ -178,37 +178,43 @@ message HttpClient {
     int64 cancellation_action = 3; // C signature: void handle_http_cancellation(intptr_t bindings_operation_handle);
 }
 
+message ProtonDriveClientOptions {
+    string bindings_language = 1; // Optional
+
+    // Client UID, optional
+    // If a null value is provided, the SDK automatically generates a UUID during initialization
+    string uid = 2;
+    
+    int32 api_call_timeout = 3; // Optional
+    int32 storage_call_timeout = 4; // Optional
+}
+
 // The response value must be an Int64Value carrying a handle to an instance of ProtonDriveClient.
 message DriveClientCreateRequest {
     string base_url = 1;
-    string bindings_language = 2; // Optional
-
-    HttpClient http_client = 3;
+    HttpClient http_client = 2;
+    ProtonDriveClientOptions client_options = 3; // Optional
 
     // Pointer to C function that will be called:
     // void handle_account_request(intptr_t bindings_handle, ByteArray http_request, intptr_t sdk_handle)
     //   bindings_handle: handle for the bindings
     //   account_request: Protobuf message of type proton.drive.sdk.AccountRequest carrying the request data
     //   sdk_handle: handle for the SDK
-    int64 account_request_action = 6;
+    int64 account_request_action = 4;
 
-    string entity_cache_path = 7; // Optional
-    string secret_cache_path = 8; // Optional
+    string entity_cache_path = 5; // Optional
+    string secret_cache_path = 6; // Optional
 
-    proton.sdk.Telemetry telemetry = 9; // Optional
-
-    // Client UID, optional
-    // If a null value is provided, the SDK automatically generates a UUID during initialization
-    string uid = 10;
-
+    proton.sdk.Telemetry telemetry = 7; // Optional
+    
     // Pointer to C function that will be called to check feature flags:
     // int is_feature_flag_enabled(intptr_t bindings_handle, ByteArray flag_name)
     //   bindings_handle: handle for the bindings
     //   flag_name: UTF-8 encoded feature flag name
     //   returns: 0 for disabled, non-zero for enabled
-    int64 feature_enabled_function = 11; // Optional
+    int64 feature_enabled_function = 8; // Optional
 
-    bytes secret_cache_encryption_key = 12; // Optional
+    bytes secret_cache_encryption_key = 9; // Optional
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of ProtonDriveClient.
@@ -323,11 +329,11 @@ message DriveClientRenameRequest {
 
 // The response message must be of type FolderNode
 message DriveClientCreateFolderRequest {
-  int64 client_handle = 1;
-  string parent_folder_uid = 2;
-  string folder_name = 3;
-  google.protobuf.Timestamp last_modification_time = 4; // Optional
-  int64 cancellation_token_source_handle = 5;
+    int64 client_handle = 1;
+    string parent_folder_uid = 2;
+    string folder_name = 3;
+    google.protobuf.Timestamp last_modification_time = 4; // Optional
+    int64 cancellation_token_source_handle = 5;
 }
 
 // The response must not have a value.
@@ -430,32 +436,27 @@ message DownloadControllerFreeRequest {
 
 message DrivePhotosClientCreateRequest {
     string base_url = 1;
-    string bindings_language = 2; // Optional
-
-    HttpClient http_client = 3;
+    HttpClient http_client = 2;
+    ProtonDriveClientOptions client_options = 3; // Optional
 
     // Pointer to C function that will be called:
     // void handle_account_request(intptr_t bindings_handle, ByteArray http_request, intptr_t sdk_handle)
     //   bindings_handle: handle for the bindings
     //   account_request: Protobuf message of type proton.drive.sdk.AccountRequest carrying the request data
     //   sdk_handle: handle for the SDK
-    int64 account_request_action = 6;
+    int64 account_request_action = 4;
 
-    string entity_cache_path = 7; // Optional
-    string secret_cache_path = 8; // Optional
+    string entity_cache_path = 5; // Optional
+    string secret_cache_path = 6; // Optional
 
-    proton.sdk.Telemetry telemetry = 9; // Optional
-
-    // Client UID, optional
-    // If a null value is provided, the SDK automatically generates a UUID during initialization
-    string uid = 10;
+    proton.sdk.Telemetry telemetry = 7; // Optional
 
     // Pointer to C function that will be called to check feature flags:
     // int is_feature_flag_enabled(intptr_t bindings_handle, ByteArray flag_name)
     //   bindings_handle: handle for the bindings
     //   flag_name: UTF-8 encoded feature flag name
     //   returns: 0 for disabled, non-zero for enabled
-    int64 feature_enabled_function = 11; // Optional
+    int64 feature_enabled_function = 8; // Optional
 }
 
 message DrivePhotosClientCreateFromSessionRequest {

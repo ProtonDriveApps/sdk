@@ -26,6 +26,9 @@ public struct ProtonDriveClientConfiguration: Sendable {
     let clientUID: String
     let httpTransferBufferSize: Int // Used for establishing buffer for http streams
     
+    let httpApiCallsTimeout: Int32?
+    let httpStorageCallsTimeout: Int32?
+    
     let downloadOperationalResilience: OperationalResilience
     let uploadOperationalResilience: OperationalResilience
     
@@ -39,16 +42,20 @@ public struct ProtonDriveClientConfiguration: Sendable {
         baseURL: String,
         clientUID: String,
         httpTransferBufferSize: Int = defaultHttpTransportBufferSize,
+        httpApiCallsTimeout: Int32? = nil, // if not set, default value from SDK is used
+        httpStorageCallsTimeout: Int32? = nil, // if not set, default value from SDK is used
         downloadOperationalResilience: OperationalResilience = BasicOperationalResilience.default,
         uploadOperationalResilience: OperationalResilience = BasicOperationalResilience.default,
         boundStreamsCreator: @Sendable @escaping () throws -> (InputStream, OutputStream, Int) = defaultBoundStreamsCreator,
         downloadStreamCreator: @Sendable @escaping (URLSession.AsyncBytes) -> AnyAsyncSequence<UInt8> = defaultDownloadStreamCreator,
-        entityCachePath: String? = nil,
-        secretCachePath: String? = nil
+        entityCachePath: String? = nil, // if not set, in-memory cache is used
+        secretCachePath: String? = nil // if not set, in-memory cache is used
     ) {
         self.baseURL = baseURL
         self.clientUID = clientUID
         self.httpTransferBufferSize = httpTransferBufferSize
+        self.httpApiCallsTimeout = httpApiCallsTimeout
+        self.httpStorageCallsTimeout = httpStorageCallsTimeout
         self.downloadOperationalResilience = downloadOperationalResilience
         self.uploadOperationalResilience = uploadOperationalResilience
         self.boundStreamsCreator = boundStreamsCreator

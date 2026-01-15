@@ -20,8 +20,6 @@ public sealed class ProtonDriveClient
 {
     private const int MinDegreeOfBlockTransferParallelism = 2;
     private const int MaxDegreeOfBlockTransferParallelism = 6;
-    private const int DefaultApiTimeoutSeconds = 30;
-    private const int StorageApiTimeoutSeconds = 300;
 
     /// <summary>
     /// Creates a new instance of <see cref="ProtonDriveClient"/>.
@@ -31,8 +29,8 @@ public sealed class ProtonDriveClient
     /// <remarks>If no UID is not provided, one will be generated for the duration of this instance.</remarks>
     public ProtonDriveClient(ProtonApiSession session, string? uid = null)
         : this(
-            session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(DefaultApiTimeoutSeconds)),
-            session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(StorageApiTimeoutSeconds), TimeSpan.FromSeconds(StorageApiTimeoutSeconds)),
+            session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonDriveDefaults.DefaultApiTimeoutSeconds)),
+            session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonDriveDefaults.StorageApiTimeoutSeconds), TimeSpan.FromSeconds(ProtonDriveDefaults.StorageApiTimeoutSeconds)),
             new AccountClientAdapter(session),
             new DriveClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository),
             session.ClientConfiguration.FeatureFlagProvider,
@@ -48,16 +46,15 @@ public sealed class ProtonDriveClient
         ICacheRepository secretCacheRepository,
         IFeatureFlagProvider featureFlagProvider,
         ITelemetry telemetry,
-        string? bindingsLanguage = null,
-        string? uid = null)
+        ProtonDriveClientOptions? creationParameters = null)
         : this(
-            new SdkHttpClientFactoryDecorator(httpClientFactory, bindingsLanguage).CreateClientWithTimeout(DefaultApiTimeoutSeconds),
-            new SdkHttpClientFactoryDecorator(httpClientFactory, bindingsLanguage).CreateClientWithTimeout(StorageApiTimeoutSeconds),
+            new SdkHttpClientFactoryDecorator(httpClientFactory, creationParameters?.BindingsLanguage).CreateClientWithTimeout(creationParameters?.OverrideDefaultApiTimeoutSeconds ?? ProtonDriveDefaults.DefaultApiTimeoutSeconds),
+            new SdkHttpClientFactoryDecorator(httpClientFactory, creationParameters?.BindingsLanguage).CreateClientWithTimeout(creationParameters?.OverrideStorageApiTimeoutSeconds ?? ProtonDriveDefaults.StorageApiTimeoutSeconds),
             accountClient,
             new DriveClientCache(entityCacheRepository, secretCacheRepository),
             featureFlagProvider,
             telemetry,
-            uid ?? Guid.NewGuid().ToString())
+            creationParameters?.Uid ?? Guid.NewGuid().ToString())
     {
     }
 

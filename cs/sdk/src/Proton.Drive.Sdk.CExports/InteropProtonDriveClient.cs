@@ -18,10 +18,16 @@ internal static class InteropProtonDriveClient
             throw new UriFormatException("Base URL must end with a '/'");
         }
 
+        var protonDriveClientOptions = new Sdk.ProtonDriveClientOptions(
+            request.ClientOptions.HasBindingsLanguage ? request.ClientOptions.BindingsLanguage : null,
+            request.ClientOptions.HasUid ? request.ClientOptions.Uid : null,
+            request.ClientOptions.HasApiCallTimeout ? request.ClientOptions.ApiCallTimeout : null,
+            request.ClientOptions.HasStorageCallTimeout ? request.ClientOptions.StorageCallTimeout : null);
+
         var httpClientFactory = new InteropHttpClientFactory(
             bindingsHandle,
             request.BaseUrl,
-            request.BindingsLanguage,
+            protonDriveClientOptions.BindingsLanguage,
             new InteropFunction<nint, InteropArray<byte>, nint, nint>(request.HttpClient.RequestFunction),
             new InteropAction<nint, InteropArray<byte>, nint>(request.HttpClient.ResponseContentReadAction),
             new InteropAction<nint>(request.HttpClient.CancellationAction));
@@ -58,8 +64,7 @@ internal static class InteropProtonDriveClient
             secretCacheRepository,
             featureFlagProvider,
             telemetry,
-            request.BindingsLanguage,
-            request.Uid);
+            protonDriveClientOptions);
 
         return new Int64Value
         {
