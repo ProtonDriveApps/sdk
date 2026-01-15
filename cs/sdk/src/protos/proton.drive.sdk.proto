@@ -323,11 +323,12 @@ message DriveClientRenameRequest {
 
 // The response message must be of type FolderNode
 message DriveClientCreateFolderRequest {
-    int64 client_handle = 1;
-    string parent_folder_uid = 2;
-    string folder_name = 3;
-    google.protobuf.Timestamp last_modification_time = 4; // Optional
-    int64 cancellation_token_source_handle = 5;
+  int64 client_handle = 1;
+  string parent_folder_uid = 2;
+  string folder_name = 3;
+  google.protobuf.Timestamp last_modification_time = 4; // Optional
+  int64 cancellation_token_source_handle = 5;
+}
 
 // The response must not have a value.
 message DriveClientClearSecretsRequest {
