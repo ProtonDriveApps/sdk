@@ -6,13 +6,15 @@ namespace Proton.Sdk.Caching;
 public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
 {
     private readonly SqliteConnection _connection;
+    private readonly int? _maxCacheSize;
 
-    private SqliteCacheRepository(SqliteConnection connection)
+    private SqliteCacheRepository(SqliteConnection connection, int? maxCacheSize)
     {
         _connection = connection;
+        _maxCacheSize = maxCacheSize;
     }
 
-    public static SqliteCacheRepository OpenInMemory()
+    public static SqliteCacheRepository OpenInMemory(int? maxCacheSize = 1024)
     {
         var connectionStringBuilder = new SqliteConnectionStringBuilder
         {
@@ -21,17 +23,17 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
             Cache = SqliteCacheMode.Shared,
         };
 
-        return Open(connectionStringBuilder);
+        return Open(connectionStringBuilder, maxCacheSize);
     }
 
-    public static SqliteCacheRepository OpenFile(string path)
+    public static SqliteCacheRepository OpenFile(string path, int? maxCacheSize = 1024)
     {
         var connectionStringBuilder = new SqliteConnectionStringBuilder
         {
             DataSource = path,
         };
 
-        return Open(connectionStringBuilder);
+        return Open(connectionStringBuilder, maxCacheSize);
     }
 
     ValueTask ICacheRepository.SetAsync(string key, string value, IEnumerable<string> tags, CancellationToken cancellationToken)
@@ -121,18 +123,44 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
 
         using var transaction = connection.BeginTransaction(deferred: true);
 
+        // Check if eviction is needed (if LRU is enabled)
+        if (_maxCacheSize.HasValue)
+        {
+            var currentSize = GetCacheSize(connection, transaction);
+
+            if (currentSize >= _maxCacheSize.Value)
+            {
+                // Check if key already exists (updates don't need eviction)
+                using var checkCommand = connection.CreateCommand();
+                checkCommand.Transaction = transaction;
+                checkCommand.CommandText = "SELECT 1 FROM Entries WHERE Key = @key";
+                checkCommand.Parameters.AddWithValue("@key", key);
+                var exists = checkCommand.ExecuteScalar() != null;
+
+                if (!exists)
+                {
+                    // Evict 25% of cache or at least 1 item
+                    var evictionCount = Math.Max(1, _maxCacheSize.Value / 4);
+                    EvictLeastRecentlyUsed(connection, transaction, evictionCount);
+                }
+            }
+        }
+
         using var command = connection.CreateCommand();
 
         command.Transaction = transaction;
         command.CommandText =
             """
-            INSERT INTO Entries (Key, Value)
-            VALUES (@key, @value)
-            ON CONFLICT (Key) DO UPDATE SET Value = @value
+            INSERT INTO Entries (Key, Value, LastAccessedUtc)
+            VALUES (@key, @value, @timestamp)
+            ON CONFLICT (Key) DO UPDATE SET
+                Value = @value,
+                LastAccessedUtc = @timestamp
             """;
 
         command.Parameters.AddWithValue("@key", key);
         command.Parameters.AddWithValue("@value", value);
+        command.Parameters.AddWithValue("@timestamp", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
         command.ExecuteNonQuery();
 
@@ -199,54 +227,97 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
         using var connection = new SqliteConnection(_connection.ConnectionString);
         connection.Open();
 
+        using var transaction = connection.BeginTransaction(deferred: true);
         using var command = connection.CreateCommand();
+        command.Transaction = transaction;
 
+        // Read value
         command.CommandText = "SELECT Value FROM Entries WHERE Key = @key";
         command.Parameters.AddWithValue("@key", key);
-
         var reader = command.ExecuteReader();
 
-        return reader.Read() ? reader.GetFieldValue<string>("Value") : null;
+        if (!reader.Read())
+        {
+            return null;
+        }
+
+        var value = reader.GetFieldValue<string>("Value");
+        reader.Close();
+
+        // Update timestamp
+        command.CommandText = "UPDATE Entries SET LastAccessedUtc = @timestamp WHERE Key = @key";
+        command.Parameters.Clear();
+        command.Parameters.AddWithValue("@timestamp", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        command.Parameters.AddWithValue("@key", key);
+        command.ExecuteNonQuery();
+
+        transaction.Commit();
+        return value;
     }
 
     public IEnumerable<(string Key, string Value)> GetByTags(IEnumerable<string> tags)
     {
         using var connection = new SqliteConnection(_connection.ConnectionString);
-
         connection.Open();
 
-        using var command = connection.CreateCommand();
+        // Collect all matching entries first (existing query logic)
+        var results = new List<(string Key, string Value)>();
 
-        command.Connection = connection;
-
-        var i = 0;
-        foreach (var tag in tags)
+        using (var command = connection.CreateCommand())
         {
-            command.Parameters.AddWithValue($"@tag{i++}", tag);
+            command.Connection = connection;
+
+            var i = 0;
+            foreach (var tag in tags)
+            {
+                command.Parameters.AddWithValue($"@tag{i++}", tag);
+            }
+
+            var inClause = string.Join(", ", command.Parameters.Cast<SqliteParameter>().Select(x => x.ParameterName));
+
+            command.CommandText =
+                $"""
+                 SELECT Key, Value
+                 FROM Entries
+                 WHERE Key IN (
+                   SELECT t.Key
+                   FROM Tags t
+                   WHERE t.Tag IN ({inClause})
+                   GROUP BY t.Key
+                   HAVING COUNT(DISTINCT t.Tag) = @tagCount
+                 );
+                 """;
+
+            command.Parameters.AddWithValue("@tagCount", command.Parameters.Count);
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                results.Add((reader.GetString(0), reader.GetString(1)));
+            }
         }
 
-        var inClause = string.Join(", ", command.Parameters.Cast<SqliteParameter>().Select(x => x.ParameterName));
-
-        command.CommandText =
-            $"""
-             SELECT Key, Value
-             FROM Entries
-             WHERE Key IN (
-               SELECT t.Key
-               FROM Tags t
-               WHERE t.Tag IN ({inClause})
-               GROUP BY t.Key
-               HAVING COUNT(DISTINCT t.Tag) = @tagCount
-             );
-             """;
-
-        command.Parameters.AddWithValue("@tagCount", command.Parameters.Count);
-
-        using var reader = command.ExecuteReader();
-
-        while (reader.Read())
+        // Batch update timestamps for all returned keys
+        if (results.Count > 0)
         {
-            yield return (reader.GetString(0), reader.GetString(1));
+            using var updateCommand = connection.CreateCommand();
+            var keyParams = string.Join(",", Enumerable.Range(0, results.Count).Select(i => $"@key{i}"));
+            updateCommand.CommandText =
+                $"UPDATE Entries SET LastAccessedUtc = @timestamp WHERE Key IN ({keyParams})";
+
+            updateCommand.Parameters.AddWithValue("@timestamp", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            for (int i = 0; i < results.Count; i++)
+            {
+                updateCommand.Parameters.AddWithValue($"@key{i}", results[i].Key);
+            }
+
+            updateCommand.ExecuteNonQuery();
+        }
+
+        // Return via yield
+        foreach (var result in results)
+        {
+            yield return result;
         }
     }
 
@@ -257,8 +328,39 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
         _connection.Dispose();
     }
 
-    private static SqliteCacheRepository Open(SqliteConnectionStringBuilder connectionStringBuilder)
+    private static int GetCacheSize(SqliteConnection connection, SqliteTransaction transaction)
     {
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT COUNT(*) FROM Entries";
+        return Convert.ToInt32(command.ExecuteScalar());
+    }
+
+    private static void EvictLeastRecentlyUsed(SqliteConnection connection, SqliteTransaction transaction, int count)
+    {
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText =
+            """
+            DELETE FROM Entries
+            WHERE Key IN (
+                SELECT Key
+                FROM Entries
+                ORDER BY LastAccessedUtc ASC
+                LIMIT @count
+            )
+            """;
+        command.Parameters.AddWithValue("@count", count);
+        command.ExecuteNonQuery();
+    }
+
+    private static SqliteCacheRepository Open(SqliteConnectionStringBuilder connectionStringBuilder, int? maxCacheSize)
+    {
+        if (maxCacheSize is not null && maxCacheSize.Value <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxCacheSize), "Max cache size must be greater than 0 or null to disable LRU.");
+        }
+
         var connectionString = connectionStringBuilder.ConnectionString;
 
         var connection = new SqliteConnection(connectionString);
@@ -269,7 +371,7 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
 
             InitializeDatabase(connection);
 
-            return new SqliteCacheRepository(connection);
+            return new SqliteCacheRepository(connection, maxCacheSize);
         }
         catch
         {
@@ -318,5 +420,20 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
             """;
 
         command.ExecuteNonQuery();
+
+        command.CommandText = "PRAGMA user_version";
+        var currentVersion = Convert.ToInt32(command.ExecuteScalar());
+
+        if (currentVersion < 1)
+        {
+            command.CommandText = "ALTER TABLE Entries ADD COLUMN LastAccessedUtc INTEGER NOT NULL DEFAULT 0";
+            command.ExecuteNonQuery();
+
+            command.CommandText = "CREATE INDEX IF NOT EXISTS idx_entries_last_accessed ON Entries(LastAccessedUtc)";
+            command.ExecuteNonQuery();
+
+            command.CommandText = "PRAGMA user_version = 1";
+            command.ExecuteNonQuery();
+        }
     }
 }

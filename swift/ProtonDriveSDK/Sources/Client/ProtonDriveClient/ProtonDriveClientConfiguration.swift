@@ -34,7 +34,8 @@ public struct ProtonDriveClientConfiguration: Sendable {
     
     let entityCachePath: String?
     let secretCachePath: String?
-    
+    let secretCacheEncryptionKey: Data?
+
     let boundStreamsCreator: @Sendable () throws -> (InputStream, OutputStream, Int)
     let downloadStreamCreator: @Sendable (URLSession.AsyncBytes) -> AnyAsyncSequence<UInt8>
 
@@ -49,7 +50,8 @@ public struct ProtonDriveClientConfiguration: Sendable {
         boundStreamsCreator: @Sendable @escaping () throws -> (InputStream, OutputStream, Int) = defaultBoundStreamsCreator,
         downloadStreamCreator: @Sendable @escaping (URLSession.AsyncBytes) -> AnyAsyncSequence<UInt8> = defaultDownloadStreamCreator,
         entityCachePath: String? = nil, // if not set, in-memory cache is used
-        secretCachePath: String? = nil // if not set, in-memory cache is used
+        secretCachePath: String? = nil, // if not set, in-memory cache is used
+        secretCacheEncryptionKey: Data? = nil // if not set, no encryption will be used for secrets cache
     ) {
         self.baseURL = baseURL
         self.clientUID = clientUID
@@ -62,5 +64,6 @@ public struct ProtonDriveClientConfiguration: Sendable {
         self.downloadStreamCreator = downloadStreamCreator
         self.entityCachePath = entityCachePath
         self.secretCachePath = secretCachePath
+        self.secretCacheEncryptionKey = secretCacheEncryptionKey
     }
 }

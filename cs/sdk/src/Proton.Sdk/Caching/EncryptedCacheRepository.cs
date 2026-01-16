@@ -43,7 +43,18 @@ public sealed class EncryptedCacheRepository(ICacheRepository inner, byte[] encr
     {
         var encryptedValue = await _inner.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
 
-        return encryptedValue is not null ? Decrypt(key, encryptedValue) : null;
+        try
+        {
+            return encryptedValue is not null ? Decrypt(key, encryptedValue) : null;
+        }
+        catch (AuthenticationTagMismatchException)
+        {
+            // If the tag is invalid, we assume either the cache has been tampered with or the
+            // encryption key has changed. Clear the cache and behave as if we had no value in cache.
+            await _inner.ClearAsync().ConfigureAwait(false);
+        }
+
+        return null;
     }
 
     public async IAsyncEnumerable<(string Key, string Value)> GetByTagsAsync(
@@ -52,7 +63,21 @@ public sealed class EncryptedCacheRepository(ICacheRepository inner, byte[] encr
     {
         await foreach (var (key, encryptedValue) in _inner.GetByTagsAsync(tags, cancellationToken).ConfigureAwait(false))
         {
-            yield return (key, Decrypt(key, encryptedValue));
+            string decryptedValue;
+
+            try
+            {
+                 decryptedValue = Decrypt(key, encryptedValue);
+            }
+            catch (AuthenticationTagMismatchException)
+            {
+                // If the tag is invalid, we assume either the cache has been tampered with or the
+                // encryption key has changed. Clear the cache and behave as if we had no value in cache.
+                await _inner.ClearAsync().ConfigureAwait(false);
+                yield break;
+            }
+
+            yield return (key, decryptedValue);
         }
     }
 

@@ -240,20 +240,6 @@ public sealed class ProtonDriveClient
         return VolumeOperations.EmptyTrashAsync(this, cancellationToken);
     }
 
-    // TODO: This should be reworked; ProtonDriveClient should not be responsible for clearing secrets.
-    // For more context, please check https://gitlab.protontech.ch/drive/sdk/-/merge_requests/642#note_3175380.
-    public ValueTask ClearSecretsAsync(CancellationToken cancellationToken = default)
-    {
-        return Cache.Secrets.ClearAsync();
-    }
-
-    // TODO: This should be reworked; ProtonDriveClient should not be responsible for clearing cache.
-    // For more context, please check https://gitlab.protontech.ch/drive/sdk/-/merge_requests/642#note_3175380.
-    public ValueTask ClearEntityCacheAsync(CancellationToken cancellationToken = default)
-    {
-        return Cache.Entities.ClearAsync();
-    }
-
     private async ValueTask<FileUploader> GetFileUploaderAsync(
         IRevisionDraftProvider revisionDraftProvider,
         long size,
