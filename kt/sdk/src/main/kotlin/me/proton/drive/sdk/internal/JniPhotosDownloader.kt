@@ -1,23 +1,23 @@
 package me.proton.drive.sdk.internal
 
+import kotlinx.coroutines.CoroutineScope
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.toLongResponse
 import proton.drive.sdk.ProtonDriveSdk
-import proton.drive.sdk.downloadToStreamRequest
-import proton.drive.sdk.driveClientGetFileDownloaderRequest
-import proton.drive.sdk.fileDownloaderFreeRequest
+import proton.drive.sdk.drivePhotosClientDownloadToStreamRequest
+import proton.drive.sdk.drivePhotosClientDownloaderFreeRequest
+import proton.drive.sdk.drivePhotosClientGetPhotoDownloaderRequest
 import proton.drive.sdk.request
 import java.nio.ByteBuffer
 
-class JniDownloader internal constructor() : JniBaseProtonDriveSdk() {
-
+class JniPhotosDownloader internal constructor() : JniBaseProtonDriveSdk() {
     suspend fun create(
         clientHandle: Long,
         cancellationTokenSourceHandle: Long,
-        revisionUid: String,
+        photoUid: String,
     ): Long = executeOnce("create", LongResponseCallback) {
-        driveClientGetFileDownloader = driveClientGetFileDownloaderRequest {
-            this.revisionUid = revisionUid
+        drivePhotosClientGetPhotoDownloader = drivePhotosClientGetPhotoDownloaderRequest {
+            this.photoUid = photoUid
             this.clientHandle = clientHandle
             this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
         }
@@ -42,7 +42,7 @@ class JniDownloader internal constructor() : JniBaseProtonDriveSdk() {
         },
         requestBuilder = { client ->
             request {
-                downloadToStream = downloadToStreamRequest {
+                drivePhotosClientDownloadToStream = drivePhotosClientDownloadToStreamRequest {
                     this.downloaderHandle = handle
                     this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
                     writeAction = ProtonDriveSdkNativeClient.getWritePointer()
@@ -54,7 +54,9 @@ class JniDownloader internal constructor() : JniBaseProtonDriveSdk() {
 
     fun free(handle: Long) {
         dispatch("free") {
-            fileDownloaderFree = fileDownloaderFreeRequest { fileDownloaderHandle = handle }
+            drivePhotosClientDownloaderFree = drivePhotosClientDownloaderFreeRequest {
+                fileDownloaderHandle = handle
+            }
         }
         releaseAll()
     }

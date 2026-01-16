@@ -15,7 +15,7 @@ import java.nio.channels.Channels
 import java.util.concurrent.atomic.AtomicReference
 
 class Uploader internal constructor(
-    client: DriveClient,
+    client: ProtonDriveClient,
     internal val handle: Long,
     private val bridge: JniUploader,
     override val cancellationTokenSource: CancellationTokenSource,
@@ -65,7 +65,7 @@ class Uploader internal constructor(
     }
 }
 
-suspend fun DriveClient.uploader(
+suspend fun ProtonDriveClient.uploader(
     request: FileUploaderRequest
 ): Uploader = cancellationTokenSource().let { source ->
     val client = this
@@ -79,7 +79,7 @@ suspend fun DriveClient.uploader(
     }
 }
 
-suspend fun DriveClient.uploader(
+suspend fun ProtonDriveClient.uploader(
     request: FileRevisionUploaderRequest
 ): Uploader = cancellationTokenSource().let { source ->
     val client = this@uploader
