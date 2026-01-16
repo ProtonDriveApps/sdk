@@ -1,14 +1,13 @@
 package me.proton.drive.sdk
 
 import com.google.protobuf.timestamp
-import com.google.protobuf.value
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.entity.FolderNode
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toProto
-import me.proton.drive.sdk.internal.JniDriveClient
+import me.proton.drive.sdk.internal.JniProtonDriveClient
 import me.proton.drive.sdk.internal.cancellationCoroutineScope
 import me.proton.drive.sdk.internal.toLogId
 import proton.drive.sdk.driveClientCreateFolderRequest
@@ -17,9 +16,9 @@ import proton.drive.sdk.driveClientGetThumbnailsRequest
 import proton.drive.sdk.driveClientRenameRequest
 import java.io.OutputStream
 
-class DriveClient internal constructor(
+class ProtonDriveClient internal constructor(
     internal val handle: Long,
-    private val bridge: JniDriveClient,
+    private val bridge: JniProtonDriveClient,
     session: Session? = null,
 ) : SdkNode(session), AutoCloseable {
 
@@ -107,9 +106,9 @@ class DriveClient internal constructor(
     }
 }
 
-suspend fun Session.driveClientCreate(): DriveClient = JniDriveClient().run {
-    val session = this@driveClientCreate
-    DriveClient(
+suspend fun Session.protonDriveClientCreate(): ProtonDriveClient = JniProtonDriveClient().run {
+    val session = this@protonDriveClientCreate
+    ProtonDriveClient(
         session = session,
         handle = create(handle),
         bridge = this,
