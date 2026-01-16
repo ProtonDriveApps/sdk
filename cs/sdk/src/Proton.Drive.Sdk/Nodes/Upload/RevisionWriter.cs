@@ -14,6 +14,7 @@ namespace Proton.Drive.Sdk.Nodes.Upload;
 internal sealed partial class RevisionWriter : IDisposable
 {
     public const int DefaultBlockSize = 1 << 22; // 4 MiB
+    private const int SourceReadingCancellationDelayMilliseconds = 500;
 
     private readonly ProtonDriveClient _client;
     private readonly RevisionDraft _draft;
@@ -223,36 +224,50 @@ internal sealed partial class RevisionWriter : IDisposable
         Queue<Task<BlockUploadResult>> uploadTasks,
         CancellationToken cancellationToken)
     {
-        int? currentBlockNumber = null;
+        using var delayedCancellationTokenSource = new CancellationTokenSource();
 
-        while (
-            await TryGetNextContentBlockPlainDataAsync(
-                currentBlockNumber,
-                hashingContentStream,
-                _draft.BlockVerifier.DataPacketPrefixMaxLength).ConfigureAwait(false) is var (newBlockNumber, plainData))
+        // We use a delayed cancellation token to give the read operation a fair chance to complete when cancellation is triggered,
+        // so as to not leave the stream in an indeterminate state that would prevent resuming using the same stream later.
+        // ReSharper disable once AccessToDisposedClosure
+        await using (cancellationToken.Register(() => delayedCancellationTokenSource.CancelAfter(SourceReadingCancellationDelayMilliseconds)))
         {
-            currentBlockNumber = newBlockNumber;
+            int? currentBlockNumber = null;
 
-            await WaitForBlockUploaderAsync(uploadTasks, cancellationToken).ConfigureAwait(false);
+            while (
+                await TryGetNextContentBlockPlainDataAsync(
+                    currentBlockNumber,
+                    hashingContentStream,
+                    _draft.BlockVerifier.DataPacketPrefixMaxLength,
+                    delayedCancellationTokenSource.Token).ConfigureAwait(false) is var (newBlockNumber, plainData))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
 
-            var onBlockProgress = onProgress is not null
-                ? progress =>
-                {
-                    _draft.NumberOfPlainBytesDone += progress;
-                    onProgress(_draft.NumberOfPlainBytesDone);
-                }
-            : default(Action<long>?);
+                currentBlockNumber = newBlockNumber;
 
-            var uploadTask = UploadContentBlockAsync(currentBlockNumber.Value, plainData, onBlockProgress, cancellationToken).AsTask();
+                // ReSharper disable once PossiblyMistakenUseOfCancellationToken
+                await WaitForBlockUploaderAsync(uploadTasks, cancellationToken).ConfigureAwait(false);
 
-            uploadTasks.Enqueue(uploadTask);
+                var onBlockProgress = onProgress is not null
+                    ? progress =>
+                    {
+                        _draft.NumberOfPlainBytesDone += progress;
+                        onProgress(_draft.NumberOfPlainBytesDone);
+                    }
+                : default(Action<long>?);
+
+                // ReSharper disable once PossiblyMistakenUseOfCancellationToken
+                var uploadTask = UploadContentBlockAsync(currentBlockNumber.Value, plainData, onBlockProgress, cancellationToken).AsTask();
+
+                uploadTasks.Enqueue(uploadTask);
+            }
         }
     }
 
     private async ValueTask<(int BlockNumber, BlockUploadPlainData PlainData)?> TryGetNextContentBlockPlainDataAsync(
         int? currentBlockNumber,
         Stream contentStream,
-        int prefixLength)
+        int prefixLength,
+        CancellationToken cancellationToken)
     {
         if (_draft.TryGetNextContentBlockPlainData(currentBlockNumber, out var result))
         {
@@ -269,13 +284,11 @@ internal sealed partial class RevisionWriter : IDisposable
 
             try
             {
-                // Do not cancel reading from the content stream for now, to avoid leaving it in an unusable state for resuming
-                // TODO: allow cancellation while reading block plain data
                 var bytesCopied = await contentStream.PartiallyCopyToAsync(
                     plainDataStream,
                     _targetBlockSize,
                     plainDataPrefixBuffer,
-                    CancellationToken.None).ConfigureAwait(false);
+                    cancellationToken).ConfigureAwait(false);
 
                 if (bytesCopied == 0)
                 {
@@ -294,7 +307,11 @@ internal sealed partial class RevisionWriter : IDisposable
             {
                 await plainDataStream.DisposeAsync().ConfigureAwait(false);
 
-                throw new UnreadableContentException("Reading block content for upload failed", ex);
+                throw new UploadContentReadingException(
+                    ex is OperationCanceledException && cancellationToken.IsCancellationRequested
+                        ? "Reading block content could not complete in time after cancellation"
+                        : "Reading block content for upload failed",
+                    ex);
             }
         }
         catch
