@@ -46,12 +46,6 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DriveClientCreateFolder
                     => await InteropProtonDriveClient.HandleCreateFolderAsync(request.DriveClientCreateFolder).ConfigureAwait(false),
 
-                Request.PayloadOneofCase.DriveClientClearSecrets
-                    => await InteropProtonDriveClient.HandleClearSecretsAsync(request.DriveClientClearSecrets).ConfigureAwait(false),
-
-                Request.PayloadOneofCase.DriveClientClearEntityCache
-                    => await InteropProtonDriveClient.HandleClearEntityCacheAsync(request.DriveClientClearEntityCache).ConfigureAwait(false),
-
                 Request.PayloadOneofCase.DriveClientGetThumbnails
                     => await InteropProtonDriveClient.HandleGetThumbnailsAsync(request.DriveClientGetThumbnails).ConfigureAwait(false),
 

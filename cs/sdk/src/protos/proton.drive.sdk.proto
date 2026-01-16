@@ -21,11 +21,6 @@ message Request {
         DriveClientCreateFolderRequest drive_client_create_folder = 1009;
         DriveClientTrashNodesRequest drive_client_trash_nodes = 1010;
 
-        // These are also in the DriveClient but we aim to remove them in the future,
-        // so they have a significant gap to not disturb other payload numbers.
-        DriveClientClearSecretsRequest drive_client_clear_secrets = 1030;
-        DriveClientClearEntityCacheRequest drive_client_clear_entity_cache = 1031;
-
         UploadFromStreamRequest upload_from_stream = 1100;
         UploadFromFileRequest upload_from_file = 1101;
         FileUploaderFreeRequest file_uploader_free = 1102;
@@ -214,6 +209,8 @@ message DriveClientCreateRequest {
     //   returns: 0 for disabled, non-zero for enabled
     int64 feature_enabled_function = 8; // Optional
 
+    // Encryption key used to encrypt the secrets cache. Must be a 32-byte
+    // random key. If a null value is provided, secrets cache won't be encrypted.
     bytes secret_cache_encryption_key = 9; // Optional
 }
 
@@ -334,18 +331,6 @@ message DriveClientCreateFolderRequest {
     string folder_name = 3;
     google.protobuf.Timestamp last_modification_time = 4; // Optional
     int64 cancellation_token_source_handle = 5;
-}
-
-// The response must not have a value.
-message DriveClientClearSecretsRequest {
-    int64 client_handle = 1;
-    int64 cancellation_token_source_handle = 2;
-}
-
-// The response must not have a value.
-message DriveClientClearEntityCacheRequest {
-    int64 client_handle = 1;
-    int64 cancellation_token_source_handle = 2;
 }
 
 // The response message must be of type TrashNodesResponse
