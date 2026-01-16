@@ -99,7 +99,7 @@ public sealed class UploadController : IAsyncDisposable
         return ex is not ProtonApiException { TransportCode: > 400 and < 500 }
             and not NodeKeyAndSessionKeyMismatchException
             and not SessionKeyAndDataPacketMismatchException
-            and not UnreadableContentException
+            and not UploadContentReadingException
             and not NodeWithSameNameExistsException;
     }
 
