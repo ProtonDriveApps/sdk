@@ -212,26 +212,6 @@ internal static class InteropProtonDriveClient
         return null;
     }
 
-    public static async ValueTask<IMessage> HandleClearSecretsAsync(DriveClientClearSecretsRequest request)
-    {
-        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
-
-        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
-        await client.ClearSecretsAsync(cancellationToken).ConfigureAwait(false);
-
-        return new Empty();
-    }
-
-    public static async ValueTask<IMessage> HandleClearEntityCacheAsync(DriveClientClearEntityCacheRequest request)
-    {
-        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
-
-        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
-        await client.ClearEntityCacheAsync(cancellationToken).ConfigureAwait(false);
-
-        return new Empty();
-    }
-
     public static async ValueTask<IMessage> HandleTrashNodesAsync(DriveClientTrashNodesRequest request)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
