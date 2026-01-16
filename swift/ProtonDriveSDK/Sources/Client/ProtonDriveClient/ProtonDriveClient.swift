@@ -78,6 +78,9 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             if let secretCachePath = configuration.secretCachePath {
                 $0.secretCachePath = secretCachePath
             }
+            if let secretCacheEncryptionKey = configuration.secretCacheEncryptionKey {
+                $0.secretCacheEncryptionKey = secretCacheEncryptionKey
+            }
 
             $0.clientOptions = Proton_Drive_Sdk_ProtonDriveClientOptions.with {
                 $0.uid = configuration.clientUID
