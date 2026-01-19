@@ -313,7 +313,7 @@ export class DriveAPIService {
 
         if (response.status === HTTPErrorCode.TOO_MANY_REQUESTS) {
             this.tooManyRequestsErrorHappened();
-            const timeout = parseInt(response.headers.get('retry-after') || '0', DEFAULT_429_RETRY_DELAY_SECONDS);
+            const timeout = parseInt(response.headers.get('retry-after') || '0', 10) || DEFAULT_429_RETRY_DELAY_SECONDS;
             await waitSeconds(timeout);
             return this.fetch(request, callback, attempt + 1);
         } else {
