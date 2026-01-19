@@ -17,6 +17,9 @@
       "Copy operation aborted": [
         "Operacja kopiowania została przerwana"
       ],
+      "Copying item to a non-folder is not allowed": [
+        "Kopiowanie elementu do nie-folderu nie jest dozwolone"
+      ],
       "Creating files in non-folders is not allowed": [
         "Tworzenie plików poza folderami nie jest dozwolone"
       ],
@@ -70,6 +73,12 @@
       ],
       "Failed to get inviter keys": [
         "Nie udało się pobrać kluczy zapraszającego"
+      ],
+      "Failed to get sharing info for node ${ nodeUid }": [
+        "Nie udało się pobrać informacji o udostępnianiu dla węzła ${ nodeUid }"
+      ],
+      "Failed to get verification keys": [
+        "Nie udało się pobrać kluczy weryfikacyjnych"
       ],
       "Failed to load some nodes": [
         "Nie udało się załadować niektórych węzłów"
@@ -130,6 +139,9 @@
       ],
       "Name must not contain the character '/'": [
         "Nazwa nie może zawierać znaku '/'"
+      ],
+      "No available name found": [
+        "Nie znaleziono dostępnej nazwy"
       ],
       "Node has no thumbnail": [
         "Węzeł nie ma podglądu"
