@@ -121,7 +121,7 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
         using var connection = new SqliteConnection(_connection.ConnectionString);
         connection.Open();
 
-        using var transaction = connection.BeginTransaction(deferred: false);
+        using var transaction = connection.BeginTransaction();
 
         // Check if eviction is needed (if LRU is enabled)
         if (_maxCacheSize.HasValue)
@@ -227,7 +227,7 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
         using var connection = new SqliteConnection(_connection.ConnectionString);
         connection.Open();
 
-        using var transaction = connection.BeginTransaction(deferred: false);
+        using var transaction = connection.BeginTransaction();
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
 
