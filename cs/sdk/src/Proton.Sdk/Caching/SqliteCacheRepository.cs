@@ -121,7 +121,7 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
         using var connection = new SqliteConnection(_connection.ConnectionString);
         connection.Open();
 
-        using var transaction = connection.BeginTransaction(deferred: true);
+        using var transaction = connection.BeginTransaction(deferred: false);
 
         // Check if eviction is needed (if LRU is enabled)
         if (_maxCacheSize.HasValue)
@@ -227,7 +227,7 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
         using var connection = new SqliteConnection(_connection.ConnectionString);
         connection.Open();
 
-        using var transaction = connection.BeginTransaction(deferred: true);
+        using var transaction = connection.BeginTransaction(deferred: false);
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
 
@@ -393,10 +393,14 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
             CREATE TABLE IF NOT EXISTS Entries (
                 Key TEXT NOT NULL,
                 Value TEXT NOT NULL,
+                LastAccessedUtc INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY (Key)
             )
             """;
 
+        command.ExecuteNonQuery();
+
+        command.CommandText = "CREATE INDEX IF NOT EXISTS idx_entries_last_accessed ON Entries(LastAccessedUtc)";
         command.ExecuteNonQuery();
 
         command.CommandText =
@@ -420,20 +424,5 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
             """;
 
         command.ExecuteNonQuery();
-
-        command.CommandText = "PRAGMA user_version";
-        var currentVersion = Convert.ToInt32(command.ExecuteScalar());
-
-        if (currentVersion < 1)
-        {
-            command.CommandText = "ALTER TABLE Entries ADD COLUMN LastAccessedUtc INTEGER NOT NULL DEFAULT 0";
-            command.ExecuteNonQuery();
-
-            command.CommandText = "CREATE INDEX IF NOT EXISTS idx_entries_last_accessed ON Entries(LastAccessedUtc)";
-            command.ExecuteNonQuery();
-
-            command.CommandText = "PRAGMA user_version = 1";
-            command.ExecuteNonQuery();
-        }
     }
 }
