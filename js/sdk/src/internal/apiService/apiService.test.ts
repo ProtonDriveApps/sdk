@@ -200,7 +200,8 @@ describe('DriveAPIService', () => {
             expectSDKEvents();
         });
 
-        it('on 429 response', async () => {
+        it('on 429 response with default timeout', async () => {
+            jest.useFakeTimers();
             httpClient.fetchJson = jest
                 .fn()
                 .mockResolvedValueOnce(
@@ -213,9 +214,63 @@ describe('DriveAPIService', () => {
 
             const result = api.get('test');
 
-            await expect(result).resolves.toEqual({ Code: ErrorCode.OK });
+            // First request is made immediately
+            expect(httpClient.fetchJson).toHaveBeenCalledTimes(1);
+
+            // After 9 seconds, still waiting (default is 10 seconds)
+            await jest.advanceTimersByTimeAsync(9 * 1000);
+            expect(httpClient.fetchJson).toHaveBeenCalledTimes(1);
+
+            // After 10 seconds total, second request is made
+            await jest.advanceTimersByTimeAsync(1 * 1000);
+            expect(httpClient.fetchJson).toHaveBeenCalledTimes(2);
+
+            // After another 10 seconds, third request is made
+            await jest.advanceTimersByTimeAsync(10 * 1000);
             expect(httpClient.fetchJson).toHaveBeenCalledTimes(3);
-            // No event is sent on random 429, only if limit of too many subsequent 429s is reached.
+
+            await expect(result).resolves.toEqual({ Code: ErrorCode.OK });
+            expectSDKEvents();
+        });
+
+        it('on 429 response with retry-after header', async () => {
+            jest.useFakeTimers();
+            httpClient.fetchJson = jest
+                .fn()
+                .mockResolvedValueOnce(
+                    new Response('', {
+                        status: HTTPErrorCode.TOO_MANY_REQUESTS,
+                        statusText: 'Some error',
+                        headers: { 'retry-after': '5' },
+                    }),
+                )
+                .mockResolvedValueOnce(
+                    new Response('', {
+                        status: HTTPErrorCode.TOO_MANY_REQUESTS,
+                        statusText: 'Some error',
+                        headers: { 'retry-after': '3' },
+                    }),
+                )
+                .mockResolvedValueOnce(generateOkResponse());
+
+            const result = api.get('test');
+
+            // First request is made immediately
+            expect(httpClient.fetchJson).toHaveBeenCalledTimes(1);
+
+            // After 4 seconds, still waiting (retry-after is 5 seconds)
+            await jest.advanceTimersByTimeAsync(4 * 1000);
+            expect(httpClient.fetchJson).toHaveBeenCalledTimes(1);
+
+            // After 5 seconds total, second request is made
+            await jest.advanceTimersByTimeAsync(1 * 1000);
+            expect(httpClient.fetchJson).toHaveBeenCalledTimes(2);
+
+            // After another 3 seconds, third request is made (retry-after is 3 seconds)
+            await jest.advanceTimersByTimeAsync(3 * 1000);
+            expect(httpClient.fetchJson).toHaveBeenCalledTimes(3);
+
+            await expect(result).resolves.toEqual({ Code: ErrorCode.OK });
             expectSDKEvents();
         });
 
