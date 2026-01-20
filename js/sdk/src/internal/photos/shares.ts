@@ -123,7 +123,7 @@ export class PhotoSharesManager {
     async getVolumeMetricContext(volumeId: string): Promise<MetricVolumeType> {
         const { volumeId: myVolumeId } = await this.getRootIDs();
         if (volumeId === myVolumeId) {
-            return MetricVolumeType.OwnVolume;
+            return MetricVolumeType.OwnPhotoVolume;
         }
         return this.sharesService.getVolumeMetricContext(volumeId);
     }

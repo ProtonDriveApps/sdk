@@ -113,6 +113,7 @@ export interface MetricVolumeEventsSubscriptionsChangedEvent {
 
 export enum MetricVolumeType {
     OwnVolume = 'own_volume',
+    OwnPhotoVolume = 'own_photo_volume',
     Shared = 'shared',
     SharedPublic = 'shared_public',
 }
