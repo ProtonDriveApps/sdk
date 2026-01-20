@@ -320,6 +320,7 @@ export class SDKDiagnosticBase {
 
         try {
             await controller.completion();
+            await integrityVerificationStream.close();
 
             const computedSha1 = integrityVerificationStream.computedSha1;
             const computedSizeInBytes = integrityVerificationStream.computedSizeInBytes;

@@ -235,6 +235,11 @@ export class FileDownloader {
 
             void this.telemetry.downloadFinished(this.revision.uid, fileProgress);
             this.logger.info(`Download succeeded`);
+            try {
+                writer.releaseLock();
+            } catch (error: unknown) {
+                this.logger.error(`Failed to release writer lock`, error);
+            }
         } catch (error: unknown) {
             if (error instanceof SignatureVerificationError) {
                 this.logger.warn(`Download finished with signature verification issues`);
