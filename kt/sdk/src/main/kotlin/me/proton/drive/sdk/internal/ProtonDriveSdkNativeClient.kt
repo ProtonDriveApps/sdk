@@ -198,21 +198,22 @@ class ProtonDriveSdkNativeClient internal constructor(
         sdkHandle: Long,
         block: suspend () -> Response,
     ): Job = coroutineScope(operation).launch {
-        handleResponse(sdkHandle, block())
+        try {
+            handleResponse(sdkHandle, block())
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            handleResponse(sdkHandle, response {
+                this@response.error = error.toProtonSdkError("Error while $operation")
+            })
+        }
     }.also { job ->
         job.invokeOnCompletion { error ->
-            when (error) {
-                null -> Unit // job completed normally
-                is CancellationException -> {
-                    logger(DEBUG, "Operation $operation was cancelled")
-                    handleResponse(sdkHandle, response {
-                        this@response.error =
-                            error.toProtonSdkError("Operation $operation was cancelled")
-                    })
-                }
-
-                else -> handleResponse(sdkHandle, response {
-                    this@response.error = error.toProtonSdkError("Error while $operation")
+            if (error is CancellationException) {
+                logger(DEBUG, "Operation $operation was cancelled")
+                handleResponse(sdkHandle, response {
+                    this@response.error =
+                        error.toProtonSdkError("Operation $operation was cancelled")
                 })
             }
         }
@@ -250,18 +251,17 @@ class ProtonDriveSdkNativeClient internal constructor(
             // parsing of protobuf needs to be done serially
             val value = parser(data)
             coroutineScope(callback).launch {
-                block(value)
+                try {
+                    block(value)
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Throwable) {
+                    logger(WARN, "Error while $callback")
+                    logger(WARN, error.stackTraceToString())
+                }
             }.invokeOnCompletion { error ->
-                when (error) {
-                    null -> Unit // job completed normally
-                    is CancellationException -> {
-                        logger(DEBUG, "Callback $callback was cancelled")
-                    }
-
-                    else -> {
-                        logger(WARN, "Error while $callback")
-                        logger(WARN, error.stackTraceToString())
-                    }
+                if (error is CancellationException) {
+                    logger(DEBUG, "Callback $callback was cancelled")
                 }
             }
         } catch (error: Throwable) {
