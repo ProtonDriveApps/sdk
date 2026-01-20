@@ -1,8 +1,8 @@
 module.exports = {
     extends: [
-        'plugin:@typescript-eslint/recommended'
+        "plugin:@typescript-eslint/recommended"
     ],
-    parser: '@typescript-eslint/parser',
+    parser: "@typescript-eslint/parser",
     parserOptions: {
         tsconfigRootDir: __dirname,
         project: "./tsconfig.json",
@@ -32,12 +32,12 @@ module.exports = {
                 "@typescript-eslint/no-unused-vars": "off",
                 "@typescript-eslint/no-wrapper-object-types": "off",
                 "prefer-spread": "off",
-                "tsdoc/syntax": "off",
+                "tsdoc/syntax": "off"
             },
         },
     ],
     plugins: [
         "@typescript-eslint/eslint-plugin",
-        "eslint-plugin-tsdoc"
+        "eslint-plugin-tsdoc",
     ]
 };

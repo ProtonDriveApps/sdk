@@ -1,10 +1,10 @@
 import { ChunkStreamReader } from './chunkStreamReader';
 
 describe('ChunkStreamReader', () => {
-    let stream: ReadableStream<Uint8Array>;
+    let stream: ReadableStream<Uint8Array<ArrayBuffer>>;
 
     beforeEach(() => {
-        stream = new ReadableStream<Uint8Array>({
+        stream = new ReadableStream<Uint8Array<ArrayBuffer>>({
             start(controller) {
                 controller.enqueue(new Uint8Array([1, 2, 3]));
                 controller.enqueue(new Uint8Array([4, 5, 6]));
@@ -18,7 +18,7 @@ describe('ChunkStreamReader', () => {
     it('should yield chunks as enqueued if matching the size', async () => {
         const reader = new ChunkStreamReader(stream, 3);
 
-        const chunks: Uint8Array[] = [];
+        const chunks: Uint8Array<ArrayBuffer>[] = [];
         for await (const chunk of reader.iterateChunks()) {
             chunks.push(new Uint8Array(chunk));
         }
@@ -33,7 +33,7 @@ describe('ChunkStreamReader', () => {
     it('should yield smaller chunks than enqueued chunks', async () => {
         const reader = new ChunkStreamReader(stream, 2);
 
-        const chunks: Uint8Array[] = [];
+        const chunks: Uint8Array<ArrayBuffer>[] = [];
         for await (const chunk of reader.iterateChunks()) {
             chunks.push(new Uint8Array(chunk));
         }
@@ -50,7 +50,7 @@ describe('ChunkStreamReader', () => {
     it('should yield bigger chunks than enqueued chunks', async () => {
         const reader = new ChunkStreamReader(stream, 4);
 
-        const chunks: Uint8Array[] = [];
+        const chunks: Uint8Array<ArrayBuffer>[] = [];
         for await (const chunk of reader.iterateChunks()) {
             chunks.push(new Uint8Array(chunk));
         }
@@ -64,7 +64,7 @@ describe('ChunkStreamReader', () => {
     it('should yield last incomplete chunk', async () => {
         const reader = new ChunkStreamReader(stream, 5);
 
-        const chunks: Uint8Array[] = [];
+        const chunks: Uint8Array<ArrayBuffer>[] = [];
         for await (const chunk of reader.iterateChunks()) {
             chunks.push(new Uint8Array(chunk));
         }
@@ -78,7 +78,7 @@ describe('ChunkStreamReader', () => {
     it('should yield as one big chunk', async () => {
         const reader = new ChunkStreamReader(stream, 100);
 
-        const chunks: Uint8Array[] = [];
+        const chunks: Uint8Array<ArrayBuffer>[] = [];
         for await (const chunk of reader.iterateChunks()) {
             chunks.push(new Uint8Array(chunk));
         }

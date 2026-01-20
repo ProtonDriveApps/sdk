@@ -142,7 +142,7 @@ export class UploadAPIService {
     }
 
     async getVerificationData(draftNodeRevisionUid: string): Promise<{
-        verificationCode: Uint8Array;
+        verificationCode: Uint8Array<ArrayBuffer>;
         base64ContentKeyPacket: string;
     }> {
         const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(draftNodeRevisionUid);
@@ -162,14 +162,14 @@ export class UploadAPIService {
         blocks: {
             contentBlocks: {
                 index: number;
-                hash: Uint8Array;
+                hash: Uint8Array<ArrayBuffer>;
                 encryptedSize: number;
                 armoredSignature: string;
-                verificationToken: Uint8Array;
+                verificationToken: Uint8Array<ArrayBuffer>;
             }[];
             thumbnails?: {
                 type: ThumbnailType;
-                hash: Uint8Array;
+                hash: Uint8Array<ArrayBuffer>;
                 encryptedSize: number;
             }[];
         },
@@ -260,7 +260,7 @@ export class UploadAPIService {
     async uploadBlock(
         url: string,
         token: string,
-        block: Uint8Array,
+        block: Uint8Array<ArrayBuffer>,
         onProgress?: (uploadedBytes: number) => void,
         signal?: AbortSignal,
     ): Promise<void> {
