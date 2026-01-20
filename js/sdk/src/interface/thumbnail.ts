@@ -1,6 +1,6 @@
 export type Thumbnail = {
     type: ThumbnailType;
-    thumbnail: Uint8Array;
+    thumbnail: Uint8Array<ArrayBuffer>;
 };
 
 export enum ThumbnailType {
@@ -9,5 +9,5 @@ export enum ThumbnailType {
 }
 
 export type ThumbnailResult =
-    | { nodeUid: string; ok: true; thumbnail: Uint8Array }
+    | { nodeUid: string; ok: true; thumbnail: Uint8Array<ArrayBuffer> }
     | { nodeUid: string; ok: false; error: string };

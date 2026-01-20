@@ -23,7 +23,7 @@ export class UploadCryptoService {
 
     async generateFileCrypto(
         parentUid: string,
-        parentKeys: { key: PrivateKey; hashKey: Uint8Array },
+        parentKeys: { key: PrivateKey; hashKey: Uint8Array<ArrayBuffer> },
         name: string,
     ): Promise<NodeCrypto> {
         const signingKeys = await this.getSigningKeys({ parentNodeUid: parentUid });
@@ -118,14 +118,14 @@ export class UploadCryptoService {
             encryptedData: encryptedData,
             originalSize: thumbnail.thumbnail.length,
             encryptedSize: encryptedData.length,
-            hash: new Uint8Array(digest),
+            hash: new Uint8Array<ArrayBuffer>(digest),
         };
     }
 
     async encryptBlock(
-        verifyBlock: (encryptedBlock: Uint8Array) => Promise<{ verificationToken: Uint8Array }>,
+        verifyBlock: (encryptedBlock: Uint8Array<ArrayBuffer>) => Promise<{ verificationToken: Uint8Array<ArrayBuffer> }>,
         nodeRevisionDraftKeys: NodeRevisionDraftKeys,
-        block: Uint8Array,
+        block: Uint8Array<ArrayBuffer>,
         index: number,
     ): Promise<EncryptedBlock> {
         const { encryptedData, armoredSignature } = await this.driveCrypto.encryptBlock(
@@ -145,13 +145,13 @@ export class UploadCryptoService {
             verificationToken,
             originalSize: block.length,
             encryptedSize: encryptedData.length,
-            hash: new Uint8Array(digest),
+            hash: new Uint8Array<ArrayBuffer>(digest),
         };
     }
 
     async commitFile(
         nodeRevisionDraftKeys: NodeRevisionDraftKeys,
-        manifest: Uint8Array,
+        manifest: Uint8Array<ArrayBuffer>,
         extendedAttributes?: string,
     ): Promise<{
         armoredManifestSignature: string;
@@ -190,10 +190,10 @@ export class UploadCryptoService {
 
     async verifyBlock(
         contentKeyPacketSessionKey: SessionKey,
-        verificationCode: Uint8Array,
-        encryptedData: Uint8Array,
+        verificationCode: Uint8Array<ArrayBuffer>,
+        encryptedData: Uint8Array<ArrayBuffer>,
     ): Promise<{
-        verificationToken: Uint8Array;
+        verificationToken: Uint8Array<ArrayBuffer>;
     }> {
         // Attempt to decrypt data block, to try to detect bitflips / bad hardware
         //

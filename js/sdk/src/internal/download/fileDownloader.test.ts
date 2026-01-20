@@ -85,8 +85,8 @@ describe('FileDownloader', () => {
         let onFinish: () => void;
 
         let downloader: FileDownloader;
-        let writer: WritableStreamDefaultWriter<Uint8Array>;
-        let stream: WritableStream<Uint8Array>;
+        let writer: WritableStreamDefaultWriter<Uint8Array<ArrayBuffer>>;
+        let stream: WritableStream<Uint8Array<ArrayBuffer>>;
 
         const verifySuccess = async (
             fileProgress: number = 6, // 3 blocks of length 1, 2, 3
@@ -360,8 +360,8 @@ describe('FileDownloader', () => {
         let onFinish: () => void;
 
         let downloader: FileDownloader;
-        let writer: WritableStreamDefaultWriter<Uint8Array>;
-        let stream: WritableStream<Uint8Array>;
+        let writer: WritableStreamDefaultWriter<Uint8Array<ArrayBuffer>>;
+        let stream: WritableStream<Uint8Array<ArrayBuffer>>;
 
         beforeEach(() => {
             onProgress = jest.fn();

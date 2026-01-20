@@ -24,7 +24,7 @@ export class ThumbnailDownloader {
     private batchThumbnailToNodeUids = new Map<string, string>();
     private ongoingDownloads = new Map<string, Promise<void>>();
     private bufferedThumbnails: (
-        | { nodeUid: string; ok: true; thumbnail: Uint8Array }
+        | { nodeUid: string; ok: true; thumbnail: Uint8Array<ArrayBuffer> }
         | { nodeUid: string; ok: false; error: string }
     )[] = [];
 
@@ -163,7 +163,7 @@ export class ThumbnailDownloader {
     private async *iterateThumbnailDownloads(
         signal?: AbortSignal,
     ): AsyncGenerator<
-        | { nodeUid: string; ok: true; downloadPromise: Promise<Uint8Array> }
+        | { nodeUid: string; ok: true; downloadPromise: Promise<Uint8Array<ArrayBuffer>> }
         | { nodeUid: string; ok: false; error: string }
     > {
         const missingThumbnailUids = new Set(this.batchThumbnailToNodeUids.keys());
@@ -212,10 +212,10 @@ export class ThumbnailDownloader {
         bareUrl: string,
         token: string,
         signal?: AbortSignal,
-    ): Promise<Uint8Array> {
+    ): Promise<Uint8Array<ArrayBuffer>> {
         const logger = new LoggerWithPrefix(this.logger, `thumbnail ${token}`);
 
-        let decryptedBlock: Uint8Array | null = null;
+        let decryptedBlock: Uint8Array<ArrayBuffer> | null = null;
         let attempt = 0;
 
         while (!decryptedBlock) {

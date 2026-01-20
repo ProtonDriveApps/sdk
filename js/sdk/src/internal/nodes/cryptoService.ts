@@ -433,7 +433,7 @@ export class NodesCryptoService {
         nodeKey: PrivateKey,
         addressKeys: PublicKey[],
     ): Promise<{
-        hashKey: Uint8Array;
+        hashKey: Uint8Array<ArrayBuffer>;
         author: Author;
     }> {
         if (!('folder' in node.encryptedCrypto)) {
@@ -583,7 +583,7 @@ export class NodesCryptoService {
     }
 
     async createFolder(
-        parentKeys: { key: PrivateKey; hashKey: Uint8Array },
+        parentKeys: { key: PrivateKey; hashKey: Uint8Array<ArrayBuffer> },
         signingKeys: NodeSigningKeys,
         name: string,
         extendedAttributes?: string,
@@ -648,7 +648,7 @@ export class NodesCryptoService {
     }
 
     async encryptNewName(
-        parentKeys: { key: PrivateKey; hashKey?: Uint8Array },
+        parentKeys: { key: PrivateKey; hashKey?: Uint8Array<ArrayBuffer> },
         nodeNameSessionKey: SessionKey,
         signingKeys: NodeSigningKeys,
         newName: string,
@@ -684,7 +684,7 @@ export class NodesCryptoService {
     async encryptNodeWithNewParent(
         nodeName: DecryptedNode['name'],
         keys: { passphrase: string; passphraseSessionKey: SessionKey; nameSessionKey: SessionKey },
-        parentKeys: { key: PrivateKey; hashKey: Uint8Array },
+        parentKeys: { key: PrivateKey; hashKey: Uint8Array<ArrayBuffer> },
         signingKeys: NodeSigningKeys,
     ): Promise<{
         encryptedName: string;
@@ -732,7 +732,7 @@ export class NodesCryptoService {
         };
     }
 
-    async generateNameHashes(parentHashKey: Uint8Array, names: string[]): Promise<{ name: string; hash: string }[]> {
+    async generateNameHashes(parentHashKey: Uint8Array<ArrayBuffer>, names: string[]): Promise<{ name: string; hash: string }[]> {
         return Promise.all(
             names.map(async (name) => ({
                 name,

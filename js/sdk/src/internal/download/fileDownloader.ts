@@ -30,7 +30,7 @@ export class FileDownloader {
         number,
         {
             downloadPromise: Promise<void>;
-            decryptedBufferedBlock?: Uint8Array;
+            decryptedBufferedBlock?: Uint8Array<ArrayBuffer>;
         }
     >();
 
@@ -120,7 +120,7 @@ export class FileDownloader {
         claimedBlockSizes: number[],
         position: number,
         cryptoKeys: RevisionKeys,
-    ): Promise<Uint8Array | Error | undefined> {
+    ): Promise<Uint8Array<ArrayBuffer> | Error | undefined> {
         const { value, done } = getBlockIndex(claimedBlockSizes, position);
         if (done) {
             return;
@@ -174,7 +174,7 @@ export class FileDownloader {
 
         // Collection of all block hashes for manifest verification.
         // This includes both thumbnail and regular blocks.
-        const allBlockHashes: Uint8Array[] = [];
+        const allBlockHashes: Uint8Array<ArrayBuffer>[] = [];
         let armoredManifestSignature: string | undefined;
 
         try {
@@ -271,12 +271,12 @@ export class FileDownloader {
         ignoreIntegrityErrors: boolean,
         cryptoKeys: RevisionKeys,
         onProgress?: (downloadedBytes: number) => void,
-    ): Promise<Uint8Array> {
+    ): Promise<Uint8Array<ArrayBuffer>> {
         const logger = new LoggerWithPrefix(this.logger, `block ${blockMetadata.index}`);
         logger.info(`Download started`);
 
         let blockProgress = 0;
-        let decryptedBlock: Uint8Array | null = null;
+        let decryptedBlock: Uint8Array<ArrayBuffer> | null = null;
         let retries = 0;
 
         while (!decryptedBlock) {
@@ -369,7 +369,7 @@ export class FileDownloader {
         }
     }
 
-    private async flushCompletedBlocks(write: (chunk: Uint8Array) => void | Promise<void>) {
+    private async flushCompletedBlocks(write: (chunk: Uint8Array<ArrayBuffer>) => void | Promise<void>) {
         this.logger.debug(`Flushing completed blocks`);
         while (this.isNextBlockDownloaded) {
             const decryptedBlock = this.ongoingDownloads.get(this.nextBlockIndex)!.decryptedBufferedBlock!;

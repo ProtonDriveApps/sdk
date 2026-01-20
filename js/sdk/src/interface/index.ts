@@ -100,7 +100,7 @@ export type CachedCryptoMaterial = {
         key: PrivateKey;
         passphraseSessionKey: SessionKey;
         contentKeyPacketSessionKey?: SessionKey;
-        hashKey?: Uint8Array;
+        hashKey?: Uint8Array<ArrayBuffer>;
     };
     shareKey?: {
         key: PrivateKey;

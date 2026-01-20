@@ -73,7 +73,7 @@ export class UploadManager {
 
     private async createDraftOnAPI(
         parentFolderUid: string,
-        parentHashKey: Uint8Array,
+        parentHashKey: Uint8Array<ArrayBuffer>,
         name: string,
         metadata: UploadMetadata,
         generatedNodeCrypto: NodeCrypto,
@@ -226,7 +226,7 @@ export class UploadManager {
 
     async commitDraft(
         nodeRevisionDraft: NodeRevisionDraft,
-        manifest: Uint8Array,
+        manifest: Uint8Array<ArrayBuffer>,
         extendedAttributes: {
             modificationTime?: Date;
             size: number;

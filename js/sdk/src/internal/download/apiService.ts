@@ -91,7 +91,7 @@ export class DownloadAPIService {
         token: string,
         onProgress?: (downloadedBytes: number) => void,
         signal?: AbortSignal,
-    ): Promise<Uint8Array> {
+    ): Promise<Uint8Array<ArrayBuffer>> {
         const rawBlockStream = await this.apiService.getBlockStream(baseUrl, token, signal);
         const progressStream = new ObserverStream((value) => {
             onProgress?.(value.length);

@@ -34,7 +34,7 @@ export class DownloadCryptoService {
         };
     }
 
-    async decryptBlock(encryptedBlock: Uint8Array, revisionKeys: RevisionKeys): Promise<Uint8Array> {
+    async decryptBlock(encryptedBlock: Uint8Array<ArrayBuffer>, revisionKeys: RevisionKeys): Promise<Uint8Array<ArrayBuffer>> {
         let decryptedBlock;
         try {
             // We do not verify signatures on blocks. We only verify
@@ -55,7 +55,7 @@ export class DownloadCryptoService {
         return decryptedBlock;
     }
 
-    async decryptThumbnail(thumbnail: Uint8Array, contentKeyPacketSessionKey: SessionKey): Promise<Uint8Array> {
+    async decryptThumbnail(thumbnail: Uint8Array<ArrayBuffer>, contentKeyPacketSessionKey: SessionKey): Promise<Uint8Array<ArrayBuffer>> {
         let decryptedBlock;
         try {
             const result = await this.driveCrypto.decryptThumbnailBlock(
@@ -72,7 +72,7 @@ export class DownloadCryptoService {
         return decryptedBlock;
     }
 
-    async verifyBlockIntegrity(encryptedBlock: Uint8Array, base64sha256Hash: string): Promise<void> {
+    async verifyBlockIntegrity(encryptedBlock: Uint8Array<ArrayBuffer>, base64sha256Hash: string): Promise<void> {
         const digest = await crypto.subtle.digest('SHA-256', encryptedBlock);
         const expectedHash = uint8ArrayToBase64String(new Uint8Array(digest));
 
@@ -87,7 +87,7 @@ export class DownloadCryptoService {
     async verifyManifest(
         revision: Revision,
         nodeKey: PrivateKey,
-        allBlockHashes: Uint8Array[],
+        allBlockHashes: Uint8Array<ArrayBuffer>[],
         armoredManifestSignature?: string,
     ): Promise<void> {
         const hash = mergeUint8Arrays(allBlockHashes);

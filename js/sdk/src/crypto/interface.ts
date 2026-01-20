@@ -38,7 +38,7 @@ export interface PrivateKey extends PublicKey {
 }
 
 export interface SessionKey {
-    data: Uint8Array;
+    data: Uint8Array<ArrayBuffer>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     algorithm: any;
 }
@@ -97,14 +97,14 @@ export interface OpenPGPCrypto {
         sessionKey: SessionKey,
         encryptionKeys: PublicKey | PublicKey[],
     ) => Promise<{
-        keyPacket: Uint8Array;
+        keyPacket: Uint8Array<ArrayBuffer>;
     }>;
 
     encryptSessionKeyWithPassword: (
         sessionKey: SessionKey,
         password: string,
     ) => Promise<{
-        keyPacket: Uint8Array;
+        keyPacket: Uint8Array<ArrayBuffer>;
     }>;
 
     /**
@@ -118,7 +118,7 @@ export interface OpenPGPCrypto {
     }>;
 
     encryptArmored: (
-        data: Uint8Array,
+        data: Uint8Array<ArrayBuffer>,
         encryptionKeys: PublicKey[],
         sessionKey?: SessionKey,
     ) => Promise<{
@@ -126,16 +126,16 @@ export interface OpenPGPCrypto {
     }>;
 
     encryptAndSign: (
-        data: Uint8Array,
+        data: Uint8Array<ArrayBuffer>,
         sessionKey: SessionKey,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
     ) => Promise<{
-        encryptedData: Uint8Array;
+        encryptedData: Uint8Array<ArrayBuffer>;
     }>;
 
     encryptAndSignArmored: (
-        data: Uint8Array,
+        data: Uint8Array<ArrayBuffer>,
         sessionKey: SessionKey | undefined,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
@@ -145,17 +145,17 @@ export interface OpenPGPCrypto {
     }>;
 
     encryptAndSignDetached: (
-        data: Uint8Array,
+        data: Uint8Array<ArrayBuffer>,
         sessionKey: SessionKey,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
     ) => Promise<{
-        encryptedData: Uint8Array;
-        signature: Uint8Array;
+        encryptedData: Uint8Array<ArrayBuffer>;
+        signature: Uint8Array<ArrayBuffer>;
     }>;
 
     encryptAndSignDetachedArmored: (
-        data: Uint8Array,
+        data: Uint8Array<ArrayBuffer>,
         sessionKey: SessionKey,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
@@ -165,23 +165,23 @@ export interface OpenPGPCrypto {
     }>;
 
     sign: (
-        data: Uint8Array,
+        data: Uint8Array<ArrayBuffer>,
         signingKey: PrivateKey,
         signatureContext: string,
     ) => Promise<{
-        signature: Uint8Array;
+        signature: Uint8Array<ArrayBuffer>;
     }>;
 
     signArmored: (
-        data: Uint8Array,
+        data: Uint8Array<ArrayBuffer>,
         signingKey: PrivateKey | PrivateKey[],
     ) => Promise<{
         signature: string;
     }>;
 
     verify: (
-        data: Uint8Array,
-        signature: Uint8Array,
+        data: Uint8Array<ArrayBuffer>,
+        signature: Uint8Array<ArrayBuffer>,
         verificationKeys: PublicKey | PublicKey[],
     ) => Promise<{
         verified: VERIFICATION_STATUS;
@@ -189,7 +189,7 @@ export interface OpenPGPCrypto {
     }>;
 
     verifyArmored: (
-        data: Uint8Array,
+        data: Uint8Array<ArrayBuffer>,
         armoredSignature: string,
         verificationKeys: PublicKey | PublicKey[],
         signatureContext?: string,
@@ -198,41 +198,41 @@ export interface OpenPGPCrypto {
         verificationErrors?: Error[];
     }>;
 
-    decryptSessionKey: (data: Uint8Array, decryptionKeys: PrivateKey | PrivateKey[]) => Promise<SessionKey>;
+    decryptSessionKey: (data: Uint8Array<ArrayBuffer>, decryptionKeys: PrivateKey | PrivateKey[]) => Promise<SessionKey>;
 
     decryptArmoredSessionKey: (armoredData: string, decryptionKeys: PrivateKey | PrivateKey[]) => Promise<SessionKey>;
 
     decryptKey: (armoredKey: string, passphrase: string) => Promise<PrivateKey>;
 
     decryptAndVerify(
-        data: Uint8Array,
+        data: Uint8Array<ArrayBuffer>,
         sessionKey: SessionKey,
         verificationKeys: PublicKey | PublicKey[],
     ): Promise<{
-        data: Uint8Array;
+        data: Uint8Array<ArrayBuffer>;
         verified: VERIFICATION_STATUS;
         verificationErrors?: Error[];
     }>;
 
     decryptAndVerifyDetached(
-        data: Uint8Array,
-        signature: Uint8Array | undefined,
+        data: Uint8Array<ArrayBuffer>,
+        signature: Uint8Array<ArrayBuffer> | undefined,
         sessionKey: SessionKey,
         verificationKeys?: PublicKey | PublicKey[],
     ): Promise<{
-        data: Uint8Array;
+        data: Uint8Array<ArrayBuffer>;
         verified: VERIFICATION_STATUS;
         verificationErrors?: Error[];
     }>;
 
-    decryptArmored(armoredData: string, decryptionKeys: PrivateKey | PrivateKey[]): Promise<Uint8Array>;
+    decryptArmored(armoredData: string, decryptionKeys: PrivateKey | PrivateKey[]): Promise<Uint8Array<ArrayBuffer>>;
 
     decryptArmoredAndVerify: (
         armoredData: string,
         decryptionKeys: PrivateKey | PrivateKey[],
         verificationKeys: PublicKey | PublicKey[],
     ) => Promise<{
-        data: Uint8Array;
+        data: Uint8Array<ArrayBuffer>;
         verified: VERIFICATION_STATUS;
         verificationErrors?: Error[];
     }>;
@@ -243,10 +243,10 @@ export interface OpenPGPCrypto {
         sessionKey: SessionKey,
         verificationKeys: PublicKey | PublicKey[],
     ) => Promise<{
-        data: Uint8Array;
+        data: Uint8Array<ArrayBuffer>;
         verified: VERIFICATION_STATUS;
         verificationErrors?: Error[];
     }>;
 
-    decryptArmoredWithPassword(armoredData: string, password: string): Promise<Uint8Array>;
+    decryptArmoredWithPassword(armoredData: string, password: string): Promise<Uint8Array<ArrayBuffer>>;
 }

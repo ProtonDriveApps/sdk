@@ -34,7 +34,7 @@
         "@swc/jest": "^0.2.38",
         "@types/jest": "^29.5.14",
         "@types/mocha": "^10.0.10",
-        "@typescript-eslint/eslint-plugin": "^8.19.1",
+        "@typescript-eslint/eslint-plugin": "^8.53.1",
         "@web/dev-server-esbuild": "^1.0.3",
         "eslint": "^8.57.1",
         "eslint-plugin-tsdoc": "^0.3.0",
@@ -43,7 +43,7 @@
         "openapi-typescript": "^7.4.1",
         "prettier": "^3.6.2",
         "ttag-cli": "^1.10.18",
-        "typedoc": "^0.26.11",
-        "typescript": "^5.6.3"
+        "typedoc": "^0.28.16",
+        "typescript": "^5.9.3"
     }
 }
