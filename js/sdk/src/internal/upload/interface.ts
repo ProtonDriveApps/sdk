@@ -8,7 +8,7 @@ export type NodeRevisionDraft = {
     nodeRevisionUid: string;
     nodeKeys: NodeRevisionDraftKeys;
     parentNodeKeys?: {
-        hashKey: Uint8Array;
+        hashKey: Uint8Array<ArrayBuffer>;
     };
     // newNodeInfo is set only when revision is created with the new node.
     newNodeInfo?: {
@@ -64,19 +64,19 @@ export type NodeCryptoSigningKeys = {
 export type EncryptedBlockMetadata = {
     encryptedSize: number;
     originalSize: number;
-    hash: Uint8Array;
+    hash: Uint8Array<ArrayBuffer>;
 };
 
 export type EncryptedBlock = EncryptedBlockMetadata & {
     index: number;
-    encryptedData: Uint8Array;
+    encryptedData: Uint8Array<ArrayBuffer>;
     armoredSignature: string;
-    verificationToken: Uint8Array;
+    verificationToken: Uint8Array<ArrayBuffer>;
 };
 
 export type EncryptedThumbnail = EncryptedBlockMetadata & {
     type: ThumbnailType;
-    encryptedData: Uint8Array;
+    encryptedData: Uint8Array<ArrayBuffer>;
 };
 
 export type UploadTokens = {
@@ -101,7 +101,7 @@ export interface NodesService {
         key: PrivateKey;
         passphraseSessionKey: SessionKey;
         contentKeyPacketSessionKey?: SessionKey;
-        hashKey?: Uint8Array;
+        hashKey?: Uint8Array<ArrayBuffer>;
     }>;
     getNodeSigningKeys(
         uids: { nodeUid: string; parentNodeUid?: string } | { nodeUid?: string; parentNodeUid: string },

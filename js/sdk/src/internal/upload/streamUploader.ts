@@ -655,7 +655,7 @@ export class StreamUploader {
         return uploadedBlocks.map((block) => block.originalSize);
     }
 
-    protected get manifest(): Uint8Array {
+    protected get manifest(): Uint8Array<ArrayBuffer> {
         this.uploadedThumbnails.sort((a, b) => a.type - b.type);
         this.uploadedBlocks.sort((a, b) => a.index - b.index);
         const hashes = [

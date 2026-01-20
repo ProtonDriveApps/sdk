@@ -11,6 +11,7 @@ import {
     MemoryCache,
     CachedCryptoMaterial,
     OpenPGPCryptoWithCryptoProxy,
+    OpenPGPCryptoProxy,
     MetricEvent,
     Logger,
 } from '../../sdk/src';
@@ -141,7 +142,7 @@ function createSDKDependencies(config: Config, account: Account, cryptoApi: Cryp
         }),
         entitiesCache: new SQLiteEntititesCache(config.cacheDir),
         cryptoCache: new MemoryCache<CachedCryptoMaterial>(),
-        openPGPCryptoModule: new OpenPGPCryptoWithCryptoProxy(cryptoApi),
+        openPGPCryptoModule: new OpenPGPCryptoWithCryptoProxy(cryptoApi as OpenPGPCryptoProxy),
         latestEventIdProvider: new NoLatestEventIdProvider(),
     };
 }

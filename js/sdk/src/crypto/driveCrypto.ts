@@ -343,7 +343,7 @@ export class DriveCrypto {
      * It encrypts and armors signature with provided session and encryption keys.
      */
     async encryptSignature(
-        signature: Uint8Array,
+        signature: Uint8Array<ArrayBuffer>,
         encryptionKey: PrivateKey,
         sessionKey: SessionKey,
     ): Promise<{
@@ -365,7 +365,7 @@ export class DriveCrypto {
      */
     async generateHashKey(encryptionAndSigningKey: PrivateKey): Promise<{
         armoredHashKey: string;
-        hashKey: Uint8Array;
+        hashKey: Uint8Array<ArrayBuffer>;
     }> {
         // Once all clients can use non-ascii bytes, switch to simple
         // generating of random bytes without encoding it into base64:
@@ -385,7 +385,7 @@ export class DriveCrypto {
         };
     }
 
-    async generateLookupHash(newName: string, parentHashKey: Uint8Array): Promise<string> {
+    async generateLookupHash(newName: string, parentHashKey: Uint8Array<ArrayBuffer>): Promise<string> {
         const key = await importHmacKey(parentHashKey);
 
         const signature = await computeHmacSignature(key, new TextEncoder().encode(newName));
@@ -461,7 +461,7 @@ export class DriveCrypto {
         decryptionAndVerificationKey: PrivateKey,
         extraVerificationKeys: PublicKey[],
     ): Promise<{
-        hashKey: Uint8Array;
+        hashKey: Uint8Array<ArrayBuffer>;
         verified: VERIFICATION_STATUS;
         verificationErrors?: Error[];
     }> {
@@ -611,11 +611,11 @@ export class DriveCrypto {
     }
 
     async encryptThumbnailBlock(
-        thumbnailData: Uint8Array,
+        thumbnailData: Uint8Array<ArrayBuffer>,
         sessionKey: SessionKey,
         signingKey: PrivateKey,
     ): Promise<{
-        encryptedData: Uint8Array;
+        encryptedData: Uint8Array<ArrayBuffer>;
     }> {
         const { encryptedData } = await this.openPGPCrypto.encryptAndSign(
             thumbnailData,
@@ -630,11 +630,11 @@ export class DriveCrypto {
     }
 
     async decryptThumbnailBlock(
-        encryptedThumbnail: Uint8Array,
+        encryptedThumbnail: Uint8Array<ArrayBuffer>,
         sessionKey: SessionKey,
         verificationKeys: PublicKey[],
     ): Promise<{
-        decryptedThumbnail: Uint8Array;
+        decryptedThumbnail: Uint8Array<ArrayBuffer>;
         verified: VERIFICATION_STATUS;
         verificationErrors?: Error[];
     }> {
@@ -651,12 +651,12 @@ export class DriveCrypto {
     }
 
     async encryptBlock(
-        blockData: Uint8Array,
+        blockData: Uint8Array<ArrayBuffer>,
         encryptionKey: PrivateKey,
         sessionKey: SessionKey,
         signingKey: PrivateKey,
     ): Promise<{
-        encryptedData: Uint8Array;
+        encryptedData: Uint8Array<ArrayBuffer>;
         armoredSignature: string;
     }> {
         const { encryptedData, signature } = await this.openPGPCrypto.encryptAndSignDetached(
@@ -674,14 +674,14 @@ export class DriveCrypto {
         };
     }
 
-    async decryptBlock(encryptedBlock: Uint8Array, sessionKey: SessionKey): Promise<Uint8Array> {
+    async decryptBlock(encryptedBlock: Uint8Array<ArrayBuffer>, sessionKey: SessionKey): Promise<Uint8Array<ArrayBuffer>> {
         const { data: decryptedBlock } = await this.openPGPCrypto.decryptAndVerify(encryptedBlock, sessionKey, []);
 
         return decryptedBlock;
     }
 
     async signManifest(
-        manifest: Uint8Array,
+        manifest: Uint8Array<ArrayBuffer>,
         signingKey: PrivateKey,
     ): Promise<{
         armoredManifestSignature: string;
@@ -693,7 +693,7 @@ export class DriveCrypto {
     }
 
     async verifyManifest(
-        manifest: Uint8Array,
+        manifest: Uint8Array<ArrayBuffer>,
         armoredSignature: string,
         verificationKeys: PublicKey | PublicKey[],
     ): Promise<{
@@ -727,7 +727,7 @@ export class DriveCrypto {
     }
 }
 
-export function uint8ArrayToUtf8(input: Uint8Array): string {
+export function uint8ArrayToUtf8(input: Uint8Array<ArrayBuffer>): string {
     return new TextDecoder('utf-8', { fatal: true }).decode(input);
 }
 
@@ -736,7 +736,7 @@ export function uint8ArrayToUtf8(input: Uint8Array): string {
  * @param bytes - Array of 8-bit integers to convert
  * @returns Hexadecimal representation of the array
  */
-export const arrayToHexString = (bytes: Uint8Array) => {
+export const arrayToHexString = (bytes: Uint8Array<ArrayBuffer>) => {
     const hexAlphabet = '0123456789abcdef';
     let s = '';
     bytes.forEach((v) => {

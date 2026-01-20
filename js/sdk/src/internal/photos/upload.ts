@@ -141,7 +141,7 @@ export class PhotoUploadManager extends UploadManager {
 
     async commitDraftPhoto(
         nodeRevisionDraft: NodeRevisionDraft,
-        manifest: Uint8Array,
+        manifest: Uint8Array<ArrayBuffer>,
         extendedAttributes: {
             modificationTime?: Date;
             size: number;
@@ -185,7 +185,7 @@ export class PhotoUploadCryptoService extends UploadCryptoService {
         super(driveCrypto, nodesService);
     }
 
-    async generateContentHash(sha1: string, parentHashKey: Uint8Array): Promise<string> {
+    async generateContentHash(sha1: string, parentHashKey: Uint8Array<ArrayBuffer>): Promise<string> {
         return this.driveCrypto.generateLookupHash(sha1, parentHashKey);
     }
 }

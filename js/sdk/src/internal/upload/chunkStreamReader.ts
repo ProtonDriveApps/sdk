@@ -6,16 +6,16 @@
  * If you need to keep previous chunks, copy them to a new array.
  */
 export class ChunkStreamReader {
-    private reader: ReadableStreamDefaultReader<Uint8Array>;
+    private reader: ReadableStreamDefaultReader<Uint8Array<ArrayBuffer>>;
 
     private chunkSize: number;
 
-    constructor(stream: ReadableStream<Uint8Array>, chunkSize: number) {
+    constructor(stream: ReadableStream<Uint8Array<ArrayBuffer>>, chunkSize: number) {
         this.reader = stream.getReader();
         this.chunkSize = chunkSize;
     }
 
-    async *iterateChunks(): AsyncGenerator<Uint8Array> {
+    async *iterateChunks(): AsyncGenerator<Uint8Array<ArrayBuffer>> {
         const buffer = new Uint8Array(this.chunkSize);
 
         let position = 0;

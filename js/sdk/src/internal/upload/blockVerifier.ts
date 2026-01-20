@@ -3,7 +3,7 @@ import { UploadAPIService } from './apiService';
 import { UploadCryptoService } from './cryptoService';
 
 export class BlockVerifier {
-    private verificationCode?: Uint8Array;
+    private verificationCode?: Uint8Array<ArrayBuffer>;
     private contentKeyPacketSessionKey?: SessionKey;
 
     constructor(
@@ -26,8 +26,8 @@ export class BlockVerifier {
         );
     }
 
-    async verifyBlock(encryptedBlock: Uint8Array): Promise<{
-        verificationToken: Uint8Array;
+    async verifyBlock(encryptedBlock: Uint8Array<ArrayBuffer>): Promise<{
+        verificationToken: Uint8Array<ArrayBuffer>;
     }> {
         if (!this.verificationCode || !this.contentKeyPacketSessionKey) {
             throw new Error('Verifying block before loading verification data');

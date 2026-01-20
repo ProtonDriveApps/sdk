@@ -1,4 +1,4 @@
-import { DriveCrypto, PrivateKey, SessionKey, VERIFICATION_STATUS } from '../../crypto';
+import { DriveCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from '../../crypto';
 import { MemberRole, ProtonDriveAccount, ProtonDriveTelemetry, RevisionState } from '../../interface';
 import { getMockTelemetry } from '../../tests/telemetry';
 import {
@@ -20,7 +20,7 @@ describe('nodesCryptoService', () => {
 
     let cryptoService: NodesCryptoService;
 
-    const publicAddressKey = { _idx: 21312 };
+    const publicAddressKey = { _idx: 21312 } as PublicKey;
     const ownPrivateAddressKey = { id: 'id', key: 'key' as unknown as PrivateKey };
 
     beforeEach(() => {
