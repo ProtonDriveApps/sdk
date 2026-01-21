@@ -33,6 +33,7 @@ import { initDownloadModule } from './internal/download';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharingPublicModule, UnauthDriveAPIService } from './internal/sharingPublic';
 import { initUploadModule } from './internal/upload';
+import { NodesSecurityScanResult } from './internal/sharingPublic/nodesSecurity';
 
 /**
  * ProtonDrivePublicLinkClient is the interface for the public link client.
@@ -69,6 +70,10 @@ export class ProtonDrivePublicLinkClient {
          * This is used by Docs app to encrypt and decrypt document updates.
          */
         getDocsKey: (nodeUid: NodeOrUid) => Promise<SessionKey>;
+        /**
+         * Experimental feature to check if hashes match the malware database.
+         */
+        scanHashes: (hashes: string[]) => Promise<NodesSecurityScanResult>;
     };
 
     constructor({
@@ -165,6 +170,10 @@ export class ProtonDrivePublicLinkClient {
                     throw new Error('Node does not have a content key packet session key');
                 }
                 return keys.contentKeyPacketSessionKey;
+            },
+            scanHashes: async (hashes: string[]): Promise<NodesSecurityScanResult> => {
+                this.logger.debug(`Scanning ${hashes.length} hashes`);
+                return this.sharingPublic.nodes.security.scanHashes(hashes);
             },
         };
     }

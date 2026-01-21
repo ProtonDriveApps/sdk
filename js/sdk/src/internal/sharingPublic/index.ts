@@ -15,6 +15,8 @@ import { NodesRevisons } from '../nodes/nodesRevisions';
 import { SharingPublicCryptoReporter } from './cryptoReporter';
 import { SharingPublicNodesAccess, SharingPublicNodesManagement } from './nodes';
 import { SharingPublicSharesManager } from './shares';
+import { SharingPublicAPIService } from './apiService';
+import { NodesSecurity } from './nodesSecurity';
 
 export { SharingPublicSessionManager } from './session/manager';
 export { UnauthDriveAPIService } from './unauthApiService';
@@ -113,10 +115,13 @@ export function initSharingPublicNodesModule(
     );
     const nodesManagement = new SharingPublicNodesManagement(api, cryptoCache, cryptoService, nodesAccess);
     const nodesRevisions = new NodesRevisons(telemetry.getLogger('nodes'), api, cryptoService, nodesAccess);
+    const sharingPublicApi = new SharingPublicAPIService(apiService);
+    const nodesSecurity = new NodesSecurity(sharingPublicApi, token);
 
     return {
         access: nodesAccess,
         management: nodesManagement,
         revisions: nodesRevisions,
+        security: nodesSecurity,
     };
 }

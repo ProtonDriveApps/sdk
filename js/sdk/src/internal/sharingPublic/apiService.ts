@@ -7,6 +7,12 @@ type PostTokenInfoRequest = Extract<
 type PostTokenInfoResponse =
     drivePaths['/drive/v2/urls/{token}/bookmark']['post']['responses']['200']['content']['application/json'];
 
+type PostMalwareScanRequest = Extract<
+    drivePaths['/drive/urls/{token}/security']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostMalwareScanResponse =
+    drivePaths['/drive/urls/{token}/security']['post']['responses']['200']['content']['application/json'];
 /**
  * Provides API communication for actions on the public link.
  *
@@ -34,5 +40,11 @@ export class SharingPublicAPIService {
                 },
             },
         );
+    }
+
+    async malwareScan(token: string, hashes: string[]) {
+        return this.apiService.post<PostMalwareScanRequest, PostMalwareScanResponse>(`drive/urls/${token}/security`, {
+            Hashes: hashes,
+        });
     }
 }
