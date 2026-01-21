@@ -40,6 +40,7 @@ import { CommandPublicInfo } from './public/commandPublicInfo';
 import { CommandPublicList } from './public/commandPublicList';
 import { CommandPublicRename } from './public/commandPublicRename';
 import { CommandPublicUpload } from './public/commandPublicUpload';
+import { CommandPublicScanHashes } from './public/commandPublicScanHashes';
 import { CommandRevisionDelete } from './revision/commandRevisionDelete';
 import { CommandRevisionDownload } from './revision/commandRevisionDownload';
 import { CommandRevisionList } from './revision/commandRevisionList';
@@ -103,6 +104,7 @@ const COMMANDS = [
     new CommandPublicDownload(),
     new CommandPublicDownloadThumbnails(),
     new CommandPublicUpload(),
+    new CommandPublicScanHashes(),
     // ProtonDrivePhotosClient
     new CommandPhotoRoot(),
     new CommandPhotoTimeline(),
