@@ -197,26 +197,35 @@ class ProtonDriveSdkNativeClient internal constructor(
         operation: String,
         sdkHandle: Long,
         block: suspend () -> Response,
-    ): Job = coroutineScope(operation).launch {
-        try {
-            handleResponse(sdkHandle, block())
-        } catch (error: CancellationException) {
-            throw error
-        } catch (error: Throwable) {
-            handleResponse(sdkHandle, response {
-                this@response.error = error.toProtonSdkError("Error while $operation")
-            })
-        }
-    }.also { job ->
-        job.invokeOnCompletion { error ->
-            if (error is CancellationException) {
-                logger(DEBUG, "Operation $operation was cancelled")
+    ): Job? = try {
+        coroutineScope(operation).launch {
+            try {
+                handleResponse(sdkHandle, block())
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
                 handleResponse(sdkHandle, response {
-                    this@response.error =
-                        error.toProtonSdkError("Operation $operation was cancelled")
+                    this@response.error = error.toProtonSdkError("Error while $operation")
                 })
             }
+        }.also { job ->
+            job.invokeOnCompletion { error ->
+                if (error is CancellationException) {
+                    logger(DEBUG, "Operation $operation was cancelled")
+                    handleResponse(sdkHandle, response {
+                        this@response.error =
+                            error.toProtonSdkError("Operation $operation was cancelled")
+                    })
+                }
+            }
         }
+    } catch (error: Throwable) {
+        handleResponse(sdkHandle, response {
+            this@response.error = error.toProtonSdkError(
+                "Error while scheduling $operation"
+            )
+        })
+        null
     }
 
     @Suppress("TooGenericExceptionCaught")
@@ -264,6 +273,9 @@ class ProtonDriveSdkNativeClient internal constructor(
                     logger(DEBUG, "Callback $callback was cancelled")
                 }
             }
+        } catch (error: NoCoroutineScopeException) {
+            logger(ERROR, "Error while scheduling $callback")
+            logger(ERROR, error.stackTraceToString())
         } catch (error: Throwable) {
             logger(ERROR, "Error while parsing value for $callback")
             logger(ERROR, error.stackTraceToString())
@@ -273,8 +285,10 @@ class ProtonDriveSdkNativeClient internal constructor(
 
     private fun coroutineScope(operation: String): CoroutineScope {
         val scope = coroutineScopeProvider()
-        checkNotNull(scope) {
-            "No coroutineScope was provided to ${javaClass.simpleName}, cannot execute $operation"
+        if (scope == null) {
+            throw NoCoroutineScopeException(
+                "No coroutineScope was provided to ${javaClass.simpleName}, cannot execute $operation"
+            )
         }
         if (!scope.isActive) {
             logger(DEBUG, "CoroutineScope not active for $operation")
