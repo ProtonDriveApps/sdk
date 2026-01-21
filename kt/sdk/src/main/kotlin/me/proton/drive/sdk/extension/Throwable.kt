@@ -3,6 +3,7 @@ package me.proton.drive.sdk.extension
 import kotlinx.coroutines.CancellationException
 import me.proton.core.network.domain.ApiException
 import me.proton.core.network.domain.ApiResult
+import me.proton.drive.sdk.internal.NoCoroutineScopeException
 import proton.sdk.ProtonSdk
 
 fun Throwable.toProtonSdkError(message: String) = proton.sdk.error {
@@ -16,6 +17,7 @@ fun Throwable.toProtonSdkError(message: String) = proton.sdk.error {
 }
 
 private fun Throwable.domain(): ProtonSdk.ErrorDomain = when (this) {
+    is NoCoroutineScopeException -> ProtonSdk.ErrorDomain.SuccessfulCancellation
     is CancellationException -> ProtonSdk.ErrorDomain.SuccessfulCancellation
 
     is ApiException -> when (error) {
