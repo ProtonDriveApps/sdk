@@ -1,6 +1,5 @@
 package me.proton.drive.sdk.internal
 
-import kotlinx.coroutines.CoroutineScope
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.toLongResponse
 import proton.drive.sdk.ProtonDriveSdk
@@ -32,8 +31,8 @@ class JniPhotosDownloader internal constructor() : JniBaseProtonDriveSdk() {
     ): Long = executePersistent(
         clientBuilder = { continuation ->
             ProtonDriveSdkNativeClient(
-                method("downloadToStream"),
-                continuation.toLongResponse(),
+                name = method("downloadToStream"),
+                response = continuation.toLongResponse().asClientResponseCallback(),
                 write = onWrite,
                 progress = onProgress,
                 logger = internalLogger,

@@ -1,14 +1,13 @@
 package me.proton.drive.sdk.internal
 
 import me.proton.drive.sdk.LoggerProvider.Level
-import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.VERBOSE
 import proton.sdk.ProtonSdk.Request
 import java.nio.ByteBuffer
 
 class ProtonSdkNativeClient internal constructor(
     val name: String,
-    val response: ResponseCallback = { error("response not configured for $name") },
+    val response: ClientResponseCallback<ProtonSdkNativeClient> = { _, _ -> error("response not configured for $name") },
     val callback: (ByteBuffer) -> Unit = { error("callback not configured for $name") },
     val logger: (Level, String) -> Unit = { _, _ -> }
 ) {
@@ -31,7 +30,7 @@ class ProtonSdkNativeClient internal constructor(
 
     fun onResponse(data: ByteBuffer) {
         logger(VERBOSE, "response for $name of size: ${data.capacity()}")
-        response(data)
+        response(this, data)
     }
 
     fun onCallback(data: ByteBuffer) {

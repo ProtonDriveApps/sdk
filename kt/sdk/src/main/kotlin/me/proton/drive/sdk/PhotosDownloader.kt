@@ -6,6 +6,7 @@ import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
 import me.proton.drive.sdk.internal.JniDownloadController
 import me.proton.drive.sdk.internal.JniPhotosDownloader
+import me.proton.drive.sdk.internal.factory
 import me.proton.drive.sdk.internal.toLogId
 import java.io.OutputStream
 import java.nio.channels.Channels
@@ -66,7 +67,7 @@ class PhotosDownloader internal constructor(
 suspend fun ProtonPhotosClient.downloader(
     photoUid: String
 ): Downloader = cancellationTokenSource().let { source ->
-    JniPhotosDownloader().run {
+    factory(JniPhotosDownloader()) {
         PhotosDownloader(
             client = this@downloader,
             handle = create(

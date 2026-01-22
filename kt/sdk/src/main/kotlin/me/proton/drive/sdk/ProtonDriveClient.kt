@@ -9,6 +9,7 @@ import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toProto
 import me.proton.drive.sdk.internal.JniProtonDriveClient
 import me.proton.drive.sdk.internal.cancellationCoroutineScope
+import me.proton.drive.sdk.internal.factory
 import me.proton.drive.sdk.internal.toLogId
 import proton.drive.sdk.driveClientCreateFolderRequest
 import proton.drive.sdk.driveClientGetAvailableNameRequest
@@ -106,10 +107,9 @@ class ProtonDriveClient internal constructor(
     }
 }
 
-suspend fun Session.protonDriveClientCreate(): ProtonDriveClient = JniProtonDriveClient().run {
-    val session = this@protonDriveClientCreate
+suspend fun Session.protonDriveClientCreate(): ProtonDriveClient = factory(JniProtonDriveClient()) {
     ProtonDriveClient(
-        session = session,
+        session = this@protonDriveClientCreate,
         handle = create(handle),
         bridge = this,
     )

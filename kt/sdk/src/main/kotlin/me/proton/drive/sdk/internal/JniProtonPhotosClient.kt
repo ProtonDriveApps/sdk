@@ -37,8 +37,8 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
         onFeatureEnabled: suspend (String) -> Boolean,
     ) = executePersistent(clientBuilder = { continuation ->
         ProtonDriveSdkNativeClient(
-            method("create"),
-            continuation.toLongResponse(),
+            name = method("create"),
+            response = continuation.toLongResponse().asClientResponseCallback(),
             httpClientRequest = onHttpClientRequest,
             accountRequest = onAccountRequest,
             logger = internalLogger,
