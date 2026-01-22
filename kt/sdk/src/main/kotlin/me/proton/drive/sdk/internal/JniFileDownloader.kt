@@ -32,8 +32,8 @@ class JniFileDownloader internal constructor() : JniBaseProtonDriveSdk() {
     ): Long = executePersistent(
         clientBuilder = { continuation ->
             ProtonDriveSdkNativeClient(
-                method("downloadToStream"),
-                continuation.toLongResponse(),
+                name = method("downloadToStream"),
+                response = continuation.toLongResponse().asClientResponseCallback(),
                 write = onWrite,
                 progress = onProgress,
                 logger = internalLogger,

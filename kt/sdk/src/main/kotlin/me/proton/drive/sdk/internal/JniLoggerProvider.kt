@@ -21,8 +21,8 @@ class JniLoggerProvider internal constructor(
     suspend fun create(): Long = executePersistent(
         clientBuilder = { continuation ->
             ProtonSdkNativeClient(
-                method("create"),
-                continuation.toLongResponse(),
+                name = method("create"),
+                response = continuation.toLongResponse().asClientResponseCallback(),
                 callback = ::onLog,
             )
         },

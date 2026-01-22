@@ -6,6 +6,7 @@ import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toProto
 import me.proton.drive.sdk.internal.JniProtonPhotosClient
 import me.proton.drive.sdk.internal.cancellationCoroutineScope
+import me.proton.drive.sdk.internal.factory
 import me.proton.drive.sdk.internal.toLogId
 import proton.drive.sdk.drivePhotosClientEnumeratePhotosThumbnailsRequest
 import java.io.OutputStream
@@ -47,11 +48,12 @@ class ProtonPhotosClient internal constructor(
     }
 }
 
-suspend fun Session.protonPhotosClientCreate(): ProtonPhotosClient = JniProtonPhotosClient().run {
-    val session = this@protonPhotosClientCreate
-    ProtonPhotosClient(
-        session = session,
-        handle = create(handle),
-        bridge = this,
-    )
-}
+suspend fun Session.protonPhotosClientCreate(): ProtonPhotosClient =
+    factory(JniProtonPhotosClient()) {
+        val session = this@protonPhotosClientCreate
+        ProtonPhotosClient(
+            session = session,
+            handle = create(handle),
+            bridge = this,
+        )
+    }

@@ -9,6 +9,7 @@ import me.proton.drive.sdk.entity.FileUploaderRequest
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.internal.JniUploadController
 import me.proton.drive.sdk.internal.JniUploader
+import me.proton.drive.sdk.internal.factory
 import me.proton.drive.sdk.internal.toLogId
 import java.io.InputStream
 import java.nio.channels.Channels
@@ -68,11 +69,10 @@ class Uploader internal constructor(
 suspend fun ProtonDriveClient.uploader(
     request: FileUploaderRequest
 ): Uploader = cancellationTokenSource().let { source ->
-    val client = this
-    JniUploader().run {
+    factory(JniUploader()) {
         Uploader(
-            client = client,
-            handle = getFile(client.handle, source.handle, request),
+            client = this@uploader,
+            handle = getFile(this@uploader.handle, source.handle, request),
             bridge = this,
             cancellationTokenSource = source,
         )
@@ -82,10 +82,9 @@ suspend fun ProtonDriveClient.uploader(
 suspend fun ProtonDriveClient.uploader(
     request: FileRevisionUploaderRequest
 ): Uploader = cancellationTokenSource().let { source ->
-    val client = this@uploader
-    JniUploader().run {
+    factory(JniUploader()) {
         Uploader(
-            client = client,
+            client = this@uploader,
             handle = getFileRevision(handle, source.handle, request),
             bridge = this,
             cancellationTokenSource = source,

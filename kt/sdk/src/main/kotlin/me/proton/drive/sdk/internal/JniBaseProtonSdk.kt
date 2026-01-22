@@ -28,19 +28,29 @@ abstract class JniBaseProtonSdk : JniBase() {
     ): T = suspendCancellableCoroutine { continuation ->
         val nativeClient = ProtonSdkNativeClient(
             name = method(name),
-            response = callback(continuation),
+            response = { client, buffer ->
+                callback(continuation).invoke(buffer)
+                client.release()
+                clients -= client
+            },
             logger = internalLogger,
         )
-        continuation.invokeOnCancellation { nativeClient.release() }
+        clients += nativeClient
         nativeClient.handleRequest(request(block))
     }
 
     suspend fun <T> executeOnce(
-        clientBuilder: (CancellableContinuation<T>) -> ProtonSdkNativeClient,
+        clientBuilder: (CancellableContinuation<T>, ResponseCallback.() -> ClientResponseCallback<ProtonSdkNativeClient>) -> ProtonSdkNativeClient,
         requestBuilder: (ProtonSdkNativeClient) -> Request,
     ): T = suspendCancellableCoroutine { continuation ->
-        val nativeClient = clientBuilder(continuation)
-        continuation.invokeOnCancellation { nativeClient.release() }
+        val nativeClient = clientBuilder(continuation) {
+            { client, buffer ->
+                this(buffer)
+                client.release()
+                clients -= client
+            }
+        }
+        clients += nativeClient
         nativeClient.handleRequest(requestBuilder(nativeClient))
     }
 

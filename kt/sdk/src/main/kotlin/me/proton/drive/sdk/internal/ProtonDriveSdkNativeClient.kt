@@ -26,7 +26,7 @@ import java.nio.ByteBuffer
 
 class ProtonDriveSdkNativeClient internal constructor(
     val name: String,
-    val response: ResponseCallback = { error("response not configured for $name") },
+    val response: ClientResponseCallback<ProtonDriveSdkNativeClient> = { _, _ -> error("response not configured for $name") },
     val read: suspend (ByteBuffer) -> Int = { error("read not configured for $name") },
     val write: suspend (ByteBuffer) -> Unit = { error("write not configured for $name") },
     val httpClientRequest: suspend (ProtonSdk.HttpRequest) -> HttpResponse = { error("httpClientRequest not configured for $name") },
@@ -79,7 +79,7 @@ class ProtonDriveSdkNativeClient internal constructor(
     @Suppress("unused") // Called by JNI
     fun onResponse(data: ByteBuffer) {
         logger(VERBOSE, "response for $name of size: ${data.capacity()}")
-        response(data)
+        response(this, data)
     }
 
     @Suppress("unused") // Called by JNI

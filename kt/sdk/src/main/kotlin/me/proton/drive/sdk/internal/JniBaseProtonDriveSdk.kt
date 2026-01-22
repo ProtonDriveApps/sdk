@@ -2,7 +2,6 @@ package me.proton.drive.sdk.internal
 
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
-import me.proton.drive.sdk.LoggerProvider.Level
 import me.proton.drive.sdk.LoggerProvider.Level.VERBOSE
 import proton.drive.sdk.ProtonDriveSdk.Request
 import proton.drive.sdk.RequestKt
@@ -34,10 +33,14 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
         check(released.not()) { "Cannot executeOnce ${method(name)} after release" }
         val nativeClient = ProtonDriveSdkNativeClient(
             name = method(name),
-            response = callback(continuation),
+            response = { client, buffer ->
+                callback(continuation).invoke(buffer)
+                client.release()
+                clients -= client
+            },
             logger = internalLogger,
         )
-        continuation.invokeOnCancellation { nativeClient.release() }
+        clients += nativeClient
         nativeClient.handleRequest(request(block))
     }
 

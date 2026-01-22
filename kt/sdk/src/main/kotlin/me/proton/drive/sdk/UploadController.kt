@@ -51,7 +51,10 @@ class UploadController internal constructor(
         isPausedFlow.emit(paused)
     }
 
-    suspend fun dispose() = bridge.dispose(handle)
+    suspend fun dispose() {
+        log(DEBUG, "dispose")
+        bridge.dispose(handle)
+    }
 
     override fun close() {
         log(DEBUG, "close")

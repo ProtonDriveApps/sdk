@@ -45,8 +45,8 @@ class JniUploader internal constructor() : JniBaseProtonDriveSdk() {
     ): Long = executePersistent(
         clientBuilder = { continuation ->
             ProtonDriveSdkNativeClient(
-                method("uploadFromStream"),
-                continuation.toLongResponse(),
+                name = method("uploadFromStream"),
+                response = continuation.toLongResponse().asClientResponseCallback(),
                 read = onRead,
                 progress = onProgress,
                 logger = internalLogger,

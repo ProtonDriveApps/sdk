@@ -6,6 +6,7 @@ import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
 import me.proton.drive.sdk.internal.JniDownloadController
 import me.proton.drive.sdk.internal.JniFileDownloader
+import me.proton.drive.sdk.internal.factory
 import me.proton.drive.sdk.internal.toLogId
 import java.io.OutputStream
 import java.nio.channels.Channels
@@ -66,10 +67,10 @@ class FileDownloader internal constructor(
 suspend fun ProtonDriveClient.downloader(
     revisionUid: String
 ): Downloader = cancellationTokenSource().let { source ->
-    JniFileDownloader().run {
+    factory(JniFileDownloader()){
         FileDownloader(
             client = this@downloader,
-            handle = create(handle, source.handle, revisionUid),
+            handle = this.create(handle, source.handle, revisionUid),
             bridge = this,
             cancellationTokenSource = source,
         )

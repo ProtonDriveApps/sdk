@@ -5,6 +5,9 @@ import me.proton.drive.sdk.SdkLogger
 import java.nio.ByteBuffer
 
 typealias ResponseCallback = (ByteBuffer) -> Unit
+typealias ClientResponseCallback<T> = (T, ByteBuffer) -> Unit
+
+fun <T> ResponseCallback.asClientResponseCallback(): ClientResponseCallback<T> = { _, buffer -> this(buffer)}
 
 abstract class JniBase {
 
