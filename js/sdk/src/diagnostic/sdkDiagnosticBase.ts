@@ -1,4 +1,5 @@
 import { Author, FileDownloader, MaybeNode, NodeOrUid, NodeType, ThumbnailType, ThumbnailResult } from '../interface';
+import { isProtonDocument, isProtonSheet } from '../internal/nodes/mediaTypes';
 import {
     DiagnosticOptions,
     DiagnosticResult,
@@ -210,12 +211,12 @@ export class SDKDiagnosticBase {
     ): AsyncGenerator<DiagnosticResult> {
         const activeRevision = getActiveRevision(node);
 
-        const expectedAttributes = getNodeType(node) === NodeType.File;
+        const isNodeWithContent = this.isNodeWithContent(node);
 
         const claimedSha1 = activeRevision?.claimedDigests?.sha1;
         const claimedSizeInBytes = activeRevision?.claimedSize;
 
-        if (claimedSha1 && !/^[0-9a-f]{40}$/i.test(claimedSha1)) {
+        if (isNodeWithContent && claimedSha1 && !/^[0-9a-f]{40}$/i.test(claimedSha1)) {
             yield {
                 type: 'extended_attributes_error',
                 field: 'sha1',
@@ -224,7 +225,7 @@ export class SDKDiagnosticBase {
             };
         }
 
-        if (expectedAttributes && !claimedSha1) {
+        if (isNodeWithContent && !claimedSha1) {
             yield {
                 type: 'extended_attributes_missing_field',
                 missingField: 'sha1',
@@ -252,7 +253,7 @@ export class SDKDiagnosticBase {
     }
 
     private async *verifyContentPeak(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
-        if (getNodeType(node) !== NodeType.File) {
+        if (!this.isNodeWithContent(node)) {
             return;
         }
 
@@ -288,7 +289,7 @@ export class SDKDiagnosticBase {
     }
 
     private async *verifyContent(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
-        if (getNodeType(node) !== NodeType.File) {
+        if (!this.isNodeWithContent(node)) {
             return;
         }
         const activeRevision = getActiveRevision(node);
@@ -344,7 +345,7 @@ export class SDKDiagnosticBase {
     }
 
     private async *verifyThumbnails(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
-        if (getNodeType(node) !== NodeType.File) {
+        if (!this.isNodeWithContent(node)) {
             return;
         }
 
@@ -375,5 +376,15 @@ export class SDKDiagnosticBase {
                 error,
             };
         }
+    }
+
+    private isNodeWithContent(node: MaybeNode): boolean {
+        const nodeType = getNodeType(node);
+        const isFile = nodeType === NodeType.File || nodeType === NodeType.Photo;
+
+        const mediaType = getMediaType(node);
+        const isDocs = isProtonDocument(mediaType) || isProtonSheet(mediaType);
+
+        return isFile && !isDocs;
     }
 }
