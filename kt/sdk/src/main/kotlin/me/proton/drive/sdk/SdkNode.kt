@@ -5,10 +5,10 @@ abstract class SdkNode(val parent: SdkNode?) : AutoCloseable {
     private var children: List<SdkNode> = emptyList()
 
     init {
-        parent?.run { children += this }
+        parent?.children += this
     }
 
     override fun close() {
-        parent?.run { children -= this }
+        parent?.children -= this
     }
 }

@@ -40,21 +40,24 @@ class JniHttpStream internal constructor(
     suspend fun read(
         handle: Long,
         buffer: ByteBuffer,
-    ): Int = executeOnce(clientBuilder = { continuation ->
-        ProtonSdkNativeClient(
-            name = method("read"),
-            response = continuation.toIntResponse(),
-            logger = internalLogger,
-        )
-    }, requestBuilder = { client ->
-        request {
-            streamRead = streamReadRequest {
-                streamHandle = handle
-                bufferPointer = JniBuffer.getBufferPointer(buffer)
-                bufferLength = JniBuffer.getBufferSize(buffer).toInt()
+    ): Int = executeOnce(
+        clientBuilder = { continuation, asClientResponseCallback ->
+            ProtonSdkNativeClient(
+                name = method("read"),
+                response = continuation.toIntResponse().asClientResponseCallback(),
+                logger = internalLogger,
+            )
+        },
+        requestBuilder = { client ->
+            request {
+                streamRead = streamReadRequest {
+                    streamHandle = handle
+                    bufferPointer = JniBuffer.getBufferPointer(buffer)
+                    bufferLength = JniBuffer.getBufferSize(buffer).toInt()
+                }
             }
         }
-    })
+    )
 
     fun release() {
         client = null
