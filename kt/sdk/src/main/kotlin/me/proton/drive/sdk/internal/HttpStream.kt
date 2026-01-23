@@ -1,6 +1,9 @@
 package me.proton.drive.sdk.internal
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 import java.nio.channels.ReadableByteChannel
 
@@ -9,8 +12,13 @@ class HttpStream internal constructor(
     private val bridge: JniHttpStream,
 ) : AutoCloseable {
 
-    suspend fun read(sdkContentHandle: Long, buffer: ByteBuffer) =
-        bridge.read(sdkContentHandle, buffer)
+    suspend fun read(sdkContentHandle: Long, buffer: ByteBuffer) = withContext(Dispatchers.IO){
+         bridge.read(sdkContentHandle, buffer)
+    }
+
+    fun readBlocking(sdkContentHandle: Long, buffer: ByteBuffer) = runBlocking(Dispatchers.IO) {
+         bridge.read(sdkContentHandle, buffer)
+    }
 
     fun write(coroutineScope: CoroutineScope, channel: ReadableByteChannel): Long =
         bridge.write(coroutineScope, channel)
