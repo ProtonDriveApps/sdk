@@ -4,9 +4,8 @@ import kotlinx.coroutines.CoroutineScope
 import me.proton.drive.sdk.extension.toIntResponse
 import proton.sdk.request
 import proton.sdk.streamReadRequest
-import java.io.InputStream
 import java.nio.ByteBuffer
-import java.nio.channels.Channels
+import java.nio.channels.ReadableByteChannel
 
 class JniHttpStream internal constructor(
 ) : JniBaseProtonSdk() {
@@ -17,15 +16,14 @@ class JniHttpStream internal constructor(
 
     fun write(
         coroutineScope: CoroutineScope,
-        inputStream: InputStream,
+        channel: ReadableByteChannel,
     ): Long {
-        val channel = Channels.newChannel(inputStream)
         return ProtonDriveSdkNativeClient(
             name = method("write"),
             readHttpBody = { buffer ->
                 channel.read(buffer).also { numberOfByteRead ->
                     if (numberOfByteRead == -1) {
-                        inputStream.close()
+                        channel.close()
                         onBodyRead?.invoke()
                     }
                 }

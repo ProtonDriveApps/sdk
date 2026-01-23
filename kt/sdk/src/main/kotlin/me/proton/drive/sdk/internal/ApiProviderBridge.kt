@@ -16,6 +16,7 @@ import proton.sdk.ProtonSdk.HttpResponse
 import proton.sdk.httpHeader
 import proton.sdk.httpResponse
 import retrofit2.Response
+import java.nio.channels.Channels
 
 internal class ApiProviderBridge(
     private val userId: UserId,
@@ -49,7 +50,10 @@ internal class ApiProviderBridge(
                         }
                     }
                     response.body?.byteStream()?.let { inputStream ->
-                        bindingsContentHandle = httpStream.write(coroutineScope, inputStream)
+                        bindingsContentHandle = httpStream.write(
+                            coroutineScope = coroutineScope,
+                            channel = Channels.newChannel(inputStream),
+                        )
                     }
                 }
             }
@@ -67,7 +71,10 @@ internal class ApiProviderBridge(
                 }
             }
             response.body()?.byteStream()?.let { inputStream ->
-                bindingsContentHandle = httpStream.write(coroutineScope, inputStream)
+                bindingsContentHandle = httpStream.write(
+                    coroutineScope = coroutineScope,
+                    channel = Channels.newChannel(inputStream),
+                )
             }
         }
     }
