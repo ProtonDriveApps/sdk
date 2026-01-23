@@ -5,5 +5,6 @@ public enum VolumeType
     OwnVolume,
     Shared,
     SharedPublic,
+    OwnPhotoVolume,
     Photo,
 }

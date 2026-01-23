@@ -1,5 +1,6 @@
 ﻿using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Nodes;
+using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Shares;
 
@@ -26,6 +27,7 @@ internal static class ShareOperations
                 response.Passphrase,
                 response.AddressId,
                 rootFolderId,
+                response.Type,
                 cancellationToken).ConfigureAwait(false);
 
             await client.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
@@ -35,10 +37,17 @@ internal static class ShareOperations
         return new ShareAndKey(share, shareKey.Value);
     }
 
-    public static async ValueTask<ShareAndKey> GetContextShareAsync(ProtonDriveClient client, NodeUid nodeUid, CancellationToken cancellationToken)
+    public static async ValueTask<ShareAndKey> GetContextShareAsync(ProtonDriveClient client, Result<NodeMetadata, DegradedNodeMetadata> nodeResult, CancellationToken cancellationToken)
     {
-        var response = await client.Api.Links.GetContextShareAsync(nodeUid.VolumeId, nodeUid.LinkId, cancellationToken).ConfigureAwait(false);
 
-        return await GetShareAsync(client, response.ContextShareId, cancellationToken).ConfigureAwait(false);
+        var contextRoot = await TraversalOperations.FindRootForNode(client, nodeResult, cancellationToken).ConfigureAwait(false);
+        ShareId? contextShareId = contextRoot.Merge(x => x.MembershipShareId, x => x.MembershipShareId);
+
+        if (!contextShareId.HasValue)
+        {
+            throw new ProtonDriveException("Node does not have a valid context share");
+        }
+
+        return await ShareOperations.GetShareAsync(client, (ShareId)contextShareId, cancellationToken).ConfigureAwait(false);
     }
 }

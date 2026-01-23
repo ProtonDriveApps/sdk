@@ -79,5 +79,4 @@ internal sealed class PhotosSecretCache(ICacheRepository repository) : IDriveSec
     {
         return _repository.ClearAsync();
     }
-
 }

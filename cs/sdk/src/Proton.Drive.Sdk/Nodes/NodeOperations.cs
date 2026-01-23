@@ -46,6 +46,16 @@ internal static class NodeOperations
         ShareAndKey? knownShareAndKey,
         CancellationToken cancellationToken)
     {
+        var metadataResult = await GetNodeMetadataResultAsync(client, uid, knownShareAndKey, cancellationToken).ConfigureAwait(false);
+        return metadataResult.GetValueOrThrow();
+    }
+
+    public static async ValueTask<Result<NodeMetadata, DegradedNodeMetadata>> GetNodeMetadataResultAsync(
+        ProtonDriveClient client,
+        NodeUid uid,
+        ShareAndKey? knownShareAndKey,
+        CancellationToken cancellationToken)
+    {
         var cachedNodeInfo = await client.Cache.Entities.TryGetNodeAsync(uid, cancellationToken).ConfigureAwait(false);
 
         var metadataResult = cachedNodeInfo is not null
@@ -54,7 +64,7 @@ internal static class NodeOperations
 
         metadataResult ??= await GetFreshNodeMetadataAsync(client, uid, knownShareAndKey, cancellationToken).ConfigureAwait(false);
 
-        return metadataResult.Value.GetValueOrThrow();
+        return (Result<NodeMetadata, DegradedNodeMetadata>)metadataResult;
     }
 
     public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(
@@ -129,7 +139,12 @@ internal static class NodeOperations
     {
         var response = await client.Api.Links.GetDetailsAsync(uid.VolumeId, [uid.LinkId], cancellationToken).ConfigureAwait(false);
 
-        return await DtoToMetadataConverter.ConvertDtoToNodeMetadataAsync(client, uid.VolumeId, response.Links[0], knownShareAndKey, cancellationToken)
+        return await DtoToMetadataConverter.ConvertDtoToNodeMetadataAsync(
+            client,
+            uid.VolumeId,
+            response.Links[0],
+            knownShareAndKey,
+            cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -534,12 +549,20 @@ internal static class NodeOperations
             shareDto.Passphrase,
             shareDto.AddressId,
             nodeUid,
+            ShareType.Main,
             cancellationToken).ConfigureAwait(false);
 
         await client.Cache.Secrets.SetShareKeyAsync(share.Id, shareKey, cancellationToken).ConfigureAwait(false);
         await client.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
 
-        var metadataResult = await DtoToMetadataConverter.ConvertDtoToFolderMetadataAsync(client.Account, client.Cache.Entities, client.Cache.Secrets, volumeDto.Id, linkDetailsDto, shareKey, cancellationToken)
+        var metadataResult = await DtoToMetadataConverter.ConvertDtoToFolderMetadataAsync(
+            client,
+            client.Cache.Entities,
+            client.Cache.Secrets,
+            volumeDto.Id,
+            linkDetailsDto,
+            shareKey,
+            cancellationToken)
             .ConfigureAwait(false);
 
         return metadataResult.GetValueOrThrow().Node;
