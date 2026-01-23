@@ -9,12 +9,13 @@ import me.proton.drive.sdk.internal.CoroutineScopeConsumer
 import me.proton.drive.sdk.internal.JniUploadController
 import me.proton.drive.sdk.internal.toLogId
 import java.io.InputStream
+import java.nio.channels.Channel
 
 class UploadController internal constructor(
     uploader: Uploader,
     internal val handle: Long,
     private val bridge: JniUploadController,
-    private val inputStream: InputStream,
+    private val channel: Channel,
     private val coroutineScopeConsumer: CoroutineScopeConsumer,
     override val cancellationTokenSource: CancellationTokenSource,
 ) : SdkNode(uploader), AutoCloseable, Cancellable {
@@ -58,7 +59,7 @@ class UploadController internal constructor(
 
     override fun close() {
         log(DEBUG, "close")
-        inputStream.close()
+        channel.close()
         bridge.free(handle)
         super.close()
     }
