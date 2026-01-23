@@ -56,19 +56,17 @@ private class StreamRequestBody(
     override fun writeTo(sink: BufferedSink) {
         if (request.hasSdkContentHandle()) {
             val buffer = ByteBuffer.allocateDirect(64 * 1024)
-            runBlocking {
-                while (true) {
-                    buffer.clear()
-                    val bytesRead = httpStream.read(request.sdkContentHandle, buffer)
-                    if (bytesRead <= 0) break
-                    buffer.position(bytesRead)
+            while (true) {
+                buffer.clear()
+                val bytesRead = httpStream.readBlocking(request.sdkContentHandle, buffer)
+                if (bytesRead <= 0) break
+                buffer.position(bytesRead)
 
-                    // Flip so we can read bytes from ByteBuffer
-                    buffer.flip()
+                // Flip so we can read bytes from ByteBuffer
+                buffer.flip()
 
-                    // Write directly from ByteBuffer to okio
-                    sink.write(buffer)
-                }
+                // Write directly from ByteBuffer to okio
+                sink.write(buffer)
             }
         }
     }
