@@ -21,6 +21,7 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
         {
             UploadEvent me => GetUploadEventPayload(me),
             DownloadEvent me => GetDownloadEventPayload(me),
+            // FIXME support error metrics
             _ => null,
         };
 

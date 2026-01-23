@@ -4,6 +4,7 @@ using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Nodes.Cryptography;
 using Proton.Drive.Sdk.Shares;
+using Proton.Drive.Sdk.Telemetry;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk;
 
@@ -26,11 +27,20 @@ internal static class DtoToMetadataConverter
             linkDetailsDto.Sharing?.ShareId,
             cancellationToken).ConfigureAwait(false);
 
-        return await ConvertDtoToNodeMetadataAsync(client, volumeId, linkDetailsDto, parentKeyResult, cancellationToken).ConfigureAwait(false);
+        return await ConvertDtoToNodeMetadataAsync(
+            client,
+            client.Cache.Entities,
+            client.Cache.Secrets,
+            volumeId,
+            linkDetailsDto,
+            parentKeyResult,
+            cancellationToken).ConfigureAwait(false);
     }
 
     public static async Task<Result<NodeMetadata, DegradedNodeMetadata>> ConvertDtoToNodeMetadataAsync(
         ProtonDriveClient client,
+        IEntityCache entityCache,
+        IDriveSecretCache secretCache,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
         Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
@@ -38,13 +48,13 @@ internal static class DtoToMetadataConverter
     {
         var linkType = linkDetailsDto.Link.Type;
 
-        return linkType switch
+        var nodeMetadata = linkType switch
         {
             LinkType.Folder =>
                 (await ConvertDtoToFolderMetadataAsync(
-                    client.Account,
-                    client.Cache.Entities,
-                    client.Cache.Secrets,
+                    client,
+                    entityCache,
+                    secretCache,
                     volumeId,
                     linkDetailsDto,
                     parentKeyResult,
@@ -53,9 +63,9 @@ internal static class DtoToMetadataConverter
 
             LinkType.File =>
                 (await ConvertDtoToFileMetadataAsync(
-                    client.Account,
-                    client.Cache.Entities,
-                    client.Cache.Secrets,
+                    client,
+                    entityCache,
+                    secretCache,
                     volumeId,
                     linkDetailsDto,
                     parentKeyResult,
@@ -65,10 +75,12 @@ internal static class DtoToMetadataConverter
             // FIXME: handle other existing node types, and determine a way for forward compatibility or degraded result in case a new node type is introduced
             _ => throw new NotSupportedException($"Link type {linkType} is not supported."),
         };
+
+        return nodeMetadata;
     }
 
     public static async ValueTask<Result<FolderMetadata, DegradedFolderMetadata>> ConvertDtoToFolderMetadataAsync(
-        IAccountClient accountClient,
+        ProtonDriveClient client,
         IEntityCache entityCache,
         IDriveSecretCache secretCache,
         VolumeId volumeId,
@@ -89,7 +101,7 @@ internal static class DtoToMetadataConverter
         var uid = new NodeUid(volumeId, linkDto.Id);
         var parentUid = linkDto.ParentId is not null ? (NodeUid?)new NodeUid(uid.VolumeId, linkDto.ParentId.Value) : null;
 
-        var decryptionResult = await NodeCrypto.DecryptFolderAsync(accountClient, linkDto, folderDto.HashKey, parentKeyResult, cancellationToken).ConfigureAwait(false);
+        var decryptionResult = await NodeCrypto.DecryptFolderAsync(client.Account, linkDto, folderDto.HashKey, parentKeyResult, cancellationToken).ConfigureAwait(false);
 
         var nameIsInvalid = !NodeOperations.ValidateName(decryptionResult.Link.Name, out var nameOutput, out var nameResult, out var nameSessionKey);
         var nodeKeyIsInvalid = !decryptionResult.Link.NodeKey.TryGetValue(out var nodeKey);
@@ -107,19 +119,28 @@ internal static class DtoToMetadataConverter
             nameIsInvalid || nameSessionKey is null || nameOutput is null
             || passphraseIsInvalid || nodeKeyIsInvalid || hashKeyIsInvalid)
         {
-            var errors = new List<ProtonDriveError>();
+            List<EncryptedField> failedDecryptionFields = new();
+            List<ProtonDriveError> errors = new();
 
             if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
             {
                 errors.Add(new DecryptionError(passphraseError ?? "Failed to decrypt passphrase"));
+                failedDecryptionFields.Add(EncryptedField.NodeKey);
             }
             else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
             {
                 errors.Add(new DecryptionError(nodeKeyError ?? "Failed to decrypt node key"));
+                failedDecryptionFields.Add(EncryptedField.NodeKey);
             }
             else if (decryptionResult.HashKey.TryGetError(out var hashKeyError))
             {
                 errors.Add(new DecryptionError(hashKeyError ?? "Failed to decrypt hash key"));
+                failedDecryptionFields.Add(EncryptedField.NodeHashKey);
+            }
+
+            if (nameResult.IsFailure)
+            {
+                failedDecryptionFields.Add(EncryptedField.NodeName);
             }
 
             var degradedNode = new DegradedFolderNode
@@ -144,9 +165,13 @@ internal static class DtoToMetadataConverter
 
             await secretCache.SetFolderSecretsAsync(uid, degradedSecrets, cancellationToken).ConfigureAwait(false);
 
-            // FIXME: remove entity cache or cache degraded node
+            var degradedFolderMetadata = new DegradedFolderMetadata(degradedNode, degradedSecrets, membershipDto?.ShareId, linkDto.NameHashDigest);
 
-            return new DegradedFolderMetadata(degradedNode, degradedSecrets, membershipDto?.ShareId, linkDto.NameHashDigest);
+            await entityCache.SetNodeAsync(uid, degradedNode, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken).ConfigureAwait(false);
+
+            await ReportDecryptionError(client, DegradedNodeMetadata.FromFolder(degradedFolderMetadata), failedDecryptionFields, cancellationToken).ConfigureAwait(false);
+
+            return degradedFolderMetadata;
         }
 
         var secrets = new FolderSecrets
@@ -177,7 +202,7 @@ internal static class DtoToMetadataConverter
     }
 
     public static async Task<Result<FileMetadata, DegradedFileMetadata>> ConvertDtoToFileMetadataAsync(
-        IAccountClient accountClient,
+        ProtonDriveClient client,
         IEntityCache entityCache,
         IDriveSecretCache secretCache,
         VolumeId volumeId,
@@ -210,7 +235,7 @@ internal static class DtoToMetadataConverter
         var uid = new NodeUid(volumeId, linkDto.Id);
         var parentUid = linkDto.ParentId is not null ? (NodeUid?)new NodeUid(uid.VolumeId, linkDto.ParentId.Value) : null;
 
-        var decryptionResult = await NodeCrypto.DecryptFileAsync(accountClient, linkDto, fileDto, activeRevisionDto, parentKeyResult, cancellationToken)
+        var decryptionResult = await NodeCrypto.DecryptFileAsync(client.Account, linkDto, fileDto, activeRevisionDto, parentKeyResult, cancellationToken)
             .ConfigureAwait(false);
 
         var nameIsInvalid = !NodeOperations.ValidateName(decryptionResult.Link.Name, out var nameOutput, out var nameResult, out var nameSessionKey);
@@ -250,20 +275,34 @@ internal static class DtoToMetadataConverter
             || extendedAttributesIsInvalid
             || contentKeyIsInvalid)
         {
-            var errors = new List<ProtonDriveError>();
+            List<EncryptedField> failedDecryptionFields = new();
+            List<ProtonDriveError> errors = new();
+
             if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
             {
                 errors.Add(new DecryptionError(passphraseError ?? "Failed to decrypt passphrase"));
+                failedDecryptionFields.Add(EncryptedField.NodeKey);
             }
             else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
             {
                 errors.Add(new DecryptionError(nodeKeyError ?? "Failed to decrypt node key"));
+                failedDecryptionFields.Add(EncryptedField.NodeKey);
+            }
+            else if (decryptionResult.ContentKey.IsFailure)
+            {
+                failedDecryptionFields.Add(EncryptedField.NodeContentKey);
+            }
+
+            if (nameResult.IsFailure)
+            {
+                failedDecryptionFields.Add(EncryptedField.NodeName);
             }
 
             var revisionErrors = new List<ProtonDriveError>();
             if (decryptionResult.ExtendedAttributes.TryGetError(out var extendedAttributesError))
             {
                 revisionErrors.Add(new DecryptionError(extendedAttributesError ?? "Failed to decrypt extended attributes key"));
+                failedDecryptionFields.Add(EncryptedField.NodeExtendedAttributes);
             }
 
             var degradedRevision = new DegradedRevision
@@ -305,9 +344,14 @@ internal static class DtoToMetadataConverter
             };
 
             await secretCache.SetFileSecretsAsync(uid, degradedSecrets, cancellationToken).ConfigureAwait(false);
-            // FIXME: remove entity cache or cache degraded node
 
-            return new DegradedFileMetadata(degradedNode, degradedSecrets, membershipDto?.ShareId, linkDto.NameHashDigest);
+            var degradedFileMetadata = new DegradedFileMetadata(degradedNode, degradedSecrets, membershipDto?.ShareId, linkDto.NameHashDigest);
+
+            await entityCache.SetNodeAsync(uid, degradedNode, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken).ConfigureAwait(false);
+
+            await ReportDecryptionError(client, DegradedNodeMetadata.FromFile(degradedFileMetadata), failedDecryptionFields, cancellationToken).ConfigureAwait(false);
+
+            return degradedFileMetadata;
         }
 
         var secrets = new FileSecrets
@@ -360,18 +404,18 @@ internal static class DtoToMetadataConverter
         VolumeId volumeId,
         LinkId? parentId,
         ShareAndKey? shareAndKeyToUse,
-        ShareId? childShareId,
+        ShareId? shareId,
         IDriveSecretCache secretCache,
         Func<IEnumerable<LinkId>, CancellationToken, Task<LinkDetailsDto>> getLinkDetails,
         CancellationToken cancellationToken)
     {
-        if (childShareId is not null && childShareId == shareAndKeyToUse?.Share.Id)
+        if (shareId is not null && shareId == shareAndKeyToUse?.Share.Id)
         {
             return shareAndKeyToUse.Value.Key;
         }
 
         var currentId = parentId;
-        var currentShareId = childShareId;
+        var currentShareId = shareId;
 
         var linkAncestry = new Stack<LinkDetailsDto>(8);
 
@@ -379,6 +423,7 @@ internal static class DtoToMetadataConverter
 
         try
         {
+            // FIXME this could go into an infinite loop if there's a structure issue in the cache.
             while (currentId is not null)
             {
                 if (shareAndKeyToUse is var (shareToUse, shareKeyToUse) && currentId == shareToUse.RootFolderId.LinkId)
@@ -434,6 +479,8 @@ internal static class DtoToMetadataConverter
         {
             var decryptionResult = await ConvertDtoToNodeMetadataAsync(
                 client,
+                client.Cache.Entities,
+                client.Cache.Secrets,
                 volumeId,
                 ancestorLinkDetails,
                 currentParentKey,
@@ -456,16 +503,46 @@ internal static class DtoToMetadataConverter
         VolumeId volumeId,
         LinkId? parentId,
         ShareAndKey? shareAndKeyToUse,
-        ShareId? childShareId,
+        ShareId? shareId,
         CancellationToken cancellationToken)
     {
-        return await GetParentKeyAsync(client, volumeId, parentId, shareAndKeyToUse, childShareId, client.Cache.Secrets, GetLinkDetailsAsync, cancellationToken)
+        return await GetParentKeyAsync(client, volumeId, parentId, shareAndKeyToUse, shareId, client.Cache.Secrets, GetLinkDetailsAsync, cancellationToken)
             .ConfigureAwait(false);
 
         async Task<LinkDetailsDto> GetLinkDetailsAsync(IEnumerable<LinkId> links, CancellationToken ct)
         {
             var response = await client.Api.Links.GetDetailsAsync(volumeId, links, ct).ConfigureAwait(false);
             return response.Links[0];
+        }
+    }
+
+    private static async Task ReportDecryptionError(
+        ProtonDriveClient client,
+        DegradedNodeMetadata degradedNode,
+        List<EncryptedField> failedDecryptionFields,
+        CancellationToken cancellationToken)
+    {
+        var legacyBoundary = new DateTime(2024, 1, 1, 0, 0, 0, 0, 0, DateTimeKind.Utc);
+
+        try {
+            // FIXME won't work for photos in an album, this will need to be differentiated for photos.
+            var share = await ShareOperations.GetContextShareAsync(client, degradedNode, cancellationToken).ConfigureAwait(false);
+
+            foreach (var failedField in failedDecryptionFields)
+            {
+                client.Telemetry.RecordMetric(new DecryptionErrorEvent
+                {
+                    Uid = degradedNode.Node.Uid.ToString(),
+                    Field = failedField,
+                    VolumeType = VolumeTypeFactory.FromShareType(share.Share.Type),
+                    FromBefore2024 = degradedNode.Node.CreationTime.CompareTo(legacyBoundary) < 1,
+                    Error = "",
+                });
+            }
+        }
+        catch
+        {
+            // Do nothing
         }
     }
 }

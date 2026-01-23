@@ -62,7 +62,7 @@ internal static class PhotoDtoToMetadataConverter
         {
             LinkType.File =>
                 (await DtoToMetadataConverter.ConvertDtoToFileMetadataAsync(
-                    client.DriveClient.Account,
+                    client.DriveClient,
                     client.Cache.Entities,
                     client.Cache.Secrets,
                     volumeId,
@@ -73,7 +73,7 @@ internal static class PhotoDtoToMetadataConverter
 
             LinkType.Album =>
                 (await DtoToMetadataConverter.ConvertDtoToFolderMetadataAsync(
-                    client.DriveClient.Account,
+                    client.DriveClient,
                     client.Cache.Entities,
                     client.Cache.Secrets,
                     volumeId,
@@ -84,7 +84,7 @@ internal static class PhotoDtoToMetadataConverter
 
             LinkType.Folder =>
                 (await DtoToMetadataConverter.ConvertDtoToFolderMetadataAsync(
-                    client.DriveClient.Account,
+                    client.DriveClient,
                     client.Cache.Entities,
                     client.Cache.Secrets,
                     volumeId,
@@ -113,6 +113,7 @@ internal static class PhotoDtoToMetadataConverter
         var currentId = parentId;
         var currentShareId = childShareId;
 
+        // FIXME, we don't have nested folders in photos, max depth is 3 including photo.
         var linkAncestry = new Stack<PhotoLinkDetailsDto>(8);
 
         PgpPrivateKey? lastKey = null;

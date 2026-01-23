@@ -31,7 +31,7 @@ internal static class VolumeOperations
 
         var volume = new Volume(response.Volume);
 
-        var share = new Share(volume.RootShareId, volume.RootFolderId, defaultAddress.Id);
+        var share = new Share(volume.RootShareId, volume.RootFolderId, defaultAddress.Id, ShareType.Main);
 
         var rootFolder = new FolderNode
         {

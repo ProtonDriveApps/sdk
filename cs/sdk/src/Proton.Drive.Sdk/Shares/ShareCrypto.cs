@@ -15,15 +15,17 @@ internal static class ShareCrypto
         PgpArmoredMessage passphraseMessage,
         AddressId addressId,
         NodeUid rootFolderId,
+        ShareType shareType,
         CancellationToken cancellationToken)
     {
         var addressKeys = await client.Account.GetAddressPrivateKeysAsync(addressId, cancellationToken).ConfigureAwait(false);
 
+        // FIXME use node if available instead of address key
         var passphrase = new PgpPrivateKeyRing(addressKeys).Decrypt(passphraseMessage);
 
         var key = PgpPrivateKey.ImportAndUnlock(lockedKey, passphrase);
 
-        var share = new Share(shareId, rootFolderId, addressId);
+        var share = new Share(shareId, rootFolderId, addressId, shareType);
 
         return (share, key);
     }

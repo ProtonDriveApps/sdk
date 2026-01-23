@@ -105,5 +105,4 @@ internal sealed partial class BlockDownloader
         Level = LogLevel.Information,
         Message = "Waiting {DelayDuration} before retrying blob download due to 429 response")]
     private partial void LogBlobDownloadWaitingForRetryAfter(TimeSpan delayDuration);
-
 }

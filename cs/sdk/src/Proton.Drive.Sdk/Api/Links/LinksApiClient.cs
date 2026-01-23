@@ -18,6 +18,7 @@ internal sealed class LinksApiClient(HttpClient httpClient) : ILinksApiClient
             .ConfigureAwait(false);
     }
 
+    // FIXME use recursive lookup instead, remove this
     public async ValueTask<ContextShareResponse> GetContextShareAsync(VolumeId volumeId, LinkId linkId, CancellationToken cancellationToken)
     {
         return await _httpClient

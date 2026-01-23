@@ -111,19 +111,20 @@ internal static class PhotosNodeOperations
             shareDto.Passphrase,
             shareDto.AddressId,
             nodeUid,
+            ShareType.Photos,
             cancellationToken).ConfigureAwait(false);
 
         await photosClient.DriveClient.Cache.Secrets.SetShareKeyAsync(share.Id, shareKey, cancellationToken).ConfigureAwait(false);
         await photosClient.DriveClient.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
 
         var metadataResult = await DtoToMetadataConverter.ConvertDtoToFolderMetadataAsync(
-                photosClient.DriveClient.Account,
-                photosClient.Cache.Entities,
-                photosClient.Cache.Secrets,
-                volumeDto.Id,
-                linkDetailsDto,
-                shareKey,
-                cancellationToken)
+            photosClient.DriveClient,
+            photosClient.Cache.Entities,
+            photosClient.Cache.Secrets,
+            volumeDto.Id,
+            linkDetailsDto,
+            shareKey,
+            cancellationToken)
             .ConfigureAwait(false);
 
         return metadataResult.GetValueOrThrow().Node;
