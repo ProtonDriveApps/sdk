@@ -1,5 +1,6 @@
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk;
+using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Shares;
@@ -29,7 +30,7 @@ internal static class VolumeOperations
 
         var volume = new Volume(response.Volume);
 
-        var share = new Share(volume.RootShareId, volume.RootFolderId, defaultAddress.Id);
+        var share = new Share(volume.RootShareId, volume.RootFolderId, defaultAddress.Id, ShareType.Photos);
 
         var rootFolder = new FolderNode
         {

@@ -23,7 +23,14 @@ internal sealed class FolderChildrenBatchLoader(ProtonDriveClient client, Volume
 
         foreach (var linkDetails in response.Links)
         {
-            var nodeMetadataResult = await DtoToMetadataConverter.ConvertDtoToNodeMetadataAsync(_client, _volumeId, linkDetails, _parentKey, cancellationToken)
+            var nodeMetadataResult = await DtoToMetadataConverter.ConvertDtoToNodeMetadataAsync(
+                _client,
+                _client.Cache.Entities,
+                _client.Cache.Secrets,
+                _volumeId,
+                linkDetails,
+                _parentKey,
+                cancellationToken)
                 .ConfigureAwait(false);
 
             var nodeResult = nodeMetadataResult.ToNodeResult();
