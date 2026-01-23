@@ -133,6 +133,21 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DrivePhotosClientDownloaderFree
                     => InteropPhotosDownloader.HandleFree(request.DrivePhotosClientDownloaderFree),
 
+                Request.PayloadOneofCase.DrivePhotosClientGetPhotoUploader
+                    => await InteropProtonPhotosClient.HandleGetFileUploaderAsync(request.DrivePhotosClientGetPhotoUploader).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientFindDuplicates
+                    => await InteropProtonPhotosClient.HandleFindDuplicatesAsync(request.DrivePhotosClientFindDuplicates, bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientUploadFromStream
+                    => InteropPhotosUploader.HandleUploadFromStream(request.DrivePhotosClientUploadFromStream, bindingsHandle),
+
+                Request.PayloadOneofCase.DrivePhotosClientUploadFromFile
+                    => InteropPhotosUploader.HandleUploadFromFile(request.DrivePhotosClientUploadFromFile, bindingsHandle),
+
+                Request.PayloadOneofCase.DrivePhotosClientUploaderFree
+                    => InteropPhotosUploader.HandleFree(request.DrivePhotosClientUploaderFree),
+
                 Request.PayloadOneofCase.None or _
                     => throw new ArgumentException($"Unknown request type: {request.PayloadCase}", nameof(requestBytes)),
             };

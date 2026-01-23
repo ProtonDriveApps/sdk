@@ -2,6 +2,8 @@ using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Photos.Sdk;
+using Proton.Photos.Sdk.Api.Photos;
+using Proton.Photos.Sdk.Nodes;
 using Proton.Sdk;
 using Proton.Sdk.Caching;
 using Proton.Sdk.CExports;
@@ -152,5 +154,49 @@ internal static class InteropProtonPhotosClient
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new FileThumbnailList { Thumbnails = { thumbnails } };
+    }
+
+    public static async ValueTask<IMessage> HandleGetFileUploaderAsync(DrivePhotosClientGetPhotoUploaderRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var tags = request.Metadata.Tags is { Count: > 0 }
+            ? request.Metadata.Tags.Select(t => (Proton.Photos.Sdk.Api.Photos.PhotoTag)t)
+            : null;
+
+        var metadata = new PhotosFileUploadMetadata
+        {
+            MediaType = request.Metadata.MediaType,
+            MainPhotoLinkId = request.Metadata.MainPhotoLinkId,
+            ExpectedSize = request.Size,
+            Tags = tags,
+        };
+
+        var uploader = await ProtonPhotosClient.GetFileUploaderAsync(
+            request.Name,
+            metadata,
+            cancellationToken).ConfigureAwait(false);
+
+        return new Int64Value { Value = Interop.AllocHandle(uploader) };
+    }
+
+    public static async ValueTask<IMessage> HandleFindDuplicatesAsync(DrivePhotosClientFindDuplicatesRequest request, nint bindingsHandle)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        Action<string> generateSha1Action = (sha1) =>
+        {
+            // TODO: Implement SHA1 generation callback
+        };
+
+        var duplicates = await ProtonPhotosClient.FindDuplicatesAsync(
+            request.Name,
+            generateSha1Action,
+            cancellationToken).ConfigureAwait(false);
+
+        var result = new ListValue();
+        result.Values.AddRange(duplicates.Select(duplicate => Value.ForString(duplicate)));
+
+        return result;
     }
 }

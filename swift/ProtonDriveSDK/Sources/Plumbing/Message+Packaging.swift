@@ -39,6 +39,8 @@ extension Message {
                 $0.payload = .loggerProviderCreate(request)
             }
 
+            // MARK: - Drive Client
+
         case let request as Proton_Drive_Sdk_DriveClientCreateRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .driveClientCreate(request)
@@ -94,6 +96,8 @@ extension Message {
                 $0.payload = .driveClientGetThumbnails(request)
             }
 
+            // MARK: - Uploads
+
         case let request as Proton_Drive_Sdk_UploadFromFileRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .uploadFromFile(request)
@@ -133,6 +137,8 @@ extension Message {
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .uploadControllerFree(request)
             }
+
+            // MARK: - Downloads
 
         case let request as Proton_Drive_Sdk_DownloadToFileRequest:
             Proton_Drive_Sdk_Request.with {
@@ -174,6 +180,8 @@ extension Message {
                 $0.payload = .downloadControllerFree(request)
             }
         
+            // MARK: - Photo Client
+
         case let request as Proton_Drive_Sdk_DrivePhotosClientCreateRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .drivePhotosClientCreate(request)
@@ -204,6 +212,8 @@ extension Message {
                 $0.payload = .drivePhotosClientEnumeratePhotosTimeline(request)
             }
 
+            // MARK: - Photo Downloads
+
         case let request as Proton_Drive_Sdk_DrivePhotosClientGetPhotoDownloaderRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .drivePhotosClientGetPhotoDownloader(request)
@@ -222,6 +232,28 @@ extension Message {
         case let request as Proton_Drive_Sdk_DrivePhotosClientDownloaderFreeRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .drivePhotosClientDownloaderFree(request)
+            }
+
+            // MARK: - Photo Uploads
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientGetPhotoUploaderRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientGetPhotoUploader(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientUploadFromFileRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientUploadFromFile(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientUploadFromStreamRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientUploadFromStream(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientUploaderFreeRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientUploaderFree(request)
             }
 
         default:

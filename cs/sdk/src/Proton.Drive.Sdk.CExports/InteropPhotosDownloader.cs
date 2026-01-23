@@ -1,6 +1,7 @@
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Proton.Photos.Sdk.Nodes;
+using Proton.Photos.Sdk.Nodes.Download;
 using Proton.Sdk.CExports;
 
 namespace Proton.Drive.Sdk.CExports;
@@ -11,7 +12,7 @@ internal static class InteropPhotosDownloader
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
-        var downloader = Interop.GetFromHandle<PhotosDownloader>(request.DownloaderHandle);
+        var downloader = Interop.GetFromHandle<PhotosFileDownloader>(request.DownloaderHandle);
 
         var stream = new InteropStream(bindingsHandle, new InteropAction<nint, InteropArray<byte>, nint>(request.WriteAction));
 
@@ -29,7 +30,7 @@ internal static class InteropPhotosDownloader
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
-        var downloader = Interop.GetFromHandle<PhotosDownloader>(request.DownloaderHandle);
+        var downloader = Interop.GetFromHandle<PhotosFileDownloader>(request.DownloaderHandle);
 
         var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
 
@@ -43,7 +44,7 @@ internal static class InteropPhotosDownloader
 
     public static IMessage? HandleFree(DrivePhotosClientDownloaderFreeRequest request)
     {
-        var fileDownloader = Interop.FreeHandle<PhotosDownloader>(request.FileDownloaderHandle);
+        var fileDownloader = Interop.FreeHandle<PhotosFileDownloader>(request.FileDownloaderHandle);
 
         fileDownloader.Dispose();
 

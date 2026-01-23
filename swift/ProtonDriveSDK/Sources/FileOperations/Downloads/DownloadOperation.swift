@@ -9,19 +9,12 @@ public enum DownloadOperationResult: Sendable {
     case failed(Error)
 }
 
-/// Represents the type of downloader used for a download operation.
-/// Determines which cleanup function is called when the operation is disposed.
-public enum DownloaderType: Sendable {
-    case file
-    case photo
-}
-
 public final class DownloadOperation: Sendable {
     
     private let fileDownloaderHandle: ObjectHandle
     private let downloadControllerHandle: ObjectHandle
     private let logger: Logger?
-    private let downloaderType: DownloaderType
+    private let nodeType: NodeType
     private let progressCallbackWrapper: ProgressCallbackWrapper
     private let onOperationCancel: @Sendable () async throws -> Void
     private let onOperationDispose: @Sendable () async -> Void
@@ -32,7 +25,7 @@ public final class DownloadOperation: Sendable {
          downloadControllerHandle: ObjectHandle,
          progressCallbackWrapper: ProgressCallbackWrapper,
          logger: Logger?,
-         downloaderType: DownloaderType,
+         nodeType: NodeType,
          onOperationCancel: @Sendable @escaping () async throws -> Void,
          onOperationDispose: @Sendable @escaping () async -> Void) {
         assert(fileDownloaderHandle != 0)
@@ -41,7 +34,7 @@ public final class DownloadOperation: Sendable {
         self.downloadControllerHandle = downloadControllerHandle
         self.progressCallbackWrapper = progressCallbackWrapper
         self.logger = logger
-        self.downloaderType = downloaderType
+        self.nodeType = nodeType
         self.onOperationCancel = onOperationCancel
         self.onOperationDispose = onOperationDispose
     }
@@ -164,20 +157,20 @@ public final class DownloadOperation: Sendable {
     }
     
     deinit {
-        Self.freeSDKObjects(downloadControllerHandle, fileDownloaderHandle, logger, downloaderType, onOperationDispose)
+        Self.freeSDKObjects(downloadControllerHandle, fileDownloaderHandle, logger, nodeType, onOperationDispose)
     }
     
     private static func freeSDKObjects(
         _ downloadControllerHandle: ObjectHandle,
         _ fileDownloaderHandle: ObjectHandle,
         _ logger: Logger?,
-        _ downloaderType: DownloaderType,
+        _ nodeType: NodeType,
         _ onOperationDispose: @Sendable @escaping () async -> Void
     ) {
         Task {
             await onOperationDispose()
             await freeDownloadController(Int64(downloadControllerHandle), logger)
-            switch downloaderType {
+            switch nodeType {
             case .file:
                 await freeFileDownloader(Int64(fileDownloaderHandle), logger)
             case .photo:

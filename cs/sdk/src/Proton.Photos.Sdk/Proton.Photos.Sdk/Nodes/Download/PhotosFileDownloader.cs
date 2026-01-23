@@ -3,9 +3,9 @@ using Proton.Drive.Sdk;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Download;
 
-namespace Proton.Photos.Sdk.Nodes;
+namespace Proton.Photos.Sdk.Nodes.Download;
 
-public sealed partial class PhotosDownloader : IFileDownloader
+public sealed partial class PhotosFileDownloader : IFileDownloader
 {
     private readonly ProtonPhotosClient _client;
     private readonly NodeUid _photoUid;
@@ -13,7 +13,7 @@ public sealed partial class PhotosDownloader : IFileDownloader
 
     private volatile int _remainingNumberOfBlocksToList;
 
-    private PhotosDownloader(ProtonPhotosClient client, NodeUid photoUid, ILogger logger)
+    private PhotosFileDownloader(ProtonPhotosClient client, NodeUid photoUid, ILogger logger)
     {
         _client = client;
         _photoUid = photoUid;
@@ -40,14 +40,14 @@ public sealed partial class PhotosDownloader : IFileDownloader
         ReleaseRemainingBlockListing();
     }
 
-    internal static async ValueTask<PhotosDownloader> CreateAsync(ProtonPhotosClient client, NodeUid photoUid, CancellationToken cancellationToken)
+    internal static async ValueTask<PhotosFileDownloader> CreateAsync(ProtonPhotosClient client, NodeUid photoUid, CancellationToken cancellationToken)
     {
         var logger = client.DriveClient.Telemetry.GetLogger("Photo downloader");
         LogEnteringBlockListingSemaphore(logger, photoUid, 1);
         await client.DriveClient.BlockListingSemaphore.EnterAsync(1, cancellationToken).ConfigureAwait(false);
         LogEnteredBlockListingSemaphore(logger, photoUid, 1);
 
-        return new PhotosDownloader(client, photoUid, logger);
+        return new PhotosFileDownloader(client, photoUid, logger);
     }
 
     [LoggerMessage(Level = LogLevel.Trace, Message = "Trying to enter block listing semaphore for photo {PhotoUid} with {Increment}")]

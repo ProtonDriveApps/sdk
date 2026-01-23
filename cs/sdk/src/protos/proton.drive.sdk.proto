@@ -51,6 +51,11 @@ message Request {
         DrivePhotosClientDownloadToFileRequest drive_photos_client_download_to_file = 1307;
         DrivePhotosClientDownloaderFreeRequest drive_photos_client_downloader_free = 1308;
         DrivePhotosClientEnumeratePhotosTimelineRequest drive_photos_client_enumerate_photos_timeline = 1309;
+        DrivePhotosClientGetPhotoUploaderRequest drive_photos_client_get_photo_uploader = 1310;
+        DrivePhotosClientFindDuplicatesRequest drive_photos_client_find_duplicates = 1311;
+        DrivePhotosClientUploadFromStreamRequest drive_photos_client_upload_from_stream = 1312;
+        DrivePhotosClientUploadFromFileRequest drive_photos_client_upload_from_file = 1313;
+        DrivePhotosClientUploaderFreeRequest drive_photos_client_uploader_free = 1314;
     };
 }
 
@@ -487,7 +492,7 @@ message PhotosTimelineItem {
     google.protobuf.Timestamp capture_time = 2;
 }
 
-// The response value must be an Int64Value carrying a handle to an instance of PhotosDownloader.
+// The response value must be an Int64Value carrying a handle to an instance of PhotosFileDownloader.
 message DrivePhotosClientGetPhotoDownloaderRequest {
     int64 client_handle = 1;
     string photo_uid = 2;
@@ -515,6 +520,71 @@ message DrivePhotosClientDownloadToFileRequest {
 // The response must not have a value.
 message DrivePhotosClientDownloaderFreeRequest  {
     int64 file_downloader_handle = 1;
+}
+
+// Photo uploader
+
+// The response value must be an Int64Value carrying a handle to an instance of PhotosFileUploader.
+message DrivePhotosClientGetPhotoUploaderRequest {
+    int64 client_handle = 1;
+    string name = 2;
+    int64 size = 3;
+    PhotoFileUploadMetadata metadata = 4;
+    int64 cancellation_token_source_handle = 5;
+}
+
+message PhotoFileUploadMetadata {
+    string media_type = 1;
+    google.protobuf.Timestamp last_modification_time = 2; // Optional
+    repeated AdditionalMetadataProperty additional_metadata = 3; // Optional
+    bool override_existing_draft_by_other_client = 4;
+    google.protobuf.Timestamp capture_time = 5; // Optional
+    string main_photo_link_id = 6; // Optional
+    repeated PhotoTag tags = 7; // Optional
+}
+
+enum PhotoTag {
+    PHOTO_TAG_FAVORITES = 0;
+    PHOTO_TAG_SCREENSHOTS = 1;
+    PHOTO_TAG_VIDEOS = 2;
+    PHOTO_TAG_LIVE_PHOTOS = 3;
+    PHOTO_TAG_MOTION_PHOTOS = 4;
+    PHOTO_TAG_SELFIES = 5;
+    PHOTO_TAG_PORTRAITS = 6;
+    PHOTO_TAG_BURSTS = 7;
+    PHOTO_TAG_PANORAMAS = 8;
+    PHOTO_TAG_RAW = 9;
+}
+
+// The response message must be of type google.protobuf.ListValue containing node UIDs of duplicate photos.
+message DrivePhotosClientFindDuplicatesRequest {
+    int64 client_handle = 1;
+    string name = 2;
+    int64 generate_sha1_function = 3; // C signature: ByteArray generate_sha1(intptr_t bindings_handle);
+    int64 cancellation_token_source_handle = 4;
+}
+
+// The response value must be an Int64Value carrying a handle to an instance of UploadController.
+message DrivePhotosClientUploadFromStreamRequest {
+    int64 uploader_handle = 1;
+    repeated Thumbnail thumbnails = 2;
+    int64 read_action = 3; // C signature: void handle_stream_operation(intptr_t bindings_handle, ByteArray buffer, intptr_t sdk_handle);
+    int64 progress_action = 4; // See array_action in C header file for signature
+    int64 cancellation_token_source_handle = 5;
+}
+
+// The response value must be an Int64Value carrying a handle to an instance of UploadController.
+message DrivePhotosClientUploadFromFileRequest {
+    int64 uploader_handle = 1;
+    repeated Thumbnail thumbnails = 2;
+    string file_path = 3;
+    int64 progress_action = 4; // See array_action in C header file for signature
+    int64 cancellation_token_source_handle = 5;
+}
+
+// The response must not have a value.
+message DrivePhotosClientUploaderFreeRequest {
+    int64 file_uploader_handle = 1;
 }
 
 enum VolumeType {
