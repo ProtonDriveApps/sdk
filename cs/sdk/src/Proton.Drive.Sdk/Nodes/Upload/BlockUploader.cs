@@ -81,7 +81,6 @@ internal sealed partial class BlockUploader
                     var signature = signatureStream.GetBuffer().AsMemory()[..(int)signatureStream.Length];
 
                     // FIXME: retry upon verification failure
-
                     const long AeadChunkSize =
                         1 + // packet header: packet type
                         1 + // packet header: partial length

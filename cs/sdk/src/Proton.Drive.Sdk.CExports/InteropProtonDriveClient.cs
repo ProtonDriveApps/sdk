@@ -228,15 +228,19 @@ internal static class InteropProtonDriveClient
             {
                 results.Select(pair =>
                 {
-                    var result = new NodeResultPair();
-                    result.NodeUid = pair.Key.ToString();
+                    var result = new NodeResultPair
+                    {
+                        NodeUid = pair.Key.ToString(),
+                    };
+
                     if (pair.Value.TryGetError(out var error))
                     {
                         result.Error = error;
                     }
+
                     return result;
-                })
-            }
+                }),
+            },
         };
 
         return response;

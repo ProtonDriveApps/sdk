@@ -16,24 +16,18 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
 
     public static SqliteCacheRepository OpenInMemory(int? maxCacheSize = 1024)
     {
-        var connectionStringBuilder = new SqliteConnectionStringBuilder
-        {
-            DataSource = Guid.NewGuid().ToString(),
-            Mode = SqliteOpenMode.Memory,
-            Cache = SqliteCacheMode.Shared,
-        };
+        // Avoiding SqliteConnectionStringBuilder due to IL2113 warning in AOT scenarios
+        var connectionString = $"Data Source={Guid.NewGuid().ToString()};Mode=Memory;Cache=Shared";
 
-        return Open(connectionStringBuilder, maxCacheSize);
+        return Open(connectionString, maxCacheSize);
     }
 
     public static SqliteCacheRepository OpenFile(string path, int? maxCacheSize = 1024)
     {
-        var connectionStringBuilder = new SqliteConnectionStringBuilder
-        {
-            DataSource = path,
-        };
+        // Avoiding SqliteConnectionStringBuilder due to IL2113 warning in AOT scenarios
+        var connectionString = $"Data Source=\"{path}\"";
 
-        return Open(connectionStringBuilder, maxCacheSize);
+        return Open(connectionString, maxCacheSize);
     }
 
     ValueTask ICacheRepository.SetAsync(string key, string value, IEnumerable<string> tags, CancellationToken cancellationToken)
@@ -306,7 +300,7 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
                 $"UPDATE Entries SET LastAccessedUtc = @timestamp WHERE Key IN ({keyParams})";
 
             updateCommand.Parameters.AddWithValue("@timestamp", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
-            for (int i = 0; i < results.Count; i++)
+            for (var i = 0; i < results.Count; i++)
             {
                 updateCommand.Parameters.AddWithValue($"@key{i}", results[i].Key);
             }
@@ -354,14 +348,12 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
         command.ExecuteNonQuery();
     }
 
-    private static SqliteCacheRepository Open(SqliteConnectionStringBuilder connectionStringBuilder, int? maxCacheSize)
+    private static SqliteCacheRepository Open(string connectionString, int? maxCacheSize)
     {
-        if (maxCacheSize is not null && maxCacheSize.Value <= 0)
+        if (maxCacheSize <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(maxCacheSize), "Max cache size must be greater than 0 or null to disable LRU.");
         }
-
-        var connectionString = connectionStringBuilder.ConnectionString;
 
         var connection = new SqliteConnection(connectionString);
 

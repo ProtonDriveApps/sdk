@@ -60,6 +60,11 @@ internal sealed class PhotosSecretCache(ICacheRepository repository) : IDriveSec
         throw new NotSupportedException();
     }
 
+    public ValueTask ClearAsync()
+    {
+        return _repository.ClearAsync();
+    }
+
     private static string GetShareKeyCacheKey(ShareId shareId)
     {
         return $"share:{shareId}:key";
@@ -73,10 +78,5 @@ internal sealed class PhotosSecretCache(ICacheRepository repository) : IDriveSec
     private static string GetFileSecretsCacheKey(NodeUid nodeId)
     {
         return $"file:{nodeId}:secrets";
-    }
-
-    public ValueTask ClearAsync()
-    {
-        return _repository.ClearAsync();
     }
 }

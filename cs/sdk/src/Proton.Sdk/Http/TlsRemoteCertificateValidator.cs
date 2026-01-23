@@ -38,6 +38,7 @@ internal static class TlsRemoteCertificateValidator
         }
 
         var validHashFound = false;
+#pragma warning disable S3267 // Loops should be simplified with "LINQ" expressions: LINQ cannot be used here because of Span<byte>
         foreach (var knownPublicKeyHashDigest in KnownPublicKeySha256Digests)
         {
             if (knownPublicKeyHashDigest.AsSpan().SequenceEqual(hashDigestBuffer))
@@ -46,6 +47,7 @@ internal static class TlsRemoteCertificateValidator
                 break;
             }
         }
+#pragma warning restore S3267 // Loops should be simplified with "LINQ" expressions
 
         return validHashFound;
     }

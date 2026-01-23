@@ -6,7 +6,11 @@
     <PublishAot>true</PublishAot>
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
     <NativeCryptoLibName>proton_crypto</NativeCryptoLibName>
-    <NoWarn>Photos</NoWarn>
+
+    <NoWarn>$(NoWarn);Photos</NoWarn>
+
+    <!-- IL2113 warning due to usage of SqliteConnectionStringBuilder, but its usage is limited and tested under AOT -->
+    <NoWarn>$(NoWarn);IL2113</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
