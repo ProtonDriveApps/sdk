@@ -9,8 +9,8 @@ internal static class TraversalOperations
         Result<NodeMetadata, DegradedNodeMetadata> nodeResult,
         CancellationToken cancellationToken)
     {
-        NodeUid? parentUid = nodeResult.Merge(x => x.Node.ParentUid, x => x.Node.ParentUid);
-        HashSet<NodeUid> visitedNodes = new();
+        var parentUid = nodeResult.Merge(x => x.Node.ParentUid, x => x.Node.ParentUid);
+        HashSet<NodeUid> visitedNodes = [];
 
         while (parentUid is not null)
         {

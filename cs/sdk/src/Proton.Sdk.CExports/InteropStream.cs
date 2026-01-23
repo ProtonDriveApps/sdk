@@ -52,7 +52,9 @@ internal sealed class InteropStream : Stream
         return new Int32Value { Value = bytesRead };
     }
 
-    public override void Flush() { }
+    public override void Flush()
+    {
+    }
 
     public override int Read(byte[] buffer, int offset, int count)
     {
@@ -138,8 +140,12 @@ internal sealed class InteropStream : Stream
             return new MemoryHandle(_pointer + elementIndex);
         }
 
-        public override void Unpin() { }
+        public override void Unpin()
+        {
+        }
 
-        protected override void Dispose(bool disposing) { }
+        protected override void Dispose(bool disposing)
+        {
+        }
     }
 }

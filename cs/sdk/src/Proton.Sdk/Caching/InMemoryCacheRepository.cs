@@ -158,7 +158,7 @@ internal sealed class InMemoryCacheRepository : ICacheRepository, IDisposable
                     }
                     else
                     {
-                        candidateKeys = new HashSet<string>(keysWithTag);
+                        candidateKeys = [.. keysWithTag];
                     }
 
                     if (candidateKeys.Count == 0)

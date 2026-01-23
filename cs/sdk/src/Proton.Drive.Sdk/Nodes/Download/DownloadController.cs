@@ -14,12 +14,26 @@ public sealed class DownloadController
     // FIXME
     public bool IsPaused { get; }
 
+    public Task Completion { get; private set; }
+
     public bool GetIsDownloadCompleteWithVerificationIssue()
     {
         return _isDownloadCompleteWithVerificationIssue;
     }
 
-    public Task Completion { get; private set; }
+#pragma warning disable S2325 // Methods and properties that don't access instance data should be static: waiting for implementation
+    public void Pause()
+    {
+        // FIXME
+        throw new NotImplementedException();
+    }
+
+    public void Resume()
+    {
+        // FIXME
+        throw new NotImplementedException();
+    }
+#pragma warning restore S2325 // Methods and properties that don't access instance data should be static
 
     private async Task WrapDownloadTaskAsync()
     {
@@ -32,17 +46,5 @@ public sealed class DownloadController
             _isDownloadCompleteWithVerificationIssue = true;
             throw new DataIntegrityException(error.Message);
         }
-    }
-
-    public void Pause()
-    {
-        // FIXME
-        throw new NotImplementedException();
-    }
-
-    public void Resume()
-    {
-        // FIXME
-        throw new NotImplementedException();
     }
 }

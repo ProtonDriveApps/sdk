@@ -90,7 +90,7 @@ internal static class FolderOperations
             Common = new CommonExtendedAttributes
             {
                 ModificationTime = lastModificationTime?.UtcDateTime,
-            }
+            },
         };
 
         var extendedAttributesUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(extendedAttributes, DriveApiSerializerContext.Default.ExtendedAttributes);

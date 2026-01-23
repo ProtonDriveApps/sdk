@@ -49,7 +49,7 @@ internal static class InteropProtonPhotosClient
         var featureFlagProvider = request.HasFeatureEnabledFunction
             ? new InteropFeatureFlagProvider(bindingsHandle, new InteropFunction<nint, InteropArray<byte>, int>(request.FeatureEnabledFunction))
             : AlwaysDisabledFeatureFlagProvider.Instance;
-        
+
         var client = new ProtonPhotosClient(
             httpClientFactory,
             accountClient,

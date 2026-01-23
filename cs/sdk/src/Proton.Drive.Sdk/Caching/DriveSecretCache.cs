@@ -67,6 +67,11 @@ internal sealed class DriveSecretCache(ICacheRepository repository) : IDriveSecr
             : null;
     }
 
+    public ValueTask ClearAsync()
+    {
+        return _repository.ClearAsync();
+    }
+
     private static string GetShareKeyCacheKey(ShareId shareId)
     {
         return $"share:{shareId}:key";
@@ -80,10 +85,5 @@ internal sealed class DriveSecretCache(ICacheRepository repository) : IDriveSecr
     private static string GetFileSecretsCacheKey(NodeUid nodeId)
     {
         return $"file:{nodeId}:secrets";
-    }
-
-    public ValueTask ClearAsync()
-    {
-        return _repository.ClearAsync();
     }
 }

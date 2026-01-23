@@ -119,8 +119,8 @@ internal static class DtoToMetadataConverter
             nameIsInvalid || nameSessionKey is null || nameOutput is null
             || passphraseIsInvalid || nodeKeyIsInvalid || hashKeyIsInvalid)
         {
-            List<EncryptedField> failedDecryptionFields = new();
-            List<ProtonDriveError> errors = new();
+            List<EncryptedField> failedDecryptionFields = [];
+            List<ProtonDriveError> errors = [];
 
             if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
             {
@@ -275,12 +275,12 @@ internal static class DtoToMetadataConverter
             || extendedAttributesIsInvalid
             || contentKeyIsInvalid)
         {
-            List<EncryptedField> failedDecryptionFields = new();
-            List<ProtonDriveError> errors = new();
+            List<EncryptedField> failedDecryptionFields = [];
+            List<ProtonDriveError> errors = [];
 
             if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
             {
-                errors.Add(new DecryptionError(passphraseError ?? "Failed to decrypt passphrase"));
+                errors.Add(new DecryptionError(passphraseError));
                 failedDecryptionFields.Add(EncryptedField.NodeKey);
             }
             else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
@@ -524,7 +524,8 @@ internal static class DtoToMetadataConverter
     {
         var legacyBoundary = new DateTime(2024, 1, 1, 0, 0, 0, 0, 0, DateTimeKind.Utc);
 
-        try {
+        try
+        {
             // FIXME won't work for photos in an album, this will need to be differentiated for photos.
             var share = await ShareOperations.GetContextShareAsync(client, degradedNode, cancellationToken).ConfigureAwait(false);
 
@@ -536,7 +537,7 @@ internal static class DtoToMetadataConverter
                     Field = failedField,
                     VolumeType = VolumeTypeFactory.FromShareType(share.Share.Type),
                     FromBefore2024 = degradedNode.Node.CreationTime.CompareTo(legacyBoundary) < 1,
-                    Error = "",
+                    Error = string.Empty,
                 });
             }
         }

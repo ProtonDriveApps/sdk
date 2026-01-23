@@ -95,6 +95,11 @@ internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEnti
         await _repository.RemoveAsync(GetNodeCacheKey(nodeUid), cancellationToken).ConfigureAwait(false);
     }
 
+    public ValueTask ClearAsync()
+    {
+        return _repository.ClearAsync();
+    }
+
     private static string GetShareCacheKey(ShareId shareId)
     {
         return $"share:{shareId}";
@@ -103,10 +108,5 @@ internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEnti
     private static string GetNodeCacheKey(NodeUid nodeId)
     {
         return $"node:{nodeId}";
-    }
-
-    public ValueTask ClearAsync()
-    {
-        return _repository.ClearAsync();
     }
 }

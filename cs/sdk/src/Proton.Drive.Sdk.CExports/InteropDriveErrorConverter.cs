@@ -9,7 +9,6 @@ namespace Proton.Drive.Sdk.CExports;
 internal static class InteropDriveErrorConverter
 {
     private const int UnknownDecryptionErrorPrimaryCode = 0;
-    private const int ShareMetadataDecryptionErrorPrimaryCode = 1;
     private const int NodeMetadataDecryptionErrorPrimaryCode = 2;
     private const int FileContentsDecryptionErrorPrimaryCode = 3;
     private const int UploadKeyMismatchErrorPrimaryCode = 4;
@@ -70,6 +69,7 @@ internal static class InteropDriveErrorConverter
                 break;
 
             default:
+                error.PrimaryCode = UnknownDecryptionErrorPrimaryCode;
                 InteropErrorConverter.SetDomainAndCodes(error, exception);
                 break;
         }

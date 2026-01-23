@@ -3,10 +3,16 @@ is_global = true
 stylecop.layout.allowConsecutiveUsings = true
 stylecop.layout.allowDoWhileOnClosingBrace = true
 
+# IDE0007: Use var instead of explicit type
+dotnet_diagnostic.IDE0007.severity = warning
+
+# IDE0007: Use collection initializers or expressions
+dotnet_diagnostic.IDE0028.severity = warning
+
 dotnet_diagnostic.CA1032.severity = warning
-dotnet_diagnostic.CA1711.severity = suggestion
+dotnet_diagnostic.CA1711.severity = warning
 dotnet_diagnostic.CA2000.severity = suggestion
-dotnet_diagnostic.CA2201.severity = suggestion
+dotnet_diagnostic.CA2201.severity = warning
 dotnet_diagnostic.CA2215.severity = warning
 
 # StyleCop - Special
@@ -23,12 +29,12 @@ dotnet_diagnostic.SA1009.severity = suggestion
 # https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/ReadabilityRules.md
 
 dotnet_diagnostic.SA1101.severity = none
-dotnet_diagnostic.SA1200.severity = none
-dotnet_diagnostic.SA1216.severity = none
-dotnet_diagnostic.SA1217.severity = none
-dotnet_diagnostic.SA1413.severity = none
-dotnet_diagnostic.SA1502.severity = none
 dotnet_diagnostic.SA1516.severity = none
+
+# StyleCop - Naming
+# https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/NamingRules.md
+
+dotnet_diagnostic.SA1309.severity = none
 
 # StyleCop - Documentation
 # https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/DocumentationRules.md
@@ -77,70 +83,22 @@ dotnet_diagnostic.SA1648.severity = none
 
 dotnet_diagnostic.SX1101.severity = warning
 dotnet_diagnostic.SX1309.severity = warning
-dotnet_diagnostic.SA1309.severity = none
 
 # Roslynator
+
+# RCS1037: Remove trailing white-space
 dotnet_diagnostic.RCS1037.severity = none # Redundant with SA1028
+
+# RCS1047: Non-asynchronous method name should not end with 'Async'
+dotnet_diagnostic.RCS1047.severity = warning
+
+# RCS1090: Add parameter to exception constructor
 dotnet_diagnostic.RCS1194.severity = none # Redundant with CA1032
 
-# To discuss, remove to enable:
+# Sonar
 
-# IDE0058: Expression value is never used
-dotnet_diagnostic.IDE0058.severity = none
-
-# CA1806: Do not ignore method results
-dotnet_diagnostic.CA1806.severity = none
-
-# SA1005: Single line comments should begin with single space
-dotnet_diagnostic.SA1005.severity = suggestion
-
-# SA1108: Block statements should not contain embedded comments
-dotnet_diagnostic.SA1108.severity = suggestion
-
-# SA1111: Closing parenthesis should be on line of last parameter
-dotnet_diagnostic.SA1111.severity = suggestion
-
-# SA1122: Use string.Empty for empty strings
-dotnet_diagnostic.SA1122.severity = suggestion
-
-# SA1127: Generic type constraints should be on their own line
-dotnet_diagnostic.SA1127.severity = suggestion
-
-# SA1128: Put constructor initializers on their own line
-dotnet_diagnostic.SA1128.severity = suggestion
-
-# SA1201: Elements should appear in the correct order
-dotnet_diagnostic.SA1201.severity = suggestion
-
-# SA1202: Elements should be ordered by access
-dotnet_diagnostic.SA1202.severity = suggestion
-
-# SA1204: Static elements should appear before instance elements
-dotnet_diagnostic.SA1204.severity = suggestion
-
-# SA1214: Readonly fields should appear before non-readonly fields
-dotnet_diagnostic.SA1214.severity = suggestion
-
-# SA1408: Conditional expressions should declare precedence
-dotnet_diagnostic.SA1408.severity = suggestion
-
-# SA1503: Braces should not be omitted
-dotnet_diagnostic.SA1503.severity = suggestion
-
-# SA1512: Single-line comments should not be followed by blank line
-dotnet_diagnostic.SA1512.severity = suggestion
-
-# SA1515: Single-line comment should be preceded by blank line
-dotnet_diagnostic.SA1515.severity = suggestion
-
-# SA1519: Braces should not be omitted from multi-line child statement
-dotnet_diagnostic.SA1519.severity = suggestion
-
-# RCS1139: Add summary element to documentation comment.
-dotnet_diagnostic.RCS1139.severity = suggestion
-
-# RCS1181: Convert comment to documentation comment.
-dotnet_diagnostic.RCS1181.severity = none
+# S1134: Track uses of "FIXME" tags
+dotnet_diagnostic.S1134.severity = suggestion
 
 # S1135: Complete the task associated to this 'TODO' comment
 dotnet_diagnostic.S1135.severity = suggestion
