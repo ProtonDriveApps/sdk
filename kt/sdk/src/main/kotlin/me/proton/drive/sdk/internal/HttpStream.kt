@@ -1,8 +1,8 @@
 package me.proton.drive.sdk.internal
 
 import kotlinx.coroutines.CoroutineScope
-import java.io.InputStream
 import java.nio.ByteBuffer
+import java.nio.channels.ReadableByteChannel
 
 
 class HttpStream internal constructor(
@@ -12,8 +12,8 @@ class HttpStream internal constructor(
     suspend fun read(sdkContentHandle: Long, buffer: ByteBuffer) =
         bridge.read(sdkContentHandle, buffer)
 
-    fun write(coroutineScope: CoroutineScope, inputStream: InputStream): Long =
-        bridge.write(coroutineScope, inputStream)
+    fun write(coroutineScope: CoroutineScope, channel: ReadableByteChannel): Long =
+        bridge.write(coroutineScope, channel)
 
     override fun close() {
         bridge.release()

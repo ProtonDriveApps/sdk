@@ -5,37 +5,34 @@ import me.proton.drive.sdk.internal.HttpStream
 import okhttp3.MediaType
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okio.Buffer
 import okio.BufferedSink
 import proton.sdk.ProtonSdk.HttpRequest
-import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
-import java.nio.channels.Channels
 
 
 internal suspend fun HttpStream.read(
     request: HttpRequest
 ): RequestBody {
-    val outputStream = ByteArrayOutputStream()
+    val buffer = Buffer()
     if (request.hasSdkContentHandle()) {
-        val buffer = ByteBuffer.allocateDirect(64 * 1024)
-        val channel = Channels.newChannel(outputStream)
+        val byteBuffer = ByteBuffer.allocateDirect(64 * 1024)
 
         while (true) {
-            buffer.clear()
-            val bytesRead = read(request.sdkContentHandle, buffer)
+            byteBuffer.clear()
+            val bytesRead = read(request.sdkContentHandle, byteBuffer)
             if (bytesRead <= 0) break
-            buffer.position(bytesRead)
+            byteBuffer.position(bytesRead)
 
             // Flip so we can read bytes from ByteBuffer
-            buffer.flip()
+            byteBuffer.flip()
 
-            // Write directly from ByteBuffer to okio
-            channel.write(buffer)
+            // Write directly from ByteBuffer to okio Buffer
+            buffer.write(byteBuffer)
         }
     }
 
-    val body = outputStream.toByteArray().toRequestBody()
-    return body
+    return buffer.snapshot().toRequestBody()
 }
 
 
