@@ -11,8 +11,7 @@ import me.proton.drive.sdk.internal.JniUploadController
 import me.proton.drive.sdk.internal.JniUploader
 import me.proton.drive.sdk.internal.factory
 import me.proton.drive.sdk.internal.toLogId
-import java.io.InputStream
-import java.nio.channels.Channels
+import java.nio.channels.ReadableByteChannel
 import java.util.concurrent.atomic.AtomicReference
 
 class Uploader internal constructor(
@@ -24,12 +23,11 @@ class Uploader internal constructor(
 
     suspend fun uploadFromStream(
         coroutineScope: CoroutineScope,
-        inputStream: InputStream,
+        channel: ReadableByteChannel,
         thumbnails: Map<ThumbnailType, ByteArray> = emptyMap(),
         progress: suspend (Long, Long) -> Unit = { _, _ -> },
     ): UploadController = cancellationTokenSource().let { source ->
         log(INFO, "uploadFromStream")
-        val channel = Channels.newChannel(inputStream)
         val coroutineScopeReference = AtomicReference(coroutineScope)
         val handle = bridge.uploadFromStream(
             uploaderHandle = handle,
@@ -49,7 +47,7 @@ class Uploader internal constructor(
             handle = handle,
             bridge = JniUploadController(),
             cancellationTokenSource = source,
-            inputStream = inputStream,
+            channel = channel,
             coroutineScopeConsumer = coroutineScopeReference::set,
         )
     }
