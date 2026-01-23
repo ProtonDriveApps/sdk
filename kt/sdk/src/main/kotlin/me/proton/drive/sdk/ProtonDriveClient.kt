@@ -15,7 +15,7 @@ import proton.drive.sdk.driveClientCreateFolderRequest
 import proton.drive.sdk.driveClientGetAvailableNameRequest
 import proton.drive.sdk.driveClientGetThumbnailsRequest
 import proton.drive.sdk.driveClientRenameRequest
-import java.io.OutputStream
+import java.nio.channels.WritableByteChannel
 
 class ProtonDriveClient internal constructor(
     internal val handle: Long,
@@ -41,7 +41,7 @@ class ProtonDriveClient internal constructor(
     suspend fun getThumbnails(
         fileUids: List<String>,
         type: ThumbnailType,
-        block: (String) -> OutputStream,
+        block: (String) -> WritableByteChannel,
     ): Unit = cancellationCoroutineScope { source ->
         log(INFO, "getThumbnails($type)")
         bridge.getThumbnails(
@@ -52,8 +52,8 @@ class ProtonDriveClient internal constructor(
                 cancellationTokenSourceHandle = source.handle
             }
         ).thumbnailsList.forEach { fileThumbnail ->
-            block(fileThumbnail.fileUid).use { outputStream ->
-                outputStream.write(fileThumbnail.data.toByteArray())
+            block(fileThumbnail.fileUid).use { channel ->
+                channel.write(fileThumbnail.data.asReadOnlyByteBuffer())
             }
         }
     }
