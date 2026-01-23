@@ -8,7 +8,6 @@ import me.proton.drive.sdk.entity.UploadResult
 import me.proton.drive.sdk.internal.CoroutineScopeConsumer
 import me.proton.drive.sdk.internal.JniUploadController
 import me.proton.drive.sdk.internal.toLogId
-import java.io.InputStream
 import java.nio.channels.Channel
 
 class UploadController internal constructor(
