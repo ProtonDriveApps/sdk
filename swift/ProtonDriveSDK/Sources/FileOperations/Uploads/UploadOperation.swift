@@ -11,6 +11,7 @@ public final class UploadOperation: Sendable {
     private let uploadControllerHandle: ObjectHandle
     private let progressCallbackWrapper: ProgressCallbackWrapper
     private let logger: Logger?
+    private let nodeType: NodeType
     private let onOperationCancel: @Sendable () async throws -> Void
     private let onOperationDispose: @Sendable () async -> Void
 
@@ -20,6 +21,7 @@ public final class UploadOperation: Sendable {
          uploadControllerHandle: ObjectHandle,
          progressCallbackWrapper: ProgressCallbackWrapper,
          logger: Logger?,
+         nodeType: NodeType,
          onOperationCancel: @Sendable @escaping () async throws -> Void,
          onOperationDispose: @Sendable @escaping () async -> Void) {
         assert(fileUploaderHandle != 0)
@@ -28,6 +30,7 @@ public final class UploadOperation: Sendable {
         self.uploadControllerHandle = uploadControllerHandle
         self.progressCallbackWrapper = progressCallbackWrapper
         self.logger = logger
+        self.nodeType = nodeType
         self.onOperationCancel = onOperationCancel
         self.onOperationDispose = onOperationDispose
     }
@@ -104,7 +107,7 @@ public final class UploadOperation: Sendable {
                 }
             } catch let isPausedError {
                 logger?.info("Checking isPaused status failed with: \(isPausedError.localizedDescription)",
-                             category: "DownloadOperation")
+                             category: "UploadOperation")
                 if cleanUpTemporaryState {
                     try? await self.cleanUpTemporaryState()
                 }
@@ -156,33 +159,25 @@ public final class UploadOperation: Sendable {
     }
 
     deinit {
-        Self.freeSDKObjects(uploadControllerHandle, fileUploaderHandle, logger, onOperationDispose)
+        Self.freeSDKObjects(uploadControllerHandle, fileUploaderHandle, logger, nodeType, onOperationDispose)
     }
 
     private static func freeSDKObjects(
         _ uploadControllerHandle: ObjectHandle,
         _ fileUploaderHandle: ObjectHandle,
         _ logger: Logger?,
+        _ nodeType: NodeType,
         _ onOperationDispose: @Sendable @escaping () async -> Void
     ) {
         Task {
             await onOperationDispose()
-            await freeFileUploadController(Int64(uploadControllerHandle), logger: logger)
-            await freeFileUploader(Int64(fileUploaderHandle), logger)
-        }
-    }
-
-    private static func freeFileUploadController(_ uploadControllerHandle: Int64, logger: Logger?) async {
-        let freeRequest = Proton_Drive_Sdk_UploadControllerFreeRequest.with {
-            $0.uploadControllerHandle = uploadControllerHandle
-        }
-        do {
-            try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
-        } catch {
-            // If the request to free the file upload controller failed, we have a memory leak, but not much else can be done.
-            // It's not gonna break the app's functionality, so we just log the issue and continue.
-            logger?.error("Proton_Drive_Sdk_UploadControllerFreeRequest failed: \(error)",
-                          category: "UploadController.freeFileUploadController")
+            await freeUploadController(Int64(uploadControllerHandle), logger: logger)
+            switch nodeType {
+            case .file:
+                await freeFileUploader(Int64(fileUploaderHandle), logger)
+            case .photo:
+                await freePhotoUploader(Int64(fileUploaderHandle), logger)
+            }
         }
     }
 
@@ -198,6 +193,35 @@ public final class UploadOperation: Sendable {
             // It's not gonna break the app's functionality, so we just log the issue and continue.
             logger?.error("Proton_Drive_Sdk_FileUploaderFreeRequest failed: \(error)",
                           category: "UploadManager.freeFileUploader")
+        }
+    }
+
+    /// Free a photo uploader when no longer needed
+    private static func freePhotoUploader(_ photoUploaderHandle: Int64, _ logger: Logger?) async {
+        let freeRequest = Proton_Drive_Sdk_DrivePhotosClientUploaderFreeRequest.with {
+            $0.fileUploaderHandle = photoUploaderHandle
+        }
+        do {
+            try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
+        } catch {
+            // If the request to free the uploader failed, we have a memory leak, but not much else can be done.
+            // It's not gonna break the app's functionality, so we just log the issue and continue.
+            logger?.error("Proton_Drive_Sdk_DrivePhotosClientUploaderFreeRequest failed: \(error)",
+                          category: "UploadManager.freeFileUploader")
+        }
+    }
+
+    private static func freeUploadController(_ uploadControllerHandle: Int64, logger: Logger?) async {
+        let freeRequest = Proton_Drive_Sdk_UploadControllerFreeRequest.with {
+            $0.uploadControllerHandle = uploadControllerHandle
+        }
+        do {
+            try await SDKRequestHandler.send(freeRequest, logger: logger) as Void
+        } catch {
+            // If the request to free the file upload controller failed, we have a memory leak, but not much else can be done.
+            // It's not gonna break the app's functionality, so we just log the issue and continue.
+            logger?.error("Proton_Drive_Sdk_UploadControllerFreeRequest failed: \(error)",
+                          category: "UploadController.freeFileUploadController")
         }
     }
 }
