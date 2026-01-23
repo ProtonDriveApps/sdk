@@ -9,6 +9,7 @@ import me.proton.core.network.data.ProtonErrorException
 import me.proton.core.network.domain.ApiResult
 import me.proton.drive.sdk.HttpSdkApi
 import me.proton.drive.sdk.extension.read
+import me.proton.drive.sdk.extension.readAsStream
 import okhttp3.ResponseBody
 import proton.sdk.ProtonSdk
 import proton.sdk.ProtonSdk.HttpRequest
@@ -115,9 +116,7 @@ internal class ApiProviderBridge(
             header.name to header.valuesList.joinToString(",")
         }
         val body = if (request.isUploadBlock) {
-            httpStream.read(request)
-            // TODO: no working yet request is seen in the log but not send
-            //httpStream.readAsStream(request)
+            httpStream.readAsStream(request)
         } else {
             httpStream.read(request)
         }
