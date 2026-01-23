@@ -5,6 +5,8 @@ using Proton.Drive.Sdk.Nodes;
 using Proton.Photos.Sdk.Api;
 using Proton.Photos.Sdk.Caching;
 using Proton.Photos.Sdk.Nodes;
+using Proton.Photos.Sdk.Nodes.Download;
+using Proton.Photos.Sdk.Nodes.Upload;
 using Proton.Sdk;
 using Proton.Sdk.Caching;
 using Proton.Sdk.Http;
@@ -56,6 +58,16 @@ public sealed class ProtonPhotosClient : IDisposable
 
     internal ProtonDriveClient DriveClient { get; }
 
+    public static ValueTask<PhotosFileUploader> GetFileUploaderAsync(string name, PhotosFileUploadMetadata metadata, CancellationToken cancellationToken)
+    {
+        throw new NotSupportedException();
+    }
+
+    public static ValueTask<IReadOnlyList<string>> FindDuplicatesAsync(string name, Action<string> generateSha1, CancellationToken cancellationToken)
+    {
+        throw new NotSupportedException();
+    }
+
     [Experimental("Photos")]
     public ValueTask<FolderNode> GetPhotosRootAsync(CancellationToken cancellationToken)
     {
@@ -76,9 +88,9 @@ public sealed class ProtonPhotosClient : IDisposable
         return PhotosNodeOperations.EnumeratePhotosTimelineAsync(this, uid, cancellationToken);
     }
 
-    public async ValueTask<PhotosDownloader> GetPhotosDownloaderAsync(NodeUid photoUid, CancellationToken cancellationToken)
+    public async ValueTask<PhotosFileDownloader> GetPhotosDownloaderAsync(NodeUid photoUid, CancellationToken cancellationToken)
     {
-        return await PhotosDownloader.CreateAsync(this, photoUid, cancellationToken).ConfigureAwait(false);
+        return await PhotosFileDownloader.CreateAsync(this, photoUid, cancellationToken).ConfigureAwait(false);
     }
 
     public IAsyncEnumerable<FileThumbnail> EnumeratePhotosThumbnailsAsync(

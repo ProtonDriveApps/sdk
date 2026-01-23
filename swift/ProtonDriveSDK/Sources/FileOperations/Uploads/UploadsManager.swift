@@ -208,6 +208,7 @@ extension UploadsManager {
             uploadControllerHandle: uploadControllerHandle,
             progressCallbackWrapper: callbackState,
             logger: logger,
+            nodeType: .file,
             onOperationCancel: { [weak self] in
                 guard let self else { return }
                 try await self.cancelUpload(with: cancellationToken)

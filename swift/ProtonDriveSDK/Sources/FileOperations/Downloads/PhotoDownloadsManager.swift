@@ -53,7 +53,7 @@ actor PhotoDownloadsManager {
             downloadControllerHandle: downloadControllerHandle,
             progressCallbackWrapper: callbackState,
             logger: logger,
-            downloaderType: .photo,
+            nodeType: .photo,
             onOperationCancel: { [weak self] in
                 guard let self else { return }
                 try await self.cancelDownload(with: cancellationToken)
