@@ -1,0 +1,29 @@
+diff --git a/node_modules/@protontech/pmcrypto/lib/openpgp.ts b/node_modules/@protontech/pmcrypto/lib/openpgp.ts
+index 134ae5b..3b2b952 100644
+--- a/node_modules/@protontech/pmcrypto/lib/openpgp.ts
++++ b/node_modules/@protontech/pmcrypto/lib/openpgp.ts
+@@ -1,4 +1,4 @@
+-import { config } from 'openpgp/lightweight';
++import { config } from 'openpgp';
+ 
+ export const setConfig = () => {
+     config.s2kIterationCountByte = 255;
+@@ -31,4 +31,4 @@ export const setConfig = () => {
+     config.enableParsingV5Entities = true;
+ };
+ 
+-export * from 'openpgp/lightweight';
++export * from 'openpgp';
+diff --git a/node_modules/@protontech/pmcrypto/lib/pmcrypto.d.ts b/node_modules/@protontech/pmcrypto/lib/pmcrypto.d.ts
+index 49868bb..dd8e986 100644
+--- a/node_modules/@protontech/pmcrypto/lib/pmcrypto.d.ts
++++ b/node_modules/@protontech/pmcrypto/lib/pmcrypto.d.ts
+@@ -19,7 +19,7 @@ import {
+     readKey, readKeys, readPrivateKey, readPrivateKeys,
+     type PartialConfig,
+     type AlgorithmInfo
+-} from 'openpgp/lightweight';
++} from 'openpgp';
+ 
+ import { VERIFICATION_STATUS, SIGNATURE_TYPES } from './constants';
+ import type { ContextSigningOptions, ContextVerificationOptions } from './message/context';
