@@ -9,7 +9,7 @@ import me.proton.drive.sdk.internal.cancellationCoroutineScope
 import me.proton.drive.sdk.internal.factory
 import me.proton.drive.sdk.internal.toLogId
 import proton.drive.sdk.drivePhotosClientEnumeratePhotosThumbnailsRequest
-import java.io.OutputStream
+import java.nio.channels.WritableByteChannel
 
 class ProtonPhotosClient internal constructor(
     internal val handle: Long,
@@ -20,7 +20,7 @@ class ProtonPhotosClient internal constructor(
     suspend fun getThumbnails(
         photoUids: List<String>,
         type: ThumbnailType,
-        block: (String) -> OutputStream,
+        block: (String) -> WritableByteChannel,
     ): Unit = cancellationCoroutineScope { source ->
         log(INFO, "getThumbnails($type)")
         bridge.getThumbnails(
@@ -32,7 +32,7 @@ class ProtonPhotosClient internal constructor(
             }
         ).thumbnailsList.forEach { photoThumbnail ->
             block(photoThumbnail.fileUid).use { outputStream ->
-                outputStream.write(photoThumbnail.data.toByteArray())
+                outputStream.write(photoThumbnail.data.asReadOnlyByteBuffer())
             }
         }
     }
