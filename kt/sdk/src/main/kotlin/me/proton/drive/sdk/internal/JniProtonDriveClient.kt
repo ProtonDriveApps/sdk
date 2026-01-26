@@ -60,8 +60,8 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
                     cancellationAction = JniJob.getCancelPointer()
                 }
                 accountRequestAction = ProtonDriveSdkNativeClient.getAccountRequestPointer()
-                entityCachePath = request.entityCachePath
-                secretCachePath = request.secretCachePath
+                request.entityCachePath?.let { entityCachePath = it }
+                request.secretCachePath?.let { secretCachePath = it }
                 telemetry = telemetry {
                     loggerProviderHandle = request.loggerProvider.handle
                     recordMetricAction = ProtonDriveSdkNativeClient.getRecordMetricPointer()
