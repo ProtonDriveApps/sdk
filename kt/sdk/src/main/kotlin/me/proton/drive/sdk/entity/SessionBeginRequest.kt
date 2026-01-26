@@ -6,6 +6,6 @@ data class SessionBeginRequest(
     val username: String,
     val password: String,
     val appVersion: String,
-    val secretCache: File,
     val options: ProtonClientOptions,
+    val secretCachePath: String? = null,
 )

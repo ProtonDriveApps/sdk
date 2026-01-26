@@ -8,6 +8,6 @@ fun SessionBeginRequest.toProtobuf(cancellationTokenSourceHandle: Long) = sessio
     this@sessionBeginRequest.password = this@toProtobuf.password
     appVersion = this@toProtobuf.appVersion
     options = this@toProtobuf.options.toProtobuf()
-    secretCachePath = secretCache.path
+    this@toProtobuf.secretCachePath?.let { secretCachePath = it }
     this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
 }
