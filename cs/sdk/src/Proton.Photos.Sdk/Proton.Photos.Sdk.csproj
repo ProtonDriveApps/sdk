@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Proton.Drive.Sdk\Proton.Drive.Sdk.csproj" />
+    <ProjectReference Include="..\Proton.Drive.Sdk\Proton.Drive.Sdk.csproj" />
   </ItemGroup>
 
 </Project>

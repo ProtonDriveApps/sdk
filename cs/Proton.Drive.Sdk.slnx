@@ -1,0 +1,33 @@
+<Solution>
+  <Folder Name="/CLI/">
+    <Project Path="cli/src/Proton.Drive.CLI.csproj" />
+  </Folder>
+  <Folder Name="/Configuration/">
+    <File Path=".editorconfig" />
+    <File Path=".globalconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/SDK Benchmarks/">
+    <Project Path="sdk/benchmarks/Proton.Sdk.Benchmarks/Proton.Sdk.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/SDK Tests/">
+    <Project Path="sdk/tests/Proton.Drive.Sdk.Tests/Proton.Drive.Sdk.Tests.csproj" />
+    <Project Path="sdk/tests/Proton.Sdk.CExports.Tests/Proton.Sdk.CExports.Tests.csproj" />
+    <Project Path="sdk/tests/Proton.Sdk.Tests/Proton.Sdk.Tests.csproj" />
+  </Folder>
+  <Folder Name="/SDK/">
+    <File Path="sdk/src/.globalconfig" />
+    <Project Path="sdk/src/Proton.Drive.Sdk.CExports/Proton.Drive.Sdk.CExports.csproj" />
+    <Project Path="sdk/src/Proton.Drive.Sdk/Proton.Drive.Sdk.csproj" />
+    <Project Path="sdk/src/Proton.Photos.Sdk/Proton.Photos.Sdk.csproj" />
+    <Project Path="sdk/src/Proton.Sdk.CExports/Proton.Sdk.CExports.csproj" />
+    <Project Path="sdk/src/Proton.Sdk/Proton.Sdk.csproj" />
+  </Folder>
+  <Folder Name="/SDK/Headers/">
+    <File Path="headers/module.modulemap" />
+    <File Path="headers/proton_drive_sdk.h" />
+    <File Path="headers/proton_sdk.h" />
+  </Folder>
+</Solution>
