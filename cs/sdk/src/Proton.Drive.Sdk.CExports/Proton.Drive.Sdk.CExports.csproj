@@ -22,7 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Proton.Drive.Sdk\Proton.Drive.Sdk.csproj" />
     <ProjectReference Include="..\Proton.Sdk.CExports\Proton.Sdk.CExports.csproj" />
-    <ProjectReference Include="..\Proton.Photos.Sdk\Proton.Photos.Sdk\Proton.Photos.Sdk.csproj" />
+    <ProjectReference Include="..\Proton.Photos.Sdk\Proton.Photos.Sdk.csproj" />
   </ItemGroup>
 
   <ItemGroup>
