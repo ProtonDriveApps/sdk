@@ -1,7 +1,6 @@
 package me.proton.drive.sdk.internal
 
-import me.proton.drive.sdk.entity.FileRevisionUploaderRequest
-import me.proton.drive.sdk.entity.FileUploaderRequest
+import me.proton.drive.sdk.entity.PhotosUploaderRequest
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.toLongResponse
@@ -9,29 +8,24 @@ import me.proton.drive.sdk.extension.toProtobuf
 import proton.drive.sdk.ProtonDriveSdk
 import proton.drive.sdk.ProtonDriveSdk.ThumbnailType.THUMBNAIL_TYPE_PREVIEW
 import proton.drive.sdk.ProtonDriveSdk.ThumbnailType.THUMBNAIL_TYPE_THUMBNAIL
-import proton.drive.sdk.fileUploaderFreeRequest
+import proton.drive.sdk.drivePhotosClientFindDuplicatesRequest
+import proton.drive.sdk.drivePhotosClientUploadFromStreamRequest
+import proton.drive.sdk.drivePhotosClientUploaderFreeRequest
 import proton.drive.sdk.request
 import proton.drive.sdk.thumbnail
-import proton.drive.sdk.uploadFromStreamRequest
 import java.nio.ByteBuffer
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.forEach
 
-class JniUploader internal constructor() : JniBaseProtonDriveSdk() {
+class JniPhotosUploader internal constructor() : JniBaseProtonDriveSdk() {
 
-    suspend fun getFile(
+    suspend fun getPhoto(
         clientHandle: Long,
         cancellationTokenSourceHandle: Long,
-        request: FileUploaderRequest,
-    ): Long = executeOnce("getFile", LongResponseCallback) {
-        driveClientGetFileUploader =
-            request.toProtobuf(clientHandle, cancellationTokenSourceHandle)
-    }
-
-    suspend fun getFileRevision(
-        clientHandle: Long,
-        cancellationTokenSourceHandle: Long,
-        request: FileRevisionUploaderRequest,
-    ): Long = executeOnce("getFileRevision", LongResponseCallback) {
-        driveClientGetFileRevisionUploader =
+        request: PhotosUploaderRequest,
+    ): Long = executeOnce("getPhoto", LongResponseCallback) {
+        drivePhotosClientGetPhotoUploader =
             request.toProtobuf(clientHandle, cancellationTokenSourceHandle)
     }
 
@@ -55,7 +49,7 @@ class JniUploader internal constructor() : JniBaseProtonDriveSdk() {
         },
         requestBuilder = { nativeClient ->
             request {
-                uploadFromStream = uploadFromStreamRequest {
+                drivePhotosClientUploadFromStream = drivePhotosClientUploadFromStreamRequest {
                     this.uploaderHandle = uploaderHandle
                     this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
                     readAction = ProtonDriveSdkNativeClient.getReadPointer()
@@ -74,10 +68,23 @@ class JniUploader internal constructor() : JniBaseProtonDriveSdk() {
             }
         }
     )
-
+/*
+    suspend fun findDuplicates(
+        clientHandle: Long,
+        cancellationTokenSourceHandle: Long,
+    ): Long = executeOnce("findDuplicates", LongResponseCallback) {
+        drivePhotosClientFindDuplicates = drivePhotosClientFindDuplicatesRequest {
+            this.name = ""
+            this.clientHandle = clientHandle
+            this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
+            this.generateSha1Function =
+        }
+    }
+*/
     fun free(handle: Long) {
         dispatch("free") {
-            fileUploaderFree = fileUploaderFreeRequest { fileUploaderHandle = handle }
+            drivePhotosClientUploaderFree =
+                drivePhotosClientUploaderFreeRequest { fileUploaderHandle = handle }
         }
         releaseAll()
     }
