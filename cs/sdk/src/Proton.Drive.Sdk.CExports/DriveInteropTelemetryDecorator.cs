@@ -21,6 +21,7 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
         {
             UploadEvent me => GetUploadEventPayload(me),
             DownloadEvent me => GetDownloadEventPayload(me),
+            DecryptionErrorEvent me => GetDecryptionErrorPayload(me),
 
             // FIXME support error metrics
             _ => null,
@@ -75,6 +76,28 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
         if (me.OriginalError is not null)
         {
             payload.OriginalError = me.OriginalError;
+        }
+
+        return payload;
+    }
+
+    private static DecryptionErrorEventPayload GetDecryptionErrorPayload(DecryptionErrorEvent me)
+    {
+        var payload = new DecryptionErrorEventPayload
+        {
+            VolumeType = (VolumeType)me.VolumeType,
+            Field = (EncryptedField)me.Field,
+            Uid = me.Uid,
+        };
+
+        if (me.FromBefore2024.HasValue)
+        {
+            payload.FromBefore2024 = me.FromBefore2024.Value;
+        }
+
+        if (me.Error is not null)
+        {
+            payload.Error = me.Error;
         }
 
         return payload;
