@@ -12,10 +12,7 @@ internal sealed partial class RevisionReader : IDisposable
     public const int DefaultBlockPageSize = 10;
 
     private readonly ProtonDriveClient _client;
-    private readonly PgpPrivateKey _nodeKey;
-    private readonly RevisionUid _revisionUid;
-    private readonly PgpSessionKey _contentKey;
-    private readonly BlockListingRevisionDto _revisionDto;
+    private readonly DownloadState _state;
     private readonly Action<int> _releaseBlockListingAction;
     private readonly Action _releaseFileSemaphoreAction;
     private readonly int _blockPageSize;
@@ -23,23 +20,15 @@ internal sealed partial class RevisionReader : IDisposable
 
     private bool _fileSemaphoreReleased;
 
-    private long _totalProgress;
-
     internal RevisionReader(
         ProtonDriveClient client,
-        RevisionUid revisionUid,
-        PgpPrivateKey nodeKey,
-        PgpSessionKey contentKey,
-        BlockListingRevisionDto revisionDto,
+        DownloadState state,
         Action<int> releaseBlockListingAction,
         Action releaseFileSemaphoreAction,
         int blockPageSize = DefaultBlockPageSize)
     {
         _client = client;
-        _nodeKey = nodeKey;
-        _revisionUid = revisionUid;
-        _contentKey = contentKey;
-        _revisionDto = revisionDto;
+        _state = state;
         _releaseBlockListingAction = releaseBlockListingAction;
         _releaseFileSemaphoreAction = releaseFileSemaphoreAction;
         _blockPageSize = blockPageSize;
@@ -61,7 +50,11 @@ internal sealed partial class RevisionReader : IDisposable
 
             await using (manifestStream)
             {
-                if (_revisionDto.Thumbnails is { } thumbnails)
+                var downloadedBlockDigests = _state.GetDownloadedBlockDigests();
+                var revisionDto = _state.RevisionDto;
+
+                // Write thumbnail digests to manifest (if any and on first call)
+                if (revisionDto.Thumbnails is { } thumbnails && downloadedBlockDigests.Count == 0)
                 {
                     foreach (var sha256Digest in thumbnails.OrderBy(t => t.Type).Select(x => x.HashDigest))
                     {
@@ -69,11 +62,19 @@ internal sealed partial class RevisionReader : IDisposable
                     }
                 }
 
+                // Write already-downloaded block digests to manifest (for resumed downloads)
+                foreach (var digest in downloadedBlockDigests)
+                {
+                    manifestStream.Write(digest.Span);
+                }
+
                 try
                 {
                     try
                     {
-                        await foreach (var (block, _) in GetBlocksAsync(cancellationToken).ConfigureAwait(false))
+                        var startBlockIndex = _state.GetNextBlockIndexToDownload();
+
+                        await foreach (var (block, _) in GetBlocksAsync(startBlockIndex, cancellationToken).ConfigureAwait(false))
                         {
                             if (!_client.BlockDownloader.Queue.TryStartBlock())
                             {
@@ -107,8 +108,11 @@ internal sealed partial class RevisionReader : IDisposable
                 {
                     try
                     {
+                        await Task.WhenAll(downloadTasks).ConfigureAwait(false);
+                    }
+                    catch
+                    {
                         // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
-                        await Task.WhenAll(downloadTasks).ContinueWith(task => task.Exception?.Handle(_ => true), TaskContinuationOptions.NotOnRanToCompletion).ConfigureAwait(false);
                     }
                     finally
                     {
@@ -124,10 +128,12 @@ internal sealed partial class RevisionReader : IDisposable
 
                 if (manifestVerificationStatus is not PgpVerificationStatus.Ok)
                 {
-                    LogFailedManifestVerification(_revisionUid, manifestVerificationStatus);
+                    LogFailedManifestVerification(_state.Uid, manifestVerificationStatus);
 
                     throw new CompletedDownloadManifestVerificationException("File authenticity check failed");
                 }
+
+                _state.SetIsCompleted();
             }
         }
         catch (Exception ex) when (!cancellationToken.IsCancellationRequested && TelemetryErrorResolver.GetDownloadErrorFromException(ex) is { } error)
@@ -179,15 +185,17 @@ internal sealed partial class RevisionReader : IDisposable
 
             try
             {
+                _state.AddDownloadedBlockDigest(downloadResult.Sha256Digest);
+
                 manifestStream.Write(downloadResult.Sha256Digest.Span);
 
                 downloadedStream.Seek(0, SeekOrigin.Begin);
 
                 await downloadedStream.CopyToAsync(outputStream, cancellationToken).ConfigureAwait(false);
 
-                _totalProgress += downloadedStream.Length;
+                _state.AddNumberOfBytesWritten(downloadedStream.Length);
 
-                onProgress(_totalProgress, _revisionDto.Size);
+                onProgress(_state.GetNumberOfBytesWritten(), _state.RevisionDto.Size);
             }
             finally
             {
@@ -205,27 +213,39 @@ internal sealed partial class RevisionReader : IDisposable
         var blockOutputStream = ProtonDriveClient.MemoryStreamManager.GetStream();
 
         var hashDigest = await _client.BlockDownloader.DownloadAsync(
-            _revisionUid,
+            _state.Uid,
             block.Index,
             block.BareUrl,
             block.Token,
-            _contentKey,
+            _state.ContentKey,
             blockOutputStream,
             cancellationToken).ConfigureAwait(false);
 
-        return new BlockDownloadResult(block.Index, blockOutputStream, hashDigest);
+        return new BlockDownloadResult(blockOutputStream, hashDigest);
     }
 
-    private async IAsyncEnumerable<(BlockDto Value, bool IsLast)> GetBlocksAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+    private async IAsyncEnumerable<(BlockDto Value, bool IsLast)> GetBlocksAsync(
+        int startBlockIndex,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         try
         {
             var mustTryNextPageOfBlocks = true;
-            var nextExpectedIndex = 1;
+            var nextExpectedIndex = startBlockIndex;
             var outstandingBlock = default(BlockDto);
             var currentPageBlocks = new List<BlockDto>(_blockPageSize);
 
-            var revisionDto = _revisionDto;
+            // Fetch the first page of blocks starting from the desired index
+            var revisionResponse = await _client.Api.Files.GetRevisionAsync(
+                _state.Uid.NodeUid.VolumeId,
+                _state.Uid.NodeUid.LinkId,
+                _state.Uid.RevisionId,
+                startBlockIndex,
+                _blockPageSize,
+                withoutBlockUrls: false,
+                cancellationToken).ConfigureAwait(false);
+
+            var revisionDto = revisionResponse.Revision;
 
             while (mustTryNextPageOfBlocks)
             {
@@ -255,7 +275,7 @@ internal sealed partial class RevisionReader : IDisposable
 
                     if (block.Index != nextExpectedIndex)
                     {
-                        LogMissingBlock(block.Index, _revisionUid);
+                        LogMissingBlock(block.Index, _state.Uid);
 
                         throw new ProtonDriveException("File contents are incomplete");
                     }
@@ -267,11 +287,11 @@ internal sealed partial class RevisionReader : IDisposable
 
                 if (mustTryNextPageOfBlocks)
                 {
-                    var revisionResponse =
+                    revisionResponse =
                         await _client.Api.Files.GetRevisionAsync(
-                            _revisionUid.NodeUid.VolumeId,
-                            _revisionUid.NodeUid.LinkId,
-                            _revisionUid.RevisionId,
+                            _state.Uid.NodeUid.VolumeId,
+                            _state.Uid.NodeUid.LinkId,
+                            _state.Uid.RevisionId,
                             lastKnownIndex + 1,
                             _blockPageSize,
                             false,
@@ -296,21 +316,21 @@ internal sealed partial class RevisionReader : IDisposable
 
     private async Task<PgpVerificationStatus> VerifyManifestAsync(Stream manifestStream, CancellationToken cancellationToken)
     {
-        if (_revisionDto.ManifestSignature is null)
+        if (_state.RevisionDto.ManifestSignature is null)
         {
             return PgpVerificationStatus.NotSigned;
         }
 
-        var verificationKeys = string.IsNullOrEmpty(_revisionDto.SignatureEmailAddress)
-            ? [_nodeKey.ToPublic()]
-            : await _client.Account.GetAddressPublicKeysAsync(_revisionDto.SignatureEmailAddress, cancellationToken).ConfigureAwait(false);
+        var verificationKeys = string.IsNullOrEmpty(_state.RevisionDto.SignatureEmailAddress)
+            ? [_state.NodeKey.ToPublic()]
+            : await _client.Account.GetAddressPublicKeysAsync(_state.RevisionDto.SignatureEmailAddress, cancellationToken).ConfigureAwait(false);
 
         if (verificationKeys.Count == 0)
         {
             return PgpVerificationStatus.NoVerifier;
         }
 
-        var verificationResult = new PgpKeyRing(verificationKeys).Verify(manifestStream, _revisionDto.ManifestSignature.Value);
+        var verificationResult = new PgpKeyRing(verificationKeys).Verify(manifestStream, _state.RevisionDto.ManifestSignature.Value);
 
         return verificationResult.Status;
     }
@@ -321,10 +341,5 @@ internal sealed partial class RevisionReader : IDisposable
     [LoggerMessage(Level = LogLevel.Warning, Message = "Manifest verification failed for revision \"{RevisionUid}\": {VerificationStatus}")]
     private partial void LogFailedManifestVerification(RevisionUid revisionUid, PgpVerificationStatus verificationStatus);
 
-    private readonly struct BlockDownloadResult(int index, Stream stream, ReadOnlyMemory<byte> sha256Digest)
-    {
-        public int Index { get; } = index;
-        public Stream Stream { get; } = stream;
-        public ReadOnlyMemory<byte> Sha256Digest { get; } = sha256Digest;
-    }
+    private readonly record struct BlockDownloadResult(Stream Stream, ReadOnlyMemory<byte> Sha256Digest);
 }

@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
+using Proton.Drive.Sdk.Telemetry;
+using Proton.Sdk.Telemetry;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 
@@ -19,16 +21,14 @@ public sealed partial class FileDownloader : IFileDownloader
 
     public DownloadController DownloadToStream(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
     {
-        var task = DownloadToStreamAsync(contentOutputStream, onProgress, cancellationToken);
-
-        return new DownloadController(task);
+        return BuildDownloadController(contentOutputStream, ownsOutputStream: false, onProgress, cancellationToken);
     }
 
     public DownloadController DownloadToFile(string filePath, Action<long, long> onProgress, CancellationToken cancellationToken)
     {
-        var task = DownloadToFileAsync(filePath, onProgress, cancellationToken);
+        var contentOutputStream = File.Open(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
 
-        return new DownloadController(task);
+        return BuildDownloadController(contentOutputStream, ownsOutputStream: true, onProgress, cancellationToken);
     }
 
     public void Dispose()
@@ -58,21 +58,101 @@ public sealed partial class FileDownloader : IFileDownloader
     [LoggerMessage(Level = LogLevel.Trace, Message = "Released {Count} from block listing semaphore for revision \"{RevisionUid}\"")]
     private static partial void LogReleasedBlockListingSemaphore(ILogger logger, RevisionUid revisionUid, int count);
 
-    private async Task DownloadToStreamAsync(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to record telemetry event")]
+    private static partial void LogTelemetryEventFailed(ILogger logger, Exception exception);
+
+    private async Task DownloadToStreamAsync(
+        Stream contentOutputStream,
+        Action<long, long> onProgress,
+        TaskCompletionSource<DownloadState> downloadStateTaskCompletionSource,
+        CancellationToken cancellationToken)
     {
-        using var revisionReader = await RevisionOperations.OpenForReadingAsync(_client, _revisionUid, ReleaseBlockListing, cancellationToken)
-            .ConfigureAwait(false);
+        if (!downloadStateTaskCompletionSource.Task.IsCompletedSuccessfully)
+        {
+            var state = await RevisionOperations.CreateDownloadStateAsync(
+                    _client,
+                    _revisionUid,
+                    ReleaseBlockListing,
+                    cancellationToken).ConfigureAwait(false);
+
+            downloadStateTaskCompletionSource.SetResult(state);
+        }
+
+        var downloadState = downloadStateTaskCompletionSource.Task.Result;
+
+        if (downloadState.GetNumberOfBytesWritten() > 0)
+        {
+            if (!contentOutputStream.CanSeek)
+            {
+                throw new InvalidOperationException("Cannot resume download to a non-seekable stream");
+            }
+
+            contentOutputStream.Seek(downloadState.GetNumberOfBytesWritten(), SeekOrigin.Begin);
+        }
+
+        await _client.BlockDownloader.Queue.StartFileAsync(cancellationToken).ConfigureAwait(false);
+
+        using var revisionReader = RevisionOperations.OpenForReading(_client, downloadState, ReleaseBlockListing);
 
         await revisionReader.ReadAsync(contentOutputStream, onProgress, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task DownloadToFileAsync(string filePath, Action<long, long> onProgress, CancellationToken cancellationToken)
+    private DownloadController BuildDownloadController(
+        Stream contentOutputStream,
+        bool ownsOutputStream,
+        Action<long, long> onProgress,
+        CancellationToken cancellationToken)
     {
-        var contentOutputStream = File.Open(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+        var taskControl = new TaskControl(cancellationToken);
 
-        await using (contentOutputStream.ConfigureAwait(false))
+        var downloadStateTaskCompletionSource = new TaskCompletionSource<DownloadState>();
+
+        var downloadEvent = new DownloadEvent
         {
-            await DownloadToStreamAsync(contentOutputStream, onProgress, cancellationToken).ConfigureAwait(false);
+            DownloadedSize = 0,
+            VolumeType = VolumeType.OwnVolume, // FIXME: figure out how to get the actual volume type
+        };
+
+        var downloadFunction = (CancellationToken ct) => DownloadToStreamAsync(
+            contentOutputStream,
+            onProgress,
+            downloadStateTaskCompletionSource,
+            ct);
+
+        var downloadController = new DownloadController(
+            downloadStateTaskCompletionSource.Task,
+            downloadFunction.Invoke(taskControl.PauseOrCancellationToken),
+            downloadFunction,
+            ownsOutputStream ? contentOutputStream : null,
+            taskControl);
+
+        downloadController.DownloadFailed += ex =>
+        {
+            downloadEvent.Error = TelemetryErrorResolver.GetDownloadErrorFromException(ex);
+            downloadEvent.OriginalError = ex.GetBaseException().ToString();
+            RaiseTelemetryEvent(downloadEvent);
+        };
+
+        downloadController.DownloadSucceeded += downloadedByteCount =>
+        {
+            // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize
+            downloadEvent.DownloadedSize = downloadedByteCount;
+            downloadEvent.ApproximateDownloadedSize = Privacy.ReduceSizePrecision(downloadedByteCount);
+            RaiseTelemetryEvent(downloadEvent);
+        };
+
+        return downloadController;
+    }
+
+    private void RaiseTelemetryEvent(DownloadEvent downloadEvent)
+    {
+        try
+        {
+            _client.Telemetry.RecordMetric(downloadEvent);
+        }
+        catch (Exception ex)
+        {
+            LogTelemetryEventFailed(_logger, ex);
         }
     }
 
