@@ -2,6 +2,8 @@ using Microsoft.Extensions.Logging;
 using Proton.Drive.Sdk;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Download;
+using Proton.Drive.Sdk.Telemetry;
+using Proton.Sdk.Telemetry;
 
 namespace Proton.Photos.Sdk.Nodes.Download;
 
@@ -23,16 +25,13 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
 
     public DownloadController DownloadToStream(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
     {
-        var task = DownloadToStreamAsync(contentOutputStream, onProgress, cancellationToken);
-
-        return new DownloadController(task);
+        return DownloadToStream(contentOutputStream, ownsOutputStream: false, onProgress, cancellationToken);
     }
 
     public DownloadController DownloadToFile(string filePath, Action<long, long> onProgress, CancellationToken cancellationToken)
     {
-        var task = DownloadToFileAsync(filePath, onProgress, cancellationToken);
-
-        return new DownloadController(task);
+        var stream = File.Open(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+        return DownloadToStream(stream, ownsOutputStream: true, onProgress, cancellationToken);
     }
 
     public void Dispose()
@@ -59,7 +58,14 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
     [LoggerMessage(Level = LogLevel.Trace, Message = "Released {Decrement} from block listing semaphore for photo {PhotoUid}")]
     private static partial void LogReleasedBlockListingSemaphore(ILogger logger, NodeUid photoUid, int decrement);
 
-    private async Task DownloadToStreamAsync(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to record telemetry event")]
+    private static partial void LogTelemetryEventFailed(ILogger logger, Exception exception);
+
+    private async Task DownloadToStreamAsync(
+        Stream contentOutputStream,
+        Action<long, long> onProgress,
+        TaskCompletionSource<DownloadState> downloadStateTaskCompletionSource,
+        CancellationToken cancellationToken)
     {
         var result = await _client.GetNodeAsync(_photoUid, cancellationToken).ConfigureAwait(false);
 
@@ -68,23 +74,82 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
             throw new ProtonDriveException($"Revision not found for photo with ID {_photoUid}");
         }
 
-        using var revisionReader = await RevisionOperations.OpenForReadingAsync(
+        if (!downloadStateTaskCompletionSource.Task.IsCompletedSuccessfully)
+        {
+            var state = await RevisionOperations.CreateDownloadStateAsync(
                 _client.DriveClient,
                 fileNode.ActiveRevision.Uid,
                 ReleaseBlockListing,
-                cancellationToken)
-            .ConfigureAwait(false);
+                cancellationToken).ConfigureAwait(false);
+
+            downloadStateTaskCompletionSource.SetResult(state);
+        }
+
+        var downloadState = downloadStateTaskCompletionSource.Task.Result;
+
+        await _client.DriveClient.BlockDownloader.Queue.StartFileAsync(cancellationToken).ConfigureAwait(false);
+
+        using var revisionReader = RevisionOperations.OpenForReading(_client.DriveClient, downloadState, ReleaseBlockListing);
 
         await revisionReader.ReadAsync(contentOutputStream, onProgress, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task DownloadToFileAsync(string filePath, Action<long, long> onProgress, CancellationToken cancellationToken)
+    private DownloadController DownloadToStream(
+        Stream contentOutputStream,
+        bool ownsOutputStream,
+        Action<long, long> onProgress,
+        CancellationToken cancellationToken)
     {
-        var contentOutputStream = File.Open(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+        var taskControl = new TaskControl(cancellationToken);
 
-        await using (contentOutputStream.ConfigureAwait(false))
+        var downloadStateTaskCompletionSource = new TaskCompletionSource<DownloadState>();
+
+        var downloadEvent = new DownloadEvent
         {
-            await DownloadToStreamAsync(contentOutputStream, onProgress, cancellationToken).ConfigureAwait(false);
+            DownloadedSize = 0,
+            VolumeType = VolumeType.Photo,
+        };
+
+        var downloadFunction = (CancellationToken ct) => DownloadToStreamAsync(
+            contentOutputStream,
+            onProgress,
+            downloadStateTaskCompletionSource,
+            ct);
+
+        var downloadController = new DownloadController(
+            downloadStateTaskCompletionSource.Task,
+            downloadFunction.Invoke(taskControl.PauseOrCancellationToken),
+            downloadFunction,
+            ownsOutputStream ? contentOutputStream : null,
+            taskControl);
+
+        downloadController.DownloadFailed += ex =>
+        {
+            downloadEvent.Error = TelemetryErrorResolver.GetDownloadErrorFromException(ex);
+            downloadEvent.OriginalError = ex.GetBaseException().ToString();
+            RaiseTelemetryEvent(downloadEvent);
+        };
+
+        downloadController.DownloadSucceeded += downloadedByteCount =>
+        {
+            // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize
+            downloadEvent.DownloadedSize = downloadedByteCount;
+            downloadEvent.ApproximateDownloadedSize = Privacy.ReduceSizePrecision(downloadedByteCount);
+            RaiseTelemetryEvent(downloadEvent);
+        };
+
+        return downloadController;
+    }
+
+    private void RaiseTelemetryEvent(DownloadEvent downloadEvent)
+    {
+        try
+        {
+            _client.DriveClient.Telemetry.RecordMetric(downloadEvent);
+        }
+        catch (Exception ex)
+        {
+            LogTelemetryEventFailed(_logger, ex);
         }
     }
 

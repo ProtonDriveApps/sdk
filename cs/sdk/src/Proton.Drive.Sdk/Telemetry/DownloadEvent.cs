@@ -10,6 +10,8 @@ public sealed class DownloadEvent : IMetricEvent
 
     public long DownloadedSize { get; set; }
 
+    public long ApproximateDownloadedSize { get; set; }
+
     public long ClaimedFileSize { get; set; }
 
     public DownloadError? Error { get; set; }

@@ -1,18 +1,36 @@
-﻿namespace Proton.Drive.Sdk.Nodes.Download;
+using Proton.Drive.Sdk.Nodes;
+using Proton.Sdk;
 
-public sealed class DownloadController
+namespace Proton.Drive.Sdk.Nodes.Download;
+
+public sealed class DownloadController : IAsyncDisposable
 {
-    private readonly Task _downloadTask;
+    private readonly Task<DownloadState> _downloadStateTask;
+    private readonly Func<CancellationToken, Task> _resumeFunction;
+    private readonly ITaskControl _taskControl;
+    private readonly Stream? _outputStreamToDispose;
+
     private bool _isDownloadCompleteWithVerificationIssue;
 
-    internal DownloadController(Task downloadTask)
+    internal DownloadController(
+        Task<DownloadState> downloadStateTask,
+        Task downloadTask,
+        Func<CancellationToken, Task> resumeFunction,
+        Stream? outputStreamToDispose,
+        ITaskControl taskControl)
     {
-        _downloadTask = downloadTask;
-        Completion = WrapDownloadTaskAsync();
+        _downloadStateTask = downloadStateTask;
+        _resumeFunction = resumeFunction;
+        _taskControl = taskControl;
+        _outputStreamToDispose = outputStreamToDispose;
+
+        Completion = PauseOnResumableErrorAsync(downloadTask);
     }
 
-    // FIXME
-    public bool IsPaused { get; }
+    internal event Action<Exception>? DownloadFailed;
+    internal event Action<long>? DownloadSucceeded;
+
+    public bool IsPaused => _taskControl.IsPaused;
 
     public Task Completion { get; private set; }
 
@@ -21,30 +39,95 @@ public sealed class DownloadController
         return _isDownloadCompleteWithVerificationIssue;
     }
 
-#pragma warning disable S2325 // Methods and properties that don't access instance data should be static: waiting for implementation
     public void Pause()
     {
-        // FIXME
-        throw new NotImplementedException();
+        _taskControl.Pause();
     }
 
     public void Resume()
     {
-        // FIXME
-        throw new NotImplementedException();
-    }
-#pragma warning restore S2325 // Methods and properties that don't access instance data should be static
+        if (!_taskControl.TryResume())
+        {
+            return;
+        }
 
-    private async Task WrapDownloadTaskAsync()
+        Completion = PauseOnResumableErrorAsync(_resumeFunction.Invoke(_taskControl.PauseOrCancellationToken));
+    }
+
+    public async ValueTask DisposeAsync()
     {
         try
         {
-            await _downloadTask.ConfigureAwait(false);
+            try
+            {
+                if (Completion.IsCompletedSuccessfully)
+                {
+                    return;
+                }
+
+                if (Completion.IsFaulted)
+                {
+                    DownloadFailed?.Invoke(Completion.Exception.Flatten().InnerException ?? Completion.Exception);
+                }
+
+                var stateExists = _downloadStateTask.IsCompletedSuccessfully;
+                if (!stateExists)
+                {
+                    return;
+                }
+
+                await _downloadStateTask.Result.DisposeAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                _taskControl.Dispose();
+            }
+        }
+        finally
+        {
+            if (_outputStreamToDispose is not null)
+            {
+                await _outputStreamToDispose.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+    }
+
+    private static bool IsResumableError(Exception ex)
+    {
+        return ex is not DataIntegrityException
+            and not ProtonApiException { TransportCode: >= 400 and < 500 }
+            and not CompletedDownloadManifestVerificationException;
+    }
+
+    private async Task PauseOnResumableErrorAsync(Task downloadTask)
+    {
+        try
+        {
+            await downloadTask.ConfigureAwait(false);
+
+            await RaiseDownloadSucceededAsync().ConfigureAwait(false);
         }
         catch (CompletedDownloadManifestVerificationException error)
         {
             _isDownloadCompleteWithVerificationIssue = true;
-            throw new DataIntegrityException(error.Message);
+            throw new DataIntegrityException(error.Message, error);
         }
+        catch (Exception ex) when (IsResumableError(ex))
+        {
+            _taskControl.Pause();
+            throw;
+        }
+    }
+
+    private async ValueTask RaiseDownloadSucceededAsync()
+    {
+        var onSucceededHandler = DownloadSucceeded;
+        if (onSucceededHandler is null)
+        {
+            return;
+        }
+
+        var downloadState = await _downloadStateTask.ConfigureAwait(false);
+        onSucceededHandler.Invoke(downloadState.GetNumberOfBytesWritten());
     }
 }
