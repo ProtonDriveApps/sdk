@@ -7,11 +7,10 @@ import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
 import me.proton.drive.sdk.entity.FileRevisionUploaderRequest
 import me.proton.drive.sdk.entity.FileUploaderRequest
 import me.proton.drive.sdk.entity.ThumbnailType
+import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.internal.JniUploadController
 import me.proton.drive.sdk.internal.JniFileUploader
 import me.proton.drive.sdk.internal.toLogId
-import java.io.InputStream
-import java.nio.channels.Channels
 import java.nio.channels.ReadableByteChannel
 import java.util.concurrent.atomic.AtomicReference
 
@@ -26,10 +25,10 @@ class FileUploader internal constructor(
         coroutineScope: CoroutineScope,
         channel: ReadableByteChannel,
         thumbnails: Map<ThumbnailType, ByteArray>,
-        progress: suspend (Long, Long) -> Unit,
     ): UploadController = cancellationTokenSource().let { source ->
         log(INFO, "uploadFromStream")
         val coroutineScopeReference = AtomicReference(coroutineScope)
+        val controllerReference = AtomicReference<CommonUploadController>()
         val handle = bridge.uploadFromStream(
             uploaderHandle = handle,
             cancellationTokenSourceHandle = source.handle,
@@ -38,7 +37,7 @@ class FileUploader internal constructor(
             onProgress = { progressUpdate ->
                 with(progressUpdate) {
                     log(DEBUG, "progress: $bytesCompleted/$bytesInTotal")
-                    progress(bytesCompleted, bytesInTotal)
+                    controllerReference.get()?.emitProgress(toEntity())
                 }
             },
             coroutineScopeProvider = coroutineScopeReference::get,
@@ -50,7 +49,7 @@ class FileUploader internal constructor(
             cancellationTokenSource = source,
             channel = channel,
             coroutineScopeConsumer = coroutineScopeReference::set,
-        )
+        ).also(controllerReference::set)
     }
 
     override fun close() = bridge.free(handle)

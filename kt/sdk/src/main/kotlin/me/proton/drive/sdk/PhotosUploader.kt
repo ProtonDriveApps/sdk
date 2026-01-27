@@ -6,11 +6,10 @@ import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
 import me.proton.drive.sdk.entity.PhotosUploaderRequest
 import me.proton.drive.sdk.entity.ThumbnailType
+import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.internal.JniPhotosUploader
 import me.proton.drive.sdk.internal.JniUploadController
 import me.proton.drive.sdk.internal.toLogId
-import java.io.InputStream
-import java.nio.channels.Channels
 import java.nio.channels.ReadableByteChannel
 import java.util.concurrent.atomic.AtomicReference
 
@@ -25,11 +24,11 @@ class PhotosUploader(
         coroutineScope: CoroutineScope,
         channel: ReadableByteChannel,
         thumbnails: Map<ThumbnailType, ByteArray>,
-        progress: suspend (Long, Long) -> Unit
     ): UploadController =
         cancellationTokenSource().let { source ->
             log(INFO, "uploadFromStream")
             val coroutineScopeReference = AtomicReference(coroutineScope)
+            val controllerReference = AtomicReference<CommonUploadController>()
             val handle = bridge.uploadFromStream(
                 uploaderHandle = handle,
                 cancellationTokenSourceHandle = source.handle,
@@ -38,7 +37,7 @@ class PhotosUploader(
                 onProgress = { progressUpdate ->
                     with(progressUpdate) {
                         log(DEBUG, "progress: $bytesCompleted/$bytesInTotal")
-                        progress(bytesCompleted, bytesInTotal)
+                        controllerReference.get()?.emitProgress(toEntity())
                     }
                 },
                 coroutineScopeProvider = coroutineScopeReference::get,
@@ -50,7 +49,7 @@ class PhotosUploader(
                 cancellationTokenSource = source,
                 channel = channel,
                 coroutineScopeConsumer = coroutineScopeReference::set,
-            )
+            ).also(controllerReference::set)
         }
 
     override fun close() = bridge.free(handle)

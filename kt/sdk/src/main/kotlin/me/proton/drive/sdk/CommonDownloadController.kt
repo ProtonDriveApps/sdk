@@ -2,6 +2,7 @@ package me.proton.drive.sdk
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.internal.CoroutineScopeConsumer
@@ -19,6 +20,13 @@ class CommonDownloadController internal constructor(
 ) : SdkNode(downloader), DownloadController {
 
     val isPausedFlow = MutableStateFlow(false)
+
+    private val _progressFlow = MutableStateFlow<ProgressUpdate?>(null)
+    override val progressFlow = _progressFlow.asStateFlow()
+
+    internal suspend fun emitProgress(progress: ProgressUpdate?) {
+        _progressFlow.emit(progress)
+    }
 
     override suspend fun awaitCompletion() {
         log(DEBUG, "await completion")

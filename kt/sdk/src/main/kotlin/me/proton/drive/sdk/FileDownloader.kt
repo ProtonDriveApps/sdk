@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
+import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.internal.JniDownloadController
 import me.proton.drive.sdk.internal.JniFileDownloader
 import me.proton.drive.sdk.internal.factory
@@ -21,10 +22,10 @@ class FileDownloader internal constructor(
     override suspend fun downloadToStream(
         coroutineScope: CoroutineScope,
         channel: WritableByteChannel,
-        progress: suspend (Long, Long) -> Unit,
     ): DownloadController = cancellationTokenSource().let { cancellationTokenSource ->
         log(INFO, "downloadToStream")
         val coroutineScopeReference = AtomicReference(coroutineScope)
+        val controllerReference = AtomicReference<CommonDownloadController>()
         val handle = bridge.downloadToStream(
             handle = handle,
             cancellationTokenSourceHandle = cancellationTokenSource.handle,
@@ -32,7 +33,7 @@ class FileDownloader internal constructor(
             onProgress = { progressUpdate ->
                 with(progressUpdate) {
                     bridge.internalLogger(DEBUG, "progress: $bytesCompleted/$bytesInTotal")
-                    progress(bytesCompleted, bytesInTotal)
+                    controllerReference.get()?.emitProgress(toEntity())
                 }
             },
             coroutineScopeProvider = coroutineScopeReference::get,
@@ -44,7 +45,7 @@ class FileDownloader internal constructor(
             channel = channel,
             cancellationTokenSource = cancellationTokenSource,
             coroutineScopeConsumer = coroutineScopeReference::set,
-        )
+        ).also(controllerReference::set)
     }
 
     override fun close() {
