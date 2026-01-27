@@ -2,13 +2,13 @@ package me.proton.drive.sdk
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.entity.UploadResult
 import me.proton.drive.sdk.internal.CoroutineScopeConsumer
 import me.proton.drive.sdk.internal.JniUploadController
 import me.proton.drive.sdk.internal.toLogId
-import java.io.InputStream
 import java.nio.channels.Channel
 
 class CommonUploadController internal constructor(
@@ -21,6 +21,13 @@ class CommonUploadController internal constructor(
 ) : SdkNode(uploader), UploadController {
 
     val isPausedFlow = MutableStateFlow(false)
+
+    private val _progressFlow = MutableStateFlow<ProgressUpdate?>(null)
+    override val progressFlow = _progressFlow.asStateFlow()
+
+    internal suspend fun emitProgress(progress: ProgressUpdate?) {
+        _progressFlow.emit(progress)
+    }
 
     override suspend fun awaitCompletion(): UploadResult {
         log(DEBUG, "await completion")

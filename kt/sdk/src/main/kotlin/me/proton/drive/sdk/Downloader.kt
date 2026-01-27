@@ -8,6 +8,5 @@ interface Downloader : AutoCloseable, Cancellable {
     suspend fun downloadToStream(
         coroutineScope: CoroutineScope,
         channel: WritableByteChannel,
-        progress: suspend (Long, Long) -> Unit = { _, _ -> },
     ): DownloadController
 }

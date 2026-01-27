@@ -10,6 +10,5 @@ interface Uploader : AutoCloseable, Cancellable {
         coroutineScope: CoroutineScope,
         channel: ReadableByteChannel,
         thumbnails: Map<ThumbnailType, ByteArray> = emptyMap(),
-        progress: suspend (Long, Long) -> Unit = { _, _ -> },
     ): UploadController
 }
