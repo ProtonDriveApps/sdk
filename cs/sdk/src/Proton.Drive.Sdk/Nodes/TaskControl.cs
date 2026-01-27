@@ -1,6 +1,6 @@
 namespace Proton.Drive.Sdk.Nodes;
 
-internal sealed class TaskControl(CancellationToken cancellationToken) : IDisposable
+internal sealed class TaskControl(CancellationToken cancellationToken) : ITaskControl
 {
     private readonly Lock _pauseLock = new();
 

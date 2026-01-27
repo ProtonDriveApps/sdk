@@ -7,7 +7,7 @@ public sealed class UploadController : IAsyncDisposable
 {
     private readonly Task<RevisionDraft> _revisionDraftTask;
     private readonly Func<CancellationToken, Task<UploadResult>> _resumeFunction;
-    private readonly TaskControl _taskControl;
+    private readonly ITaskControl _taskControl;
     private readonly Stream? _sourceStreamToDispose;
 
     private bool _isDisposed;
@@ -17,7 +17,7 @@ public sealed class UploadController : IAsyncDisposable
         Task<UploadResult> uploadTask,
         Func<CancellationToken, Task<UploadResult>> resumeFunction,
         Stream? sourceStreamToDispose,
-        TaskControl taskControl)
+        ITaskControl taskControl)
     {
         _revisionDraftTask = revisionDraftTask;
         _resumeFunction = resumeFunction;

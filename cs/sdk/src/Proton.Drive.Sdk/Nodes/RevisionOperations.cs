@@ -1,4 +1,4 @@
-﻿using Proton.Drive.Sdk.Nodes.Download;
+using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;
 
 namespace Proton.Drive.Sdk.Nodes;
@@ -21,7 +21,7 @@ internal static class RevisionOperations
             client.TargetBlockSize);
     }
 
-    internal static async ValueTask<RevisionReader> OpenForReadingAsync(
+    internal static async ValueTask<DownloadState> CreateDownloadStateAsync(
         ProtonDriveClient client,
         RevisionUid revisionUid,
         Action<int> releaseBlockListingAction,
@@ -45,14 +45,24 @@ internal static class RevisionOperations
             withoutBlockUrls: false,
             cancellationToken).ConfigureAwait(false);
 
-        await client.BlockDownloader.Queue.StartFileAsync(cancellationToken).ConfigureAwait(false);
+        releaseBlockListingAction.Invoke(1);
 
-        return new RevisionReader(
-            client,
+        return new DownloadState(
             revisionUid,
             key,
             contentKey,
             revisionResponse.Revision,
+            client.Telemetry.GetLogger("Download state"));
+    }
+
+    internal static RevisionReader OpenForReading(
+        ProtonDriveClient client,
+        DownloadState downloadState,
+        Action<int> releaseBlockListingAction)
+    {
+        return new RevisionReader(
+            client,
+            downloadState,
             releaseBlockListingAction,
             () => client.BlockDownloader.Queue.FinishFile());
     }
