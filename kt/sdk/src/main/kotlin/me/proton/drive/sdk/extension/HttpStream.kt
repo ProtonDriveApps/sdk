@@ -1,6 +1,5 @@
 package me.proton.drive.sdk.extension
 
-import kotlinx.coroutines.runBlocking
 import me.proton.drive.sdk.internal.HttpStream
 import okhttp3.MediaType
 import okhttp3.RequestBody

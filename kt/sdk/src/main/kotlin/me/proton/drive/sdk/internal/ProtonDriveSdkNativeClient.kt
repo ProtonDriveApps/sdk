@@ -6,6 +6,7 @@ import com.google.protobuf.Int32Value
 import com.google.protobuf.StringValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.isActive
@@ -201,7 +202,7 @@ class ProtonDriveSdkNativeClient internal constructor(
         data: ByteBuffer,
         parser: (ByteBuffer) -> T,
         block: suspend (T) -> R
-    ): R = runBlocking {
+    ): R = runBlocking(Dispatchers.IO) {
         val value = parser(data)
         coroutineScope(operation).async { block(value) }.await()
     }
@@ -212,7 +213,7 @@ class ProtonDriveSdkNativeClient internal constructor(
         sdkHandle: Long,
         block: suspend () -> Response,
     ): Job? = try {
-        coroutineScope(operation).launch {
+        coroutineScope(operation).launch(Dispatchers.IO) {
             try {
                 handleResponse(sdkHandle, block())
             } catch (error: CancellationException) {
