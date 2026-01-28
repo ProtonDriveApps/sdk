@@ -110,7 +110,7 @@ class ProtonDriveClient internal constructor(
 suspend fun Session.protonDriveClientCreate(): ProtonDriveClient = factory(JniProtonDriveClient()) {
     ProtonDriveClient(
         session = this@protonDriveClientCreate,
-        handle = create(handle),
+        handle = createFromSession(sessionHandle = handle),
         bridge = this,
     )
 }

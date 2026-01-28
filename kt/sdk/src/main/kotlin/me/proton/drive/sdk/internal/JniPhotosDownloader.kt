@@ -10,7 +10,7 @@ import proton.drive.sdk.request
 import java.nio.ByteBuffer
 
 class JniPhotosDownloader internal constructor() : JniBaseProtonDriveSdk() {
-    suspend fun create(
+    suspend fun getPhotoDownloader(
         clientHandle: Long,
         cancellationTokenSourceHandle: Long,
         photoUid: String,

@@ -20,7 +20,7 @@ import proton.sdk.telemetry
 
 class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
 
-    suspend fun create(sessionHandle: Long) =
+    suspend fun createFromSession(sessionHandle: Long) =
         executeOnce("createFromSession", LongResponseCallback) {
             drivePhotosClientCreateFromSession = drivePhotosClientCreateFromSessionRequest {
                 this.sessionHandle = sessionHandle

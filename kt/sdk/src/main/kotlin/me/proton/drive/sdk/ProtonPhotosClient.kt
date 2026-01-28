@@ -53,7 +53,7 @@ suspend fun Session.protonPhotosClientCreate(): ProtonPhotosClient =
         val session = this@protonPhotosClientCreate
         ProtonPhotosClient(
             session = session,
-            handle = create(handle),
+            handle = createFromSession(sessionHandle = handle),
             bridge = this,
         )
     }

@@ -8,7 +8,6 @@ import me.proton.drive.sdk.extension.toProtobuf
 import proton.drive.sdk.ProtonDriveSdk
 import proton.drive.sdk.ProtonDriveSdk.ThumbnailType.THUMBNAIL_TYPE_PREVIEW
 import proton.drive.sdk.ProtonDriveSdk.ThumbnailType.THUMBNAIL_TYPE_THUMBNAIL
-import proton.drive.sdk.drivePhotosClientFindDuplicatesRequest
 import proton.drive.sdk.drivePhotosClientUploadFromStreamRequest
 import proton.drive.sdk.drivePhotosClientUploaderFreeRequest
 import proton.drive.sdk.request
@@ -20,7 +19,7 @@ import kotlin.collections.forEach
 
 class JniPhotosUploader internal constructor() : JniBaseProtonDriveSdk() {
 
-    suspend fun getPhoto(
+    suspend fun getPhotoUploader(
         clientHandle: Long,
         cancellationTokenSourceHandle: Long,
         request: PhotosUploaderRequest,

@@ -77,7 +77,11 @@ suspend fun ProtonDriveClient.downloader(
     factory(JniFileDownloader()){
         FileDownloader(
             client = this@downloader,
-            handle = this.create(handle, source.handle, revisionUid),
+            handle = getFileDownloader(
+                clientHandle = handle,
+                cancellationTokenSourceHandle = source.handle,
+                revisionUid = revisionUid,
+            ),
             bridge = this,
             cancellationTokenSource = source,
         )

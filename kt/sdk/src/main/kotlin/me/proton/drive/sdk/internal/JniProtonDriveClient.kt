@@ -24,7 +24,7 @@ import proton.sdk.telemetry
 
 class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
 
-    suspend fun create(sessionHandle: Long) =
+    suspend fun createFromSession(sessionHandle: Long) =
         executeOnce("createFromSession", LongResponseCallback) {
             driveClientCreateFromSession = driveClientCreateFromSessionRequest {
                 this.sessionHandle = sessionHandle
