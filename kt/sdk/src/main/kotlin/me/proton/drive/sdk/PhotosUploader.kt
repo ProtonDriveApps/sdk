@@ -67,11 +67,14 @@ class PhotosUploader(
 suspend fun ProtonPhotosClient.uploader(
     request: PhotosUploaderRequest
 ): Uploader = cancellationTokenSource().let { source ->
-    val client = this
     JniPhotosUploader().run {
         PhotosUploader(
-            client = client,
-            handle = getPhoto(client.handle, source.handle, request),
+            client = this@uploader,
+            handle = getPhotoUploader(
+                clientHandle = handle,
+                cancellationTokenSourceHandle = source.handle,
+                request = request,
+            ),
             bridge = this,
             cancellationTokenSource = source,
         )

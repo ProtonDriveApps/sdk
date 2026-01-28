@@ -70,7 +70,7 @@ suspend fun ProtonPhotosClient.downloader(
     factory(JniPhotosDownloader()) {
         PhotosDownloader(
             client = this@downloader,
-            handle = create(
+            handle = getPhotoDownloader(
                 clientHandle = handle,
                 cancellationTokenSourceHandle = source.handle,
                 photoUid = photoUid,

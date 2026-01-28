@@ -11,7 +11,7 @@ import java.nio.ByteBuffer
 
 class JniFileDownloader internal constructor() : JniBaseProtonDriveSdk() {
 
-    suspend fun create(
+    suspend fun getFileDownloader(
         clientHandle: Long,
         cancellationTokenSourceHandle: Long,
         revisionUid: String,
