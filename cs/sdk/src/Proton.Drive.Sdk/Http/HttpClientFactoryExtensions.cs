@@ -2,7 +2,7 @@
 
 internal static class HttpClientFactoryExtensions
 {
-    public static HttpClient CreateClientWithTimeout(this IHttpClientFactory httpClientFactory, int timeoutSeconds)
+    public static HttpClient CreateClientWithTimeout(this IHttpClientFactory httpClientFactory, double timeoutSeconds)
     {
         var client = httpClientFactory.CreateClient();
 

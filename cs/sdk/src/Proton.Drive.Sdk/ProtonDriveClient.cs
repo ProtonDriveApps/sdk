@@ -29,8 +29,11 @@ public sealed class ProtonDriveClient
     /// <remarks>If no UID is not provided, one will be generated for the duration of this instance.</remarks>
     public ProtonDriveClient(ProtonApiSession session, string? uid = null)
         : this(
-            session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonDriveDefaults.DefaultApiTimeoutSeconds)),
-            session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonDriveDefaults.StorageApiTimeoutSeconds), TimeSpan.FromSeconds(ProtonDriveDefaults.StorageApiTimeoutSeconds)),
+            session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonApiDefaults.DefaultTimeoutSeconds)),
+            session.GetHttpClient(
+                ProtonDriveDefaults.DriveBaseRoute,
+                TimeSpan.FromSeconds(ProtonDriveDefaults.StorageApiTimeoutSeconds),
+                TimeSpan.FromSeconds(ProtonDriveDefaults.StorageApiTimeoutSeconds)),
             new AccountClientAdapter(session),
             new DriveClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository),
             session.ClientConfiguration.FeatureFlagProvider,
@@ -48,8 +51,10 @@ public sealed class ProtonDriveClient
         ITelemetry telemetry,
         ProtonDriveClientOptions? creationParameters = null)
         : this(
-            new SdkHttpClientFactoryDecorator(httpClientFactory, creationParameters?.BindingsLanguage).CreateClientWithTimeout(creationParameters?.OverrideDefaultApiTimeoutSeconds ?? ProtonDriveDefaults.DefaultApiTimeoutSeconds),
-            new SdkHttpClientFactoryDecorator(httpClientFactory, creationParameters?.BindingsLanguage).CreateClientWithTimeout(creationParameters?.OverrideStorageApiTimeoutSeconds ?? ProtonDriveDefaults.StorageApiTimeoutSeconds),
+            new SdkHttpClientFactoryDecorator(httpClientFactory, creationParameters?.BindingsLanguage).CreateClientWithTimeout(
+                creationParameters?.OverrideDefaultApiTimeoutSeconds ?? ProtonApiDefaults.DefaultTimeoutSeconds),
+            new SdkHttpClientFactoryDecorator(httpClientFactory, creationParameters?.BindingsLanguage).CreateClientWithTimeout(
+                creationParameters?.OverrideStorageApiTimeoutSeconds ?? ProtonDriveDefaults.StorageApiTimeoutSeconds),
             accountClient,
             new DriveClientCache(entityCacheRepository, secretCacheRepository),
             featureFlagProvider,

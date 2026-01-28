@@ -1,5 +1,4 @@
-﻿using System;
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Runtime.ExceptionServices;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
@@ -93,10 +92,9 @@ internal readonly struct HttpApiCallBuilder<TSuccess, TFailure>
             return await responseMessage.Content.ReadFromJsonAsync(_successTypeInfo, cancellationToken)
                 .ConfigureAwait(false) ?? throw new JsonException();
         }
-        catch (OperationCanceledException e) when (e.InnerException is TimeoutException timeoutException)
+        catch (OperationCanceledException e) when (!cancellationToken.IsCancellationRequested)
         {
-            ExceptionDispatchInfo.Capture(timeoutException).Throw();
-            throw;  // This line is never reached
+            throw new TimeoutException("The operation has timed out.", e);
         }
     }
 }

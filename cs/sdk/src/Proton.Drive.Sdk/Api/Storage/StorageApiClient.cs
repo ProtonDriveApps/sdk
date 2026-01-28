@@ -52,10 +52,9 @@ internal sealed class StorageApiClient(HttpClient defaultHttpClient, HttpClient 
 
             return await blobResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException e) when (e.InnerException is TimeoutException timeoutException)
+        catch (OperationCanceledException e) when (!cancellationToken.IsCancellationRequested)
         {
-            ExceptionDispatchInfo.Capture(timeoutException).Throw();
-            throw;  // This line is never reached
+            throw new TimeoutException("The operation has timed out.", e);
         }
     }
 }
