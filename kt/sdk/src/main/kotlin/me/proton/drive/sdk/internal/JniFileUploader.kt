@@ -17,7 +17,7 @@ import java.nio.ByteBuffer
 
 class JniFileUploader internal constructor() : JniBaseProtonDriveSdk() {
 
-    suspend fun getFile(
+    suspend fun getFileUploader(
         clientHandle: Long,
         cancellationTokenSourceHandle: Long,
         request: FileUploaderRequest,
@@ -26,7 +26,7 @@ class JniFileUploader internal constructor() : JniBaseProtonDriveSdk() {
             request.toProtobuf(clientHandle, cancellationTokenSourceHandle)
     }
 
-    suspend fun getFileRevision(
+    suspend fun getFileRevisionUploader(
         clientHandle: Long,
         cancellationTokenSourceHandle: Long,
         request: FileRevisionUploaderRequest,

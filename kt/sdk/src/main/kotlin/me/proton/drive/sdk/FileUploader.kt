@@ -67,11 +67,10 @@ class FileUploader internal constructor(
 suspend fun ProtonDriveClient.uploader(
     request: FileUploaderRequest
 ): Uploader = cancellationTokenSource().let { source ->
-    val client = this
     JniFileUploader().run {
         FileUploader(
-            client = client,
-            handle = getFile(client.handle, source.handle, request),
+            client = this@uploader,
+            handle = getFileUploader(handle, source.handle, request),
             bridge = this,
             cancellationTokenSource = source,
         )
@@ -81,11 +80,10 @@ suspend fun ProtonDriveClient.uploader(
 suspend fun ProtonDriveClient.uploader(
     request: FileRevisionUploaderRequest
 ): Uploader = cancellationTokenSource().let { source ->
-    val client = this@uploader
     JniFileUploader().run {
         FileUploader(
-            client = client,
-            handle = getFileRevision(handle, source.handle, request),
+            client = this@uploader,
+            handle = getFileRevisionUploader(handle, source.handle, request),
             bridge = this,
             cancellationTokenSource = source,
         )
