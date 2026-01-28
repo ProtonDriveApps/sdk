@@ -147,6 +147,13 @@ internal static class InteropMessageHandler
     {
         var tfs = Interop.GetFromHandleAndFree<IValueTaskFaultingSource>(tcsHandle);
 
-        tfs.SetException(new InteropErrorException(error));
+        if (error.Domain == ErrorDomain.SuccessfulCancellation)
+        {
+            tfs.SetException(new OperationCanceledException());
+        }
+        else
+        {
+            tfs.SetException(new InteropErrorException(error));
+        }
     }
 }

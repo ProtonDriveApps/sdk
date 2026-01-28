@@ -22,7 +22,7 @@ public sealed class ProtonPhotosClient : IDisposable
     {
         DriveClient = new ProtonDriveClient(session, uid);
 
-        _httpClient = session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonDriveDefaults.DefaultApiTimeoutSeconds));
+        _httpClient = session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonApiDefaults.DefaultTimeoutSeconds));
 
         Cache = new PhotosClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository);
         PhotosApi = new PhotosApiClient(_httpClient);
@@ -46,7 +46,8 @@ public sealed class ProtonPhotosClient : IDisposable
             telemetry,
             creationParameters);
 
-        _httpClient = new SdkHttpClientFactoryDecorator(httpClientFactory).CreateClientWithTimeout(creationParameters?.OverrideDefaultApiTimeoutSeconds ?? ProtonDriveDefaults.DefaultApiTimeoutSeconds);
+        _httpClient = new SdkHttpClientFactoryDecorator(httpClientFactory).CreateClientWithTimeout(
+            creationParameters?.OverrideDefaultApiTimeoutSeconds ?? ProtonApiDefaults.DefaultTimeoutSeconds);
 
         Cache = new PhotosClientCache(entityCacheRepository, secretCacheRepository);
         PhotosApi = new PhotosApiClient(_httpClient);
