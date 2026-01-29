@@ -715,6 +715,16 @@ export class DriveCrypto {
         const password = await this.openPGPCrypto.decryptArmored(armoredPassword, decryptionKeys);
         return uint8ArrayToUtf8(password);
     }
+
+    async encryptShareUrlPassword(password: string, encryptionKey: PrivateKey, signingKey: PrivateKey): Promise<string> {
+        const { armoredData } = await this.openPGPCrypto.encryptAndSignArmored(
+            new TextEncoder().encode(password),
+            undefined,
+            [encryptionKey],
+            signingKey,
+        );
+        return armoredData;
+    }
 }
 
 export function uint8ArrayToUtf8(input: Uint8Array): string {

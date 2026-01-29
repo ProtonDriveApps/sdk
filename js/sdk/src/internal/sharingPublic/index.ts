@@ -19,6 +19,7 @@ import { SharingPublicAPIService } from './apiService';
 import { NodesSecurity } from './nodesSecurity';
 
 export { SharingPublicSessionManager } from './session/manager';
+export { getTokenAndPasswordFromUrl } from './session/url';
 export { UnauthDriveAPIService } from './unauthApiService';
 
 /**

@@ -182,6 +182,11 @@ export class SharingAccess {
         }
     }
 
+    async createBookmark(token: string, urlPassword: string, customPassword?: string): Promise<void> {
+        const encryptedBookmark = await this.cryptoService.encryptBookmark(token, urlPassword, customPassword);
+        await this.apiService.createBookmark(encryptedBookmark);
+    }
+
     async deleteBookmark(bookmarkUid: string): Promise<void> {
         const tokenId = bookmarkUid;
         await this.apiService.deleteBookmark(tokenId);

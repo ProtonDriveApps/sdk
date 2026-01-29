@@ -40,6 +40,8 @@ describe('SharingCryptoService', () => {
         sharesService = {
             getMyFilesShareMemberEmailKey: jest.fn().mockResolvedValue({
                 addressId: 'addressId',
+                addressKey: 'addressKey' as unknown as PrivateKey,
+                addressKeyId: 'keyId',
             }),
         };
         cryptoService = new SharingCryptoService(telemetry, driveCrypto, account, sharesService);
@@ -179,6 +181,71 @@ describe('SharingCryptoService', () => {
                     error: "Name must not contain the character '/'",
                 }),
             });
+        });
+    });
+
+    describe('encryptBookmark', () => {
+        const token = 'abc123token';
+        const urlPassword = 'generatedPass';
+        const customPassword = 'customPass123';
+
+        beforeEach(() => {
+            sharesService.getMyFilesShareMemberEmailKey = jest.fn().mockResolvedValue({
+                addressId: 'addressId123',
+                addressKey: 'addressKey1' as unknown as PrivateKey,
+                addressKeyId: 'keyId1',
+            });
+            driveCrypto.encryptShareUrlPassword = jest.fn().mockResolvedValue('encryptedPassword');
+        });
+
+        it('should encrypt bookmark with token, url password and custom password', async () => {
+            const result = await cryptoService.encryptBookmark(token, urlPassword, customPassword);
+
+            expect(result).toEqual({
+                token: 'abc123token',
+                encryptedUrlPassword: 'encryptedPassword',
+                addressId: 'addressId123',
+                addressKeyId: 'keyId1',
+            });
+            expect(sharesService.getMyFilesShareMemberEmailKey).toHaveBeenCalled();
+            expect(driveCrypto.encryptShareUrlPassword).toHaveBeenCalledWith(
+                'generatedPasscustomPass123',
+                'addressKey1',
+                'addressKey1',
+            );
+        });
+
+        it('should encrypt bookmark without custom password', async () => {
+            const result = await cryptoService.encryptBookmark(token, urlPassword);
+
+            expect(result).toEqual({
+                token: 'abc123token',
+                encryptedUrlPassword: 'encryptedPassword',
+                addressId: 'addressId123',
+                addressKeyId: 'keyId1',
+            });
+            expect(driveCrypto.encryptShareUrlPassword).toHaveBeenCalledWith(
+                'generatedPass',
+                'addressKey1',
+                'addressKey1',
+            );
+        });
+
+        it('should use primary key from share service', async () => {
+            sharesService.getMyFilesShareMemberEmailKey = jest.fn().mockResolvedValue({
+                addressId: 'addressId123',
+                addressKey: 'addressKey3' as unknown as PrivateKey,
+                addressKeyId: 'keyId3',
+            });
+
+            const result = await cryptoService.encryptBookmark(token, urlPassword, customPassword);
+
+            expect(result.addressKeyId).toBe('keyId3');
+            expect(driveCrypto.encryptShareUrlPassword).toHaveBeenCalledWith(
+                'generatedPasscustomPass123',
+                'addressKey3',
+                'addressKey3',
+            );
         });
     });
 });
