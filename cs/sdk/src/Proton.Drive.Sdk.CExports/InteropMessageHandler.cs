@@ -101,7 +101,7 @@ internal static class InteropMessageHandler
                     => InteropDownloadController.HandleResume(request.DownloadControllerResume),
 
                 Request.PayloadOneofCase.DownloadControllerFree
-                    => InteropDownloadController.HandleFree(request.DownloadControllerFree),
+                    => await InteropDownloadController.HandleFree(request.DownloadControllerFree).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DrivePhotosClientCreate
                     => InteropProtonPhotosClient.HandleCreate(request.DrivePhotosClientCreate, bindingsHandle),
