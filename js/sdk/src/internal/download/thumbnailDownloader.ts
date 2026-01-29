@@ -1,6 +1,6 @@
 import { c } from 'ttag';
 
-import { NodeType, ThumbnailType, ProtonDriveTelemetry, Logger, ThumbnailResult } from '../../interface';
+import {  ThumbnailType, ProtonDriveTelemetry, Logger, ThumbnailResult } from '../../interface';
 import { ValidationError } from '../../errors';
 import { LoggerWithPrefix } from '../../telemetry';
 import { DownloadAPIService } from './apiService';
@@ -92,14 +92,6 @@ export class ThumbnailDownloader {
                     nodeUid: node.missingUid,
                     ok: false,
                     error: c('Error').t`Node not found`,
-                };
-                continue;
-            }
-            if (node.type !== NodeType.File) {
-                yield {
-                    nodeUid: node.uid,
-                    ok: false,
-                    error: c('Error').t`Node is not a file`,
                 };
                 continue;
             }
