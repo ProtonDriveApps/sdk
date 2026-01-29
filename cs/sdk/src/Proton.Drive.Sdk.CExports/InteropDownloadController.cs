@@ -48,9 +48,11 @@ internal static class InteropDownloadController
         return new BoolValue { Value = downloadController.GetIsDownloadCompleteWithVerificationIssue() };
     }
 
-    public static IMessage? HandleFree(DownloadControllerFreeRequest request)
+    public static async ValueTask<IMessage?> HandleFree(DownloadControllerFreeRequest request)
     {
-        Interop.FreeHandle<DownloadController>(request.DownloadControllerHandle);
+        var downloadController = Interop.FreeHandle<DownloadController>(request.DownloadControllerHandle);
+
+        await downloadController.DisposeAsync().ConfigureAwait(false);
 
         return null;
     }
