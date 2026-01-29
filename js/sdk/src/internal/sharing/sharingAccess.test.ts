@@ -424,6 +424,47 @@ describe('SharingAccess', () => {
         });
     });
 
+    describe('createBookmark', () => {
+        it('should create bookmark with token, url password and custom password', async () => {
+            const token = 'abc123token';
+            const urlPassword = 'generatedPass';
+            const customPassword = 'customPass123';
+            const encryptedBookmark = {
+                token,
+                encryptedUrlPassword: 'encryptedPassword123',
+                addressId: 'addressId',
+                addressKeyId: 'keyId',
+            };
+
+            cryptoService.encryptBookmark = jest.fn().mockResolvedValue(encryptedBookmark);
+            apiService.createBookmark = jest.fn().mockResolvedValue(undefined);
+
+            await sharingAccess.createBookmark(token, urlPassword, customPassword);
+
+            expect(cryptoService.encryptBookmark).toHaveBeenCalledWith(token, urlPassword, customPassword);
+            expect(apiService.createBookmark).toHaveBeenCalledWith(encryptedBookmark);
+        });
+
+        it('should create bookmark without custom password', async () => {
+            const token = 'abc123token';
+            const urlPassword = 'generatedPass';
+            const encryptedBookmark = {
+                token,
+                encryptedUrlPassword: 'encryptedPassword123',
+                addressId: 'addressId',
+                addressKeyId: 'keyId',
+            };
+
+            cryptoService.encryptBookmark = jest.fn().mockResolvedValue(encryptedBookmark);
+            apiService.createBookmark = jest.fn().mockResolvedValue(undefined);
+
+            await sharingAccess.createBookmark(token, urlPassword);
+
+            expect(cryptoService.encryptBookmark).toHaveBeenCalledWith(token, urlPassword, undefined);
+            expect(apiService.createBookmark).toHaveBeenCalledWith(encryptedBookmark);
+        });
+    });
+
     describe('deleteBookmark', () => {
         it('should delete bookmark using tokenId', async () => {
             const bookmarkUid = 'tokenId123';

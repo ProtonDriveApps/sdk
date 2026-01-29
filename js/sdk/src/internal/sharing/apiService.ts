@@ -61,6 +61,11 @@ type GetShareExternalInvitations =
 type GetShareMembers =
     drivePaths['/drive/v2/shares/{shareID}/members']['get']['responses']['200']['content']['application/json'];
 
+type PostSharedBookmarksRequest =
+    Extract<drivePaths['/drive/v2/urls/{token}/bookmark']['post']['requestBody'], {content: object}>['content']['application/json'];
+type PostSharedBookmarksResponse =
+    drivePaths['/drive/v2/urls/{token}/bookmark']['post']['responses']['200']['content']['application/json'];
+
 type PostCreateShareRequest = Extract<
     drivePaths['/drive/volumes/{volumeID}/shares']['post']['requestBody'],
     { content: object }
@@ -291,6 +296,24 @@ export class SharingAPIService {
                 },
             };
         }
+    }
+
+    async createBookmark(bookmark: {
+        token: string;
+        encryptedUrlPassword: string;
+        addressId: string;
+        addressKeyId: string;
+    }): Promise<void> {
+         await this.apiService.post<PostSharedBookmarksRequest, PostSharedBookmarksResponse>(
+            `drive/v2/urls/${bookmark.token}/bookmark`,
+            {
+                BookmarkShareURL: {
+                    EncryptedUrlPassword: bookmark.encryptedUrlPassword,
+                    AddressID: bookmark.addressId,
+                    AddressKeyID: bookmark.addressKeyId,
+                },
+            },
+        );
     }
 
     async deleteBookmark(tokenId: string): Promise<void> {
