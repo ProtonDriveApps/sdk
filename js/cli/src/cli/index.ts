@@ -54,6 +54,7 @@ import { CommandInvitationAccept } from './sharing/commandInvitationAccept';
 import { CommandInvitationList } from './sharing/commandInvitationList';
 import { CommandInvitationReject } from './sharing/commandInvitationReject';
 import { Command } from './interface';
+import { CommandBookmarkCreate } from './bookmark/commandBookmarkCreate';
 
 const COMMANDS = [
     // CLI Account
@@ -90,6 +91,7 @@ const COMMANDS = [
     new CommandInvitationList(),
     new CommandInvitationAccept(),
     new CommandInvitationReject(),
+    new CommandBookmarkCreate(),
     new CommandBookmarkList(),
     new CommandBookmarkRemove(),
     new CommandDeviceCreate(),

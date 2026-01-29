@@ -148,6 +148,7 @@ export interface SharesService {
         email: string;
         addressId: string;
         addressKey: PrivateKey;
+        addressKeyId: string;
     }>;
     isOwnVolume(volumeId: string): Promise<boolean>;
 }

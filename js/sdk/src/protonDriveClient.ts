@@ -49,7 +49,7 @@ import { initNodesModule } from './internal/nodes';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharesModule } from './internal/shares';
 import { initSharingModule } from './internal/sharing';
-import { SharingPublicSessionManager } from './internal/sharingPublic';
+import { SharingPublicSessionManager, getTokenAndPasswordFromUrl } from './internal/sharingPublic';
 import { initUploadModule } from './internal/upload';
 import { makeNodeUid } from './internal/uids';
 import { ProtonDrivePublicLinkClient } from './protonDrivePublicLinkClient';
@@ -223,13 +223,17 @@ export class ProtonDriveClient {
                 return keys.contentKeyPacketSessionKey;
             },
             getPublicLinkInfo: async (url: string) => {
-                this.logger.info(`Getting info for public link ${url}`);
-                return this.publicSessionManager.getInfo(url);
+                const { token } = getTokenAndPasswordFromUrl(url)
+                this.logger.info(`Getting info for public link token ${token}`);
+                return this.publicSessionManager.getInfo(token);
             },
             authPublicLink: async (url: string, customPassword?: string, isAnonymousContext: boolean = false) => {
-                this.logger.info(`Authenticating public link ${url}`);
-                const { httpClient, token, shareKey, rootUid, publicRole } = await this.publicSessionManager.auth(
-                    url,
+                const { token, password: urlPassword } = getTokenAndPasswordFromUrl(url)
+                this.logger.info(`Authenticating public link token ${token}`);
+
+                const { httpClient, shareKey, rootUid, publicRole } = await this.publicSessionManager.auth(
+                    token,
+                    urlPassword,
                     customPassword,
                 );
                 return new ProtonDrivePublicLinkClient({
@@ -668,6 +672,18 @@ export class ProtonDriveClient {
     async *iterateBookmarks(signal?: AbortSignal): AsyncGenerator<MaybeBookmark> {
         this.logger.info('Iterating shared bookmarks');
         yield* this.sharing.access.iterateBookmarks(signal);
+    }
+
+    /**
+     * Create a shared bookmark for a public link.
+     *
+     * @param url - The public link url.
+     * @param customPassword - The optional custom password.
+     */
+    async createBookmark(url: string, customPassword?: string): Promise<void> {
+        const { token, password: urlPassword } = getTokenAndPasswordFromUrl(url)
+        this.logger.info(`Creating bookmark for token ${token}`);
+        await this.sharing.access.createBookmark(token, urlPassword, customPassword);
     }
 
     /**

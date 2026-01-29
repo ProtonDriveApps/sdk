@@ -418,6 +418,29 @@ export class SharingCryptoService {
         }
     }
 
+    async encryptBookmark(token: string, urlPassword: string, customPassword?: string): Promise<{
+        token: string;
+        encryptedUrlPassword: string;
+        addressId: string;
+        addressKeyId: string;
+    }> {
+        const { addressId, addressKey, addressKeyId } = await this.sharesService.getMyFilesShareMemberEmailKey();
+
+        const concanatedPassword = generateConcanatedPassword(urlPassword, customPassword);
+        const encryptedUrlPassword = await this.driveCrypto.encryptShareUrlPassword(
+            concanatedPassword,
+            addressKey,
+            addressKey,
+        );
+
+        return {
+            token,
+            encryptedUrlPassword,
+            addressId,
+            addressKeyId,
+        };
+    }
+
     async decryptBookmark(encryptedBookmark: EncryptedBookmark): Promise<{
         url: Result<string, Error>;
         customPassword: Result<string | undefined, Error>;
@@ -566,4 +589,9 @@ function splitGeneratedAndCustomPassword(concatenatedPassword: string): {
     const password = concatenatedPassword.substring(0, PUBLIC_LINK_GENERATED_PASSWORD_LENGTH);
     const customPassword = concatenatedPassword.substring(PUBLIC_LINK_GENERATED_PASSWORD_LENGTH) || undefined;
     return { password, customPassword };
+}
+
+function generateConcanatedPassword(urlPassword: string, customPassword?: string): string {
+    const concatenatedPassword = urlPassword.concat(customPassword || '')
+    return concatenatedPassword
 }

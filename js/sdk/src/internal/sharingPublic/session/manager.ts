@@ -5,7 +5,6 @@ import { SharingPublicSessionAPIService } from './apiService';
 import { SharingPublicSessionHttpClient } from './httpClient';
 import { EncryptedShareCrypto, PublicLinkInfo } from './interface';
 import { SharingPublicLinkSession } from './session';
-import { getTokenAndPasswordFromUrl } from './url';
 
 /**
  * Manages sessions for public links.
@@ -42,9 +41,9 @@ export class SharingPublicSessionManager {
      * the vendor type (whether it is Proton Docs, for example, and should
      * be redirected to the public Docs app).
      *
-     * @param url - The URL of the public link.
+     * @param token - The public link token.
      */
-    async getInfo(url: string): Promise<{
+    async getInfo(token: string): Promise<{
         isCustomPasswordProtected: boolean;
         isLegacy: boolean;
         vendorType: number;
@@ -54,7 +53,6 @@ export class SharingPublicSessionManager {
             publicRole: MemberRole;
         };
     }> {
-        const { token } = getTokenAndPasswordFromUrl(url);
 
         const info = await this.api.initPublicLinkSession(token);
         this.infosPerToken.set(token, info);
@@ -76,22 +74,20 @@ export class SharingPublicSessionManager {
      * It returnes parsed token and full password (password from the URL +
      * custom password) that can be used for decrypting the share key.
      *
-     * @param url - The URL of the public link.
+     * @param token - The public link token.
      * @param customPassword - The custom password for the public link, if it is
      * custom password protected.
      */
     async auth(
-        url: string,
+        token: string,
+        urlPassword: string,
         customPassword?: string,
     ): Promise<{
-        token: string;
         httpClient: SharingPublicSessionHttpClient;
         shareKey: PrivateKey;
         rootUid: string;
         publicRole: MemberRole;
     }> {
-        const { token, password: urlPassword } = getTokenAndPasswordFromUrl(url);
-
         let info = this.infosPerToken.get(token);
         if (!info) {
             info = await this.api.initPublicLinkSession(token);
@@ -105,7 +101,6 @@ export class SharingPublicSessionManager {
         const shareKey = await this.decryptShareKey(encryptedShare, password);
 
         return {
-            token,
             httpClient: new SharingPublicSessionHttpClient(this.httpClient, session),
             shareKey,
             rootUid,
