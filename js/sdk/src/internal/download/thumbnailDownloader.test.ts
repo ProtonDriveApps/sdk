@@ -117,7 +117,7 @@ describe('ThumbnailDownloader', () => {
 
         const results = await Array.fromAsync(downloader.iterateThumbnails(['node1']));
 
-        expect(results).toEqual([{ nodeUid: 'node1', ok: false, error: 'Node is not a file' }]);
+        expect(results).toEqual([{ nodeUid: 'node1', ok: false, error: 'Node has no thumbnail' }]);
         expect(apiService.iterateThumbnails).not.toHaveBeenCalled();
     });
 
