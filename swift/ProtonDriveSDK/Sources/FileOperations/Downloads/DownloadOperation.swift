@@ -10,15 +10,20 @@ public enum DownloadOperationResult: Sendable {
 }
 
 public final class DownloadOperation: Sendable {
-    
+    private enum DownloadCallback: Sendable {
+        case progress(ProgressCallbackWrapper)
+        case stream(StreamDownloadState)
+    }
+
     private let fileDownloaderHandle: ObjectHandle
     private let downloadControllerHandle: ObjectHandle
     private let logger: Logger?
     private let nodeType: NodeType
-    private let progressCallbackWrapper: ProgressCallbackWrapper
+    private let downloadCallback: DownloadCallback
     private let onOperationCancel: @Sendable () async throws -> Void
     private let onOperationDispose: @Sendable () async -> Void
-    
+    private let pauseState = PauseState()
+
     private var downloadControllerHandleForProtos: Int64 { Int64(downloadControllerHandle) }
 
     init(fileDownloaderHandle: ObjectHandle,
@@ -32,7 +37,25 @@ public final class DownloadOperation: Sendable {
         assert(downloadControllerHandle != 0)
         self.fileDownloaderHandle = fileDownloaderHandle
         self.downloadControllerHandle = downloadControllerHandle
-        self.progressCallbackWrapper = progressCallbackWrapper
+        self.downloadCallback = .progress(progressCallbackWrapper)
+        self.logger = logger
+        self.nodeType = nodeType
+        self.onOperationCancel = onOperationCancel
+        self.onOperationDispose = onOperationDispose
+    }
+
+    init(fileDownloaderHandle: ObjectHandle,
+         downloadControllerHandle: ObjectHandle,
+         streamDownloadState: StreamDownloadState,
+         logger: Logger?,
+         nodeType: NodeType,
+         onOperationCancel: @Sendable @escaping () async throws -> Void,
+         onOperationDispose: @Sendable @escaping () async -> Void) {
+        assert(fileDownloaderHandle != 0)
+        assert(downloadControllerHandle != 0)
+        self.fileDownloaderHandle = fileDownloaderHandle
+        self.downloadControllerHandle = downloadControllerHandle
+        self.downloadCallback = .stream(streamDownloadState)
         self.logger = logger
         self.nodeType = nodeType
         self.onOperationCancel = onOperationCancel
@@ -107,6 +130,12 @@ public final class DownloadOperation: Sendable {
             }
         }
 
+        if let sdkError = error as? ProtonDriveSDKError,
+           sdkError.domain == .successfulCancellation,
+           await pauseState.isRequested() {
+            return .pausedOnError(error)
+        }
+
         // check if operation can be resumed as the recovery flow
         do {
             guard try await isPaused() else {
@@ -124,6 +153,7 @@ public final class DownloadOperation: Sendable {
     }
     
     public func pause() async throws {
+        await pauseState.setRequested(true)
         let pauseRequest = Proton_Drive_Sdk_DownloadControllerPauseRequest.with {
             $0.downloadControllerHandle = downloadControllerHandleForProtos
         }
@@ -131,6 +161,7 @@ public final class DownloadOperation: Sendable {
     }
     
     public func resume() async throws {
+        await pauseState.setRequested(false)
         let resumeRequest = Proton_Drive_Sdk_DownloadControllerResumeRequest.with {
             $0.downloadControllerHandle = downloadControllerHandleForProtos
         }
@@ -221,5 +252,18 @@ public final class DownloadOperation: Sendable {
             // It's not gonna break the app's functionality, so we just log the issue and continue.
             logger?.error("Proton_Drive_Sdk_DownloadControllerFreeRequest failed: \(error)", category: "DownloadController.freeDownloadController")
         }
+    }
+
+}
+
+private actor PauseState {
+    private var requested = false
+
+    func setRequested(_ requested: Bool) {
+        self.requested = requested
+    }
+
+    func isRequested() -> Bool {
+        requested
     }
 }

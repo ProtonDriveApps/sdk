@@ -47,20 +47,28 @@ void Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_handleResponse
     (*env)->ReleaseByteArrayElements(env, response, bufferElems, 0);
 }
 
-void onRead(
+long onRead(
         intptr_t bindings_handle,
         ByteArray value,
         intptr_t sdk_handle
 ) {
-    pushDataAndLongToVoidMethod(bindings_handle, value, sdk_handle, "onRead");
+    return pushDataAndLongToLongMethod(bindings_handle, value, sdk_handle, "onRead");
 }
 
-void onWrite(
+long onWrite(
         intptr_t bindings_handle,
         ByteArray value,
         intptr_t sdk_handle
 ) {
-    pushDataAndLongToVoidMethod(bindings_handle, value, sdk_handle, "onWrite");
+    return pushDataAndLongToLongMethod(bindings_handle, value, sdk_handle, "onWrite");
+}
+
+void onSeek(
+        intptr_t bindings_handle,
+        ByteArray value,
+        intptr_t sdk_handle
+) {
+    pushDataAndLongToVoidMethod(bindings_handle, value, sdk_handle, "onSeek");
 }
 
 void onProgress(intptr_t bindings_handle, ByteArray value) {
@@ -117,6 +125,13 @@ jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getWritePoint
         jclass clazz
 ) {
     return (jlong) (intptr_t) &onWrite;
+}
+
+jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getSeekPointer(
+        JNIEnv *env,
+        jclass clazz
+) {
+    return (jlong) (intptr_t) &onSeek;
 }
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getProgressPointer(

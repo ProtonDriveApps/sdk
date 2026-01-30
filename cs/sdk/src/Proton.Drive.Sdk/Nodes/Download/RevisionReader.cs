@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
-using Proton.Drive.Sdk.Telemetry;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 
@@ -37,126 +36,93 @@ internal sealed partial class RevisionReader : IDisposable
 
     public async ValueTask ReadAsync(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
     {
-        var downloadEvent = new DownloadEvent
-        {
-            ClaimedFileSize = -1,
-            VolumeType = VolumeType.OwnVolume,  // FIXME: figure out how to get the actual volume type
-        };
+        var downloadTasks = new Queue<Task<BlockDownloadResult>>(_client.BlockDownloader.Queue.Depth);
+        var manifestStream = ProtonDriveClient.MemoryStreamManager.GetStream();
 
-        try
+        await using (manifestStream)
         {
-            var downloadTasks = new Queue<Task<BlockDownloadResult>>(_client.BlockDownloader.Queue.Depth);
-            var manifestStream = ProtonDriveClient.MemoryStreamManager.GetStream();
+            var downloadedBlockDigests = _state.GetDownloadedBlockDigests();
+            var revisionDto = _state.RevisionDto;
 
-            await using (manifestStream)
+            if (revisionDto.Thumbnails is { } thumbnails)
             {
-                var downloadedBlockDigests = _state.GetDownloadedBlockDigests();
-                var revisionDto = _state.RevisionDto;
-
-                // Write thumbnail digests to manifest (if any and on first call)
-                if (revisionDto.Thumbnails is { } thumbnails && downloadedBlockDigests.Count == 0)
+                foreach (var sha256Digest in thumbnails.OrderBy(t => t.Type).Select(x => x.HashDigest))
                 {
-                    foreach (var sha256Digest in thumbnails.OrderBy(t => t.Type).Select(x => x.HashDigest))
-                    {
-                        manifestStream.Write(sha256Digest.Span);
-                    }
+                    manifestStream.Write(sha256Digest.Span);
                 }
+            }
 
-                // Write already-downloaded block digests to manifest (for resumed downloads)
-                foreach (var digest in downloadedBlockDigests)
-                {
-                    manifestStream.Write(digest.Span);
-                }
+            foreach (var digest in downloadedBlockDigests)
+            {
+                manifestStream.Write(digest.Span);
+            }
 
+            try
+            {
                 try
                 {
-                    try
+                    var startBlockIndex = _state.GetNextBlockIndexToDownload();
+
+                    await foreach (var (block, _) in GetBlocksAsync(startBlockIndex, cancellationToken).ConfigureAwait(false))
                     {
-                        var startBlockIndex = _state.GetNextBlockIndexToDownload();
-
-                        await foreach (var (block, _) in GetBlocksAsync(startBlockIndex, cancellationToken).ConfigureAwait(false))
+                        if (!_client.BlockDownloader.Queue.TryStartBlock())
                         {
-                            if (!_client.BlockDownloader.Queue.TryStartBlock())
+                            if (downloadTasks.Count > 0)
                             {
-                                if (downloadTasks.Count > 0)
-                                {
-                                    await WriteNextBlockToOutputAsync(downloadTasks, contentOutputStream, manifestStream, onProgress, cancellationToken)
-                                        .ConfigureAwait(false);
-                                }
-
-                                await _client.BlockDownloader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
+                                await WriteNextBlockToOutputAsync(downloadTasks, contentOutputStream, manifestStream, onProgress, cancellationToken)
+                                    .ConfigureAwait(false);
                             }
 
-                            var downloadTask = DownloadBlockAsync(block, cancellationToken);
-
-                            downloadTasks.Enqueue(downloadTask);
+                            await _client.BlockDownloader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
                         }
-                    }
-                    finally
-                    {
-                        _releaseFileSemaphoreAction.Invoke();
-                        _fileSemaphoreReleased = true;
-                    }
 
-                    while (downloadTasks.Count > 0)
-                    {
-                        await WriteNextBlockToOutputAsync(downloadTasks, contentOutputStream, manifestStream, onProgress, cancellationToken)
-                            .ConfigureAwait(false);
+                        var downloadTask = DownloadBlockAsync(block, cancellationToken);
+
+                        downloadTasks.Enqueue(downloadTask);
                     }
                 }
-                catch when (downloadTasks.Count > 0)
+                finally
                 {
-                    try
-                    {
-                        await Task.WhenAll(downloadTasks).ConfigureAwait(false);
-                    }
-                    catch
-                    {
-                        // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
-                    }
-                    finally
-                    {
-                        _client.BlockDownloader.Queue.FinishBlocks(downloadTasks.Count);
-                    }
-
-                    throw;
+                    _releaseFileSemaphoreAction.Invoke();
+                    _fileSemaphoreReleased = true;
                 }
 
-                manifestStream.Seek(0, SeekOrigin.Begin);
-
-                var manifestVerificationStatus = await VerifyManifestAsync(manifestStream, cancellationToken).ConfigureAwait(false);
-
-                if (manifestVerificationStatus is not PgpVerificationStatus.Ok)
+                while (downloadTasks.Count > 0)
                 {
-                    LogFailedManifestVerification(_state.Uid, manifestVerificationStatus);
-
-                    throw new CompletedDownloadManifestVerificationException("File authenticity check failed");
+                    await WriteNextBlockToOutputAsync(downloadTasks, contentOutputStream, manifestStream, onProgress, cancellationToken)
+                        .ConfigureAwait(false);
                 }
-
-                _state.SetIsCompleted();
             }
-        }
-        catch (Exception ex) when (!cancellationToken.IsCancellationRequested && TelemetryErrorResolver.GetDownloadErrorFromException(ex) is { } error)
-        {
-            downloadEvent.Error = error;
-            downloadEvent.OriginalError = ex.FlattenMessageWithExceptionType();
-            throw;
-        }
-        finally
-        {
-            if (!cancellationToken.IsCancellationRequested)
+            catch when (downloadTasks.Count > 0)
             {
                 try
                 {
-                    downloadEvent.ClaimedFileSize = contentOutputStream.Length; // FIXME: try to report actual claimed size from metadata
-                    downloadEvent.DownloadedSize = contentOutputStream.Length;
-                    _client.Telemetry.RecordMetric(downloadEvent);
+                    await Task.WhenAll(downloadTasks).ConfigureAwait(false);
                 }
-                catch (Exception ex)
+                catch
                 {
-                    _logger.LogWarning(ex, "Failed to record metric for download event");
+                    // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
                 }
+                finally
+                {
+                    _client.BlockDownloader.Queue.FinishBlocks(downloadTasks.Count);
+                }
+
+                throw;
             }
+
+            manifestStream.Seek(0, SeekOrigin.Begin);
+
+            var manifestVerificationStatus = await VerifyManifestAsync(manifestStream, cancellationToken).ConfigureAwait(false);
+
+            if (manifestVerificationStatus is not PgpVerificationStatus.Ok)
+            {
+                LogFailedManifestVerification(_state.Uid, manifestVerificationStatus);
+
+                throw new CompletedDownloadManifestVerificationException("File authenticity check failed");
+            }
+
+            _state.SetIsCompleted();
         }
     }
 
@@ -179,27 +145,32 @@ internal sealed partial class RevisionReader : IDisposable
 
         try
         {
-            var downloadResult = await downloadTask.ConfigureAwait(false);
-
-            var downloadedStream = downloadResult.Stream;
+            var (plaintextStream, blockDigest) = await downloadTask.ConfigureAwait(false);
 
             try
             {
-                _state.AddDownloadedBlockDigest(downloadResult.Sha256Digest);
+                plaintextStream.Seek(0, SeekOrigin.Begin);
+                var initialOutputPosition = outputStream.Position;
 
-                manifestStream.Write(downloadResult.Sha256Digest.Span);
+                try
+                {
+                    await plaintextStream.CopyToAsync(outputStream, cancellationToken).ConfigureAwait(false);
+                }
+                catch
+                {
+                    outputStream.Seek(initialOutputPosition, SeekOrigin.Begin);
+                    throw;
+                }
 
-                downloadedStream.Seek(0, SeekOrigin.Begin);
-
-                await downloadedStream.CopyToAsync(outputStream, cancellationToken).ConfigureAwait(false);
-
-                _state.AddNumberOfBytesWritten(downloadedStream.Length);
+                _state.AddNumberOfBytesWritten(plaintextStream.Length);
+                _state.AddDownloadedBlockDigest(blockDigest);
+                manifestStream.Write(blockDigest.Span);
 
                 onProgress(_state.GetNumberOfBytesWritten(), _state.RevisionDto.Size);
             }
             finally
             {
-                await downloadedStream.DisposeAsync().ConfigureAwait(false);
+                await plaintextStream.DisposeAsync().ConfigureAwait(false);
             }
         }
         finally

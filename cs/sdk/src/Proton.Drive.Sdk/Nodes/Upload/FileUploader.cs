@@ -121,14 +121,16 @@ public sealed partial class FileUploader : IDisposable
             revisionDraftTaskCompletionSource,
             ct);
 
-        var uploadController = new UploadController(
+        return new UploadController(
             revisionDraftTaskCompletionSource.Task,
             uploadFunction.Invoke(taskControl.PauseOrCancellationToken),
             uploadFunction,
             ownsContentStream ? contentStream : null,
-            taskControl);
+            taskControl,
+            OnFailed,
+            OnSucceeded);
 
-        uploadController.UploadFailed += ex =>
+        void OnFailed(Exception ex)
         {
             if (ex is NodeWithSameNameExistsException)
             {
@@ -138,17 +140,15 @@ public sealed partial class FileUploader : IDisposable
             uploadEvent.Error = TelemetryErrorResolver.GetUploadErrorFromException(ex);
             uploadEvent.OriginalError = ex.GetBaseException().ToString();
             RaiseTelemetryEvent(uploadEvent);
-        };
+        }
 
-        uploadController.UploadSucceeded += uploadedByteCount =>
+        void OnSucceeded(long uploadedByteCount)
         {
             // TODO: deprecate UploadedSize in favor of ApproximateUploadedSize
             uploadEvent.UploadedSize = uploadedByteCount;
             uploadEvent.ApproximateUploadedSize = Privacy.ReduceSizePrecision(uploadedByteCount);
             RaiseTelemetryEvent(uploadEvent);
-        };
-
-        return uploadController;
+        }
     }
 
     private async Task<UploadResult> UploadFromStreamAsync(

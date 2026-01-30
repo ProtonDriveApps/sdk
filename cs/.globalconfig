@@ -92,6 +92,9 @@ dotnet_diagnostic.RCS1037.severity = none # Redundant with SA1028
 # RCS1047: Non-asynchronous method name should not end with 'Async'
 dotnet_diagnostic.RCS1047.severity = warning
 
+# RCS1118: Mark local variable as const
+dotnet_diagnostic.RCS1118.severity = warning
+
 # RCS1090: Add parameter to exception constructor
 dotnet_diagnostic.RCS1194.severity = none # Redundant with CA1032
 

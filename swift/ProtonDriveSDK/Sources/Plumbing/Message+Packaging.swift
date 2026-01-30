@@ -145,6 +145,11 @@ extension Message {
                 $0.payload = .downloadToFile(request)
             }
 
+        case let request as Proton_Drive_Sdk_DownloadToStreamRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .downloadToStream(request)
+            }
+
         case let request as Proton_Drive_Sdk_FileDownloaderFreeRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .fileDownloaderFree(request)

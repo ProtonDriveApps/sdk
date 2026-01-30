@@ -95,4 +95,40 @@ internal static class InteropActionExtensions
 
         return tcs.Task;
     }
+
+    public static unsafe (ValueTask<TResponse> Task, nint OperationHandle) InvokeWithBuffer<TResponse>(
+        this InteropFunction<nint, InteropArray<byte>, nint, nint> interopFunction,
+        nint bindingsHandle,
+        Span<byte> buffer)
+    {
+        var tcs = new ValueTaskCompletionSource<TResponse>();
+
+        var tcsHandle = Interop.AllocHandle(tcs);
+
+        nint operationHandle;
+        fixed (byte* requestBytesPointer = buffer)
+        {
+            operationHandle = interopFunction.Invoke(bindingsHandle, new InteropArray<byte>(requestBytesPointer, buffer.Length), (nint)tcsHandle);
+        }
+
+        return (tcs.Task, operationHandle);
+    }
+
+    public static unsafe (ValueTask Task, nint OperationHandle) InvokeWithBuffer(
+        this InteropFunction<nint, InteropArray<byte>, nint, nint> interopFunction,
+        nint bindingsHandle,
+        ReadOnlySpan<byte> buffer)
+    {
+        var tcs = new ValueTaskCompletionSource();
+
+        var tcsHandle = Interop.AllocHandle(tcs);
+
+        nint operationHandle;
+        fixed (byte* requestBytesPointer = buffer)
+        {
+            operationHandle = interopFunction.Invoke(bindingsHandle, new InteropArray<byte>(requestBytesPointer, buffer.Length), (nint)tcsHandle);
+        }
+
+        return (tcs.Task, operationHandle);
+    }
 }
