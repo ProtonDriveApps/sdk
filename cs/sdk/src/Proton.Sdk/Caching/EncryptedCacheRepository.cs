@@ -67,7 +67,7 @@ public sealed class EncryptedCacheRepository(ICacheRepository inner, byte[] encr
 
             try
             {
-                 decryptedValue = Decrypt(key, encryptedValue);
+                decryptedValue = Decrypt(key, encryptedValue);
             }
             catch (AuthenticationTagMismatchException)
             {

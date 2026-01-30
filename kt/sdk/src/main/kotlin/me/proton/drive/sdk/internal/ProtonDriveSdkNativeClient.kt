@@ -1,6 +1,7 @@
 package me.proton.drive.sdk.internal
 
 import com.google.protobuf.Any
+import com.google.protobuf.Int64Value
 import com.google.protobuf.Int32Value
 import com.google.protobuf.StringValue
 import kotlinx.coroutines.CancellationException
@@ -29,6 +30,7 @@ class ProtonDriveSdkNativeClient internal constructor(
     val response: ClientResponseCallback<ProtonDriveSdkNativeClient> = { _, _ -> error("response not configured for $name") },
     val read: suspend (ByteBuffer) -> Int = { error("read not configured for $name") },
     val write: suspend (ByteBuffer) -> Unit = { error("write not configured for $name") },
+    val seek: (suspend (Long, Int) -> Long)? = null,
     val httpClientRequest: suspend (ProtonSdk.HttpRequest) -> HttpResponse = { error("httpClientRequest not configured for $name") },
     val readHttpBody: suspend (ByteBuffer) -> Int = { error("readHttpBody not configured for $name") },
     val accountRequest: suspend (ProtonDriveSdk.AccountRequest) -> Any = { error("accountRequest not configured for $name") },
@@ -91,21 +93,33 @@ class ProtonDriveSdkNativeClient internal constructor(
     )
 
     @Suppress("unused") // Called by JNI
-    fun onRead(buffer: ByteBuffer, sdkHandle: Long) {
-        onOperation("read", sdkHandle) {
-            logger(VERBOSE, "read for $name of size: ${buffer.capacity()}")
-            val bytesRead = read(buffer).takeUnless { it < 0 } ?: 0
-            logger(VERBOSE, "$bytesRead bytes read for $name")
-            response { value = Int32Value.of(bytesRead).asAny("google.protobuf.Int32Value") }
-        }
-    }
+    fun onRead(buffer: ByteBuffer, sdkHandle: Long): Long = onOperation("read", sdkHandle) {
+        logger(VERBOSE, "read for $name of size: ${buffer.capacity()}")
+        val bytesRead = read(buffer).takeUnless { it < 0 } ?: 0
+        logger(VERBOSE, "$bytesRead bytes read for $name")
+        response { value = Int32Value.of(bytesRead).asAny("google.protobuf.Int32Value") }
+    }?.createWeakRef() ?: 0
 
     @Suppress("unused") // Called by JNI
-    fun onWrite(data: ByteBuffer, sdkHandle: Long) {
-        onOperation("write", sdkHandle) {
-            logger(VERBOSE, "write for $name of size: ${data.capacity()}")
-            write(data)
-            response {}
+    fun onWrite(data: ByteBuffer, sdkHandle: Long): Long = onOperation("write", sdkHandle) {
+        logger(VERBOSE, "write for $name of size: ${data.capacity()}")
+        write(data)
+        response {}
+    }?.createWeakRef() ?: 0
+
+    @Suppress("unused") // Called by JNI
+    fun onSeek(data: ByteBuffer, sdkHandle: Long) {
+        onRequest(
+            operation = "seek",
+            data = data,
+            sdkHandle = sdkHandle,
+            parser = ProtonSdk.StreamSeekRequest::parseFrom,
+        ) { request ->
+            checkNotNull(seek) { "seek not configured for $name" }
+            logger(VERBOSE, "seek for $name: offset=${request.offset}, origin=${request.origin}")
+            val newPosition = seek(request.offset, request.origin)
+            logger(VERBOSE, "seek result for $name: newPosition=$newPosition")
+            response { value = Int64Value.of(newPosition).asAny("google.protobuf.Int64Value") }
         }
     }
 
@@ -205,7 +219,7 @@ class ProtonDriveSdkNativeClient internal constructor(
                 throw error
             } catch (error: Throwable) {
                 handleResponse(sdkHandle, response {
-                    this@response.error = error.toProtonSdkError("Error while $operation")
+                    this@response.error = error.toProtonSdkError("Error while executing $operation")
                 })
             }
         }.also { job ->
@@ -305,6 +319,9 @@ class ProtonDriveSdkNativeClient internal constructor(
 
         @JvmStatic
         external fun getWritePointer(): Long
+
+        @JvmStatic
+        external fun getSeekPointer(): Long
 
         @JvmStatic
         external fun getProgressPointer(): Long

@@ -266,6 +266,7 @@ message UploadFromStreamRequest {
     int64 read_action = 3; // C signature: void handle_stream_operation(intptr_t bindings_handle, ByteArray buffer, intptr_t sdk_handle);
     int64 progress_action = 4; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 5;
+    int64 cancel_action = 6; // Optional, C signature: void on_cancel(intptr_t bindings_handle); Signals the bindings to cancel the current stream operation.
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of UploadController.
@@ -377,6 +378,8 @@ message DownloadToStreamRequest {
     int64 write_action = 2; // C signature: void on_stream_operation(intptr_t bindings_handle, ByteArray buffer, intptr_t sdk_handle);
     int64 progress_action = 3; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 4;
+    int64 seek_action = 5; // Optional, C signature: void on_stream_operation(intptr_t bindings_handle, ByteArray buffer, intptr_t sdk_handle);
+    int64 cancel_action = 6; // Optional, C signature: void on_cancel(intptr_t bindings_handle); Signals the bindings to cancel the current stream operation.
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of DownloadController.
@@ -507,6 +510,7 @@ message DrivePhotosClientDownloadToStreamRequest {
     int64 write_action = 2; // C signature: void on_stream_operation(intptr_t bindings_handle, ByteArray buffer, intptr_t sdk_handle);
     int64 progress_action = 3; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 4;
+    int64 cancel_action = 5; // Optional, C signature: void on_cancel(intptr_t bindings_handle); Signals the bindings to cancel the current stream operation.
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of DownloadController.

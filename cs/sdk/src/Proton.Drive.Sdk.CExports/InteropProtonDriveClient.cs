@@ -29,7 +29,7 @@ internal static class InteropProtonDriveClient
             request.BaseUrl,
             protonDriveClientOptions.BindingsLanguage,
             new InteropFunction<nint, InteropArray<byte>, nint, nint>(request.HttpClient.RequestFunction),
-            new InteropAction<nint, InteropArray<byte>, nint>(request.HttpClient.ResponseContentReadAction),
+            new InteropFunction<nint, InteropArray<byte>, nint, nint>(request.HttpClient.ResponseContentReadAction),
             new InteropAction<nint>(request.HttpClient.CancellationAction));
 
         var accountClient = new InteropAccountClient(bindingsHandle, new InteropAction<nint, InteropArray<byte>, nint>(request.AccountRequestAction));

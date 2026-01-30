@@ -119,29 +119,31 @@ public sealed partial class FileDownloader : IFileDownloader
             downloadStateTaskCompletionSource,
             ct);
 
-        var downloadController = new DownloadController(
+        return new DownloadController(
             downloadStateTaskCompletionSource.Task,
             downloadFunction.Invoke(taskControl.PauseOrCancellationToken),
             downloadFunction,
             ownsOutputStream ? contentOutputStream : null,
-            taskControl);
+            taskControl,
+            OnFailed,
+            OnSucceeded);
 
-        downloadController.DownloadFailed += ex =>
+        void OnFailed(Exception ex)
         {
             downloadEvent.Error = TelemetryErrorResolver.GetDownloadErrorFromException(ex);
             downloadEvent.OriginalError = ex.GetBaseException().ToString();
             RaiseTelemetryEvent(downloadEvent);
-        };
+        }
 
-        downloadController.DownloadSucceeded += downloadedByteCount =>
+        void OnSucceeded(long claimedFileSize, long downloadedByteCount)
         {
             // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize
             downloadEvent.DownloadedSize = downloadedByteCount;
             downloadEvent.ApproximateDownloadedSize = Privacy.ReduceSizePrecision(downloadedByteCount);
-            RaiseTelemetryEvent(downloadEvent);
-        };
+            downloadEvent.ClaimedFileSize = claimedFileSize;
 
-        return downloadController;
+            RaiseTelemetryEvent(downloadEvent);
+        }
     }
 
     private void RaiseTelemetryEvent(DownloadEvent downloadEvent)

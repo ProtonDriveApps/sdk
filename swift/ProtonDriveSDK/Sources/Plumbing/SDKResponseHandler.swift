@@ -13,7 +13,20 @@ enum SDKResponseHandler {
             fatalError("SDKResponseHandler.send failed with \(error)")
         }
     }
-    
+
+    /// Sends a void/nil response to indicate successful completion with no return value.
+    /// Use this instead of sending Google_Protobuf_Empty.
+    static func sendVoidResponse(callbackPointer: Int) {
+        do {
+            let emptyResponse = Proton_Sdk_Response()
+            let byteArray = ByteArray(data: try emptyResponse.serializedData())
+            proton_sdk_handle_response(callbackPointer, byteArray)
+            byteArray.deallocate()
+        } catch {
+            fatalError("SDKResponseHandler.sendVoidResponse failed with \(error)")
+        }
+    }
+
     static func sendErrorToSDK(_ error: Error, callbackPointer: Int) {
         let sdkError = Proton_Sdk_Error.from(nsError: error as NSError)
         SDKResponseHandler.send(callbackPointer: callbackPointer, message: sdkError)
@@ -28,6 +41,17 @@ enum SDKResponseHandler {
         let sdkError = Proton_Sdk_Error.with {
             $0.type = "Swift bindings"
             $0.domain = Proton_Sdk_ErrorDomain.businessLogic
+            $0.message = message
+        }
+        SDKResponseHandler.send(callbackPointer: callbackPointer, message: sdkError)
+    }
+
+    /// A helper method to send a cancellation error from Swift bindings.
+    /// This is used when a stream operation is cancelled.
+    static func sendCancellationErrorToSDK(message: String, callbackPointer: Int) {
+        let sdkError = Proton_Sdk_Error.with {
+            $0.type = "Swift bindings"
+            $0.domain = Proton_Sdk_ErrorDomain.successfulCancellation
             $0.message = message
         }
         SDKResponseHandler.send(callbackPointer: callbackPointer, message: sdkError)

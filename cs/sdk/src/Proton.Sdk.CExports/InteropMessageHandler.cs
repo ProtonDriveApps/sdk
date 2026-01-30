@@ -11,6 +11,7 @@ internal static class InteropMessageHandler
 {
     private static readonly TypeRegistry ResponseTypeRegistry = TypeRegistry.FromMessages(
         Int32Value.Descriptor,
+        Int64Value.Descriptor,
         StringValue.Descriptor,
         BytesValue.Descriptor,
         RepeatedBytesValue.Descriptor,
@@ -65,7 +66,14 @@ internal static class InteropMessageHandler
                     => throw new ArgumentException($"Unknown request type: {request.PayloadCase}", nameof(requestBytes)),
             };
 
-            responseAction.InvokeWithMessage(bindingsHandle, response is not null ? new Response { Value = Any.Pack(response) } : new Response());
+            var responseMessage = response switch
+            {
+                null => new Response(),
+                Empty => throw new InvalidOperationException("Use null instead of Empty"),
+                _ => new Response { Value = Any.Pack(response) },
+            };
+
+            responseAction.InvokeWithMessage(bindingsHandle, responseMessage);
         }
         catch (Exception e)
         {
