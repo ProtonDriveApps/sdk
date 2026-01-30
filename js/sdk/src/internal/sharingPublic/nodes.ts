@@ -1,19 +1,58 @@
+import { c } from 'ttag';
+
+import { PrivateKey } from '../../crypto';
+import { ValidationError } from '../../errors';
 import { type Logger, MemberRole, NodeResult, ProtonDriveTelemetry } from '../../interface';
+import { type DriveAPIService, drivePaths } from '../apiService';
 import { NodeAPIService, linkToEncryptedNode } from '../nodes/apiService';
 import { NodesCache } from '../nodes/cache';
 import { NodesCryptoCache } from '../nodes/cryptoCache';
 import { NodesCryptoService } from '../nodes/cryptoService';
+import { DecryptedNode, DecryptedNodeKeys, NodeSigningKeys, EncryptedNode } from '../nodes/interface';
 import { NodesAccess } from '../nodes/nodesAccess';
 import { NodesManagement } from '../nodes/nodesManagement';
 import { isProtonDocument, isProtonSheet } from '../nodes/mediaTypes';
+import { validateNodeName } from '../nodes/validations';
 import { makeNodeUid, splitNodeUid } from '../uids';
 import { SharingPublicSharesManager } from './shares';
-import { DecryptedNode, DecryptedNodeKeys, NodeSigningKeys, EncryptedNode } from '../nodes/interface';
-import { PrivateKey } from '../../crypto';
-import { type DriveAPIService, drivePaths } from '../apiService';
+
+export class SharingPublicNodesCryptoService extends NodesCryptoService {
+    async generateDocument(
+        parentKeys: { key: PrivateKey; hashKey: Uint8Array },
+        signingKeys: NodeSigningKeys,
+        name: string,
+    ) {
+        const crypto = await this.createFolder(parentKeys, signingKeys, name);
+
+        const contentKey = await this.driveCrypto.generateContentKey(crypto.keys.key);
+        const contentSigningKey = signingKeys.type === 'userAddress' ? signingKeys.key : crypto.keys.key;
+        // Proton Docs or Proton Sheets do not have any blocks, so we sign an empty array.
+        const { armoredManifestSignature } = await this.driveCrypto.signManifest(new Uint8Array(), contentSigningKey);
+
+        return {
+            encryptedCrypto: {
+                ...crypto.encryptedCrypto,
+                base64ContentKeyPacket: contentKey.encrypted.base64ContentKeyPacket,
+                armoredContentKeyPacketSignature: contentKey.encrypted.armoredContentKeyPacketSignature,
+                armoredManifestSignature,
+            },
+            keys: {
+                ...crypto.keys,
+                contentKeyPacketSessionKey: contentKey.decrypted.contentKeyPacketSessionKey,
+            },
+        };
+    }
+}
 
 type PostLoadLinksMetadataResponse =
     drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['responses']['200']['content']['application/json'];
+
+type PostCreateDocumentRequest = Extract<
+    drivePaths['/drive/urls/{token}/documents']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostCreateDocumentResponse =
+    drivePaths['/drive/urls/{token}/documents']['post']['responses']['200']['content']['application/json'];
 
 /**
  * Custom API service for public links that handles permission injection.
@@ -31,10 +70,12 @@ export class SharingPublicNodesAPIService extends NodeAPIService {
         clientUid: string | undefined,
         private publicRootNodeUid: string,
         private publicRole: MemberRole,
+        private token: string,
     ) {
         super(logger, apiService, clientUid);
         this.publicRootNodeUid = publicRootNodeUid;
         this.publicRole = publicRole;
+        this.token = token;
     }
 
     protected linkToEncryptedNode(
@@ -54,6 +95,43 @@ export class SharingPublicNodesAPIService extends NodeAPIService {
         }
 
         return encryptedNode;
+    }
+
+    async createDocument(
+        parentNodeUid: string,
+        newDocument: {
+            armoredKey: string;
+            armoredNodePassphrase: string;
+            armoredNodePassphraseSignature: string;
+            signatureEmail: string | null;
+            encryptedName: string;
+            hash: string;
+            base64ContentKeyPacket: string;
+            armoredContentKeyPacketSignature: string;
+            armoredManifestSignature: string;
+            documentType: 1 | 2;
+        },
+    ): Promise<string> {
+        const { volumeId, nodeId: parentId } = splitNodeUid(parentNodeUid);
+
+        const response = await this.apiService.post<PostCreateDocumentRequest, PostCreateDocumentResponse>(
+            `drive/urls/${this.token}/documents`,
+            {
+                ParentLinkID: parentId,
+                NodeKey: newDocument.armoredKey,
+                NodePassphrase: newDocument.armoredNodePassphrase,
+                NodePassphraseSignature: newDocument.armoredNodePassphraseSignature,
+                SignatureEmail: newDocument.signatureEmail,
+                Name: newDocument.encryptedName,
+                Hash: newDocument.hash,
+                ContentKeyPacket: newDocument.base64ContentKeyPacket,
+                ContentKeyPacketSignature: newDocument.armoredContentKeyPacketSignature,
+                ManifestSignature: newDocument.armoredManifestSignature,
+                DocumentType: newDocument.documentType,
+            },
+        );
+
+        return makeNodeUid(volumeId, response.Document.LinkID);
     }
 }
 
@@ -138,12 +216,12 @@ export class SharingPublicNodesAccess extends NodesAccess {
 
 export class SharingPublicNodesManagement extends NodesManagement {
     constructor(
-        apiService: NodeAPIService,
+        private sharingPublicApiService: SharingPublicNodesAPIService,
         cryptoCache: NodesCryptoCache,
-        cryptoService: NodesCryptoService,
+        private sharingPublicCryptoService: SharingPublicNodesCryptoService,
         nodesAccess: SharingPublicNodesAccess,
     ) {
-        super(apiService, cryptoCache, cryptoService, nodesAccess);
+        super(sharingPublicApiService, cryptoCache, sharingPublicCryptoService, nodesAccess);
     }
 
     async *deleteMyNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
@@ -155,5 +233,35 @@ export class SharingPublicNodesManagement extends NodesManagement {
             }
             yield result;
         }
+    }
+
+    async createDocument(
+        parentNodeUid: string,
+        documentName: string,
+        documentType: 1 | 2,
+    ): Promise<DecryptedNode> {
+        validateNodeName(documentName);
+
+        const parentKeys = await this.nodesAccess.getNodeKeys(parentNodeUid);
+        if (!parentKeys.hashKey) {
+            throw new ValidationError(c('Error').t`Creating documents in non-folders is not allowed`);
+        }
+
+        const signingKeys = await this.nodesAccess.getNodeSigningKeys({ parentNodeUid });
+        const { encryptedCrypto, keys } = await this.sharingPublicCryptoService.generateDocument(
+            { key: parentKeys.key, hashKey: parentKeys.hashKey },
+            signingKeys,
+            documentName,
+        );
+
+        const nodeUid = await this.sharingPublicApiService.createDocument(parentNodeUid, {
+            ...encryptedCrypto,
+            documentType,
+        });
+
+        await this.nodesAccess.notifyChildCreated(parentNodeUid);
+        await this.cryptoCache.setNodeKeys(nodeUid, keys);
+
+        return this.nodesAccess.getNode(nodeUid);
     }
 }

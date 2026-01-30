@@ -7,10 +7,9 @@ import {
     MemberRole,
 } from '../../interface';
 import { DriveAPIService } from '../apiService';
-import { SharingPublicNodesAPIService } from './nodes';
+import { SharingPublicNodesAPIService, SharingPublicNodesCryptoService } from './nodes';
 import { NodesCache } from '../nodes/cache';
 import { NodesCryptoCache } from '../nodes/cryptoCache';
-import { NodesCryptoService } from '../nodes/cryptoService';
 import { NodesRevisons } from '../nodes/nodesRevisions';
 import { SharingPublicCryptoReporter } from './cryptoReporter';
 import { SharingPublicNodesAccess, SharingPublicNodesManagement } from './nodes';
@@ -96,11 +95,12 @@ export function initSharingPublicNodesModule(
         clientUid,
         publicRootNodeUid,
         publicRole,
+        token,
     );
     const cache = new NodesCache(telemetry.getLogger('nodes-cache'), driveEntitiesCache);
     const cryptoCache = new NodesCryptoCache(telemetry.getLogger('nodes-cache'), driveCryptoCache);
     const cryptoReporter = new SharingPublicCryptoReporter(telemetry);
-    const cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, cryptoReporter);
+    const cryptoService = new SharingPublicNodesCryptoService(telemetry, driveCrypto, account, cryptoReporter);
     const nodesAccess = new SharingPublicNodesAccess(
         telemetry,
         api,

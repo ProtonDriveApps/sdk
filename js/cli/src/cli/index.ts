@@ -33,6 +33,7 @@ import { CommandPhotoDuplicate } from './photos/commandPhotoDuplicate';
 import { CommandPhotoRoot } from './photos/commandPhotoRoot';
 import { CommandPhotoTimeline } from './photos/commandPhotoTimeline';
 import { CommandPublicCreateFolder } from './public/commandPublicCreateFolder';
+import { CommandPublicCreateDocument } from './public/commandPublicCreateDocument';
 import { CommandPublicDelete } from './public/commandPublicDelete';
 import { CommandPublicDownload } from './public/commandPublicDownload';
 import { CommandPublicDownloadThumbnails } from './public/commandPublicDownloadThumbnails';
@@ -101,6 +102,7 @@ const COMMANDS = [
     new CommandPublicList(),
     new CommandPublicInfo(),
     new CommandPublicCreateFolder(),
+    new CommandPublicCreateDocument(),
     new CommandPublicRename(),
     new CommandPublicDelete(),
     new CommandPublicDownload(),
