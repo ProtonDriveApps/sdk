@@ -9,6 +9,8 @@ public sealed class UploadController : IAsyncDisposable
     private readonly Func<CancellationToken, Task<UploadResult>> _resumeFunction;
     private readonly ITaskControl _taskControl;
     private readonly Stream? _sourceStreamToDispose;
+    private readonly Action<Exception>? _onFailed;
+    private readonly Action<long>? _onSucceeded;
 
     private bool _isDisposed;
 
@@ -17,18 +19,19 @@ public sealed class UploadController : IAsyncDisposable
         Task<UploadResult> uploadTask,
         Func<CancellationToken, Task<UploadResult>> resumeFunction,
         Stream? sourceStreamToDispose,
-        ITaskControl taskControl)
+        ITaskControl taskControl,
+        Action<Exception>? onFailed = null,
+        Action<long>? onSucceeded = null)
     {
         _revisionDraftTask = revisionDraftTask;
         _resumeFunction = resumeFunction;
         _taskControl = taskControl;
         _sourceStreamToDispose = sourceStreamToDispose;
+        _onFailed = onFailed;
+        _onSucceeded = onSucceeded;
 
         Completion = PauseOnResumableErrorAsync(uploadTask);
     }
-
-    internal event Action<Exception>? UploadFailed;
-    internal event Action<long>? UploadSucceeded;
 
     public bool IsPaused => _taskControl.IsPaused;
 
@@ -69,7 +72,7 @@ public sealed class UploadController : IAsyncDisposable
 
                 if (Completion.IsFaulted)
                 {
-                    UploadFailed?.Invoke(Completion.Exception.Flatten().InnerException ?? Completion.Exception);
+                    _onFailed?.Invoke(Completion.Exception.Flatten().InnerException ?? Completion.Exception);
                 }
 
                 var draftExists = _revisionDraftTask.IsCompletedSuccessfully;
@@ -109,7 +112,7 @@ public sealed class UploadController : IAsyncDisposable
         {
             var result = await uploadTask.ConfigureAwait(false);
 
-            await RaiseUploadSucceededAsync().ConfigureAwait(false);
+            await InvokeOnSucceededAsync().ConfigureAwait(false);
 
             return result;
         }
@@ -120,9 +123,9 @@ public sealed class UploadController : IAsyncDisposable
         }
     }
 
-    private async ValueTask RaiseUploadSucceededAsync()
+    private async ValueTask InvokeOnSucceededAsync()
     {
-        var onSucceededHandler = UploadSucceeded;
+        var onSucceededHandler = _onSucceeded;
         if (onSucceededHandler is null)
         {
             return;

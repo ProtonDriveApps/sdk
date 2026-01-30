@@ -46,6 +46,7 @@ class JniPhotosDownloader internal constructor() : JniBaseProtonDriveSdk() {
                     this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
                     writeAction = ProtonDriveSdkNativeClient.getWritePointer()
                     progressAction = ProtonDriveSdkNativeClient.getProgressPointer()
+                    cancelAction = JniJob.getCancelPointer()
                 }
             }
         }

@@ -149,6 +149,28 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         try await downloadsManager.cancelDownload(with: cancellationToken)
     }
 
+    /// Downloads a file to a seekable output stream with support for pause/resume.
+    /// Use this method when you need pause/resume functionality with proper stream seeking.
+    /// - Parameters:
+    ///   - revisionUid: The revision UID of the file to download
+    ///   - outputStream: The seekable output stream to write data to
+    ///   - cancellationToken: A unique identifier for this download operation
+    ///   - progressCallback: Callback for progress updates
+    /// - Returns: A DownloadOperation that supports pause/resume via stream seeking
+    public func downloadToStreamOperation(
+        revisionUid: SDKRevisionUid,
+        outputStream: SeekableOutputStream,
+        cancellationToken: UUID,
+        progressCallback: @escaping ProgressCallback
+    ) async throws -> DownloadOperation {
+        try await downloadsManager.downloadToStreamOperation(
+            revisionUid: revisionUid,
+            outputStream: outputStream,
+            cancellationToken: cancellationToken,
+            progressCallback: progressCallback
+        )
+    }
+
     /// Convenience API for when you don't need a more granular control over the upload (pause, resume etc.)
     public func uploadFile(
         parentFolderUid: SDKNodeUid,

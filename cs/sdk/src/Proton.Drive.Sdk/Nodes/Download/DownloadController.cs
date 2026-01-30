@@ -9,6 +9,8 @@ public sealed class DownloadController : IAsyncDisposable
     private readonly Func<CancellationToken, Task> _resumeFunction;
     private readonly ITaskControl _taskControl;
     private readonly Stream? _outputStreamToDispose;
+    private readonly Action<Exception>? _onFailed;
+    private readonly Action<long, long>? _onSucceeded;
 
     private bool _isDownloadCompleteWithVerificationIssue;
 
@@ -17,18 +19,19 @@ public sealed class DownloadController : IAsyncDisposable
         Task downloadTask,
         Func<CancellationToken, Task> resumeFunction,
         Stream? outputStreamToDispose,
-        ITaskControl taskControl)
+        ITaskControl taskControl,
+        Action<Exception>? onFailed = null,
+        Action<long, long>? onSucceeded = null)
     {
         _downloadStateTask = downloadStateTask;
         _resumeFunction = resumeFunction;
         _taskControl = taskControl;
         _outputStreamToDispose = outputStreamToDispose;
+        _onFailed = onFailed;
+        _onSucceeded = onSucceeded;
 
         Completion = PauseOnResumableErrorAsync(downloadTask);
     }
-
-    internal event Action<Exception>? DownloadFailed;
-    internal event Action<long>? DownloadSucceeded;
 
     public bool IsPaused => _taskControl.IsPaused;
 
@@ -67,7 +70,7 @@ public sealed class DownloadController : IAsyncDisposable
 
                 if (Completion.IsFaulted)
                 {
-                    DownloadFailed?.Invoke(Completion.Exception.Flatten().InnerException ?? Completion.Exception);
+                    _onFailed?.Invoke(Completion.Exception.Flatten().InnerException ?? Completion.Exception);
                 }
 
                 var stateExists = _downloadStateTask.IsCompletedSuccessfully;
@@ -105,7 +108,7 @@ public sealed class DownloadController : IAsyncDisposable
         {
             await downloadTask.ConfigureAwait(false);
 
-            await RaiseDownloadSucceededAsync().ConfigureAwait(false);
+            await FinalizeDownloadAsync().ConfigureAwait(false);
         }
         catch (CompletedDownloadManifestVerificationException error)
         {
@@ -119,15 +122,22 @@ public sealed class DownloadController : IAsyncDisposable
         }
     }
 
-    private async ValueTask RaiseDownloadSucceededAsync()
+    private async ValueTask FinalizeDownloadAsync()
     {
-        var onSucceededHandler = DownloadSucceeded;
+        var onSucceededHandler = _onSucceeded;
         if (onSucceededHandler is null)
         {
             return;
         }
 
+        if (_outputStreamToDispose is not null)
+        {
+            await _outputStreamToDispose.FlushAsync().ConfigureAwait(false);
+        }
+
         var downloadState = await _downloadStateTask.ConfigureAwait(false);
-        onSucceededHandler.Invoke(downloadState.GetNumberOfBytesWritten());
+        onSucceededHandler.Invoke(
+            downloadState.RevisionDto.Size,
+            downloadState.GetNumberOfBytesWritten());
     }
 }

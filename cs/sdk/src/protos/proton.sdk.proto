@@ -223,6 +223,12 @@ message StreamReadRequest {
     int32 buffer_length = 3;
 }
 
+// The response value must be an Int64Value carrying the new position in the stream.
+message StreamSeekRequest {
+    int64 offset = 1;
+    int32 origin = 2; // 0 = Begin, 1 = Current, 2 = End (matches SeekOrigin enum)
+}
+
 enum HttpRequestType {
     HTTP_REQUEST_TYPE_REGULAR_API = 0;
     HTTP_REQUEST_TYPE_STORAGE_DOWNLOAD = 1;
@@ -248,7 +254,7 @@ message HttpResponse {
     repeated HttpHeader headers = 2;
     int64 bindings_content_handle = 3; // Optional
 }
- 
+
 message ApiRetrySucceededEventPayload {
     string url = 1;
     int32 failed_attempts = 2;
