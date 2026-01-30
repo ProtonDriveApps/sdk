@@ -74,6 +74,10 @@ export class ProtonDrivePublicLinkClient {
          * Experimental feature to check if hashes match the malware database.
          */
         scanHashes: (hashes: string[]) => Promise<NodesSecurityScanResult>;
+        /**
+         * Experimental feature to create a document (Proton Docs or Proton Sheets) in the public link.
+         */
+        createDocument: (parentNodeUid: NodeOrUid, documentName: string, documentType: 1 | 2) => Promise<MaybeNode>;
     };
 
     constructor({
@@ -174,6 +178,16 @@ export class ProtonDrivePublicLinkClient {
             scanHashes: async (hashes: string[]): Promise<NodesSecurityScanResult> => {
                 this.logger.debug(`Scanning ${hashes.length} hashes`);
                 return this.sharingPublic.nodes.security.scanHashes(hashes);
+            },
+            createDocument: async (
+                parentNodeUid: NodeOrUid,
+                documentName: string,
+                documentType: 1 | 2,
+            ): Promise<MaybeNode> => {
+                this.logger.debug(`Creating document in ${getUid(parentNodeUid)}`);
+                return convertInternalNodePromise(
+                    this.sharingPublic.nodes.management.createDocument(getUid(parentNodeUid), documentName, documentType),
+                );
             },
         };
     }
