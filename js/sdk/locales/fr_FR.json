@@ -20,6 +20,9 @@
       "Copying item to a non-folder is not allowed": [
         "La copie d'un élément vers un élément qui n'est pas un dossier n'est pas autorisée."
       ],
+      "Creating documents in non-folders is not allowed": [
+        "La création de documents dans des éléments qui ne sont pas des dossiers n'est pas autorisée."
+      ],
       "Creating files in non-folders is not allowed": [
         "La création de fichiers dans des éléments qui ne sont pas des dossiers n'est pas autorisée."
       ],
@@ -143,9 +146,6 @@
       ],
       "Node has no thumbnail": [
         "Le nœud n'a pas de vignette."
-      ],
-      "Node is not a file": [
-        "Le nœud n'est pas un fichier."
       ],
       "Node is not accessible": [
         "Le nœud n'est pas accessible."

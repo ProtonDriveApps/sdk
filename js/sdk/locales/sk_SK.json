@@ -20,6 +20,9 @@
       "Copying item to a non-folder is not allowed": [
         "Kopírovanie položky mimo priečinka nie je povolené."
       ],
+      "Creating documents in non-folders is not allowed": [
+        "Vytváranie dokumentov mimo priečinkov nie je povolené."
+      ],
       "Creating files in non-folders is not allowed": [
         "Vytváranie súborov mimo priečinkov nie je povolené."
       ],
@@ -145,9 +148,6 @@
       ],
       "Node has no thumbnail": [
         "Uzol nemá miniatúru"
-      ],
-      "Node is not a file": [
-        "Uzol nie je súbor"
       ],
       "Node is not accessible": [
         "Uzol nie je dostupný"

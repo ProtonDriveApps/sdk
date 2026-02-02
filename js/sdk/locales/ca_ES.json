@@ -20,6 +20,9 @@
       "Copying item to a non-folder is not allowed": [
         "No està permès copiar un element a un lloc que no és una carpeta"
       ],
+      "Creating documents in non-folders is not allowed": [
+        "La creació de documents fora de carpetes no està permesa"
+      ],
       "Creating files in non-folders is not allowed": [
         "No es permet crear carpetes en llocs que no són carpetes"
       ],
@@ -143,9 +146,6 @@
       ],
       "Node has no thumbnail": [
         "El node no té miniatura"
-      ],
-      "Node is not a file": [
-        "El node no és un fitxer"
       ],
       "Node is not accessible": [
         "Aquest node no és accessible"
