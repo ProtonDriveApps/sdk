@@ -20,6 +20,9 @@
       "Copying item to a non-folder is not allowed": [
         "Δεν επιτρέπεται η αντιγραφή στοιχείου σε μη-φάκελο"
       ],
+      "Creating documents in non-folders is not allowed": [
+        "Δεν επιτρέπεται η δημιουργία εγγράφων σε μη-φακέλους."
+      ],
       "Creating files in non-folders is not allowed": [
         "Δεν επιτρέπεται η δημιουργία αρχείων σε μη-φακέλους."
       ],
@@ -143,9 +146,6 @@
       ],
       "Node has no thumbnail": [
         "Ο κόμβος δεν έχει μικρογραφία"
-      ],
-      "Node is not a file": [
-        "Ο κόμβος δεν είναι αρχείο"
       ],
       "Node is not accessible": [
         "Ο κόμβος δεν είναι προσβάσιμος"

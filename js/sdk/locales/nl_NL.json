@@ -20,6 +20,9 @@
       "Copying item to a non-folder is not allowed": [
         "Het kopiëren van een item naar een niet-map is niet toegestaan"
       ],
+      "Creating documents in non-folders is not allowed": [
+        "Het aanmaken van documenten in niet-mappen is niet toegestaan"
+      ],
       "Creating files in non-folders is not allowed": [
         "Het aanmaken van bestanden in niet-mappen is niet toegestaan"
       ],
@@ -143,9 +146,6 @@
       ],
       "Node has no thumbnail": [
         "Node heeft geen miniatuur"
-      ],
-      "Node is not a file": [
-        "Node is geen bestand"
       ],
       "Node is not accessible": [
         "Node is niet toegankelijk"

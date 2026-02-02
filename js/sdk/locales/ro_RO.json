@@ -20,6 +20,9 @@
       "Copying item to a non-folder is not allowed": [
         "Copierea articolului în alt loc decât un folder nu este permisă."
       ],
+      "Creating documents in non-folders is not allowed": [
+        "Crearea documentelor în afara folderelor nu este permisă."
+      ],
       "Creating files in non-folders is not allowed": [
         "Crearea fișierelor în non-foldere nu este permisă."
       ],
@@ -144,9 +147,6 @@
       ],
       "Node has no thumbnail": [
         "Nodul nu are miniatură."
-      ],
-      "Node is not a file": [
-        "Nodul nu este un fișier."
       ],
       "Node is not accessible": [
         "Nodul nu este accesibil."

@@ -18,16 +18,19 @@
         "Kopyalama işlemi iptal edildi"
       ],
       "Copying item to a non-folder is not allowed": [
-        "Öge klasör olmayan bir yere kopyalanamaz"
+        "Öge klasör olmayan bir ögeye kopyalanamaz"
+      ],
+      "Creating documents in non-folders is not allowed": [
+        "Klasör olmayan ögeler içinde belge oluşturulamaz"
       ],
       "Creating files in non-folders is not allowed": [
-        "Klasör olmayanlar içinde dosya oluşturulamaz"
+        "Klasör olmayan ögeler içinde dosya oluşturulamaz"
       ],
       "Creating folders in non-folders is not allowed": [
-        "Klasör olmayanlar içinde klasör oluşturulamaz"
+        "Klasör olmayan ögeler içinde klasör oluşturulamaz"
       ],
       "Creating revisions in non-files is not allowed": [
-        "Dosya olmayanlar içinde sürüm oluşturulamaz"
+        "Dosya olmayan ögelerde sürüm oluşturulamaz"
       ],
       "Data integrity check failed": [
         "Veri bütünlüğü denetlenemedi"
@@ -123,7 +126,7 @@
         "Taşıma işlemi iptal edildi"
       ],
       "Moving item to a non-folder is not allowed": [
-        "Öge klasör olmayan bir yere taşınamaz"
+        "Öge klasör olmayan bir ögeye taşınamaz"
       ],
       "Moving root item is not allowed": [
         "Kök öge taşınamaz"
@@ -143,9 +146,6 @@
       ],
       "Node has no thumbnail": [
         "Düğümün küçük görseli yok"
-      ],
-      "Node is not a file": [
-        "Düğüm bir dosya değil"
       ],
       "Node is not accessible": [
         "Düğüme erişilemiyor"

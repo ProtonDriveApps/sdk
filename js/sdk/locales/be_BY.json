@@ -20,6 +20,9 @@
       "Copying item to a non-folder is not allowed": [
         "Капіяванне элементаў у асяроддзі, якое не належыць папкам забаронена"
       ],
+      "Creating documents in non-folders is not allowed": [
+        "Стварэнне дакументаў у асяроддзі, якое не належыць папкам забаронена"
+      ],
       "Creating files in non-folders is not allowed": [
         "Стварэнне файлаў у асяроддзі, якое не належыць папкам забаронена"
       ],
@@ -145,9 +148,6 @@
       ],
       "Node has no thumbnail": [
         "У вузла адсутнічае мініяцюра"
-      ],
-      "Node is not a file": [
-        "Вузел не з'яўляецца файлам"
       ],
       "Node is not accessible": [
         "Вузел недаступны"

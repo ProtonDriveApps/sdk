@@ -128,9 +128,6 @@
       "Node has no thumbnail": [
         "У узла нет значка"
       ],
-      "Node is not a file": [
-        "Узел не является файлом"
-      ],
       "Node is not accessible": [
         "Узел недоступен"
       ],

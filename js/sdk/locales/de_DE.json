@@ -20,6 +20,9 @@
       "Copying item to a non-folder is not allowed": [
         "Kopieren des Eintrags in einen Nicht-Ordner ist nicht erlaubt"
       ],
+      "Creating documents in non-folders is not allowed": [
+        "Das Erstellen von Dokumenten außerhalb von Ordnern ist nicht erlaubt."
+      ],
       "Creating files in non-folders is not allowed": [
         "Erstellen von Dateien in Nicht-Ordnern ist nicht erlaubt"
       ],
@@ -143,9 +146,6 @@
       ],
       "Node has no thumbnail": [
         "Node hat kein Vorschaubild"
-      ],
-      "Node is not a file": [
-        "Node ist keine Datei"
       ],
       "Node is not accessible": [
         "Node ist nicht erreichbar"
