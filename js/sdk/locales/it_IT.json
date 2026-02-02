@@ -20,6 +20,9 @@
       "Copying item to a non-folder is not allowed": [
         "Non è consentito copiare l'elemento in un elemento che non è una cartella."
       ],
+      "Creating documents in non-folders is not allowed": [
+        "La creazione di documenti in elementi non cartella non è consentita"
+      ],
       "Creating files in non-folders is not allowed": [
         "Non è consentito creare file in elementi che non sono cartelle."
       ],
@@ -143,9 +146,6 @@
       ],
       "Node has no thumbnail": [
         "Il nodo non ha alcuna miniatura"
-      ],
-      "Node is not a file": [
-        "Il nodo non è un file"
       ],
       "Node is not accessible": [
         "Il nodo non è accessibile"
