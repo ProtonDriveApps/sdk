@@ -1,8 +1,8 @@
 package me.proton.drive.sdk.internal
 
 import com.google.protobuf.Any
-import com.google.protobuf.Int64Value
 import com.google.protobuf.Int32Value
+import com.google.protobuf.Int64Value
 import com.google.protobuf.StringValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -12,6 +12,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import me.proton.drive.sdk.LoggerProvider.Level
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.ERROR
@@ -202,32 +203,50 @@ class ProtonDriveSdkNativeClient internal constructor(
         data: ByteBuffer,
         parser: (ByteBuffer) -> T,
         block: suspend (T) -> R
-    ): R = runBlocking(Dispatchers.IO) {
+    ): R = runBlocking(Dispatchers.Unconfined) {
         val value = parser(data)
         coroutineScope(operation).async { block(value) }.await()
+    }
+
+    private inner class ResponseOnce(private val operation: String) {
+        private val responseSent = java.util.concurrent.atomic.AtomicBoolean(false)
+
+        operator fun invoke(sdkHandle: Long, response: Response) {
+            if (responseSent.compareAndSet(false, true)) {
+                handleResponse(sdkHandle, response)
+            } else {
+                logger(WARN, "Response already sent for $operation")
+            }
+        }
     }
 
     @Suppress("TooGenericExceptionCaught")
     private fun onOperation(
         operation: String,
         sdkHandle: Long,
+        responseOnce: ResponseOnce = ResponseOnce(operation),
         block: suspend () -> Response,
     ): Job? = try {
         coroutineScope(operation).launch(Dispatchers.IO) {
             try {
-                handleResponse(sdkHandle, block())
+                val response = block()
+                withContext(Dispatchers.Unconfined) {
+                    responseOnce(sdkHandle, response)
+                }
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Throwable) {
-                handleResponse(sdkHandle, response {
-                    this@response.error = error.toProtonSdkError("Error while executing $operation")
-                })
+                withContext(Dispatchers.Unconfined) {
+                    responseOnce(sdkHandle, response {
+                        this@response.error = error.toProtonSdkError("Error while executing $operation")
+                    })
+                }
             }
         }.also { job ->
             job.invokeOnCompletion { error ->
                 if (error is CancellationException) {
                     logger(DEBUG, "Operation $operation was cancelled")
-                    handleResponse(sdkHandle, response {
+                    responseOnce(sdkHandle, response {
                         this@response.error =
                             error.toProtonSdkError("Operation $operation was cancelled")
                     })
@@ -249,13 +268,14 @@ class ProtonDriveSdkNativeClient internal constructor(
         data: ByteBuffer,
         sdkHandle: Long,
         parser: (ByteBuffer) -> T,
+        responseOnce: ResponseOnce = ResponseOnce(operation),
         block: suspend (T) -> Response
     ): Job? = try {
         // parsing of protobuf needs to be done serially
         val request = parser(data)
-        onOperation(operation, sdkHandle) { block(request) }
+        onOperation(operation, sdkHandle, responseOnce) { block(request) }
     } catch (error: Throwable) {
-        handleResponse(sdkHandle, response {
+        responseOnce(sdkHandle, response {
             this@response.error = error.toProtonSdkError(
                 "Error while parsing request for $operation"
             )
