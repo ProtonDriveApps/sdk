@@ -103,6 +103,23 @@ internal static class InteropProtonPhotosClient
         };
     }
 
+    public static async ValueTask<IMessage?> HandleGetNodeAsync(DrivePhotosClientGetNodeRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        var nodeResult = await client.GetNodeAsync(
+            NodeUid.Parse(request.NodeUid),
+            cancellationToken).ConfigureAwait(false);
+
+        if (nodeResult == null)
+        {
+            return null;
+        }
+
+        return InteropProtonDriveClient.ConvertToNodeResult(nodeResult.Value);
+    }
+
     public static async ValueTask<IMessage> HandleEnumeratePhotosTimelineAsync(DrivePhotosClientEnumeratePhotosTimelineRequest request)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);

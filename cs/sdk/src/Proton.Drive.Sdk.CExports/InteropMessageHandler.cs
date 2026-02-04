@@ -49,6 +49,12 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DriveClientGetThumbnails
                     => await InteropProtonDriveClient.HandleGetThumbnailsAsync(request.DriveClientGetThumbnails).ConfigureAwait(false),
 
+                Request.PayloadOneofCase.DriveClientEnumerateFolderChildren
+                    => await InteropProtonDriveClient.HandleEnumerateFolderChildrenAsync(request.DriveClientEnumerateFolderChildren).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientGetMyFilesFolder
+                    => await InteropProtonDriveClient.HandleGetMyFilesFolderAsync(request.DriveClientGetMyFilesFolder).ConfigureAwait(false),
+
                 Request.PayloadOneofCase.UploadFromStream
                     => InteropFileUploader.HandleUploadFromStream(request.UploadFromStream, bindingsHandle),
 
@@ -120,6 +126,9 @@ internal static class InteropMessageHandler
 
                 Request.PayloadOneofCase.DrivePhotosClientEnumeratePhotosTimeline
                     => await InteropProtonPhotosClient.HandleEnumeratePhotosTimelineAsync(request.DrivePhotosClientEnumeratePhotosTimeline).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientGetNode
+                    => await InteropProtonPhotosClient.HandleGetNodeAsync(request.DrivePhotosClientGetNode).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DrivePhotosClientGetPhotoDownloader
                     => await InteropProtonPhotosClient.HandleGetPhotosDownloaderAsync(request.DrivePhotosClientGetPhotoDownloader).ConfigureAwait(false),
