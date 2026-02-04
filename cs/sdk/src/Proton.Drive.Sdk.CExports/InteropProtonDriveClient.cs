@@ -296,12 +296,21 @@ internal static class InteropProtonDriveClient
 
         if (result.TryGetValueElseError(out var author, out var error))
         {
-            authorResult.Author = new Proton.Drive.Sdk.CExports.Author { EmailAddress = author.EmailAddress };
+            authorResult.Value = new Author
+            {
+                EmailAddress = author.EmailAddress,
+            };
         }
         else
         {
-            authorResult.Author = new Proton.Drive.Sdk.CExports.Author { EmailAddress = error.ClaimedAuthor.EmailAddress };
-            authorResult.SignatureVerificationError = error.Message;
+            authorResult.Error = new SignatureVerificationError
+            {
+                ClaimedAuthor = new Author
+                {
+                    EmailAddress = error.ClaimedAuthor.EmailAddress,
+                },
+                Message = error.Message,
+            };
         }
 
         return authorResult;

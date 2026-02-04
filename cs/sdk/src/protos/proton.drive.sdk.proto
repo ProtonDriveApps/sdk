@@ -143,9 +143,16 @@ message FolderNode {
     AuthorResult author = 8;
 }
 
+message SignatureVerificationError {
+    Author claimed_author = 1; // optional - preserves error context
+    string message = 2; // optional
+}
+
 message AuthorResult {
-    Author author = 1;
-    string signature_verification_error = 2;
+    oneof result {
+        Author value = 1;
+        SignatureVerificationError error = 2;
+    }
 }
 
 message Author {
