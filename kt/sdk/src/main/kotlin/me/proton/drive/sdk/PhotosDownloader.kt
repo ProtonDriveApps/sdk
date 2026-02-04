@@ -4,11 +4,13 @@ import kotlinx.coroutines.CoroutineScope
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
+import me.proton.drive.sdk.extension.seek
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.internal.JniDownloadController
 import me.proton.drive.sdk.internal.JniPhotosDownloader
 import me.proton.drive.sdk.internal.factory
 import me.proton.drive.sdk.internal.toLogId
+import java.nio.channels.SeekableByteChannel
 import java.nio.channels.WritableByteChannel
 import java.util.concurrent.atomic.AtomicReference
 
@@ -30,6 +32,11 @@ class PhotosDownloader internal constructor(
             handle = handle,
             cancellationTokenSourceHandle = cancellationTokenSource.handle,
             onWrite = channel::write,
+            onSeek = if (channel is SeekableByteChannel) {
+                channel::seek
+            } else {
+                null
+            },
             onProgress = { progressUpdate ->
                 with(progressUpdate) {
                     bridge.internalLogger(DEBUG, "progress: $bytesCompleted/$bytesInTotal")
