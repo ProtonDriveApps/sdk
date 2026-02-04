@@ -24,8 +24,12 @@ actor PhotoUploadsManager {
         fileURL: URL,
         fileSize: Int64,
         modificationDate: Date,
+        captureTime: Date,
+        mainPhotoLinkID: String?,
         mediaType: String,
         thumbnails: [ThumbnailData],
+        tags: [Proton_Drive_Sdk_PhotoTag],
+        additionalMetadata: [AdditionalMetadata],
         overrideExistingDraft: Bool,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
@@ -38,6 +42,10 @@ actor PhotoUploadsManager {
             fileSize: fileSize,
             modificationDate: modificationDate,
             mediaType: mediaType,
+            captureTime: captureTime,
+            mainPhotoLinkID: mainPhotoLinkID,
+            tags: tags,
+            additionalMetadata: additionalMetadata,
             overrideExistingDraft: overrideExistingDraft,
             cancellationHandle: cancellationTokenSource.handle
         )
@@ -137,6 +145,10 @@ actor PhotoUploadsManager {
         fileSize: Int64,
         modificationDate: Date,
         mediaType: String,
+        captureTime: Date,
+        mainPhotoLinkID: String?,
+        tags: [Proton_Drive_Sdk_PhotoTag],
+        additionalMetadata: [AdditionalMetadata],
         overrideExistingDraft: Bool,
         cancellationHandle: ObjectHandle
     ) async throws -> ObjectHandle {
@@ -147,7 +159,13 @@ actor PhotoUploadsManager {
             $0.metadata = Proton_Drive_Sdk_PhotoFileUploadMetadata.with { metadata in
                 metadata.mediaType = mediaType
                 metadata.lastModificationTime = Google_Protobuf_Timestamp(date: modificationDate)
+                metadata.additionalMetadata = additionalMetadata.map { $0.toSDK }
                 metadata.overrideExistingDraftByOtherClient = overrideExistingDraft
+                metadata.captureTime = Google_Protobuf_Timestamp(date: captureTime)
+                if let mainPhotoLinkID {
+                    metadata.mainPhotoLinkID = mainPhotoLinkID
+                }
+                metadata.tags = tags
             }
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
         }

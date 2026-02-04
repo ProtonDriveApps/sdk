@@ -4,6 +4,7 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
 
     private var clientHandle: ObjectHandle = 0
     private var downloadsManager: PhotoDownloadsManager!
+    private var uploadManager: PhotoUploadsManager!
     private var thumbnailsManager: DownloadThumbnailsManager!
 
     let accountClient: AccountClientProtocol
@@ -80,6 +81,7 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
         logger.trace("client handle: \(clientHandle)", category: "ProtonDriveClient")
 
         self.downloadsManager = PhotoDownloadsManager(clientHandle: clientHandle, logger: logger)
+        self.uploadManager = PhotoUploadsManager(clientHandle: clientHandle, logger: logger)
         self.thumbnailsManager = DownloadThumbnailsManager(clientHandle: clientHandle, logger: logger)
     }
 
@@ -140,7 +142,10 @@ extension ProtonPhotosClient {
         let list: Proton_Drive_Sdk_PhotosTimelineList = try await SDKRequestHandler.send(request, logger: logger)
         return list.items.compactMap { PhotoTimelineItem(item: $0) }
     }
+}
 
+// MARK: - Download
+extension ProtonPhotosClient {
     public func downloadThumbnails(
         photoUids: [SDKNodeUid],
         type: ThumbnailData.ThumbnailType,
@@ -189,5 +194,90 @@ extension ProtonPhotosClient {
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
+    }
+}
+
+// MARK: - Upload
+extension ProtonPhotosClient {
+    public func uploadPhoto(
+        name: String,
+        fileURL: URL,
+        fileSize: Int64,
+        modificationDate: Date,
+        captureTime: Date,
+        mainPhotoLinkID: String?,
+        mediaType: String,
+        thumbnails: [ThumbnailData],
+        tags: [Int],
+        additionalMetadata: [AdditionalMetadata],
+        overrideExistingDraft: Bool,
+        cancellationToken: UUID,
+        progressCallback: @escaping ProgressCallback,
+        onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
+    ) async throws -> UploadedFileIdentifiers {
+        let operation = try await uploadOperation(
+            name: name,
+            fileURL: fileURL,
+            fileSize: fileSize,
+            modificationDate: modificationDate,
+            captureTime: captureTime,
+            mainPhotoLinkID: mainPhotoLinkID,
+            mediaType: mediaType,
+            thumbnails: thumbnails,
+            tags: tags,
+            additionalMetadata: additionalMetadata,
+            overrideExistingDraft: overrideExistingDraft,
+            cancellationToken: cancellationToken,
+            progressCallback: progressCallback
+        )
+
+        return try await operation.awaitUploadWithResilience(
+            operationalResilience: configuration.uploadOperationalResilience,
+            onRetriableErrorReceived: onRetriableErrorReceived
+        )
+    }
+
+    public func uploadOperation(
+        name: String,
+        fileURL: URL,
+        fileSize: Int64,
+        modificationDate: Date,
+        captureTime: Date,
+        mainPhotoLinkID: String?,
+        mediaType: String,
+        thumbnails: [ThumbnailData],
+        tags: [Int],
+        additionalMetadata: [AdditionalMetadata],
+        overrideExistingDraft: Bool,
+        cancellationToken: UUID,
+        progressCallback: @escaping ProgressCallback
+    ) async throws -> UploadOperation {
+        let mappedTags = tags.compactMap { Proton_Drive_Sdk_PhotoTag(rawValue: $0) }
+        guard mappedTags.count == tags.count else {
+            let inputTags = Set(tags)
+            let knownTags = Set(mappedTags.map(\.rawValue))
+            let unknownTags = Array(inputTags.subtracting(knownTags))
+            throw ProtonDriveSDKError(interopError: .containsUnknownPhotoTags(tags: unknownTags))
+        }
+
+        return try await uploadManager.uploadPhotoOperation(
+            name: name,
+            fileURL: fileURL,
+            fileSize: fileSize,
+            modificationDate: modificationDate,
+            captureTime: captureTime,
+            mainPhotoLinkID: mainPhotoLinkID,
+            mediaType: mediaType,
+            thumbnails: thumbnails,
+            tags: mappedTags,
+            additionalMetadata: additionalMetadata,
+            overrideExistingDraft: overrideExistingDraft,
+            cancellationToken: cancellationToken,
+            progressCallback: progressCallback
+        )
+    }
+
+    public func cancelUpload(with token: UUID) async throws {
+        try await uploadManager.cancelUpload(with: token)
     }
 }
