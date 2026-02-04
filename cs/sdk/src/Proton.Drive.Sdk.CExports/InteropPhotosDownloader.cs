@@ -15,8 +15,9 @@ internal static class InteropPhotosDownloader
         var downloader = Interop.GetFromHandle<PhotosFileDownloader>(request.DownloaderHandle);
 
         var writeFunction = new InteropFunction<nint, InteropArray<byte>, nint, nint>(request.WriteAction);
+        var seekAction = request.SeekAction != 0 ? new InteropAction<nint, InteropArray<byte>, nint>(request.SeekAction) : (InteropAction<nint, InteropArray<byte>, nint>?)null;
         var cancelAction = request.CancelAction != 0 ? new InteropAction<nint>(request.CancelAction) : (InteropAction<nint>?)null;
-        var stream = new InteropStream(bindingsHandle, writeFunction, cancelAction: cancelAction);
+        var stream = new InteropStream(bindingsHandle, writeFunction, seekAction, cancelAction);
 
         var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
 

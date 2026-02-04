@@ -150,7 +150,7 @@ internal sealed partial class RevisionReader : IDisposable
             try
             {
                 plaintextStream.Seek(0, SeekOrigin.Begin);
-                var initialOutputPosition = outputStream.Position;
+                var initialOutputPosition = outputStream.CanSeek ? outputStream.Position : 0;
 
                 try
                 {

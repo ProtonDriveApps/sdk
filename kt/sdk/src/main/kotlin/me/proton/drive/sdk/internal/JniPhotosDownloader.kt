@@ -26,6 +26,7 @@ class JniPhotosDownloader internal constructor() : JniBaseProtonDriveSdk() {
         handle: Long,
         cancellationTokenSourceHandle: Long,
         onWrite: suspend (ByteBuffer) -> Unit,
+        onSeek: ((Long, Int) -> Long)? = null,
         onProgress: suspend (ProtonDriveSdk.ProgressUpdate) -> Unit,
         coroutineScopeProvider: CoroutineScopeProvider,
     ): Long = executePersistent(
@@ -34,6 +35,7 @@ class JniPhotosDownloader internal constructor() : JniBaseProtonDriveSdk() {
                 name = method("downloadToStream"),
                 response = continuation.toLongResponse().asClientResponseCallback(),
                 write = onWrite,
+                seek = onSeek,
                 progress = onProgress,
                 logger = internalLogger,
                 coroutineScopeProvider = coroutineScopeProvider,
@@ -47,6 +49,9 @@ class JniPhotosDownloader internal constructor() : JniBaseProtonDriveSdk() {
                     writeAction = ProtonDriveSdkNativeClient.getWritePointer()
                     progressAction = ProtonDriveSdkNativeClient.getProgressPointer()
                     cancelAction = JniJob.getCancelPointer()
+                    if (onSeek != null) {
+                        seekAction = ProtonDriveSdkNativeClient.getSeekPointer()
+                    }
                 }
             }
         }
