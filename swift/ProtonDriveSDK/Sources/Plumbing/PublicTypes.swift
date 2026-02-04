@@ -150,13 +150,23 @@ public struct FolderNode: Sendable {
     }
 }
 
+// FIXME: Preserve distinction between verified and claimed email addresses to match original interface.
 public struct Author: Sendable {
     let emailAddress: String?
     let signatureVerificationError: String?
 
     init(result: Proton_Drive_Sdk_AuthorResult) {
-        self.emailAddress = result.author.emailAddress
-        self.signatureVerificationError = result.hasSignatureVerificationError ? result.signatureVerificationError : nil
+        switch result.result {
+        case .value(let author):
+            self.emailAddress = author.emailAddress
+            self.signatureVerificationError = nil
+        case .error(let error):
+            self.emailAddress = error.claimedAuthor.emailAddress
+            self.signatureVerificationError = error.message
+        case .none:
+            self.emailAddress = nil
+            self.signatureVerificationError = "Invalid AuthorResult: no value or error set"
+        }
     }
 }
 
