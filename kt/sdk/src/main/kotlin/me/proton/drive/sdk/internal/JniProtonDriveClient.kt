@@ -3,6 +3,7 @@ package me.proton.drive.sdk.internal
 import com.google.protobuf.Any
 import kotlinx.coroutines.CoroutineScope
 import me.proton.drive.sdk.converter.FileThumbnailListConverter
+import me.proton.drive.sdk.converter.FolderChildrenListConverter
 import me.proton.drive.sdk.converter.FolderNodeConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
 import me.proton.drive.sdk.extension.LongResponseCallback
@@ -101,6 +102,19 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
     ): ProtonDriveSdk.FolderNode = executeOnce("createFolder", FolderNodeConverter().asCallback) {
         driveClientCreateFolder = request
     }
+
+    suspend fun getMyFilesFolder(
+        request: ProtonDriveSdk.DriveClientGetMyFilesFolderRequest,
+    ): ProtonDriveSdk.FolderNode = executeOnce("getMyFilesFolder", FolderNodeConverter().asCallback) {
+        driveClientGetMyFilesFolder = request
+    }
+
+    suspend fun enumerateFolderChildren(
+        request: ProtonDriveSdk.DriveClientEnumerateFolderChildrenRequest,
+    ): ProtonDriveSdk.FolderChildrenList =
+        executeOnce("enumerateFolderChildren", FolderChildrenListConverter().asCallback) {
+            driveClientEnumerateFolderChildren = request
+        }
 
     fun free(handle: Long) {
         dispatch("free") {

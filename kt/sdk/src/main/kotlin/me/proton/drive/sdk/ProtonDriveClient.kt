@@ -4,6 +4,7 @@ import com.google.protobuf.timestamp
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.entity.FolderNode
+import me.proton.drive.sdk.entity.NodeResult
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toProto
@@ -12,7 +13,9 @@ import me.proton.drive.sdk.internal.cancellationCoroutineScope
 import me.proton.drive.sdk.internal.factory
 import me.proton.drive.sdk.internal.toLogId
 import proton.drive.sdk.driveClientCreateFolderRequest
+import proton.drive.sdk.driveClientEnumerateFolderChildrenRequest
 import proton.drive.sdk.driveClientGetAvailableNameRequest
+import proton.drive.sdk.driveClientGetMyFilesFolderRequest
 import proton.drive.sdk.driveClientGetThumbnailsRequest
 import proton.drive.sdk.driveClientRenameRequest
 import java.nio.channels.WritableByteChannel
@@ -90,6 +93,29 @@ class ProtonDriveClient internal constructor(
                 lastModification?.let {
                     lastModificationTime = timestamp { seconds = lastModification}
                 }
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        ).toEntity()
+    }
+
+    suspend fun getMyFilesFolder(): FolderNode = cancellationCoroutineScope { source ->
+        log(DEBUG, "getMyFilesFolder")
+        bridge.getMyFilesFolder(
+            driveClientGetMyFilesFolderRequest {
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        ).toEntity()
+    }
+
+    suspend fun enumerateFolderChildren(
+        folderUid: String,
+    ): List<NodeResult> = cancellationCoroutineScope { source ->
+        log(DEBUG, "enumerateFolderChildren")
+        bridge.enumerateFolderChildren(
+            driveClientEnumerateFolderChildrenRequest {
+                this.folderUid = folderUid
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }

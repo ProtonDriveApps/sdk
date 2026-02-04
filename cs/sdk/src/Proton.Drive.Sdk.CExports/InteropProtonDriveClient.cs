@@ -187,6 +187,43 @@ internal static class InteropProtonDriveClient
         return new FileThumbnailList { Thumbnails = { thumbnails } };
     }
 
+    public static async ValueTask<IMessage> HandleEnumerateFolderChildrenAsync(DriveClientEnumerateFolderChildrenRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        var childrenEnumerable = client.EnumerateFolderChildrenAsync(
+            NodeUid.Parse(request.FolderUid),
+            cancellationToken);
+
+        var children = await childrenEnumerable
+            .Select(ConvertToNodeResult)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+        return new FolderChildrenList { Children = { children } };
+    }
+
+    public static async ValueTask<IMessage> HandleGetMyFilesFolderAsync(DriveClientGetMyFilesFolderRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        var folderNode = await client.GetMyFilesFolderAsync(cancellationToken).ConfigureAwait(false);
+
+        return new FolderNode
+        {
+            Uid = folderNode.Uid.ToString(),
+            ParentUid = folderNode.ParentUid?.ToString() ?? string.Empty,
+            TreeEventScopeId = folderNode.TreeEventScopeId,
+            Name = folderNode.Name,
+            CreationTime = folderNode.CreationTime.ToUniversalTime().ToTimestamp(),
+            TrashTime = folderNode.TrashTime?.ToUniversalTime().ToTimestamp(),
+            NameAuthor = ParseAuthorResult(folderNode.NameAuthor),
+            Author = ParseAuthorResult(folderNode.Author),
+        };
+    }
+
     public static async ValueTask<IMessage> HandleGetFileDownloaderAsync(DriveClientGetFileDownloaderRequest request)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
@@ -268,5 +305,215 @@ internal static class InteropProtonDriveClient
         }
 
         return authorResult;
+    }
+
+    public static NodeResult ConvertToNodeResult(Result<Proton.Drive.Sdk.Nodes.Node, Proton.Drive.Sdk.Nodes.DegradedNode> result)
+    {
+        var nodeResult = new NodeResult();
+
+        if (result.TryGetValueElseError(out var node, out var degradedNode))
+        {
+            nodeResult.Value = ConvertToNode(node);
+        }
+        else
+        {
+            nodeResult.Error = ConvertToDegradedNode(degradedNode);
+        }
+
+        return nodeResult;
+    }
+
+    private static Node ConvertToNode(Proton.Drive.Sdk.Nodes.Node node)
+    {
+        var result = new Node();
+
+        switch (node)
+        {
+            case Proton.Drive.Sdk.Nodes.FolderNode folderNode:
+                result.Folder = new FolderNode
+                {
+                    Uid = folderNode.Uid.ToString(),
+                    ParentUid = folderNode.ParentUid?.ToString() ?? string.Empty,
+                    TreeEventScopeId = folderNode.TreeEventScopeId,
+                    Name = folderNode.Name,
+                    CreationTime = folderNode.CreationTime.ToUniversalTime().ToTimestamp(),
+                    TrashTime = folderNode.TrashTime?.ToUniversalTime().ToTimestamp(),
+                    NameAuthor = ParseAuthorResult(folderNode.NameAuthor),
+                    Author = ParseAuthorResult(folderNode.Author),
+                };
+                break;
+
+            case Proton.Drive.Sdk.Nodes.FileNode fileNode:
+                var fileNodeProto = new FileNode
+                {
+                    Uid = fileNode.Uid.ToString(),
+                    ParentUid = fileNode.ParentUid?.ToString() ?? string.Empty,
+                    TreeEventScopeId = fileNode.TreeEventScopeId,
+                    Name = fileNode.Name,
+                    MediaType = fileNode.MediaType,
+                    CreationTime = fileNode.CreationTime.ToUniversalTime().ToTimestamp(),
+                    TrashTime = fileNode.TrashTime?.ToUniversalTime().ToTimestamp(),
+                    NameAuthor = ParseAuthorResult(fileNode.NameAuthor),
+                    Author = ParseAuthorResult(fileNode.Author),
+                    TotalSizeOnCloudStorage = fileNode.TotalSizeOnCloudStorage,
+                    ActiveRevision = new FileRevision
+                    {
+                        Uid = fileNode.ActiveRevision.Uid.ToString(),
+                        CreationTime = fileNode.ActiveRevision.CreationTime.ToUniversalTime().ToTimestamp(),
+                        SizeOnCloudStorage = fileNode.ActiveRevision.SizeOnCloudStorage,
+                        ClaimedSize = fileNode.ActiveRevision.ClaimedSize ?? 0,
+                        ClaimedModificationTime = fileNode.ActiveRevision.ClaimedModificationTime?.ToUniversalTime().ToTimestamp(),
+                        ClaimedDigests = new FileContentDigests(),
+                    },
+                };
+
+                if (fileNode.ActiveRevision.ClaimedDigests.Sha1.HasValue)
+                {
+                    fileNodeProto.ActiveRevision.ClaimedDigests.Sha1 = ByteString.CopyFrom(fileNode.ActiveRevision.ClaimedDigests.Sha1.Value.Span);
+                }
+
+                fileNodeProto.ActiveRevision.Thumbnails.AddRange(
+                    fileNode.ActiveRevision.Thumbnails.Select(t => new ThumbnailHeader
+                    {
+                        Id = t.Id,
+                        Type = (ThumbnailType)(int)t.Type,
+                    }));
+
+                if (fileNode.ActiveRevision.AdditionalClaimedMetadata is not null)
+                {
+                    fileNodeProto.ActiveRevision.AdditionalClaimedMetadata.AddRange(
+                        fileNode.ActiveRevision.AdditionalClaimedMetadata.Select(m => new AdditionalMetadataProperty
+                        {
+                            Name = m.Name,
+                            Utf8JsonValue = ByteString.CopyFromUtf8(m.Value.ToString()),
+                        }));
+                }
+
+                if (fileNode.ActiveRevision.ContentAuthor.HasValue)
+                {
+                    fileNodeProto.ActiveRevision.ContentAuthor = ParseAuthorResult(fileNode.ActiveRevision.ContentAuthor.Value);
+                }
+
+                result.File = fileNodeProto;
+                break;
+        }
+
+        return result;
+    }
+
+    private static DegradedNode ConvertToDegradedNode(Proton.Drive.Sdk.Nodes.DegradedNode degradedNode)
+    {
+        var result = new DegradedNode();
+
+        switch (degradedNode)
+        {
+            case Proton.Drive.Sdk.Nodes.DegradedFolderNode degradedFolderNode:
+                var degradedFolder = new DegradedFolderNode
+                {
+                    Uid = degradedFolderNode.Uid.ToString(),
+                    ParentUid = degradedFolderNode.ParentUid?.ToString() ?? string.Empty,
+                    TreeEventScopeId = degradedFolderNode.TreeEventScopeId,
+                    Name = ConvertStringToStringResult(degradedFolderNode.Name),
+                    CreationTime = degradedFolderNode.CreationTime.ToUniversalTime().ToTimestamp(),
+                    TrashTime = degradedFolderNode.TrashTime?.ToUniversalTime().ToTimestamp(),
+                    NameAuthor = ParseAuthorResult(degradedFolderNode.NameAuthor),
+                    Author = ParseAuthorResult(degradedFolderNode.Author),
+                };
+
+                degradedFolder.Errors.AddRange(degradedFolderNode.Errors.Select(ConvertToDriveError));
+                result.Folder = degradedFolder;
+                break;
+
+            case Proton.Drive.Sdk.Nodes.DegradedFileNode degradedFileNode:
+                var degradedFile = new DegradedFileNode
+                {
+                    Uid = degradedFileNode.Uid.ToString(),
+                    ParentUid = degradedFileNode.ParentUid?.ToString() ?? string.Empty,
+                    TreeEventScopeId = degradedFileNode.TreeEventScopeId,
+                    Name = ConvertStringToStringResult(degradedFileNode.Name),
+                    MediaType = degradedFileNode.MediaType,
+                    CreationTime = degradedFileNode.CreationTime.ToUniversalTime().ToTimestamp(),
+                    TrashTime = degradedFileNode.TrashTime?.ToUniversalTime().ToTimestamp(),
+                    NameAuthor = ParseAuthorResult(degradedFileNode.NameAuthor),
+                    Author = ParseAuthorResult(degradedFileNode.Author),
+                    TotalStorageQuotaUsage = degradedFileNode.TotalStorageQuotaUsage,
+                };
+
+                if (degradedFileNode.ActiveRevision is not null)
+                {
+                    degradedFile.ActiveRevision = new DegradedRevision
+                    {
+                        Uid = degradedFileNode.ActiveRevision.Uid.ToString(),
+                        CreationTime = degradedFileNode.ActiveRevision.CreationTime.ToUniversalTime().ToTimestamp(),
+                        SizeOnCloudStorage = degradedFileNode.ActiveRevision.SizeOnCloudStorage,
+                        ClaimedSize = degradedFileNode.ActiveRevision.ClaimedSize ?? 0,
+                        ClaimedModificationTime = degradedFileNode.ActiveRevision.ClaimedModificationTime?.ToUniversalTime().ToTimestamp(),
+                        CanDecrypt = degradedFileNode.ActiveRevision.CanDecrypt,
+                    };
+
+                    if (degradedFileNode.ActiveRevision.ClaimedDigests.HasValue)
+                    {
+                        degradedFile.ActiveRevision.ClaimedDigests = new FileContentDigests();
+                        if (degradedFileNode.ActiveRevision.ClaimedDigests.Value.Sha1.HasValue)
+                        {
+                            degradedFile.ActiveRevision.ClaimedDigests.Sha1 = ByteString.CopyFrom(degradedFileNode.ActiveRevision.ClaimedDigests.Value.Sha1.Value.Span);
+                        }
+                    }
+
+                    degradedFile.ActiveRevision.Thumbnails.AddRange(
+                        degradedFileNode.ActiveRevision.Thumbnails.Select(t => new ThumbnailHeader
+                        {
+                            Id = t.Id,
+                            Type = (ThumbnailType)(int)t.Type,
+                        }));
+
+                    if (degradedFileNode.ActiveRevision.AdditionalClaimedMetadata is not null)
+                    {
+                        degradedFile.ActiveRevision.AdditionalClaimedMetadata.AddRange(
+                            degradedFileNode.ActiveRevision.AdditionalClaimedMetadata.Select(m => new AdditionalMetadataProperty
+                            {
+                                Name = m.Name,
+                                Utf8JsonValue = ByteString.CopyFromUtf8(m.Value.ToString()),
+                            }));
+                    }
+
+                    if (degradedFileNode.ActiveRevision.ContentAuthor.HasValue)
+                    {
+                        degradedFile.ActiveRevision.ContentAuthor = ParseAuthorResult(degradedFileNode.ActiveRevision.ContentAuthor.Value);
+                    }
+
+                    degradedFile.ActiveRevision.Errors.AddRange(degradedFileNode.ActiveRevision.Errors.Select(ConvertToDriveError));
+                }
+
+                degradedFile.Errors.AddRange(degradedFileNode.Errors.Select(ConvertToDriveError));
+                result.File = degradedFile;
+                break;
+        }
+
+        return result;
+    }
+
+    private static DriveError ConvertToDriveError(ProtonDriveError error)
+    {
+        return new DriveError
+        {
+            Message = error.Message ?? string.Empty,
+            InnerError = error.InnerError != null ? ConvertToDriveError(error.InnerError) : null,
+        };
+    }
+
+    private static StringResult ConvertStringToStringResult(Result<string, ProtonDriveError> result)
+    {
+        var stringResult = new StringResult();
+        if (result.TryGetValueElseError(out var value, out var error))
+        {
+            stringResult.Value = value;
+        }
+        else
+        {
+            stringResult.Error = ConvertToDriveError(error);
+        }
+
+        return stringResult;
     }
 }
