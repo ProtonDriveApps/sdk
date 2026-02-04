@@ -109,6 +109,24 @@ public struct ThumbnailData: Sendable {
     }
 }
 
+/// Extended attribute for photo upload
+public struct AdditionalMetadata: Sendable {
+    public let name: String
+    public let utf8JsonValue: Data
+
+    var toSDK: Proton_Drive_Sdk_AdditionalMetadataProperty {
+        Proton_Drive_Sdk_AdditionalMetadataProperty.with {
+            $0.name = name
+            $0.utf8JsonValue = utf8JsonValue
+        }
+    }
+
+    public init(name: String, utf8JsonValue: Data) {
+        self.name = name
+        self.utf8JsonValue = utf8JsonValue
+    }
+}
+
 public struct FolderNode: Sendable {
     public let uid: SDKNodeUid
     public let parentUid: SDKNodeUid?
