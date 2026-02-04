@@ -60,6 +60,7 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
         case wrongSDKResponse(message: String)
         case wrongResult(message: String)
         case incorrectIDFormat(id: String)
+        case containsUnknownPhotoTags(tags: [Int])
 
         var typeName: String {
             switch self {
@@ -68,6 +69,7 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
             case .wrongSDKResponse: return "WrongSDKResponseType"
             case .wrongResult: return "WrongSDKRequestResult"
             case .incorrectIDFormat: return "IncorrectIDFormat"
+            case .containsUnknownPhotoTags: return "ContainsUnknownPhotoTags"
             }
         }
         
@@ -78,6 +80,7 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
             case .wrongSDKResponse(let message): return message
             case .wrongResult(let message): return message
             case .incorrectIDFormat(let id): return "ID \(id) is not in the correct format"
+            case .containsUnknownPhotoTags(let tags): return "Contains unknown photo tags \(tags)"
             }
         }
     }
