@@ -56,6 +56,7 @@ import { CommandInvitationList } from './sharing/commandInvitationList';
 import { CommandInvitationReject } from './sharing/commandInvitationReject';
 import { Command } from './interface';
 import { CommandBookmarkCreate } from './bookmark/commandBookmarkCreate';
+import { CommandPhotoEmptyTrash } from './photos/CommandPhotoEmptyTrash';
 
 const COMMANDS = [
     // CLI Account
@@ -114,6 +115,7 @@ const COMMANDS = [
     new CommandPhotoTimeline(),
     new CommandPhotoDuplicate(),
     new CommandAlbumList(),
+    new CommandPhotoEmptyTrash(),
     // Diagnostic
     new CommandDiagnosticTree(),
     new CommandDiagnosticPhotosTimeline(),

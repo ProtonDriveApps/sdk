@@ -299,13 +299,11 @@ export class ProtonDrivePhotosClient {
     }
 
     /**
-     * Empty the trash.
-     *
-     * See `ProtonDriveClient.emptyTrash` for more information.
+     * Empty the trash for the photos volume.
      */
     async emptyTrash(): Promise<void> {
-        this.logger.info('Emptying trash');
-        throw new Error('Method not implemented');
+        this.logger.info('Emptying photo volume trash');
+        return this.nodes.management.emptyTrash();
     }
 
     /**
