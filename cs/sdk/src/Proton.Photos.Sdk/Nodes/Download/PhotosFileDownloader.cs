@@ -107,7 +107,7 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
         var downloadEvent = new DownloadEvent
         {
             DownloadedSize = 0,
-            VolumeType = VolumeType.Photo,
+            VolumeType = VolumeType.OwnPhotoVolume,
         };
 
         var downloadFunction = (CancellationToken ct) => DownloadToStreamAsync(

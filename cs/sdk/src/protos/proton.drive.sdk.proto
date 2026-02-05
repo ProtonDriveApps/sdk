@@ -716,7 +716,7 @@ enum VolumeType {
     VOLUME_TYPE_OWN_VOLUME = 0;
     VOLUME_TYPE_SHARED = 1;
     VOLUME_TYPE_SHARED_PUBLIC = 2;
-    VOLUME_TYPE_PHOTO = 3;
+    VOLUME_TYPE_OWN_PHOTO_VOLUME = 3;
 }
 
 enum DownloadError {

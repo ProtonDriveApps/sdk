@@ -7,6 +7,6 @@ fun ProtonDriveSdk.VolumeType.toEnum() = when (this) {
     ProtonDriveSdk.VolumeType.VOLUME_TYPE_OWN_VOLUME -> VolumeType.OWN_VOLUME
     ProtonDriveSdk.VolumeType.VOLUME_TYPE_SHARED -> VolumeType.SHARED
     ProtonDriveSdk.VolumeType.VOLUME_TYPE_SHARED_PUBLIC -> VolumeType.SHARED_PUBLIC
-    ProtonDriveSdk.VolumeType.VOLUME_TYPE_PHOTO -> VolumeType.PHOTO
+    ProtonDriveSdk.VolumeType.VOLUME_TYPE_OWN_PHOTO_VOLUME -> VolumeType.OWN_PHOTO_VOLUME
     ProtonDriveSdk.VolumeType.UNRECOGNIZED -> VolumeType.UNRECOGNIZED
 }
