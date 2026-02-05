@@ -74,6 +74,6 @@ class CommonUploadController internal constructor(
     }
 
     private fun log(level: LoggerProvider.Level, message: String) {
-        bridge.clientLogger(level, "UploadController(${handle.toLogId()}) $message")
+        bridge.clientLogger(level, "CommonUploadController(${handle.toLogId()}) $message")
     }
 }

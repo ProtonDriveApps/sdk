@@ -53,8 +53,10 @@ class CommonDownloadController internal constructor(
         coroutineScopeConsumer(null)
     }
 
-    override suspend fun isPaused() = bridge.isPaused(handle)
-        .also { isPausedFlow.emit(it) }
+    override suspend fun isPaused() = bridge.isPaused(handle).also { paused ->
+        log(DEBUG, "isPaused: $paused")
+        isPausedFlow.emit(paused)
+    }
 
     override suspend fun isDownloadCompleteWithVerificationIssue(): Boolean {
         log(DEBUG, "isDownloadCompleteWithVerificationIssue")
