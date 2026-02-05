@@ -22,6 +22,7 @@ cache*.sqlite
 
 # VS Code
 .vs
+.vscode
 
 # Intellij
 .idea
