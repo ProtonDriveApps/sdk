@@ -16,18 +16,18 @@ The SDK may be used for personal, non-commercial projects. If you choose to buil
 
 ### Technical Requirements
 
-| Requirement | Description |
-|-------------|-------------|
-| **Use the SDK** | Always interact with Proton Drive through the SDK. Direct API calls are not permitted. |
-| **Use official endpoints** | All HTTP requests must be directed to the official Proton Drive domain. Do not modify or proxy API endpoints to different domains. |
+| Requirement                   | Description                                                                                                                                                                                                                       |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Use the SDK**               | Always interact with Proton Drive through the SDK. Direct API calls are not permitted.                                                                                                                                            |
+| **Use official endpoints**    | All HTTP requests must be directed to the official Proton Drive domain. Do not modify or proxy API endpoints to different domains.                                                                                                |
 | **Identify your application** | Set the `x-pm-appversion` HTTP header using the format `external-drive-{projectname}@{version}` (e.g., `external-drive-myapp@1.2.3`). This header must accurately represent your application. Do not spoof or falsify this value. |
-| **Use event-based sync** | Synchronize data using Drive events. Do not poll the API or perform frequent recursive traversals of the file tree. |
+| **Use event-based sync**      | Synchronize data using Drive events. Do not poll the API or perform frequent recursive traversals of the file tree.                                                                                                               |
 
 ### Branding and User Safety Requirements
 
-| Requirement | Description |
-|-------------|-------------|
-| **No Proton branding** | Your application must not use Proton logos, trademarks, or design elements. It must be clearly distinguishable as an unofficial, third-party product. |
+| Requirement                        | Description                                                                                                                                             |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **No Proton branding**             | Your application must not use Proton logos, trademarks, or design elements. It must be clearly distinguishable as an unofficial, third-party product.   |
 | **Credential handling disclosure** | Users must be explicitly warned that they are entering credentials into a non-official application. Passwords must never be stored by your application. |
 
 Failure to comply with these requirements may result in access restrictions.
