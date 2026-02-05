@@ -5,5 +5,5 @@ enum class VolumeType {
     OWN_VOLUME,
     SHARED,
     SHARED_PUBLIC,
-    PHOTO,
+    OWN_PHOTO_VOLUME,
 }

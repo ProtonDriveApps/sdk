@@ -141,8 +141,8 @@ public enum VolumeType: Int, Sendable {
     case ownVolume = 0
     case shared = 1
     case sharedPublic = 2
-    case photo = 3
-    
+    case ownPhotoVolume = 3
+
     init(sdkVolumeType: Proton_Drive_Sdk_VolumeType) {
         switch sdkVolumeType {
         case .ownVolume:
@@ -151,8 +151,8 @@ public enum VolumeType: Int, Sendable {
             self = .shared
         case .sharedPublic:
             self = .sharedPublic
-        case .photo:
-            self = .photo
+        case .ownPhotoVolume:
+            self = .ownPhotoVolume
         case .UNRECOGNIZED(let value):
             assertionFailure("Received unrecognized VolumeType from the SDK \(value)")
             self = .unknown
