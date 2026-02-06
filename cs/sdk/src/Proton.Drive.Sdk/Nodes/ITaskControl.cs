@@ -8,4 +8,5 @@ internal interface ITaskControl : IDisposable
     CancellationToken PauseOrCancellationToken { get; }
     void Pause();
     bool TryResume();
+    void AbortPause();
 }

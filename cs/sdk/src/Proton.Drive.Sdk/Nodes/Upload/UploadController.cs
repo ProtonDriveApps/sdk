@@ -119,6 +119,15 @@ public sealed class UploadController : IAsyncDisposable
             _taskControl.Pause();
             throw;
         }
+        catch
+        {
+            if (_taskControl.IsPaused)
+            {
+                _taskControl.AbortPause();
+            }
+
+            throw;
+        }
     }
 
     private async ValueTask InvokeOnSucceededAsync()

@@ -120,6 +120,15 @@ public sealed class DownloadController : IAsyncDisposable
             _taskControl.Pause();
             throw;
         }
+        catch
+        {
+            if (_taskControl.IsPaused)
+            {
+                _taskControl.AbortPause();
+            }
+
+            throw;
+        }
     }
 
     private async ValueTask FinalizeDownloadAsync()
