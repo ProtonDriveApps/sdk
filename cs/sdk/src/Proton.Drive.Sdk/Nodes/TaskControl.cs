@@ -60,6 +60,14 @@ internal sealed class TaskControl(CancellationToken cancellationToken) : ITaskCo
         return true;
     }
 
+    public void AbortPause()
+    {
+        var resumeSignalSource = _resumeSignalSource;
+        _resumeSignalSource = null;
+
+        resumeSignalSource?.TrySetCanceled();
+    }
+
     public void Dispose()
     {
         if (_isDisposed)
