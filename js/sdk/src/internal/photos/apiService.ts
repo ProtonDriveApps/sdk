@@ -1,6 +1,9 @@
-import { DriveAPIService, drivePaths } from '../apiService';
+import { c } from 'ttag';
+
+import { ValidationError } from '../../errors';
+import { APICodeError, DriveAPIService, drivePaths } from '../apiService';
 import { EncryptedRootShare, EncryptedShareCrypto, ShareType } from '../shares/interface';
-import { makeNodeUid } from '../uids';
+import { makeNodeUid, splitNodeUid } from '../uids';
 
 type GetPhotoShareResponse =
     drivePaths['/drive/v2/shares/photos']['get']['responses']['200']['content']['application/json'];
@@ -18,12 +21,26 @@ type GetTimelineResponse =
 type GetAlbumsResponse =
     drivePaths['/drive/photos/volumes/{volumeID}/albums']['get']['responses']['200']['content']['application/json'];
 
+type PostCreateAlbumRequest = Extract<
+    drivePaths['/drive/photos/volumes/{volumeID}/albums']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostCreateAlbumResponse =
+    drivePaths['/drive/photos/volumes/{volumeID}/albums']['post']['responses']['200']['content']['application/json'];
+
+type PutUpdateAlbumRequest = Extract<
+    drivePaths['/drive/photos/volumes/{volumeID}/albums/{linkID}']['put']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+
 type PostPhotoDuplicateRequest = Extract<
     drivePaths['/drive/volumes/{volumeID}/photos/duplicates']['post']['requestBody'],
     { content: object }
 >['content']['application/json'];
 type PostPhotoDuplicateResponse =
     drivePaths['/drive/volumes/{volumeID}/photos/duplicates']['post']['responses']['200']['content']['application/json'];
+
+const ALBUM_CONTAINS_PHOTOS_NOT_IN_TIMELINE_ERROR_CODE = 200302;
 
 /**
  * Provides API communication for fetching and manipulating photos and albums
@@ -187,5 +204,80 @@ export class PhotosAPIService {
                 clientUid: duplicate.ClientUID || undefined,
             };
         }).filter((duplicate) => duplicate !== undefined);
+    }
+
+    async createAlbum(
+        parentNodeUid: string,
+        album: {
+            encryptedName: string;
+            hash: string;
+            armoredKey: string;
+            armoredNodePassphrase: string;
+            armoredNodePassphraseSignature: string;
+            signatureEmail: string;
+            armoredHashKey: string;
+        },
+    ): Promise<string> {
+        const { volumeId } = splitNodeUid(parentNodeUid);
+        const response = await this.apiService.post<PostCreateAlbumRequest, PostCreateAlbumResponse>(
+            `drive/photos/volumes/${volumeId}/albums`,
+            {
+                Locked: false,
+                Link: {
+                    Name: album.encryptedName,
+                    Hash: album.hash,
+                    NodeKey: album.armoredKey,
+                    NodePassphrase: album.armoredNodePassphrase,
+                    NodePassphraseSignature: album.armoredNodePassphraseSignature,
+                    SignatureEmail: album.signatureEmail,
+                    NodeHashKey: album.armoredHashKey,
+                    XAttr: null,
+                },
+            },
+        );
+
+        return makeNodeUid(volumeId, response.Album.Link.LinkID);
+    }
+
+    async updateAlbum(
+        albumNodeUid: string,
+        coverPhotoNodeUid?: string,
+        updatedName?: {
+            encryptedName: string;
+            hash: string;
+            originalHash: string;
+            nameSignatureEmail: string;
+        },
+    ): Promise<void> {
+        const { volumeId, nodeId: linkId } = splitNodeUid(albumNodeUid);
+        const coverLinkId = coverPhotoNodeUid ? splitNodeUid(coverPhotoNodeUid).nodeId : undefined;
+        await this.apiService.put<PutUpdateAlbumRequest, void>(
+            `drive/photos/volumes/${volumeId}/albums/${linkId}`,
+            {
+                CoverLinkID: coverLinkId,
+                Link: updatedName
+                    ? {
+                          Name: updatedName.encryptedName,
+                          Hash: updatedName.hash,
+                          OriginalHash: updatedName.originalHash,
+                          NameSignatureEmail: updatedName.nameSignatureEmail,
+                      }
+                    : null,
+            },
+        );
+    }
+
+    async deleteAlbum(albumNodeUid: string, options: { force?: boolean } = {}): Promise<void> {
+        const { volumeId, nodeId: linkId } = splitNodeUid(albumNodeUid);
+        try {
+            await this.apiService.delete(
+                `drive/photos/volumes/${volumeId}/albums/${linkId}?DeleteAlbumPhotos=${options.force ? 1 : 0}`,
+            );
+        } catch (error) {
+            if (error instanceof APICodeError && error.code === ALBUM_CONTAINS_PHOTOS_NOT_IN_TIMELINE_ERROR_CODE) {
+                throw new ValidationError(c('Error').t`Album contains photos not in timeline`);
+            }
+            throw error;
+        }
     }
 }

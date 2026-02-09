@@ -1,4 +1,3 @@
-import { DriveAPIService } from '../apiService';
 import { DriveCrypto } from '../../crypto';
 import {
     ProtonDriveAccount,
@@ -6,9 +5,12 @@ import {
     ProtonDriveEntitiesCache,
     ProtonDriveTelemetry,
 } from '../../interface';
+import { DriveAPIService } from '../apiService';
 import { NodesCryptoService } from '../nodes/cryptoService';
 import { NodesCryptoReporter } from '../nodes/cryptoReporter';
 import { NodesCryptoCache } from '../nodes/cryptoCache';
+import { NodesEventsHandler } from '../nodes/events';
+import { NodesRevisons } from '../nodes/nodesRevisions';
 import { ShareTargetType } from '../shares';
 import { SharesCache } from '../shares/cache';
 import { SharesCryptoCache } from '../shares/cryptoCache';
@@ -17,6 +19,7 @@ import { NodesService as UploadNodesService } from '../upload/interface';
 import { UploadTelemetry } from '../upload/telemetry';
 import { UploadQueue } from '../upload/queue';
 import { Albums } from './albums';
+import { AlbumsCryptoService } from './albumsCrypto';
 import { PhotosAPIService } from './apiService';
 import { SharesService } from './interface';
 import { PhotosNodesAPIService, PhotosNodesAccess, PhotosNodesCache, PhotosNodesManagement } from './nodes';
@@ -29,8 +32,6 @@ import {
     PhotoUploadManager,
     PhotoUploadMetadata,
 } from './upload';
-import { NodesRevisons } from '../nodes/nodesRevisions';
-import { NodesEventsHandler } from '../nodes/events';
 
 export type { DecryptedPhotoNode } from './interface';
 
@@ -51,6 +52,7 @@ export function initPhotosModule(
     nodesService: PhotosNodesAccess,
 ) {
     const api = new PhotosAPIService(apiService);
+    const albumsCryptoService = new AlbumsCryptoService(driveCrypto);
     const timeline = new PhotosTimeline(
         telemetry.getLogger('photos-timeline'),
         api,
@@ -58,7 +60,7 @@ export function initPhotosModule(
         photoShares,
         nodesService,
     );
-    const albums = new Albums(api, photoShares, nodesService);
+    const albums = new Albums(api, albumsCryptoService, photoShares, nodesService);
 
     return {
         timeline,
