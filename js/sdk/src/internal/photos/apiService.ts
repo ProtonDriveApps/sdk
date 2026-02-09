@@ -6,6 +6,7 @@ import { APICodeError, DriveAPIService, drivePaths } from '../apiService';
 import { batch } from '../batch';
 import { EncryptedRootShare, EncryptedShareCrypto, ShareType } from '../shares/interface';
 import { makeNodeUid, splitNodeUid } from '../uids';
+import { AlbumItem } from './interface';
 
 type GetPhotoShareResponse =
     drivePaths['/drive/v2/shares/photos']['get']['responses']['200']['content']['application/json'];
@@ -22,6 +23,9 @@ type GetTimelineResponse =
 
 type GetAlbumsResponse =
     drivePaths['/drive/photos/volumes/{volumeID}/albums']['get']['responses']['200']['content']['application/json'];
+
+type GetAlbumChildrenResponse =
+    drivePaths['/drive/photos/volumes/{volumeID}/albums/{linkID}/children']['get']['responses']['200']['content']['application/json'];
 
 type PostCreateAlbumRequest = Extract<
     drivePaths['/drive/photos/volumes/{volumeID}/albums']['post']['requestBody'],
@@ -172,6 +176,31 @@ export class PhotosAPIService {
                     coverNodeUid: album.CoverLinkID ? makeNodeUid(volumeId, album.CoverLinkID) : undefined,
                     photoCount: album.PhotoCount,
                     lastActivityTime: new Date(album.LastActivityTime * 1000),
+                };
+            }
+
+            if (!response.More || !response.AnchorID) {
+                break;
+            }
+            anchor = response.AnchorID;
+        }
+    }
+
+    async *iterateAlbumChildren(
+        albumNodeUid: string,
+        signal?: AbortSignal,
+    ): AsyncGenerator<AlbumItem> {
+        const { volumeId, nodeId: linkId } = splitNodeUid(albumNodeUid);
+        let anchor = '';
+        while (true) {
+            const response = await this.apiService.get<GetAlbumChildrenResponse>(
+                `drive/photos/volumes/${volumeId}/albums/${linkId}/children?Sort=Captured&Desc=1${anchor ? `&AnchorID=${anchor}` : ''}`,
+                signal,
+            );
+            for (const photo of response.Photos) {
+                yield {
+                    nodeUid: makeNodeUid(volumeId, photo.LinkID),
+                    captureTime: new Date(photo.CaptureTime * 1000),
                 };
             }
 

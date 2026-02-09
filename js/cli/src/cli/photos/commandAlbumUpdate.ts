@@ -35,7 +35,7 @@ export class CommandAlbumUpdate implements Command {
 
         const updates: {
             name?: string;
-            coverPhotoNodeUid?: string | null;
+            coverPhotoNodeUid?: string;
         } = {};
 
         if (name) {

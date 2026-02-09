@@ -2,6 +2,7 @@ import { DriveCrypto } from '../../crypto';
 import { Logger } from '../../interface';
 import { makeNodeUid } from '../uids';
 import { PhotosAPIService } from './apiService';
+import { TimelineItem } from './interface';
 import { PhotosNodesAccess } from './nodes';
 import { PhotoSharesManager } from './shares';
 
@@ -23,11 +24,7 @@ export class PhotosTimeline {
         this.nodesService = nodesService;
     }
 
-    async *iterateTimeline(signal?: AbortSignal): AsyncGenerator<{
-        nodeUid: string;
-        captureTime: Date;
-        tags: number[];
-    }> {
+    async *iterateTimeline(signal?: AbortSignal): AsyncGenerator<TimelineItem> {
         const { volumeId } = await this.photoShares.getRootIDs();
         yield* this.apiService.iterateTimeline(volumeId, signal);
     }
