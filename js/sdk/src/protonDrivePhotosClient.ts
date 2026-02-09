@@ -117,7 +117,13 @@ export class ProtonDrivePhotosClient {
             this.photoShares,
             fullConfig.clientUid,
         );
-        this.photos = initPhotosModule(telemetry, apiService, cryptoModule, this.photoShares, this.nodes.access);
+        this.photos = initPhotosModule(
+            telemetry,
+            apiService,
+            cryptoModule,
+            this.photoShares,
+            this.nodes.access,
+        );
         this.sharing = initSharingModule(
             telemetry,
             apiService,
@@ -505,6 +511,63 @@ export class ProtonDrivePhotosClient {
     async findPhotoDuplicates(name: string, generateSha1: () => Promise<string>, signal?: AbortSignal): Promise<string[]> {
         this.logger.info(`Checking if photo have duplicates`);
         return this.photos.timeline.findPhotoDuplicates(name, generateSha1, signal);
+    }
+
+    /**
+     * Creates a new album with the given name.
+     *
+     * @param name - The name for the new album.
+     * @returns The created album node.
+     */
+    async createAlbum(name: string): Promise<MaybePhotoNode> {
+        this.logger.info('Creating album');
+        return convertInternalPhotoNodePromise(this.photos.albums.createAlbum(name));
+    }
+
+    /**
+     * Updates an existing album.
+     *
+     * Updates can include a new name and/or a cover photo.
+     *
+     * @param nodeUid - The UID of the album to edit.
+     * @param updates - The updates to apply.
+     * @returns The updated album node.
+     */
+    async updateAlbum(
+        nodeUid: NodeOrUid,
+        updates: {
+            name?: string;
+            coverPhotoNodeUid?: NodeOrUid;
+        },
+    ): Promise<MaybePhotoNode> {
+        this.logger.info(`Updating album ${getUid(nodeUid)}`);
+        const coverPhotoNodeUid = updates.coverPhotoNodeUid ? getUid(updates.coverPhotoNodeUid) : undefined;
+        return convertInternalPhotoNodePromise(
+            this.photos.albums.updateAlbum(getUid(nodeUid), {
+                name: updates.name,
+                coverPhotoNodeUid,
+            }),
+        );
+    }
+
+    /**
+     * Deletes an album.
+     *
+     * Photos in the timeline will not be deleted. If the album has photos
+     * that are not in the timeline (uploaded by another user), the method
+     * will throw an error. The photos must be moved to the timeline, or
+     * the album must be deleted with `force` option that deletes the photos
+     * not in the timeline as well.
+     *
+     * This operation is irreversible. Both the album and the photos will be
+     * permanently deleted, skipping the trash.
+     *
+     * @param nodeUid - The UID of the album to delete.
+     * @param force - Whether to force the deletion.
+     */
+    async deleteAlbum(nodeUid: NodeOrUid, options: { force?: boolean } = {}): Promise<void> {
+        this.logger.info(`Deleting album ${getUid(nodeUid)}`);
+        await this.photos.albums.deleteAlbum(getUid(nodeUid), options);
     }
 
     /**

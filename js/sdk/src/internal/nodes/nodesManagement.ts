@@ -12,6 +12,7 @@ import { generateFolderExtendedAttributes } from './extendedAttributes';
 import { DecryptedNode, EncryptedNode } from './interface';
 import { splitExtension, joinNameAndExtension } from './nodeName';
 import { NodesAccessBase } from './nodesAccess';
+import { FOLDER_MEDIA_TYPE } from './mediaTypes';
 import { validateNodeName } from './validations';
 
 const AVAILABLE_NAME_BATCH_SIZE = 10;
@@ -373,7 +374,7 @@ export abstract class NodesManagementBase<
             uid: nodeUid,
             parentUid: parentNodeUid,
             type: NodeType.Folder,
-            mediaType: 'Folder',
+            mediaType: FOLDER_MEDIA_TYPE,
             creationTime: new Date(),
             modificationTime: new Date(),
 

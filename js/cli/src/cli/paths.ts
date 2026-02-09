@@ -11,6 +11,7 @@ export enum PathType {
     SharedByMe = 'shared-by-me',
     SharedWithMe = 'shared-with-me',
     Trash = 'trash',
+    Albums = 'albums',
     Photos = 'photos',
     PhotosSharedByMe = 'photos-shared-by-me',
     PhotosSharedWithMe = 'photos-shared-with-me',
@@ -38,6 +39,7 @@ export class Paths {
             PathType.SharedByMe,
             PathType.SharedWithMe,
             PathType.Trash,
+            PathType.Albums,
             PathType.Photos,
             PathType.PhotosSharedByMe,
             PathType.PhotosSharedWithMe,
@@ -111,6 +113,9 @@ export class Path {
         if (this.fullPath.startsWith(`${path.sep}photos`)) {
             return PathType.Photos;
         }
+        if (this.fullPath.startsWith(`${path.sep}albums`)) {
+            return PathType.Albums;
+        }
         throw new Error(`Path "${this.fullPath}" not supported`);
     }
 
@@ -124,6 +129,7 @@ export class Path {
 
     get sdk(): ProtonDriveClient | ProtonDrivePhotosClient {
         const photoPaths = [
+            PathType.Albums,
             PathType.Photos,
             PathType.PhotosSharedByMe,
             PathType.PhotosSharedWithMe,
@@ -157,6 +163,9 @@ export class Path {
         }
         if (this.type === PathType.Photos) {
             return this.getPhotoNodeByPath(this.sectionPath);
+        }
+        if (this.type === PathType.Albums) {
+            return this.getAlbumNodeByPath(this.sectionPath);
         }
         throw new Error('Not implemented');
     }
@@ -258,6 +267,22 @@ export class Path {
             }
         }
         throw new Error(`Photo not found: ${name}`);
+    }
+
+    private async getAlbumNodeByPath(pathString: string): Promise<MaybeNode> {
+        if (isNodeUid(pathString)) {
+            return this.photosSdk.getNode(pathString);
+        }
+        return this.getAlbumByName(pathString);
+    }
+
+    private async getAlbumByName(name: string): Promise<MaybeNode> {
+        for await (const maybeAlbum of this.photosSdk.iterateAlbums()) {
+            if (getName(maybeAlbum) === name) {
+                return maybeAlbum;
+            }
+        }
+        throw new Error(`Album not found: ${name}`);
     }
 }
 

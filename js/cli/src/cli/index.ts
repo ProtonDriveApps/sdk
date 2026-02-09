@@ -28,7 +28,10 @@ import { CommandFileSystemRename } from './fileSystem/commandFileSystemRename';
 import { CommandFileSystemRestore } from './fileSystem/commandFileSystemRestore';
 import { CommandFileSystemUpload } from './fileSystem/commandFileSystemUpload';
 import { CommandFileSystemTrash } from './fileSystem/commandFileSystemTrash';
+import { CommandAlbumCreate } from './photos/commandAlbumCreate';
+import { CommandAlbumDelete } from './photos/commandAlbumDelete';
 import { CommandAlbumList } from './photos/commandAlbumList';
+import { CommandAlbumUpdate } from './photos/commandAlbumUpdate';
 import { CommandPhotoDuplicate } from './photos/commandPhotoDuplicate';
 import { CommandPhotoRoot } from './photos/commandPhotoRoot';
 import { CommandPhotoTimeline } from './photos/commandPhotoTimeline';
@@ -114,8 +117,11 @@ const COMMANDS = [
     new CommandPhotoRoot(),
     new CommandPhotoTimeline(),
     new CommandPhotoDuplicate(),
-    new CommandAlbumList(),
     new CommandPhotoEmptyTrash(),
+    new CommandAlbumList(),
+    new CommandAlbumCreate(),
+    new CommandAlbumUpdate(),
+    new CommandAlbumDelete(),
     // Diagnostic
     new CommandDiagnosticTree(),
     new CommandDiagnosticPhotosTimeline(),
