@@ -6,7 +6,7 @@ import { validateNodeName } from '../nodes/validations';
 import { splitNodeUid } from '../uids';
 import { AlbumsCryptoService } from './albumsCrypto';
 import { PhotosAPIService } from './apiService';
-import { DecryptedPhotoNode } from './interface';
+import { AlbumItem, DecryptedPhotoNode } from './interface';
 import { PhotosNodesAccess } from './nodes';
 import { PhotoSharesManager } from './shares';
 
@@ -39,6 +39,10 @@ export class Albums {
             yield* batchLoading.load(album.albumUid);
         }
         yield* batchLoading.loadRest();
+    }
+
+    async *iterateAlbum(albumNodeUid: string, signal?: AbortSignal): AsyncGenerator<AlbumItem> {
+        yield* this.apiService.iterateAlbumChildren(albumNodeUid, signal);
     }
 
     async createAlbum(name: string): Promise<DecryptedPhotoNode> {

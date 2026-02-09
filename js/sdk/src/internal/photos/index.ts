@@ -33,7 +33,7 @@ import {
     PhotoUploadMetadata,
 } from './upload';
 
-export type { DecryptedPhotoNode } from './interface';
+export type { DecryptedPhotoNode, TimelineItem, AlbumItem, PhotoTag } from './interface';
 
 // Only photos and albums can be shared in photos volume.
 export const PHOTOS_SHARE_TARGET_TYPES = [ShareTargetType.Photo, ShareTargetType.Album];
