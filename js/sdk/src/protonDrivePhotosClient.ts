@@ -38,6 +38,9 @@ import {
     initPhotoSharesModule,
     initPhotoUploadModule,
     initPhotosNodesModule,
+    AlbumItem,
+    TimelineItem,
+    PhotoTag,
 } from './internal/photos';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharesModule } from './internal/shares';
@@ -224,12 +227,7 @@ export class ProtonDrivePhotosClient {
      * The output is sorted by the capture time, starting from the
      * the most recent photos.
      */
-    async *iterateTimeline(signal?: AbortSignal): AsyncGenerator<{
-        nodeUid: string;
-        captureTime: Date;
-        tags: number[];
-    }> {
-        // TODO: expose better type
+    async *iterateTimeline(signal?: AbortSignal): AsyncGenerator<TimelineItem> {
         yield* this.photos.timeline.iterateTimeline(signal);
     }
 
@@ -456,8 +454,7 @@ export class ProtonDrivePhotosClient {
         metadata: UploadMetadata & {
             captureTime?: Date;
             mainPhotoLinkID?: string;
-            // TODO: handle tags enum in the SDK
-            tags?: (0 | 3 | 1 | 2 | 7 | 4 | 5 | 6 | 8 | 9)[];
+            tags?: PhotoTag[];
         },
         signal?: AbortSignal,
     ): Promise<FileUploader> {
@@ -582,6 +579,20 @@ export class ProtonDrivePhotosClient {
     }
 
     /**
+     * Iterates the photo placeholders of the given album.
+     *
+     * The output is sorted by the capture time, starting from the
+     * the most recent photos.
+     *
+     * @param albumNodeUid - The UID of the album.
+     * @param signal - An optional abort the operation.
+     */
+    async *iterateAlbum(albumNodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<AlbumItem> {
+        this.logger.info(`Iterating photos of album ${getUid(albumNodeUid)}`);
+        yield* this.photos.albums.iterateAlbum(getUid(albumNodeUid), signal);
+    }
+
+    /**
      * Removes photos from an album.
      *
      * Photos are not deleted, they are just removed from the album.
@@ -591,7 +602,7 @@ export class ProtonDrivePhotosClient {
      * @param albumNodeUid - The UID of the album to remove photos from.
      * @param photoNodeUids - The UIDs of the photos to remove from the album.
      * @param signal - An optional abort signal to cancel the operation.
-     * @yields NodeResult for each photo as it is processed.
+     * @returns An async generator of the removed photo results.
      */
     async *removePhotosFromAlbum(
         albumNodeUid: NodeOrUid,

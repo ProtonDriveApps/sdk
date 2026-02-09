@@ -31,6 +31,7 @@ import { CommandFileSystemTrash } from './fileSystem/commandFileSystemTrash';
 import { CommandAlbumCreate } from './photos/commandAlbumCreate';
 import { CommandAlbumDelete } from './photos/commandAlbumDelete';
 import { CommandAlbumList } from './photos/commandAlbumList';
+import { CommandAlbumPhotos } from './photos/commandAlbumPhotos';
 import { CommandAlbumRemovePhoto } from './photos/commandAlbumRemovePhoto';
 import { CommandAlbumUpdate } from './photos/commandAlbumUpdate';
 import { CommandPhotoDuplicate } from './photos/commandPhotoDuplicate';
@@ -120,6 +121,7 @@ const COMMANDS = [
     new CommandPhotoDuplicate(),
     new CommandPhotoEmptyTrash(),
     new CommandAlbumList(),
+    new CommandAlbumPhotos(),
     new CommandAlbumCreate(),
     new CommandAlbumUpdate(),
     new CommandAlbumDelete(),
