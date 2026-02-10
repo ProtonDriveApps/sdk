@@ -1,5 +1,10 @@
 # Changelog
 
+## cs/v0.7.0-alpha.6 (2026-02-10)
+
+* Add SHA1 upload verification
+* Update changelog for cs/v0.7.0-alpha.5
+
 ## cs/v0.7.0-alpha.5 (2026-02-05)
 
 * Verify C# build for published source code
