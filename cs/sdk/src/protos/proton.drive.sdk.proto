@@ -266,6 +266,7 @@ message DriveClientGetFileUploaderRequest {
     repeated AdditionalMetadataProperty additional_metadata = 7; // Optional
     bool override_existing_draft_by_other_client = 8;
     int64 cancellation_token_source_handle = 9;
+    bytes expected_sha1 = 10; // Optional - SHA1 hash of the file content for verification
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of FileUploader.
@@ -276,6 +277,7 @@ message DriveClientGetFileRevisionUploaderRequest {
     google.protobuf.Timestamp last_modification_time = 4;
     repeated AdditionalMetadataProperty additional_metadata = 5; // Optional
     int64 cancellation_token_source_handle = 6;
+    bytes expected_sha1 = 7; // Optional - SHA1 hash of the file content for verification
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of UploadController.
@@ -673,6 +675,7 @@ message PhotoFileUploadMetadata {
     google.protobuf.Timestamp capture_time = 5; // Optional
     string main_photo_link_id = 6; // Optional
     repeated PhotoTag tags = 7; // Optional
+    bytes expected_sha1 = 8; // Optional - SHA1 hash of the file content for verification
 }
 
 enum PhotoTag {

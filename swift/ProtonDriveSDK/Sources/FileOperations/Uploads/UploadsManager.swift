@@ -18,7 +18,7 @@ actor UploadsManager {
             $0.free()
         }
     }
-    
+
     func uploadFileOperation(
         parentFolderUid: SDKNodeUid,
         name: String,
@@ -28,6 +28,7 @@ actor UploadsManager {
         mediaType: String,
         thumbnails: [ThumbnailData],
         overrideExistingDraft: Bool,
+        expectedSha1: Data?,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> UploadOperation {
@@ -43,6 +44,7 @@ actor UploadsManager {
             fileSize: fileSize,
             modificationDate: modificationDate,
             overrideExistingDraft: overrideExistingDraft,
+            expectedSha1: expectedSha1,
             cancellationHandle: cancellationHandle,
             logger: logger
         )
@@ -57,13 +59,14 @@ actor UploadsManager {
         )
         return uploadController
     }
-   
+
     func uploadNewRevisionOperation(
         currentActiveRevisionUid: SDKRevisionUid,
         fileURL: URL,
         fileSize: Int64,
         modificationDate: Date,
         thumbnails: [ThumbnailData],
+        expectedSha1: Data?,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> UploadOperation {
@@ -76,9 +79,10 @@ actor UploadsManager {
             currentActiveRevisionUid: currentActiveRevisionUid,
             fileSize: fileSize,
             modificationDate: modificationDate,
+            expectedSha1: expectedSha1,
             cancellationHandle: cancellationHandle
         )
-        
+
         let uploadController = try await uploadFromFile(
             fileUploaderHandle: uploaderHandle,
             fileURL: fileURL,
@@ -97,11 +101,11 @@ actor UploadsManager {
         }
 
         try await uploadCancellationToken.cancel()
-        
+
         activeUploads[cancellationToken] = nil
         uploadCancellationToken.free()
     }
-    
+
     private func freeCancellationTokenSourceIfNeeded(cancellationToken: UUID) {
         guard let cancellationTokenSource = activeUploads[cancellationToken] else { return }
         activeUploads[cancellationToken] = nil
@@ -118,6 +122,7 @@ extension UploadsManager {
         fileSize: Int64,
         modificationDate: Date,
         overrideExistingDraft: Bool,
+        expectedSha1: Data?,
         cancellationHandle: ObjectHandle?,
         logger: Logger?
     ) async throws -> ObjectHandle {
@@ -129,6 +134,10 @@ extension UploadsManager {
             $0.size = fileSize
             $0.lastModificationTime = Google_Protobuf_Timestamp(date: modificationDate)
             $0.overrideExistingDraftByOtherClient = overrideExistingDraft
+
+            if let expectedSha1 = expectedSha1 {
+                $0.expectedSha1 = expectedSha1
+            }
 
             if let cancellationHandle = cancellationHandle {
                 $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
@@ -144,6 +153,7 @@ extension UploadsManager {
         currentActiveRevisionUid: SDKRevisionUid,
         fileSize: Int64,
         modificationDate: Date,
+        expectedSha1: Data?,
         cancellationHandle: ObjectHandle?
     ) async throws -> ObjectHandle {
         let uploaderRequest = Proton_Drive_Sdk_DriveClientGetFileRevisionUploaderRequest.with {
@@ -151,6 +161,9 @@ extension UploadsManager {
             $0.currentActiveRevisionUid = currentActiveRevisionUid.sdkCompatibleIdentifier
             $0.size = fileSize
             $0.lastModificationTime = Google_Protobuf_Timestamp(date: modificationDate)
+            if let expectedSha1 = expectedSha1 {
+                $0.expectedSha1 = expectedSha1
+            }
             if let cancellationHandle = cancellationHandle {
                 $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
             }
@@ -202,7 +215,7 @@ extension UploadsManager {
             includesLongLivedCallback: true,
             logger: logger
         )
-        
+
         return UploadOperation(
             fileUploaderHandle: fileUploaderHandle,
             uploadControllerHandle: uploadControllerHandle,

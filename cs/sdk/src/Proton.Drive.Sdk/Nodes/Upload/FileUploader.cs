@@ -10,6 +10,7 @@ public sealed partial class FileUploader : IDisposable
     private readonly IRevisionDraftProvider _revisionDraftProvider;
     private readonly DateTimeOffset? _lastModificationTime;
     private readonly IEnumerable<AdditionalMetadataProperty>? _additionalMetadata;
+    private readonly ReadOnlyMemory<byte>? _expectedSha1;
     private readonly ILogger _logger;
 
     private volatile int _remainingNumberOfBlocks;
@@ -20,6 +21,7 @@ public sealed partial class FileUploader : IDisposable
         long size,
         DateTimeOffset? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
+        ReadOnlyMemory<byte>? expectedSha1,
         int expectedNumberOfBlocks,
         ILogger logger)
     {
@@ -28,6 +30,7 @@ public sealed partial class FileUploader : IDisposable
         FileSize = size;
         _lastModificationTime = lastModificationTime;
         _additionalMetadata = additionalMetadata;
+        _expectedSha1 = expectedSha1;
         _remainingNumberOfBlocks = expectedNumberOfBlocks;
         _logger = logger;
     }
@@ -70,6 +73,7 @@ public sealed partial class FileUploader : IDisposable
         long size,
         DateTime? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalExtendedAttributes,
+        ReadOnlyMemory<byte>? expectedSha1,
         CancellationToken cancellationToken)
     {
         var logger = client.Telemetry.GetLogger("File uploader");
@@ -82,7 +86,7 @@ public sealed partial class FileUploader : IDisposable
 
         LogAcquiredRevisionCreationSemaphore(logger, expectedNumberOfBlocks);
 
-        return new FileUploader(client, revisionDraftProvider, size, lastModificationTime, additionalExtendedAttributes, expectedNumberOfBlocks, logger);
+        return new FileUploader(client, revisionDraftProvider, size, lastModificationTime, additionalExtendedAttributes, expectedSha1, expectedNumberOfBlocks, logger);
     }
 
     [LoggerMessage(Level = LogLevel.Trace, Message = "Trying to acquire {Count} from revision creation semaphore")]
@@ -221,6 +225,7 @@ public sealed partial class FileUploader : IDisposable
         await revisionWriter.WriteAsync(
             contentStream,
             FileSize,
+            _expectedSha1,
             thumbnails,
             lastModificationTime,
             additionalMetadata,

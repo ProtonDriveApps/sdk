@@ -10,4 +10,5 @@ data class PhotosUploaderRequest(
     val tags: List<PhotoTag> = emptyList(),  // optional
     val overrideExistingDraftByOtherClient: Boolean,
     val additionalMetadata: Map<String, ByteArray> = emptyMap(),  // optional
+    val expectedSha1: ByteArray? = null,  // optional
 )

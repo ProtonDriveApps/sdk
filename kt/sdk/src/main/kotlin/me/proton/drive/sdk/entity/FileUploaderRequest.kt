@@ -7,5 +7,6 @@ data class FileUploaderRequest(
     val fileSize: Long,
     val lastModificationTime: Long,
     val overrideExistingDraftByOtherClient: Boolean,
-    val additionalMetadata: Map<String, ByteArray> = emptyMap()
+    val additionalMetadata: Map<String, ByteArray> = emptyMap(),
+    val expectedSha1: ByteArray? = null,
 )

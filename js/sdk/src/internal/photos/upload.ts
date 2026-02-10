@@ -109,13 +109,14 @@ export class PhotoStreamUploader extends StreamUploader {
     }
 
     async commitFile(thumbnails: Thumbnail[]) {
-        this.verifyIntegrity(thumbnails);
+        const digests = this.digests.digests();
+        this.verifyIntegrity(thumbnails, digests);
 
         const extendedAttributes = {
             modificationTime: this.metadata.modificationTime,
             size: this.metadata.expectedSize,
             blockSizes: this.uploadedBlockSizes,
-            digests: this.digests.digests(),
+            digests,
         };
 
         await this.photoUploadManager.commitDraftPhoto(this.revisionDraft, this.manifest, extendedAttributes, this.photoMetadata);
