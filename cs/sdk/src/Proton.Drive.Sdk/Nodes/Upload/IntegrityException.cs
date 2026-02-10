@@ -1,6 +1,6 @@
 ﻿namespace Proton.Drive.Sdk.Nodes.Upload;
 
-public class IntegrityException : Exception
+public class IntegrityException : ProtonDriveException
 {
     public IntegrityException(string message)
         : base(message)
