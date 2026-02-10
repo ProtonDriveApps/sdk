@@ -1,4 +1,3 @@
-using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
@@ -100,10 +99,9 @@ public sealed class UploadController : IAsyncDisposable
     private static bool IsResumableError(Exception ex)
     {
         return ex is not ProtonApiException { TransportCode: > 400 and < 500 }
-            and not NodeKeyAndSessionKeyMismatchException
-            and not SessionKeyAndDataPacketMismatchException
             and not UploadContentReadingException
-            and not NodeWithSameNameExistsException;
+            and not NodeWithSameNameExistsException
+            and not IntegrityException;
     }
 
     private async Task<UploadResult> PauseOnResumableErrorAsync(Task<UploadResult> uploadTask)
