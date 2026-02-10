@@ -31,6 +31,7 @@ actor PhotoUploadsManager {
         tags: [Proton_Drive_Sdk_PhotoTag],
         additionalMetadata: [AdditionalMetadata],
         overrideExistingDraft: Bool,
+        expectedSha1: Data?,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> UploadOperation {
@@ -47,6 +48,7 @@ actor PhotoUploadsManager {
             tags: tags,
             additionalMetadata: additionalMetadata,
             overrideExistingDraft: overrideExistingDraft,
+            expectedSha1: expectedSha1,
             cancellationHandle: cancellationTokenSource.handle
         )
 
@@ -150,6 +152,7 @@ actor PhotoUploadsManager {
         tags: [Proton_Drive_Sdk_PhotoTag],
         additionalMetadata: [AdditionalMetadata],
         overrideExistingDraft: Bool,
+        expectedSha1: Data?,
         cancellationHandle: ObjectHandle
     ) async throws -> ObjectHandle {
         let uploaderRequest = Proton_Drive_Sdk_DrivePhotosClientGetPhotoUploaderRequest.with {
@@ -161,6 +164,9 @@ actor PhotoUploadsManager {
                 metadata.lastModificationTime = Google_Protobuf_Timestamp(date: modificationDate)
                 metadata.additionalMetadata = additionalMetadata.map { $0.toSDK }
                 metadata.overrideExistingDraftByOtherClient = overrideExistingDraft
+                if let expectedSha1 = expectedSha1 {
+                    metadata.expectedSha1 = expectedSha1
+                }
                 metadata.captureTime = Google_Protobuf_Timestamp(date: captureTime)
                 if let mainPhotoLinkID {
                     metadata.mainPhotoLinkID = mainPhotoLinkID

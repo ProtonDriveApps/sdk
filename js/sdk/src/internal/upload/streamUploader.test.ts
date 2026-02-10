@@ -564,6 +564,44 @@ describe('StreamUploader', () => {
 
                 await verifyFailure('Some file bytes failed to upload', 10 * 1024 * 1024 + 1024);
             });
+
+            it('should succeed with matching expectedSha1', async () => {
+                metadata.expectedSha1 = '8c206a1a87599f532ce68675536f0b1546900d7a';
+
+                uploader = new StreamUploader(
+                    telemetry,
+                    apiService,
+                    cryptoService,
+                    uploadManager,
+                    blockVerifier,
+                    revisionDraft,
+                    metadata,
+                    onFinish,
+                    controller,
+                    abortController,
+                );
+
+                await verifySuccess();
+            });
+
+            it('should throw an error if SHA1 does not match', async () => {
+                metadata.expectedSha1 = 'wrong_sha1_hash_that_will_not_match';
+
+                uploader = new StreamUploader(
+                    telemetry,
+                    apiService,
+                    cryptoService,
+                    uploadManager,
+                    blockVerifier,
+                    revisionDraft,
+                    metadata,
+                    onFinish,
+                    controller,
+                    abortController,
+                );
+
+                await verifyFailure('File hash does not match expected hash', 10 * 1024 * 1024 + 1024);
+            });
         });
     });
 

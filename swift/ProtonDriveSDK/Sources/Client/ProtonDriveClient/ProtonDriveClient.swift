@@ -19,7 +19,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
     let httpClient: HttpClientProtocol
     let accountClient: AccountClientProtocol
     let configuration: ProtonDriveClientConfiguration
-    
+
     private enum OperationIdentifier: Hashable {
         case createFolder(UUID)
         case rename(UUID)
@@ -35,7 +35,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             }
         }
     }
-    
+
     private var activeOperations: [OperationIdentifier: CancellationTokenSource] = [:]
 
     public init(
@@ -181,6 +181,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         mediaType: String,
         thumbnails: [ThumbnailData],
         overrideExistingDraft: Bool,
+        expectedSha1: Data? = nil,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback,
         onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
@@ -194,6 +195,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             mediaType: mediaType,
             thumbnails: thumbnails,
             overrideExistingDraft: overrideExistingDraft,
+            expectedSha1: expectedSha1,
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
@@ -213,6 +215,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         mediaType: String,
         thumbnails: [ThumbnailData],
         overrideExistingDraft: Bool,
+        expectedSha1: Data? = nil,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> UploadOperation {
@@ -225,6 +228,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             mediaType: mediaType,
             thumbnails: thumbnails,
             overrideExistingDraft: overrideExistingDraft,
+            expectedSha1: expectedSha1,
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
@@ -237,6 +241,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         fileSize: Int64,
         modificationDate: Date,
         thumbnails: [ThumbnailData],
+        expectedSha1: Data? = nil,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback,
         onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
@@ -247,6 +252,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             fileSize: fileSize,
             modificationDate: modificationDate,
             thumbnails: thumbnails,
+            expectedSha1: expectedSha1,
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
@@ -263,6 +269,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         fileSize: Int64,
         modificationDate: Date,
         thumbnails: [ThumbnailData],
+        expectedSha1: Data? = nil,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> UploadOperation {
@@ -272,6 +279,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             fileSize: fileSize,
             modificationDate: modificationDate,
             thumbnails: thumbnails,
+            expectedSha1: expectedSha1,
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
@@ -312,24 +320,24 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         guard clientHandle != 0 else { return }
         Self.freeProtonDriveClient(Int64(clientHandle), logger)
     }
-    
+
     private func cancelOperation(identifier: OperationIdentifier) async throws {
         guard let cancellationToken = activeOperations[identifier] else {
             throw ProtonDriveSDKError(interopError: .noCancellationTokenForIdentifier(operation: identifier.operationName))
         }
 
         try await cancellationToken.cancel()
-        
+
         activeOperations[identifier] = nil
         cancellationToken.free()
     }
-    
+
     private func createCancellationTokenSource(_ operationIdentifier: OperationIdentifier, _ logger: Logger) async throws -> CancellationTokenSource {
         let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
         activeOperations[operationIdentifier] = cancellationTokenSource
         return cancellationTokenSource
     }
-    
+
     private func freeCancellationTokenSourceIfNeeded(identifier: OperationIdentifier) {
         guard let cancellationTokenSource = activeOperations[identifier] else { return }
         activeOperations[identifier] = nil
@@ -354,7 +362,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
 
 // MARK: - Node action
 extension ProtonDriveClient {
-    
+
     public func createFolder(
         parentFolderUid: SDKNodeUid,
         folderName: String,
@@ -365,9 +373,9 @@ extension ProtonDriveClient {
         defer {
             freeCancellationTokenSourceIfNeeded(identifier: .createFolder(cancellationToken))
         }
-        
+
         let cancellationHandle = cancellationTokenSource.handle
-        
+
         let createFolderRequest = Proton_Drive_Sdk_DriveClientCreateFolderRequest.with {
             $0.clientHandle = Int64(clientHandle)
             $0.parentFolderUid = parentFolderUid.sdkCompatibleIdentifier
@@ -375,11 +383,11 @@ extension ProtonDriveClient {
             $0.lastModificationTime = Google_Protobuf_Timestamp(date: lastModificationTime)
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
         }
-        
+
         let sdkFolderNode: Proton_Drive_Sdk_FolderNode = try await SDKRequestHandler.send(createFolderRequest, logger: logger)
         return try FolderNode(sdkFolderNode: sdkFolderNode)
     }
-    
+
     public func cancelCreateFolder(cancellationToken: UUID) async throws {
         try await cancelOperation(identifier: .createFolder(cancellationToken))
     }
@@ -407,11 +415,11 @@ extension ProtonDriveClient {
                                                                   logger: logger)
         return nameResult
     }
-    
+
     public func cancelGetAvailableName(cancellationToken: UUID) async throws {
         try await cancelOperation(identifier: .getAvailableName(cancellationToken))
     }
-    
+
     public func rename(nodeUid: SDKNodeUid, newName: String, newMediaType: String?, cancellationToken: UUID) async throws {
         let cancellationTokenSource = try await createCancellationTokenSource(.rename(cancellationToken), logger)
         defer {
@@ -430,7 +438,7 @@ extension ProtonDriveClient {
         }
         let result: Void = try await SDKRequestHandler.send(renameRequest, logger: logger)
     }
-    
+
     public func cancelRename(cancellationToken: UUID) async throws {
         try await cancelOperation(identifier: .rename(cancellationToken))
     }
