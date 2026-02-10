@@ -6,13 +6,13 @@ public struct SDKNodeUid: Sendable {
     public let volumeID: String
     public let nodeID: String
     public let sdkCompatibleIdentifier: String
-    
+
     public init(volumeID: String, nodeID: String) {
         self.volumeID = volumeID
         self.nodeID = nodeID
         self.sdkCompatibleIdentifier = "\(volumeID)~\(nodeID)"
     }
-    
+
     public init?(sdkCompatibleIdentifier: String) {
         guard let match = sdkCompatibleIdentifier.firstMatch(of: #/(.+)~(.+)/#) else { return nil }
         self.volumeID = String(match.output.1)
@@ -26,18 +26,18 @@ public struct SDKRevisionUid: Sendable {
     public let nodeID: String
     public let revisionID: String
     public let sdkCompatibleIdentifier: String
-    
+
     public init(sdkNodeUid: SDKNodeUid, revisionID: String) {
         self.init(volumeID: sdkNodeUid.volumeID, nodeID: sdkNodeUid.nodeID, revisionID: revisionID)
     }
-    
+
     public init(volumeID: String, nodeID: String, revisionID: String) {
         self.volumeID = volumeID
         self.nodeID = nodeID
         self.revisionID = revisionID
         self.sdkCompatibleIdentifier = "\(volumeID)~\(nodeID)~\(revisionID)"
     }
-    
+
     public init?(sdkCompatibleIdentifier: String) {
         guard let match = sdkCompatibleIdentifier.firstMatch(of: #/(.+)~(.+)~(.+)/#) else { return nil }
         self.volumeID = String(match.output.1)
@@ -207,7 +207,7 @@ public struct FileRevision: Sendable {
 public struct UploadedFileIdentifiers: Sendable {
     public let nodeUid: SDKNodeUid
     public let revisionUid: SDKRevisionUid
-    
+
     init?(interopUploadResult: Proton_Drive_Sdk_UploadResult) {
         guard let nodeUid = SDKNodeUid(sdkCompatibleIdentifier: interopUploadResult.nodeUid),
               let revisionUid = SDKRevisionUid(sdkCompatibleIdentifier: interopUploadResult.revisionUid)

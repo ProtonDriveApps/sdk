@@ -33,6 +33,7 @@ internal fun PhotosUploaderRequest.toProtobuf(
                 this.utf8JsonValue = data.toByteString()
             }
         }
+        this@toProtobuf.expectedSha1?.let { expectedSha1 = it.toByteString() }
         this@toProtobuf.mainPhotoLinkId?.let {
             mainPhotoLinkId = it
         }

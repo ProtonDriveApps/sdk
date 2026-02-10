@@ -53,7 +53,7 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
             }
 
             $0.featureEnabledFunction = Int64(ObjectHandle(callback: cCompatibleFeatureFlagProviderCallback))
-            
+
             $0.clientOptions = Proton_Drive_Sdk_ProtonDriveClientOptions.with {
                 $0.uid = configuration.clientUID
                 if let httpApiCallsTimeout = configuration.httpApiCallsTimeout {
@@ -75,7 +75,7 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
                 includesLongLivedCallback: true,
                 logger: logger
             )
-        
+
         assert(handle != 0)
         self.clientHandle = ObjectHandle(handle)
         logger.trace("client handle: \(clientHandle)", category: "ProtonDriveClient")
@@ -211,6 +211,7 @@ extension ProtonPhotosClient {
         tags: [Int],
         additionalMetadata: [AdditionalMetadata],
         overrideExistingDraft: Bool,
+        expectedSha1: Data?,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback,
         onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
@@ -227,6 +228,7 @@ extension ProtonPhotosClient {
             tags: tags,
             additionalMetadata: additionalMetadata,
             overrideExistingDraft: overrideExistingDraft,
+            expectedSha1: expectedSha1,
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
@@ -249,6 +251,7 @@ extension ProtonPhotosClient {
         tags: [Int],
         additionalMetadata: [AdditionalMetadata],
         overrideExistingDraft: Bool,
+        expectedSha1: Data?,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> UploadOperation {
@@ -272,6 +275,7 @@ extension ProtonPhotosClient {
             tags: mappedTags,
             additionalMetadata: additionalMetadata,
             overrideExistingDraft: overrideExistingDraft,
+            expectedSha1: expectedSha1,
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )

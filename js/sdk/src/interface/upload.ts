@@ -11,6 +11,16 @@ export type UploadMetadata = {
      */
     expectedSize: number;
     /**
+     * Expected SHA1 hash of the file content.
+     *
+     * If provided, the SDK will verify that the SHA1 hash of the uploaded
+     * content matches the expected SHA1 hash. If the hashes do not match,
+     * the upload will fail with an IntegrityError.
+     *
+     * The hash should be provided as a hexadecimal string (40 characters).
+     */
+    expectedSha1?: string;
+    /**
      * Modification time of the file.
      *
      * The modification time will be encrypted and stored with the file.

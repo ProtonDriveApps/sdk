@@ -219,13 +219,14 @@ export class StreamUploader {
     }
 
     protected async commitFile(thumbnails: Thumbnail[]) {
-        this.verifyIntegrity(thumbnails);
+        const digests = this.digests.digests();
+        this.verifyIntegrity(thumbnails, digests);
 
         const extendedAttributes = {
             modificationTime: this.metadata.modificationTime,
             size: this.metadata.expectedSize,
             blockSizes: this.uploadedBlockSizes,
-            digests: this.digests.digests(),
+            digests,
         };
         await this.uploadManager.commitDraft(
             this.revisionDraft,
@@ -607,7 +608,7 @@ export class StreamUploader {
         }
     }
 
-    protected verifyIntegrity(thumbnails: Thumbnail[]) {
+    protected verifyIntegrity(thumbnails: Thumbnail[], digests: { sha1: string }) {
         const expectedBlockCount =
             Math.ceil(this.metadata.expectedSize / FILE_CHUNK_SIZE) + (thumbnails ? thumbnails?.length : 0);
         if (this.uploadedBlockCount !== expectedBlockCount) {
@@ -620,6 +621,12 @@ export class StreamUploader {
             throw new IntegrityError(c('Error').t`Some file bytes failed to upload`, {
                 uploadedOriginalFileSize: this.uploadedOriginalFileSize,
                 expectedFileSize: this.metadata.expectedSize,
+            });
+        }
+        if (this.metadata.expectedSha1 && digests.sha1 !== this.metadata.expectedSha1) {
+            throw new IntegrityError(c('Error').t`File hash does not match expected hash`, {
+                uploadedSha1: digests.sha1,
+                expectedSha1: this.metadata.expectedSha1,
             });
         }
     }
