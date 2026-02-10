@@ -71,6 +71,12 @@ export class ProtonDrivePublicLinkClient {
          */
         getDocsKey: (nodeUid: NodeOrUid) => Promise<SessionKey>;
         /**
+         * Experimental feature to get the passphrase for a node.
+         *
+         * This is used by public link page to report abuse.
+         */
+        getNodePassphrase: (nodeUid: NodeOrUid) => Promise<string>;
+        /**
          * Experimental feature to check if hashes match the malware database.
          */
         scanHashes: (hashes: string[]) => Promise<NodesSecurityScanResult>;
@@ -174,6 +180,14 @@ export class ProtonDrivePublicLinkClient {
                     throw new Error('Node does not have a content key packet session key');
                 }
                 return keys.contentKeyPacketSessionKey;
+            },
+            getNodePassphrase: async (nodeUid: NodeOrUid) => {
+                this.logger.debug(`Getting node passphrase for ${getUid(nodeUid)}`);
+                const keys = await this.sharingPublic.nodes.access.getNodeKeys(getUid(nodeUid));
+                if (!keys.passphrase) {
+                    throw new Error('Node does not have a passphrase');
+                }
+                return keys.passphrase
             },
             scanHashes: async (hashes: string[]): Promise<NodesSecurityScanResult> => {
                 this.logger.debug(`Scanning ${hashes.length} hashes`);
