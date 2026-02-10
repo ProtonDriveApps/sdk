@@ -1,5 +1,12 @@
 # Changelog
 
+## js/v0.9.8 (2026-02-10)
+
+* Add experimental getNodePassphrase
+* Add SHA1 upload verification
+* Add album management
+* Update changelog for js/v0.9.7
+
 ## js/v0.9.7 (2026-02-05)
 
 * [DRVWEB-5135] Add empty trash for photo volume
