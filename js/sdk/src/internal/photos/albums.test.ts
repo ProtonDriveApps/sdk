@@ -37,6 +37,7 @@ describe('Albums', () => {
             createAlbum: jest.fn().mockResolvedValue('volumeId~newAlbumNodeId'),
             updateAlbum: jest.fn(),
             deleteAlbum: jest.fn(),
+            removePhotosFromAlbum: jest.fn(),
         };
 
         // @ts-expect-error No need to implement all methods for mocking
@@ -236,6 +237,32 @@ describe('Albums', () => {
 
             expect(apiService.deleteAlbum).toHaveBeenCalledWith('albumNodeUid', { force: true });
             expect(nodesService.notifyNodeDeleted).toHaveBeenCalledWith('albumNodeUid');
+        });
+    });
+
+    describe('removePhotos', () => {
+        it('notifies nodes service only for successfully removed photos', async () => {
+            apiService.removePhotosFromAlbum = jest.fn().mockImplementation(async function* () {
+                yield { uid: 'photo1', ok: true };
+                yield { uid: 'photo2', ok: false, error: 'Some error' };
+                yield { uid: 'photo3', ok: true };
+            });
+
+            const results = [];
+            for await (const result of albums.removePhotos('albumNodeUid', ['photo1', 'photo2', 'photo3'])) {
+                results.push(result);
+            }
+
+            expect(results).toEqual([
+                { uid: 'photo1', ok: true },
+                { uid: 'photo2', ok: false, error: 'Some error' },
+                { uid: 'photo3', ok: true },
+            ]);
+            expect(apiService.removePhotosFromAlbum).toHaveBeenCalledWith('albumNodeUid', ['photo1', 'photo2', 'photo3'], undefined);
+            expect(nodesService.notifyNodeChanged).toHaveBeenCalledTimes(2);
+            expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('photo1');
+            expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('photo3');
+            expect(nodesService.notifyNodeChanged).not.toHaveBeenCalledWith('photo2');
         });
     });
 });
