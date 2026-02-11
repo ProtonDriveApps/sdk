@@ -1,4 +1,4 @@
-import { MemberRole, NodeType, resultOk } from '../../interface';
+import { MemberRole, NodeResult, NodeType, resultOk } from '../../interface';
 import { BatchLoading } from '../batchLoading';
 import { DecryptedNode } from '../nodes';
 import { ALBUM_MEDIA_TYPE } from '../nodes/mediaTypes';
@@ -150,6 +150,19 @@ export class Albums {
     async deleteAlbum(nodeUid: string, options: { force?: boolean } = {}): Promise<void> {
         await this.apiService.deleteAlbum(nodeUid, options);
         await this.nodesService.notifyNodeDeleted(nodeUid);
+    }
+
+    async *removePhotos(
+        albumNodeUid: string,
+        photoNodeUids: string[],
+        signal?: AbortSignal,
+    ): AsyncGenerator<NodeResult> {
+        for await (const result of this.apiService.removePhotosFromAlbum(albumNodeUid, photoNodeUids, signal)) {
+            if (result.ok) {
+                await this.nodesService.notifyNodeChanged(result.uid);
+            }
+            yield result;
+        }
     }
 
     private async *iterateNodesAndIgnoreMissingOnes(

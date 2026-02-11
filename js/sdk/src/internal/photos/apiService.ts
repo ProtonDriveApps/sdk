@@ -1,7 +1,9 @@
 import { c } from 'ttag';
 
 import { ValidationError } from '../../errors';
+import { NodeResult } from '../../interface';
 import { APICodeError, DriveAPIService, drivePaths } from '../apiService';
+import { batch } from '../batch';
 import { EncryptedRootShare, EncryptedShareCrypto, ShareType } from '../shares/interface';
 import { makeNodeUid, splitNodeUid } from '../uids';
 
@@ -39,6 +41,13 @@ type PostPhotoDuplicateRequest = Extract<
 >['content']['application/json'];
 type PostPhotoDuplicateResponse =
     drivePaths['/drive/volumes/{volumeID}/photos/duplicates']['post']['responses']['200']['content']['application/json'];
+
+type PostRemovePhotosFromAlbumRequest = Extract<
+    drivePaths['/drive/photos/volumes/{volumeID}/albums/{linkID}/remove-multiple']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostRemovePhotosFromAlbumResponse =
+    drivePaths['/drive/photos/volumes/{volumeID}/albums/{linkID}/remove-multiple']['post']['responses']['200']['content']['application/json'];
 
 const ALBUM_CONTAINS_PHOTOS_NOT_IN_TIMELINE_ERROR_CODE = 200302;
 
@@ -278,6 +287,42 @@ export class PhotosAPIService {
                 throw new ValidationError(c('Error').t`Album contains photos not in timeline`);
             }
             throw error;
+        }
+    }
+
+    async *removePhotosFromAlbum(
+        albumNodeUid: string,
+        photoNodeUids: string[],
+        signal?: AbortSignal,
+    ): AsyncGenerator<NodeResult> {
+        const { volumeId, nodeId: albumLinkId } = splitNodeUid(albumNodeUid);
+
+        const batchSize = 50;
+
+        for (const photoNodeUidsBatch of batch(photoNodeUids, batchSize)) {
+            const linkIds = photoNodeUidsBatch.map((nodeUid) => splitNodeUid(nodeUid).nodeId);
+
+            let errorMessage: string | undefined;
+            try {
+                await this.apiService.post<PostRemovePhotosFromAlbumRequest, PostRemovePhotosFromAlbumResponse>(
+                    `drive/photos/volumes/${volumeId}/albums/${albumLinkId}/remove-multiple`,
+                    {
+                        LinkIDs: linkIds,
+                    },
+                    signal,
+                );
+            } catch (error) {
+                errorMessage = error instanceof Error ? error.message : c('Error').t`Unknown error`;
+            }
+
+            // The API does not return individual results for each photo.
+            for (const uid of photoNodeUidsBatch) {
+                if (errorMessage) {
+                    yield { uid, ok: false, error: errorMessage };
+                } else {
+                    yield { uid, ok: true };
+                }
+            }
         }
     }
 }
