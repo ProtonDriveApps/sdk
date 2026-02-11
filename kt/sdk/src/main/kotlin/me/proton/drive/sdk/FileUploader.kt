@@ -8,8 +8,8 @@ import me.proton.drive.sdk.entity.FileRevisionUploaderRequest
 import me.proton.drive.sdk.entity.FileUploaderRequest
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
-import me.proton.drive.sdk.internal.JniUploadController
 import me.proton.drive.sdk.internal.JniFileUploader
+import me.proton.drive.sdk.internal.JniUploadController
 import me.proton.drive.sdk.internal.toLogId
 import java.nio.channels.ReadableByteChannel
 import java.util.concurrent.atomic.AtomicReference
@@ -25,6 +25,7 @@ class FileUploader internal constructor(
         coroutineScope: CoroutineScope,
         channel: ReadableByteChannel,
         thumbnails: Map<ThumbnailType, ByteArray>,
+        sha1Provider: (() -> ByteArray)?,
     ): UploadController = cancellationTokenSource().let { source ->
         log(INFO, "uploadFromStream")
         val coroutineScopeReference = AtomicReference(coroutineScope)
@@ -40,6 +41,7 @@ class FileUploader internal constructor(
                     controllerReference.get()?.emitProgress(toEntity())
                 }
             },
+            sha1Provider = sha1Provider,
             coroutineScopeProvider = coroutineScopeReference::get,
         )
         CommonUploadController(

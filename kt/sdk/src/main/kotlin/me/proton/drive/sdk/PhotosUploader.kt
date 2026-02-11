@@ -24,33 +24,34 @@ class PhotosUploader(
         coroutineScope: CoroutineScope,
         channel: ReadableByteChannel,
         thumbnails: Map<ThumbnailType, ByteArray>,
-    ): UploadController =
-        cancellationTokenSource().let { source ->
-            log(INFO, "uploadFromStream")
-            val coroutineScopeReference = AtomicReference(coroutineScope)
-            val controllerReference = AtomicReference<CommonUploadController>()
-            val handle = bridge.uploadFromStream(
-                uploaderHandle = handle,
-                cancellationTokenSourceHandle = source.handle,
-                thumbnails = thumbnails,
-                onRead = channel::read,
-                onProgress = { progressUpdate ->
-                    with(progressUpdate) {
-                        log(DEBUG, "progress: $bytesCompleted/$bytesInTotal")
-                        controllerReference.get()?.emitProgress(toEntity())
-                    }
-                },
-                coroutineScopeProvider = coroutineScopeReference::get,
-            )
-            CommonUploadController(
-                uploader = this@PhotosUploader,
-                handle = handle,
-                bridge = JniUploadController(),
-                cancellationTokenSource = source,
-                channel = channel,
-                coroutineScopeConsumer = coroutineScopeReference::set,
-            ).also(controllerReference::set)
-        }
+        sha1Provider: (() -> ByteArray)?,
+    ): UploadController = cancellationTokenSource().let { source ->
+        log(INFO, "uploadFromStream")
+        val coroutineScopeReference = AtomicReference(coroutineScope)
+        val controllerReference = AtomicReference<CommonUploadController>()
+        val handle = bridge.uploadFromStream(
+            uploaderHandle = handle,
+            cancellationTokenSourceHandle = source.handle,
+            thumbnails = thumbnails,
+            onRead = channel::read,
+            onProgress = { progressUpdate ->
+                with(progressUpdate) {
+                    log(DEBUG, "progress: $bytesCompleted/$bytesInTotal")
+                    controllerReference.get()?.emitProgress(toEntity())
+                }
+            },
+            sha1Provider = sha1Provider,
+            coroutineScopeProvider = coroutineScopeReference::get,
+        )
+        CommonUploadController(
+            uploader = this@PhotosUploader,
+            handle = handle,
+            bridge = JniUploadController(),
+            cancellationTokenSource = source,
+            channel = channel,
+            coroutineScopeConsumer = coroutineScopeReference::set,
+        ).also(controllerReference::set)
+    }
 
     override fun close() = bridge.free(handle)
 

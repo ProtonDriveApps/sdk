@@ -32,4 +32,9 @@ long pushDataAndLongToLongMethod(
         const char *name
 );
 
+ByteArray callByteBufferMethod(
+        intptr_t bindings_handle,
+        const char *name
+);
+
 #endif //PROTONDRIVE_GLOBAL_H

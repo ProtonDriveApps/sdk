@@ -10,7 +10,6 @@ public sealed partial class FileUploader : IDisposable
     private readonly IRevisionDraftProvider _revisionDraftProvider;
     private readonly DateTimeOffset? _lastModificationTime;
     private readonly IEnumerable<AdditionalMetadataProperty>? _additionalMetadata;
-    private readonly ReadOnlyMemory<byte>? _expectedSha1;
     private readonly ILogger _logger;
 
     private volatile int _remainingNumberOfBlocks;
@@ -21,7 +20,6 @@ public sealed partial class FileUploader : IDisposable
         long size,
         DateTimeOffset? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
-        ReadOnlyMemory<byte>? expectedSha1,
         int expectedNumberOfBlocks,
         ILogger logger)
     {
@@ -30,7 +28,6 @@ public sealed partial class FileUploader : IDisposable
         FileSize = size;
         _lastModificationTime = lastModificationTime;
         _additionalMetadata = additionalMetadata;
-        _expectedSha1 = expectedSha1;
         _remainingNumberOfBlocks = expectedNumberOfBlocks;
         _logger = logger;
     }
@@ -41,15 +38,23 @@ public sealed partial class FileUploader : IDisposable
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
         Action<long, long>? onProgress,
+        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         CancellationToken cancellationToken)
     {
-        return UploadFromStream(contentStream, ownsContentStream: false, thumbnails, onProgress, cancellationToken);
+        return UploadFromStream(
+            contentStream,
+            ownsContentStream: false,
+            thumbnails,
+            onProgress,
+            expectedSha1Provider,
+            cancellationToken);
     }
 
     public UploadController UploadFromFile(
         string filePath,
         IEnumerable<Thumbnail> thumbnails,
         Action<long, long>? onProgress,
+        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         CancellationToken cancellationToken)
     {
         var contentStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
@@ -59,6 +64,7 @@ public sealed partial class FileUploader : IDisposable
             ownsContentStream: true,
             thumbnails,
             onProgress,
+            expectedSha1Provider: expectedSha1Provider,
             cancellationToken);
     }
 
@@ -73,7 +79,6 @@ public sealed partial class FileUploader : IDisposable
         long size,
         DateTime? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalExtendedAttributes,
-        ReadOnlyMemory<byte>? expectedSha1,
         CancellationToken cancellationToken)
     {
         var logger = client.Telemetry.GetLogger("File uploader");
@@ -92,7 +97,6 @@ public sealed partial class FileUploader : IDisposable
             size,
             lastModificationTime,
             additionalExtendedAttributes,
-            expectedSha1,
             expectedNumberOfBlocks,
             logger);
     }
@@ -111,6 +115,7 @@ public sealed partial class FileUploader : IDisposable
         bool ownsContentStream,
         IEnumerable<Thumbnail> thumbnails,
         Action<long, long>? onProgress,
+        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         CancellationToken cancellationToken)
     {
         var taskControl = new TaskControl(cancellationToken);
@@ -130,6 +135,7 @@ public sealed partial class FileUploader : IDisposable
             thumbnails,
             _additionalMetadata,
             progress => onProgress?.Invoke(progress, FileSize),
+            expectedSha1Provider,
             revisionDraftTaskCompletionSource,
             ct);
 
@@ -168,6 +174,7 @@ public sealed partial class FileUploader : IDisposable
         IEnumerable<Thumbnail> thumbnails,
         IEnumerable<AdditionalMetadataProperty>? additionalExtendedAttributes,
         Action<long>? onProgress,
+        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         TaskCompletionSource<RevisionDraft> revisionDraftTaskCompletionSource,
         CancellationToken cancellationToken)
     {
@@ -186,6 +193,7 @@ public sealed partial class FileUploader : IDisposable
             _lastModificationTime,
             additionalExtendedAttributes,
             onProgress,
+            expectedSha1Provider,
             cancellationToken).ConfigureAwait(false);
 
         await UpdateActiveRevisionInCacheAsync(revisionDraft.Uid, contentStream.Length, cancellationToken).ConfigureAwait(false);
@@ -226,6 +234,7 @@ public sealed partial class FileUploader : IDisposable
         DateTimeOffset? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long>? onProgress,
+        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         CancellationToken cancellationToken)
     {
         using var revisionWriter = await RevisionOperations.OpenForWritingAsync(_client, revisionDraft, ReleaseBlocks, cancellationToken).ConfigureAwait(false);
@@ -233,7 +242,7 @@ public sealed partial class FileUploader : IDisposable
         await revisionWriter.WriteAsync(
             contentStream,
             FileSize,
-            _expectedSha1,
+            expectedSha1Provider,
             thumbnails,
             lastModificationTime,
             additionalMetadata,

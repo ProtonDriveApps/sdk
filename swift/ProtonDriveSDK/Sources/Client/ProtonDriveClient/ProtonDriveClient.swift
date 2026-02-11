@@ -181,7 +181,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         mediaType: String,
         thumbnails: [ThumbnailData],
         overrideExistingDraft: Bool,
-        expectedSha1: Data? = nil,
+        expectedSHA1: Data? = nil,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback,
         onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
@@ -195,7 +195,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             mediaType: mediaType,
             thumbnails: thumbnails,
             overrideExistingDraft: overrideExistingDraft,
-            expectedSha1: expectedSha1,
+            expectedSHA1: expectedSHA1,
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
@@ -215,7 +215,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         mediaType: String,
         thumbnails: [ThumbnailData],
         overrideExistingDraft: Bool,
-        expectedSha1: Data? = nil,
+        expectedSHA1: Data? = nil,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> UploadOperation {
@@ -228,7 +228,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             mediaType: mediaType,
             thumbnails: thumbnails,
             overrideExistingDraft: overrideExistingDraft,
-            expectedSha1: expectedSha1,
+            expectedSHA1: expectedSHA1,
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
@@ -241,7 +241,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         fileSize: Int64,
         modificationDate: Date,
         thumbnails: [ThumbnailData],
-        expectedSha1: Data? = nil,
+        expectedSHA1: Data? = nil,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback,
         onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
@@ -252,7 +252,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             fileSize: fileSize,
             modificationDate: modificationDate,
             thumbnails: thumbnails,
-            expectedSha1: expectedSha1,
+            expectedSHA1: expectedSHA1,
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
@@ -269,7 +269,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         fileSize: Int64,
         modificationDate: Date,
         thumbnails: [ThumbnailData],
-        expectedSha1: Data? = nil,
+        expectedSHA1: Data? = nil,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> UploadOperation {
@@ -279,7 +279,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             fileSize: fileSize,
             modificationDate: modificationDate,
             thumbnails: thumbnails,
-            expectedSha1: expectedSha1,
+            expectedSHA1: expectedSHA1,
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
@@ -436,7 +436,7 @@ extension ProtonDriveClient {
             }
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
         }
-        let result: Void = try await SDKRequestHandler.send(renameRequest, logger: logger)
+        let _: Void = try await SDKRequestHandler.send(renameRequest, logger: logger)
     }
 
     public func cancelRename(cancellationToken: UUID) async throws {

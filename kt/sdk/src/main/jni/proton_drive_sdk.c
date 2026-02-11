@@ -113,6 +113,12 @@ long onFeatureEnabled(
     return pushDataToLongMethod(bindings_handle, value, "onFeatureEnabled");
 }
 
+ByteArray onSha1(
+        intptr_t bindings_handle
+) {
+    return callByteBufferMethod(bindings_handle, "onSha1");
+}
+
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getReadPointer(
         JNIEnv *env,
         jclass clazz
@@ -174,6 +180,13 @@ jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getFeatureEna
         jclass clazz
 ) {
     return (jlong) (intptr_t) &onFeatureEnabled;
+}
+
+jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getSha1Pointer(
+        JNIEnv *env,
+        jclass clazz
+) {
+    return (jlong) (intptr_t) &onSha1;
 }
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_createWeakRef(JNIEnv* env, jobject obj) {
