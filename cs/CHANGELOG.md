@@ -1,5 +1,11 @@
 # Changelog
 
+## cs/v0.7.0-alpha.7 (2026-02-11)
+
+* Abort pause state on non-resumable upload errors
+* Exclude integrity errors from being resumable during upload
+* Update changelog for cs/v0.7.0-alpha.6
+
 ## cs/v0.7.0-alpha.6 (2026-02-10)
 
 * Add SHA1 upload verification
