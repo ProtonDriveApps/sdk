@@ -36,7 +36,7 @@ actor DownloadsManager {
         let downloaderRequest = Proton_Drive_Sdk_DownloadToFileRequest.with {
             $0.downloaderHandle = Int64(downloaderHandle)
             $0.filePath = destinationUrl.path(percentEncoded: false)
-            $0.progressAction = Int64(ObjectHandle(callback: cProgressCallback))
+            $0.progressAction = Int64(ObjectHandle(callback: cProgressCallbackForDownload))
             $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
         }
 

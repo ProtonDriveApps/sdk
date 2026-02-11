@@ -194,7 +194,7 @@ extension ProtonPhotosClient {
         tags: [Int],
         additionalMetadata: [AdditionalMetadata],
         overrideExistingDraft: Bool,
-        expectedSha1: Data?,
+        expectedSHA1: Data? = nil,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback,
         onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
@@ -211,7 +211,7 @@ extension ProtonPhotosClient {
             tags: tags,
             additionalMetadata: additionalMetadata,
             overrideExistingDraft: overrideExistingDraft,
-            expectedSha1: expectedSha1,
+            expectedSHA1: expectedSHA1,
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )
@@ -234,7 +234,7 @@ extension ProtonPhotosClient {
         tags: [Int],
         additionalMetadata: [AdditionalMetadata],
         overrideExistingDraft: Bool,
-        expectedSha1: Data?,
+        expectedSHA1: Data? = nil,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> UploadOperation {
@@ -258,7 +258,7 @@ extension ProtonPhotosClient {
             tags: mappedTags,
             additionalMetadata: additionalMetadata,
             overrideExistingDraft: overrideExistingDraft,
-            expectedSha1: expectedSha1,
+            expectedSHA1: expectedSHA1,
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
         )

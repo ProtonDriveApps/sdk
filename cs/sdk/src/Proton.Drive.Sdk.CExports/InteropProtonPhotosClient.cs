@@ -156,14 +156,11 @@ internal static class InteropProtonPhotosClient
             ? request.Metadata.Tags.Select(t => (Api.Photos.PhotoTag)t)
             : null;
 
-        var expectedSha1 = request.Metadata.HasExpectedSha1 ? request.Metadata.ExpectedSha1.Memory : default(ReadOnlyMemory<byte>?);
-
         var metadata = new PhotosFileUploadMetadata
         {
             MediaType = request.Metadata.MediaType,
             MainPhotoLinkId = request.Metadata.MainPhotoLinkId,
             ExpectedSize = request.Size,
-            ExpectedSha1 = expectedSha1,
             Tags = tags,
         };
 

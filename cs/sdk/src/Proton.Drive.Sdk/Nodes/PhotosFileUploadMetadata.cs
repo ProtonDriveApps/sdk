@@ -10,7 +10,5 @@ public sealed class PhotosFileUploadMetadata : FileUploadMetadata
 
     public long? ExpectedSize { get; init; }
 
-    public ReadOnlyMemory<byte>? ExpectedSha1 { get; init; }
-
     public IEnumerable<PhotoTag>? Tags { get; init; }
 }

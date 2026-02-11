@@ -10,5 +10,6 @@ interface Uploader : AutoCloseable, Cancellable {
         coroutineScope: CoroutineScope,
         channel: ReadableByteChannel,
         thumbnails: Map<ThumbnailType, ByteArray> = emptyMap(),
+        sha1Provider: (() -> ByteArray)? = null,
     ): UploadController
 }
