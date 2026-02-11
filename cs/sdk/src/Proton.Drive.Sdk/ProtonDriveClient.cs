@@ -65,7 +65,7 @@ public sealed class ProtonDriveClient
 
     internal ProtonDriveClient(
         IAccountClient accountClient,
-        IDriveApiClients apiClients,
+        IDriveApiClients api,
         IDriveClientCache cache,
         IBlockVerifierFactory blockVerifierFactory,
         IFeatureFlagProvider featureFlagProvider,
@@ -76,7 +76,7 @@ public sealed class ProtonDriveClient
         Uid = uid;
 
         Account = accountClient;
-        Api = apiClients;
+        Api = api;
         Cache = cache;
         BlockVerifierFactory = blockVerifierFactory;
         Telemetry = telemetry;
@@ -148,7 +148,12 @@ public sealed class ProtonDriveClient
         return NodeOperations
             .EnumerateNodesAsync(this, nodeUid.VolumeId, [nodeUid.LinkId], cancellationToken)
             .Select(x => (Result<Node, DegradedNode>?)x)
-            .FirstOrDefaultAsync(cancellationToken: cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(IEnumerable<NodeUid> nodeUids, CancellationToken cancellationToken = default)
+    {
+        return NodeOperations.EnumerateNodesAsync(this, nodeUids, cancellationToken);
     }
 
     public ValueTask<FolderNode> CreateFolderAsync(NodeUid parentId, string name, DateTime? lastModificationTime, CancellationToken cancellationToken)
@@ -258,6 +263,7 @@ public sealed class ProtonDriveClient
         ReadOnlyMemory<byte>? expectedSha1,
         CancellationToken cancellationToken)
     {
-        return await FileUploader.CreateAsync(this, revisionDraftProvider, size, lastModificationTime, additionalMetadata, expectedSha1, cancellationToken).ConfigureAwait(false);
+        return await FileUploader.CreateAsync(this, revisionDraftProvider, size, lastModificationTime, additionalMetadata, expectedSha1, cancellationToken)
+            .ConfigureAwait(false);
     }
 }

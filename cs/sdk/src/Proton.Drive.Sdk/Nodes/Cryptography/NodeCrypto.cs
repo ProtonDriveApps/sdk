@@ -125,7 +125,13 @@ internal static class NodeCrypto
     {
         try
         {
-            var passphrase = DecryptMessage(encryptedPassphrase, signature, parentNodeKey, authorshipClaim.GetKeyRing(parentNodeKey), out var sessionKey, out var author);
+            var passphrase = DecryptMessage(
+                encryptedPassphrase,
+                signature,
+                parentNodeKey,
+                authorshipClaim.GetKeyRing(parentNodeKey),
+                out var sessionKey,
+                out var author);
 
             return new PhasedDecryptionOutput<ReadOnlyMemory<byte>>(sessionKey, passphrase, author);
         }
@@ -159,7 +165,13 @@ internal static class NodeCrypto
     {
         try
         {
-            var nameUtf8Bytes = DecryptMessage(encryptedName, detachedSignature: null, parentNodeKey, authorshipClaim.GetKeyRing(parentNodeKey), out var sessionKey, out var author);
+            var nameUtf8Bytes = DecryptMessage(
+                encryptedName,
+                detachedSignature: null,
+                parentNodeKey,
+                authorshipClaim.GetKeyRing(parentNodeKey),
+                out var sessionKey,
+                out var author);
 
             var name = Encoding.UTF8.GetString(nameUtf8Bytes);
 

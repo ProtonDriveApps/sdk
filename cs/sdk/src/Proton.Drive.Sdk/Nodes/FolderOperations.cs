@@ -58,7 +58,12 @@ internal static class FolderOperations
         }
     }
 
-    public static async ValueTask<FolderNode> CreateAsync(ProtonDriveClient client, NodeUid parentUid, string name, DateTimeOffset? lastModificationTime, CancellationToken cancellationToken)
+    public static async ValueTask<FolderNode> CreateAsync(
+        ProtonDriveClient client,
+        NodeUid parentUid,
+        string name,
+        DateTimeOffset? lastModificationTime,
+        CancellationToken cancellationToken)
     {
         var parentSecrets = await GetSecretsAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
 
@@ -68,7 +73,8 @@ internal static class FolderOperations
 
         var hashKey = CryptoGenerator.GenerateFolderHashKey();
 
-        var useAeadFeatureFlag = await client.FeatureFlagProvider.IsEnabledAsync(FeatureFlags.DriveCryptoEncryptBlocksWithPgpAead, cancellationToken).ConfigureAwait(false);
+        var useAeadFeatureFlag = await client.FeatureFlagProvider.IsEnabledAsync(FeatureFlags.DriveCryptoEncryptBlocksWithPgpAead, cancellationToken)
+            .ConfigureAwait(false);
 
         NodeOperations.GetCommonCreationParameters(
             name,

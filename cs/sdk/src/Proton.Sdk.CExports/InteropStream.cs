@@ -123,7 +123,9 @@ internal sealed class InteropStream : Stream
         };
 
         var requestBytes = request.ToByteArray();
-        var newPosition = _seekAction.Value.InvokeWithBufferAsync<Int64Value>(_bindingsHandle, requestBytes).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+
+        // TODO: use sync call
+        var newPosition = _seekAction.Value.InvokeWithBufferAsync<Int64Value>(_bindingsHandle, requestBytes).AsTask().GetAwaiter().GetResult();
 
         _position = newPosition.Value;
 

@@ -12,4 +12,6 @@ internal interface IEntityCache
         ShareId? membershipShareId,
         ReadOnlyMemory<byte> nameHashDigest,
         CancellationToken cancellationToken);
+
+    ValueTask<CachedNodeInfo?> TryGetNodeAsync(NodeUid nodeId, CancellationToken cancellationToken);
 }

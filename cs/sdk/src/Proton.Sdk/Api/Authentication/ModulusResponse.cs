@@ -1,5 +1,4 @@
 ﻿using System.Text.Json.Serialization;
-using Proton.Sdk.Api;
 
 namespace Proton.Sdk.Api.Authentication;
 

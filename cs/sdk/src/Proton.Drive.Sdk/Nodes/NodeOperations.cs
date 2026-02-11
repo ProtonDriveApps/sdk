@@ -6,6 +6,7 @@ using System.Text;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Shares;
+using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Nodes.Cryptography;
 using Proton.Drive.Sdk.Shares;
@@ -65,6 +66,16 @@ internal static class NodeOperations
         metadataResult ??= await GetFreshNodeMetadataAsync(client, uid, knownShareAndKey, cancellationToken).ConfigureAwait(false);
 
         return (Result<NodeMetadata, DegradedNodeMetadata>)metadataResult;
+    }
+
+    public static IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(
+        ProtonDriveClient client,
+        IEnumerable<NodeUid> nodeUids,
+        CancellationToken cancellationToken = default)
+    {
+        return nodeUids.GroupBy(uid => uid.VolumeId, uid => uid.LinkId)
+            .ToAsyncEnumerable()
+            .SelectMany(linkGroup => EnumerateNodesAsync(client, linkGroup.Key, linkGroup, cancellationToken));
     }
 
     public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(

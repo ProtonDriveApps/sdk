@@ -1,8 +1,6 @@
-﻿using Proton.Sdk;
+﻿namespace Proton.Drive.Sdk.Nodes;
 
-namespace Proton.Drive.Sdk.Nodes;
-
-public sealed record DegradedFileNode : DegradedNode
+public record DegradedFileNode : DegradedNode
 {
     public required string MediaType { get; init; }
 

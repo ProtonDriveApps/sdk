@@ -20,7 +20,9 @@ internal static class TelemetryErrorResolver
             FileContentsDecryptionException => DownloadError.DecryptionError,
             CryptographicException => DownloadError.DecryptionError,
 
+#pragma warning disable RCS0056 // Line too long
             HttpRequestException { HttpRequestError: HttpRequestError.NameResolutionError or HttpRequestError.ConnectionError or HttpRequestError.ProxyTunnelError } => DownloadError.NetworkError,
+#pragma warning restore RCS0056
             HttpRequestException { HttpRequestError: HttpRequestError.InvalidResponse or HttpRequestError.ResponseEnded } => DownloadError.ServerError,
             HttpRequestException { StatusCode: HttpStatusCode.RequestTimeout } => DownloadError.ServerError,
             HttpRequestException { StatusCode: >= (HttpStatusCode)400 and < (HttpStatusCode)500 } => DownloadError.HttpClientSideError,
@@ -42,7 +44,9 @@ internal static class TelemetryErrorResolver
             // Upload errors
             NodeKeyAndSessionKeyMismatchException or SessionKeyAndDataPacketMismatchException => UploadError.IntegrityError,
 
+#pragma warning disable RCS0056 // Line too long
             HttpRequestException { HttpRequestError: HttpRequestError.NameResolutionError or HttpRequestError.ConnectionError or HttpRequestError.ProxyTunnelError } => UploadError.NetworkError,
+#pragma warning restore RCS0056
             HttpRequestException { HttpRequestError: HttpRequestError.InvalidResponse or HttpRequestError.ResponseEnded } => UploadError.ServerError,
             HttpRequestException { StatusCode: HttpStatusCode.RequestTimeout } => UploadError.ServerError,
             HttpRequestException { StatusCode: >= (HttpStatusCode)400 and < (HttpStatusCode)500 } => UploadError.HttpClientSideError,

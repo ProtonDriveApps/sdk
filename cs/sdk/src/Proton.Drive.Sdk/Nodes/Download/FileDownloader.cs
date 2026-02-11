@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Proton.Drive.Sdk.Telemetry;
-using Proton.Sdk.Telemetry;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 

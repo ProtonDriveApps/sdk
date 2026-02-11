@@ -1,9 +1,6 @@
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes;
-using Proton.Photos.Sdk;
-using Proton.Photos.Sdk.Api.Photos;
-using Proton.Photos.Sdk.Nodes;
 using Proton.Sdk;
 using Proton.Sdk.Caching;
 using Proton.Sdk.CExports;
@@ -83,26 +80,6 @@ internal static class InteropProtonPhotosClient
         return null;
     }
 
-    public static async ValueTask<IMessage> HandleGetPhotosRootAsync(DrivePhotosClientGetPhotosRootRequest request)
-    {
-        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
-        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
-
-        var folderNode = await client.GetPhotosRootAsync(cancellationToken).ConfigureAwait(false);
-
-        return new FolderNode
-        {
-            Uid = folderNode.Uid.ToString(),
-            ParentUid = folderNode.ParentUid.ToString(),
-            TreeEventScopeId = folderNode.TreeEventScopeId,
-            Name = folderNode.Name,
-            CreationTime = folderNode.CreationTime.ToUniversalTime().ToTimestamp(),
-            TrashTime = folderNode.TrashTime?.ToUniversalTime().ToTimestamp(),
-            NameAuthor = InteropProtonDriveClient.ParseAuthorResult(folderNode.NameAuthor),
-            Author = InteropProtonDriveClient.ParseAuthorResult(folderNode.Author),
-        };
-    }
-
     public static async ValueTask<IMessage?> HandleGetNodeAsync(DrivePhotosClientGetNodeRequest request)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
@@ -120,13 +97,11 @@ internal static class InteropProtonPhotosClient
         return InteropProtonDriveClient.ConvertToNodeResult(nodeResult.Value);
     }
 
-    public static async ValueTask<IMessage> HandleEnumeratePhotosTimelineAsync(DrivePhotosClientEnumeratePhotosTimelineRequest request)
+    public static async ValueTask<IMessage> HandleEnumeratePhotosTimelineAsync(DrivePhotosClientEnumerateTimelineRequest request)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
         var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
-        var timelineEnumerable = client.EnumeratePhotosTimelineAsync(
-            NodeUid.Parse(request.FolderUid),
-            cancellationToken);
+        var timelineEnumerable = client.EnumerateTimelineAsync(cancellationToken);
 
         var items = await timelineEnumerable
             .Select(x => new PhotosTimelineItem
@@ -157,7 +132,7 @@ internal static class InteropProtonPhotosClient
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
         var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
 
-        var thumbnailsEnumerable = client.EnumeratePhotosThumbnailsAsync(
+        var thumbnailsEnumerable = client.EnumerateThumbnailsAsync(
             request.PhotoUids.Select(NodeUid.Parse),
             (Proton.Drive.Sdk.Nodes.ThumbnailType)request.Type,
             cancellationToken);
@@ -178,7 +153,7 @@ internal static class InteropProtonPhotosClient
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
         var tags = request.Metadata.Tags is { Count: > 0 }
-            ? request.Metadata.Tags.Select(t => (Proton.Photos.Sdk.Api.Photos.PhotoTag)t)
+            ? request.Metadata.Tags.Select(t => (Api.Photos.PhotoTag)t)
             : null;
 
         var expectedSha1 = request.Metadata.HasExpectedSha1 ? request.Metadata.ExpectedSha1.Memory : default(ReadOnlyMemory<byte>?);

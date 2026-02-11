@@ -14,7 +14,11 @@ internal static class InteropFileDownloader
         var downloader = Interop.GetFromHandle<FileDownloader>(request.DownloaderHandle);
 
         var writeFunction = new InteropFunction<nint, InteropArray<byte>, nint, nint>(request.WriteAction);
-        var seekAction = request.SeekAction != 0 ? new InteropAction<nint, InteropArray<byte>, nint>(request.SeekAction) : (InteropAction<nint, InteropArray<byte>, nint>?)null;
+
+        var seekAction = request.SeekAction != 0
+            ? new InteropAction<nint, InteropArray<byte>, nint>(request.SeekAction)
+            : (InteropAction<nint, InteropArray<byte>, nint>?)null;
+
         var cancelAction = request.CancelAction != 0 ? new InteropAction<nint>(request.CancelAction) : (InteropAction<nint>?)null;
         var stream = new InteropStream(bindingsHandle, writeFunction, seekAction, cancelAction);
 

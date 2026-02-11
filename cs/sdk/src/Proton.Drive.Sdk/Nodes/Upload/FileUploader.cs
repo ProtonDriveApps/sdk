@@ -86,7 +86,15 @@ public sealed partial class FileUploader : IDisposable
 
         LogAcquiredRevisionCreationSemaphore(logger, expectedNumberOfBlocks);
 
-        return new FileUploader(client, revisionDraftProvider, size, lastModificationTime, additionalExtendedAttributes, expectedSha1, expectedNumberOfBlocks, logger);
+        return new FileUploader(
+            client,
+            revisionDraftProvider,
+            size,
+            lastModificationTime,
+            additionalExtendedAttributes,
+            expectedSha1,
+            expectedNumberOfBlocks,
+            logger);
     }
 
     [LoggerMessage(Level = LogLevel.Trace, Message = "Trying to acquire {Count} from revision creation semaphore")]

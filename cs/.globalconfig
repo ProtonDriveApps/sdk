@@ -3,16 +3,46 @@ is_global = true
 stylecop.layout.allowConsecutiveUsings = true
 stylecop.layout.allowDoWhileOnClosingBrace = true
 
+# IDE0001: Simplify Names
+dotnet_diagnostic.IDE0001.severity = warning
+
+# IDE0002: Simplify Member Access
+dotnet_diagnostic.IDE0002.severity = warning
+
+# IDE0003: Remove qualification
+dotnet_diagnostic.IDE0003.severity = warning
+
+# IDE0004: Remove Unnecessary Cast
+dotnet_diagnostic.IDE0004.severity = warning
+
+# IDE0005: Using directive is unnecessary.
+dotnet_diagnostic.IDE0005.severity = warning
+
 # IDE0007: Use var instead of explicit type
 dotnet_diagnostic.IDE0007.severity = warning
 
-# IDE0007: Use collection initializers or expressions
+# IDE0028: Use collection initializers or expressions
 dotnet_diagnostic.IDE0028.severity = warning
 
+# IDE0047: Remove unnecessary parentheses
+dotnet_diagnostic.IDE0047.severity = warning
+
+# CA1032: Implement standard exception constructors
 dotnet_diagnostic.CA1032.severity = warning
+
+# CS1591: Missing XML comment for publicly visible type or member
+dotnet_diagnostic.CS1591.severity = none
+
+# CA1711: Identifiers should not have incorrect suffix
 dotnet_diagnostic.CA1711.severity = warning
+
+# CA2000: Dispose objects before losing scope
 dotnet_diagnostic.CA2000.severity = suggestion
+
+# CA2201: Do not raise reserved exception types
 dotnet_diagnostic.CA2201.severity = warning
+
+# CA2215: Dispose methods should call base class dispose
 dotnet_diagnostic.CA2215.severity = warning
 
 # StyleCop - Special
@@ -85,6 +115,9 @@ dotnet_diagnostic.SX1101.severity = warning
 dotnet_diagnostic.SX1309.severity = warning
 
 # Roslynator
+
+# RCS0056: A line is too long
+dotnet_diagnostic.RCS0056.severity = warning
 
 # RCS1037: Remove trailing white-space
 dotnet_diagnostic.RCS1037.severity = none # Redundant with SA1028

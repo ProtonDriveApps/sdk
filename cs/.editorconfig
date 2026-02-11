@@ -129,6 +129,8 @@ csharp_new_line_before_members_in_object_initializers = false
 csharp_new_line_before_open_brace = all
 csharp_new_line_between_query_expression_clauses = true
 
+roslynator_max_line_length = 160
+
 # Indentation preferences
 csharp_indent_block_contents = true
 csharp_indent_braces = false

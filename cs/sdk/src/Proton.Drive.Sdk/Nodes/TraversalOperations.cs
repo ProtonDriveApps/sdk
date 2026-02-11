@@ -19,7 +19,9 @@ internal static class TraversalOperations
                 throw new ProtonDriveException("Folder structure loop detected");
             }
 
-            nodeResult = await NodeOperations.GetNodeMetadataResultAsync(client, (NodeUid)parentUid, knownShareAndKey: null, cancellationToken).ConfigureAwait(false);
+            nodeResult = await NodeOperations.GetNodeMetadataResultAsync(client, (NodeUid)parentUid, knownShareAndKey: null, cancellationToken)
+                .ConfigureAwait(false);
+
             parentUid = nodeResult.Merge(x => x.Node.ParentUid, x => x.Node.ParentUid);
         }
 

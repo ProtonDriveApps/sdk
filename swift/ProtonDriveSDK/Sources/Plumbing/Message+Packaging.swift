@@ -202,19 +202,14 @@ extension Message {
                 $0.payload = .drivePhotosClientFree(request)
             }
 
-        case let request as Proton_Drive_Sdk_DrivePhotosClientGetPhotosRootRequest:
-            Proton_Drive_Sdk_Request.with {
-                $0.payload = .drivePhotosClientGetPhotosRoot(request)
-            }
-
         case let request as Proton_Drive_Sdk_DrivePhotosClientEnumeratePhotosThumbnailsRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .drivePhotosClientEnumeratePhotosThumbnails(request)
             }
 
-        case let request as Proton_Drive_Sdk_DrivePhotosClientEnumeratePhotosTimelineRequest:
+        case let request as Proton_Drive_Sdk_DrivePhotosClientEnumerateTimelineRequest:
             Proton_Drive_Sdk_Request.with {
-                $0.payload = .drivePhotosClientEnumeratePhotosTimeline(request)
+                $0.payload = .drivePhotosClientEnumerateTimeline(request)
             }
 
             // MARK: - Photo Downloads

@@ -18,7 +18,6 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="$(NativeLibPrefix)proton_drive_sdk" />
-    <InternalsVisibleTo Include="Proton.Photos.Sdk" />
   </ItemGroup>
 
   <ItemGroup>
