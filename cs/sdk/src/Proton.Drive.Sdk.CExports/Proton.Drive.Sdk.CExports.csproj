@@ -17,12 +17,13 @@
     <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
     <PackageReference Include="Proton.Cryptography" />
+
+    <InternalsVisibileTo Include="Proton.Drive.CLI" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Proton.Drive.Sdk\Proton.Drive.Sdk.csproj" />
     <ProjectReference Include="..\Proton.Sdk.CExports\Proton.Sdk.CExports.csproj" />
-    <ProjectReference Include="..\Proton.Photos.Sdk\Proton.Photos.Sdk.csproj" />
   </ItemGroup>
 
   <ItemGroup>

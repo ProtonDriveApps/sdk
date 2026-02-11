@@ -1,6 +1,6 @@
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
-using Proton.Photos.Sdk.Nodes.Upload;
+using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Sdk.CExports;
 
 namespace Proton.Drive.Sdk.CExports;

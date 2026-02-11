@@ -37,7 +37,7 @@ public static class ResultExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool TryGetError<T, TError>(this Result<T, TError> result, [MaybeNullWhen(false)] out TError error)
+    public static bool TryGetError<T, TError>(this Result<T, TError> result, [NotNullWhen(true)] out TError? error)
     {
         return !result.TryGetValueElseError(out _, out error);
     }

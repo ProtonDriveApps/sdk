@@ -1,7 +1,7 @@
 ﻿using System.Buffers;
 using Microsoft.IO;
 
-namespace Proton.Sdk.Drive;
+namespace Proton.Drive.Sdk;
 
 public static class RecyclableMemoryStreamExtensions
 {

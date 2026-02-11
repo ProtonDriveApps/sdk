@@ -19,7 +19,5 @@ internal interface IDriveEntityCache : IEntityCache
     ValueTask SetShareAsync(Share share, CancellationToken cancellationToken);
     ValueTask<Share?> TryGetShareAsync(ShareId shareId, CancellationToken cancellationToken);
 
-    ValueTask<CachedNodeInfo?> TryGetNodeAsync(NodeUid nodeId, CancellationToken cancellationToken);
-
     ValueTask RemoveNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken);
 }

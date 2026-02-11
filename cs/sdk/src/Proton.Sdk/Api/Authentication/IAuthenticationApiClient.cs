@@ -1,5 +1,4 @@
 ﻿using Proton.Cryptography.Srp;
-using Proton.Sdk.Api;
 using Proton.Sdk.Authentication;
 
 namespace Proton.Sdk.Api.Authentication;

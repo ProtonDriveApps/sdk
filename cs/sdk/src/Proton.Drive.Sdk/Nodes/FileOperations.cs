@@ -7,7 +7,10 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal static partial class FileOperations
 {
-    public static async ValueTask<Result<FileSecrets, DegradedFileSecrets>> GetSecretsAsync(ProtonDriveClient client, NodeUid fileUid, CancellationToken cancellationToken)
+    public static async ValueTask<Result<FileSecrets, DegradedFileSecrets>> GetSecretsAsync(
+        ProtonDriveClient client,
+        NodeUid fileUid,
+        CancellationToken cancellationToken)
     {
         var fileSecretsResult = await client.Cache.Secrets.TryGetFileSecretsAsync(fileUid, cancellationToken).ConfigureAwait(false);
 
@@ -81,6 +84,7 @@ internal static partial class FileOperations
                 tasks.Enqueue(DownloadThumbnailAsync(client, fileNode.ActiveRevision.Uid, block, cancellationToken));
             }
 
+            // TODO: cancel other thumbnail downloads if one fails
             while (tasks.TryDequeue(out var task))
             {
                 yield return await task.ConfigureAwait(false);

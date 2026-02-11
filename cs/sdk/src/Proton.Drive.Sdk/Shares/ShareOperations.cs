@@ -37,7 +37,10 @@ internal static class ShareOperations
         return new ShareAndKey(share, shareKey.Value);
     }
 
-    public static async ValueTask<ShareAndKey> GetContextShareAsync(ProtonDriveClient client, Result<NodeMetadata, DegradedNodeMetadata> nodeResult, CancellationToken cancellationToken)
+    public static async ValueTask<ShareAndKey> GetContextShareAsync(
+        ProtonDriveClient client,
+        Result<NodeMetadata, DegradedNodeMetadata> nodeResult,
+        CancellationToken cancellationToken)
     {
         var contextRoot = await TraversalOperations.FindRootForNode(client, nodeResult, cancellationToken).ConfigureAwait(false);
         var contextShareId = contextRoot.Merge(x => x.MembershipShareId, x => x.MembershipShareId);

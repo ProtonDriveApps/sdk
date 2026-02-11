@@ -109,22 +109,6 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
 }
 
 extension ProtonPhotosClient {
-    public func getPhotosRoot() async throws -> FolderNode {
-        let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
-        defer {
-            cancellationTokenSource.free()
-        }
-
-        let cancellationHandle = cancellationTokenSource.handle
-
-        let request = Proton_Drive_Sdk_DrivePhotosClientGetPhotosRootRequest.with {
-            $0.clientHandle = Int64(clientHandle)
-            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
-        }
-        let sdkNode: Proton_Drive_Sdk_FolderNode = try await SDKRequestHandler.send(request, logger: logger)
-        return try FolderNode(sdkFolderNode: sdkNode)
-    }
-
     public func enumerateTimeline(in folderUid: SDKNodeUid) async throws -> [PhotoTimelineItem] {
         let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
         defer {
@@ -133,9 +117,8 @@ extension ProtonPhotosClient {
 
         let cancellationHandle = cancellationTokenSource.handle
 
-        let request = Proton_Drive_Sdk_DrivePhotosClientEnumeratePhotosTimelineRequest.with {
+        let request = Proton_Drive_Sdk_DrivePhotosClientEnumerateTimelineRequest.with {
             $0.clientHandle = Int64(clientHandle)
-            $0.folderUid = folderUid.sdkCompatibleIdentifier
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
         }
 

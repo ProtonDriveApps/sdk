@@ -95,7 +95,8 @@ internal static class InteropMessageHandler
                     => InteropDownloadController.HandleIsPaused(request.DownloadControllerIsPaused),
 
                 Request.PayloadOneofCase.DownloadControllerIsDownloadCompleteWithVerificationIssue
-                    => InteropDownloadController.HandleIsDownloadCompleteWithVerificationIssue(request.DownloadControllerIsDownloadCompleteWithVerificationIssue),
+                    => InteropDownloadController.HandleIsDownloadCompleteWithVerificationIssue(
+                        request.DownloadControllerIsDownloadCompleteWithVerificationIssue),
 
                 Request.PayloadOneofCase.DownloadControllerAwaitCompletion
                     => await InteropDownloadController.HandleAwaitCompletion(request.DownloadControllerAwaitCompletion).ConfigureAwait(false),
@@ -118,14 +119,13 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DrivePhotosClientFree
                     => InteropProtonPhotosClient.HandleFree(request.DrivePhotosClientFree),
 
-                Request.PayloadOneofCase.DrivePhotosClientGetPhotosRoot
-                    => await InteropProtonPhotosClient.HandleGetPhotosRootAsync(request.DrivePhotosClientGetPhotosRoot).ConfigureAwait(false),
-
                 Request.PayloadOneofCase.DrivePhotosClientEnumeratePhotosThumbnails
-                    => await InteropProtonPhotosClient.HandleEnumeratePhotosThumbnailsAsync(request.DrivePhotosClientEnumeratePhotosThumbnails).ConfigureAwait(false),
+                    => await InteropProtonPhotosClient.HandleEnumeratePhotosThumbnailsAsync(
+                        request.DrivePhotosClientEnumeratePhotosThumbnails).ConfigureAwait(false),
 
-                Request.PayloadOneofCase.DrivePhotosClientEnumeratePhotosTimeline
-                    => await InteropProtonPhotosClient.HandleEnumeratePhotosTimelineAsync(request.DrivePhotosClientEnumeratePhotosTimeline).ConfigureAwait(false),
+                Request.PayloadOneofCase.DrivePhotosClientEnumerateTimeline
+                    => await InteropProtonPhotosClient.HandleEnumeratePhotosTimelineAsync(
+                        request.DrivePhotosClientEnumerateTimeline).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DrivePhotosClientGetNode
                     => await InteropProtonPhotosClient.HandleGetNodeAsync(request.DrivePhotosClientGetNode).ConfigureAwait(false),

@@ -1,6 +1,4 @@
-﻿using Proton.Sdk.Api;
-
-namespace Proton.Sdk.Api.Addresses;
+﻿namespace Proton.Sdk.Api.Addresses;
 
 internal sealed class AddressResponse : ApiResponse
 {
