@@ -1,4 +1,3 @@
-using Proton.Drive.Sdk.Nodes;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes.Download;

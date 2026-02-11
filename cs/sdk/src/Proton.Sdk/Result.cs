@@ -42,7 +42,7 @@ public readonly struct Result<T, TError>
         return new Result<T, TError>(error);
     }
 
-    public bool TryGetValueElseError([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out TError error)
+    public bool TryGetValueElseError([NotNullWhen(true)] out T? value, [NotNullWhen(false)] out TError? error)
     {
         value = _value;
         error = _error;

@@ -3,7 +3,6 @@ package me.proton.drive.sdk.internal
 import com.google.protobuf.Any
 import kotlinx.coroutines.CoroutineScope
 import me.proton.drive.sdk.converter.FileThumbnailListConverter
-import me.proton.drive.sdk.converter.FolderNodeConverter
 import me.proton.drive.sdk.converter.NodeResultConverter
 import me.proton.drive.sdk.converter.PhotosTimelineListConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
@@ -84,17 +83,11 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
             drivePhotosClientEnumeratePhotosThumbnails = request
         }
 
-    suspend fun getPhotosRoot(
-        request: ProtonDriveSdk.DrivePhotosClientGetPhotosRootRequest,
-    ): ProtonDriveSdk.FolderNode = executeOnce("getPhotosRoot", FolderNodeConverter().asCallback) {
-        drivePhotosClientGetPhotosRoot = request
-    }
-
-    suspend fun enumeratePhotosTimeline(
-        request: ProtonDriveSdk.DrivePhotosClientEnumeratePhotosTimelineRequest,
+    suspend fun enumerateTimeline(
+        request: ProtonDriveSdk.DrivePhotosClientEnumerateTimelineRequest,
     ): ProtonDriveSdk.PhotosTimelineList =
-        executeOnce("enumeratePhotosTimeline", PhotosTimelineListConverter().asCallback) {
-            drivePhotosClientEnumeratePhotosTimeline = request
+        executeOnce("enumerateTimeline", PhotosTimelineListConverter().asCallback) {
+            drivePhotosClientEnumerateTimeline = request
         }
 
     suspend fun getNode(

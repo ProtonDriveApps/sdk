@@ -10,7 +10,6 @@ using Proton.Drive.Sdk.Http;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Resilience;
 using Proton.Sdk;
-using Proton.Sdk.Drive;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 

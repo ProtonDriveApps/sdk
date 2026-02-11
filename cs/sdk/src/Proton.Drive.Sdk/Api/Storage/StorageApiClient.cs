@@ -1,6 +1,5 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Mime;
-using System.Runtime.ExceptionServices;
 using Proton.Sdk.Api;
 using Proton.Sdk.Http;
 using Proton.Sdk.Serialization;
@@ -46,7 +45,8 @@ internal sealed class StorageApiClient(HttpClient defaultHttpClient, HttpClient 
         try
         {
             // Because of HttpCompletionOption.ResponseHeadersRead option, the long timeout is not needed, so we don't use the storage HTTP client
-            var blobResponse = await _defaultHttpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+            var blobResponse = await _defaultHttpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                .ConfigureAwait(false);
 
             await blobResponse.EnsureApiSuccessAsync(ProtonApiSerializerContext.Default.ApiResponse, cancellationToken).ConfigureAwait(false);
 

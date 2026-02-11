@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Shares;
 using Proton.Sdk.Serialization;

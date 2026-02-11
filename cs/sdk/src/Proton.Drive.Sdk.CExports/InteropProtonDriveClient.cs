@@ -471,7 +471,8 @@ internal static class InteropProtonDriveClient
                         degradedFile.ActiveRevision.ClaimedDigests = new FileContentDigests();
                         if (degradedFileNode.ActiveRevision.ClaimedDigests.Value.Sha1.HasValue)
                         {
-                            degradedFile.ActiveRevision.ClaimedDigests.Sha1 = ByteString.CopyFrom(degradedFileNode.ActiveRevision.ClaimedDigests.Value.Sha1.Value.Span);
+                            degradedFile.ActiveRevision.ClaimedDigests.Sha1 =
+                                ByteString.CopyFrom(degradedFileNode.ActiveRevision.ClaimedDigests.Value.Sha1.Value.Span);
                         }
                     }
 
