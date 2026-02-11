@@ -39,6 +39,7 @@ class ProtonDriveSdkNativeClient internal constructor(
     val progress: suspend (ProtonDriveSdk.ProgressUpdate) -> Unit = { error("progress not configured for $name") },
     val recordMetric: suspend (ProtonSdk.MetricEvent) -> Unit = { error("recordMetric not configured for $name") },
     val featureEnabled: suspend (String) -> Boolean = { error("featureEnabled not configured for $name") },
+    val sha1Provider: suspend () -> ByteArray = { error("sha1Provider not configured for $name") },
     val logger: (Level, String) -> Unit = { _, _ -> },
     private val coroutineScopeProvider: CoroutineScopeProvider = { null },
 ) {
@@ -196,6 +197,29 @@ class ProtonDriveSdkNativeClient internal constructor(
             logger(WARN, error.stackTraceToString())
             0L
         }
+    }
+
+    @Suppress("TooGenericExceptionCaught", "unused") // Called by JNI
+    fun onSha1(): ByteBuffer = onFunction(operation = "sha1Provider") {
+        runCatching {
+            sha1Provider().let { sha1 ->
+                ByteBuffer.allocateDirect(sha1.size).apply {
+                    put(sha1)
+                    flip()
+                }
+            }
+        }.getOrElse { error ->
+            logger(WARN, "Cannot get expected SHA1")
+            logger(WARN, error.stackTraceToString())
+            ByteBuffer.allocateDirect(0)
+        }
+    }
+
+    private fun <R> onFunction(
+        operation: String,
+        block: suspend () -> R
+    ): R = runBlocking(Dispatchers.Unconfined) {
+        coroutineScope(operation).async { block() }.await()
     }
 
     private fun <T, R> onFunction(
@@ -361,5 +385,8 @@ class ProtonDriveSdkNativeClient internal constructor(
 
         @JvmStatic
         external fun getFeatureEnabledPointer(): Long
+
+        @JvmStatic
+        external fun getSha1Pointer(): Long
     }
 }

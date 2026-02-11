@@ -7,6 +7,39 @@ namespace Proton.Sdk.CExports;
 /// Similar to InteropAction but with a return value.
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
+internal readonly unsafe struct InteropFunction<TArg, TResult>
+    where TArg : unmanaged
+    where TResult : unmanaged
+{
+    private readonly delegate* unmanaged[Cdecl]<TArg, TResult> _pointer;
+
+    public InteropFunction(delegate* unmanaged[Cdecl]<TArg, TResult> pointer)
+    {
+        ArgumentNullException.ThrowIfNull(pointer);
+        _pointer = pointer;
+    }
+
+    public InteropFunction(long pointer)
+        : this((delegate* unmanaged[Cdecl]<TArg, TResult>)pointer)
+    {
+    }
+
+    public TResult Invoke(TArg arg)
+    {
+        return _pointer(arg);
+    }
+
+    public override string ToString()
+    {
+        return $"0x{new nint(_pointer):x16}";
+    }
+}
+
+/// <summary>
+/// Represents a function pointer that can be called from C# to Swift/other languages.
+/// Similar to InteropAction but with a return value.
+/// </summary>
+[StructLayout(LayoutKind.Sequential)]
 internal readonly unsafe struct InteropFunction<TArg1, TArg2, TResult>
     where TArg1 : unmanaged
     where TArg2 : unmanaged

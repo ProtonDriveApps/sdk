@@ -117,8 +117,6 @@ internal static class InteropProtonDriveClient
                 new Proton.Drive.Sdk.Nodes.AdditionalMetadataProperty(x.Name, JsonDocument.Parse(x.Utf8JsonValue.Memory).RootElement))
             : null;
 
-        var expectedSha1 = request.HasExpectedSha1 ? request.ExpectedSha1.Memory : default(ReadOnlyMemory<byte>?);
-
         var fileUploader = await client.GetFileUploaderAsync(
             NodeUid.Parse(request.ParentFolderUid),
             request.Name,
@@ -127,7 +125,6 @@ internal static class InteropProtonDriveClient
             request.LastModificationTime.ToDateTime(),
             additionalMetadata,
             request.OverrideExistingDraftByOtherClient,
-            expectedSha1,
             cancellationToken).ConfigureAwait(false);
 
         return new Int64Value { Value = Interop.AllocHandle(fileUploader) };
@@ -144,14 +141,11 @@ internal static class InteropProtonDriveClient
                 new Proton.Drive.Sdk.Nodes.AdditionalMetadataProperty(x.Name, JsonDocument.Parse(x.Utf8JsonValue.Memory).RootElement))
             : null;
 
-        var expectedSha1 = request.HasExpectedSha1 ? request.ExpectedSha1.Memory : default(ReadOnlyMemory<byte>?);
-
         var fileUploader = await client.GetFileRevisionUploaderAsync(
             RevisionUid.Parse(request.CurrentActiveRevisionUid),
             request.Size,
             request.LastModificationTime.ToDateTime(),
             additionalMetadata,
-            expectedSha1,
             cancellationToken).ConfigureAwait(false);
 
         return new Int64Value { Value = Interop.AllocHandle(fileUploader) };

@@ -174,7 +174,7 @@ public sealed class ProtonDriveClient
         return FileOperations.EnumerateThumbnailsAsync(this, fileUids, type, cancellationToken);
     }
 
-    // FIXME: Group all parameterts bettween mediaType and expectedSha1 into uploadMetadata object.
+    // FIXME: Group all parameterts bettween mediaType and overrideExistingDraftByOtherClient into uploadMetadata object.
     public async ValueTask<FileUploader> GetFileUploaderAsync(
         NodeUid parentFolderUid,
         string name,
@@ -183,26 +183,24 @@ public sealed class ProtonDriveClient
         DateTime? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         bool overrideExistingDraftByOtherClient,
-        ReadOnlyMemory<byte>? expectedSha1,
         CancellationToken cancellationToken)
     {
         var draftProvider = new NewFileDraftProvider(this, parentFolderUid, name, mediaType, overrideExistingDraftByOtherClient);
 
-        return await GetFileUploaderAsync(draftProvider, size, lastModificationTime, additionalMetadata, expectedSha1, cancellationToken).ConfigureAwait(false);
+        return await GetFileUploaderAsync(draftProvider, size, lastModificationTime, additionalMetadata, cancellationToken).ConfigureAwait(false);
     }
 
-    // FIXME: Group all parameterts bettween mediaType and expectedSha1 into uploadMetadata object.
+    // FIXME: Group all parameterts bettween size and additionalMetadata into uploadMetadata object.
     public async ValueTask<FileUploader> GetFileRevisionUploaderAsync(
         RevisionUid currentActiveRevisionUid,
         long size,
         DateTime? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
-        ReadOnlyMemory<byte>? expectedSha1,
         CancellationToken cancellationToken)
     {
         var draftProvider = new NewRevisionDraftProvider(this, currentActiveRevisionUid.NodeUid, currentActiveRevisionUid.RevisionId);
 
-        return await GetFileUploaderAsync(draftProvider, size, lastModificationTime, additionalMetadata, expectedSha1, cancellationToken).ConfigureAwait(false);
+        return await GetFileUploaderAsync(draftProvider, size, lastModificationTime, additionalMetadata, cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<FileDownloader> GetFileDownloaderAsync(RevisionUid revisionUid, CancellationToken cancellationToken)
@@ -260,10 +258,9 @@ public sealed class ProtonDriveClient
         long size,
         DateTime? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
-        ReadOnlyMemory<byte>? expectedSha1,
         CancellationToken cancellationToken)
     {
-        return await FileUploader.CreateAsync(this, revisionDraftProvider, size, lastModificationTime, additionalMetadata, expectedSha1, cancellationToken)
+        return await FileUploader.CreateAsync(this, revisionDraftProvider, size, lastModificationTime, additionalMetadata, cancellationToken)
             .ConfigureAwait(false);
     }
 }

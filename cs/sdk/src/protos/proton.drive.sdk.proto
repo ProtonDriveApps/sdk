@@ -265,7 +265,6 @@ message DriveClientGetFileUploaderRequest {
     repeated AdditionalMetadataProperty additional_metadata = 7; // Optional
     bool override_existing_draft_by_other_client = 8;
     int64 cancellation_token_source_handle = 9;
-    bytes expected_sha1 = 10; // Optional - SHA1 hash of the file content for verification
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of FileUploader.
@@ -276,7 +275,6 @@ message DriveClientGetFileRevisionUploaderRequest {
     google.protobuf.Timestamp last_modification_time = 4;
     repeated AdditionalMetadataProperty additional_metadata = 5; // Optional
     int64 cancellation_token_source_handle = 6;
-    bytes expected_sha1 = 7; // Optional - SHA1 hash of the file content for verification
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of UploadController.
@@ -287,6 +285,7 @@ message UploadFromStreamRequest {
     int64 progress_action = 4; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 5;
     int64 cancel_action = 6; // Optional, C signature: void on_cancel(intptr_t bindings_handle); Signals the bindings to cancel the current stream operation.
+    int64 sha1_function = 7; // Optional - C signature: ByteArray get_sha1(intptr_t bindings_handle);
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of UploadController.
@@ -296,6 +295,7 @@ message UploadFromFileRequest {
     string file_path = 3;
     int64 progress_action = 4; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 5;
+    int64 sha1_function = 7; // Optional - C signature: ByteArray get_sha1(intptr_t bindings_handle);
 }
 
 // The response must not have a value.
@@ -667,7 +667,6 @@ message PhotoFileUploadMetadata {
     google.protobuf.Timestamp capture_time = 5; // Optional
     string main_photo_link_id = 6; // Optional
     repeated PhotoTag tags = 7; // Optional
-    bytes expected_sha1 = 8; // Optional - SHA1 hash of the file content for verification
 }
 
 enum PhotoTag {
@@ -698,6 +697,7 @@ message DrivePhotosClientUploadFromStreamRequest {
     int64 read_action = 3; // C signature: void handle_stream_operation(intptr_t bindings_handle, ByteArray buffer, intptr_t sdk_handle);
     int64 progress_action = 4; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 5;
+    int64 sha1_function = 7; // Optional - C signature: ByteArray get_sha1(intptr_t bindings_handle);
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of UploadController.
@@ -707,6 +707,7 @@ message DrivePhotosClientUploadFromFileRequest {
     string file_path = 3;
     int64 progress_action = 4; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 5;
+    int64 sha1_function = 7; // Optional - C signature: ByteArray get_sha1(intptr_t bindings_handle);
 }
 
 // The response must not have a value.

@@ -34,6 +34,7 @@ class JniPhotosUploader internal constructor() : JniBaseProtonDriveSdk() {
         thumbnails: Map<ThumbnailType, ByteArray>,
         onRead: (ByteBuffer) -> Int,
         onProgress: suspend (ProtonDriveSdk.ProgressUpdate) -> Unit,
+        sha1Provider: (() -> ByteArray)?,
         coroutineScopeProvider: CoroutineScopeProvider,
     ): Long = executePersistent(
         clientBuilder = { continuation ->
@@ -42,6 +43,7 @@ class JniPhotosUploader internal constructor() : JniBaseProtonDriveSdk() {
                 response = continuation.toLongResponse().asClientResponseCallback(),
                 read = onRead,
                 progress = onProgress,
+                sha1Provider = sha1Provider ?: { error("sha1Provider not configured for uploadFromStream") },
                 logger = internalLogger,
                 coroutineScopeProvider = coroutineScopeProvider,
             )
@@ -53,6 +55,9 @@ class JniPhotosUploader internal constructor() : JniBaseProtonDriveSdk() {
                     this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
                     readAction = ProtonDriveSdkNativeClient.getReadPointer()
                     progressAction = ProtonDriveSdkNativeClient.getProgressPointer()
+                    if (sha1Provider != null) {
+                        sha1Function = ProtonDriveSdkNativeClient.getSha1Pointer()
+                    }
                     thumbnails.forEach { (type, data) ->
                         this.thumbnails.add(thumbnail {
                             this.type = when (type) {

@@ -31,12 +31,14 @@ actor PhotoUploadsManager {
         tags: [Proton_Drive_Sdk_PhotoTag],
         additionalMetadata: [AdditionalMetadata],
         overrideExistingDraft: Bool,
-        expectedSha1: Data?,
+        expectedSHA1: Data? = nil,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> UploadOperation {
         let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
         activeUploads[cancellationToken] = cancellationTokenSource
+
+        let cancellationHandle = cancellationTokenSource.handle
 
         let uploaderHandle = try await buildUploader(
             name: name,
@@ -48,8 +50,7 @@ actor PhotoUploadsManager {
             tags: tags,
             additionalMetadata: additionalMetadata,
             overrideExistingDraft: overrideExistingDraft,
-            expectedSha1: expectedSha1,
-            cancellationHandle: cancellationTokenSource.handle
+            cancellationHandle: cancellationHandle
         )
 
         let uploadController = try await uploadFromFile(
@@ -57,8 +58,9 @@ actor PhotoUploadsManager {
             fileURL: fileURL,
             progressCallback: progressCallback,
             cancellationToken: cancellationToken,
-            cancellationHandle: cancellationTokenSource.handle,
-            thumbnails: thumbnails
+            cancellationHandle: cancellationHandle,
+            thumbnails: thumbnails,
+            expectedSHA1: expectedSHA1
         )
         return uploadController
     }
@@ -69,7 +71,8 @@ actor PhotoUploadsManager {
         progressCallback: @escaping ProgressCallback,
         cancellationToken: UUID,
         cancellationHandle: ObjectHandle,
-        thumbnails: [ThumbnailData]
+        thumbnails: [ThumbnailData],
+        expectedSHA1: Data? = nil
     ) async throws -> UploadOperation {
         let thumbnails = thumbnails.map {
             let count = $0.data.count
@@ -86,8 +89,11 @@ actor PhotoUploadsManager {
         let uploaderRequest = Proton_Drive_Sdk_DrivePhotosClientUploadFromFileRequest.with {
             $0.uploaderHandle = Int64(fileUploaderHandle)
             $0.filePath = fileURL.path(percentEncoded: false)
-            $0.progressAction = Int64(ObjectHandle(callback: cProgressCallback))
+            $0.progressAction = Int64(ObjectHandle(callback: cProgressCallbackForUpload))
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
+            if expectedSHA1 != nil {
+                $0.sha1Function = Int64(ObjectHandle(callback: cExpectedSha1CallbackForUpload))
+            }
             $0.thumbnails = thumbnails.map { type, handle, count in
                 Proton_Drive_Sdk_Thumbnail.with {
                     $0.type = type == .thumbnail ? .thumbnail : .preview
@@ -97,10 +103,10 @@ actor PhotoUploadsManager {
             }
         }
 
-        let callbackState = ProgressCallbackWrapper(callback: progressCallback)
+        let uploadOperationState = UploadOperationState(callback: progressCallback, expectedSHA1: expectedSHA1)
         let uploadControllerHandle: ObjectHandle = try await SDKRequestHandler.send(
             uploaderRequest,
-            state: WeakReference(value: callbackState),
+            state: WeakReference(value: uploadOperationState),
             includesLongLivedCallback: true,
             logger: logger
         )
@@ -108,7 +114,7 @@ actor PhotoUploadsManager {
         return UploadOperation(
             fileUploaderHandle: fileUploaderHandle,
             uploadControllerHandle: uploadControllerHandle,
-            progressCallbackWrapper: callbackState,
+            uploadOperationState: uploadOperationState,
             logger: logger,
             nodeType: .photo,
             onOperationCancel: { [weak self] in
@@ -152,7 +158,6 @@ actor PhotoUploadsManager {
         tags: [Proton_Drive_Sdk_PhotoTag],
         additionalMetadata: [AdditionalMetadata],
         overrideExistingDraft: Bool,
-        expectedSha1: Data?,
         cancellationHandle: ObjectHandle
     ) async throws -> ObjectHandle {
         let uploaderRequest = Proton_Drive_Sdk_DrivePhotosClientGetPhotoUploaderRequest.with {
@@ -164,9 +169,6 @@ actor PhotoUploadsManager {
                 metadata.lastModificationTime = Google_Protobuf_Timestamp(date: modificationDate)
                 metadata.additionalMetadata = additionalMetadata.map { $0.toSDK }
                 metadata.overrideExistingDraftByOtherClient = overrideExistingDraft
-                if let expectedSha1 = expectedSha1 {
-                    metadata.expectedSha1 = expectedSha1
-                }
                 metadata.captureTime = Google_Protobuf_Timestamp(date: captureTime)
                 if let mainPhotoLinkID {
                     metadata.mainPhotoLinkID = mainPhotoLinkID

@@ -13,6 +13,7 @@ public sealed class PhotosFileUploader : IDisposable
         System.IO.Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
         Action<long, long>? onProgress,
+        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         CancellationToken cancellationToken)
     {
         throw new NotSupportedException();
@@ -22,6 +23,7 @@ public sealed class PhotosFileUploader : IDisposable
         string filePath,
         IEnumerable<Thumbnail> thumbnails,
         Action<long, long>? onProgress,
+        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         CancellationToken cancellationToken)
     {
         throw new NotSupportedException();

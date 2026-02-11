@@ -1,4 +1,5 @@
 import Foundation
+import CProtonDriveSDK
 
 public enum UploadOperationResult: Sendable {
     case succeeded(UploadedFileIdentifiers)
@@ -9,9 +10,10 @@ public enum UploadOperationResult: Sendable {
 public final class UploadOperation: Sendable {
     private let fileUploaderHandle: ObjectHandle
     private let uploadControllerHandle: ObjectHandle
-    private let progressCallbackWrapper: ProgressCallbackWrapper
+    private let uploadOperationState: UploadOperationState
     private let logger: Logger?
     private let nodeType: NodeType
+    private let expectedSHA1: Data?
     private let onOperationCancel: @Sendable () async throws -> Void
     private let onOperationDispose: @Sendable () async -> Void
 
@@ -19,18 +21,20 @@ public final class UploadOperation: Sendable {
 
     init(fileUploaderHandle: ObjectHandle,
          uploadControllerHandle: ObjectHandle,
-         progressCallbackWrapper: ProgressCallbackWrapper,
+         uploadOperationState: UploadOperationState,
          logger: Logger?,
          nodeType: NodeType,
+         expectedSHA1: Data? = nil,
          onOperationCancel: @Sendable @escaping () async throws -> Void,
          onOperationDispose: @Sendable @escaping () async -> Void) {
         assert(fileUploaderHandle != 0)
         assert(uploadControllerHandle != 0)
         self.fileUploaderHandle = fileUploaderHandle
         self.uploadControllerHandle = uploadControllerHandle
-        self.progressCallbackWrapper = progressCallbackWrapper
+        self.uploadOperationState = uploadOperationState
         self.logger = logger
         self.nodeType = nodeType
+        self.expectedSHA1 = expectedSHA1
         self.onOperationCancel = onOperationCancel
         self.onOperationDispose = onOperationDispose
     }
@@ -224,4 +228,28 @@ public final class UploadOperation: Sendable {
                           category: "UploadController.freeFileUploadController")
         }
     }
+}
+
+final class UploadOperationState: Sendable {
+    let callback: ProgressCallback
+    let expectedSHA1: Data?
+    
+    init(callback: @escaping ProgressCallback, expectedSHA1: Data?) {
+        self.callback = callback
+        self.expectedSHA1 = expectedSHA1
+    }
+}
+
+let cExpectedSha1CallbackForUpload: CCallbackWithByteArrayReturn = { statePointer in
+    typealias BoxType = BoxedCompletionBlock<Int, WeakReference<UploadOperationState>>
+    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
+        assertionFailure("cExpectedSha1ProviderCallback.statePointer is nil")
+        return ByteArray(pointer: nil, length: 0)
+    }
+
+    let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
+    guard let expectedSHA1 = stateTypedPointer.takeUnretainedValue().state.value?.expectedSHA1 else {
+        return ByteArray(pointer: nil, length: 0)
+    }
+    return ByteArray(data: expectedSHA1)
 }

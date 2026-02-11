@@ -166,3 +166,37 @@ long pushDataAndLongToLongMethod(
         return (*env)->CallLongMethod(env, obj, mid, buffer, caller_state);
     }
 }
+
+ByteArray callByteBufferMethod(
+        intptr_t bindings_handle,
+        const char *name
+) {
+    ByteArray result = {NULL, 0};
+    JNIEnv *env = getJNIEnv();
+    jobject obj = (*env)->NewLocalRef(env, (jweak) bindings_handle);
+    if ((*env)->IsSameObject(env, obj, NULL)) {
+        __android_log_print(
+                ANDROID_LOG_FATAL,
+                "drive.sdk.internal",
+                "Object was recycled for: %s %ld", name, (long) bindings_handle
+        );
+        return result;
+    } else {
+        jclass cls = (*env)->GetObjectClass(env, obj);
+        jmethodID mid = (*env)->GetMethodID(env, cls, name, "()Ljava/nio/ByteBuffer;");
+        if (mid == 0) {
+            __android_log_print(
+                    ANDROID_LOG_FATAL,
+                    "drive.sdk.internal",
+                    "Cannot found method: %s", name
+            );
+            return result;
+        }
+        jobject buffer = (*env)->CallObjectMethod(env, obj, mid);
+        if (buffer != NULL) {
+            result.pointer = (const uint8_t *) (*env)->GetDirectBufferAddress(env, buffer);
+            result.length = (size_t) (*env)->GetDirectBufferCapacity(env, buffer);
+        }
+        return result;
+    }
+}

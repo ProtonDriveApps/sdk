@@ -27,6 +27,7 @@ extension ObjectHandle {
 typealias CCallback = @convention(c) (_ statePointer: Int, _ byteArray: ByteArray) -> Void
 typealias CCallbackWithoutByteArray = @convention(c) (_ statePointer: Int) -> Void
 typealias CCallbackWithIntReturn = @convention(c) (_ statePointer: Int, _ byteArray: ByteArray) -> Int32
+typealias CCallbackWithByteArrayReturn = @convention(c) (_ statePointer: Int) -> ByteArray
 typealias CCallbackWithCallbackPointer = @convention(c) (_ statePointer: Int, _ byteArray: ByteArray, _ callbackPointer: Int) -> Void
 typealias CCallbackWithCallbackPointerAndObjectPointerReturn = @convention(c) (_ statePointer: Int, _ byteArray: ByteArray, _ callbackPointer: Int) -> Int
 

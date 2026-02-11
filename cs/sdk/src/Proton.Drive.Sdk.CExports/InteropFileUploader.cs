@@ -28,10 +28,14 @@ internal static class InteropFileUploader
 
         var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
 
+        var expectedSha1Provider = request.HasSha1Function ?
+            CreateSha1Provider(bindingsHandle, request.Sha1Function) : null;
+
         var uploadController = uploader.UploadFromStream(
             stream,
             thumbnails,
             (progress, total) => progressAction.InvokeProgressUpdate(bindingsHandle, progress, total),
+            expectedSha1Provider,
             cancellationToken);
 
         return new Int64Value { Value = Interop.AllocHandle(uploadController) };
@@ -54,10 +58,14 @@ internal static class InteropFileUploader
 
         var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
 
+        var expectedSha1Provider = request.HasSha1Function ?
+            CreateSha1Provider(bindingsHandle, request.Sha1Function) : null;
+
         var uploadController = uploader.UploadFromFile(
             request.FilePath,
             thumbnails,
             (progress, total) => progressAction.InvokeProgressUpdate(bindingsHandle, progress, total),
+            expectedSha1Provider,
             cancellationToken);
 
         return new Int64Value { Value = Interop.AllocHandle(uploadController) };
@@ -70,5 +78,15 @@ internal static class InteropFileUploader
         fileUploader.Dispose();
 
         return null;
+    }
+
+    internal static Func<ReadOnlyMemory<byte>> CreateSha1Provider(nint bindingsHandle, long functionPointer)
+    {
+        var function = new InteropFunction<nint, InteropArray<byte>>(functionPointer);
+        return () =>
+        {
+            var result = function.Invoke(bindingsHandle);
+            return result.ToArray();
+        };
     }
 }

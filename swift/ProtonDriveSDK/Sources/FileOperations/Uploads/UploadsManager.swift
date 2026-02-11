@@ -28,7 +28,7 @@ actor UploadsManager {
         mediaType: String,
         thumbnails: [ThumbnailData],
         overrideExistingDraft: Bool,
-        expectedSha1: Data?,
+        expectedSHA1: Data?,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> UploadOperation {
@@ -44,7 +44,6 @@ actor UploadsManager {
             fileSize: fileSize,
             modificationDate: modificationDate,
             overrideExistingDraft: overrideExistingDraft,
-            expectedSha1: expectedSha1,
             cancellationHandle: cancellationHandle,
             logger: logger
         )
@@ -55,7 +54,8 @@ actor UploadsManager {
             progressCallback: progressCallback,
             cancellationToken: cancellationToken,
             cancellationHandle: cancellationHandle,
-            thumbnails: thumbnails
+            thumbnails: thumbnails,
+            expectedSHA1: expectedSHA1
         )
         return uploadController
     }
@@ -66,7 +66,7 @@ actor UploadsManager {
         fileSize: Int64,
         modificationDate: Date,
         thumbnails: [ThumbnailData],
-        expectedSha1: Data?,
+        expectedSHA1: Data?,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
     ) async throws -> UploadOperation {
@@ -79,7 +79,6 @@ actor UploadsManager {
             currentActiveRevisionUid: currentActiveRevisionUid,
             fileSize: fileSize,
             modificationDate: modificationDate,
-            expectedSha1: expectedSha1,
             cancellationHandle: cancellationHandle
         )
 
@@ -89,7 +88,8 @@ actor UploadsManager {
             progressCallback: progressCallback,
             cancellationToken: cancellationToken,
             cancellationHandle: cancellationHandle,
-            thumbnails: thumbnails
+            thumbnails: thumbnails,
+            expectedSHA1: expectedSHA1
         )
         return uploadController
     }
@@ -122,7 +122,6 @@ extension UploadsManager {
         fileSize: Int64,
         modificationDate: Date,
         overrideExistingDraft: Bool,
-        expectedSha1: Data?,
         cancellationHandle: ObjectHandle?,
         logger: Logger?
     ) async throws -> ObjectHandle {
@@ -134,10 +133,6 @@ extension UploadsManager {
             $0.size = fileSize
             $0.lastModificationTime = Google_Protobuf_Timestamp(date: modificationDate)
             $0.overrideExistingDraftByOtherClient = overrideExistingDraft
-
-            if let expectedSha1 = expectedSha1 {
-                $0.expectedSha1 = expectedSha1
-            }
 
             if let cancellationHandle = cancellationHandle {
                 $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
@@ -153,7 +148,6 @@ extension UploadsManager {
         currentActiveRevisionUid: SDKRevisionUid,
         fileSize: Int64,
         modificationDate: Date,
-        expectedSha1: Data?,
         cancellationHandle: ObjectHandle?
     ) async throws -> ObjectHandle {
         let uploaderRequest = Proton_Drive_Sdk_DriveClientGetFileRevisionUploaderRequest.with {
@@ -161,9 +155,7 @@ extension UploadsManager {
             $0.currentActiveRevisionUid = currentActiveRevisionUid.sdkCompatibleIdentifier
             $0.size = fileSize
             $0.lastModificationTime = Google_Protobuf_Timestamp(date: modificationDate)
-            if let expectedSha1 = expectedSha1 {
-                $0.expectedSha1 = expectedSha1
-            }
+
             if let cancellationHandle = cancellationHandle {
                 $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
             }
@@ -180,7 +172,8 @@ extension UploadsManager {
         progressCallback: @escaping ProgressCallback,
         cancellationToken: UUID,
         cancellationHandle: ObjectHandle,
-        thumbnails: [ThumbnailData]
+        thumbnails: [ThumbnailData],
+        expectedSHA1: Data?
     ) async throws -> UploadOperation {
         let thumbnails = thumbnails.map {
             let count = $0.data.count
@@ -197,8 +190,11 @@ extension UploadsManager {
         let uploaderRequest = Proton_Drive_Sdk_UploadFromFileRequest.with {
             $0.uploaderHandle = Int64(fileUploaderHandle)
             $0.filePath = fileURL.path(percentEncoded: false)
-            $0.progressAction = Int64(ObjectHandle(callback: cProgressCallback))
+            $0.progressAction = Int64(ObjectHandle(callback: cProgressCallbackForUpload))
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
+            if expectedSHA1 != nil {
+                $0.sha1Function = Int64(ObjectHandle(callback: cExpectedSha1CallbackForUpload))
+            }
             $0.thumbnails = thumbnails.map { type, handle, count in
                 Proton_Drive_Sdk_Thumbnail.with {
                     $0.type = type == .thumbnail ? .thumbnail : .preview
@@ -208,10 +204,10 @@ extension UploadsManager {
             }
         }
 
-        let callbackState = ProgressCallbackWrapper(callback: progressCallback)
+        let uploadOperationState = UploadOperationState(callback: progressCallback, expectedSHA1: expectedSHA1)
         let uploadControllerHandle: ObjectHandle = try await SDKRequestHandler.send(
             uploaderRequest,
-            state: WeakReference(value: callbackState),
+            state: WeakReference(value: uploadOperationState),
             includesLongLivedCallback: true,
             logger: logger
         )
@@ -219,9 +215,10 @@ extension UploadsManager {
         return UploadOperation(
             fileUploaderHandle: fileUploaderHandle,
             uploadControllerHandle: uploadControllerHandle,
-            progressCallbackWrapper: callbackState,
+            uploadOperationState: uploadOperationState,
             logger: logger,
             nodeType: .file,
+            expectedSHA1: expectedSHA1,
             onOperationCancel: { [weak self] in
                 guard let self else { return }
                 try await self.cancelUpload(with: cancellationToken)

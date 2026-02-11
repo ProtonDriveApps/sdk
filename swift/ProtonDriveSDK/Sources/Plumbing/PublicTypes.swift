@@ -141,7 +141,7 @@ public struct FolderNode: Sendable {
             throw ProtonDriveSDKError(interopError: .incorrectIDFormat(id: sdkFolderNode.uid))
         }
         self.uid = uid
-        self.parentUid = sdkFolderNode.parentUid == nil ? nil : .init(sdkCompatibleIdentifier: sdkFolderNode.parentUid)
+        self.parentUid = sdkFolderNode.hasParentUid ? .init(sdkCompatibleIdentifier: sdkFolderNode.parentUid) : nil
         self.name = sdkFolderNode.name
         self.creationTime = sdkFolderNode.creationTime.timeIntervalSince1970
         self.trashTime = sdkFolderNode.trashTime.timeIntervalSince1970

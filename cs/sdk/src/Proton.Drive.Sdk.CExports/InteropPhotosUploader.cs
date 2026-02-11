@@ -26,10 +26,14 @@ internal static class InteropPhotosUploader
 
         var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
 
+        var expectedSha1Provider = request.HasSha1Function ?
+            InteropFileUploader.CreateSha1Provider(bindingsHandle, request.Sha1Function) : null;
+
         var uploadController = PhotosFileUploader.UploadFromStream(
             stream,
             thumbnails,
             (progress, total) => progressAction.InvokeProgressUpdate(bindingsHandle, progress, total),
+            expectedSha1Provider,
             cancellationToken);
 
         return new Int64Value { Value = Interop.AllocHandle(uploadController) };
@@ -49,11 +53,14 @@ internal static class InteropPhotosUploader
         });
 
         var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
+        var expectedSha1Provider = request.HasSha1Function ?
+            InteropFileUploader.CreateSha1Provider(bindingsHandle, request.Sha1Function) : null;
 
         var uploadController = PhotosFileUploader.UploadFromFile(
             request.FilePath,
             thumbnails,
             (progress, total) => progressAction.InvokeProgressUpdate(bindingsHandle, progress, total),
+            expectedSha1Provider,
             cancellationToken);
 
         return new Int64Value { Value = Interop.AllocHandle(uploadController) };

@@ -44,7 +44,7 @@ internal sealed partial class RevisionWriter : IDisposable
     public async ValueTask WriteAsync(
         Stream contentStream,
         long expectedContentLength,
-        ReadOnlyMemory<byte>? expectedSha1,
+        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         IEnumerable<Thumbnail> thumbnails,
         DateTimeOffset? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
@@ -104,7 +104,7 @@ internal sealed partial class RevisionWriter : IDisposable
             lastModificationTime,
             expectedContentLength,
             expectedThumbnailBlockCount,
-            expectedSha1,
+            expectedSha1Provider,
             sha1Digest,
             signingEmailAddress,
             additionalMetadata);
@@ -342,7 +342,7 @@ internal sealed partial class RevisionWriter : IDisposable
         DateTimeOffset? lastModificationTime,
         long expectedContentLength,
         int expectedThumbnailBlockCount,
-        ReadOnlyMemory<byte>? expectedSha1,
+        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         byte[]? sha1Digest,
         string signingEmailAddress,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata)
@@ -391,9 +391,13 @@ internal sealed partial class RevisionWriter : IDisposable
             throw new IntegrityException("Unexpected number of thumbnail blocks");
         }
 
-        if (expectedSha1 is not null && (sha1Digest is null || !expectedSha1.Value.Span.SequenceEqual(sha1Digest)))
+        if (expectedSha1Provider is not null)
         {
-            throw new IntegrityException("Mismatch between uploaded SHA1 and expected SHA1");
+            var expectedSha1 = expectedSha1Provider();
+            if (!expectedSha1.Span.SequenceEqual(sha1Digest))
+            {
+                throw new IntegrityException("Mismatch between uploaded SHA1 and expected SHA1");
+            }
         }
 
         var extendedAttributes = new ExtendedAttributes
