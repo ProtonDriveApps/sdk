@@ -580,4 +580,25 @@ export class ProtonDrivePhotosClient {
         // TODO: expose album type
         yield * convertInternalPhotoNodeIterator(this.photos.albums.iterateAlbums(signal));
     }
+
+    /**
+     * Removes photos from an album.
+     *
+     * Photos are not deleted, they are just removed from the album.
+     * If a photo was added to the timeline by the user, it will remain
+     * in the timeline after being removed from the album.
+     *
+     * @param albumNodeUid - The UID of the album to remove photos from.
+     * @param photoNodeUids - The UIDs of the photos to remove from the album.
+     * @param signal - An optional abort signal to cancel the operation.
+     * @yields NodeResult for each photo as it is processed.
+     */
+    async *removePhotosFromAlbum(
+        albumNodeUid: NodeOrUid,
+        photoNodeUids: NodeOrUid[],
+        signal?: AbortSignal,
+    ): AsyncGenerator<NodeResult> {
+        this.logger.info(`Removing ${photoNodeUids.length} photos from album ${getUid(albumNodeUid)}`);
+        yield* this.photos.albums.removePhotos(getUid(albumNodeUid), getUids(photoNodeUids), signal);
+    }
 }
