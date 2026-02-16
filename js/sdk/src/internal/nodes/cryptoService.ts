@@ -145,7 +145,10 @@ export class NodesCryptoService {
                     }),
                     nameAuthor,
                     membership,
-                    activeRevision: 'file' in node.encryptedCrypto ? resultError(new Error(errorMessage)) : undefined,
+                    activeRevision:
+                        'file' in node.encryptedCrypto
+                            ? resultError(new Error(errorMessage, { cause: error }))
+                            : undefined,
                     folder: undefined,
                     errors: [error],
                 },
@@ -210,7 +213,7 @@ export class NodesCryptoService {
                 void this.reporter.reportDecryptionError(node, 'nodeExtendedAttributes', error);
                 const message = getErrorMessage(error);
                 const errorMessage = c('Error').t`Failed to decrypt active revision: ${message}`;
-                activeRevision = resultError(new Error(errorMessage));
+                activeRevision = resultError(new Error(errorMessage, { cause: error }));
             }
 
             try {
@@ -361,7 +364,7 @@ export class NodesCryptoService {
             void this.reporter.reportDecryptionError(node, 'nodeName', error);
             const errorMessage = getErrorMessage(error);
             return {
-                name: resultError(new Error(errorMessage)),
+                name: resultError(new Error(errorMessage, { cause: error })),
                 author: resultError({
                     claimedAuthor: getClaimedAuthor(nameSignatureEmail, verificationKeys.length === 0),
                     error: errorMessage,
