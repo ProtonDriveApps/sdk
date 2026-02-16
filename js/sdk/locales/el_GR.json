@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "Album contains photos not in timeline": [
+        "Το άλμπουμ περιέχει φωτογραφίες που δε βρίσκονται στο χρονολόγιο"
+      ],
       "Bookmark password is not available": [
         "Η σελιδοδείκτηση κωδικού δεν είναι διαθέσιμη"
       ],
@@ -97,6 +100,9 @@
       ],
       "File has no content key": [
         "Το αρχείο δεν έχει κλειδί περιεχομένου"
+      ],
+      "File hash does not match expected hash": [
+        "Το hash του αρχείου δεν ταιριάζει με τον αναμενόμενο hash"
       ],
       "Invalid URL": [
         "Μη έγκυρη διεύθυνση URL"

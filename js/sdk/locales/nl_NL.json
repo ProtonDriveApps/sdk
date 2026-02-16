@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "Album contains photos not in timeline": [
+        "Album bevat foto's die niet in de tijdlijn staan"
+      ],
       "Bookmark password is not available": [
         "Bladwijzerwachtwoord is niet beschikbaar"
       ],
@@ -97,6 +100,9 @@
       ],
       "File has no content key": [
         "Bestand heeft geen inhoudssleutel"
+      ],
+      "File hash does not match expected hash": [
+        "Bestandhash komt niet overeen met verwachte hash"
       ],
       "Invalid URL": [
         "Ongeldige URL"
