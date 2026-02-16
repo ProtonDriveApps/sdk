@@ -20,6 +20,9 @@
       "Copying item to a non-folder is not allowed": [
         "Não é permitido copiar um item para um item que não seja uma pasta."
       ],
+      "Creating documents in non-folders is not allowed": [
+        "Não é permitido criar documentos em itens que não sejam pastas."
+      ],
       "Creating files in non-folders is not allowed": [
         "Não é permitido criar arquivos em itens que não sejam pastas."
       ],

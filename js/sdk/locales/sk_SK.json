@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "Album contains photos not in timeline": [
+        "Album obsahuje fotografie, ktoré nie sú v časovej osi"
+      ],
       "Bookmark password is not available": [
         "Heslo záložky nie je dostupné"
       ],
@@ -97,6 +100,9 @@
       ],
       "File has no content key": [
         "Súbor nemá kľúč obsahu"
+      ],
+      "File hash does not match expected hash": [
+        "Hash súboru nezodpovedá očakávanému hashu"
       ],
       "Invalid URL": [
         "Neplatná URL"

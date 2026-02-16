@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "Album contains photos not in timeline": [
+        "Das Album enthält Fotos, die nicht in der Zeitleiste enthalten sind"
+      ],
       "Bookmark password is not available": [
         "Lesezeichen-Passwort ist nicht verfügbar"
       ],
@@ -97,6 +100,9 @@
       ],
       "File has no content key": [
         "Datei hat keinen Inhaltsschlüssel"
+      ],
+      "File hash does not match expected hash": [
+        "Datei-Hash stimmt nicht mit dem erwarteten Hash überein"
       ],
       "Invalid URL": [
         "Ungültige URL"

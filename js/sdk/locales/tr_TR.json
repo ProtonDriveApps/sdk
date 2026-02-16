@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "Album contains photos not in timeline": [
+        "Albümde zaman akışınızda olmayan fotoğraflar var"
+      ],
       "Bookmark password is not available": [
         "Yer imi parolası kullanılamıyor"
       ],
@@ -97,6 +100,9 @@
       ],
       "File has no content key": [
         "Dosyanın içerik anahtarı yok"
+      ],
+      "File hash does not match expected hash": [
+        "Dosya karma değeri beklenen değerle aynı değil"
       ],
       "Invalid URL": [
         "Adres geçersiz"

@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "Album contains photos not in timeline": [
+        "Albumul conține fotografii care nu sunt în cronologie."
+      ],
       "Bookmark password is not available": [
         "Parola semnului de carte nu este disponibilă."
       ],
@@ -97,6 +100,9 @@
       ],
       "File has no content key": [
         "Fișierul nu are nicio cheie de conținut."
+      ],
+      "File hash does not match expected hash": [
+        "Codul de verificare al fișierului nu corespunde cu cel așteptat."
       ],
       "Invalid URL": [
         "Adresă URL nevalidă."

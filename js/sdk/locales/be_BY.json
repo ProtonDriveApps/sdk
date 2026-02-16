@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "Album contains photos not in timeline": [
+        "Альбом змяшчае фатаграфіі, якіх няма ў шкале часу"
+      ],
       "Bookmark password is not available": [
         "Пароль закладкі недаступны"
       ],
@@ -97,6 +100,9 @@
       ],
       "File has no content key": [
         "Файл не мае ключа змесціва"
+      ],
+      "File hash does not match expected hash": [
+        "Хэш файла не супадае з чаканым хэшам"
       ],
       "Invalid URL": [
         "Памылковы URL-адрас"
