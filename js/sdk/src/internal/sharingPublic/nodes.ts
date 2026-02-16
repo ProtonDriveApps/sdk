@@ -18,7 +18,7 @@ import { SharingPublicSharesManager } from './shares';
 
 export class SharingPublicNodesCryptoService extends NodesCryptoService {
     async generateDocument(
-        parentKeys: { key: PrivateKey; hashKey: Uint8Array },
+        parentKeys: { key: PrivateKey; hashKey: Uint8Array<ArrayBuffer> },
         signingKeys: NodeSigningKeys,
         name: string,
     ) {

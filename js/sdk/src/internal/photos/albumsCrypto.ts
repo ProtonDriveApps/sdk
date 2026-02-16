@@ -13,7 +13,7 @@ export class AlbumsCryptoService {
     }
 
     async createAlbum(
-        parentKeys: { key: PrivateKey; hashKey: Uint8Array },
+        parentKeys: { key: PrivateKey; hashKey: Uint8Array<ArrayBuffer> },
         signingKeys: NodeSigningKeys,
         name: string,
     ): Promise<{
@@ -62,7 +62,7 @@ export class AlbumsCryptoService {
     }
 
     async renameAlbum(
-        parentKeys: { key: PrivateKey; hashKey?: Uint8Array },
+        parentKeys: { key: PrivateKey; hashKey?: Uint8Array<ArrayBuffer> },
         encryptedName: string,
         signingKeys: NodeSigningKeys,
         newName: string,
