@@ -20,7 +20,7 @@
         "@types/bun": "^1.2.18",
         "@types/jest": "^29.5.14",
         "@types/sharedworker": "^0.0.130",
-        "@typescript-eslint/eslint-plugin": "^8.19.1",
+        "@typescript-eslint/eslint-plugin": "^8.55.0",
         "bun-types": "^1.1.31",
         "eslint": "^8.57.1",
         "eslint-plugin-tsdoc": "^0.3.0",
