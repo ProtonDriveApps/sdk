@@ -23,6 +23,20 @@ export class DevicesManager {
         this.nodesManagementService = nodesManagementService;
     }
 
+    async getDevice(deviceUid: string): Promise<Device> {
+        const device = await this.getDeviceMetadata(deviceUid);
+
+        const [node] = await Array.fromAsync(this.nodesService.iterateNodes([device.rootFolderUid]));
+        if (!node || 'missingUid' in node) {
+            throw new ValidationError(c('Error').t`Device not found`);
+        }
+
+        return {
+            ...device,
+            name: node.name,
+        };
+    }
+
     async *iterateDevices(signal?: AbortSignal): AsyncGenerator<Device> {
         const devices = await this.apiService.getDevices(signal);
 
