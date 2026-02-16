@@ -213,7 +213,7 @@ export class SharingCryptoService {
         } catch (error: unknown) {
             const message = getErrorMessage(error);
             const errorMessage = c('Error').t`Failed to decrypt item name: ${message}`;
-            nodeName = resultError(new Error(errorMessage));
+            nodeName = resultError(new Error(errorMessage, { cause: error }));
         }
 
         return {
@@ -458,7 +458,10 @@ export class SharingCryptoService {
             urlPassword = result.password;
             customPassword = resultOk(result.customPassword);
         } catch (originalError: unknown) {
-            const error = originalError instanceof Error ? originalError : new Error(c('Error').t`Unknown error`);
+            const error =
+                originalError instanceof Error
+                    ? originalError
+                    : new Error(c('Error').t`Unknown error`, { cause: originalError });
             return {
                 url: resultError(error),
                 customPassword: resultError(error),
@@ -473,7 +476,10 @@ export class SharingCryptoService {
         try {
             shareKey = await this.decryptBookmarkKey(encryptedBookmark, password);
         } catch (originalError: unknown) {
-            const error = originalError instanceof Error ? originalError : new Error(c('Error').t`Unknown error`);
+            const error =
+                originalError instanceof Error
+                    ? originalError
+                    : new Error(c('Error').t`Unknown error`, { cause: originalError });
             return {
                 url,
                 customPassword,
@@ -577,7 +583,7 @@ export class SharingCryptoService {
 
             const message = getErrorMessage(error);
             const errorMessage = c('Error').t`Failed to decrypt bookmark name: ${message}`;
-            return resultError(new Error(errorMessage));
+            return resultError(new Error(errorMessage, { cause: error }));
         }
     }
 }
