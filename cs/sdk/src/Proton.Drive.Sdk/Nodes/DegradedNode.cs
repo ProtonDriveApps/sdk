@@ -1,7 +1,12 @@
-﻿using Proton.Sdk;
+﻿using System.Text.Json.Serialization;
+using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
 
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+[JsonDerivedType(typeof(DegradedFolderNode), typeDiscriminator: "folder")]
+[JsonDerivedType(typeof(DegradedFileNode), typeDiscriminator: "file")]
+[JsonDerivedType(typeof(DegradedPhotoNode), typeDiscriminator: "photo")]
 public abstract record DegradedNode
 {
     public required NodeUid Uid { get; init; }
