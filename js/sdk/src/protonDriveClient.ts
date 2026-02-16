@@ -223,12 +223,12 @@ export class ProtonDriveClient {
                 return keys.contentKeyPacketSessionKey;
             },
             getPublicLinkInfo: async (url: string) => {
-                const { token } = getTokenAndPasswordFromUrl(url)
+                const { token } = getTokenAndPasswordFromUrl(url);
                 this.logger.info(`Getting info for public link token ${token}`);
                 return this.publicSessionManager.getInfo(token);
             },
             authPublicLink: async (url: string, customPassword?: string, isAnonymousContext: boolean = false) => {
-                const { token, password: urlPassword } = getTokenAndPasswordFromUrl(url)
+                const { token, password: urlPassword } = getTokenAndPasswordFromUrl(url);
                 this.logger.info(`Authenticating public link token ${token}`);
 
                 const { httpClient, shareKey, rootUid, publicRole } = await this.publicSessionManager.auth(
@@ -681,7 +681,7 @@ export class ProtonDriveClient {
      * @param customPassword - The optional custom password.
      */
     async createBookmark(url: string, customPassword?: string): Promise<void> {
-        const { token, password: urlPassword } = getTokenAndPasswordFromUrl(url)
+        const { token, password: urlPassword } = getTokenAndPasswordFromUrl(url);
         this.logger.info(`Creating bookmark for token ${token}`);
         await this.sharing.access.createBookmark(token, urlPassword, customPassword);
     }
@@ -910,6 +910,18 @@ export class ProtonDriveClient {
     async *iterateDevices(signal?: AbortSignal): AsyncGenerator<Device> {
         this.logger.info('Iterating devices');
         yield* this.devices.iterateDevices(signal);
+    }
+
+    /**
+     * Get the device entity by its UID.
+     *
+     * @param deviceOrUid - Device entity or its UID string.
+     * @returns The device entity.
+     * @throws {@link ValidationError} If the device is not found.
+     */
+    async getDevice(deviceOrUid: DeviceOrUid): Promise<Device> {
+        this.logger.info(`Getting device ${getUid(deviceOrUid)}`);
+        return this.devices.getDevice(getUid(deviceOrUid));
     }
 
     /**
