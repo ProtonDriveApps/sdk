@@ -5,11 +5,16 @@ class ProtonDriveSdkException(
     override val cause: Throwable? = null,
     val error: ProtonSdkError? = null
 ) : Throwable(message, cause) {
-    override fun toString(): String {
-        return buildString {
-            appendLine(super.toString())
-            appendError(error)
-        }
+    override fun toString(): String = buildString {
+        appendLine(super.toString())
+        appendError(error)
+    }
+}
+
+fun ProtonDriveSdkException.errorToString(): String = buildString {
+    error?.let { error ->
+        appendLine("SDK error: ${error.message}")
+        appendError(error)
     }
 }
 
