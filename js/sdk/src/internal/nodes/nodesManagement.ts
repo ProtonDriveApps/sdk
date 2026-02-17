@@ -180,7 +180,6 @@ export abstract class NodesManagementBase<
                 encryptedName: encryptedCrypto.encryptedName,
                 nameSignatureEmail: encryptedCrypto.nameSignatureEmail,
                 hash: encryptedCrypto.hash,
-                // TODO: When moving photos, we need to pass content hash.
             },
         );
         const newNode: TDecryptedNode = {

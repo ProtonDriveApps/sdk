@@ -1,9 +1,10 @@
-import { MemberRole, NodeResult, NodeType, resultOk } from '../../interface';
+import { Logger, MemberRole, NodeResultWithError, NodeType, ProtonDriveTelemetry, resultOk } from '../../interface';
 import { BatchLoading } from '../batchLoading';
 import { DecryptedNode } from '../nodes';
 import { ALBUM_MEDIA_TYPE } from '../nodes/mediaTypes';
 import { validateNodeName } from '../nodes/validations';
 import { splitNodeUid } from '../uids';
+import { AddToAlbumProcess } from './addToAlbum';
 import { AlbumsCryptoService } from './albumsCrypto';
 import { PhotosAPIService } from './apiService';
 import { AlbumItem, DecryptedPhotoNode } from './interface';
@@ -16,12 +17,16 @@ const BATCH_LOADING_SIZE = 10;
  * Provides access and high-level actions for managing albums.
  */
 export class Albums {
+    private logger: Logger;
+
     constructor(
+        telemetry: ProtonDriveTelemetry,
         private apiService: PhotosAPIService,
         private cryptoService: AlbumsCryptoService,
         private photoShares: PhotoSharesManager,
         private nodesService: PhotosNodesAccess,
     ) {
+        this.logger = telemetry.getLogger('albums');
         this.apiService = apiService;
         this.cryptoService = cryptoService;
         this.photoShares = photoShares;
@@ -156,11 +161,35 @@ export class Albums {
         await this.nodesService.notifyNodeDeleted(nodeUid);
     }
 
+    async *addPhotos(
+        albumNodeUid: string,
+        photoNodeUids: string[],
+        signal?: AbortSignal,
+    ): AsyncGenerator<NodeResultWithError> {
+        const albumKeys = await this.nodesService.getNodeKeys(albumNodeUid);
+        if (!albumKeys.hashKey) {
+            throw new Error('Cannot add photos to album: album hash key not available');
+        }
+        const signingKeys = await this.nodesService.getNodeSigningKeys({ nodeUid: albumNodeUid });
+
+        const process = new AddToAlbumProcess(
+            albumNodeUid,
+            albumKeys,
+            signingKeys,
+            this.apiService,
+            this.cryptoService,
+            this.nodesService,
+            this.logger,
+            signal,
+        );
+        yield * process.execute(photoNodeUids);
+    }
+
     async *removePhotos(
         albumNodeUid: string,
         photoNodeUids: string[],
         signal?: AbortSignal,
-    ): AsyncGenerator<NodeResult> {
+    ): AsyncGenerator<NodeResultWithError> {
         for await (const result of this.apiService.removePhotosFromAlbum(albumNodeUid, photoNodeUids, signal)) {
             if (result.ok) {
                 await this.nodesService.notifyNodeChanged(result.uid);

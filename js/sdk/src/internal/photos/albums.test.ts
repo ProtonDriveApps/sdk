@@ -1,5 +1,6 @@
-import { NodeType, MemberRole } from '../../interface';
+import { NodeType } from '../../interface';
 import { ValidationError } from '../../errors';
+import { getMockTelemetry } from '../../tests/telemetry';
 import { Albums } from './albums';
 import { AlbumsCryptoService } from './albumsCrypto';
 import { PhotosAPIService } from './apiService';
@@ -96,7 +97,7 @@ describe('Albums', () => {
             notifyChildCreated: jest.fn(),
         };
 
-        albums = new Albums(apiService, cryptoService, photoShares, nodesService);
+        albums = new Albums(getMockTelemetry(), apiService, cryptoService, photoShares, nodesService);
     });
 
     describe('createAlbum', () => {
@@ -172,16 +173,12 @@ describe('Albums', () => {
                 { type: 'userAddress', email: 'user@example.com', addressId: 'addressId', key: 'addressKey' },
                 'new album name',
             );
-            expect(apiService.updateAlbum).toHaveBeenCalledWith(
-                'albumNodeUid',
-                undefined,
-                {
-                    encryptedName: 'newArmoredAlbumName',
-                    hash: 'newHash',
-                    originalHash: 'albumHash',
-                    nameSignatureEmail: 'newSignatureEmail',
-                },
-            );
+            expect(apiService.updateAlbum).toHaveBeenCalledWith('albumNodeUid', undefined, {
+                encryptedName: 'newArmoredAlbumName',
+                hash: 'newHash',
+                originalHash: 'albumHash',
+                nameSignatureEmail: 'newSignatureEmail',
+            });
             expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('albumNodeUid');
         });
 
@@ -207,16 +204,12 @@ describe('Albums', () => {
                 nameAuthor: { ok: true, value: 'newSignatureEmail' },
                 hash: 'newHash',
             });
-            expect(apiService.updateAlbum).toHaveBeenCalledWith(
-                'albumNodeUid',
-                'photoNodeUid',
-                {
-                    encryptedName: 'newArmoredAlbumName',
-                    hash: 'newHash',
-                    originalHash: 'albumHash',
-                    nameSignatureEmail: 'newSignatureEmail',
-                },
-            );
+            expect(apiService.updateAlbum).toHaveBeenCalledWith('albumNodeUid', 'photoNodeUid', {
+                encryptedName: 'newArmoredAlbumName',
+                hash: 'newHash',
+                originalHash: 'albumHash',
+                nameSignatureEmail: 'newSignatureEmail',
+            });
         });
 
         it('throws validation error for invalid album name', async () => {
@@ -258,7 +251,11 @@ describe('Albums', () => {
                 { uid: 'photo2', ok: false, error: 'Some error' },
                 { uid: 'photo3', ok: true },
             ]);
-            expect(apiService.removePhotosFromAlbum).toHaveBeenCalledWith('albumNodeUid', ['photo1', 'photo2', 'photo3'], undefined);
+            expect(apiService.removePhotosFromAlbum).toHaveBeenCalledWith(
+                'albumNodeUid',
+                ['photo1', 'photo2', 'photo3'],
+                undefined,
+            );
             expect(nodesService.notifyNodeChanged).toHaveBeenCalledTimes(2);
             expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('photo1');
             expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('photo3');

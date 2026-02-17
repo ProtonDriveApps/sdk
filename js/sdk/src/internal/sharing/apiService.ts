@@ -36,6 +36,9 @@ type GetSharedNodesResponse =
 type GetSharedWithMeNodesResponse =
     drivePaths['/drive/v2/sharedwithme']['get']['responses']['200']['content']['application/json'];
 
+type GetSharedAlbumsResponse =
+    drivePaths['/drive/photos/albums/shared-with-me']['get']['responses']['200']['content']['application/json'];
+
 type GetInvitationsResponse =
     drivePaths['/drive/v2/shares/invitations']['get']['responses']['200']['content']['application/json'];
 
@@ -177,6 +180,30 @@ export class SharingAPIService {
                 }
 
                 yield nodeUid;
+            }
+
+            if (!response.More || !response.AnchorID) {
+                break;
+            }
+            anchor = response.AnchorID;
+        }
+
+        if (this.shareTargetTypes.includes(ShareTargetType.Album)) {
+            yield* this.iterateSharedAlbumUids(signal);
+        }
+    }
+
+    // TODO: Sharing cannot know about albums. We should remove this and use
+    // ShareTargetTypes when it is supported by the API.
+    private async *iterateSharedAlbumUids(signal?: AbortSignal): AsyncGenerator<string> {
+        let anchor = '';
+        while (true) {
+            const response = await this.apiService.get<GetSharedAlbumsResponse>(
+                `drive/photos/albums/shared-with-me?${anchor ? `AnchorID=${anchor}` : ''}`,
+                signal,
+            );
+            for (const album of response.Albums) {
+                yield makeNodeUid(album.VolumeID, album.LinkID);
             }
 
             if (!response.More || !response.AnchorID) {

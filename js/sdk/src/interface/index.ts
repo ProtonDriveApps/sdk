@@ -43,6 +43,7 @@ export type {
     NodeOrUid,
     RevisionOrUid,
     NodeResult,
+    NodeResultWithError,
     NodeResultWithNewUid,
     Membership,
 } from './nodes';
