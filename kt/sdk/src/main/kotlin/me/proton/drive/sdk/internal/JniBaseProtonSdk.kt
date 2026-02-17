@@ -26,10 +26,12 @@ abstract class JniBaseProtonSdk : JniBase() {
         callback: (CancellableContinuation<T>) -> ResponseCallback,
         block: RequestKt.Dsl.() -> Unit,
     ): T = suspendCancellableCoroutine { continuation ->
+        // Create the callback here to capture the call stack trace
+        val responseCallback = callback(continuation)
         val nativeClient = ProtonSdkNativeClient(
             name = method(name),
             response = { client, buffer ->
-                callback(continuation).invoke(buffer)
+                responseCallback.invoke(buffer)
                 client.release()
                 clients -= client
             },

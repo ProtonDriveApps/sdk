@@ -31,10 +31,12 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
         block: RequestKt.Dsl.() -> Unit,
     ): T = suspendCancellableCoroutine { continuation ->
         check(released.not()) { "Cannot executeOnce ${method(name)} after release" }
+        // Create the callback here to capture the call stack trace
+        val responseCallback = callback(continuation)
         val nativeClient = ProtonDriveSdkNativeClient(
             name = method(name),
             response = { client, buffer ->
-                callback(continuation).invoke(buffer)
+                responseCallback(buffer)
                 client.release()
                 clients -= client
             },
