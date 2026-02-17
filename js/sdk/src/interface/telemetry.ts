@@ -24,6 +24,7 @@ export interface MetricAPIRetrySucceededEvent {
     eventName: 'apiRetrySucceeded';
     url: string;
     failedAttempts: number;
+    previousError?: unknown;
 }
 
 export interface MetricDebounceLongWaitEvent {
