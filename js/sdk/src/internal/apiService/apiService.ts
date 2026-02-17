@@ -245,7 +245,15 @@ export class DriveAPIService {
     private async fetch(
         request: { method: string; url: string; signal?: AbortSignal },
         callback: () => Promise<Response>,
-        attempt = 0,
+        {
+            attempt,
+            previousError,
+        }: {
+            attempt: number;
+            previousError?: unknown;
+        } = {
+            attempt: 0,
+        },
     ): Promise<Response> {
         if (request.signal?.aborted) {
             throw new AbortError(c('Error').t`Request aborted`);
@@ -282,19 +290,19 @@ export class DriveAPIService {
                     this.offlineErrorHappened();
                     this.logger.info(`${request.method} ${request.url}: Offline error, retrying`);
                     await waitSeconds(OFFLINE_RETRY_DELAY_SECONDS);
-                    return this.fetch(request, callback, attempt + 1);
+                    return this.fetch(request, callback, { attempt: attempt + 1, previousError: error });
                 }
 
                 if (error.name === 'TimeoutError' && attempt + 1 < MAX_TIMEOUT_ERROR_RETRY_ATTEMPTS) {
                     this.logger.warn(`${request.method} ${request.url}: Timeout error, retrying`);
                     await waitSeconds(SERVER_ERROR_RETRY_DELAY_SECONDS);
-                    return this.fetch(request, callback, attempt + 1);
+                    return this.fetch(request, callback, { attempt: attempt + 1, previousError: error });
                 }
             }
             if (attempt === 0) {
                 this.logger.error(`${request.method} ${request.url}: failed, retrying once`, error);
                 await waitSeconds(GENERAL_RETRY_DELAY_SECONDS);
-                return this.fetch(request, callback, attempt + 1);
+                return this.fetch(request, callback, { attempt: attempt + 1, previousError: error });
             }
             this.logger.error(`${request.method} ${request.url}: failed`, error);
             throw error;
@@ -315,7 +323,7 @@ export class DriveAPIService {
             this.tooManyRequestsErrorHappened();
             const timeout = parseInt(response.headers.get('retry-after') || '0', 10) || DEFAULT_429_RETRY_DELAY_SECONDS;
             await waitSeconds(timeout);
-            return this.fetch(request, callback, attempt + 1);
+            return this.fetch(request, callback, { attempt: attempt + 1, previousError: response.status });
         } else {
             this.clearSubsequentTooManyRequestsError();
         }
@@ -329,16 +337,29 @@ export class DriveAPIService {
                 this.logger.warn(`${request.method} ${request.url}: ${response.status} - retry failed`);
             } else {
                 await waitSeconds(SERVER_ERROR_RETRY_DELAY_SECONDS);
-                return this.fetch(request, callback, attempt + 1);
+                return this.fetch(request, callback, { attempt: attempt + 1, previousError: response.status });
             }
         } else {
             if (attempt > 0) {
-                this.telemetry.recordMetric({
-                    eventName: 'apiRetrySucceeded',
-                    failedAttempts: attempt,
-                    url: request.url,
-                });
-                this.logger.warn(`${request.method} ${request.url}: ${response.status} - retry helped`);
+                const previousErrorMessage =
+                    previousError instanceof Error ? previousError.message : String(previousError);
+                const isWarning =
+                    !(previousError instanceof Error) ||
+                    (previousError instanceof Error &&
+                        previousError.name !== 'TimeoutError' &&
+                        previousError.name !== 'OfflineError');
+
+                if (isWarning) {
+                    this.telemetry.recordMetric({
+                        eventName: 'apiRetrySucceeded',
+                        failedAttempts: attempt,
+                        url: request.url,
+                        previousError,
+                    });
+                    this.logger.warn(`${request.method} ${request.url}: ${previousErrorMessage} - retry helped`);
+                } else {
+                    this.logger.debug(`${request.method} ${request.url}: ${previousErrorMessage} - retry helped`);
+                }
             }
             this.clearSubsequentServerErrors();
         }
