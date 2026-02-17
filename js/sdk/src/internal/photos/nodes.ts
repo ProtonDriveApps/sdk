@@ -78,6 +78,12 @@ export class PhotosNodesAPIService extends NodeAPIServiceBase<
         if (link.Link.Type === 3 && link.Album) {
             return {
                 ...baseNodeMetadata,
+                album: {
+                    photoCount: link.Album.PhotoCount,
+                    coverPhotoNodeUid: link.Album.CoverLinkID
+                        ? makeNodeUid(volumeId, link.Album.CoverLinkID)
+                        : undefined,
+                },
                 encryptedCrypto: {
                     ...baseCryptoNodeMetadata,
                     folder: {
@@ -115,7 +121,8 @@ export class PhotosNodesCache extends NodesCacheBase<DecryptedPhotoNode> {
             typeof node !== 'object' ||
             (typeof node.photo !== 'object' && node.photo !== undefined) ||
             (typeof node.photo?.captureTime !== 'string' && node.folder?.captureTime !== undefined) ||
-            (typeof node.photo?.albums !== 'object' && node.photo?.albums !== undefined)
+            (typeof node.photo?.albums !== 'object' && node.photo?.albums !== undefined) ||
+            (typeof node.album !== 'object' && node.album !== undefined)
         ) {
             throw new Error(`Invalid node data: ${nodeData}`);
         }
@@ -194,6 +201,18 @@ export class PhotosNodesAccess extends NodesAccessBase<EncryptedPhotoNode, Decry
             };
         }
 
+        if (unparsedNode.type === NodeType.Album) {
+            const node = parseNodeBase(this.logger, {
+                ...unparsedNode,
+                type: NodeType.Folder,
+            });
+            return {
+                ...node,
+                album: unparsedNode.album,
+                type: NodeType.Album,
+            };
+        }
+
         return parseNodeBase(this.logger, unparsedNode);
     }
 }
@@ -210,6 +229,15 @@ export class PhotosNodesCryptoService extends NodesCryptoService {
                 node: {
                     ...decryptedNode.node,
                     photo: encryptedNode.photo,
+                },
+            };
+        }
+
+        if (decryptedNode.node.type === NodeType.Album) {
+            return {
+                node: {
+                    ...decryptedNode.node,
+                    album: encryptedNode.album,
                 },
             };
         }
