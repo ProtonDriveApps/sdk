@@ -17,6 +17,7 @@ import {
     NonProtonInvitationOrUid,
     ProtonInvitationWithNode,
     NodeResult,
+    NodeResultWithError,
 } from './interface';
 import { getConfig } from './config';
 import { DriveCrypto } from './crypto';
@@ -120,13 +121,7 @@ export class ProtonDrivePhotosClient {
             this.photoShares,
             fullConfig.clientUid,
         );
-        this.photos = initPhotosModule(
-            telemetry,
-            apiService,
-            cryptoModule,
-            this.photoShares,
-            this.nodes.access,
-        );
+        this.photos = initPhotosModule(telemetry, apiService, cryptoModule, this.photoShares, this.nodes.access);
         this.sharing = initSharingModule(
             telemetry,
             apiService,
@@ -238,7 +233,7 @@ export class ProtonDrivePhotosClient {
      */
     async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<MaybePhotoNode> {
         this.logger.info('Iterating trashed nodes');
-        yield * convertInternalPhotoNodeIterator(this.nodes.access.iterateTrashedNodes(signal));
+        yield* convertInternalPhotoNodeIterator(this.nodes.access.iterateTrashedNodes(signal));
     }
 
     /**
@@ -249,7 +244,7 @@ export class ProtonDrivePhotosClient {
     async *iterateNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<MaybeMissingPhotoNode> {
         this.logger.info(`Iterating ${nodeUids.length} nodes`);
         // TODO: expose photo type
-        yield * convertInternalMissingPhotoNodeIterator(this.nodes.access.iterateNodes(getUids(nodeUids), signal));
+        yield* convertInternalMissingPhotoNodeIterator(this.nodes.access.iterateNodes(getUids(nodeUids), signal));
     }
 
     /**
@@ -299,7 +294,7 @@ export class ProtonDrivePhotosClient {
      */
     async *deleteNodes(nodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         this.logger.info(`Deleting ${nodeUids.length} nodes`);
-        yield * this.nodes.management.deleteTrashedNodes(getUids(nodeUids), signal);
+        yield* this.nodes.management.deleteTrashedNodes(getUids(nodeUids), signal);
     }
 
     /**
@@ -317,7 +312,7 @@ export class ProtonDrivePhotosClient {
      */
     async *iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<MaybePhotoNode> {
         this.logger.info('Iterating shared nodes by me');
-        yield * convertInternalPhotoNodeIterator(this.sharing.access.iterateSharedNodes(signal));
+        yield* convertInternalPhotoNodeIterator(this.sharing.access.iterateSharedNodes(signal));
     }
 
     /**
@@ -484,7 +479,9 @@ export class ProtonDrivePhotosClient {
      */
     async isDuplicatePhoto(name: string, generateSha1: () => Promise<string>, signal?: AbortSignal): Promise<boolean> {
         this.logger.info(`Checking if photo is a duplicate`);
-        return this.photos.timeline.findPhotoDuplicates(name, generateSha1, signal).then(nodeUids => nodeUids.length !== 0);
+        return this.photos.timeline
+            .findPhotoDuplicates(name, generateSha1, signal)
+            .then((nodeUids) => nodeUids.length !== 0);
     }
 
     /**
@@ -505,7 +502,11 @@ export class ProtonDrivePhotosClient {
      * @param signal - An optional abort signal to cancel the operation.
      * @returns An array of node UIDs of duplicate photos. Empty array if no duplicates found.
      */
-    async findPhotoDuplicates(name: string, generateSha1: () => Promise<string>, signal?: AbortSignal): Promise<string[]> {
+    async findPhotoDuplicates(
+        name: string,
+        generateSha1: () => Promise<string>,
+        signal?: AbortSignal,
+    ): Promise<string[]> {
         this.logger.info(`Checking if photo have duplicates`);
         return this.photos.timeline.findPhotoDuplicates(name, generateSha1, signal);
     }
@@ -575,7 +576,7 @@ export class ProtonDrivePhotosClient {
     async *iterateAlbums(signal?: AbortSignal): AsyncGenerator<MaybePhotoNode> {
         this.logger.info('Iterating albums');
         // TODO: expose album type
-        yield * convertInternalPhotoNodeIterator(this.photos.albums.iterateAlbums(signal));
+        yield* convertInternalPhotoNodeIterator(this.photos.albums.iterateAlbums(signal));
     }
 
     /**
@@ -590,6 +591,29 @@ export class ProtonDrivePhotosClient {
     async *iterateAlbum(albumNodeUid: NodeOrUid, signal?: AbortSignal): AsyncGenerator<AlbumItem> {
         this.logger.info(`Iterating photos of album ${getUid(albumNodeUid)}`);
         yield* this.photos.albums.iterateAlbum(getUid(albumNodeUid), signal);
+    }
+
+    /**
+     * Adds photos to an album.
+     *
+     * Photos are added in batches. Each photo's related photos (e.g., live
+     * photo components) are always included with the main photo.
+     *
+     * The album has a limit of 10,000 photos. If the limit is reached,
+     * a `ValidationError` is thrown.
+     *
+     * @param albumNodeUid - The UID of the album to add photos to.
+     * @param photoNodeUids - The UIDs of the photos to add to the album.
+     * @param signal - An optional abort signal to cancel the operation.
+     * @returns An async generator of the added photo results.
+     */
+    async *addPhotosToAlbum(
+        albumNodeUid: NodeOrUid,
+        photoNodeUids: NodeOrUid[],
+        signal?: AbortSignal,
+    ): AsyncGenerator<NodeResultWithError> {
+        this.logger.info(`Adding ${photoNodeUids.length} photos to album ${getUid(albumNodeUid)}`);
+        yield* this.photos.albums.addPhotos(getUid(albumNodeUid), getUids(photoNodeUids), signal);
     }
 
     /**
@@ -608,7 +632,7 @@ export class ProtonDrivePhotosClient {
         albumNodeUid: NodeOrUid,
         photoNodeUids: NodeOrUid[],
         signal?: AbortSignal,
-    ): AsyncGenerator<NodeResult> {
+    ): AsyncGenerator<NodeResultWithError> {
         this.logger.info(`Removing ${photoNodeUids.length} photos from album ${getUid(albumNodeUid)}`);
         yield* this.photos.albums.removePhotos(getUid(albumNodeUid), getUids(photoNodeUids), signal);
     }

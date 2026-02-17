@@ -60,7 +60,7 @@ export function initPhotosModule(
         photoShares,
         nodesService,
     );
-    const albums = new Albums(api, albumsCryptoService, photoShares, nodesService);
+    const albums = new Albums(telemetry, api, albumsCryptoService, photoShares, nodesService);
 
     return {
         timeline,

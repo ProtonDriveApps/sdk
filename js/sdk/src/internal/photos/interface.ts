@@ -47,12 +47,12 @@ export type TimelineItem = {
     nodeUid: string;
     captureTime: Date;
     tags: PhotoTag[];
-}
+};
 
 export type AlbumItem = {
     nodeUid: string;
     captureTime: Date;
-}
+};
 
 export enum PhotoTag {
     Favorites = 0,
@@ -66,3 +66,15 @@ export enum PhotoTag {
     Panoramas = 8,
     Raw = 9,
 }
+
+export type AddToAlbumEncryptedPhotoPayload = {
+    nodeUid: string;
+    contentHash: string;
+    nameHash: string;
+    encryptedName: string;
+    nameSignatureEmail: string;
+    nodePassphrase: string;
+    nodePassphraseSignature?: string;
+    signatureEmail?: string;
+    relatedPhotos?: Omit<AddToAlbumEncryptedPhotoPayload, 'relatedPhotos'>[];
+};

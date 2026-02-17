@@ -1,4 +1,7 @@
-import { DriveCrypto, PrivateKey } from '../../crypto';
+import { c } from 'ttag';
+import { DriveCrypto, PrivateKey, SessionKey } from '../../crypto';
+import { ValidationError } from '../../errors';
+import { InvalidNameError, Result } from '../../interface';
 import { DecryptedNodeKeys, NodeSigningKeys } from '../nodes/interface';
 
 /**
@@ -95,6 +98,54 @@ export class AlbumsCryptoService {
             signatureEmail: email,
             armoredNodeName,
             hash,
+        };
+    }
+
+    async encryptPhotoForAlbum(
+        nodeName: Result<string, Error | InvalidNameError>,
+        sha1: string,
+        nodeKeys: { passphrase: string; passphraseSessionKey: SessionKey; nameSessionKey: SessionKey },
+        albumKeys: { key: PrivateKey; hashKey: Uint8Array<ArrayBuffer> },
+        signingKeys: NodeSigningKeys,
+    ): Promise<{
+        encryptedName: string;
+        hash: string;
+        contentHash: string;
+        armoredNodePassphrase: string;
+        armoredNodePassphraseSignature: string;
+        signatureEmail: string;
+        nameSignatureEmail: string;
+    }> {
+        if (!nodeName.ok) {
+            throw new ValidationError(c('Error').t`Cannot add photo to album without a valid name`);
+        }
+        if (signingKeys.type !== 'userAddress') {
+            throw new Error('Adding photos to album by anonymous user is not supported');
+        }
+        const email = signingKeys.email;
+        const signingKey = signingKeys.key;
+
+        const [{ armoredNodeName }, hash, contentHash, { armoredPassphrase, armoredPassphraseSignature }] =
+            await Promise.all([
+                this.driveCrypto.encryptNodeName(nodeName.value, nodeKeys.nameSessionKey, albumKeys.key, signingKey),
+                this.driveCrypto.generateLookupHash(nodeName.value, albumKeys.hashKey),
+                this.driveCrypto.generateLookupHash(sha1, albumKeys.hashKey),
+                this.driveCrypto.encryptPassphrase(
+                    nodeKeys.passphrase,
+                    nodeKeys.passphraseSessionKey,
+                    [albumKeys.key],
+                    signingKey,
+                ),
+            ]);
+
+        return {
+            encryptedName: armoredNodeName,
+            hash,
+            contentHash,
+            armoredNodePassphrase: armoredPassphrase,
+            armoredNodePassphraseSignature: armoredPassphraseSignature,
+            signatureEmail: email,
+            nameSignatureEmail: email,
         };
     }
 }
