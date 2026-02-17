@@ -75,11 +75,15 @@ export class PhotosNodesAPIService extends NodeAPIServiceBase<
             };
         }
 
-        if (link.Link.Type === 3) {
+        if (link.Link.Type === 3 && link.Album) {
             return {
                 ...baseNodeMetadata,
                 encryptedCrypto: {
                     ...baseCryptoNodeMetadata,
+                    folder: {
+                        armoredExtendedAttributes: link.Album.XAttr || undefined,
+                        armoredHashKey: link.Album.NodeHashKey as string,
+                    },
                 },
             };
         }

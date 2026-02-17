@@ -1,12 +1,13 @@
 import { c } from 'ttag';
 
 import { ValidationError } from '../../errors';
-import { NodeResult } from '../../interface';
-import { APICodeError, DriveAPIService, drivePaths } from '../apiService';
+import { NodeResultWithError } from '../../interface';
+import { APICodeError, DriveAPIService, drivePaths, InvalidRequirementsAPIError, isCodeOk } from '../apiService';
 import { batch } from '../batch';
 import { EncryptedRootShare, EncryptedShareCrypto, ShareType } from '../shares/interface';
 import { makeNodeUid, splitNodeUid } from '../uids';
-import { AlbumItem } from './interface';
+import { MissingRelatedPhotosError } from './errors';
+import { AddToAlbumEncryptedPhotoPayload, AlbumItem } from './interface';
 
 type GetPhotoShareResponse =
     drivePaths['/drive/v2/shares/photos']['get']['responses']['200']['content']['application/json'];
@@ -45,6 +46,20 @@ type PostPhotoDuplicateRequest = Extract<
 >['content']['application/json'];
 type PostPhotoDuplicateResponse =
     drivePaths['/drive/volumes/{volumeID}/photos/duplicates']['post']['responses']['200']['content']['application/json'];
+
+type PostAddPhotosToAlbumRequest = Extract<
+    drivePaths['/drive/photos/volumes/{volumeID}/albums/{linkID}/add-multiple']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostAddPhotosToAlbumResponse =
+    drivePaths['/drive/photos/volumes/{volumeID}/albums/{linkID}/add-multiple']['post']['responses']['200']['content']['application/json'];
+
+type PostCopyLinkRequest = Extract<
+    drivePaths['/drive/volumes/{volumeID}/links/{linkID}/copy']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostCopyLinkResponse =
+    drivePaths['/drive/volumes/{volumeID}/links/{linkID}/copy']['post']['responses']['200']['content']['application/json'];
 
 type PostRemovePhotosFromAlbumRequest = Extract<
     drivePaths['/drive/photos/volumes/{volumeID}/albums/{linkID}/remove-multiple']['post']['requestBody'],
@@ -186,10 +201,7 @@ export class PhotosAPIService {
         }
     }
 
-    async *iterateAlbumChildren(
-        albumNodeUid: string,
-        signal?: AbortSignal,
-    ): AsyncGenerator<AlbumItem> {
+    async *iterateAlbumChildren(albumNodeUid: string, signal?: AbortSignal): AsyncGenerator<AlbumItem> {
         const { volumeId, nodeId: linkId } = splitNodeUid(albumNodeUid);
         let anchor = '';
         while (true) {
@@ -289,20 +301,17 @@ export class PhotosAPIService {
     ): Promise<void> {
         const { volumeId, nodeId: linkId } = splitNodeUid(albumNodeUid);
         const coverLinkId = coverPhotoNodeUid ? splitNodeUid(coverPhotoNodeUid).nodeId : undefined;
-        await this.apiService.put<PutUpdateAlbumRequest, void>(
-            `drive/photos/volumes/${volumeId}/albums/${linkId}`,
-            {
-                CoverLinkID: coverLinkId,
-                Link: updatedName
-                    ? {
-                          Name: updatedName.encryptedName,
-                          Hash: updatedName.hash,
-                          OriginalHash: updatedName.originalHash,
-                          NameSignatureEmail: updatedName.nameSignatureEmail,
-                      }
-                    : null,
-            },
-        );
+        await this.apiService.put<PutUpdateAlbumRequest, void>(`drive/photos/volumes/${volumeId}/albums/${linkId}`, {
+            CoverLinkID: coverLinkId,
+            Link: updatedName
+                ? {
+                      Name: updatedName.encryptedName,
+                      Hash: updatedName.hash,
+                      OriginalHash: updatedName.originalHash,
+                      NameSignatureEmail: updatedName.nameSignatureEmail,
+                  }
+                : null,
+        });
     }
 
     async deleteAlbum(albumNodeUid: string, options: { force?: boolean } = {}): Promise<void> {
@@ -319,11 +328,147 @@ export class PhotosAPIService {
         }
     }
 
+    /**
+     * Add photos from the same volume to an album.
+     *
+     * To add photos from different volumes, use the {@link copyPhotoToAlbum} method.
+     *
+     * In the future, these two methods will be merged into a single one.
+     */
+    async *addPhotosToAlbum(
+        albumNodeUid: string,
+        photoPayloads: AddToAlbumEncryptedPhotoPayload[],
+        signal?: AbortSignal,
+    ): AsyncGenerator<NodeResultWithError> {
+        const { volumeId, nodeId: albumLinkId } = splitNodeUid(albumNodeUid);
+
+        const allPhotoPayloads = photoPayloads.flatMap((photoPayload) => [
+            photoPayload,
+            ...(photoPayload.relatedPhotos || []),
+        ]);
+        const allPhotoData = allPhotoPayloads.map((photoPayload) => {
+            const { nodeId } = splitNodeUid(photoPayload.nodeUid);
+            return {
+                LinkID: nodeId,
+                Hash: photoPayload.nameHash,
+                Name: photoPayload.encryptedName,
+                NameSignatureEmail: photoPayload.nameSignatureEmail,
+                NodePassphrase: photoPayload.nodePassphrase,
+                ContentHash: photoPayload.contentHash,
+            };
+        });
+
+        const response = await this.apiService.post<PostAddPhotosToAlbumRequest, PostAddPhotosToAlbumResponse>(
+            `drive/photos/volumes/${volumeId}/albums/${albumLinkId}/add-multiple`,
+            {
+                AlbumData: allPhotoData,
+            },
+            signal,
+        );
+
+        const errors = new Map<string, Error>();
+
+        for (const r of response.Responses || []) {
+            // @ts-expect-error - API definition is not correct.
+            const details = r as {
+                LinkID: string;
+                Response: {
+                    Code: number;
+                    Error?: string;
+                    Details: { Missing: string[] };
+                };
+            };
+
+            if (!details.Response.Code || !isCodeOk(details.Response.Code) || details.Response?.Error) {
+                const nodeUid = makeNodeUid(volumeId, details.LinkID);
+
+                if (details.Response.Details?.Missing) {
+                    const missingNodeUids = details.Response.Details.Missing.map((linkId) =>
+                        makeNodeUid(volumeId, linkId),
+                    );
+                    errors.set(nodeUid, new MissingRelatedPhotosError(missingNodeUids));
+                } else {
+                    errors.set(
+                        nodeUid,
+                        new APICodeError(details.Response.Error || c('Error').t`Unknown error`, details.Response.Code),
+                    );
+                }
+            }
+        }
+
+        for (const photoPayload of photoPayloads) {
+            const uid = photoPayload.nodeUid;
+            const error = errors.get(uid);
+            if (error) {
+                yield { uid, ok: false, error };
+            } else {
+                yield { uid, ok: true };
+            }
+        }
+    }
+
+    /**
+     * Copy a photo to a shared album on a different volume.
+     *
+     * To add photos from the same volume to an album, use the {@link addPhotosToAlbum} method.
+     *
+     * In the future, these two methods will be merged into a single one.
+     */
+    async copyPhotoToAlbum(
+        albumNodeUid: string,
+        payload: AddToAlbumEncryptedPhotoPayload,
+        signal?: AbortSignal,
+    ): Promise<string> {
+        const { volumeId: sourceVolumeId, nodeId: sourceLinkId } = splitNodeUid(payload.nodeUid);
+        const { volumeId: targetVolumeId, nodeId: targetAlbumLinkId } = splitNodeUid(albumNodeUid);
+
+        try {
+            const response = await this.apiService.post<PostCopyLinkRequest, PostCopyLinkResponse>(
+                `drive/volumes/${sourceVolumeId}/links/${sourceLinkId}/copy`,
+                {
+                    TargetVolumeID: targetVolumeId,
+                    TargetParentLinkID: targetAlbumLinkId,
+                    Hash: payload.nameHash,
+                    Name: payload.encryptedName,
+                    NameSignatureEmail: payload.nameSignatureEmail,
+                    NodePassphrase: payload.nodePassphrase,
+                    // @ts-expect-error: API accepts NodePassphraseSignature as optional.
+                    NodePassphraseSignature: payload.nodePassphraseSignature,
+                    // @ts-expect-error: API accepts SignatureEmail as optional.
+                    SignatureEmail: payload.signatureEmail,
+                    Photos: {
+                        ContentHash: payload.contentHash,
+                        RelatedPhotos:
+                            payload.relatedPhotos?.map((related) => ({
+                                LinkID: splitNodeUid(related.nodeUid).nodeId,
+                                Hash: related.nameHash,
+                                Name: related.encryptedName,
+                                NodePassphrase: related.nodePassphrase,
+                                ContentHash: related.contentHash,
+                            })) || [],
+                    },
+                },
+                signal,
+            );
+            return makeNodeUid(targetVolumeId, response.LinkID);
+        } catch (error) {
+            if (error instanceof InvalidRequirementsAPIError) {
+                const { Missing: missingLinkIds } = error.details as { Missing: string[] };
+                if (missingLinkIds.length > 0) {
+                    throw new MissingRelatedPhotosError(
+                        missingLinkIds.map((linkId) => makeNodeUid(sourceVolumeId, linkId)),
+                    );
+                }
+            }
+            throw error;
+        }
+    }
+
     async *removePhotosFromAlbum(
         albumNodeUid: string,
         photoNodeUids: string[],
         signal?: AbortSignal,
-    ): AsyncGenerator<NodeResult> {
+    ): AsyncGenerator<NodeResultWithError> {
         const { volumeId, nodeId: albumLinkId } = splitNodeUid(albumNodeUid);
 
         const batchSize = 50;
@@ -331,7 +476,7 @@ export class PhotosAPIService {
         for (const photoNodeUidsBatch of batch(photoNodeUids, batchSize)) {
             const linkIds = photoNodeUidsBatch.map((nodeUid) => splitNodeUid(nodeUid).nodeId);
 
-            let errorMessage: string | undefined;
+            let error: Error | undefined;
             try {
                 await this.apiService.post<PostRemovePhotosFromAlbumRequest, PostRemovePhotosFromAlbumResponse>(
                     `drive/photos/volumes/${volumeId}/albums/${albumLinkId}/remove-multiple`,
@@ -340,14 +485,14 @@ export class PhotosAPIService {
                     },
                     signal,
                 );
-            } catch (error) {
-                errorMessage = error instanceof Error ? error.message : c('Error').t`Unknown error`;
+            } catch (e) {
+                error = e instanceof Error ? e : new Error(c('Error').t`Unknown error`);
             }
 
             // The API does not return individual results for each photo.
             for (const uid of photoNodeUidsBatch) {
-                if (errorMessage) {
-                    yield { uid, ok: false, error: errorMessage };
+                if (error) {
+                    yield { uid, ok: false, error };
                 } else {
                     yield { uid, ok: true };
                 }
