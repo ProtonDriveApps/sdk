@@ -21,8 +21,9 @@ export type MaybeMissingPhotoNode = Result<PhotoNode, DegradedPhotoNode | Missin
  * See `NodeEntity` for more information.
  */
 export type PhotoNode = NodeEntity & {
-    type: NodeType.Photo;
+    type: NodeType.Photo | NodeType.Album;
     photo?: PhotoAttributes;
+    album?: AlbumAttributes;
 };
 
 /**
@@ -32,6 +33,7 @@ export type PhotoNode = NodeEntity & {
  */
 export type DegradedPhotoNode = DegradedNode & {
     photo?: PhotoAttributes;
+    album?: AlbumAttributes;
 };
 
 /**
@@ -64,4 +66,20 @@ export type PhotoAttributes = {
      * List of tags assigned to the photo.
      */
     tags: number[]; // TODO: enum
+}
+
+/**
+ * Attributes of an album.
+ *
+ * Only nodes of type `NodeType.Album` have property of this type.
+ */
+export type AlbumAttributes = {
+    /**
+     * Number of photos in the album.
+     */
+    photoCount: number;
+    /**
+     * UID of the cover photo node of the album.
+     */
+    coverPhotoNodeUid?: string;
 }
