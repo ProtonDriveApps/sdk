@@ -1,5 +1,5 @@
 import { PrivateKey } from '../../crypto';
-import { MetricVolumeType, PhotoAttributes } from '../../interface';
+import { MetricVolumeType, PhotoAttributes, AlbumAttributes } from '../../interface';
 import { DecryptedNode, EncryptedNode, DecryptedUnparsedNode } from '../nodes/interface';
 import { EncryptedShare } from '../shares';
 
@@ -25,14 +25,17 @@ export interface SharesService {
 
 export type EncryptedPhotoNode = EncryptedNode & {
     photo?: EcnryptedPhotoAttributes;
+    album?: AlbumAttributes;
 };
 
 export type DecryptedUnparsedPhotoNode = DecryptedUnparsedNode & {
     photo?: PhotoAttributes;
+    album?: AlbumAttributes;
 };
 
 export type DecryptedPhotoNode = DecryptedNode & {
     photo?: PhotoAttributes;
+    album?: AlbumAttributes;
 };
 
 export type EcnryptedPhotoAttributes = Omit<PhotoAttributes, 'albums'> & {

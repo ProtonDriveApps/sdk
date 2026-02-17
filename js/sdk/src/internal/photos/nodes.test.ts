@@ -44,6 +44,10 @@ function generateAPIAlbumNode(linkOverrides = {}, overrides = {}) {
         ...node,
         Link: { ...node.Link, Type: 3, ...linkOverrides },
         Photo: null,
+        Album: {
+            PhotoCount: 1,
+            CoverLinkID: 'coverLinkId',
+        },
         Folder: null,
         ...overrides,
     };
@@ -103,6 +107,8 @@ describe('PhotosNodesAPIService', () => {
             const nodes = await Array.fromAsync(api.iterateNodes(['volumeId~nodeId'], 'volumeId'));
             expect(nodes).toHaveLength(1);
             expect(nodes[0].type).toBe(expectedType);
+
+            return nodes;
         }
 
         it('should convert folder (type 1) to folder node', async () => {
@@ -110,16 +116,16 @@ describe('PhotosNodesAPIService', () => {
         });
 
         it('should convert album (type 3) to album node', async () => {
-            await testIterateNodes(generateAPIAlbumNode(), NodeType.Album);
+            const nodes = await testIterateNodes(generateAPIAlbumNode(), NodeType.Album);
+
+            expect(nodes[0].album).toBeDefined();
+            expect(nodes[0].album?.photoCount).toEqual(1);
+            expect(nodes[0].album?.coverPhotoNodeUid).toBe('volumeId~coverLinkId');
         });
 
         it('should convert photo (type 2) to photo node with photo attributes', async () => {
-            apiMock.post = jest.fn().mockResolvedValue({ Links: [generateAPIPhotoNode()] });
+            const nodes = await testIterateNodes(generateAPIPhotoNode(), NodeType.Photo);
 
-            const nodes = await Array.fromAsync(api.iterateNodes(['volumeId~nodeId'], 'volumeId'));
-
-            expect(nodes).toHaveLength(1);
-            expect(nodes[0].type).toBe(NodeType.Photo);
             expect(nodes[0].photo).toBeDefined();
             expect(nodes[0].photo?.captureTime).toEqual(new Date(1700000000 * 1000));
             expect(nodes[0].photo?.tags).toEqual([1, 2]);
@@ -161,6 +167,10 @@ describe('PhotosNodesCache', () => {
                         },
                     ],
                 },
+                album: {
+                    photoCount: 1,
+                    coverPhotoNodeUid: 'volumeId~coverLinkId',
+                },
             });
 
             const node = cache.deserialiseNode(serialisedNode);
@@ -170,6 +180,9 @@ describe('PhotosNodesCache', () => {
             expect(node.photo?.captureTime).toEqual(new Date('2023-11-14T22:13:20.000Z'));
             expect(node.photo?.albums[0].additionTime).toBeInstanceOf(Date);
             expect(node.photo?.albums[0].additionTime).toEqual(new Date('2023-11-15T10:00:00.000Z'));
+            expect(node.album).toBeDefined();
+            expect(node.album?.photoCount).toEqual(1);
+            expect(node.album?.coverPhotoNodeUid).toBe('volumeId~coverLinkId');
         });
 
         it('should handle node without photo attributes', () => {
@@ -187,6 +200,7 @@ describe('PhotosNodesCache', () => {
             const node = cache.deserialiseNode(serialisedNode);
 
             expect(node.photo).toBeUndefined();
+            expect(node.album).toBeUndefined();
         });
     });
 });
@@ -244,6 +258,10 @@ describe('PhotosNodesAccess', () => {
                     tags: [1, 2],
                     albums: [],
                 },
+                album: {
+                    photoCount: 1,
+                    coverPhotoNodeUid: 'volumeId~coverLinkId',
+                },
             };
 
             // @ts-expect-error Accessing protected method for testing
@@ -253,6 +271,9 @@ describe('PhotosNodesAccess', () => {
             expect(parsedNode.photo).toBeDefined();
             expect(parsedNode.photo?.captureTime).toEqual(new Date('2023-11-14T22:13:20.000Z'));
             expect(parsedNode.photo?.tags).toEqual([1, 2]);
+            expect(parsedNode.album).toBeDefined();
+            expect(parsedNode.album?.photoCount).toEqual(1);
+            expect(parsedNode.album?.coverPhotoNodeUid).toBe('volumeId~coverLinkId');
         });
     });
 });

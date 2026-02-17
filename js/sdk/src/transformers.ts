@@ -160,11 +160,13 @@ export function convertInternalPhotoNode(photoNode: InternalPartialPhotoNode): P
         return resultOk({
             ...node.value,
             photo: photoNode.photo,
+            album: photoNode.album,
         } as PublicPhotoNode);
     }
     return resultError({
         ...node.error,
         photo: photoNode.photo,
+        album: photoNode.album,
     } as PublicDegradedPhotoNode);
 }
 
