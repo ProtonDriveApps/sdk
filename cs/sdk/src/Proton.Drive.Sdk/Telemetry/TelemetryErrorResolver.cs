@@ -14,6 +14,7 @@ internal static class TelemetryErrorResolver
         {
             // Reported as download success
             CompletedDownloadManifestVerificationException => null,
+            DataIntegrityException => exception.GetBaseException() is CompletedDownloadManifestVerificationException ? null : DownloadError.IntegrityError,
 
             // Download errors
             NodeKeyAndSessionKeyMismatchException or SessionKeyAndDataPacketMismatchException => DownloadError.IntegrityError,
