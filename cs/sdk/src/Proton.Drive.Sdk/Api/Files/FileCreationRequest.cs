@@ -11,7 +11,8 @@ internal sealed class FileCreationRequest : NodeCreationRequest
 
     public required ReadOnlyMemory<byte> ContentKeyPacket { get; init; }
 
-    public required PgpArmoredSignature ContentKeyPacketSignature { get; init; }
+    [JsonPropertyName("ContentKeyPacketSignature")]
+    public required PgpArmoredSignature ContentKeySignature { get; init; }
 
     [JsonPropertyName("ClientUID")]
     public string? ClientUid { get; init; }

@@ -13,7 +13,7 @@ internal class FileDto
     public required ReadOnlyMemory<byte> ContentKeyPacket { get; init; }
 
     [JsonPropertyName("ContentKeyPacketSignature")]
-    public PgpArmoredSignature ContentKeySignature { get; init; }
+    public PgpArmoredSignature? ContentKeySignature { get; init; }
 
     public ActiveRevisionDto? ActiveRevision { get; init; }
 }

@@ -90,7 +90,6 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
             out var lockedKeyBytes);
 
         contentKey = useAeadFeatureFlag ? PgpSessionKey.GenerateForAead() : PgpSessionKey.Generate();
-        var contentKeyToken = contentKey.Export();
 
         return new FileCreationRequest
         {
@@ -104,7 +103,7 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
             Key = lockedKeyBytes,
             MediaType = mediaType,
             ContentKeyPacket = nodeKey.EncryptSessionKey(contentKey),
-            ContentKeyPacketSignature = nodeKey.Sign(contentKeyToken),
+            ContentKeySignature = nodeKey.Sign(contentKey.Export()),
         };
     }
 
