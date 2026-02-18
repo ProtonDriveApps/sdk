@@ -238,6 +238,10 @@ final class UploadOperationState: Sendable {
         self.callback = callback
         self.expectedSHA1 = expectedSHA1
     }
+
+    deinit {
+        CallbackHandleRegistry.shared.removeAll(ownedBy: self)
+    }
 }
 
 let cExpectedSha1CallbackForUpload: CCallbackWithByteArrayReturn = { statePointer in

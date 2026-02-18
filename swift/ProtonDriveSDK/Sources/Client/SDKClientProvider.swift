@@ -1,6 +1,6 @@
 import Foundation
 
-final class SDKClientProvider {
+final class SDKClientProvider: @unchecked Sendable {
     private weak var client: (any ProtonSDKClient)?
 
     init(client: any ProtonSDKClient) {
