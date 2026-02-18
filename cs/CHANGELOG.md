@@ -1,5 +1,16 @@
 # Changelog
 
+## cs/v0.7.0-alpha.11 (2026-02-18)
+
+* Fix download of photos and their thumbnails from shared albums
+* Capture caller stack trace in ResponseCallback
+* Fix tranforming CompletedDownloadManifestVerificationException to...
+* Only set AEAD flag on file key creation
+
+## cs/v0.7.0-alpha.10 (2026-02-18)
+
+* Introduce callback handle registry, separate callback lifecycle from object lifecycle
+
 ## cs/v0.7.0-alpha.9 (2026-02-17)
 
 * Expose errorToString
