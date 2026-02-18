@@ -7,6 +7,10 @@ final class ProgressCallbackWrapper: Sendable {
     init(callback: @escaping ProgressCallback) {
         self.callback = callback
     }
+
+    deinit {
+        CallbackHandleRegistry.shared.removeAll(ownedBy: self)
+    }
 }
 
 let cProgressCallbackForUpload: CCallback = { statePointer, byteArray in
