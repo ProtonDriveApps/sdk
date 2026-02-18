@@ -43,7 +43,7 @@ internal static class NodeCrypto
 
         var linkDecryptionResult = await DecryptLinkAsync(accountClient, linkDto, parentKeyResult, cancellationToken).ConfigureAwait(false);
 
-        var nodeKey = linkDecryptionResult.NodeKey.GetValueOrDefault();
+        var nodeKey = linkDecryptionResult.NodeKey.Merge(x => x, _ => default(PgpPrivateKey?));
 
         var contentKeyDecryptionResult = DecryptContentKey(
             nodeKey,

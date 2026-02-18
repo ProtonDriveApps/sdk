@@ -13,7 +13,8 @@ internal sealed class PhotoDto : FileDto
     [JsonConverter(typeof(EpochSecondsJsonConverter))]
     public required DateTime CaptureTime { get; init; }
 
-    public string? ContentHash { get; init; }
+    [JsonConverter(typeof(ForgivingBytesToHexJsonConverter))]
+    public ReadOnlyMemory<byte>? ContentHash { get; init; }
 
     [JsonPropertyName("Hash")]
     public string? NameHash { get; init; }

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Proton.Sdk.Telemetry;
 
-internal sealed class NullTelemetry : ITelemetry
+public sealed class NullTelemetry : ITelemetry
 {
     public static NullTelemetry Instance { get; } = new();
 

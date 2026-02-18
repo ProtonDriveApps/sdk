@@ -29,16 +29,9 @@ public sealed class ProtonDriveClient
     /// <remarks>If no UID is not provided, one will be generated for the duration of this instance.</remarks>
     public ProtonDriveClient(ProtonApiSession session, string? uid = null)
         : this(
-            session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonApiDefaults.DefaultTimeoutSeconds)),
-            session.GetHttpClient(
-                ProtonDriveDefaults.DriveBaseRoute,
-                TimeSpan.FromSeconds(ProtonDriveDefaults.StorageApiTimeoutSeconds),
-                TimeSpan.FromSeconds(ProtonDriveDefaults.StorageApiTimeoutSeconds)),
-            new AccountClientAdapter(session),
-            new DriveClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository),
-            session.ClientConfiguration.FeatureFlagProvider,
-            session.ClientConfiguration.Telemetry,
-            uid ?? Guid.NewGuid().ToString())
+            session,
+            (defaultApiHttpClient, storageApiHttpClient) => new DriveApiClients(defaultApiHttpClient, storageApiHttpClient),
+            uid)
     {
     }
 
@@ -59,6 +52,49 @@ public sealed class ProtonDriveClient
             new DriveClientCache(entityCacheRepository, secretCacheRepository),
             featureFlagProvider,
             telemetry,
+            (defaultApiHttpClient, storageApiHttpClient) => new DriveApiClients(defaultApiHttpClient, storageApiHttpClient),
+            creationParameters?.Uid ?? Guid.NewGuid().ToString())
+    {
+    }
+
+    internal ProtonDriveClient(
+        ProtonApiSession session,
+        Func<HttpClient, HttpClient, IDriveApiClients> driveApiClientsFactory,
+        string? uid = null)
+        : this(
+            session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonApiDefaults.DefaultTimeoutSeconds)),
+            session.GetHttpClient(
+                ProtonDriveDefaults.DriveBaseRoute,
+                TimeSpan.FromSeconds(ProtonDriveDefaults.StorageApiTimeoutSeconds),
+                TimeSpan.FromSeconds(ProtonDriveDefaults.StorageApiTimeoutSeconds)),
+            new AccountClientAdapter(session),
+            new DriveClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository),
+            session.ClientConfiguration.FeatureFlagProvider,
+            session.ClientConfiguration.Telemetry,
+            driveApiClientsFactory,
+            uid ?? Guid.NewGuid().ToString())
+    {
+    }
+
+    internal ProtonDriveClient(
+        IHttpClientFactory httpClientFactory,
+        IAccountClient accountClient,
+        ICacheRepository entityCacheRepository,
+        ICacheRepository secretCacheRepository,
+        IFeatureFlagProvider featureFlagProvider,
+        ITelemetry telemetry,
+        Func<HttpClient, HttpClient, IDriveApiClients> driveApiClientsFactory,
+        ProtonDriveClientOptions? creationParameters = null)
+        : this(
+            new SdkHttpClientFactoryDecorator(httpClientFactory, creationParameters?.BindingsLanguage).CreateClientWithTimeout(
+                creationParameters?.OverrideDefaultApiTimeoutSeconds ?? ProtonApiDefaults.DefaultTimeoutSeconds),
+            new SdkHttpClientFactoryDecorator(httpClientFactory, creationParameters?.BindingsLanguage).CreateClientWithTimeout(
+                creationParameters?.OverrideStorageApiTimeoutSeconds ?? ProtonDriveDefaults.StorageApiTimeoutSeconds),
+            accountClient,
+            new DriveClientCache(entityCacheRepository, secretCacheRepository),
+            featureFlagProvider,
+            telemetry,
+            driveApiClientsFactory,
             creationParameters?.Uid ?? Guid.NewGuid().ToString())
     {
     }
@@ -103,10 +139,11 @@ public sealed class ProtonDriveClient
         IDriveClientCache cache,
         IFeatureFlagProvider featureFlagProvider,
         ITelemetry telemetry,
+        Func<HttpClient, HttpClient, IDriveApiClients> driveApiClientsFactory,
         string uid)
         : this(
             accountClient,
-            new DriveApiClients(defaultApiHttpClient, storageApiHttpClient),
+            driveApiClientsFactory.Invoke(defaultApiHttpClient, storageApiHttpClient),
             cache,
             new BlockVerifierFactory(defaultApiHttpClient),
             featureFlagProvider,

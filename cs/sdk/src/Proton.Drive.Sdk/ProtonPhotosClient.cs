@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using Proton.Drive.Sdk.Api;
+using Proton.Drive.Sdk.Api.Photos;
 using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Http;
 using Proton.Drive.Sdk.Nodes;
@@ -18,7 +18,11 @@ public sealed class ProtonPhotosClient : IDisposable
 
     public ProtonPhotosClient(ProtonApiSession session, string? uid = null)
     {
-        DriveClient = new ProtonDriveClient(session, uid);
+        DriveClient = new ProtonDriveClient(
+            session,
+            (defaultApiHttpClient, storageApiHttpClient) => new PhotosApiClients(defaultApiHttpClient, storageApiHttpClient),
+            uid);
+
         _httpClient = session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonApiDefaults.DefaultTimeoutSeconds));
 
         Cache = new PhotosClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository);
@@ -41,7 +45,9 @@ public sealed class ProtonPhotosClient : IDisposable
             secretCacheRepository,
             featureFlagProvider,
             telemetry,
+            (defaultApiHttpClient, storageApiHttpClient) => new PhotosApiClients(defaultApiHttpClient, storageApiHttpClient),
             creationParameters);
+
         _httpClient = new SdkHttpClientFactoryDecorator(httpClientFactory).CreateClientWithTimeout(
             creationParameters?.OverrideDefaultApiTimeoutSeconds ?? ProtonApiDefaults.DefaultTimeoutSeconds);
 

@@ -42,7 +42,9 @@ internal static class Interop
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static CancellationToken GetCancellationToken(long cancellationTokenSourceHandle)
     {
-        return GetFromHandle<CancellationTokenSource>(cancellationTokenSourceHandle).Token;
+        return cancellationTokenSourceHandle != 0
+            ? GetFromHandle<CancellationTokenSource>(cancellationTokenSourceHandle).Token
+            : CancellationToken.None;
     }
 
     private static T GetFromHandle<T>(long handle, bool free)

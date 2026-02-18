@@ -20,10 +20,18 @@ internal static class DtoToMetadataConverter
         ShareAndKey? knownShareAndKey,
         CancellationToken cancellationToken)
     {
+        var parentId = linkDetailsDto.Link.ParentId;
+
+        if (parentId is null && linkDetailsDto.Photo is not null)
+        {
+            // TODO: optimize by selecting the album that is in cache, if any
+            parentId = linkDetailsDto.Photo.AlbumInclusions is { Count: > 0 } albumInclusions ? albumInclusions[0].Id : null;
+        }
+
         var parentKeyResult = await GetParentKeyAsync(
             client,
             volumeId,
-            linkDetailsDto.Link.ParentId,
+            parentId,
             knownShareAndKey,
             linkDetailsDto.Sharing?.ShareId,
             cancellationToken).ConfigureAwait(false);
@@ -151,7 +159,7 @@ internal static class DtoToMetadataConverter
         CancellationToken cancellationToken)
     {
         var linkDto = linkDetailsDto.Link;
-        var fileDto = linkDetailsDto.File;
+        var fileDto = linkDetailsDto.File ?? linkDetailsDto.Photo;
         var membershipDto = linkDetailsDto.Membership;
 
         if (fileDto is null)
@@ -294,7 +302,7 @@ internal static class DtoToMetadataConverter
 
             var degradedSecrets = new DegradedFileSecrets
             {
-                Key = decryptionResult.Link.NodeKey.GetValueOrDefault(),
+                Key = decryptionResult.Link.NodeKey.Merge(x => (PgpPrivateKey?)x, _ => null),
                 PassphraseSessionKey = decryptionResult.Link.Passphrase.Merge(x => (PgpSessionKey?)x.SessionKey, _ => null),
                 NameSessionKey = nameSessionKey,
                 ContentKey = decryptionResult.ContentKey.Merge(x => (PgpSessionKey?)x.Data, _ => null),
@@ -521,7 +529,7 @@ internal static class DtoToMetadataConverter
 
         try
         {
-            // FIXME this could go into an infinite loop if there's a structure issue in the cache.
+            // FIXME: this could go into an infinite loop if there's a structure issue in the cache.
             while (currentId is not null)
             {
                 if (shareAndKeyToUse is var (shareToUse, shareKeyToUse) && currentId == shareToUse.RootFolderId.LinkId)
