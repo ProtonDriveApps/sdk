@@ -225,7 +225,7 @@ internal static class NodeCrypto
     private static Result<DecryptionOutput<PgpSessionKey>, string?> DecryptContentKey(
         PgpPrivateKey? nodeKey,
         ReadOnlyMemory<byte> contentKeyPacket,
-        PgpArmoredSignature contentKeySignature,
+        PgpArmoredSignature? contentKeySignature,
         AuthorshipClaim nodeAuthorshipClaim)
     {
         if (nodeKey is null)
@@ -248,10 +248,12 @@ internal static class NodeCrypto
         AuthorshipVerificationFailure? verificationFailure;
         try
         {
-            var verificationResult = verificationKeyRing.Verify(contentKey.Export(), contentKeySignature);
+            var verificationStatus = contentKeySignature is not null
+                ? verificationKeyRing.Verify(contentKey.Export(), contentKeySignature.Value).Status
+                : PgpVerificationStatus.NotSigned;
 
-            verificationFailure = verificationResult.Status is not PgpVerificationStatus.Ok
-                ? new AuthorshipVerificationFailure(verificationResult.Status)
+            verificationFailure = verificationStatus is not PgpVerificationStatus.Ok
+                ? new AuthorshipVerificationFailure(verificationStatus)
                 : null;
         }
         catch (Exception e)

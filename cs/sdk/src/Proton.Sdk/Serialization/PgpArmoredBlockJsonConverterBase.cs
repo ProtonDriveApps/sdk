@@ -15,7 +15,8 @@ internal abstract class PgpArmoredBlockJsonConverterBase<T> : JsonConverter<T>
     {
         if (reader.TokenType != JsonTokenType.String)
         {
-            throw new JsonException($"Unexpected token type '{reader.TokenType}', expected '{nameof(JsonTokenType.String)}'");
+            throw new JsonException(
+                $"Unexpected token type '{reader.TokenType}' when converting to {typeof(T).Name}, expected '{nameof(JsonTokenType.String)}'");
         }
 
         var buffer = ArrayPool<byte>.Shared.Rent(reader.ValueSpan.Length);
