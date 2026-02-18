@@ -23,6 +23,12 @@ The SDK may be used for personal, non-commercial projects. If you choose to buil
 | **Identify your application** | Set the `x-pm-appversion` HTTP header using the format `external-drive-{projectname}@{version}` (e.g., `external-drive-myapp@1.2.3`). This header must accurately represent your application. Do not spoof or falsify this value. |
 | **Use event-based sync**      | Synchronize data using Drive events. Do not poll the API or perform frequent recursive traversals of the file tree.                                                                                                               |
 
+Note: The full `x-pm-appversion` string must conform to the regex:
+
+```
+/^(external-drive)+(-[a-z_]+)+@[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?-((stable|beta|RC|alpha)(([.-]?\d+)*)?)?([.-]?dev)?(\+.*)?$/i
+```
+
 ### Branding and User Safety Requirements
 
 | Requirement                        | Description                                                                                                                                             |
