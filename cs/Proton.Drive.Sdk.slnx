@@ -10,7 +10,6 @@
     <File Path="sdk/src/.globalconfig" />
     <Project Path="sdk/src/Proton.Drive.Sdk.CExports/Proton.Drive.Sdk.CExports.csproj" />
     <Project Path="sdk/src/Proton.Drive.Sdk/Proton.Drive.Sdk.csproj" />
-    <Project Path="sdk/src/Proton.Photos.Sdk/Proton.Photos.Sdk.csproj" />
     <Project Path="sdk/src/Proton.Sdk.CExports/Proton.Sdk.CExports.csproj" />
     <Project Path="sdk/src/Proton.Sdk/Proton.Sdk.csproj" />
   </Folder>
