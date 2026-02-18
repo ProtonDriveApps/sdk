@@ -72,12 +72,14 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
         out PgpSessionKey nameSessionKey,
         out PgpSessionKey contentKey)
     {
+        var pgpProfile = useAeadFeatureFlag ? PgpProfile.ProtonAead : PgpProfile.Proton;
+
         NodeOperations.GetCommonCreationParameters(
             name,
             parentSecrets.Key,
             parentSecrets.HashKey.Span,
             signingKey,
-            useAeadFeatureFlag,
+            pgpProfile,
             out nodeKey,
             out nameSessionKey,
             out passphraseSessionKey,
