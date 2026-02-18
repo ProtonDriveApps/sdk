@@ -39,6 +39,7 @@ import { CommandPhotoDuplicate } from './photos/commandPhotoDuplicate';
 import { CommandPhotoRoot } from './photos/commandPhotoRoot';
 import { CommandPhotoTimeline } from './photos/commandPhotoTimeline';
 import { CommandPublicCreateFolder } from './public/commandPublicCreateFolder';
+import { CommandPublicGetAvailableName } from './public/commandPublicGetAvailableName';
 import { CommandPublicCreateDocument } from './public/commandPublicCreateDocument';
 import { CommandPublicDelete } from './public/commandPublicDelete';
 import { CommandPublicDownload } from './public/commandPublicDownload';
@@ -110,6 +111,7 @@ const COMMANDS = [
     new CommandPublicInfo(),
     new CommandPublicCreateFolder(),
     new CommandPublicCreateDocument(),
+    new CommandPublicGetAvailableName(),
     new CommandPublicRename(),
     new CommandPublicDelete(),
     new CommandPublicDownload(),

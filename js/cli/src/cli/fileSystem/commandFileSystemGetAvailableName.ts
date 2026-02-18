@@ -3,15 +3,18 @@ import { Command, ActionArgs } from '../interface';
 
 export class CommandFileSystemGetAvailableName implements Command {
     group = 'filesystem';
-    name = 'getAvailableName';
+    name = 'get-available-name';
     args = ['path', 'name'];
 
     async action({ sdk, paths, args: [pathString, name], options: { json } }: ActionArgs) {
         const path = paths.getPath(pathString);
         const node = await path.getNode();
         const availableName = await sdk.getAvailableName(node, name);
-        printObject({
-            availableName,
-        }, json);
+        printObject(
+            {
+                availableName,
+            },
+            json,
+        );
     }
 }
