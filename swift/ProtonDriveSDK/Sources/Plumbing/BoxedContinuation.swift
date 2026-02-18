@@ -13,11 +13,12 @@ extension Resumable where ReturnType == Void {
 }
 
 // Boxed completion
-final class BoxedCompletionBlock<ResultType, StateType>: Resumable {
+final class BoxedCompletionBlock<ResultType, StateType>: RegistryTracking, Resumable {
     typealias CompletionBlock = (Result<ResultType, Error>) -> Void
 
     private var completionBlock: CompletionBlock?
     let state: StateType
+    var registryHandleId: RegistryHandle?
 
     init(_ completionBlock: CompletionBlock?, state: StateType) {
         self.completionBlock = completionBlock

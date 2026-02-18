@@ -29,35 +29,36 @@ enum SDKRequestHandler {
     static func send<T: Message, U>(
         _ request: T,
         logger: Logger?,
-        includesLongLivedCallback: Bool = false,
+        scope: CallbackScope = .operation,
+        owner: AnyObject? = nil,
         completionBlock: @escaping (Result<U, Error>) -> Void
     ) {
-        send(request, state: (), logger: logger, includesLongLivedCallback: includesLongLivedCallback, completionBlock: completionBlock)
+        send(request, state: (), logger: logger, scope: scope, owner: owner, completionBlock: completionBlock)
     }
 
     // MARK: - Requests with additional state
-    // `includesLongLivedCallback` property is used to know whether we need keep the box for state alive longer
-    // than just until this method finished
 
     /// Async/await API for request with state for types with the generics documented via InteropRequest protocol.
     static func sendInteropRequest<T: Message & InteropRequest & Sendable>(
         _ request: T,
         state: T.StateType,
-        includesLongLivedCallback: Bool = false,
+        scope: CallbackScope = .operation,
+        owner: AnyObject? = nil,
         logger: Logger?
     ) async throws -> T.CallResultType {
-        try await send(request, state: state, includesLongLivedCallback: includesLongLivedCallback, logger: logger)
+        try await send(request, state: state, scope: scope, owner: owner, logger: logger)
     }
 
     /// Async/await API for requests with state
     static func send<T: Message, U: Sendable, V>(
         _ request: T,
         state: V,
-        includesLongLivedCallback: Bool = false,
+        scope: CallbackScope = .operation,
+        owner: AnyObject? = nil,
         logger: Logger?
     ) async throws -> U {
         try await withCheckedThrowingContinuation { continuation in
-            send(request, state: state, logger: logger, includesLongLivedCallback: includesLongLivedCallback) { (result: Result<U, Error>) in
+            send(request, state: state, logger: logger, scope: scope, owner: owner) { (result: Result<U, Error>) in
                 switch result {
                 case .success(let response):
                     continuation.resume(returning: response)
@@ -73,7 +74,8 @@ enum SDKRequestHandler {
         _ request: T,
         state: V,
         logger: Logger?,
-        includesLongLivedCallback: Bool = false,
+        scope: CallbackScope = .operation,
+        owner: AnyObject? = nil,
         completionBlock: @escaping (Result<U, Error>) -> Void
     ) {
         do {
@@ -93,12 +95,7 @@ enum SDKRequestHandler {
             // Switch to InteropTypes.BoxedStateType once we use it for all requests
             let boxedState = BoxedCompletionBlock(completionBlock, state: state)
             let pointer = Unmanaged.passRetained(boxedState)
-            if includesLongLivedCallback {
-                // We double-retain to keep the box alive after the method finishes.
-                // Currently, the reference to the box will not be kept anywhere,
-                // so the deallocation must be done in the long-lived callback. Improve if necessary.
-                _ = pointer.retain() // fixes "result of call to 'retain()' is unused" warning
-            }
+            boxedState.registryHandleId = CallbackHandleRegistry.shared.register(boxedState, scope: scope, owner: owner)
             let bindingsHandle = Int(rawPointer: pointer.toOpaque())
             if isDriveRequest {
                 logger?.trace(" -> proton_drive_sdk_handle_request", category: "SDKRequestHandler")
@@ -115,9 +112,23 @@ enum SDKRequestHandler {
 
 /// C-compatible callback function for SDK responses.
 let sdkResponseCallbackWithState: CCallback = { statePointer, responseArray in
-    guard let sdkPointer = UnsafeRawPointer(bitPattern: statePointer),
-          let box = Unmanaged<AnyObject>.fromOpaque(sdkPointer).takeRetainedValue() as? any Resumable
-    else {
+    guard let sdkPointer = UnsafeRawPointer(bitPattern: statePointer) else {
+        assertionFailure("If the pointer is not Resumable, we cannot get the continuation")
+        return
+    }
+
+    let rawBox = Unmanaged<AnyObject>.fromOpaque(sdkPointer).takeRetainedValue()
+
+    // Release the registry reference for operation-scoped entries only.
+    // ownerManaged entries are cleaned up by the owner's deinit via removeAll(ownedBy:).
+    // indefinite entries intentionally outlive every owner.
+    if let managed = rawBox as? RegistryTracking, let handleId = managed.registryHandleId {
+        if CallbackHandleRegistry.shared.scope(for: handleId) == .operation {
+            CallbackHandleRegistry.shared.remove(handleId)
+        }
+    }
+
+    guard let box = rawBox as? any Resumable else {
         assertionFailure("If the pointer is not Resumable, we cannot get the continuation")
         return
     }

@@ -44,7 +44,8 @@ actor PhotoDownloadsManager {
         let downloadControllerHandle: ObjectHandle = try await SDKRequestHandler.send(
             downloaderRequest,
             state: WeakReference(value: callbackState),
-            includesLongLivedCallback: true,
+            scope: .ownerManaged,
+            owner: callbackState,
             logger: logger
         )
 

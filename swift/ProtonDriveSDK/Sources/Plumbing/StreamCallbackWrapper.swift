@@ -16,6 +16,10 @@ final class StreamDownloadState: @unchecked Sendable {
         self.progressCallback = progressCallback
     }
 
+    deinit {
+        CallbackHandleRegistry.shared.removeAll(ownedBy: self)
+    }
+
     func markReady() {
         let buffered: [FileOperationProgress]
         lock.lock()
@@ -69,8 +73,7 @@ let cStreamWriteCallback: CCallbackWithCallbackPointerAndObjectPointerReturn = {
     // Capture data before entering the task
     let data = Data(byteArray: byteArray)
 
-    // Create a boxed task with the write work
-    let taskBox = BoxedCancellableTask {
+    return BoxedCancellableTask.registered {
         do {
             try state.outputStream.write(data)
             SDKResponseHandler.sendVoidResponse(callbackPointer: callbackPointer)
@@ -85,17 +88,6 @@ let cStreamWriteCallback: CCallbackWithCallbackPointerAndObjectPointerReturn = {
             }
         }
     }
-
-    // Retain the task box and return its address as the cancellation handle
-    let unmanaged = Unmanaged.passRetained(taskBox)
-    let handle = Int(bitPattern: unmanaged.toOpaque())
-
-    // Set completion handler to release the Unmanaged reference when done
-    taskBox.setCompletionHandler {
-        unmanaged.release()
-    }
-
-    return handle
 }
 
 /// C-compatible callback for seeking in the output stream.
@@ -127,8 +119,7 @@ let cStreamSeekCallback: CCallbackWithCallbackPointerAndObjectPointerReturn = { 
     let seekRequest = Proton_Sdk_StreamSeekRequest(byteArray: byteArray)
     let origin = SeekOrigin(rawValue: seekRequest.origin) ?? .begin
 
-    // Create a boxed task with the seek work
-    let taskBox = BoxedCancellableTask {
+    return BoxedCancellableTask.registered {
         do {
             let newPosition = try state.outputStream.seek(offset: seekRequest.offset, origin: origin)
             let int64Value = Google_Protobuf_Int64Value.with { $0.value = newPosition }
@@ -144,17 +135,6 @@ let cStreamSeekCallback: CCallbackWithCallbackPointerAndObjectPointerReturn = { 
             }
         }
     }
-
-    // Retain the task box and return its address as the cancellation handle
-    let unmanaged = Unmanaged.passRetained(taskBox)
-    let handle = Int(bitPattern: unmanaged.toOpaque())
-
-    // Set completion handler to release the Unmanaged reference when done
-    taskBox.setCompletionHandler {
-        unmanaged.release()
-    }
-
-    return handle
 }
 
 /// C-compatible callback for progress updates during stream download.
@@ -178,19 +158,6 @@ let cStreamProgressCallback: CCallback = { statePointer, byteArray in
 
 /// C-compatible callback for cancelling the stream operation.
 /// The SDK calls this with the operation handle returned from write/seek callbacks.
-let cStreamCancelCallback: CCallbackWithoutByteArray = { operationHandle in
-    // If operationHandle is 0, it means we've early returned from the callback
-    guard operationHandle != 0 else { return }
-
-    // Convert the address back to the task box
-    guard let pointer = UnsafeRawPointer(bitPattern: operationHandle) else {
-        assertionFailure("cStreamCancelCallback.operationHandle is nil")
-        return
-    }
-
-    // Get the task box and cancel it
-    let unmanaged = Unmanaged<BoxedCancellableTask>.fromOpaque(pointer)
-    let taskBox = unmanaged.takeUnretainedValue()
-    // Release of the task box is wrapped in completionHandler, which is called in cancel()
-    taskBox.cancel()
+let cStreamCancelCallback: CCallbackWithoutByteArray = { callbackHandle in
+    CallbackHandleRegistry.shared.cancel(callbackHandle)
 }

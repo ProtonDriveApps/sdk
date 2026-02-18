@@ -3,12 +3,11 @@ import SwiftProtobuf
 
 enum HttpClientResponseProcessor {
     
-    // statePointer is bindings content handle,
+    // statePointer is the registry handle for the BoxedStreamingData,
     // byteArray is buffer,
     // callbackPointer is used for calling sdk back to let it know we've filled the buffer
     static let cCompatibleHttpResponseRead: CCallbackWithCallbackPointer = { statePointer, byteArray, callbackPointer in
-        guard let bindingsContentHandle = UnsafeRawPointer(bitPattern: statePointer)
-        else {
+        guard statePointer != 0 else {
             let message = "cCompatibleHttpResponseRead.statePointer is null"
             SDKResponseHandler.sendInteropErrorToSDK(message: message, callbackPointer: callbackPointer)
             return
@@ -22,7 +21,13 @@ enum HttpClientResponseProcessor {
             }
             let bufferSize = byteArray.length
             
-            let boxedStreamingData = Unmanaged<BoxedStreamingData>.fromOpaque(bindingsContentHandle).takeUnretainedValue()
+            guard let boxedStreamingData = CallbackHandleRegistry.shared.get(statePointer, as: BoxedStreamingData.self) else {
+                SDKResponseHandler.sendInteropErrorToSDK(
+                    message: "cCompatibleHttpResponseRead: BoxedStreamingData not found in registry (handle: \(statePointer))",
+                    callbackPointer: callbackPointer
+                )
+                return
+            }
             
             if let boxedRawBuffer = boxedStreamingData.uploadBuffer {
                 await HttpClientResponseProcessor.passResponseBytes(
@@ -31,7 +36,7 @@ enum HttpClientResponseProcessor {
                     bufferSize: bufferSize,
                     callbackPointer: callbackPointer,
                     releaseBox: {
-                        _ = Unmanaged<BoxedStreamingData>.fromOpaque(bindingsContentHandle).takeRetainedValue()
+                        CallbackHandleRegistry.shared.remove(statePointer)
                     }
                 )
             } else if let boxedDownloadStream = boxedStreamingData.downloadStream {
@@ -41,10 +46,11 @@ enum HttpClientResponseProcessor {
                     bufferSize: bufferSize,
                     callbackPointer: callbackPointer,
                     releaseBox: {
-                        _ = Unmanaged<BoxedStreamingData>.fromOpaque(bindingsContentHandle).takeRetainedValue()
+                        CallbackHandleRegistry.shared.remove(statePointer)
                     }
                 )
             } else {
+                CallbackHandleRegistry.shared.remove(statePointer)
                 SDKResponseHandler.sendInteropErrorToSDK(message: "Failed to pass valid BytesOrStream",
                                                          callbackPointer: callbackPointer)
             }

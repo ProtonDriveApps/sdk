@@ -19,53 +19,29 @@ enum HttpClientRequestProcessor {
 
         let httpRequestData = Proton_Sdk_HttpRequest(byteArray: byteArray)
         
-        // Create a boxed task with the HTTP work
-        let taskBox = BoxedCancellableTask {
+        return BoxedCancellableTask.registered {
             do {
                 try await HttpClientRequestProcessor.perform(
                     client: driveClient,
                     httpRequestData: httpRequestData,
-                    callbackPointer: callbackPointer
+                    callbackPointer: callbackPointer,
+                    provider: provider
                 )
             } catch {
                 SDKResponseHandler.sendErrorToSDK(error, callbackPointer: callbackPointer)
             }
         }
-        
-        // Retain the task box and return its address as the cancellation handle
-        let unmanaged = Unmanaged.passRetained(taskBox)
-        let handle = Int(bitPattern: unmanaged.toOpaque())
-
-        // Set completion handler to release the Unmanaged reference when done
-        taskBox.setCompletionHandler {
-            unmanaged.release()
-        }
-        
-        return handle
     }
     
-    static let cCompatibleHttpCancellationAction: CCallbackWithoutByteArray = { statePointer in
-        // if statePointer is -1, it means we've early returned from cCompatibleHttpRequest
-        guard statePointer != -1 else { return }
-        // Convert the address back to the task box
-        guard let pointer = UnsafeRawPointer(bitPattern: statePointer) else {
-            let message = "cCompatibleHttpCancellationAction.statePointer is nil"
-            assertionFailure(message)
-            // there is no way we can inform the SDK back about the issue
-            return
-        }
-
-        // Get the task box and cancel it
-        let unmanaged = Unmanaged<BoxedCancellableTask>.fromOpaque(pointer)
-        let taskBox = unmanaged.takeUnretainedValue()
-        // Release of the task box is wrapped in completionBlock (see `cCompatibleHttpRequest`), which is called in `cancel`
-        taskBox.cancel()
+    static let cCompatibleHttpCancellationAction: CCallbackWithoutByteArray = { callbackHandle in
+        CallbackHandleRegistry.shared.cancel(callbackHandle)
     }
 
     fileprivate static func perform(
         client: ProtonSDKClient,
         httpRequestData: Proton_Sdk_HttpRequest,
-        callbackPointer: Int
+        callbackPointer: Int,
+        provider: SDKClientProvider
     ) async throws {
 
         switch httpRequestData.type {
@@ -77,19 +53,22 @@ enum HttpClientRequestProcessor {
                 driveRelativePath: "/drive/" + relativeApiPath,
                 client: client,
                 httpRequestData: httpRequestData,
-                callbackPointer: callbackPointer
+                callbackPointer: callbackPointer,
+                provider: provider
             )
         case .storageUpload:
             try await uploadToStorage(
                 client: client,
                 httpRequestData: httpRequestData,
-                callbackPointer: callbackPointer
+                callbackPointer: callbackPointer,
+                provider: provider
             )
         case .storageDownload:
             try await downloadFromStorage(
                 client: client,
                 httpRequestData: httpRequestData,
-                callbackPointer: callbackPointer
+                callbackPointer: callbackPointer,
+                provider: provider
             )
         case .UNRECOGNIZED(let int):
             fatalError("Unknown HttpRequestType: \(int)")
@@ -101,7 +80,8 @@ enum HttpClientRequestProcessor {
         driveRelativePath: String,
         client: ProtonSDKClient,
         httpRequestData: Proton_Sdk_HttpRequest,
-        callbackPointer: Int
+        callbackPointer: Int,
+        provider: SDKClientProvider
     ) async throws {
         let headers: [(String, [String])] = httpRequestData.headers.map { header in
             (header.name, header.values)
@@ -144,8 +124,7 @@ enum HttpClientRequestProcessor {
             let uploadBuffer = BoxedRawBuffer(bufferSize: data.count, logger: client.logger)
             uploadBuffer.copyBytes(from: data)
             let bytesOrStream = BoxedStreamingData(uploadBuffer: uploadBuffer, logger: client.logger)
-            let pointer = Unmanaged.passRetained(bytesOrStream)
-            bindingsHandle = Int(rawPointer: pointer.toOpaque())
+            bindingsHandle = CallbackHandleRegistry.shared.register(bytesOrStream, scope: .ownerManaged, owner: provider)
         } else {
             bindingsHandle = nil
         }
@@ -168,7 +147,8 @@ enum HttpClientRequestProcessor {
     fileprivate static func uploadToStorage(
         client: ProtonSDKClient,
         httpRequestData: Proton_Sdk_HttpRequest,
-        callbackPointer: Int
+        callbackPointer: Int,
+        provider: SDKClientProvider
     ) async throws {
         let headers: [(String, [String])] = httpRequestData.headers.map { header in
             (header.name, header.values)
@@ -203,8 +183,7 @@ enum HttpClientRequestProcessor {
             let uploadBuffer = BoxedRawBuffer(bufferSize: data.count, logger: client.logger)
             uploadBuffer.copyBytes(from: data)
             let bytesOrStream = BoxedStreamingData(uploadBuffer: uploadBuffer, logger: client.logger)
-            let pointer = Unmanaged.passRetained(bytesOrStream)
-            bindingsHandle = Int(rawPointer: pointer.toOpaque())
+            bindingsHandle = CallbackHandleRegistry.shared.register(bytesOrStream, scope: .ownerManaged, owner: provider)
         } else {
             bindingsHandle = nil
         }
@@ -227,7 +206,8 @@ enum HttpClientRequestProcessor {
     fileprivate static func downloadFromStorage(
         client: ProtonSDKClient,
         httpRequestData: Proton_Sdk_HttpRequest,
-        callbackPointer: Int
+        callbackPointer: Int,
+        provider: SDKClientProvider
     ) async throws {
         let headers: [(String, [String])] = httpRequestData.headers.map { header in
             (header.name, header.values)
@@ -264,6 +244,8 @@ enum HttpClientRequestProcessor {
             downloadStreamCreator: client.configuration.downloadStreamCreator
         ).get()
         
+        let bytesOrStream = BoxedStreamingData(downloadStream: response.stream, logger: client.logger)
+        let bindingsHandle = CallbackHandleRegistry.shared.register(bytesOrStream, scope: .ownerManaged, owner: provider)
         let httpResponse = Proton_Sdk_HttpResponse.with {
             $0.headers = response.headers.map { header in
                 Proton_Sdk_HttpHeader.with {
@@ -271,9 +253,6 @@ enum HttpClientRequestProcessor {
                     $0.values = header.1
                 }
             }
-            let bytesOrStream = BoxedStreamingData(downloadStream: response.stream, logger: client.logger)
-            let pointer = Unmanaged.passRetained(bytesOrStream)
-            let bindingsHandle = Int(rawPointer: pointer.toOpaque())
             $0.bindingsContentHandle = Int64(bindingsHandle)
             $0.statusCode = Int32(response.statusCode)
         }

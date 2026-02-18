@@ -3,6 +3,7 @@ import Foundation
 public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
 
     private var clientHandle: ObjectHandle = 0
+    nonisolated(unsafe) var sdkClientProvider: SDKClientProvider!
     private var downloadsManager: PhotoDownloadsManager!
     private var uploadManager: PhotoUploadsManager!
     private var thumbnailsManager: DownloadThumbnailsManager!
@@ -67,12 +68,17 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
 
         // we pass the weak reference as the state because we don't want the interop layer
         // to prolong the client object existence
-        let provider = SDKClientProvider(client: self)
+        // owner is nil: the client creation callback must outlive the client because C# may
+        // invoke secondary callbacks (log, telemetry, etc.) during teardown of operations that
+        // race with the client's deinit. SDKClientProvider.client is weak, so callbacks bail
+        // out safely once the client is gone; the small leak of the box is acceptable.
+        self.sdkClientProvider = SDKClientProvider(client: self)
         let handle: Proton_Drive_Sdk_DrivePhotosClientCreateRequest.CallResultType = try await SDKRequestHandler
             .sendInteropRequest(
                 clientCreateRequest,
-                state: provider,
-                includesLongLivedCallback: true,
+                state: sdkClientProvider,
+                scope: .indefinite,
+                owner: nil,
                 logger: logger
             )
 
@@ -86,6 +92,7 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
     }
 
     deinit {
+        CallbackHandleRegistry.shared.removeAll(ownedBy: sdkClientProvider)
         guard clientHandle != 0 else { return }
         Self.freeProtonPhotosClient(Int64(clientHandle), logger)
     }

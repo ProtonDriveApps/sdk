@@ -208,7 +208,8 @@ extension UploadsManager {
         let uploadControllerHandle: ObjectHandle = try await SDKRequestHandler.send(
             uploaderRequest,
             state: WeakReference(value: uploadOperationState),
-            includesLongLivedCallback: true,
+            scope: .ownerManaged,
+            owner: uploadOperationState,
             logger: logger
         )
 
