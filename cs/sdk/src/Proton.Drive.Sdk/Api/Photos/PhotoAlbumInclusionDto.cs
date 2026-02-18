@@ -12,7 +12,8 @@ internal sealed class PhotoAlbumInclusionDto
     [JsonPropertyName("Hash")]
     public required string NameHash { get; init; }
 
-    public required string ContentHash { get; init; }
+    [JsonConverter(typeof(ForgivingBytesToHexJsonConverter))]
+    public required ReadOnlyMemory<byte> ContentHash { get; init; }
 
     [JsonConverter(typeof(EpochSecondsJsonConverter))]
     [JsonPropertyName("AddedTime")]

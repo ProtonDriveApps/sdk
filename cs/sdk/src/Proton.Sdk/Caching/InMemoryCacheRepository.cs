@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Proton.Sdk.Caching;
 
-internal sealed class InMemoryCacheRepository : ICacheRepository, IDisposable
+public sealed class InMemoryCacheRepository : ICacheRepository, IDisposable
 {
     private readonly ConcurrentDictionary<string, string> _entries = new();
     private readonly ConcurrentDictionary<string, HashSet<string>> _keyToTags = new();
