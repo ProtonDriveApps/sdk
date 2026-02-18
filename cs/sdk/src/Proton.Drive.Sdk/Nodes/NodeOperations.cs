@@ -114,7 +114,7 @@ internal static class NodeOperations
         PgpPrivateKey parentFolderKey,
         ReadOnlySpan<byte> parentFolderHashKey,
         PgpPrivateKey signingKey,
-        bool useAeadFeatureFlag,
+        PgpProfile pgpProfile,
         out PgpPrivateKey key,
         out PgpSessionKey nameSessionKey,
         out PgpSessionKey passphraseSessionKey,
@@ -124,7 +124,6 @@ internal static class NodeOperations
         out ArraySegment<byte> passphraseSignature,
         out ArraySegment<byte> lockedKeyBytes)
     {
-        var pgpProfile = useAeadFeatureFlag ? PgpProfile.ProtonAead : PgpProfile.Proton;
         key = PgpPrivateKey.Generate("Drive key", "no-reply@proton.me", KeyGenerationAlgorithm.Default, profile: pgpProfile);
         nameSessionKey = PgpSessionKey.Generate();
 
