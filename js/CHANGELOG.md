@@ -1,5 +1,17 @@
 # Changelog
 
+## js/v0.10.0 (2026-02-19)
+
+* Add option for editors to manage share settings
+* Expose Album properties
+* Ignore apiRetrySucceeded metric on offline or timeout errors
+* Add cause to re-thrown errors
+* Add capability to add photos to albums
+* Add method to get device
+* Fix after rebase
+* TS: declare Uint8Array<ArrayBuffer> over generic Uint8Array
+* Cleanup crypto utils and fix type errors
+
 ## js/v0.9.9 (2026-02-12)
 
 * Support getAvailableName for public client
