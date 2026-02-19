@@ -85,6 +85,7 @@ export type ShareNodeSettings = {
         message?: string;
         includeNodeName?: boolean;
     };
+    editorsCanShare?: boolean;
 };
 
 export type ShareMembersSettings =
@@ -107,6 +108,7 @@ export type ShareResult = {
     nonProtonInvitations: NonProtonInvitation[];
     members: Member[];
     publicLink?: PublicLink;
+    editorsCanShare: boolean;
 };
 
 export type UnshareNodeSettings = {

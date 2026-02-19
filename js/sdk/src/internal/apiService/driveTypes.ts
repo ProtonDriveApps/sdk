@@ -2628,6 +2628,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drive/shares/{shareID}/property": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Update properties of a share
+         * @description Update the values on one or more properties of the Share. For now, only allowed changing editorsCanShare attribute
+         */
+        post: operations["post_drive-shares-{shareID}-property"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drive/migrations/shareaccesswithnode": {
         parameters: {
             query?: never;
@@ -6334,6 +6354,13 @@ export interface components {
             /** @description Base64 encoded key packet for the share passphrase, reusing the same session key as previously, and encrypted for the key referenced by the KeyID. */
             MemberKeyPacket: string;
         };
+        UpdateSharePropertyRequestDto: {
+            /**
+             * @description Indicates if editor members of this share could reshare it or not
+             * @default null
+             */
+            EditorsCanShare: boolean | null;
+        };
         ShareKPMigrationData: {
             /** @description Share to migrate. Can only be Active (State=1) Shares of Type=2 */
             ShareID: string;
@@ -6395,6 +6422,20 @@ export interface components {
              * @default null
              */
             Name: string | null;
+        };
+        StandardShareResponseDto: {
+            ID: components["schemas"]["Id"];
+            /** @description Indicates if editor members of this share could reshare it or not */
+            EditorsCanShare: boolean;
+        };
+        CreateStandardShareResponseDto: {
+            Share: components["schemas"]["StandardShareResponseDto"];
+            /**
+             * ProtonResponseCode
+             * @example 1000
+             * @enum {integer}
+             */
+            Code: 1000;
         };
         LinkSharedByMeResponseDto: {
             ShareID: components["schemas"]["Id"];
@@ -12331,6 +12372,33 @@ export interface operations {
             };
         };
     };
+    "post_drive-shares-{shareID}-property": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateSharePropertyRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessfulResponse"];
+                };
+            };
+        };
+    };
     "post_drive-migrations-shareaccesswithnode": {
         parameters: {
             query?: never;
@@ -12392,19 +12460,14 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Share */
+            /** @description Success */
             200: {
                 headers: {
+                    "x-pm-code": 1000;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        Code: components["schemas"]["ResponseCodeSuccess"];
-                        Share: {
-                            /** @description Share ID */
-                            ID: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["CreateStandardShareResponseDto"];
                 };
             };
             /** @description Unprocessable Entity */

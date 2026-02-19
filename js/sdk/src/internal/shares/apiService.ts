@@ -170,6 +170,7 @@ function convertSharePayload(response: GetShareResponse): EncryptedShare {
               }
             : undefined,
         type: convertShareTypeNumberToEnum(response.Type),
+        editorsCanShare: response.EditorsCanShare
     };
 }
 

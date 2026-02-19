@@ -64,8 +64,10 @@ type GetShareExternalInvitations =
 type GetShareMembers =
     drivePaths['/drive/v2/shares/{shareID}/members']['get']['responses']['200']['content']['application/json'];
 
-type PostSharedBookmarksRequest =
-    Extract<drivePaths['/drive/v2/urls/{token}/bookmark']['post']['requestBody'], {content: object}>['content']['application/json'];
+type PostSharedBookmarksRequest = Extract<
+    drivePaths['/drive/v2/urls/{token}/bookmark']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
 type PostSharedBookmarksResponse =
     drivePaths['/drive/v2/urls/{token}/bookmark']['post']['responses']['200']['content']['application/json'];
 
@@ -75,6 +77,14 @@ type PostCreateShareRequest = Extract<
 >['content']['application/json'];
 type PostCreateShareResponse =
     drivePaths['/drive/volumes/{volumeID}/shares']['post']['responses']['200']['content']['application/json'];
+
+type PostChangeSharePropertiesRequest = Extract<
+    drivePaths['/drive/shares/{shareID}/property']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+
+type PostChangeSharePropertiesResponse =
+    drivePaths['/drive/shares/{shareID}/property']['post']['responses']['200']['content']['application/json'];
 
 type PostInviteProtonUserRequest = Extract<
     drivePaths['/drive/v2/shares/{shareID}/invitations']['post']['requestBody'],
@@ -331,7 +341,7 @@ export class SharingAPIService {
         addressId: string;
         addressKeyId: string;
     }): Promise<void> {
-         await this.apiService.post<PostSharedBookmarksRequest, PostSharedBookmarksResponse>(
+        await this.apiService.post<PostSharedBookmarksRequest, PostSharedBookmarksResponse>(
             `drive/v2/urls/${bookmark.token}/bookmark`,
             {
                 BookmarkShareURL: {
@@ -390,7 +400,7 @@ export class SharingAPIService {
             base64PassphraseKeyPacket: string;
             base64NameKeyPacket: string;
         },
-    ): Promise<string> {
+    ): Promise<{ shareId: string; editorsCanShare: boolean }> {
         const { volumeId, nodeId } = splitNodeUid(nodeUid);
         const response = await this.apiService.post<PostCreateShareRequest, PostCreateShareResponse>(
             `drive/volumes/${volumeId}/shares`,
@@ -405,11 +415,18 @@ export class SharingAPIService {
                 NameKeyPacket: node.base64NameKeyPacket,
             },
         );
-        return response.Share.ID;
+        return { shareId: response.Share.ID, editorsCanShare: response.Share.EditorsCanShare };
     }
 
     async deleteShare(shareId: string, force: boolean = false): Promise<void> {
         await this.apiService.delete(`drive/shares/${shareId}?Force=${force ? 1 : 0}`);
+    }
+
+    async changeShareProperties(shareId: string, { editorsCanShare }: { editorsCanShare: boolean }) {
+        await this.apiService.post<PostChangeSharePropertiesRequest, PostChangeSharePropertiesResponse>(
+            `drive/shares/${shareId}/property`,
+            { EditorsCanShare: editorsCanShare },
+        );
     }
 
     async inviteProtonUser(
