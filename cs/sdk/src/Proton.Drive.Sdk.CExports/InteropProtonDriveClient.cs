@@ -90,7 +90,7 @@ internal static class InteropProtonDriveClient
         var createdFolder = await client.CreateFolderAsync(
             NodeUid.Parse(request.ParentFolderUid),
             request.FolderName,
-            request.LastModificationTime?.ToDateTime(),
+            request.LastModificationTime?.ToDateTimeFixed(),
             cancellationToken).ConfigureAwait(false);
 
         return new FolderNode
@@ -122,7 +122,7 @@ internal static class InteropProtonDriveClient
             request.Name,
             request.MediaType,
             request.Size,
-            request.LastModificationTime.ToDateTime(),
+            request.LastModificationTime.ToDateTimeFixed(),
             additionalMetadata,
             request.OverrideExistingDraftByOtherClient,
             cancellationToken).ConfigureAwait(false);
@@ -144,7 +144,7 @@ internal static class InteropProtonDriveClient
         var fileUploader = await client.GetFileRevisionUploaderAsync(
             RevisionUid.Parse(request.CurrentActiveRevisionUid),
             request.Size,
-            request.LastModificationTime.ToDateTime(),
+            request.LastModificationTime.ToDateTimeFixed(),
             additionalMetadata,
             cancellationToken).ConfigureAwait(false);
 
