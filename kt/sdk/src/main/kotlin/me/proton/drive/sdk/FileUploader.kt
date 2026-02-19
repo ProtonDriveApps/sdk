@@ -8,6 +8,7 @@ import me.proton.drive.sdk.entity.FileRevisionUploaderRequest
 import me.proton.drive.sdk.entity.FileUploaderRequest
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
+import me.proton.drive.sdk.extension.toPercentageString
 import me.proton.drive.sdk.internal.JniFileUploader
 import me.proton.drive.sdk.internal.JniUploadController
 import me.proton.drive.sdk.internal.toLogId
@@ -37,7 +38,7 @@ class FileUploader internal constructor(
             onRead = channel::read,
             onProgress = { progressUpdate ->
                 with(progressUpdate) {
-                    log(DEBUG, "progress: $bytesCompleted/$bytesInTotal")
+                    log(DEBUG, "progress: ${progressUpdate.toPercentageString()}")
                     controllerReference.get()?.emitProgress(toEntity())
                 }
             },
