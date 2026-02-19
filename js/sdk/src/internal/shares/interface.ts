@@ -78,6 +78,7 @@ export interface EncryptedShare extends BaseShare {
     creatorEmail: string;
     encryptedCrypto: EncryptedShareCrypto;
     membership?: ShareMembership;
+    editorsCanShare: boolean;
 }
 
 interface ShareMembership {

@@ -18,6 +18,8 @@ import { SharingManagement } from './sharingManagement';
 import { ValidationError } from '../../errors';
 import { ErrorCode } from '../apiService';
 
+const DEFAULT_SHARE_ID = 'shareId';
+
 describe('SharingManagement', () => {
     let logger: Logger;
     let apiService: SharingAPIService;
@@ -34,7 +36,7 @@ describe('SharingManagement', () => {
 
         // @ts-expect-error No need to implement all methods for mocking
         apiService = {
-            createStandardShare: jest.fn().mockReturnValue('newShareId'),
+            createStandardShare: jest.fn().mockReturnValue({ shareId: 'newShareId', editorsCanShare: false }),
             getShareInvitations: jest.fn().mockResolvedValue([]),
             getShareExternalInvitations: jest.fn().mockResolvedValue([]),
             getShareMembers: jest.fn().mockResolvedValue([]),
@@ -63,6 +65,7 @@ describe('SharingManagement', () => {
                 publicUrl: 'publicLinkUrl',
             }),
             updatePublicLink: jest.fn(),
+            changeShareProperties: jest.fn(),
         };
         // @ts-expect-error No need to implement all methods for mocking
         cache = {
@@ -98,7 +101,7 @@ describe('SharingManagement', () => {
         // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
             loadEncryptedShare: jest.fn().mockResolvedValue({
-                id: 'shareId',
+                id: DEFAULT_SHARE_ID,
                 addressId: 'addressId',
                 creatorEmail: 'address@example.com',
                 passphraseSessionKey: 'sharePassphraseSessionKey',
@@ -106,9 +109,11 @@ describe('SharingManagement', () => {
         };
         // @ts-expect-error No need to implement all methods for mocking
         nodesService = {
-            getNode: jest
-                .fn()
-                .mockImplementation((nodeUid) => ({ nodeUid, shareId: 'shareId', name: { ok: true, value: 'name' } })),
+            getNode: jest.fn().mockImplementation((nodeUid) => ({
+                nodeUid,
+                shareId: DEFAULT_SHARE_ID,
+                name: { ok: true, value: 'name' },
+            })),
             getNodeKeys: jest.fn().mockImplementation((nodeUid) => ({ key: 'node-key' })),
             getNodePrivateAndSessionKeys: jest.fn().mockImplementation((nodeUid) => ({})),
             getRootNodeEmailKey: jest.fn().mockResolvedValue({ email: 'volume-email', addressKey: 'volume-key' }),
@@ -225,6 +230,7 @@ describe('SharingManagement', () => {
                 nonProtonInvitations: [],
                 members: [],
                 publicLink: undefined,
+                editorsCanShare: false,
             });
             expect(apiService.updateInvitation).not.toHaveBeenCalled();
             expect(apiService.inviteProtonUser).toHaveBeenCalled();
@@ -393,6 +399,28 @@ describe('SharingManagement', () => {
                 expect(apiService.updateInvitation).toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).not.toHaveBeenCalled();
                 expect(cache.addSharedByMeNodeUid).not.toHaveBeenCalled();
+            });
+
+            it('should update editorsCanChange', async () => {
+                const sharingInfo = await sharingManagement.shareNode(nodeUid, {
+                    editorsCanShare: true,
+                });
+
+                expect(sharingInfo).toEqual({
+                    protonInvitations: [
+                        {
+                            ...invitation,
+                            role: 'viewer',
+                        },
+                    ],
+                    nonProtonInvitations: [externalInvitation],
+                    members: [member],
+                    publicLink: undefined,
+                    editorsCanShare: true,
+                });
+                expect(apiService.changeShareProperties).toHaveBeenCalledWith(DEFAULT_SHARE_ID, {
+                    editorsCanShare: true,
+                });
             });
 
             it('should be no-op if no change', async () => {

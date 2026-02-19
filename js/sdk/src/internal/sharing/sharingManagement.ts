@@ -77,11 +77,12 @@ export class SharingManagement {
             return;
         }
 
-        const [protonInvitations, nonProtonInvitations, members, publicLink] = await Promise.all([
+        const [protonInvitations, nonProtonInvitations, members, publicLink, share] = await Promise.all([
             Array.fromAsync(this.iterateShareInvitations(node.shareId)),
             Array.fromAsync(this.iterateShareExternalInvitations(node.shareId)),
             Array.fromAsync(this.iterateShareMembers(node.shareId)),
             this.getPublicLink(node.shareId),
+            this.sharesService.loadEncryptedShare(node.shareId),
         ]);
 
         return {
@@ -89,6 +90,7 @@ export class SharingManagement {
             nonProtonInvitations,
             members,
             publicLink,
+            editorsCanShare: share.editorsCanShare,
         };
     }
 
@@ -161,6 +163,7 @@ export class SharingManagement {
                     nonProtonInvitations: [],
                     members: [],
                     publicLink: undefined,
+                    editorsCanShare: result.editorsCanShare,
                 };
                 contextShareAddress = result.contextShareAddress;
             } catch (error: unknown) {
@@ -182,6 +185,11 @@ export class SharingManagement {
         }
         if (!contextShareAddress) {
             contextShareAddress = await this.nodesService.getRootNodeEmailKey(nodeUid);
+        }
+
+        if (settings.editorsCanShare !== undefined) {
+            await this.setEditorsCanShare(currentSharing.share.shareId, settings.editorsCanShare);
+            currentSharing.editorsCanShare = settings.editorsCanShare;
         }
 
         const emailOptions: EmailOptions = {
@@ -294,6 +302,7 @@ export class SharingManagement {
             nonProtonInvitations: currentSharing.nonProtonInvitations,
             members: currentSharing.members,
             publicLink: currentSharing.publicLink,
+            editorsCanShare: currentSharing.editorsCanShare,
         };
     }
 
@@ -385,6 +394,7 @@ export class SharingManagement {
             nonProtonInvitations: currentSharing.nonProtonInvitations,
             members: currentSharing.members,
             publicLink: currentSharing.publicLink,
+            editorsCanShare: currentSharing.editorsCanShare,
         };
     }
 
@@ -415,7 +425,9 @@ export class SharingManagement {
         };
     }
 
-    private async createShare(nodeUid: string): Promise<{ share: Share; contextShareAddress: ContextShareAddress }> {
+    private async createShare(
+        nodeUid: string,
+    ): Promise<{ share: Share; contextShareAddress: ContextShareAddress; editorsCanShare: boolean }> {
         const node = await this.nodesService.getNode(nodeUid);
         if (!node.parentUid) {
             throw new ValidationError(c('Error').t`Cannot share root folder`);
@@ -426,10 +438,15 @@ export class SharingManagement {
 
         const nodeKeys = await this.nodesService.getNodePrivateAndSessionKeys(nodeUid);
         const keys = await this.cryptoService.generateShareKeys(nodeKeys, addressKey);
-        const shareId = await this.apiService.createStandardShare(nodeUid, addressId, keys.shareKey.encrypted, {
-            base64PassphraseKeyPacket: keys.base64PpassphraseKeyPacket,
-            base64NameKeyPacket: keys.base64NameKeyPacket,
-        });
+        const { shareId, editorsCanShare } = await this.apiService.createStandardShare(
+            nodeUid,
+            addressId,
+            keys.shareKey.encrypted,
+            {
+                base64PassphraseKeyPacket: keys.base64PpassphraseKeyPacket,
+                base64NameKeyPacket: keys.base64NameKeyPacket,
+            },
+        );
         await this.nodesService.notifyNodeChanged(nodeUid);
         if (await this.cache.hasSharedByMeNodeUidsLoaded()) {
             await this.cache.addSharedByMeNodeUid(nodeUid);
@@ -449,7 +466,12 @@ export class SharingManagement {
         return {
             share,
             contextShareAddress,
+            editorsCanShare,
         };
+    }
+
+    private async setEditorsCanShare(shareId: string, editorsCanShare: boolean) {
+        await this.apiService.changeShareProperties(shareId, { editorsCanShare });
     }
 
     /**
