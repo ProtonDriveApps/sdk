@@ -9,3 +9,9 @@ fun ProtonDriveSdk.ProgressUpdate.toEntity() = takeIf { it.bytesInTotal > 0 }?.r
         bytesInTotal = bytesInTotal,
     )
 }
+
+internal fun ProtonDriveSdk.ProgressUpdate.toPercentageString(): String = if (bytesInTotal > 0) {
+    (bytesCompleted * 100.0 / bytesInTotal).toInt()
+} else {
+    0
+}.let { percentage -> "$percentage%" }

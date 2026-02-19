@@ -7,6 +7,7 @@ import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
 import me.proton.drive.sdk.entity.PhotosUploaderRequest
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
+import me.proton.drive.sdk.extension.toPercentageString
 import me.proton.drive.sdk.internal.JniPhotosUploader
 import me.proton.drive.sdk.internal.JniUploadController
 import me.proton.drive.sdk.internal.toLogId
@@ -36,7 +37,7 @@ class PhotosUploader(
             onRead = channel::read,
             onProgress = { progressUpdate ->
                 with(progressUpdate) {
-                    log(DEBUG, "progress: $bytesCompleted/$bytesInTotal")
+                    log(DEBUG, "progress: ${progressUpdate.toPercentageString()}")
                     controllerReference.get()?.emitProgress(toEntity())
                 }
             },

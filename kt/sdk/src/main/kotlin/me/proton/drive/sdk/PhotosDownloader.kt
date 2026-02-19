@@ -6,6 +6,7 @@ import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
 import me.proton.drive.sdk.extension.seek
 import me.proton.drive.sdk.extension.toEntity
+import me.proton.drive.sdk.extension.toPercentageString
 import me.proton.drive.sdk.internal.JniDownloadController
 import me.proton.drive.sdk.internal.JniPhotosDownloader
 import me.proton.drive.sdk.internal.factory
@@ -39,7 +40,7 @@ class PhotosDownloader internal constructor(
             },
             onProgress = { progressUpdate ->
                 with(progressUpdate) {
-                    bridge.internalLogger(DEBUG, "progress: $bytesCompleted/$bytesInTotal")
+                    bridge.internalLogger(DEBUG, "progress: ${progressUpdate.toPercentageString()}")
                     controllerReference.get()?.emitProgress(toEntity())
                 }
             },
