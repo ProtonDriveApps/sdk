@@ -111,14 +111,14 @@ export class UploadCryptoService {
             nodeRevisionDraftKeys.signingKeys.contentSigningKey,
         );
 
-        const digest = await crypto.subtle.digest('SHA-256', encryptedData);
+        const digestPromise = crypto.subtle.digest('SHA-256', encryptedData);
 
         return {
             type: thumbnail.type,
             encryptedData: encryptedData,
             originalSize: thumbnail.thumbnail.length,
             encryptedSize: encryptedData.length,
-            hash: new Uint8Array<ArrayBuffer>(digest),
+            hashPromise: digestPromise.then((digest) => new Uint8Array<ArrayBuffer>(digest)),
         };
     }
 
@@ -134,8 +134,7 @@ export class UploadCryptoService {
             nodeRevisionDraftKeys.contentKeyPacketSessionKey,
             nodeRevisionDraftKeys.signingKeys.contentSigningKey,
         );
-
-        const digest = await crypto.subtle.digest('SHA-256', encryptedData);
+        const digestPromise = crypto.subtle.digest('SHA-256', encryptedData);
         const { verificationToken } = await verifyBlock(encryptedData);
 
         return {
@@ -145,7 +144,7 @@ export class UploadCryptoService {
             verificationToken,
             originalSize: block.length,
             encryptedSize: encryptedData.length,
-            hash: new Uint8Array<ArrayBuffer>(digest),
+            hashPromise: digestPromise.then((digest) => new Uint8Array<ArrayBuffer>(digest)),
         };
     }
 

@@ -230,7 +230,7 @@ export class StreamUploader {
         };
         await this.uploadManager.commitDraft(
             this.revisionDraft,
-            this.manifest,
+            await this.getManifest(),
             extendedAttributes,
             this.metadata.additionalMetadata,
         );
@@ -328,8 +328,6 @@ export class StreamUploader {
                 contentBlocks: Array.from(
                     this.encryptedBlocks.values().map((block) => ({
                         index: block.index,
-                        encryptedSize: block.encryptedSize,
-                        hash: block.hash,
                         armoredSignature: block.armoredSignature,
                         verificationToken: block.verificationToken,
                     })),
@@ -337,8 +335,6 @@ export class StreamUploader {
                 thumbnails: Array.from(
                     this.encryptedThumbnails.values().map((block) => ({
                         type: block.type,
-                        encryptedSize: block.encryptedSize,
-                        hash: block.hash,
                     })),
                 ),
             },
@@ -422,7 +418,7 @@ export class StreamUploader {
                 );
                 this.uploadedThumbnails.push({
                     type: encryptedThumbnail.type,
-                    hash: encryptedThumbnail.hash,
+                    hashPromise: encryptedThumbnail.hashPromise,
                     encryptedSize: encryptedThumbnail.encryptedSize,
                     originalSize: encryptedThumbnail.originalSize,
                 });
@@ -489,7 +485,7 @@ export class StreamUploader {
                 );
                 this.uploadedBlocks.push({
                     index: encryptedBlock.index,
-                    hash: encryptedBlock.hash,
+                    hashPromise: encryptedBlock.hashPromise,
                     encryptedSize: encryptedBlock.encryptedSize,
                     originalSize: encryptedBlock.originalSize,
                 });
@@ -524,8 +520,6 @@ export class StreamUploader {
                             contentBlocks: [
                                 {
                                     index: encryptedBlock.index,
-                                    encryptedSize: encryptedBlock.encryptedSize,
-                                    hash: encryptedBlock.hash,
                                     armoredSignature: encryptedBlock.armoredSignature,
                                     verificationToken: encryptedBlock.verificationToken,
                                 },
@@ -655,12 +649,12 @@ export class StreamUploader {
         return uploadedBlocks.map((block) => block.originalSize);
     }
 
-    protected get manifest(): Uint8Array<ArrayBuffer> {
+    protected async getManifest(): Promise<Uint8Array<ArrayBuffer>> {
         this.uploadedThumbnails.sort((a, b) => a.type - b.type);
         this.uploadedBlocks.sort((a, b) => a.index - b.index);
         const hashes = [
-            ...this.uploadedThumbnails.map(({ hash }) => hash),
-            ...this.uploadedBlocks.map(({ hash }) => hash),
+            ...(await Promise.all(this.uploadedThumbnails.map(({ hashPromise }) => hashPromise))),
+            ...(await Promise.all(this.uploadedBlocks.map(({ hashPromise }) => hashPromise))),
         ];
         return mergeUint8Arrays(hashes);
     }

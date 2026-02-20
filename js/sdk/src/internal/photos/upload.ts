@@ -119,7 +119,12 @@ export class PhotoStreamUploader extends StreamUploader {
             digests,
         };
 
-        await this.photoUploadManager.commitDraftPhoto(this.revisionDraft, this.manifest, extendedAttributes, this.photoMetadata);
+        await this.photoUploadManager.commitDraftPhoto(
+            this.revisionDraft,
+            await this.getManifest(),
+            extendedAttributes,
+            this.photoMetadata,
+        );
     }
 }
 
