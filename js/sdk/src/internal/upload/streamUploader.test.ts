@@ -27,7 +27,7 @@ async function mockEncryptBlock(
         verificationToken: 'verificationToken',
         originalSize: block.length,
         encryptedSize: block.length + BLOCK_ENCRYPTION_OVERHEAD,
-        hash: 'blockHash',
+        hashPromise: Promise.resolve('blockHash'),
     };
 }
 
@@ -90,7 +90,7 @@ describe('StreamUploader', () => {
                 encryptedData: thumbnail.thumbnail,
                 originalSize: thumbnail.thumbnail.length,
                 encryptedSize: thumbnail.thumbnail + 1000,
-                hash: 'thumbnailHash',
+                hashPromise: Promise.resolve('thumbnailHash'),
             })),
             encryptBlock: jest.fn().mockImplementation(mockEncryptBlock),
         };
@@ -496,8 +496,6 @@ describe('StreamUploader', () => {
                     contentBlocks: [
                         {
                             index: 2,
-                            encryptedSize: 4 * 1024 * 1024 + 10000,
-                            hash: 'blockHash',
                             armoredSignature: 'signature',
                             verificationToken: 'verificationToken',
                         },
