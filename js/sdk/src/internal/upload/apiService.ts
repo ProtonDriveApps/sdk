@@ -162,22 +162,24 @@ export class UploadAPIService {
         blocks: {
             contentBlocks: {
                 index: number;
-                hash: Uint8Array<ArrayBuffer>;
-                encryptedSize: number;
                 armoredSignature: string;
                 verificationToken: Uint8Array<ArrayBuffer>;
             }[];
             thumbnails?: {
                 type: ThumbnailType;
-                hash: Uint8Array<ArrayBuffer>;
-                encryptedSize: number;
             }[];
         },
     ): Promise<UploadTokens> {
         const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(draftNodeRevisionUid);
         const result = await this.apiService.post<
             // TODO: Deprected fields but not properly marked in the types.
-            Omit<PostRequestBlockUploadRequest, 'ShareID' | 'Thumbnail' | 'ThumbnailHash' | 'ThumbnailSize'>,
+            Omit<
+                PostRequestBlockUploadRequest,
+                'ShareID' | 'Thumbnail' | 'ThumbnailHash' | 'ThumbnailSize' | 'BlockList' | 'ThumbnailList'
+            > & {
+                BlockList: Omit<PostRequestBlockUploadRequest['BlockList'][0], 'Hash' | 'Size'>[];
+                ThumbnailList: Omit<PostRequestBlockUploadRequest['ThumbnailList'][0], 'Hash' | 'Size'>[];
+            },
             PostRequestBlockUploadResponse
         >('drive/blocks', {
             AddressID: addressId,
@@ -186,16 +188,12 @@ export class UploadAPIService {
             RevisionID: revisionId,
             BlockList: blocks.contentBlocks.map((block) => ({
                 Index: block.index,
-                Hash: uint8ArrayToBase64String(block.hash),
                 EncSignature: block.armoredSignature,
-                Size: block.encryptedSize,
                 Verifier: {
                     Token: uint8ArrayToBase64String(block.verificationToken),
                 },
             })),
             ThumbnailList: (blocks.thumbnails || []).map((block) => ({
-                Hash: uint8ArrayToBase64String(block.hash),
-                Size: block.encryptedSize,
                 Type: block.type,
             })),
         });

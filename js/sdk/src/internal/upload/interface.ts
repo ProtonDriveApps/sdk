@@ -64,7 +64,7 @@ export type NodeCryptoSigningKeys = {
 export type EncryptedBlockMetadata = {
     encryptedSize: number;
     originalSize: number;
-    hash: Uint8Array<ArrayBuffer>;
+    hashPromise: Promise<Uint8Array<ArrayBuffer>>;
 };
 
 export type EncryptedBlock = EncryptedBlockMetadata & {
