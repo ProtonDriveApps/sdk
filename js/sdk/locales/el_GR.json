@@ -11,6 +11,9 @@
       "Bookmark password is not available": [
         "Η σελιδοδείκτηση κωδικού δεν είναι διαθέσιμη"
       ],
+      "Cannot add photo to album without a valid name": [
+        "Δεν είναι δυνατή η προσθήκη φωτογραφίας στο άλμπουμ χωρίς έγκυρο όνομα"
+      ],
       "Cannot download a folder": [
         "Δεν είναι δυνατή η λήψη ενός φακέλου"
       ],
@@ -165,8 +168,14 @@
       "Operation aborted": [
         "Η λειτουργία ακυρώθηκε"
       ],
+      "Operation failed, try again later": [
+        "Η λειτουργία απέτυχε, δοκιμάστε ξανά αργότερα"
+      ],
       "Parent cannot be decrypted": [
         "Το γονικό αντικείμενο δεν μπορεί να αποκρυπτογραφηθεί"
+      ],
+      "Photo not found": [
+        "Η φωτογραφία δεν βρέθηκε"
       ],
       "Renaming root item is not allowed": [
         "Δεν επιτρέπεται η μετονομασία του ριζικού στοιχείου"

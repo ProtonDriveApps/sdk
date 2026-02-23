@@ -11,6 +11,9 @@
       "Bookmark password is not available": [
         "Bladwijzerwachtwoord is niet beschikbaar"
       ],
+      "Cannot add photo to album without a valid name": [
+        "Kan geen foto aan album toevoegen zonder geldige naam"
+      ],
       "Cannot download a folder": [
         "Kan geen map downloaden"
       ],
@@ -165,8 +168,14 @@
       "Operation aborted": [
         "Handeling afgebroken"
       ],
+      "Operation failed, try again later": [
+        "Actie mislukt, probeer het later opnieuw"
+      ],
       "Parent cannot be decrypted": [
         "Bovenliggend onderdeel kan niet worden ontsleuteld"
+      ],
+      "Photo not found": [
+        "Foto niet gevonden"
       ],
       "Renaming root item is not allowed": [
         "Het hernoemen van het hoofditem is niet toegelaten"

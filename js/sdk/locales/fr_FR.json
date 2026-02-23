@@ -11,6 +11,9 @@
       "Bookmark password is not available": [
         "Le mot de passe du favori n'est pas disponible."
       ],
+      "Cannot add photo to album without a valid name": [
+        "Impossible d'ajouter une photo à l'album sans un nom valide."
+      ],
       "Cannot download a folder": [
         "Le téléchargement d'un dossier n'a pas abouti."
       ],
@@ -165,8 +168,14 @@
       "Operation aborted": [
         "L'opération a été annulée."
       ],
+      "Operation failed, try again later": [
+        "L'opération n'a pas abouti, veuillez réessayer plus tard."
+      ],
       "Parent cannot be decrypted": [
         "L'élément principal ne peut pas être déchiffré."
+      ],
+      "Photo not found": [
+        "La photo est introuvable."
       ],
       "Renaming root item is not allowed": [
         "La modification du nom de l'élément principal n'est pas autorisée."
