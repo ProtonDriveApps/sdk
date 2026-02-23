@@ -14,7 +14,7 @@ class ContinuationValueOrNullResponse<T>(
     override fun invoke(data: ByteBuffer) = parse(data) { response ->
         when (response.resultCase) {
             VALUE -> {
-                if (response.value.typeUrl == anyConverter.typeUrl) {
+                if (response.value.typeUrl != anyConverter.typeUrl) {
                     error("Wrong converter for ${response.value.typeUrl} (${anyConverter.typeUrl})")
                 }
                 anyConverter.convert(response.value)
