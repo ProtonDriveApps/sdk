@@ -5,7 +5,7 @@ androidx-room = "2.7.2"
 androidx-test = "1.5.0"
 # Android tools
 android-tools = "1.1.5"
-core = "35.0.0"
+core = "36.3.2"
 # Dagger
 dagger = "2.53.1"
 # Desugar

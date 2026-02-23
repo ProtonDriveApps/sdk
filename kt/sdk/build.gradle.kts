@@ -73,7 +73,9 @@ dependencies {
     androidTestImplementation(files("$rootDir/gopenpgp-v2-v3/gopenpgp.aar"))
     androidTestImplementation(libs.core.auth.domain)
     androidTestImplementation(libs.core.network.data)
-    androidTestImplementation(libs.core.crypto.android)
+    androidTestImplementation(libs.core.crypto.android) {
+        exclude("me.proton.crypto", "android-golib")
+    }
     androidTestImplementation(libs.core.domain)
     androidTestImplementation(libs.core.account.dagger)
     androidTestImplementation(libs.core.accountManager.dagger) {
@@ -83,7 +85,9 @@ dependencies {
         exclude("me.proton.core", "auth-presentation")
     }
     androidTestImplementation(libs.core.accountRecovery.dagger)
-    androidTestImplementation(libs.core.crypto.dagger)
+    androidTestImplementation(libs.core.crypto.dagger){
+        exclude("me.proton.crypto", "android-golib")
+    }
     androidTestImplementation(libs.core.featureFlag.dagger)
     androidTestImplementation(libs.core.key.dagger)
     androidTestImplementation(libs.core.plan.dagger)
