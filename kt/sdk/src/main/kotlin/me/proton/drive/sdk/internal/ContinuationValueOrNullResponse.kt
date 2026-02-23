@@ -1,7 +1,6 @@
 package me.proton.drive.sdk.internal
 
 import me.proton.drive.sdk.converter.AnyConverter
-import me.proton.drive.sdk.extension.toException
 import proton.sdk.ProtonSdk.Response.ResultCase.ERROR
 import proton.sdk.ProtonSdk.Response.ResultCase.RESULT_NOT_SET
 import proton.sdk.ProtonSdk.Response.ResultCase.VALUE
@@ -15,14 +14,14 @@ class ContinuationValueOrNullResponse<T>(
     override fun invoke(data: ByteBuffer) = parse(data) { response ->
         when (response.resultCase) {
             VALUE -> {
-                check(response.value.typeUrl == anyConverter.typeUrl) {
-                    "Wrong converter for ${response.value.typeUrl} (${anyConverter.typeUrl})"
+                if (response.value.typeUrl == anyConverter.typeUrl) {
+                    error("Wrong converter for ${response.value.typeUrl} (${anyConverter.typeUrl})")
                 }
                 anyConverter.convert(response.value)
             }
 
             RESULT_NOT_SET -> null
-            ERROR -> throw response.error.toException()
+            ERROR -> error(response.error)
             null -> null
         }
     }

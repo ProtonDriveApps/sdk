@@ -2,6 +2,7 @@ package me.proton.drive.sdk.internal
 
 import com.google.protobuf.kotlin.toByteString
 import me.proton.drive.sdk.ProtonDriveSdkException
+import me.proton.drive.sdk.extension.toError
 import proton.sdk.ProtonSdk
 import java.nio.ByteBuffer
 import kotlin.coroutines.Continuation
@@ -24,17 +25,25 @@ abstract class BaseContinuationResponse<T>(
             }
             .mapCatching(block)
             .onSuccess(continuation::resume)
-            .onFailure(::resumeWithException)
+            .onFailure(continuation::resumeWithException)
     }
 
-    private fun resumeWithException(exception: Throwable) {
-        continuation.resumeWithException(exception.apply {
-            addSuppressed(callSite.apply {
-                // Remove the first few frames that are internal to this function
-                stackTrace = stackTrace.dropWhile { element ->
-                    element.className.startsWith("me.proton.drive.sdk.internal.Jni").not()
-                }.toTypedArray()
-            })
-        })
+    protected fun error(message: String): Nothing = throw ProtonDriveSdkException(
+        message = message,
+        cause = prepareCallSite(),
+        error = null,
+    )
+
+    protected fun error(error: ProtonSdk.Error): Nothing = throw ProtonDriveSdkException(
+        message = error.message,
+        cause = prepareCallSite(),
+        error = error.toError(),
+    )
+
+    private fun prepareCallSite(): CallerException = callSite.apply {
+        // Remove the first few frames that are internal to this function
+        stackTrace = stackTrace.dropWhile { element ->
+            element.className.startsWith("me.proton.drive.sdk.internal.Jni").not()
+        }.toTypedArray()
     }
 }
