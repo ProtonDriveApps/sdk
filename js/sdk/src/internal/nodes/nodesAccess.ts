@@ -412,7 +412,7 @@ export abstract class NodesAccessBase<
         }
         // This is bug that should not happen.
         // API cannot provide node without parent or share.
-        throw new Error('Node has neither parent node nor share');
+        throw new Error(`Node has neither parent node nor share: ${node.uid}`);
     }
 
     async getNodeKeys(nodeUid: string): Promise<DecryptedNodeKeys> {
