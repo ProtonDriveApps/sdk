@@ -178,7 +178,7 @@ export class PhotosNodesAccess extends NodesAccessBase<EncryptedPhotoNode, Decry
 
         // This is bug that should not happen.
         // API cannot provide node without parent or share or album.
-        throw new Error('Node has neither parent node nor share nor album');
+        throw new Error(`Node has neither parent node nor share nor album: ${node.uid}`);
     }
 
     protected getDegradedUndecryptableNode(
