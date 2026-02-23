@@ -11,6 +11,9 @@
       "Bookmark password is not available": [
         "Heslo záložky nie je dostupné"
       ],
+      "Cannot add photo to album without a valid name": [
+        "Nie je možné pridať fotografiu do albumu bez platného názvu"
+      ],
       "Cannot download a folder": [
         "Nie je možné stiahnuť priečinok"
       ],
@@ -167,8 +170,14 @@
       "Operation aborted": [
         "Operácia prerušená"
       ],
+      "Operation failed, try again later": [
+        "Operácia zlyhala, skúste to neskôr"
+      ],
       "Parent cannot be decrypted": [
         "Nadradenú položku nemožno dešifrovať"
+      ],
+      "Photo not found": [
+        "Fotka sa nenašla"
       ],
       "Renaming root item is not allowed": [
         "Premenovanie koreňovej položky nie je povolené"

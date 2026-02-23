@@ -95,6 +95,9 @@
       "File has no content key": [
         "O arquivo não tem chave de conteúdo."
       ],
+      "File hash does not match expected hash": [
+        "O hash do arquivo não corresponde ao hash esperado"
+      ],
       "Invalid URL": [
         "O URL não é válido."
       ],
@@ -158,6 +161,9 @@
       ],
       "Parent cannot be decrypted": [
         "O elemento principal não pode ser descriptografado."
+      ],
+      "Photo not found": [
+        "Foto não encontrada"
       ],
       "Renaming root item is not allowed": [
         "Não é permitido alterar o nome do item raiz"

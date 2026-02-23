@@ -11,6 +11,9 @@
       "Bookmark password is not available": [
         "Пароль закладкі недаступны"
       ],
+      "Cannot add photo to album without a valid name": [
+        "Нельга дадаць фатаграфію ў альбом без сапраўднай назвы"
+      ],
       "Cannot download a folder": [
         "Немагчыма спампаваць папку"
       ],
@@ -167,8 +170,14 @@
       "Operation aborted": [
         "Аперацыя перарвана"
       ],
+      "Operation failed, try again later": [
+        "Збой аперацыі. Паспрабуйце яшчэ раз пазней"
+      ],
       "Parent cannot be decrypted": [
         "Немагчыма расшыфраваць бацькоўскі вузел"
+      ],
+      "Photo not found": [
+        "Фатаграфія не знойдзена"
       ],
       "Renaming root item is not allowed": [
         "Перайменаванне каранёвага элемента забаронена"

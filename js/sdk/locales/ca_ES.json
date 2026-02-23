@@ -11,6 +11,9 @@
       "Bookmark password is not available": [
         "La contrasenya d'adreces d'interès no està disponible."
       ],
+      "Cannot add photo to album without a valid name": [
+        "No es pot afegir la fotografia a l'àlbum sense un nom vàlid"
+      ],
       "Cannot download a folder": [
         "No es pot descarregar una carpeta"
       ],
@@ -165,8 +168,14 @@
       "Operation aborted": [
         "S'ha interromput l'operació"
       ],
+      "Operation failed, try again later": [
+        "L'operació ha fallat, torneu-ho a provar més tard"
+      ],
       "Parent cannot be decrypted": [
         "L'element principal no es pot desxifrar"
+      ],
+      "Photo not found": [
+        "No s'ha trobat la fotografia"
       ],
       "Renaming root item is not allowed": [
         "No està permès canviar el nom d'un element arrel"

@@ -11,6 +11,9 @@
       "Bookmark password is not available": [
         "Yer imi parolası kullanılamıyor"
       ],
+      "Cannot add photo to album without a valid name": [
+        "Geçerli bir ad olmadan fotoğraf albüme eklenemez"
+      ],
       "Cannot download a folder": [
         "Bir klasör indirilemedi"
       ],
@@ -165,8 +168,14 @@
       "Operation aborted": [
         "İşlem iptal edildi"
       ],
+      "Operation failed, try again later": [
+        "İşlem yapılamadı. Lütfen bir süre sonra yeniden deneyin"
+      ],
       "Parent cannot be decrypted": [
         "Üst ögenin şifresi çözülemedi"
+      ],
+      "Photo not found": [
+        "Fotoğraf bulunamadı"
       ],
       "Renaming root item is not allowed": [
         "Kök öge yeniden adlandırılamaz"

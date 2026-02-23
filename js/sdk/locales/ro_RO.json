@@ -11,6 +11,9 @@
       "Bookmark password is not available": [
         "Parola semnului de carte nu este disponibilă."
       ],
+      "Cannot add photo to album without a valid name": [
+        "Nu se poate adăuga o fotografie în album fără un nume valid."
+      ],
       "Cannot download a folder": [
         "Nu se poate descărca un folder."
       ],
@@ -166,8 +169,14 @@
       "Operation aborted": [
         "Operație anulată"
       ],
+      "Operation failed, try again later": [
+        "Operațiunea a eșuat. Reîncercați mai târziu."
+      ],
       "Parent cannot be decrypted": [
         "Părintele nu poate fi decriptat."
+      ],
+      "Photo not found": [
+        "Fotografia nu a fost găsită"
       ],
       "Renaming root item is not allowed": [
         "Redenumirea rădăcinii nu este permisă."
