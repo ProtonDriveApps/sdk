@@ -11,6 +11,9 @@
       "Bookmark password is not available": [
         "La password del segnalibro non è disponibile."
       ],
+      "Cannot add photo to album without a valid name": [
+        "Impossibile aggiungere la foto all’album senza un nome valido."
+      ],
       "Cannot download a folder": [
         "Impossibile scaricare una cartella"
       ],
@@ -165,8 +168,14 @@
       "Operation aborted": [
         "Operazione annullata"
       ],
+      "Operation failed, try again later": [
+        "Operazione non riuscita, riprova più tardi."
+      ],
       "Parent cannot be decrypted": [
         "Impossibile decriptare il genitore"
+      ],
+      "Photo not found": [
+        "Foto non trovata"
       ],
       "Renaming root item is not allowed": [
         "Non è consentito rinominare l'elemento radice"

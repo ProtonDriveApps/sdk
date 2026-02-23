@@ -11,6 +11,9 @@
       "Bookmark password is not available": [
         "La contraseña del marcador no está disponible"
       ],
+      "Cannot add photo to album without a valid name": [
+        "No se puede añadir una foto a un álbum sin un nombre válido"
+      ],
       "Cannot download a folder": [
         "No se puede descargar una carpeta."
       ],
@@ -165,8 +168,14 @@
       "Operation aborted": [
         "Operación cancelada"
       ],
+      "Operation failed, try again later": [
+        "Operación fallida, inténtalo de nuevo más tarde"
+      ],
       "Parent cannot be decrypted": [
         "No se puede descifrar el elemento principal."
+      ],
+      "Photo not found": [
+        "Foto no encontrada"
       ],
       "Renaming root item is not allowed": [
         "No se permite cambiar el nombre del elemento principal."

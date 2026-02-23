@@ -11,6 +11,9 @@
       "Bookmark password is not available": [
         "Lesezeichen-Passwort ist nicht verfügbar"
       ],
+      "Cannot add photo to album without a valid name": [
+        "Foto kann ohne gültigen Namen nicht zum Album hinzugefügt werden"
+      ],
       "Cannot download a folder": [
         "Ordner kann nicht heruntergeladen werden"
       ],
@@ -165,8 +168,14 @@
       "Operation aborted": [
         "Vorgang abgebrochen"
       ],
+      "Operation failed, try again later": [
+        "Vorgang fehlgeschlagen, bitte versuche es später erneut"
+      ],
       "Parent cannot be decrypted": [
         "Übergeordnetes Element kann nicht entschlüsselt werden"
+      ],
+      "Photo not found": [
+        "Foto nicht gefunden"
       ],
       "Renaming root item is not allowed": [
         "Umbenennen des Stammeintrags ist nicht erlaubt."
