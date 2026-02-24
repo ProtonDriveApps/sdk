@@ -8,7 +8,14 @@ object JniJob {
     external fun getCancelPointer(): Long
 
     @JvmStatic
-    external fun createWeakRef(job: Job): Long
+    external fun createWeakGlobalRef(job: Job): Long
+
+    @JvmStatic
+    external fun deleteWeakGlobalRef(ref: Long)
 }
 
-fun Job.createWeakRef() = JniJob.createWeakRef(this)
+fun Job.asWeakReference() = JniJob.createWeakGlobalRef(this).also { ref ->
+    invokeOnCompletion {
+        JniJob.deleteWeakGlobalRef(ref)
+    }
+}
