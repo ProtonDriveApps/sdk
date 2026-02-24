@@ -32,7 +32,7 @@ class JniHttpStream internal constructor(
             logger = internalLogger
         ).also {
             client = it
-        }.createWeakRef()
+        }.asWeakReference()
     }
 
     suspend fun read(
@@ -58,6 +58,7 @@ class JniHttpStream internal constructor(
     )
 
     fun release() {
+        client?.release()
         client = null
     }
 

@@ -68,11 +68,19 @@ jlong Java_me_proton_drive_sdk_internal_JniJob_getCancelPointer(
     return (jlong) (intptr_t) &onCancel;
 }
 
-jlong Java_me_proton_drive_sdk_internal_JniJob_createWeakRef(
+jlong Java_me_proton_drive_sdk_internal_JniJob_createWeakGlobalRef(
         JNIEnv *env,
         jclass clazz,
         jobject obj
 ) {
     jweak weakRef = (*env)->NewWeakGlobalRef(env, obj);
     return (jlong) (intptr_t) weakRef;
+}
+
+void Java_me_proton_drive_sdk_internal_JniJob_deleteWeakGlobalRef(
+        JNIEnv *env,
+        jclass clazz,
+        jlong ref
+) {
+    (*env)->DeleteWeakGlobalRef(env, (jweak) ref);
 }

@@ -189,7 +189,11 @@ jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getSha1Pointe
     return (jlong) (intptr_t) &onSha1;
 }
 
-jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_createWeakRef(JNIEnv* env, jobject obj) {
+jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_createWeakGlobalRef(JNIEnv* env, jobject obj) {
     jweak weakRef = (*env)->NewWeakGlobalRef(env, obj);
     return (jlong)(intptr_t) weakRef;
+}
+
+void Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_deleteWeakGlobalRef(JNIEnv* env, jclass clazz, jlong weakRef) {
+    (*env)->DeleteWeakGlobalRef(env, (jweak) weakRef);
 }
