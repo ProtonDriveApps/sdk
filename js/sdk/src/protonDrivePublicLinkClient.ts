@@ -132,7 +132,7 @@ export class ProtonDrivePublicLinkClient {
             fullConfig.baseUrl,
             fullConfig.language,
         );
-        const cryptoModule = new DriveCrypto(openPGPCryptoModule, srpModule);
+        const cryptoModule = new DriveCrypto(telemetry, openPGPCryptoModule, srpModule);
         this.sharingPublic = initSharingPublicModule(
             telemetry,
             apiService,

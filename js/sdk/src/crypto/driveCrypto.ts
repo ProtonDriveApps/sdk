@@ -1,3 +1,4 @@
+import { ProtonDriveTelemetry } from '../interface';
 import {
     OpenPGPCrypto,
     PrivateKey,
@@ -29,9 +30,11 @@ enum SIGNING_CONTEXTS {
  */
 export class DriveCrypto {
     constructor(
+        private telemetry: ProtonDriveTelemetry,
         private openPGPCrypto: OpenPGPCrypto,
         private srpModule: SRPModule,
     ) {
+        this.telemetry = telemetry;
         this.openPGPCrypto = openPGPCrypto;
         this.srpModule = srpModule;
     }
@@ -617,12 +620,14 @@ export class DriveCrypto {
     ): Promise<{
         encryptedData: Uint8Array<ArrayBuffer>;
     }> {
+        const start = performance.now();
         const { encryptedData } = await this.openPGPCrypto.encryptAndSign(
             thumbnailData,
             sessionKey,
             [], // Thumbnails use the session key so we do not send encryption key.
             signingKey,
         );
+        this.recordPerformance('content_encryption', thumbnailData.length, start);
 
         return {
             encryptedData,
@@ -638,11 +643,13 @@ export class DriveCrypto {
         verified: VERIFICATION_STATUS;
         verificationErrors?: Error[];
     }> {
+        const start = performance.now();
         const {
             data: decryptedThumbnail,
             verified,
             verificationErrors,
         } = await this.openPGPCrypto.decryptAndVerify(encryptedThumbnail, sessionKey, verificationKeys);
+        this.recordPerformance('content_decryption', decryptedThumbnail.length, start);
         return {
             decryptedThumbnail,
             verified,
@@ -659,12 +666,14 @@ export class DriveCrypto {
         encryptedData: Uint8Array<ArrayBuffer>;
         armoredSignature: string;
     }> {
+        const start = performance.now();
         const { encryptedData, signature } = await this.openPGPCrypto.encryptAndSignDetached(
             blockData,
             sessionKey,
             [], // Blocks use the session key so we do not send encryption key.
             signingKey,
         );
+        this.recordPerformance('content_encryption', blockData.length, start);
 
         const { armoredSignature } = await this.encryptSignature(signature, encryptionKey, sessionKey);
 
@@ -674,8 +683,13 @@ export class DriveCrypto {
         };
     }
 
-    async decryptBlock(encryptedBlock: Uint8Array<ArrayBuffer>, sessionKey: SessionKey): Promise<Uint8Array<ArrayBuffer>> {
+    async decryptBlock(
+        encryptedBlock: Uint8Array<ArrayBuffer>,
+        sessionKey: SessionKey,
+    ): Promise<Uint8Array<ArrayBuffer>> {
+        const start = performance.now();
         const { data: decryptedBlock } = await this.openPGPCrypto.decryptAndVerify(encryptedBlock, sessionKey, []);
+        this.recordPerformance('content_decryption', decryptedBlock.length, start);
 
         return decryptedBlock;
     }
@@ -716,7 +730,11 @@ export class DriveCrypto {
         return uint8ArrayToUtf8(password);
     }
 
-    async encryptShareUrlPassword(password: string, encryptionKey: PrivateKey, signingKey: PrivateKey): Promise<string> {
+    async encryptShareUrlPassword(
+        password: string,
+        encryptionKey: PrivateKey,
+        signingKey: PrivateKey,
+    ): Promise<string> {
         const { armoredData } = await this.openPGPCrypto.encryptAndSignArmored(
             new TextEncoder().encode(password),
             undefined,
@@ -724,6 +742,22 @@ export class DriveCrypto {
             signingKey,
         );
         return armoredData;
+    }
+
+    private recordPerformance(
+        type: 'content_encryption' | 'content_decryption',
+        bytesProcessed: number,
+        start: number,
+    ) {
+        const end = performance.now();
+        const duration = end - start;
+        this.telemetry.recordMetric({
+            eventName: 'performance',
+            type,
+            cryptoModel: 'v1',
+            bytesProcessed,
+            milliseconds: Math.round(duration),
+        });
     }
 }
 

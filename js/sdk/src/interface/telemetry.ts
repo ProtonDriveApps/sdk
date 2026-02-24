@@ -18,7 +18,8 @@ export type MetricEvent =
     | MetricDecryptionErrorEvent
     | MetricVerificationErrorEvent
     | MetricBlockVerificationErrorEvent
-    | MetricVolumeEventsSubscriptionsChangedEvent;
+    | MetricVolumeEventsSubscriptionsChangedEvent
+    | MetricPerformanceEvent;
 
 export interface MetricAPIRetrySucceededEvent {
     eventName: 'apiRetrySucceeded';
@@ -117,4 +118,16 @@ export enum MetricVolumeType {
     OwnPhotoVolume = 'own_photo_volume',
     Shared = 'shared',
     SharedPublic = 'shared_public',
+}
+
+/**
+ * Experimental metrics to track performance of encryption and decryption
+ * operations of the file content.
+ */
+export interface MetricPerformanceEvent {
+    eventName: 'performance';
+    type: 'content_encryption' | 'content_decryption';
+    cryptoModel: 'v1' | 'v1.5';
+    bytesProcessed: number;
+    milliseconds: number;
 }
