@@ -93,7 +93,7 @@ export class ProtonDrivePhotosClient {
 
         const fullConfig = getConfig(config);
         this.sdkEvents = new SDKEvents(telemetry);
-        const cryptoModule = new DriveCrypto(openPGPCryptoModule, srpModule);
+        const cryptoModule = new DriveCrypto(telemetry, openPGPCryptoModule, srpModule);
         const apiService = new DriveAPIService(
             telemetry,
             this.sdkEvents,

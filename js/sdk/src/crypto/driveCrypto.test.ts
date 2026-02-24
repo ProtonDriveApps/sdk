@@ -1,4 +1,5 @@
 import { uint8ArrayToUtf8, arrayToHexString, DriveCrypto } from './driveCrypto';
+import { getMockTelemetry } from '../tests/telemetry';
 
 describe('uint8ArrayToUtf8', () => {
     it('should convert a Uint8Array to a UTF-8 string', () => {
@@ -53,7 +54,7 @@ describe('DriveCrypto.encryptShareUrlPassword', () => {
         };
 
         const mockSrpModule = jest.fn();
-        const driveCrypto = new DriveCrypto(mockOpenPGPCrypto as any, mockSrpModule as any);
+        const driveCrypto = new DriveCrypto(getMockTelemetry(), mockOpenPGPCrypto as any, mockSrpModule as any);
 
         const password = 'testPassword123';
         const encryptionKey = 'mockEncryptionKey' as any;
