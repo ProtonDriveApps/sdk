@@ -43,11 +43,20 @@ class ProtonDriveSdkNativeClient internal constructor(
     val logger: (Level, String) -> Unit = { _, _ -> },
     private val coroutineScopeProvider: CoroutineScopeProvider = { null },
 ) {
+    @Volatile
+    private var nativeWeakReference: Long? = null
+    private val weakReferenceLock = Any()
 
     private val byteArrayPointers = ByteArrayPointers()
 
     fun release() {
         byteArrayPointers.releaseAll()
+        synchronized(weakReferenceLock) {
+            nativeWeakReference?.let { ref ->
+                deleteWeakGlobalRef(ref)
+                nativeWeakReference = null
+            }
+        }
     }
 
     fun handleRequest(
@@ -79,7 +88,11 @@ class ProtonDriveSdkNativeClient internal constructor(
 
     fun getByteArrayPointer(data: ByteArray): Long = byteArrayPointers.allocate(data)
 
-    external fun createWeakRef(): Long
+    fun asWeakReference(): Long = synchronized(weakReferenceLock) {
+        nativeWeakReference ?: createWeakGlobalRef().also { ref -> nativeWeakReference = ref }
+    }
+
+    external fun createWeakGlobalRef(): Long
 
     @Suppress("unused") // Called by JNI
     fun onResponse(data: ByteBuffer) {
@@ -101,14 +114,14 @@ class ProtonDriveSdkNativeClient internal constructor(
         val bytesRead = read(buffer).takeUnless { it < 0 } ?: 0
         logger(VERBOSE, "$bytesRead bytes read for $name")
         response { value = Int32Value.of(bytesRead).asAny("google.protobuf.Int32Value") }
-    }?.createWeakRef() ?: 0
+    }?.asWeakReference() ?: 0
 
     @Suppress("unused") // Called by JNI
     fun onWrite(data: ByteBuffer, sdkHandle: Long): Long = onOperation("write", sdkHandle) {
         logger(VERBOSE, "write for $name of size: ${data.capacity()}")
         write(data)
         response {}
-    }?.createWeakRef() ?: 0
+    }?.asWeakReference() ?: 0
 
     @Suppress("unused") // Called by JNI
     fun onSeek(data: ByteBuffer, sdkHandle: Long) {
@@ -146,7 +159,7 @@ class ProtonDriveSdkNativeClient internal constructor(
             "receive http response ${httpResponse.statusCode} for ${httpRequest.method} ${httpRequest.url}"
         )
         response { value = httpResponse.asAny("proton.sdk.HttpResponse") }
-    }?.createWeakRef() ?: 0
+    }?.asWeakReference() ?: 0
 
     @Suppress("unused") // Called by JNI
     fun onHttpResponseRead(buffer: ByteBuffer, sdkHandle: Long) {
@@ -388,5 +401,8 @@ class ProtonDriveSdkNativeClient internal constructor(
 
         @JvmStatic
         external fun getSha1Pointer(): Long
+
+        @JvmStatic
+        external fun deleteWeakGlobalRef(ref: Long)
     }
 }
