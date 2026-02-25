@@ -428,6 +428,37 @@ describe('StreamUploader', () => {
             expect((uploader as any).maxUploadingBlocks).toEqual(1);
         });
 
+        it('should not call onProgress after upload has failed', async () => {
+            let firstBlockPromise;
+
+            // Block 1 delays before reporting progress; block 2 fails immediately.
+            // This simulates block 1's progress callback firing after we've already
+            // entered the catch block.
+            apiService.uploadBlock = jest.fn().mockImplementation(async function (bareUrl, token, block, onProgress) {
+                if (token === 'token/block:1') {
+                    firstBlockPromise = new Promise((resolve) => setTimeout(resolve, 100));
+                    await firstBlockPromise;
+                    return mockUploadBlock(bareUrl, token, block, onProgress);
+                }
+                if (token === 'token/block:2') {
+                    throw new Error('Failed to upload block');
+                }
+                return mockUploadBlock(bareUrl, token, block, onProgress);
+            });
+
+            const startPromise = uploader.start(stream, thumbnails, onProgress);
+            await expect(startPromise).rejects.toThrow('Failed to upload block');
+
+            expect(firstBlockPromise).toBeDefined();
+            await firstBlockPromise!;
+
+            // Mocked file has 3 blocks - 2x 4 MB blocks and 1x 2 MB block
+            // First block is delayed - should not be reported.
+            // Second block is failed - should not be reported.
+            // Third block is successfull before second block is failed - should be reported.
+            await verifyOnProgress([thumbnailSize, 2 * 1024 * 1024]);
+        });
+
         it('limitUploadCapacity should wait for the previous blocks to finish', async () => {
             const error = new Error('TimeoutError');
             error.name = 'TimeoutError';

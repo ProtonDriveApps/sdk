@@ -121,7 +121,9 @@ export class StreamUploader {
             this.logger.info(`Starting upload`);
             await this.encryptAndUploadBlocks(stream, thumbnails, (uploadedBytes) => {
                 fileProgress += uploadedBytes;
-                onProgress?.(fileProgress);
+                if (!failure) {
+                    onProgress?.(fileProgress);
+                }
             });
 
             this.logger.debug(`All blocks uploaded, committing`);
@@ -470,6 +472,10 @@ export class StreamUploader {
         let attempt = 0;
 
         while (true) {
+            if (this.isUploadAborted) {
+                throw this.error || new AbortError();
+            }
+
             attempt++;
             try {
                 logger.debug(`Uploading`);
