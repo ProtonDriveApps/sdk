@@ -157,7 +157,9 @@ internal static class InteropMessageHandler
 
         if (error.Domain == ErrorDomain.SuccessfulCancellation)
         {
-            tfs.SetException(new OperationCanceledException());
+            tfs.SetException(new OperationCanceledException(
+                "The operation was canceled by the client",
+                new InteropErrorException(error)));
         }
         else
         {
