@@ -130,7 +130,7 @@ public sealed partial class FileDownloader : IFileDownloader
         void OnFailed(Exception ex)
         {
             downloadEvent.Error = TelemetryErrorResolver.GetDownloadErrorFromException(ex);
-            downloadEvent.OriginalError = ex.GetBaseException().ToString();
+            downloadEvent.OriginalError = ex;
             RaiseTelemetryEvent(downloadEvent);
         }
 

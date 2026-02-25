@@ -156,7 +156,7 @@ public sealed partial class FileUploader : IDisposable
             }
 
             uploadEvent.Error = TelemetryErrorResolver.GetUploadErrorFromException(ex);
-            uploadEvent.OriginalError = ex.GetBaseException().ToString();
+            uploadEvent.OriginalError = ex;
             RaiseTelemetryEvent(uploadEvent);
         }
 
