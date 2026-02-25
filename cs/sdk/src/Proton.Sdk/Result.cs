@@ -4,25 +4,38 @@ namespace Proton.Sdk;
 
 public readonly struct Result<T, TError>
 {
+    private readonly ResultStatus _status;
     private readonly T? _value;
     private readonly TError? _error;
 
     public Result(T value)
     {
-        IsSuccess = true;
+        _status = ResultStatus.Success;
         _value = value;
         _error = default;
     }
 
     public Result(TError error)
     {
-        IsSuccess = false;
+        _status = ResultStatus.Failure;
         _error = error;
         _value = default;
     }
 
-    public bool IsSuccess { get; }
-    public bool IsFailure => !IsSuccess;
+    private enum ResultStatus : byte
+    {
+        Invalid = 0,
+        Success = 1,
+        Failure = 2,
+    }
+
+    public bool IsSuccess => ValidStatus is ResultStatus.Success;
+    public bool IsFailure => ValidStatus is ResultStatus.Failure;
+
+    private ResultStatus ValidStatus =>
+        _status is not ResultStatus.Invalid
+            ? _status
+            : throw new InvalidOperationException("Result is in an invalid state.");
 
     public static implicit operator Result<T, TError>(T value) => new(value);
     public static implicit operator Result<T, TError>(TError error) => new(error);

@@ -1,4 +1,6 @@
-﻿using Proton.Cryptography.Pgp;
+﻿using System.Collections.ObjectModel;
+using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Shares;
@@ -186,133 +188,41 @@ internal static class DtoToMetadataConverter
         var decryptionResult = await NodeCrypto.DecryptFileAsync(client.Account, linkDto, fileDto, activeRevisionDto, parentKeyResult, cancellationToken)
             .ConfigureAwait(false);
 
-        var nameIsInvalid = !NodeOperations.ValidateName(decryptionResult.Link.Name, out var nameOutput, out var nameResult, out var nameSessionKey);
-        var nodeKeyIsInvalid = !decryptionResult.Link.NodeKey.TryGetValue(out var nodeKey);
-        var passphraseIsInvalid = !decryptionResult.Link.Passphrase.TryGetValue(out var passphraseOutput);
-        var extendedAttributesIsInvalid = !decryptionResult.ExtendedAttributes.TryGetValue(out var extendedAttributesOutput);
-        var contentKeyIsInvalid = !decryptionResult.ContentKey.TryGetValue(out var contentKeyOutput);
+        var nodeKeyIsValid = decryptionResult.Link.NodeKey.TryGetValue(out var nodeKey);
+        var passphraseIsValid = decryptionResult.Link.Passphrase.TryGetValue(out var passphraseOutput);
+        var extendedAttributesIsValid = decryptionResult.ExtendedAttributes.TryGetValue(out var extendedAttributesOutput);
+        var contentKeyIsValid = decryptionResult.ContentKey.TryGetValue(out var contentKeyOutput);
 
-        var nameAuthor = !nameIsInvalid && nameOutput.HasValue
-            ? decryptionResult.Link.NameAuthorshipClaim.ToAuthorshipResult(nameOutput.Value.AuthorshipVerificationFailure)
-            : default;
-
-        var nodeAuthor = !passphraseIsInvalid
-            ? decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.AuthorshipVerificationFailure
-                ?? contentKeyOutput.AuthorshipVerificationFailure)
-            : default;
-
-        var contentAuthor = !extendedAttributesIsInvalid
-            ? decryptionResult.ContentAuthorshipClaim.ToAuthorshipResult(extendedAttributesOutput.AuthorshipVerificationFailure)
-            : default;
+        var thumbnails = activeRevisionDto.Thumbnails.Select(dto => new ThumbnailHeader(dto.Id, (ThumbnailType)dto.Type)).ToList().AsReadOnly();
 
         var extendedAttributes = extendedAttributesOutput.Data;
-
-        var thumbnails = activeRevisionDto.Thumbnails.Count > 0 ? new ThumbnailHeader[activeRevisionDto.Thumbnails.Count] : [];
-
         var additionalMetadata = extendedAttributes?.AdditionalMetadata?.Select(x => new AdditionalMetadataProperty(x.Key, x.Value)).ToList().AsReadOnly();
 
-        for (var i = 0; i < activeRevisionDto.Thumbnails.Count; ++i)
+        if (!NodeOperations.ValidateName(decryptionResult.Link.Name, out var nameOutput, out var nameResult, out var nameSessionKey)
+            || !nodeKeyIsValid
+            || !passphraseIsValid
+            || !extendedAttributesIsValid
+            || !contentKeyIsValid)
         {
-            var thumbnailDto = activeRevisionDto.Thumbnails[i];
-            thumbnails[i] = new ThumbnailHeader(thumbnailDto.Id, (ThumbnailType)thumbnailDto.Type);
-        }
+            var (degradedFileMetadata, failedDecryptionFields) = CreateDegradedFileMetadata(
+                linkDetailsDto,
+                decryptionResult,
+                nameResult,
+                uid,
+                activeRevisionDto,
+                extendedAttributes,
+                thumbnails,
+                additionalMetadata,
+                parentUid,
+                linkDto,
+                fileDto,
+                nameSessionKey,
+                membershipDto);
 
-        if (
-            nameIsInvalid || (nameSessionKey is null) || nameOutput is null
-            || passphraseIsInvalid
-            || nodeKeyIsInvalid
-            || extendedAttributesIsInvalid
-            || contentKeyIsInvalid)
-        {
-            List<EncryptedField> failedDecryptionFields = [];
-            List<ProtonDriveError> errors = [];
+            await secretCache.SetFileSecretsAsync(uid, degradedFileMetadata.Secrets, cancellationToken).ConfigureAwait(false);
 
-            if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
-            {
-                errors.Add(new DecryptionError(passphraseError));
-                failedDecryptionFields.Add(EncryptedField.NodeKey);
-            }
-            else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
-            {
-                errors.Add(new DecryptionError(nodeKeyError));
-                failedDecryptionFields.Add(EncryptedField.NodeKey);
-            }
-            else if (decryptionResult.ContentKey.IsFailure)
-            {
-                failedDecryptionFields.Add(EncryptedField.NodeContentKey);
-            }
-
-            if (nameResult.IsFailure)
-            {
-                failedDecryptionFields.Add(EncryptedField.NodeName);
-            }
-
-            var revisionErrors = new List<ProtonDriveError>();
-            if (decryptionResult.ExtendedAttributes.TryGetError(out var extendedAttributesError))
-            {
-                revisionErrors.Add(new DecryptionError(extendedAttributesError));
-                failedDecryptionFields.Add(EncryptedField.NodeExtendedAttributes);
-            }
-
-            var degradedRevision = new DegradedRevision
-            {
-                Uid = new RevisionUid(uid, activeRevisionDto.Id),
-                CreationTime = activeRevisionDto.CreationTime,
-                SizeOnCloudStorage = activeRevisionDto.StorageQuotaConsumption,
-                ClaimedSize = extendedAttributes?.Common?.Size,
-                ClaimedModificationTime = extendedAttributes?.Common?.ModificationTime,
-                ClaimedDigests = new FileContentDigests { Sha1 = extendedAttributes?.Common?.Digests?.Sha1 },
-                Thumbnails = thumbnails.AsReadOnly(),
-                AdditionalClaimedMetadata = additionalMetadata,
-                ContentAuthor = contentAuthor,
-                CanDecrypt = !contentKeyIsInvalid,
-                Errors = revisionErrors,
-            };
-
-            var degradedNode = linkDetailsDto.Photo is not null
-                ? new DegradedPhotoNode
-                {
-                    Uid = uid,
-                    ParentUid = parentUid,
-                    Name = nameResult,
-                    NameAuthor = nameAuthor,
-                    CreationTime = linkDto.CreationTime,
-                    TrashTime = linkDto.TrashTime,
-                    Author = nodeAuthor,
-                    MediaType = fileDto.MediaType,
-                    ActiveRevision = degradedRevision,
-                    TotalStorageQuotaUsage = fileDto.TotalSizeOnStorage,
-                    Errors = errors,
-                    CaptureTime = linkDetailsDto.Photo.CaptureTime,
-                }
-                : new DegradedFileNode
-                {
-                    Uid = uid,
-                    ParentUid = parentUid,
-                    Name = nameResult,
-                    NameAuthor = nameAuthor,
-                    CreationTime = linkDto.CreationTime,
-                    TrashTime = linkDto.TrashTime,
-                    Author = nodeAuthor,
-                    MediaType = fileDto.MediaType,
-                    ActiveRevision = degradedRevision,
-                    TotalStorageQuotaUsage = fileDto.TotalSizeOnStorage,
-                    Errors = errors,
-                };
-
-            var degradedSecrets = new DegradedFileSecrets
-            {
-                Key = decryptionResult.Link.NodeKey.Merge(x => (PgpPrivateKey?)x, _ => null),
-                PassphraseSessionKey = decryptionResult.Link.Passphrase.Merge(x => (PgpSessionKey?)x.SessionKey, _ => null),
-                NameSessionKey = nameSessionKey,
-                ContentKey = decryptionResult.ContentKey.Merge(x => (PgpSessionKey?)x.Data, _ => null),
-            };
-
-            await secretCache.SetFileSecretsAsync(uid, degradedSecrets, cancellationToken).ConfigureAwait(false);
-
-            var degradedFileMetadata = new DegradedFileMetadata(degradedNode, degradedSecrets, membershipDto?.ShareId, linkDto.NameHashDigest);
-
-            await entityCache.SetNodeAsync(uid, degradedNode, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken).ConfigureAwait(false);
+            await entityCache.SetNodeAsync(uid, degradedFileMetadata.Node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken)
+                .ConfigureAwait(false);
 
             await ReportDecryptionError(client, DegradedNodeMetadata.FromFile(degradedFileMetadata), failedDecryptionFields, cancellationToken)
                 .ConfigureAwait(false);
@@ -330,6 +240,10 @@ internal static class DtoToMetadataConverter
                 ? passphraseOutput.Data
                 : (ReadOnlyMemory<byte>?)null,
         };
+
+        var nodeAuthor = decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.AuthorshipVerificationFailure);
+        var nameAuthor = decryptionResult.Link.NameAuthorshipClaim.ToAuthorshipResult(nameOutput.Value.AuthorshipVerificationFailure);
+        var contentAuthor = decryptionResult.ContentAuthorshipClaim.ToAuthorshipResult(contentKeyOutput.AuthorshipVerificationFailure);
 
         var activeRevision = new Revision
         {
@@ -380,6 +294,120 @@ internal static class DtoToMetadataConverter
         return new FileMetadata(node, secrets, membershipDto?.ShareId, linkDto.NameHashDigest);
     }
 
+    private static (DegradedFileMetadata Metadata, List<EncryptedField> FailedDecryptionFields) CreateDegradedFileMetadata(
+        LinkDetailsDto linkDetailsDto,
+        FileDecryptionResult decryptionResult,
+        Result<string, ProtonDriveError> nameResult,
+        NodeUid uid,
+        ActiveRevisionDto activeRevisionDto,
+        ExtendedAttributes? extendedAttributes,
+        ReadOnlyCollection<ThumbnailHeader> thumbnails,
+        ReadOnlyCollection<AdditionalMetadataProperty>? additionalMetadata,
+        NodeUid? parentUid,
+        LinkDto linkDto,
+        FileDto fileDto,
+        PgpSessionKey? nameSessionKey,
+        ShareMembershipSummaryDto? membershipDto)
+    {
+        List<EncryptedField> failedDecryptionFields = [];
+        List<ProtonDriveError> errors = [];
+
+        if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
+        {
+            errors.Add(new DecryptionError(passphraseError));
+            failedDecryptionFields.Add(EncryptedField.NodeKey);
+        }
+        else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
+        {
+            errors.Add(new DecryptionError(nodeKeyError));
+            failedDecryptionFields.Add(EncryptedField.NodeKey);
+        }
+        else if (decryptionResult.ContentKey.IsFailure)
+        {
+            failedDecryptionFields.Add(EncryptedField.NodeContentKey);
+        }
+
+        if (nameResult.IsFailure)
+        {
+            failedDecryptionFields.Add(EncryptedField.NodeName);
+        }
+
+        var revisionErrors = new List<ProtonDriveError>();
+        if (decryptionResult.ExtendedAttributes.TryGetError(out var extendedAttributesError))
+        {
+            revisionErrors.Add(new DecryptionError(extendedAttributesError));
+            failedDecryptionFields.Add(EncryptedField.NodeExtendedAttributes);
+        }
+
+        var nodeAuthor = decryptionResult.Link.Passphrase.Merge(
+            x => decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(x.AuthorshipVerificationFailure),
+            _ => new SignatureVerificationError(decryptionResult.Link.NodeAuthorshipClaim.Author, "Passphrase decryption failed"));
+
+        var nameAuthor = decryptionResult.Link.Name.Merge(
+            x => decryptionResult.Link.NameAuthorshipClaim.ToAuthorshipResult(x.AuthorshipVerificationFailure),
+            _ => new SignatureVerificationError(decryptionResult.Link.NameAuthorshipClaim.Author, "Name decryption failed"));
+
+        var contentAuthor = decryptionResult.ContentKey.Merge(
+            x => decryptionResult.ContentAuthorshipClaim.ToAuthorshipResult(x.AuthorshipVerificationFailure),
+            _ => new SignatureVerificationError(decryptionResult.ContentAuthorshipClaim.Author, "Content key decryption failed"));
+
+        var degradedRevision = new DegradedRevision
+        {
+            Uid = new RevisionUid(uid, activeRevisionDto.Id),
+            CreationTime = activeRevisionDto.CreationTime,
+            SizeOnCloudStorage = activeRevisionDto.StorageQuotaConsumption,
+            ClaimedSize = extendedAttributes?.Common?.Size,
+            ClaimedModificationTime = extendedAttributes?.Common?.ModificationTime,
+            ClaimedDigests = new FileContentDigests { Sha1 = extendedAttributes?.Common?.Digests?.Sha1 },
+            Thumbnails = thumbnails.AsReadOnly(),
+            AdditionalClaimedMetadata = additionalMetadata,
+            ContentAuthor = contentAuthor,
+            CanDecrypt = decryptionResult.ContentKey.IsSuccess,
+            Errors = revisionErrors,
+        };
+
+        var degradedNode = linkDetailsDto.Photo is not null
+            ? new DegradedPhotoNode
+            {
+                Uid = uid,
+                ParentUid = parentUid,
+                Name = nameResult,
+                NameAuthor = nameAuthor,
+                CreationTime = linkDto.CreationTime,
+                TrashTime = linkDto.TrashTime,
+                Author = nodeAuthor,
+                MediaType = fileDto.MediaType,
+                ActiveRevision = degradedRevision,
+                TotalStorageQuotaUsage = fileDto.TotalSizeOnStorage,
+                Errors = errors,
+                CaptureTime = linkDetailsDto.Photo.CaptureTime,
+            }
+            : new DegradedFileNode
+            {
+                Uid = uid,
+                ParentUid = parentUid,
+                Name = nameResult,
+                NameAuthor = nameAuthor,
+                CreationTime = linkDto.CreationTime,
+                TrashTime = linkDto.TrashTime,
+                Author = nodeAuthor,
+                MediaType = fileDto.MediaType,
+                ActiveRevision = degradedRevision,
+                TotalStorageQuotaUsage = fileDto.TotalSizeOnStorage,
+                Errors = errors,
+            };
+
+        var degradedSecrets = new DegradedFileSecrets
+        {
+            Key = decryptionResult.Link.NodeKey.Merge(x => (PgpPrivateKey?)x, _ => null),
+            PassphraseSessionKey = decryptionResult.Link.Passphrase.Merge(x => (PgpSessionKey?)x.SessionKey, _ => null),
+            NameSessionKey = nameSessionKey,
+            ContentKey = decryptionResult.ContentKey.Merge(x => (PgpSessionKey?)x.Data, _ => null),
+        };
+
+        return (new DegradedFileMetadata(degradedNode, degradedSecrets, membershipDto?.ShareId, linkDto.NameHashDigest), failedDecryptionFields);
+    }
+
     private static async ValueTask<Result<FolderMetadata, DegradedFolderMetadata>> ConvertDtoToFolderMetadataAsync(
         ProtonDriveClient client,
         IEntityCache entityCache,
@@ -393,84 +421,34 @@ internal static class DtoToMetadataConverter
         var linkDto = linkDetailsDto.Link;
         var membershipDto = linkDetailsDto.Membership;
 
-        if (folderDto is null)
-        {
-            var linkType = linkDetailsDto.Link.Type is LinkType.Folder ? "folder" : "album";
-            throw new InvalidOperationException($"Node is a {linkType}, but {linkType} properties are missing");
-        }
-
         var uid = new NodeUid(volumeId, linkDto.Id);
         var parentUid = linkDto.ParentId is not null ? (NodeUid?)new NodeUid(uid.VolumeId, linkDto.ParentId.Value) : null;
 
         var decryptionResult = await NodeCrypto.DecryptFolderAsync(client.Account, linkDto, folderDto.HashKey, parentKeyResult, cancellationToken)
             .ConfigureAwait(false);
 
-        var nameIsInvalid = !NodeOperations.ValidateName(decryptionResult.Link.Name, out var nameOutput, out var nameResult, out var nameSessionKey);
-        var nodeKeyIsInvalid = !decryptionResult.Link.NodeKey.TryGetValue(out var nodeKey);
-        var passphraseIsInvalid = !decryptionResult.Link.Passphrase.TryGetValue(out var passphraseOutput);
-        var hashKeyIsInvalid = !decryptionResult.HashKey.TryGetValue(out var hashKeyOutput);
+        var nodeKeyIsValid = decryptionResult.Link.NodeKey.TryGetValue(out var nodeKey);
+        var passphraseIsValid = decryptionResult.Link.Passphrase.TryGetValue(out var passphraseOutput);
+        var hashKeyIsValid = decryptionResult.HashKey.TryGetValue(out var hashKeyOutput);
 
-        var nameAuthor = !nameIsInvalid && nameOutput.HasValue
-            ? decryptionResult.Link.NameAuthorshipClaim.ToAuthorshipResult(nameOutput.Value.AuthorshipVerificationFailure)
-            : default;
-        var nodeAuthor = !passphraseIsInvalid && !hashKeyIsInvalid
-            ? decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.AuthorshipVerificationFailure
-                ?? hashKeyOutput.AuthorshipVerificationFailure)
-            : default;
-
-        if (
-            nameIsInvalid || nameSessionKey is null || nameOutput is null
-            || passphraseIsInvalid || nodeKeyIsInvalid || hashKeyIsInvalid)
+        if (!NodeOperations.ValidateName(decryptionResult.Link.Name, out var nameOutput, out var nameResult, out var nameSessionKey)
+            || !passphraseIsValid
+            || !nodeKeyIsValid
+            || !hashKeyIsValid)
         {
-            List<EncryptedField> failedDecryptionFields = [];
-            List<ProtonDriveError> errors = [];
+            var (degradedFolderMetadata, failedDecryptionFields) = CreateDegradedFolderMetadata(
+                decryptionResult,
+                nameResult,
+                uid,
+                parentUid,
+                linkDto,
+                nameSessionKey,
+                membershipDto);
 
-            if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
-            {
-                errors.Add(new DecryptionError(passphraseError));
-                failedDecryptionFields.Add(EncryptedField.NodeKey);
-            }
-            else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
-            {
-                errors.Add(new DecryptionError(nodeKeyError));
-                failedDecryptionFields.Add(EncryptedField.NodeKey);
-            }
-            else if (decryptionResult.HashKey.TryGetError(out var hashKeyError))
-            {
-                errors.Add(new DecryptionError(hashKeyError));
-                failedDecryptionFields.Add(EncryptedField.NodeHashKey);
-            }
+            await secretCache.SetFolderSecretsAsync(uid, degradedFolderMetadata.Secrets, cancellationToken).ConfigureAwait(false);
 
-            if (nameResult.IsFailure)
-            {
-                failedDecryptionFields.Add(EncryptedField.NodeName);
-            }
-
-            var degradedNode = new DegradedFolderNode
-            {
-                Uid = uid,
-                ParentUid = parentUid,
-                Name = nameResult,
-                NameAuthor = nameAuthor,
-                CreationTime = linkDto.CreationTime,
-                TrashTime = linkDto.TrashTime,
-                Author = nodeAuthor,
-                Errors = errors,
-            };
-
-            var degradedSecrets = new DegradedFolderSecrets
-            {
-                Key = decryptionResult.Link.NodeKey.GetValueOrDefault(),
-                PassphraseSessionKey = decryptionResult.Link.Passphrase.Merge(x => (PgpSessionKey?)x.SessionKey, _ => null),
-                NameSessionKey = nameSessionKey,
-                HashKey = decryptionResult.HashKey.Merge(x => (ReadOnlyMemory<byte>?)x.Data, _ => null),
-            };
-
-            await secretCache.SetFolderSecretsAsync(uid, degradedSecrets, cancellationToken).ConfigureAwait(false);
-
-            var degradedFolderMetadata = new DegradedFolderMetadata(degradedNode, degradedSecrets, membershipDto?.ShareId, linkDto.NameHashDigest);
-
-            await entityCache.SetNodeAsync(uid, degradedNode, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken).ConfigureAwait(false);
+            await entityCache.SetNodeAsync(uid, degradedFolderMetadata.Node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken)
+                .ConfigureAwait(false);
 
             await ReportDecryptionError(client, DegradedNodeMetadata.FromFolder(degradedFolderMetadata), failedDecryptionFields, cancellationToken)
                 .ConfigureAwait(false);
@@ -487,7 +465,12 @@ internal static class DtoToMetadataConverter
             PassphraseForAnonymousMove = decryptionResult.Link.NodeAuthorshipClaim.Author == Author.Anonymous ? passphraseOutput.Data : null,
         };
 
-        await secretCache.SetFolderSecretsAsync(uid, secrets, cancellationToken).ConfigureAwait(false);
+        var nodeAuthorFromPassphrase = decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(passphraseOutput.AuthorshipVerificationFailure);
+        var nodeAuthorFromHashKey = decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(hashKeyOutput.AuthorshipVerificationFailure);
+
+        var nodeAuthor = nodeAuthorFromHashKey.IsFailure ? nodeAuthorFromHashKey : nodeAuthorFromPassphrase;
+
+        var nameAuthor = decryptionResult.Link.NameAuthorshipClaim.ToAuthorshipResult(nameOutput.Value.AuthorshipVerificationFailure);
 
         var node = new FolderNode
         {
@@ -500,9 +483,81 @@ internal static class DtoToMetadataConverter
             TrashTime = linkDto.TrashTime,
         };
 
+        await secretCache.SetFolderSecretsAsync(uid, secrets, cancellationToken).ConfigureAwait(false);
+
         await entityCache.SetNodeAsync(uid, node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken).ConfigureAwait(false);
 
         return new FolderMetadata(node, secrets, membershipDto?.ShareId, linkDto.NameHashDigest);
+    }
+
+    private static (DegradedFolderMetadata Metadata, List<EncryptedField> FailedDecryptionFields) CreateDegradedFolderMetadata(
+        FolderDecryptionResult decryptionResult,
+        Result<string, ProtonDriveError> nameResult,
+        NodeUid uid,
+        NodeUid? parentUid,
+        LinkDto linkDto,
+        PgpSessionKey? nameSessionKey,
+        ShareMembershipSummaryDto? membershipDto)
+    {
+        List<EncryptedField> failedDecryptionFields = [];
+        List<ProtonDriveError> errors = [];
+
+        if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
+        {
+            errors.Add(new DecryptionError(passphraseError));
+            failedDecryptionFields.Add(EncryptedField.NodeKey);
+        }
+        else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
+        {
+            errors.Add(new DecryptionError(nodeKeyError));
+            failedDecryptionFields.Add(EncryptedField.NodeKey);
+        }
+        else if (decryptionResult.HashKey.TryGetError(out var hashKeyError))
+        {
+            errors.Add(new DecryptionError(hashKeyError));
+            failedDecryptionFields.Add(EncryptedField.NodeHashKey);
+        }
+
+        if (nameResult.IsFailure)
+        {
+            failedDecryptionFields.Add(EncryptedField.NodeName);
+        }
+
+        var nodeAuthorFromPassphrase = decryptionResult.Link.Passphrase.Merge(
+            x => decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(x.AuthorshipVerificationFailure),
+            _ => new SignatureVerificationError(decryptionResult.Link.NodeAuthorshipClaim.Author, "Passphrase decryption failed"));
+
+        var nodeAuthorFromHashKey = decryptionResult.HashKey.Merge(
+            x => decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(x.AuthorshipVerificationFailure),
+            _ => new SignatureVerificationError(decryptionResult.Link.NodeAuthorshipClaim.Author, "Hash key decryption failed"));
+
+        var nodeAuthor = nodeAuthorFromHashKey.IsFailure ? nodeAuthorFromHashKey : nodeAuthorFromPassphrase;
+
+        var nameAuthor = decryptionResult.Link.Name.Merge(
+            x => decryptionResult.Link.NameAuthorshipClaim.ToAuthorshipResult(x.AuthorshipVerificationFailure),
+            _ => new SignatureVerificationError(decryptionResult.Link.NameAuthorshipClaim.Author, "Name decryption failed"));
+
+        var degradedNode = new DegradedFolderNode
+        {
+            Uid = uid,
+            ParentUid = parentUid,
+            Name = nameResult,
+            NameAuthor = nameAuthor,
+            CreationTime = linkDto.CreationTime,
+            TrashTime = linkDto.TrashTime,
+            Author = nodeAuthor,
+            Errors = errors,
+        };
+
+        var degradedSecrets = new DegradedFolderSecrets
+        {
+            Key = decryptionResult.Link.NodeKey.GetValueOrDefault(),
+            PassphraseSessionKey = decryptionResult.Link.Passphrase.Merge(x => (PgpSessionKey?)x.SessionKey, _ => null),
+            NameSessionKey = nameSessionKey,
+            HashKey = decryptionResult.HashKey.Merge(x => (ReadOnlyMemory<byte>?)x.Data, _ => null),
+        };
+
+        return (new DegradedFolderMetadata(degradedNode, degradedSecrets, membershipDto?.ShareId, linkDto.NameHashDigest), failedDecryptionFields);
     }
 
     private static async ValueTask<Result<PgpPrivateKey, ProtonDriveError>> GetParentKeyAsync(
