@@ -13,9 +13,3 @@ object JniJob {
     @JvmStatic
     external fun deleteWeakGlobalRef(ref: Long)
 }
-
-fun Job.asWeakReference() = JniJob.createWeakGlobalRef(this).also { ref ->
-    invokeOnCompletion {
-        JniJob.deleteWeakGlobalRef(ref)
-    }
-}
