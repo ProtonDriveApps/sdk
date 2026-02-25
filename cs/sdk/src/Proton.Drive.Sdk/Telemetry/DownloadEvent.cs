@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Proton.Sdk.Telemetry;
 
 namespace Proton.Drive.Sdk.Telemetry;
@@ -16,5 +17,6 @@ public sealed class DownloadEvent : IMetricEvent
 
     public DownloadError? Error { get; set; }
 
-    public string? OriginalError { get; set; }
+    [JsonIgnore]
+    public Exception? OriginalError { get; set; }
 }
