@@ -13,6 +13,8 @@ fun Throwable.toProtonSdkError(message: String) = proton.sdk.error {
         "$message, caused by ${exception.message}"
     } ?: message
     domain = exception.domain()
+    exception.primaryCode()?.let { primaryCode = it }
+    exception.secondaryCode()?.let { secondaryCode = it }
     context = stackTraceToString()
 }
 
@@ -29,3 +31,9 @@ private fun Throwable.domain(): ProtonSdk.ErrorDomain = when (this) {
 
     else -> ProtonSdk.ErrorDomain.Undefined
 }
+
+private fun Throwable.primaryCode(): Long? =
+    ((this as? ApiException)?.error as? ApiResult.Error.Http)?.proton?.code?.toLong()
+
+private fun Throwable.secondaryCode(): Long? =
+    ((this as? ApiException)?.error as? ApiResult.Error.Http)?.httpCode?.toLong()
