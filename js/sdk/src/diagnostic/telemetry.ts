@@ -27,6 +27,9 @@ export class DiagnosticTelemetry extends EventsGenerator {
         if (event.eventName === 'volumeEventsSubscriptionsChanged') {
             return;
         }
+        if (event.eventName === 'performance') {
+            return;
+        }
 
         this.enqueueEvent({
             type: 'metric',
