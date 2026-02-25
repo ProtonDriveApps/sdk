@@ -46,6 +46,7 @@ class ProtonDriveSdkNativeClient internal constructor(
     @Volatile
     private var nativeWeakReference: Long? = null
     private val weakReferenceLock = Any()
+    val inactiveJobWeakReferences = ArrayDeque<Long>()
 
     private val byteArrayPointers = ByteArrayPointers()
 
@@ -56,6 +57,10 @@ class ProtonDriveSdkNativeClient internal constructor(
                 deleteWeakGlobalRef(ref)
                 nativeWeakReference = null
             }
+            inactiveJobWeakReferences.forEach { ref ->
+                JniJob.deleteWeakGlobalRef(ref)
+            }
+            inactiveJobWeakReferences.clear()
         }
     }
 
@@ -114,14 +119,14 @@ class ProtonDriveSdkNativeClient internal constructor(
         val bytesRead = read(buffer).takeUnless { it < 0 } ?: 0
         logger(VERBOSE, "$bytesRead bytes read for $name")
         response { value = Int32Value.of(bytesRead).asAny("google.protobuf.Int32Value") }
-    }?.asWeakReference() ?: 0
+    }?.trackWeakReference() ?: 0
 
     @Suppress("unused") // Called by JNI
     fun onWrite(data: ByteBuffer, sdkHandle: Long): Long = onOperation("write", sdkHandle) {
         logger(VERBOSE, "write for $name of size: ${data.capacity()}")
         write(data)
         response {}
-    }?.asWeakReference() ?: 0
+    }?.trackWeakReference() ?: 0
 
     @Suppress("unused") // Called by JNI
     fun onSeek(data: ByteBuffer, sdkHandle: Long) {
@@ -159,7 +164,7 @@ class ProtonDriveSdkNativeClient internal constructor(
             "receive http response ${httpResponse.statusCode} for ${httpRequest.method} ${httpRequest.url}"
         )
         response { value = httpResponse.asAny("proton.sdk.HttpResponse") }
-    }?.asWeakReference() ?: 0
+    }?.trackWeakReference() ?: 0
 
     @Suppress("unused") // Called by JNI
     fun onHttpResponseRead(buffer: ByteBuffer, sdkHandle: Long) {
@@ -368,7 +373,24 @@ class ProtonDriveSdkNativeClient internal constructor(
         return scope
     }
 
+    private fun Job.trackWeakReference(): Long = JniJob.createWeakGlobalRef(this).also { ref ->
+        invokeOnCompletion {
+            synchronized(weakReferenceLock) {
+                inactiveJobWeakReferences.addLast(ref)
+                // Clean up oldest refs if we exceed the limit
+                while (inactiveJobWeakReferences.size > MAX_INACTIVE_JOB_WEAK_REFERENCES) {
+                    inactiveJobWeakReferences.removeFirstOrNull()?.let { oldestRef ->
+                        JniJob.deleteWeakGlobalRef(oldestRef)
+                    }
+                }
+            }
+        }
+    }
+
+    @Suppress("TooManyFunctions")
     companion object {
+        private const val MAX_INACTIVE_JOB_WEAK_REFERENCES = 128
+
         @JvmStatic
         external fun handleResponse(sdkHandle: Long, response: ByteArray)
 
