@@ -137,8 +137,12 @@ export class DriveAPIService {
         return this.makeRequest(url, 'PUT', data, signal);
     }
 
-    async delete<Response>(url: string, signal?: AbortSignal): Promise<Response> {
-        return this.makeRequest(url, 'DELETE', undefined, signal);
+    async delete<RequestPayload, ResponsePayload>(
+        url: string,
+        data?: RequestPayload,
+        signal?: AbortSignal,
+    ): Promise<ResponsePayload> {
+        return this.makeRequest(url, 'DELETE', data, signal);
     }
 
     protected async makeRequest<RequestPayload, ResponsePayload>(

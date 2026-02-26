@@ -38,6 +38,7 @@ import { CommandAlbumUpdate } from './photos/commandAlbumUpdate';
 import { CommandPhotoDuplicate } from './photos/commandPhotoDuplicate';
 import { CommandPhotoRoot } from './photos/commandPhotoRoot';
 import { CommandPhotoTimeline } from './photos/commandPhotoTimeline';
+import { CommandPhotoUpdate } from './photos/commandPhotoUpdate';
 import { CommandPublicCreateFolder } from './public/commandPublicCreateFolder';
 import { CommandPublicGetAvailableName } from './public/commandPublicGetAvailableName';
 import { CommandPublicCreateDocument } from './public/commandPublicCreateDocument';
@@ -122,6 +123,7 @@ const COMMANDS = [
     new CommandPhotoRoot(),
     new CommandPhotoTimeline(),
     new CommandPhotoDuplicate(),
+    new CommandPhotoUpdate(),
     new CommandPhotoEmptyTrash(),
     new CommandAlbumList(),
     new CommandAlbumCreate(),

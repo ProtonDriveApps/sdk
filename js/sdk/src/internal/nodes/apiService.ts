@@ -440,7 +440,7 @@ export abstract class NodeAPIServiceBase<
     }
 
     async emptyTrash(volumeId: string): Promise<void> {
-        await this.apiService.delete<EmptyTrashResponse>(`drive/volumes/${volumeId}/trash`);
+        await this.apiService.delete<undefined, EmptyTrashResponse>(`drive/volumes/${volumeId}/trash`);
     }
 
     async *restoreNodes(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
@@ -561,7 +561,7 @@ export abstract class NodeAPIServiceBase<
     async deleteRevision(nodeRevisionUid: string): Promise<void> {
         const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(nodeRevisionUid);
 
-        await this.apiService.delete<DeleteRevisionResponse>(
+        await this.apiService.delete<undefined, DeleteRevisionResponse>(
             `drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/${revisionId}`,
         );
     }
