@@ -1,5 +1,5 @@
 import { PrivateKey } from '../../crypto';
-import { MetricVolumeType, PhotoAttributes, AlbumAttributes } from '../../interface';
+import { MetricVolumeType, PhotoAttributes, AlbumAttributes, PhotoTag } from '../../interface';
 import { DecryptedNode, EncryptedNode, DecryptedUnparsedNode } from '../nodes/interface';
 import { EncryptedShare } from '../shares';
 
@@ -24,7 +24,7 @@ export interface SharesService {
 }
 
 export type EncryptedPhotoNode = EncryptedNode & {
-    photo?: EcnryptedPhotoAttributes;
+    photo?: EncryptedPhotoAttributes;
     album?: AlbumAttributes;
 };
 
@@ -38,7 +38,7 @@ export type DecryptedPhotoNode = DecryptedNode & {
     album?: AlbumAttributes;
 };
 
-export type EcnryptedPhotoAttributes = Omit<PhotoAttributes, 'albums'> & {
+export type EncryptedPhotoAttributes = Omit<PhotoAttributes, 'albums'> & {
     contentHash?: string;
     albums: (PhotoAttributes['albums'][0] & {
         nameHash?: string;
@@ -55,29 +55,4 @@ export type TimelineItem = {
 export type AlbumItem = {
     nodeUid: string;
     captureTime: Date;
-};
-
-export enum PhotoTag {
-    Favorites = 0,
-    Screenshots = 1,
-    Videos = 2,
-    LivePhotos = 3,
-    MotionPhotos = 4,
-    Selfies = 5,
-    Portraits = 6,
-    Bursts = 7,
-    Panoramas = 8,
-    Raw = 9,
-}
-
-export type AddToAlbumEncryptedPhotoPayload = {
-    nodeUid: string;
-    contentHash: string;
-    nameHash: string;
-    encryptedName: string;
-    nameSignatureEmail: string;
-    nodePassphrase: string;
-    nodePassphraseSignature?: string;
-    signatureEmail?: string;
-    relatedPhotos?: Omit<AddToAlbumEncryptedPhotoPayload, 'relatedPhotos'>[];
 };

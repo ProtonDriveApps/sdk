@@ -65,7 +65,20 @@ export type PhotoAttributes = {
     /**
      * List of tags assigned to the photo.
      */
-    tags: number[]; // TODO: enum
+    tags: PhotoTag[];
+};
+
+export enum PhotoTag {
+    Favorites = 0,
+    Screenshots = 1,
+    Videos = 2,
+    LivePhotos = 3,
+    MotionPhotos = 4,
+    Selfies = 5,
+    Portraits = 6,
+    Bursts = 7,
+    Panoramas = 8,
+    Raw = 9,
 }
 
 /**

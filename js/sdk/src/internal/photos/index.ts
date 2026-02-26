@@ -18,13 +18,14 @@ import { SharesCryptoService } from '../shares/cryptoService';
 import { NodesService as UploadNodesService } from '../upload/interface';
 import { UploadTelemetry } from '../upload/telemetry';
 import { UploadQueue } from '../upload/queue';
-import { Albums } from './albums';
+import { AlbumsManager } from './albumsManager';
 import { AlbumsCryptoService } from './albumsCrypto';
 import { PhotosAPIService } from './apiService';
 import { SharesService } from './interface';
 import { PhotosNodesAPIService, PhotosNodesAccess, PhotosNodesCache, PhotosNodesManagement } from './nodes';
 import { PhotoSharesManager } from './shares';
 import { PhotosTimeline } from './timeline';
+import { PhotosManager } from './photosManager';
 import {
     PhotoFileUploader,
     PhotoUploadAPIService,
@@ -33,7 +34,7 @@ import {
     PhotoUploadMetadata,
 } from './upload';
 
-export type { DecryptedPhotoNode, TimelineItem, AlbumItem, PhotoTag } from './interface';
+export type { DecryptedPhotoNode, TimelineItem, AlbumItem } from './interface';
 
 // Only photos and albums can be shared in photos volume.
 export const PHOTOS_SHARE_TARGET_TYPES = [ShareTargetType.Photo, ShareTargetType.Album];
@@ -60,11 +61,13 @@ export function initPhotosModule(
         photoShares,
         nodesService,
     );
-    const albums = new Albums(telemetry, api, albumsCryptoService, photoShares, nodesService);
+    const albums = new AlbumsManager(telemetry, api, albumsCryptoService, photoShares, nodesService);
+    const photos = new PhotosManager(telemetry.getLogger('photos-update'), api, albumsCryptoService, nodesService);
 
     return {
         timeline,
         albums,
+        photos,
     };
 }
 

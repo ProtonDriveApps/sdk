@@ -1,13 +1,14 @@
 import { c } from 'ttag';
 
 import { ValidationError } from '../../errors';
-import { NodeResultWithError } from '../../interface';
+import { NodeResultWithError, PhotoTag } from '../../interface';
 import { APICodeError, DriveAPIService, drivePaths, InvalidRequirementsAPIError, isCodeOk } from '../apiService';
 import { batch } from '../batch';
 import { EncryptedRootShare, EncryptedShareCrypto, ShareType } from '../shares/interface';
 import { makeNodeUid, splitNodeUid } from '../uids';
 import { MissingRelatedPhotosError } from './errors';
-import { AddToAlbumEncryptedPhotoPayload, AlbumItem } from './interface';
+import { AlbumItem } from './interface';
+import { TransferEncryptedPhotoPayload } from './photosTransferPayloadBuilder';
 
 type GetPhotoShareResponse =
     drivePaths['/drive/v2/shares/photos']['get']['responses']['200']['content']['application/json'];
@@ -67,6 +68,19 @@ type PostRemovePhotosFromAlbumRequest = Extract<
 >['content']['application/json'];
 type PostRemovePhotosFromAlbumResponse =
     drivePaths['/drive/photos/volumes/{volumeID}/albums/{linkID}/remove-multiple']['post']['responses']['200']['content']['application/json'];
+
+type PostAddPhotoTagsRequest = Extract<
+    drivePaths['/drive/photos/volumes/{volumeID}/links/{linkID}/tags']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostRemovePhotoTagsRequest = Extract<
+    drivePaths['/drive/photos/volumes/{volumeID}/links/{linkID}/tags']['delete']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostFavoritePhotoRequest = Extract<
+    drivePaths['/drive/photos/volumes/{volumeID}/links/{linkID}/favorite']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
 
 const ALBUM_CONTAINS_PHOTOS_NOT_IN_TIMELINE_ERROR_CODE = 200302;
 
@@ -337,15 +351,12 @@ export class PhotosAPIService {
      */
     async *addPhotosToAlbum(
         albumNodeUid: string,
-        photoPayloads: AddToAlbumEncryptedPhotoPayload[],
+        photoPayloads: TransferEncryptedPhotoPayload[],
         signal?: AbortSignal,
     ): AsyncGenerator<NodeResultWithError> {
         const { volumeId, nodeId: albumLinkId } = splitNodeUid(albumNodeUid);
 
-        const allPhotoPayloads = photoPayloads.flatMap((photoPayload) => [
-            photoPayload,
-            ...(photoPayload.relatedPhotos || []),
-        ]);
+        const allPhotoPayloads = photoPayloads.flatMap((photoPayload) => [photoPayload, ...photoPayload.relatedPhotos]);
         const allPhotoData = allPhotoPayloads.map((photoPayload) => {
             const { nodeId } = splitNodeUid(photoPayload.nodeUid);
             return {
@@ -416,7 +427,7 @@ export class PhotosAPIService {
      */
     async copyPhotoToAlbum(
         albumNodeUid: string,
-        payload: AddToAlbumEncryptedPhotoPayload,
+        payload: TransferEncryptedPhotoPayload,
         signal?: AbortSignal,
     ): Promise<string> {
         const { volumeId: sourceVolumeId, nodeId: sourceLinkId } = splitNodeUid(payload.nodeUid);
@@ -438,14 +449,13 @@ export class PhotosAPIService {
                     SignatureEmail: payload.signatureEmail,
                     Photos: {
                         ContentHash: payload.contentHash,
-                        RelatedPhotos:
-                            payload.relatedPhotos?.map((related) => ({
-                                LinkID: splitNodeUid(related.nodeUid).nodeId,
-                                Hash: related.nameHash,
-                                Name: related.encryptedName,
-                                NodePassphrase: related.nodePassphrase,
-                                ContentHash: related.contentHash,
-                            })) || [],
+                        RelatedPhotos: payload.relatedPhotos.map((related) => ({
+                            LinkID: splitNodeUid(related.nodeUid).nodeId,
+                            Hash: related.nameHash,
+                            Name: related.encryptedName,
+                            NodePassphrase: related.nodePassphrase,
+                            ContentHash: related.contentHash,
+                        })),
                     },
                 },
                 signal,
@@ -498,5 +508,52 @@ export class PhotosAPIService {
                 }
             }
         }
+    }
+
+    async addPhotoTags(nodeUid: string, tags: PhotoTag[]): Promise<void> {
+        const { volumeId, nodeId: linkId } = splitNodeUid(nodeUid);
+        await this.apiService.post<PostAddPhotoTagsRequest, { Code: number }>(
+            `drive/photos/volumes/${volumeId}/links/${linkId}/tags`,
+            { Tags: tags },
+        );
+    }
+
+    async removePhotoTags(nodeUid: string, tags: PhotoTag[]): Promise<void> {
+        const { volumeId, nodeId: linkId } = splitNodeUid(nodeUid);
+        await this.apiService.delete<PostRemovePhotoTagsRequest, { Code: number }>(
+            `drive/photos/volumes/${volumeId}/links/${linkId}/tags`,
+            { Tags: tags },
+        );
+    }
+
+    async setPhotoFavorite(nodeUid: string, payload?: TransferEncryptedPhotoPayload): Promise<void> {
+        const { volumeId, nodeId: linkId } = splitNodeUid(nodeUid);
+        const requestBody = payload
+            ? {
+                  PhotoData: {
+                      Hash: payload.nameHash,
+                      Name: payload.encryptedName,
+                      NameSignatureEmail: payload.nameSignatureEmail,
+                      NodePassphrase: payload.nodePassphrase,
+                      ContentHash: payload.contentHash,
+                      NodePassphraseSignature: payload.nodePassphraseSignature ?? null,
+                      SignatureEmail: payload.signatureEmail ?? null,
+                      RelatedPhotos: payload.relatedPhotos.map((related) => ({
+                          LinkID: splitNodeUid(related.nodeUid).nodeId,
+                          Hash: related.nameHash,
+                          Name: related.encryptedName,
+                          NameSignatureEmail: related.nameSignatureEmail,
+                          NodePassphrase: related.nodePassphrase,
+                          ContentHash: related.contentHash,
+                          NodePassphraseSignature: related.nodePassphraseSignature ?? null,
+                          SignatureEmail: related.signatureEmail ?? null,
+                      })),
+                  },
+              }
+            : undefined;
+        await this.apiService.post<PostFavoritePhotoRequest, { Code: number }>(
+            `drive/photos/volumes/${volumeId}/links/${linkId}/favorite`,
+            requestBody,
+        );
     }
 }

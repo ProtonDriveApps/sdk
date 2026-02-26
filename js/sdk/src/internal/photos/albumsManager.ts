@@ -16,7 +16,7 @@ const BATCH_LOADING_SIZE = 10;
 /**
  * Provides access and high-level actions for managing albums.
  */
-export class Albums {
+export class AlbumsManager {
     private logger: Logger;
 
     constructor(

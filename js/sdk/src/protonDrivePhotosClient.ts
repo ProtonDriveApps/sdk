@@ -18,6 +18,7 @@ import {
     ProtonInvitationWithNode,
     NodeResult,
     NodeResultWithError,
+    PhotoTag,
 } from './interface';
 import { getConfig } from './config';
 import { DriveCrypto } from './crypto';
@@ -41,7 +42,6 @@ import {
     initPhotosNodesModule,
     AlbumItem,
     TimelineItem,
-    PhotoTag,
 } from './internal/photos';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharesModule } from './internal/shares';
@@ -635,5 +635,37 @@ export class ProtonDrivePhotosClient {
     ): AsyncGenerator<NodeResultWithError> {
         this.logger.info(`Removing ${photoNodeUids.length} photos from album ${getUid(albumNodeUid)}`);
         yield* this.photos.albums.removePhotos(getUid(albumNodeUid), getUids(photoNodeUids), signal);
+    }
+
+    /**
+     * Updates photos with the given settings: add or remove tags.
+     *
+     * Assigning a favorite tag to a photo that is not in the timeline will
+     * result in a move operation to the timeline. The photo will stay in
+     * the album.
+     *
+     * @param nodeUids - The UIDs of the photos to update.
+     * @param settings - addTags: tags to add, removeTags: tags to remove.
+     * @param signal - An optional abort signal to cancel the operation.
+     * @returns An async generator of per-photo results.
+     */
+    async *updatePhotos(
+        photos: {
+            nodeUid: NodeOrUid;
+            tagsToAdd?: PhotoTag[];
+            tagsToRemove?: PhotoTag[];
+        }[],
+        signal?: AbortSignal,
+    ): AsyncGenerator<NodeResultWithError> {
+        this.logger.info(`Updating ${photos.length} photos`);
+        yield *
+            this.photos.photos.updatePhotos(
+                photos.map((p) => ({
+                    nodeUid: getUid(p.nodeUid),
+                    tagsToAdd: p.tagsToAdd || [],
+                    tagsToRemove: p.tagsToRemove || [],
+                })),
+                signal,
+            );
     }
 }
