@@ -1,5 +1,21 @@
 # Changelog
 
+## cs/v0.7.0-alpha.12 (2026-02-25)
+
+* Transmit api codes through interop
+* Provide clearer context when canceling operations
+* Improve error reporting with full exception details
+* Clean native memory of weak references after release
+* Fix failures due to empty authorship results on degraded nodes
+* Clean native memory of global weak references
+* Upgrade android core to the last version (36.3.0)
+* Fix value type check
+* Set caller exception as cause to be reported in Sentry
+* Add context to timestamp conversion errors
+* Raise the timeout to 5min to upload 100MB file
+* Log progress as percentage
+* Accept null content key signatures
+
 ## cs/v0.7.0-alpha.11 (2026-02-18)
 
 * Fix download of photos and their thumbnails from shared albums
