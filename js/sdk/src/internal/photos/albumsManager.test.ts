@@ -1,7 +1,7 @@
 import { NodeType } from '../../interface';
 import { ValidationError } from '../../errors';
 import { getMockTelemetry } from '../../tests/telemetry';
-import { Albums } from './albums';
+import { AlbumsManager } from './albumsManager';
 import { AlbumsCryptoService } from './albumsCrypto';
 import { PhotosAPIService } from './apiService';
 import { DecryptedPhotoNode } from './interface';
@@ -13,7 +13,7 @@ describe('Albums', () => {
     let cryptoService: AlbumsCryptoService;
     let photoShares: PhotoSharesManager;
     let nodesService: PhotosNodesAccess;
-    let albums: Albums;
+    let albums: AlbumsManager;
 
     let nodes: { [uid: string]: DecryptedPhotoNode };
 
@@ -97,7 +97,7 @@ describe('Albums', () => {
             notifyChildCreated: jest.fn(),
         };
 
-        albums = new Albums(getMockTelemetry(), apiService, cryptoService, photoShares, nodesService);
+        albums = new AlbumsManager(getMockTelemetry(), apiService, cryptoService, photoShares, nodesService);
     });
 
     describe('createAlbum', () => {

@@ -56,6 +56,7 @@ export type {
     PhotoAttributes,
     AlbumAttributes,
 } from './photos';
+export { PhotoTag } from './photos';
 export type {
     ProtonInvitation,
     ProtonInvitationWithNode,

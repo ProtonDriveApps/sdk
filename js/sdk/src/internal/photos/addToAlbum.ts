@@ -1,13 +1,12 @@
 import { c } from 'ttag';
 
-import { ValidationError } from '../../errors';
 import { Logger, NodeResultWithError } from '../../interface';
 import { DecryptedNodeKeys, NodeSigningKeys } from '../nodes/interface';
 import { splitNodeUid } from '../uids';
 import { AlbumsCryptoService } from './albumsCrypto';
 import { PhotosAPIService } from './apiService';
 import { MissingRelatedPhotosError } from './errors';
-import { AddToAlbumEncryptedPhotoPayload, DecryptedPhotoNode } from './interface';
+import { PhotoTransferPayloadBuilder, TransferEncryptedPhotoPayload } from './photosTransferPayloadBuilder';
 import { PhotosNodesAccess } from './nodes';
 
 /**
@@ -47,18 +46,20 @@ type PhotoQueueItem = {
 export class AddToAlbumProcess {
     private readonly albumVolumeId: string;
     private readonly retriedPhotoUids = new Set<string>();
+    private readonly payloadBuilder: PhotoTransferPayloadBuilder;
 
     constructor(
         private readonly albumNodeUid: string,
         private readonly albumKeys: DecryptedNodeKeys,
         private readonly signingKeys: NodeSigningKeys,
         private readonly apiService: PhotosAPIService,
-        private readonly cryptoService: AlbumsCryptoService,
+        cryptoService: AlbumsCryptoService,
         private readonly nodesService: PhotosNodesAccess,
         private readonly logger: Logger,
         private readonly signal?: AbortSignal,
     ) {
         this.albumVolumeId = splitNodeUid(albumNodeUid).volumeId;
+        this.payloadBuilder = new PhotoTransferPayloadBuilder(cryptoService, nodesService);
     }
 
     async *execute(photoNodeUids: string[]): AsyncGenerator<NodeResultWithError> {
@@ -71,7 +72,13 @@ export class AddToAlbumProcess {
     private async *processSameVolumeQueue(queue: PhotoQueueItem[]): AsyncGenerator<NodeResultWithError> {
         while (queue.length > 0) {
             const items = queue.splice(0, BATCH_LOADING_SIZE);
-            const { payloads, errors } = await this.preparePhotoPayloads(items);
+            const { payloads, errors } = await this.payloadBuilder.preparePhotoPayloads(
+                items,
+                this.albumNodeUid,
+                this.albumKeys,
+                this.signingKeys,
+                this.signal,
+            );
 
             for (const [uid, error] of errors) {
                 yield { uid, ok: false, error };
@@ -97,7 +104,13 @@ export class AddToAlbumProcess {
     private async *processDifferentVolumeQueue(queue: PhotoQueueItem[]): AsyncGenerator<NodeResultWithError> {
         while (queue.length > 0) {
             const items = queue.splice(0, BATCH_LOADING_SIZE);
-            const { payloads, errors } = await this.preparePhotoPayloads(items);
+            const { payloads, errors } = await this.payloadBuilder.preparePhotoPayloads(
+                items,
+                this.albumNodeUid,
+                this.albumKeys,
+                this.signingKeys,
+                this.signal,
+            );
 
             for (const [uid, error] of errors) {
                 yield { uid, ok: false, error };
@@ -105,7 +118,11 @@ export class AddToAlbumProcess {
 
             for (const payload of payloads) {
                 try {
-                    const newPhotoNodeUid = await this.apiService.copyPhotoToAlbum(this.albumNodeUid, payload, this.signal);
+                    const newPhotoNodeUid = await this.apiService.copyPhotoToAlbum(
+                        this.albumNodeUid,
+                        payload,
+                        this.signal,
+                    );
                     await this.nodesService.notifyChildCreated(newPhotoNodeUid);
                     yield { uid: payload.nodeUid, ok: true };
                 } catch (error) {
@@ -119,129 +136,12 @@ export class AddToAlbumProcess {
                     yield {
                         uid: payload.nodeUid,
                         ok: false,
-                        error: error instanceof Error ? error : new Error(c('Error').t`Unknown error`, { cause: error }),
+                        error:
+                            error instanceof Error ? error : new Error(c('Error').t`Unknown error`, { cause: error }),
                     };
                 }
             }
         }
-    }
-
-    private async preparePhotoPayloads(items: PhotoQueueItem[]): Promise<{
-        payloads: AddToAlbumEncryptedPhotoPayload[];
-        errors: Map<string, Error>;
-    }> {
-        const payloads: AddToAlbumEncryptedPhotoPayload[] = [];
-        const errors = new Map<string, Error>();
-
-        const additionalRelatedMap = new Map(
-            items.map((item) => [item.photoNodeUid, item.additionalRelatedPhotoNodeUids]),
-        );
-
-        const nodeUids = items.map((item) => item.photoNodeUid);
-        for await (const photoNode of this.nodesService.iterateNodes(nodeUids, this.signal)) {
-            if ('missingUid' in photoNode) {
-                errors.set(photoNode.missingUid, new ValidationError(c('Error').t`Photo not found`));
-                continue;
-            }
-
-            try {
-                const additionalRelated = additionalRelatedMap.get(photoNode.uid) || [];
-                const payload = await this.preparePhotoPayload(photoNode, additionalRelated);
-                payloads.push(payload);
-            } catch (error) {
-                errors.set(
-                    photoNode.uid,
-                    error instanceof Error ? error : new Error(c('Error').t`Unknown error`, { cause: error }),
-                );
-            }
-        }
-
-        return { payloads, errors };
-    }
-
-    private async preparePhotoPayload(
-        photoNode: DecryptedPhotoNode,
-        additionalRelatedPhotoNodeUids: string[],
-    ): Promise<AddToAlbumEncryptedPhotoPayload> {
-        const photoData = await this.encryptPhotoForAlbum(photoNode);
-
-        const relatedNodeUids = [...new Set([
-            ...(photoNode.photo?.relatedPhotoNodeUids || []),
-            ...additionalRelatedPhotoNodeUids,
-        ])];
-
-        const relatedPhotos =
-            relatedNodeUids.length > 0 ? await this.prepareRelatedPhotoPayloads(relatedNodeUids) : [];
-
-        return {
-            ...photoData,
-            relatedPhotos,
-        };
-    }
-
-    private async prepareRelatedPhotoPayloads(
-        nodeUids: string[],
-    ): Promise<Omit<AddToAlbumEncryptedPhotoPayload, 'relatedPhotos'>[]> {
-        const payloads: Omit<AddToAlbumEncryptedPhotoPayload, 'relatedPhotos'>[] = [];
-
-        for await (const photoNode of this.nodesService.iterateNodes(nodeUids, this.signal)) {
-            // Missing related photos means that the related photo was deleted
-            // since the loading of the metadata. It can happen and should be
-            // ignored. The backend controls all the related photos are part
-            // of the request, thus the request will fail and be retried if
-            // there is any other race condition.
-            if ('missingUid' in photoNode) {
-                continue;
-            }
-            const payload = await this.encryptPhotoForAlbum(photoNode);
-            payloads.push(payload);
-        }
-
-        return payloads;
-    }
-
-    private async encryptPhotoForAlbum(
-        photoNode: DecryptedPhotoNode,
-    ): Promise<AddToAlbumEncryptedPhotoPayload> {
-        const nodeKeys = await this.nodesService.getNodePrivateAndSessionKeys(photoNode.uid);
-
-        const contentSha1 = photoNode.activeRevision?.ok
-            ? photoNode.activeRevision.value.claimedDigests?.sha1
-            : undefined;
-
-        if (!contentSha1) {
-            throw new Error('Cannot add photo to album without a content hash');
-        }
-
-        const encryptedCrypto = await this.cryptoService.encryptPhotoForAlbum(
-            photoNode.name,
-            contentSha1,
-            nodeKeys,
-            { key: this.albumKeys.key, hashKey: this.albumKeys.hashKey! },
-            this.signingKeys,
-        );
-
-        // Node could be uploaded or renamed by anonymous user and thus have
-        // missing signatures that must be added to the request.
-        // Node passphrase and signature email must be passed if and only if
-        // the signatures are missing (key author is null).
-        const anonymousKey = photoNode.keyAuthor.ok && photoNode.keyAuthor.value === null;
-        const keySignatureProperties = !anonymousKey
-            ? {}
-            : {
-                  signatureEmail: encryptedCrypto.signatureEmail,
-                  nodePassphraseSignature: encryptedCrypto.armoredNodePassphraseSignature,
-              };
-
-        return {
-            nodeUid: photoNode.uid,
-            contentHash: encryptedCrypto.contentHash,
-            nameHash: encryptedCrypto.hash,
-            encryptedName: encryptedCrypto.encryptedName,
-            nameSignatureEmail: encryptedCrypto.nameSignatureEmail,
-            nodePassphrase: encryptedCrypto.armoredNodePassphrase,
-            ...keySignatureProperties,
-        };
     }
 
     /**
@@ -260,19 +160,14 @@ export class AddToAlbumProcess {
      * Returns undefined if the photo has already been retried, preventing
      * infinite retry loops.
      */
-    private createRetryQueueItem(
-        photoNodeUid: string,
-        error: MissingRelatedPhotosError,
-    ): PhotoQueueItem | undefined {
+    private createRetryQueueItem(photoNodeUid: string, error: MissingRelatedPhotosError): PhotoQueueItem | undefined {
         if (this.retriedPhotoUids.has(photoNodeUid)) {
             this.logger.warn(`Missing related photos for ${photoNodeUid}, already retried`);
             return undefined;
         }
 
         this.retriedPhotoUids.add(photoNodeUid);
-        this.logger.info(
-            `Missing related photos for ${photoNodeUid}, re-queuing: ${error.missingNodeUids.join(', ')}`,
-        );
+        this.logger.info(`Missing related photos for ${photoNodeUid}, re-queuing: ${error.missingNodeUids.join(', ')}`);
 
         return {
             photoNodeUid,
@@ -316,10 +211,8 @@ function splitByVolume(
  * Groups payloads into batches respecting the API limit.
  * Each payload's size counts itself plus its related photos.
  */
-function* createBatches(
-    payloads: AddToAlbumEncryptedPhotoPayload[],
-): Generator<AddToAlbumEncryptedPhotoPayload[]> {
-    let batch: AddToAlbumEncryptedPhotoPayload[] = [];
+function* createBatches(payloads: TransferEncryptedPhotoPayload[]): Generator<TransferEncryptedPhotoPayload[]> {
+    let batch: TransferEncryptedPhotoPayload[] = [];
     let batchSize = 0;
 
     for (const payload of payloads) {
