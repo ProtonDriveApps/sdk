@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Security.Cryptography;
 using Proton.Drive.Sdk.Nodes.Download;
+using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Sdk;
 
@@ -43,7 +44,7 @@ internal static class TelemetryErrorResolver
         return exception switch
         {
             // Upload errors
-            NodeKeyAndSessionKeyMismatchException or SessionKeyAndDataPacketMismatchException => UploadError.IntegrityError,
+            IntegrityException => UploadError.IntegrityError,
 
 #pragma warning disable RCS0056 // Line too long
             HttpRequestException { HttpRequestError: HttpRequestError.NameResolutionError or HttpRequestError.ConnectionError or HttpRequestError.ProxyTunnelError } => UploadError.NetworkError,
