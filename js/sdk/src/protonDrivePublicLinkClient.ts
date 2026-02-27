@@ -20,6 +20,7 @@ import {
     NodeResult,
     SDKEvent,
     MemberRole,
+    FeatureFlagProvider,
 } from './interface';
 import { Telemetry } from './telemetry';
 import {
@@ -33,6 +34,7 @@ import { initDownloadModule } from './internal/download';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharingPublicModule, UnauthDriveAPIService } from './internal/sharingPublic';
 import { initUploadModule } from './internal/upload';
+import { NullFeatureFlagProvider } from './featureFlags';
 import { NodesSecurityScanResult } from './internal/sharingPublic/nodesSecurity';
 
 /**
@@ -93,6 +95,7 @@ export class ProtonDrivePublicLinkClient {
         srpModule,
         config,
         telemetry,
+        featureFlagProvider,
         url,
         token,
         publicShareKey,
@@ -106,6 +109,7 @@ export class ProtonDrivePublicLinkClient {
         srpModule: SRPModule;
         config?: ProtonDriveConfig;
         telemetry?: ProtonDriveTelemetry;
+        featureFlagProvider?: FeatureFlagProvider;
         url: string;
         token: string;
         publicShareKey: PrivateKey;
@@ -115,6 +119,9 @@ export class ProtonDrivePublicLinkClient {
     }) {
         if (!telemetry) {
             telemetry = new Telemetry();
+        }
+        if (!featureFlagProvider) {
+            featureFlagProvider = new NullFeatureFlagProvider();
         }
         this.logger = telemetry.getLogger('publicLink-interface');
 
@@ -165,6 +172,7 @@ export class ProtonDrivePublicLinkClient {
             cryptoModule,
             this.sharingPublic.shares,
             this.sharingPublic.nodes.access,
+            featureFlagProvider,
             fullConfig.clientUid,
         );
 

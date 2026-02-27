@@ -1,4 +1,4 @@
-import { ProtonDriveTelemetry, UploadMetadata } from '../../interface';
+import { FeatureFlagProvider, ProtonDriveTelemetry, UploadMetadata } from '../../interface';
 import { DriveAPIService } from '../apiService';
 import { DriveCrypto } from '../../crypto';
 import { UploadAPIService } from './apiService';
@@ -22,10 +22,11 @@ export function initUploadModule(
     driveCrypto: DriveCrypto,
     sharesService: SharesService,
     nodesService: NodesService,
+    featureFlagProvider: FeatureFlagProvider,
     clientUid?: string,
 ) {
     const api = new UploadAPIService(apiService, clientUid);
-    const cryptoService = new UploadCryptoService(driveCrypto, nodesService);
+    const cryptoService = new UploadCryptoService(telemetry, driveCrypto, nodesService, featureFlagProvider);
 
     const uploadTelemetry = new UploadTelemetry(telemetry, sharesService);
     const manager = new UploadManager(telemetry, api, cryptoService, nodesService, clientUid);

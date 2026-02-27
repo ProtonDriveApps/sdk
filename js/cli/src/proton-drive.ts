@@ -3,7 +3,7 @@ import { parseArgs } from 'util';
 import { VERSION } from '../../sdk/src';
 
 import { init } from './init';
-import { getCommand, validateCommandArguments } from './cli';
+import { getCommand, validateCommandArguments, formatReadableJson } from './cli';
 
 const groupName = Bun.argv[2];
 const commandName = Bun.argv[3];
@@ -62,7 +62,7 @@ try {
 
     // Get all the object properties and convert through JSON to avoid custom object interpretation.
     console.debug('Error details:');
-    console.debug(JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(error as object)))));
+    console.debug(formatReadableJson(Object.fromEntries(Object.entries(error as object))));
 
     process.exit(1);
 }

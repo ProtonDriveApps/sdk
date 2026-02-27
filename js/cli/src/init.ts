@@ -14,6 +14,7 @@ import {
     OpenPGPCryptoProxy,
     MetricEvent,
     Logger,
+    FeatureFlags,
 } from '../../sdk/src';
 import { Telemetry } from '../../sdk/src/telemetry';
 import { ProtonDrivePhotosClient } from '../../sdk/src/protonDrivePhotosClient';
@@ -34,8 +35,8 @@ export async function init(debug: boolean) {
     const telemetry = initTelemetry(config.cacheDir, config.enableConsoleLog);
     const account = await initAccount(cryptoApi, config, telemetry.getLogger('account'));
     const srp = await initSrp(cryptoApi, config);
-    const sdk = initSDK(cryptoApi, config, account, srp, telemetry);
-    const photosSdk = initPhotosSDK(cryptoApi, config, account, srp, telemetry);
+    const sdk = await initSDK(cryptoApi, config, account, srp, telemetry);
+    const photosSdk = await initPhotosSDK(cryptoApi, config, account, srp, telemetry);
     const sdkDiagnostic = initSDKDiagnostic(cryptoApi, config, account, srp);
     const paths = new Paths(sdk, photosSdk, account);
     return {
@@ -74,9 +75,15 @@ async function initSrp(cryptoApi: CryptoApi, config: Config) {
     return new Srp(cryptoApi, config);
 }
 
-function initSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Srp, telemetry: Telemetry<MetricEvent>) {
-    const { httpClient, entitiesCache, cryptoCache, openPGPCryptoModule, latestEventIdProvider } =
-        createSDKDependencies(config, account, cryptoApi);
+async function initSDK(
+    cryptoApi: CryptoApi,
+    config: Config,
+    account: Account,
+    srp: Srp,
+    telemetry: Telemetry<MetricEvent>,
+) {
+    const { httpClient, entitiesCache, cryptoCache, openPGPCryptoModule, latestEventIdProvider, featureFlagProvider } =
+        await createSDKDependencies(config, account, cryptoApi);
 
     const sdk = new ProtonDriveClient({
         httpClient,
@@ -91,19 +98,20 @@ function initSDK(cryptoApi: CryptoApi, config: Config, account: Account, srp: Sr
         openPGPCryptoModule,
         srpModule: srp,
         latestEventIdProvider,
+        featureFlagProvider,
     });
     return sdk;
 }
 
-function initPhotosSDK(
+async function initPhotosSDK(
     cryptoApi: CryptoApi,
     config: Config,
     account: Account,
     srp: Srp,
     telemetry: Telemetry<MetricEvent>,
 ) {
-    const { httpClient, entitiesCache, cryptoCache, openPGPCryptoModule, latestEventIdProvider } =
-        createSDKDependencies(config, account, cryptoApi);
+    const { httpClient, entitiesCache, cryptoCache, openPGPCryptoModule, latestEventIdProvider, featureFlagProvider } =
+        await createSDKDependencies(config, account, cryptoApi);
 
     return new ProtonDrivePhotosClient({
         httpClient,
@@ -118,11 +126,12 @@ function initPhotosSDK(
         openPGPCryptoModule,
         srpModule: srp,
         latestEventIdProvider,
+        featureFlagProvider,
     });
 }
 
-function initSDKDiagnostic(cryptoApi: CryptoApi, config: Config, account: Account, srp: Srp) {
-    const { httpClient, openPGPCryptoModule } = createSDKDependencies(config, account, cryptoApi);
+async function initSDKDiagnostic(cryptoApi: CryptoApi, config: Config, account: Account, srp: Srp) {
+    const { httpClient, openPGPCryptoModule } = await createSDKDependencies(config, account, cryptoApi);
 
     return initDiagnostic({
         httpClient,
@@ -133,7 +142,7 @@ function initSDKDiagnostic(cryptoApi: CryptoApi, config: Config, account: Accoun
     });
 }
 
-function createSDKDependencies(config: Config, account: Account, cryptoApi: CryptoApi) {
+async function createSDKDependencies(config: Config, account: Account, cryptoApi: CryptoApi) {
     return {
         httpClient: new HTTPClient({
             ...config,
@@ -144,11 +153,35 @@ function createSDKDependencies(config: Config, account: Account, cryptoApi: Cryp
         cryptoCache: new MemoryCache<CachedCryptoMaterial>(),
         openPGPCryptoModule: new OpenPGPCryptoWithCryptoProxy(cryptoApi as OpenPGPCryptoProxy),
         latestEventIdProvider: new NoLatestEventIdProvider(),
+        featureFlagProvider: await FeatureFlagProvider.fromJsonFile(config.cacheDir + '/config.json'),
     };
 }
 
 class NoLatestEventIdProvider {
     getLatestEventId(): string | null {
         return null;
+    }
+}
+
+class FeatureFlagProvider {
+    constructor(private flags: Record<FeatureFlags, boolean>) {
+        this.flags = flags;
+    }
+
+    static async fromJsonFile(jsonFile: string) {
+        const file = Bun.file(jsonFile);
+
+        if (!(await file.exists())) {
+            return new FeatureFlagProvider({} as Record<FeatureFlags, boolean>);
+        }
+
+        const bytes = await file.bytes();
+        const content = new TextDecoder().decode(bytes);
+        const flags = JSON.parse(content) as Record<FeatureFlags, boolean>;
+        return new FeatureFlagProvider(flags);
+    }
+
+    isEnabled(flagName: FeatureFlags): Promise<boolean> {
+        return Promise.resolve(this.flags[flagName] ?? false);
     }
 }
