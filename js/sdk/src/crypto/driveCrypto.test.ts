@@ -68,6 +68,7 @@ describe('DriveCrypto.encryptShareUrlPassword', () => {
             undefined,
             [encryptionKey],
             signingKey,
+            { enableAeadWithEncryptionKeys: false },
         );
     });
 });

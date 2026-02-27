@@ -19,16 +19,14 @@ auth.txt
 cache*.sqlite
 *.log
 *.bun-build
+config.json
 
-# VS Code
+# IDEs
 .vs
 .vscode
-
-# Intellij
 .idea
+*.swp
 
 # Tests
 tests/storage
-
-# Test reporter
 tests/test-results

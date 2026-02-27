@@ -39,8 +39,8 @@ export interface PrivateKey extends PublicKey {
 
 export interface SessionKey {
     data: Uint8Array<ArrayBuffer>;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    algorithm: any;
+    algorithm: string | null;
+    aeadAlgorithm: string | null;
 }
 
 export enum VERIFICATION_STATUS {
@@ -91,7 +91,7 @@ export interface OpenPGPCrypto {
      */
     generatePassphrase: () => string;
 
-    generateSessionKey: (encryptionKeys: PublicKey[]) => Promise<SessionKey>;
+    generateSessionKey: (encryptionKeys: PublicKey[], options: { enableAeadWithEncryptionKeys: boolean }) => Promise<SessionKey>;
 
     encryptSessionKey: (
         sessionKey: SessionKey,
@@ -112,7 +112,10 @@ export interface OpenPGPCrypto {
      *
      * The key pair is generated using the Curve25519 algorithm.
      */
-    generateKey: (passphrase: string) => Promise<{
+    generateKey: (
+        passphrase: string,
+        options: { enableAead: boolean },
+    ) => Promise<{
         privateKey: PrivateKey;
         armoredKey: string;
     }>;
@@ -120,7 +123,8 @@ export interface OpenPGPCrypto {
     encryptArmored: (
         data: Uint8Array<ArrayBuffer>,
         encryptionKeys: PublicKey[],
-        sessionKey?: SessionKey,
+        sessionKey: SessionKey | undefined,
+        options: { enableAeadWithEncryptionKeys: boolean },
     ) => Promise<{
         armoredData: string;
     }>;
@@ -130,6 +134,7 @@ export interface OpenPGPCrypto {
         sessionKey: SessionKey,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
+        options: { enableAeadWithEncryptionKeys: boolean },
     ) => Promise<{
         encryptedData: Uint8Array<ArrayBuffer>;
     }>;
@@ -139,7 +144,7 @@ export interface OpenPGPCrypto {
         sessionKey: SessionKey | undefined,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
-        options?: { compress?: boolean },
+        options: { compress?: boolean, enableAeadWithEncryptionKeys: boolean },
     ) => Promise<{
         armoredData: string;
     }>;
@@ -149,6 +154,7 @@ export interface OpenPGPCrypto {
         sessionKey: SessionKey,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
+        options: { enableAeadWithEncryptionKeys: boolean },
     ) => Promise<{
         encryptedData: Uint8Array<ArrayBuffer>;
         signature: Uint8Array<ArrayBuffer>;
@@ -159,6 +165,7 @@ export interface OpenPGPCrypto {
         sessionKey: SessionKey,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
+        options: { enableAeadWithEncryptionKeys: boolean },
     ) => Promise<{
         armoredData: string;
         armoredSignature: string;

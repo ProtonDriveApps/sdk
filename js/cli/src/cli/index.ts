@@ -66,6 +66,8 @@ import { Command } from './interface';
 import { CommandBookmarkCreate } from './bookmark/commandBookmarkCreate';
 import { CommandPhotoEmptyTrash } from './photos/CommandPhotoEmptyTrash';
 
+export { formatReadableJson } from './formatters';
+
 const COMMANDS = [
     // CLI Account
     new CommandAuthLogin(),

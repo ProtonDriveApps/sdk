@@ -46,6 +46,7 @@ import {
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharesModule } from './internal/shares';
 import { initSharingModule } from './internal/sharing';
+import { NullFeatureFlagProvider } from './featureFlags';
 
 /**
  * ProtonDrivePhotosClient is the interface to access Photos functionality.
@@ -84,10 +85,14 @@ export class ProtonDrivePhotosClient {
         srpModule,
         config,
         telemetry,
+        featureFlagProvider,
         latestEventIdProvider,
     }: ProtonDriveClientContructorParameters) {
         if (!telemetry) {
             telemetry = new Telemetry();
+        }
+        if (!featureFlagProvider) {
+            featureFlagProvider = new NullFeatureFlagProvider();
         }
         this.logger = telemetry.getLogger('photos-interface');
 
@@ -147,6 +152,7 @@ export class ProtonDrivePhotosClient {
             cryptoModule,
             this.photoShares,
             this.nodes.access,
+            featureFlagProvider,
             fullConfig.clientUid,
         );
 
