@@ -1,5 +1,5 @@
 import { DriveCrypto } from '../../crypto';
-import { ProtonDriveTelemetry, UploadMetadata, Thumbnail, AnonymousUser } from '../../interface';
+import { ProtonDriveTelemetry, UploadMetadata, Thumbnail, AnonymousUser, FeatureFlagProvider } from '../../interface';
 import { DriveAPIService, drivePaths } from '../apiService';
 import { generateFileExtendedAttributes } from '../nodes';
 import { splitNodeRevisionUid } from '../uids';
@@ -162,7 +162,10 @@ export class PhotoUploadManager extends UploadManager {
         }
 
         // TODO: handle photo extended attributes in the SDK - now it must be passed from the client
-        const generatedExtendedAttributes = generateFileExtendedAttributes(extendedAttributes, uploadMetadata.additionalMetadata);
+        const generatedExtendedAttributes = generateFileExtendedAttributes(
+            extendedAttributes,
+            uploadMetadata.additionalMetadata,
+        );
         const nodeCommitCrypto = await this.cryptoService.commitFile(
             nodeRevisionDraft.nodeKeys,
             manifest,
@@ -170,13 +173,16 @@ export class PhotoUploadManager extends UploadManager {
         );
 
         const sha1 = extendedAttributes.digests.sha1;
-        const contentHash = await this.photoCryptoService.generateContentHash(sha1, nodeRevisionDraft.parentNodeKeys?.hashKey);
+        const contentHash = await this.photoCryptoService.generateContentHash(
+            sha1,
+            nodeRevisionDraft.parentNodeKeys?.hashKey,
+        );
         const photo = {
             contentHash,
-            captureTime: uploadMetadata.captureTime || extendedAttributes.modificationTime,
+            captureTime: uploadMetadata.captureTime || extendedAttributes.modificationTime,
             mainPhotoLinkID: uploadMetadata.mainPhotoLinkID,
             tags: uploadMetadata.tags,
-        }
+        };
         await this.photoApiService.commitDraftPhoto(nodeRevisionDraft.nodeRevisionUid, nodeCommitCrypto, photo);
         await this.notifyNodeUploaded(nodeRevisionDraft);
     }
@@ -184,10 +190,12 @@ export class PhotoUploadManager extends UploadManager {
 
 export class PhotoUploadCryptoService extends UploadCryptoService {
     constructor(
+        telemetry: ProtonDriveTelemetry,
         driveCrypto: DriveCrypto,
         nodesService: NodesService,
+        featureFlagProvider: FeatureFlagProvider,
     ) {
-        super(driveCrypto, nodesService);
+        super(telemetry, driveCrypto, nodesService, featureFlagProvider);
     }
 
     async generateContentHash(sha1: string, parentHashKey: Uint8Array<ArrayBuffer>): Promise<string> {

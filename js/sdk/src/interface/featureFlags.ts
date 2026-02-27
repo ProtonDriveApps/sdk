@@ -3,5 +3,9 @@
  * Applications must supply their own implementation.
  */
 export interface FeatureFlagProvider {
-    isEnabled(flagName: string, signal?: AbortSignal): Promise<boolean>;
+    isEnabled(flagName: FeatureFlags, signal?: AbortSignal): Promise<boolean>;
+}
+
+export enum FeatureFlags {
+    DriveCryptoEncryptBlocksWithPgpAead = 'DriveCryptoEncryptBlocksWithPgpAead',
 }

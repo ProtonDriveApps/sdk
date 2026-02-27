@@ -27,6 +27,19 @@ enum SIGNING_CONTEXTS {
  * but we do share same key generation across shares and nodes modules,
  * for example, which we can generelise here and in each module just
  * call with specific arguments.
+ *
+ * Note about AEAD encryption:
+ *
+ * The algorithm of generated session key or encrypted data is defined by
+ * the encryption key preferences. If encryption key was generated with
+ * `aeadProtect` set to true, session key or encrypted data should use
+ * AEAD algorithm.
+ *
+ * However, in Drive, we do not want to use the AEAD algorithm everywhere,
+ * only for file content. Thus, we must pass the `enableAeadWithEncryptionKeys`
+ * flag explicitely to control whether to use the encryption key preferences
+ * to avoid using AEAD on places where it would not be supported. It should
+ * be set to false by default everywhere except for content encryption.
  */
 export class DriveCrypto {
     constructor(
@@ -55,6 +68,7 @@ export class DriveCrypto {
     async generateKey(
         encryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
+        { enableAead }: { enableAead: boolean } = { enableAead: false },
     ): Promise<{
         encrypted: {
             armoredKey: string;
@@ -69,8 +83,9 @@ export class DriveCrypto {
     }> {
         const passphrase = this.openPGPCrypto.generatePassphrase();
         const [{ privateKey, armoredKey }, passphraseSessionKey] = await Promise.all([
-            this.openPGPCrypto.generateKey(passphrase),
-            this.openPGPCrypto.generateSessionKey(encryptionKeys),
+            this.openPGPCrypto.generateKey(passphrase, { enableAead }),
+            // See note in the interface documentation about AEAD encryption.
+            this.openPGPCrypto.generateSessionKey(encryptionKeys, { enableAeadWithEncryptionKeys: false }),
         ]);
 
         const { armoredPassphrase, armoredPassphraseSignature } = await this.encryptPassphrase(
@@ -109,7 +124,10 @@ export class DriveCrypto {
             contentKeyPacketSessionKey: SessionKey;
         };
     }> {
-        const contentKeyPacketSessionKey = await this.openPGPCrypto.generateSessionKey([encryptionKey]);
+        // See note in the interface documentation about AEAD encryption.
+        const contentKeyPacketSessionKey = await this.openPGPCrypto.generateSessionKey([encryptionKey], {
+            enableAeadWithEncryptionKeys: true,
+        });
         const { signature: armoredContentKeyPacketSignature } = await this.openPGPCrypto.signArmored(
             contentKeyPacketSessionKey.data,
             [encryptionKey],
@@ -149,6 +167,8 @@ export class DriveCrypto {
                 sessionKey,
                 encryptionKeys,
                 signingKey,
+                // See note in the interface documentation about AEAD encryption.
+                { enableAeadWithEncryptionKeys: false },
             );
 
         return {
@@ -242,7 +262,13 @@ export class DriveCrypto {
         srp: SRPVerifier;
     }> {
         const [{ armoredData: armoredPassword }, { keyPacket }, srp] = await Promise.all([
-            this.openPGPCrypto.encryptArmored(new TextEncoder().encode(password), [addressKey]),
+            this.openPGPCrypto.encryptArmored(
+                new TextEncoder().encode(password),
+                [addressKey],
+                undefined,
+                // See note in the interface documentation about AEAD encryption.
+                { enableAeadWithEncryptionKeys: false },
+            ),
             this.openPGPCrypto.encryptSessionKeyWithPassword(sharePassphraseSessionKey, bcryptPassphrase),
             this.srpModule.getSrpVerifier(password),
         ]);
@@ -356,6 +382,8 @@ export class DriveCrypto {
             signature,
             [encryptionKey],
             sessionKey,
+            // See note in the interface documentation about AEAD encryption.
+            { enableAeadWithEncryptionKeys: false },
         );
         return {
             armoredSignature,
@@ -381,6 +409,8 @@ export class DriveCrypto {
             undefined,
             [encryptionAndSigningKey],
             encryptionAndSigningKey,
+            // See note in the interface documentation about AEAD encryption.
+            { enableAeadWithEncryptionKeys: false },
         );
         return {
             armoredHashKey,
@@ -420,6 +450,8 @@ export class DriveCrypto {
             sessionKey,
             encryptionKey ? [encryptionKey] : [],
             signingKey,
+            // See note in the interface documentation about AEAD encryption.
+            { enableAeadWithEncryptionKeys: false },
         );
         return {
             armoredNodeName,
@@ -502,7 +534,8 @@ export class DriveCrypto {
             undefined,
             [encryptionKey],
             signingKey,
-            { compress: true },
+            // See note in the interface documentation about AEAD encryption.
+            { compress: true, enableAeadWithEncryptionKeys: false },
         );
         return {
             armoredExtendedAttributes,
@@ -626,8 +659,10 @@ export class DriveCrypto {
             sessionKey,
             [], // Thumbnails use the session key so we do not send encryption key.
             signingKey,
+            // See note in the interface documentation about AEAD encryption.
+            { enableAeadWithEncryptionKeys: true },
         );
-        this.recordPerformance('content_encryption', thumbnailData.length, start);
+        this.recordPerformance('content_encryption', sessionKey, thumbnailData.length, start);
 
         return {
             encryptedData,
@@ -649,7 +684,7 @@ export class DriveCrypto {
             verified,
             verificationErrors,
         } = await this.openPGPCrypto.decryptAndVerify(encryptedThumbnail, sessionKey, verificationKeys);
-        this.recordPerformance('content_decryption', decryptedThumbnail.length, start);
+        this.recordPerformance('content_decryption', sessionKey, decryptedThumbnail.length, start);
         return {
             decryptedThumbnail,
             verified,
@@ -672,8 +707,10 @@ export class DriveCrypto {
             sessionKey,
             [], // Blocks use the session key so we do not send encryption key.
             signingKey,
+            // See note in the interface documentation about AEAD encryption.
+            { enableAeadWithEncryptionKeys: true },
         );
-        this.recordPerformance('content_encryption', blockData.length, start);
+        this.recordPerformance('content_encryption', sessionKey, blockData.length, start);
 
         const { armoredSignature } = await this.encryptSignature(signature, encryptionKey, sessionKey);
 
@@ -689,7 +726,7 @@ export class DriveCrypto {
     ): Promise<Uint8Array<ArrayBuffer>> {
         const start = performance.now();
         const { data: decryptedBlock } = await this.openPGPCrypto.decryptAndVerify(encryptedBlock, sessionKey, []);
-        this.recordPerformance('content_decryption', decryptedBlock.length, start);
+        this.recordPerformance('content_decryption', sessionKey, decryptedBlock.length, start);
 
         return decryptedBlock;
     }
@@ -740,21 +777,25 @@ export class DriveCrypto {
             undefined,
             [encryptionKey],
             signingKey,
+            // See note in the interface documentation about AEAD encryption.
+            { enableAeadWithEncryptionKeys: false },
         );
         return armoredData;
     }
 
     private recordPerformance(
         type: 'content_encryption' | 'content_decryption',
+        sessionKey: SessionKey,
         bytesProcessed: number,
         start: number,
     ) {
         const end = performance.now();
         const duration = end - start;
+        const cryptoModel = sessionKey.aeadAlgorithm ? 'v1.5' : 'v1';
         this.telemetry.recordMetric({
             eventName: 'performance',
             type,
-            cryptoModel: 'v1',
+            cryptoModel,
             bytesProcessed,
             milliseconds: Math.round(duration),
         });

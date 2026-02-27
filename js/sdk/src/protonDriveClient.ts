@@ -178,6 +178,7 @@ export class ProtonDriveClient {
             cryptoModule,
             this.shares,
             this.nodes.access,
+            featureFlagProvider,
             fullConfig.clientUid,
         );
         this.devices = initDevicesModule(

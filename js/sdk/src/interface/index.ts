@@ -14,6 +14,7 @@ export type { Author, UnverifiedAuthorError, AnonymousUser } from './author';
 export type { ProtonDriveConfig } from './config';
 export type { Device, DeviceOrUid } from './devices';
 export type { FeatureFlagProvider } from './featureFlags';
+export { FeatureFlags } from './featureFlags';
 export { DeviceType } from './devices';
 export type { FileDownloader, DownloadController, SeekableReadableStream } from './download';
 export type {

@@ -8,10 +8,18 @@ import { uint8ArrayToBase64String } from './utils';
  * clients/packages/crypto/lib/proxy/proxy.ts.
  */
 export interface OpenPGPCryptoProxy {
-    generateKey: (options: { userIDs: { name: string }[]; type: 'ecc'; curve: 'ed25519Legacy' }) => Promise<PrivateKey>;
+    generateKey: (options: {
+        userIDs: { name: string }[];
+        type: 'ecc';
+        curve: 'ed25519Legacy';
+        config?: { aeadProtect: boolean };
+    }) => Promise<PrivateKey>;
     exportPrivateKey: (options: { privateKey: PrivateKey; passphrase: string | null }) => Promise<string>;
     importPrivateKey: (options: { armoredKey: string; passphrase: string | null }) => Promise<PrivateKey>;
-    generateSessionKey: (options: { recipientKeys: PublicKey[] }) => Promise<SessionKey>;
+    generateSessionKey: (options: {
+        recipientKeys: PublicKey[];
+        config?: { ignoreSEIPDv2FeatureFlag: boolean };
+    }) => Promise<SessionKey>;
     encryptSessionKey: (
         options: SessionKey & {
             format: 'binary';
@@ -32,6 +40,7 @@ export interface OpenPGPCryptoProxy {
         signingKeys?: PrivateKey;
         detached?: Detached;
         compress?: boolean;
+        config?: { ignoreSEIPDv2FeatureFlag: boolean };
     }) => Promise<
         Detached extends true
             ? {
@@ -93,8 +102,15 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         return uint8ArrayToBase64String(value);
     }
 
-    async generateSessionKey(encryptionKeys: PublicKey[]) {
-        return this.cryptoProxy.generateSessionKey({ recipientKeys: encryptionKeys });
+    async generateSessionKey(encryptionKeys: PublicKey[], options: { enableAeadWithEncryptionKeys: boolean }) {
+        return this.cryptoProxy.generateSessionKey({
+            recipientKeys: encryptionKeys,
+            // `ignoreSEIPDv2FeatureFlag` means that the key preferences are
+            // ignored. If set to `true`, the session key will be generated
+            // the standard non-AEAD algorithm. If set to `false`, the session
+            // key will always follow the encryption key preferences.
+            config: { ignoreSEIPDv2FeatureFlag: !options.enableAeadWithEncryptionKeys },
+        });
     }
 
     async encryptSessionKey(sessionKey: SessionKey, encryptionKeys: PublicKey | PublicKey[]) {
@@ -119,11 +135,12 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         };
     }
 
-    async generateKey(passphrase: string) {
+    async generateKey(passphrase: string, options: { enableAead: boolean }) {
         const privateKey = await this.cryptoProxy.generateKey({
             userIDs: [{ name: 'Drive key' }],
             type: 'ecc',
             curve: 'ed25519Legacy',
+            config: { aeadProtect: options.enableAead },
         });
 
         const armoredKey = await this.cryptoProxy.exportPrivateKey({
@@ -137,11 +154,21 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         };
     }
 
-    async encryptArmored(data: Uint8Array<ArrayBuffer>, encryptionKeys: PublicKey[], sessionKey?: SessionKey) {
+    async encryptArmored(
+        data: Uint8Array<ArrayBuffer>,
+        encryptionKeys: PublicKey[],
+        sessionKey: SessionKey | undefined,
+        options: { enableAeadWithEncryptionKeys: boolean },
+    ) {
         const { message: armoredData } = await this.cryptoProxy.encryptMessage({
             binaryData: data,
             sessionKey,
             encryptionKeys,
+            // `ignoreSEIPDv2FeatureFlag` means that the key preferences are
+            // ignored. If set to `true`, the encrypted data will be generated
+            // the standard non-AEAD algorithm. If set to `false`, the session
+            // key will always follow the encryption key preferences.
+            config: { ignoreSEIPDv2FeatureFlag: !options.enableAeadWithEncryptionKeys },
         });
         return {
             armoredData: armoredData,
@@ -153,6 +180,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         sessionKey: SessionKey,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
+        options: { compress?: boolean, enableAeadWithEncryptionKeys: boolean },
     ) {
         const { message: encryptedData } = await this.cryptoProxy.encryptMessage({
             binaryData: data,
@@ -161,6 +189,11 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             encryptionKeys,
             format: 'binary',
             detached: false,
+            // `ignoreSEIPDv2FeatureFlag` means that the key preferences are
+            // ignored. If set to `true`, the encrypted data will be generated
+            // the standard non-AEAD algorithm. If set to `false`, the session
+            // key will always follow the encryption key preferences.
+            config: { ignoreSEIPDv2FeatureFlag: !options.enableAeadWithEncryptionKeys },
         });
         return {
             encryptedData: encryptedData,
@@ -172,7 +205,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         sessionKey: SessionKey | undefined,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
-        options: { compress?: boolean } = {},
+        options: { compress?: boolean, enableAeadWithEncryptionKeys: boolean },
     ) {
         const { message: armoredData } = await this.cryptoProxy.encryptMessage({
             binaryData: data,
@@ -181,6 +214,11 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             signingKeys: signingKey,
             detached: false,
             compress: options.compress || false,
+            // `ignoreSEIPDv2FeatureFlag` means that the key preferences are
+            // ignored. If set to `true`, the encrypted data will be generated
+            // the standard non-AEAD algorithm. If set to `false`, the session
+            // key will always follow the encryption key preferences.
+            config: { ignoreSEIPDv2FeatureFlag: !options.enableAeadWithEncryptionKeys },
         });
         return {
             armoredData: armoredData,
@@ -192,6 +230,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         sessionKey: SessionKey,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
+        options: { enableAeadWithEncryptionKeys: boolean },
     ) {
         const { message: encryptedData, signature } = await this.cryptoProxy.encryptMessage({
             binaryData: data,
@@ -200,6 +239,11 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             encryptionKeys,
             format: 'binary',
             detached: true,
+            // `ignoreSEIPDv2FeatureFlag` means that the key preferences are
+            // ignored. If set to `true`, the encrypted data will be generated
+            // the standard non-AEAD algorithm. If set to `false`, the session
+            // key will always follow the encryption key preferences.
+            config: { ignoreSEIPDv2FeatureFlag: !options.enableAeadWithEncryptionKeys },
         });
         return {
             encryptedData: encryptedData,
@@ -212,6 +256,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         sessionKey: SessionKey,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
+        options: { enableAeadWithEncryptionKeys: boolean },
     ) {
         const { message: armoredData, signature: armoredSignature } = await this.cryptoProxy.encryptMessage({
             binaryData: data,
@@ -219,6 +264,11 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             signingKeys: signingKey,
             encryptionKeys,
             detached: true,
+            // `ignoreSEIPDv2FeatureFlag` means that the key preferences are
+            // ignored. If set to `true`, the encrypted data will be generated
+            // the standard non-AEAD algorithm. If set to `false`, the session
+            // key will always follow the encryption key preferences.
+            config: { ignoreSEIPDv2FeatureFlag: !options.enableAeadWithEncryptionKeys },
         });
         return {
             armoredData: armoredData,
@@ -290,6 +340,12 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
 
         if (!sessionKey) {
             throw new Error('Could not decrypt session key');
+        }
+
+        // Encrypted OpenPGP v6 session keys used for AEAD do not store algorithm information, so we hardcode it
+        if (sessionKey.algorithm === null) {
+            sessionKey.algorithm = 'aes256';
+            sessionKey.aeadAlgorithm = 'gcm';
         }
 
         return sessionKey;
