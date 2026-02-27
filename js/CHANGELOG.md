@@ -1,5 +1,14 @@
 # Changelog
 
+## js/v0.11.0 (2026-02-26)
+
+* Add method to update photo tags
+* Ignore performance metrics in diagnostics tool
+* Stop reporting progress after failed upload
+* Add crypto performance metrics
+* Add node context to error about missing parent key
+* Do not block upload block reuqest by computing digest
+
 ## js/v0.10.0 (2026-02-19)
 
 * Add option for editors to manage share settings
