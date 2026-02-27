@@ -112,9 +112,6 @@ internal sealed partial class RevisionDraft(
 
     public async ValueTask DisposeAsync()
     {
-        FileKey.Dispose();
-        ContentKey.Dispose();
-        SigningKey.Dispose();
         Sha1.Dispose();
 
         var dataItemsToDispose = ContentBlockStates
