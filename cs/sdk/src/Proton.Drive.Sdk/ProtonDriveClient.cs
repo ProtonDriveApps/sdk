@@ -265,7 +265,7 @@ public sealed class ProtonDriveClient
         return NodeOperations.RenameAsync(this, uid, newName, newMediaType, cancellationToken);
     }
 
-    public ValueTask<IReadOnlyDictionary<NodeUid, Result<string?>>> TrashNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
+    public ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> TrashNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
     {
         return NodeOperations.TrashAsync(this, uids, cancellationToken);
     }
@@ -275,7 +275,7 @@ public sealed class ProtonDriveClient
         return NodeOperations.DeleteAsync(this, uids, cancellationToken);
     }
 
-    public ValueTask<IReadOnlyDictionary<NodeUid, Result<string?>>> RestoreNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
+    public ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> RestoreNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
     {
         return NodeOperations.RestoreAsync(this, uids, cancellationToken);
     }

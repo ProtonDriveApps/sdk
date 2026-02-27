@@ -332,14 +332,14 @@ internal static class NodeOperations
         await client.Cache.Entities.SetNodeAsync(uid, node with { Name = newName }, membershipShareId, nameHashDigest, cancellationToken).ConfigureAwait(false);
     }
 
-    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<string?>>> TrashAsync(
+    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> TrashAsync(
         ProtonDriveClient client,
         IEnumerable<NodeUid> uids,
         CancellationToken cancellationToken)
     {
         var uidsByVolumeId = uids.GroupBy(x => x.VolumeId);
 
-        var results = new ConcurrentDictionary<NodeUid, Result<string?>>();
+        var results = new ConcurrentDictionary<NodeUid, Result<Exception>>();
 
         var tasks = uidsByVolumeId.Select(async uidGroup =>
         {
@@ -366,7 +366,7 @@ internal static class NodeOperations
                             .ConfigureAwait(false);
                     }
 
-                    var result = response.IsSuccess ? Result<string?>.Success : response.ErrorMessage;
+                    var result = response.IsSuccess ? Result<Exception>.Success : new ProtonApiException(response);
 
                     results.TryAdd(uid, result);
                 }
@@ -411,14 +411,14 @@ internal static class NodeOperations
         return results;
     }
 
-    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<string?>>> RestoreAsync(
+    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> RestoreAsync(
         ProtonDriveClient client,
         IEnumerable<NodeUid> uids,
         CancellationToken cancellationToken)
     {
         var uidsByVolumeId = uids.GroupBy(x => x.VolumeId);
 
-        var results = new ConcurrentDictionary<NodeUid, Result<string?>>();
+        var results = new ConcurrentDictionary<NodeUid, Result<Exception>>();
 
         var tasks = uidsByVolumeId.Select(async uidGroup =>
         {
@@ -432,7 +432,7 @@ internal static class NodeOperations
                 {
                     var uid = new NodeUid(uidGroup.Key, linkId);
 
-                    var result = response.IsSuccess ? Result<string?>.Success : response.ErrorMessage;
+                    var result = response.IsSuccess ? Result<Exception>.Success : new ProtonApiException(response);
 
                     results.TryAdd(uid, result);
                 }

@@ -270,9 +270,9 @@ internal static class InteropProtonDriveClient
                         NodeUid = pair.Key.ToString(),
                     };
 
-                    if (pair.Value.TryGetError(out var error))
+                    if (pair.Value.TryGetError(out var exception))
                     {
-                        result.Error = error;
+                        result.Error = exception.ToErrorMessage(InteropDriveErrorConverter.SetDomainAndCodes);
                     }
 
                     return result;
