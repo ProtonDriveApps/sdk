@@ -1,5 +1,13 @@
 # Changelog
 
+## cs/v0.7.0-alpha.13 (2026-03-02)
+
+* Add Kotlin bindings for trash nodes
+* Test should not failed when SDK is aborted
+* Improve error reporting for trash and restore operations
+* Fix second-attempt file upload failing due to signature key disposal
+* Categorize upload integrity exception properly
+
 ## cs/v0.7.0-alpha.12 (2026-02-25)
 
 * Transmit api codes through interop
