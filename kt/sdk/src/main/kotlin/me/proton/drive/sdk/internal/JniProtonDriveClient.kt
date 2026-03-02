@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import me.proton.drive.sdk.converter.FileThumbnailListConverter
 import me.proton.drive.sdk.converter.FolderChildrenListConverter
 import me.proton.drive.sdk.converter.FolderNodeConverter
+import me.proton.drive.sdk.converter.TrashNodesResponseConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.StringResponseCallback
@@ -114,6 +115,13 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
     ): ProtonDriveSdk.FolderChildrenList =
         executeOnce("enumerateFolderChildren", FolderChildrenListConverter().asCallback) {
             driveClientEnumerateFolderChildren = request
+        }
+
+    suspend fun trashNodes(
+        request: ProtonDriveSdk.DriveClientTrashNodesRequest,
+    ): ProtonDriveSdk.TrashNodesResponse =
+        executeOnce("trashNodes", TrashNodesResponseConverter().asCallback) {
+            driveClientTrashNodes = request
         }
 
     fun free(handle: Long) {
