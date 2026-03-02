@@ -86,12 +86,19 @@ export class SharingPublicNodesAPIService extends NodeAPIService {
         const nodeUid = makeNodeUid(volumeId, link.Link.LinkID);
         const encryptedNode = linkToEncryptedNode(this.logger, volumeId, link, isOwnVolumeId);
 
-        // TEMPORARY: Inject public permissions for the root node only.
-        // This ensures the root node has the correct directRole instead of
-        // incorrectly falling back to 'admin' due to null DirectPermissions.
-        // May be fixed by backend later.
+        // TODO: This affects the cache. At this moment, the public link is not cached
+        // anywhere, thus OK. To avoid issues when public links reuses the same cache,
+        // we need to move this either to the interface of given instance, or leave
+        // this as a responsibility to the client.
         if (this.publicRootNodeUid === nodeUid) {
+            // Inject public permissions for the root node only.
+            // This ensures the root node has the correct directRole instead of
+            // incorrectly falling back to 'admin' due to null DirectPermissions.
             encryptedNode.directRole = this.publicRole;
+            // This prevent to have parentUid in case user visited parent folder public link of a public link
+            // Since the session got permissions to get the parentNode,
+            // when visiting children it will return the parentLinkID in links request.
+            encryptedNode.parentUid = undefined;
         }
 
         return encryptedNode;
