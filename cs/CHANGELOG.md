@@ -1,5 +1,9 @@
 # Changelog
 
+## cs/v0.7.0-alpha.14 (2026-03-02)
+
+* Improve the way drafts are considered non-resumable to pass through original exceptions
+
 ## cs/v0.7.0-alpha.13 (2026-03-02)
 
 * Add Kotlin bindings for trash nodes
