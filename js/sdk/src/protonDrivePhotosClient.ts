@@ -664,14 +664,13 @@ export class ProtonDrivePhotosClient {
         signal?: AbortSignal,
     ): AsyncGenerator<NodeResultWithError> {
         this.logger.info(`Updating ${photos.length} photos`);
-        yield *
-            this.photos.photos.updatePhotos(
-                photos.map((p) => ({
-                    nodeUid: getUid(p.nodeUid),
-                    tagsToAdd: p.tagsToAdd || [],
-                    tagsToRemove: p.tagsToRemove || [],
-                })),
-                signal,
-            );
+        yield* this.photos.photos.updatePhotos(
+            photos.map((p) => ({
+                nodeUid: getUid(p.nodeUid),
+                tagsToAdd: p.tagsToAdd || [],
+                tagsToRemove: p.tagsToRemove || [],
+            })),
+            signal,
+        );
     }
 }
