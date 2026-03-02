@@ -2,7 +2,7 @@
 export interface PublicKey {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     readonly _idx: any;
-        readonly _keyContentHash: [string, string];
+    readonly _keyContentHash: [string, string];
 
     getVersion(): number;
     getFingerprint(): string;
@@ -91,7 +91,10 @@ export interface OpenPGPCrypto {
      */
     generatePassphrase: () => string;
 
-    generateSessionKey: (encryptionKeys: PublicKey[], options: { enableAeadWithEncryptionKeys: boolean }) => Promise<SessionKey>;
+    generateSessionKey: (
+        encryptionKeys: PublicKey[],
+        options: { enableAeadWithEncryptionKeys: boolean },
+    ) => Promise<SessionKey>;
 
     encryptSessionKey: (
         sessionKey: SessionKey,
@@ -144,7 +147,7 @@ export interface OpenPGPCrypto {
         sessionKey: SessionKey | undefined,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
-        options: { compress?: boolean, enableAeadWithEncryptionKeys: boolean },
+        options: { compress?: boolean; enableAeadWithEncryptionKeys: boolean },
     ) => Promise<{
         armoredData: string;
     }>;
@@ -205,7 +208,10 @@ export interface OpenPGPCrypto {
         verificationErrors?: Error[];
     }>;
 
-    decryptSessionKey: (data: Uint8Array<ArrayBuffer>, decryptionKeys: PrivateKey | PrivateKey[]) => Promise<SessionKey>;
+    decryptSessionKey: (
+        data: Uint8Array<ArrayBuffer>,
+        decryptionKeys: PrivateKey | PrivateKey[],
+    ) => Promise<SessionKey>;
 
     decryptArmoredSessionKey: (armoredData: string, decryptionKeys: PrivateKey | PrivateKey[]) => Promise<SessionKey>;
 

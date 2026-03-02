@@ -180,7 +180,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         sessionKey: SessionKey,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
-        options: { compress?: boolean, enableAeadWithEncryptionKeys: boolean },
+        options: { compress?: boolean; enableAeadWithEncryptionKeys: boolean },
     ) {
         const { message: encryptedData } = await this.cryptoProxy.encryptMessage({
             binaryData: data,
@@ -205,7 +205,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         sessionKey: SessionKey | undefined,
         encryptionKeys: PublicKey[],
         signingKey: PrivateKey,
-        options: { compress?: boolean, enableAeadWithEncryptionKeys: boolean },
+        options: { compress?: boolean; enableAeadWithEncryptionKeys: boolean },
     ) {
         const { message: armoredData } = await this.cryptoProxy.encryptMessage({
             binaryData: data,
@@ -301,7 +301,11 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         };
     }
 
-    async verify(data: Uint8Array<ArrayBuffer>, signature: Uint8Array<ArrayBuffer>, verificationKeys: PublicKey | PublicKey[]) {
+    async verify(
+        data: Uint8Array<ArrayBuffer>,
+        signature: Uint8Array<ArrayBuffer>,
+        verificationKeys: PublicKey | PublicKey[],
+    ) {
         const { verificationStatus, errors } = await this.cryptoProxy.verifyMessage({
             binaryData: data,
             binarySignature: signature,
