@@ -174,6 +174,9 @@
       "Parent cannot be decrypted": [
         "Üst ögenin şifresi çözülemedi"
       ],
+      "Photo is already in the target album": [
+        "Fotoğraf zaten hedef albümde bulunuyor"
+      ],
       "Photo not found": [
         "Fotoğraf bulunamadı"
       ],

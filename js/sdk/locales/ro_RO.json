@@ -175,6 +175,9 @@
       "Parent cannot be decrypted": [
         "Părintele nu poate fi decriptat."
       ],
+      "Photo is already in the target album": [
+        "Fotografia există deja în albumul țintă."
+      ],
       "Photo not found": [
         "Fotografia nu a fost găsită"
       ],
