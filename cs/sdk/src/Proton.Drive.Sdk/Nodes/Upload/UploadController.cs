@@ -99,7 +99,6 @@ public sealed class UploadController : IAsyncDisposable
     private static bool IsResumableError(Exception ex)
     {
         return ex is not ProtonApiException { TransportCode: > 400 and < 500 }
-            and not UploadContentReadingException
             and not NodeWithSameNameExistsException
             and not IntegrityException;
     }

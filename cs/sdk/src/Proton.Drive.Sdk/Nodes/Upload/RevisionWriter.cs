@@ -51,88 +51,96 @@ internal sealed partial class RevisionWriter : IDisposable
         Action<long>? onProgress,
         CancellationToken cancellationToken)
     {
-        var uploadTasks = new Queue<Task<BlockUploadResult>>(_client.BlockUploader.Queue.Depth);
-
-        var signingEmailAddress = _draft.MembershipAddress.EmailAddress;
-
-        int expectedThumbnailBlockCount;
-
-        var hashingContentStream = new HashingReadStream(contentStream, _draft.Sha1, leaveOpen: true);
-
-        await using (hashingContentStream.ConfigureAwait(false))
+        try
         {
-            try
+            var uploadTasks = new Queue<Task<BlockUploadResult>>(_client.BlockUploader.Queue.Depth);
+
+            var signingEmailAddress = _draft.MembershipAddress.EmailAddress;
+
+            int expectedThumbnailBlockCount;
+
+            var hashingContentStream = new HashingReadStream(contentStream, _draft.Sha1, leaveOpen: true);
+
+            await using (hashingContentStream.ConfigureAwait(false))
             {
                 try
                 {
-                    expectedThumbnailBlockCount = await UploadThumbnailBlocksAsync(thumbnails, uploadTasks, cancellationToken).ConfigureAwait(false);
-
-                    await UploadContentBlocksAsync(onProgress, hashingContentStream, uploadTasks, cancellationToken).ConfigureAwait(false);
-                }
-                finally
-                {
-                    _releaseFileSemaphoreAction.Invoke();
-                    _fileReleased = true;
-                }
-
-                while (uploadTasks.TryDequeue(out var uploadTask))
-                {
-                    await uploadTask.ConfigureAwait(false);
-                }
-            }
-            catch when (uploadTasks.Count > 0)
-            {
-                foreach (var uploadTask in uploadTasks)
-                {
                     try
+                    {
+                        expectedThumbnailBlockCount = await UploadThumbnailBlocksAsync(thumbnails, uploadTasks, cancellationToken).ConfigureAwait(false);
+
+                        await UploadContentBlocksAsync(onProgress, hashingContentStream, uploadTasks, cancellationToken).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        _releaseFileSemaphoreAction.Invoke();
+                        _fileReleased = true;
+                    }
+
+                    while (uploadTasks.TryDequeue(out var uploadTask))
                     {
                         await uploadTask.ConfigureAwait(false);
                     }
-                    catch
-                    {
-                        // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
-                    }
                 }
+                catch when (uploadTasks.Count > 0)
+                {
+                    foreach (var uploadTask in uploadTasks)
+                    {
+                        try
+                        {
+                            await uploadTask.ConfigureAwait(false);
+                        }
+                        catch
+                        {
+                            // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
+                        }
+                    }
 
-                throw;
+                    throw;
+                }
             }
-        }
 
-        var sha1Digest = _draft.Sha1.GetCurrentHash();
+            var sha1Digest = _draft.Sha1.GetCurrentHash();
 
-        var request = CreateRevisionUpdateRequest(
-            lastModificationTime,
-            expectedContentLength,
-            expectedThumbnailBlockCount,
-            expectedSha1Provider,
-            sha1Digest,
-            signingEmailAddress,
-            additionalMetadata);
+            var request = CreateRevisionUpdateRequest(
+                lastModificationTime,
+                expectedContentLength,
+                expectedThumbnailBlockCount,
+                expectedSha1Provider,
+                sha1Digest,
+                signingEmailAddress,
+                additionalMetadata);
 
-        LogSealingRevision(_draft.Uid);
+            LogSealingRevision(_draft.Uid);
 
-        try
-        {
-            await _client.Api.Files.UpdateRevisionAsync(
-                _draft.Uid.NodeUid.VolumeId,
-                _draft.Uid.NodeUid.LinkId,
-                _draft.Uid.RevisionId,
-                request,
-                cancellationToken).ConfigureAwait(false);
-        }
-        catch (ProtonApiException ex) when (ex.Code is ResponseCode.IncompatibleState)
-        {
-            // The revision might have been previously sealed without getting the response back due to a cancellation.
-            // Throw only if the revision is still not sealed.
-            if (!(await RevisionIsSealedAsync(cancellationToken).ConfigureAwait(false)))
+            try
             {
-                throw;
+                await _client.Api.Files.UpdateRevisionAsync(
+                    _draft.Uid.NodeUid.VolumeId,
+                    _draft.Uid.NodeUid.LinkId,
+                    _draft.Uid.RevisionId,
+                    request,
+                    cancellationToken).ConfigureAwait(false);
             }
+            catch (ProtonApiException ex) when (ex.Code is ResponseCode.IncompatibleState)
+            {
+                // The revision might have been previously sealed without getting the response back due to a cancellation.
+                // Throw only if the revision is still not sealed.
+                if (!await RevisionIsSealedAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    throw;
+                }
+            }
+
+            LogRevisionSealed(_draft.Uid);
+
+            _draft.IsCompleted = true;
         }
-
-        LogRevisionSealed(_draft.Uid);
-
-        _draft.IsCompleted = true;
+        catch (Exception ex) when (!IsResumableError(ex))
+        {
+            _draft.IsResumable = false;
+            throw;
+        }
     }
 
     public void Dispose()
@@ -141,6 +149,13 @@ internal sealed partial class RevisionWriter : IDisposable
         {
             _releaseFileSemaphoreAction.Invoke();
         }
+    }
+
+    private static bool IsResumableError(Exception ex)
+    {
+        return ex is not ProtonApiException { TransportCode: >= 400 and < 500 }
+            and not NodeWithSameNameExistsException
+            and not IntegrityException;
     }
 
     private async ValueTask<BlockUploadResult> UploadContentBlockAsync(
@@ -307,15 +322,13 @@ internal sealed partial class RevisionWriter : IDisposable
 
                 return (currentBlockNumber.Value, plainData);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
+                _draft.IsResumable = false;
+
                 await plainDataStream.DisposeAsync().ConfigureAwait(false);
 
-                throw new UploadContentReadingException(
-                    ex is OperationCanceledException && cancellationToken.IsCancellationRequested
-                        ? "Reading block content could not complete in time after cancellation"
-                        : "Reading block content for upload failed",
-                    ex);
+                throw;
             }
         }
         catch

@@ -38,6 +38,7 @@ internal sealed partial class RevisionDraft(
     public IReadOnlyList<Either<BlockUploadPlainData, BlockUploadResult>> ContentBlockStates => _contentBlockStates;
 
     public bool IsCompleted { get; set; }
+    public bool IsResumable { get; set; } = true;
     public long NumberOfPlainBytesDone { get; set; }
 
     public void SetContentBlockPlainData(int blockNumber, BlockUploadPlainData plainData)
