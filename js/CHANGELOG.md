@@ -1,5 +1,11 @@
 # Changelog
 
+## js/v0.12.0 (2026-03-02)
+
+* Add AEAD crypto test and FF management
+* Override parentUid for root node of public link
+* Support AEAD block encryption
+
 ## js/v0.11.0 (2026-02-26)
 
 * Add method to update photo tags
