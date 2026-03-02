@@ -174,6 +174,9 @@
       "Parent cannot be decrypted": [
         "Bovenliggend onderdeel kan niet worden ontsleuteld"
       ],
+      "Photo is already in the target album": [
+        "Foto staat al in het doelalbum"
+      ],
       "Photo not found": [
         "Foto niet gevonden"
       ],

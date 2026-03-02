@@ -176,6 +176,9 @@
       "Parent cannot be decrypted": [
         "Немагчыма расшыфраваць бацькоўскі вузел"
       ],
+      "Photo is already in the target album": [
+        "Фатаграфіі ўжо знаходзяцца ў мэтавым альбоме"
+      ],
       "Photo not found": [
         "Фатаграфія не знойдзена"
       ],

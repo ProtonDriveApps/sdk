@@ -176,6 +176,9 @@
       "Parent cannot be decrypted": [
         "Nadradenú položku nemožno dešifrovať"
       ],
+      "Photo is already in the target album": [
+        "Fotografia sa už v cieľovom albume nachádza"
+      ],
       "Photo not found": [
         "Fotka sa nenašla"
       ],
