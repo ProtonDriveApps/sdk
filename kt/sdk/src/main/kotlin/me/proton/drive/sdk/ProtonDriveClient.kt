@@ -6,6 +6,7 @@ import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.entity.FolderNode
 import me.proton.drive.sdk.entity.NodeResult
 import me.proton.drive.sdk.entity.ThumbnailType
+import me.proton.drive.sdk.entity.NodeResultPair
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toProto
 import me.proton.drive.sdk.internal.JniProtonDriveClient
@@ -18,6 +19,7 @@ import proton.drive.sdk.driveClientGetAvailableNameRequest
 import proton.drive.sdk.driveClientGetMyFilesFolderRequest
 import proton.drive.sdk.driveClientGetThumbnailsRequest
 import proton.drive.sdk.driveClientRenameRequest
+import proton.drive.sdk.driveClientTrashNodesRequest
 import java.nio.channels.WritableByteChannel
 
 class ProtonDriveClient internal constructor(
@@ -116,6 +118,19 @@ class ProtonDriveClient internal constructor(
         bridge.enumerateFolderChildren(
             driveClientEnumerateFolderChildrenRequest {
                 this.folderUid = folderUid
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        ).toEntity()
+    }
+
+    suspend fun trashNodes(
+        nodeUids: List<String>,
+    ): List<NodeResultPair> = cancellationCoroutineScope { source ->
+        log(DEBUG, "trashNodes(${nodeUids.size} nodes)")
+        bridge.trashNodes(
+            driveClientTrashNodesRequest {
+                this.nodeUids += nodeUids
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }
