@@ -1,5 +1,9 @@
 # Changelog
 
+## cs/v0.7.0-alpha.15 (2026-03-03)
+
+* Fix registry not removing objects when the removeAll call happens from the owner's deinit
+
 ## cs/v0.7.0-alpha.14 (2026-03-02)
 
 * Improve the way drafts are considered non-resumable to pass through original exceptions
