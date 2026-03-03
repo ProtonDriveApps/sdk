@@ -45,10 +45,13 @@ final class CallbackHandleRegistry: @unchecked Sendable {
     private var nextId: RegistryHandle = 1
     private var entries: [RegistryHandle: Entry] = [:]
 
+    private var registrationsSinceLastSweep = 0
+
     private struct Entry {
         let object: AnyObject
         let scope: CallbackScope
         weak var owner: AnyObject?
+        let ownerIdentity: ObjectIdentifier?
     }
 
     func register(_ object: AnyObject, scope: CallbackScope = .operation, owner: AnyObject? = nil) -> RegistryHandle {
@@ -63,9 +66,14 @@ final class CallbackHandleRegistry: @unchecked Sendable {
         }
 
         lock.lock()
+        registrationsSinceLastSweep += 1
+        if registrationsSinceLastSweep >= 100 {
+            entries = entries.filter { $0.value.scope != .ownerManaged || $0.value.owner != nil }
+            registrationsSinceLastSweep = 0
+        }
         let id = nextId
         nextId += 1
-        entries[id] = Entry(object: object, scope: scope, owner: owner)
+        entries[id] = Entry(object: object, scope: scope, owner: owner, ownerIdentity: owner.map(ObjectIdentifier.init))
         lock.unlock()
         return id
     }
@@ -109,9 +117,13 @@ final class CallbackHandleRegistry: @unchecked Sendable {
     }
 
     /// Removes all entries owned by the given owner without cancelling them.
+    ///
+    /// Uses `ObjectIdentifier` for matching because weak references to the owner
+    /// are already zeroed by the time `deinit` runs, making `===` always fail.
     func removeAll(ownedBy owner: AnyObject) {
+        let identity = ObjectIdentifier(owner)
         lock.lock()
-        let keysToRemove = entries.filter { $0.value.owner === owner }.map { $0.key }
+        let keysToRemove = entries.filter { $0.value.ownerIdentity == identity }.map { $0.key }
         for key in keysToRemove {
             entries.removeValue(forKey: key)
         }
