@@ -16,6 +16,7 @@ import me.proton.drive.sdk.internal.JniLoggerProvider
 import me.proton.drive.sdk.internal.JniNativeLibrary
 import me.proton.drive.sdk.internal.JniSession
 import me.proton.drive.sdk.internal.ProtonDriveSdkNativeClient
+import me.proton.drive.sdk.internal.cancellationCoroutineScope
 
 object ProtonDriveSdk {
     init {
@@ -29,7 +30,7 @@ object ProtonDriveSdk {
 
     suspend fun sessionBegin(
         request: SessionBeginRequest,
-    ): Session = cancellationTokenSource().let { source ->
+    ): Session = cancellationCoroutineScope { source ->
         JniSession().run {
             clientLogger(DEBUG, "ProtonDriveSdk sessionBegin")
             Session(begin(source.handle, request), this, source)
@@ -38,10 +39,14 @@ object ProtonDriveSdk {
 
     suspend fun sessionResume(
         request: SessionResumeRequest,
-    ): Session = cancellationTokenSource().let { source ->
+    ): Session = cancellationCoroutineScope { source ->
         JniSession().run {
             clientLogger(DEBUG, "ProtonDriveSdk sessionResume")
-            Session(resume(request), this, source)
+            Session(
+                handle = resume(request),
+                bridge = this,
+                cancellationTokenSource = source
+            )
         }
     }
 

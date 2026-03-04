@@ -1,6 +1,7 @@
 package me.proton.drive.sdk
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.withTimeout
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
@@ -11,9 +12,11 @@ import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toPercentageString
 import me.proton.drive.sdk.internal.JniFileUploader
 import me.proton.drive.sdk.internal.JniUploadController
+import me.proton.drive.sdk.internal.cancellationCoroutineScope
 import me.proton.drive.sdk.internal.toLogId
 import java.nio.channels.ReadableByteChannel
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration
 
 class FileUploader internal constructor(
     client: ProtonDriveClient,
@@ -68,27 +71,41 @@ class FileUploader internal constructor(
 }
 
 suspend fun ProtonDriveClient.uploader(
-    request: FileUploaderRequest
-): Uploader = cancellationTokenSource().let { source ->
-    JniFileUploader().run {
-        FileUploader(
-            client = this@uploader,
-            handle = getFileUploader(handle, source.handle, request),
-            bridge = this,
-            cancellationTokenSource = source,
-        )
+    request: FileUploaderRequest,
+    timeout: Duration,
+): Uploader = withTimeout(timeout) {
+    cancellationCoroutineScope { source ->
+        JniFileUploader().run {
+            FileUploader(
+                client = this@uploader,
+                handle = getFileUploader(
+                    clientHandle = handle,
+                    cancellationTokenSourceHandle = source.handle,
+                    request = request
+                ),
+                bridge = this,
+                cancellationTokenSource = source,
+            )
+        }
     }
 }
 
 suspend fun ProtonDriveClient.uploader(
-    request: FileRevisionUploaderRequest
-): Uploader = cancellationTokenSource().let { source ->
-    JniFileUploader().run {
-        FileUploader(
-            client = this@uploader,
-            handle = getFileRevisionUploader(handle, source.handle, request),
-            bridge = this,
-            cancellationTokenSource = source,
-        )
+    request: FileRevisionUploaderRequest,
+    timeout: Duration,
+): Uploader = withTimeout(timeout) {
+    cancellationCoroutineScope { source ->
+        JniFileUploader().run {
+            FileUploader(
+                client = this@uploader,
+                handle = getFileRevisionUploader(
+                    clientHandle = handle,
+                    cancellationTokenSourceHandle = source.handle,
+                    request = request
+                ),
+                bridge = this,
+                cancellationTokenSource = source,
+            )
+        }
     }
 }
