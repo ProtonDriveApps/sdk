@@ -1,5 +1,9 @@
 # Changelog
 
+## cs/v0.7.0-alpha.16 (2026-03-04)
+
+* Ensure cancelled uploads/downloads don't block queue
+
 ## cs/v0.7.0-alpha.15 (2026-03-03)
 
 * Fix registry not removing objects when the removeAll call happens from the owner's deinit
