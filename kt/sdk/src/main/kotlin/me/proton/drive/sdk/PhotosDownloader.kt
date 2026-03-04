@@ -1,6 +1,7 @@
 package me.proton.drive.sdk
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.withTimeout
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
@@ -9,11 +10,14 @@ import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toPercentageString
 import me.proton.drive.sdk.internal.JniDownloadController
 import me.proton.drive.sdk.internal.JniPhotosDownloader
+import me.proton.drive.sdk.internal.cancellationCoroutineScope
 import me.proton.drive.sdk.internal.factory
 import me.proton.drive.sdk.internal.toLogId
 import java.nio.channels.SeekableByteChannel
 import java.nio.channels.WritableByteChannel
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 class PhotosDownloader internal constructor(
     client: ProtonPhotosClient,
@@ -25,13 +29,13 @@ class PhotosDownloader internal constructor(
     override suspend fun downloadToStream(
         coroutineScope: CoroutineScope,
         channel: WritableByteChannel,
-    ): DownloadController = cancellationTokenSource().let { cancellationTokenSource ->
+    ): DownloadController = cancellationTokenSource().let { source ->
         log(INFO, "downloadToStream")
         val coroutineScopeReference = AtomicReference(coroutineScope)
         val controllerReference = AtomicReference<CommonDownloadController>()
         val handle = bridge.downloadToStream(
             handle = handle,
-            cancellationTokenSourceHandle = cancellationTokenSource.handle,
+            cancellationTokenSourceHandle = source.handle,
             onWrite = channel::write,
             onSeek = if (channel is SeekableByteChannel) {
                 channel::seek
@@ -52,7 +56,7 @@ class PhotosDownloader internal constructor(
             bridge = JniDownloadController(),
             channel = channel,
             coroutineScopeConsumer = coroutineScopeReference::set,
-            cancellationTokenSource = cancellationTokenSource,
+            cancellationTokenSource = source,
         ).also(controllerReference::set)
     }
 
@@ -73,18 +77,21 @@ class PhotosDownloader internal constructor(
 }
 
 suspend fun ProtonPhotosClient.downloader(
-    photoUid: String
-): Downloader = cancellationTokenSource().let { source ->
-    factory(JniPhotosDownloader()) {
-        PhotosDownloader(
-            client = this@downloader,
-            handle = getPhotoDownloader(
-                clientHandle = handle,
-                cancellationTokenSourceHandle = source.handle,
-                photoUid = photoUid,
-            ),
-            bridge = this,
-            cancellationTokenSource = source,
-        )
+    photoUid: String,
+    timeout: Duration,
+): Downloader = withTimeout(timeout) {
+    cancellationCoroutineScope { source ->
+        factory(JniPhotosDownloader()) {
+            PhotosDownloader(
+                client = this@downloader,
+                handle = getPhotoDownloader(
+                    clientHandle = handle,
+                    cancellationTokenSourceHandle = source.handle,
+                    photoUid = photoUid,
+                ),
+                bridge = this,
+                cancellationTokenSource = source,
+            )
+        }
     }
 }
