@@ -8,7 +8,7 @@ public sealed class DownloadController : IAsyncDisposable
     private readonly Func<CancellationToken, Task> _resumeFunction;
     private readonly ITaskControl _taskControl;
     private readonly Stream? _outputStreamToDispose;
-    private readonly Action<Exception>? _onFailed;
+    private readonly Action<Exception, long, long>? _onFailed;
     private readonly Action<long, long>? _onSucceeded;
 
     private bool _isDownloadCompleteWithVerificationIssue;
@@ -19,7 +19,7 @@ public sealed class DownloadController : IAsyncDisposable
         Func<CancellationToken, Task> resumeFunction,
         Stream? outputStreamToDispose,
         ITaskControl taskControl,
-        Action<Exception>? onFailed = null,
+        Action<Exception, long, long>? onFailed = null,
         Action<long, long>? onSucceeded = null)
     {
         _downloadStateTask = downloadStateTask;
@@ -69,7 +69,11 @@ public sealed class DownloadController : IAsyncDisposable
 
                 if (Completion.IsFaulted)
                 {
-                    _onFailed?.Invoke(Completion.Exception.Flatten().InnerException ?? Completion.Exception);
+                    var downloadState = await _downloadStateTask.ConfigureAwait(false);
+                    _onFailed?.Invoke(
+                        Completion.Exception.Flatten().InnerException ?? Completion.Exception,
+                        downloadState.RevisionDto.Size,
+                        downloadState.GetNumberOfBytesWritten());
                 }
 
                 var stateExists = _downloadStateTask.IsCompletedSuccessfully;
