@@ -13,9 +13,9 @@ import { UploadTelemetry } from './telemetry';
  * and initiate the upload process for a file object or a stream.
  *
  * This class is not meant to be used directly, but rather to be extended
- * by `FileUploader` and `FileRevisionUploader`.
+ * by `FileUploader`, `FileRevisionUploader`, or `SmallFileUploader`.
  */
-abstract class Uploader {
+export abstract class Uploader {
     protected controller: UploadController;
     protected abortController: AbortController;
 

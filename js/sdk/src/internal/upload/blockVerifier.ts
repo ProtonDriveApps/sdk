@@ -2,6 +2,18 @@ import { PrivateKey, SessionKey } from '../../crypto';
 import { UploadAPIService } from './apiService';
 import { UploadCryptoService } from './cryptoService';
 
+export async function verifyBlockWithContentKey(
+    cryptoService: UploadCryptoService,
+    contentKeyPacket: Uint8Array<ArrayBuffer>,
+    contentKeyPacketSessionKey: SessionKey,
+    encryptedBlock: Uint8Array<ArrayBuffer>,
+): Promise<{
+    verificationToken: Uint8Array<ArrayBuffer>;
+}> {
+    const verificationCode = contentKeyPacket.subarray(-32);
+    return cryptoService.verifyBlock(contentKeyPacketSessionKey, verificationCode, encryptedBlock);
+}
+
 export class BlockVerifier {
     private verificationCode?: Uint8Array<ArrayBuffer>;
     private contentKeyPacketSessionKey?: SessionKey;

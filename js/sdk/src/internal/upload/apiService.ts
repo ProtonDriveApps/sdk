@@ -52,6 +52,26 @@ type PostLoadLinksMetadataRequest = Extract<
 type PostLoadLinksMetadataResponse =
     drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['responses']['200']['content']['application/json'];
 
+type PostSmallFileFormData = Extract<
+    Extract<
+        drivePaths['/drive/v2/volumes/{volumeID}/files/small']['post']['requestBody'],
+        { content: object }
+    >['content']['multipart/form-data'],
+    { Metadata: object }
+>;
+type PostSmallFileResponse =
+    drivePaths['/drive/v2/volumes/{volumeID}/files/small']['post']['responses']['200']['content']['application/json'];
+
+type PostSmallRevisionFormData = Extract<
+    Extract<
+        drivePaths['/drive/v2/volumes/{volumeID}/files/{linkID}/revisions/small']['post']['requestBody'],
+        { content: object }
+    >['content']['multipart/form-data'],
+    { Metadata: object }
+>;
+type PostSmallRevisionResponse =
+    drivePaths['/drive/v2/volumes/{volumeID}/files/{linkID}/revisions/small']['post']['responses']['200']['content']['application/json'];
+
 export class UploadAPIService {
     constructor(
         protected apiService: DriveAPIService,
@@ -218,7 +238,7 @@ export class UploadAPIService {
         options: {
             armoredManifestSignature: string;
             signatureEmail: string | AnonymousUser;
-            armoredExtendedAttributes?: string;
+            armoredExtendedAttributes: string;
         },
     ): Promise<void> {
         const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(draftNodeRevisionUid);
@@ -229,7 +249,7 @@ export class UploadAPIService {
         >(`drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/${revisionId}`, {
             ManifestSignature: options.armoredManifestSignature,
             SignatureAddress: options.signatureEmail,
-            XAttr: options.armoredExtendedAttributes || null,
+            XAttr: options.armoredExtendedAttributes,
             Photo: null, // Only used for photos in the Photo volume.
         });
     }
@@ -284,5 +304,144 @@ export class UploadAPIService {
             link.Link.State === 1 && // ACTIVE state
             link.File?.ActiveRevision?.RevisionID === revisionId
         );
+    }
+
+    async uploadSmallFile(
+        parentFolderUid: string,
+        metadata: {
+            armoredEncryptedName: string;
+            hash: string;
+            mediaType: string;
+            armoredNodeKey: string;
+            armoredNodePassphrase: string;
+            armoredNodePassphraseSignature: string;
+            base64ContentKeyPacket: string;
+            armoredContentKeyPacketSignature: string;
+            armoredExtendedAttributes: string;
+            signatureEmail: string | AnonymousUser;
+        },
+        content: {
+            armoredManifestSignature: string;
+            block: {
+                encryptedData: Uint8Array<ArrayBuffer>;
+                armoredSignature: string;
+                verificationToken: Uint8Array<ArrayBuffer>;
+            };
+            thumbnails: {
+                type: ThumbnailType;
+                encryptedData: Uint8Array<ArrayBuffer>;
+            }[];
+        },
+        signal?: AbortSignal,
+    ): Promise<{ nodeUid: string; nodeRevisionUid: string }> {
+        const { volumeId, nodeId: parentNodeId } = splitNodeUid(parentFolderUid);
+
+        const metadataPayload: PostSmallFileFormData['Metadata'] = {
+            ParentLinkID: parentNodeId,
+            Name: metadata.armoredEncryptedName,
+            NameHash: metadata.hash,
+            NodePassphrase: metadata.armoredNodePassphrase,
+            NodePassphraseSignature: metadata.armoredNodePassphraseSignature,
+            SignatureEmail: metadata.signatureEmail,
+            NodeKey: metadata.armoredNodeKey,
+            MIMEType: metadata.mediaType,
+            ContentKeyPacket: metadata.base64ContentKeyPacket,
+            ContentKeyPacketSignature: metadata.armoredContentKeyPacketSignature,
+            ManifestSignature: content.armoredManifestSignature,
+            ContentBlockEncSignature: content.block.encryptedData.length > 0 ? content.block.armoredSignature : null,
+            ContentBlockVerificationToken: uint8ArrayToBase64String(content.block.verificationToken),
+            XAttr: metadata.armoredExtendedAttributes,
+            Photo: null, // TODO
+        };
+
+        const formData = new FormData();
+        formData.append(
+            'Metadata',
+            new Blob([JSON.stringify(metadataPayload)], { type: 'application/json' }),
+            'Metadata',
+        );
+        if (content.block.encryptedData.length > 0) {
+            formData.append('ContentBlock', new Blob([content.block.encryptedData]), 'ContentBlock');
+        }
+        for (const thumb of content.thumbnails) {
+            formData.append(
+                `ThumbnailBlockType_${thumb.type}`,
+                new Blob([thumb.encryptedData]),
+                `ThumbnailBlockType_${thumb.type}`,
+            );
+        }
+
+        const result = await this.apiService.postFormData<PostSmallFileResponse>(
+            `drive/v2/volumes/${volumeId}/files/small`,
+            formData,
+            signal,
+        );
+
+        return {
+            nodeUid: makeNodeUid(volumeId, result.LinkID),
+            nodeRevisionUid: makeNodeRevisionUid(volumeId, result.LinkID, result.RevisionID),
+        };
+    }
+
+    async uploadSmallRevision(
+        nodeUid: string,
+        currentRevisionUid: string,
+        metadata: {
+            signatureEmail: string | AnonymousUser | null;
+            armoredExtendedAttributes: string;
+        },
+        content: {
+            armoredManifestSignature: string;
+            block: {
+                encryptedData: Uint8Array<ArrayBuffer>;
+                armoredSignature: string;
+                verificationToken: Uint8Array<ArrayBuffer>;
+            };
+            thumbnails: {
+                type: ThumbnailType;
+                encryptedData: Uint8Array<ArrayBuffer>;
+            }[];
+        },
+        signal?: AbortSignal,
+    ): Promise<{ nodeUid: string; nodeRevisionUid: string }> {
+        const { volumeId, nodeId } = splitNodeUid(nodeUid);
+        const { revisionId: currentRevisionId } = splitNodeRevisionUid(currentRevisionUid);
+
+        const metadataPayload: PostSmallRevisionFormData['Metadata'] = {
+            CurrentRevisionID: currentRevisionId,
+            SignatureEmail: metadata.signatureEmail,
+            ManifestSignature: content.armoredManifestSignature,
+            ContentBlockEncSignature: content.block.armoredSignature,
+            ContentBlockVerificationToken: uint8ArrayToBase64String(content.block.verificationToken),
+            XAttr: metadata.armoredExtendedAttributes,
+        };
+
+        const formData = new FormData();
+        formData.append(
+            'Metadata',
+            new Blob([JSON.stringify(metadataPayload)], { type: 'application/json' }),
+            'Metadata',
+        );
+        if (content.block.encryptedData.length > 0) {
+            formData.append('ContentBlock', new Blob([content.block.encryptedData]), 'ContentBlock');
+        }
+        for (const thumb of content.thumbnails) {
+            formData.append(
+                `ThumbnailBlockType_${thumb.type}`,
+                new Blob([thumb.encryptedData]),
+                `ThumbnailBlockType_${thumb.type}`,
+            );
+        }
+
+        const result = await this.apiService.postFormData<PostSmallRevisionResponse>(
+            `drive/v2/volumes/${volumeId}/files/${nodeId}/revisions/small`,
+            formData,
+            signal,
+        );
+
+        return {
+            nodeUid: makeNodeUid(volumeId, result.LinkID),
+            nodeRevisionUid: makeNodeRevisionUid(volumeId, result.LinkID, result.RevisionID),
+        };
     }
 }

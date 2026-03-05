@@ -39,7 +39,7 @@ const MAX_UPLOADING_BLOCKS = 5;
  * This is to automatically retry random errors that can happen
  * during encryption, for example bitflips.
  */
-const MAX_BLOCK_ENCRYPTION_RETRIES = 1;
+export const MAX_BLOCK_ENCRYPTION_RETRIES = 1;
 
 /**
  * Maximum number of retries for block upload.
