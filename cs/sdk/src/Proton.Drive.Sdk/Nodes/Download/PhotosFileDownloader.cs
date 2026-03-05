@@ -121,8 +121,13 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
             OnFailed,
             OnSucceeded);
 
-        void OnFailed(Exception ex)
+        void OnFailed(Exception ex, long claimedFileSize, long downloadedByteCount)
         {
+            // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize
+            downloadEvent.ClaimedFileSize = claimedFileSize;
+            downloadEvent.ApproximateClaimedFileSize = Privacy.ReduceSizePrecision(claimedFileSize);
+            downloadEvent.DownloadedSize = downloadedByteCount;
+            downloadEvent.ApproximateDownloadedSize = Privacy.ReduceSizePrecision(downloadedByteCount);
             downloadEvent.Error = TelemetryErrorResolver.GetDownloadErrorFromException(ex);
             downloadEvent.OriginalError = ex;
             RaiseTelemetryEvent(downloadEvent);
@@ -131,9 +136,10 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
         void OnSucceeded(long claimedFileSize, long downloadedByteCount)
         {
             // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize
+            downloadEvent.ClaimedFileSize = claimedFileSize;
+            downloadEvent.ApproximateClaimedFileSize = Privacy.ReduceSizePrecision(claimedFileSize);
             downloadEvent.DownloadedSize = downloadedByteCount;
             downloadEvent.ApproximateDownloadedSize = Privacy.ReduceSizePrecision(downloadedByteCount);
-            downloadEvent.ClaimedFileSize = claimedFileSize;
             RaiseTelemetryEvent(downloadEvent);
         }
     }

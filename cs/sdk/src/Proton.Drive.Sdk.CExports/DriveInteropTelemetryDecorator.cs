@@ -44,6 +44,7 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
             UploadedSize = me.UploadedSize,
             ApproximateUploadedSize = me.ApproximateUploadedSize,
             ExpectedSize = me.ExpectedSize,
+            ApproximateExpectedSize = me.ApproximateExpectedSize,
         };
 
         // Check if we should translate InteropErrorException when error is Unknown
@@ -70,7 +71,9 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
         {
             VolumeType = (VolumeType)me.VolumeType,
             DownloadedSize = me.DownloadedSize,
+            ApproximateDownloadedSize = me.ApproximateDownloadedSize,
             ClaimedFileSize = me.ClaimedFileSize,
+            ApproximateClaimedFileSize = me.ApproximateClaimedFileSize,
         };
 
         // Check if we should translate InteropErrorException when error is Unknown

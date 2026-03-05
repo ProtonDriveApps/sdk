@@ -85,15 +85,15 @@ public struct DecryptionErrorEventPayload: Sendable {
 public struct DownloadEventPayload: Sendable {
     
     public let volumeType: VolumeType
-    public let claimedFileSize: Int64
-    public let downloadedSize: Int64
+    public let approximateClaimedFileSize: Int64
+    public let approximateDownloadedSize: Int64
     public let error: DownloadError?
     public let originalError: String?
     
     init(sdkDownloadEventPayload: Proton_Drive_Sdk_DownloadEventPayload) {
         self.volumeType = .init(sdkVolumeType: sdkDownloadEventPayload.volumeType)
-        self.claimedFileSize = sdkDownloadEventPayload.claimedFileSize
-        self.downloadedSize = sdkDownloadEventPayload.downloadedSize
+        self.approximateClaimedFileSize = sdkDownloadEventPayload.approximateClaimedFileSize
+        self.approximateDownloadedSize = sdkDownloadEventPayload.approximateDownloadedSize
         self.error = sdkDownloadEventPayload.hasError ? .init(sdkDownloadError: sdkDownloadEventPayload.error) : nil
         self.originalError = sdkDownloadEventPayload.hasOriginalError ? sdkDownloadEventPayload.originalError : nil
     }
@@ -102,15 +102,15 @@ public struct DownloadEventPayload: Sendable {
 public struct UploadEventPayload: Sendable {
     
     public let volumeType: VolumeType
-    public let expectedSize: Int64
-    public let uploadedSize: Int64
+    public let approximateExpectedSize: Int64
+    public let approximateUploadedSize: Int64
     public let error: UploadError?
     public let originalError: String?
     
     init(sdkUploadEventPayload: Proton_Drive_Sdk_UploadEventPayload) {
         self.volumeType = .init(sdkVolumeType: sdkUploadEventPayload.volumeType)
-        self.expectedSize = sdkUploadEventPayload.expectedSize
-        self.uploadedSize = sdkUploadEventPayload.uploadedSize
+        self.approximateExpectedSize = sdkUploadEventPayload.approximateExpectedSize
+        self.approximateUploadedSize = sdkUploadEventPayload.approximateUploadedSize
         self.error = sdkUploadEventPayload.hasError ? .init(sdkUploadError: sdkUploadEventPayload.error) : nil
         self.originalError = sdkUploadEventPayload.hasOriginalError ? sdkUploadEventPayload.originalError : nil
     }

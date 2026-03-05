@@ -8,7 +8,7 @@ public sealed class UploadController : IAsyncDisposable
     private readonly Func<CancellationToken, Task<UploadResult>> _resumeFunction;
     private readonly ITaskControl _taskControl;
     private readonly Stream? _sourceStreamToDispose;
-    private readonly Action<Exception>? _onFailed;
+    private readonly Action<Exception, long>? _onFailed;
     private readonly Action<long>? _onSucceeded;
 
     private bool _isDisposed;
@@ -19,7 +19,7 @@ public sealed class UploadController : IAsyncDisposable
         Func<CancellationToken, Task<UploadResult>> resumeFunction,
         Stream? sourceStreamToDispose,
         ITaskControl taskControl,
-        Action<Exception>? onFailed = null,
+        Action<Exception, long>? onFailed = null,
         Action<long>? onSucceeded = null)
     {
         _revisionDraftTask = revisionDraftTask;
@@ -71,7 +71,10 @@ public sealed class UploadController : IAsyncDisposable
 
                 if (Completion.IsFaulted)
                 {
-                    _onFailed?.Invoke(Completion.Exception.Flatten().InnerException ?? Completion.Exception);
+                    var revisionDraft = await _revisionDraftTask.ConfigureAwait(false);
+                    _onFailed?.Invoke(
+                        Completion.Exception.Flatten().InnerException ?? Completion.Exception,
+                        revisionDraft.NumberOfPlainBytesDone);
                 }
 
                 var draftExists = _revisionDraftTask.IsCompletedSuccessfully;

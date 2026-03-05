@@ -125,6 +125,7 @@ public sealed partial class FileUploader : IDisposable
         var uploadEvent = new UploadEvent
         {
             ExpectedSize = contentStream.Length,
+            ApproximateExpectedSize = Privacy.ReduceSizePrecision(contentStream.Length),
             UploadedSize = 0,
             ApproximateUploadedSize = 0,
             VolumeType = VolumeType.OwnVolume, // FIXME: figure out how to get the actual volume type
@@ -148,13 +149,15 @@ public sealed partial class FileUploader : IDisposable
             OnFailed,
             OnSucceeded);
 
-        void OnFailed(Exception ex)
+        void OnFailed(Exception ex, long uploadedByteCount)
         {
             if (ex is NodeWithSameNameExistsException)
             {
                 return;
             }
 
+            uploadEvent.UploadedSize = uploadedByteCount;
+            uploadEvent.ApproximateUploadedSize = Privacy.ReduceSizePrecision(uploadedByteCount);
             uploadEvent.Error = TelemetryErrorResolver.GetUploadErrorFromException(ex);
             uploadEvent.OriginalError = ex;
             RaiseTelemetryEvent(uploadEvent);
@@ -162,7 +165,6 @@ public sealed partial class FileUploader : IDisposable
 
         void OnSucceeded(long uploadedByteCount)
         {
-            // TODO: deprecate UploadedSize in favor of ApproximateUploadedSize
             uploadEvent.UploadedSize = uploadedByteCount;
             uploadEvent.ApproximateUploadedSize = Privacy.ReduceSizePrecision(uploadedByteCount);
             RaiseTelemetryEvent(uploadEvent);

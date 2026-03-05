@@ -15,6 +15,8 @@ public sealed class DownloadEvent : IMetricEvent
 
     public long ClaimedFileSize { get; set; }
 
+    public long ApproximateClaimedFileSize { get; set; }
+
     public DownloadError? Error { get; set; }
 
     [JsonIgnore]
