@@ -86,14 +86,14 @@ export function parseFolderExtendedAttributes(logger: Logger, extendedAttributes
 export function generateFileExtendedAttributes(
     common: {
         modificationTime?: Date;
-        size?: number;
-        blockSizes?: number[];
-        digests?: {
-            sha1?: string;
+        size: number;
+        blockSizes: number[];
+        digests: {
+            sha1: string;
         };
     },
     additionalMetadata?: object,
-): string | undefined {
+): string {
     if (additionalMetadata && 'Common' in additionalMetadata) {
         throw new Error('Common attributes are not allowed in additional metadata');
     }
@@ -102,20 +102,11 @@ export function generateFileExtendedAttributes(
     if (common.modificationTime) {
         commonAttributes.ModificationTime = dateToIsoString(common.modificationTime);
     }
-    if (common.size !== undefined) {
-        commonAttributes.Size = common.size;
-    }
-    if (common.blockSizes?.length) {
-        commonAttributes.BlockSizes = common.blockSizes;
-    }
-    if (common.digests?.sha1) {
-        commonAttributes.Digests = {
-            SHA1: common.digests.sha1,
-        };
-    }
-    if (!Object.keys(commonAttributes).length && !additionalMetadata) {
-        return undefined;
-    }
+    commonAttributes.Size = common.size;
+    commonAttributes.BlockSizes = common.blockSizes;
+    commonAttributes.Digests = {
+        SHA1: common.digests.sha1,
+    };
     return JSON.stringify({
         ...(Object.keys(commonAttributes).length ? { Common: commonAttributes } : {}),
         ...(additionalMetadata ? { ...additionalMetadata } : {}),

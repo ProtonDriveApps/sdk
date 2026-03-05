@@ -145,7 +145,9 @@ export class UploadCryptoService {
     }
 
     async encryptBlock(
-        verifyBlock: (encryptedBlock: Uint8Array<ArrayBuffer>) => Promise<{ verificationToken: Uint8Array<ArrayBuffer> }>,
+        verifyBlock: (
+            encryptedBlock: Uint8Array<ArrayBuffer>,
+        ) => Promise<{ verificationToken: Uint8Array<ArrayBuffer> }>,
         nodeRevisionDraftKeys: NodeRevisionDraftKeys,
         block: Uint8Array<ArrayBuffer>,
         index: number,
@@ -173,24 +175,22 @@ export class UploadCryptoService {
     async commitFile(
         nodeRevisionDraftKeys: NodeRevisionDraftKeys,
         manifest: Uint8Array<ArrayBuffer>,
-        extendedAttributes?: string,
+        extendedAttributes: string,
     ): Promise<{
         armoredManifestSignature: string;
         signatureEmail: string | AnonymousUser;
-        armoredExtendedAttributes?: string;
+        armoredExtendedAttributes: string;
     }> {
         const { armoredManifestSignature } = await this.driveCrypto.signManifest(
             manifest,
             nodeRevisionDraftKeys.signingKeys.contentSigningKey,
         );
 
-        const { armoredExtendedAttributes } = extendedAttributes
-            ? await this.driveCrypto.encryptExtendedAttributes(
-                  extendedAttributes,
-                  nodeRevisionDraftKeys.key,
-                  nodeRevisionDraftKeys.signingKeys.contentSigningKey,
-              )
-            : { armoredExtendedAttributes: undefined };
+        const { armoredExtendedAttributes } = await this.driveCrypto.encryptExtendedAttributes(
+            extendedAttributes,
+            nodeRevisionDraftKeys.key,
+            nodeRevisionDraftKeys.signingKeys.contentSigningKey,
+        );
 
         return {
             armoredManifestSignature,

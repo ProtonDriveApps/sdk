@@ -1,6 +1,13 @@
 import { c } from 'ttag';
 
-import { DriveCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from '../../crypto';
+import {
+    base64StringToUint8Array,
+    DriveCrypto,
+    PrivateKey,
+    PublicKey,
+    SessionKey,
+    VERIFICATION_STATUS,
+} from '../../crypto';
 import {
     resultOk,
     resultError,
@@ -201,7 +208,9 @@ export class NodesCryptoService {
         let activeRevision: Result<DecryptedUnparsedRevision, Error> | undefined;
         let contentKeyPacketSessionKey;
         let contentKeyPacketAuthor;
+        let contentKeyPacket: Uint8Array<ArrayBuffer> | undefined;
         if ('file' in node.encryptedCrypto) {
+            contentKeyPacket = base64StringToUint8Array(node.encryptedCrypto.file.base64ContentKeyPacket);
             const [activeRevisionPromise, contentKeyPacketSessionKeyPromise] = [
                 this.decryptRevision(node.uid, node.encryptedCrypto.activeRevision, key),
                 this.decryptContentKeyPacket(node, node.encryptedCrypto, key, keyVerificationKeys),
@@ -284,6 +293,7 @@ export class NodesCryptoService {
                 passphrase,
                 key,
                 passphraseSessionKey,
+                contentKeyPacket,
                 contentKeyPacketSessionKey,
                 hashKey,
             },

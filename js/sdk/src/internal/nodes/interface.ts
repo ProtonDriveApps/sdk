@@ -156,6 +156,7 @@ export interface DecryptedNodeKeys {
     passphrase: string;
     key: PrivateKey;
     passphraseSessionKey: SessionKey;
+    contentKeyPacket?: Uint8Array<ArrayBuffer>;
     contentKeyPacketSessionKey?: SessionKey;
     hashKey?: Uint8Array<ArrayBuffer>;
 }

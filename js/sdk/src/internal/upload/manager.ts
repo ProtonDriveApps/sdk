@@ -1,6 +1,7 @@
 import { c } from 'ttag';
 
-import { Logger, ProtonDriveTelemetry, UploadMetadata } from '../../interface';
+import { PrivateKey, SessionKey } from '../../crypto';
+import { Logger, ProtonDriveTelemetry, ThumbnailType, UploadMetadata } from '../../interface';
 import { ValidationError, NodeWithSameNameExistsValidationError } from '../../errors';
 import { ErrorCode } from '../apiService';
 import { generateFileExtendedAttributes } from '../nodes';
@@ -32,20 +33,11 @@ export class UploadManager {
     }
 
     async createDraftNode(parentFolderUid: string, name: string, metadata: UploadMetadata): Promise<NodeRevisionDraft> {
-        const parentKeys = await this.nodesService.getNodeKeys(parentFolderUid);
-        if (!parentKeys.hashKey) {
-            throw new ValidationError(c('Error').t`Creating files in non-folders is not allowed`);
-        }
-
-        const generatedNodeCrypto = await this.cryptoService.generateFileCrypto(
-            parentFolderUid,
-            { key: parentKeys.key, hashKey: parentKeys.hashKey },
-            name,
-        );
+        const { parentHashKey, ...generatedNodeCrypto } = await this.generateNewFileCrypto(parentFolderUid, name);
 
         const { nodeUid, nodeRevisionUid } = await this.createDraftOnAPI(
             parentFolderUid,
-            parentKeys.hashKey,
+            parentHashKey,
             name,
             metadata,
             generatedNodeCrypto,
@@ -60,7 +52,7 @@ export class UploadManager {
                 signingKeys: generatedNodeCrypto.signingKeys,
             },
             parentNodeKeys: {
-                hashKey: parentKeys.hashKey,
+                hashKey: parentHashKey,
             },
             newNodeInfo: {
                 parentUid: parentFolderUid,
@@ -68,6 +60,57 @@ export class UploadManager {
                 encryptedName: generatedNodeCrypto.encryptedNode.encryptedName,
                 hash: generatedNodeCrypto.encryptedNode.hash,
             },
+        };
+    }
+
+    async generateNewFileCrypto(
+        parentFolderUid: string,
+        name: string,
+    ): Promise<NodeCrypto & { parentHashKey: Uint8Array<ArrayBuffer> }> {
+        const parentKeys = await this.nodesService.getNodeKeys(parentFolderUid);
+        if (!parentKeys.hashKey) {
+            throw new ValidationError(c('Error').t`Creating files in non-folders is not allowed`);
+        }
+
+        const generatedNodeCrypto = await this.cryptoService.generateFileCrypto(
+            parentFolderUid,
+            { key: parentKeys.key, hashKey: parentKeys.hashKey },
+            name,
+        );
+
+        return {
+            ...generatedNodeCrypto,
+            parentHashKey: parentKeys.hashKey,
+        };
+    }
+
+    async getExistingFileNodeCrypto(nodeUid: string): Promise<{
+        key: PrivateKey;
+        contentKeyPacket: Uint8Array<ArrayBuffer>;
+        contentKeyPacketSessionKey: SessionKey;
+        signingKeys: NodeCrypto['signingKeys'];
+    }> {
+        const node = await this.nodesService.getNode(nodeUid);
+        const nodeKeys = await this.nodesService.getNodeKeys(nodeUid);
+
+        if (!node.activeRevision?.ok || !nodeKeys.contentKeyPacketSessionKey) {
+            throw new ValidationError(c('Error').t`Creating revisions in non-files is not allowed`);
+        }
+
+        if (!nodeKeys.contentKeyPacket) {
+            throw new ValidationError(c('Error').t`Content key packet is required for small revision upload`);
+        }
+
+        const signingKeys = await this.cryptoService.getSigningKeysForExistingNode({
+            nodeUid,
+            parentNodeUid: node.parentUid,
+        });
+
+        return {
+            key: nodeKeys.key,
+            contentKeyPacket: nodeKeys.contentKeyPacket,
+            contentKeyPacketSessionKey: nodeKeys.contentKeyPacketSessionKey,
+            signingKeys,
         };
     }
 
@@ -97,80 +140,181 @@ export class UploadManager {
             });
             return result;
         } catch (error: unknown) {
-            if (error instanceof ValidationError) {
-                if (error.code === ErrorCode.ALREADY_EXISTS) {
-                    this.logger.info(`Node with given name already exists`);
+            return this.handleConflictError(parentFolderUid, metadata, error, async () => {
+                return this.createDraftOnAPI(parentFolderUid, parentHashKey, name, metadata, generatedNodeCrypto);
+            });
+        }
+    }
 
-                    const typedDetails = error.details as
-                        | {
-                              ConflictLinkID: string;
-                              ConflictRevisionID?: string;
-                              ConflictDraftRevisionID?: string;
-                              ConflictDraftClientUID?: string;
-                          }
-                        | undefined;
+    async uploadFile(
+        parentFolderUid: string,
+        nodeCrypto: NodeCrypto,
+        metadata: UploadMetadata,
+        commitPayload: {
+            armoredManifestSignature: string;
+            armoredExtendedAttributes: string;
+        },
+        encryptedBlock: {
+            encryptedData: Uint8Array<ArrayBuffer>;
+            armoredSignature: string;
+            verificationToken: Uint8Array<ArrayBuffer>;
+        },
+        encryptedThumbnails: { type: ThumbnailType; encryptedData: Uint8Array<ArrayBuffer> }[],
+        signal?: AbortSignal,
+    ): Promise<{ nodeUid: string; nodeRevisionUid: string }> {
+        try {
+            const result = await this.apiService.uploadSmallFile(
+                parentFolderUid,
+                {
+                    armoredEncryptedName: nodeCrypto.encryptedNode.encryptedName,
+                    hash: nodeCrypto.encryptedNode.hash,
+                    mediaType: metadata.mediaType ?? 'application/octet-stream',
+                    armoredNodeKey: nodeCrypto.nodeKeys.encrypted.armoredKey,
+                    armoredNodePassphrase: nodeCrypto.nodeKeys.encrypted.armoredPassphrase,
+                    armoredNodePassphraseSignature: nodeCrypto.nodeKeys.encrypted.armoredPassphraseSignature,
+                    base64ContentKeyPacket: nodeCrypto.contentKey.encrypted.base64ContentKeyPacket,
+                    armoredContentKeyPacketSignature: nodeCrypto.contentKey.encrypted.armoredContentKeyPacketSignature,
+                    armoredExtendedAttributes: commitPayload.armoredExtendedAttributes,
+                    signatureEmail: nodeCrypto.signingKeys.email ?? null,
+                },
+                {
+                    armoredManifestSignature: commitPayload.armoredManifestSignature,
+                    block: {
+                        encryptedData: encryptedBlock.encryptedData,
+                        armoredSignature: encryptedBlock.armoredSignature,
+                        verificationToken: encryptedBlock.verificationToken,
+                    },
+                    thumbnails: encryptedThumbnails,
+                },
+                signal,
+            );
+            await this.nodesService.notifyChildCreated(parentFolderUid);
+            return result;
+        } catch (error: unknown) {
+            return this.handleConflictError(parentFolderUid, metadata, error, async () => {
+                return this.uploadFile(
+                    parentFolderUid,
+                    nodeCrypto,
+                    metadata,
+                    commitPayload,
+                    encryptedBlock,
+                    encryptedThumbnails,
+                    signal,
+                );
+            });
+        }
+    }
 
-                    // If the client doesn't specify the client UID, it should
-                    // never be considered own draft.
-                    const isOwnDraftConflict =
-                        typedDetails?.ConflictDraftRevisionID &&
-                        this.clientUid &&
-                        typedDetails?.ConflictDraftClientUID === this.clientUid;
+    async uploadSmallRevision(
+        nodeUid: string,
+        nodeCrypto: Pick<NodeCrypto, 'signingKeys'>,
+        commitPayload: {
+            armoredManifestSignature: string;
+            armoredExtendedAttributes: string;
+        },
+        encryptedBlock: {
+            encryptedData: Uint8Array<ArrayBuffer>;
+            armoredSignature: string;
+            verificationToken: Uint8Array<ArrayBuffer>;
+        },
+        encryptedThumbnails: { type: ThumbnailType; encryptedData: Uint8Array<ArrayBuffer> }[],
+        signal?: AbortSignal,
+    ): Promise<{ nodeUid: string; nodeRevisionUid: string }> {
+        const node = await this.nodesService.getNode(nodeUid);
+        if (!node.activeRevision?.ok) {
+            throw new ValidationError(c('Error').t`File has no revision`);
+        }
+        const result = await this.apiService.uploadSmallRevision(
+            nodeUid,
+            node.activeRevision.value.uid,
+            {
+                signatureEmail: nodeCrypto.signingKeys.email ?? null,
+                armoredExtendedAttributes: commitPayload.armoredExtendedAttributes,
+            },
+            {
+                armoredManifestSignature: commitPayload.armoredManifestSignature,
+                block: encryptedBlock,
+                thumbnails: encryptedThumbnails,
+            },
+            signal,
+        );
+        await this.nodesService.notifyNodeChanged(nodeUid);
+        return result;
+    }
 
-                    // If there is existing draft created by this client,
-                    // automatically delete it and try to create a new one
-                    // with the same name again.
-                    if (
-                        typedDetails?.ConflictDraftRevisionID &&
-                        (isOwnDraftConflict || metadata.overrideExistingDraftByOtherClient)
-                    ) {
-                        const existingDraftNodeUid = makeNodeUid(
-                            splitNodeUid(parentFolderUid).volumeId,
-                            typedDetails.ConflictLinkID,
-                        );
+    private async handleConflictError(
+        parentFolderUid: string,
+        metadata: UploadMetadata,
+        error: unknown,
+        onRetryAfterDraftDeleted: () => Promise<{ nodeUid: string; nodeRevisionUid: string }>,
+    ): Promise<{ nodeUid: string; nodeRevisionUid: string }> {
+        if (error instanceof ValidationError) {
+            if (error.code === ErrorCode.ALREADY_EXISTS) {
+                this.logger.info(`Node with given name already exists`);
 
-                        let deleteFailed = false;
-                        try {
-                            this.logger.warn(
-                                `Deleting existing draft node ${existingDraftNodeUid} by ${typedDetails.ConflictDraftClientUID}`,
-                            );
-                            await this.apiService.deleteDraft(existingDraftNodeUid);
-                        } catch (deleteDraftError: unknown) {
-                            // Do not throw, let throw the conflict error.
-                            deleteFailed = true;
-                            this.logger.error('Failed to delete existing draft node', deleteDraftError);
-                        }
-                        if (!deleteFailed) {
-                            return this.createDraftOnAPI(
-                                parentFolderUid,
-                                parentHashKey,
-                                name,
-                                metadata,
-                                generatedNodeCrypto,
-                            );
-                        }
-                    }
+                const typedDetails = error.details as
+                    | {
+                          ConflictLinkID: string;
+                          ConflictRevisionID?: string;
+                          ConflictDraftRevisionID?: string;
+                          ConflictDraftClientUID?: string;
+                      }
+                    | undefined;
 
-                    if (isOwnDraftConflict) {
+                // If the client doesn't specify the client UID, it should
+                // never be considered own draft.
+                const isOwnDraftConflict =
+                    typedDetails?.ConflictDraftRevisionID &&
+                    this.clientUid &&
+                    typedDetails?.ConflictDraftClientUID === this.clientUid;
+
+                // If there is existing draft created by this client,
+                // automatically delete it and try to create a new one
+                // with the same name again.
+                if (
+                    typedDetails?.ConflictDraftRevisionID &&
+                    (isOwnDraftConflict || metadata.overrideExistingDraftByOtherClient)
+                ) {
+                    const existingDraftNodeUid = makeNodeUid(
+                        splitNodeUid(parentFolderUid).volumeId,
+                        typedDetails.ConflictLinkID,
+                    );
+
+                    let deleteFailed = false;
+                    try {
                         this.logger.warn(
-                            `Existing draft conflict by another client ${typedDetails.ConflictDraftClientUID}`,
+                            `Deleting existing draft node ${existingDraftNodeUid} by ${typedDetails.ConflictDraftClientUID}`,
                         );
+                        await this.apiService.deleteDraft(existingDraftNodeUid);
+                    } catch (deleteDraftError: unknown) {
+                        // Do not throw, let throw the conflict error.
+                        deleteFailed = true;
+                        this.logger.error('Failed to delete existing draft node', deleteDraftError);
                     }
+                    if (!deleteFailed) {
+                        return onRetryAfterDraftDeleted();
+                    }
+                }
 
-                    const existingNodeUid = typedDetails
-                        ? makeNodeUid(splitNodeUid(parentFolderUid).volumeId, typedDetails.ConflictLinkID)
-                        : undefined;
-
-                    throw new NodeWithSameNameExistsValidationError(
-                        error.message,
-                        error.code,
-                        existingNodeUid,
-                        !!typedDetails?.ConflictDraftRevisionID,
+                if (isOwnDraftConflict) {
+                    this.logger.warn(
+                        `Existing draft conflict by another client ${typedDetails.ConflictDraftClientUID}`,
                     );
                 }
+
+                const existingNodeUid = typedDetails
+                    ? makeNodeUid(splitNodeUid(parentFolderUid).volumeId, typedDetails.ConflictLinkID)
+                    : undefined;
+
+                throw new NodeWithSameNameExistsValidationError(
+                    error.message,
+                    error.code,
+                    existingNodeUid,
+                    !!typedDetails?.ConflictDraftRevisionID,
+                );
             }
-            throw error;
         }
+        throw error;
     }
 
     async deleteDraftNode(nodeUid: string): Promise<void> {

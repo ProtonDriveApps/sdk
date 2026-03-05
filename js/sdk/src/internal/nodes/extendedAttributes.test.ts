@@ -51,19 +51,15 @@ describe('extended attrbiutes', () => {
     });
 
     describe('should generate file attributes without additional metadata', () => {
-        const testCases: [object, string | undefined][] = [
-            [{}, undefined],
+        const testCases: [any, string | undefined][] = [
             [
-                { modificationTime: new Date(1234567890000) },
-                '{"Common":{"ModificationTime":"2009-02-13T23:31:30.000Z"}}',
+                { size: 0, blockSizes: [], digests: { sha1: 'abcdef' } },
+                '{"Common":{"Size":0,"BlockSizes":[],"Digests":{"SHA1":"abcdef"}}}',
             ],
-            [{ size: undefined }, undefined],
-            [{ size: 0 }, '{"Common":{"Size":0}}'],
-            [{ size: 1234 }, '{"Common":{"Size":1234}}'],
-            [{ blockSizes: [] }, undefined],
-            [{ blockSizes: [4, 4, 4, 2] }, '{"Common":{"BlockSizes":[4,4,4,2]}}'],
-            [{ digests: {} }, undefined],
-            [{ digests: { sha1: 'abcdef' } }, '{"Common":{"Digests":{"SHA1":"abcdef"}}}'],
+            [
+                { size: 1234, blockSizes: [1200, 34], digests: { sha1: 'gedcba' } },
+                '{"Common":{"Size":1234,"BlockSizes":[1200,34],"Digests":{"SHA1":"gedcba"}}}',
+            ],
             [
                 {
                     modificationTime: new Date(1234567890000),
@@ -75,7 +71,7 @@ describe('extended attrbiutes', () => {
             ],
         ];
         testCases.forEach(([input, expectedAttributes]) => {
-            it(`should generate ${input}`, () => {
+            it(`should generate ${JSON.stringify(input)}`, () => {
                 const output = generateFileExtendedAttributes(input);
                 expect(output).toBe(expectedAttributes);
             });
@@ -83,24 +79,28 @@ describe('extended attrbiutes', () => {
     });
 
     describe('should generate file attributes with additional metadata', () => {
-        const testCases: [object, string | undefined][] = [
-            [{}, '{"Media":{"Width":100,"Height":100}}'],
-            [{ size: undefined }, '{"Media":{"Width":100,"Height":100}}'],
-            [{ size: 123 }, '{"Common":{"Size":123},"Media":{"Width":100,"Height":100}}'],
-        ];
-        testCases.forEach(([input, expectedAttributes]) => {
-            it(`should generate ${input}`, () => {
-                const output = generateFileExtendedAttributes(input, { Media: { Width: 100, Height: 100 } });
-                expect(output).toBe(expectedAttributes);
-            });
+        const input = {
+            size: 1234,
+            blockSizes: [1200, 34],
+            digests: { sha1: 'abcdef' },
+        };
+
+        it(`should generate ${JSON.stringify(input)}`, () => {
+            const output = generateFileExtendedAttributes(input, { Media: { Width: 100, Height: 100 } });
+            expect(output).toBe(
+                '{"Common":{"Size":1234,"BlockSizes":[1200,34],"Digests":{"SHA1":"abcdef"}},"Media":{"Width":100,"Height":100}}',
+            );
         });
     });
 
     describe('should throw an error if additional metadata contains common attributes', () => {
         it('should throw an error', () => {
-            expect(() => generateFileExtendedAttributes({ size: 123 }, { Common: { Hello: 'World' } })).toThrow(
-                'Common attributes are not allowed in additional metadata',
-            );
+            expect(() =>
+                generateFileExtendedAttributes(
+                    { size: 123, blockSizes: [], digests: { sha1: 'abcdef' } },
+                    { Common: { Hello: 'World' } },
+                ),
+            ).toThrow('Common attributes are not allowed in additional metadata');
         });
     });
 
