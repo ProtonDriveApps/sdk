@@ -15,6 +15,8 @@ public sealed class UploadEvent : IMetricEvent
 
     public required long ExpectedSize { get; set; }
 
+    public required long ApproximateExpectedSize { get; set; }
+
     public UploadError? Error { get; set; }
 
     [JsonIgnore]
