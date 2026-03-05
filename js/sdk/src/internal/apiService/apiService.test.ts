@@ -94,6 +94,36 @@ describe('DriveAPIService', () => {
             expect(telemetry.recordMetric).not.toHaveBeenCalled();
         }
 
+        it('POST FormData request', async () => {
+            const formData = new FormData();
+            formData.set('field', 'value');
+            const result = await api.postFormData('test', formData);
+            expect(result).toEqual({ Code: ErrorCode.OK });
+            await expectFetchFormDataToBeCalledWith(formData);
+        });
+
+        async function expectFetchFormDataToBeCalledWith(formData: FormData) {
+            // @ts-expect-error: Fetch is mock.
+            const request = httpClient.fetchJson.mock.calls[0][0];
+            expect(request.method).toEqual('POST');
+            expect(request.timeoutMs).toEqual(30000);
+            expect(request.body).toEqual(formData);
+            expect(request.json).toBeUndefined();
+            // FormData must not have Content-Type set (runtime sets it with boundary)
+            expect(request.headers.has('Content-Type')).toBe(false);
+            expect(Array.from(request.headers.entries())).toEqual(
+                Array.from(
+                    new Headers({
+                        Accept: 'application/vnd.protonmail.v1+json',
+                        Language: 'en',
+                        'x-pm-drive-sdk-version': `js@${process.env.npm_package_version}`,
+                    }).entries(),
+                ),
+            );
+            expectSDKEvents();
+            expect(telemetry.recordMetric).not.toHaveBeenCalled();
+        }
+
         it('storage GET request', async () => {
             const stream = await api.getBlockStream('test', 'token');
             const result = await Array.fromAsync(stream);

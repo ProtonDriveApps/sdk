@@ -40,6 +40,7 @@ export type NodeCrypto = {
     };
     contentKey: {
         encrypted: {
+            contentKeyPacket: Uint8Array<ArrayBuffer>;
             base64ContentKeyPacket: string;
             armoredContentKeyPacketSignature: string;
         };
@@ -100,6 +101,7 @@ export interface NodesService {
     getNodeKeys(nodeUid: string): Promise<{
         key: PrivateKey;
         passphraseSessionKey: SessionKey;
+        contentKeyPacket?: Uint8Array<ArrayBuffer>;
         contentKeyPacketSessionKey?: SessionKey;
         hashKey?: Uint8Array<ArrayBuffer>;
     }>;

@@ -129,6 +129,14 @@ export class DriveAPIService {
         return this.makeRequest(url, 'POST', data, signal);
     }
 
+    async postFormData<ResponsePayload>(
+        url: string,
+        formData: FormData,
+        signal?: AbortSignal,
+    ): Promise<ResponsePayload> {
+        return this.makeRequest(url, 'POST', formData, signal);
+    }
+
     async put<RequestPayload, ResponsePayload>(
         url: string,
         data: RequestPayload,
@@ -151,16 +159,24 @@ export class DriveAPIService {
         data?: RequestPayload,
         signal?: AbortSignal,
     ): Promise<ResponsePayload> {
+        const isJson = !(data instanceof FormData);
+
+        const headers = new Headers({
+            Accept: 'application/vnd.protonmail.v1+json',
+            Language: this.language,
+            'x-pm-drive-sdk-version': `js@${VERSION}`,
+        });
+        // FormData must not get a manual Content-Type: the runtime sets it with the boundary.
+        if (isJson) {
+            headers.set('Content-Type', 'application/json');
+        }
+
         const request = {
             url: `${this.baseUrl}/${url}`,
             method,
-            headers: new Headers({
-                Accept: 'application/vnd.protonmail.v1+json',
-                'Content-Type': 'application/json',
-                Language: this.language,
-                'x-pm-drive-sdk-version': `js@${VERSION}`,
-            }),
-            json: data || undefined,
+            headers,
+            json: isJson && data ? data : undefined,
+            body: !isJson && data ? data : undefined,
             timeoutMs: DEFAULT_TIMEOUT_MS,
             signal,
         };

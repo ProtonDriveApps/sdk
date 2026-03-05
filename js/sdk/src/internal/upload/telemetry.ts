@@ -6,7 +6,7 @@ import { splitNodeUid, splitNodeRevisionUid } from '../uids';
 import { SharesService } from './interface';
 
 export class UploadTelemetry {
-    private logger: Logger;
+    readonly logger: Logger;
 
     constructor(
         private telemetry: ProtonDriveTelemetry,
@@ -15,6 +15,10 @@ export class UploadTelemetry {
         this.telemetry = telemetry;
         this.logger = this.telemetry.getLogger('upload');
         this.sharesService = sharesService;
+    }
+
+    getLoggerForSmallUpload() {
+        return new LoggerWithPrefix(this.logger, `small upload`);
     }
 
     getLoggerForRevision(revisionUid: string) {

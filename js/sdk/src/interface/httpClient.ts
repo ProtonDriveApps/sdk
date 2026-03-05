@@ -5,6 +5,7 @@ export interface ProtonDriveHTTPClient {
 
 export type ProtonDriveHTTPClientJsonRequest = ProtonDriveHTTPClientBaseRequest & {
     json?: object;
+    body?: XMLHttpRequestBodyInit;
 };
 
 export type ProtonDriveHTTPClientBlobRequest = ProtonDriveHTTPClientBaseRequest & {

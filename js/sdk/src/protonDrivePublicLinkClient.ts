@@ -174,6 +174,8 @@ export class ProtonDrivePublicLinkClient {
             this.sharingPublic.nodes.access,
             featureFlagProvider,
             fullConfig.clientUid,
+            // Public links do not support small file upload.
+            false,
         );
 
         this.experimental = {

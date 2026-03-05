@@ -117,6 +117,7 @@ export class DriveCrypto {
      */
     async generateContentKey(encryptionKey: PrivateKey): Promise<{
         encrypted: {
+            contentKeyPacket: Uint8Array<ArrayBuffer>;
             base64ContentKeyPacket: string;
             armoredContentKeyPacketSignature: string;
         };
@@ -136,6 +137,7 @@ export class DriveCrypto {
 
         return {
             encrypted: {
+                contentKeyPacket: keyPacket,
                 base64ContentKeyPacket: uint8ArrayToBase64String(keyPacket),
                 armoredContentKeyPacketSignature,
             },

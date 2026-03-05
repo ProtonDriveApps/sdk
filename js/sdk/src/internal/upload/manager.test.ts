@@ -1,5 +1,5 @@
 import { ValidationError } from '../../errors';
-import { ProtonDriveTelemetry, UploadMetadata } from '../../interface';
+import { ProtonDriveTelemetry, ThumbnailType, UploadMetadata } from '../../interface';
 import { getMockTelemetry } from '../../tests/telemetry';
 import { ErrorCode } from '../apiService';
 import { UploadAPIService } from './apiService';
@@ -27,6 +27,14 @@ describe('UploadManager', () => {
             }),
             deleteDraft: jest.fn(),
             commitDraftRevision: jest.fn(),
+            uploadSmallFile: jest.fn().mockResolvedValue({
+                nodeUid: 'uploaded:nodeUid',
+                nodeRevisionUid: 'uploaded:nodeRevisionUid',
+            }),
+            uploadSmallRevision: jest.fn().mockResolvedValue({
+                nodeUid: 'revised:nodeUid',
+                nodeRevisionUid: 'revised:nodeRevisionUid',
+            }),
         };
         // @ts-expect-error No need to implement all methods for mocking
         cryptoService = {
@@ -58,6 +66,12 @@ describe('UploadManager', () => {
                 armoredManifestSignature: 'newNode:armoredManifestSignature',
                 signatureEmail: 'signatureEmail',
                 armoredExtendedAttributes: 'newNode:armoredExtendedAttributes',
+            }),
+            getSigningKeysForExistingNode: jest.fn().mockResolvedValue({
+                email: 'signatureEmail',
+                addressId: 'addressId',
+                nameAndPassphraseSigningKey: {} as any,
+                contentSigningKey: {} as any,
             }),
         };
         nodesService = {
@@ -260,6 +274,289 @@ describe('UploadManager', () => {
                 expect(error.existingNodeUid).toBe('volumeId~existingLinkId');
             }
             expect(apiService.deleteDraft).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('generateNewFileCrypto', () => {
+        it('should throw when parent is not a folder (no hashKey)', async () => {
+            nodesService.getNodeKeys = jest.fn().mockResolvedValue({ hashKey: undefined });
+
+            const result = manager.generateNewFileCrypto('parentUid', 'fileName');
+
+            await expect(result).rejects.toThrow('Creating files in non-folders is not allowed');
+            expect(nodesService.getNodeKeys).toHaveBeenCalledWith('parentUid');
+            expect(cryptoService.generateFileCrypto).not.toHaveBeenCalled();
+        });
+
+        it('should return generated crypto with parentHashKey when parent is folder', async () => {
+            const result = await manager.generateNewFileCrypto('parentUid', 'fileName');
+
+            expect(nodesService.getNodeKeys).toHaveBeenCalledWith('parentUid');
+            expect(cryptoService.generateFileCrypto).toHaveBeenCalledWith(
+                'parentUid',
+                { key: 'parentNode:nodekey', hashKey: 'parentNode:hashKey' },
+                'fileName',
+            );
+            expect(result).toMatchObject({
+                parentHashKey: 'parentNode:hashKey',
+                encryptedNode: { encryptedName: 'newNode:encryptedName', hash: 'newNode:hash' },
+                nodeKeys: expect.anything(),
+                contentKey: expect.anything(),
+                signingKeys: { email: 'signatureEmail' },
+            });
+        });
+    });
+
+    describe('getExistingFileNodeCrypto', () => {
+        it('should throw when node has no active revision', async () => {
+            nodesService.getNode = jest.fn().mockResolvedValue({
+                uid: 'fileNodeUid',
+                parentUid: 'parentUid',
+                activeRevision: { ok: false, error: new Error('No revision') },
+            });
+
+            const result = manager.getExistingFileNodeCrypto('fileNodeUid');
+
+            await expect(result).rejects.toThrow('Creating revisions in non-files is not allowed');
+        });
+
+        it('should throw when nodeKeys has no contentKeyPacketSessionKey', async () => {
+            nodesService.getNode = jest.fn().mockResolvedValue({
+                uid: 'fileNodeUid',
+                parentUid: 'parentUid',
+                activeRevision: { ok: true, value: { uid: 'revisionUid' } },
+            });
+            nodesService.getNodeKeys = jest.fn().mockResolvedValue({
+                key: 'nodeKey',
+                contentKeyPacket: new Uint8Array([1, 2, 3]),
+                hashKey: 'hashKey',
+            });
+
+            const result = manager.getExistingFileNodeCrypto('fileNodeUid');
+
+            await expect(result).rejects.toThrow('Creating revisions in non-files is not allowed');
+        });
+
+        it('should throw when nodeKeys has no contentKeyPacket', async () => {
+            nodesService.getNode = jest.fn().mockResolvedValue({
+                uid: 'fileNodeUid',
+                parentUid: 'parentUid',
+                activeRevision: { ok: true, value: { uid: 'revisionUid' } },
+            });
+            nodesService.getNodeKeys = jest.fn().mockResolvedValue({
+                key: 'nodeKey',
+                contentKeyPacketSessionKey: 'sessionKey',
+                hashKey: 'hashKey',
+            });
+
+            const result = manager.getExistingFileNodeCrypto('fileNodeUid');
+
+            await expect(result).rejects.toThrow('Content key packet is required for small revision upload');
+        });
+
+        it('should return key, contentKeyPacket, contentKeyPacketSessionKey and signingKeys', async () => {
+            const contentKeyPacket = new Uint8Array([1, 2, 3]);
+            nodesService.getNode = jest.fn().mockResolvedValue({
+                uid: 'fileNodeUid',
+                parentUid: 'parentUid',
+                activeRevision: { ok: true, value: { uid: 'revisionUid' } },
+            });
+            nodesService.getNodeKeys = jest.fn().mockResolvedValue({
+                key: 'nodeKey',
+                contentKeyPacket,
+                contentKeyPacketSessionKey: 'sessionKey',
+                hashKey: 'hashKey',
+            });
+
+            const result = await manager.getExistingFileNodeCrypto('fileNodeUid');
+
+            expect(cryptoService.getSigningKeysForExistingNode).toHaveBeenCalledWith({
+                nodeUid: 'fileNodeUid',
+                parentNodeUid: 'parentUid',
+            });
+            expect(result).toEqual({
+                key: 'nodeKey',
+                contentKeyPacket,
+                contentKeyPacketSessionKey: 'sessionKey',
+                signingKeys: {
+                    email: 'signatureEmail',
+                    addressId: 'addressId',
+                    nameAndPassphraseSigningKey: {},
+                    contentSigningKey: {},
+                },
+            });
+        });
+    });
+
+    describe('uploadFile', () => {
+        const nodeCrypto = {
+            encryptedNode: { encryptedName: 'encName', hash: 'hash' },
+            nodeKeys: {
+                encrypted: {
+                    armoredKey: 'armoredKey',
+                    armoredPassphrase: 'armoredPassphrase',
+                    armoredPassphraseSignature: 'armoredPassphraseSignature',
+                },
+            },
+            contentKey: {
+                encrypted: {
+                    base64ContentKeyPacket: 'base64ContentKeyPacket',
+                    armoredContentKeyPacketSignature: 'armoredContentKeyPacketSignature',
+                },
+            },
+            signingKeys: { email: 'signatureEmail' },
+        } as any;
+        const metadata = { mediaType: 'application/octet-stream', expectedSize: 100 } as UploadMetadata;
+        const commitPayload = {
+            armoredManifestSignature: 'manifestSignature',
+            armoredExtendedAttributes: 'extAttr',
+        };
+        const encryptedBlock = {
+            encryptedData: new Uint8Array([1, 2, 3]),
+            armoredSignature: 'blockSig',
+            verificationToken: new Uint8Array([4, 5, 6]),
+        };
+        const encryptedThumbnails = [{ type: ThumbnailType.Type1, encryptedData: new Uint8Array([7, 8, 9]) }];
+
+        it('should call uploadSmallFile and notifyChildCreated on success', async () => {
+            const result = await manager.uploadFile(
+                'parentUid',
+                nodeCrypto,
+                metadata,
+                commitPayload,
+                encryptedBlock,
+                encryptedThumbnails,
+            );
+
+            expect(result).toEqual({
+                nodeUid: 'uploaded:nodeUid',
+                nodeRevisionUid: 'uploaded:nodeRevisionUid',
+            });
+            expect(apiService.uploadSmallFile).toHaveBeenCalledWith(
+                'parentUid',
+                {
+                    armoredEncryptedName: 'encName',
+                    hash: 'hash',
+                    mediaType: 'application/octet-stream',
+                    armoredNodeKey: 'armoredKey',
+                    armoredNodePassphrase: 'armoredPassphrase',
+                    armoredNodePassphraseSignature: 'armoredPassphraseSignature',
+                    base64ContentKeyPacket: 'base64ContentKeyPacket',
+                    armoredContentKeyPacketSignature: 'armoredContentKeyPacketSignature',
+                    armoredExtendedAttributes: 'extAttr',
+                    signatureEmail: 'signatureEmail',
+                },
+                {
+                    armoredManifestSignature: 'manifestSignature',
+                    block: encryptedBlock,
+                    thumbnails: encryptedThumbnails,
+                },
+                undefined,
+            );
+            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('parentUid');
+        });
+
+        it('should delete existing draft and retry on ALREADY_EXISTS when own draft', async () => {
+            let firstCall = true;
+            apiService.uploadSmallFile = jest.fn().mockImplementation(() => {
+                if (firstCall) {
+                    firstCall = false;
+                    throw new ValidationError('Already exists', ErrorCode.ALREADY_EXISTS, {
+                        ConflictLinkID: 'existingLinkId',
+                        ConflictDraftRevisionID: 'existingDraftRevisionId',
+                        ConflictDraftClientUID: clientUid,
+                    });
+                }
+                return {
+                    nodeUid: 'uploaded:nodeUid',
+                    nodeRevisionUid: 'uploaded:nodeRevisionUid',
+                };
+            });
+
+            const result = await manager.uploadFile(
+                'volumeId~parentUid',
+                nodeCrypto,
+                { ...metadata, overrideExistingDraftByOtherClient: false },
+                commitPayload,
+                encryptedBlock,
+                encryptedThumbnails,
+            );
+
+            expect(result).toEqual({
+                nodeUid: 'uploaded:nodeUid',
+                nodeRevisionUid: 'uploaded:nodeRevisionUid',
+            });
+            expect(apiService.deleteDraft).toHaveBeenCalledWith('volumeId~existingLinkId');
+            expect(apiService.uploadSmallFile).toHaveBeenCalledTimes(2);
+        });
+    });
+
+    describe('uploadSmallRevision', () => {
+        const nodeCrypto = { signingKeys: { email: 'signatureEmail' } } as any;
+        const commitPayload = {
+            armoredManifestSignature: 'manifestSig',
+            armoredExtendedAttributes: 'extAttr',
+        };
+        const encryptedBlock = {
+            encryptedData: new Uint8Array([1, 2, 3]),
+            armoredSignature: 'blockSig',
+            verificationToken: new Uint8Array([4, 5, 6]),
+        };
+        const encryptedThumbnails = [{ type: ThumbnailType.Type1, encryptedData: new Uint8Array([7, 8, 9]) }];
+
+        it('should throw when file has no revision', async () => {
+            nodesService.getNode = jest.fn().mockResolvedValue({
+                uid: 'fileNodeUid',
+                parentUid: 'parentUid',
+                activeRevision: { ok: false, error: new Error('No revision') },
+            });
+
+            const result = manager.uploadSmallRevision(
+                'fileNodeUid',
+                nodeCrypto,
+                commitPayload,
+                encryptedBlock,
+                encryptedThumbnails,
+            );
+
+            await expect(result).rejects.toThrow('File has no revision');
+            expect(apiService.uploadSmallRevision).not.toHaveBeenCalled();
+        });
+
+        it('should call uploadSmallRevision and notifyNodeChanged on success', async () => {
+            nodesService.getNode = jest.fn().mockResolvedValue({
+                uid: 'fileNodeUid',
+                parentUid: 'parentUid',
+                activeRevision: { ok: true, value: { uid: 'currentRevisionUid' } },
+            });
+
+            const result = await manager.uploadSmallRevision(
+                'fileNodeUid',
+                nodeCrypto,
+                commitPayload,
+                encryptedBlock,
+                encryptedThumbnails,
+            );
+
+            expect(result).toEqual({
+                nodeUid: 'revised:nodeUid',
+                nodeRevisionUid: 'revised:nodeRevisionUid',
+            });
+            expect(apiService.uploadSmallRevision).toHaveBeenCalledWith(
+                'fileNodeUid',
+                'currentRevisionUid',
+                {
+                    signatureEmail: 'signatureEmail',
+                    armoredExtendedAttributes: 'extAttr',
+                },
+                {
+                    armoredManifestSignature: 'manifestSig',
+                    block: encryptedBlock,
+                    thumbnails: encryptedThumbnails,
+                },
+                undefined,
+            );
+            expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('fileNodeUid');
         });
     });
 
