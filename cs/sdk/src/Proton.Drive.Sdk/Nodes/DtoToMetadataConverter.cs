@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Folders;
@@ -702,9 +703,9 @@ internal static class DtoToMetadataConverter
                 });
             }
         }
-        catch
+        catch (Exception e)
         {
-            // Do nothing
+            client.Telemetry.GetLogger("Metric").LogWarning(e, "Failed to record metric for decryption event");
         }
     }
 }
