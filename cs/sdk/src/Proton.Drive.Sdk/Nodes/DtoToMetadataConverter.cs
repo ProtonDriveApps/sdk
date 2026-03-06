@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Folders;
@@ -23,18 +22,18 @@ internal static class DtoToMetadataConverter
         ShareAndKey? knownShareAndKey,
         CancellationToken cancellationToken)
     {
-        var parentId = linkDetailsDto.Link.ParentId;
+        var sourceNodeEntryPointId = linkDetailsDto.Link.ParentId;
 
-        if (parentId is null && linkDetailsDto.Photo is not null)
+        if (sourceNodeEntryPointId is null && linkDetailsDto.Photo is not null)
         {
             // TODO: optimize by selecting the album that is in cache, if any
-            parentId = linkDetailsDto.Photo.AlbumInclusions is { Count: > 0 } albumInclusions ? albumInclusions[0].Id : null;
+            sourceNodeEntryPointId = linkDetailsDto.Photo.AlbumInclusions is { Count: > 0 } albumInclusions ? albumInclusions[0].Id : null;
         }
 
-        var parentKeyResult = await GetParentKeyAsync(
+        var entryPointKeyResult = await GetEntryPointKeyAsync(
             client,
             volumeId,
-            parentId,
+            sourceNodeEntryPointId,
             knownShareAndKey,
             linkDetailsDto.Sharing?.ShareId,
             cancellationToken).ConfigureAwait(false);
@@ -45,7 +44,7 @@ internal static class DtoToMetadataConverter
             client.Cache.Secrets,
             volumeId,
             linkDetailsDto,
-            parentKeyResult,
+            entryPointKeyResult,
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -225,8 +224,11 @@ internal static class DtoToMetadataConverter
             await entityCache.SetNodeAsync(uid, degradedFileMetadata.Node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken)
                 .ConfigureAwait(false);
 
-            await ReportDecryptionError(client, DegradedNodeMetadata.FromFile(degradedFileMetadata), failedDecryptionFields, cancellationToken)
-                .ConfigureAwait(false);
+            await TelemetryRecorder.TryRecordDecryptionErrorAsync(
+                client,
+                DegradedNodeMetadata.FromFile(degradedFileMetadata),
+                failedDecryptionFields,
+                cancellationToken).ConfigureAwait(false);
 
             return degradedFileMetadata;
         }
@@ -273,6 +275,7 @@ internal static class DtoToMetadataConverter
                 ActiveRevision = activeRevision,
                 TotalSizeOnCloudStorage = fileDto.TotalSizeOnStorage,
                 CaptureTime = linkDetailsDto.Photo.CaptureTime,
+                AlbumUids = linkDetailsDto.Photo.AlbumInclusions.Select(a => new NodeUid(uid.VolumeId, a.Id)).ToList(),
             }
             : new FileNode
             {
@@ -382,6 +385,7 @@ internal static class DtoToMetadataConverter
                 TotalStorageQuotaUsage = fileDto.TotalSizeOnStorage,
                 Errors = errors,
                 CaptureTime = linkDetailsDto.Photo.CaptureTime,
+                AlbumUids = linkDetailsDto.Photo.AlbumInclusions.Select(a => new NodeUid(uid.VolumeId, a.Id)).ToList(),
             }
             : new DegradedFileNode
             {
@@ -451,8 +455,11 @@ internal static class DtoToMetadataConverter
             await entityCache.SetNodeAsync(uid, degradedFolderMetadata.Node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken)
                 .ConfigureAwait(false);
 
-            await ReportDecryptionError(client, DegradedNodeMetadata.FromFolder(degradedFolderMetadata), failedDecryptionFields, cancellationToken)
-                .ConfigureAwait(false);
+            await TelemetryRecorder.TryRecordDecryptionErrorAsync(
+                client,
+                DegradedNodeMetadata.FromFolder(degradedFolderMetadata),
+                failedDecryptionFields,
+                cancellationToken).ConfigureAwait(false);
 
             return degradedFolderMetadata;
         }
@@ -561,7 +568,7 @@ internal static class DtoToMetadataConverter
         return (new DegradedFolderMetadata(degradedNode, degradedSecrets, membershipDto?.ShareId, linkDto.NameHashDigest), failedDecryptionFields);
     }
 
-    private static async ValueTask<Result<PgpPrivateKey, ProtonDriveError>> GetParentKeyAsync(
+    private static async ValueTask<Result<PgpPrivateKey, ProtonDriveError>> GetEntryPointKeyAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         LinkId? parentId,
@@ -660,7 +667,7 @@ internal static class DtoToMetadataConverter
         return currentParentKey;
     }
 
-    private static async ValueTask<Result<PgpPrivateKey, ProtonDriveError>> GetParentKeyAsync(
+    private static async ValueTask<Result<PgpPrivateKey, ProtonDriveError>> GetEntryPointKeyAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         LinkId? parentId,
@@ -668,44 +675,13 @@ internal static class DtoToMetadataConverter
         ShareId? shareId,
         CancellationToken cancellationToken)
     {
-        return await GetParentKeyAsync(client, volumeId, parentId, shareAndKeyToUse, shareId, client.Cache.Secrets, GetLinkDetailsAsync, cancellationToken)
+        return await GetEntryPointKeyAsync(client, volumeId, parentId, shareAndKeyToUse, shareId, client.Cache.Secrets, GetLinkDetailsAsync, cancellationToken)
             .ConfigureAwait(false);
 
         async Task<LinkDetailsDto> GetLinkDetailsAsync(IEnumerable<LinkId> links, CancellationToken ct)
         {
             var response = await client.Api.Links.GetDetailsAsync(volumeId, links, ct).ConfigureAwait(false);
             return response.Links[0];
-        }
-    }
-
-    private static async Task ReportDecryptionError(
-        ProtonDriveClient client,
-        DegradedNodeMetadata degradedNode,
-        List<EncryptedField> failedDecryptionFields,
-        CancellationToken cancellationToken)
-    {
-        var legacyBoundary = new DateTime(2024, 1, 1, 0, 0, 0, 0, 0, DateTimeKind.Utc);
-
-        try
-        {
-            // FIXME won't work for photos in an album, this will need to be differentiated for photos.
-            var share = await ShareOperations.GetContextShareAsync(client, degradedNode, cancellationToken).ConfigureAwait(false);
-
-            foreach (var failedField in failedDecryptionFields)
-            {
-                client.Telemetry.RecordMetric(new DecryptionErrorEvent
-                {
-                    Uid = degradedNode.Node.Uid.ToString(),
-                    Field = failedField,
-                    VolumeType = VolumeTypeFactory.FromShareType(share.Share.Type),
-                    FromBefore2024 = degradedNode.Node.CreationTime.CompareTo(legacyBoundary) < 1,
-                    Error = string.Empty,
-                });
-            }
-        }
-        catch (Exception e)
-        {
-            client.Telemetry.GetLogger("Metric").LogWarning(e, "Failed to record metric for decryption event");
         }
     }
 }

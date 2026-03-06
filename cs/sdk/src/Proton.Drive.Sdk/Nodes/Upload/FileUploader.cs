@@ -8,6 +8,7 @@ public sealed partial class FileUploader : IDisposable
 {
     private readonly ProtonDriveClient _client;
     private readonly IRevisionDraftProvider _revisionDraftProvider;
+    private readonly NodeUid _telemetryContextNodeUid;
     private readonly DateTimeOffset? _lastModificationTime;
     private readonly IEnumerable<AdditionalMetadataProperty>? _additionalMetadata;
     private readonly ILogger _logger;
@@ -17,6 +18,7 @@ public sealed partial class FileUploader : IDisposable
     private FileUploader(
         ProtonDriveClient client,
         IRevisionDraftProvider revisionDraftProvider,
+        NodeUid telemetryContextNodeUid,
         long size,
         DateTimeOffset? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
@@ -25,6 +27,7 @@ public sealed partial class FileUploader : IDisposable
     {
         _client = client;
         _revisionDraftProvider = revisionDraftProvider;
+        _telemetryContextNodeUid = telemetryContextNodeUid;
         FileSize = size;
         _lastModificationTime = lastModificationTime;
         _additionalMetadata = additionalMetadata;
@@ -76,6 +79,7 @@ public sealed partial class FileUploader : IDisposable
     internal static async ValueTask<FileUploader> CreateAsync(
         ProtonDriveClient client,
         IRevisionDraftProvider revisionDraftProvider,
+        NodeUid telemetryContextNodeUid,
         long size,
         DateTime? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalExtendedAttributes,
@@ -94,6 +98,7 @@ public sealed partial class FileUploader : IDisposable
         return new FileUploader(
             client,
             revisionDraftProvider,
+            telemetryContextNodeUid,
             size,
             lastModificationTime,
             additionalExtendedAttributes,
@@ -122,14 +127,8 @@ public sealed partial class FileUploader : IDisposable
 
         var revisionDraftTaskCompletionSource = new TaskCompletionSource<RevisionDraft>();
 
-        var uploadEvent = new UploadEvent
-        {
-            ExpectedSize = contentStream.Length,
-            ApproximateExpectedSize = Privacy.ReduceSizePrecision(contentStream.Length),
-            UploadedSize = 0,
-            ApproximateUploadedSize = 0,
-            VolumeType = VolumeType.OwnVolume, // FIXME: figure out how to get the actual volume type
-        };
+        var uploadEvent = TelemetryEventFactory.CreateUploadEventAsync(_client, _telemetryContextNodeUid, contentStream.Length, cancellationToken)
+            .ConfigureAwait(false).GetAwaiter().GetResult();
 
         var uploadFunction = (CancellationToken ct) => UploadFromStreamAsync(
             contentStream,
