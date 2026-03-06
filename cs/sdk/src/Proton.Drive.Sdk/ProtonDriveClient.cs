@@ -211,7 +211,7 @@ public sealed class ProtonDriveClient
         return FileOperations.EnumerateThumbnailsAsync(this, fileUids, type, cancellationToken);
     }
 
-    // FIXME: Group all parameterts bettween mediaType and overrideExistingDraftByOtherClient into uploadMetadata object.
+    // FIXME: Group all parameters between mediaType and overrideExistingDraftByOtherClient into uploadMetadata object.
     public async ValueTask<FileUploader> GetFileUploaderAsync(
         NodeUid parentFolderUid,
         string name,
@@ -224,7 +224,13 @@ public sealed class ProtonDriveClient
     {
         var draftProvider = new NewFileDraftProvider(this, parentFolderUid, name, mediaType, overrideExistingDraftByOtherClient);
 
-        return await GetFileUploaderAsync(draftProvider, size, lastModificationTime, additionalMetadata, cancellationToken).ConfigureAwait(false);
+        return await GetFileUploaderAsync(
+            draftProvider,
+            parentFolderUid,
+            size,
+            lastModificationTime,
+            additionalMetadata,
+            cancellationToken).ConfigureAwait(false);
     }
 
     // FIXME: Group all parameterts bettween size and additionalMetadata into uploadMetadata object.
@@ -237,7 +243,13 @@ public sealed class ProtonDriveClient
     {
         var draftProvider = new NewRevisionDraftProvider(this, currentActiveRevisionUid.NodeUid, currentActiveRevisionUid.RevisionId);
 
-        return await GetFileUploaderAsync(draftProvider, size, lastModificationTime, additionalMetadata, cancellationToken).ConfigureAwait(false);
+        return await GetFileUploaderAsync(
+            draftProvider,
+            currentActiveRevisionUid.NodeUid,
+            size,
+            lastModificationTime,
+            additionalMetadata,
+            cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<FileDownloader> GetFileDownloaderAsync(RevisionUid revisionUid, CancellationToken cancellationToken)
@@ -292,12 +304,19 @@ public sealed class ProtonDriveClient
 
     private async ValueTask<FileUploader> GetFileUploaderAsync(
         IRevisionDraftProvider revisionDraftProvider,
+        NodeUid telemetryContextNodeUid,
         long size,
         DateTime? lastModificationTime,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         CancellationToken cancellationToken)
     {
-        return await FileUploader.CreateAsync(this, revisionDraftProvider, size, lastModificationTime, additionalMetadata, cancellationToken)
-            .ConfigureAwait(false);
+        return await FileUploader.CreateAsync(
+            this,
+            revisionDraftProvider,
+            telemetryContextNodeUid,
+            size,
+            lastModificationTime,
+            additionalMetadata,
+            cancellationToken).ConfigureAwait(false);
     }
 }

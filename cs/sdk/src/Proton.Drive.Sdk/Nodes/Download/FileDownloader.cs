@@ -106,11 +106,8 @@ public sealed partial class FileDownloader : IFileDownloader
 
         var downloadStateTaskCompletionSource = new TaskCompletionSource<DownloadState>();
 
-        var downloadEvent = new DownloadEvent
-        {
-            DownloadedSize = 0,
-            VolumeType = VolumeType.OwnVolume, // FIXME: figure out how to get the actual volume type
-        };
+        var downloadEvent = TelemetryEventFactory.CreateDownloadEventAsync(_client, _revisionUid.NodeUid, cancellationToken)
+            .ConfigureAwait(false).GetAwaiter().GetResult();
 
         var downloadFunction = (CancellationToken ct) => DownloadToStreamAsync(
             contentOutputStream,
