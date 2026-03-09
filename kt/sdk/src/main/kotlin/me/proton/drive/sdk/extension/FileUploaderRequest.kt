@@ -1,7 +1,6 @@
 package me.proton.drive.sdk.extension
 
 import com.google.protobuf.kotlin.toByteString
-import com.google.protobuf.timestamp
 import me.proton.drive.sdk.entity.FileUploaderRequest
 import proton.drive.sdk.additionalMetadataProperty
 import proton.drive.sdk.driveClientGetFileUploaderRequest
@@ -14,7 +13,7 @@ internal fun FileUploaderRequest.toProtobuf(
     mediaType = this@toProtobuf.mediaType
     size = this@toProtobuf.fileSize
     parentFolderUid = this@toProtobuf.parentFolderUid
-    lastModificationTime = timestamp { seconds = this@toProtobuf.lastModificationTime }
+    lastModificationTime = this@toProtobuf.lastModificationTime.toTimestamp()
     overrideExistingDraftByOtherClient = this@toProtobuf.overrideExistingDraftByOtherClient
     additionalMetadata += this@toProtobuf.additionalMetadata.map { (name, data) ->
         additionalMetadataProperty {

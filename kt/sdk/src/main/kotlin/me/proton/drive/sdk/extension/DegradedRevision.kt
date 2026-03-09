@@ -8,11 +8,11 @@ import proton.drive.sdk.contentAuthorOrNull
 
 fun ProtonDriveSdk.DegradedRevision.toEntity() = DegradedRevision(
     uid = uid,
-    creationTime = creationTime.seconds,
+    creationTime = creationTime.toInstant(),
     sizeOnCloudStorage = sizeOnCloudStorage,
     claimedSize = if (hasClaimedSize()) claimedSize else null,
     claimedDigests = claimedDigestsOrNull?.toEntity(),
-    claimedModificationTime = claimedModificationTimeOrNull?.seconds,
+    claimedModificationTime = claimedModificationTimeOrNull?.toInstant(),
     thumbnails = thumbnailsList.map { it.toEntity() },
     additionalClaimedMetadata = if (additionalClaimedMetadataList.isNotEmpty()) {
         additionalClaimedMetadataList.map { it.toEntity() }

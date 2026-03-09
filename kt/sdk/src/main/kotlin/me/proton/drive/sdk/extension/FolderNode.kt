@@ -9,8 +9,8 @@ fun ProtonDriveSdk.FolderNode.toEntity() = FolderNode(
     parentUid = parentUid,
     treeEventScopeId = treeEventScopeId,
     name = name,
-    creationTime = creationTime.seconds,
-    trashTime = trashTimeOrNull?.seconds,
+    creationTime = creationTime.toInstant(),
+    trashTime = trashTimeOrNull?.toInstant(),
     nameAuthor = nameAuthor.toEntity(),
     author = author.toEntity()
 )

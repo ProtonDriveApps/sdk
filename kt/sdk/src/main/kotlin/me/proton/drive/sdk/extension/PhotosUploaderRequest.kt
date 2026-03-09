@@ -17,14 +17,10 @@ internal fun PhotosUploaderRequest.toProtobuf(
         metadata = photoFileUploadMetadata {
             mediaType = this@toProtobuf.mediaType
             this@toProtobuf.captureTime?.let {
-                captureTime = timestamp {
-                    seconds = it
-                }
+                captureTime = it.toTimestamp()
             }
             this@toProtobuf.lastModificationTime?.let {
-                lastModificationTime = timestamp {
-                    seconds = it
-                }
+                lastModificationTime = it.toTimestamp()
             }
             overrideExistingDraftByOtherClient = this@toProtobuf.overrideExistingDraftByOtherClient
             additionalMetadata += this@toProtobuf.additionalMetadata.map { (name, data) ->
