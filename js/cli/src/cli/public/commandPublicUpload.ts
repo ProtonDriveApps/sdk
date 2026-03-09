@@ -4,6 +4,7 @@ import { ParseArgsConfig } from 'util';
 import { Thumbnail } from '../../../../sdk/src';
 import { Command, ActionArgs } from '../interface';
 import { PUBLIC_OPTIONS } from './base';
+import { printObject } from '../formatters';
 
 export class CommandPublicUpload implements Command {
     group = 'public';
@@ -62,6 +63,8 @@ export class CommandPublicUpload implements Command {
             }
         });
 
-        await controller.completion();
+        const result = await controller.completion();
+
+        printObject(result, json);
     }
 }
