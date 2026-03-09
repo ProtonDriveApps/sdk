@@ -284,12 +284,12 @@ public sealed class ProtonDriveClient
 
     public ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> DeleteNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
     {
-        return NodeOperations.DeleteAsync(this, uids, cancellationToken);
+        return NodeOperations.DeleteFromTrashAsync(this, uids, cancellationToken);
     }
 
     public ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> RestoreNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
     {
-        return NodeOperations.RestoreAsync(this, uids, cancellationToken);
+        return NodeOperations.RestoreFromTrashAsync(this, uids, cancellationToken);
     }
 
     public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateTrashAsync(CancellationToken cancellationToken)

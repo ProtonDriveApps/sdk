@@ -15,10 +15,14 @@ import me.proton.drive.sdk.internal.factory
 import me.proton.drive.sdk.internal.toLogId
 import proton.drive.sdk.driveClientCreateFolderRequest
 import proton.drive.sdk.driveClientEnumerateFolderChildrenRequest
+import proton.drive.sdk.driveClientDeleteNodesRequest
+import proton.drive.sdk.driveClientEmptyTrashRequest
+import proton.drive.sdk.driveClientEnumerateTrashRequest
 import proton.drive.sdk.driveClientGetAvailableNameRequest
 import proton.drive.sdk.driveClientGetMyFilesFolderRequest
 import proton.drive.sdk.driveClientGetThumbnailsRequest
 import proton.drive.sdk.driveClientRenameRequest
+import proton.drive.sdk.driveClientRestoreNodesRequest
 import proton.drive.sdk.driveClientTrashNodesRequest
 import java.nio.channels.WritableByteChannel
 
@@ -68,7 +72,7 @@ class ProtonDriveClient internal constructor(
         name: String,
         mediaType: String? = null,
     ): Unit = cancellationCoroutineScope { source ->
-        log(DEBUG, "rename")
+        log(INFO, "rename")
         bridge.rename(
             driveClientRenameRequest {
                 this.nodeUid = nodeUid
@@ -87,7 +91,7 @@ class ProtonDriveClient internal constructor(
         name: String,
         lastModification: Long? = null,
     ): FolderNode = cancellationCoroutineScope { source ->
-        log(DEBUG, "createFolder")
+        log(INFO, "createFolder")
         bridge.createFolder(
             driveClientCreateFolderRequest {
                 this.parentFolderUid = parentFolderUid
@@ -127,7 +131,7 @@ class ProtonDriveClient internal constructor(
     suspend fun trashNodes(
         nodeUids: List<String>,
     ): List<NodeResultPair> = cancellationCoroutineScope { source ->
-        log(DEBUG, "trashNodes(${nodeUids.size} nodes)")
+        log(INFO, "trashNodes(${nodeUids.size} nodes)")
         bridge.trashNodes(
             driveClientTrashNodesRequest {
                 this.nodeUids += nodeUids
@@ -135,6 +139,52 @@ class ProtonDriveClient internal constructor(
                 cancellationTokenSourceHandle = source.handle
             }
         ).toEntity()
+    }
+
+    suspend fun deleteNodes(
+        nodeUids: List<String>,
+    ): List<NodeResultPair> = cancellationCoroutineScope { source ->
+        log(INFO, "deleteNodes(${nodeUids.size} nodes)")
+        bridge.deleteNodes(
+            driveClientDeleteNodesRequest {
+                this.nodeUids += nodeUids
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        ).toEntity()
+    }
+
+    suspend fun restoreNodes(
+        nodeUids: List<String>,
+    ): List<NodeResultPair> = cancellationCoroutineScope { source ->
+        log(INFO, "restoreNodes(${nodeUids.size} nodes)")
+        bridge.restoreNodes(
+            driveClientRestoreNodesRequest {
+                this.nodeUids += nodeUids
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        ).toEntity()
+    }
+
+    suspend fun enumerateTrash(): List<NodeResult> = cancellationCoroutineScope { source ->
+        log(DEBUG, "enumerateTrash")
+        bridge.enumerateTrash(
+            driveClientEnumerateTrashRequest {
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        ).toEntity()
+    }
+
+    suspend fun emptyTrash(): Unit = cancellationCoroutineScope { source ->
+        log(INFO, "emptyTrash")
+        bridge.emptyTrash(
+            driveClientEmptyTrashRequest {
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        )
     }
 
     override fun close() {

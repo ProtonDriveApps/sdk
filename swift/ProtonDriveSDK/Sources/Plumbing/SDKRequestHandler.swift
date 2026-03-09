@@ -213,10 +213,10 @@ let sdkResponseCallbackWithState: CCallback = { statePointer, responseArray in
             }
             resultBox.resume(returning: unpackedValue)
 
-        case .value(let value) where value.isA(Proton_Drive_Sdk_TrashNodesResponse.self):
-            let unpackedValue = try Proton_Drive_Sdk_TrashNodesResponse(unpackingAny: value)
-            guard let uploadResultBox = box as? any Resumable<Proton_Drive_Sdk_TrashNodesResponse> else {
-                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Received unexpected state in the response. We expected Resumable<Proton_Drive_Sdk_TrashNodesResponse>, we got \(type(of: box))"))
+        case .value(let value) where value.isA(Proton_Drive_Sdk_NodeResultListResponse.self):
+            let unpackedValue = try Proton_Drive_Sdk_NodeResultListResponse(unpackingAny: value)
+            guard let uploadResultBox = box as? any Resumable<Proton_Drive_Sdk_NodeResultListResponse> else {
+                throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Received unexpected state in the response. We expected Resumable<Proton_Drive_Sdk_NodeResultListResponse>, we got \(type(of: box))"))
             }
             uploadResultBox.resume(returning: unpackedValue)
 

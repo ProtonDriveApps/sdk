@@ -77,7 +77,7 @@ internal static class InteropMessageHandler
         }
         catch (Exception e)
         {
-            var error = e.ToErrorMessage(InteropErrorConverter.SetDomainAndCodes);
+            var error = e.ToProtoError(InteropErrorConverter.SetDomainAndCodes);
 
             responseAction.InvokeWithMessage(bindingsHandle, new Response { Error = error });
         }

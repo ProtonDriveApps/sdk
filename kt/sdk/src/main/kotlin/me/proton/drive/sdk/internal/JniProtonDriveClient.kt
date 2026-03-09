@@ -2,10 +2,11 @@ package me.proton.drive.sdk.internal
 
 import com.google.protobuf.Any
 import kotlinx.coroutines.CoroutineScope
+import me.proton.drive.sdk.converter.NodeResultListResponseConverter
 import me.proton.drive.sdk.converter.FileThumbnailListConverter
 import me.proton.drive.sdk.converter.FolderChildrenListConverter
 import me.proton.drive.sdk.converter.FolderNodeConverter
-import me.proton.drive.sdk.converter.TrashNodesResponseConverter
+import me.proton.drive.sdk.converter.TrashChildrenListConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.StringResponseCallback
@@ -119,10 +120,37 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
 
     suspend fun trashNodes(
         request: ProtonDriveSdk.DriveClientTrashNodesRequest,
-    ): ProtonDriveSdk.TrashNodesResponse =
-        executeOnce("trashNodes", TrashNodesResponseConverter().asCallback) {
+    ): ProtonDriveSdk.NodeResultListResponse =
+        executeOnce("trashNodes", NodeResultListResponseConverter().asCallback) {
             driveClientTrashNodes = request
         }
+
+    suspend fun deleteNodes(
+        request: ProtonDriveSdk.DriveClientDeleteNodesRequest,
+    ): ProtonDriveSdk.NodeResultListResponse =
+        executeOnce("deleteNodes", NodeResultListResponseConverter().asCallback) {
+            driveClientDeleteNodes = request
+        }
+
+    suspend fun restoreNodes(
+        request: ProtonDriveSdk.DriveClientRestoreNodesRequest,
+    ): ProtonDriveSdk.NodeResultListResponse =
+        executeOnce("restoreNodes", NodeResultListResponseConverter().asCallback) {
+            driveClientRestoreNodes = request
+        }
+
+    suspend fun enumerateTrash(
+        request: ProtonDriveSdk.DriveClientEnumerateTrashRequest,
+    ): ProtonDriveSdk.TrashChildrenList =
+        executeOnce("enumerateTrash", TrashChildrenListConverter().asCallback) {
+            driveClientEnumerateTrash = request
+        }
+
+    suspend fun emptyTrash(
+        request: ProtonDriveSdk.DriveClientEmptyTrashRequest,
+    ): Unit = executeOnce("emptyTrash", UnitResponseCallback) {
+        driveClientEmptyTrash = request
+    }
 
     fun free(handle: Long) {
         dispatch("free") {

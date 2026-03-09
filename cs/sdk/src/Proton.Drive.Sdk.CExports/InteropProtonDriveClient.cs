@@ -259,7 +259,87 @@ internal static class InteropProtonDriveClient
             request.NodeUids.Select(NodeUid.Parse),
             cancellationToken).ConfigureAwait(false);
 
-        var response = new TrashNodesResponse
+        return ConvertToNodeResultListResponse(results);
+    }
+
+    public static async ValueTask<IMessage> HandleDeleteNodesAsync(DriveClientDeleteNodesRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        var results = await client.DeleteNodesAsync(
+            request.NodeUids.Select(NodeUid.Parse),
+            cancellationToken).ConfigureAwait(false);
+
+        return ConvertToNodeResultListResponse(results);
+    }
+
+    public static async ValueTask<IMessage> HandleRestoreNodesAsync(DriveClientRestoreNodesRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        var results = await client.RestoreNodesAsync(
+            request.NodeUids.Select(NodeUid.Parse),
+            cancellationToken).ConfigureAwait(false);
+
+        return ConvertToNodeResultListResponse(results);
+    }
+
+    public static async ValueTask<IMessage> HandleEnumerateTrashAsync(DriveClientEnumerateTrashRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        var trashEnumerable = client.EnumerateTrashAsync(cancellationToken);
+
+        var children = await trashEnumerable
+            .Select(ConvertToNodeResult)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+        return new TrashChildrenList { Children = { children } };
+    }
+
+    public static async ValueTask<IMessage?> HandleEmptyTrashAsync(DriveClientEmptyTrashRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        await client.EmptyTrashAsync(cancellationToken).ConfigureAwait(false);
+
+        return null;
+    }
+
+    public static IMessage? HandleFree(DriveClientFreeRequest request)
+    {
+        Interop.FreeHandle<ProtonDriveClient>(request.ClientHandle);
+
+        return null;
+    }
+
+    public static NodeResult ConvertToNodeResult(Result<Proton.Drive.Sdk.Nodes.Node, Proton.Drive.Sdk.Nodes.DegradedNode> result)
+    {
+        var nodeResult = new NodeResult();
+
+        if (result.TryGetValueElseError(out var node, out var degradedNode))
+        {
+            nodeResult.Value = ConvertToNode(node);
+        }
+        else
+        {
+            nodeResult.Error = ConvertToDegradedNode(degradedNode);
+        }
+
+        return nodeResult;
+    }
+
+    private static NodeResultListResponse ConvertToNodeResultListResponse(IReadOnlyDictionary<NodeUid, Result<Exception>> results)
+    {
+        return new NodeResultListResponse
         {
             Results =
             {
@@ -272,25 +352,16 @@ internal static class InteropProtonDriveClient
 
                     if (pair.Value.TryGetError(out var exception))
                     {
-                        result.Error = exception.ToErrorMessage(InteropDriveErrorConverter.SetDomainAndCodes);
+                        result.Error = exception.ToProtoError(InteropDriveErrorConverter.SetDomainAndCodes);
                     }
 
                     return result;
                 }),
             },
         };
-
-        return response;
     }
 
-    public static IMessage? HandleFree(DriveClientFreeRequest request)
-    {
-        Interop.FreeHandle<ProtonDriveClient>(request.ClientHandle);
-
-        return null;
-    }
-
-    public static AuthorResult ParseAuthorResult(Result<Proton.Drive.Sdk.Author, Proton.Drive.Sdk.Nodes.SignatureVerificationError> result)
+    private static AuthorResult ParseAuthorResult(Result<Proton.Drive.Sdk.Author, Proton.Drive.Sdk.Nodes.SignatureVerificationError> result)
     {
         var authorResult = new AuthorResult();
 
@@ -314,22 +385,6 @@ internal static class InteropProtonDriveClient
         }
 
         return authorResult;
-    }
-
-    public static NodeResult ConvertToNodeResult(Result<Proton.Drive.Sdk.Nodes.Node, Proton.Drive.Sdk.Nodes.DegradedNode> result)
-    {
-        var nodeResult = new NodeResult();
-
-        if (result.TryGetValueElseError(out var node, out var degradedNode))
-        {
-            nodeResult.Value = ConvertToNode(node);
-        }
-        else
-        {
-            nodeResult.Error = ConvertToDegradedNode(degradedNode);
-        }
-
-        return nodeResult;
     }
 
     private static Node ConvertToNode(Proton.Drive.Sdk.Nodes.Node node)
