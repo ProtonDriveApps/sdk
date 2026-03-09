@@ -22,6 +22,10 @@ message Request {
         DriveClientTrashNodesRequest drive_client_trash_nodes = 1010;
         DriveClientEnumerateFolderChildrenRequest drive_client_enumerate_folder_children = 1011;
         DriveClientGetMyFilesFolderRequest drive_client_get_my_files_folder = 1012;
+        DriveClientDeleteNodesRequest drive_client_delete_nodes = 1013;
+        DriveClientRestoreNodesRequest drive_client_restore_nodes = 1014;
+        DriveClientEnumerateTrashRequest drive_client_enumerate_trash = 1015;
+        DriveClientEmptyTrashRequest drive_client_empty_trash = 1016;
 
         UploadFromStreamRequest upload_from_stream = 1100;
         UploadFromFileRequest upload_from_file = 1101;
@@ -359,7 +363,7 @@ message DriveClientCreateFolderRequest {
     int64 cancellation_token_source_handle = 5;
 }
 
-// The response message must be of type TrashNodesResponse
+// The response message must be of type NodeResultListResponse
 message DriveClientTrashNodesRequest {
     int64 client_handle = 1;
     repeated string node_uids = 2;
@@ -371,8 +375,38 @@ message NodeResultPair {
   proton.sdk.Error error = 2;
 }
 
-message TrashNodesResponse {
+message NodeResultListResponse {
   repeated NodeResultPair results = 1;
+}
+
+// The response message must be of type NodeResultListResponse
+message DriveClientDeleteNodesRequest {
+    int64 client_handle = 1;
+    repeated string node_uids = 2;
+    int64 cancellation_token_source_handle = 3;
+}
+
+// The response message must be of type NodeResultListResponse
+message DriveClientRestoreNodesRequest {
+    int64 client_handle = 1;
+    repeated string node_uids = 2;
+    int64 cancellation_token_source_handle = 3;
+}
+
+// The response message must be of type TrashChildrenList
+message DriveClientEnumerateTrashRequest {
+    int64 client_handle = 1;
+    int64 cancellation_token_source_handle = 2;
+}
+
+message TrashChildrenList {
+    repeated NodeResult children = 1;
+}
+
+// The response must not have a value.
+message DriveClientEmptyTrashRequest {
+    int64 client_handle = 1;
+    int64 cancellation_token_source_handle = 2;
 }
 
 // The response message must be of type FileThumbnailList.

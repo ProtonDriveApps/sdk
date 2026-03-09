@@ -157,7 +157,7 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
             {
                 var conflictingNodeUid = new NodeUid(_parentUid.VolumeId, conflictingLinkId);
 
-                var deletionResults = await NodeOperations.DeleteAsync(_client, [conflictingNodeUid], cancellationToken).ConfigureAwait(false);
+                var deletionResults = await NodeOperations.DeleteDraftAsync(_client, [conflictingNodeUid], cancellationToken).ConfigureAwait(false);
 
                 if (!deletionResults.TryGetValue(conflictingNodeUid, out var deletionResult))
                 {

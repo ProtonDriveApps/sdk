@@ -332,6 +332,39 @@ internal static class NodeOperations
         await client.Cache.Entities.SetNodeAsync(uid, node with { Name = newName }, membershipShareId, nameHashDigest, cancellationToken).ConfigureAwait(false);
     }
 
+    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> DeleteDraftAsync(
+        ProtonDriveClient client,
+        IEnumerable<NodeUid> uids,
+        CancellationToken cancellationToken)
+    {
+        var uidsByVolumeId = uids.GroupBy(x => x.VolumeId);
+
+        var results = new ConcurrentDictionary<NodeUid, Result<Exception>>();
+
+        var tasks = uidsByVolumeId.Select(async uidGroup =>
+        {
+            foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchCount))
+            {
+                var request = new MultipleLinksNullaryRequest { LinkIds = batch };
+
+                var aggregateResponse = await client.Api.Links.DeleteMultipleAsync(uidGroup.Key, request.LinkIds, cancellationToken).ConfigureAwait(false);
+
+                foreach (var (linkId, response) in aggregateResponse.Responses)
+                {
+                    var uid = new NodeUid(uidGroup.Key, linkId);
+
+                    var result = response.IsSuccess ? Result<Exception>.Success : new ProtonApiException(response);
+
+                    results.TryAdd(uid, result);
+                }
+            }
+        });
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        return results;
+    }
+
     public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> TrashAsync(
         ProtonDriveClient client,
         IEnumerable<NodeUid> uids,
@@ -378,7 +411,7 @@ internal static class NodeOperations
         return results;
     }
 
-    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> DeleteAsync(
+    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> DeleteFromTrashAsync(
         ProtonDriveClient client,
         IEnumerable<NodeUid> uids,
         CancellationToken cancellationToken)
@@ -393,7 +426,7 @@ internal static class NodeOperations
             {
                 var request = new MultipleLinksNullaryRequest { LinkIds = batch };
 
-                var aggregateResponse = await client.Api.Links.DeleteMultipleAsync(uidGroup.Key, request.LinkIds, cancellationToken).ConfigureAwait(false);
+                var aggregateResponse = await client.Api.Trash.DeleteMultipleAsync(uidGroup.Key, request, cancellationToken).ConfigureAwait(false);
 
                 foreach (var (linkId, response) in aggregateResponse.Responses)
                 {
@@ -411,7 +444,7 @@ internal static class NodeOperations
         return results;
     }
 
-    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> RestoreAsync(
+    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> RestoreFromTrashAsync(
         ProtonDriveClient client,
         IEnumerable<NodeUid> uids,
         CancellationToken cancellationToken)
