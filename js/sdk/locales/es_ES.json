@@ -20,6 +20,9 @@
       "Cannot share root folder": [
         "No se puede compartir la carpeta principal."
       ],
+      "Content key packet is required for small revision upload": [
+        "Se requiere el paquete de claves de contenido para subir una revisión pequeña"
+      ],
       "Copy operation aborted": [
         "Se ha cancelado la copia."
       ],
@@ -103,6 +106,9 @@
       ],
       "File has no content key": [
         "El archivo no tiene clave de contenido."
+      ],
+      "File has no revision": [
+        "El archivo no tiene revisiones"
       ],
       "File hash does not match expected hash": [
         "El hash del archivo no coincide con el valor esperado"

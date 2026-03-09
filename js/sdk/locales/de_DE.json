@@ -20,6 +20,9 @@
       "Cannot share root folder": [
         "Stammordner kann nicht geteilt werden"
       ],
+      "Content key packet is required for small revision upload": [
+        "Für das Hochladen kleinerer Überarbeitungen ist ein Content-Key-Paket erforderlich"
+      ],
       "Copy operation aborted": [
         "Kopiervorgang abgebrochen"
       ],
@@ -103,6 +106,9 @@
       ],
       "File has no content key": [
         "Datei hat keinen Inhaltsschlüssel"
+      ],
+      "File has no revision": [
+        "Datei noch nicht überarbeitet"
       ],
       "File hash does not match expected hash": [
         "Datei-Hash stimmt nicht mit dem erwarteten Hash überein"

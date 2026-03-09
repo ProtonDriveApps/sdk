@@ -20,6 +20,9 @@
       "Cannot share root folder": [
         "Δεν είναι δυνατή η κοινοποίηση του κεντρικού φακέλου"
       ],
+      "Content key packet is required for small revision upload": [
+        "Το πακέτο κλειδιού περιεχομένου απαιτείται για τη μεταφόρτωση μικρής αναθεώρησης"
+      ],
       "Copy operation aborted": [
         "Η αντιγραφή ακυρώθηκε"
       ],
@@ -103,6 +106,9 @@
       ],
       "File has no content key": [
         "Το αρχείο δεν έχει κλειδί περιεχομένου"
+      ],
+      "File has no revision": [
+        "Το αρχείο δεν έχει αναθεώρηση"
       ],
       "File hash does not match expected hash": [
         "Το hash του αρχείου δεν ταιριάζει με τον αναμενόμενο hash"
