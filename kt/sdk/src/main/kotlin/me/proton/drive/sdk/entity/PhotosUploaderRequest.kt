@@ -1,11 +1,13 @@
 package me.proton.drive.sdk.entity
 
+import java.time.Instant
+
 data class PhotosUploaderRequest(
     val name: String,
     val mediaType: String,
     val fileSize: Long,
-    val lastModificationTime: Long?, // optional
-    val captureTime: Long?, // optional
+    val lastModificationTime: Instant?, // optional
+    val captureTime: Instant?, // optional
     val mainPhotoLinkId: String?, // optional
     val tags: List<PhotoTag> = emptyList(),  // optional
     val overrideExistingDraftByOtherClient: Boolean,

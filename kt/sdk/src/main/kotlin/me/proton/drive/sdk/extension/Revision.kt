@@ -7,11 +7,11 @@ import proton.drive.sdk.contentAuthorOrNull
 
 fun ProtonDriveSdk.FileRevision.toEntity() = FileRevision(
     uid = uid,
-    creationTime = creationTime.seconds,
+    creationTime = creationTime.toInstant(),
     sizeOnCloudStorage = sizeOnCloudStorage,
     claimedSize = if (hasClaimedSize()) claimedSize else null,
     claimedDigests = claimedDigests.toEntity(),
-    claimedModificationTime = claimedModificationTimeOrNull?.seconds,
+    claimedModificationTime = claimedModificationTimeOrNull?.toInstant(),
     thumbnails = thumbnailsList.map { it.toEntity() },
     additionalClaimedMetadata = if (additionalClaimedMetadataList.isNotEmpty()) {
         additionalClaimedMetadataList.map { it.toEntity() }
