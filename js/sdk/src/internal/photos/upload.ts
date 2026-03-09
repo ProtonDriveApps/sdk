@@ -1,8 +1,15 @@
 import { DriveCrypto } from '../../crypto';
-import { ProtonDriveTelemetry, UploadMetadata, Thumbnail, AnonymousUser, FeatureFlagProvider } from '../../interface';
+import {
+    ProtonDriveTelemetry,
+    UploadMetadata,
+    Thumbnail,
+    AnonymousUser,
+    FeatureFlagProvider,
+    PhotoTag,
+} from '../../interface';
 import { DriveAPIService, drivePaths } from '../apiService';
 import { generateFileExtendedAttributes } from '../nodes';
-import { splitNodeRevisionUid } from '../uids';
+import { splitNodeRevisionUid, splitNodeUid } from '../uids';
 import { UploadAPIService } from '../upload/apiService';
 import { BlockVerifier } from '../upload/blockVerifier';
 import { UploadController } from '../upload/controller';
@@ -22,9 +29,8 @@ type PostCommitRevisionResponse =
 
 export type PhotoUploadMetadata = UploadMetadata & {
     captureTime?: Date;
-    mainPhotoLinkID?: string;
-    // TODO: handle tags enum in the SDK
-    tags?: (0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9)[];
+    mainPhotoNodeUid?: string;
+    tags?: PhotoTag[];
 };
 
 export class PhotoFileUploader extends FileUploader {
@@ -180,7 +186,7 @@ export class PhotoUploadManager extends UploadManager {
         const photo = {
             contentHash,
             captureTime: uploadMetadata.captureTime || extendedAttributes.modificationTime,
-            mainPhotoLinkID: uploadMetadata.mainPhotoLinkID,
+            mainPhotoNodeUid: uploadMetadata.mainPhotoNodeUid,
             tags: uploadMetadata.tags,
         };
         await this.photoApiService.commitDraftPhoto(nodeRevisionDraft.nodeRevisionUid, nodeCommitCrypto, photo);
@@ -218,12 +224,19 @@ export class PhotoUploadAPIService extends UploadAPIService {
         photo: {
             contentHash: string;
             captureTime?: Date;
-            mainPhotoLinkID?: string;
-            // TODO: handle tags enum in the SDK
-            tags?: (0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9)[];
+            mainPhotoNodeUid?: string;
+            tags?: PhotoTag[];
         },
     ): Promise<void> {
         const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(draftNodeRevisionUid);
+        const { volumeId: mainPhotoVolumeId, nodeId: mainPhotoNodeId } = photo.mainPhotoNodeUid
+            ? splitNodeUid(photo.mainPhotoNodeUid)
+            : { volumeId: null, nodeId: null };
+
+        if (mainPhotoVolumeId !== null && mainPhotoVolumeId !== volumeId) {
+            throw new Error('mainPhotoNodeUid must belong to the same volume as the draft');
+        }
+
         await this.apiService.put<
             // TODO: Deprected fields but not properly marked in the types.
             Omit<PostCommitRevisionRequest, 'BlockNumber' | 'BlockList' | 'ThumbnailToken' | 'State'>,
@@ -235,7 +248,7 @@ export class PhotoUploadAPIService extends UploadAPIService {
             Photo: {
                 ContentHash: photo.contentHash,
                 CaptureTime: photo.captureTime ? Math.floor(photo.captureTime?.getTime() / 1000) : 0,
-                MainPhotoLinkID: photo.mainPhotoLinkID || null,
+                MainPhotoLinkID: mainPhotoNodeId,
                 Tags: photo.tags || [],
                 Exif: null, // Deprecated field, not used.
             },
