@@ -4,6 +4,7 @@ import { ParseArgsConfig } from 'util';
 import { Thumbnail } from '../../../../sdk/src';
 import { Command, ActionArgs } from '../interface';
 import { PathType } from '../paths';
+import { printObject } from '../formatters';
 
 export class CommandFileSystemUpload implements Command {
     group = 'filesystem';
@@ -66,6 +67,8 @@ export class CommandFileSystemUpload implements Command {
             }
         });
 
-        await controller.completion();
+        const result = await controller.completion();
+
+        printObject(result, json);
     }
 }
