@@ -40,6 +40,18 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DriveClientTrashNodes
                     => await InteropProtonDriveClient.HandleTrashNodesAsync(request.DriveClientTrashNodes).ConfigureAwait(false),
 
+                Request.PayloadOneofCase.DriveClientDeleteNodes
+                    => await InteropProtonDriveClient.HandleDeleteNodesAsync(request.DriveClientDeleteNodes).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientRestoreNodes
+                    => await InteropProtonDriveClient.HandleRestoreNodesAsync(request.DriveClientRestoreNodes).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientEnumerateTrash
+                    => await InteropProtonDriveClient.HandleEnumerateTrashAsync(request.DriveClientEnumerateTrash).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientEmptyTrash
+                    => await InteropProtonDriveClient.HandleEmptyTrashAsync(request.DriveClientEmptyTrash).ConfigureAwait(false),
+
                 Request.PayloadOneofCase.DriveClientRename
                     => await InteropProtonDriveClient.HandleRenameAsync(request.DriveClientRename).ConfigureAwait(false),
 
@@ -165,7 +177,7 @@ internal static class InteropMessageHandler
         }
         catch (Exception e)
         {
-            var error = e.ToErrorMessage(InteropDriveErrorConverter.SetDomainAndCodes);
+            var error = e.ToProtoError(InteropDriveErrorConverter.SetDomainAndCodes);
 
             responseAction.InvokeWithMessage(bindingsHandle, new Response { Error = error });
         }
