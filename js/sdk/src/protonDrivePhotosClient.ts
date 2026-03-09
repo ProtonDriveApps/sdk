@@ -454,7 +454,7 @@ export class ProtonDrivePhotosClient {
         name: string,
         metadata: UploadMetadata & {
             captureTime?: Date;
-            mainPhotoLinkID?: string;
+            mainPhotoNodeUid?: string;
             tags?: PhotoTag[];
         },
         signal?: AbortSignal,
