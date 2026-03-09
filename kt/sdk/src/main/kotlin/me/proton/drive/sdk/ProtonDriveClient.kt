@@ -9,6 +9,7 @@ import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.entity.NodeResultPair
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toProto
+import me.proton.drive.sdk.extension.toTimestamp
 import me.proton.drive.sdk.internal.JniProtonDriveClient
 import me.proton.drive.sdk.internal.cancellationCoroutineScope
 import me.proton.drive.sdk.internal.factory
@@ -25,6 +26,7 @@ import proton.drive.sdk.driveClientRenameRequest
 import proton.drive.sdk.driveClientRestoreNodesRequest
 import proton.drive.sdk.driveClientTrashNodesRequest
 import java.nio.channels.WritableByteChannel
+import java.time.Instant
 
 class ProtonDriveClient internal constructor(
     internal val handle: Long,
@@ -89,7 +91,7 @@ class ProtonDriveClient internal constructor(
     suspend fun createFolder(
         parentFolderUid: String,
         name: String,
-        lastModification: Long? = null,
+        lastModification: Instant? = null,
     ): FolderNode = cancellationCoroutineScope { source ->
         log(INFO, "createFolder")
         bridge.createFolder(
@@ -97,7 +99,7 @@ class ProtonDriveClient internal constructor(
                 this.parentFolderUid = parentFolderUid
                 folderName = name
                 lastModification?.let {
-                    lastModificationTime = timestamp { seconds = lastModification}
+                    lastModificationTime = lastModification.toTimestamp()
                 }
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle

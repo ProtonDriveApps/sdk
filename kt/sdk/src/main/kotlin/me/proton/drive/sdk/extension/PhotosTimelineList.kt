@@ -8,5 +8,5 @@ fun ProtonDriveSdk.PhotosTimelineList.toEntity(): List<PhotosTimelineItem> =
 
 fun ProtonDriveSdk.PhotosTimelineItem.toEntity() = PhotosTimelineItem(
     nodeUid = nodeUid,
-    captureTime = captureTime.seconds,
+    captureTime = captureTime.toInstant(),
 )
