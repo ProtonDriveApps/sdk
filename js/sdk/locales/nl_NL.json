@@ -20,6 +20,9 @@
       "Cannot share root folder": [
         "Kan hoofdmap niet delen"
       ],
+      "Content key packet is required for small revision upload": [
+        "Content key packet is vereist voor kleine revisie upload"
+      ],
       "Copy operation aborted": [
         "Kopieeractie afgebroken"
       ],
@@ -103,6 +106,9 @@
       ],
       "File has no content key": [
         "Bestand heeft geen inhoudssleutel"
+      ],
+      "File has no revision": [
+        "Bestand heeft geen revisie"
       ],
       "File hash does not match expected hash": [
         "Bestandhash komt niet overeen met verwachte hash"

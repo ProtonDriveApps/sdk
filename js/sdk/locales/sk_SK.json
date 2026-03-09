@@ -20,6 +20,9 @@
       "Cannot share root folder": [
         "Nie je možné zdieľať koreňový priečinok"
       ],
+      "Content key packet is required for small revision upload": [
+        "Na nahratie malých revízií je potrebný balík kľúčov obsahu."
+      ],
       "Copy operation aborted": [
         "Operácia kopírovania bola prerušená"
       ],
@@ -103,6 +106,9 @@
       ],
       "File has no content key": [
         "Súbor nemá kľúč obsahu"
+      ],
+      "File has no revision": [
+        "Súbor nemá žiadnu revíziu"
       ],
       "File hash does not match expected hash": [
         "Hash súboru nezodpovedá očakávanému hashu"

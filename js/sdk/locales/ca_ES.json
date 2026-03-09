@@ -20,6 +20,9 @@
       "Cannot share root folder": [
         "No es pot compartir la carpeta arrel"
       ],
+      "Content key packet is required for small revision upload": [
+        "Es requereix el paquet de claus de contingut per carregar revisions petites"
+      ],
       "Copy operation aborted": [
         "S'ha cancel·lat l'operació de còpia"
       ],
@@ -103,6 +106,9 @@
       ],
       "File has no content key": [
         "El fitxer no té clau de contingut"
+      ],
+      "File has no revision": [
+        "Aquest fitxer no té cap revisió"
       ],
       "File hash does not match expected hash": [
         "L'empremta electrònica del fitxer no coincideix amb l'esperada"

@@ -20,6 +20,9 @@
       "Cannot share root folder": [
         "Kök klasör paylaşılamaz"
       ],
+      "Content key packet is required for small revision upload": [
+        "Küçük sürüm yüklemeleri için içerik anahtarı paketi gereklidir"
+      ],
       "Copy operation aborted": [
         "Kopyalama işlemi iptal edildi"
       ],
@@ -103,6 +106,9 @@
       ],
       "File has no content key": [
         "Dosyanın içerik anahtarı yok"
+      ],
+      "File has no revision": [
+        "Dosyanın sürümü yok"
       ],
       "File hash does not match expected hash": [
         "Dosya karma değeri beklenen değerle aynı değil"

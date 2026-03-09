@@ -20,6 +20,9 @@
       "Cannot share root folder": [
         "Impossibile condividere la cartella principale"
       ],
+      "Content key packet is required for small revision upload": [
+        "Il pacchetto chiave di contenuto è richiesto per il caricamento di piccole revisioni"
+      ],
       "Copy operation aborted": [
         "Copia interrotta"
       ],
@@ -104,6 +107,9 @@
       "File has no content key": [
         "Il file non ha una chiave di contenuto"
       ],
+      "File has no revision": [
+        "Il file non ha una revisione"
+      ],
       "File hash does not match expected hash": [
         "L'hash del file non corrisponde all'hash atteso"
       ],
@@ -173,6 +179,9 @@
       ],
       "Parent cannot be decrypted": [
         "Impossibile decriptare il genitore"
+      ],
+      "Photo is already in the target album": [
+        "La foto è già nell'album di destinazione"
       ],
       "Photo not found": [
         "Foto non trovata"
