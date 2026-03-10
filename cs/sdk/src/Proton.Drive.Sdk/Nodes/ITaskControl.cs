@@ -5,6 +5,7 @@ internal interface ITaskControl : IDisposable
     bool IsPaused { get; }
     bool IsCanceled { get; }
     CancellationToken CancellationToken { get; }
+    int Attempt { get; }
     CancellationToken PauseOrCancellationToken { get; }
     void Pause();
     bool TryResume();
