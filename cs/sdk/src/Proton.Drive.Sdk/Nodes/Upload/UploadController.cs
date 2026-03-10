@@ -29,7 +29,7 @@ public sealed class UploadController : IAsyncDisposable
         _onFailed = onFailed;
         _onSucceeded = onSucceeded;
 
-        Completion = PauseOnResumableErrorAsync(uploadTask);
+        Completion = PauseOnResumableErrorAsync(uploadTask, taskControl.Attempt);
     }
 
     public bool IsPaused => _taskControl.IsPaused;
@@ -48,7 +48,8 @@ public sealed class UploadController : IAsyncDisposable
             return;
         }
 
-        Completion = PauseOnResumableErrorAsync(_resumeFunction.Invoke(_taskControl.PauseOrCancellationToken));
+        var previousCompletion = Completion;
+        Completion = ResumeAfterPreviousCompletionAsync(previousCompletion, _taskControl.Attempt);
     }
 
     public async ValueTask DisposeAsync()
@@ -106,7 +107,17 @@ public sealed class UploadController : IAsyncDisposable
             and not IntegrityException;
     }
 
-    private async Task<UploadResult> PauseOnResumableErrorAsync(Task<UploadResult> uploadTask)
+    private async Task<UploadResult> ResumeAfterPreviousCompletionAsync(Task previousCompletion, int attempt)
+    {
+        await previousCompletion.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+
+        return await PauseOnResumableErrorAsync(
+                _resumeFunction.Invoke(_taskControl.PauseOrCancellationToken),
+                attempt)
+            .ConfigureAwait(false);
+    }
+
+    private async Task<UploadResult> PauseOnResumableErrorAsync(Task<UploadResult> uploadTask, int attempt)
     {
         try
         {
@@ -118,7 +129,11 @@ public sealed class UploadController : IAsyncDisposable
         }
         catch (Exception ex) when (IsResumableError(ex))
         {
-            _taskControl.Pause();
+            if (_taskControl.Attempt == attempt)
+            {
+                _taskControl.Pause();
+            }
+
             throw;
         }
         catch
