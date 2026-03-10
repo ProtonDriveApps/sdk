@@ -6,8 +6,10 @@ internal sealed class TaskControl(CancellationToken cancellationToken) : ITaskCo
 
     private bool _isDisposed;
     private TaskCompletionSource? _resumeSignalSource;
+    private int _attemptCount;
     private CancellationTokenSource _pauseCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
+    public int Attempt => _attemptCount;
     public bool IsPaused => _resumeSignalSource is { Task.IsCompleted: false } && !IsCanceled;
     public bool IsCanceled => CancellationToken.IsCancellationRequested;
 
@@ -51,6 +53,8 @@ internal sealed class TaskControl(CancellationToken cancellationToken) : ITaskCo
             _pauseCancellationTokenSource.Dispose();
             _pauseCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(CancellationToken);
 
+            Interlocked.Increment(ref _attemptCount);
+
             var resumeSignalSource = _resumeSignalSource;
             _resumeSignalSource = null;
 
@@ -62,8 +66,13 @@ internal sealed class TaskControl(CancellationToken cancellationToken) : ITaskCo
 
     public void AbortPause()
     {
-        var resumeSignalSource = _resumeSignalSource;
-        _resumeSignalSource = null;
+        TaskCompletionSource? resumeSignalSource;
+
+        lock (_pauseLock)
+        {
+            resumeSignalSource = _resumeSignalSource;
+            _resumeSignalSource = null;
+        }
 
         resumeSignalSource?.TrySetCanceled();
     }
