@@ -19,7 +19,7 @@ internal sealed partial class RevisionDraft(
     Func<CancellationToken, ValueTask> deleteDraftFunction,
     ILogger logger) : IAsyncDisposable
 {
-    private readonly Dictionary<ThumbnailType, BlockUploadResult> _thumbnailUploadResults = [];
+    private readonly SortedDictionary<ThumbnailType, BlockUploadResult> _thumbnailUploadResults = [];
     private readonly List<Either<BlockUploadPlainData, BlockUploadResult>> _contentBlockStates = [];
 
     private readonly Lock _blockUploadStatesLock = new();
@@ -34,8 +34,8 @@ internal sealed partial class RevisionDraft(
 
     public IncrementalHash Sha1 { get; } = IncrementalHash.CreateHash(HashAlgorithmName.SHA1);
 
-    public IReadOnlyDictionary<ThumbnailType, BlockUploadResult> ThumbnailUploadResults => _thumbnailUploadResults;
-    public IReadOnlyList<Either<BlockUploadPlainData, BlockUploadResult>> ContentBlockStates => _contentBlockStates;
+    public IReadOnlyCollection<BlockUploadResult> OrderedThumbnailUploadResults => _thumbnailUploadResults.Values;
+    public IReadOnlyList<Either<BlockUploadPlainData, BlockUploadResult>> OrderedContentBlockStates => _contentBlockStates;
 
     public bool IsCompleted { get; set; }
     public bool IsResumable { get; set; } = true;
@@ -89,7 +89,7 @@ internal sealed partial class RevisionDraft(
 
     public int GetNewContentBlockNumber()
     {
-        return ContentBlockStates.Count + 1;
+        return OrderedContentBlockStates.Count + 1;
     }
 
     public bool TryGetNextContentBlockPlainData(
@@ -115,7 +115,7 @@ internal sealed partial class RevisionDraft(
     {
         Sha1.Dispose();
 
-        var dataItemsToDispose = ContentBlockStates
+        var dataItemsToDispose = OrderedContentBlockStates
             .Select(x => x.TryGetFirst(out var data) ? data : (BlockUploadPlainData?)null)
             .Where(task => task is not null)
             .Select(task => task!.Value);

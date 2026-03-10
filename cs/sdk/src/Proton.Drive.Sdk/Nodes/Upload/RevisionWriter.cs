@@ -360,13 +360,13 @@ internal sealed partial class RevisionWriter : IDisposable
         string signingEmailAddress,
         IEnumerable<AdditionalMetadataProperty>? additionalMetadata)
     {
-        var manifest = new byte[(_draft.ThumbnailUploadResults.Count + _draft.ContentBlockStates.Count) * SHA256.HashSizeInBytes];
+        var manifest = new byte[(_draft.OrderedThumbnailUploadResults.Count + _draft.OrderedContentBlockStates.Count) * SHA256.HashSizeInBytes];
         using var manifestStream = new MemoryStream(manifest);
 
-        var contentBlockSizes = new List<int>(_draft.ContentBlockStates.Count);
+        var contentBlockSizes = new List<int>(_draft.OrderedContentBlockStates.Count);
         var uploadedContentSize = 0L;
 
-        var contentBlockUploadResults = _draft.ContentBlockStates
+        var contentBlockUploadResults = _draft.OrderedContentBlockStates
             .Select((blockState, i) =>
             {
                 var blockNumber = i + 1;
@@ -376,7 +376,7 @@ internal sealed partial class RevisionWriter : IDisposable
                     : throw new IntegrityException($"Missing content block #{blockNumber}");
             });
 
-        var blockUploadResults = _draft.ThumbnailUploadResults.Values.Select(x => (Number: 0, x)).Concat(contentBlockUploadResults);
+        var blockUploadResults = _draft.OrderedThumbnailUploadResults.Select(x => (Number: 0, x)).Concat(contentBlockUploadResults);
 
         foreach (var (blockNumber, blockUploadResult) in blockUploadResults)
         {
@@ -399,7 +399,7 @@ internal sealed partial class RevisionWriter : IDisposable
             throw new IntegrityException("Mismatch between uploaded size and expected size");
         }
 
-        if (expectedThumbnailBlockCount != _draft.ThumbnailUploadResults.Count)
+        if (expectedThumbnailBlockCount != _draft.OrderedThumbnailUploadResults.Count)
         {
             throw new IntegrityException("Unexpected number of thumbnail blocks");
         }
