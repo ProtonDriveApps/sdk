@@ -182,7 +182,10 @@ message Thumbnail {
 
 message FileThumbnail {
     string file_uid = 1;
-    bytes data = 2;
+    oneof result {
+        bytes data = 2;
+        DriveError error = 3;
+    }
 }
 
 message FileThumbnailList {

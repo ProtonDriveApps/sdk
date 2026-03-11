@@ -138,10 +138,19 @@ internal static class InteropProtonPhotosClient
             cancellationToken);
 
         var thumbnails = await thumbnailsEnumerable
-            .Select(x => new FileThumbnail
+            .Select(x =>
             {
-                FileUid = x.FileUid.ToString(),
-                Data = ByteString.CopyFrom(x.Data.Span),
+                var thumbnail = new FileThumbnail { FileUid = x.FileUid.ToString() };
+                if (x.Result.TryGetValueElseError(out var data, out var error))
+                {
+                    thumbnail.Data = ByteString.CopyFrom(data.Span);
+                }
+                else
+                {
+                    thumbnail.Error = InteropProtonDriveClient.ConvertToDriveError(error);
+                }
+
+                return thumbnail;
             })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 

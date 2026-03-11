@@ -3,6 +3,7 @@ package me.proton.drive.sdk
 import com.google.protobuf.timestamp
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
+import me.proton.drive.sdk.entity.FileThumbnail
 import me.proton.drive.sdk.entity.FolderNode
 import me.proton.drive.sdk.entity.NodeResult
 import me.proton.drive.sdk.entity.ThumbnailType
@@ -52,8 +53,7 @@ class ProtonDriveClient internal constructor(
     suspend fun getThumbnails(
         fileUids: List<String>,
         type: ThumbnailType,
-        block: (String) -> WritableByteChannel,
-    ): Unit = cancellationCoroutineScope { source ->
+    ): List<FileThumbnail> = cancellationCoroutineScope { source ->
         log(INFO, "getThumbnails($type)")
         bridge.getThumbnails(
             driveClientGetThumbnailsRequest {
@@ -62,10 +62,8 @@ class ProtonDriveClient internal constructor(
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }
-        ).thumbnailsList.forEach { fileThumbnail ->
-            block(fileThumbnail.fileUid).use { channel ->
-                channel.write(fileThumbnail.data.asReadOnlyByteBuffer())
-            }
+        ).thumbnailsList.map { fileThumbnail ->
+            fileThumbnail.toEntity()
         }
     }
 

@@ -2,6 +2,7 @@ package me.proton.drive.sdk
 
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
+import me.proton.drive.sdk.entity.FileThumbnail
 import me.proton.drive.sdk.entity.NodeResult
 import me.proton.drive.sdk.entity.PhotosTimelineItem
 import me.proton.drive.sdk.entity.ThumbnailType
@@ -14,7 +15,6 @@ import me.proton.drive.sdk.internal.toLogId
 import proton.drive.sdk.drivePhotosClientEnumeratePhotosThumbnailsRequest
 import proton.drive.sdk.drivePhotosClientEnumerateTimelineRequest
 import proton.drive.sdk.drivePhotosClientGetNodeRequest
-import java.nio.channels.WritableByteChannel
 
 class ProtonPhotosClient internal constructor(
     internal val handle: Long,
@@ -25,8 +25,7 @@ class ProtonPhotosClient internal constructor(
     suspend fun getThumbnails(
         photoUids: List<String>,
         type: ThumbnailType,
-        block: (String) -> WritableByteChannel,
-    ): Unit = cancellationCoroutineScope { source ->
+    ): List<FileThumbnail> = cancellationCoroutineScope { source ->
         log(INFO, "getThumbnails($type)")
         bridge.getThumbnails(
             drivePhotosClientEnumeratePhotosThumbnailsRequest {
@@ -35,10 +34,8 @@ class ProtonPhotosClient internal constructor(
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }
-        ).thumbnailsList.forEach { photoThumbnail ->
-            block(photoThumbnail.fileUid).use { outputStream ->
-                outputStream.write(photoThumbnail.data.asReadOnlyByteBuffer())
-            }
+        ).thumbnailsList.map { fileThumbnail ->
+            fileThumbnail.toEntity()
         }
     }
 

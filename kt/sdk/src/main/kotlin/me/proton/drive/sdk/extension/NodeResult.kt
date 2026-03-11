@@ -30,7 +30,7 @@ private fun List<DriveError>.toException(message: String) = ProtonDriveException
     }
 }
 
-private fun DriveError.toException(): ProtonDriveException =
+fun DriveError.toException(): ProtonDriveException =
     ProtonDriveException(
         message = message,
         cause = innerError?.toException()

@@ -178,10 +178,19 @@ internal static class InteropProtonDriveClient
             cancellationToken);
 
         var thumbnails = await thumbnailsEnumerable
-            .Select(x => new FileThumbnail
+            .Select(x =>
             {
-                FileUid = x.FileUid.ToString(),
-                Data = ByteString.CopyFrom(x.Data.Span),
+                var thumbnail = new FileThumbnail { FileUid = x.FileUid.ToString() };
+                if (x.Result.TryGetValueElseError(out var data, out var error))
+                {
+                    thumbnail.Data = ByteString.CopyFrom(data.Span);
+                }
+                else
+                {
+                    thumbnail.Error = ConvertToDriveError(error);
+                }
+
+                return thumbnail;
             })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
@@ -337,6 +346,15 @@ internal static class InteropProtonDriveClient
         }
 
         return nodeResult;
+    }
+
+    internal static DriveError ConvertToDriveError(ProtonDriveError error)
+    {
+        return new DriveError
+        {
+            Message = error.Message ?? string.Empty,
+            InnerError = error.InnerError != null ? ConvertToDriveError(error.InnerError) : null,
+        };
     }
 
     private static NodeResultListResponse ConvertToNodeResultListResponse(IReadOnlyDictionary<NodeUid, Result<Exception>> results)
@@ -572,15 +590,6 @@ internal static class InteropProtonDriveClient
         }
 
         return result;
-    }
-
-    private static DriveError ConvertToDriveError(ProtonDriveError error)
-    {
-        return new DriveError
-        {
-            Message = error.Message ?? string.Empty,
-            InnerError = error.InnerError != null ? ConvertToDriveError(error.InnerError) : null,
-        };
     }
 
     private static StringResult ConvertStringToStringResult(Result<string, ProtonDriveError> result)
