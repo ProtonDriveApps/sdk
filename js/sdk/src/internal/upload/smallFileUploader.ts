@@ -90,11 +90,13 @@ abstract class SmallUploader extends Uploader {
             armoredManifestSignature: string;
             armoredExtendedAttributes: string;
         };
-        encryptedBlock: {
-            encryptedData: Uint8Array<ArrayBuffer>;
-            armoredSignature: string;
-            verificationToken: Uint8Array<ArrayBuffer>;
-        };
+        encryptedBlock:
+            | {
+                  encryptedData: Uint8Array<ArrayBuffer>;
+                  armoredSignature: string;
+                  verificationToken: Uint8Array<ArrayBuffer>;
+              }
+            | undefined;
         encryptedThumbnails: { type: ThumbnailType; encryptedData: Uint8Array<ArrayBuffer> }[];
     }> {
         const content = await this.readStreamContent(stream);
@@ -158,13 +160,21 @@ abstract class SmallUploader extends Uploader {
     private async encryptContentBlock(
         nodeKeys: NodeKeys,
         content: Uint8Array<ArrayBuffer>,
-    ): Promise<{
-        encryptedData: Uint8Array<ArrayBuffer>;
-        armoredSignature: string;
-        verificationToken: Uint8Array<ArrayBuffer>;
-        blockHash: Uint8Array<ArrayBuffer>;
-    }> {
+    ): Promise<
+        | {
+              encryptedData: Uint8Array<ArrayBuffer>;
+              armoredSignature: string;
+              verificationToken: Uint8Array<ArrayBuffer>;
+              blockHash: Uint8Array<ArrayBuffer>;
+          }
+        | undefined
+    > {
         this.logger.debug(`Encrypting block`);
+
+        if (content.length === 0) {
+            return;
+        }
+
         let attempt = 0;
         let integrityError = false;
         let encrypted;
@@ -221,16 +231,18 @@ abstract class SmallUploader extends Uploader {
     private async encryptCommitPayload(
         nodeKeys: NodeKeys,
         contentSha1: string,
-        encryptedBlock: {
-            blockHash: Uint8Array<ArrayBuffer>;
-        },
+        encryptedBlock:
+            | {
+                  blockHash: Uint8Array<ArrayBuffer>;
+              }
+            | undefined,
     ): Promise<{
         armoredManifestSignature: string;
         armoredExtendedAttributes: string;
     }> {
         this.logger.debug(`Preparing commit payload`);
 
-        const manifest = encryptedBlock.blockHash ? new Uint8Array(encryptedBlock.blockHash) : new Uint8Array(0);
+        const manifest = encryptedBlock ? encryptedBlock.blockHash : new Uint8Array(0);
         const extendedAttributes = generateFileExtendedAttributes(
             {
                 modificationTime: this.metadata.modificationTime,

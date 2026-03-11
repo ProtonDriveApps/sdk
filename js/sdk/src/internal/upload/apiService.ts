@@ -322,11 +322,13 @@ export class UploadAPIService {
         },
         content: {
             armoredManifestSignature: string;
-            block: {
-                encryptedData: Uint8Array<ArrayBuffer>;
-                armoredSignature: string;
-                verificationToken: Uint8Array<ArrayBuffer>;
-            };
+            block:
+                | {
+                      encryptedData: Uint8Array<ArrayBuffer>;
+                      armoredSignature: string;
+                      verificationToken: Uint8Array<ArrayBuffer>;
+                  }
+                | undefined;
             thumbnails: {
                 type: ThumbnailType;
                 encryptedData: Uint8Array<ArrayBuffer>;
@@ -348,23 +350,24 @@ export class UploadAPIService {
             ContentKeyPacket: metadata.base64ContentKeyPacket,
             ContentKeyPacketSignature: metadata.armoredContentKeyPacketSignature,
             ManifestSignature: content.armoredManifestSignature,
-            ContentBlockEncSignature: content.block.encryptedData.length > 0 ? content.block.armoredSignature : null,
-            ContentBlockVerificationToken: uint8ArrayToBase64String(content.block.verificationToken),
+            ContentBlockEncSignature: content.block ? content.block.armoredSignature : null,
+            ContentBlockVerificationToken: content.block
+                ? uint8ArrayToBase64String(content.block.verificationToken)
+                : null,
             XAttr: metadata.armoredExtendedAttributes,
             Photo: null, // TODO
         };
 
         const formData = new FormData();
-        formData.append(
-            'Metadata',
-            new Blob([JSON.stringify(metadataPayload)], { type: 'application/json' }),
-            'Metadata',
-        );
-        if (content.block.encryptedData.length > 0) {
-            formData.append('ContentBlock', new Blob([content.block.encryptedData]), 'ContentBlock');
+        formData.set('Metadata', new Blob([JSON.stringify(metadataPayload)], { type: 'application/json' }), 'Metadata');
+        if (content.block) {
+            formData.set('ContentBlock', new Blob([content.block.encryptedData]), 'ContentBlock');
         }
         for (const thumb of content.thumbnails) {
-            formData.append(
+            if (formData.get(`ThumbnailBlockType_${thumb.type}`)) {
+                throw new Error('Duplicate thumbnail types');
+            }
+            formData.set(
                 `ThumbnailBlockType_${thumb.type}`,
                 new Blob([thumb.encryptedData]),
                 `ThumbnailBlockType_${thumb.type}`,
@@ -392,11 +395,13 @@ export class UploadAPIService {
         },
         content: {
             armoredManifestSignature: string;
-            block: {
-                encryptedData: Uint8Array<ArrayBuffer>;
-                armoredSignature: string;
-                verificationToken: Uint8Array<ArrayBuffer>;
-            };
+            block:
+                | {
+                      encryptedData: Uint8Array<ArrayBuffer>;
+                      armoredSignature: string;
+                      verificationToken: Uint8Array<ArrayBuffer>;
+                  }
+                | undefined;
             thumbnails: {
                 type: ThumbnailType;
                 encryptedData: Uint8Array<ArrayBuffer>;
@@ -411,22 +416,23 @@ export class UploadAPIService {
             CurrentRevisionID: currentRevisionId,
             SignatureEmail: metadata.signatureEmail,
             ManifestSignature: content.armoredManifestSignature,
-            ContentBlockEncSignature: content.block.armoredSignature,
-            ContentBlockVerificationToken: uint8ArrayToBase64String(content.block.verificationToken),
+            ContentBlockEncSignature: content.block ? content.block.armoredSignature : null,
+            ContentBlockVerificationToken: content.block
+                ? uint8ArrayToBase64String(content.block.verificationToken)
+                : null,
             XAttr: metadata.armoredExtendedAttributes,
         };
 
         const formData = new FormData();
-        formData.append(
-            'Metadata',
-            new Blob([JSON.stringify(metadataPayload)], { type: 'application/json' }),
-            'Metadata',
-        );
-        if (content.block.encryptedData.length > 0) {
-            formData.append('ContentBlock', new Blob([content.block.encryptedData]), 'ContentBlock');
+        formData.set('Metadata', new Blob([JSON.stringify(metadataPayload)], { type: 'application/json' }), 'Metadata');
+        if (content.block) {
+            formData.set('ContentBlock', new Blob([content.block.encryptedData]), 'ContentBlock');
         }
         for (const thumb of content.thumbnails) {
-            formData.append(
+            if (formData.get(`ThumbnailBlockType_${thumb.type}`)) {
+                throw new Error('Duplicate thumbnail types');
+            }
+            formData.set(
                 `ThumbnailBlockType_${thumb.type}`,
                 new Blob([thumb.encryptedData]),
                 `ThumbnailBlockType_${thumb.type}`,
