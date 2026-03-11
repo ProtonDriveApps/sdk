@@ -95,6 +95,7 @@ export class AlbumsManager {
             isShared: false,
             isSharedPublicly: false,
             directRole: MemberRole.Inherited,
+            ownedBy: rootNode.ownedBy,
 
             // Decrypted metadata
             isStale: false,

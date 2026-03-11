@@ -65,6 +65,16 @@ internal static class FolderOperations
         DateTimeOffset? lastModificationTime,
         CancellationToken cancellationToken)
     {
+        var parentResult = await client.GetNodeAsync(parentUid, cancellationToken).ConfigureAwait(false);
+        if (parentResult is null)
+        {
+            throw new InvalidOperationException("Parent node not found.");
+        }
+
+        var parentOwnedBy = parentResult.Value.TryGetValueElseError(out var parentNode, out var parentDegraded)
+            ? parentNode.OwnedBy
+            : parentDegraded.OwnedBy;
+
         var parentSecrets = await GetSecretsAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
 
         var membershipAddress = await NodeOperations.GetMembershipAddressAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
@@ -137,6 +147,7 @@ internal static class FolderOperations
             NameAuthor = author,
             Author = author,
             CreationTime = DateTime.UtcNow,
+            OwnedBy = parentOwnedBy,
         };
 
         await client.Cache.Entities.SetNodeAsync(folderUid, folderNode, membershipShareId: null, nameHashDigest, cancellationToken).ConfigureAwait(false);
