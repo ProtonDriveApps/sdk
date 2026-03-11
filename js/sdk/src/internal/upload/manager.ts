@@ -154,11 +154,13 @@ export class UploadManager {
             armoredManifestSignature: string;
             armoredExtendedAttributes: string;
         },
-        encryptedBlock: {
-            encryptedData: Uint8Array<ArrayBuffer>;
-            armoredSignature: string;
-            verificationToken: Uint8Array<ArrayBuffer>;
-        },
+        encryptedBlock:
+            | {
+                  encryptedData: Uint8Array<ArrayBuffer>;
+                  armoredSignature: string;
+                  verificationToken: Uint8Array<ArrayBuffer>;
+              }
+            | undefined,
         encryptedThumbnails: { type: ThumbnailType; encryptedData: Uint8Array<ArrayBuffer> }[],
         signal?: AbortSignal,
     ): Promise<{ nodeUid: string; nodeRevisionUid: string }> {
@@ -179,11 +181,13 @@ export class UploadManager {
                 },
                 {
                     armoredManifestSignature: commitPayload.armoredManifestSignature,
-                    block: {
-                        encryptedData: encryptedBlock.encryptedData,
-                        armoredSignature: encryptedBlock.armoredSignature,
-                        verificationToken: encryptedBlock.verificationToken,
-                    },
+                    block: encryptedBlock
+                        ? {
+                              encryptedData: encryptedBlock.encryptedData,
+                              armoredSignature: encryptedBlock.armoredSignature,
+                              verificationToken: encryptedBlock.verificationToken,
+                          }
+                        : undefined,
                     thumbnails: encryptedThumbnails,
                 },
                 signal,
@@ -212,11 +216,13 @@ export class UploadManager {
             armoredManifestSignature: string;
             armoredExtendedAttributes: string;
         },
-        encryptedBlock: {
-            encryptedData: Uint8Array<ArrayBuffer>;
-            armoredSignature: string;
-            verificationToken: Uint8Array<ArrayBuffer>;
-        },
+        encryptedBlock:
+            | {
+                  encryptedData: Uint8Array<ArrayBuffer>;
+                  armoredSignature: string;
+                  verificationToken: Uint8Array<ArrayBuffer>;
+              }
+            | undefined,
         encryptedThumbnails: { type: ThumbnailType; encryptedData: Uint8Array<ArrayBuffer> }[],
         signal?: AbortSignal,
     ): Promise<{ nodeUid: string; nodeRevisionUid: string }> {

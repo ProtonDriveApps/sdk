@@ -489,6 +489,39 @@ describe('UploadManager', () => {
             expect(apiService.deleteDraft).toHaveBeenCalledWith('volumeId~existingLinkId');
             expect(apiService.uploadSmallFile).toHaveBeenCalledTimes(2);
         });
+
+        it('should call uploadSmallFile with block undefined for zero-byte file', async () => {
+            const result = await manager.uploadFile(
+                'parentUid',
+                nodeCrypto,
+                { ...metadata, expectedSize: 0 },
+                commitPayload,
+                undefined,
+                [],
+            );
+
+            expect(result).toEqual({
+                nodeUid: 'uploaded:nodeUid',
+                nodeRevisionUid: 'uploaded:nodeRevisionUid',
+            });
+            expect(apiService.uploadSmallFile).toHaveBeenCalledWith(
+                'parentUid',
+                expect.objectContaining({
+                    armoredEncryptedName: 'encName',
+                    hash: 'hash',
+                    mediaType: 'application/octet-stream',
+                    armoredExtendedAttributes: 'extAttr',
+                    signatureEmail: 'signatureEmail',
+                }),
+                {
+                    armoredManifestSignature: 'manifestSignature',
+                    block: undefined,
+                    thumbnails: [],
+                },
+                undefined,
+            );
+            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('parentUid');
+        });
     });
 
     describe('uploadSmallRevision', () => {
@@ -553,6 +586,42 @@ describe('UploadManager', () => {
                     armoredManifestSignature: 'manifestSig',
                     block: encryptedBlock,
                     thumbnails: encryptedThumbnails,
+                },
+                undefined,
+            );
+            expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('fileNodeUid');
+        });
+
+        it('should call uploadSmallRevision with block undefined for zero-byte revision', async () => {
+            nodesService.getNode = jest.fn().mockResolvedValue({
+                uid: 'fileNodeUid',
+                parentUid: 'parentUid',
+                activeRevision: { ok: true, value: { uid: 'currentRevisionUid' } },
+            });
+
+            const result = await manager.uploadSmallRevision(
+                'fileNodeUid',
+                nodeCrypto,
+                commitPayload,
+                undefined,
+                [],
+            );
+
+            expect(result).toEqual({
+                nodeUid: 'revised:nodeUid',
+                nodeRevisionUid: 'revised:nodeRevisionUid',
+            });
+            expect(apiService.uploadSmallRevision).toHaveBeenCalledWith(
+                'fileNodeUid',
+                'currentRevisionUid',
+                {
+                    signatureEmail: 'signatureEmail',
+                    armoredExtendedAttributes: 'extAttr',
+                },
+                {
+                    armoredManifestSignature: 'manifestSig',
+                    block: undefined,
+                    thumbnails: [],
                 },
                 undefined,
             );

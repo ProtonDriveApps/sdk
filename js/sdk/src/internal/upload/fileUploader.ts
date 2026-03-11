@@ -51,9 +51,9 @@ export abstract class Uploader {
         thumbnails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,
     ): Promise<UploadController> {
-        if (this.controller.promise) {
-            throw new Error(`Upload already started`);
-        }
+        this.assertNotStartedYet();
+        this.assertUniqueThumbnailTypes(thumbnails);
+
         if (!this.metadata.mediaType) {
             this.metadata.mediaType = fileObject.type;
         }
@@ -72,11 +72,24 @@ export abstract class Uploader {
         thumbnails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,
     ): Promise<UploadController> {
+        this.assertNotStartedYet();
+        this.assertUniqueThumbnailTypes(thumbnails);
+
+        this.controller.promise = this.startUpload(stream, thumbnails, onProgress);
+        return this.controller;
+    }
+
+    private assertNotStartedYet(): void {
         if (this.controller.promise) {
             throw new Error(`Upload already started`);
         }
-        this.controller.promise = this.startUpload(stream, thumbnails, onProgress);
-        return this.controller;
+    }
+
+    private assertUniqueThumbnailTypes(thumbnails: Thumbnail[]): void {
+        const uniqueThumbnailTypes = new Set(thumbnails.map(({ type }) => type));
+        if (uniqueThumbnailTypes.size !== thumbnails.length) {
+            throw new Error('Duplicate thumbnail types');
+        }
     }
 
     protected async startUpload(
