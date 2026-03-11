@@ -1,5 +1,15 @@
 # Changelog
 
+## cs/v0.7.0-alpha.17 (2026-03-10)
+
+* Fix manifest verification errors due to wrong thumbnail order in manifest
+* Prevent resumed uploads from being paused by a stale previous attempt
+* Use java Instant instead for Long to describe time
+* Add interop and Kotlin bindings for trash management
+* Add context traversal for photo nodes and set telemetry volume type
+* Log failed attempts to report decryption errors to telemetry
+* Align telemetry with the web SDK
+
 ## cs/v0.7.0-alpha.16 (2026-03-04)
 
 * Ensure cancelled uploads/downloads don't block queue
