@@ -1,4 +1,4 @@
-﻿using Proton.Sdk;
+using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
 
@@ -15,6 +15,7 @@ public sealed record DegradedFolderNode : DegradedNode
             CreationTime = CreationTime,
             TrashTime = TrashTime,
             Author = Author,
+            OwnedBy = OwnedBy,
         };
     }
 }

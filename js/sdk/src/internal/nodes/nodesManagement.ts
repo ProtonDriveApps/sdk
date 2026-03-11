@@ -312,6 +312,7 @@ export abstract class NodesManagementBase<
     async createFolder(parentNodeUid: string, folderName: string, modificationTime?: Date): Promise<TDecryptedNode> {
         validateNodeName(folderName);
 
+        const parentNode = await this.nodesAccess.getNode(parentNodeUid);
         const parentKeys = await this.nodesAccess.getNodeKeys(parentNodeUid);
         if (!parentKeys.hashKey) {
             throw new ValidationError(c('Error').t`Creating folders in non-folders is not allowed`);
@@ -338,14 +339,14 @@ export abstract class NodesManagementBase<
         });
 
         await this.nodesAccess.notifyChildCreated(parentNodeUid);
-        const node = this.generateNodeFolder(nodeUid, parentNodeUid, folderName, encryptedCrypto);
+        const node = this.generateNodeFolder(parentNode, nodeUid, folderName, encryptedCrypto);
         await this.cryptoCache.setNodeKeys(nodeUid, keys);
         return node;
     }
 
     protected abstract generateNodeFolder(
+        parentNode: TDecryptedNode,
         nodeUid: string,
-        parentUid: string,
         name: string,
         encryptedCrypto: {
             hash: string;
@@ -355,8 +356,8 @@ export abstract class NodesManagementBase<
     ): TDecryptedNode;
 
     protected generateNodeFolderBase(
+        parentNode: TDecryptedNode,
         nodeUid: string,
-        parentNodeUid: string,
         name: string,
         encryptedCrypto: {
             hash: string;
@@ -371,7 +372,7 @@ export abstract class NodesManagementBase<
 
             // Basic node metadata
             uid: nodeUid,
-            parentUid: parentNodeUid,
+            parentUid: parentNode.uid,
             type: NodeType.Folder,
             mediaType: FOLDER_MEDIA_TYPE,
             creationTime: new Date(),
@@ -381,6 +382,7 @@ export abstract class NodesManagementBase<
             isShared: false,
             isSharedPublicly: false,
             directRole: MemberRole.Inherited,
+            ownedBy: parentNode.ownedBy,
 
             // Decrypted metadata
             isStale: false,
@@ -432,8 +434,8 @@ export abstract class NodesManagementBase<
 
 export class NodesManagement extends NodesManagementBase {
     protected generateNodeFolder(
+        parentNode: DecryptedNode,
         nodeUid: string,
-        parentNodeUid: string,
         name: string,
         encryptedCrypto: {
             hash: string;
@@ -441,6 +443,6 @@ export class NodesManagement extends NodesManagementBase {
             signatureEmail: string | null;
         },
     ): DecryptedNode {
-        return this.generateNodeFolderBase(nodeUid, parentNodeUid, name, encryptedCrypto);
+        return this.generateNodeFolderBase(parentNode, nodeUid, name, encryptedCrypto);
     }
 }

@@ -1392,7 +1392,7 @@ export interface paths {
         put?: never;
         /**
          * Request block upload
-         * @description Request upload information for a set of blocks.
+         * @description Request upload URLs for a set of blocks/thumbnails of a given draft revision.
          */
         post: operations["post_drive-blocks"];
         delete?: never;
@@ -1410,10 +1410,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Upload small file
-         * @description This does not support anonymous uploads (yet)
-         */
+        /** Upload small file */
         post: operations["post_drive-v2-volumes-{volumeID}-files-small"];
         delete?: never;
         options?: never;
@@ -1430,10 +1427,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Upload small revision
-         * @description This does not support anonymous uploads (yet)
-         */
+        /** Upload small revision */
         post: operations["post_drive-v2-volumes-{volumeID}-files-{linkID}-revisions-small"];
         delete?: never;
         options?: never;
@@ -2148,7 +2142,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List URLs on share */
+        /**
+         * List URLs on share
+         * @description There can only be one or zero share URLs on a given share.
+         */
         get: operations["get_drive-shares-{shareID}-urls"];
         put?: never;
         /** Share by URL */
@@ -2459,6 +2456,46 @@ export interface paths {
          * @description See /drive/blocks for full documentation
          */
         post: operations["post_drive-unauth-blocks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/unauth/v2/volumes/{volumeID}/files/small": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload small file
+         * @description See /drive/v2/volumes/{volumeID}/files/small for full documentation
+         */
+        post: operations["post_drive-unauth-v2-volumes-{volumeID}-files-small"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/unauth/v2/volumes/{volumeID}/files/{linkID}/revisions/small": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload small revision
+         * @description See /drive/v2/volumes/{volumeID}/files/{linkID}/revisions/small for full documentation
+         */
+        post: operations["post_drive-unauth-v2-volumes-{volumeID}-files-{linkID}-revisions-small"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4540,6 +4577,15 @@ export interface components {
          * @enum {integer}
          */
         LinkState2: 0 | 1 | 2;
+        OwnedByDto: {
+            /**
+             * Format: email
+             * @description OwnerUser email for regular and photo volumes, null otherwise
+             */
+            Email?: string | null;
+            /** @description OwnerOrganization name for org. volumes, null otherwise */
+            Organization?: string | null;
+        };
         LinkDto: {
             LinkID: components["schemas"]["Id"];
             Type: components["schemas"]["NodeType2"];
@@ -4557,6 +4603,7 @@ export interface components {
             SignatureEmail?: string | null;
             /** Format: email */
             NameSignatureEmail?: string | null;
+            OwnedBy: components["schemas"]["OwnedByDto"];
             /** @default null */
             DirectPermissions: number | null;
         };
@@ -5236,6 +5283,8 @@ export interface components {
             State: components["schemas"]["HealthCheckState"];
         };
         AbuseReportDto: {
+            /** @description Passphrase for reported Link's Node key, unencrypted, as a string, escaped for JSON. */
+            ResourcePassphrase: string;
             /**
              * @description Reported ShareURL, complete including fragment
              * @example https://drive.proton.me/urls/1F9BKXYDMA#yF7d7bn01GMM
@@ -5243,8 +5292,6 @@ export interface components {
             ShareURL: string;
             /** @enum {string} */
             AbuseCategory: "spam" | "copyright" | "child-abuse" | "stolen-data" | "malware" | "other";
-            /** @description Passphrase for reported Link's Node key, unencrypted, as a string, escaped for JSON. */
-            ResourcePassphrase: string;
             /**
              * @description Full password, including custom part, as string, escaped for JSON
              * @default
@@ -5984,11 +6031,10 @@ export interface components {
             ShareURLs: components["schemas"]["ShareURLResponseDto"][];
             /**
              * @deprecated
-             * @description If the Recursive query parameter is set, also returns the related links and ancestors up to the share as a dictionary by LinkID.
+             * @description Unused and deprecated. Always empty.
+             * @default []
              */
-            Links: {
-                [key: string]: components["schemas"]["ExtendedLinkTransformer"];
-            };
+            Links: Record<string, never>;
             /**
              * ProtonResponseCode
              * @example 1000
@@ -7275,23 +7321,6 @@ export interface operations {
                     };
                 };
             };
-            /** @description Failed dependency */
-            424: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Potential codes:
-                         *      - 2032
-                         *
-                         * @enum {integer}
-                         */
-                        Code: 2032;
-                    };
-                };
-            };
         };
     };
     "post_drive-photos-volumes": {
@@ -7330,23 +7359,6 @@ export interface operations {
                          *      - 200501: Operation failed: Please retry
                          *      */
                         Code: number;
-                    };
-                };
-            };
-            /** @description Failed dependency */
-            424: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Potential codes:
-                         *      - 2032
-                         *
-                         * @enum {integer}
-                         */
-                        Code: 2032;
                     };
                 };
             };
@@ -7390,26 +7402,6 @@ export interface operations {
                          *      - 2011: Insufficient permissions
                          *      */
                         Code: number;
-                    };
-                };
-            };
-            /** @description Failed dependency */
-            424: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Potential codes:
-                         *      - 2501: File or folder not found
-                         *      - 2001: Invalid PGP message
-                         *      - 200501: Operation failed: Please retry
-                         *      - 2032
-                         *
-                         * @enum {integer}
-                         */
-                        Code: 2032;
                     };
                 };
             };
@@ -10832,23 +10824,6 @@ export interface operations {
                     };
                 };
             };
-            /** @description Failed dependency */
-            424: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Potential codes:
-                         *      - 2032
-                         *
-                         * @enum {integer}
-                         */
-                        Code: 2032;
-                    };
-                };
-            };
         };
     };
     "post_drive-urls-{token}-auth": {
@@ -11570,20 +11545,7 @@ export interface operations {
     };
     "get_drive-shares-{shareID}-urls": {
         parameters: {
-            query?: {
-                /**
-                 * @deprecated
-                 * @description By default, only shareURL pointing to the share are returned. With Recursive=1, list all shareURLs in the subtree reachable from the Share. 1 (true) or 0 (false).
-                 */
-                Recursive?: 0 | 1;
-                /**
-                 * @deprecated
-                 * @description Fetch Thumbnail URLs
-                 */
-                Thumbnails?: 0 | 1;
-                PageSize?: components["schemas"]["OffsetPagination"]["PageSize"] & unknown;
-                Page?: components["schemas"]["OffsetPagination"]["Page"] & unknown;
-            };
+            query?: never;
             header?: never;
             path: {
                 shareID: string;
@@ -12116,6 +12078,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RequestUploadResponse"];
+                };
+            };
+        };
+    };
+    "post_drive-unauth-v2-volumes-{volumeID}-files-small": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmallUploadResponseDto"];
+                };
+            };
+        };
+    };
+    "post_drive-unauth-v2-volumes-{volumeID}-files-{linkID}-revisions-small": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+                linkID: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmallUploadResponseDto"];
                 };
             };
         };
