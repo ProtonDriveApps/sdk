@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Photos;
 using Proton.Drive.Sdk.Api.Shares;
@@ -42,6 +42,7 @@ internal static class VolumeOperations
             NameAuthor = new Author { EmailAddress = defaultAddress.EmailAddress },
             Author = new Author { EmailAddress = defaultAddress.EmailAddress },
             CreationTime = DateTime.UtcNow,
+            OwnedBy = new OwnedBy(Email: defaultAddress.EmailAddress),
         };
 
         // The volume root folder never has siblings and does not need a name hash digest
@@ -141,6 +142,7 @@ internal static class VolumeOperations
             NameAuthor = new Author { EmailAddress = defaultAddress.EmailAddress },
             Author = new Author { EmailAddress = defaultAddress.EmailAddress },
             CreationTime = DateTime.UtcNow,
+            OwnedBy = new OwnedBy(Email: defaultAddress.EmailAddress),
         };
 
         // The volume root folder never has siblings and does not need a name hash digest

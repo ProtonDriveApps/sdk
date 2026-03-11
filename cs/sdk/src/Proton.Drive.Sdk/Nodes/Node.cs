@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
@@ -25,4 +25,6 @@ public abstract record Node
     public required Result<Author, SignatureVerificationError> NameAuthor { get; init; }
 
     public required Result<Author, SignatureVerificationError> Author { get; init; }
+
+    public required OwnedBy OwnedBy { get; init; }
 }

@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
@@ -24,6 +24,8 @@ public abstract record DegradedNode
     public DateTime? TrashTime { get; init; }
 
     public required Result<Author, SignatureVerificationError> Author { get; init; }
+
+    public required OwnedBy OwnedBy { get; init; }
 
     public required IReadOnlyList<ProtonDriveError> Errors { get; init; }
 }

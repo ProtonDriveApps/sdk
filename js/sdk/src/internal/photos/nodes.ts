@@ -252,8 +252,8 @@ export class PhotosNodesManagement extends NodesManagementBase<
     PhotosNodesCryptoService
 > {
     protected generateNodeFolder(
+        parentNode: DecryptedPhotoNode,
         nodeUid: string,
-        parentNodeUid: string,
         name: string,
         encryptedCrypto: {
             hash: string;
@@ -261,6 +261,6 @@ export class PhotosNodesManagement extends NodesManagementBase<
             signatureEmail: string | null;
         },
     ): DecryptedPhotoNode {
-        return this.generateNodeFolderBase(nodeUid, parentNodeUid, name, encryptedCrypto);
+        return this.generateNodeFolderBase(parentNode, nodeUid, name, encryptedCrypto);
     }
 }

@@ -47,6 +47,10 @@ interface BaseNode {
         inviteTime: Date;
         // TODO: acceptedBy: Author;
     };
+    ownedBy: {
+        email?: string;
+        organization?: string;
+    };
 }
 
 /**

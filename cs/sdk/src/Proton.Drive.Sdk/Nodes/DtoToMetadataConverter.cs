@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Folders;
@@ -261,6 +261,7 @@ internal static class DtoToMetadataConverter
             ContentAuthor = contentAuthor,
         };
 
+        var ownedBy = MapOwnedBy(linkDto.OwnedBy);
         var node = linkDetailsDto.Photo is not null
             ? new PhotoNode
             {
@@ -276,6 +277,7 @@ internal static class DtoToMetadataConverter
                 TotalSizeOnCloudStorage = fileDto.TotalSizeOnStorage,
                 CaptureTime = linkDetailsDto.Photo.CaptureTime,
                 AlbumUids = linkDetailsDto.Photo.AlbumInclusions.Select(a => new NodeUid(uid.VolumeId, a.Id)).ToList(),
+                OwnedBy = ownedBy,
             }
             : new FileNode
             {
@@ -289,6 +291,7 @@ internal static class DtoToMetadataConverter
                 MediaType = fileDto.MediaType,
                 ActiveRevision = activeRevision,
                 TotalSizeOnCloudStorage = fileDto.TotalSizeOnStorage,
+                OwnedBy = ownedBy,
             };
 
         await secretCache.SetFileSecretsAsync(uid, secrets, cancellationToken).ConfigureAwait(false);
@@ -370,6 +373,7 @@ internal static class DtoToMetadataConverter
             Errors = revisionErrors,
         };
 
+        var ownedBy = MapOwnedBy(linkDto.OwnedBy);
         var degradedNode = linkDetailsDto.Photo is not null
             ? new DegradedPhotoNode
             {
@@ -386,6 +390,7 @@ internal static class DtoToMetadataConverter
                 Errors = errors,
                 CaptureTime = linkDetailsDto.Photo.CaptureTime,
                 AlbumUids = linkDetailsDto.Photo.AlbumInclusions.Select(a => new NodeUid(uid.VolumeId, a.Id)).ToList(),
+                OwnedBy = ownedBy,
             }
             : new DegradedFileNode
             {
@@ -400,6 +405,7 @@ internal static class DtoToMetadataConverter
                 ActiveRevision = degradedRevision,
                 TotalStorageQuotaUsage = fileDto.TotalSizeOnStorage,
                 Errors = errors,
+                OwnedBy = ownedBy,
             };
 
         var degradedSecrets = new DegradedFileSecrets
@@ -489,6 +495,7 @@ internal static class DtoToMetadataConverter
             Author = nodeAuthor,
             CreationTime = linkDto.CreationTime,
             TrashTime = linkDto.TrashTime,
+            OwnedBy = MapOwnedBy(linkDto.OwnedBy),
         };
 
         await secretCache.SetFolderSecretsAsync(uid, secrets, cancellationToken).ConfigureAwait(false);
@@ -555,6 +562,7 @@ internal static class DtoToMetadataConverter
             TrashTime = linkDto.TrashTime,
             Author = nodeAuthor,
             Errors = errors,
+            OwnedBy = MapOwnedBy(linkDto.OwnedBy),
         };
 
         var degradedSecrets = new DegradedFolderSecrets
@@ -684,4 +692,6 @@ internal static class DtoToMetadataConverter
             return response.Links[0];
         }
     }
+
+    private static OwnedBy MapOwnedBy(OwnedByDto? dto) => new(dto?.Email, dto?.Organization);
 }

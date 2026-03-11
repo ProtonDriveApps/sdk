@@ -68,6 +68,13 @@ export type NodeEntity = {
      * membership is inherited from the parent node.
      */
     membership?: Membership;
+    /**
+     * Owner of the node (who owns the volume where the node is located).
+     */
+    ownedBy: {
+        email?: string;
+        organization?: string;
+    };
     type: NodeType;
     mediaType?: string;
     /**

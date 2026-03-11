@@ -133,6 +133,7 @@ message FileNode {
     AuthorResult author = 9;
     FileRevision active_revision = 10;
     int64 total_size_on_cloud_storage = 11;
+    OwnedBy owned_by = 12;
 }
 
 message FolderNode {
@@ -144,6 +145,7 @@ message FolderNode {
     google.protobuf.Timestamp trash_time = 6; // optional
     AuthorResult name_author = 7;
     AuthorResult author = 8;
+    OwnedBy owned_by = 9;
 }
 
 message SignatureVerificationError {
@@ -160,6 +162,11 @@ message AuthorResult {
 
 message Author {
     string email_address = 1; // optional
+}
+
+message OwnedBy {
+    string email = 1; // optional - owner email for regular and photo volumes
+    string organization = 2; // optional - organization name for org. volumes
 }
 
 message ProgressUpdate {
@@ -478,6 +485,7 @@ message DegradedFolderNode {
     AuthorResult name_author = 7;
     AuthorResult author = 8;
     repeated DriveError errors = 9;
+    OwnedBy owned_by = 10;
 }
 
 message DegradedFileNode {
@@ -493,6 +501,7 @@ message DegradedFileNode {
     DegradedRevision active_revision = 10; // optional
     int64 total_storage_quota_usage = 11;
     repeated DriveError errors = 12;
+    OwnedBy owned_by = 13;
 }
 
 message FileContentDigests {

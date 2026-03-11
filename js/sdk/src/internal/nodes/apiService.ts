@@ -780,6 +780,10 @@ export function linkToEncryptedNodeBaseMetadata(
                   inviteTime: new Date(link.Membership.InviteTime * 1000),
               }
             : undefined,
+        ownedBy: {
+            email: link.Link.OwnedBy?.Email || undefined,
+            organization: link.Link.OwnedBy?.Organization || undefined,
+        },
     };
 
     const baseCryptoNodeMetadata = {

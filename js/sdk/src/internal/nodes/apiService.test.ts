@@ -74,6 +74,11 @@ function generateAPINode() {
             NodeKey: 'nodeKey',
             NodePassphrase: 'nodePass',
             NodePassphraseSignature: 'nodePassSig',
+
+            OwnedBy: {
+                Email: 'ownerByEmail',
+                Organization: null,
+            },
         },
         SharingSummary: null,
     };
@@ -149,6 +154,10 @@ function generateNode() {
         isSharedPublicly: false,
         directRole: MemberRole.Admin,
         membership: undefined,
+        ownedBy: {
+            email: 'ownerByEmail',
+            organization: undefined,
+        },
 
         encryptedCrypto: {
             armoredKey: 'nodeKey',

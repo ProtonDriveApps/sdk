@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using Proton.Sdk.Cryptography;
 using Proton.Sdk.Serialization;
 
@@ -48,4 +48,7 @@ internal sealed class LinkDto
 
     [JsonPropertyName("NameSignatureEmail")]
     public string? NameSignatureEmailAddress { get; init; }
+
+    [JsonPropertyName("OwnedBy")]
+    public OwnedByDto? OwnedBy { get; init; }
 }

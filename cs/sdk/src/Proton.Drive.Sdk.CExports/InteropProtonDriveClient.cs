@@ -103,6 +103,7 @@ internal static class InteropProtonDriveClient
             TrashTime = createdFolder.TrashTime?.ToUniversalTime().ToTimestamp(),
             NameAuthor = ParseAuthorResult(createdFolder.NameAuthor),
             Author = ParseAuthorResult(createdFolder.Author),
+            OwnedBy = MapOwnedByToProto(createdFolder.OwnedBy),
         };
     }
 
@@ -221,6 +222,7 @@ internal static class InteropProtonDriveClient
             TrashTime = folderNode.TrashTime?.ToUniversalTime().ToTimestamp(),
             NameAuthor = ParseAuthorResult(folderNode.NameAuthor),
             Author = ParseAuthorResult(folderNode.Author),
+            OwnedBy = MapOwnedByToProto(folderNode.OwnedBy),
         };
     }
 
@@ -387,6 +389,16 @@ internal static class InteropProtonDriveClient
         return authorResult;
     }
 
+    private static OwnedBy MapOwnedByToProto(Proton.Drive.Sdk.Nodes.OwnedBy ownedBy)
+    {
+        if (ownedBy is null)
+        {
+            return new OwnedBy();
+        }
+
+        return new OwnedBy { Email = ownedBy.Email, Organization = ownedBy.Organization };
+    }
+
     private static Node ConvertToNode(Proton.Drive.Sdk.Nodes.Node node)
     {
         var result = new Node();
@@ -404,6 +416,7 @@ internal static class InteropProtonDriveClient
                     TrashTime = folderNode.TrashTime?.ToUniversalTime().ToTimestamp(),
                     NameAuthor = ParseAuthorResult(folderNode.NameAuthor),
                     Author = ParseAuthorResult(folderNode.Author),
+                    OwnedBy = MapOwnedByToProto(folderNode.OwnedBy),
                 };
                 break;
 
@@ -420,6 +433,7 @@ internal static class InteropProtonDriveClient
                     NameAuthor = ParseAuthorResult(fileNode.NameAuthor),
                     Author = ParseAuthorResult(fileNode.Author),
                     TotalSizeOnCloudStorage = fileNode.TotalSizeOnCloudStorage,
+                    OwnedBy = MapOwnedByToProto(fileNode.OwnedBy),
                     ActiveRevision = new FileRevision
                     {
                         Uid = fileNode.ActiveRevision.Uid.ToString(),
@@ -482,6 +496,7 @@ internal static class InteropProtonDriveClient
                     TrashTime = degradedFolderNode.TrashTime?.ToUniversalTime().ToTimestamp(),
                     NameAuthor = ParseAuthorResult(degradedFolderNode.NameAuthor),
                     Author = ParseAuthorResult(degradedFolderNode.Author),
+                    OwnedBy = MapOwnedByToProto(degradedFolderNode.OwnedBy),
                 };
 
                 degradedFolder.Errors.AddRange(degradedFolderNode.Errors.Select(ConvertToDriveError));
@@ -501,6 +516,7 @@ internal static class InteropProtonDriveClient
                     NameAuthor = ParseAuthorResult(degradedFileNode.NameAuthor),
                     Author = ParseAuthorResult(degradedFileNode.Author),
                     TotalStorageQuotaUsage = degradedFileNode.TotalStorageQuotaUsage,
+                    OwnedBy = MapOwnedByToProto(degradedFileNode.OwnedBy),
                 };
 
                 if (degradedFileNode.ActiveRevision is not null)
