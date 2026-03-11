@@ -1,5 +1,16 @@
 # Changelog
 
+## js/v0.13.0 (2026-03-11)
+
+* Add owned by property
+* Handle empty file using single-request-file-upload endpoint
+* Change main photo reference to UID instead of link ID
+* Implement small file upload endpoint
+
+## js/v0.12.1 (2026-03-04)
+
+* No changes
+
 ## js/v0.12.0 (2026-03-02)
 
 * Add AEAD crypto test and FF management
