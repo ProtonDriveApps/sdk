@@ -298,6 +298,39 @@ describe('SmallFileUploader', () => {
             });
         });
     });
+
+    describe('zero-byte file', () => {
+        it('should upload zero-byte file without calling encryptBlock and pass undefined block to manager.uploadFile', async () => {
+            metadata.expectedSize = 0;
+            const uploader = createUploader();
+            const stream = createStream([]);
+            const onProgress = jest.fn();
+
+            const controller = await uploader.uploadFromStream(stream, [], onProgress);
+            const result = await controller.completion();
+
+            expect(result).toEqual({ nodeUid: 'nodeUid', nodeRevisionUid: 'nodeRevisionUid' });
+            expect(cryptoService.encryptBlock).not.toHaveBeenCalled();
+            expect(uploadManager.uploadFile).toHaveBeenCalledWith(
+                parentFolderUid,
+                mockNodeCrypto,
+                metadata,
+                expect.objectContaining({
+                    armoredManifestSignature: 'mockManifestSignature',
+                    armoredExtendedAttributes: 'mockExtendedAttributes',
+                }),
+                undefined,
+                [],
+            );
+            expect(cryptoService.commitFile).toHaveBeenCalledWith(
+                expect.anything(),
+                new Uint8Array(0),
+                expect.any(String),
+            );
+            expect(onFinish).toHaveBeenCalled();
+            expect(onProgress).toHaveBeenCalledWith(0);
+        });
+    });
 });
 
 describe('SmallFileRevisionUploader', () => {
@@ -431,5 +464,28 @@ describe('SmallFileRevisionUploader', () => {
             }),
             [],
         );
+    });
+
+    it('should upload zero-byte revision without calling encryptBlock and pass undefined block to uploadSmallRevision', async () => {
+        metadata.expectedSize = 0;
+        const uploader = createUploader();
+        const stream = createStream([]);
+
+        const controller = await uploader.uploadFromStream(stream, [], undefined);
+        const result = await controller.completion();
+
+        expect(result).toEqual({ nodeUid: 'nodeUid', nodeRevisionUid: 'nodeRevisionUid' });
+        expect(cryptoService.encryptBlock).not.toHaveBeenCalled();
+        expect(uploadManager.uploadSmallRevision).toHaveBeenCalledWith(
+            nodeUid,
+            mockNodeKeys,
+            expect.objectContaining({
+                armoredManifestSignature: 'mockManifestSignature',
+                armoredExtendedAttributes: 'mockExtendedAttributes',
+            }),
+            undefined,
+            [],
+        );
+        expect(cryptoService.commitFile).toHaveBeenCalledWith(expect.anything(), new Uint8Array(0), expect.any(String));
     });
 });
