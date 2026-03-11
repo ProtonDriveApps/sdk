@@ -9,4 +9,9 @@ public class ProtonDriveError(string? message, ProtonDriveError? innerError = nu
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ProtonDriveError? InnerError { get; } = innerError;
+
+    public Exception ToException()
+    {
+        return new InvalidOperationException(Message, InnerError?.ToException());
+    }
 }

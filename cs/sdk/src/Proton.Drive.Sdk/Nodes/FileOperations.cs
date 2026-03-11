@@ -1,11 +1,10 @@
-﻿using System.Runtime.CompilerServices;
-using Microsoft.Extensions.Logging;
+using System.Runtime.CompilerServices;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
 
-internal static partial class FileOperations
+internal static class FileOperations
 {
     public static async ValueTask<Result<FileSecrets, DegradedFileSecrets>> GetSecretsAsync(
         ProtonDriveClient client,
@@ -31,33 +30,87 @@ internal static partial class FileOperations
         ThumbnailType thumbnailType,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var logger = client.Telemetry.GetLogger("Thumbnail enumeration");
-
         // TODO: optimize parallelization for when UIDs are scattered over many volumes
         foreach (var volumeLinkIdGroup in fileUids.GroupBy(uid => uid.VolumeId, uid => uid.LinkId))
         {
             var volumeId = volumeLinkIdGroup.Key;
 
-            var nodeResults = NodeOperations.EnumerateNodesAsync(client, volumeId, volumeLinkIdGroup, cancellationToken);
+            var unprocessedLinkIds = volumeLinkIdGroup.ToHashSet();
+
+            var nodeResults = NodeOperations.EnumerateNodesAsync(client, volumeId, unprocessedLinkIds, cancellationToken);
+
+            var errors = new List<FileThumbnail>();
 
             var thumbnailIds = await nodeResults
-                .Select(nodeResult => nodeResult.TryGetValue(out var node) ? node as FileNode : null)
-                .Where(fileNode => fileNode is not null)
-                .SelectMany(fileNode =>
+                .Select(FileNodeInfo? (nodeResult) =>
                 {
-                    var thumbnails = fileNode!.ActiveRevision.Thumbnails;
+                    nodeResult.TryGetValueElseError(out var node, out var degradedNode);
+
+                    if ((node?.Uid.LinkId ?? degradedNode?.Uid.LinkId) is { } processedLinkId)
+                    {
+                        unprocessedLinkIds.Remove(processedLinkId);
+                    }
+
+                    if (node is FileNode fileNode)
+                    {
+                        return new FileNodeInfo(fileNode.Uid, fileNode.ActiveRevision.Uid, fileNode.ActiveRevision.Thumbnails);
+                    }
+
+                    if (degradedNode is DegradedFileNode { ActiveRevision: { } degradedRevision } degradedFileNode)
+                    {
+                        if (degradedRevision.CanDecrypt)
+                        {
+                            return new FileNodeInfo(degradedFileNode.Uid, degradedRevision.Uid, degradedRevision.Thumbnails);
+                        }
+
+                        // TODO: yield error results immediately instead of collecting them in a list,
+                        // to stream results back to the client as fast as possible (similarly to thumbnail content).
+                        errors.Add(
+                            degradedRevision.ContentAuthor?.TryGetValueElseError(out _, out var error) == false
+                                ? new FileThumbnail(degradedFileNode.Uid, new ProtonDriveError("Cannot decrypt degraded file", error))
+                                : new FileThumbnail(degradedFileNode.Uid, new ProtonDriveError("Cannot decrypt degraded file")));
+
+                        return null;
+                    }
+
+                    if (node?.Uid is { } nonFileNodeUid)
+                    {
+                        errors.Add(new FileThumbnail(nonFileNodeUid, new ProtonDriveError("Node is not a file")));
+                    }
+
+                    return null;
+                })
+                .Where(x => x.HasValue)
+                .Select(x => x!.Value)
+                .SelectMany(fileNodeInfo =>
+                {
+                    var thumbnails = fileNodeInfo.Thumbnails;
                     if (thumbnails.Count == 0)
                     {
-                        LogNoThumbnailOnNode(logger, fileNode.Uid);
+                        errors.Add(new FileThumbnail(fileNodeInfo.Uid, new ProtonDriveError("Node has no thumbnails")));
+                    }
+                    else if (thumbnails.All(thumbnail => thumbnail.Type != thumbnailType))
+                    {
+                        errors.Add(new FileThumbnail(fileNodeInfo.Uid, new ProtonDriveError($"Node has no thumbnail of type {thumbnailType}")));
                     }
 
                     return thumbnails
                         .Where(thumbnail => thumbnail.Type == thumbnailType)
-                        .Select(thumbnail => (thumbnail.Id, Node: fileNode))
+                        .Select(thumbnail => (thumbnail.Id, Info: fileNodeInfo))
                         .ToAsyncEnumerable();
                 })
-                .ToDictionaryAsync(thumbnail => thumbnail.Id, thumbnail => thumbnail.Node, cancellationToken)
+                .ToDictionaryAsync(x => x.Id, x => x.Info, cancellationToken)
                 .ConfigureAwait(false);
+
+            errors.AddRange(
+                unprocessedLinkIds
+                    .Select(missingLinkId =>
+                        new FileThumbnail(new NodeUid(volumeId, missingLinkId), new ProtonDriveError("Node not found"))));
+
+            foreach (var error in errors)
+            {
+                yield return error;
+            }
 
             if (thumbnailIds.Count == 0)
             {
@@ -67,9 +120,11 @@ internal static partial class FileOperations
             var response = await client.Api.Files.GetThumbnailBlocksAsync(volumeId, thumbnailIds.Keys, cancellationToken).ConfigureAwait(false);
 
             var tasks = new Queue<Task<FileThumbnail>>();
+            var processedThumbnailIds = new HashSet<string>();
             foreach (var block in response.Blocks)
             {
-                var fileNode = thumbnailIds[block.ThumbnailId];
+                processedThumbnailIds.Add(block.ThumbnailId);
+                var nodeInfo = thumbnailIds[block.ThumbnailId];
 
                 if (!client.ThumbnailBlockDownloader.Queue.TryStartBlock())
                 {
@@ -81,13 +136,21 @@ internal static partial class FileOperations
                     await client.ThumbnailBlockDownloader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
                 }
 
-                tasks.Enqueue(DownloadThumbnailAsync(client, fileNode.ActiveRevision.Uid, block, cancellationToken));
+                tasks.Enqueue(DownloadThumbnailAsync(client, nodeInfo.ActiveRevisionUid, block, cancellationToken));
             }
 
             // TODO: cancel other thumbnail downloads if one fails
             while (tasks.TryDequeue(out var task))
             {
                 yield return await task.ConfigureAwait(false);
+            }
+
+            foreach (var (thumbnailId, nodeInfo) in thumbnailIds)
+            {
+                if (!processedThumbnailIds.Contains(thumbnailId))
+                {
+                    yield return new FileThumbnail(nodeInfo.Uid, new ProtonDriveError("Thumbnail not found"));
+                }
             }
         }
     }
@@ -121,8 +184,12 @@ internal static partial class FileOperations
                     cancellationToken).ConfigureAwait(false);
                 var thumbnailData = outputStream.TryGetBuffer(out var outputBuffer) ? outputBuffer : outputStream.ToArray();
 
-                return new FileThumbnail(revisionUid.NodeUid, thumbnailData);
+                return new FileThumbnail(revisionUid.NodeUid, (ReadOnlyMemory<byte>)thumbnailData);
             }
+        }
+        catch (Exception ex)
+        {
+            return new FileThumbnail(revisionUid.NodeUid, ex.ToProtonDriveError());
         }
         finally
         {
@@ -130,6 +197,10 @@ internal static partial class FileOperations
         }
     }
 
-    [LoggerMessage(Level = LogLevel.Trace, Message = "No thumbnail on node {NodeUid}")]
-    private static partial void LogNoThumbnailOnNode(ILogger logger, NodeUid nodeUid);
+    private readonly struct FileNodeInfo(NodeUid uid, RevisionUid activeRevisionUid, IReadOnlyList<ThumbnailHeader> thumbnails)
+    {
+        public NodeUid Uid { get; } = uid;
+        public RevisionUid ActiveRevisionUid { get; } = activeRevisionUid;
+        public IReadOnlyList<ThumbnailHeader> Thumbnails { get; } = thumbnails;
+    }
 }

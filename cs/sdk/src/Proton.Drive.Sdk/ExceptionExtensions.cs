@@ -24,6 +24,11 @@ internal static class ExceptionExtensions
         Adaptive,
     }
 
+    public static ProtonDriveError ToProtonDriveError(this Exception exception)
+    {
+        return new ProtonDriveError(exception.Message, exception.InnerException?.ToProtonDriveError());
+    }
+
     public static string FlattenMessage(this Exception exception)
     {
         var previousMessage = string.Empty;

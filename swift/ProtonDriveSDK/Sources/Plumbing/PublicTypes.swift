@@ -260,13 +260,21 @@ public struct FileOperationProgress {
 /// Thumbnail with file id
 public struct ThumbnailDataWithId: Sendable {
     public let fileUid: SDKNodeUid
-    public let data: Data
+    public let result: Result<Data, ProtonDriveSDKDriveError>
 
     init?(fileThumbnail: Proton_Drive_Sdk_FileThumbnail) {
         guard let fileUid = SDKNodeUid(sdkCompatibleIdentifier: fileThumbnail.fileUid) else {
             return nil
         }
         self.fileUid = fileUid
-        self.data = fileThumbnail.data
+        switch fileThumbnail.result {
+        case .data(let data):
+            self.result = .success(data)
+        case .error(let error):
+            self.result = .failure(ProtonDriveSDKDriveError(error: error))
+        case .none:
+            assert(false, "Unexpected case")
+            return nil
+        }
     }
 }
