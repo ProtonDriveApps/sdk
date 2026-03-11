@@ -407,14 +407,25 @@ internal static class InteropProtonDriveClient
         return authorResult;
     }
 
-    private static OwnedBy MapOwnedByToProto(Proton.Drive.Sdk.Nodes.OwnedBy ownedBy)
+    private static OwnedBy MapOwnedByToProto(Proton.Drive.Sdk.Nodes.OwnedBy? ownedBy)
     {
         if (ownedBy is null)
         {
             return new OwnedBy();
         }
 
-        return new OwnedBy { Email = ownedBy.Email, Organization = ownedBy.Organization };
+        var result = new OwnedBy();
+        if (ownedBy.Email != null)
+        {
+            result.Email = ownedBy.Email;
+        }
+
+        if (ownedBy.Organization != null)
+        {
+            result.Organization = ownedBy.Organization;
+        }
+
+        return result;
     }
 
     private static Node ConvertToNode(Proton.Drive.Sdk.Nodes.Node node)
