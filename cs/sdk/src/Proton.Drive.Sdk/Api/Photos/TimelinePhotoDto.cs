@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using Proton.Drive.Sdk.Api.Links;
+using Proton.Drive.Sdk.Nodes;
 using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Api.Photos;

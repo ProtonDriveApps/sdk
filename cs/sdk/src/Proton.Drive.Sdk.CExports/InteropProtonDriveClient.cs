@@ -115,7 +115,7 @@ internal static class InteropProtonDriveClient
 
         var additionalMetadata = request.AdditionalMetadata is { Count: > 0 }
             ? request.AdditionalMetadata.Select(x =>
-                new Proton.Drive.Sdk.Nodes.AdditionalMetadataProperty(x.Name, JsonDocument.Parse(x.Utf8JsonValue.Memory).RootElement))
+                new Nodes.AdditionalMetadataProperty(x.Name, JsonDocument.Parse(x.Utf8JsonValue.Memory).RootElement))
             : null;
 
         var fileUploader = await client.GetFileUploaderAsync(
@@ -123,8 +123,7 @@ internal static class InteropProtonDriveClient
             request.Name,
             request.MediaType,
             request.Size,
-            request.LastModificationTime.ToDateTimeFixed(),
-            additionalMetadata,
+            new FileUploadMetadata { LastModificationTime = request.LastModificationTime.ToDateTimeFixed(), AdditionalMetadata = additionalMetadata },
             request.OverrideExistingDraftByOtherClient,
             cancellationToken).ConfigureAwait(false);
 
@@ -139,14 +138,13 @@ internal static class InteropProtonDriveClient
 
         var additionalMetadata = request.AdditionalMetadata.Count > 0
             ? request.AdditionalMetadata.Select(x =>
-                new Proton.Drive.Sdk.Nodes.AdditionalMetadataProperty(x.Name, JsonDocument.Parse(x.Utf8JsonValue.Memory).RootElement))
+                new Nodes.AdditionalMetadataProperty(x.Name, JsonDocument.Parse(x.Utf8JsonValue.Memory).RootElement))
             : null;
 
         var fileUploader = await client.GetFileRevisionUploaderAsync(
             RevisionUid.Parse(request.CurrentActiveRevisionUid),
             request.Size,
-            request.LastModificationTime.ToDateTimeFixed(),
-            additionalMetadata,
+            new FileUploadMetadata { LastModificationTime = request.LastModificationTime.ToDateTimeFixed(), AdditionalMetadata = additionalMetadata },
             cancellationToken).ConfigureAwait(false);
 
         return new Int64Value { Value = Interop.AllocHandle(fileUploader) };
@@ -174,7 +172,7 @@ internal static class InteropProtonDriveClient
 
         var thumbnailsEnumerable = client.EnumerateThumbnailsAsync(
             request.FileUids.Select(NodeUid.Parse),
-            (Proton.Drive.Sdk.Nodes.ThumbnailType)request.Type,
+            (Nodes.ThumbnailType)request.Type,
             cancellationToken);
 
         var thumbnails = await thumbnailsEnumerable
@@ -348,6 +346,32 @@ internal static class InteropProtonDriveClient
         return nodeResult;
     }
 
+    public static AuthorResult ParseAuthorResult(Result<Sdk.Author, Nodes.SignatureVerificationError> result)
+    {
+        var authorResult = new AuthorResult();
+
+        if (result.TryGetValueElseError(out var author, out var error))
+        {
+            authorResult.Value = new Author
+            {
+                EmailAddress = author.EmailAddress,
+            };
+        }
+        else
+        {
+            authorResult.Error = new SignatureVerificationError
+            {
+                ClaimedAuthor = new Author
+                {
+                    EmailAddress = error.ClaimedAuthor.EmailAddress,
+                },
+                Message = error.Message,
+            };
+        }
+
+        return authorResult;
+    }
+
     internal static DriveError ConvertToDriveError(ProtonDriveError error)
     {
         return new DriveError
@@ -381,32 +405,6 @@ internal static class InteropProtonDriveClient
         };
     }
 
-    private static AuthorResult ParseAuthorResult(Result<Proton.Drive.Sdk.Author, Proton.Drive.Sdk.Nodes.SignatureVerificationError> result)
-    {
-        var authorResult = new AuthorResult();
-
-        if (result.TryGetValueElseError(out var author, out var error))
-        {
-            authorResult.Value = new Author
-            {
-                EmailAddress = author.EmailAddress,
-            };
-        }
-        else
-        {
-            authorResult.Error = new SignatureVerificationError
-            {
-                ClaimedAuthor = new Author
-                {
-                    EmailAddress = error.ClaimedAuthor.EmailAddress,
-                },
-                Message = error.Message,
-            };
-        }
-
-        return authorResult;
-    }
-
     private static OwnedBy MapOwnedByToProto(Proton.Drive.Sdk.Nodes.OwnedBy? ownedBy)
     {
         if (ownedBy is null)
@@ -428,13 +426,13 @@ internal static class InteropProtonDriveClient
         return result;
     }
 
-    private static Node ConvertToNode(Proton.Drive.Sdk.Nodes.Node node)
+    private static Node ConvertToNode(Nodes.Node node)
     {
         var result = new Node();
 
         switch (node)
         {
-            case Proton.Drive.Sdk.Nodes.FolderNode folderNode:
+            case Nodes.FolderNode folderNode:
                 result.Folder = new FolderNode
                 {
                     Uid = folderNode.Uid.ToString(),
@@ -449,7 +447,7 @@ internal static class InteropProtonDriveClient
                 };
                 break;
 
-            case Proton.Drive.Sdk.Nodes.FileNode fileNode:
+            case Nodes.FileNode fileNode:
                 var fileNodeProto = new FileNode
                 {
                     Uid = fileNode.Uid.ToString(),
@@ -508,13 +506,13 @@ internal static class InteropProtonDriveClient
         return result;
     }
 
-    private static DegradedNode ConvertToDegradedNode(Proton.Drive.Sdk.Nodes.DegradedNode degradedNode)
+    private static DegradedNode ConvertToDegradedNode(Nodes.DegradedNode degradedNode)
     {
         var result = new DegradedNode();
 
         switch (degradedNode)
         {
-            case Proton.Drive.Sdk.Nodes.DegradedFolderNode degradedFolderNode:
+            case Nodes.DegradedFolderNode degradedFolderNode:
                 var degradedFolder = new DegradedFolderNode
                 {
                     Uid = degradedFolderNode.Uid.ToString(),
@@ -532,7 +530,7 @@ internal static class InteropProtonDriveClient
                 result.Folder = degradedFolder;
                 break;
 
-            case Proton.Drive.Sdk.Nodes.DegradedFileNode degradedFileNode:
+            case Nodes.DegradedFileNode degradedFileNode:
                 var degradedFile = new DegradedFileNode
                 {
                     Uid = degradedFileNode.Uid.ToString(),

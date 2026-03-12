@@ -8,7 +8,7 @@ data class PhotosUploaderRequest(
     val fileSize: Long,
     val lastModificationTime: Instant?, // optional
     val captureTime: Instant?, // optional
-    val mainPhotoLinkId: String?, // optional
+    val mainPhotoUid: String? = null, // optional
     val tags: List<PhotoTag> = emptyList(),  // optional
     val overrideExistingDraftByOtherClient: Boolean,
     val additionalMetadata: Map<String, ByteArray> = emptyMap(),  // optional

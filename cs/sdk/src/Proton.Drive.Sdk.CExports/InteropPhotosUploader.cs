@@ -11,7 +11,7 @@ internal static class InteropPhotosUploader
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
-        var uploader = Interop.GetFromHandle<PhotosFileUploader>(request.UploaderHandle);
+        var uploader = Interop.GetFromHandle<FileUploader>(request.UploaderHandle);
 
         var stream = new InteropStream(uploader.FileSize, bindingsHandle, new InteropFunction<nint, InteropArray<byte>, nint, nint>(request.ReadAction));
 
@@ -19,8 +19,8 @@ internal static class InteropPhotosUploader
         {
             unsafe
             {
-                var thumbnailType = (Proton.Drive.Sdk.Nodes.ThumbnailType)t.Type;
-                return new Proton.Drive.Sdk.Nodes.Thumbnail(thumbnailType, new InteropArray<byte>((byte*)t.DataPointer, (nint)t.DataLength).ToArray());
+                var thumbnailType = (Nodes.ThumbnailType)t.Type;
+                return new Nodes.Thumbnail(thumbnailType, new InteropArray<byte>((byte*)t.DataPointer, (nint)t.DataLength).ToArray());
             }
         });
 
@@ -29,7 +29,7 @@ internal static class InteropPhotosUploader
         var expectedSha1Provider = request.HasSha1Function ?
             InteropFileUploader.CreateSha1Provider(bindingsHandle, request.Sha1Function) : null;
 
-        var uploadController = PhotosFileUploader.UploadFromStream(
+        var uploadController = uploader.UploadFromStream(
             stream,
             thumbnails,
             (progress, total) => progressAction.InvokeProgressUpdate(bindingsHandle, progress, total),
@@ -47,8 +47,8 @@ internal static class InteropPhotosUploader
         {
             unsafe
             {
-                var thumbnailType = (Proton.Drive.Sdk.Nodes.ThumbnailType)t.Type;
-                return new Proton.Drive.Sdk.Nodes.Thumbnail(thumbnailType, new InteropArray<byte>((byte*)t.DataPointer, (nint)t.DataLength).ToArray());
+                var thumbnailType = (Nodes.ThumbnailType)t.Type;
+                return new Nodes.Thumbnail(thumbnailType, new InteropArray<byte>((byte*)t.DataPointer, (nint)t.DataLength).ToArray());
             }
         });
 
@@ -56,7 +56,9 @@ internal static class InteropPhotosUploader
         var expectedSha1Provider = request.HasSha1Function ?
             InteropFileUploader.CreateSha1Provider(bindingsHandle, request.Sha1Function) : null;
 
-        var uploadController = PhotosFileUploader.UploadFromFile(
+        var uploader = Interop.GetFromHandle<FileUploader>(request.UploaderHandle);
+
+        var uploadController = uploader.UploadFromFile(
             request.FilePath,
             thumbnails,
             (progress, total) => progressAction.InvokeProgressUpdate(bindingsHandle, progress, total),
@@ -68,7 +70,7 @@ internal static class InteropPhotosUploader
 
     public static IMessage? HandleFree(DrivePhotosClientUploaderFreeRequest request)
     {
-        var fileUploader = Interop.FreeHandle<PhotosFileUploader>(request.FileUploaderHandle);
+        var fileUploader = Interop.FreeHandle<FileUploader>(request.FileUploaderHandle);
 
         fileUploader.Dispose();
 

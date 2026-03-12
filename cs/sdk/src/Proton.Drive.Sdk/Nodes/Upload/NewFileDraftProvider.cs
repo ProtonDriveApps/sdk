@@ -52,6 +52,7 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
             fileSecrets.Key,
             fileSecrets.ContentKey,
             signingKey,
+            parentSecrets.HashKey,
             membershipAddress,
             blockVerifier,
             ct => DeleteDraftAsync(draftRevisionUid, ct),
