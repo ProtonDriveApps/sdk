@@ -195,14 +195,21 @@ class ProtonDriveClient internal constructor(
         ).toEntity()
     }
 
-    suspend fun enumerateTrash(): List<NodeResult> = cancellationCoroutineScope { source ->
+    fun enumerateTrash(): Flow<NodeResult> = channelFlow {
         log(DEBUG, "enumerateTrash")
-        bridge.enumerateTrash(
-            driveClientEnumerateTrashRequest {
-                clientHandle = handle
-                cancellationTokenSourceHandle = source.handle
-            }
-        ).toEntity()
+        cancellationCoroutineScope { source ->
+            bridge.enumerateTrash(
+                coroutineScope = this@channelFlow,
+                request = driveClientEnumerateTrashRequest {
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    iterateAction = ProtonDriveSdkNativeClient.getEnumeratePointer()
+                },
+                enumerate = { nodeResult ->
+                    send(nodeResult.toEntity())
+                }
+            )
+        }
     }
 
     suspend fun emptyTrash(): Unit = cancellationCoroutineScope { source ->

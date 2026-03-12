@@ -405,10 +405,11 @@ message DriveClientRestoreNodesRequest {
     int64 cancellation_token_source_handle = 3;
 }
 
-// The response message must be of type TrashChildrenList
+// The response must not have a value, iterate_action will be called for each item.
 message DriveClientEnumerateTrashRequest {
     int64 client_handle = 1;
     int64 cancellation_token_source_handle = 2;
+    int64 iterate_action = 3;
 }
 
 message TrashChildrenList {
