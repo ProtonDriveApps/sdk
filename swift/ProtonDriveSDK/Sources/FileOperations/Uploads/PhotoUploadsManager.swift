@@ -25,12 +25,11 @@ actor PhotoUploadsManager {
         fileSize: Int64,
         modificationDate: Date,
         captureTime: Date,
-        mainPhotoLinkID: String?,
+        mainPhotoUid: SDKNodeUid?,
         mediaType: String,
         thumbnails: [ThumbnailData],
         tags: [Proton_Drive_Sdk_PhotoTag],
         additionalMetadata: [AdditionalMetadata],
-        overrideExistingDraft: Bool,
         expectedSHA1: Data? = nil,
         cancellationToken: UUID,
         progressCallback: @escaping ProgressCallback
@@ -46,10 +45,9 @@ actor PhotoUploadsManager {
             modificationDate: modificationDate,
             mediaType: mediaType,
             captureTime: captureTime,
-            mainPhotoLinkID: mainPhotoLinkID,
+            mainPhotoUid: mainPhotoUid,
             tags: tags,
             additionalMetadata: additionalMetadata,
-            overrideExistingDraft: overrideExistingDraft,
             cancellationHandle: cancellationHandle
         )
 
@@ -155,24 +153,23 @@ actor PhotoUploadsManager {
         modificationDate: Date,
         mediaType: String,
         captureTime: Date,
-        mainPhotoLinkID: String?,
+        mainPhotoUid: SDKNodeUid?,
         tags: [Proton_Drive_Sdk_PhotoTag],
         additionalMetadata: [AdditionalMetadata],
-        overrideExistingDraft: Bool,
         cancellationHandle: ObjectHandle
     ) async throws -> ObjectHandle {
         let uploaderRequest = Proton_Drive_Sdk_DrivePhotosClientGetPhotoUploaderRequest.with {
             $0.clientHandle = Int64(clientHandle)
             $0.name = name
+            $0.mediaType = mediaType
             $0.size = fileSize
-            $0.metadata = Proton_Drive_Sdk_PhotoFileUploadMetadata.with { metadata in
-                metadata.mediaType = mediaType
+
+            $0.metadata = Proton_Drive_Sdk_PhotosFileUploadMetadata.with { metadata in
                 metadata.lastModificationTime = Google_Protobuf_Timestamp(date: modificationDate)
                 metadata.additionalMetadata = additionalMetadata.map { $0.toSDK }
-                metadata.overrideExistingDraftByOtherClient = overrideExistingDraft
                 metadata.captureTime = Google_Protobuf_Timestamp(date: captureTime)
-                if let mainPhotoLinkID {
-                    metadata.mainPhotoLinkID = mainPhotoLinkID
+                if let mainPhotoUid {
+                    metadata.mainPhotoUid = mainPhotoUid.sdkCompatibleIdentifier
                 }
                 metadata.tags = tags
             }

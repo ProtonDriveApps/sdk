@@ -566,6 +566,21 @@ internal static class NodeOperations
         return true;
     }
 
+    public static async Task<ReadOnlyMemory<byte>> GetParentFolderHashKeyAsync(ProtonDriveClient client, NodeUid uid, CancellationToken cancellationToken)
+    {
+        var nodeMetadataResult = await GetNodeMetadataResultAsync(client, uid, knownShareAndKey: null, cancellationToken).ConfigureAwait(false);
+
+        var parentUid = nodeMetadataResult.Merge(x => x.Node.ParentUid, x => x.Node.ParentUid);
+        if (parentUid is null)
+        {
+            throw new InvalidOperationException("Root node does not have a parent folder");
+        }
+
+        var parentFolderSecrets = await FolderOperations.GetSecretsAsync(client, parentUid.Value, cancellationToken).ConfigureAwait(false);
+
+        return parentFolderSecrets.HashKey;
+    }
+
     private static async ValueTask<FolderNode> GetFreshMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
     {
         ShareVolumeDto volumeDto;

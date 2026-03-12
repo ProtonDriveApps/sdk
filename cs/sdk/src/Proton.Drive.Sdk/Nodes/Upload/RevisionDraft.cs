@@ -14,6 +14,7 @@ internal sealed partial class RevisionDraft(
     PgpPrivateKey fileKey,
     PgpSessionKey contentKey,
     PgpPrivateKey signingKey,
+    ReadOnlyMemory<byte>? hashKey,
     Address membershipAddress,
     IBlockVerifier blockVerifier,
     Func<CancellationToken, ValueTask> deleteDraftFunction,
@@ -29,6 +30,7 @@ internal sealed partial class RevisionDraft(
     public PgpPrivateKey FileKey { get; } = fileKey;
     public PgpSessionKey ContentKey { get; } = contentKey;
     public PgpPrivateKey SigningKey { get; } = signingKey;
+    public ReadOnlyMemory<byte>? HashKey { get; } = hashKey;
     public Address MembershipAddress { get; } = membershipAddress;
     public IBlockVerifier BlockVerifier { get; } = blockVerifier;
 

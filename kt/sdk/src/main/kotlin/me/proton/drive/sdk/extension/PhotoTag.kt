@@ -4,14 +4,14 @@ import me.proton.drive.sdk.entity.PhotoTag
 import proton.drive.sdk.ProtonDriveSdk.PhotoTag as SdkPhotoTag
 
 fun PhotoTag.toSdkPhotoTag(): SdkPhotoTag = when (this) {
-    PhotoTag.Favorites -> SdkPhotoTag.PHOTO_TAG_FAVORITES
-    PhotoTag.Screenshots -> SdkPhotoTag.PHOTO_TAG_SCREENSHOTS
-    PhotoTag.Videos -> SdkPhotoTag.PHOTO_TAG_VIDEOS
-    PhotoTag.LivePhotos -> SdkPhotoTag.PHOTO_TAG_LIVE_PHOTOS
-    PhotoTag.MotionPhotos -> SdkPhotoTag.PHOTO_TAG_MOTION_PHOTOS
-    PhotoTag.Selfies -> SdkPhotoTag.PHOTO_TAG_SELFIES
-    PhotoTag.Portraits -> SdkPhotoTag.PHOTO_TAG_PORTRAITS
-    PhotoTag.Bursts -> SdkPhotoTag.PHOTO_TAG_BURSTS
-    PhotoTag.Panoramas -> SdkPhotoTag.PHOTO_TAG_PANORAMAS
+    PhotoTag.Favorite -> SdkPhotoTag.PHOTO_TAG_FAVORITE
+    PhotoTag.Screenshot -> SdkPhotoTag.PHOTO_TAG_SCREENSHOT
+    PhotoTag.Video -> SdkPhotoTag.PHOTO_TAG_VIDEO
+    PhotoTag.LivePhoto -> SdkPhotoTag.PHOTO_TAG_LIVE_PHOTO
+    PhotoTag.MotionPhoto -> SdkPhotoTag.PHOTO_TAG_MOTION_PHOTO
+    PhotoTag.Selfie -> SdkPhotoTag.PHOTO_TAG_SELFIE
+    PhotoTag.Portrait -> SdkPhotoTag.PHOTO_TAG_PORTRAIT
+    PhotoTag.Burst -> SdkPhotoTag.PHOTO_TAG_BURST
+    PhotoTag.Panorama -> SdkPhotoTag.PHOTO_TAG_PANORAMA
     PhotoTag.Raw -> SdkPhotoTag.PHOTO_TAG_RAW
 }

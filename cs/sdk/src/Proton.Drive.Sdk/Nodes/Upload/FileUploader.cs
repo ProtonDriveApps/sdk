@@ -9,8 +9,7 @@ public sealed partial class FileUploader : IDisposable
     private readonly ProtonDriveClient _client;
     private readonly IRevisionDraftProvider _revisionDraftProvider;
     private readonly NodeUid _telemetryContextNodeUid;
-    private readonly DateTimeOffset? _lastModificationTime;
-    private readonly IEnumerable<AdditionalMetadataProperty>? _additionalMetadata;
+    private readonly FileUploadMetadata _metadata;
     private readonly ILogger _logger;
 
     private volatile int _remainingNumberOfBlocks;
@@ -20,8 +19,7 @@ public sealed partial class FileUploader : IDisposable
         IRevisionDraftProvider revisionDraftProvider,
         NodeUid telemetryContextNodeUid,
         long size,
-        DateTimeOffset? lastModificationTime,
-        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
+        FileUploadMetadata metadata,
         int expectedNumberOfBlocks,
         ILogger logger)
     {
@@ -29,8 +27,7 @@ public sealed partial class FileUploader : IDisposable
         _revisionDraftProvider = revisionDraftProvider;
         _telemetryContextNodeUid = telemetryContextNodeUid;
         FileSize = size;
-        _lastModificationTime = lastModificationTime;
-        _additionalMetadata = additionalMetadata;
+        _metadata = metadata;
         _remainingNumberOfBlocks = expectedNumberOfBlocks;
         _logger = logger;
     }
@@ -81,8 +78,7 @@ public sealed partial class FileUploader : IDisposable
         IRevisionDraftProvider revisionDraftProvider,
         NodeUid telemetryContextNodeUid,
         long size,
-        DateTime? lastModificationTime,
-        IEnumerable<AdditionalMetadataProperty>? additionalExtendedAttributes,
+        FileUploadMetadata metadata,
         CancellationToken cancellationToken)
     {
         var logger = client.Telemetry.GetLogger("File uploader");
@@ -100,8 +96,7 @@ public sealed partial class FileUploader : IDisposable
             revisionDraftProvider,
             telemetryContextNodeUid,
             size,
-            lastModificationTime,
-            additionalExtendedAttributes,
+            metadata,
             expectedNumberOfBlocks,
             logger);
     }
@@ -133,7 +128,6 @@ public sealed partial class FileUploader : IDisposable
         var uploadFunction = (CancellationToken ct) => UploadFromStreamAsync(
             contentStream,
             thumbnails,
-            _additionalMetadata,
             progress => onProgress?.Invoke(progress, FileSize),
             expectedSha1Provider,
             revisionDraftTaskCompletionSource,
@@ -173,7 +167,6 @@ public sealed partial class FileUploader : IDisposable
     private async Task<UploadResult> UploadFromStreamAsync(
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
-        IEnumerable<AdditionalMetadataProperty>? additionalExtendedAttributes,
         Action<long>? onProgress,
         Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         TaskCompletionSource<RevisionDraft> revisionDraftTaskCompletionSource,
@@ -191,8 +184,6 @@ public sealed partial class FileUploader : IDisposable
             revisionDraftTaskCompletionSource.Task.Result,
             contentStream,
             thumbnails,
-            _lastModificationTime,
-            additionalExtendedAttributes,
             onProgress,
             expectedSha1Provider,
             cancellationToken).ConfigureAwait(false);
@@ -219,7 +210,7 @@ public sealed partial class FileUploader : IDisposable
             {
                 Uid = revisionUid,
                 ClaimedSize = size,
-                ClaimedModificationTime = _lastModificationTime?.UtcDateTime,
+                ClaimedModificationTime = _metadata.LastModificationTime?.UtcDateTime,
 
                 // FIXME: update remaining metadata in cache, but this is not critical because this metadata will soon be invalidated by the event anyway
             },
@@ -232,8 +223,6 @@ public sealed partial class FileUploader : IDisposable
         RevisionDraft revisionDraft,
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
-        DateTimeOffset? lastModificationTime,
-        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
         Action<long>? onProgress,
         Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         CancellationToken cancellationToken)
@@ -245,8 +234,7 @@ public sealed partial class FileUploader : IDisposable
             FileSize,
             expectedSha1Provider,
             thumbnails,
-            lastModificationTime,
-            additionalMetadata,
+            _metadata,
             onProgress,
             cancellationToken).ConfigureAwait(false);
     }

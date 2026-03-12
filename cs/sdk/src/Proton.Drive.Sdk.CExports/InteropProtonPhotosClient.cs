@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes;
@@ -134,7 +135,7 @@ internal static class InteropProtonPhotosClient
 
         var thumbnailsEnumerable = client.EnumerateThumbnailsAsync(
             request.PhotoUids.Select(NodeUid.Parse),
-            (Proton.Drive.Sdk.Nodes.ThumbnailType)request.Type,
+            (Nodes.ThumbnailType)request.Type,
             cancellationToken);
 
         var thumbnails = await thumbnailsEnumerable
@@ -162,20 +163,31 @@ internal static class InteropProtonPhotosClient
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
         var tags = request.Metadata.Tags is { Count: > 0 }
-            ? request.Metadata.Tags.Select(t => (Api.Photos.PhotoTag)t)
+            ? request.Metadata.Tags.Select(t => (Nodes.PhotoTag)t)
             : null;
 
-        var metadata = new PhotosFileUploadMetadata
+        var additionalMetadata = request.Metadata.AdditionalMetadata is { Count: > 0 }
+            ? request.Metadata.AdditionalMetadata.Select(x =>
+                new Nodes.AdditionalMetadataProperty(x.Name, JsonDocument.Parse(x.Utf8JsonValue.Memory).RootElement))
+            : null;
+
+        var metadata = new Nodes.PhotosFileUploadMetadata
         {
-            MediaType = request.Metadata.MediaType,
-            MainPhotoLinkId = request.Metadata.MainPhotoLinkId,
-            ExpectedSize = request.Size,
+            AdditionalMetadata = additionalMetadata,
+            LastModificationTime = request.Metadata.LastModificationTime.ToDateTimeFixed(),
+            CaptureTime = request.Metadata.CaptureTime.ToDateTimeFixed(),
+            MainPhotoUid = request.Metadata.HasMainPhotoUid ? NodeUid.Parse(request.Metadata.MainPhotoUid) : null,
             Tags = tags,
         };
 
-        var uploader = await ProtonPhotosClient.GetFileUploaderAsync(
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        var uploader = await client.GetFileUploaderAsync(
             request.Name,
+            request.MediaType,
+            request.Size,
             metadata,
+            request.OverrideExistingDraftByOtherClient,
             cancellationToken).ConfigureAwait(false);
 
         return new Int64Value { Value = Interop.AllocHandle(uploader) };
@@ -185,19 +197,18 @@ internal static class InteropProtonPhotosClient
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
-        Action<string> generateSha1Action = (sha1) =>
-        {
-            // TODO: Implement SHA1 generation callback
-        };
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
 
-        var duplicates = await ProtonPhotosClient.FindDuplicatesAsync(
-            request.Name,
-            generateSha1Action,
-            cancellationToken).ConfigureAwait(false);
+        var duplicates = await client.FindDuplicatesAsync(request.Name, GenerateSha1Action, cancellationToken).ConfigureAwait(false);
 
         var result = new ListValue();
-        result.Values.AddRange(duplicates.Select(duplicate => Value.ForString(duplicate)));
+        result.Values.AddRange(duplicates.Select(Value.ForString));
 
         return result;
+
+        static void GenerateSha1Action(string sha1)
+        {
+            // TODO: Implement SHA1 generation callback
+        }
     }
 }

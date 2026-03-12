@@ -28,7 +28,7 @@ internal static class ProtonApiSessionRequestHandler
             UserAgent = request.Options.UserAgent,
             BindingsLanguage = request.Options.BindingsLanguage,
             Telemetry = telemetry,
-            TlsPolicy = (Proton.Sdk.Http.ProtonClientTlsPolicy?)request.Options.TlsPolicy,
+            TlsPolicy = (Http.ProtonClientTlsPolicy?)request.Options.TlsPolicy,
             EntityCacheRepository = entityCacheRepository,
             SecretCacheRepository = secretCacheRepository,
         };
@@ -53,13 +53,13 @@ internal static class ProtonApiSessionRequestHandler
             ? SqliteCacheRepository.OpenFile(request.Options.EntityCachePath)
             : new InMemoryCacheRepository();
 
-        var options = new Proton.Sdk.ProtonClientOptions
+        var options = new Sdk.ProtonClientOptions
         {
             BaseUrl = new Uri(request.Options.BaseUrl),
             UserAgent = request.Options.UserAgent,
             BindingsLanguage = request.Options.BindingsLanguage,
             Telemetry = telemetry,
-            TlsPolicy = (Proton.Sdk.Http.ProtonClientTlsPolicy?)request.Options.TlsPolicy,
+            TlsPolicy = (Http.ProtonClientTlsPolicy?)request.Options.TlsPolicy,
             EntityCacheRepository = entityCacheRepository,
             SecretCacheRepository = secretCacheRepository,
         };
