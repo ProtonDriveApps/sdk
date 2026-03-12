@@ -2,12 +2,13 @@ package me.proton.drive.sdk.internal
 
 import com.google.protobuf.Any
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.ProducerScope
 import me.proton.drive.sdk.converter.NodeResultListResponseConverter
 import me.proton.drive.sdk.converter.FileThumbnailListConverter
 import me.proton.drive.sdk.converter.FolderChildrenListConverter
 import me.proton.drive.sdk.converter.FolderNodeConverter
-import me.proton.drive.sdk.converter.TrashChildrenListConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
+import me.proton.drive.sdk.entity.NodeResult
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.StringResponseCallback
 import me.proton.drive.sdk.extension.UnitResponseCallback
@@ -154,11 +155,18 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
         }
 
     suspend fun enumerateTrash(
+        coroutineScope: ProducerScope<NodeResult>,
         request: ProtonDriveSdk.DriveClientEnumerateTrashRequest,
-    ): ProtonDriveSdk.TrashChildrenList =
-        executeOnce("enumerateTrash", TrashChildrenListConverter().asCallback) {
-            driveClientEnumerateTrash = request
-        }
+        enumerate: suspend (ProtonDriveSdk.NodeResult) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "enumerateTrash",
+        callback = UnitResponseCallback,
+        enumerate = enumerate,
+        parser = ProtonDriveSdk.NodeResult::parseFrom,
+        coroutineScopeProvider = { coroutineScope }
+    ) {
+        driveClientEnumerateTrash = request
+    }
 
     suspend fun emptyTrash(
         request: ProtonDriveSdk.DriveClientEmptyTrashRequest,
