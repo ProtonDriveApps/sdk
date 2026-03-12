@@ -1,5 +1,13 @@
 # Changelog
 
+## cs/v0.8.0 (2026-03-12)
+
+* Implement upload to Photos
+* Set swift error message
+* Handle nullable OwnedBy fields when mapping to proto
+* Propagate individual thumbnail errors to callers instead of silently skipping them
+* Add owned by property
+
 ## cs/v0.7.0-alpha.17 (2026-03-10)
 
 * Fix manifest verification errors due to wrong thumbnail order in manifest
