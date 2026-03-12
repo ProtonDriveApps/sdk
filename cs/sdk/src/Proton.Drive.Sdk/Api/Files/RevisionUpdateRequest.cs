@@ -12,4 +12,7 @@ internal sealed class RevisionUpdateRequest
 
     [JsonPropertyName("XAttr")]
     public PgpArmoredMessage? ExtendedAttributes { get; init; }
+
+    [JsonPropertyName("Photo")]
+    public PhotosAttributesDto? PhotosAttributes { get; set; }
 }

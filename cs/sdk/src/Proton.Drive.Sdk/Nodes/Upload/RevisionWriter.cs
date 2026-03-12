@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
@@ -46,8 +47,7 @@ internal sealed partial class RevisionWriter : IDisposable
         long expectedContentLength,
         Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         IEnumerable<Thumbnail> thumbnails,
-        DateTimeOffset? lastModificationTime,
-        IEnumerable<AdditionalMetadataProperty>? additionalMetadata,
+        FileUploadMetadata metadata,
         Action<long>? onProgress,
         CancellationToken cancellationToken)
     {
@@ -102,14 +102,17 @@ internal sealed partial class RevisionWriter : IDisposable
 
             var sha1Digest = _draft.Sha1.GetCurrentHash();
 
+            var hashKey = _draft.HashKey
+                ?? await NodeOperations.GetParentFolderHashKeyAsync(_client, _draft.Uid.NodeUid, cancellationToken).ConfigureAwait(false);
+
             var request = CreateRevisionUpdateRequest(
-                lastModificationTime,
+                metadata,
                 expectedContentLength,
                 expectedThumbnailBlockCount,
                 expectedSha1Provider,
                 sha1Digest,
-                signingEmailAddress,
-                additionalMetadata);
+                hashKey,
+                signingEmailAddress);
 
             LogSealingRevision(_draft.Uid);
 
@@ -156,6 +159,110 @@ internal sealed partial class RevisionWriter : IDisposable
         return ex is not ProtonApiException { TransportCode: >= 400 and < 500 }
             and not NodeWithSameNameExistsException
             and not IntegrityException;
+    }
+
+    private RevisionUpdateRequest CreateRevisionUpdateRequest(
+        FileUploadMetadata metadata,
+        long expectedContentLength,
+        int expectedThumbnailBlockCount,
+        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
+        byte[] sha1Digest,
+        ReadOnlyMemory<byte> hashKey,
+        string signingEmailAddress)
+    {
+        var manifest = new byte[(_draft.OrderedThumbnailUploadResults.Count + _draft.OrderedContentBlockStates.Count) * SHA256.HashSizeInBytes];
+        using var manifestStream = new MemoryStream(manifest);
+
+        var contentBlockSizes = new List<int>(_draft.OrderedContentBlockStates.Count);
+        var uploadedContentSize = 0L;
+
+        var contentBlockUploadResults = _draft.OrderedContentBlockStates
+            .Select((blockState, i) =>
+            {
+                var blockNumber = i + 1;
+
+                return blockState.TryGetSecond(out var uploadResult)
+                    ? (Number: blockNumber, Value: uploadResult)
+                    : throw new IntegrityException($"Missing content block #{blockNumber}");
+            });
+
+        var blockUploadResults = _draft.OrderedThumbnailUploadResults.Select(x => (Number: 0, Value: x)).Concat(contentBlockUploadResults);
+
+        foreach (var (blockNumber, blockUploadResult) in blockUploadResults)
+        {
+            var (plaintextSize, sha256Digest) = blockUploadResult;
+
+            manifestStream.Write(sha256Digest);
+
+            if (blockNumber == 0)
+            {
+                // Not a content block
+                continue;
+            }
+
+            contentBlockSizes.Add(plaintextSize);
+            uploadedContentSize += plaintextSize;
+        }
+
+        if (uploadedContentSize != expectedContentLength)
+        {
+            throw new IntegrityException("Mismatch between uploaded size and expected size");
+        }
+
+        if (expectedThumbnailBlockCount != _draft.OrderedThumbnailUploadResults.Count)
+        {
+            throw new IntegrityException("Unexpected number of thumbnail blocks");
+        }
+
+        if (expectedSha1Provider is not null)
+        {
+            var expectedSha1 = expectedSha1Provider();
+            if (!expectedSha1.Span.SequenceEqual(sha1Digest))
+            {
+                throw new IntegrityException("Mismatch between uploaded SHA1 and expected SHA1");
+            }
+        }
+
+        var extendedAttributes = new ExtendedAttributes
+        {
+            Common = new CommonExtendedAttributes
+            {
+                Size = uploadedContentSize,
+                ModificationTime = metadata.LastModificationTime?.UtcDateTime,
+                BlockSizes = contentBlockSizes,
+                Digests = new FileContentDigestsDto { Sha1 = sha1Digest },
+            },
+            AdditionalMetadata = metadata.AdditionalMetadata?.ToDictionary(x => x.Name, x => x.Value),
+        };
+
+        var extendedAttributesUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(extendedAttributes, DriveApiSerializerContext.Default.ExtendedAttributes);
+
+        var encryptedExtendedAttributes = _draft.FileKey.EncryptAndSign(
+            extendedAttributesUtf8Bytes,
+            _draft.SigningKey,
+            outputCompression: PgpCompression.Default);
+
+        var request = new RevisionUpdateRequest
+        {
+            ManifestSignature = _draft.SigningKey.Sign(manifest),
+            SignatureEmailAddress = signingEmailAddress,
+            ExtendedAttributes = encryptedExtendedAttributes,
+        };
+
+        if (metadata is PhotosFileUploadMetadata photoMetadata)
+        {
+            var captureTime = photoMetadata.CaptureTime ?? metadata.LastModificationTime ?? DateTime.UtcNow;
+
+            request.PhotosAttributes = new PhotosAttributesDto
+            {
+                CaptureTime = captureTime.UtcDateTime,
+                ContentHashDigest = HMACSHA256.HashData(hashKey.Span, Encoding.ASCII.GetBytes(Convert.ToHexStringLower(sha1Digest))),
+                MainPhotoLinkId = photoMetadata.MainPhotoUid?.LinkId,
+                Tags = photoMetadata.Tags?.ToHashSet() ?? [],
+            };
+        }
+
+        return request;
     }
 
     private async ValueTask<BlockUploadResult> UploadContentBlockAsync(
@@ -246,7 +353,7 @@ internal sealed partial class RevisionWriter : IDisposable
         using var delayedCancellationTokenSource = new CancellationTokenSource();
 
         // We use a delayed cancellation token to give the read operation a fair chance to complete when cancellation is triggered,
-        // so as to not leave the stream in an indeterminate state that would prevent resuming using the same stream later.
+        // to not leave the stream in an indeterminate state that would prevent resuming using the same stream later.
         // ReSharper disable once AccessToDisposedClosure
         await using (cancellationToken.Register(() => delayedCancellationTokenSource.CancelAfter(SourceReadingCancellationDelayMilliseconds)))
         {
@@ -349,95 +456,6 @@ internal sealed partial class RevisionWriter : IDisposable
 
             await _client.BlockUploader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
         }
-    }
-
-    private RevisionUpdateRequest CreateRevisionUpdateRequest(
-        DateTimeOffset? lastModificationTime,
-        long expectedContentLength,
-        int expectedThumbnailBlockCount,
-        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
-        byte[]? sha1Digest,
-        string signingEmailAddress,
-        IEnumerable<AdditionalMetadataProperty>? additionalMetadata)
-    {
-        var manifest = new byte[(_draft.OrderedThumbnailUploadResults.Count + _draft.OrderedContentBlockStates.Count) * SHA256.HashSizeInBytes];
-        using var manifestStream = new MemoryStream(manifest);
-
-        var contentBlockSizes = new List<int>(_draft.OrderedContentBlockStates.Count);
-        var uploadedContentSize = 0L;
-
-        var contentBlockUploadResults = _draft.OrderedContentBlockStates
-            .Select((blockState, i) =>
-            {
-                var blockNumber = i + 1;
-
-                return blockState.TryGetSecond(out var uploadResult)
-                    ? (Number: blockNumber, Value: uploadResult)
-                    : throw new IntegrityException($"Missing content block #{blockNumber}");
-            });
-
-        var blockUploadResults = _draft.OrderedThumbnailUploadResults.Select(x => (Number: 0, x)).Concat(contentBlockUploadResults);
-
-        foreach (var (blockNumber, blockUploadResult) in blockUploadResults)
-        {
-            var (plaintextSize, sha256Digest) = blockUploadResult;
-
-            manifestStream.Write(sha256Digest);
-
-            if (blockNumber == 0)
-            {
-                // Not a content block
-                continue;
-            }
-
-            contentBlockSizes.Add(plaintextSize);
-            uploadedContentSize += plaintextSize;
-        }
-
-        if (uploadedContentSize != expectedContentLength)
-        {
-            throw new IntegrityException("Mismatch between uploaded size and expected size");
-        }
-
-        if (expectedThumbnailBlockCount != _draft.OrderedThumbnailUploadResults.Count)
-        {
-            throw new IntegrityException("Unexpected number of thumbnail blocks");
-        }
-
-        if (expectedSha1Provider is not null)
-        {
-            var expectedSha1 = expectedSha1Provider();
-            if (!expectedSha1.Span.SequenceEqual(sha1Digest))
-            {
-                throw new IntegrityException("Mismatch between uploaded SHA1 and expected SHA1");
-            }
-        }
-
-        var extendedAttributes = new ExtendedAttributes
-        {
-            Common = new CommonExtendedAttributes
-            {
-                Size = uploadedContentSize,
-                ModificationTime = lastModificationTime?.UtcDateTime,
-                BlockSizes = contentBlockSizes,
-                Digests = new FileContentDigestsDto { Sha1 = sha1Digest },
-            },
-            AdditionalMetadata = additionalMetadata?.ToDictionary(x => x.Name, x => x.Value),
-        };
-
-        var extendedAttributesUtf8Bytes = JsonSerializer.SerializeToUtf8Bytes(extendedAttributes, DriveApiSerializerContext.Default.ExtendedAttributes);
-
-        var encryptedExtendedAttributes = _draft.FileKey.EncryptAndSign(
-            extendedAttributesUtf8Bytes,
-            _draft.SigningKey,
-            outputCompression: PgpCompression.Default);
-
-        return new RevisionUpdateRequest
-        {
-            ManifestSignature = _draft.SigningKey.Sign(manifest),
-            SignatureEmailAddress = signingEmailAddress,
-            ExtendedAttributes = encryptedExtendedAttributes,
-        };
     }
 
     private async ValueTask<bool> RevisionIsSealedAsync(CancellationToken cancellationToken)

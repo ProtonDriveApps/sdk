@@ -61,14 +61,25 @@ public sealed class ProtonPhotosClient : IDisposable
 
     internal ProtonDriveClient DriveClient { get; }
 
-    public static ValueTask<PhotosFileUploader> GetFileUploaderAsync(string name, PhotosFileUploadMetadata metadata, CancellationToken cancellationToken)
+    public async ValueTask<FileUploader> GetFileUploaderAsync(
+        string name,
+        string mediaType,
+        long size,
+        PhotosFileUploadMetadata metadata,
+        bool overrideExistingDraftByOtherClient,
+        CancellationToken cancellationToken)
     {
-        throw new NotSupportedException();
+        var photosRoot = await PhotosNodeOperations.GetPhotosFolderAsync(this, cancellationToken).ConfigureAwait(false);
+
+        var draftProvider = new NewFileDraftProvider(DriveClient, photosRoot.Uid, name, mediaType, overrideExistingDraftByOtherClient);
+
+        return await GetFileUploaderAsync(draftProvider, photosRoot.Uid, size, metadata, cancellationToken).ConfigureAwait(false);
     }
 
-    public static ValueTask<IReadOnlyList<string>> FindDuplicatesAsync(string name, Action<string> generateSha1, CancellationToken cancellationToken)
+    public ValueTask<IReadOnlyList<string>> FindDuplicatesAsync(string name, Action<string> generateSha1, CancellationToken cancellationToken)
     {
-        throw new NotSupportedException();
+        _ = DriveClient;
+        throw new NotImplementedException();
     }
 
     public ValueTask<Result<Node, DegradedNode>?> GetNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
@@ -109,5 +120,21 @@ public sealed class ProtonPhotosClient : IDisposable
     internal ValueTask<FolderNode> GetPhotosRootAsync(CancellationToken cancellationToken)
     {
         return PhotosNodeOperations.GetPhotosFolderAsync(this, cancellationToken);
+    }
+
+    private async ValueTask<FileUploader> GetFileUploaderAsync(
+        IRevisionDraftProvider revisionDraftProvider,
+        NodeUid telemetryContextNodeUid,
+        long size,
+        PhotosFileUploadMetadata metadata,
+        CancellationToken cancellationToken)
+    {
+        return await FileUploader.CreateAsync(
+            DriveClient,
+            revisionDraftProvider,
+            telemetryContextNodeUid,
+            size,
+            metadata,
+            cancellationToken).ConfigureAwait(false);
     }
 }
