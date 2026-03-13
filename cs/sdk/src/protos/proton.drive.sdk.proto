@@ -26,6 +26,7 @@ message Request {
         DriveClientRestoreNodesRequest drive_client_restore_nodes = 1014;
         DriveClientEnumerateTrashRequest drive_client_enumerate_trash = 1015;
         DriveClientEmptyTrashRequest drive_client_empty_trash = 1016;
+        DriveClientEnumerateThumbnailsRequest drive_client_enumerate_thumbnails = 1017;
 
         UploadFromStreamRequest upload_from_stream = 1100;
         UploadFromFileRequest upload_from_file = 1101;
@@ -50,7 +51,7 @@ message Request {
         DrivePhotosClientCreateRequest drive_photos_client_create = 1300;
         DrivePhotosClientCreateFromSessionRequest drive_photos_client_create_from_session = 1301;
         DrivePhotosClientFreeRequest drive_photos_client_free = 1302;
-        DrivePhotosClientEnumeratePhotosThumbnailsRequest drive_photos_client_enumerate_photos_thumbnails = 1303;
+        DrivePhotosClientGetThumbnailsRequest drive_photos_client_enumerate_photos_thumbnails = 1303;
         DrivePhotosClientGetPhotoDownloaderRequest drive_photos_client_get_photo_downloader = 1304;
         DrivePhotosClientDownloadToStreamRequest drive_photos_client_download_to_stream = 1305;
         DrivePhotosClientDownloadToFileRequest drive_photos_client_download_to_file = 1306;
@@ -62,6 +63,7 @@ message Request {
         DrivePhotosClientUploadFromStreamRequest drive_photos_client_upload_from_stream = 1312;
         DrivePhotosClientUploadFromFileRequest drive_photos_client_upload_from_file = 1313;
         DrivePhotosClientUploaderFreeRequest drive_photos_client_uploader_free = 1314;
+        DrivePhotosClientEnumerateThumbnailsRequest drive_photos_client_enumerate_thumbnails = 1315;
     };
 }
 
@@ -427,6 +429,15 @@ message DriveClientGetThumbnailsRequest {
     int64 cancellation_token_source_handle = 4;
 }
 
+// The response must not have a value, iterate_action will be call for each item.
+message DriveClientEnumerateThumbnailsRequest {
+    int64 client_handle = 1;
+    repeated string file_uids = 2;
+    ThumbnailType type = 3;
+    int64 cancellation_token_source_handle = 4;
+    int64 iterate_action = 5;
+}
+
 // The response message must be of type FolderChildrenList.
 message DriveClientEnumerateFolderChildrenRequest {
     int64 client_handle = 1;
@@ -633,11 +644,20 @@ message DrivePhotosClientFreeRequest {
 }
 
 // The response message must be of type FileThumbnailList.
-message  DrivePhotosClientEnumeratePhotosThumbnailsRequest {
+message DrivePhotosClientGetThumbnailsRequest {
     int64 client_handle = 1;
     repeated string photo_uids = 2;
     ThumbnailType type = 3;
     int64 cancellation_token_source_handle = 4;
+}
+
+// The response must not have a value, iterate_action will be call for each item.
+message DrivePhotosClientEnumerateThumbnailsRequest {
+    int64 client_handle = 1;
+    repeated string photo_uids = 2;
+    ThumbnailType type = 3;
+    int64 cancellation_token_source_handle = 4;
+    int64 iterate_action = 5;
 }
 
 // The response message must be of type PhotosTimelineList.

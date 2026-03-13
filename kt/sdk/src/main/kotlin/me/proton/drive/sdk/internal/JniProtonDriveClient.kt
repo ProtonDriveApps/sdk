@@ -99,6 +99,20 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
             driveClientGetThumbnails = request
         }
 
+    suspend fun enumerateThumbnails(
+        coroutineScope: CoroutineScope,
+        request: ProtonDriveSdk.DriveClientEnumerateThumbnailsRequest,
+        enumerate: suspend (ProtonDriveSdk.FileThumbnail) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "enumerateThumbnails",
+        callback = UnitResponseCallback,
+        enumerate = enumerate,
+        parser = ProtonDriveSdk.FileThumbnail::parseFrom,
+        coroutineScopeProvider = { coroutineScope },
+    ) {
+        driveClientEnumerateThumbnails = request
+    }
+
     suspend fun createFolder(
         request: ProtonDriveSdk.DriveClientCreateFolderRequest,
     ): ProtonDriveSdk.FolderNode = executeOnce("createFolder", FolderNodeConverter().asCallback) {

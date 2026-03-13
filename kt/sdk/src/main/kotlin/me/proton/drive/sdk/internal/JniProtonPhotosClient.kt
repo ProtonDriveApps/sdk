@@ -7,6 +7,7 @@ import me.proton.drive.sdk.converter.NodeResultConverter
 import me.proton.drive.sdk.converter.PhotosTimelineListConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
 import me.proton.drive.sdk.extension.LongResponseCallback
+import me.proton.drive.sdk.extension.UnitResponseCallback
 import me.proton.drive.sdk.extension.asCallback
 import me.proton.drive.sdk.extension.asNullableCallback
 import me.proton.drive.sdk.extension.toLongResponse
@@ -77,11 +78,25 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
     })
 
     suspend fun getThumbnails(
-        request: ProtonDriveSdk.DrivePhotosClientEnumeratePhotosThumbnailsRequest,
+        request: ProtonDriveSdk.DrivePhotosClientGetThumbnailsRequest,
     ): ProtonDriveSdk.FileThumbnailList =
         executeOnce("getThumbnails", FileThumbnailListConverter().asCallback) {
             drivePhotosClientEnumeratePhotosThumbnails = request
         }
+
+    suspend fun enumerateThumbnails(
+        coroutineScope: CoroutineScope,
+        request: ProtonDriveSdk.DrivePhotosClientEnumerateThumbnailsRequest,
+        enumerate: suspend (ProtonDriveSdk.FileThumbnail) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "enumerateThumbnails",
+        callback = UnitResponseCallback,
+        enumerate = enumerate,
+        parser = ProtonDriveSdk.FileThumbnail::parseFrom,
+        coroutineScopeProvider = { coroutineScope },
+    ) {
+        drivePhotosClientEnumerateThumbnails = request
+    }
 
     suspend fun enumerateTimeline(
         request: ProtonDriveSdk.DrivePhotosClientEnumerateTimelineRequest,
