@@ -1,5 +1,8 @@
 package me.proton.drive.sdk
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.entity.FileThumbnail
@@ -9,12 +12,14 @@ import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toProto
 import me.proton.drive.sdk.internal.JniProtonPhotosClient
+import me.proton.drive.sdk.internal.ProtonDriveSdkNativeClient
 import me.proton.drive.sdk.internal.cancellationCoroutineScope
 import me.proton.drive.sdk.internal.factory
 import me.proton.drive.sdk.internal.toLogId
-import proton.drive.sdk.drivePhotosClientEnumeratePhotosThumbnailsRequest
+import proton.drive.sdk.drivePhotosClientEnumerateThumbnailsRequest
 import proton.drive.sdk.drivePhotosClientEnumerateTimelineRequest
 import proton.drive.sdk.drivePhotosClientGetNodeRequest
+import proton.drive.sdk.drivePhotosClientGetThumbnailsRequest
 
 class ProtonPhotosClient internal constructor(
     internal val handle: Long,
@@ -22,13 +27,17 @@ class ProtonPhotosClient internal constructor(
     session: Session? = null,
 ) : SdkNode(session), AutoCloseable {
 
+    @Deprecated(
+        message = "Use enumerateThumbnails instead for streaming results.",
+        replaceWith = ReplaceWith("enumerateThumbnails(photoUids, type)"),
+    )
     suspend fun getThumbnails(
         photoUids: List<String>,
         type: ThumbnailType,
     ): List<FileThumbnail> = cancellationCoroutineScope { source ->
         log(INFO, "getThumbnails($type)")
         bridge.getThumbnails(
-            drivePhotosClientEnumeratePhotosThumbnailsRequest {
+            drivePhotosClientGetThumbnailsRequest {
                 this.photoUids += photoUids
                 this.type = type.toProto()
                 clientHandle = handle
@@ -36,6 +45,28 @@ class ProtonPhotosClient internal constructor(
             }
         ).thumbnailsList.map { fileThumbnail ->
             fileThumbnail.toEntity()
+        }
+    }
+
+    fun enumerateThumbnails(
+        photoUids: List<String>,
+        type: ThumbnailType,
+    ): Flow<FileThumbnail> = channelFlow {
+        log(INFO, "enumerateThumbnails($type)")
+        cancellationCoroutineScope { source ->
+            bridge.enumerateThumbnails(
+                coroutineScope = this@channelFlow,
+                request = drivePhotosClientEnumerateThumbnailsRequest {
+                    this.photoUids += photoUids
+                    this.type = type.toProto()
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    iterateAction = ProtonDriveSdkNativeClient.getEnumeratePointer()
+                },
+                enumerate = { fileThumbnail ->
+                    send(fileThumbnail.toEntity())
+                }
+            )
         }
     }
 

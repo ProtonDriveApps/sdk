@@ -65,7 +65,7 @@ actor DownloadThumbnailsManager {
             }
         }
 
-        let thumbnailsRequest = Proton_Drive_Sdk_DrivePhotosClientEnumeratePhotosThumbnailsRequest.with {
+        let thumbnailsRequest = Proton_Drive_Sdk_DrivePhotosClientGetThumbnailsRequest.with {
             $0.clientHandle = Int64(clientHandle)
             $0.photoUids = photoUids.map(\.sdkCompatibleIdentifier)
             $0.type = type.sdkType
