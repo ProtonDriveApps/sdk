@@ -30,6 +30,7 @@ import java.nio.ByteBuffer
 class ProtonDriveSdkNativeClient internal constructor(
     val name: String,
     val response: ClientResponseCallback<ProtonDriveSdkNativeClient> = { _, _ -> error("response not configured for $name") },
+    val enumerate: suspend (ByteBuffer) -> Unit = { error("enumerate not configured for $name") },
     val read: suspend (ByteBuffer) -> Int = { error("read not configured for $name") },
     val write: suspend (ByteBuffer) -> Unit = { error("write not configured for $name") },
     val seek: (suspend (Long, Int) -> Long)? = null,
@@ -104,6 +105,14 @@ class ProtonDriveSdkNativeClient internal constructor(
         logger(VERBOSE, "response for $name of size: ${data.capacity()}")
         response(this, data)
     }
+
+    @Suppress("unused") // Called by JNI
+    fun onEnumerate(data: ByteBuffer) = onCallback(
+        callback = "enumerate",
+        data = data,
+        parser = { it },
+        block = enumerate,
+    )
 
     @Suppress("unused") // Called by JNI
     fun onProgress(data: ByteBuffer) = onCallback(
@@ -402,6 +411,9 @@ class ProtonDriveSdkNativeClient internal constructor(
 
         @JvmStatic
         external fun getSeekPointer(): Long
+
+        @JvmStatic
+        external fun getEnumeratePointer(): Long
 
         @JvmStatic
         external fun getProgressPointer(): Long

@@ -6,6 +6,7 @@ import me.proton.drive.sdk.LoggerProvider.Level.VERBOSE
 import proton.drive.sdk.ProtonDriveSdk.Request
 import proton.drive.sdk.RequestKt
 import proton.drive.sdk.request
+import java.nio.ByteBuffer
 
 abstract class JniBaseProtonDriveSdk : JniBase() {
 
@@ -41,6 +42,32 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
                 clients -= client
             },
             logger = internalLogger,
+        )
+        clients += nativeClient
+        nativeClient.handleRequest(request(block))
+    }
+
+    suspend fun <T, E> executeEnumerate(
+        name: String,
+        callback: (CancellableContinuation<T>) -> ResponseCallback,
+        enumerate: suspend (E) -> Unit,
+        parser: (ByteBuffer) -> E,
+        coroutineScopeProvider: CoroutineScopeProvider,
+        block: RequestKt.Dsl.() -> Unit,
+    ): T = suspendCancellableCoroutine { continuation ->
+        check(released.not()) { "Cannot executeOnce ${method(name)} after release" }
+        // Create the callback here to capture the call stack trace
+        val responseCallback = callback(continuation)
+        val nativeClient = ProtonDriveSdkNativeClient(
+            name = method(name),
+            response = { client, buffer ->
+                responseCallback(buffer)
+                client.release()
+                clients -= client
+            },
+            enumerate = { data -> enumerate(parser(data)) },
+            logger = internalLogger,
+            coroutineScopeProvider = coroutineScopeProvider,
         )
         clients += nativeClient
         nativeClient.handleRequest(request(block))

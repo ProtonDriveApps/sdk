@@ -202,7 +202,7 @@ extension Message {
                 $0.payload = .drivePhotosClientFree(request)
             }
 
-        case let request as Proton_Drive_Sdk_DrivePhotosClientEnumeratePhotosThumbnailsRequest:
+        case let request as Proton_Drive_Sdk_DrivePhotosClientGetThumbnailsRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .drivePhotosClientEnumeratePhotosThumbnails(request)
             }

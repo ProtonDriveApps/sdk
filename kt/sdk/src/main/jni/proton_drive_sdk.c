@@ -71,6 +71,10 @@ void onSeek(
     pushDataAndLongToVoidMethod(bindings_handle, value, sdk_handle, "onSeek");
 }
 
+void onEnumerate(intptr_t bindings_handle, ByteArray value) {
+    pushDataToVoidMethod(bindings_handle, value, "onEnumerate");
+}
+
 void onProgress(intptr_t bindings_handle, ByteArray value) {
     pushDataToVoidMethod(bindings_handle, value, "onProgress");
 }
@@ -138,6 +142,13 @@ jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getSeekPointe
         jclass clazz
 ) {
     return (jlong) (intptr_t) &onSeek;
+}
+
+jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getEnumeratePointer(
+        JNIEnv *env,
+        jclass clazz
+) {
+    return (jlong) (intptr_t) &onEnumerate;
 }
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getProgressPointer(
