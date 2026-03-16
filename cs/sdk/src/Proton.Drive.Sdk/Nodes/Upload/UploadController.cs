@@ -70,15 +70,21 @@ public sealed class UploadController : IAsyncDisposable
                     return;
                 }
 
+                var draftExists = _revisionDraftTask.IsCompletedSuccessfully;
                 if (Completion.IsFaulted)
                 {
-                    var revisionDraft = await _revisionDraftTask.ConfigureAwait(false);
+                    long numberOfPlainBytesDone = 0;
+                    if (draftExists)
+                    {
+                        var revisionDraft = await _revisionDraftTask.ConfigureAwait(false);
+                        numberOfPlainBytesDone = revisionDraft.NumberOfPlainBytesDone;
+                    }
+
                     _onFailed?.Invoke(
                         Completion.Exception.Flatten().InnerException ?? Completion.Exception,
-                        revisionDraft.NumberOfPlainBytesDone);
+                        numberOfPlainBytesDone);
                 }
 
-                var draftExists = _revisionDraftTask.IsCompletedSuccessfully;
                 if (!draftExists)
                 {
                     return;

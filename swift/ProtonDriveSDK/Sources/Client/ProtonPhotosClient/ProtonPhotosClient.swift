@@ -221,6 +221,16 @@ extension ProtonPhotosClient {
             progressCallback: progressCallback
         )
 
+        return try await startUpload(
+            operation: operation,
+            onRetriableErrorReceived: onRetriableErrorReceived
+        )
+    }
+
+    public func startUpload(
+        operation: UploadOperation,
+        onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
+    ) async throws -> UploadedFileIdentifiers {
         return try await operation.awaitUploadWithResilience(
             operationalResilience: configuration.uploadOperationalResilience,
             onRetriableErrorReceived: onRetriableErrorReceived

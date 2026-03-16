@@ -205,8 +205,8 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             progressCallback: progressCallback
         )
 
-        return try await operation.awaitUploadWithResilience(
-            operationalResilience: configuration.uploadOperationalResilience,
+        return try await startUpload(
+            operation: operation,
             onRetriableErrorReceived: onRetriableErrorReceived
         )
     }
@@ -236,6 +236,16 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             expectedSHA1: expectedSHA1,
             cancellationToken: cancellationToken,
             progressCallback: progressCallback
+        )
+    }
+
+    public func startUpload(
+        operation: UploadOperation,
+        onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
+    ) async throws -> UploadedFileIdentifiers {
+        return try await operation.awaitUploadWithResilience(
+            operationalResilience: configuration.uploadOperationalResilience,
+            onRetriableErrorReceived: onRetriableErrorReceived
         )
     }
 
