@@ -77,7 +77,7 @@ class ProtonDriveClient internal constructor(
         fileUids: List<String>,
         type: ThumbnailType,
     ): Flow<FileThumbnail> = channelFlow {
-        log(INFO, "enumerateThumbnails($type)")
+        log(INFO, "enumerateThumbnails(${fileUids.size}, $type)")
         cancellationCoroutineScope { source ->
             bridge.enumerateThumbnails(
                 coroutineScope = this@channelFlow,

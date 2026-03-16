@@ -52,7 +52,7 @@ class ProtonPhotosClient internal constructor(
         photoUids: List<String>,
         type: ThumbnailType,
     ): Flow<FileThumbnail> = channelFlow {
-        log(INFO, "enumerateThumbnails($type)")
+        log(INFO, "enumerateThumbnails(${photoUids.size}, $type)")
         cancellationCoroutineScope { source ->
             bridge.enumerateThumbnails(
                 coroutineScope = this@channelFlow,
