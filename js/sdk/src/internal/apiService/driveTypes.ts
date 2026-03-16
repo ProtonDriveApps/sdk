@@ -2644,6 +2644,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drive/shares/{shareID}/editors-can-share": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update editorsCanShare property of a share
+         * @description Only allowed to volume owners and members with Admin rights on the Parent
+         */
+        put: operations["put_drive-shares-{shareID}-editors-can-share"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drive/shares/{shareID}/owner": {
         parameters: {
             query?: never;
@@ -2676,6 +2696,7 @@ export interface paths {
         put?: never;
         /**
          * Update properties of a share
+         * @deprecated
          * @description Update the values on one or more properties of the Share. For now, only allowed changing editorsCanShare attribute
          */
         post: operations["post_drive-shares-{shareID}-property"];
@@ -6389,6 +6410,10 @@ export interface components {
              * @enum {integer}
              */
             Code: 1000;
+        };
+        UpdateShareEditorsCanShareRequestDto: {
+            /** @description Indicates if editor members of this share could reshare it or not */
+            Value: boolean;
         };
         TransferInput: {
             /** @description The ID of the new address */
@@ -12350,6 +12375,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListSharesResponseDto"];
+                };
+            };
+        };
+    };
+    "put_drive-shares-{shareID}-editors-can-share": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateShareEditorsCanShareRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessfulResponse"];
                 };
             };
         };

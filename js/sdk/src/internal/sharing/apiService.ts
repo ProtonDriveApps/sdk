@@ -79,12 +79,12 @@ type PostCreateShareResponse =
     drivePaths['/drive/volumes/{volumeID}/shares']['post']['responses']['200']['content']['application/json'];
 
 type PostChangeSharePropertiesRequest = Extract<
-    drivePaths['/drive/shares/{shareID}/property']['post']['requestBody'],
+    drivePaths['/drive/shares/{shareID}/editors-can-share']['put']['requestBody'],
     { content: object }
 >['content']['application/json'];
 
 type PostChangeSharePropertiesResponse =
-    drivePaths['/drive/shares/{shareID}/property']['post']['responses']['200']['content']['application/json'];
+    drivePaths['/drive/shares/{shareID}/editors-can-share']['put']['responses']['200']['content']['application/json'];
 
 type PostInviteProtonUserRequest = Extract<
     drivePaths['/drive/v2/shares/{shareID}/invitations']['post']['requestBody'],
@@ -423,9 +423,9 @@ export class SharingAPIService {
     }
 
     async changeShareProperties(shareId: string, { editorsCanShare }: { editorsCanShare: boolean }) {
-        await this.apiService.post<PostChangeSharePropertiesRequest, PostChangeSharePropertiesResponse>(
-            `drive/shares/${shareId}/property`,
-            { EditorsCanShare: editorsCanShare },
+        await this.apiService.put<PostChangeSharePropertiesRequest, PostChangeSharePropertiesResponse>(
+            `drive/shares/${shareId}/editors-can-share`,
+            { Value: editorsCanShare },
         );
     }
 
