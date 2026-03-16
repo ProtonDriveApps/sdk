@@ -104,6 +104,9 @@
       "File has no content key": [
         "Файл не мае ключа змесціва"
       ],
+      "File has no revision": [
+        "У файла адсутнічае рэдакцыя"
+      ],
       "File hash does not match expected hash": [
         "Хэш файла не супадае з чаканым хэшам"
       ],
