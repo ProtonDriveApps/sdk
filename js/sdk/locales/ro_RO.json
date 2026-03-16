@@ -20,6 +20,9 @@
       "Cannot share root folder": [
         "Nu se poate partaja folderul rădăcină."
       ],
+      "Content key packet is required for small revision upload": [
+        "Pentru încărcarea revizuirilor mici este necesar pachetul cheii conținutului."
+      ],
       "Copy operation aborted": [
         "Copierea a fost anulată."
       ],
@@ -103,6 +106,9 @@
       ],
       "File has no content key": [
         "Fișierul nu are nicio cheie de conținut."
+      ],
+      "File has no revision": [
+        "Fișierul nu are nicio revizie."
       ],
       "File hash does not match expected hash": [
         "Codul de verificare al fișierului nu corespunde cu cel așteptat."
