@@ -1,5 +1,11 @@
 # Changelog
 
+## cs/v0.8.1 (2026-03-16)
+
+* Fix disposal of upload controller and update upload bindings api
+* Add streaming thumbnails enumeration for Drive and Photos clients
+* Update download event values for tests
+
 ## cs/v0.8.0 (2026-03-12)
 
 * Implement upload to Photos
