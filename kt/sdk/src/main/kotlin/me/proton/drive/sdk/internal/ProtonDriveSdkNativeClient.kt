@@ -27,10 +27,10 @@ import proton.sdk.ProtonSdk.Response
 import proton.sdk.response
 import java.nio.ByteBuffer
 
-class ProtonDriveSdkNativeClient internal constructor(
+class ProtonDriveSdkNativeClient<E> internal constructor(
     val name: String,
-    val response: ClientResponseCallback<ProtonDriveSdkNativeClient> = { _, _ -> error("response not configured for $name") },
-    val enumerate: suspend (ByteBuffer) -> Unit = { error("enumerate not configured for $name") },
+    val response: ClientResponseCallback<ProtonDriveSdkNativeClient<E>> = { _, _ -> error("response not configured for $name") },
+    val enumerateHandler: EnumerateHandler<E> = EnumerateHandler.notConfigured(name),
     val read: suspend (ByteBuffer) -> Int = { error("read not configured for $name") },
     val write: suspend (ByteBuffer) -> Unit = { error("write not configured for $name") },
     val seek: (suspend (Long, Int) -> Long)? = null,
@@ -110,8 +110,8 @@ class ProtonDriveSdkNativeClient internal constructor(
     fun onEnumerate(data: ByteBuffer) = onCallback(
         callback = "enumerate",
         data = data,
-        parser = { it },
-        block = enumerate,
+        parser = enumerateHandler.parser,
+        block = enumerateHandler.callback,
     )
 
     @Suppress("unused") // Called by JNI
