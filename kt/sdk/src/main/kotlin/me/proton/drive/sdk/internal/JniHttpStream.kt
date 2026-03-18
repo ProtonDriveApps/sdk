@@ -10,7 +10,7 @@ import java.nio.channels.ReadableByteChannel
 class JniHttpStream internal constructor(
 ) : JniBaseProtonSdk() {
 
-    private var client: ProtonDriveSdkNativeClient? = null
+    private var client: ProtonDriveSdkNativeClient<*>? = null
 
     internal var onBodyRead: (suspend () -> Unit)? = null
 
@@ -18,7 +18,7 @@ class JniHttpStream internal constructor(
         coroutineScope: CoroutineScope,
         channel: ReadableByteChannel,
     ): Long {
-        return ProtonDriveSdkNativeClient(
+        return ProtonDriveSdkNativeClient<Nothing>(
             name = method("write"),
             readHttpBody = { buffer ->
                 channel.read(buffer).also { numberOfByteRead ->

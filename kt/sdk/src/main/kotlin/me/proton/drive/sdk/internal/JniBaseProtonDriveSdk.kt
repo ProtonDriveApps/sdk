@@ -11,14 +11,14 @@ import java.nio.ByteBuffer
 abstract class JniBaseProtonDriveSdk : JniBase() {
 
     private var released = false
-    private var clients = emptyList<ProtonDriveSdkNativeClient>()
+    private var clients = emptyList<ProtonDriveSdkNativeClient<*>>()
 
     fun dispatch(
         name: String,
         block: RequestKt.Dsl.() -> Unit,
     ) {
         check(released.not()) { "Cannot dispatch ${method(name)} after release" }
-        val nativeClient = ProtonDriveSdkNativeClient(
+        val nativeClient = ProtonDriveSdkNativeClient<Nothing>(
             method(name),
             IgnoredIntegerOrErrorResponse(),
             logger = internalLogger,
@@ -34,7 +34,7 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
         check(released.not()) { "Cannot executeOnce ${method(name)} after release" }
         // Create the callback here to capture the call stack trace
         val responseCallback = callback(continuation)
-        val nativeClient = ProtonDriveSdkNativeClient(
+        val nativeClient = ProtonDriveSdkNativeClient<Nothing>(
             name = method(name),
             response = { client, buffer ->
                 responseCallback(buffer)
@@ -65,7 +65,7 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
                 client.release()
                 clients -= client
             },
-            enumerate = { data -> enumerate(parser(data)) },
+            enumerateHandler = EnumerateHandler.create(enumerate, parser) ,
             logger = internalLogger,
             coroutineScopeProvider = coroutineScopeProvider,
         )
@@ -74,8 +74,8 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
     }
 
     suspend fun <T> executePersistent(
-        clientBuilder: (CancellableContinuation<T>) -> ProtonDriveSdkNativeClient,
-        requestBuilder: (ProtonDriveSdkNativeClient) -> Request,
+        clientBuilder: (CancellableContinuation<T>) -> ProtonDriveSdkNativeClient<Nothing>,
+        requestBuilder: (ProtonDriveSdkNativeClient<Nothing>) -> Request,
     ): T = suspendCancellableCoroutine { continuation ->
         val nativeClient = clientBuilder(continuation)
         check(released.not()) { "Cannot executePersistent ${method(nativeClient.name)} after release" }
