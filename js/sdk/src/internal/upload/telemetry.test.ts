@@ -38,7 +38,9 @@ describe('UploadTelemetry', () => {
             eventName: 'upload',
             volumeType: 'own_volume',
             uploadedSize: 0,
+            approximateUploadedSize: 0,
             expectedSize: 1000,
+            approximateExpectedSize: 4095,
             error: 'unknown',
             originalError: error,
         });
@@ -52,7 +54,9 @@ describe('UploadTelemetry', () => {
             eventName: 'upload',
             volumeType: 'own_volume',
             uploadedSize: 500,
+            approximateUploadedSize: 4095,
             expectedSize: 1000,
+            approximateExpectedSize: 4095,
             error: 'unknown',
             originalError: error,
         });
@@ -65,7 +69,9 @@ describe('UploadTelemetry', () => {
             eventName: 'upload',
             volumeType: 'own_volume',
             uploadedSize: 1000,
+            approximateUploadedSize: 4095,
             expectedSize: 1000,
+            approximateExpectedSize: 4095,
         });
     });
 

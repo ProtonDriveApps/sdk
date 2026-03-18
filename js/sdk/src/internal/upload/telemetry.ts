@@ -1,6 +1,6 @@
 import { RateLimitedError, ValidationError, IntegrityError } from '../../errors';
 import { ProtonDriveTelemetry, MetricsUploadErrorType, Logger } from '../../interface';
-import { LoggerWithPrefix } from '../../telemetry';
+import { LoggerWithPrefix, reduceSizePrecision } from '../../telemetry';
 import { APIHTTPError } from '../apiService';
 import { splitNodeUid, splitNodeRevisionUid } from '../uids';
 import { SharesService } from './interface';
@@ -95,6 +95,8 @@ export class UploadTelemetry {
         this.telemetry.recordMetric({
             eventName: 'upload',
             volumeType,
+            approximateUploadedSize: reduceSizePrecision(options.uploadedSize),
+            approximateExpectedSize: reduceSizePrecision(options.expectedSize),
             ...options,
         });
     }

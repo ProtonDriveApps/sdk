@@ -36,7 +36,9 @@ export interface MetricUploadEvent {
     eventName: 'upload';
     volumeType?: MetricVolumeType;
     uploadedSize: number;
+    approximateUploadedSize: number;
     expectedSize: number;
+    approximateExpectedSize: number;
     error?: MetricsUploadErrorType;
     originalError?: unknown;
 }
@@ -52,7 +54,9 @@ export interface MetricDownloadEvent {
     eventName: 'download';
     volumeType?: MetricVolumeType;
     downloadedSize: number;
+    approximateDownloadedSize: number;
     claimedFileSize?: number;
+    approximateClaimedFileSize?: number;
     error?: MetricsDownloadErrorType;
     originalError?: unknown;
 }
