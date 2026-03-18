@@ -152,7 +152,7 @@ internal static class NodeOperations
         return await DtoToMetadataConverter.ConvertDtoToNodeMetadataAsync(
             client,
             uid.VolumeId,
-            response.Links[0],
+            response.Links is { Count: > 0 } links ? links[0] : throw new ProtonDriveException($"Node \"{uid}\" not found"),
             knownShareAndKey,
             cancellationToken)
             .ConfigureAwait(false);
