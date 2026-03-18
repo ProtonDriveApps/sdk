@@ -583,7 +583,7 @@ internal static class DtoToMetadataConverter
         ShareAndKey? shareAndKeyToUse,
         ShareId? shareId,
         IDriveSecretCache secretCache,
-        Func<IEnumerable<LinkId>, CancellationToken, Task<LinkDetailsDto>> getLinkDetails,
+        Func<LinkId, CancellationToken, Task<LinkDetailsDto>> getLinkDetails,
         CancellationToken cancellationToken)
     {
         if (shareId is not null && shareId == shareAndKeyToUse?.Share.Id)
@@ -621,7 +621,7 @@ internal static class DtoToMetadataConverter
                     break;
                 }
 
-                var linkDetails = await getLinkDetails([currentId.Value], cancellationToken).ConfigureAwait(false);
+                var linkDetails = await getLinkDetails(currentId.Value, cancellationToken).ConfigureAwait(false);
 
                 linkAncestry.Push(linkDetails);
 
@@ -686,10 +686,11 @@ internal static class DtoToMetadataConverter
         return await GetEntryPointKeyAsync(client, volumeId, parentId, shareAndKeyToUse, shareId, client.Cache.Secrets, GetLinkDetailsAsync, cancellationToken)
             .ConfigureAwait(false);
 
-        async Task<LinkDetailsDto> GetLinkDetailsAsync(IEnumerable<LinkId> links, CancellationToken ct)
+        async Task<LinkDetailsDto> GetLinkDetailsAsync(LinkId linkId, CancellationToken ct)
         {
-            var response = await client.Api.Links.GetDetailsAsync(volumeId, links, ct).ConfigureAwait(false);
-            return response.Links[0];
+            var response = await client.Api.Links.GetDetailsAsync(volumeId, [linkId], ct).ConfigureAwait(false);
+
+            return response.Links is { Count: > 0 } links ? links[0] : throw new ProtonDriveException($"Node \"{new NodeUid(volumeId, linkId)}\" not found");
         }
     }
 
