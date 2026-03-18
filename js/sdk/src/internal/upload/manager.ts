@@ -9,6 +9,7 @@ import { UploadAPIService } from './apiService';
 import { UploadCryptoService } from './cryptoService';
 import { NodeRevisionDraft, NodesService, NodeCrypto } from './interface';
 import { makeNodeUid, splitNodeUid } from '../uids';
+import { reduceSizePrecision } from '../../telemetry';
 
 /**
  * UploadManager is responsible for creating and deleting draft nodes
@@ -129,7 +130,7 @@ export class UploadManager {
                 armoredEncryptedName: generatedNodeCrypto.encryptedNode.encryptedName,
                 hash: generatedNodeCrypto.encryptedNode.hash,
                 mediaType: metadata.mediaType,
-                intendedUploadSize: metadata.expectedSize,
+                intendedUploadSize: reduceSizePrecision(metadata.expectedSize),
                 armoredNodeKey: generatedNodeCrypto.nodeKeys.encrypted.armoredKey,
                 armoredNodePassphrase: generatedNodeCrypto.nodeKeys.encrypted.armoredPassphrase,
                 armoredNodePassphraseSignature: generatedNodeCrypto.nodeKeys.encrypted.armoredPassphraseSignature,
@@ -349,7 +350,7 @@ export class UploadManager {
 
         const { nodeRevisionUid } = await this.apiService.createDraftRevision(nodeUid, {
             currentRevisionUid: node.activeRevision.value.uid,
-            intendedUploadSize: metadata.expectedSize,
+            intendedUploadSize: reduceSizePrecision(metadata.expectedSize),
         });
 
         return {

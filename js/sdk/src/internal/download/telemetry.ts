@@ -1,6 +1,6 @@
 import { RateLimitedError, ValidationError, DecryptionError, IntegrityError } from '../../errors';
 import { ProtonDriveTelemetry, MetricsDownloadErrorType, Logger } from '../../interface';
-import { LoggerWithPrefix } from '../../telemetry';
+import { LoggerWithPrefix, reduceSizePrecision } from '../../telemetry';
 import { APIHTTPError } from '../apiService';
 import { splitNodeRevisionUid, splitNodeUid } from '../uids';
 import { SharesService } from './interface';
@@ -83,6 +83,10 @@ export class DownloadTelemetry {
         this.telemetry.recordMetric({
             eventName: 'download',
             volumeType,
+            approximateDownloadedSize: reduceSizePrecision(options.downloadedSize),
+            approximateClaimedFileSize: options.claimedFileSize
+                ? reduceSizePrecision(options.claimedFileSize)
+                : undefined,
             ...options,
         });
     }

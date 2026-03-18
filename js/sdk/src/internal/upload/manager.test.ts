@@ -133,7 +133,7 @@ describe('UploadManager', () => {
                 armoredEncryptedName: 'newNode:encryptedName',
                 hash: 'newNode:hash',
                 mediaType: 'myMimeType',
-                intendedUploadSize: 123456,
+                intendedUploadSize: 100_000,
                 armoredNodeKey: 'newNode:armoredKey',
                 armoredNodePassphrase: 'newNode:armoredPassphrase',
                 armoredNodePassphraseSignature: 'newNode:armoredPassphraseSignature',
