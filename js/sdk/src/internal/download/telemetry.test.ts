@@ -38,6 +38,7 @@ describe('DownloadTelemetry', () => {
             eventName: 'download',
             volumeType: 'own_volume',
             downloadedSize: 0,
+            approximateDownloadedSize: 0,
             error: 'unknown',
             originalError: error,
         });
@@ -51,7 +52,9 @@ describe('DownloadTelemetry', () => {
             eventName: 'download',
             volumeType: 'own_volume',
             downloadedSize: 123,
+            approximateDownloadedSize: 4095,
             claimedFileSize: 456,
+            approximateClaimedFileSize: 4095,
             error: 'unknown',
             originalError: error,
         });
@@ -64,7 +67,9 @@ describe('DownloadTelemetry', () => {
             eventName: 'download',
             volumeType: 'own_volume',
             downloadedSize: 500,
+            approximateDownloadedSize: 4095,
             claimedFileSize: 500,
+            approximateClaimedFileSize: 4095,
         });
     });
 

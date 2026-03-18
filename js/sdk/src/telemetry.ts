@@ -352,3 +352,25 @@ class ConsoleMetricHandler<T extends MetricEvent> implements MetricHandler<T> {
         );
     }
 }
+
+export function reduceSizePrecision(size: number): number {
+    // The client shouldn't send the clear text size of the file.
+    // The intented upload size is needed only for early validation that
+    // the file can fit in the remaining quota to avoid data transfer when
+    // the upload would be rejected. The backend will still validate
+    // the quota during block upload and revision commit.
+    const precision = 100_000; // bytes
+
+    if (size === 0) {
+        return 0;
+    }
+    // We care about very small files in metrics, thus we handle explicitely
+    // the very small files so they appear correctly in metrics.
+    if (size < 4096) {
+        return 4095;
+    }
+    if (size < precision) {
+        return precision;
+    }
+    return Math.floor(size / precision) * precision;
+}
