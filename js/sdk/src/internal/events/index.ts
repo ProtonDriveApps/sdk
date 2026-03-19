@@ -62,7 +62,7 @@ export class DriveEventsService {
         }
 
         const coreEventManager = new CoreEventManager(this.logger, this.apiService);
-        const latestEventId = this.latestEventIdProvider.getLatestEventId('core') ?? null;
+        const latestEventId = await this.latestEventIdProvider.getLatestEventId('core');
         const eventManager = new EventManager(coreEventManager, CORE_POLLING_INTERVAL, latestEventId);
 
         for (const listener of this.cacheEventListeners) {
@@ -105,7 +105,7 @@ export class DriveEventsService {
 
         const isOwnVolume = await this.sharesService.isOwnVolume(volumeId);
         const pollingInterval = this.getDefaultVolumePollingInterval(isOwnVolume);
-        const latestEventId = this.latestEventIdProvider.getLatestEventId(volumeId);
+        const latestEventId = await this.latestEventIdProvider.getLatestEventId(volumeId);
         const eventManager = new EventManager<DriveEvent>(volumeEventManager, pollingInterval, latestEventId);
 
         for (const listener of this.cacheEventListeners) {
