@@ -1,4 +1,5 @@
 using Proton.Sdk;
+using Proton.Sdk.Threading;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
@@ -8,8 +9,8 @@ public sealed class UploadController : IAsyncDisposable
     private readonly Func<CancellationToken, Task<UploadResult>> _resumeFunction;
     private readonly ITaskControl _taskControl;
     private readonly Stream? _sourceStreamToDispose;
-    private readonly Action<Exception, long>? _onFailed;
-    private readonly Action<long>? _onSucceeded;
+    private readonly Func<Exception, long, ValueTask>? _onFailedAsync;
+    private readonly Func<long, ValueTask>? _onSucceededAsync;
 
     private bool _isDisposed;
 
@@ -19,15 +20,15 @@ public sealed class UploadController : IAsyncDisposable
         Func<CancellationToken, Task<UploadResult>> resumeFunction,
         Stream? sourceStreamToDispose,
         ITaskControl taskControl,
-        Action<Exception, long>? onFailed = null,
-        Action<long>? onSucceeded = null)
+        Func<Exception, long, ValueTask>? onFailedAsync = null,
+        Func<long, ValueTask>? onSucceededAsync = null)
     {
         _revisionDraftTask = revisionDraftTask;
         _resumeFunction = resumeFunction;
         _taskControl = taskControl;
         _sourceStreamToDispose = sourceStreamToDispose;
-        _onFailed = onFailed;
-        _onSucceeded = onSucceeded;
+        _onFailedAsync = onFailedAsync;
+        _onSucceededAsync = onSucceededAsync;
 
         Completion = PauseOnResumableErrorAsync(uploadTask, taskControl.Attempt);
     }
@@ -65,32 +66,37 @@ public sealed class UploadController : IAsyncDisposable
         {
             try
             {
-                if (Completion.IsCompletedSuccessfully)
+                Exception? exception = null;
+                try
                 {
-                    return;
+                    await Completion.ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
                 }
 
-                var draftExists = _revisionDraftTask.IsCompletedSuccessfully;
-                if (Completion.IsFaulted)
+                var draft = _revisionDraftTask.GetResultIfCompletedSuccessfully();
+
+                try
                 {
-                    long numberOfPlainBytesDone = 0;
-                    if (draftExists)
+                    if (exception is not null)
                     {
-                        var revisionDraft = await _revisionDraftTask.ConfigureAwait(false);
-                        numberOfPlainBytesDone = revisionDraft.NumberOfPlainBytesDone;
+                        var numberOfPlainBytesDone = draft?.NumberOfPlainBytesDone ?? 0;
+
+                        if (_onFailedAsync is not null)
+                        {
+                            await _onFailedAsync.Invoke(exception, numberOfPlainBytesDone).ConfigureAwait(false);
+                        }
                     }
-
-                    _onFailed?.Invoke(
-                        Completion.Exception.Flatten().InnerException ?? Completion.Exception,
-                        numberOfPlainBytesDone);
                 }
-
-                if (!draftExists)
+                catch
                 {
-                    return;
+                    if (draft is not null)
+                    {
+                        await draft.DisposeAsync().ConfigureAwait(false);
+                    }
                 }
-
-                await _revisionDraftTask.Result.DisposeAsync().ConfigureAwait(false);
             }
             finally
             {
@@ -155,13 +161,14 @@ public sealed class UploadController : IAsyncDisposable
 
     private async ValueTask InvokeOnSucceededAsync()
     {
-        var onSucceededHandler = _onSucceeded;
+        var onSucceededHandler = _onSucceededAsync;
         if (onSucceededHandler is null)
         {
             return;
         }
 
         var revisionDraft = await _revisionDraftTask.ConfigureAwait(false);
-        onSucceededHandler.Invoke(revisionDraft.NumberOfPlainBytesDone);
+
+        await onSucceededHandler.Invoke(revisionDraft.NumberOfPlainBytesDone).ConfigureAwait(false);
     }
 }

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Proton.Drive.Sdk.Telemetry;
 using Proton.Sdk;
+using Proton.Sdk.Threading;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
@@ -122,9 +123,6 @@ public sealed partial class FileUploader : IDisposable
 
         var revisionDraftTaskCompletionSource = new TaskCompletionSource<RevisionDraft>();
 
-        var uploadEvent = TelemetryEventFactory.CreateUploadEventAsync(_client, _telemetryContextNodeUid, contentStream.Length, cancellationToken)
-            .ConfigureAwait(false).GetAwaiter().GetResult();
-
         var uploadFunction = (CancellationToken ct) => UploadFromStreamAsync(
             contentStream,
             thumbnails,
@@ -139,15 +137,18 @@ public sealed partial class FileUploader : IDisposable
             uploadFunction,
             ownsContentStream ? contentStream : null,
             taskControl,
-            OnFailed,
-            OnSucceeded);
+            OnFailedAsync,
+            OnSucceededAsync);
 
-        void OnFailed(Exception ex, long uploadedByteCount)
+        async ValueTask OnFailedAsync(Exception ex, long uploadedByteCount)
         {
             if (ex is NodeWithSameNameExistsException)
             {
                 return;
             }
+
+            var uploadEvent = await TelemetryEventFactory.CreateUploadEventAsync(_client, _telemetryContextNodeUid, contentStream.Length, cancellationToken)
+                .ConfigureAwait(false);
 
             uploadEvent.UploadedSize = uploadedByteCount;
             uploadEvent.ApproximateUploadedSize = Privacy.ReduceSizePrecision(uploadedByteCount);
@@ -156,8 +157,11 @@ public sealed partial class FileUploader : IDisposable
             RaiseTelemetryEvent(uploadEvent);
         }
 
-        void OnSucceeded(long uploadedByteCount)
+        async ValueTask OnSucceededAsync(long uploadedByteCount)
         {
+            var uploadEvent = await TelemetryEventFactory.CreateUploadEventAsync(_client, _telemetryContextNodeUid, contentStream.Length, cancellationToken)
+                .ConfigureAwait(false);
+
             uploadEvent.UploadedSize = uploadedByteCount;
             uploadEvent.ApproximateUploadedSize = Privacy.ReduceSizePrecision(uploadedByteCount);
             RaiseTelemetryEvent(uploadEvent);
@@ -172,16 +176,15 @@ public sealed partial class FileUploader : IDisposable
         TaskCompletionSource<RevisionDraft> revisionDraftTaskCompletionSource,
         CancellationToken cancellationToken)
     {
-        if (!revisionDraftTaskCompletionSource.Task.IsCompletedSuccessfully)
+        var revisionDraft = revisionDraftTaskCompletionSource.Task.GetResultIfCompletedSuccessfully();
+        if (revisionDraft is null)
         {
-            revisionDraftTaskCompletionSource.SetResult(
-                await _revisionDraftProvider.GetDraftAsync(cancellationToken).ConfigureAwait(false));
+            revisionDraft = await _revisionDraftProvider.GetDraftAsync(cancellationToken).ConfigureAwait(false);
+            revisionDraftTaskCompletionSource.SetResult(revisionDraft);
         }
 
-        var revisionDraft = revisionDraftTaskCompletionSource.Task.Result;
-
         await UploadAsync(
-            revisionDraftTaskCompletionSource.Task.Result,
+            revisionDraft,
             contentStream,
             thumbnails,
             onProgress,

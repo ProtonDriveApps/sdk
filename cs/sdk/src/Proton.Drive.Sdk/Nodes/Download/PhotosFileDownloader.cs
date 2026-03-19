@@ -81,7 +81,7 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
             downloadStateTaskCompletionSource.SetResult(state);
         }
 
-        var downloadState = downloadStateTaskCompletionSource.Task.Result;
+        var downloadState = await downloadStateTaskCompletionSource.Task.ConfigureAwait(false);
 
         await _client.DriveClient.BlockDownloader.Queue.StartFileAsync(cancellationToken).ConfigureAwait(false);
 
@@ -118,10 +118,10 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
             downloadFunction,
             ownsOutputStream ? contentOutputStream : null,
             taskControl,
-            OnFailed,
-            OnSucceeded);
+            OnFailedAsync,
+            OnSucceededAsync);
 
-        void OnFailed(Exception ex, long claimedFileSize, long downloadedByteCount)
+        ValueTask OnFailedAsync(Exception ex, long claimedFileSize, long downloadedByteCount)
         {
             // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize
             downloadEvent.ClaimedFileSize = claimedFileSize;
@@ -131,9 +131,10 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
             downloadEvent.Error = TelemetryErrorResolver.GetDownloadErrorFromException(ex);
             downloadEvent.OriginalError = ex;
             RaiseTelemetryEvent(downloadEvent);
+            return ValueTask.CompletedTask;
         }
 
-        void OnSucceeded(long claimedFileSize, long downloadedByteCount)
+        ValueTask OnSucceededAsync(long claimedFileSize, long downloadedByteCount)
         {
             // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize
             downloadEvent.ClaimedFileSize = claimedFileSize;
@@ -141,6 +142,7 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
             downloadEvent.DownloadedSize = downloadedByteCount;
             downloadEvent.ApproximateDownloadedSize = Privacy.ReduceSizePrecision(downloadedByteCount);
             RaiseTelemetryEvent(downloadEvent);
+            return ValueTask.CompletedTask;
         }
     }
 

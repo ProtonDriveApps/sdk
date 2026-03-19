@@ -17,7 +17,7 @@ public sealed class InMemoryCacheRepository : ICacheRepository, IDisposable
 
     ValueTask ICacheRepository.SetAsync(string key, string value, IEnumerable<string> tags, CancellationToken cancellationToken)
     {
-        Set(key, value, tags, cancellationToken);
+        Set(key, value, tags);
 
         return ValueTask.CompletedTask;
     }
@@ -54,7 +54,7 @@ public sealed class InMemoryCacheRepository : ICacheRepository, IDisposable
         return ValueTask.CompletedTask;
     }
 
-    public void Set(string key, string value, IEnumerable<string> tags, CancellationToken cancellationToken)
+    public void Set(string key, string value, IEnumerable<string> tags)
     {
         _lock.EnterWriteLock();
         try
