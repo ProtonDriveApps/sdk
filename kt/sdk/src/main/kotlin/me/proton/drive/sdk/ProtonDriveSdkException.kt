@@ -7,28 +7,36 @@ class ProtonDriveSdkException(
 ) : Throwable(message, cause) {
     override fun toString(): String = buildString {
         appendLine(super.toString())
-        appendError(error)
+        appendError(error, logMode = LogMode.Full)
     }
 }
 
-fun ProtonDriveSdkException.errorToString(): String = buildString {
+enum class LogMode {
+    Safe, Full
+}
+
+fun ProtonDriveSdkException.errorToString(logMode: LogMode = LogMode.Safe): String = buildString {
     error?.let { error ->
         appendLine("SDK error: ${error.message}")
-        appendError(error)
+        appendError(error, logMode)
     }
 }
 
-private fun StringBuilder.appendError(error: ProtonSdkError?) {
+private fun StringBuilder.appendError(error: ProtonSdkError?, logMode: LogMode) {
     error?.run {
         appendLine("type: $type")
         appendLine("domain: $domain")
         appendLine("primaryCode: $primaryCode")
         appendLine("secondaryCode: $secondaryCode")
-        appendLine("additionalData: $additionalData")
+        val data = when (logMode) {
+            LogMode.Safe -> additionalData?.toSafe()
+            LogMode.Full -> additionalData
+        }
+        appendLine("additionalData: ${data}")
         appendLine(context)
         if (innerError != null) {
             appendLine("Caused by: ${innerError.message}")
-            appendError(innerError)
+            appendError(innerError, logMode)
         }
     }
 }
