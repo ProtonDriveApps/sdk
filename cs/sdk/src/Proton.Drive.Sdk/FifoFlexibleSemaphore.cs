@@ -18,7 +18,7 @@ internal sealed class FifoFlexibleSemaphore
     public int MaximumCount { get; }
     public int CurrentCount { get; private set; }
 
-    public ValueTask EnterAsync(int count, CancellationToken cancellationToken = default)
+    public async ValueTask EnterAsync(int count, CancellationToken cancellationToken = default)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(count);
 
@@ -28,7 +28,7 @@ internal sealed class FifoFlexibleSemaphore
             if (CurrentCount > 0)
             {
                 CurrentCount -= count;
-                return ValueTask.CompletedTask;
+                return;
             }
 
             tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -39,11 +39,13 @@ internal sealed class FifoFlexibleSemaphore
 
         if (cancellationToken.IsCancellationRequested)
         {
-            cancellationTokenRegistration.Dispose();
-            return ValueTask.FromCanceled(cancellationToken);
+            await cancellationTokenRegistration.DisposeAsync().ConfigureAwait(false);
+            return;
         }
 
-        return WaitAsync();
+        await WaitAsync().ConfigureAwait(false);
+
+        return;
 
         async ValueTask WaitAsync()
         {

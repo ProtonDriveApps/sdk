@@ -1,4 +1,5 @@
 using Proton.Sdk;
+using Proton.Sdk.Threading;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 
@@ -8,8 +9,8 @@ public sealed class DownloadController : IAsyncDisposable
     private readonly Func<CancellationToken, Task> _resumeFunction;
     private readonly ITaskControl _taskControl;
     private readonly Stream? _outputStreamToDispose;
-    private readonly Action<Exception, long, long>? _onFailed;
-    private readonly Action<long, long>? _onSucceeded;
+    private readonly Func<Exception, long, long, ValueTask>? _onFailedAsync;
+    private readonly Func<long, long, ValueTask>? _onSucceededAsync;
 
     private bool _isDownloadCompleteWithVerificationIssue;
 
@@ -19,15 +20,15 @@ public sealed class DownloadController : IAsyncDisposable
         Func<CancellationToken, Task> resumeFunction,
         Stream? outputStreamToDispose,
         ITaskControl taskControl,
-        Action<Exception, long, long>? onFailed = null,
-        Action<long, long>? onSucceeded = null)
+        Func<Exception, long, long, ValueTask>? onFailedAsync = null,
+        Func<long, long, ValueTask>? onSucceededAsync = null)
     {
         _downloadStateTask = downloadStateTask;
         _resumeFunction = resumeFunction;
         _taskControl = taskControl;
         _outputStreamToDispose = outputStreamToDispose;
-        _onFailed = onFailed;
-        _onSucceeded = onSucceeded;
+        _onFailedAsync = onFailedAsync;
+        _onSucceededAsync = onSucceededAsync;
 
         Completion = PauseOnResumableErrorAsync(downloadTask, taskControl.Attempt);
     }
@@ -63,27 +64,35 @@ public sealed class DownloadController : IAsyncDisposable
         {
             try
             {
-                if (Completion.IsCompletedSuccessfully)
+                Exception? exception = null;
+                try
                 {
-                    return;
+                    await Completion.ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
                 }
 
-                if (Completion.IsFaulted)
-                {
-                    var downloadState = await _downloadStateTask.ConfigureAwait(false);
-                    _onFailed?.Invoke(
-                        Completion.Exception.Flatten().InnerException ?? Completion.Exception,
-                        downloadState.RevisionDto.Size,
-                        downloadState.GetNumberOfBytesWritten());
-                }
+                var downloadState = _downloadStateTask.GetResultIfCompletedSuccessfully();
 
-                var stateExists = _downloadStateTask.IsCompletedSuccessfully;
-                if (!stateExists)
+                try
                 {
-                    return;
+                    if (exception is not null && _onFailedAsync is not null)
+                    {
+                        await _onFailedAsync.Invoke(
+                            exception,
+                            downloadState?.RevisionDto.Size ?? 0,
+                            downloadState?.GetNumberOfBytesWritten() ?? 0).ConfigureAwait(false);
+                    }
                 }
-
-                await _downloadStateTask.Result.DisposeAsync().ConfigureAwait(false);
+                catch
+                {
+                    if (downloadState is not null)
+                    {
+                        await downloadState.DisposeAsync().ConfigureAwait(false);
+                    }
+                }
             }
             finally
             {
@@ -131,7 +140,7 @@ public sealed class DownloadController : IAsyncDisposable
         }
         catch (Exception ex) when (IsResumableError(ex))
         {
-            if (_taskControl.Attempt == attempt)
+            if (_taskControl.Attempt == attempt && !_taskControl.IsPaused)
             {
                 _taskControl.Pause();
             }
@@ -151,7 +160,7 @@ public sealed class DownloadController : IAsyncDisposable
 
     private async ValueTask FinalizeDownloadAsync()
     {
-        var onSucceededHandler = _onSucceeded;
+        var onSucceededHandler = _onSucceededAsync;
         if (onSucceededHandler is null)
         {
             return;
@@ -163,8 +172,9 @@ public sealed class DownloadController : IAsyncDisposable
         }
 
         var downloadState = await _downloadStateTask.ConfigureAwait(false);
-        onSucceededHandler.Invoke(
+
+        await onSucceededHandler.Invoke(
             downloadState.RevisionDto.Size,
-            downloadState.GetNumberOfBytesWritten());
+            downloadState.GetNumberOfBytesWritten()).ConfigureAwait(false);
     }
 }
