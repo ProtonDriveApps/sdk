@@ -123,22 +123,8 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
             if let innerError = innerErrorBox?.innerError.asProton_Sdk_Error {
                 $0.innerError = innerError
             }
-            switch additionalErrorData {
-            case .some(let data as NodeNameConflictErrorData):
-                let errorData = Proton_Drive_Sdk_NodeNameConflictErrorData.with {
-                    $0.conflictingNodeIsFileDraft = data.isFileDraft
-                    if let conflictingNodeId = data.nodeUID {
-                        $0.conflictingNodeUid = conflictingNodeId.sdkCompatibleIdentifier
-                    }
-                    if let conflictingRevisionUid = data.revisionUID {
-                        $0.conflictingRevisionUid = conflictingRevisionUid.sdkCompatibleIdentifier
-                    }
-                }
-                if let additionalData = try? Google_Protobuf_Any(message: errorData) {
-                    $0.additionalData = additionalData
-                }
-                
-            case .some, nil: break
+            if let data = additionalErrorData?.toProtobufAny() {
+                $0.additionalData = data
             }
         }
     }
@@ -201,7 +187,7 @@ public extension ProtonDriveSDKError {
         case manifestSignatureVerificationErrorPrimaryCode:
             return .manifestSignatureVerification(message: message, context: context)
         case contentUploadIntegrityErrorPrimaryCode:
-            return .contentUploadIntegrity(message: message, context: context)
+            return .contentUploadIntegrity(message: message, context: context, additionalData: additionalErrorData?.errorDescription())
         case unknownDecryptionErrorPrimaryCode:
             return .unknown(message: message, context: context)
         default:
@@ -221,7 +207,7 @@ public enum ProtonDriveSDKDataIntegrityError: LocalizedError {
     case fileContents(message: String, context: String?)
     case uploadKeyMismatch(message: String, context: String?)
     case manifestSignatureVerification(message: String, context: String?)
-    case contentUploadIntegrity(message: String, context: String?)
+    case contentUploadIntegrity(message: String, context: String?, additionalData: String?)
 
     public enum NodeMetadataPart: Int, Sendable {
         case key = 0
@@ -237,7 +223,7 @@ public enum ProtonDriveSDKDataIntegrityError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .unknown(let message, _), .shareMetadata(let message, _), .nodeMetadata(let message, _, _), .fileContents(let message, _),
-             .uploadKeyMismatch(let message, _), .manifestSignatureVerification(let message, _), .contentUploadIntegrity(let message, _):
+             .uploadKeyMismatch(let message, _), .manifestSignatureVerification(let message, _), .contentUploadIntegrity(let message, _, _):
             return message
         }
     }
