@@ -18,7 +18,7 @@ export interface EventSubscription {
 }
 
 export interface LatestEventIdProvider {
-    getLatestEventId(treeEventScopeId: string): string | null;
+    getLatestEventId(treeEventScopeId: string): Promise<string | null>;
 }
 
 /**
