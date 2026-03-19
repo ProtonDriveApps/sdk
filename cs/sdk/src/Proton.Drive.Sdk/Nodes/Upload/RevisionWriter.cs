@@ -183,7 +183,7 @@ internal sealed partial class RevisionWriter : IDisposable
 
                 return blockState.TryGetSecond(out var uploadResult)
                     ? (Number: blockNumber, Value: uploadResult)
-                    : throw new IntegrityException($"Missing content block #{blockNumber}");
+                    : throw new MissingContentBlockIntegrityException(blockNumber);
             });
 
         var blockUploadResults = _draft.OrderedThumbnailUploadResults.Select(x => (Number: 0, Value: x)).Concat(contentBlockUploadResults);
@@ -206,12 +206,16 @@ internal sealed partial class RevisionWriter : IDisposable
 
         if (uploadedContentSize != expectedContentLength)
         {
-            throw new IntegrityException("Mismatch between uploaded size and expected size");
+            throw new ContentSizeMismatchIntegrityException(
+                uploadedSize: uploadedContentSize,
+                expectedSize: expectedContentLength);
         }
 
         if (expectedThumbnailBlockCount != _draft.OrderedThumbnailUploadResults.Count)
         {
-            throw new IntegrityException("Unexpected number of thumbnail blocks");
+            throw new ThumbnailCountMismatchIntegrityException(
+                uploadedBlockCount: _draft.OrderedThumbnailUploadResults.Count,
+                expectedBlockCount: expectedThumbnailBlockCount);
         }
 
         if (expectedSha1Provider is not null)
@@ -219,7 +223,9 @@ internal sealed partial class RevisionWriter : IDisposable
             var expectedSha1 = expectedSha1Provider();
             if (!expectedSha1.Span.SequenceEqual(sha1Digest))
             {
-                throw new IntegrityException("Mismatch between uploaded SHA1 and expected SHA1");
+                throw new ChecksumMismatchIntegrityException(
+                    actualChecksum: sha1Digest,
+                    expectedChecksum: expectedSha1.ToArray());
             }
         }
 

@@ -863,3 +863,22 @@ message NodeNameConflictErrorData {
     string conflicting_node_uid = 2;
     string conflicting_revision_uid = 3;
 }
+
+message MissingContentBlockErrorData {
+    int32 block_number = 1;
+}
+
+message ContentSizeMismatchErrorData {
+    int64 uploaded_size = 1;
+    int64 expected_size = 2;
+}
+
+message ThumbnailCountMismatchErrorData {
+    int32 uploaded_block_count = 1;
+    int32 expected_block_count = 2;
+}
+
+message ChecksumMismatchErrorData {
+    bytes actual_checksum = 1;
+    bytes expected_checksum = 2;
+}

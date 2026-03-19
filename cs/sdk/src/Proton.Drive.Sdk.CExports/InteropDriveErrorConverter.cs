@@ -1,4 +1,5 @@
-﻿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
@@ -41,6 +42,30 @@ internal static class InteropDriveErrorConverter
                 error.PrimaryCode = ManifestSignatureVerificationErrorPrimaryCode;
                 break;
 
+            case MissingContentBlockIntegrityException e:
+                error.Domain = ErrorDomain.DataIntegrity;
+                error.PrimaryCode = ContentUploadIntegrityErrorPrimaryCode;
+                error.AdditionalData = Any.Pack(ToAdditionalData(e));
+                break;
+
+            case ContentSizeMismatchIntegrityException e:
+                error.Domain = ErrorDomain.DataIntegrity;
+                error.PrimaryCode = ContentUploadIntegrityErrorPrimaryCode;
+                error.AdditionalData = Any.Pack(ToAdditionalData(e));
+                break;
+
+            case ThumbnailCountMismatchIntegrityException e:
+                error.Domain = ErrorDomain.DataIntegrity;
+                error.PrimaryCode = ContentUploadIntegrityErrorPrimaryCode;
+                error.AdditionalData = Any.Pack(ToAdditionalData(e));
+                break;
+
+            case ChecksumMismatchIntegrityException e:
+                error.Domain = ErrorDomain.DataIntegrity;
+                error.PrimaryCode = ContentUploadIntegrityErrorPrimaryCode;
+                error.AdditionalData = Any.Pack(ToAdditionalData(e));
+                break;
+
             case IntegrityException:
                 error.Domain = ErrorDomain.DataIntegrity;
                 error.PrimaryCode = ContentUploadIntegrityErrorPrimaryCode;
@@ -48,24 +73,7 @@ internal static class InteropDriveErrorConverter
 
             case NodeWithSameNameExistsException e:
                 error.Domain = ErrorDomain.BusinessLogic;
-
-                var additionalData = new NodeNameConflictErrorData();
-                if (e.ConflictingNodeIsFileDraft is { } conflictingNodeIsFileDraft)
-                {
-                    additionalData.ConflictingNodeIsFileDraft = conflictingNodeIsFileDraft;
-                }
-
-                if (e.ConflictingNodeUid is { } conflictingNodeUid)
-                {
-                    additionalData.ConflictingNodeUid = conflictingNodeUid.ToString();
-                }
-
-                if (e.ConflictingRevisionUid is { } conflictingRevisionUid)
-                {
-                    additionalData.ConflictingRevisionUid = conflictingRevisionUid.ToString();
-                }
-
-                error.AdditionalData = Any.Pack(additionalData);
+                error.AdditionalData = Any.Pack(ToAdditionalData(e));
                 break;
 
             default:
@@ -73,5 +81,85 @@ internal static class InteropDriveErrorConverter
                 InteropErrorConverter.SetDomainAndCodes(error, exception);
                 break;
         }
+    }
+
+    private static MissingContentBlockErrorData ToAdditionalData(MissingContentBlockIntegrityException e)
+    {
+        var data = new MissingContentBlockErrorData();
+        if (e.BlockNumber is { } blockNumber)
+        {
+            data.BlockNumber = blockNumber;
+        }
+
+        return data;
+    }
+
+    private static ContentSizeMismatchErrorData ToAdditionalData(ContentSizeMismatchIntegrityException e)
+    {
+        var data = new ContentSizeMismatchErrorData();
+        if (e.UploadedSize is { } uploadedSize)
+        {
+            data.UploadedSize = uploadedSize;
+        }
+
+        if (e.ExpectedSize is { } expectedSize)
+        {
+            data.ExpectedSize = expectedSize;
+        }
+
+        return data;
+    }
+
+    private static ThumbnailCountMismatchErrorData ToAdditionalData(ThumbnailCountMismatchIntegrityException e)
+    {
+        var data = new ThumbnailCountMismatchErrorData();
+        if (e.UploadedBlockCount is { } uploadedBlockCount)
+        {
+            data.UploadedBlockCount = uploadedBlockCount;
+        }
+
+        if (e.ExpectedBlockCount is { } expectedBlockCount)
+        {
+            data.ExpectedBlockCount = expectedBlockCount;
+        }
+
+        return data;
+    }
+
+    private static ChecksumMismatchErrorData ToAdditionalData(ChecksumMismatchIntegrityException e)
+    {
+        var data = new ChecksumMismatchErrorData();
+        if (e.ActualChecksum is not null)
+        {
+            data.ActualChecksum = ByteString.CopyFrom(e.ActualChecksum);
+        }
+
+        if (e.ExpectedChecksum is not null)
+        {
+            data.ExpectedChecksum = ByteString.CopyFrom(e.ExpectedChecksum);
+        }
+
+        return data;
+    }
+
+    private static NodeNameConflictErrorData ToAdditionalData(NodeWithSameNameExistsException e)
+    {
+        var data = new NodeNameConflictErrorData();
+        if (e.ConflictingNodeIsFileDraft is { } conflictingNodeIsFileDraft)
+        {
+            data.ConflictingNodeIsFileDraft = conflictingNodeIsFileDraft;
+        }
+
+        if (e.ConflictingNodeUid is { } conflictingNodeUid)
+        {
+            data.ConflictingNodeUid = conflictingNodeUid.ToString();
+        }
+
+        if (e.ConflictingRevisionUid is { } conflictingRevisionUid)
+        {
+            data.ConflictingRevisionUid = conflictingRevisionUid.ToString();
+        }
+
+        return data;
     }
 }
