@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Proton.Drive.Sdk.Telemetry;
+using Proton.Sdk.Threading;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 
@@ -66,18 +67,17 @@ public sealed partial class FileDownloader : IFileDownloader
         TaskCompletionSource<DownloadState> downloadStateTaskCompletionSource,
         CancellationToken cancellationToken)
     {
-        if (!downloadStateTaskCompletionSource.Task.IsCompletedSuccessfully)
+        var downloadState = downloadStateTaskCompletionSource.Task.GetResultIfCompletedSuccessfully();
+        if (downloadState is null)
         {
-            var state = await RevisionOperations.CreateDownloadStateAsync(
+            downloadState = await RevisionOperations.CreateDownloadStateAsync(
                     _client,
                     _revisionUid,
                     ReleaseBlockListing,
                     cancellationToken).ConfigureAwait(false);
 
-            downloadStateTaskCompletionSource.SetResult(state);
+            downloadStateTaskCompletionSource.SetResult(downloadState);
         }
-
-        var downloadState = downloadStateTaskCompletionSource.Task.Result;
 
         if (downloadState.GetNumberOfBytesWritten() > 0)
         {
@@ -106,9 +106,6 @@ public sealed partial class FileDownloader : IFileDownloader
 
         var downloadStateTaskCompletionSource = new TaskCompletionSource<DownloadState>();
 
-        var downloadEvent = TelemetryEventFactory.CreateDownloadEventAsync(_client, _revisionUid.NodeUid, cancellationToken)
-            .ConfigureAwait(false).GetAwaiter().GetResult();
-
         var downloadFunction = (CancellationToken ct) => DownloadToStreamAsync(
             contentOutputStream,
             onProgress,
@@ -121,11 +118,13 @@ public sealed partial class FileDownloader : IFileDownloader
             downloadFunction,
             ownsOutputStream ? contentOutputStream : null,
             taskControl,
-            OnFailed,
-            OnSucceeded);
+            OnFailedAsync,
+            OnSucceededAsync);
 
-        void OnFailed(Exception ex, long claimedFileSize, long downloadedByteCount)
+        async ValueTask OnFailedAsync(Exception ex, long claimedFileSize, long downloadedByteCount)
         {
+            var downloadEvent = await TelemetryEventFactory.CreateDownloadEventAsync(_client, _revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
+
             // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize
             downloadEvent.ClaimedFileSize = claimedFileSize;
             downloadEvent.ApproximateClaimedFileSize = Privacy.ReduceSizePrecision(claimedFileSize);
@@ -136,8 +135,10 @@ public sealed partial class FileDownloader : IFileDownloader
             RaiseTelemetryEvent(downloadEvent);
         }
 
-        void OnSucceeded(long claimedFileSize, long downloadedByteCount)
+        async ValueTask OnSucceededAsync(long claimedFileSize, long downloadedByteCount)
         {
+            var downloadEvent = await TelemetryEventFactory.CreateDownloadEventAsync(_client, _revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
+
             // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize
             downloadEvent.ClaimedFileSize = claimedFileSize;
             downloadEvent.ApproximateClaimedFileSize = Privacy.ReduceSizePrecision(claimedFileSize);
