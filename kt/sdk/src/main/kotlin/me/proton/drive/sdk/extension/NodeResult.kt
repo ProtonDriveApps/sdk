@@ -1,6 +1,7 @@
 package me.proton.drive.sdk.extension
 
 import me.proton.drive.sdk.ProtonDriveException
+import me.proton.drive.sdk.ProtonDriveSdkException
 import me.proton.drive.sdk.entity.DriveError
 import me.proton.drive.sdk.entity.NodeResult
 
@@ -14,7 +15,7 @@ fun NodeResult.getOrNull(): NodeResult.Value? = when (this) {
     is NodeResult.Error -> null
 }
 
-private fun List<DriveError>.toException(message: String) = ProtonDriveException(message).apply {
+private fun List<DriveError>.toException(message: String) = ProtonDriveSdkException(message).apply {
     this@toException.forEach { driveError ->
         addSuppressed(
             exception = ProtonDriveException(
@@ -30,8 +31,12 @@ private fun List<DriveError>.toException(message: String) = ProtonDriveException
     }
 }
 
-fun DriveError.toException(): ProtonDriveException =
-    ProtonDriveException(
-        message = message,
-        cause = innerError?.toException()
-    )
+fun DriveError.toException(message: String): ProtonDriveSdkException = ProtonDriveSdkException(
+    message = message,
+    cause = toException()
+)
+
+fun DriveError.toException(): ProtonDriveException = ProtonDriveException(
+    message = message,
+    cause = innerError?.toException()
+)
