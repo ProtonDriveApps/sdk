@@ -39,5 +39,17 @@ private fun Any.toData() = when (typeUrl) {
     "type.googleapis.com/proton.drive.sdk.NodeNameConflictErrorData" ->
         ProtonDriveSdk.NodeNameConflictErrorData.parseFrom(value).toEntity()
 
+    "type.googleapis.com/proton.drive.sdk.MissingContentBlockErrorData" ->
+        ProtonDriveSdk.MissingContentBlockErrorData.parseFrom(value).toEntity()
+
+    "type.googleapis.com/proton.drive.sdk.ContentSizeMismatchErrorData" ->
+        ProtonDriveSdk.ContentSizeMismatchErrorData.parseFrom(value).toEntity()
+
+    "type.googleapis.com/proton.drive.sdk.ThumbnailCountMismatchErrorData" ->
+        ProtonDriveSdk.ThumbnailCountMismatchErrorData.parseFrom(value).toEntity()
+
+    "type.googleapis.com/proton.drive.sdk.ChecksumMismatchErrorData" ->
+        ProtonDriveSdk.ChecksumMismatchErrorData.parseFrom(value).toEntity()
+
     else -> null
 }
