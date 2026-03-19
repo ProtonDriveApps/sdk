@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Folders;
@@ -24,19 +25,45 @@ internal static class DtoToMetadataConverter
     {
         var sourceNodeEntryPointId = linkDetailsDto.Link.ParentId;
 
-        if (sourceNodeEntryPointId is null && linkDetailsDto.Photo is not null)
-        {
-            // TODO: optimize by selecting the album that is in cache, if any
-            sourceNodeEntryPointId = linkDetailsDto.Photo.AlbumInclusions is { Count: > 0 } albumInclusions ? albumInclusions[0].Id : null;
-        }
+        Result<PgpPrivateKey, ProtonDriveError> entryPointKeyResult;
 
-        var entryPointKeyResult = await GetEntryPointKeyAsync(
-            client,
-            volumeId,
-            sourceNodeEntryPointId,
-            knownShareAndKey,
-            linkDetailsDto.Sharing?.ShareId,
-            cancellationToken).ConfigureAwait(false);
+        if (sourceNodeEntryPointId is null && linkDetailsDto.Photo is { AlbumInclusions: { Count: > 0 } albumInclusions })
+        {
+            entryPointKeyResult = new ProtonDriveError("No album entry point key found");
+
+            // TODO: optimize by selecting the album that is in cache, if any
+            // TODO: getting entry point key from the first album should be enough when backend only returns accessible album ids
+            foreach (var albumInclusionId in albumInclusions.Select(albumInclusion => albumInclusion.Id))
+            {
+                entryPointKeyResult = await GetEntryPointKeyAsync(
+                    client,
+                    volumeId,
+                    albumInclusionId,
+                    knownShareAndKey,
+                    linkDetailsDto.Sharing?.ShareId,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (entryPointKeyResult.TryGetError(out var error))
+                {
+                    var uid = new NodeUid(volumeId, albumInclusionId);
+                    client.Telemetry.GetLogger("Node metadata").LogError(error.ToException(), "Album \"{Uid}\" not found", uid);
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+        else
+        {
+            entryPointKeyResult = await GetEntryPointKeyAsync(
+                client,
+                volumeId,
+                sourceNodeEntryPointId,
+                knownShareAndKey,
+                linkDetailsDto.Sharing?.ShareId,
+                cancellationToken).ConfigureAwait(false);
+        }
 
         return await ConvertDtoToNodeMetadataAsync(
             client,
