@@ -1,5 +1,5 @@
 import { RateLimitedError, ValidationError, IntegrityError } from '../../errors';
-import { ProtonDriveTelemetry, MetricsUploadErrorType, Logger } from '../../interface';
+import { ProtonDriveTelemetry, MetricsUploadErrorType, Logger, MetricVolumeType } from '../../interface';
 import { LoggerWithPrefix, reduceSizePrecision } from '../../telemetry';
 import { APIHTTPError } from '../apiService';
 import { splitNodeUid, splitNodeRevisionUid } from '../uids';
@@ -85,7 +85,7 @@ export class UploadTelemetry {
             originalError?: unknown;
         },
     ) {
-        let volumeType;
+        let volumeType = MetricVolumeType.Unknown;
         try {
             volumeType = await this.sharesService.getVolumeMetricContext(volumeId);
         } catch (error: unknown) {
