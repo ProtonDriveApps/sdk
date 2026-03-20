@@ -36,6 +36,10 @@ export class NodesRevisons {
         return {
             ...revision,
             ...extendedAttributes,
+            claimedDigests: {
+                ...extendedAttributes?.claimedDigests,
+                sha1Verified: revision.sha1Verified || false,
+            },
         };
     }
 
@@ -53,6 +57,10 @@ export class NodesRevisons {
             yield {
                 ...revision,
                 ...extendedAttributes,
+                claimedDigests: {
+                    ...extendedAttributes?.claimedDigests,
+                    sha1Verified: revision.sha1Verified || false,
+                },
             };
         }
     }

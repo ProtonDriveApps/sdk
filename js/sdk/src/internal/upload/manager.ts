@@ -154,6 +154,7 @@ export class UploadManager {
         commitPayload: {
             armoredManifestSignature: string;
             armoredExtendedAttributes: string;
+            checksumVerified?: boolean;
         },
         encryptedBlock:
             | {
@@ -182,6 +183,7 @@ export class UploadManager {
                 },
                 {
                     armoredManifestSignature: commitPayload.armoredManifestSignature,
+                    checksumVerified: commitPayload.checksumVerified,
                     block: encryptedBlock
                         ? {
                               encryptedData: encryptedBlock.encryptedData,
@@ -387,6 +389,7 @@ export class UploadManager {
             };
         },
         additionalExtendedAttributes?: object,
+        integrityInfo?: { checksumVerified: boolean },
     ): Promise<void> {
         const generatedExtendedAttributes = generateFileExtendedAttributes(
             extendedAttributes,
@@ -398,7 +401,10 @@ export class UploadManager {
             generatedExtendedAttributes,
         );
         try {
-            await this.apiService.commitDraftRevision(nodeRevisionDraft.nodeRevisionUid, nodeCommitCrypto);
+            await this.apiService.commitDraftRevision(nodeRevisionDraft.nodeRevisionUid, {
+                ...nodeCommitCrypto,
+                ...integrityInfo,
+            });
         } catch (error: unknown) {
             // Commit might be sent but due to network error no response is
             // received. In this case, API service automatically retries the

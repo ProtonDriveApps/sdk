@@ -851,6 +851,7 @@ function transformRevisionResponse(
         signatureEmail: revision.SignatureEmail || undefined,
         armoredExtendedAttributes: revision.XAttr || undefined,
         thumbnails: revision.Thumbnails?.map((thumbnail) => transformThumbnail(volumeId, nodeId, thumbnail)) || [],
+        sha1Verified: revision.ChecksumVerified,
     };
 }
 

@@ -128,7 +128,7 @@ export class PhotoStreamUploader extends StreamUploader {
 
     async commitFile(thumbnails: Thumbnail[]) {
         const digests = this.digests.digests();
-        this.verifyIntegrity(thumbnails, digests);
+        const integrityInfo = this.verifyIntegrity(thumbnails, digests);
 
         const extendedAttributes = {
             modificationTime: this.metadata.modificationTime,
@@ -142,6 +142,7 @@ export class PhotoStreamUploader extends StreamUploader {
             await this.getManifest(),
             extendedAttributes,
             this.photoMetadata,
+            integrityInfo,
         );
     }
 }
@@ -174,6 +175,7 @@ export class PhotoUploadManager extends UploadManager {
             };
         },
         uploadMetadata: PhotoUploadMetadata,
+        integrityInfo: { checksumVerified: boolean },
     ): Promise<void> {
         if (!nodeRevisionDraft.parentNodeKeys) {
             throw new Error('Parent node keys are required for photo upload');
@@ -201,7 +203,14 @@ export class PhotoUploadManager extends UploadManager {
             mainPhotoNodeUid: uploadMetadata.mainPhotoNodeUid,
             tags: uploadMetadata.tags,
         };
-        await this.photoApiService.commitDraftPhoto(nodeRevisionDraft.nodeRevisionUid, nodeCommitCrypto, photo);
+        await this.photoApiService.commitDraftPhoto(
+            nodeRevisionDraft.nodeRevisionUid,
+            {
+                ...nodeCommitCrypto,
+                ...integrityInfo,
+            },
+            photo,
+        );
         await this.notifyNodeUploaded(nodeRevisionDraft);
     }
 }
@@ -232,6 +241,7 @@ export class PhotoUploadAPIService extends UploadAPIService {
             armoredManifestSignature: string;
             signatureEmail: string | AnonymousUser;
             armoredExtendedAttributes?: string;
+            checksumVerified?: boolean;
         },
         photo: {
             contentHash: string;
@@ -257,6 +267,7 @@ export class PhotoUploadAPIService extends UploadAPIService {
             ManifestSignature: options.armoredManifestSignature,
             SignatureAddress: options.signatureEmail,
             XAttr: options.armoredExtendedAttributes || null,
+            ChecksumVerified: options.checksumVerified || false,
             Photo: {
                 ContentHash: photo.contentHash,
                 CaptureTime: photo.captureTime ? Math.floor(photo.captureTime?.getTime() / 1000) : 0,

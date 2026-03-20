@@ -239,6 +239,7 @@ export class UploadAPIService {
             armoredManifestSignature: string;
             signatureEmail: string | AnonymousUser;
             armoredExtendedAttributes: string;
+            checksumVerified?: boolean;
         },
     ): Promise<void> {
         const { volumeId, nodeId, revisionId } = splitNodeRevisionUid(draftNodeRevisionUid);
@@ -250,6 +251,7 @@ export class UploadAPIService {
             ManifestSignature: options.armoredManifestSignature,
             SignatureAddress: options.signatureEmail,
             XAttr: options.armoredExtendedAttributes,
+            ChecksumVerified: options.checksumVerified || false,
             Photo: null, // Only used for photos in the Photo volume.
         });
     }
@@ -322,6 +324,7 @@ export class UploadAPIService {
         },
         content: {
             armoredManifestSignature: string;
+            checksumVerified?: boolean;
             block:
                 | {
                       encryptedData: Uint8Array<ArrayBuffer>;
@@ -355,6 +358,7 @@ export class UploadAPIService {
                 ? uint8ArrayToBase64String(content.block.verificationToken)
                 : null,
             XAttr: metadata.armoredExtendedAttributes,
+            ChecksumVerified: content.checksumVerified || false,
             Photo: null, // TODO
         };
 
@@ -395,6 +399,7 @@ export class UploadAPIService {
         },
         content: {
             armoredManifestSignature: string;
+            checksumVerified?: boolean;
             block:
                 | {
                       encryptedData: Uint8Array<ArrayBuffer>;
@@ -421,6 +426,7 @@ export class UploadAPIService {
                 ? uint8ArrayToBase64String(content.block.verificationToken)
                 : null,
             XAttr: metadata.armoredExtendedAttributes,
+            ChecksumVerified: content.checksumVerified || false,
         };
 
         const formData = new FormData();

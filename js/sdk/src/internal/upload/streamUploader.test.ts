@@ -172,6 +172,9 @@ describe('StreamUploader', () => {
                     },
                 },
                 metadata.additionalMetadata,
+                {
+                    checksumVerified: !!metadata.expectedSha1,
+                },
             );
             expect(telemetry.uploadFinished).toHaveBeenCalledTimes(1);
             expect(telemetry.uploadFinished).toHaveBeenCalledWith('revisionUid', metadata.expectedSize + thumbnailSize);

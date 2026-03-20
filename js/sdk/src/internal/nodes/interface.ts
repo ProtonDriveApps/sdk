@@ -181,11 +181,13 @@ export type Thumbnail = {
 export interface EncryptedRevision extends BaseRevision {
     signatureEmail?: string;
     armoredExtendedAttributes?: string;
+    sha1Verified?: boolean;
 }
 
 export interface DecryptedUnparsedRevision extends BaseRevision {
     contentAuthor: Author;
     extendedAttributes?: string;
+    sha1Verified?: boolean;
 }
 
 export interface DecryptedRevision extends Revision {
