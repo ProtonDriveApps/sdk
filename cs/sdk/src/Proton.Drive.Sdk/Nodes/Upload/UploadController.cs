@@ -1,4 +1,3 @@
-using Proton.Sdk;
 using Proton.Sdk.Threading;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
@@ -112,13 +111,6 @@ public sealed class UploadController : IAsyncDisposable
         }
     }
 
-    private static bool IsResumableError(Exception ex)
-    {
-        return ex is not ProtonApiException { TransportCode: > 400 and < 500 }
-            and not NodeWithSameNameExistsException
-            and not IntegrityException;
-    }
-
     private async Task<UploadResult> ResumeAfterPreviousCompletionAsync(Task previousCompletion, int attempt)
     {
         await previousCompletion.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
@@ -139,7 +131,7 @@ public sealed class UploadController : IAsyncDisposable
 
             return result;
         }
-        catch (Exception ex) when (IsResumableError(ex))
+        catch (Exception) when (IsResumable())
         {
             if (_taskControl.Attempt == attempt)
             {
@@ -170,5 +162,10 @@ public sealed class UploadController : IAsyncDisposable
         var revisionDraft = await _revisionDraftTask.ConfigureAwait(false);
 
         await onSucceededHandler.Invoke(revisionDraft.NumberOfPlainBytesDone).ConfigureAwait(false);
+    }
+
+    private bool IsResumable()
+    {
+        return _revisionDraftTask is { IsCompletedSuccessfully: true, Result.IsResumable: true };
     }
 }

@@ -79,16 +79,6 @@ public sealed partial class FileDownloader : IFileDownloader
             downloadStateTaskCompletionSource.SetResult(downloadState);
         }
 
-        if (downloadState.GetNumberOfBytesWritten() > 0)
-        {
-            if (!contentOutputStream.CanSeek)
-            {
-                throw new InvalidOperationException("Cannot resume download to a non-seekable stream");
-            }
-
-            contentOutputStream.Seek(downloadState.GetNumberOfBytesWritten(), SeekOrigin.Begin);
-        }
-
         await _client.BlockDownloader.Queue.StartFileAsync(cancellationToken).ConfigureAwait(false);
 
         using var revisionReader = RevisionOperations.OpenForReading(_client, downloadState, ReleaseBlockListing);

@@ -1,4 +1,3 @@
-using Proton.Sdk;
 using Proton.Sdk.Threading;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
@@ -108,13 +107,6 @@ public sealed class DownloadController : IAsyncDisposable
         }
     }
 
-    private static bool IsResumableError(Exception ex)
-    {
-        return ex is not DataIntegrityException
-            and not ProtonApiException { TransportCode: >= 400 and < 500 }
-            and not CompletedDownloadManifestVerificationException;
-    }
-
     private async Task ResumeAfterPreviousCompletionAsync(Task previousCompletion, int attempt)
     {
         await previousCompletion.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
@@ -138,7 +130,7 @@ public sealed class DownloadController : IAsyncDisposable
             _isDownloadCompleteWithVerificationIssue = true;
             throw new DataIntegrityException(error.Message, error);
         }
-        catch (Exception ex) when (IsResumableError(ex))
+        catch (Exception) when (IsResumable())
         {
             if (_taskControl.Attempt == attempt && !_taskControl.IsPaused)
             {
@@ -176,5 +168,10 @@ public sealed class DownloadController : IAsyncDisposable
         await onSucceededHandler.Invoke(
             downloadState.RevisionDto.Size,
             downloadState.GetNumberOfBytesWritten()).ConfigureAwait(false);
+    }
+
+    private bool IsResumable()
+    {
+        return _downloadStateTask is { IsCompletedSuccessfully: true, Result.IsResumable: true };
     }
 }
