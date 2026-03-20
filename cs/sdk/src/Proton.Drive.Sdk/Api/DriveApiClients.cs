@@ -1,6 +1,7 @@
 ﻿using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
+using Proton.Drive.Sdk.Api.Photos;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Api.Storage;
 using Proton.Drive.Sdk.Api.Volumes;
@@ -16,4 +17,5 @@ internal sealed class DriveApiClients(HttpClient defaultHttpClient, HttpClient s
     public IFilesApiClient Files { get; } = new FilesApiClient(defaultHttpClient);
     public IStorageApiClient Storage { get; } = new StorageApiClient(defaultHttpClient, storageHttpClient);
     public ITrashApiClient Trash { get; } = new TrashApiClient(defaultHttpClient);
+    public IPhotosApiClient Photos { get; } = new PhotosApiClient(defaultHttpClient);
 }

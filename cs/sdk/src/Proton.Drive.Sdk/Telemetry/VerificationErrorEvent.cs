@@ -1,3 +1,4 @@
+using Proton.Drive.Sdk.Nodes;
 using Proton.Sdk.Telemetry;
 
 namespace Proton.Drive.Sdk.Telemetry;
@@ -16,5 +17,5 @@ public sealed class VerificationErrorEvent : IMetricEvent
 
     public string? Error { get; set; }
 
-    public required string Uid { get; set; }
+    public required NodeUid Uid { get; set; }
 }

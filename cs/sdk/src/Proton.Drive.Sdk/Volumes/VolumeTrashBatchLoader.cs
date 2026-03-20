@@ -46,8 +46,6 @@ internal sealed class VolumeTrashBatchLoader(ProtonDriveClient client, VolumeId 
 
             var nodeMetadataResult = await DtoToMetadataConverter.ConvertDtoToNodeMetadataAsync(
                 _client,
-                _client.Cache.Entities,
-                _client.Cache.Secrets,
                 _volumeId,
                 linkDetails,
                 parentKey,

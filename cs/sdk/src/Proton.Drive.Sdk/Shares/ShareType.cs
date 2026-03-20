@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk.Api.Shares;
+﻿namespace Proton.Drive.Sdk.Shares;
 
 public enum ShareType
 {

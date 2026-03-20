@@ -9,6 +9,7 @@ internal sealed class FolderChildrenResponse : ApiResponse
     [JsonPropertyName("LinkIDs")]
     public required IReadOnlyList<LinkId> LinkIds { get; init; }
 
+    [JsonPropertyName("AnchorID")]
     public LinkId? AnchorId { get; init; }
 
     [JsonPropertyName("More")]

@@ -10,11 +10,17 @@ internal interface IDriveEntityCache : IEntityCache
     ValueTask SetClientUidAsync(string clientUid, CancellationToken cancellationToken);
     ValueTask<string?> TryGetClientUidAsync(CancellationToken cancellationToken);
 
-    ValueTask SetMainVolumeIdAsync(VolumeId volumeId, CancellationToken cancellationToken);
-    ValueTask<VolumeId?> TryGetMainVolumeIdAsync(CancellationToken cancellationToken);
+    ValueTask SetMainVolumeIdAsync(VolumeId? volumeId, CancellationToken cancellationToken);
+    ValueTask<(bool Exists, VolumeId? VolumeId)> TryGetMainVolumeIdAsync(CancellationToken cancellationToken);
+
+    ValueTask SetPhotosVolumeIdAsync(VolumeId? volumeId, CancellationToken cancellationToken);
+    ValueTask<(bool Exists, VolumeId? VolumeId)> TryGetPhotosVolumeIdAsync(CancellationToken cancellationToken);
 
     ValueTask SetMyFilesShareIdAsync(ShareId shareId, CancellationToken cancellationToken);
     ValueTask<ShareId?> TryGetMyFilesShareIdAsync(CancellationToken cancellationToken);
+
+    ValueTask SetPhotosShareIdAsync(ShareId shareId, CancellationToken cancellationToken);
+    ValueTask<ShareId?> TryGetPhotosShareIdAsync(CancellationToken cancellationToken);
 
     ValueTask SetShareAsync(Share share, CancellationToken cancellationToken);
     ValueTask<Share?> TryGetShareAsync(ShareId shareId, CancellationToken cancellationToken);

@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Proton.Cryptography.Pgp;
+﻿using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Sdk;
 
@@ -60,42 +59,29 @@ internal static class NodeMetadataResultExtensions
         }
     }
 
-    public static bool TryGetFolderKeyElseError(
-        this Result<NodeMetadata, DegradedNodeMetadata> metadataResult,
-        [NotNullWhen(true)] out PgpPrivateKey? folderKey,
-        [MaybeNullWhen(true)] out ProtonDriveError error)
+    public static PgpPrivateKey GetFolderKeyOrThrow(this Result<NodeMetadata, DegradedNodeMetadata> metadataResult)
     {
         if (!metadataResult.TryGetValueElseError(out var nodeAndSecrets, out var degradedNodeAndSecrets))
         {
             if (degradedNodeAndSecrets.TryGetFileElseFolder(out var degradedFileNode, out _, out var degradedFolderNode, out var degradedFolderSecrets))
             {
-                folderKey = null;
-                error = new ProtonDriveError(InvalidNodeTypeException.GetMessage(degradedFileNode.Uid, LinkType.File));
-                return false;
+                throw new InvalidNodeTypeException(degradedFileNode.Uid, LinkType.File);
             }
 
-            if (degradedFolderSecrets.Key is null)
+            if (degradedFolderSecrets.Key is not { } folderKey)
             {
-                folderKey = null;
-                error = degradedFolderNode.Errors[0];
-                return false;
+                throw new ProtonDriveException($"Degraded node does not have a key: {degradedFolderNode.Errors[0]}");
             }
 
-            folderKey = degradedFolderSecrets.Key;
-            error = null;
-            return true;
+            return folderKey;
         }
 
         if (nodeAndSecrets.TryGetFileElseFolder(out var fileNode, out _, out _, out var folderSecrets))
         {
-            folderKey = null;
-            error = new ProtonDriveError(InvalidNodeTypeException.GetMessage(fileNode.Uid, LinkType.File));
-            return false;
+            throw new InvalidNodeTypeException(fileNode.Uid, LinkType.File);
         }
 
-        folderKey = folderSecrets.Key;
-        error = null;
-        return true;
+        return folderSecrets.Key;
     }
 
     public static Result<Node, DegradedNode> ToNodeResult(this Result<NodeMetadata, DegradedNodeMetadata> metadataResult)

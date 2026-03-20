@@ -4,7 +4,7 @@ using Proton.Sdk.Serialization;
 namespace Proton.Drive.Sdk.Volumes;
 
 [JsonConverter(typeof(StrongIdJsonConverter<VolumeId>))]
-public readonly record struct VolumeId : IStrongId<VolumeId>
+internal readonly record struct VolumeId : IStrongId<VolumeId>
 {
     private readonly string? _value;
 

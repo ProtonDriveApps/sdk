@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Microsoft.IO;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api;
@@ -177,7 +178,7 @@ public sealed class ProtonDriveClient
 
     public ValueTask<FolderNode> GetMyFilesFolderAsync(CancellationToken cancellationToken)
     {
-        return NodeOperations.GetMyFilesFolderAsync(this, cancellationToken);
+        return NodeOperations.GetOrCreateMyFilesFolderAsync(this, cancellationToken);
     }
 
     public ValueTask<Result<Node, DegradedNode>?> GetNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
@@ -276,9 +277,19 @@ public sealed class ProtonDriveClient
         return NodeOperations.RestoreFromTrashAsync(this, uids, cancellationToken);
     }
 
-    public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateTrashAsync(CancellationToken cancellationToken)
+    public async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateTrashAsync([EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        return VolumeOperations.EnumerateTrashAsync(this, cancellationToken);
+        var volumeId = await VolumeOperations.TryGetMainVolumeIdAsync(this, cancellationToken).ConfigureAwait(false);
+        if (volumeId is null)
+        {
+            // Nothing to enumerate if the main volume doesn't exist
+            yield break;
+        }
+
+        await foreach (var entry in VolumeOperations.EnumerateTrashAsync(this, volumeId.Value, cancellationToken).ConfigureAwait(false))
+        {
+            yield return entry;
+        }
     }
 
     public ValueTask EmptyTrashAsync(CancellationToken cancellationToken)

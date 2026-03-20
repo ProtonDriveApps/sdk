@@ -16,12 +16,14 @@ internal static class NodeCrypto
         IAccountClient accountClient,
         LinkDto link,
         PgpArmoredMessage folderHashKey,
-        Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
+        PgpPrivateKey parentKey,
         CancellationToken cancellationToken)
     {
-        var linkDecryptionResult = await DecryptLinkAsync(accountClient, link, parentKeyResult, cancellationToken).ConfigureAwait(false);
+        var linkDecryptionResult = await DecryptLinkAsync(accountClient, link, parentKey, cancellationToken).ConfigureAwait(false);
 
-        var hashKeyResult = DecryptHashKey(folderHashKey, linkDecryptionResult.NodeKey.GetValueOrDefault(), linkDecryptionResult.NodeAuthorshipClaim);
+        var hashKeyResult = linkDecryptionResult.NodeKey.TryGetValue(out var nodeKey)
+            ? DecryptHashKey(folderHashKey, nodeKey, linkDecryptionResult.NodeAuthorshipClaim)
+            : "Node key not available";
 
         return new FolderDecryptionResult
         {
@@ -35,13 +37,13 @@ internal static class NodeCrypto
         LinkDto linkDto,
         FileDto fileDto,
         ActiveRevisionDto activeRevisionDto,
-        Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
+        PgpPrivateKey parentKey,
         CancellationToken cancellationToken)
     {
         var contentAuthorshipClaim =
             await AuthorshipClaim.CreateAsync(accountClient, activeRevisionDto.SignatureEmailAddress, cancellationToken).ConfigureAwait(false);
 
-        var linkDecryptionResult = await DecryptLinkAsync(accountClient, linkDto, parentKeyResult, cancellationToken).ConfigureAwait(false);
+        var linkDecryptionResult = await DecryptLinkAsync(accountClient, linkDto, parentKey, cancellationToken).ConfigureAwait(false);
 
         var nodeKey = linkDecryptionResult.NodeKey.Merge(x => x, _ => default(PgpPrivateKey?));
 
@@ -81,7 +83,7 @@ internal static class NodeCrypto
     private static async ValueTask<LinkDecryptionResult> DecryptLinkAsync(
         IAccountClient accountClient,
         LinkDto link,
-        Result<PgpPrivateKey, ProtonDriveError> parentKeyResult,
+        PgpPrivateKey parentKey,
         CancellationToken cancellationToken)
     {
         var nodeAuthorshipClaim = await AuthorshipClaim.CreateAsync(accountClient, link.SignatureEmailAddress, cancellationToken).ConfigureAwait(false);
@@ -90,20 +92,8 @@ internal static class NodeCrypto
             ? await AuthorshipClaim.CreateAsync(accountClient, link.NameSignatureEmailAddress, cancellationToken).ConfigureAwait(false)
             : nodeAuthorshipClaim;
 
-        Result<PhasedDecryptionOutput<string>, string> nameResult;
-        Result<PhasedDecryptionOutput<ReadOnlyMemory<byte>>, string> passphraseResult;
-
-        if (parentKeyResult.TryGetValueElseError(out var parentKey, out var parentNodeKeyInnerError))
-        {
-            nameResult = DecryptName(link.Name, parentKey, nameAuthorshipClaim);
-            passphraseResult = DecryptPassphrase(parentKey, link.Passphrase, link.PassphraseSignature, nodeAuthorshipClaim);
-        }
-        else
-        {
-            var errorMessage = parentNodeKeyInnerError.Message ?? "Decryption key unavailable";
-            nameResult = errorMessage;
-            passphraseResult = errorMessage;
-        }
+        var nameResult = DecryptName(link.Name, parentKey, nameAuthorshipClaim);
+        var passphraseResult = DecryptPassphrase(parentKey, link.Passphrase, link.PassphraseSignature, nodeAuthorshipClaim);
 
         var nodeKeyResult = UnlockNodeKey(link.Key, passphraseResult.Merge(x => (ReadOnlyMemory<byte>?)x.Data, _ => null));
 

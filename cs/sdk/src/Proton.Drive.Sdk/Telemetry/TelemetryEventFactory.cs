@@ -1,5 +1,5 @@
 using Proton.Drive.Sdk.Nodes;
-using Proton.Drive.Sdk.Shares;
+using Proton.Drive.Sdk.Volumes;
 
 namespace Proton.Drive.Sdk.Telemetry;
 
@@ -12,22 +12,21 @@ internal static class TelemetryEventFactory
     /// </summary>
     public static async Task<IEnumerable<DecryptionErrorEvent>> CreateDecryptionErrorEventsAsync(
         ProtonDriveClient client,
-        DegradedNodeMetadata degradedNode,
+        DegradedNode degradedNode,
         IEnumerable<EncryptedField> failedFields,
         CancellationToken cancellationToken)
     {
-        // FIXME won't work for photos in an album, this will need to be differentiated for photos.
-        var share = await ShareOperations.GetContextShareAsync(client, degradedNode, cancellationToken).ConfigureAwait(false);
-        var fromBefore2024 = degradedNode.Node.CreationTime.CompareTo(LegacyBoundary) < 1;
+        var fromBefore2024 = degradedNode.CreationTime.CompareTo(LegacyBoundary) < 1;
+
+        var volumeType = await ResolveVolumeTypeAsync(client, degradedNode.Uid, cancellationToken).ConfigureAwait(false);
 
         return failedFields.Select(field => new DecryptionErrorEvent
         {
-            Uid = degradedNode.Node.Uid.ToString(),
+            Uid = degradedNode.Uid,
             Field = field,
-            VolumeType = VolumeTypeFactory.FromShareType(share.Share.Type),
+            VolumeType = volumeType,
             FromBefore2024 = fromBefore2024,
-            Error = string.Empty,
-        }).ToList();
+        });
     }
 
     /// <summary>
@@ -40,16 +39,12 @@ internal static class TelemetryEventFactory
         DateTime creationTime,
         CancellationToken cancellationToken)
     {
-        var nodeResult = await NodeOperations.GetNodeMetadataResultAsync(client, nodeUid, null, cancellationToken).ConfigureAwait(false);
-        var share = await ShareOperations.GetContextShareAsync(client, nodeResult, cancellationToken).ConfigureAwait(false);
-
         return new DecryptionErrorEvent
         {
-            Uid = nodeUid.ToString(),
+            Uid = nodeUid,
             Field = field,
-            VolumeType = VolumeTypeFactory.FromShareType(share.Share.Type),
+            VolumeType = await ResolveVolumeTypeAsync(client, nodeUid, cancellationToken).ConfigureAwait(false),
             FromBefore2024 = creationTime.CompareTo(LegacyBoundary) < 1,
-            Error = string.Empty,
         };
     }
 
@@ -63,16 +58,12 @@ internal static class TelemetryEventFactory
         DateTime creationTime,
         CancellationToken cancellationToken)
     {
-        var nodeResult = await NodeOperations.GetNodeMetadataResultAsync(client, nodeUid, null, cancellationToken).ConfigureAwait(false);
-        var share = await ShareOperations.GetContextShareAsync(client, nodeResult, cancellationToken).ConfigureAwait(false);
-
         return new VerificationErrorEvent
         {
-            Uid = nodeUid.ToString(),
+            Uid = nodeUid,
             Field = field,
-            VolumeType = VolumeTypeFactory.FromShareType(share.Share.Type),
+            VolumeType = await ResolveVolumeTypeAsync(client, nodeUid, cancellationToken).ConfigureAwait(false),
             FromBefore2024 = creationTime.CompareTo(LegacyBoundary) < 1,
-            Error = string.Empty,
         };
     }
 
@@ -117,14 +108,25 @@ internal static class TelemetryEventFactory
     {
         try
         {
-            var nodeResult = await NodeOperations.GetNodeMetadataResultAsync(client, nodeUid, null, cancellationToken).ConfigureAwait(false);
-            var share = await ShareOperations.GetContextShareAsync(client, nodeResult, cancellationToken).ConfigureAwait(false);
+            var mainVolumeId = await VolumeOperations.TryGetMainVolumeIdAsync(client, cancellationToken).ConfigureAwait(false);
 
-            return VolumeTypeFactory.FromShareType(share.Share.Type);
+            if (mainVolumeId is not null && nodeUid.VolumeId == mainVolumeId)
+            {
+                return VolumeType.OwnVolume;
+            }
+
+            var photosVolumeId = await VolumeOperations.TryGetPhotosVolumeIdAsync(client, cancellationToken).ConfigureAwait(false);
+
+            if (photosVolumeId is not null && nodeUid.VolumeId == photosVolumeId)
+            {
+                return VolumeType.OwnPhotosVolume;
+            }
+
+            return VolumeType.Shared;
         }
         catch
         {
-            return VolumeType.OwnVolume;
+            return VolumeType.Unknown;
         }
     }
 }
