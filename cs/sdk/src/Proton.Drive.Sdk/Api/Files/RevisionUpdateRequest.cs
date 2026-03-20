@@ -10,6 +10,8 @@ internal sealed class RevisionUpdateRequest
     [JsonPropertyName("SignatureAddress")]
     public required string SignatureEmailAddress { get; init; }
 
+    public required bool ChecksumVerified { get; init; }
+
     [JsonPropertyName("XAttr")]
     public PgpArmoredMessage? ExtendedAttributes { get; init; }
 
