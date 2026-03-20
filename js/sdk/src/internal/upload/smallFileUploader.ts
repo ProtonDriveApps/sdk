@@ -77,6 +77,7 @@ abstract class SmallUploader {
         commitPayload: {
             armoredManifestSignature: string;
             armoredExtendedAttributes: string;
+            checksumVerified?: boolean;
         };
         encryptedBlock:
             | {
@@ -253,6 +254,7 @@ abstract class SmallUploader {
     ): Promise<{
         armoredManifestSignature: string;
         armoredExtendedAttributes: string;
+        checksumVerified?: boolean;
     }> {
         this.logger.debug(`Preparing commit payload`);
 
@@ -269,6 +271,7 @@ abstract class SmallUploader {
         return {
             armoredManifestSignature: commitCrypto.armoredManifestSignature,
             armoredExtendedAttributes: commitCrypto.armoredExtendedAttributes,
+            checksumVerified: !!(this.metadata.expectedSha1 && contentSha1 === this.metadata.expectedSha1),
         };
     }
 }

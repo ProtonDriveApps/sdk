@@ -1735,6 +1735,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drive/photos/volumes/{volumeID}/links/{linkID}/capture-time": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Photo Capture Time
+         * @description ONLY updates the clear text photo capture time. Any user with WRITE permissions may update the capture time.
+         */
+        put: operations["put_drive-photos-volumes-{volumeID}-links-{linkID}-capture-time"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drive/photos/volumes/{volumeID}/links/{linkID}/revisions/{revisionID}/xattr": {
         parameters: {
             query?: never;
@@ -2664,27 +2684,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/drive/shares/{shareID}/owner": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Update ownership of a share
-         * @description Replace the signature and related membership of the share.
-         *     This allows users to change the associated address & key they use for a share, so that they can get rid of it.
-         */
-        post: operations["post_drive-shares-{shareID}-owner"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/drive/shares/{shareID}/property": {
         parameters: {
             query?: never;
@@ -3331,7 +3330,7 @@ export interface components {
     schemas: {
         /**
          * ProtonResponseCode
-         * @enum {integer}
+         * @constant
          */
         ResponseCodeSuccess: 1000;
         ProtonSuccess: {
@@ -3346,17 +3345,17 @@ export interface components {
             Details: Record<string, never>;
         };
         DriveConstants: {
-            /** @enum {integer} */
+            /** @constant */
             BlockMaxSizeInBytes?: 5300000;
-            /** @enum {integer} */
+            /** @constant */
             ThumbnailMaxSizeInBytes?: 65536;
-            /** @enum {integer} */
+            /** @constant */
             DraftRevisionLifetimeInSec?: 14400;
-            /** @enum {integer} */
+            /** @constant */
             ExtendedAttributesMaxSizeInBytes?: 65535;
-            /** @enum {integer} */
+            /** @constant */
             UploadTokenExpirationTimeInSec?: 10800;
-            /** @enum {integer} */
+            /** @constant */
             DownloadTokenExpirationTimeInSec?: 1800;
         };
         /** @description An encrypted ID */
@@ -3374,12 +3373,13 @@ export interface components {
             LinkID: components["schemas"]["Id"];
             /** @description Name Hash */
             Hash: string;
-            Name: string;
+            Name: components["schemas"]["PGPMessage"];
             /**
              * Format: email
              * @description Email address used for signing name
              */
             NameSignatureEmail: string;
+            /** @description Passphrase should be unchanged, reusing same session key as previously */
             NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Photo content hash */
             ContentHash: string;
@@ -3402,15 +3402,16 @@ export interface components {
             Hash: string;
             NodePassphrase: components["schemas"]["PGPMessage"];
             NodePassphraseSignature: components["schemas"]["PGPSignature"];
+            /** @description Signature email address used to sign passphrase and name */
             SignatureEmail: components["schemas"]["AddressEmail"];
             NodeKey: components["schemas"]["PGPPrivateKey"];
             /** @description Node hash key (random bytes encoded in base64 format), encrypted and signed. */
-            NodeHashKey: string;
+            NodeHashKey: components["schemas"]["PGPMessage"];
             /**
              * @description Extended attributes encrypted with link key
              * @default null
              */
-            XAttr: string | null;
+            XAttr: components["schemas"]["PGPMessage"] | null;
         };
         CreateAlbumRequestDto: {
             Locked: boolean;
@@ -3439,11 +3440,11 @@ export interface components {
             Passphrase: components["schemas"]["PGPMessage"];
             PassphraseSignature: components["schemas"]["PGPSignature"];
             /** @description User's encrypted AddressKeyID. Must be the primary key from the AddressID */
-            AddressKeyID: string;
+            AddressKeyID?: components["schemas"]["Id"] | null;
         };
         LinkDataDto: {
             /** @description Root folder name */
-            Name: string;
+            Name: components["schemas"]["PGPMessage"];
             NodeKey: components["schemas"]["PGPPrivateKey"];
             NodePassphrase: components["schemas"]["PGPMessage"];
             NodePassphraseSignature: components["schemas"]["PGPSignature"];
@@ -3460,6 +3461,7 @@ export interface components {
         VolumeState: 1 | 3;
         ShareReferenceResponseDto: {
             ShareID: components["schemas"]["Id"];
+            /** @description Deprecated, use `ShareID` instead */
             ID: components["schemas"]["Id"];
             LinkID: components["schemas"]["Id"];
         };
@@ -3477,6 +3479,7 @@ export interface components {
             DownloadedBytes: number;
             UploadedBytes: number;
             State: components["schemas"]["VolumeState"];
+            /** @description Main share of the volume */
             Share: components["schemas"]["ShareReferenceResponseDto"];
             Type: components["schemas"]["VolumeType"];
         };
@@ -3508,16 +3511,17 @@ export interface components {
         LinkState: 0 | 1 | 2;
         FoundDuplicate: {
             /** @description NameHash of the found duplicate */
-            Hash?: string | null;
+            Hash: string | null;
             /** @description ContentHash of the found duplicate */
-            ContentHash?: string | null;
+            ContentHash: string | null;
+            /** @description Can be null if the Link was deleted */
             LinkState: components["schemas"]["LinkState"];
             /** @description Client defined UID for the draft. Null if no ClientUID passed, or Revision was already committed. */
-            ClientUID?: string | null;
+            ClientUID: string | null;
             /** @description LinkID, null if deleted */
-            LinkID: string;
+            LinkID: components["schemas"]["Id"] | null;
             /** @description RevisionID, null if deleted */
-            RevisionID: string;
+            RevisionID: components["schemas"]["Id"] | null;
         };
         FindDuplicatesOutputCollection: {
             DuplicateHashes: components["schemas"]["FoundDuplicate"][];
@@ -3538,7 +3542,7 @@ export interface components {
         };
         PhotoTagMigrationStatusResponseDto: {
             Finished: boolean;
-            Anchor?: components["schemas"]["PhotoTagMigrationDataDto"] | null;
+            Anchor: components["schemas"]["PhotoTagMigrationDataDto"] | null;
             /**
              * ProtonResponseCode
              * @example 1000
@@ -3552,14 +3556,12 @@ export interface components {
             PhotoCount: number;
             LinkID: components["schemas"]["Id"];
             VolumeID: components["schemas"]["Id"];
-            /** @default null */
             ShareID: components["schemas"]["Id"] | null;
-            /** @default null */
             CoverLinkID: components["schemas"]["Id"] | null;
         };
         ListAlbumsResponseDto: {
             Albums: components["schemas"]["AlbumResponseDto"][];
-            AnchorID?: string | null;
+            AnchorID: string | null;
             More: boolean;
             /**
              * ProtonResponseCode
@@ -3604,15 +3606,12 @@ export interface components {
             RelatedPhotos: components["schemas"]["ListPhotosAlbumRelatedPhotoItemResponseDto"][];
             AddedTime: number;
             IsChildOfAlbum: boolean;
-            /**
-             * @description Tags assigned to the photo
-             * @default []
-             */
+            /** @description Tags assigned to the photo */
             Tags: number[];
         };
         ListPhotosAlbumResponseDto: {
             Photos: components["schemas"]["ListPhotosAlbumItemResponseDto"][];
-            AnchorID?: string | null;
+            AnchorID: string | null;
             More: boolean;
             /**
              * ProtonResponseCode
@@ -3624,9 +3623,9 @@ export interface components {
         TransferPhotoLinkInBatchRequestDto: {
             LinkID: components["schemas"]["Id"];
             /** @description Name, reusing same session key as previously. */
-            Name: string;
+            Name: components["schemas"]["PGPMessage"];
             /** @description Node passphrase, reusing same session key as previously. */
-            NodePassphrase: string;
+            NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Name hash */
             Hash: string;
             /** @description Current name hash before move operation. Used to prevent race conditions. */
@@ -3673,7 +3672,7 @@ export interface components {
         };
         SharedWithMeResponseDto: {
             Albums: components["schemas"]["AlbumResponseDto"][];
-            AnchorID?: string | null;
+            AnchorID: string | null;
             More: boolean;
             /**
              * ProtonResponseCode
@@ -3692,7 +3691,7 @@ export interface components {
             NameSignatureEmail?: string | null;
             OriginalHash?: string | null;
             /** @description Extended attributes encrypted with link key */
-            XAttr?: string | null;
+            XAttr?: components["schemas"]["PGPMessage"] | null;
         };
         UpdateAlbumRequestDto: {
             CoverLinkID?: components["schemas"]["Id"] | null;
@@ -3715,7 +3714,7 @@ export interface components {
             UserID: components["schemas"]["Id"];
             Token: string;
             ShareURLID: components["schemas"]["Id"];
-            EncryptedUrlPassword?: components["schemas"]["PGPMessage"] | null;
+            EncryptedUrlPassword: components["schemas"]["PGPMessage"] | null;
             State: components["schemas"]["BookmarkShareURLState"];
             CreateTime: number;
             ModifyTime: number;
@@ -3743,9 +3742,9 @@ export interface components {
              */
             URL?: string | null;
             /** @description Bare Download URL for the thumbnail */
-            BareURL?: string | null;
+            BareURL: string | null;
             /** @description Token for the thumbnail URL */
-            Token?: string | null;
+            Token: string | null;
         };
         TokenResponseDto: {
             /**
@@ -3753,6 +3752,7 @@ export interface components {
              * @example YTZZRH7DA8
              */
             Token: string;
+            /** @description Types: Folder - 1, File - 2} */
             LinkType: components["schemas"]["NodeType"];
             VolumeID: components["schemas"]["Id"];
             LinkID: components["schemas"]["Id"];
@@ -3763,7 +3763,7 @@ export interface components {
             NodeKey: components["schemas"]["PGPPrivateKey"];
             Name: components["schemas"]["PGPMessage"];
             /** @description Base64 encoded content key packet. Null for folders */
-            ContentKeyPacket?: components["schemas"]["BinaryString"] | null;
+            ContentKeyPacket: components["schemas"]["BinaryString"] | null;
             /** @example text/plain */
             MIMEType: string;
             /**
@@ -3775,24 +3775,17 @@ export interface components {
              */
             Permissions: 4 | 6;
             /** @description File size, null for folders */
-            Size?: number | null;
+            Size: number | null;
             /** @description File properties */
-            ThumbnailURLInfo?: components["schemas"]["ThumbnailURLInfoResponseDto"] | null;
-            /** @default null */
+            ThumbnailURLInfo: components["schemas"]["ThumbnailURLInfoResponseDto"] | null;
             NodeHashKey: components["schemas"]["PGPMessage"] | null;
-            /**
-             * @description Signature email of the share owner. Only set for a ShareURL with read+write permissions.
-             * @default null
-             */
+            /** @description Signature email of the share owner. Only set for a ShareURL with read+write permissions. */
             SignatureEmail: string | null;
-            /**
-             * @description Only set for a ShareURL with read+write permissions.
-             * @default null
-             */
+            /** @description Only set for a ShareURL with read+write permissions. */
             NodePassphraseSignature: components["schemas"]["PGPSignature"] | null;
         };
         BookmarkShareURLInfoResponseDto: {
-            EncryptedUrlPassword?: components["schemas"]["PGPMessage"] | null;
+            EncryptedUrlPassword: components["schemas"]["PGPMessage"] | null;
             CreateTime: number;
             Token: components["schemas"]["TokenResponseDto"];
         };
@@ -3830,7 +3823,7 @@ export interface components {
             Passphrase: components["schemas"]["PGPMessage"];
             PassphraseSignature: components["schemas"]["PGPSignature"];
             /** @description User's encrypted AddressKeyID. Must be the primary key from the AddressID */
-            AddressKeyID: string;
+            AddressKeyID?: components["schemas"]["Id"] | null;
             /**
              * @deprecated
              * @default null
@@ -3948,6 +3941,7 @@ export interface components {
              * @default null
              */
             ContentKeyPacketSignature: components["schemas"]["PGPSignature"] | null;
+            /** @description Document=1, Sheet=2 */
             DocumentType?: components["schemas"]["DocumentType"];
             Name: components["schemas"]["PGPMessage"];
             /** @description File/folder name Hash */
@@ -4218,6 +4212,8 @@ export interface components {
                      * @enum {integer}
                      */
                     State?: 1;
+                    /** @description Whether the checksum in xattr of the revision content was verified by the client during upload */
+                    ChecksumVerified?: boolean;
                     /**
                      * @deprecated
                      * @description Revision has a thumbnail
@@ -4300,12 +4296,12 @@ export interface components {
              * @description The share the user has access to that is closest to the root. Delete events do not have it but other events do.
              * @default null
              */
-            ContextShareID: string | null;
+            ContextShareID: components["schemas"]["Id"] | null;
             /**
              * @description If a file was moved to a different context share, this shows the old, origin share
              * @default null
              */
-            FromContextShareID: string | null;
+            FromContextShareID: components["schemas"]["Id"];
             /**
              * @description Optional event data
              * @default null
@@ -4329,12 +4325,12 @@ export interface components {
                 FLAG_RESTORE_REVISION_COMPLETE?: string;
                 /** @description Parent before the move */
                 FromParentLinkID?: string;
-            } | null;
+            };
         };
         ListEventsResponseDto: {
             Events: components["schemas"]["EventResponseDto"][];
             /** @description Last event ID that can be used on the next call. Will be latest/newest-event-id if requested last-event-id does not exist. */
-            EventID: string;
+            EventID: components["schemas"]["Id"];
             /**
              * @description 1 if there is more to pull, i.e. there are more events than returned in one call
              * @enum {integer}
@@ -4366,7 +4362,7 @@ export interface components {
         ListEventsV2ResponseDto: {
             Events: components["schemas"]["EventV2ResponseDto"][];
             /** @description Last event ID that can be used on the next call. Will be latest/newest-event-id if requested last-event-id does not exist. */
-            EventID: string;
+            EventID: components["schemas"]["Id"];
             /** @description true if there is more to pull, i.e. there are more events than returned in one call */
             More: boolean;
             /** @description true if client needs to refresh from scratch as their provided event does not exist anymore, i.e. too much time passed since the last event sync */
@@ -4380,12 +4376,12 @@ export interface components {
         };
         CreateFolderRequestDto: {
             /** @description Node hash key (random bytes encoded in base64 format), encrypted and signed. */
-            NodeHashKey: string;
+            NodeHashKey: components["schemas"]["PGPMessage"];
             /**
              * @description Extended attributes encrypted with link key
              * @default null
              */
-            XAttr: string | null;
+            XAttr: components["schemas"]["PGPMessage"] | null;
             Name: components["schemas"]["PGPMessage"];
             /** @description File/folder name Hash */
             Hash: string;
@@ -4401,6 +4397,7 @@ export interface components {
             SignatureAddress: components["schemas"]["AddressEmail"] | null;
         };
         FolderResponseDto: {
+            /** @description Link ID */
             ID: components["schemas"]["Id"];
         };
         CreateFolderResponseDto: {
@@ -4414,12 +4411,12 @@ export interface components {
         };
         CreateFolderRequestDto2: {
             /** @description Node hash key (random bytes encoded in base64 format), encrypted and signed. */
-            NodeHashKey: string;
+            NodeHashKey: components["schemas"]["PGPMessage"];
             /**
              * @description Extended attributes encrypted with link key
              * @default null
              */
-            XAttr: string | null;
+            XAttr: components["schemas"]["PGPMessage"] | null;
             Name: components["schemas"]["PGPMessage"];
             /** @description File/folder name Hash */
             Hash: string;
@@ -4451,7 +4448,7 @@ export interface components {
         ListChildrenResponseDto: {
             LinkIDs: components["schemas"]["Id"][];
             /** @description Used for pagination, pass to the next call to get the next page of results */
-            AnchorID?: string | null;
+            AnchorID: components["schemas"]["Id"] | null;
             /** @description Indicates if there is a next page of results */
             More: boolean;
             /**
@@ -4473,7 +4470,7 @@ export interface components {
             Hash: string;
             RevisionID: components["schemas"]["Id"];
             LinkID: components["schemas"]["Id"];
-            ClientUID?: string | null;
+            ClientUID: string | null;
         };
         AvailableHashesResponseDto: {
             AvailableHashes: string[];
@@ -4489,9 +4486,9 @@ export interface components {
         RelatedPhotoDto: {
             LinkID: components["schemas"]["Id"];
             /** @description Name, reusing same session key as previously. */
-            Name: string;
+            Name: components["schemas"]["PGPMessage"];
             /** @description Node passphrase, reusing same session key as previously. */
-            NodePassphrase: string;
+            NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Name hash */
             Hash: string;
             /** @description Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ] */
@@ -4500,20 +4497,19 @@ export interface components {
         PhotosDto: {
             /** @description Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ] */
             ContentHash: string;
-            /** @default [] */
             RelatedPhotos: components["schemas"]["RelatedPhotoDto"][];
         };
         CopyLinkRequestDto: {
             /** @description Name, reusing same session key as previously. */
-            Name: string;
+            Name: components["schemas"]["PGPMessage"];
             /** @description Node passphrase, reusing same session key as previously. */
-            NodePassphrase: string;
+            NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Name hash */
             Hash: string;
             /** @description Volume ID to copy to. */
-            TargetVolumeID: string;
+            TargetVolumeID: components["schemas"]["Id"];
             /** @description New parent link ID to copy to. */
-            TargetParentLinkID: string;
+            TargetParentLinkID: components["schemas"]["Id"];
             /**
              * Format: email
              * @description Signature email address used for signing name.
@@ -4544,7 +4540,7 @@ export interface components {
              * @description Only for legacy folders (signed by the user). Node hash key should be unchanged, just re-signed with the NodeKey.
              * @default null
              */
-            NodeHashKey: string | null;
+            NodeHashKey: components["schemas"]["PGPMessage"] | null;
         };
         CopyLinkResponseDto: {
             LinkID: components["schemas"]["Id"];
@@ -4603,35 +4599,34 @@ export interface components {
              * Format: email
              * @description OwnerUser email for regular and photo volumes, null otherwise
              */
-            Email?: string | null;
+            Email: string | null;
             /** @description OwnerOrganization name for org. volumes, null otherwise */
-            Organization?: string | null;
+            Organization: string | null;
         };
         LinkDto: {
             LinkID: components["schemas"]["Id"];
             Type: components["schemas"]["NodeType2"];
-            ParentLinkID?: components["schemas"]["Id"] | null;
+            ParentLinkID: components["schemas"]["Id"] | null;
             State: components["schemas"]["LinkState2"];
             CreateTime: number;
             ModifyTime: number;
-            TrashTime?: number | null;
+            TrashTime: number | null;
             Name: components["schemas"]["PGPMessage"];
-            NameHash?: string | null;
+            NameHash: string | null;
             NodeKey: components["schemas"]["PGPPrivateKey"];
             NodePassphrase: components["schemas"]["PGPMessage"];
             NodePassphraseSignature: components["schemas"]["PGPSignature"];
             /** Format: email */
-            SignatureEmail?: string | null;
+            SignatureEmail: string | null;
             /** Format: email */
-            NameSignatureEmail?: string | null;
+            NameSignatureEmail: string | null;
             OwnedBy: components["schemas"]["OwnedByDto"];
-            /** @default null */
             DirectPermissions: number | null;
         };
         PhotoDto: {
             CaptureTime: number;
-            MainPhotoLinkID?: components["schemas"]["Id"] | null;
-            ContentHash?: string | null;
+            MainPhotoLinkID: components["schemas"]["Id"] | null;
+            ContentHash: string | null;
             RelatedPhotosLinkIDs: components["schemas"]["Id"][];
         };
         /**
@@ -4651,6 +4646,8 @@ export interface components {
             RevisionID: components["schemas"]["Id"];
             CreateTime: number;
             EncryptedSize: number;
+            /** @description Whether the checksum in xattr of the revision content was verified by the client during upload */
+            ChecksumVerified: boolean;
             ManifestSignature?: components["schemas"]["PGPSignature"] | null;
             XAttr?: components["schemas"]["PGPMessage"] | null;
             Thumbnails: components["schemas"]["ThumbnailDto"][];
@@ -4658,7 +4655,7 @@ export interface components {
             SignatureEmail?: string | null;
         };
         FileDto: {
-            ActiveRevision?: components["schemas"]["ActiveRevisionDto"] | null;
+            ActiveRevision: components["schemas"]["ActiveRevisionDto"] | null;
             TotalEncryptedSize: number;
             ContentKeyPacket: components["schemas"]["BinaryString"];
             MediaType?: string | null;
@@ -4684,11 +4681,11 @@ export interface components {
             /** Format: email */
             InviterEmail: string;
             /** @description base64 encoded key packet, encrypting the share passphrase's session key with the invitee's address key */
-            MemberSharePassphraseKeyPacket: string;
+            MemberSharePassphraseKeyPacket: components["schemas"]["BinaryString"];
             /** @description PGP signature of the member key packet (encrypted) by inviter */
-            InviterSharePassphraseKeyPacketSignature: string;
+            InviterSharePassphraseKeyPacketSignature: components["schemas"]["PGPSignature"];
             /** @description Signature of the share passphrase's session key with the private key of the user (invitee). */
-            InviteeSharePassphraseSessionKeySignature: string;
+            InviteeSharePassphraseSessionKeySignature: components["schemas"]["PGPSignature"];
         };
         FileDetailsDto: {
             Link: components["schemas"]["LinkDto"];
@@ -4701,9 +4698,9 @@ export interface components {
              */
             Membership: components["schemas"]["MembershipDto"] | null;
             /** @default null */
-            Folder: null | null;
+            Folder: null;
             /** @default null */
-            Album: null | null;
+            Album: null;
         };
         FolderDto: {
             NodeHashKey?: components["schemas"]["PGPMessage"] | null;
@@ -4720,18 +4717,18 @@ export interface components {
              */
             Membership: components["schemas"]["MembershipDto"] | null;
             /** @default null */
-            File: null | null;
+            File: null;
             /** @default null */
-            Album: null | null;
+            Album: null;
         };
         AlbumDto: {
             Hidden: boolean;
             Locked: boolean;
-            CoverLinkID?: components["schemas"]["Id"] | null;
+            CoverLinkID: components["schemas"]["Id"] | null;
             LastActivityTime: number;
             PhotoCount: number;
             NodeHashKey: components["schemas"]["PGPMessage"];
-            XAttr?: components["schemas"]["PGPMessage"] | null;
+            XAttr: components["schemas"]["PGPMessage"] | null;
         };
         AlbumDetailsDto: {
             Link: components["schemas"]["LinkDto"];
@@ -4741,9 +4738,9 @@ export interface components {
             /** @default null */
             Membership: components["schemas"]["MembershipDto"] | null;
             /** @default null */
-            File: null | null;
+            File: null;
             /** @default null */
-            Folder: null | null;
+            Folder: null;
         };
         LoadLinkDetailsResponseDto: {
             Links: (components["schemas"]["FileDetailsDto"] | components["schemas"]["FolderDetailsDto"] | components["schemas"]["AlbumDetailsDto"])[];
@@ -4757,9 +4754,9 @@ export interface components {
         MoveLinkInBatchRequestDto: {
             LinkID: components["schemas"]["Id"];
             /** @description Name, reusing same session key as previously. */
-            Name: string;
+            Name: components["schemas"]["PGPMessage"];
             /** @description Node passphrase, reusing same session key as previously. */
-            NodePassphrase: string;
+            NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Name hash */
             Hash: string;
             /**
@@ -4796,9 +4793,9 @@ export interface components {
         };
         MoveLinkRequestDto: {
             /** @description Name, reusing same session key as previously. */
-            Name: string;
+            Name: components["schemas"]["PGPMessage"];
             /** @description Node passphrase, reusing same session key as previously. */
-            NodePassphrase: string;
+            NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Name hash */
             Hash: string;
             ParentLinkID: components["schemas"]["Id"];
@@ -4845,9 +4842,9 @@ export interface components {
         };
         MoveLinkRequestDto2: {
             /** @description Name, reusing same session key as previously. */
-            Name: string;
+            Name: components["schemas"]["PGPMessage"];
             /** @description Node passphrase, reusing same session key as previously. */
-            NodePassphrase: string;
+            NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Name hash */
             Hash: string;
             ParentLinkID: components["schemas"]["Id"];
@@ -4877,7 +4874,7 @@ export interface components {
         };
         RenameLinkRequestDto: {
             /** @description Name, reusing same session key as previously. */
-            Name: string;
+            Name: components["schemas"]["PGPMessage"];
             /** @description Name hash; ignored/nullable for root-links */
             Hash?: string | null;
             /**
@@ -4922,7 +4919,7 @@ export interface components {
              * @description Main photo LinkID reference. Pass null if none.
              * @default null
              */
-            MainPhotoLinkID: string | null;
+            MainPhotoLinkID: components["schemas"]["Id"] | null;
             /**
              * @deprecated
              * @description Deprecated: Clients persist exif information in xAttr instead
@@ -4957,7 +4954,7 @@ export interface components {
              * @description Extended attributes encrypted with link key
              * @default null
              */
-            XAttr: string | null;
+            XAttr: components["schemas"]["PGPMessage"] | null;
             /** @default null */
             Photo: components["schemas"]["CommitRevisionPhotoDto"] | null;
             /**
@@ -4977,6 +4974,11 @@ export interface components {
              * @default null
              */
             State: number | null;
+            /**
+             * @description Whether the checksum in xattr of the revision content was verified by the client during upload
+             * @default false
+             */
+            ChecksumVerified: boolean;
         };
         CreateFileDto: {
             /** @example text/plain */
@@ -4986,7 +4988,7 @@ export interface components {
              * @description Unencrypted signature of the content session key (plain text of the ContentKeyPacket), signed with the NodeKey.
              * @default null
              */
-            ContentKeyPacketSignature: string | null;
+            ContentKeyPacketSignature: components["schemas"]["PGPSignature"] | null;
             /**
              * @description Client unique ID. Useful for marking client's drafts - in case of failure client can recognise its own draft and continue upload.
              * @default null
@@ -5012,9 +5014,10 @@ export interface components {
             SignatureAddress: components["schemas"]["AddressEmail"] | null;
         };
         FileResponseDto: {
+            /** @description Link ID */
             ID: components["schemas"]["Id"];
             RevisionID: components["schemas"]["Id"];
-            ClientUID?: string | null;
+            ClientUID: string | null;
         };
         CreateDraftFileResponseDto: {
             File: components["schemas"]["FileResponseDto"];
@@ -5040,6 +5043,7 @@ export interface components {
             IntendedUploadSize: number | null;
         };
         RevisionResponseDto: {
+            /** @description Revision ID */
             ID: components["schemas"]["Id"];
         };
         CreateDraftRevisionResponseDto: {
@@ -5081,11 +5085,11 @@ export interface components {
         };
         RevisionResponseDto2: {
             ID: components["schemas"]["Id"];
-            ManifestSignature?: components["schemas"]["PGPSignature"] | null;
+            ManifestSignature: components["schemas"]["PGPSignature"] | null;
             /** @description Size of revision (in bytes) */
             Size: number;
             State: components["schemas"]["RevisionState"];
-            XAttr?: components["schemas"]["PGPMessage"] | null;
+            XAttr: components["schemas"]["PGPMessage"] | null;
             /**
              * @deprecated
              * @description Flag stating if revision has a thumbnail
@@ -5100,7 +5104,9 @@ export interface components {
              */
             ThumbnailSize: number;
             Thumbnails: components["schemas"]["ThumbnailResponseDto"][];
-            ClientUID?: string | null;
+            /** @description Whether the checksum in xattr of the revision content was verified by the client during upload */
+            ChecksumVerified: boolean;
+            ClientUID: string | null;
             /** @default null */
             CreateTime: number | null;
             /**
@@ -5179,6 +5185,7 @@ export interface components {
             Code: 1000;
         };
         Verifier: {
+            /** @description Derived from verificationCode from GET /verification endpoint: base64(xor(verificationCode, padWithZeros(dataPacket, 32))) */
             Token: components["schemas"]["BinaryString"];
         };
         RequestUploadBlockInput: {
@@ -5190,7 +5197,7 @@ export interface components {
              * @description Encrypted PGP Signature of the raw block content. Deprecated: Once clients do not validate the block signature, it should also not be calculated and uploaded anymore.
              * @default null
              */
-            EncSignature: string | null;
+            EncSignature: components["schemas"]["PGPMessage"] | null;
             /**
              * @deprecated
              * @description Block size in bytes
@@ -5201,7 +5208,7 @@ export interface components {
              * @deprecated
              * @description sha256 hash of encrypted block, base64 encoded
              */
-            Hash: string;
+            Hash?: components["schemas"]["BinaryString"] | null;
         };
         RequestUploadThumbnailInput: {
             Type: components["schemas"]["ThumbnailType"];
@@ -5215,7 +5222,7 @@ export interface components {
              * @deprecated
              * @description sha256 hash of encrypted block, base64 encoded
              */
-            Hash: string;
+            Hash?: components["schemas"]["BinaryString"] | null;
         };
         RequestUploadInput: {
             LinkID: components["schemas"]["Id"];
@@ -5240,7 +5247,7 @@ export interface components {
              * @description sha256 hash of thumbnail contents
              * @default null
              */
-            ThumbnailHash: string | null;
+            ThumbnailHash: components["schemas"]["BinaryString"] | null;
             /**
              * @deprecated
              * @description Size of thumbnail contents
@@ -5303,6 +5310,8 @@ export interface components {
             FailedItemCount: number;
             State: components["schemas"]["HealthCheckState"];
         };
+        /** @enum {string} */
+        AbuseDtoCategory: "spam" | "copyright" | "child-abuse" | "stolen-data" | "malware" | "other";
         AbuseReportDto: {
             /** @description Passphrase for reported Link's Node key, unencrypted, as a string, escaped for JSON. */
             ResourcePassphrase: string;
@@ -5311,8 +5320,7 @@ export interface components {
              * @example https://drive.proton.me/urls/1F9BKXYDMA#yF7d7bn01GMM
              */
             ShareURL: string;
-            /** @enum {string} */
-            AbuseCategory: "spam" | "copyright" | "child-abuse" | "stolen-data" | "malware" | "other";
+            AbuseCategory: components["schemas"]["AbuseDtoCategory"];
             /**
              * @description Full password, including custom part, as string, escaped for JSON
              * @default
@@ -5338,9 +5346,9 @@ export interface components {
             RevisionID: components["schemas"]["Id"] | null;
         };
         FreshAccountResponseDto: {
-            EndTime?: number | null;
+            EndTime: number | null;
             /** @description Maximum available space for the free upload timer, in bytes (API allows going 10% over limit for zero-rating) */
-            Quota?: number | null;
+            Quota: number | null;
             /**
              * ProtonResponseCode
              * @example 1000
@@ -5351,8 +5359,8 @@ export interface components {
         ChecklistResponseDto: {
             /** @description Array of completed checklist items */
             Items: string[];
-            CreatedAt?: number | null;
-            ExpiresAt?: number | null;
+            CreatedAt: number | null;
+            ExpiresAt: number | null;
             /** @description User already has reward quota */
             UserWasRewarded: boolean;
             /** @description Client has displayed completed checklist */
@@ -5407,12 +5415,13 @@ export interface components {
         FavoritePhotoDataDto: {
             /** @description Name Hash */
             Hash: string;
-            Name: string;
+            Name: components["schemas"]["PGPMessage"];
             /**
              * Format: email
              * @description Email address used for signing name
              */
             NameSignatureEmail: string;
+            /** @description Passphrase should be unchanged, reusing same session key as previously */
             NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Photo content hash */
             ContentHash: string;
@@ -5445,7 +5454,7 @@ export interface components {
         };
         GetMigrationStatusResponseDto: {
             OldVolumeID: components["schemas"]["Id"];
-            NewVolumeID?: components["schemas"]["Id"] | null;
+            NewVolumeID: components["schemas"]["Id"] | null;
             /**
              * ProtonResponseCode
              * @example 1000
@@ -5496,12 +5505,8 @@ export interface components {
             Hash: string;
             /** @description Photo content hash, Hashmac of content using parent folder's hash key */
             ContentHash?: string | null;
-            /**
-             * @description Tags assigned to the photo
-             * @default []
-             */
+            /** @description Tags assigned to the photo */
             Tags: number[];
-            /** @default [] */
             RelatedPhotos: components["schemas"]["PhotoListingRelatedItemResponse"][];
         };
         PhotoListingResponse: {
@@ -5517,6 +5522,8 @@ export interface components {
             RevisionID: components["schemas"]["Id"];
             CreateTime: number;
             EncryptedSize: number;
+            /** @description Whether the checksum in xattr of the revision content was verified by the client during upload */
+            ChecksumVerified: boolean;
             ManifestSignature?: components["schemas"]["PGPSignature"] | null;
             XAttr?: components["schemas"]["PGPMessage"] | null;
             Thumbnails: components["schemas"]["ThumbnailDto"][];
@@ -5530,10 +5537,10 @@ export interface components {
             AddedTime: number;
         };
         PhotoFileDto: {
-            ActiveRevision?: components["schemas"]["ActivePhotoRevisionDto"] | null;
+            ActiveRevision: components["schemas"]["ActivePhotoRevisionDto"] | null;
             CaptureTime: number;
-            MainPhotoLinkID?: components["schemas"]["Id"] | null;
-            ContentHash?: string | null;
+            MainPhotoLinkID: components["schemas"]["Id"] | null;
+            ContentHash: string | null;
             RelatedPhotosLinkIDs: components["schemas"]["Id"][];
             Albums: components["schemas"]["PhotoAlbumDto"][];
             /** @description Will be empty if the user is not the owner. */
@@ -5554,7 +5561,7 @@ export interface components {
              */
             Membership: components["schemas"]["MembershipDto"] | null;
             /** @default null */
-            Album: null | null;
+            Album: null;
         };
         PhotoAlbumDetailsDto: {
             Link: components["schemas"]["LinkDto"];
@@ -5564,7 +5571,7 @@ export interface components {
             /** @default null */
             Membership: components["schemas"]["MembershipDto"] | null;
             /** @default null */
-            Photo: null | null;
+            Photo: null;
         };
         PhotoRootFolderDetailsDto: {
             Link: components["schemas"]["LinkDto"];
@@ -5577,9 +5584,9 @@ export interface components {
              */
             Membership: components["schemas"]["MembershipDto"] | null;
             /** @default null */
-            Photo: null | null;
+            Photo: null;
             /** @default null */
-            Album: null | null;
+            Album: null;
         };
         LoadPhotoVolumeLinkDetailsResponseDto: {
             Links: (components["schemas"]["PhotoDetailsDto"] | components["schemas"]["PhotoAlbumDetailsDto"] | components["schemas"]["PhotoRootFolderDetailsDto"])[];
@@ -5593,6 +5600,10 @@ export interface components {
         RemoveTagsRequestDto: {
             Tags: components["schemas"]["TagType"][];
         };
+        UpdatePhotoCaptureTimeRequestDto: {
+            /** @description Unix timestamp used to determine position in timeline */
+            CaptureTime: number;
+        };
         UpdateXAttrRequest: {
             /**
              * Format: email
@@ -5600,7 +5611,7 @@ export interface components {
              */
             SignatureEmail: string;
             /** @description Extended attributes encrypted with link key */
-            XAttr: string;
+            XAttr: components["schemas"]["PGPMessage"];
         };
         AuthShareTokenRequestDto: {
             ClientEphemeral: components["schemas"]["BinaryString"];
@@ -5624,19 +5635,12 @@ export interface components {
             UID: string;
             ServerProof: components["schemas"]["BinaryString"];
             Share: components["schemas"]["AuthShareDataResponseDto"];
-            /**
-             * @description Session Access token (present if new session)
-             * @default null
-             */
+            /** @description Session Access token (present if new session) */
             AccessToken: string;
-            /**
-             * @description Duration of the session in seconds (present if new session)
-             * @default null
-             */
+            /** @description Duration of the session in seconds (present if new session) */
             ExpiresIn: number;
             /**
              * @description Type of token (present if new session)
-             * @default null
              * @example Bearer
              */
             TokenType: string;
@@ -5685,10 +5689,7 @@ export interface components {
             /** @deprecated */
             IsDoc: boolean;
             VendorType: components["schemas"]["VendorType"];
-            /**
-             * @description Only set if the user is authenticated AND has direct access to the share already
-             * @default null
-             */
+            /** @description Only set if the user is authenticated AND has direct access to the share already */
             DirectAccess: components["schemas"]["DirectAccessResponseDto"] | null;
             /**
              * ProtonResponseCode
@@ -5705,12 +5706,17 @@ export interface components {
              */
             SignatureEmail?: components["schemas"]["AddressEmail"] | null;
             /** @description Extended attributes encrypted with link key */
-            XAttr: string;
+            XAttr: components["schemas"]["PGPMessage"];
             /**
              * @description Photo attributes
              * @default null
              */
             Photo: components["schemas"]["CommitRevisionPhotoDto"] | null;
+            /**
+             * @description Whether the checksum in xattr of the revision content was verified by the client during upload
+             * @default false
+             */
+            ChecksumVerified: boolean;
         };
         CreateAnonymousDocumentDto: {
             Name: components["schemas"]["PGPMessage"];
@@ -5733,6 +5739,7 @@ export interface components {
              * @default null
              */
             ContentKeyPacketSignature: components["schemas"]["PGPSignature"] | null;
+            /** @description Document=1, Sheet=2 */
             DocumentType?: components["schemas"]["DocumentType"];
         };
         CreateAnonymousDocumentResponseDto: {
@@ -5766,7 +5773,7 @@ export interface components {
              * @description Unencrypted signature of the content session key (plain text of the ContentKeyPacket), signed with the NodeKey.
              * @default null
              */
-            ContentKeyPacketSignature: string | null;
+            ContentKeyPacketSignature: components["schemas"]["PGPSignature"] | null;
             /**
              * @description Client unique ID. Useful for marking client's drafts - in case of failure client can recognise its own draft and continue upload.
              * @default null
@@ -5797,7 +5804,7 @@ export interface components {
             NodePassphraseSignature: components["schemas"]["PGPSignature"];
             NodeKey: components["schemas"]["PGPPrivateKey"];
             /** @description Node hash key (random bytes encoded in base64 format), encrypted and signed. */
-            NodeHashKey: string;
+            NodeHashKey: components["schemas"]["PGPMessage"];
             /**
              * Format: email
              * @description Signature email address used to sign passphrase and name
@@ -5808,7 +5815,7 @@ export interface components {
              * @description Extended attributes encrypted with link key
              * @default null
              */
-            XAttr: string | null;
+            XAttr: components["schemas"]["PGPMessage"] | null;
         };
         CreateAnonymousFolderResponseDto: {
             Folder: components["schemas"]["FolderResponseDto"];
@@ -5830,7 +5837,7 @@ export interface components {
         };
         RenameAnonymousLinkRequestDto: {
             /** @description Name, reusing same session key as previously. */
-            Name: string;
+            Name: components["schemas"]["PGPMessage"];
             /** @description Name hash */
             Hash: string;
             /** @description Current name hash before move operation. Used to prevent race conditions. */
@@ -5876,10 +5883,10 @@ export interface components {
         BlockResponseDto: {
             Index: number;
             Hash: components["schemas"]["BinaryString"];
-            Token?: string | null;
+            Token: string | null;
             /** @deprecated */
             URL?: string | null;
-            BareURL?: string | null;
+            BareURL: string | null;
             /**
              * @deprecated
              * @default null
@@ -5897,11 +5904,11 @@ export interface components {
             LinkID: components["schemas"]["Id"];
             /** @description Unix timestamp of when the photo was taken as extracted by client from exif */
             CaptureTime: number;
-            MainPhotoLinkID?: components["schemas"]["Id"] | null;
+            MainPhotoLinkID: components["schemas"]["Id"] | null;
             /** @description File name hash */
-            Hash?: string | null;
+            Hash: string | null;
             /** @description Photo content hash, Hashmac of content using parent folder's hash key */
-            ContentHash?: string | null;
+            ContentHash: string | null;
             /** @description LinkIDs of related Photos if there are any */
             RelatedPhotosLinkIDs: components["schemas"]["Id"][];
             /**
@@ -5913,7 +5920,7 @@ export interface components {
         };
         DetailedRevisionResponseDto: {
             Blocks: components["schemas"]["BlockResponseDto"][];
-            Photo?: components["schemas"]["PhotoResponseDto"] | null;
+            Photo: components["schemas"]["PhotoResponseDto"] | null;
             ID: components["schemas"]["Id"];
             ManifestSignature?: components["schemas"]["PGPSignature"] | null;
             /** @description Size of revision (in bytes) */
@@ -5934,6 +5941,8 @@ export interface components {
              */
             ThumbnailSize: number;
             Thumbnails: components["schemas"]["ThumbnailResponseDto"][];
+            /** @description Whether the checksum in xattr of the revision content was verified by the client during upload */
+            ChecksumVerified: boolean;
             ClientUID?: string | null;
             /** @default null */
             CreateTime: number | null;
@@ -6004,12 +6013,12 @@ export interface components {
             ShareID: components["schemas"]["Id"];
             /** @description URL to use to access the ShareURL */
             PublicUrl: string;
-            ExpirationTime?: number | null;
-            LastAccessTime?: number | null;
+            ExpirationTime: number | null;
+            LastAccessTime: number | null;
             CreateTime: number;
             MaxAccesses: number;
             NumAccesses: number;
-            Name?: components["schemas"]["PGPMessage"] | null;
+            Name: components["schemas"]["PGPMessage"] | null;
             CreatorEmail: string;
             /**
              * @description Permission bitfield, cannot exceed the owner's permissions. Valid permissions:
@@ -6032,7 +6041,7 @@ export interface components {
         };
         ShareURLContext: {
             /** @description Share ID of the share highest in the tree with permissions */
-            ContextShareID: string;
+            ContextShareID: components["schemas"]["Id"];
             ShareURLs: components["schemas"]["ShareURLResponseDto"][];
             /** @description Related link IDs and ancestors up to the share. */
             LinkIDs: components["schemas"]["Id"][];
@@ -6081,7 +6090,7 @@ export interface components {
             Flags: number;
             SharePassphraseKeyPacket: components["schemas"]["BinaryString"];
             /** @description PGP encrypted password. The password is encrypted with the user's address key. */
-            Password: string;
+            Password: components["schemas"]["PGPMessage"];
             /** @description Maximum number of times this link can be accessed. 0 for infinite */
             MaxAccesses: number;
             /**
@@ -6098,7 +6107,7 @@ export interface components {
              * @description PGP encrypted name. The name is encrypted with the user's address key. The name is only for user convenience.
              * @default null
              */
-            Name: string | null;
+            Name: components["schemas"]["PGPMessage"] | null;
         };
         UpdateShareURLRequestDto: {
             /** @description UNIX timestamp after which this link is no longer accessible. Use this or ExpirationDuration for a relative expiration period. Max 90 days from now. */
@@ -6106,7 +6115,7 @@ export interface components {
             /** @description Number of seconds after which this link is no longer accessible. Maximum 90 days. */
             ExpirationDuration?: number | null;
             /** @description PGP encrypted name. The name is encrypted with the user's address key. The name is only for user convenience. */
-            Name: number;
+            Name?: components["schemas"]["PGPMessage"] | null;
             /**
              * @description Permission bitfield, cannot exceed the owner's permissions. Valid permissions:
              *      - 4: read access
@@ -6283,11 +6292,12 @@ export interface components {
              */
             Permissions: 4 | 6 | 22;
             /** @description base64 encoded key packet, encrypting the share passphrase's session key with the invitee's address key */
-            KeyPacket: string;
+            KeyPacket: components["schemas"]["BinaryString"];
             /** @description PGP signature of the member key packet (encrypted) by inviter */
-            KeyPacketSignature: string;
+            KeyPacketSignature: components["schemas"]["PGPSignature"] | null;
             /** @description Signature of the share passphrase's session key with the private key of the user (invitee). */
-            SessionKeySignature: string;
+            SessionKeySignature: components["schemas"]["PGPSignature"] | null;
+            /** @description 1=active, 3=locked */
             State: components["schemas"]["ShareMemberState"];
             CreateTime: number;
             ModifyTime: number;
@@ -6304,6 +6314,7 @@ export interface components {
             AddressID: components["schemas"]["Id"];
             AddressKeyID: components["schemas"]["Id"];
             KeyPacket: components["schemas"]["BinaryString"];
+            /** @description 1=active, 3=locked */
             State: components["schemas"]["ShareMemberState"];
             /**
              * @deprecated
@@ -6315,12 +6326,15 @@ export interface components {
         BootstrapShareResponseDto: {
             ShareID: components["schemas"]["Id"];
             VolumeID: components["schemas"]["Id"];
+            /** @description 1=Main, 2=Standard, 3=Device, 4=Photo */
             Type: components["schemas"]["ShareType"];
+            /** @description 1=Active, 3=Restored */
             State: components["schemas"]["ShareState"];
+            /** @description 1=Regular, 2=Photo */
             VolumeType: components["schemas"]["VolumeType2"];
             /** Format: email */
             Creator: string;
-            Locked?: boolean | null;
+            Locked: boolean | null;
             CreateTime: number;
             ModifyTime: number;
             LinkID: components["schemas"]["Id"];
@@ -6331,6 +6345,7 @@ export interface components {
             CreationTime: number;
             /** @deprecated */
             PermissionsMask: number;
+            /** @description 1=folder, 2=file */
             LinkType: components["schemas"]["NodeType3"];
             /** @deprecated */
             Flags: number;
@@ -6342,12 +6357,12 @@ export interface components {
             Passphrase: components["schemas"]["PGPMessage"];
             PassphraseSignature: components["schemas"]["PGPSignature"];
             /** @description Address ID of the current user's address for the membership of this share. Can be missing if the user is not a direct member of the share. */
-            AddressID?: string | null;
+            AddressID: components["schemas"]["Id"] | null;
             /**
              * @deprecated
              * @description Clients should not use this field but pass the address keyring when validating and decrypting related fields.
              */
-            AddressKeyID?: string | null;
+            AddressKeyID?: components["schemas"]["Id"] | null;
             /** @description Your own memberships */
             Memberships: components["schemas"]["MemberResponseDto"][];
             /**
@@ -6355,7 +6370,7 @@ export interface components {
              * @description Deprecated, use `Memberships` instead
              */
             PossibleKeyPackets: components["schemas"]["KeyPacketResponseDto"][];
-            RootLinkRecoveryPassphrase?: components["schemas"]["PGPMessage"] | null;
+            RootLinkRecoveryPassphrase: components["schemas"]["PGPMessage"] | null;
             /** @description Indicates if editor members of this share could reshare it or not */
             EditorsCanShare: boolean;
             /**
@@ -6366,6 +6381,7 @@ export interface components {
             Code: 1000;
         };
         GetHighestContextForDocumentResponse: {
+            /** @description Context shareID of the highest level that the user is granted permission */
             ContextShareID: components["schemas"]["Id"];
             /**
              * ProtonResponseCode
@@ -6377,12 +6393,15 @@ export interface components {
         ShareResponseDto: {
             ShareID: components["schemas"]["Id"];
             VolumeID: components["schemas"]["Id"];
+            /** @description 1=Main, 2=Standard, 3=Device, 4=Photo */
             Type: components["schemas"]["ShareType"];
+            /** @description 1=Active, 3=Restored */
             State: components["schemas"]["ShareState"];
+            /** @description 1=Regular, 2=Photo */
             VolumeType: components["schemas"]["VolumeType2"];
             /** Format: email */
             Creator: string;
-            Locked?: boolean | null;
+            Locked: boolean | null;
             CreateTime: number;
             ModifyTime: number;
             LinkID: components["schemas"]["Id"];
@@ -6415,16 +6434,6 @@ export interface components {
             /** @description Indicates if editor members of this share could reshare it or not */
             Value: boolean;
         };
-        TransferInput: {
-            /** @description The ID of the new address */
-            AddressID: string;
-            /** @description The ID of the new key */
-            KeyID: string;
-            /** @description Armored signature of the share passphrase, signed with the users's address with AddressID. */
-            SharePassphraseSignature: string;
-            /** @description Base64 encoded key packet for the share passphrase, reusing the same session key as previously, and encrypted for the key referenced by the KeyID. */
-            MemberKeyPacket: string;
-        };
         UpdateSharePropertyRequestDto: {
             /**
              * @description Indicates if editor members of this share could reshare it or not
@@ -6434,9 +6443,9 @@ export interface components {
         };
         ShareKPMigrationData: {
             /** @description Share to migrate. Can only be Active (State=1) Shares of Type=2 */
-            ShareID: string;
+            ShareID: components["schemas"]["Id"];
             /** @description Key packet to decrypt the share passphrase, encrypted with the node key, base64 encoded */
-            PassphraseNodeKeyPacket: string;
+            PassphraseNodeKeyPacket: components["schemas"]["BinaryString"];
         };
         MigrateSharesRequestDto: {
             /**
@@ -6483,10 +6492,10 @@ export interface components {
             RootLinkID: components["schemas"]["Id"];
             ShareKey: components["schemas"]["PGPPrivateKey"];
             /** @description Full PGP message containing (optionally) PassphraseNodeKP and SharePassphrase-KP and data-packet (encrypted SharePassphrase) -> in this exact order */
-            SharePassphrase: string;
+            SharePassphrase: components["schemas"]["PGPMessage"];
             SharePassphraseSignature: components["schemas"]["PGPSignature"];
             /** @description Key packet for passphrase of referenced link's node key passphrase */
-            PassphraseKeyPacket: string;
+            PassphraseKeyPacket: components["schemas"]["BinaryString"];
             NameKeyPacket: components["schemas"]["BinaryString"];
             /**
              * @deprecated
@@ -6516,7 +6525,7 @@ export interface components {
         SharedByMeResponseDto: {
             Links: components["schemas"]["LinkSharedByMeResponseDto"][];
             /** @description Used for pagination, pass to the next call to get the next page of results */
-            AnchorID?: string | null;
+            AnchorID: components["schemas"]["Id"] | null;
             /** @description Indicates if there is a next page of results */
             More: boolean;
             /**
@@ -6536,12 +6545,14 @@ export interface components {
             VolumeID: components["schemas"]["Id"];
             ShareID: components["schemas"]["Id"];
             LinkID: components["schemas"]["Id"];
+            /** @description The target type of the Share that is corresponding to this invitation.
+             *                 This should not be used as source of information to know what NodeType or MIMEType the targeted Share is. */
             ShareTargetType: components["schemas"]["TargetType"];
         };
         SharedWithMeResponseDto2: {
             Links: components["schemas"]["LinkSharedWithMeResponseDto"][];
             /** @description Used for pagination, pass to the next call to get the next page of results */
-            AnchorID?: string | null;
+            AnchorID: components["schemas"]["Id"] | null;
             /** @description Indicates if there is a next page of results */
             More: boolean;
             /**
@@ -6565,7 +6576,7 @@ export interface components {
              */
             Permissions: 4 | 6 | 22;
             /** @description Base64 signature of "inviteemail|base64(share passphrase session key)" signed with the admin's address key and the signature context `drive.share-member.external-invitation` */
-            ExternalInvitationSignature: string;
+            ExternalInvitationSignature: components["schemas"]["BinaryString"];
         };
         InvitationEmailDetailsRequestDto: {
             Message?: string | null;
@@ -6597,7 +6608,7 @@ export interface components {
              */
             Permissions: 4 | 6 | 22;
             /** @description Base64 signature of "inviteemail|base64(share passphrase session key)" signed with the admin's address key and the signature context `drive.share-member.external-invitation` */
-            ExternalInvitationSignature: string;
+            ExternalInvitationSignature: components["schemas"]["BinaryString"];
             State: components["schemas"]["ExternalInvitationState"];
             CreateTime: number;
         };
@@ -6627,7 +6638,7 @@ export interface components {
         ListUserRegisteredExternalInvitationResponseDto: {
             ExternalInvitations: components["schemas"]["UserRegisteredExternalInvitationItemDto"][];
             /** @description Used for pagination, pass to the next call to get the next page of results */
-            AnchorID?: string | null;
+            AnchorID: components["schemas"]["Id"] | null;
             /** @description Indicates if there is a next page of results */
             More: boolean;
             /**
@@ -6650,7 +6661,7 @@ export interface components {
         };
         AcceptInvitationRequestDto: {
             /** @description Signature of the share passphrase's session key with the private key of the user (invitee) and the signature context `drive.share-member.member`, base64 encoded */
-            SessionKeySignature: string;
+            SessionKeySignature: components["schemas"]["BinaryString"];
         };
         InvitationRequestDto: {
             InviterEmail: components["schemas"]["AddressEmail"];
@@ -6665,9 +6676,9 @@ export interface components {
              */
             Permissions: 4 | 6 | 22;
             /** @description Encrypting the share passphrase's session key with the invitee's public address key, base64 encoded */
-            KeyPacket: string;
+            KeyPacket: components["schemas"]["BinaryString"];
             /** @description Signature of the above member key packet with the private key of the user (inviter) and the signature context `drive.share-member.inviter`, base64 encoded */
-            KeyPacketSignature: string;
+            KeyPacketSignature: components["schemas"]["BinaryString"];
             /** @default null */
             ExternalInvitationID: components["schemas"]["Id"] | null;
         };
@@ -6692,9 +6703,9 @@ export interface components {
              */
             Permissions: 4 | 6 | 22;
             /** @description base64 encoded key packet, encrypting the share passphrase's session key with the invitee's address key */
-            KeyPacket: string;
+            KeyPacket: components["schemas"]["BinaryString"];
             /** @description PGP signature of the member key packet (encrypted) by inviter */
-            KeyPacketSignature: string;
+            KeyPacketSignature: components["schemas"]["BinaryString"];
             CreateTime: number;
         };
         InviteUserResponseDto: {
@@ -6731,12 +6742,14 @@ export interface components {
             VolumeID: components["schemas"]["Id"];
             ShareID: components["schemas"]["Id"];
             InvitationID: components["schemas"]["Id"];
+            /** @description The target type of the Share that is corresponding to this invitation.
+             *                 This should not be used as source of information to know what NodeType or MIMEType the targeted Share is. */
             ShareTargetType: components["schemas"]["TargetType"];
         };
         ListPendingInvitationResponseDto: {
             Invitations: components["schemas"]["PendingInvitationItemDto"][];
             /** @description Used for pagination, pass to the next call to get the next page of results */
-            AnchorID?: string | null;
+            AnchorID: components["schemas"]["Id"] | null;
             /** @description Indicates if there is a next page of results */
             More: boolean;
             /**
@@ -6753,13 +6766,15 @@ export interface components {
             ShareKey: components["schemas"]["PGPPrivateKey"];
             /** Format: email */
             CreatorEmail: string;
+            /** @description The target type of the Share that is corresponding to this invitation.
+             *                 This should not be used as source of information to know what NodeType or MIMEType the targeted Share is. */
             ShareTargetType: components["schemas"]["TargetType"];
         };
         LinkResponseDto: {
             Type: components["schemas"]["NodeType2"];
             LinkID: components["schemas"]["Id"];
             Name: components["schemas"]["PGPMessage"];
-            MIMEType?: string | null;
+            MIMEType: string | null;
         };
         PendingInvitationResponseDto: {
             Invitation: components["schemas"]["InvitationResponseDto"];
@@ -6816,11 +6831,11 @@ export interface components {
              */
             Permissions: 4 | 6 | 22;
             /** @description base64 encoded key packet, encrypting the share passphrase's session key with the invitee's address key */
-            KeyPacket: string;
+            KeyPacket: components["schemas"]["BinaryString"];
             /** @description PGP signature of the member key packet (encrypted) by inviter */
-            KeyPacketSignature: string;
+            KeyPacketSignature: components["schemas"]["BinaryString"];
             /** @description Signature of the share passphrase's session key with the private key of the user (invitee). */
-            SessionKeySignature: string;
+            SessionKeySignature: components["schemas"]["BinaryString"];
             CreateTime: number;
         };
         ListShareMembersResponseDto: {
@@ -6893,6 +6908,7 @@ export interface components {
             B2BPhotosEnabled: null;
             Layout: components["schemas"]["LayoutSetting"];
             Sort: components["schemas"]["SortSetting"];
+            /** @description Number of days revisions should be retained. If null, default will be used by backend. Changing the setting is only available to paid users, free users will always use the default. */
             RevisionRetentionDays: components["schemas"]["RevisionRetentionDays"];
             /** @description Indicates if email notifications for comment activity in Proton Docs are enabled. If null, the default value to 0 = false will be used by backend. */
             DocsCommentsNotificationsEnabled?: boolean | null;
@@ -6914,6 +6930,7 @@ export interface components {
              * @description [DEPRECATED] Always true
              */
             B2BPhotosEnabled: boolean;
+            /** @description Number of days revisions should be retained if not defined by the user. Default ALWAYS used for free users, even if different value is set (premium feature). */
             RevisionRetentionDays: components["schemas"]["RevisionRetentionDays2"];
             /** @description Indicates if email notifications for comment activity in Proton Docs are enabled. If null, the default value to 0 = false will be used by backend. */
             DocsCommentsNotificationsEnabled: boolean;
@@ -6923,7 +6940,9 @@ export interface components {
             PhotoTags: number[];
         };
         SettingsResponse: {
+            /** @description User settings as defined by the user. */
             UserSettings: components["schemas"]["UserSettings"];
+            /** @description Defaults for certain settings (e.g. if not set by user). */
             Defaults: components["schemas"]["Defaults"];
             /**
              * ProtonResponseCode
@@ -6935,6 +6954,7 @@ export interface components {
         UserSettingsRequest: {
             Layout: components["schemas"]["LayoutSetting"];
             Sort: components["schemas"]["SortSetting"];
+            /** @description Number of days revisions should be retained. If null, default will be used by backend. Changing the setting is only available to paid users, free users will always use the default. */
             RevisionRetentionDays: components["schemas"]["RevisionRetentionDays"];
             /** @description Indicates if email notifications for comment activity in Proton Docs are enabled. If null, the default value to 0 = false will be used by backend. */
             DocsCommentsNotificationsEnabled?: boolean | null;
@@ -6948,7 +6968,7 @@ export interface components {
         CreateOrgVolumeRequestDto: {
             AddressID: components["schemas"]["AddressID"];
             /** @description XX's encrypted AddressKeyID. Must be the primary key from the AddressID */
-            AddressKeyID: string;
+            AddressKeyID: components["schemas"]["Id"];
             ShareKey: components["schemas"]["PGPPrivateKey"];
             SharePassphrase: components["schemas"]["PGPMessage"];
             SharePassphraseSignature: components["schemas"]["PGPSignature"];
@@ -6962,6 +6982,7 @@ export interface components {
             VolumeName: string;
         };
         VolumeResponseDto: {
+            /** @description Deprecated, use `VolumeID` instead */
             ID: components["schemas"]["Id"];
             /**
              * @deprecated
@@ -6981,6 +7002,7 @@ export interface components {
             DownloadedBytes: number;
             UploadedBytes: number;
             State: components["schemas"]["VolumeState"];
+            /** @description Main share of the volume */
             Share: components["schemas"]["ShareReferenceResponseDto"];
             Type: components["schemas"]["VolumeType"];
         };
@@ -7004,7 +7026,7 @@ export interface components {
             FolderPassphraseSignature: components["schemas"]["PGPSignature"];
             FolderHashKey: components["schemas"]["PGPMessage"];
             /** @description User's encrypted AddressKeyID. Must be the primary key from the AddressID */
-            AddressKeyID: string;
+            AddressKeyID?: components["schemas"]["Id"] | null;
             /**
              * @deprecated
              * @default null
@@ -7058,9 +7080,9 @@ export interface components {
         };
         RestoreMainShareDto: {
             /** @description ShareID of the existing, locked main share */
-            LockedShareID: string;
+            LockedShareID: components["schemas"]["Id"];
             /** @description Folder name as armored PGP message */
-            Name: string;
+            Name: components["schemas"]["PGPMessage"];
             /** @description Hash of the name */
             Hash: string;
             NodePassphrase: components["schemas"]["PGPMessage"];
@@ -7069,15 +7091,15 @@ export interface components {
              * @description Node Hash Key should be provided if it needs to be signed because it was unsigned or signed  with the address key (legacy). It should be signed with the new parent's node key. If it was properly signed with the parent node key, it should not be updated. Armored PGP message.
              * @default null
              */
-            NodeHashKey: string | null;
+            NodeHashKey: components["schemas"]["PGPMessage"] | null;
         };
         RestoreRootShareDto: {
             /** @description ShareID of the existing share on the old volume */
-            LockedShareID: string;
+            LockedShareID: components["schemas"]["Id"];
             /** @description Key packet for the share passphrase, encrypted with the active key associated with the new volume. Encoded with Base64. */
-            ShareKeyPacket: string;
+            ShareKeyPacket: components["schemas"]["BinaryString"];
             /** @description Signed with new key as armored PGP signature */
-            PassphraseSignature: string;
+            PassphraseSignature: components["schemas"]["PGPSignature"];
         };
         RestoreVolumeDto: {
             SignatureAddress: components["schemas"]["AddressEmail"];
@@ -7088,7 +7110,7 @@ export interface components {
             /** @default [] */
             PhotoShares: components["schemas"]["RestoreRootShareDto"][];
             /** @description User's encrypted AddressKeyID. Must be the primary key from the signatureAddress */
-            AddressKeyID: string;
+            AddressKeyID?: components["schemas"]["Id"] | null;
         };
         AddPhotoToAlbumWithLinkIDResponseDto: Record<string, never>;
         MultiResponsesPerLinkFactory: {
@@ -7106,12 +7128,12 @@ export interface components {
              * @description A conflicting Revision in Active state.
              * @default null
              */
-            ConflictRevisionID: string | null;
+            ConflictRevisionID: components["schemas"]["Id"] | null;
             /**
              * @description A conflicting Revision in Draft state.
              * @default null
              */
-            ConflictDraftRevisionID: string | null;
+            ConflictDraftRevisionID: components["schemas"]["Id"] | null;
             /**
              * @description ClientUID of conflicting Revision if in Draft state.
              * @default null
@@ -7122,7 +7144,7 @@ export interface components {
              * @description [DEPRECATED] for backwards compatibility on create revision, same value as ConflictDraftRevisionID
              * @default null
              */
-            RevisionID: string | null;
+            RevisionID: components["schemas"]["Id"] | null;
         };
         ConflictErrorResponseDto: {
             Details: components["schemas"]["ConflictErrorDetailsDto"];
@@ -7132,7 +7154,7 @@ export interface components {
         ShareConflictErrorDetailsDto: {
             ConflictLinkID: components["schemas"]["Id"];
             /** @description A conflicting Share on the Link. */
-            ConflictShareID: string;
+            ConflictShareID: components["schemas"]["Id"];
         };
         /** @description Conflict, a share already exists for the file or folder. */
         ShareConflictErrorResponseDto: {
@@ -7156,21 +7178,26 @@ export interface components {
             MIMEType: string;
             ContentKeyPacket: components["schemas"]["BinaryString"];
             /** @description Unencrypted signature of the content session key (plain text of the ContentKeyPacket), signed with the NodeKey. */
-            ContentKeyPacketSignature?: string | null;
+            ContentKeyPacketSignature?: components["schemas"]["PGPSignature"] | null;
             ManifestSignature: components["schemas"]["PGPSignature"];
             ContentBlockVerificationToken?: components["schemas"]["BinaryString"] | null;
             /**
              * @description Extended attributes encrypted with link key
              * @default null
              */
-            XAttr: string | null;
+            XAttr: components["schemas"]["PGPMessage"] | null;
             /** @default null */
             Photo: components["schemas"]["CommitRevisionPhotoDto"] | null;
             /**
              * @description Encrypted PGP Signature of the raw block content. Is null for empty files as they do not have blocks or when uploaded by anonymous users. Deprecated: Once clients do not validate the block signature, it should also not be calculated and uploaded anymore.
              * @default null
              */
-            ContentBlockEncSignature: string | null;
+            ContentBlockEncSignature: components["schemas"]["PGPMessage"] | null;
+            /**
+             * @description Whether the checksum in xattr of the revision content was verified by the client during upload
+             * @default false
+             */
+            ChecksumVerified: boolean;
         };
         SmallRevisionUploadMetadataRequestDto: {
             CurrentRevisionID: components["schemas"]["Id"];
@@ -7187,7 +7214,12 @@ export interface components {
              * @description File extended attributes encrypted with link key
              * @default null
              */
-            XAttr: string | null;
+            XAttr: components["schemas"]["PGPMessage"] | null;
+            /**
+             * @description Whether the checksum in xattr of the revision content was verified by the client during upload
+             * @default false
+             */
+            ChecksumVerified: boolean;
         };
     };
     responses: {
@@ -8514,7 +8546,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Link ID use to indicate where to start the next page */
-                AnchorID?: (string & components["schemas"]["Id"]) | null;
+                AnchorID?: string & (components["schemas"]["Id"] | null);
                 /** @description Show folders only */
                 FoldersOnly?: 0 | 1;
             };
@@ -10806,6 +10838,34 @@ export interface operations {
             };
         };
     };
+    "put_drive-photos-volumes-{volumeID}-links-{linkID}-capture-time": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+                linkID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdatePhotoCaptureTimeRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessfulResponse"];
+                };
+            };
+        };
+    };
     "put_drive-photos-volumes-{volumeID}-links-{linkID}-revisions-{revisionID}-xattr": {
         parameters: {
             query?: never;
@@ -12391,33 +12451,6 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["UpdateShareEditorsCanShareRequestDto"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    "x-pm-code": 1000;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SuccessfulResponse"];
-                };
-            };
-        };
-    };
-    "post_drive-shares-{shareID}-owner": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                shareID: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["TransferInput"];
             };
         };
         responses: {

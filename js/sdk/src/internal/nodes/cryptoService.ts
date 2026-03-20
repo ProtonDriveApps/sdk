@@ -509,6 +509,7 @@ export class NodesCryptoService {
             contentAuthor,
             extendedAttributes,
             thumbnails: encryptedRevision.thumbnails,
+            sha1Verified: encryptedRevision.sha1Verified,
         };
     }
 

@@ -549,6 +549,10 @@ export function parseNode(logger: Logger, unparsedNode: DecryptedUnparsedNode): 
                       contentAuthor: unparsedNode.activeRevision.value.contentAuthor,
                       thumbnails: unparsedNode.activeRevision.value.thumbnails,
                       ...extendedAttributes,
+                      claimedDigests: {
+                          ...extendedAttributes?.claimedDigests,
+                          sha1Verified: unparsedNode.activeRevision.value.sha1Verified || false,
+                      },
                   }),
             folder: undefined,
             treeEventScopeId,

@@ -123,6 +123,7 @@ describe('nodesCache', () => {
             claimedSize: 100,
             claimedDigests: {
                 sha1: 'hash',
+                sha1Verified: true,
             },
             claimedBlockSizes: [100],
             claimedAdditionalMetadata: {
