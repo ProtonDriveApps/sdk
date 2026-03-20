@@ -1,5 +1,11 @@
 # Changelog
 
+## js/v0.13.1 (2026-03-19)
+
+* Make LatestEventIdProvider.getLatestEventId async to support IndexedDB
+* Change API endpoint that updates 'editors can share' value
+* Add approximate sizes to telemetry events
+
 ## js/v0.13.0 (2026-03-11)
 
 * Add owned by property
