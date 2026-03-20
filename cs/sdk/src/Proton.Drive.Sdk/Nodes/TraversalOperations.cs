@@ -7,6 +7,7 @@ internal static class TraversalOperations
     public static async ValueTask<Result<NodeMetadata, DegradedNodeMetadata>> FindRootForNode(
         ProtonDriveClient client,
         Result<NodeMetadata, DegradedNodeMetadata> nodeResult,
+        bool useCacheOnly,
         CancellationToken cancellationToken)
     {
         var entryPointUid = nodeResult.Merge(x => x.Node.ParentUid, x => x.Node.ParentUid)
@@ -21,7 +22,7 @@ internal static class TraversalOperations
                 throw new ProtonDriveException("Folder structure loop detected");
             }
 
-            nodeResult = await NodeOperations.GetNodeMetadataResultAsync(client, (NodeUid)entryPointUid, knownShareAndKey: null, cancellationToken)
+            nodeResult = await NodeOperations.GetNodeMetadataAsync(client, (NodeUid)entryPointUid, knownShareAndKey: null, useCacheOnly, cancellationToken)
                 .ConfigureAwait(false);
 
             entryPointUid = nodeResult.Merge(x => x.Node.ParentUid, x => x.Node.ParentUid);
@@ -33,7 +34,7 @@ internal static class TraversalOperations
     private static NodeUid? GetAlbumEntryPointUid(Result<NodeMetadata, DegradedNodeMetadata> nodeResult)
     {
         return nodeResult.Merge(
-            x => x.Node is PhotoNode photo && photo.AlbumUids.Count > 0 ? photo.AlbumUids[0] : (NodeUid?)null,
-            x => x.Node is DegradedPhotoNode photo && photo.AlbumUids.Count > 0 ? photo.AlbumUids[0] : null);
+            x => x.Node is PhotoNode { AlbumUids.Count: > 0 } photo ? photo.AlbumUids[0] : (NodeUid?)null,
+            x => x.Node is DegradedPhotoNode { AlbumUids.Count: > 0 } photo ? photo.AlbumUids[0] : null);
     }
 }

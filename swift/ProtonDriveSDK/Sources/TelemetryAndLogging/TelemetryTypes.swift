@@ -137,14 +137,17 @@ public struct VerificationErrorEventPayload: Sendable {
 
 
 public enum VolumeType: Int, Sendable {
-    case unknown = -1
-    case ownVolume = 0
-    case shared = 1
-    case sharedPublic = 2
-    case ownPhotoVolume = 3
+    case unrecognized = -1
+    case unknown = 0
+    case ownVolume = 1
+    case shared = 2
+    case sharedPublic = 3
+    case ownPhotoVolume = 4
 
     init(sdkVolumeType: Proton_Drive_Sdk_VolumeType) {
         switch sdkVolumeType {
+        case .unknown:
+            self = .unknown
         case .ownVolume:
             self = .ownVolume
         case .shared:
@@ -155,7 +158,7 @@ public enum VolumeType: Int, Sendable {
             self = .ownPhotoVolume
         case .UNRECOGNIZED(let value):
             assertionFailure("Received unrecognized VolumeType from the SDK \(value)")
-            self = .unknown
+            self = .unrecognized
         }
     }
 }

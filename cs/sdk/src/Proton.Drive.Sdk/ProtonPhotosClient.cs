@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
+using Proton.Drive.Sdk.Api;
 using Proton.Drive.Sdk.Api.Photos;
-using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Http;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Download;
@@ -20,12 +20,11 @@ public sealed class ProtonPhotosClient : IDisposable
     {
         DriveClient = new ProtonDriveClient(
             session,
-            (defaultApiHttpClient, storageApiHttpClient) => new PhotosApiClients(defaultApiHttpClient, storageApiHttpClient),
+            (defaultApiHttpClient, storageApiHttpClient) => new DriveApiClients(defaultApiHttpClient, storageApiHttpClient),
             uid);
 
         _httpClient = session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonApiDefaults.DefaultTimeoutSeconds));
 
-        Cache = new PhotosClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository);
         PhotosApi = new PhotosApiClient(_httpClient);
     }
 
@@ -45,19 +44,16 @@ public sealed class ProtonPhotosClient : IDisposable
             secretCacheRepository,
             featureFlagProvider,
             telemetry,
-            (defaultApiHttpClient, storageApiHttpClient) => new PhotosApiClients(defaultApiHttpClient, storageApiHttpClient),
+            (defaultApiHttpClient, storageApiHttpClient) => new DriveApiClients(defaultApiHttpClient, storageApiHttpClient),
             creationParameters);
 
         _httpClient = new SdkHttpClientFactoryDecorator(httpClientFactory).CreateClientWithTimeout(
             creationParameters?.OverrideDefaultApiTimeoutSeconds ?? ProtonApiDefaults.DefaultTimeoutSeconds);
 
-        Cache = new PhotosClientCache(entityCacheRepository, secretCacheRepository);
         PhotosApi = new PhotosApiClient(_httpClient);
     }
 
     internal IPhotosApiClient PhotosApi { get; }
-
-    internal IPhotosClientCache Cache { get; }
 
     internal ProtonDriveClient DriveClient { get; }
 
@@ -69,7 +65,7 @@ public sealed class ProtonPhotosClient : IDisposable
         bool overrideExistingDraftByOtherClient,
         CancellationToken cancellationToken)
     {
-        var photosRoot = await PhotosNodeOperations.GetPhotosFolderAsync(this, cancellationToken).ConfigureAwait(false);
+        var photosRoot = await PhotosNodeOperations.GetOrCreatePhotosFolderAsync(DriveClient, cancellationToken).ConfigureAwait(false);
 
         var draftProvider = new NewFileDraftProvider(DriveClient, photosRoot.Uid, name, mediaType, overrideExistingDraftByOtherClient);
 
@@ -95,7 +91,7 @@ public sealed class ProtonPhotosClient : IDisposable
     [Experimental("Photos")]
     public IAsyncEnumerable<PhotosTimelineItem> EnumerateTimelineAsync(CancellationToken cancellationToken)
     {
-        return PhotosNodeOperations.EnumeratePhotosTimelineAsync(this, cancellationToken);
+        return PhotosNodeOperations.EnumeratePhotosTimelineAsync(DriveClient, cancellationToken);
     }
 
     public async ValueTask<PhotosFileDownloader> GetPhotosDownloaderAsync(NodeUid photoUid, CancellationToken cancellationToken)
@@ -119,7 +115,7 @@ public sealed class ProtonPhotosClient : IDisposable
     [Experimental("Photos")]
     internal ValueTask<FolderNode> GetPhotosRootAsync(CancellationToken cancellationToken)
     {
-        return PhotosNodeOperations.GetPhotosFolderAsync(this, cancellationToken);
+        return PhotosNodeOperations.GetOrCreatePhotosFolderAsync(DriveClient, cancellationToken);
     }
 
     private async ValueTask<FileUploader> GetFileUploaderAsync(

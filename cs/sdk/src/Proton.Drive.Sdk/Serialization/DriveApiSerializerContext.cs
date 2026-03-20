@@ -29,6 +29,7 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(LinkDetailsResponse))]
 [JsonSerializable(typeof(ExtendedAttributes))]
 [JsonSerializable(typeof(ShareResponse))]
+[JsonSerializable(typeof(ShareListResponse))]
 [JsonSerializable(typeof(ShareResponseV2))]
 [JsonSerializable(typeof(ContextShareResponse))]
 [JsonSerializable(typeof(FolderChildrenResponse))]

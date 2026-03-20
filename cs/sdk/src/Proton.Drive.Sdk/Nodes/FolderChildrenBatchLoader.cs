@@ -25,8 +25,6 @@ internal sealed class FolderChildrenBatchLoader(ProtonDriveClient client, Volume
         {
             var nodeMetadataResult = await DtoToMetadataConverter.ConvertDtoToNodeMetadataAsync(
                 _client,
-                _client.Cache.Entities,
-                _client.Cache.Secrets,
                 _volumeId,
                 linkDetails,
                 _parentKey,

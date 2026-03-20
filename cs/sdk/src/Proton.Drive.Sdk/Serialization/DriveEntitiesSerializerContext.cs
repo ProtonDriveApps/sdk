@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Shares;
+using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Serialization;
@@ -20,6 +21,7 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(Share))]
 [JsonSerializable(typeof(FolderNode))]
 [JsonSerializable(typeof(CachedNodeInfo))]
+[JsonSerializable(typeof(VolumeId?))]
 [JsonSerializable(typeof(SerializableRefResult<string, string>))]
 [JsonSerializable(typeof(SerializableValResult<Author, SignatureVerificationError>))]
 [JsonSerializable(typeof(SerializableRefResult<Node, DegradedNode>))]
