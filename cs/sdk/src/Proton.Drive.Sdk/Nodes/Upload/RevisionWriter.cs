@@ -218,15 +218,18 @@ internal sealed partial class RevisionWriter : IDisposable
                 expectedBlockCount: expectedThumbnailBlockCount);
         }
 
+        var checksumVerified = false;
         if (expectedSha1Provider is not null)
         {
-            var expectedSha1 = expectedSha1Provider();
+            var expectedSha1 = expectedSha1Provider.Invoke();
             if (!expectedSha1.Span.SequenceEqual(sha1Digest))
             {
                 throw new ChecksumMismatchIntegrityException(
                     actualChecksum: sha1Digest,
                     expectedChecksum: expectedSha1.ToArray());
             }
+
+            checksumVerified = true;
         }
 
         var extendedAttributes = new ExtendedAttributes
@@ -251,6 +254,7 @@ internal sealed partial class RevisionWriter : IDisposable
         var request = new RevisionUpdateRequest
         {
             ManifestSignature = _draft.SigningKey.Sign(manifest),
+            ChecksumVerified = checksumVerified,
             SignatureEmailAddress = signingEmailAddress,
             ExtendedAttributes = encryptedExtendedAttributes,
         };

@@ -232,7 +232,12 @@ internal static class DtoToMetadataConverter
             SizeOnCloudStorage = activeRevisionDto.StorageQuotaConsumption,
             ClaimedSize = extendedAttributes?.Common?.Size,
             ClaimedModificationTime = extendedAttributes?.Common?.ModificationTime,
-            ClaimedDigests = new FileContentDigests { Sha1 = extendedAttributes?.Common?.Digests?.Sha1 },
+            ClaimedDigests =
+                new FileContentDigests
+                {
+                    Sha1 = extendedAttributes?.Common?.Digests?.Sha1,
+                    Sha1Verified = fileDto.ActiveRevision.ChecksumVerified,
+                },
             Thumbnails = thumbnails.AsReadOnly(),
             AdditionalClaimedMetadata = additionalMetadata,
             ContentAuthor = contentAuthor,
