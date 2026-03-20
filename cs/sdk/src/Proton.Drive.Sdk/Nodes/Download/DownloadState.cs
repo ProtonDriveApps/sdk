@@ -22,6 +22,7 @@ internal sealed partial class DownloadState(
     public BlockListingRevisionDto RevisionDto { get; } = revisionDto;
     public PgpPrivateKey NodeKey { get; } = nodeKey;
     public PgpSessionKey ContentKey { get; } = contentKey;
+    public bool IsResumable { get; set; } = true;
 
     public int GetNextBlockIndexToDownload()
     {

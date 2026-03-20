@@ -15,7 +15,7 @@ namespace Proton.Drive.Sdk.Nodes.Upload;
 internal sealed partial class RevisionWriter : IDisposable
 {
     public const int DefaultBlockSize = 1 << 22; // 4 MiB
-    private const int SourceReadingCancellationDelayMilliseconds = 500;
+    private static readonly TimeSpan SourceReadingCancellationDelay = TimeSpan.FromMilliseconds(500);
 
     private readonly ProtonDriveClient _client;
     private readonly RevisionDraft _draft;
@@ -356,12 +356,14 @@ internal sealed partial class RevisionWriter : IDisposable
         Queue<Task<BlockUploadResult>> uploadTasks,
         CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         using var delayedCancellationTokenSource = new CancellationTokenSource();
 
         // We use a delayed cancellation token to give the read operation a fair chance to complete when cancellation is triggered,
         // to not leave the stream in an indeterminate state that would prevent resuming using the same stream later.
         // ReSharper disable once AccessToDisposedClosure
-        await using (cancellationToken.Register(() => delayedCancellationTokenSource.CancelAfter(SourceReadingCancellationDelayMilliseconds)))
+        await using (cancellationToken.Register(() => delayedCancellationTokenSource.CancelAfter(SourceReadingCancellationDelay)))
         {
             int? currentBlockNumber = null;
 
@@ -435,8 +437,9 @@ internal sealed partial class RevisionWriter : IDisposable
 
                 return (currentBlockNumber.Value, plainData);
             }
-            catch (Exception)
+            catch
             {
+                // TODO: Seek the content stream and allow resuming the upload. Currently, the HashingReadStream prevents seeking.
                 _draft.IsResumable = false;
 
                 await plainDataStream.DisposeAsync().ConfigureAwait(false);
