@@ -264,7 +264,12 @@ export class PhotosAPIService {
         );
 
         return response.DuplicateHashes.map((duplicate) => {
-            if (!duplicate.Hash || !duplicate.ContentHash || duplicate.LinkState !== 1 /* Active */) {
+            if (
+                !duplicate.Hash ||
+                !duplicate.ContentHash ||
+                !duplicate.LinkID ||
+                duplicate.LinkState !== 1 /* Active */
+            ) {
                 return undefined;
             }
             return {

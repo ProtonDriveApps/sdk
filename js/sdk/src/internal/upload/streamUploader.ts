@@ -254,7 +254,7 @@ export class StreamUploader {
 
     protected async commitFile(thumbnails: Thumbnail[]) {
         const digests = this.digests.digests();
-        this.verifyIntegrity(thumbnails, digests);
+        const integrityInfo = this.verifyIntegrity(thumbnails, digests);
 
         const extendedAttributes = {
             modificationTime: this.metadata.modificationTime,
@@ -267,6 +267,7 @@ export class StreamUploader {
             await this.getManifest(),
             extendedAttributes,
             this.metadata.additionalMetadata,
+            integrityInfo,
         );
     }
 
@@ -626,7 +627,12 @@ export class StreamUploader {
         }
     }
 
-    protected verifyIntegrity(thumbnails: Thumbnail[], digests: { sha1: string }) {
+    protected verifyIntegrity(
+        thumbnails: Thumbnail[],
+        digests: { sha1: string },
+    ): {
+        checksumVerified: boolean;
+    } {
         const expectedBlockCount =
             Math.ceil(this.metadata.expectedSize / FILE_CHUNK_SIZE) + (thumbnails ? thumbnails?.length : 0);
         if (this.uploadedBlockCount !== expectedBlockCount) {
@@ -647,6 +653,9 @@ export class StreamUploader {
                 expectedSha1: this.metadata.expectedSha1,
             });
         }
+        return {
+            checksumVerified: !!(this.metadata.expectedSha1 && digests.sha1 === this.metadata.expectedSha1),
+        };
     }
 
     /**

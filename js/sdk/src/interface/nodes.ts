@@ -222,6 +222,7 @@ export type Revision = {
     claimedModificationTime?: Date;
     claimedDigests?: {
         sha1?: string;
+        sha1Verified: boolean;
     };
     claimedAdditionalMetadata?: object;
 };
