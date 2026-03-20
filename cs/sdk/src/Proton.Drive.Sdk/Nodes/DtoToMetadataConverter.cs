@@ -298,12 +298,12 @@ internal static class DtoToMetadataConverter
 
         if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
         {
-            errors.Add(new DecryptionError(passphraseError));
+            errors.Add(new DecryptionError("Passphrase decryption failed", passphraseError));
             failedDecryptionFields.Add(EncryptedField.NodeKey);
         }
         else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
         {
-            errors.Add(new DecryptionError(nodeKeyError));
+            errors.Add(new DecryptionError("Node key decryption failed", nodeKeyError));
             failedDecryptionFields.Add(EncryptedField.NodeKey);
         }
         else if (decryptionResult.ContentKey.IsFailure)
@@ -319,21 +319,21 @@ internal static class DtoToMetadataConverter
         var revisionErrors = new List<ProtonDriveError>();
         if (decryptionResult.ExtendedAttributes.TryGetError(out var extendedAttributesError))
         {
-            revisionErrors.Add(new DecryptionError(extendedAttributesError));
+            revisionErrors.Add(new DecryptionError("Extended attributes decryption failed", extendedAttributesError));
             failedDecryptionFields.Add(EncryptedField.NodeExtendedAttributes);
         }
 
         var nodeAuthor = decryptionResult.Link.Passphrase.Merge(
             x => decryptionResult.Link.NodeAuthorshipClaim.ToAuthorshipResult(x.AuthorshipVerificationFailure),
-            _ => new SignatureVerificationError(decryptionResult.Link.NodeAuthorshipClaim.Author, "Passphrase decryption failed"));
+            error => new SignatureVerificationError(decryptionResult.Link.NodeAuthorshipClaim.Author, "Passphrase decryption failed", error));
 
         var nameAuthor = decryptionResult.Link.Name.Merge(
             x => decryptionResult.Link.NameAuthorshipClaim.ToAuthorshipResult(x.AuthorshipVerificationFailure),
-            _ => new SignatureVerificationError(decryptionResult.Link.NameAuthorshipClaim.Author, "Name decryption failed"));
+            error => new SignatureVerificationError(decryptionResult.Link.NameAuthorshipClaim.Author, "Name decryption failed", error));
 
         var contentAuthor = decryptionResult.ContentKey.Merge(
             x => decryptionResult.ContentAuthorshipClaim.ToAuthorshipResult(x.AuthorshipVerificationFailure),
-            _ => new SignatureVerificationError(decryptionResult.ContentAuthorshipClaim.Author, "Content key decryption failed"));
+            error => new SignatureVerificationError(decryptionResult.ContentAuthorshipClaim.Author, "Content key decryption failed", error));
 
         var degradedRevision = new DegradedRevision
         {
@@ -494,17 +494,17 @@ internal static class DtoToMetadataConverter
 
         if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
         {
-            errors.Add(new DecryptionError(passphraseError));
+            errors.Add(new DecryptionError("Passphrase decryption failed", passphraseError));
             failedDecryptionFields.Add(EncryptedField.NodeKey);
         }
         else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
         {
-            errors.Add(new DecryptionError(nodeKeyError));
+            errors.Add(new DecryptionError("Node key decryption failed", nodeKeyError));
             failedDecryptionFields.Add(EncryptedField.NodeKey);
         }
-        else if (decryptionResult.HashKey.TryGetError(out var hashKeyError))
+        else if (decryptionResult.HashKey.TryGetError(out var error))
         {
-            errors.Add(new DecryptionError(hashKeyError));
+            errors.Add(new DecryptionError("Hash key decryption failed", error));
             failedDecryptionFields.Add(EncryptedField.NodeHashKey);
         }
 
