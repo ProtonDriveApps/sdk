@@ -8,6 +8,7 @@ import {
     Logger,
     MetricsDecryptionErrorField,
     MetricVerificationErrorField,
+    MetricVolumeType,
 } from '../../interface';
 import { getVerificationMessage, isNotApplicationError } from '../errors';
 import { splitNodeUid } from '../uids';
@@ -63,7 +64,8 @@ export class NodesCryptoReporter {
 
         const fromBefore2024 = node.creationTime < new Date('2024-01-01');
 
-        let addressMatchingDefaultShare, volumeType;
+        let addressMatchingDefaultShare,
+            volumeType = MetricVolumeType.Unknown;
         try {
             const { volumeId } = splitNodeUid(node.uid);
             const { email } = await this.shareService.getMyFilesShareMemberEmailKey();
@@ -99,7 +101,7 @@ export class NodesCryptoReporter {
 
         const fromBefore2024 = node.creationTime < new Date('2024-01-01');
 
-        let volumeType;
+        let volumeType = MetricVolumeType.Unknown;
         try {
             const { volumeId } = splitNodeUid(node.uid);
             volumeType = await this.shareService.getVolumeMetricContext(volumeId);
