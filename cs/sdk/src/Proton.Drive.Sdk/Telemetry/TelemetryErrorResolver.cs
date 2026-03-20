@@ -22,19 +22,22 @@ internal static class TelemetryErrorResolver
             FileContentsDecryptionException => DownloadError.DecryptionError,
             CryptographicException => DownloadError.DecryptionError,
 
-#pragma warning disable RCS0056 // Line too long
-            HttpRequestException { HttpRequestError: HttpRequestError.NameResolutionError or HttpRequestError.ConnectionError or HttpRequestError.ProxyTunnelError } => DownloadError.NetworkError,
-#pragma warning restore RCS0056
             HttpRequestException { HttpRequestError: HttpRequestError.InvalidResponse or HttpRequestError.ResponseEnded } => DownloadError.ServerError,
             HttpRequestException { StatusCode: HttpStatusCode.RequestTimeout } => DownloadError.ServerError,
             HttpRequestException { StatusCode: >= (HttpStatusCode)400 and < (HttpStatusCode)500 } => DownloadError.HttpClientSideError,
             HttpRequestException { StatusCode: >= (HttpStatusCode)500 and < (HttpStatusCode)600 } => DownloadError.ServerError,
+            HttpRequestException => DownloadError.NetworkError,
 
             ProtonApiException { TransportCode: (int)HttpStatusCode.TooManyRequests } => DownloadError.RateLimited,
             ProtonApiException { TransportCode: >= 400 and < 500 } => DownloadError.HttpClientSideError,
 
             // TODO: How to better distinguish network errors, that were subject to retry in the HTTP request handler, but resulted in TimeoutException?
             TimeoutException => DownloadError.ServerError,
+
+            // Windows client specific HTTP request handler errors
+            // TODO: The injected HTTP client should provide error categorization, at least for its own specific errors
+            Polly.CircuitBreaker.BrokenCircuitException => DownloadError.NetworkError,
+
             _ => DownloadError.Unknown,
         };
     }
@@ -46,19 +49,22 @@ internal static class TelemetryErrorResolver
             // Upload errors
             IntegrityException => UploadError.IntegrityError,
 
-#pragma warning disable RCS0056 // Line too long
-            HttpRequestException { HttpRequestError: HttpRequestError.NameResolutionError or HttpRequestError.ConnectionError or HttpRequestError.ProxyTunnelError } => UploadError.NetworkError,
-#pragma warning restore RCS0056
             HttpRequestException { HttpRequestError: HttpRequestError.InvalidResponse or HttpRequestError.ResponseEnded } => UploadError.ServerError,
             HttpRequestException { StatusCode: HttpStatusCode.RequestTimeout } => UploadError.ServerError,
             HttpRequestException { StatusCode: >= (HttpStatusCode)400 and < (HttpStatusCode)500 } => UploadError.HttpClientSideError,
             HttpRequestException { StatusCode: >= (HttpStatusCode)500 and < (HttpStatusCode)600 } => UploadError.ServerError,
+            HttpRequestException => UploadError.NetworkError,
 
             ProtonApiException { TransportCode: (int)HttpStatusCode.TooManyRequests } => UploadError.RateLimited,
             ProtonApiException { TransportCode: >= 400 and < 500 } => UploadError.HttpClientSideError,
 
             // TODO: How to better distinguish network errors, that were subject to retry in the HTTP request handler, but resulted in TimeoutException?
             TimeoutException => UploadError.ServerError,
+
+            // Windows client specific HTTP request handler errors
+            // TODO: The injected HTTP client should provide error categorization, at least for its own specific errors
+            Polly.CircuitBreaker.BrokenCircuitException => UploadError.NetworkError,
+
             _ => UploadError.Unknown,
         };
     }
