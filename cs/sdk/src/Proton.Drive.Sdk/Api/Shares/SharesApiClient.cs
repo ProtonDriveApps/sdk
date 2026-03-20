@@ -1,4 +1,5 @@
 ﻿using Proton.Drive.Sdk.Serialization;
+using Proton.Drive.Sdk.Shares;
 using Proton.Sdk.Http;
 
 namespace Proton.Drive.Sdk.Api.Shares;
@@ -19,5 +20,14 @@ internal sealed class SharesApiClient(HttpClient httpClient) : ISharesApiClient
         return await _httpClient
             .Expecting(DriveApiSerializerContext.Default.ShareResponse)
             .GetAsync($"shares/{id}", cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask<ShareListResponse> GetSharesAsync(ShareType? typeFilter, CancellationToken cancellationToken)
+    {
+        var queryParameters = typeFilter is not null ? $"?ShareType={(int)typeFilter}" : string.Empty;
+
+        return await _httpClient
+            .Expecting(DriveApiSerializerContext.Default.ShareListResponse)
+            .GetAsync($"shares{queryParameters}", cancellationToken).ConfigureAwait(false);
     }
 }

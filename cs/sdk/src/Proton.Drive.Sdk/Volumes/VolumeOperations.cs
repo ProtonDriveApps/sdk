@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Photos;
-using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Api.Volumes;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Nodes;
@@ -59,19 +58,11 @@ internal static class VolumeOperations
         return (volume, share, rootFolder);
     }
 
-    public static async ValueTask<ShareId> GetVolumeMainShareIdAsync(ProtonDriveClient client, VolumeId volumeId, CancellationToken cancellationToken)
-    {
-        var response = await client.Api.Volumes.GetVolumeAsync(volumeId, cancellationToken).ConfigureAwait(false);
-
-        return response.Volume.Share.ShareId;
-    }
-
     public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateTrashAsync(
         ProtonDriveClient client,
+        VolumeId volumeId,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var volumeId = await GetMainVolumeIdAsync(client, cancellationToken).ConfigureAwait(false);
-
         var page = 0;
         var mustTryMoreResults = true;
 
@@ -83,14 +74,13 @@ internal static class VolumeOperations
 
             foreach (var (shareId, linkIds, _) in response.TrashByShare)
             {
-                var (_, shareKey) = await ShareOperations.GetShareAsync(client, shareId, cancellationToken).ConfigureAwait(false);
+                var (_, shareKey) = await ShareOperations.GetShareAsync(client, shareId, useCacheOnly: false, cancellationToken).ConfigureAwait(false);
 
                 var batchLoader = new VolumeTrashBatchLoader(client, volumeId, shareKey);
 
                 foreach (var linkId in linkIds)
                 {
                     var uid = new NodeUid(volumeId, linkId);
-
                     var cachedNodeInfo = await client.Cache.Entities.TryGetNodeAsync(uid, cancellationToken).ConfigureAwait(false);
 
                     if (cachedNodeInfo is null)
@@ -117,18 +107,18 @@ internal static class VolumeOperations
     }
 
     public static async ValueTask<(Volume Volume, Share Share, FolderNode RootFolder)> CreatePhotosVolumeAsync(
-        ProtonPhotosClient photosClient,
+        ProtonDriveClient client,
         CancellationToken cancellationToken)
     {
-        var defaultAddress = await photosClient.DriveClient.Account.GetDefaultAddressAsync(cancellationToken).ConfigureAwait(false);
+        var defaultAddress = await client.Account.GetDefaultAddressAsync(cancellationToken).ConfigureAwait(false);
 
-        var addressKey = await photosClient.DriveClient.Account.GetAddressPrimaryPrivateKeyAsync(defaultAddress.Id, cancellationToken).ConfigureAwait(false);
+        var addressKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(defaultAddress.Id, cancellationToken).ConfigureAwait(false);
 
         var addressKeyId = defaultAddress.GetPrimaryKey().AddressKeyId;
 
         var request = GetPhotosCreationRequest(defaultAddress.Id, addressKeyId, addressKey, out var rootShareKey, out var rootFolderSecrets);
 
-        var response = await photosClient.PhotosApi.CreateVolumeAsync(request, cancellationToken).ConfigureAwait(false);
+        var response = await client.Api.Photos.CreateVolumeAsync(request, cancellationToken).ConfigureAwait(false);
 
         var volume = new Volume(response.Volume);
 
@@ -148,25 +138,56 @@ internal static class VolumeOperations
         // The volume root folder never has siblings and does not need a name hash digest
         var nameHashDigest = ReadOnlyMemory<byte>.Empty;
 
-        await photosClient.Cache.Entities.SetPhotosVolumeIdAsync(volume.Id, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Entities.SetPhotosVolumeIdAsync(volume.Id, cancellationToken).ConfigureAwait(false);
 
-        await photosClient.DriveClient.Cache.Entities.SetNodeAsync(volume.RootFolderId, rootFolder, share.Id, nameHashDigest, cancellationToken)
+        await client.Cache.Entities.SetNodeAsync(volume.RootFolderId, rootFolder, share.Id, nameHashDigest, cancellationToken)
             .ConfigureAwait(false);
 
-        await photosClient.Cache.Entities.SetPhotosShareIdAsync(share.Id, cancellationToken).ConfigureAwait(false);
-        await photosClient.DriveClient.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Entities.SetPhotosShareIdAsync(share.Id, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
 
-        await photosClient.Cache.Secrets.SetShareKeyAsync(volume.RootShareId, rootShareKey, cancellationToken).ConfigureAwait(false);
-        await photosClient.Cache.Secrets.SetFolderSecretsAsync(volume.RootFolderId, rootFolderSecrets, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Secrets.SetShareKeyAsync(volume.RootShareId, rootShareKey, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Secrets.SetFolderSecretsAsync(volume.RootFolderId, rootFolderSecrets, cancellationToken).ConfigureAwait(false);
 
         return (volume, share, rootFolder);
     }
 
     public static async ValueTask EmptyTrashAsync(ProtonDriveClient client, CancellationToken cancellationToken)
     {
-        var volumeId = await GetMainVolumeIdAsync(client, cancellationToken).ConfigureAwait(false);
+        var volumeId = await TryGetMainVolumeIdAsync(client, cancellationToken).ConfigureAwait(false);
+        if (volumeId is null)
+        {
+            // No trash to empty if the main volume doesn't exist
+            return;
+        }
 
-        await client.Api.Trash.EmptyAsync(volumeId, cancellationToken).ConfigureAwait(false);
+        await client.Api.Trash.EmptyAsync(volumeId.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    public static async ValueTask<VolumeId?> TryGetMainVolumeIdAsync(ProtonDriveClient client, CancellationToken cancellationToken)
+    {
+        var (cacheEntryExists, volumeId) = await client.Cache.Entities.TryGetMainVolumeIdAsync(cancellationToken).ConfigureAwait(false);
+        if (cacheEntryExists)
+        {
+            return volumeId;
+        }
+
+        var myFilesFolder = await NodeOperations.TryGetExistingMyFilesFolderAsync(client, cancellationToken).ConfigureAwait(false);
+
+        return myFilesFolder?.Uid.VolumeId;
+    }
+
+    public static async ValueTask<VolumeId?> TryGetPhotosVolumeIdAsync(ProtonDriveClient client, CancellationToken cancellationToken)
+    {
+        var (cacheEntryExists, volumeId) = await client.Cache.Entities.TryGetPhotosVolumeIdAsync(cancellationToken).ConfigureAwait(false);
+        if (cacheEntryExists)
+        {
+            return volumeId;
+        }
+
+        var myFilesFolder = await PhotosNodeOperations.TryGetExistingPhotosFolderAsync(client, cancellationToken).ConfigureAwait(false);
+
+        return myFilesFolder?.Uid.VolumeId;
     }
 
     private static VolumeCreationRequest GetCreationRequest(
@@ -281,13 +302,5 @@ internal static class VolumeOperations
                 NodeHashKey = encryptedHashKey,
             },
         };
-    }
-
-    private static async ValueTask<VolumeId> GetMainVolumeIdAsync(ProtonDriveClient client, CancellationToken cancellationToken)
-    {
-        // TODO: optimize this, which is overkill to just get the volume ID
-        var myFilesFolder = await NodeOperations.GetMyFilesFolderAsync(client, cancellationToken).ConfigureAwait(false);
-
-        return myFilesFolder.Uid.VolumeId;
     }
 }

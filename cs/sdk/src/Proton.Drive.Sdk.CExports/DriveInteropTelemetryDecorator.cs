@@ -48,7 +48,7 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
         };
 
         // Check if we should translate InteropErrorException when error is Unknown
-        var error = me is { Error: Sdk.Telemetry.UploadError.Unknown, OriginalError: InteropErrorException interopError }
+        var error = me is { Error: Telemetry.UploadError.Unknown, OriginalError: InteropErrorException interopError }
             ? TranslateToUploadError(interopError)
             : me.Error;
 
@@ -77,7 +77,7 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
         };
 
         // Check if we should translate InteropErrorException when error is Unknown
-        var error = me is { Error: Sdk.Telemetry.DownloadError.Unknown, OriginalError: InteropErrorException interopError }
+        var error = me is { Error: Telemetry.DownloadError.Unknown, OriginalError: InteropErrorException interopError }
             ? TranslateToDownloadError(interopError)
             : me.Error;
 
@@ -100,7 +100,7 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
         {
             VolumeType = (VolumeType)me.VolumeType,
             Field = (EncryptedField)me.Field,
-            Uid = me.Uid,
+            Uid = me.Uid.ToString(),
         };
 
         if (me.FromBefore2024.HasValue)
@@ -116,59 +116,59 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
         return payload;
     }
 
-    private static Sdk.Telemetry.UploadError? TranslateToUploadError(InteropErrorException exception)
+    private static Telemetry.UploadError? TranslateToUploadError(InteropErrorException exception)
     {
         if (exception.Error is null)
         {
-            return Sdk.Telemetry.UploadError.Unknown;
+            return Telemetry.UploadError.Unknown;
         }
 
         var error = exception.Error;
         return exception.Error.Domain switch
         {
             ErrorDomain.Api => TranslateApiErrorToUploadError(error.SecondaryCode),
-            ErrorDomain.Network or ErrorDomain.Transport => Sdk.Telemetry.UploadError.NetworkError,
-            ErrorDomain.Serialization => Sdk.Telemetry.UploadError.HttpClientSideError,
-            ErrorDomain.Cryptography or ErrorDomain.DataIntegrity => Sdk.Telemetry.UploadError.IntegrityError,
-            _ => Sdk.Telemetry.UploadError.Unknown,
+            ErrorDomain.Network or ErrorDomain.Transport => Telemetry.UploadError.NetworkError,
+            ErrorDomain.Serialization => Telemetry.UploadError.HttpClientSideError,
+            ErrorDomain.Cryptography or ErrorDomain.DataIntegrity => Telemetry.UploadError.IntegrityError,
+            _ => Telemetry.UploadError.Unknown,
         };
     }
 
-    private static Sdk.Telemetry.UploadError TranslateApiErrorToUploadError(long statusCode)
+    private static Telemetry.UploadError TranslateApiErrorToUploadError(long statusCode)
     {
         return statusCode switch
         {
-            429 => Sdk.Telemetry.UploadError.RateLimited,
-            >= 400 and < 500 => Sdk.Telemetry.UploadError.HttpClientSideError,
-            _ => Sdk.Telemetry.UploadError.ServerError,
+            429 => Telemetry.UploadError.RateLimited,
+            >= 400 and < 500 => Telemetry.UploadError.HttpClientSideError,
+            _ => Telemetry.UploadError.ServerError,
         };
     }
 
-    private static Sdk.Telemetry.DownloadError? TranslateToDownloadError(InteropErrorException exception)
+    private static Telemetry.DownloadError? TranslateToDownloadError(InteropErrorException exception)
     {
         if (exception.Error is null)
         {
-            return Sdk.Telemetry.DownloadError.Unknown;
+            return Telemetry.DownloadError.Unknown;
         }
 
         var error = exception.Error;
         return exception.Error.Domain switch
         {
             ErrorDomain.Api => TranslateApiErrorToDownloadError(error.SecondaryCode),
-            ErrorDomain.Network or ErrorDomain.Transport => Sdk.Telemetry.DownloadError.NetworkError,
-            ErrorDomain.Serialization => Sdk.Telemetry.DownloadError.HttpClientSideError,
-            ErrorDomain.Cryptography or ErrorDomain.DataIntegrity => Sdk.Telemetry.DownloadError.IntegrityError,
-            _ => Sdk.Telemetry.DownloadError.Unknown,
+            ErrorDomain.Network or ErrorDomain.Transport => Telemetry.DownloadError.NetworkError,
+            ErrorDomain.Serialization => Telemetry.DownloadError.HttpClientSideError,
+            ErrorDomain.Cryptography or ErrorDomain.DataIntegrity => Telemetry.DownloadError.IntegrityError,
+            _ => Telemetry.DownloadError.Unknown,
         };
     }
 
-    private static Sdk.Telemetry.DownloadError TranslateApiErrorToDownloadError(long statusCode)
+    private static Telemetry.DownloadError TranslateApiErrorToDownloadError(long statusCode)
     {
         return statusCode switch
         {
-            429 => Sdk.Telemetry.DownloadError.RateLimited,
-            >= 400 and < 500 => Sdk.Telemetry.DownloadError.HttpClientSideError,
-            _ => Sdk.Telemetry.DownloadError.ServerError,
+            429 => Telemetry.DownloadError.RateLimited,
+            >= 400 and < 500 => Telemetry.DownloadError.HttpClientSideError,
+            _ => Telemetry.DownloadError.ServerError,
         };
     }
 }

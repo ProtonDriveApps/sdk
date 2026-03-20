@@ -167,7 +167,7 @@ internal static class InteropProtonPhotosClient
 
         var thumbnailsEnumerable = client.EnumerateThumbnailsAsync(
             request.PhotoUids.Select(NodeUid.Parse),
-            (Proton.Drive.Sdk.Nodes.ThumbnailType)request.Type,
+            (Sdk.Nodes.ThumbnailType)request.Type,
             cancellationToken);
 
         await foreach (var x in thumbnailsEnumerable.ConfigureAwait(false))

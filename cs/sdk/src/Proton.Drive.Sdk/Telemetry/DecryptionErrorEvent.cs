@@ -1,3 +1,4 @@
+using Proton.Drive.Sdk.Nodes;
 using Proton.Sdk.Telemetry;
 
 namespace Proton.Drive.Sdk.Telemetry;
@@ -14,5 +15,5 @@ public sealed class DecryptionErrorEvent : IMetricEvent
 
     public string? Error { get; init; }
 
-    public required string Uid { get; init; }
+    public required NodeUid Uid { get; init; }
 }

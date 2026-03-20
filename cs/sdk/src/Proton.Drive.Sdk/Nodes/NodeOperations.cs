@@ -5,8 +5,6 @@ using System.Security.Cryptography;
 using System.Text;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Links;
-using Proton.Drive.Sdk.Api.Shares;
-using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Nodes.Cryptography;
 using Proton.Drive.Sdk.Shares;
@@ -21,49 +19,55 @@ internal static class NodeOperations
 {
     private const int MaximumBatchCount = 150;
 
-    public static async ValueTask<FolderNode> GetMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
+    public static async ValueTask<FolderNode> GetOrCreateMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
+    {
+        var existingFolder = await TryGetExistingMyFilesFolderAsync(client, cancellationToken).ConfigureAwait(false);
+
+        return existingFolder ?? await CreateMyFilesFolderAsync(client, cancellationToken).ConfigureAwait(false);
+    }
+
+    public static async ValueTask<FolderNode?> TryGetExistingMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
     {
         var shareId = await client.Cache.Entities.TryGetMyFilesShareIdAsync(cancellationToken).ConfigureAwait(false);
         if (shareId is null)
         {
-            return await GetFreshMyFilesFolderAsync(client, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                return await GetFreshExistingMyFilesFolderAsync(client, cancellationToken).ConfigureAwait(false);
+            }
+            catch (ProtonApiException e) when (e.Code is ResponseCode.DoesNotExist)
+            {
+                await client.Cache.Entities.SetMainVolumeIdAsync(null, cancellationToken).AsTask().ConfigureAwait(false);
+                return null;
+            }
         }
 
-        var shareAndKey = await ShareOperations.GetShareAsync(client, shareId.Value, cancellationToken).ConfigureAwait(false);
+        var shareAndKey = await ShareOperations.GetShareAsync(client, shareId.Value, useCacheOnly: false, cancellationToken).ConfigureAwait(false);
 
-        var metadata = await GetNodeMetadataAsync(client, shareAndKey.Share.RootFolderId, shareAndKey, cancellationToken).ConfigureAwait(false);
+        var metadata = await GetNodeMetadataAsync(client, shareAndKey.Share.RootFolderId, shareAndKey, useCacheOnly: false, cancellationToken)
+            .ConfigureAwait(false);
 
-        return (FolderNode)metadata.Node;
+        return (FolderNode)metadata.GetValueOrThrow().Node;
     }
 
-    public static ValueTask<NodeMetadata> GetNodeMetadataAsync(ProtonDriveClient client, NodeUid uid, CancellationToken cancellationToken)
-    {
-        return GetNodeMetadataAsync(client, uid, knownShareAndKey: null, cancellationToken);
-    }
-
-    public static async ValueTask<NodeMetadata> GetNodeMetadataAsync(
+    public static async ValueTask<Result<NodeMetadata, DegradedNodeMetadata>> GetNodeMetadataAsync(
         ProtonDriveClient client,
         NodeUid uid,
         ShareAndKey? knownShareAndKey,
+        bool useCacheOnly,
         CancellationToken cancellationToken)
     {
-        var metadataResult = await GetNodeMetadataResultAsync(client, uid, knownShareAndKey, cancellationToken).ConfigureAwait(false);
-        return metadataResult.GetValueOrThrow();
-    }
+        var metadataResult = await TryGetNodeMetadataFromCacheAsync(client, uid, cancellationToken).ConfigureAwait(false);
 
-    public static async ValueTask<Result<NodeMetadata, DegradedNodeMetadata>> GetNodeMetadataResultAsync(
-        ProtonDriveClient client,
-        NodeUid uid,
-        ShareAndKey? knownShareAndKey,
-        CancellationToken cancellationToken)
-    {
-        var cachedNodeInfo = await client.Cache.Entities.TryGetNodeAsync(uid, cancellationToken).ConfigureAwait(false);
+        if (metadataResult is null)
+        {
+            if (useCacheOnly)
+            {
+                throw new ProtonDriveException("Node \"{uid}\" not found in cache");
+            }
 
-        var metadataResult = cachedNodeInfo is not null
-            ? await GetNodeMetadataAsync(client, uid, cachedNodeInfo.Value, cancellationToken).ConfigureAwait(false)
-            : null;
-
-        metadataResult ??= await GetFreshNodeMetadataAsync(client, uid, knownShareAndKey, cancellationToken).ConfigureAwait(false);
+            metadataResult = await GetFreshNodeMetadataAsync(client, uid, knownShareAndKey, cancellationToken).ConfigureAwait(false);
+        }
 
         return (Result<NodeMetadata, DegradedNodeMetadata>)metadataResult;
     }
@@ -182,8 +186,9 @@ internal static class NodeOperations
             throw new InvalidOperationException($"Node {uid} cannot have destination node {newParentUid} as parent as they are not on the same volume");
         }
 
-        var (originNode, originSecrets, membershipShareId, originNameHashDigest) = await GetNodeMetadataAsync(client, uid, null, cancellationToken)
-            .ConfigureAwait(false);
+        // FIXME: Try to use the degraded node if it has enough for the move to be successful
+        var (originNode, originSecrets, membershipShareId, originNameHashDigest) =
+            (await GetNodeMetadataAsync(client, uid, null, useCacheOnly: false, cancellationToken).ConfigureAwait(false)).GetValueOrThrow();
 
         GetNameParameters(
             newName ?? originNode.Name, // FIXME: validate name
@@ -248,8 +253,9 @@ internal static class NodeOperations
                 throw new InvalidOperationException($"Node {uid} cannot have destination node {newParentUid} as parent as they are not on the same volume");
             }
 
-            var (originNode, originSecrets, _, originNameHashDigest) = await GetNodeMetadataAsync(client, uid, null, cancellationToken)
-                .ConfigureAwait(false);
+            // FIXME: Try to use the degraded node if it has enough for the move to be successful
+            var (originNode, originSecrets, _, originNameHashDigest) =
+                (await GetNodeMetadataAsync(client, uid, null, useCacheOnly: false, cancellationToken).ConfigureAwait(false)).GetValueOrThrow();
 
             GetNameParameters(
                 newName ?? originNode.Name, // FIXME: validate name
@@ -295,8 +301,9 @@ internal static class NodeOperations
         string? newMediaType,
         CancellationToken cancellationToken)
     {
-        // TODO: support renaming degraded nodes
-        var (node, secrets, membershipShareId, originalNameHashDigest) = await GetNodeMetadataAsync(client, uid, cancellationToken).ConfigureAwait(false);
+        // FIXME: Try to use the degraded node if it has enough for the move to be successful
+        var (node, secrets, membershipShareId, originalNameHashDigest) =
+            (await GetNodeMetadataAsync(client, uid, knownShareAndKey: null, useCacheOnly: false, cancellationToken).ConfigureAwait(false)).GetValueOrThrow();
 
         if (node.ParentUid is not { } parentUid)
         {
@@ -526,7 +533,7 @@ internal static class NodeOperations
         // FIXME: try to get the information from cache first
         var response = await client.Api.Links.GetContextShareAsync(nodeUid.VolumeId, nodeUid.LinkId, cancellationToken).ConfigureAwait(false);
 
-        var (share, _) = await ShareOperations.GetShareAsync(client, response.ContextShareId, cancellationToken).ConfigureAwait(false);
+        var (share, _) = await ShareOperations.GetShareAsync(client, response.ContextShareId, useCacheOnly: false, cancellationToken).ConfigureAwait(false);
 
         return await client.Account.GetAddressAsync(share.MembershipAddressId, cancellationToken).ConfigureAwait(false);
     }
@@ -568,7 +575,7 @@ internal static class NodeOperations
 
     public static async Task<ReadOnlyMemory<byte>> GetParentFolderHashKeyAsync(ProtonDriveClient client, NodeUid uid, CancellationToken cancellationToken)
     {
-        var nodeMetadataResult = await GetNodeMetadataResultAsync(client, uid, knownShareAndKey: null, cancellationToken).ConfigureAwait(false);
+        var nodeMetadataResult = await GetNodeMetadataAsync(client, uid, knownShareAndKey: null, useCacheOnly: false, cancellationToken).ConfigureAwait(false);
 
         var parentUid = nodeMetadataResult.Merge(x => x.Node.ParentUid, x => x.Node.ParentUid);
         if (parentUid is null)
@@ -581,22 +588,12 @@ internal static class NodeOperations
         return parentFolderSecrets.HashKey;
     }
 
-    private static async ValueTask<FolderNode> GetFreshMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
+    private static async ValueTask<FolderNode?> GetFreshExistingMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
     {
-        ShareVolumeDto volumeDto;
-        ShareDto shareDto;
-        LinkDetailsDto linkDetailsDto;
-
-        try
-        {
-            (volumeDto, shareDto, linkDetailsDto) = await client.Api.Shares.GetMyFilesShareAsync(cancellationToken).ConfigureAwait(false);
-        }
-        catch (ProtonApiException e) when (e.Code == ResponseCode.DoesNotExist)
-        {
-            return await CreateMyFilesFolderAsync(client, cancellationToken).ConfigureAwait(false);
-        }
+        var (volumeDto, shareDto, linkDetailsDto) = await client.Api.Shares.GetMyFilesShareAsync(cancellationToken).ConfigureAwait(false);
 
         await client.Cache.Entities.SetMyFilesShareIdAsync(shareDto.Id, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Entities.SetMainVolumeIdAsync(volumeDto.Id, cancellationToken).ConfigureAwait(false);
 
         var nodeUid = new NodeUid(volumeDto.Id, linkDetailsDto.Link.Id);
 
@@ -614,13 +611,11 @@ internal static class NodeOperations
         await client.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
 
         var metadataResult = await DtoToMetadataConverter.ConvertDtoToFolderMetadataAsync(
-            client,
-            client.Cache.Entities,
-            client.Cache.Secrets,
-            volumeDto.Id,
-            linkDetailsDto,
-            shareKey,
-            cancellationToken)
+                client,
+                volumeDto.Id,
+                linkDetailsDto,
+                shareKey,
+                cancellationToken)
             .ConfigureAwait(false);
 
         return metadataResult.GetValueOrThrow().Node;
@@ -651,12 +646,17 @@ internal static class NodeOperations
         }
     }
 
-    private static async ValueTask<Result<NodeMetadata, DegradedNodeMetadata>?> GetNodeMetadataAsync(
+    private static async ValueTask<Result<NodeMetadata, DegradedNodeMetadata>?> TryGetNodeMetadataFromCacheAsync(
         ProtonDriveClient client,
         NodeUid uid,
-        CachedNodeInfo cachedNodeInfo,
         CancellationToken cancellationToken)
     {
+        var cachedNodeInfoResult = await client.Cache.Entities.TryGetNodeAsync(uid, cancellationToken).ConfigureAwait(false);
+        if (cachedNodeInfoResult is not { } cachedNodeInfo)
+        {
+            return null;
+        }
+
         if (!cachedNodeInfo.NodeProvisionResult.TryGetValueElseError(out var node, out var degradedNode))
         {
             switch (degradedNode)
