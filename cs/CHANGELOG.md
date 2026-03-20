@@ -1,5 +1,20 @@
 # Changelog
 
+## cs/v0.9.0 (2026-03-20)
+
+* Fail node provision when parent key could not be obtained
+* Try all album inclusions to find the entry point key
+* Handle missing timestamps in photo upload metadata
+* Improve error details for drive errors
+* Remove failing test data
+* Fix telemetry causing deadlock on uploads and downloads
+* Expose structured data on upload integrity errors
+* Throw error if node is not found
+* Parse enumerate result synchronously
+* Clarify exception for missing node when looking up entry point
+* Fix setup for timeouts in test
+* Log number of ids when enumerate thumbnails
+
 ## cs/v0.8.1 (2026-03-16)
 
 * Fix disposal of upload controller and update upload bindings api
