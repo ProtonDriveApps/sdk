@@ -7,4 +7,4 @@ internal readonly record struct PhasedDecryptionOutput<TData>(
     TData Data,
     AuthorshipVerificationFailure? AuthorshipVerificationFailure = null);
 
-internal readonly record struct AuthorshipVerificationFailure(PgpVerificationStatus Status, string? Message = null);
+internal readonly record struct AuthorshipVerificationFailure(PgpVerificationStatus Status, ProtonDriveError? Error = null);

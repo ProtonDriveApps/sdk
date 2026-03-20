@@ -4,11 +4,15 @@ using Proton.Cryptography.Pgp;
 namespace Proton.Drive.Sdk.Nodes;
 
 [method: JsonConstructor]
-public sealed class SignatureVerificationError(Author claimedAuthor, string? message = null)
-    : ProtonDriveError(message)
+public sealed class SignatureVerificationError(Author claimedAuthor, string? message = null, ProtonDriveError? innerError = null)
+    : ProtonDriveError(message, innerError)
 {
-    public SignatureVerificationError(Author claimedAuthor, PgpVerificationStatus? verificationStatus = null, string? message = null)
-        : this(claimedAuthor, GetMessage(verificationStatus, message))
+    public SignatureVerificationError(
+        Author claimedAuthor,
+        PgpVerificationStatus? verificationStatus = null,
+        string? message = null,
+        ProtonDriveError? innerError = null)
+        : this(claimedAuthor, GetMessage(verificationStatus, message), innerError)
     {
     }
 

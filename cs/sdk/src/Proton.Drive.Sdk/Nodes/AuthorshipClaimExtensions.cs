@@ -11,9 +11,9 @@ internal static class AuthorshipClaimExtensions
     {
         if (verificationFailure is not null)
         {
-            var errorMessage = authorshipClaim.KeyRetrievalErrorMessage ?? verificationFailure.Value.Message;
+            var error = authorshipClaim.KeyRetrievalError ?? verificationFailure.Value.Error;
 
-            return new SignatureVerificationError(authorshipClaim.Author, verificationFailure.Value.Status, errorMessage);
+            return new SignatureVerificationError(authorshipClaim.Author, verificationFailure.Value.Status, "Authorship failure", error);
         }
 
         return authorshipClaim.Author;

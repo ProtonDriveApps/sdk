@@ -2,13 +2,13 @@
 
 namespace Proton.Drive.Sdk.Nodes;
 
-internal readonly struct AuthorshipClaim(Author author, IReadOnlyList<PgpPublicKey> keys, string? keyRetrievalErrorMessage = null)
+internal readonly struct AuthorshipClaim(Author author, IReadOnlyList<PgpPublicKey> keys, ProtonDriveError? keyRetrievalError = null)
 {
     public readonly IReadOnlyList<PgpPublicKey> Keys { get; } = keys;
 
     public Author Author { get; } = author;
 
-    public string? KeyRetrievalErrorMessage { get; } = keyRetrievalErrorMessage;
+    public ProtonDriveError? KeyRetrievalError { get; } = keyRetrievalError;
 
     public static async ValueTask<AuthorshipClaim> CreateAsync(
         IAccountClient accountClient,
@@ -28,7 +28,7 @@ internal readonly struct AuthorshipClaim(Author author, IReadOnlyList<PgpPublicK
         }
         catch (Exception e)
         {
-            return new AuthorshipClaim(new Author { EmailAddress = claimedAuthorEmailAddress }, [], e.Message);
+            return new AuthorshipClaim(new Author { EmailAddress = claimedAuthorEmailAddress }, [], e.ToProtonDriveError());
         }
     }
 
