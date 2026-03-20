@@ -34,10 +34,10 @@ internal sealed class PhotosApiClient(HttpClient httpClient) : IPhotosApiClient
             .GetAsync($"volumes/{request.VolumeId}/photos{query}", cancellationToken).ConfigureAwait(false);
     }
 
-    public async ValueTask<PhotoDetailsResponse> GetDetailsAsync(VolumeId volumeId, IEnumerable<LinkId> linkIds, CancellationToken cancellationToken)
+    public async ValueTask<LinkDetailsResponse> GetDetailsAsync(VolumeId volumeId, IEnumerable<LinkId> linkIds, CancellationToken cancellationToken)
     {
         return await _httpClient
-            .Expecting(PhotosApiSerializerContext.Default.PhotoDetailsResponse)
+            .Expecting(DriveApiSerializerContext.Default.LinkDetailsResponse)
             .PostAsync(
                 $"photos/volumes/{volumeId}/links",
                 new LinkDetailsRequest(linkIds),

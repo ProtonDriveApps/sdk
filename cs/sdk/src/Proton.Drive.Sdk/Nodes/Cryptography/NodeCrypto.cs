@@ -179,7 +179,7 @@ internal static class NodeCrypto
         Result<PgpPrivateKey, ProtonDriveError> nodeKeyResult,
         AuthorshipClaim authorshipClaim)
     {
-        if (nodeKeyResult.TryGetValueElseError(out var nodeKey, out var error))
+        if (!nodeKeyResult.TryGetValueElseError(out var nodeKey, out var error))
         {
             return new ProtonDriveError("Cannot decrypt hash key without node key", error);
         }

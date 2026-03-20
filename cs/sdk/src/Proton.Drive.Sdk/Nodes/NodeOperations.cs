@@ -75,20 +75,22 @@ internal static class NodeOperations
     public static IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(
         ProtonDriveClient client,
         IEnumerable<NodeUid> nodeUids,
+        bool forPhotos,
         CancellationToken cancellationToken = default)
     {
         return nodeUids.GroupBy(uid => uid.VolumeId, uid => uid.LinkId)
             .ToAsyncEnumerable()
-            .SelectMany(linkGroup => EnumerateNodesAsync(client, linkGroup.Key, linkGroup, cancellationToken));
+            .SelectMany(linkGroup => EnumerateNodesAsync(client, linkGroup.Key, linkGroup, forPhotos, cancellationToken));
     }
 
     public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         IEnumerable<LinkId> linkIds,
+        bool forPhotos,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var batchLoader = new NodeBatchLoader(client, volumeId);
+        var batchLoader = new NodeBatchLoader(client, volumeId, forPhotos);
 
         foreach (var linkId in linkIds)
         {

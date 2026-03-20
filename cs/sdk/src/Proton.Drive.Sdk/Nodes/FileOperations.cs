@@ -28,6 +28,7 @@ internal static class FileOperations
         ProtonDriveClient client,
         IEnumerable<NodeUid> fileUids,
         ThumbnailType thumbnailType,
+        bool forPhotos,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         // TODO: optimize parallelization for when UIDs are scattered over many volumes
@@ -37,7 +38,7 @@ internal static class FileOperations
 
             var unprocessedLinkIds = volumeLinkIdGroup.ToHashSet();
 
-            var nodeResults = NodeOperations.EnumerateNodesAsync(client, volumeId, unprocessedLinkIds, cancellationToken);
+            var nodeResults = NodeOperations.EnumerateNodesAsync(client, volumeId, unprocessedLinkIds, forPhotos, cancellationToken);
 
             var errors = new List<FileThumbnail>();
 

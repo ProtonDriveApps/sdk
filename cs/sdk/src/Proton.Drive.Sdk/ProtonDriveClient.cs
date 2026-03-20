@@ -184,14 +184,14 @@ public sealed class ProtonDriveClient
     public ValueTask<Result<Node, DegradedNode>?> GetNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
     {
         return NodeOperations
-            .EnumerateNodesAsync(this, nodeUid.VolumeId, [nodeUid.LinkId], cancellationToken)
+            .EnumerateNodesAsync(this, nodeUid.VolumeId, [nodeUid.LinkId], forPhotos: false, cancellationToken)
             .Select(x => (Result<Node, DegradedNode>?)x)
             .FirstOrDefaultAsync(cancellationToken);
     }
 
     public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(IEnumerable<NodeUid> nodeUids, CancellationToken cancellationToken = default)
     {
-        return NodeOperations.EnumerateNodesAsync(this, nodeUids, cancellationToken);
+        return NodeOperations.EnumerateNodesAsync(this, nodeUids, forPhotos: false, cancellationToken);
     }
 
     public ValueTask<FolderNode> CreateFolderAsync(NodeUid parentId, string name, DateTime? lastModificationTime, CancellationToken cancellationToken)
@@ -209,7 +209,7 @@ public sealed class ProtonDriveClient
         ThumbnailType type,
         CancellationToken cancellationToken = default)
     {
-        return FileOperations.EnumerateThumbnailsAsync(this, fileUids, type, cancellationToken);
+        return FileOperations.EnumerateThumbnailsAsync(this, fileUids, type, forPhotos: false, cancellationToken);
     }
 
     public async ValueTask<FileUploader> GetFileUploaderAsync(
