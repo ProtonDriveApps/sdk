@@ -1,5 +1,16 @@
 # Changelog
 
+## cs/v0.9.2 (2026-03-20)
+
+* Report checksum verification state to back-end and client
+
+## cs/v0.9.1 (2026-03-20)
+
+* Report unmapped HTTP errors as Network errors instead of Unknown
+* Allow resuming download to non seekable data stream
+* Fix wrong link details endpoint being used for Photos
+* Improve error details for node decryption failures
+
 ## cs/v0.9.0 (2026-03-20)
 
 * Fail node provision when parent key could not be obtained
