@@ -78,6 +78,7 @@ internal static class PhotosNodeOperations
         var (volumeDto, shareDto, linkDetailsDto) = await client.Api.Photos.GetRootShareAsync(cancellationToken).ConfigureAwait(false);
 
         await client.Cache.Entities.SetPhotosShareIdAsync(shareDto.Id, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Entities.SetPhotosVolumeIdAsync(volumeDto.Id, cancellationToken).ConfigureAwait(false);
 
         var nodeUid = new NodeUid(volumeDto.Id, linkDetailsDto.Link.Id);
 
@@ -99,8 +100,7 @@ internal static class PhotosNodeOperations
             volumeDto.Id,
             linkDetailsDto,
             shareKey,
-            cancellationToken)
-            .ConfigureAwait(false);
+            cancellationToken).ConfigureAwait(false);
 
         return metadataResult.GetValueOrThrow().Node;
     }

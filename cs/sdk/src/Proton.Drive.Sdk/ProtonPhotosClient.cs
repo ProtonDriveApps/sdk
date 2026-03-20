@@ -85,7 +85,7 @@ public sealed class ProtonPhotosClient : IDisposable
 
     public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(IEnumerable<NodeUid> nodeUids, CancellationToken cancellationToken = default)
     {
-        return NodeOperations.EnumerateNodesAsync(DriveClient, nodeUids, cancellationToken);
+        return NodeOperations.EnumerateNodesAsync(DriveClient, nodeUids, forPhotos: true, cancellationToken);
     }
 
     [Experimental("Photos")]
@@ -104,7 +104,7 @@ public sealed class ProtonPhotosClient : IDisposable
         ThumbnailType thumbnailType = ThumbnailType.Thumbnail,
         CancellationToken cancellationToken = default)
     {
-        return FileOperations.EnumerateThumbnailsAsync(DriveClient, photoUids, thumbnailType, cancellationToken);
+        return FileOperations.EnumerateThumbnailsAsync(DriveClient, photoUids, thumbnailType, forPhotos: true, cancellationToken);
     }
 
     public void Dispose()

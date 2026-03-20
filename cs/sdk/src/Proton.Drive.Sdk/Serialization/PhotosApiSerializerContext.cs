@@ -1,5 +1,4 @@
 ﻿using System.Text.Json.Serialization;
-using Proton.Drive.Sdk.Api;
 using Proton.Drive.Sdk.Api.Photos;
 using Proton.Sdk.Serialization;
 
@@ -23,5 +22,4 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(PhotosVolumeLinkCreationParameters))]
 [JsonSerializable(typeof(TimelinePhotoListRequest))]
 [JsonSerializable(typeof(TimelinePhotoListResponse))]
-[JsonSerializable(typeof(PhotoDetailsResponse))]
 internal sealed partial class PhotosApiSerializerContext : JsonSerializerContext;
