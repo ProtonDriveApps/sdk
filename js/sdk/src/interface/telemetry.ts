@@ -34,7 +34,7 @@ export interface MetricDebounceLongWaitEvent {
 
 export interface MetricUploadEvent {
     eventName: 'upload';
-    volumeType?: MetricVolumeType;
+    volumeType: MetricVolumeType;
     uploadedSize: number;
     approximateUploadedSize: number;
     expectedSize: number;
@@ -52,7 +52,7 @@ export type MetricsUploadErrorType =
 
 export interface MetricDownloadEvent {
     eventName: 'download';
-    volumeType?: MetricVolumeType;
+    volumeType: MetricVolumeType;
     downloadedSize: number;
     approximateDownloadedSize: number;
     claimedFileSize?: number;
@@ -71,7 +71,7 @@ export type MetricsDownloadErrorType =
 
 export interface MetricDecryptionErrorEvent {
     eventName: 'decryptionError';
-    volumeType?: MetricVolumeType;
+    volumeType: MetricVolumeType;
     field: MetricsDecryptionErrorField;
     fromBefore2024?: boolean;
     error?: unknown;
@@ -89,7 +89,7 @@ export type MetricsDecryptionErrorField =
 
 export interface MetricVerificationErrorEvent {
     eventName: 'verificationError';
-    volumeType?: MetricVolumeType;
+    volumeType: MetricVolumeType;
     field: MetricVerificationErrorField;
     addressMatchingDefaultShare?: boolean;
     fromBefore2024?: boolean;
@@ -118,6 +118,7 @@ export interface MetricVolumeEventsSubscriptionsChangedEvent {
 }
 
 export enum MetricVolumeType {
+    Unknown = 'unknown',
     OwnVolume = 'own_volume',
     OwnPhotoVolume = 'own_photo_volume',
     Shared = 'shared',
