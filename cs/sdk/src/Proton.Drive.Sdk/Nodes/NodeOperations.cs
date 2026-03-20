@@ -539,15 +539,15 @@ internal static class NodeOperations
     }
 
     public static bool ValidateName(
-        Result<PhasedDecryptionOutput<string>, string> decryptionResult,
+        Result<PhasedDecryptionOutput<string>, ProtonDriveError> decryptionResult,
         [NotNullWhen(true)] out PhasedDecryptionOutput<string>? nameOutput,
         out Result<string, ProtonDriveError> nameResult,
         [NotNullWhen(true)] out PgpSessionKey? sessionKey)
     {
-        if (!decryptionResult.TryGetValueElseError(out var nameOutputValue, out var decryptionErrorMessage))
+        if (!decryptionResult.TryGetValueElseError(out var nameOutputValue, out var decryptionError))
         {
             nameOutput = null;
-            nameResult = new DecryptionError(decryptionErrorMessage);
+            nameResult = new DecryptionError("Name decryption failed", decryptionError);
             sessionKey = null;
             return false;
         }

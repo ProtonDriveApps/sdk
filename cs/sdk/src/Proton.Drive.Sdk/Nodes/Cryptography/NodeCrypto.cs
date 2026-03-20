@@ -21,9 +21,7 @@ internal static class NodeCrypto
     {
         var linkDecryptionResult = await DecryptLinkAsync(accountClient, link, parentKey, cancellationToken).ConfigureAwait(false);
 
-        var hashKeyResult = linkDecryptionResult.NodeKey.TryGetValue(out var nodeKey)
-            ? DecryptHashKey(folderHashKey, nodeKey, linkDecryptionResult.NodeAuthorshipClaim)
-            : "Node key not available";
+        var hashKeyResult = DecryptHashKey(folderHashKey, linkDecryptionResult.NodeKey, linkDecryptionResult.NodeAuthorshipClaim);
 
         return new FolderDecryptionResult
         {
@@ -45,15 +43,16 @@ internal static class NodeCrypto
 
         var linkDecryptionResult = await DecryptLinkAsync(accountClient, linkDto, parentKey, cancellationToken).ConfigureAwait(false);
 
-        var nodeKey = linkDecryptionResult.NodeKey.Merge(x => x, _ => default(PgpPrivateKey?));
-
         var contentKeyDecryptionResult = DecryptContentKey(
-            nodeKey,
+            linkDecryptionResult.NodeKey,
             fileDto.ContentKeyPacket,
             fileDto.ContentKeySignature,
             linkDecryptionResult.NodeAuthorshipClaim);
 
-        var extendedAttributesResult = DecryptExtendedAttributes(activeRevisionDto.ExtendedAttributes, nodeKey, contentAuthorshipClaim);
+        var extendedAttributesResult = DecryptExtendedAttributes(
+            activeRevisionDto.ExtendedAttributes,
+            linkDecryptionResult.NodeKey,
+            contentAuthorshipClaim);
 
         return new FileDecryptionResult
         {
@@ -95,7 +94,7 @@ internal static class NodeCrypto
         var nameResult = DecryptName(link.Name, parentKey, nameAuthorshipClaim);
         var passphraseResult = DecryptPassphrase(parentKey, link.Passphrase, link.PassphraseSignature, nodeAuthorshipClaim);
 
-        var nodeKeyResult = UnlockNodeKey(link.Key, passphraseResult.Merge(x => (ReadOnlyMemory<byte>?)x.Data, _ => null));
+        var nodeKeyResult = UnlockNodeKey(link.Key, passphraseResult);
 
         return new LinkDecryptionResult
         {
@@ -107,7 +106,7 @@ internal static class NodeCrypto
         };
     }
 
-    private static Result<PhasedDecryptionOutput<ReadOnlyMemory<byte>>, string> DecryptPassphrase(
+    private static Result<PhasedDecryptionOutput<ReadOnlyMemory<byte>>, ProtonDriveError> DecryptPassphrase(
         PgpPrivateKey parentNodeKey,
         PgpArmoredMessage encryptedPassphrase,
         PgpArmoredSignature? signature,
@@ -127,28 +126,30 @@ internal static class NodeCrypto
         }
         catch (Exception e)
         {
-            return e.Message;
+            return new ProtonDriveError("Failed to decrypt passphrase", e.ToProtonDriveError());
         }
     }
 
-    private static Result<PgpPrivateKey, string?> UnlockNodeKey(PgpArmoredPrivateKey lockedKey, ReadOnlyMemory<byte>? passphrase)
+    private static Result<PgpPrivateKey, ProtonDriveError> UnlockNodeKey(
+        PgpArmoredPrivateKey lockedKey,
+        Result<PhasedDecryptionOutput<ReadOnlyMemory<byte>>, ProtonDriveError> passphraseResult)
     {
-        if (passphrase is null)
+        if (!passphraseResult.TryGetValueElseError(out var passphrase, out var error))
         {
-            return null;
+            return new ProtonDriveError("Cannot get passphrase", error);
         }
 
         try
         {
-            return PgpPrivateKey.ImportAndUnlock(lockedKey, passphrase.Value.Span);
+            return PgpPrivateKey.ImportAndUnlock(lockedKey, passphrase.Data.Span);
         }
         catch (Exception e)
         {
-            return e.Message;
+            return new ProtonDriveError("Failed to import and unlock passphrase", e.ToProtonDriveError());
         }
     }
 
-    private static Result<PhasedDecryptionOutput<string>, string> DecryptName(
+    private static Result<PhasedDecryptionOutput<string>, ProtonDriveError> DecryptName(
         PgpArmoredMessage encryptedName,
         PgpPrivateKey parentNodeKey,
         AuthorshipClaim authorshipClaim)
@@ -169,34 +170,29 @@ internal static class NodeCrypto
         }
         catch (Exception e)
         {
-            return e.Message;
+            return new ProtonDriveError("Failed to decrypt name", e.ToProtonDriveError());
         }
     }
 
-    private static Result<DecryptionOutput<ReadOnlyMemory<byte>>, string?> DecryptHashKey(
-        PgpArmoredMessage? encryptedHashKey,
-        PgpPrivateKey? nodeKey,
+    private static Result<DecryptionOutput<ReadOnlyMemory<byte>>, ProtonDriveError> DecryptHashKey(
+        PgpArmoredMessage encryptedHashKey,
+        Result<PgpPrivateKey, ProtonDriveError> nodeKeyResult,
         AuthorshipClaim authorshipClaim)
     {
-        if (nodeKey is null)
+        if (nodeKeyResult.TryGetValueElseError(out var nodeKey, out var error))
         {
-            return null;
-        }
-
-        if (encryptedHashKey is null)
-        {
-            return "Folder information missing for link of type Folder";
+            return new ProtonDriveError("Cannot decrypt hash key without node key", error);
         }
 
         try
         {
-            var verificationKeyRing = GetContentKeyAndHashKeyVerificationKeyRing(nodeKey.Value, authorshipClaim);
-            var hashKey = DecryptMessage(encryptedHashKey.Value, detachedSignature: null, nodeKey.Value, verificationKeyRing, out _, out var author);
+            var verificationKeyRing = GetContentKeyAndHashKeyVerificationKeyRing(nodeKey, authorshipClaim);
+            var hashKey = DecryptMessage(encryptedHashKey, detachedSignature: null, nodeKey, verificationKeyRing, out _, out var author);
             return new DecryptionOutput<ReadOnlyMemory<byte>>(hashKey, author);
         }
         catch (Exception e)
         {
-            return e.Message;
+            return new ProtonDriveError("Failed to decrypt hash key", e.ToProtonDriveError());
         }
     }
 
@@ -212,28 +208,28 @@ internal static class NodeCrypto
         return keyRing;
     }
 
-    private static Result<DecryptionOutput<PgpSessionKey>, string?> DecryptContentKey(
-        PgpPrivateKey? nodeKey,
+    private static Result<DecryptionOutput<PgpSessionKey>, ProtonDriveError> DecryptContentKey(
+        Result<PgpPrivateKey, ProtonDriveError> nodeKeyResult,
         ReadOnlyMemory<byte> contentKeyPacket,
         PgpArmoredSignature? contentKeySignature,
         AuthorshipClaim nodeAuthorshipClaim)
     {
-        if (nodeKey is null)
+        if (!nodeKeyResult.TryGetValueElseError(out var nodeKey, out var error))
         {
-            return null;
+            return new ProtonDriveError("Cannot get node key", error);
         }
 
         PgpSessionKey contentKey;
         try
         {
-            contentKey = nodeKey.Value.DecryptSessionKey(contentKeyPacket.Span);
+            contentKey = nodeKey.DecryptSessionKey(contentKeyPacket.Span);
         }
         catch (Exception e)
         {
-            return e.Message;
+            return new ProtonDriveError("Cannot decrypt session key", e.ToProtonDriveError());
         }
 
-        var verificationKeyRing = GetContentKeyAndHashKeyVerificationKeyRing(nodeKey.Value, nodeAuthorshipClaim);
+        var verificationKeyRing = GetContentKeyAndHashKeyVerificationKeyRing(nodeKey, nodeAuthorshipClaim);
 
         AuthorshipVerificationFailure? verificationFailure;
         try
@@ -248,15 +244,15 @@ internal static class NodeCrypto
         }
         catch (Exception e)
         {
-            verificationFailure = new AuthorshipVerificationFailure(PgpVerificationStatus.Failed, e.Message);
+            verificationFailure = new AuthorshipVerificationFailure(PgpVerificationStatus.Failed, e.ToProtonDriveError());
         }
 
         return new DecryptionOutput<PgpSessionKey>(contentKey, verificationFailure);
     }
 
-    private static Result<DecryptionOutput<ExtendedAttributes?>, string?> DecryptExtendedAttributes(
+    private static Result<DecryptionOutput<ExtendedAttributes?>, ProtonDriveError> DecryptExtendedAttributes(
         PgpArmoredMessage? encryptedExtendedAttributes,
-        PgpPrivateKey? nodeKey,
+        Result<PgpPrivateKey, ProtonDriveError> nodeKeyResult,
         AuthorshipClaim authorshipClaim)
     {
         if (encryptedExtendedAttributes is null)
@@ -264,9 +260,9 @@ internal static class NodeCrypto
             return new DecryptionOutput<ExtendedAttributes?>(null);
         }
 
-        if (nodeKey is null)
+        if (!nodeKeyResult.TryGetValueElseError(out var nodeKey, out var error))
         {
-            return null;
+            return new ProtonDriveError("Cannot get node key", error);
         }
 
         try
@@ -274,8 +270,8 @@ internal static class NodeCrypto
             var serializedExtendedAttributes = DecryptMessage(
                 encryptedExtendedAttributes.Value,
                 detachedSignature: null,
-                nodeKey.Value,
-                authorshipClaim.GetKeyRing(nodeKey.Value),
+                nodeKey,
+                authorshipClaim.GetKeyRing(nodeKey),
                 out _,
                 out var author);
 
@@ -287,12 +283,12 @@ internal static class NodeCrypto
             }
             catch (Exception e)
             {
-                return $"Failed to deserialize extended attributes: {e.Message}";
+                return new ProtonDriveError("Failed to deserialize extended attributes", e.ToProtonDriveError());
             }
         }
         catch (Exception e)
         {
-            return e.Message;
+            return new ProtonDriveError("Failed to decrypt extended attributes", e.ToProtonDriveError());
         }
     }
 

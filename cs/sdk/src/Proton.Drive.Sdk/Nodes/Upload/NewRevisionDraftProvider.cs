@@ -57,7 +57,7 @@ internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
             }
             catch (ProtonApiException<RevisionConflictResponse> e)
             {
-                throw new RevisionDraftConflictException(e);
+                throw new RevisionDraftConflictException("Cannot create revision", e);
             }
         }
 
