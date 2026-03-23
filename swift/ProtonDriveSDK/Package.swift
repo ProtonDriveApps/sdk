@@ -21,7 +21,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.33.3"),
         .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: "0.1.0"),
-        .package(url: "https://github.com/ProtonMail/protoncore_ios.git", exact: "34.2.2"),
+        .package(url: "https://github.com/ProtonMail/protoncore_ios.git", exact: "36.0.3"),
     ],
     targets: [
         .binaryTarget(
