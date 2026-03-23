@@ -236,7 +236,7 @@ internal static class DtoToMetadataConverter
                 new FileContentDigests
                 {
                     Sha1 = extendedAttributes?.Common?.Digests?.Sha1,
-                    Sha1Verified = fileDto.ActiveRevision.ChecksumVerified,
+                    Sha1Verified = fileDto.ActiveRevision.ChecksumVerified ?? false,
                 },
             Thumbnails = thumbnails.AsReadOnly(),
             AdditionalClaimedMetadata = additionalMetadata,
