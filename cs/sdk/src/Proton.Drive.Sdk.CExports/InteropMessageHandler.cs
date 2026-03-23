@@ -171,6 +171,21 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DrivePhotosClientUploaderFree
                     => InteropPhotosUploader.HandleFree(request.DrivePhotosClientUploaderFree),
 
+                Request.PayloadOneofCase.DrivePhotosClientTrashNodes
+                    => await InteropProtonPhotosClient.HandleTrashNodesAsync(request.DrivePhotosClientTrashNodes).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientDeleteNodes
+                    => await InteropProtonPhotosClient.HandleDeleteNodesAsync(request.DrivePhotosClientDeleteNodes).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientRestoreNodes
+                    => await InteropProtonPhotosClient.HandleRestoreNodesAsync(request.DrivePhotosClientRestoreNodes).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientEnumerateTrash
+                    => await InteropProtonPhotosClient.HandleEnumerateTrashAsync(request.DrivePhotosClientEnumerateTrash, bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientEmptyTrash
+                    => await InteropProtonPhotosClient.HandleEmptyTrashAsync(request.DrivePhotosClientEmptyTrash).ConfigureAwait(false),
+
                 Request.PayloadOneofCase.None or _
                     => throw new ArgumentException($"Unknown request type: {request.PayloadCase}", nameof(requestBytes)),
             };
