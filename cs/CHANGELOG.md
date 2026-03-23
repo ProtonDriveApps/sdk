@@ -1,5 +1,10 @@
 # Changelog
 
+## cs/v0.9.4 (2026-03-23)
+
+* Fix wrong volume type for photo events
+* Expose structured data on upload integrity errors to Swift binding
+
 ## cs/v0.9.3 (2026-03-23)
 
 * Mark checksum verified as optional in the api
