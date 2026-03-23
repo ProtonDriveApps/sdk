@@ -230,7 +230,7 @@ public struct PhotoTimelineItem: Sendable {
 
 public struct TrashNodeResult: Sendable {
     public let nodeUid: SDKNodeUid
-    public let error: String?
+    public let error: ProtonDriveSDKError?
 }
 
 /// Callback for progress updates

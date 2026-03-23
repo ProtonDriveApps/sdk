@@ -477,7 +477,7 @@ extension ProtonDriveClient {
         let result: Proton_Drive_Sdk_NodeResultListResponse = try await SDKRequestHandler.send(trashRequest, logger: logger)
         let results: [TrashNodeResult] = result.results.compactMap { result in
             guard let id = SDKNodeUid(sdkCompatibleIdentifier: result.nodeUid) else { return nil }
-            let error: String? = result.hasError ? result.error.message : nil
+            let error: ProtonDriveSDKError? = result.hasError ? ProtonDriveSDKError(protoError: result.error) : nil
             return TrashNodeResult(nodeUid: id, error: error)
         }
         return results
