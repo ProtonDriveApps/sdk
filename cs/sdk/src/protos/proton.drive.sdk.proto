@@ -782,12 +782,13 @@ message DrivePhotosClientUploaderFreeRequest {
     int64 file_uploader_handle = 1;
 }
 
+// The list must match the order from Telemetry/VolumeTypes to properly match it over the interop.
 enum VolumeType {
     VOLUME_TYPE_UNKNOWN = 0;
     VOLUME_TYPE_OWN_VOLUME = 1;
-    VOLUME_TYPE_SHARED = 2;
-    VOLUME_TYPE_SHARED_PUBLIC = 3;
-    VOLUME_TYPE_OWN_PHOTO_VOLUME = 4;
+    VOLUME_TYPE_OWN_PHOTO_VOLUME = 2;
+    VOLUME_TYPE_SHARED = 3;
+    VOLUME_TYPE_SHARED_PUBLIC = 4;
 }
 
 enum DownloadError {
