@@ -16,7 +16,7 @@ internal sealed class ActiveRevisionDto
     [JsonPropertyName("EncryptedSize")]
     public required long StorageQuotaConsumption { get; init; }
 
-    public required bool ChecksumVerified { get; init; }
+    public bool? ChecksumVerified { get; init; }
 
     public PgpArmoredSignature? ManifestSignature { get; init; }
 
