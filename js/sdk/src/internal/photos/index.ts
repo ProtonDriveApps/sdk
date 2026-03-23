@@ -62,8 +62,8 @@ export function initPhotosModule(
         photoShares,
         nodesService,
     );
-    const albums = new AlbumsManager(telemetry, api, albumsCryptoService, photoShares, nodesService);
     const photos = new PhotosManager(telemetry.getLogger('photos-update'), api, albumsCryptoService, nodesService);
+    const albums = new AlbumsManager(telemetry, api, albumsCryptoService, photoShares, nodesService, photos);
 
     return {
         timeline,

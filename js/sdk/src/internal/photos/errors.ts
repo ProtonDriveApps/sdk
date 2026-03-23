@@ -1,5 +1,7 @@
 import { c } from 'ttag';
 
+import { ValidationError } from '../../errors';
+
 export class MissingRelatedPhotosError extends Error {
     constructor(public missingNodeUids: string[]) {
         // We do not want to leak the technical details of the error to the user.
@@ -7,5 +9,14 @@ export class MissingRelatedPhotosError extends Error {
         // user will not see this error unless the operation fails twice in a row.
         super(c('Error').t`Operation failed, try again later`);
         this.name = 'MissingRelatedPhotosError';
+    }
+}
+
+export class AlbumContainsPhotosNotInTimelineError extends ValidationError {
+    public readonly photosOnlyInAlbumNodeUids: string[];
+
+    constructor(message: string, code: number, photosOnlyInAlbumNodeUids: string[]) {
+        super(message, code);
+        this.photosOnlyInAlbumNodeUids = photosOnlyInAlbumNodeUids;
     }
 }

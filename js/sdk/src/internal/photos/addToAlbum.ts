@@ -211,7 +211,7 @@ function splitByVolume(
  * Groups payloads into batches respecting the API limit.
  * Each payload's size counts itself plus its related photos.
  */
-function* createBatches(payloads: TransferEncryptedPhotoPayload[]): Generator<TransferEncryptedPhotoPayload[]> {
+export function* createBatches(payloads: TransferEncryptedPhotoPayload[]): Generator<TransferEncryptedPhotoPayload[]> {
     let batch: TransferEncryptedPhotoPayload[] = [];
     let batchSize = 0;
 
