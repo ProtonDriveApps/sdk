@@ -100,12 +100,6 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
 
         var downloadStateTaskCompletionSource = new TaskCompletionSource<DownloadState>();
 
-        var downloadEvent = new DownloadEvent
-        {
-            DownloadedSize = 0,
-            VolumeType = VolumeType.OwnPhotosVolume,
-        };
-
         var downloadFunction = (CancellationToken ct) => DownloadToStreamAsync(
             contentOutputStream,
             onProgress,
@@ -121,8 +115,10 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
             OnFailedAsync,
             OnSucceededAsync);
 
-        ValueTask OnFailedAsync(Exception ex, long claimedFileSize, long downloadedByteCount)
+        async ValueTask OnFailedAsync(Exception ex, long claimedFileSize, long downloadedByteCount)
         {
+            var downloadEvent = await TelemetryEventFactory.CreateDownloadEventAsync(_client.DriveClient, _photoUid, cancellationToken).ConfigureAwait(false);
+
             // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize
             downloadEvent.ClaimedFileSize = claimedFileSize;
             downloadEvent.ApproximateClaimedFileSize = Privacy.ReduceSizePrecision(claimedFileSize);
@@ -131,18 +127,19 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
             downloadEvent.Error = TelemetryErrorResolver.GetDownloadErrorFromException(ex);
             downloadEvent.OriginalError = ex;
             RaiseTelemetryEvent(downloadEvent);
-            return ValueTask.CompletedTask;
         }
 
-        ValueTask OnSucceededAsync(long claimedFileSize, long downloadedByteCount)
+        async ValueTask OnSucceededAsync(long claimedFileSize, long downloadedByteCount)
         {
+            var downloadEvent = await TelemetryEventFactory.CreateDownloadEventAsync(_client.DriveClient, _photoUid, cancellationToken).ConfigureAwait(false);
+
             // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize
             downloadEvent.ClaimedFileSize = claimedFileSize;
             downloadEvent.ApproximateClaimedFileSize = Privacy.ReduceSizePrecision(claimedFileSize);
             downloadEvent.DownloadedSize = downloadedByteCount;
             downloadEvent.ApproximateDownloadedSize = Privacy.ReduceSizePrecision(downloadedByteCount);
+
             RaiseTelemetryEvent(downloadEvent);
-            return ValueTask.CompletedTask;
         }
     }
 
