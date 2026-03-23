@@ -1,5 +1,10 @@
 # Changelog
 
+## cs/v0.9.3 (2026-03-23)
+
+* Mark checksum verified as optional in the api
+* Report checksum verification state to interop
+
 ## cs/v0.9.2 (2026-03-20)
 
 * Report checksum verification state to back-end and client
