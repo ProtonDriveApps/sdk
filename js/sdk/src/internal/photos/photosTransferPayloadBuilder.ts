@@ -14,12 +14,13 @@ type TransferEncryptedRelatedPhotoPayload = {
     nodeUid: string;
     contentHash: string;
     nameHash: string;
+    originalNameHash: string | undefined;
     encryptedName: string;
     nameSignatureEmail: string;
     nodePassphrase: string;
     nodePassphraseSignature?: string;
     signatureEmail?: string;
-}
+};
 
 /**
  * Item representing a photo to build a payload for.
@@ -186,6 +187,7 @@ export class PhotoTransferPayloadBuilder {
             nodeUid: photoNode.uid,
             contentHash: encryptedCrypto.contentHash,
             nameHash: encryptedCrypto.hash,
+            originalNameHash: photoNode.hash,
             encryptedName: encryptedCrypto.encryptedName,
             nameSignatureEmail: encryptedCrypto.nameSignatureEmail,
             nodePassphrase: encryptedCrypto.armoredNodePassphrase,

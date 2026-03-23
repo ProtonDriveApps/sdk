@@ -7,8 +7,10 @@ import { splitNodeUid } from '../uids';
 import { AddToAlbumProcess } from './addToAlbum';
 import { AlbumsCryptoService } from './albumsCrypto';
 import { PhotosAPIService } from './apiService';
+import { AlbumContainsPhotosNotInTimelineError } from './errors';
 import { AlbumItem, DecryptedPhotoNode } from './interface';
 import { PhotosNodesAccess } from './nodes';
+import { PhotosManager } from './photosManager';
 import { PhotoSharesManager } from './shares';
 
 const BATCH_LOADING_SIZE = 10;
@@ -25,6 +27,7 @@ export class AlbumsManager {
         private cryptoService: AlbumsCryptoService,
         private photoShares: PhotoSharesManager,
         private nodesService: PhotosNodesAccess,
+        private photos: PhotosManager,
     ) {
         this.logger = telemetry.getLogger('albums');
         this.apiService = apiService;
@@ -157,8 +160,25 @@ export class AlbumsManager {
         return newNode;
     }
 
-    async deleteAlbum(nodeUid: string, options: { force?: boolean } = {}): Promise<void> {
-        await this.apiService.deleteAlbum(nodeUid, options);
+    async deleteAlbum(nodeUid: string, options: { force?: boolean; saveToTimeline?: boolean } = {}): Promise<void> {
+        try {
+            await this.apiService.deleteAlbum(nodeUid, options);
+        } catch (error) {
+            if (
+                options.saveToTimeline &&
+                error instanceof AlbumContainsPhotosNotInTimelineError &&
+                error.photosOnlyInAlbumNodeUids.length > 0
+            ) {
+                for await (const result of this.photos.saveToTimeline(error.photosOnlyInAlbumNodeUids)) {
+                    if (!result.ok) {
+                        throw result.error;
+                    }
+                }
+                await this.apiService.deleteAlbum(nodeUid, options);
+            } else {
+                throw error;
+            }
+        }
         await this.nodesService.notifyNodeDeleted(nodeUid);
     }
 
@@ -183,7 +203,7 @@ export class AlbumsManager {
             this.logger,
             signal,
         );
-        yield * process.execute(photoNodeUids);
+        yield* process.execute(photoNodeUids);
     }
 
     async *removePhotos(

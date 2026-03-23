@@ -559,9 +559,9 @@ export class ProtonDrivePhotosClient {
      *
      * Photos in the timeline will not be deleted. If the album has photos
      * that are not in the timeline (uploaded by another user), the method
-     * will throw an error. The photos must be moved to the timeline, or
-     * the album must be deleted with `force` option that deletes the photos
-     * not in the timeline as well.
+     * will throw an error. Then, either the photos must be saved to the
+     * timelines with `saveToTimeline` option, or the album must be deleted
+     * with `force` option that deletes the photos not in the timeline as well.
      *
      * This operation is irreversible. Both the album and the photos will be
      * permanently deleted, skipping the trash.
@@ -569,7 +569,7 @@ export class ProtonDrivePhotosClient {
      * @param nodeUid - The UID of the album to delete.
      * @param force - Whether to force the deletion.
      */
-    async deleteAlbum(nodeUid: NodeOrUid, options: { force?: boolean } = {}): Promise<void> {
+    async deleteAlbum(nodeUid: NodeOrUid, options: { force?: boolean; saveToTimeline?: boolean } = {}): Promise<void> {
         this.logger.info(`Deleting album ${getUid(nodeUid)}`);
         await this.photos.albums.deleteAlbum(getUid(nodeUid), options);
     }

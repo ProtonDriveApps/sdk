@@ -4,8 +4,10 @@ import { getMockTelemetry } from '../../tests/telemetry';
 import { AlbumsManager } from './albumsManager';
 import { AlbumsCryptoService } from './albumsCrypto';
 import { PhotosAPIService } from './apiService';
+import { AlbumContainsPhotosNotInTimelineError } from './errors';
 import { DecryptedPhotoNode } from './interface';
 import { PhotosNodesAccess } from './nodes';
+import { PhotosManager } from './photosManager';
 import { PhotoSharesManager } from './shares';
 
 describe('Albums', () => {
@@ -13,6 +15,7 @@ describe('Albums', () => {
     let cryptoService: AlbumsCryptoService;
     let photoShares: PhotoSharesManager;
     let nodesService: PhotosNodesAccess;
+    let photosService: PhotosManager;
     let albums: AlbumsManager;
 
     let nodes: { [uid: string]: DecryptedPhotoNode };
@@ -97,7 +100,19 @@ describe('Albums', () => {
             notifyChildCreated: jest.fn(),
         };
 
-        albums = new AlbumsManager(getMockTelemetry(), apiService, cryptoService, photoShares, nodesService);
+        // @ts-expect-error No need to implement all methods for mocking
+        photosService = {
+            saveToTimeline: jest.fn(),
+        };
+
+        albums = new AlbumsManager(
+            getMockTelemetry(),
+            apiService,
+            cryptoService,
+            photoShares,
+            nodesService,
+            photosService,
+        );
     });
 
     describe('createAlbum', () => {
@@ -230,6 +245,51 @@ describe('Albums', () => {
 
             expect(apiService.deleteAlbum).toHaveBeenCalledWith('albumNodeUid', { force: true });
             expect(nodesService.notifyNodeDeleted).toHaveBeenCalledWith('albumNodeUid');
+        });
+
+        it('when saveToTimeline is true, saves photos then retries delete', async () => {
+            const notInTimelineError = new AlbumContainsPhotosNotInTimelineError('msg', 1, ['p1', 'p2']);
+            (apiService.deleteAlbum as jest.Mock)
+                .mockRejectedValueOnce(notInTimelineError)
+                .mockResolvedValueOnce(undefined);
+
+            photosService.saveToTimeline = jest.fn().mockImplementation(async function* () {
+                yield { uid: 'p1', ok: true };
+                yield { uid: 'p2', ok: true };
+            });
+
+            await albums.deleteAlbum('albumNodeUid', { saveToTimeline: true });
+
+            expect(apiService.deleteAlbum).toHaveBeenCalledTimes(2);
+            expect(photosService.saveToTimeline).toHaveBeenCalledWith(['p1', 'p2']);
+            expect(nodesService.notifyNodeDeleted).toHaveBeenCalledTimes(1);
+            expect(nodesService.notifyNodeDeleted).toHaveBeenCalledWith('albumNodeUid');
+        });
+
+        it('throws AlbumContainsPhotosNotInTimelineError when saveToTimeline is false', async () => {
+            const notInTimelineError = new AlbumContainsPhotosNotInTimelineError('msg', 1, ['p1']);
+            (apiService.deleteAlbum as jest.Mock).mockRejectedValueOnce(notInTimelineError);
+
+            await expect(albums.deleteAlbum('albumNodeUid')).rejects.toBe(notInTimelineError);
+
+            expect(apiService.deleteAlbum).toHaveBeenCalledTimes(1);
+            expect(photosService.saveToTimeline).not.toHaveBeenCalled();
+            expect(nodesService.notifyNodeDeleted).not.toHaveBeenCalled();
+        });
+
+        it('throws when saveToTimeline step fails with error', async () => {
+            const notInTimelineError = new AlbumContainsPhotosNotInTimelineError('msg', 1, ['p1']);
+            (apiService.deleteAlbum as jest.Mock).mockRejectedValue(notInTimelineError);
+
+            const saveError = new Error('save failed');
+            photosService.saveToTimeline = jest.fn().mockImplementation(async function* () {
+                yield { uid: 'p1', ok: false, error: saveError };
+            });
+
+            await expect(albums.deleteAlbum('albumNodeUid', { saveToTimeline: true })).rejects.toBe(saveError);
+
+            expect(apiService.deleteAlbum).toHaveBeenCalledTimes(1);
+            expect(nodesService.notifyNodeDeleted).not.toHaveBeenCalled();
         });
     });
 

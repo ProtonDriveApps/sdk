@@ -5,6 +5,7 @@ import { PhotosAPIService } from './apiService';
 import { AlbumsCryptoService } from './albumsCrypto';
 import { PhotosNodesAccess } from './nodes';
 import { DecryptedPhotoNode } from './interface';
+import { MissingRelatedPhotosError } from './errors';
 
 function createMockPhotoNode(uid: string, overrides: Partial<DecryptedPhotoNode> = {}): DecryptedPhotoNode {
     return {
@@ -46,9 +47,19 @@ async function collectUpdateResults(manager: PhotosManager, photos: UpdatePhotoS
     return results;
 }
 
+async function collectSaveToTimelineResults(manager: PhotosManager, nodeUids: string[], signal?: AbortSignal) {
+    const results = [];
+    for await (const result of manager.saveToTimeline(nodeUids, signal)) {
+        results.push(result);
+    }
+    return results;
+}
+
 describe('PhotosManager', () => {
     let logger: ReturnType<typeof getMockLogger>;
-    let apiService: jest.Mocked<Pick<PhotosAPIService, 'addPhotoTags' | 'removePhotoTags' | 'setPhotoFavorite'>>;
+    let apiService: jest.Mocked<
+        Pick<PhotosAPIService, 'addPhotoTags' | 'removePhotoTags' | 'setPhotoFavorite' | 'transferPhotos'>
+    >;
     let cryptoService: jest.Mocked<Pick<AlbumsCryptoService, 'encryptPhotoForAlbum'>>;
     let nodesService: jest.Mocked<
         Pick<
@@ -80,6 +91,7 @@ describe('PhotosManager', () => {
             addPhotoTags: jest.fn().mockResolvedValue(undefined),
             removePhotoTags: jest.fn().mockResolvedValue(undefined),
             setPhotoFavorite: jest.fn().mockResolvedValue(undefined),
+            transferPhotos: jest.fn().mockImplementation(async function* () {}),
         };
 
         cryptoService = {
@@ -261,6 +273,36 @@ describe('PhotosManager', () => {
                 expect(results).toEqual([{ uid: 'volume1~photo1', ok: false, error: apiError }]);
                 expect(nodesService.notifyNodeChanged).not.toHaveBeenCalled();
             });
+        });
+    });
+
+    describe('saveToTimeline', () => {
+        it('re-queues once on MissingRelatedPhotosError then succeeds without yielding the retry error', async () => {
+            const missingRelatedUid = 'volume1~related1';
+            let transferCall = 0;
+            apiService.transferPhotos.mockImplementation(async function* (_rootUid, payloads) {
+                transferCall++;
+                for (const payload of payloads) {
+                    if (transferCall === 1) {
+                        yield {
+                            uid: payload.nodeUid,
+                            ok: false,
+                            error: new MissingRelatedPhotosError([missingRelatedUid]),
+                        };
+                    } else {
+                        yield { uid: payload.nodeUid, ok: true };
+                    }
+                }
+            });
+
+            const results = await collectSaveToTimelineResults(manager, ['volume1~photo1']);
+
+            expect(results).toEqual([{ uid: 'volume1~photo1', ok: true }]);
+            expect(apiService.transferPhotos).toHaveBeenCalledTimes(2);
+            expect(logger.info).toHaveBeenCalledWith(
+                `Missing related photos for saving volume1~photo1, re-queuing: ${missingRelatedUid}`,
+            );
+            expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('volume1~photo1');
         });
     });
 });
