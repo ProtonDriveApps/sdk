@@ -1,12 +1,11 @@
 import { c } from 'ttag';
 
-import { ValidationError } from '../../errors';
 import { NodeResultWithError, PhotoTag } from '../../interface';
 import { APICodeError, DriveAPIService, drivePaths, InvalidRequirementsAPIError, isCodeOk } from '../apiService';
 import { batch } from '../batch';
 import { EncryptedRootShare, EncryptedShareCrypto, ShareType } from '../shares/interface';
 import { makeNodeUid, splitNodeUid } from '../uids';
-import { MissingRelatedPhotosError } from './errors';
+import { AlbumContainsPhotosNotInTimelineError, MissingRelatedPhotosError } from './errors';
 import { AlbumItem } from './interface';
 import { TransferEncryptedPhotoPayload } from './photosTransferPayloadBuilder';
 
@@ -81,6 +80,13 @@ type PostFavoritePhotoRequest = Extract<
     drivePaths['/drive/photos/volumes/{volumeID}/links/{linkID}/favorite']['post']['requestBody'],
     { content: object }
 >['content']['application/json'];
+
+type PutTransferPhotosRequest = Extract<
+    drivePaths['/drive/photos/volumes/{volumeID}/links/transfer-multiple']['put']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PutTransferPhotosResponse =
+    drivePaths['/drive/photos/volumes/{volumeID}/links/transfer-multiple']['put']['responses']['200']['content']['application/json'];
 
 const ALBUM_CONTAINS_PHOTOS_NOT_IN_TIMELINE_ERROR_CODE = 200302;
 
@@ -336,7 +342,9 @@ export class PhotosAPIService {
             );
         } catch (error) {
             if (error instanceof APICodeError && error.code === ALBUM_CONTAINS_PHOTOS_NOT_IN_TIMELINE_ERROR_CODE) {
-                throw new ValidationError(c('Error').t`Album contains photos not in timeline`);
+                const childLinkIds = (error.debug as { ChildLinkIDs: string[] })?.ChildLinkIDs || [];
+                const nodeUids = childLinkIds.map((linkId) => makeNodeUid(volumeId, linkId));
+                throw new AlbumContainsPhotosNotInTimelineError(error.message, error.code, nodeUids);
             }
             throw error;
         }
@@ -555,5 +563,86 @@ export class PhotosAPIService {
             `drive/photos/volumes/${volumeId}/links/${linkId}/favorite`,
             requestBody,
         );
+    }
+
+    async *transferPhotos(
+        newParentNodeUid: string,
+        photoPayloads: TransferEncryptedPhotoPayload[],
+        signal?: AbortSignal,
+    ): AsyncGenerator<NodeResultWithError> {
+        const { volumeId, nodeId: newParentNodeId } = splitNodeUid(newParentNodeUid);
+
+        if (photoPayloads.length === 0) {
+            return;
+        }
+
+        const nameSignatureEmail = photoPayloads[0].nameSignatureEmail;
+        if (photoPayloads.some((photoPayload) => photoPayload.nameSignatureEmail !== nameSignatureEmail)) {
+            throw new Error('All photos must have the same name signature email');
+        }
+
+        const allPhotoPayloads = photoPayloads.flatMap((photoPayload) => [photoPayload, ...photoPayload.relatedPhotos]);
+        const allLinksData = allPhotoPayloads.map((photoPayload) => {
+            const { nodeId } = splitNodeUid(photoPayload.nodeUid);
+            return {
+                LinkID: nodeId,
+                Hash: photoPayload.nameHash,
+                OriginalHash: photoPayload.originalNameHash!,
+                Name: photoPayload.encryptedName,
+                NodePassphrase: photoPayload.nodePassphrase,
+                ContentHash: photoPayload.contentHash,
+                NodePassphraseSignature: null, // Required when moving an anonymous node.
+            };
+        });
+
+        const response = await this.apiService.put<PutTransferPhotosRequest, PutTransferPhotosResponse>(
+            `drive/photos/volumes/${volumeId}/links/transfer-multiple`,
+            {
+                ParentLinkID: newParentNodeId,
+                Links: allLinksData,
+                NameSignatureEmail: nameSignatureEmail,
+                SignatureEmail: null, // Required when moving an anonymous node.
+            },
+            signal,
+        );
+
+        const errors = new Map<string, Error>();
+
+        for (const r of response.Responses || []) {
+            const details = r as {
+                LinkID: string;
+                Response: {
+                    Code: number;
+                    Error?: string;
+                    Details: { Missing: string[] };
+                };
+            };
+
+            if (!details.Response.Code || !isCodeOk(details.Response.Code) || details.Response?.Error) {
+                const nodeUid = makeNodeUid(volumeId, details.LinkID);
+
+                if (details.Response.Details?.Missing) {
+                    const missingNodeUids = details.Response.Details.Missing.map((linkId) =>
+                        makeNodeUid(volumeId, linkId),
+                    );
+                    errors.set(nodeUid, new MissingRelatedPhotosError(missingNodeUids));
+                } else {
+                    errors.set(
+                        nodeUid,
+                        new APICodeError(details.Response.Error || c('Error').t`Unknown error`, details.Response.Code),
+                    );
+                }
+            }
+        }
+
+        for (const photoPayload of photoPayloads) {
+            const uid = photoPayload.nodeUid;
+            const error = errors.get(uid);
+            if (error) {
+                yield { uid, ok: false, error };
+            } else {
+                yield { uid, ok: true };
+            }
+        }
     }
 }

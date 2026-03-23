@@ -1,13 +1,19 @@
 import { c } from 'ttag';
 
+import { AbortError } from '../../errors';
 import { Logger, NodeResultWithError, PhotoTag } from '../../interface';
+import { batch } from '../batch';
 import { PhotosAPIService } from './apiService';
 import { PhotoAlreadyInTargetError, PhotoTransferPayloadBuilder, TransferEncryptedPhotoPayload } from './photosTransferPayloadBuilder';
 import { PhotosNodesAccess } from './nodes';
 import { AlbumsCryptoService } from './albumsCrypto';
-import { AbortError } from '../../errors';
-import { BATCH_LOADING_SIZE } from '../sharing/sharingAccess';
-import { batch } from '../batch';
+import { createBatches } from './addToAlbum';
+import { MissingRelatedPhotosError } from './errors';
+
+/**
+ * The number of photos that are loaded in parallel to prepare the payloads.
+ */
+const BATCH_LOADING_SIZE = 20;
 
 export type UpdatePhotoSettings = {
     nodeUid: string;
@@ -29,6 +35,58 @@ export class PhotosManager {
         private readonly nodesService: PhotosNodesAccess,
     ) {
         this.payloadBuilder = new PhotoTransferPayloadBuilder(albumsCryptoService, nodesService);
+    }
+
+    async *saveToTimeline(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResultWithError> {
+        const rootNode = await this.nodesService.getVolumeRootFolder();
+        const volumeRootKeys = await this.nodesService.getNodeKeys(rootNode.uid);
+        const signingKeys = await this.nodesService.getNodeSigningKeys({ nodeUid: rootNode.uid });
+
+        const queue: {
+            photoNodeUid: string;
+            additionalRelatedPhotoNodeUids: string[];
+        }[] = nodeUids.map((nodeUid) => ({ photoNodeUid: nodeUid, additionalRelatedPhotoNodeUids: [] }));
+        const retriedPhotoUids = new Set<string>();
+
+        while (queue.length > 0) {
+            const items = queue.splice(0, BATCH_LOADING_SIZE);
+            const { payloads, errors } = await this.payloadBuilder.preparePhotoPayloads(
+                items,
+                rootNode.uid,
+                volumeRootKeys,
+                signingKeys,
+                signal,
+            );
+
+            for (const [uid, error] of errors) {
+                yield { uid, ok: false, error };
+            }
+
+            for (const batch of createBatches(payloads)) {
+                for await (const result of this.apiService.transferPhotos(rootNode.uid, batch, signal)) {
+                    if (
+                        !result.ok &&
+                        result.error instanceof MissingRelatedPhotosError &&
+                        !retriedPhotoUids.has(result.uid)
+                    ) {
+                        retriedPhotoUids.add(result.uid);
+                        this.logger.info(
+                            `Missing related photos for saving ${result.uid}, re-queuing: ${result.error.missingNodeUids.join(', ')}`,
+                        );
+                        queue.push({
+                            photoNodeUid: result.uid,
+                            additionalRelatedPhotoNodeUids: result.error.missingNodeUids,
+                        });
+                        continue;
+                    }
+
+                    if (result.ok) {
+                        await this.nodesService.notifyNodeChanged(result.uid);
+                    }
+                    yield result;
+                }
+            }
+        }
     }
 
     async *updatePhotos(photos: UpdatePhotoSettings[], signal?: AbortSignal): AsyncGenerator<NodeResultWithError> {
