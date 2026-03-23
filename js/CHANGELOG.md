@@ -1,5 +1,10 @@
 # Changelog
 
+## js/v0.14.0 (2026-03-23)
+
+* Allow saving photos when deleting albums
+* Make unknown telemetry volume type explicit
+
 ## js/v0.13.1 (2026-03-19)
 
 * Make LatestEventIdProvider.getLatestEventId async to support IndexedDB
