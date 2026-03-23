@@ -292,9 +292,16 @@ public sealed class ProtonDriveClient
         }
     }
 
-    public ValueTask EmptyTrashAsync(CancellationToken cancellationToken)
+    public async ValueTask EmptyTrashAsync(CancellationToken cancellationToken)
     {
-        return VolumeOperations.EmptyTrashAsync(this, cancellationToken);
+        var volumeId = await VolumeOperations.TryGetMainVolumeIdAsync(this, cancellationToken).ConfigureAwait(false);
+
+        if (volumeId is null)
+        {
+            return;
+        }
+
+        await VolumeOperations.EmptyTrashAsync(this, volumeId.Value, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<FileUploader> GetFileUploaderAsync(

@@ -74,6 +74,71 @@ internal static class InteropProtonPhotosClient
         return new Int64Value { Value = Interop.AllocHandle(client) };
     }
 
+    public static async ValueTask<IMessage> HandleTrashNodesAsync(DrivePhotosClientTrashNodesRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        var results = await client.TrashNodesAsync(
+            request.NodeUids.Select(NodeUid.Parse),
+            cancellationToken).ConfigureAwait(false);
+
+        return ConvertToNodeResultListResponse(results);
+    }
+
+    public static async ValueTask<IMessage> HandleDeleteNodesAsync(DrivePhotosClientDeleteNodesRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        var results = await client.DeleteNodesAsync(
+            request.NodeUids.Select(NodeUid.Parse),
+            cancellationToken).ConfigureAwait(false);
+
+        return ConvertToNodeResultListResponse(results);
+    }
+
+    public static async ValueTask<IMessage> HandleRestoreNodesAsync(DrivePhotosClientRestoreNodesRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        var results = await client.RestoreNodesAsync(
+            request.NodeUids.Select(NodeUid.Parse),
+            cancellationToken).ConfigureAwait(false);
+
+        return ConvertToNodeResultListResponse(results);
+    }
+
+    public static async ValueTask<IMessage?> HandleEnumerateTrashAsync(DrivePhotosClientEnumerateTrashRequest request, nint bindingsHandle)
+    {
+        var iterateFunction = new InteropAction<nint, InteropArray<byte>>(request.IterateAction);
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        await foreach (var x in client.EnumerateTrashAsync(cancellationToken).ConfigureAwait(false))
+        {
+            iterateFunction.InvokeWithMessage(bindingsHandle, InteropProtonDriveClient.ConvertToNodeResult(x));
+        }
+
+        return null;
+    }
+
+    public static async ValueTask<IMessage?> HandleEmptyTrashAsync(DrivePhotosClientEmptyTrashRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        await client.EmptyTrashAsync(cancellationToken).ConfigureAwait(false);
+
+        return null;
+    }
+
     public static IMessage? HandleFree(DrivePhotosClientFreeRequest request)
     {
         Interop.FreeHandle<ProtonPhotosClient>(request.ClientHandle);
@@ -210,5 +275,29 @@ internal static class InteropProtonPhotosClient
         {
             // TODO: Implement SHA1 generation callback
         }
+    }
+
+    private static NodeResultListResponse ConvertToNodeResultListResponse(IReadOnlyDictionary<NodeUid, Result<Exception>> results)
+    {
+        return new NodeResultListResponse
+        {
+            Results =
+            {
+                results.Select(pair =>
+                {
+                    var result = new NodeResultPair
+                    {
+                        NodeUid = pair.Key.ToString(),
+                    };
+
+                    if (pair.Value.TryGetError(out var exception))
+                    {
+                        result.Error = exception.ToProtoError(InteropDriveErrorConverter.SetDomainAndCodes);
+                    }
+
+                    return result;
+                }),
+            },
+        };
     }
 }

@@ -1,10 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Proton.Drive.Sdk.Api;
 using Proton.Drive.Sdk.Api.Photos;
 using Proton.Drive.Sdk.Http;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;
+using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk;
 using Proton.Sdk.Caching;
 using Proton.Sdk.Http;
@@ -103,6 +105,50 @@ public sealed class ProtonPhotosClient
         CancellationToken cancellationToken = default)
     {
         return FileOperations.EnumerateThumbnailsAsync(DriveClient, photoUids, thumbnailType, forPhotos: true, cancellationToken);
+    }
+
+    public ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> TrashNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
+    {
+        return NodeOperations.TrashAsync(DriveClient, uids, cancellationToken);
+    }
+
+    public ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> DeleteNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
+    {
+        return NodeOperations.DeleteFromTrashAsync(DriveClient, uids, cancellationToken);
+    }
+
+    public ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> RestoreNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
+    {
+        return NodeOperations.RestoreFromTrashAsync(DriveClient, uids, cancellationToken);
+    }
+
+    public async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateTrashAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var volumeId = await VolumeOperations.TryGetPhotosVolumeIdAsync(DriveClient, cancellationToken).ConfigureAwait(false);
+
+        if (volumeId is null)
+        {
+            // Nothing to enumerate if the main volume doesn't exist
+            yield break;
+        }
+
+        await foreach (var item in VolumeOperations.EnumerateTrashAsync(DriveClient, volumeId.Value, cancellationToken).ConfigureAwait(false))
+        {
+            yield return item;
+        }
+    }
+
+    public async ValueTask EmptyTrashAsync(CancellationToken cancellationToken)
+    {
+        var volumeId = await VolumeOperations.TryGetPhotosVolumeIdAsync(DriveClient, cancellationToken).ConfigureAwait(false);
+
+        if (volumeId is null)
+        {
+            // Nothing to do if the photos volume doesn't exist
+            return;
+        }
+
+        await VolumeOperations.EmptyTrashAsync(DriveClient, volumeId.Value, cancellationToken).ConfigureAwait(false);
     }
 
     [Experimental("Photos")]

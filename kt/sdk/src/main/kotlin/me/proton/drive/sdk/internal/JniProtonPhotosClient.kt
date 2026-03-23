@@ -2,9 +2,12 @@ package me.proton.drive.sdk.internal
 
 import com.google.protobuf.Any
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.ProducerScope
 import me.proton.drive.sdk.converter.NodeResultConverter
+import me.proton.drive.sdk.converter.NodeResultListResponseConverter
 import me.proton.drive.sdk.converter.PhotosTimelineListConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
+import me.proton.drive.sdk.entity.NodeResult
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.UnitResponseCallback
 import me.proton.drive.sdk.extension.asCallback
@@ -103,6 +106,47 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
         executeOnce("getNode", NodeResultConverter().asNullableCallback) {
             drivePhotosClientGetNode = request
         }
+
+    suspend fun trashNodes(
+        request: ProtonDriveSdk.DrivePhotosClientTrashNodesRequest,
+    ): ProtonDriveSdk.NodeResultListResponse =
+        executeOnce("trashNodes", NodeResultListResponseConverter().asCallback) {
+            drivePhotosClientTrashNodes = request
+        }
+
+    suspend fun deleteNodes(
+        request: ProtonDriveSdk.DrivePhotosClientDeleteNodesRequest,
+    ): ProtonDriveSdk.NodeResultListResponse =
+        executeOnce("deleteNodes", NodeResultListResponseConverter().asCallback) {
+            drivePhotosClientDeleteNodes = request
+        }
+
+    suspend fun restoreNodes(
+        request: ProtonDriveSdk.DrivePhotosClientRestoreNodesRequest,
+    ): ProtonDriveSdk.NodeResultListResponse =
+        executeOnce("restoreNodes", NodeResultListResponseConverter().asCallback) {
+            drivePhotosClientRestoreNodes = request
+        }
+
+    suspend fun enumerateTrash(
+        coroutineScope: ProducerScope<NodeResult>,
+        request: ProtonDriveSdk.DrivePhotosClientEnumerateTrashRequest,
+        enumerate: suspend (ProtonDriveSdk.NodeResult) -> Unit,
+    ): Unit = executeEnumerate(
+            name = "enumerateTrash",
+            callback = UnitResponseCallback,
+            enumerate = enumerate,
+            parser = ProtonDriveSdk.NodeResult::parseFrom,
+            coroutineScopeProvider = { coroutineScope }
+        ) {
+            drivePhotosClientEnumerateTrash = request
+        }
+
+    suspend fun emptyTrash(
+        request: ProtonDriveSdk.DrivePhotosClientEmptyTrashRequest,
+    ) = executeOnce("emptyTrash", UnitResponseCallback) {
+        drivePhotosClientEmptyTrash = request
+    }
 
     fun free(handle: Long) {
         dispatch("free") {

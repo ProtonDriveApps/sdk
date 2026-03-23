@@ -152,16 +152,9 @@ internal static class VolumeOperations
         return (volume, share, rootFolder);
     }
 
-    public static async ValueTask EmptyTrashAsync(ProtonDriveClient client, CancellationToken cancellationToken)
+    public static async ValueTask EmptyTrashAsync(ProtonDriveClient client, VolumeId volumeId, CancellationToken cancellationToken)
     {
-        var volumeId = await TryGetMainVolumeIdAsync(client, cancellationToken).ConfigureAwait(false);
-        if (volumeId is null)
-        {
-            // No trash to empty if the main volume doesn't exist
-            return;
-        }
-
-        await client.Api.Trash.EmptyAsync(volumeId.Value, cancellationToken).ConfigureAwait(false);
+        await client.Api.Trash.EmptyAsync(volumeId, cancellationToken).ConfigureAwait(false);
     }
 
     public static async ValueTask<VolumeId?> TryGetMainVolumeIdAsync(ProtonDriveClient client, CancellationToken cancellationToken)

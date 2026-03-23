@@ -62,6 +62,11 @@ message Request {
         DrivePhotosClientUploadFromFileRequest drive_photos_client_upload_from_file = 1312;
         DrivePhotosClientUploaderFreeRequest drive_photos_client_uploader_free = 1313;
         DrivePhotosClientEnumerateThumbnailsRequest drive_photos_client_enumerate_thumbnails = 1314;
+        DrivePhotosClientTrashNodesRequest drive_photos_client_trash_nodes = 1315;
+        DrivePhotosClientDeleteNodesRequest drive_photos_client_delete_nodes = 1316;
+        DrivePhotosClientRestoreNodesRequest drive_photos_client_restore_nodes = 1317;
+        DrivePhotosClientEnumerateTrashRequest drive_photos_client_enumerate_trash = 1318;
+        DrivePhotosClientEmptyTrashRequest drive_photos_client_empty_trash = 1319;
     };
 }
 
@@ -763,6 +768,40 @@ message DrivePhotosClientUploadFromFileRequest {
 // The response must not have a value.
 message DrivePhotosClientUploaderFreeRequest {
     int64 file_uploader_handle = 1;
+}
+
+// The response message must be of type NodeResultListResponse
+message DrivePhotosClientTrashNodesRequest {
+    int64 client_handle = 1;
+    repeated string node_uids = 2;
+    int64 cancellation_token_source_handle = 3;
+}
+
+// The response message must be of type NodeResultListResponse
+message DrivePhotosClientDeleteNodesRequest {
+    int64 client_handle = 1;
+    repeated string node_uids = 2;
+    int64 cancellation_token_source_handle = 3;
+}
+
+// The response message must be of type NodeResultListResponse
+message DrivePhotosClientRestoreNodesRequest {
+    int64 client_handle = 1;
+    repeated string node_uids = 2;
+    int64 cancellation_token_source_handle = 3;
+}
+
+// The response message must be of type TrashChildrenList
+message DrivePhotosClientEnumerateTrashRequest {
+    int64 client_handle = 1;
+    int64 cancellation_token_source_handle = 2;
+    int64 iterate_action = 3;
+}
+
+// The response must not have a value.
+message DrivePhotosClientEmptyTrashRequest {
+    int64 client_handle = 1;
+    int64 cancellation_token_source_handle = 2;
 }
 
 // The list must match the order from Telemetry/VolumeTypes to properly match it over the interop.
