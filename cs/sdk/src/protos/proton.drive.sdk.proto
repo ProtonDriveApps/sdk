@@ -520,6 +520,7 @@ message DegradedFileNode {
 
 message FileContentDigests {
     bytes sha1 = 1; // optional
+    bool sha1_verified = 2;
 }
 
 message ThumbnailHeader {

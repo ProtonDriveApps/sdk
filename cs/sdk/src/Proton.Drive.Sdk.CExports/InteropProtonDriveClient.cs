@@ -507,6 +507,8 @@ internal static class InteropProtonDriveClient
                     fileNodeProto.ActiveRevision.ClaimedDigests.Sha1 = ByteString.CopyFrom(fileNode.ActiveRevision.ClaimedDigests.Sha1.Value.Span);
                 }
 
+                fileNodeProto.ActiveRevision.ClaimedDigests.Sha1Verified = fileNode.ActiveRevision.ClaimedDigests.Sha1Verified;
+
                 fileNodeProto.ActiveRevision.Thumbnails.AddRange(
                     fileNode.ActiveRevision.Thumbnails.Select(t => new ThumbnailHeader
                     {
@@ -590,7 +592,10 @@ internal static class InteropProtonDriveClient
 
                     if (degradedFileNode.ActiveRevision.ClaimedDigests.HasValue)
                     {
-                        degradedFile.ActiveRevision.ClaimedDigests = new FileContentDigests();
+                        degradedFile.ActiveRevision.ClaimedDigests = new FileContentDigests
+                        {
+                            Sha1Verified = degradedFileNode.ActiveRevision.ClaimedDigests.Value.Sha1Verified,
+                        };
                         if (degradedFileNode.ActiveRevision.ClaimedDigests.Value.Sha1.HasValue)
                         {
                             degradedFile.ActiveRevision.ClaimedDigests.Sha1 =
