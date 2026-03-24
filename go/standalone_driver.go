@@ -1,6 +1,7 @@
 package protondrive
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -198,12 +199,74 @@ func (d *standaloneDriver) CreateFolder(ctx context.Context, parentID, name stri
 	return created.ID, nil
 }
 
-func (d *standaloneDriver) GetRevisionAttrs(context.Context, string) (RevisionAttrs, error) {
-	return RevisionAttrs{}, ErrNotImplemented
+func (d *standaloneDriver) GetRevisionAttrs(ctx context.Context, nodeID string) (RevisionAttrs, error) {
+	return d.getRevisionAttrs(ctx, nodeID)
 }
 
-func (d *standaloneDriver) DownloadFile(context.Context, string, int64) (DownloadResult, error) {
-	return DownloadResult{}, ErrNotImplemented
+func (d *standaloneDriver) DownloadFile(ctx context.Context, nodeID string, offset int64) (DownloadResult, error) {
+	link, err := d.getLink(ctx, nodeID)
+	if err != nil {
+		return DownloadResult{}, err
+	}
+	if link.Type != proton.LinkTypeFile {
+		return DownloadResult{}, fmt.Errorf("link %s is not a file", nodeID)
+	}
+	nodeKR, err := d.getLinkKR(ctx, link)
+	if err != nil {
+		return DownloadResult{}, err
+	}
+	sessionKey, err := link.GetSessionKey(nodeKR)
+	if err != nil {
+		return DownloadResult{}, err
+	}
+	activeRevision, err := d.getActiveRevisionMetadata(ctx, link)
+	if err != nil {
+		return DownloadResult{}, err
+	}
+	revision, err := d.getRevisionAllBlocks(ctx, link.LinkID, activeRevision.ID)
+	if err != nil {
+		return DownloadResult{}, err
+	}
+	attrs, err := d.getRevisionAttrs(ctx, nodeID)
+	if err != nil {
+		return DownloadResult{}, err
+	}
+	reader := &fileDownloadReader{
+		driver:     d,
+		ctx:        ctx,
+		link:       &link,
+		nodeKR:     nodeKR,
+		sessionKey: sessionKey,
+		revision:   &revision,
+		data:       bytes.NewBuffer(nil),
+	}
+	if offset > 0 {
+		if len(attrs.BlockSizes) > 0 {
+			blockIndex, intra, err := locateBlockOffset(attrs.BlockSizes, offset)
+			if err != nil {
+				return DownloadResult{}, err
+			}
+			reader.nextBlock = blockIndex
+			if intra > 0 {
+				n, err := io.CopyN(io.Discard, reader, intra)
+				if err != nil {
+					return DownloadResult{}, err
+				}
+				if n != intra {
+					return DownloadResult{}, fmt.Errorf("failed to seek within decrypted stream")
+				}
+			}
+		} else {
+			n, err := io.CopyN(io.Discard, reader, offset)
+			if err != nil {
+				return DownloadResult{}, err
+			}
+			if n != offset {
+				return DownloadResult{}, fmt.Errorf("failed to seek within decrypted stream")
+			}
+		}
+	}
+	return DownloadResult{Reader: reader, Attrs: attrs, ServerSize: link.Size}, nil
 }
 
 func (d *standaloneDriver) UploadFile(context.Context, string, string, io.Reader, UploadOptions) (Node, RevisionAttrs, error) {
@@ -506,6 +569,226 @@ func getNameHash(name string, hashKey []byte) string {
 	h := hmac.New(sha256.New, hashKey)
 	_, _ = h.Write([]byte(name))
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+func (d *standaloneDriver) getRevisionAttrs(ctx context.Context, nodeID string) (RevisionAttrs, error) {
+	link, err := d.getLink(ctx, nodeID)
+	if err != nil {
+		return RevisionAttrs{}, err
+	}
+	if link.Type != proton.LinkTypeFile {
+		return RevisionAttrs{}, fmt.Errorf("link %s is not a file", nodeID)
+	}
+	activeRevision, err := d.getActiveRevisionMetadata(ctx, link)
+	if err != nil {
+		return RevisionAttrs{}, err
+	}
+	attrs := RevisionAttrs{
+		Size:          activeRevision.Size,
+		ModTime:       time.Unix(link.ModifyTime, 0),
+		Digests:       map[string]string{},
+		BlockSizes:    nil,
+		EncryptedSize: link.Size,
+	}
+	revision, err := d.getRevisionAllBlocks(ctx, link.LinkID, activeRevision.ID)
+	if err != nil {
+		return RevisionAttrs{}, err
+	}
+	attrs.BlockSizes = make([]int64, 0, len(revision.Blocks))
+	for range revision.Blocks {
+		attrs.BlockSizes = append(attrs.BlockSizes, 4*1024*1024)
+	}
+	if len(attrs.BlockSizes) > 0 {
+		remaining := attrs.Size
+		for i := range attrs.BlockSizes {
+			if remaining <= 0 {
+				attrs.BlockSizes[i] = 0
+				continue
+			}
+			if remaining < attrs.BlockSizes[i] {
+				attrs.BlockSizes[i] = remaining
+			}
+			remaining -= attrs.BlockSizes[i]
+		}
+	}
+	return attrs, nil
+}
+
+func (d *standaloneDriver) getActiveRevisionMetadata(ctx context.Context, link proton.Link) (proton.RevisionMetadata, error) {
+	revisions, err := d.client.ListRevisions(ctx, d.state.mainShare.ShareID, link.LinkID)
+	if err != nil {
+		return proton.RevisionMetadata{}, err
+	}
+	var active *proton.RevisionMetadata
+	for i := range revisions {
+		if revisions[i].State == proton.RevisionStateActive {
+			if active != nil {
+				return proton.RevisionMetadata{}, fmt.Errorf("multiple active revisions for %s", link.LinkID)
+			}
+			active = &revisions[i]
+		}
+	}
+	if active == nil {
+		return proton.RevisionMetadata{}, fmt.Errorf("no active revision for %s", link.LinkID)
+	}
+	return *active, nil
+}
+
+func (d *standaloneDriver) getRevisionAllBlocks(ctx context.Context, linkID, revisionID string) (proton.Revision, error) {
+	const pageSize = 150
+	fromBlock := 1
+	var full proton.Revision
+	for {
+		revision, err := d.client.GetRevision(ctx, d.state.mainShare.ShareID, linkID, revisionID, fromBlock, pageSize)
+		if err != nil {
+			return proton.Revision{}, err
+		}
+		if fromBlock == 1 {
+			full.RevisionMetadata = revision.RevisionMetadata
+		}
+		full.Blocks = append(full.Blocks, revision.Blocks...)
+		if len(revision.Blocks) < pageSize {
+			break
+		}
+		fromBlock = len(full.Blocks) + 1
+	}
+	return full, nil
+}
+
+type fileDownloadReader struct {
+	driver     *standaloneDriver
+	ctx        context.Context
+	link       *proton.Link
+	data       *bytes.Buffer
+	nodeKR     *crypto.KeyRing
+	sessionKey *crypto.SessionKey
+	revision   *proton.Revision
+	nextBlock  int
+	isEOF      bool
+}
+
+func (r *fileDownloadReader) Read(p []byte) (int, error) {
+	if r.data.Len() == 0 {
+		r.data = bytes.NewBuffer(nil)
+		if err := r.populate(); err != nil {
+			return 0, err
+		}
+		if r.isEOF {
+			return 0, io.EOF
+		}
+	}
+	return r.data.Read(p)
+}
+
+func (r *fileDownloadReader) Close() error {
+	r.driver = nil
+	return nil
+}
+
+func (r *fileDownloadReader) populate() error {
+	if r.revision == nil || len(r.revision.Blocks) == 0 || r.nextBlock >= len(r.revision.Blocks) {
+		r.isEOF = true
+		return nil
+	}
+	block := r.revision.Blocks[r.nextBlock]
+	blockReader, err := r.driver.client.GetBlock(r.ctx, block.BareURL, block.Token)
+	if err != nil {
+		return err
+	}
+	defer blockReader.Close()
+	verificationKR, err := r.driver.buildSignatureVerificationKR([]string{block.SignatureEmail}, r.nodeKR)
+	if err != nil {
+		return err
+	}
+	if err := decryptBlockIntoBuffer(r.sessionKey, verificationKR, r.nodeKR, block.Hash, block.EncSignature, r.data, blockReader); err != nil {
+		return err
+	}
+	r.nextBlock++
+	return nil
+}
+
+func (d *standaloneDriver) buildSignatureVerificationKR(emails []string, extra ...*crypto.KeyRing) (*crypto.KeyRing, error) {
+	ret, err := crypto.NewKeyRing(nil)
+	if err != nil {
+		return nil, err
+	}
+	for _, email := range emails {
+		for _, address := range d.state.addresses {
+			if address.Email != email {
+				continue
+			}
+			if kr := d.state.addrKRs[address.ID]; kr != nil {
+				if err := addKeysFromKR(ret, kr); err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+	if err := addKeysFromKR(ret, extra...); err != nil {
+		return nil, err
+	}
+	if ret.CountEntities() == 0 {
+		return nil, fmt.Errorf("no keys available for signature verification")
+	}
+	return ret, nil
+}
+
+func addKeysFromKR(kr *crypto.KeyRing, newKRs ...*crypto.KeyRing) error {
+	for _, newKR := range newKRs {
+		if newKR == nil {
+			continue
+		}
+		for _, key := range newKR.GetKeys() {
+			if err := kr.AddKey(key); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func decryptBlockIntoBuffer(sessionKey *crypto.SessionKey, addrKR, nodeKR *crypto.KeyRing, originalHash, encSignature string, buffer io.Writer, block io.ReadCloser) error {
+	data, err := io.ReadAll(block)
+	if err != nil {
+		return err
+	}
+	plainMessage, err := sessionKey.Decrypt(data)
+	if err != nil {
+		return err
+	}
+	encSignatureArm, err := crypto.NewPGPMessageFromArmored(encSignature)
+	if err != nil {
+		return err
+	}
+	if err := addrKR.VerifyDetachedEncrypted(plainMessage, encSignatureArm, nodeKR, crypto.GetUnixTime()); err != nil {
+		return err
+	}
+	if _, err := io.Copy(buffer, plainMessage.NewReader()); err != nil {
+		return err
+	}
+	h := sha256.New()
+	h.Write(data)
+	if base64.StdEncoding.EncodeToString(h.Sum(nil)) != originalHash {
+		return fmt.Errorf("downloaded block hash verification failed")
+	}
+	return nil
+}
+
+func locateBlockOffset(blockSizes []int64, offset int64) (int, int64, error) {
+	if offset < 0 {
+		return 0, 0, fmt.Errorf("offset must be non-negative")
+	}
+	cumulative := int64(0)
+	for i, size := range blockSizes {
+		if offset < cumulative+size {
+			return i, offset - cumulative, nil
+		}
+		cumulative += size
+	}
+	if offset == cumulative {
+		return len(blockSizes), 0, nil
+	}
+	return 0, 0, io.EOF
 }
 
 func decryptLinkName(link proton.Link, parentKR, verificationKR *crypto.KeyRing) (string, error) {

@@ -5,6 +5,7 @@ package protondrive
 import (
 	"context"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 )
@@ -196,9 +197,12 @@ func TestIntegrationGetRevisionAttrs(t *testing.T) {
 		t.Skip("integration config missing test_file_id")
 	}
 	client := requireIntegrationClient(t, testContext)
-	_, err := client.GetRevisionAttrs(context.Background(), testContext.Config.TestFileID)
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
+	attrs, err := client.GetRevisionAttrs(context.Background(), testContext.Config.TestFileID)
+	if err != nil {
+		t.Fatalf("unexpected revision attrs error: %v", err)
+	}
+	if attrs.EncryptedSize <= 0 {
+		t.Fatalf("expected positive encrypted size, got %+v", attrs)
 	}
 }
 
@@ -208,9 +212,18 @@ func TestIntegrationDownloadFile(t *testing.T) {
 		t.Skip("integration config missing test_file_id")
 	}
 	client := requireIntegrationClient(t, testContext)
-	_, err := client.DownloadFile(context.Background(), testContext.Config.TestFileID, 0)
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
+	result, err := client.DownloadFile(context.Background(), testContext.Config.TestFileID, 0)
+	if err != nil {
+		t.Fatalf("unexpected download error: %v", err)
+	}
+	defer result.Reader.Close()
+	buffer := make([]byte, 1)
+	n, readErr := result.Reader.Read(buffer)
+	if readErr != nil && !errors.Is(readErr, io.EOF) {
+		t.Fatalf("unexpected read error: %v", readErr)
+	}
+	if n == 0 && result.ServerSize > 0 {
+		t.Fatalf("expected some data for non-empty file, got n=%d serverSize=%d", n, result.ServerSize)
 	}
 }
 
