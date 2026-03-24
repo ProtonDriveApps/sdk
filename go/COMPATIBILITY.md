@@ -41,9 +41,9 @@ Legend:
 - `done` package API for known-size `UploadFile`
 - `done` unknown-size uploads rejected with `ErrUnknownSizeUpload`
 - `partial` original-size metadata resolution
-- `partial` SHA1 digest and block size retrieval
+- `done` SHA1 digest and block size retrieval
 - `done` encrypted block streaming downloads
-- `partial` encrypted uploads and revision commit flow
+- `done` encrypted uploads and revision commit flow
 
 ## Behavior Expectations
 
