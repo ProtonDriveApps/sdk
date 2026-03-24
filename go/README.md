@@ -1,128 +1,72 @@
 # Proton Drive Go Package
 
-This module is a narrow, pure-Go package intended to provide basic Proton Drive operations.
+A narrow, pure-Go SDK for basic Proton Drive operations: login, directory
+listing, file upload/download, move, trash, and logout.
 
-Current toolchain target:
+## Toolchain
 
-- Go `1.26.1` to match the current official `github.com/ProtonMail/go-proton-api` dependency line
+Go 1.26.1 to match the current official `github.com/ProtonMail/go-proton-api`
+dependency line.
 
-Current design goals:
+## Design Goals
 
 - pure Go module with no cgo or native runtime dependencies
-- stable session import/export using `uid`, `access_token`, `refresh_token`, and `salted_key_pass`
-- backend-oriented API for directory listing, uploads, downloads, moves, trash, quota, and logout
-- optional internal caching with explicit invalidation through `ClearCache`
-- minimal public surface so the package can be maintained upstream and adopted easily
+- stable session import/export for credential-free reconnection
+- backend-oriented API suitable for tools like rclone
+- minimal public surface for upstream maintainability
 
-What is implemented now:
+## What Is Implemented
 
-- real Proton authentication, session resume, root/share discovery, and logout
-- directory listing, child lookup, folder creation, file revision lookup, and offset downloads
-- small-file uploads, file/folder moves, trash, and empty trash
-- a package-owned standalone `Dialer` and `Driver` in `go/dialer.go` and `go/standalone_driver.go`
-- integration credentials loading and live integration coverage in `go/integration_config.go` and `go/integration_test.go`
-- compatibility and integration planning docs in `go/COMPATIBILITY.md` and `go/INTEGRATION.md`
+- real Proton authentication via SRP, session resume, TOTP 2FA support
+- root/share discovery, storage quota (`About`), and logout
+- directory listing, child search (hash-based), and folder creation
+- small-file uploads (<4 MiB) and large-file uploads (>4 MiB via v2 block API)
+- file download with offset support and block-level decryption
+- file/folder move with re-encryption for the destination keyring
+- trash, empty trash, and cache management
 
-What is still rough or intentionally incomplete:
-
-- large-file uploads still need the multi-block upload path finalized
-- revision metadata is functional but not yet full parity with the richer legacy xattr model
-- cache semantics are intentionally lightweight and can be tightened further for long-lived clients
-
-Bootstrap example:
+## Quick Start
 
 ```go
-package main
-
-import (
-	"context"
-	"log"
-	"strings"
-
-	protondrive "github.com/ProtonDriveApps/sdk/go"
-)
-
-func main() {
-	ctx := context.Background()
-
-	client, err := protondrive.NewClient(ctx, protondrive.NewDialer(), protondrive.LoginOptions{
-		BaseURL:    "https://mail.proton.me/api",
-		Username:   "user@proton.me",
-		Password:   "secret",
-		AppVersion: "proton-drive-go-sdk-example@1.0.0",
-	}, protondrive.SessionHooks{
-		OnSession: func(session protondrive.Session) {
-			log.Printf("persist reusable session: uid=%s", session.UID)
-		},
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func() {
-		_ = client.Logout(ctx)
-	}()
-
-	rootID, err := client.RootID(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	entries, err := client.ListDirectory(ctx, rootID)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, entry := range entries {
-		log.Printf("%s %s", entry.Node.Type, entry.Node.Name)
-	}
-}
-```
-
-Resume with a previously persisted session:
-
-```go
-client, err := protondrive.NewClientWithSession(ctx, protondrive.NewDialer(), protondrive.ResumeOptions{
-	Session: protondrive.Session{
-		UID:           savedUID,
-		AccessToken:   savedAccessToken,
-		RefreshToken:  savedRefreshToken,
-		SaltedKeyPass: savedSaltedKeyPass,
-	},
-	BaseURL:    "https://mail.proton.me/api",
-	AppVersion: "proton-drive-go-sdk-example@1.0.0",
+client, err := protondrive.NewClient(ctx, protondrive.NewDialer(), protondrive.LoginOptions{
+    BaseURL:    "https://mail.proton.me/api",
+    Username:   "user@proton.me",
+    Password:   "secret",
+    AppVersion: "my-app@1.0.0",
 }, protondrive.SessionHooks{})
+if err != nil {
+    log.Fatal(err)
+}
+defer client.Logout(ctx)
+
+rootID, _ := client.RootID(ctx)
+entries, _ := client.ListDirectory(ctx, rootID)
+for _, e := range entries {
+    fmt.Println(e.Node.Name)
+}
 ```
 
-Basic operations example:
+See [go/USAGE.md](USAGE.md) for complete examples covering all operations.
 
-```go
-about, err := client.About(ctx)
-if err != nil {
-	log.Fatal(err)
-}
+## Project Layout
 
-log.Printf("used %d of %d bytes", about.Used, about.Total)
+| File | Purpose |
+|------|---------|
+| `client.go` | Public `Client` type — input validation and delegation |
+| `types.go` | Exported types, constants, `Driver` and `Dialer` interfaces |
+| `session.go` | `Session`, `SessionHooks` |
+| `errors.go` | Sentinel errors |
+| `dialer.go` | SRP login, session resume, account bootstrap |
+| `standalone_driver.go` | Core `Driver` implementation — traversal, move, trash |
+| `upload.go` | Small-file and large-file upload flows |
+| `download.go` | Streaming block download with offset support |
+| `crypto_helpers.go` | PGP key generation, encryption, name hashing |
+| `internal_drive_api.go` | REST API types and helpers for Proton endpoints |
+| `fake.go` | `FakeDialer` and `FakeDriver` test doubles |
+| `integration_config.go` | Credentials loader for integration tests |
 
-rootID, err := client.RootID(ctx)
-if err != nil {
-	log.Fatal(err)
-}
+## Documentation
 
-folderID, err := client.CreateFolder(ctx, rootID, "sdk-demo")
-if err != nil {
-	log.Fatal(err)
-}
-
-file, attrs, err := client.UploadFile(ctx, folderID, "hello.txt", strings.NewReader("hello world"), protondrive.UploadOptions{
-	KnownSize: int64(len("hello world")),
-})
-if err != nil {
-	log.Fatal(err)
-}
-
-log.Printf("uploaded %s with sha1=%s", file.Name, attrs.Digests["SHA1"])
-```
-
-The package is focused on basic Proton Drive operations such as login, listing, file transfer, move, trash, and logout.
-
-See `go/COMPATIBILITY.md` for the current functionality checklist and `go/INTEGRATION.md` for the integration-test plan.
+- [go/USAGE.md](USAGE.md) — complete operation examples
+- [go/TESTING.md](TESTING.md) — unit and integration test instructions
+- [go/COMPATIBILITY.md](COMPATIBILITY.md) — functionality checklist
