@@ -15,8 +15,6 @@ import (
 	resty "github.com/go-resty/resty/v2"
 )
 
-const protonAPIBaseURL = "https://mail.proton.me/api"
-
 type moveLinkReq struct {
 	ParentLinkID            string `json:"ParentLinkID"`
 	Name                    string `json:"Name"`
@@ -191,7 +189,7 @@ func (d *standaloneDriver) doJSON(ctx context.Context, method, path string, body
 		}
 		reader = bytes.NewReader(payload)
 	}
-	req, err := http.NewRequestWithContext(ctx, method, protonAPIBaseURL+path, reader)
+	req, err := http.NewRequestWithContext(ctx, method, d.apiBaseURL()+path, reader)
 	if err != nil {
 		return err
 	}
@@ -243,7 +241,7 @@ func (d *standaloneDriver) uploadSmallFile(ctx context.Context, metadata smallFi
 	if err := writer.Close(); err != nil {
 		return result, err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, protonAPIBaseURL+"/drive/v2/volumes/"+d.state.mainShare.VolumeID+"/files/small", &body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, d.apiBaseURL()+"/drive/v2/volumes/"+d.state.mainShare.VolumeID+"/files/small", &body)
 	if err != nil {
 		return result, err
 	}
@@ -290,4 +288,15 @@ func (d *standaloneDriver) deleteLinks(ctx context.Context, linkIDs []string) er
 
 func (d *standaloneDriver) emptyTrash(ctx context.Context) error {
 	return d.doJSON(ctx, http.MethodDelete, "/drive/volumes/"+d.state.volumeID+"/trash", nil, nil)
+}
+
+func (d *standaloneDriver) apiBaseURL() string {
+	trimmed := strings.TrimRight(strings.TrimSpace(d.baseURL), "/")
+	if trimmed == "" {
+		return "https://mail.proton.me/api"
+	}
+	if strings.HasSuffix(trimmed, "/api") {
+		return trimmed
+	}
+	return trimmed + "/api"
 }

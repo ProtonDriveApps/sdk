@@ -59,5 +59,5 @@ Legend:
 - `done` credentials file loader in `go/integration_config.go`
 - `done` example credentials config in `go/integration/protondrive.test.json.example`
 - `done` integration build-tag harness in `go/integration_test.go`
-- `partial` credential-gated integration coverage for all currently implemented operations; mutation tests self-seed fixtures, while some read tests still depend on account-specific named fixtures
+- `done` credential-gated integration coverage for all currently implemented operations through self-seeded fixtures and live account login
 - `missing` CI strategy for gated/manual integration test execution

@@ -16,33 +16,12 @@ type IntegrationConfig struct {
 	Password        string `json:"password"`
 	MailboxPassword string `json:"mailbox_password"`
 	TwoFactorCode   string `json:"two_factor_code"`
-	UID             string `json:"uid"`
-	AccessToken     string `json:"access_token"`
-	RefreshToken    string `json:"refresh_token"`
-	SaltedKeyPass   string `json:"salted_key_pass"`
-	AppVersion      string `json:"app_version"`
-	UserAgent       string `json:"user_agent"`
-	EnableCaching   bool   `json:"enable_caching"`
-	ReplaceDrafts   bool   `json:"replace_existing_draft"`
-	ExpectedRootID  string `json:"expected_root_id"`
-	TestFolderID    string `json:"test_folder_id"`
-	TestFileID      string `json:"test_file_id"`
 }
 
-func (c IntegrationConfig) ResumeOptions() ResumeOptions {
-	return ResumeOptions{
-		BaseURL: c.BaseURL,
-		Session: Session{
-			UID:           c.UID,
-			AccessToken:   c.AccessToken,
-			RefreshToken:  c.RefreshToken,
-			SaltedKeyPass: c.SaltedKeyPass,
-		},
-		AppVersion:    c.AppVersion,
-		UserAgent:     c.UserAgent,
-		EnableCaching: c.EnableCaching,
-	}
-}
+const (
+	defaultIntegrationAppVersion = "proton-drive-go-sdk-integration@1.0.0"
+	defaultIntegrationUserAgent  = "proton-drive-go-sdk-integration"
+)
 
 func LoadIntegrationConfig(path string) (IntegrationConfig, error) {
 	if strings.TrimSpace(path) == "" {
@@ -69,9 +48,8 @@ func (c IntegrationConfig) LoginOptions() LoginOptions {
 		Password:        c.Password,
 		MailboxPassword: c.MailboxPassword,
 		TwoFactorCode:   c.TwoFactorCode,
-		AppVersion:      c.AppVersion,
-		UserAgent:       c.UserAgent,
-		EnableCaching:   c.EnableCaching,
+		AppVersion:      defaultIntegrationAppVersion,
+		UserAgent:       defaultIntegrationUserAgent,
 	}
 }
 
@@ -85,17 +63,5 @@ func (c IntegrationConfig) Validate() error {
 	if strings.TrimSpace(c.Password) == "" {
 		return errors.New("password is required")
 	}
-	if strings.TrimSpace(c.AppVersion) == "" {
-		return errors.New("app_version is required")
-	}
 	return nil
-}
-
-func (c IntegrationConfig) HasReusableSession() bool {
-	return Session{
-		UID:           c.UID,
-		AccessToken:   c.AccessToken,
-		RefreshToken:  c.RefreshToken,
-		SaltedKeyPass: c.SaltedKeyPass,
-	}.Valid()
 }

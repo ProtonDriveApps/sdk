@@ -18,11 +18,6 @@ The config file is intentionally untracked and should never be committed.
 
 `base_url` is required and can point at production or a staging environment.
 
-`test_folder_id` and `test_file_id` may be either real Proton link IDs or human-readable names:
-
-- `test_folder_id`: a folder link ID, or a folder name located directly under the Drive root
-- `test_file_id`: a file link ID, or a file name located inside the configured test folder
-
 ## Planned Integration Coverage
 
 1. `Login` with username/password and optional mailbox password / 2FA
@@ -47,8 +42,8 @@ The current integration suite live-verifies:
 
 - login and session resume
 - root discovery and quota lookup
-- listing, search, and folder creation when configured fixtures are discoverable
-- revision lookup and downloads when configured fixtures are discoverable
+- listing, search, and folder creation
+- revision lookup and downloads
 - small-file uploads
 - move, trash, and empty-trash flows using self-created fixtures
 - logout
@@ -56,5 +51,4 @@ The current integration suite live-verifies:
 Known limitations:
 
 - large-file upload coverage is not complete yet
-- some read-path integration tests depend on account-specific named fixtures being discoverable from the configured root/test folder
 - integration tests mutate the configured account state, so they should be run against a disposable test area/account

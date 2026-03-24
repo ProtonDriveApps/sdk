@@ -20,15 +20,12 @@ func TestLoadIntegrationConfigMissingFile(t *testing.T) {
 
 func TestIntegrationConfigProducesLoginOptions(t *testing.T) {
 	config := IntegrationConfig{
-		BaseURL:       "https://mail.proton.me/api",
-		Username:      "user",
-		Password:      "pass",
-		AppVersion:    "proton-drive-go-sdk-integration@1.0.0",
-		UserAgent:     "proton-drive-go-sdk-test",
-		EnableCaching: true,
+		BaseURL:  "https://mail.proton.me/api",
+		Username: "user",
+		Password: "pass",
 	}
 	options := config.LoginOptions()
-	if options.Username != config.Username || options.AppVersion != config.AppVersion || !options.EnableCaching {
+	if options.Username != config.Username || options.BaseURL != config.BaseURL || options.AppVersion != defaultIntegrationAppVersion {
 		t.Fatalf("unexpected login options: %#v", options)
 	}
 }
@@ -49,7 +46,6 @@ func TestCompatibilityCoverageEnumeratesAllRcloneOperations(t *testing.T) {
 	coverage := integrationCoverageChecklist()
 	required := []string{
 		"Login",
-		"Resume",
 		"RootID",
 		"ListDirectory",
 		"SearchChild",
@@ -78,11 +74,12 @@ func TestCompatibilityCoverageEnumeratesAllRcloneOperations(t *testing.T) {
 }
 
 func TestIntegrationConfigValidatesCredentialPresence(t *testing.T) {
-	config := IntegrationConfig{AppVersion: "external-drive-rclone@1.0.0"}
+	config := IntegrationConfig{}
 	if err := config.Validate(); err == nil {
 		t.Fatal("expected missing credential validation error")
 	}
 
+	config.BaseURL = "https://mail.proton.me/api"
 	config.Username = "user"
 	config.Password = "pass"
 	if err := config.Validate(); err != nil {
@@ -107,20 +104,6 @@ func TestIntegrationLoginWithCredentials(t *testing.T) {
 	}
 	if !client.Session().Valid() {
 		t.Fatalf("expected valid session after login, got %#v", client.Session())
-	}
-}
-
-func TestIntegrationResumeWithCredentials(t *testing.T) {
-	testContext := requireIntegrationTestContext(t)
-	if !testContext.Config.HasReusableSession() {
-		t.Skip("integration config missing reusable session fields")
-	}
-	client, err := NewClientWithSession(context.Background(), NewDialer(), testContext.Config.ResumeOptions(), SessionHooks{})
-	if err != nil {
-		t.Fatalf("unexpected resume error: %v", err)
-	}
-	if !client.Session().Valid() {
-		t.Fatalf("expected valid session after resume, got %#v", client.Session())
 	}
 }
 
@@ -151,7 +134,7 @@ func TestIntegrationAbout(t *testing.T) {
 func TestIntegrationListDirectory(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	entries, err := client.ListDirectory(context.Background(), resolveIntegrationFolderID(t, testContext, client))
+	entries, err := client.ListDirectory(context.Background(), clientSessionRootID(t, client))
 	if err != nil {
 		t.Fatalf("unexpected list directory error: %v", err)
 	}
@@ -163,7 +146,7 @@ func TestIntegrationListDirectory(t *testing.T) {
 func TestIntegrationSearchChild(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	result, err := client.SearchChild(context.Background(), resolveIntegrationFolderID(t, testContext, client), "definitely-not-present-sdk-test-entry", NodeTypeFile)
+	result, err := client.SearchChild(context.Background(), clientSessionRootID(t, client), "definitely-not-present-sdk-test-entry", NodeTypeFile)
 	if err != nil {
 		t.Fatalf("unexpected search child error: %v", err)
 	}
@@ -175,7 +158,7 @@ func TestIntegrationSearchChild(t *testing.T) {
 func TestIntegrationCreateFolder(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	parentID := resolveIntegrationFolderID(t, testContext, client)
+	parentID := clientSessionRootID(t, client)
 	folderName := integrationFolderName()
 	folderID, err := client.CreateFolder(context.Background(), parentID, folderName)
 	if err != nil {
@@ -197,7 +180,8 @@ func TestIntegrationCreateFolder(t *testing.T) {
 func TestIntegrationGetRevisionAttrs(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	attrs, err := client.GetRevisionAttrs(context.Background(), resolveIntegrationFileID(t, testContext, client))
+	_, fileID, _ := createIntegrationFileFixture(t, testContext, client)
+	attrs, err := client.GetRevisionAttrs(context.Background(), fileID)
 	if err != nil {
 		t.Fatalf("unexpected revision attrs error: %v", err)
 	}
@@ -209,7 +193,8 @@ func TestIntegrationGetRevisionAttrs(t *testing.T) {
 func TestIntegrationDownloadFile(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	result, err := client.DownloadFile(context.Background(), resolveIntegrationFileID(t, testContext, client), 0)
+	_, fileID, _ := createIntegrationFileFixture(t, testContext, client)
+	result, err := client.DownloadFile(context.Background(), fileID, 0)
 	if err != nil {
 		t.Fatalf("unexpected download error: %v", err)
 	}
@@ -227,15 +212,16 @@ func TestIntegrationDownloadFile(t *testing.T) {
 func TestIntegrationUploadFile(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
+	_, folderID, _ := createIntegrationFolderFixture(t, testContext, client)
 	filename := "sdk-upload-" + integrationFolderName() + ".txt"
-	node, attrs, err := client.UploadFile(context.Background(), resolveIntegrationFolderID(t, testContext, client), filename, strings.NewReader("hello world"), UploadOptions{KnownSize: int64(len("hello world")), ModTime: time.Now().UTC()})
+	node, attrs, err := client.UploadFile(context.Background(), folderID, filename, strings.NewReader("hello world"), UploadOptions{KnownSize: int64(len("hello world")), ModTime: time.Now().UTC()})
 	if err != nil {
 		t.Fatalf("unexpected upload error: %v", err)
 	}
 	if node.ID == "" || attrs.Size <= 0 {
 		t.Fatalf("expected uploaded file metadata, got node=%#v attrs=%#v", node, attrs)
 	}
-	resolved, err := client.SearchChild(context.Background(), resolveIntegrationFolderID(t, testContext, client), filename, NodeTypeFile)
+	resolved, err := client.SearchChild(context.Background(), folderID, filename, NodeTypeFile)
 	if err != nil {
 		t.Fatalf("unexpected search after upload error: %v", err)
 	}

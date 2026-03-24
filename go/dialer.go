@@ -16,7 +16,12 @@ func NewDialer() Dialer {
 
 type dialer struct{}
 
-func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionHooks) (Driver, error) {
+func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionHooks) (_ Driver, err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = fmt.Errorf("proton login bootstrap panicked: %v", recovered)
+		}
+	}()
 	options.Username = strings.TrimSpace(options.Username)
 	options.Password = strings.TrimSpace(options.Password)
 	options.MailboxPassword = strings.TrimSpace(options.MailboxPassword)
@@ -71,6 +76,7 @@ func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionH
 	driver := newStandaloneDriver(standaloneDriverConfig{
 		manager:    manager,
 		client:     client,
+		baseURL:    options.BaseURL,
 		appVersion: options.AppVersion,
 		hooks:      hooks,
 		session:    session,
@@ -81,7 +87,12 @@ func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionH
 	return driver, nil
 }
 
-func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks SessionHooks) (Driver, error) {
+func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks SessionHooks) (_ Driver, err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = fmt.Errorf("proton session resume panicked: %v", recovered)
+		}
+	}()
 	options.Session.UID = strings.TrimSpace(options.Session.UID)
 	options.Session.AccessToken = strings.TrimSpace(options.Session.AccessToken)
 	options.Session.RefreshToken = strings.TrimSpace(options.Session.RefreshToken)
@@ -120,6 +131,7 @@ func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks Sessio
 	driver := newStandaloneDriver(standaloneDriverConfig{
 		manager:    manager,
 		client:     client,
+		baseURL:    options.BaseURL,
 		appVersion: options.AppVersion,
 		hooks:      hooks,
 		session:    session,
@@ -133,10 +145,15 @@ func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks Sessio
 func newManager(baseURL, appVersion, userAgent string) *proton.Manager {
 	options := []proton.Option{proton.WithAppVersion(appVersion)}
 	if strings.TrimSpace(baseURL) != "" {
-		options = append(options, proton.WithHostURL(strings.TrimSpace(baseURL)))
+		options = append(options, proton.WithHostURL(normalizeProtonHostURL(baseURL)))
 	}
 	_ = userAgent
 	return proton.New(options...)
+}
+
+func normalizeProtonHostURL(baseURL string) string {
+	trimmed := strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	return strings.TrimSuffix(trimmed, "/api")
 }
 
 func attachSessionHooks(client *proton.Client, driver *standaloneDriver, hooks SessionHooks) {
