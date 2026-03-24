@@ -6,11 +6,9 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	bridge "github.com/rclone/Proton-API-Bridge"
-	bridgecommon "github.com/rclone/Proton-API-Bridge/common"
 	proton "github.com/rclone/go-proton-api"
 )
 
@@ -29,17 +27,14 @@ func (BridgeDialer) Login(ctx context.Context, options LoginOptions, hooks Sessi
 	config.FirstLoginCredential.MailboxPassword = options.MailboxPassword
 	config.FirstLoginCredential.TwoFA = options.TwoFactorCode
 
-	protonDrive, creds, err := bridge.NewProtonDrive(ctx, config, authHandler(hooks), deauthHandler(hooks))
+	protonDrive, creds, err := bridge.NewProtonDrive(ctx, config, authHandler(hooks, func() string {
+		return config.ReusableCredential.SaltedKeyPass
+	}), deauthHandler(hooks))
 	if err != nil {
 		return nil, err
 	}
 	if creds != nil {
-		hooks.emitSession(Session{
-			UID:           creds.UID,
-			AccessToken:   creds.AccessToken,
-			RefreshToken:  creds.RefreshToken,
-			SaltedKeyPass: creds.SaltedKeyPass,
-		})
+		hooks.emitSession(sessionFromBridgeCredential(creds))
 	}
 	return &BridgeDriver{drive: protonDrive, hooks: hooks}, nil
 }
@@ -53,7 +48,9 @@ func (BridgeDialer) Resume(ctx context.Context, options ResumeOptions, hooks Ses
 	config.ReusableCredential.RefreshToken = options.Session.RefreshToken
 	config.ReusableCredential.SaltedKeyPass = options.Session.SaltedKeyPass
 
-	protonDrive, _, err := bridge.NewProtonDrive(ctx, config, authHandler(hooks), deauthHandler(hooks))
+	protonDrive, _, err := bridge.NewProtonDrive(ctx, config, authHandler(hooks, func() string {
+		return options.Session.SaltedKeyPass
+	}), deauthHandler(hooks))
 	if err != nil {
 		return nil, err
 	}
@@ -146,16 +143,17 @@ func (d *BridgeDriver) UploadFile(ctx context.Context, parentID, name string, bo
 		return Node{}, RevisionAttrs{}, ErrUnknownSizeUpload
 	}
 	if options.ReplaceExistingDraft {
+		previous := d.drive.Config.ReplaceExistingDraft
 		d.drive.Config.ReplaceExistingDraft = true
+		defer func() {
+			d.drive.Config.ReplaceExistingDraft = previous
+		}()
 	}
 	modTime := options.ModTime
 	if modTime.IsZero() {
 		modTime = time.Now()
 	}
 	linkID, attrs, err := d.drive.UploadFileByReader(ctx, parentID, name, modTime, body, 0)
-	if options.ReplaceExistingDraft {
-		d.drive.Config.ReplaceExistingDraft = false
-	}
 	if err != nil {
 		return Node{}, RevisionAttrs{}, err
 	}
@@ -197,13 +195,7 @@ func (d *BridgeDriver) Session() Session {
 	if d.drive == nil || d.drive.Config == nil || d.drive.Config.ReusableCredential == nil {
 		return Session{}
 	}
-	credential := d.drive.Config.ReusableCredential
-	return Session{
-		UID:           credential.UID,
-		AccessToken:   credential.AccessToken,
-		RefreshToken:  credential.RefreshToken,
-		SaltedKeyPass: credential.SaltedKeyPass,
-	}
+	return sessionFromCredential(d.drive.Config.ReusableCredential)
 }
 
 func (d *BridgeDriver) Logout(ctx context.Context) error {
@@ -212,93 +204,6 @@ func (d *BridgeDriver) Logout(ctx context.Context) error {
 		d.hooks.emitDeauth()
 	}
 	return err
-}
-
-func applyCommonConfig(config *bridgecommon.Config, appVersion, userAgent string, enableCaching bool) {
-	config.AppVersion = appVersion
-	config.UserAgent = userAgent
-	config.EnableCaching = enableCaching
-	config.CredentialCacheFile = ""
-}
-
-func authHandler(hooks SessionHooks) proton.AuthHandler {
-	return func(auth proton.Auth) {
-		hooks.emitSession(Session{
-			UID:           auth.UID,
-			AccessToken:   auth.AccessToken,
-			RefreshToken:  auth.RefreshToken,
-			SaltedKeyPass: "",
-		})
-	}
-}
-
-func deauthHandler(hooks SessionHooks) proton.Handler {
-	return func() {
-		hooks.emitDeauth()
-	}
-}
-
-func nodeFromLink(link *proton.Link, name string) Node {
-	nodeType := NodeTypeFile
-	if link.Type == proton.LinkTypeFolder {
-		nodeType = NodeTypeFolder
-	}
-	return Node{
-		ID:           link.LinkID,
-		ParentID:     link.ParentLinkID,
-		Name:         name,
-		Type:         nodeType,
-		Size:         link.Size,
-		MIMEType:     link.MIMEType,
-		ModTime:      time.Unix(link.ModifyTime, 0),
-		CreateTime:   time.Unix(link.CreateTime, 0),
-		OriginalSHA1: "",
-	}
-}
-
-func revisionAttrsFromBridge(attrs *bridge.FileSystemAttrs, encryptedSize int64) RevisionAttrs {
-	if attrs == nil {
-		return RevisionAttrs{EncryptedSize: encryptedSize}
-	}
-	result := RevisionAttrs{
-		Size:          attrs.Size,
-		ModTime:       attrs.ModificationTime,
-		BlockSizes:    append([]int64(nil), attrs.BlockSizes...),
-		EncryptedSize: encryptedSize,
-		Digests:       map[string]string{},
-	}
-	if strings.TrimSpace(attrs.Digests) != "" {
-		result.Digests["SHA1"] = strings.ToLower(attrs.Digests)
-	}
-	return result
-}
-
-func revisionAttrsFromRevisionCommon(attrs *proton.RevisionXAttrCommon) RevisionAttrs {
-	result := RevisionAttrs{
-		Size:       attrs.Size,
-		BlockSizes: append([]int64(nil), attrs.BlockSizes...),
-		Digests:    map[string]string{},
-	}
-	for name, value := range attrs.Digests {
-		result.Digests[strings.ToUpper(name)] = strings.ToLower(value)
-	}
-	if attrs.ModificationTime != "" {
-		if parsed, err := time.Parse("2006-01-02T15:04:05-0700", attrs.ModificationTime); err == nil {
-			result.ModTime = parsed
-		}
-	}
-	return result
-}
-
-func fallbackMIMEType(value string) string {
-	if strings.TrimSpace(value) == "" {
-		return "application/octet-stream"
-	}
-	return value
-}
-
-func ptr[T any](value T) *T {
-	return &value
 }
 
 func (d *BridgeDriver) String() string {

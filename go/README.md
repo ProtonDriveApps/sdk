@@ -16,12 +16,19 @@ What is implemented now:
 - a `Client` wrapper that centralizes validation and session/deauth hook behavior
 - test doubles to make the package easy to integrate and evolve safely
 - an optional transitional `BridgeDialer` implementation behind the `protonbridge` build tag that adapts the current `github.com/rclone/Proton-API-Bridge` package to this narrower API
+- bridge-specific config, session, node, and revision conversion helpers that isolate bridge details from the public package surface
 
 What is intentionally not implemented yet:
 
 - a native implementation that replaces `Proton-API-Bridge`
 - dependency reduction work to peel the package off bridge-era mail and crypto transitive dependencies
 - cache implementation owned directly by this package instead of the transitional bridge backend
+
+Transitional adapter boundary:
+
+- `go/bridge_proton.go` keeps the bridge-backed `Dialer` and `Driver` wiring only
+- `go/bridge_adapter.go` keeps bridge-specific config, session, node, and revision conversion logic only
+- the long-term replacement plan is to swap the helper logic in `go/bridge_adapter.go` for package-owned implementations without changing the public `Client` API
 
 Planned implementation order:
 
