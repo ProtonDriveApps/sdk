@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"strings"
 
+	proton "github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
-	proton "github.com/rclone/go-proton-api"
 )
 
 func NewDialer() Dialer {
@@ -16,6 +17,13 @@ func NewDialer() Dialer {
 type dialer struct{}
 
 func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionHooks) (Driver, error) {
+	options.Username = strings.TrimSpace(options.Username)
+	options.Password = strings.TrimSpace(options.Password)
+	options.MailboxPassword = strings.TrimSpace(options.MailboxPassword)
+	options.TwoFactorCode = strings.TrimSpace(options.TwoFactorCode)
+	options.AppVersion = strings.TrimSpace(options.AppVersion)
+	options.UserAgent = strings.TrimSpace(options.UserAgent)
+
 	manager := newManager(options.AppVersion, options.UserAgent)
 	client, auth, err := manager.NewClientWithLogin(ctx, options.Username, []byte(options.Password))
 	if err != nil {
@@ -73,6 +81,13 @@ func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionH
 }
 
 func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks SessionHooks) (Driver, error) {
+	options.Session.UID = strings.TrimSpace(options.Session.UID)
+	options.Session.AccessToken = strings.TrimSpace(options.Session.AccessToken)
+	options.Session.RefreshToken = strings.TrimSpace(options.Session.RefreshToken)
+	options.Session.SaltedKeyPass = strings.TrimSpace(options.Session.SaltedKeyPass)
+	options.AppVersion = strings.TrimSpace(options.AppVersion)
+	options.UserAgent = strings.TrimSpace(options.UserAgent)
+
 	manager := newManager(options.AppVersion, options.UserAgent)
 	client, auth, err := manager.NewClientWithRefresh(ctx, options.Session.UID, options.Session.RefreshToken)
 	if err != nil {
@@ -115,9 +130,7 @@ func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks Sessio
 
 func newManager(appVersion, userAgent string) *proton.Manager {
 	options := []proton.Option{proton.WithAppVersion(appVersion)}
-	if userAgent != "" {
-		options = append(options, proton.WithUserAgent(userAgent))
-	}
+	_ = userAgent
 	return proton.New(options...)
 }
 

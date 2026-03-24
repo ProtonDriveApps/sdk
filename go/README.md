@@ -2,6 +2,10 @@
 
 This module is a narrow, pure-Go package intended to support the Proton Drive backend in `rclone`.
 
+Current toolchain target:
+
+- Go `1.26.1` to match the current official `github.com/ProtonMail/go-proton-api` dependency line
+
 Current design goals:
 
 - pure Go module with no cgo or native runtime dependencies

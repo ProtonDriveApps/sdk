@@ -6,8 +6,8 @@ import (
 	"io"
 	"sync"
 
+	proton "github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
-	proton "github.com/rclone/go-proton-api"
 )
 
 type driveState struct {
@@ -66,10 +66,7 @@ func (d *standaloneDriver) About(ctx context.Context) (AccountUsage, error) {
 		return AccountUsage{}, err
 	}
 	free := user.MaxSpace - user.UsedSpace
-	if free < 0 {
-		free = 0
-	}
-	return AccountUsage{Total: user.MaxSpace, Used: user.UsedSpace, Free: free}, nil
+	return AccountUsage{Total: int64(user.MaxSpace), Used: int64(user.UsedSpace), Free: int64(free)}, nil
 }
 
 func (d *standaloneDriver) RootID(context.Context) (string, error) {
