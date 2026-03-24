@@ -30,3 +30,5 @@ config.json
 # Tests
 tests/storage
 tests/test-results
+
+.tmp-tools
