@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io"
 	"mime"
+	"net/http"
 	"path/filepath"
 	"sync"
+	"time"
 
 	proton "github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
@@ -45,6 +47,8 @@ type standaloneDriverConfig struct {
 	client     *proton.Client
 	baseURL    string
 	appVersion string
+	userAgent  string
+	httpClient *http.Client
 	hooks      SessionHooks
 	session    Session
 	state      *driveState
@@ -58,6 +62,8 @@ type standaloneDriver struct {
 	client     *proton.Client
 	baseURL    string
 	appVersion string
+	userAgent  string
+	httpClient *http.Client
 	session    Session
 	hooks      SessionHooks
 	cache      map[string]Node
@@ -66,11 +72,17 @@ type standaloneDriver struct {
 }
 
 func newStandaloneDriver(config standaloneDriverConfig) *standaloneDriver {
+	httpClient := config.httpClient
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
 	driver := &standaloneDriver{
 		manager:    config.manager,
 		client:     config.client,
 		baseURL:    config.baseURL,
 		appVersion: config.appVersion,
+		userAgent:  config.userAgent,
+		httpClient: httpClient,
 		session:    config.session,
 		hooks:      config.hooks,
 		cache:      make(map[string]Node),
@@ -258,9 +270,26 @@ func (d *standaloneDriver) DownloadFile(ctx context.Context, nodeID string, offs
 	if err != nil {
 		return DownloadResult{}, err
 	}
-	attrs, err := d.getRevisionAttrs(ctx, nodeID)
-	if err != nil {
-		return DownloadResult{}, err
+	// Build revision attrs from the already-fetched data to avoid redundant API calls.
+	attrs := RevisionAttrs{
+		Size:          activeRevision.Size,
+		ModTime:       time.Unix(link.ModifyTime, 0),
+		Digests:       map[string]string{},
+		EncryptedSize: link.Size,
+	}
+	const blockSize = 4 * 1024 * 1024
+	attrs.BlockSizes = make([]int64, 0, len(revision.Blocks))
+	remaining := attrs.Size
+	for range revision.Blocks {
+		if remaining <= 0 {
+			attrs.BlockSizes = append(attrs.BlockSizes, 0)
+		} else if remaining < blockSize {
+			attrs.BlockSizes = append(attrs.BlockSizes, remaining)
+			remaining = 0
+		} else {
+			attrs.BlockSizes = append(attrs.BlockSizes, blockSize)
+			remaining -= blockSize
+		}
 	}
 	reader := &fileDownloadReader{
 		driver:     d,

@@ -151,11 +151,11 @@ func decryptLinkName(link proton.Link, parentKR, verificationKR *crypto.KeyRing)
 	}
 	encName, parseErr := crypto.NewPGPMessageFromArmored(link.Name)
 	if parseErr != nil {
-		return "", err
+		return "", fmt.Errorf("parse encrypted name: %w", parseErr)
 	}
 	decName, decryptErr := parentKR.Decrypt(encName, nil, crypto.GetUnixTime())
 	if decryptErr != nil {
-		return "", err
+		return "", fmt.Errorf("decrypt name: %w", decryptErr)
 	}
 	return decName.GetString(), nil
 }

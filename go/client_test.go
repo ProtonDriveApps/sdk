@@ -316,12 +316,12 @@ func TestClearCache(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	client.ClearCache()
-	if d.ClearCacheCalls != 1 {
-		t.Fatalf("expected 1 ClearCache call, got %d", d.ClearCacheCalls)
+	if d.ClearCacheCalls() != 1 {
+		t.Fatalf("expected 1 ClearCache call, got %d", d.ClearCacheCalls())
 	}
 	client.ClearCache()
-	if d.ClearCacheCalls != 2 {
-		t.Fatalf("expected 2 ClearCache calls, got %d", d.ClearCacheCalls)
+	if d.ClearCacheCalls() != 2 {
+		t.Fatalf("expected 2 ClearCache calls, got %d", d.ClearCacheCalls())
 	}
 }
 

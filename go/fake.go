@@ -3,6 +3,7 @@ package protondrive
 import (
 	"context"
 	"io"
+	"sync"
 )
 
 // FakeDialer is a test double that implements Dialer. It returns preconfigured
@@ -41,8 +42,9 @@ func (f *FakeDialer) Resume(_ context.Context, options ResumeOptions, hooks Sess
 }
 
 // FakeDriver is a test double that implements Driver with configurable return
-// values for every method.
+// values for every method. It is safe for concurrent use.
 type FakeDriver struct {
+	mu              sync.Mutex
 	SessionValue    Session
 	AboutValue      AccountUsage
 	AboutErr        error
@@ -65,7 +67,7 @@ type FakeDriver struct {
 	TrashErr        error
 	EmptyTrashErr   error
 	LogoutErr       error
-	ClearCacheCalls int
+	clearCacheCalls int
 }
 
 func (f *FakeDriver) About(context.Context) (AccountUsage, error) { return f.AboutValue, f.AboutErr }
@@ -93,6 +95,17 @@ func (f *FakeDriver) MoveFolder(context.Context, string, string, string) error {
 func (f *FakeDriver) TrashFile(context.Context, string) error                  { return f.TrashErr }
 func (f *FakeDriver) TrashFolder(context.Context, string, bool) error          { return f.TrashErr }
 func (f *FakeDriver) EmptyTrash(context.Context) error                         { return f.EmptyTrashErr }
-func (f *FakeDriver) ClearCache()                                              { f.ClearCacheCalls++ }
-func (f *FakeDriver) Session() Session                                         { return f.SessionValue }
-func (f *FakeDriver) Logout(context.Context) error                             { return f.LogoutErr }
+func (f *FakeDriver) ClearCache() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.clearCacheCalls++
+}
+func (f *FakeDriver) Session() Session             { return f.SessionValue }
+func (f *FakeDriver) Logout(context.Context) error { return f.LogoutErr }
+
+// ClearCacheCalls returns the number of times ClearCache has been called.
+func (f *FakeDriver) ClearCacheCalls() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.clearCacheCalls
+}

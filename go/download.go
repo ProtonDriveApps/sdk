@@ -129,6 +129,12 @@ func (r *fileDownloadReader) Read(p []byte) (int, error) {
 
 func (r *fileDownloadReader) Close() error {
 	r.driver = nil
+	r.ctx = nil
+	r.link = nil
+	r.nodeKR = nil
+	r.sessionKey = nil
+	r.revision = nil
+	r.data = nil
 	return nil
 }
 

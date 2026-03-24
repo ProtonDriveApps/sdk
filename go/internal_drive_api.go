@@ -188,17 +188,20 @@ func (d *standaloneDriver) doJSON(ctx context.Context, method, path string, body
 		}
 		reader = bytes.NewReader(payload)
 	}
-	req, err := http.NewRequestWithContext(ctx, method, d.apiBaseURL()+path, reader)
+	req, err := http.NewRequestWithContext(ctx, method, ensureAPIBaseURL(d.baseURL)+path, reader)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("x-pm-appversion", d.appVersion)
 	req.Header.Set("Authorization", "Bearer "+d.session.AccessToken)
 	req.Header.Set("x-pm-uid", d.session.UID)
+	if d.userAgent != "" {
+		req.Header.Set("User-Agent", d.userAgent)
+	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := d.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -242,15 +245,18 @@ func (d *standaloneDriver) uploadSmallFile(ctx context.Context, metadata smallFi
 	if err := writer.Close(); err != nil {
 		return result, err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, d.apiBaseURL()+"/drive/v2/volumes/"+d.state.mainShare.VolumeID+"/files/small", &body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ensureAPIBaseURL(d.baseURL)+"/drive/v2/volumes/"+d.state.mainShare.VolumeID+"/files/small", &body)
 	if err != nil {
 		return result, err
 	}
 	req.Header.Set("x-pm-appversion", d.appVersion)
 	req.Header.Set("Authorization", "Bearer "+d.session.AccessToken)
 	req.Header.Set("x-pm-uid", d.session.UID)
+	if d.userAgent != "" {
+		req.Header.Set("User-Agent", d.userAgent)
+	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := d.httpClient.Do(req)
 	if err != nil {
 		return result, err
 	}
@@ -297,16 +303,4 @@ func (d *standaloneDriver) trashLinks(ctx context.Context, linkIDs []string) err
 // emptyTrash calls DELETE .../trash to permanently delete all trashed items.
 func (d *standaloneDriver) emptyTrash(ctx context.Context) error {
 	return d.doJSON(ctx, http.MethodDelete, "/drive/volumes/"+d.state.volumeID+"/trash", nil, nil)
-}
-
-// apiBaseURL returns the normalized API base URL with /api suffix.
-func (d *standaloneDriver) apiBaseURL() string {
-	trimmed := strings.TrimRight(strings.TrimSpace(d.baseURL), "/")
-	if trimmed == "" {
-		return "https://mail.proton.me/api"
-	}
-	if strings.HasSuffix(trimmed, "/api") {
-		return trimmed
-	}
-	return trimmed + "/api"
 }

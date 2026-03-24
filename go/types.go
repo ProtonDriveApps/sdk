@@ -5,6 +5,7 @@ package protondrive
 import (
 	"context"
 	"io"
+	"net/http"
 	"time"
 )
 
@@ -19,6 +20,7 @@ type LoginOptions struct {
 	TOTPSecret      string // Base32 TOTP secret; if set, the 2FA code is generated automatically
 	AppVersion      string
 	UserAgent       string
+	HTTPClient      *http.Client // Optional; defaults to http.DefaultClient
 	EnableCaching   bool
 }
 
@@ -29,6 +31,7 @@ type ResumeOptions struct {
 	Session       Session
 	AppVersion    string
 	UserAgent     string
+	HTTPClient    *http.Client // Optional; defaults to http.DefaultClient
 	EnableCaching bool
 }
 

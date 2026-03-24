@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"runtime/debug"
 	"strings"
 
 	proton "github.com/ProtonMail/go-proton-api"
@@ -29,7 +30,7 @@ type dialer struct{}
 func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionHooks) (_ Driver, err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			err = fmt.Errorf("proton login bootstrap panicked: %v", recovered)
+			err = fmt.Errorf("proton login bootstrap panicked: %v\n%s", recovered, debug.Stack())
 		}
 	}()
 	options.Username = strings.TrimSpace(options.Username)
@@ -97,6 +98,8 @@ func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionH
 		client:     client,
 		baseURL:    options.BaseURL,
 		appVersion: options.AppVersion,
+		userAgent:  options.UserAgent,
+		httpClient: options.HTTPClient,
 		hooks:      hooks,
 		session:    session,
 		state:      state,
@@ -111,7 +114,7 @@ func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionH
 func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks SessionHooks) (_ Driver, err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			err = fmt.Errorf("proton session resume panicked: %v", recovered)
+			err = fmt.Errorf("proton session resume panicked: %v\n%s", recovered, debug.Stack())
 		}
 	}()
 	options.Session.UID = strings.TrimSpace(options.Session.UID)
@@ -153,6 +156,8 @@ func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks Sessio
 		client:     client,
 		baseURL:    options.BaseURL,
 		appVersion: options.AppVersion,
+		userAgent:  options.UserAgent,
+		httpClient: options.HTTPClient,
 		hooks:      hooks,
 		session:    session,
 		state:      state,
@@ -247,12 +252,22 @@ func fetchAuthInfo(ctx context.Context, options LoginOptions) (authInfoResponse,
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-pm-appversion", options.AppVersion)
-	resp, err := http.DefaultClient.Do(req)
+	if options.UserAgent != "" {
+		req.Header.Set("User-Agent", options.UserAgent)
+	}
+	httpClient := options.HTTPClient
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return out, err
 	}
 	defer resp.Body.Close() //nolint:errcheck // best-effort close on response body
-	body, _ := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return out, fmt.Errorf("read auth info response: %w", err)
+	}
 	if err := json.Unmarshal(body, &out); err != nil {
 		return out, err
 	}
@@ -284,12 +299,22 @@ func performAuth(ctx context.Context, options LoginOptions, srpSession string, p
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-pm-appversion", options.AppVersion)
-	resp, err := http.DefaultClient.Do(req)
+	if options.UserAgent != "" {
+		req.Header.Set("User-Agent", options.UserAgent)
+	}
+	httpClient := options.HTTPClient
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return out, err
 	}
 	defer resp.Body.Close() //nolint:errcheck // best-effort close on response body
-	body, _ := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return out, fmt.Errorf("read auth response: %w", err)
+	}
 	if err := json.Unmarshal(body, &out); err != nil {
 		return out, err
 	}
