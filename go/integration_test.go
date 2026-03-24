@@ -230,6 +230,22 @@ func TestIntegrationUploadFile(t *testing.T) {
 	}
 }
 
+func TestIntegrationUploadLargeFile(t *testing.T) {
+	testContext := requireIntegrationTestContext(t)
+	client := requireIntegrationClient(t, testContext)
+	_, folderID, _ := createIntegrationFolderFixture(t, testContext, client)
+	filename := "sdk-large-upload-" + integrationFolderName() + ".bin"
+	const largeSize = 4*1024*1024 + 1024
+	content := strings.Repeat("a", largeSize)
+	node, attrs, err := client.UploadFile(context.Background(), folderID, filename, strings.NewReader(content), UploadOptions{KnownSize: int64(len(content)), ModTime: time.Now().UTC()})
+	if err != nil {
+		t.Fatalf("unexpected large upload error: %v", err)
+	}
+	if node.ID == "" || attrs.Size != int64(len(content)) {
+		t.Fatalf("expected uploaded large file metadata, got node=%#v attrs=%#v", node, attrs)
+	}
+}
+
 func TestIntegrationMoveFile(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)

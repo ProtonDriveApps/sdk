@@ -31,6 +31,69 @@ type createRevisionRes struct {
 	ID string `json:"ID"`
 }
 
+type draftFileReq struct {
+	ParentLinkID              string  `json:"ParentLinkID"`
+	Name                      string  `json:"Name"`
+	Hash                      string  `json:"Hash"`
+	MIMEType                  string  `json:"MIMEType"`
+	ClientUID                 *string `json:"ClientUID"`
+	IntendedUploadSize        *int64  `json:"IntendedUploadSize"`
+	NodeKey                   string  `json:"NodeKey"`
+	NodePassphrase            string  `json:"NodePassphrase"`
+	NodePassphraseSignature   string  `json:"NodePassphraseSignature"`
+	ContentKeyPacket          string  `json:"ContentKeyPacket"`
+	ContentKeyPacketSignature string  `json:"ContentKeyPacketSignature"`
+	SignatureAddress          string  `json:"SignatureAddress"`
+}
+
+type draftFileRes struct {
+	File struct {
+		ID         string `json:"ID"`
+		RevisionID string `json:"RevisionID"`
+	} `json:"File"`
+}
+
+type draftRevisionReq struct {
+	CurrentRevisionID  string  `json:"CurrentRevisionID"`
+	ClientUID          *string `json:"ClientUID"`
+	IntendedUploadSize *int64  `json:"IntendedUploadSize"`
+}
+
+type draftRevisionRes struct {
+	Revision struct {
+		ID string `json:"ID"`
+	} `json:"Revision"`
+}
+
+type blockUploadVerifier struct {
+	Token string `json:"Token"`
+}
+
+type blockUploadInfoV2 struct {
+	Index        int                 `json:"Index"`
+	Size         int64               `json:"Size"`
+	EncSignature string              `json:"EncSignature"`
+	Hash         []byte              `json:"Hash"`
+	Verifier     blockUploadVerifier `json:"Verifier"`
+}
+
+type blockUploadReqV2 struct {
+	AddressID     string              `json:"AddressID"`
+	VolumeID      string              `json:"VolumeID"`
+	LinkID        string              `json:"LinkID"`
+	RevisionID    string              `json:"RevisionID"`
+	BlockList     []blockUploadInfoV2 `json:"BlockList"`
+	ThumbnailList []any               `json:"ThumbnailList"`
+}
+
+type blockUploadResV2 struct {
+	UploadLinks []struct {
+		Index   int    `json:"Index"`
+		Token   string `json:"Token"`
+		BareURL string `json:"BareURL"`
+	} `json:"UploadLinks"`
+}
+
 type revisionXAttrCommon struct {
 	ModificationTime string            `json:"ModificationTime"`
 	Size             int64             `json:"Size"`
@@ -74,6 +137,10 @@ type smallFileResponse struct {
 type verificationInputResponse struct {
 	VerificationCode string `json:"VerificationCode"`
 	ContentKeyPacket string `json:"ContentKeyPacket"`
+}
+
+type blockVerificationInput struct {
+	Token string `json:"Token"`
 }
 
 type linkBatchReq struct {
@@ -268,6 +335,32 @@ func (d *standaloneDriver) getVerificationInput(ctx context.Context, linkID, rev
 	var result verificationInputResponse
 	err := d.doJSON(ctx, http.MethodGet, "/drive/v2/volumes/"+d.state.volumeID+"/links/"+linkID+"/revisions/"+revisionID+"/verification", nil, &result)
 	return result, err
+}
+
+func (d *standaloneDriver) createDraftFile(ctx context.Context, req draftFileReq) (draftFileRes, error) {
+	var result draftFileRes
+	err := d.doJSON(ctx, http.MethodPost, "/drive/v2/volumes/"+d.state.volumeID+"/files", req, &result)
+	return result, err
+}
+
+func (d *standaloneDriver) createDraftRevision(ctx context.Context, linkID string, req draftRevisionReq) (draftRevisionRes, error) {
+	var result draftRevisionRes
+	err := d.doJSON(ctx, http.MethodPost, "/drive/v2/volumes/"+d.state.volumeID+"/files/"+linkID+"/revisions", req, &result)
+	return result, err
+}
+
+func (d *standaloneDriver) requestBlockUploadV2(ctx context.Context, req blockUploadReqV2) (blockUploadResV2, error) {
+	var result blockUploadResV2
+	err := d.doJSON(ctx, http.MethodPost, "/drive/blocks", req, &result)
+	return result, err
+}
+
+func (d *standaloneDriver) getBlockVerificationToken(ctx context.Context, linkID, revisionID string, blockIndex int, verificationToken []byte) (string, error) {
+	var result blockVerificationInput
+	err := d.doJSON(ctx, http.MethodPost, fmt.Sprintf("/drive/v2/volumes/%s/links/%s/revisions/%s/blocks/%d/verification", d.state.volumeID, linkID, revisionID, blockIndex), map[string]string{
+		"VerificationToken": base64.StdEncoding.EncodeToString(verificationToken),
+	}, &result)
+	return result.Token, err
 }
 
 func (d *standaloneDriver) renameLink(ctx context.Context, linkID string, req renameLinkReq) error {

@@ -43,6 +43,7 @@ type nodeSecretMaterial struct {
 type standaloneDriverConfig struct {
 	manager    *proton.Manager
 	client     *proton.Client
+	baseURL    string
 	appVersion string
 	hooks      SessionHooks
 	session    Session
@@ -53,6 +54,7 @@ type standaloneDriver struct {
 	mu         sync.RWMutex
 	manager    *proton.Manager
 	client     *proton.Client
+	baseURL    string
 	appVersion string
 	session    Session
 	hooks      SessionHooks
@@ -65,6 +67,7 @@ func newStandaloneDriver(config standaloneDriverConfig) *standaloneDriver {
 	driver := &standaloneDriver{
 		manager:    config.manager,
 		client:     config.client,
+		baseURL:    config.baseURL,
 		appVersion: config.appVersion,
 		session:    config.session,
 		hooks:      config.hooks,
@@ -1013,7 +1016,7 @@ func (d *standaloneDriver) uploadFile(ctx context.Context, parentID, name string
 	if options.KnownSize >= 0 && options.KnownSize <= 4*1024*1024 {
 		return d.uploadSmallFileFlow(ctx, parent, parentID, name, mimeType, body, options)
 	}
-	linkID, revisionID, sessionKey, nodeKR, err := d.createFileUploadDraft(ctx, parent, name, mimeType)
+	linkID, revisionID, sessionKey, nodeKR, err := d.createFileUploadDraftV2(ctx, parent, name, mimeType, options.KnownSize)
 	if err != nil {
 		return Node{}, RevisionAttrs{}, err
 	}
@@ -1076,10 +1079,17 @@ func (d *standaloneDriver) uploadSmallFileFlow(ctx context.Context, parent proto
 	if err != nil {
 		return Node{}, RevisionAttrs{}, err
 	}
-	verificationToken, err := d.computeVerificationToken(contentKeyPacket, newNodeKR, encryptedBlock, content)
+	contentKeyPacketBytes, err := base64.StdEncoding.DecodeString(contentKeyPacket)
 	if err != nil {
 		return Node{}, RevisionAttrs{}, err
 	}
+	var verificationCode []byte
+	if len(contentKeyPacketBytes) >= 32 {
+		verificationCode = contentKeyPacketBytes[len(contentKeyPacketBytes)-32:]
+	} else {
+		verificationCode = contentKeyPacketBytes
+	}
+	verificationToken := computeVerificationToken(verificationCode, encryptedBlock)
 	sha256Digest := sha256.Sum256(encryptedBlock)
 	sha1Digest := sha1.Sum(content)
 	modTime := options.ModTime
@@ -1134,39 +1144,16 @@ func (d *standaloneDriver) uploadSmallFileFlow(ctx context.Context, parent proto
 	return node, attrs, nil
 }
 
-func (d *standaloneDriver) computeVerificationToken(base64ContentKeyPacket string, nodeKR *crypto.KeyRing, encryptedBlock []byte, plainData []byte) ([]byte, error) {
-	contentKeyPacket, err := base64.StdEncoding.DecodeString(base64ContentKeyPacket)
-	if err != nil {
-		return nil, err
-	}
-	sessionKey, err := nodeKR.DecryptSessionKey(contentKeyPacket)
-	if err != nil {
-		return nil, err
-	}
-	decrypted, err := sessionKey.Decrypt(encryptedBlock)
-	if err != nil {
-		return nil, err
-	}
-	plainPrefix := plainData
-	if len(plainPrefix) > 16 {
-		plainPrefix = plainPrefix[:16]
-	}
-	decryptedPrefix, err := io.ReadAll(io.LimitReader(decrypted.NewReader(), int64(len(plainPrefix))))
-	if err != nil {
-		return nil, err
-	}
-	if !bytes.Equal(decryptedPrefix, plainPrefix) {
-		return nil, fmt.Errorf("session key and encrypted block mismatch during verification")
-	}
-	verificationToken := make([]byte, 32)
-	for i := range verificationToken {
-		var b byte
-		if i < len(encryptedBlock) {
-			b = encryptedBlock[i]
+func computeVerificationToken(verificationCode []byte, encryptedData []byte) []byte {
+	token := make([]byte, len(verificationCode))
+	for i := range verificationCode {
+		if i < len(encryptedData) {
+			token[i] = verificationCode[i] ^ encryptedData[i]
+		} else {
+			token[i] = verificationCode[i]
 		}
-		verificationToken[i] = contentKeyPacket[len(contentKeyPacket)-32+i] ^ b
 	}
-	return verificationToken, nil
+	return token
 }
 
 func signEncryptedBlock(signingKR *crypto.KeyRing, plain *crypto.PlainMessage, nodeKR *crypto.KeyRing) (string, error) {
@@ -1177,7 +1164,15 @@ func signEncryptedBlock(signingKR *crypto.KeyRing, plain *crypto.PlainMessage, n
 	return encSignature.GetArmored()
 }
 
-func (d *standaloneDriver) createFileUploadDraft(ctx context.Context, parent proton.Link, filename, mimeType string) (string, string, *crypto.SessionKey, *crypto.KeyRing, error) {
+func mustEncryptSessionKeyPacket(nodeKR *crypto.KeyRing, sessionKey *crypto.SessionKey) []byte {
+	packet, err := nodeKR.EncryptSessionKey(sessionKey)
+	if err != nil {
+		panic(err)
+	}
+	return packet
+}
+
+func (d *standaloneDriver) createFileUploadDraftV2(ctx context.Context, parent proton.Link, filename, mimeType string, intendedSize int64) (string, string, *crypto.SessionKey, *crypto.KeyRing, error) {
 	parentKR, err := d.getLinkKR(ctx, parent)
 	if err != nil {
 		return "", "", nil, nil, err
@@ -1194,30 +1189,48 @@ func (d *standaloneDriver) createFileUploadDraft(ctx context.Context, parent pro
 	if err != nil {
 		return "", "", nil, nil, err
 	}
-	req := proton.CreateFileReq{
+	var intendedUploadSize *int64
+	if intendedSize > 0 {
+		size := intendedSize
+		intendedUploadSize = &size
+	}
+	createFileResp, err := d.createDraftFile(ctx, draftFileReq{
 		ParentLinkID:              parent.LinkID,
 		Name:                      mustEncryptArmored(parentKR, []byte(filename)),
 		Hash:                      getNameHash(filename, parentHashKey),
 		MIMEType:                  mimeType,
-		ContentKeyPacket:          contentKeyPacket,
-		ContentKeyPacketSignature: contentKeyPacketSignature,
+		ClientUID:                 nil,
+		IntendedUploadSize:        intendedUploadSize,
 		NodeKey:                   newNodeKey,
 		NodePassphrase:            newNodePassphraseEnc,
 		NodePassphraseSignature:   newNodePassphraseSignature,
+		ContentKeyPacket:          contentKeyPacket,
+		ContentKeyPacketSignature: contentKeyPacketSignature,
 		SignatureAddress:          d.signatureAddress(),
-	}
-	createFileResp, err := d.client.CreateFile(ctx, d.state.mainShare.ShareID, req)
+	})
 	if err != nil {
 		return "", "", nil, nil, err
 	}
-	return createFileResp.ID, createFileResp.RevisionID, contentSessionKey, newNodeKR, nil
+	return createFileResp.File.ID, createFileResp.File.RevisionID, contentSessionKey, newNodeKR, nil
 }
 
 func (d *standaloneDriver) uploadAndCollectBlockData(ctx context.Context, sessionKey *crypto.SessionKey, nodeKR *crypto.KeyRing, file io.Reader, linkID, revisionID string) ([]byte, int64, []int64, string, []proton.BlockToken, error) {
 	const uploadBlockSize = 4 * 1024 * 1024
+	verificationInput, err := d.getVerificationInput(ctx, linkID, revisionID)
+	if err != nil {
+		return nil, 0, nil, "", nil, fmt.Errorf("fetch verification input: %w", err)
+	}
+	verificationCode, err := base64.StdEncoding.DecodeString(verificationInput.VerificationCode)
+	if err != nil {
+		return nil, 0, nil, "", nil, fmt.Errorf("decode verification code: %w", err)
+	}
 	type pendingUploadBlock struct {
-		info    proton.BlockUploadInfo
-		encData []byte
+		index        int
+		size         int64
+		encSignature string
+		hash         []byte
+		verifier     []byte
+		encData      []byte
 	}
 	totalFileSize := int64(0)
 	manifestSignatureData := make([]byte, 0)
@@ -1244,40 +1257,67 @@ func (d *standaloneDriver) uploadAndCollectBlockData(ctx context.Context, sessio
 		sha1Digests.Write(data)
 		blockSizes = append(blockSizes, int64(len(data)))
 		plain := crypto.NewPlainMessage(data)
-		encData, err := sessionKey.Encrypt(plain)
+		encData, err := sessionKey.EncryptAndSign(plain, d.state.defaultAddrKR)
 		if err != nil {
 			return nil, 0, nil, "", nil, err
 		}
-		encSignature, err := d.state.defaultAddrKR.SignDetachedEncrypted(plain, nodeKR)
+		signature, err := d.state.defaultAddrKR.SignDetached(plain)
 		if err != nil {
 			return nil, 0, nil, "", nil, err
 		}
-		encSignatureStr, err := encSignature.GetArmored()
+		signaturePlaintext := crypto.NewPlainMessage(signature.GetBinary())
+		signatureDataPacket, err := sessionKey.Encrypt(signaturePlaintext)
 		if err != nil {
 			return nil, 0, nil, "", nil, err
 		}
+		keyPacket, err := nodeKR.EncryptSessionKey(sessionKey)
+		if err != nil {
+			return nil, 0, nil, "", nil, err
+		}
+		encryptedSignatureMessage := crypto.NewPGPSplitMessage(keyPacket, signatureDataPacket)
+		encSignatureArmored, err := encryptedSignatureMessage.GetArmored()
+		if err != nil {
+			return nil, 0, nil, "", nil, err
+		}
+		verificationToken := computeVerificationToken(verificationCode, encData)
 		h := sha256.New()
 		h.Write(encData)
 		hash := h.Sum(nil)
 		manifestSignatureData = append(manifestSignatureData, hash...)
-		pending = append(pending, pendingUploadBlock{info: proton.BlockUploadInfo{Index: index, Size: int64(len(encData)), EncSignature: encSignatureStr, Hash: base64.StdEncoding.EncodeToString(hash)}, encData: encData})
+		pending = append(pending, pendingUploadBlock{index: index, size: int64(len(encData)), encSignature: encSignatureArmored, hash: append([]byte(nil), hash...), verifier: verificationToken, encData: encData})
 	}
 	if len(pending) == 0 {
 		return nil, 0, nil, "", nil, nil
 	}
-	blockUploadReq := proton.BlockUploadReq{AddressID: d.state.mainShare.AddressID, ShareID: d.state.mainShare.ShareID, LinkID: linkID, RevisionID: revisionID, BlockList: make([]proton.BlockUploadInfo, 0, len(pending))}
-	for _, item := range pending {
-		blockUploadReq.BlockList = append(blockUploadReq.BlockList, item.info)
+	request := blockUploadReqV2{
+		AddressID:     d.state.mainShare.AddressID,
+		VolumeID:      d.state.volumeID,
+		LinkID:        linkID,
+		RevisionID:    revisionID,
+		BlockList:     make([]blockUploadInfoV2, 0, len(pending)),
+		ThumbnailList: []any{},
 	}
-	blockUploadResp, err := d.client.RequestBlockUpload(ctx, blockUploadReq)
+	for _, item := range pending {
+		request.BlockList = append(request.BlockList, blockUploadInfoV2{
+			Index:        item.index,
+			Size:         item.size,
+			EncSignature: item.encSignature,
+			Hash:         item.hash,
+			Verifier:     blockUploadVerifier{Token: base64.StdEncoding.EncodeToString(item.verifier)},
+		})
+	}
+	blockUploadResp, err := d.requestBlockUploadV2(ctx, request)
 	if err != nil {
 		return nil, 0, nil, "", nil, err
 	}
-	for i := range blockUploadResp {
-		if err := d.client.UploadBlock(ctx, blockUploadResp[i].BareURL, blockUploadResp[i].Token, byteMultipartStream(pending[i].encData)); err != nil {
+	if len(blockUploadResp.UploadLinks) != len(pending) {
+		return nil, 0, nil, "", nil, fmt.Errorf("unexpected block upload target count: got %d want %d", len(blockUploadResp.UploadLinks), len(pending))
+	}
+	for i := range blockUploadResp.UploadLinks {
+		if err := d.client.UploadBlock(ctx, blockUploadResp.UploadLinks[i].BareURL, blockUploadResp.UploadLinks[i].Token, byteMultipartStream(pending[i].encData)); err != nil {
 			return nil, 0, nil, "", nil, err
 		}
-		tokens = append(tokens, proton.BlockToken{Index: pending[i].info.Index, Token: blockUploadResp[i].Token})
+		tokens = append(tokens, proton.BlockToken{Index: pending[i].index, Token: blockUploadResp.UploadLinks[i].Token})
 	}
 	return manifestSignatureData, totalFileSize, blockSizes, hex.EncodeToString(sha1Digests.Sum(nil)), tokens, nil
 }
