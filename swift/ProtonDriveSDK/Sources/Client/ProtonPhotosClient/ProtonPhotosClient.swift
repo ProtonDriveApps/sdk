@@ -231,6 +231,9 @@ extension ProtonPhotosClient {
         operation: UploadOperation,
         onRetriableErrorReceived: @Sendable @escaping (Error) -> Void
     ) async throws -> UploadedFileIdentifiers {
+        if try await operation.isPaused() {
+            try await operation.resume()
+        }
         return try await operation.awaitUploadWithResilience(
             operationalResilience: configuration.uploadOperationalResilience,
             onRetriableErrorReceived: onRetriableErrorReceived

@@ -48,7 +48,7 @@ actor UploadsManager {
             logger: logger
         )
 
-        let uploadController = try await uploadFromFile(
+        let uploadOperation = try await uploadFromFile(
             fileUploaderHandle: uploaderHandle,
             fileURL: fileURL,
             progressCallback: progressCallback,
@@ -57,7 +57,7 @@ actor UploadsManager {
             thumbnails: thumbnails,
             expectedSHA1: expectedSHA1
         )
-        return uploadController
+        return uploadOperation
     }
 
     func uploadNewRevisionOperation(
