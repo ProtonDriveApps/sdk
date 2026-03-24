@@ -1,5 +1,6 @@
 package me.proton.drive.sdk
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,22 +37,33 @@ class CommonUploadController internal constructor(
             bridge.awaitCompletion(handle)
         }.onSuccess {
             log(INFO, "completed")
-        }.onFailure {
-            log(INFO, "cancelled or failed")
-            isPaused()
+        }.recoverCatching { error ->
+            if (error is CancellationException) {
+                log(INFO, "interrupted")
+                throw error
+            }
+            if (isPaused()) {
+                log(INFO, "paused")
+                throw error
+            }
+            log(INFO, "aborted")
+            throw UploadAbortedException(error)
         }.getOrThrow()
     }
 
-    override suspend fun resume(coroutineScope: CoroutineScope) {
+    override suspend fun tryResume(coroutineScope: CoroutineScope): Boolean {
         log(INFO, "resume")
         coroutineScopeConsumer(coroutineScope)
+        if (!isPaused()) {
+            return false
+        }
         bridge.resume(handle).also { isPaused() }
+        return true
     }
 
     override suspend fun pause() {
         log(INFO, "pause")
         bridge.pause(handle).also { isPaused() }
-        coroutineScopeConsumer(null)
     }
 
     override suspend fun isPaused() = bridge.isPaused(handle).also { paused ->

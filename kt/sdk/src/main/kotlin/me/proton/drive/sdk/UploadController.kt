@@ -9,7 +9,7 @@ interface UploadController : AutoCloseable, Cancellable {
     val progressFlow: Flow<ProgressUpdate?>
 
     suspend fun awaitCompletion(): UploadResult
-    suspend fun resume(coroutineScope: CoroutineScope)
+    suspend fun tryResume(coroutineScope: CoroutineScope): Boolean
     suspend fun pause()
     suspend fun isPaused(): Boolean
     suspend fun dispose()
