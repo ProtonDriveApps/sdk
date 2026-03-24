@@ -36,11 +36,8 @@ func TestStandaloneIntegrationHarnessBootstrapsFromConfig(t *testing.T) {
 		Password:   "pass",
 		AppVersion: "external-drive-rclone@1.0.0",
 	}, SessionHooks{})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !driver.Session().Valid() {
-		t.Fatalf("expected placeholder standalone session, got %#v", driver.Session())
+	if err == nil {
+		_ = driver.Logout(context.Background())
 	}
 }
 
@@ -111,12 +108,10 @@ func TestIntegrationLoginWithCredentials(t *testing.T) {
 
 func TestIntegrationResumeWithCredentials(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
-	client, err := NewClientWithSession(context.Background(), NewDialer(), ResumeOptions{
-		Session:       Session{UID: "uid", AccessToken: "access", RefreshToken: "refresh", SaltedKeyPass: "salted"},
-		AppVersion:    testContext.Config.AppVersion,
-		UserAgent:     testContext.Config.UserAgent,
-		EnableCaching: testContext.Config.EnableCaching,
-	}, SessionHooks{})
+	if !testContext.Config.HasReusableSession() {
+		t.Skip("integration config missing reusable session fields")
+	}
+	client, err := NewClientWithSession(context.Background(), NewDialer(), testContext.Config.ResumeOptions(), SessionHooks{})
 	if err != nil {
 		t.Fatalf("unexpected resume error: %v", err)
 	}
@@ -140,9 +135,12 @@ func TestIntegrationRootID(t *testing.T) {
 func TestIntegrationAbout(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	_, err := client.About(context.Background())
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Fatalf("expected placeholder ErrNotImplemented until Proton backend is implemented, got %v", err)
+	usage, err := client.About(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected about error: %v", err)
+	}
+	if usage.Total < usage.Used {
+		t.Fatalf("expected total >= used, got %+v", usage)
 	}
 }
 

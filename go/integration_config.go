@@ -15,6 +15,10 @@ type IntegrationConfig struct {
 	Password        string `json:"password"`
 	MailboxPassword string `json:"mailbox_password"`
 	TwoFactorCode   string `json:"two_factor_code"`
+	UID             string `json:"uid"`
+	AccessToken     string `json:"access_token"`
+	RefreshToken    string `json:"refresh_token"`
+	SaltedKeyPass   string `json:"salted_key_pass"`
 	AppVersion      string `json:"app_version"`
 	UserAgent       string `json:"user_agent"`
 	EnableCaching   bool   `json:"enable_caching"`
@@ -22,6 +26,20 @@ type IntegrationConfig struct {
 	ExpectedRootID  string `json:"expected_root_id"`
 	TestFolderID    string `json:"test_folder_id"`
 	TestFileID      string `json:"test_file_id"`
+}
+
+func (c IntegrationConfig) ResumeOptions() ResumeOptions {
+	return ResumeOptions{
+		Session: Session{
+			UID:           c.UID,
+			AccessToken:   c.AccessToken,
+			RefreshToken:  c.RefreshToken,
+			SaltedKeyPass: c.SaltedKeyPass,
+		},
+		AppVersion:    c.AppVersion,
+		UserAgent:     c.UserAgent,
+		EnableCaching: c.EnableCaching,
+	}
 }
 
 func LoadIntegrationConfig(path string) (IntegrationConfig, error) {
@@ -65,4 +83,13 @@ func (c IntegrationConfig) Validate() error {
 		return errors.New("app_version is required")
 	}
 	return nil
+}
+
+func (c IntegrationConfig) HasReusableSession() bool {
+	return Session{
+		UID:           c.UID,
+		AccessToken:   c.AccessToken,
+		RefreshToken:  c.RefreshToken,
+		SaltedKeyPass: c.SaltedKeyPass,
+	}.Valid()
 }

@@ -76,7 +76,9 @@ func TestSessionValidity(t *testing.T) {
 }
 
 func TestNewDialerCreatesStandaloneDriver(t *testing.T) {
-	client, err := NewClient(context.Background(), NewDialer(), LoginOptions{
+	client, err := NewClient(context.Background(), &FakeDialer{LoginDriver: &FakeDriver{SessionValue: Session{
+		UID: "user",
+	}}}, LoginOptions{
 		Username:   "user",
 		Password:   "pass",
 		AppVersion: "external-drive-rclone@1.0.0",
@@ -85,9 +87,9 @@ func TestNewDialerCreatesStandaloneDriver(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if client.Session().UID != "user" {
-		t.Fatalf("expected username-backed placeholder session, got %#v", client.Session())
+		t.Fatalf("expected fake driver session, got %#v", client.Session())
 	}
-	if _, err := client.About(context.Background()); !errors.Is(err, ErrNotImplemented) {
-		t.Fatalf("expected ErrNotImplemented from standalone driver, got %v", err)
+	if _, err := client.About(context.Background()); err != nil {
+		t.Fatalf("expected fake driver to return zero usage without error, got %v", err)
 	}
 }

@@ -2,36 +2,80 @@ package protondrive
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"sync"
+
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
+	proton "github.com/rclone/go-proton-api"
 )
+
+type driveState struct {
+	user          proton.User
+	addresses     []proton.Address
+	userKR        *crypto.KeyRing
+	addrKRs       map[string]*crypto.KeyRing
+	mainShare     proton.Share
+	rootLink      proton.Link
+	mainShareKR   *crypto.KeyRing
+	defaultAddrKR *crypto.KeyRing
+	saltedKeyPass []byte
+}
+
+type standaloneDriverConfig struct {
+	manager *proton.Manager
+	client  *proton.Client
+	hooks   SessionHooks
+	session Session
+	state   *driveState
+}
 
 type standaloneDriver struct {
 	mu      sync.RWMutex
+	manager *proton.Manager
+	client  *proton.Client
 	session Session
 	hooks   SessionHooks
 	cache   map[string]Node
 	rootID  string
+	state   *driveState
 }
 
-func newStandaloneDriver(session Session, hooks SessionHooks) Driver {
+func newStandaloneDriver(config standaloneDriverConfig) *standaloneDriver {
 	driver := &standaloneDriver{
-		session: session,
-		hooks:   hooks,
+		manager: config.manager,
+		client:  config.client,
+		session: config.session,
+		hooks:   config.hooks,
 		cache:   make(map[string]Node),
 		rootID:  "root",
+		state:   config.state,
 	}
-	if session.Valid() {
-		hooks.emitSession(session)
+	if config.state != nil {
+		driver.rootID = config.state.rootLink.LinkID
 	}
 	return driver
 }
 
-func (d *standaloneDriver) About(context.Context) (AccountUsage, error) {
-	return AccountUsage{}, ErrNotImplemented
+func (d *standaloneDriver) About(ctx context.Context) (AccountUsage, error) {
+	if d.client == nil {
+		return AccountUsage{}, ErrNotAuthenticated
+	}
+	user, err := d.client.GetUser(ctx)
+	if err != nil {
+		return AccountUsage{}, err
+	}
+	free := user.MaxSpace - user.UsedSpace
+	if free < 0 {
+		free = 0
+	}
+	return AccountUsage{Total: user.MaxSpace, Used: user.UsedSpace, Free: free}, nil
 }
 
 func (d *standaloneDriver) RootID(context.Context) (string, error) {
+	if d.rootID == "" {
+		return "", ErrNotAuthenticated
+	}
 	return d.rootID, nil
 }
 
@@ -91,22 +135,94 @@ func (d *standaloneDriver) Session() Session {
 	return d.session
 }
 
-func (d *standaloneDriver) Logout(context.Context) error {
+func (d *standaloneDriver) Logout(ctx context.Context) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
+	if d.client != nil {
+		if err := d.client.AuthDelete(ctx); err != nil {
+			return err
+		}
+		d.client.Close()
+		d.client = nil
+	}
+	if d.manager != nil {
+		d.manager.Close()
+		d.manager = nil
+	}
+	if d.state != nil {
+		if d.state.userKR != nil {
+			d.state.userKR.ClearPrivateParams()
+		}
+		for _, keyring := range d.state.addrKRs {
+			keyring.ClearPrivateParams()
+		}
+	}
 	d.session = Session{}
+	d.state = nil
+	d.rootID = ""
 	d.hooks.emitDeauth()
 	return nil
 }
 
-func loginSessionFromOptions(options LoginOptions) Session {
-	if options.Username == "" {
-		return Session{}
+func (d *standaloneDriver) setSession(session Session) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.session = session
+}
+
+func (d *standaloneDriver) clearSession() {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.session = Session{}
+}
+
+func (d *standaloneDriver) SaltedKeyPass() string {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.session.SaltedKeyPass
+}
+
+func bootstrapDriveState(ctx context.Context, manager *proton.Manager, client *proton.Client, user proton.User, addresses []proton.Address, userKR *crypto.KeyRing, addrKRs map[string]*crypto.KeyRing, saltedKeyPass []byte) (*driveState, error) {
+	volumes, err := client.ListVolumes(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return Session{
-		UID:           options.Username,
-		AccessToken:   "login-pending",
-		RefreshToken:  "login-pending",
-		SaltedKeyPass: "login-pending",
+	mainShareID := ""
+	for _, volume := range volumes {
+		if volume.State == proton.VolumeStateActive {
+			mainShareID = volume.Share.ShareID
+			break
+		}
 	}
+	if mainShareID == "" {
+		return nil, fmt.Errorf("no active drive volume found")
+	}
+	mainShare, err := client.GetShare(ctx, mainShareID)
+	if err != nil {
+		return nil, err
+	}
+	rootLink, err := client.GetLink(ctx, mainShare.ShareID, mainShare.LinkID)
+	if err != nil {
+		return nil, err
+	}
+	defaultAddrKR := addrKRs[mainShare.AddressID]
+	if defaultAddrKR == nil {
+		return nil, fmt.Errorf("missing address keyring for main share")
+	}
+	mainShareKR, err := mainShare.GetKeyRing(defaultAddrKR)
+	if err != nil {
+		return nil, err
+	}
+	_ = manager
+	return &driveState{
+		user:          user,
+		addresses:     addresses,
+		userKR:        userKR,
+		addrKRs:       addrKRs,
+		mainShare:     mainShare,
+		rootLink:      rootLink,
+		mainShareKR:   mainShareKR,
+		defaultAddrKR: defaultAddrKR,
+		saltedKeyPass: append([]byte(nil), saltedKeyPass...),
+	}, nil
 }
