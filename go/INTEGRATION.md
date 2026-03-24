@@ -1,6 +1,6 @@
 # Integration Test Plan
 
-The package now includes a credentials loader and a placeholder integration harness so that real Proton-backed tests can be added once credentials are available.
+The package now includes a credentials loader and a live integration harness that exercises the currently implemented Proton-backed flows.
 
 ## Credentials File
 
@@ -41,4 +41,18 @@ Run integration-only tests with:
 go test -tags integration ./...
 ```
 
-At the moment these tests include credential-gated coverage for every operation rclone requires. Most of them still assert `ErrNotImplemented` until the standalone Proton backend is implemented, but the test structure is now in place so real behavior can be turned on method-by-method as functionality lands.
+The current integration suite live-verifies:
+
+- login and session resume
+- root discovery and quota lookup
+- listing, search, and folder creation when configured fixtures are discoverable
+- revision lookup and downloads when configured fixtures are discoverable
+- small-file uploads
+- move, trash, and empty-trash flows using self-created fixtures
+- logout
+
+Known limitations:
+
+- large-file upload coverage is not complete yet
+- some read-path integration tests depend on account-specific named fixtures being discoverable from the configured root/test folder
+- integration tests mutate the configured account state, so they should be run against a disposable test area/account

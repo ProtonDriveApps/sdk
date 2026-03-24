@@ -16,27 +16,79 @@ Current design goals:
 
 What is implemented now:
 
-- the public API contracts for sessions, login/resume options, filesystem operations, and hooks
-- a `Client` wrapper that centralizes validation and session/deauth hook behavior
-- a package-owned standalone `Dialer` and placeholder `Driver` in `go/dialer.go` and `go/standalone_driver.go`
-- test doubles to make the package easy to integrate and evolve safely
-- integration credentials loading and an integration test harness scaffold in `go/integration_config.go` and `go/integration_test.go`
-- a compatibility checklist and integration test plan in `go/COMPATIBILITY.md` and `go/INTEGRATION.md`
+- real Proton authentication, session resume, root/share discovery, and logout
+- directory listing, child lookup, folder creation, file revision lookup, and offset downloads
+- small-file uploads, file/folder moves, trash, and empty trash
+- a package-owned standalone `Dialer` and `Driver` in `go/dialer.go` and `go/standalone_driver.go`
+- integration credentials loading and live integration coverage in `go/integration_config.go` and `go/integration_test.go`
+- compatibility and integration planning docs in `go/COMPATIBILITY.md` and `go/INTEGRATION.md`
 
-What is intentionally not implemented yet:
+What is still rough or intentionally incomplete:
 
-- real Proton authentication and reusable session refresh
-- real root/share discovery and encrypted metadata traversal
-- encrypted uploads, downloads, and revision handling
-- package-owned cache semantics aligned with rclone mutations
+- large-file uploads still need the multi-block upload path finalized
+- revision metadata is functional but not yet full parity with the richer legacy xattr model
+- cache semantics are intentionally lightweight and can be tightened further for long-lived clients
 
-Planned implementation order:
+Bootstrap example:
 
-1. implement real session bootstrap and session refresh against Proton APIs
-2. implement root/share discovery and directory traversal
-3. implement revision attrs and offset-based streaming downloads
-4. implement known-size uploads and server-side mutations
-5. add integration coverage with real credentials and harden cache behavior
+```go
+package main
+
+import (
+	"context"
+	"log"
+
+	protondrive "github.com/ProtonDriveApps/sdk/go"
+)
+
+func main() {
+	ctx := context.Background()
+
+	client, err := protondrive.NewClient(ctx, protondrive.NewDialer(), protondrive.LoginOptions{
+		Username:   "user@proton.me",
+		Password:   "secret",
+		AppVersion: "external-drive-rclone@1.0.0",
+	}, protondrive.SessionHooks{
+		OnSession: func(session protondrive.Session) {
+			log.Printf("persist reusable session: uid=%s", session.UID)
+		},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		_ = client.Logout(ctx)
+	}()
+
+	rootID, err := client.RootID(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	entries, err := client.ListDirectory(ctx, rootID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, entry := range entries {
+		log.Printf("%s %s", entry.Node.Type, entry.Node.Name)
+	}
+}
+```
+
+Resume with a previously persisted session:
+
+```go
+client, err := protondrive.NewClientWithSession(ctx, protondrive.NewDialer(), protondrive.ResumeOptions{
+	Session: protondrive.Session{
+		UID:           savedUID,
+		AccessToken:   savedAccessToken,
+		RefreshToken:  savedRefreshToken,
+		SaltedKeyPass: savedSaltedKeyPass,
+	},
+	AppVersion: "external-drive-rclone@1.0.0",
+}, protondrive.SessionHooks{})
+```
 
 The package is being shaped around the operations used today by `rclone/backend/protondrive`, so that a future rclone PR can replace `Proton-API-Bridge` with this module incrementally.
 

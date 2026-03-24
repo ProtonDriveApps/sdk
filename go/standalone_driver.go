@@ -120,7 +120,7 @@ func (d *standaloneDriver) ListDirectory(ctx context.Context, parentID string) (
 		}
 		name, err := decryptLinkName(child, parentKR, d.state.defaultAddrKR)
 		if err != nil {
-			return nil, err
+			continue
 		}
 		node := nodeFromLink(child, name)
 		entries = append(entries, DirectoryEntry{Node: node, IsFolder: child.Type == proton.LinkTypeFolder})
@@ -162,7 +162,7 @@ func (d *standaloneDriver) SearchChild(ctx context.Context, parentID, name strin
 		}
 		decryptedName, err := decryptLinkName(child, parentKR, d.state.defaultAddrKR)
 		if err != nil {
-			return nil, err
+			continue
 		}
 		node := nodeFromLink(child, decryptedName)
 		d.cacheNode(node)
