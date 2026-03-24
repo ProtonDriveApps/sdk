@@ -11,6 +11,7 @@ import (
 const DefaultIntegrationConfigPath = "integration/protondrive.test.json"
 
 type IntegrationConfig struct {
+	BaseURL         string `json:"base_url"`
 	Username        string `json:"username"`
 	Password        string `json:"password"`
 	MailboxPassword string `json:"mailbox_password"`
@@ -30,6 +31,7 @@ type IntegrationConfig struct {
 
 func (c IntegrationConfig) ResumeOptions() ResumeOptions {
 	return ResumeOptions{
+		BaseURL: c.BaseURL,
 		Session: Session{
 			UID:           c.UID,
 			AccessToken:   c.AccessToken,
@@ -62,6 +64,7 @@ func LoadIntegrationConfig(path string) (IntegrationConfig, error) {
 
 func (c IntegrationConfig) LoginOptions() LoginOptions {
 	return LoginOptions{
+		BaseURL:         c.BaseURL,
 		Username:        c.Username,
 		Password:        c.Password,
 		MailboxPassword: c.MailboxPassword,
@@ -73,6 +76,9 @@ func (c IntegrationConfig) LoginOptions() LoginOptions {
 }
 
 func (c IntegrationConfig) Validate() error {
+	if strings.TrimSpace(c.BaseURL) == "" {
+		return errors.New("base_url is required")
+	}
 	if strings.TrimSpace(c.Username) == "" {
 		return errors.New("username is required")
 	}

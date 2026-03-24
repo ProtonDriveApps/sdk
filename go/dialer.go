@@ -24,7 +24,7 @@ func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionH
 	options.AppVersion = strings.TrimSpace(options.AppVersion)
 	options.UserAgent = strings.TrimSpace(options.UserAgent)
 
-	manager := newManager(options.AppVersion, options.UserAgent)
+	manager := newManager(options.BaseURL, options.AppVersion, options.UserAgent)
 	client, auth, err := manager.NewClientWithLogin(ctx, options.Username, []byte(options.Password))
 	if err != nil {
 		manager.Close()
@@ -89,7 +89,7 @@ func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks Sessio
 	options.AppVersion = strings.TrimSpace(options.AppVersion)
 	options.UserAgent = strings.TrimSpace(options.UserAgent)
 
-	manager := newManager(options.AppVersion, options.UserAgent)
+	manager := newManager(options.BaseURL, options.AppVersion, options.UserAgent)
 	client, auth, err := manager.NewClientWithRefresh(ctx, options.Session.UID, options.Session.RefreshToken)
 	if err != nil {
 		manager.Close()
@@ -130,8 +130,11 @@ func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks Sessio
 	return driver, nil
 }
 
-func newManager(appVersion, userAgent string) *proton.Manager {
+func newManager(baseURL, appVersion, userAgent string) *proton.Manager {
 	options := []proton.Option{proton.WithAppVersion(appVersion)}
+	if strings.TrimSpace(baseURL) != "" {
+		options = append(options, proton.WithHostURL(strings.TrimSpace(baseURL)))
+	}
 	_ = userAgent
 	return proton.New(options...)
 }

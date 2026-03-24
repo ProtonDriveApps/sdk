@@ -20,10 +20,11 @@ func TestLoadIntegrationConfigMissingFile(t *testing.T) {
 
 func TestIntegrationConfigProducesLoginOptions(t *testing.T) {
 	config := IntegrationConfig{
+		BaseURL:       "https://mail.proton.me/api",
 		Username:      "user",
 		Password:      "pass",
-		AppVersion:    "external-drive-rclone@1.0.0",
-		UserAgent:     "rclone/test",
+		AppVersion:    "proton-drive-go-sdk-integration@1.0.0",
+		UserAgent:     "proton-drive-go-sdk-test",
 		EnableCaching: true,
 	}
 	options := config.LoginOptions()
@@ -34,9 +35,10 @@ func TestIntegrationConfigProducesLoginOptions(t *testing.T) {
 
 func TestStandaloneIntegrationHarnessBootstrapsFromConfig(t *testing.T) {
 	driver, err := NewDialer().Login(context.Background(), LoginOptions{
+		BaseURL:    "https://mail.proton.me/api",
 		Username:   "user",
 		Password:   "pass",
-		AppVersion: "external-drive-rclone@1.0.0",
+		AppVersion: "proton-drive-go-sdk-integration@1.0.0",
 	}, SessionHooks{})
 	if err == nil {
 		_ = driver.Logout(context.Background())

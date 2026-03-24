@@ -1,6 +1,6 @@
-# rclone Compatibility Checklist
+# Functionality Checklist
 
-This checklist tracks the Go package features required to replace `Proton-API-Bridge` in `rclone/backend/protondrive`.
+This checklist tracks the basic Proton Drive operations currently covered by the Go package.
 
 Legend:
 
@@ -16,7 +16,7 @@ Legend:
 - `done` deauth/session hooks for config persistence
 - `done` real Proton login bootstrap
 - `done` reusable session refresh against Proton APIs
-- `missing` OTP secret based 2FA generation path used by rclone
+- `missing` OTP secret based 2FA generation path
 
 ## Filesystem Operations
 
@@ -45,19 +45,19 @@ Legend:
 - `done` encrypted block streaming downloads
 - `partial` encrypted uploads and revision commit flow
 
-## rclone Behavior Expectations
+## Behavior Expectations
 
-- `done` package surface supports all operations currently called by the rclone backend
+- `done` package surface supports the currently implemented basic Proton Drive operations
 - `done` compatibility checklist committed in-tree
 - `done` integration harness and credentials loader
-- `partial` end-to-end parity verification for the core rclone operation surface
-- `partial` cache invalidation semantics aligned with rclone mutations
-- `done` root/share discovery parity with current rclone expectations
+- `partial` end-to-end parity verification for the core operation surface
+- `partial` cache invalidation semantics aligned with mutations
+- `done` root/share discovery parity with current expected behavior
 
 ## Integration Test Readiness
 
 - `done` credentials file loader in `go/integration_config.go`
 - `done` example credentials config in `go/integration/protondrive.test.json.example`
 - `done` integration build-tag harness in `go/integration_test.go`
-- `partial` credential-gated integration coverage for all currently implemented rclone-required operations; mutation tests self-seed fixtures, while some read tests still depend on account-specific named fixtures
+- `partial` credential-gated integration coverage for all currently implemented operations; mutation tests self-seed fixtures, while some read tests still depend on account-specific named fixtures
 - `missing` CI strategy for gated/manual integration test execution

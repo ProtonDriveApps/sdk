@@ -1,6 +1,6 @@
 # Proton Drive Go Package
 
-This module is a narrow, pure-Go package intended to support the Proton Drive backend in `rclone`.
+This module is a narrow, pure-Go package intended to provide basic Proton Drive operations.
 
 Current toolchain target:
 
@@ -12,7 +12,7 @@ Current design goals:
 - stable session import/export using `uid`, `access_token`, `refresh_token`, and `salted_key_pass`
 - backend-oriented API for directory listing, uploads, downloads, moves, trash, quota, and logout
 - optional internal caching with explicit invalidation through `ClearCache`
-- minimal public surface so the package can be maintained upstream and consumed by `rclone` easily
+- minimal public surface so the package can be maintained upstream and adopted easily
 
 What is implemented now:
 
@@ -37,6 +37,7 @@ package main
 import (
 	"context"
 	"log"
+	"strings"
 
 	protondrive "github.com/ProtonDriveApps/sdk/go"
 )
@@ -45,9 +46,10 @@ func main() {
 	ctx := context.Background()
 
 	client, err := protondrive.NewClient(ctx, protondrive.NewDialer(), protondrive.LoginOptions{
+		BaseURL:    "https://mail.proton.me/api",
 		Username:   "user@proton.me",
 		Password:   "secret",
-		AppVersion: "external-drive-rclone@1.0.0",
+		AppVersion: "proton-drive-go-sdk-example@1.0.0",
 	}, protondrive.SessionHooks{
 		OnSession: func(session protondrive.Session) {
 			log.Printf("persist reusable session: uid=%s", session.UID)
@@ -86,10 +88,41 @@ client, err := protondrive.NewClientWithSession(ctx, protondrive.NewDialer(), pr
 		RefreshToken:  savedRefreshToken,
 		SaltedKeyPass: savedSaltedKeyPass,
 	},
-	AppVersion: "external-drive-rclone@1.0.0",
+	BaseURL:    "https://mail.proton.me/api",
+	AppVersion: "proton-drive-go-sdk-example@1.0.0",
 }, protondrive.SessionHooks{})
 ```
 
-The package is being shaped around the operations used today by `rclone/backend/protondrive`, so that a future rclone PR can replace `Proton-API-Bridge` with this module incrementally.
+Basic operations example:
 
-See `go/COMPATIBILITY.md` for the current rclone parity checklist and `go/INTEGRATION.md` for the integration-test plan.
+```go
+about, err := client.About(ctx)
+if err != nil {
+	log.Fatal(err)
+}
+
+log.Printf("used %d of %d bytes", about.Used, about.Total)
+
+rootID, err := client.RootID(ctx)
+if err != nil {
+	log.Fatal(err)
+}
+
+folderID, err := client.CreateFolder(ctx, rootID, "sdk-demo")
+if err != nil {
+	log.Fatal(err)
+}
+
+file, attrs, err := client.UploadFile(ctx, folderID, "hello.txt", strings.NewReader("hello world"), protondrive.UploadOptions{
+	KnownSize: int64(len("hello world")),
+})
+if err != nil {
+	log.Fatal(err)
+}
+
+log.Printf("uploaded %s with sha1=%s", file.Name, attrs.Digests["SHA1"])
+```
+
+The package is focused on basic Proton Drive operations such as login, listing, file transfer, move, trash, and logout.
+
+See `go/COMPATIBILITY.md` for the current functionality checklist and `go/INTEGRATION.md` for the integration-test plan.

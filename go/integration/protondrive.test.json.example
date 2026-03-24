@@ -1,4 +1,5 @@
 {
+  "base_url": "https://mail.proton.me/api",
   "username": "your-proton-username",
   "password": "your-proton-password",
   "mailbox_password": "optional-mailbox-password",
@@ -7,8 +8,8 @@
   "access_token": "optional-session-access-token",
   "refresh_token": "optional-session-refresh-token",
   "salted_key_pass": "optional-base64-salted-key-pass",
-  "app_version": "external-drive-rclone@1.0.0",
-  "user_agent": "rclone/protondrive-sdk-integration",
+  "app_version": "proton-drive-go-sdk-integration@1.0.0",
+  "user_agent": "proton-drive-go-sdk-integration",
   "enable_caching": false,
   "replace_existing_draft": true,
   "expected_root_id": "",

@@ -7,6 +7,7 @@ import (
 )
 
 type LoginOptions struct {
+	BaseURL         string
 	Username        string
 	Password        string
 	MailboxPassword string
@@ -17,6 +18,7 @@ type LoginOptions struct {
 }
 
 type ResumeOptions struct {
+	BaseURL       string
 	Session       Session
 	AppVersion    string
 	UserAgent     string

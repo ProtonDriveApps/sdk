@@ -15,7 +15,7 @@ func TestNewClientValidatesRequiredFields(t *testing.T) {
 }
 
 func TestNewClientWithSessionValidatesSession(t *testing.T) {
-	_, err := NewClientWithSession(context.Background(), &FakeDialer{}, ResumeOptions{AppVersion: "external-drive-rclone@1.0.0"}, SessionHooks{})
+	_, err := NewClientWithSession(context.Background(), &FakeDialer{}, ResumeOptions{AppVersion: "proton-drive-go-sdk-test@1.0.0"}, SessionHooks{})
 	if !errors.Is(err, ErrInvalidSession) {
 		t.Fatalf("expected ErrInvalidSession, got %v", err)
 	}
@@ -27,7 +27,7 @@ func TestNewClientEmitsSessionFromDialer(t *testing.T) {
 	client, err := NewClient(
 		context.Background(),
 		&FakeDialer{LoginDriver: &FakeDriver{SessionValue: expected}},
-		LoginOptions{Username: "user", Password: "pass", AppVersion: "external-drive-rclone@1.0.0"},
+		LoginOptions{BaseURL: "https://mail.proton.me/api", Username: "user", Password: "pass", AppVersion: "proton-drive-go-sdk-test@1.0.0"},
 		SessionHooks{OnSession: func(session Session) { got = session }},
 	)
 	if err != nil {
@@ -79,9 +79,10 @@ func TestNewDialerCreatesStandaloneDriver(t *testing.T) {
 	client, err := NewClient(context.Background(), &FakeDialer{LoginDriver: &FakeDriver{SessionValue: Session{
 		UID: "user",
 	}}}, LoginOptions{
+		BaseURL:    "https://mail.proton.me/api",
 		Username:   "user",
 		Password:   "pass",
-		AppVersion: "external-drive-rclone@1.0.0",
+		AppVersion: "proton-drive-go-sdk-test@1.0.0",
 	}, SessionHooks{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

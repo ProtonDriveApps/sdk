@@ -16,6 +16,8 @@ and fill in the account details.
 
 The config file is intentionally untracked and should never be committed.
 
+`base_url` is required and can point at production or a staging environment.
+
 `test_folder_id` and `test_file_id` may be either real Proton link IDs or human-readable names:
 
 - `test_folder_id`: a folder link ID, or a folder name located directly under the Drive root
