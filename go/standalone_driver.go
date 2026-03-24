@@ -3,23 +3,19 @@ package protondrive
 import (
 	"bytes"
 	"context"
-	"crypto/hmac"
-	"crypto/sha1"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"mime"
 	"path/filepath"
 	"sync"
-	"time"
 
 	proton "github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
-	"github.com/ProtonMail/gopenpgp/v2/helper"
 )
 
+// driveState holds the authenticated account state including keyrings, the main
+// share, and the root link. It is populated during login/resume and used by
+// all driver operations.
 type driveState struct {
 	volumeID         string
 	user             proton.User
@@ -34,12 +30,16 @@ type driveState struct {
 	nodeKeysByLinkID map[string]*nodeSecretMaterial
 }
 
+// nodeSecretMaterial caches the decrypted passphrase and session keys for a
+// node so that move/rename operations can re-encrypt without re-deriving keys.
 type nodeSecretMaterial struct {
 	Passphrase           []byte
 	PassphraseSessionKey *crypto.SessionKey
 	NameSessionKey       *crypto.SessionKey
 }
 
+// standaloneDriverConfig is the construction-time configuration for a
+// standaloneDriver.
 type standaloneDriverConfig struct {
 	manager    *proton.Manager
 	client     *proton.Client
@@ -50,6 +50,8 @@ type standaloneDriverConfig struct {
 	state      *driveState
 }
 
+// standaloneDriver implements the Driver interface using the official
+// Proton Mail Go client library directly (no cgo or native dependencies).
 type standaloneDriver struct {
 	mu         sync.RWMutex
 	manager    *proton.Manager
@@ -81,6 +83,7 @@ func newStandaloneDriver(config standaloneDriverConfig) *standaloneDriver {
 	return driver
 }
 
+// About returns the authenticated account's storage quota.
 func (d *standaloneDriver) About(ctx context.Context) (AccountUsage, error) {
 	if d.client == nil {
 		return AccountUsage{}, ErrNotAuthenticated
@@ -93,6 +96,7 @@ func (d *standaloneDriver) About(ctx context.Context) (AccountUsage, error) {
 	return AccountUsage{Total: int64(user.MaxSpace), Used: int64(user.UsedSpace), Free: int64(free)}, nil
 }
 
+// RootID returns the link ID of the drive root node.
 func (d *standaloneDriver) RootID(context.Context) (string, error) {
 	if d.rootID == "" {
 		return "", ErrNotAuthenticated
@@ -100,6 +104,8 @@ func (d *standaloneDriver) RootID(context.Context) (string, error) {
 	return d.rootID, nil
 }
 
+// ListDirectory returns the active children of the given folder, decrypting
+// their names using the parent's keyring.
 func (d *standaloneDriver) ListDirectory(ctx context.Context, parentID string) ([]DirectoryEntry, error) {
 	parent, err := d.getLink(ctx, parentID)
 	if err != nil {
@@ -132,6 +138,8 @@ func (d *standaloneDriver) ListDirectory(ctx context.Context, parentID string) (
 	return entries, nil
 }
 
+// SearchChild looks up a child by name hash and type under the given parent.
+// Returns nil (no error) if the child is not found.
 func (d *standaloneDriver) SearchChild(ctx context.Context, parentID, name string, nodeType NodeType) (*Node, error) {
 	parent, err := d.getLink(ctx, parentID)
 	if err != nil {
@@ -174,6 +182,8 @@ func (d *standaloneDriver) SearchChild(ctx context.Context, parentID, name strin
 	return nil, nil
 }
 
+// CreateFolder creates a new folder with the given name under the parent node.
+// Returns the new folder's link ID.
 func (d *standaloneDriver) CreateFolder(ctx context.Context, parentID, name string) (string, error) {
 	parent, err := d.getLink(ctx, parentID)
 	if err != nil {
@@ -186,7 +196,7 @@ func (d *standaloneDriver) CreateFolder(ctx context.Context, parentID, name stri
 	if err != nil {
 		return "", err
 	}
-	newNodeKey, nodeSecrets, nodePassphraseEnc, nodePassphraseSignature, newNodeKR, err := d.generateNodeMaterial(parentKR)
+	newNodeKey, nodeSecrets, passphraseEnc, passphraseSig, newNodeKR, err := d.generateNodeMaterial(parentKR)
 	if err != nil {
 		return "", err
 	}
@@ -204,8 +214,8 @@ func (d *standaloneDriver) CreateFolder(ctx context.Context, parentID, name stri
 		Hash:                    getNameHash(name, parentHashKey),
 		NodeKey:                 newNodeKey,
 		NodeHashKey:             nodeHashKey,
-		NodePassphrase:          nodePassphraseEnc,
-		NodePassphraseSignature: nodePassphraseSignature,
+		NodePassphrase:          passphraseEnc,
+		NodePassphraseSignature: passphraseSig,
 		SignatureAddress:        d.signatureAddress(),
 	}
 	created, err := d.client.CreateFolder(ctx, d.state.mainShare.ShareID, req)
@@ -217,10 +227,13 @@ func (d *standaloneDriver) CreateFolder(ctx context.Context, parentID, name stri
 	return created.ID, nil
 }
 
+// GetRevisionAttrs delegates to the download helpers.
 func (d *standaloneDriver) GetRevisionAttrs(ctx context.Context, nodeID string) (RevisionAttrs, error) {
 	return d.getRevisionAttrs(ctx, nodeID)
 }
 
+// DownloadFile opens a streaming reader for the file, starting at the given
+// byte offset. Blocks are fetched and decrypted lazily.
 func (d *standaloneDriver) DownloadFile(ctx context.Context, nodeID string, offset int64) (DownloadResult, error) {
 	link, err := d.getLink(ctx, nodeID)
 	if err != nil {
@@ -266,64 +279,78 @@ func (d *standaloneDriver) DownloadFile(ctx context.Context, nodeID string, offs
 			}
 			reader.nextBlock = blockIndex
 			if intra > 0 {
-				n, err := io.CopyN(io.Discard, reader, intra)
-				if err != nil {
-					return DownloadResult{}, err
-				}
-				if n != intra {
-					return DownloadResult{}, fmt.Errorf("failed to seek within decrypted stream")
+				if _, err := io.CopyN(io.Discard, reader, intra); err != nil {
+					return DownloadResult{}, fmt.Errorf("seek within decrypted stream: %w", err)
 				}
 			}
 		} else {
-			n, err := io.CopyN(io.Discard, reader, offset)
-			if err != nil {
-				return DownloadResult{}, err
-			}
-			if n != offset {
-				return DownloadResult{}, fmt.Errorf("failed to seek within decrypted stream")
+			if _, err := io.CopyN(io.Discard, reader, offset); err != nil {
+				return DownloadResult{}, fmt.Errorf("seek within decrypted stream: %w", err)
 			}
 		}
 	}
 	return DownloadResult{Reader: reader, Attrs: attrs, ServerSize: link.Size}, nil
 }
 
+// UploadFile delegates to the upload helpers (see upload.go).
 func (d *standaloneDriver) UploadFile(ctx context.Context, parentID, name string, body io.Reader, options UploadOptions) (Node, RevisionAttrs, error) {
 	return d.uploadFile(ctx, parentID, name, body, options)
 }
 
+// MoveFile moves a file node to a new parent with an optional rename.
 func (d *standaloneDriver) MoveFile(ctx context.Context, nodeID, parentID, name string) error {
 	return d.moveNode(ctx, nodeID, parentID, name)
 }
 
+// MoveFolder moves a folder node to a new parent with an optional rename.
 func (d *standaloneDriver) MoveFolder(ctx context.Context, nodeID, parentID, name string) error {
 	return d.moveNode(ctx, nodeID, parentID, name)
 }
 
+// TrashFile moves a single file to the trash.
 func (d *standaloneDriver) TrashFile(ctx context.Context, nodeID string) error {
 	return d.trashLinks(ctx, []string{nodeID})
 }
 
+// TrashFolder moves a folder to the trash. The recursive parameter is accepted
+// but the Proton API handles folder trash as a unit operation.
 func (d *standaloneDriver) TrashFolder(ctx context.Context, nodeID string, recursive bool) error {
-	_ = recursive
 	return d.trashLinks(ctx, []string{nodeID})
 }
 
+// EmptyTrash permanently deletes all items in the trash.
 func (d *standaloneDriver) EmptyTrash(ctx context.Context) error {
 	return d.emptyTrash(ctx)
 }
 
+// ClearCache drops all cached node metadata.
 func (d *standaloneDriver) ClearCache() {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.cache = make(map[string]Node)
 }
 
+// Session returns a snapshot of the current authentication session.
 func (d *standaloneDriver) Session() Session {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.session
 }
 
+func (d *standaloneDriver) setSession(session Session) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.session = session
+}
+
+func (d *standaloneDriver) clearSession() {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.session = Session{}
+}
+
+// Logout revokes the authentication tokens, closes connections, clears
+// private key material, and emits a deauth hook.
 func (d *standaloneDriver) Logout(ctx context.Context) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -353,24 +380,15 @@ func (d *standaloneDriver) Logout(ctx context.Context) error {
 	return nil
 }
 
-func (d *standaloneDriver) setSession(session Session) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	d.session = session
-}
-
-func (d *standaloneDriver) clearSession() {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	d.session = Session{}
-}
-
+// SaltedKeyPass returns the base64-encoded salted key passphrase for session
+// persistence.
 func (d *standaloneDriver) SaltedKeyPass() string {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.session.SaltedKeyPass
 }
 
+// getLink fetches a link by ID, short-circuiting for the cached root link.
 func (d *standaloneDriver) getLink(ctx context.Context, linkID string) (proton.Link, error) {
 	if linkID == "" {
 		return proton.Link{}, fmt.Errorf("link id is required")
@@ -381,6 +399,8 @@ func (d *standaloneDriver) getLink(ctx context.Context, linkID string) (proton.L
 	return d.client.GetLink(ctx, d.state.mainShare.ShareID, linkID)
 }
 
+// getLinkKR derives the keyring for a link by recursively resolving parent
+// keyrings up to the share root.
 func (d *standaloneDriver) getLinkKR(ctx context.Context, link proton.Link) (*crypto.KeyRing, error) {
 	if link.ParentLinkID == "" {
 		return link.GetKeyRing(d.state.mainShareKR, d.state.defaultAddrKR)
@@ -396,12 +416,15 @@ func (d *standaloneDriver) getLinkKR(ctx context.Context, link proton.Link) (*cr
 	return link.GetKeyRing(parentKR, d.state.defaultAddrKR)
 }
 
+// cacheNode stores a node in the in-memory cache by ID.
 func (d *standaloneDriver) cacheNode(node Node) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.cache[node.ID] = node
 }
 
+// storeNodeSecrets saves a deep copy of the node's secret material so that
+// future move/rename operations can re-encrypt without re-deriving keys.
 func (d *standaloneDriver) storeNodeSecrets(linkID string, material *nodeSecretMaterial) {
 	if d.state == nil || linkID == "" || material == nil {
 		return
@@ -411,16 +434,11 @@ func (d *standaloneDriver) storeNodeSecrets(linkID string, material *nodeSecretM
 	if d.state.nodeKeysByLinkID == nil {
 		d.state.nodeKeysByLinkID = map[string]*nodeSecretMaterial{}
 	}
-	copyMaterial := &nodeSecretMaterial{Passphrase: append([]byte(nil), material.Passphrase...)}
-	if material.PassphraseSessionKey != nil {
-		copyMaterial.PassphraseSessionKey = crypto.NewSessionKeyFromToken(material.PassphraseSessionKey.Key, material.PassphraseSessionKey.Algo)
-	}
-	if material.NameSessionKey != nil {
-		copyMaterial.NameSessionKey = crypto.NewSessionKeyFromToken(material.NameSessionKey.Key, material.NameSessionKey.Algo)
-	}
-	d.state.nodeKeysByLinkID[linkID] = copyMaterial
+	d.state.nodeKeysByLinkID[linkID] = copyNodeSecretMaterial(material)
 }
 
+// getStoredNodeSecrets returns a deep copy of the cached secret material for
+// a node, or (nil, false) if not cached.
 func (d *standaloneDriver) getStoredNodeSecrets(linkID string) (*nodeSecretMaterial, bool) {
 	if d.state == nil || linkID == "" {
 		return nil, false
@@ -431,16 +449,24 @@ func (d *standaloneDriver) getStoredNodeSecrets(linkID string) (*nodeSecretMater
 	if !ok {
 		return nil, false
 	}
-	copyMaterial := &nodeSecretMaterial{Passphrase: append([]byte(nil), value.Passphrase...)}
-	if value.PassphraseSessionKey != nil {
-		copyMaterial.PassphraseSessionKey = crypto.NewSessionKeyFromToken(value.PassphraseSessionKey.Key, value.PassphraseSessionKey.Algo)
-	}
-	if value.NameSessionKey != nil {
-		copyMaterial.NameSessionKey = crypto.NewSessionKeyFromToken(value.NameSessionKey.Key, value.NameSessionKey.Algo)
-	}
-	return copyMaterial, true
+	return copyNodeSecretMaterial(value), true
 }
 
+// copyNodeSecretMaterial creates a deep copy of node secret material to
+// prevent shared mutable state across goroutines.
+func copyNodeSecretMaterial(src *nodeSecretMaterial) *nodeSecretMaterial {
+	cp := &nodeSecretMaterial{Passphrase: append([]byte(nil), src.Passphrase...)}
+	if src.PassphraseSessionKey != nil {
+		cp.PassphraseSessionKey = crypto.NewSessionKeyFromToken(src.PassphraseSessionKey.Key, src.PassphraseSessionKey.Algo)
+	}
+	if src.NameSessionKey != nil {
+		cp.NameSessionKey = crypto.NewSessionKeyFromToken(src.NameSessionKey.Key, src.NameSessionKey.Algo)
+	}
+	return cp
+}
+
+// moveNode moves a file or folder link to a new parent, re-encrypting the
+// node passphrase and name for the destination keyring.
 func (d *standaloneDriver) moveNode(ctx context.Context, nodeID, parentID, name string) error {
 	link, err := d.getLink(ctx, nodeID)
 	if err != nil {
@@ -449,58 +475,56 @@ func (d *standaloneDriver) moveNode(ctx context.Context, nodeID, parentID, name 
 	if link.ParentLinkID == "" {
 		return fmt.Errorf("cannot move root node")
 	}
-	destinationParent, err := d.getLink(ctx, parentID)
+	// Resolve destination parent keyring.
+	destParent, err := d.getLink(ctx, parentID)
 	if err != nil {
 		return err
 	}
-	destinationKR, err := d.getLinkKR(ctx, destinationParent)
+	destKR, err := d.getLinkKR(ctx, destParent)
 	if err != nil {
 		return err
 	}
+	// Resolve origin parent keyring for hash lookup.
 	originParent, err := d.getLink(ctx, link.ParentLinkID)
 	if err != nil {
 		return err
 	}
-	originParentKR, err := d.getLinkKR(ctx, originParent)
+	originKR, err := d.getLinkKR(ctx, originParent)
 	if err != nil {
 		return err
 	}
-	originalHashKey, err := originParent.GetHashKey(originParentKR)
+	originHashKey, err := originParent.GetHashKey(originKR)
 	if err != nil {
 		return err
 	}
-	originalName, err := decryptLinkName(link, originParentKR, d.state.defaultAddrKR)
+	originalName, err := decryptLinkName(link, originKR, d.state.defaultAddrKR)
 	if err != nil {
 		return err
 	}
 	if name == "" {
 		name = originalName
 	}
-	destinationHashKey, err := destinationParent.GetHashKey(destinationKR)
+	destHashKey, err := destParent.GetHashKey(destKR)
 	if err != nil {
 		return err
 	}
-	nameEnc, err := d.reencryptNodeName(nodeID, name, destinationKR)
+	nameEnc, err := d.reencryptNodeName(nodeID, name, destKR)
 	if err != nil {
 		return err
 	}
-	originalHash := getNameHash(originalName, originalHashKey)
-	newHash := getNameHash(name, destinationHashKey)
-	passphrasePacket, passphraseSignature, signatureEmail, err := d.reencryptNodePassphrase(nodeID, destinationKR)
+	passphrasePacket, _, _, err := d.reencryptNodePassphrase(nodeID, destKR)
 	if err != nil {
 		return err
 	}
-	passphraseSignature = ""
-	signatureEmail = ""
 	if err := d.moveLink(ctx, nodeID, moveLinkReq{
 		ParentLinkID:            parentID,
 		Name:                    nameEnc,
-		OriginalHash:            originalHash,
-		Hash:                    newHash,
+		OriginalHash:            getNameHash(originalName, originHashKey),
+		Hash:                    getNameHash(name, destHashKey),
 		NodePassphrase:          passphrasePacket,
-		NodePassphraseSignature: passphraseSignature,
+		NodePassphraseSignature: "",
 		NameSignatureEmail:      d.signatureAddress(),
-		SignatureAddress:        signatureEmail,
+		SignatureAddress:        "",
 	}); err != nil {
 		return err
 	}
@@ -508,59 +532,65 @@ func (d *standaloneDriver) moveNode(ctx context.Context, nodeID, parentID, name 
 	return nil
 }
 
-func (d *standaloneDriver) reencryptNodePassphrase(linkID string, destinationKR *crypto.KeyRing) (string, string, string, error) {
+// reencryptNodePassphrase re-encrypts the node's passphrase for a new
+// destination keyring. Returns the armored passphrase packet, signature,
+// and signature address.
+func (d *standaloneDriver) reencryptNodePassphrase(linkID string, destKR *crypto.KeyRing) (string, string, string, error) {
 	material, ok := d.getStoredNodeSecrets(linkID)
 	if !ok || material.PassphraseSessionKey == nil {
 		return "", "", "", fmt.Errorf("node passphrase for %s is not available in local cache", linkID)
 	}
-	messageDataPacket, err := material.PassphraseSessionKey.Encrypt(crypto.NewPlainMessage(material.Passphrase))
+	dataPacket, err := material.PassphraseSessionKey.Encrypt(crypto.NewPlainMessage(material.Passphrase))
 	if err != nil {
 		return "", "", "", err
 	}
-	detachedSignature, err := d.state.defaultAddrKR.SignDetached(crypto.NewPlainMessage(material.Passphrase))
+	detachedSig, err := d.state.defaultAddrKR.SignDetached(crypto.NewPlainMessage(material.Passphrase))
 	if err != nil {
 		return "", "", "", err
 	}
-	signatureDataPacket, err := material.PassphraseSessionKey.Encrypt(crypto.NewPlainMessage(detachedSignature.GetBinary()))
+	sigDataPacket, err := material.PassphraseSessionKey.Encrypt(crypto.NewPlainMessage(detachedSig.GetBinary()))
 	if err != nil {
 		return "", "", "", err
 	}
-	keyPacket, err := destinationKR.EncryptSessionKey(material.PassphraseSessionKey)
+	keyPacket, err := destKR.EncryptSessionKey(material.PassphraseSessionKey)
 	if err != nil {
 		return "", "", "", err
 	}
-	enc, err := crypto.NewPGPSplitMessage(keyPacket, messageDataPacket).GetArmored()
+	passphraseArm, err := crypto.NewPGPSplitMessage(keyPacket, dataPacket).GetArmored()
 	if err != nil {
 		return "", "", "", err
 	}
-	armoredSig, err := crypto.NewPGPSplitMessage(keyPacket, signatureDataPacket).GetArmored()
+	sigArm, err := crypto.NewPGPSplitMessage(keyPacket, sigDataPacket).GetArmored()
 	if err != nil {
 		return "", "", "", err
 	}
-	return enc, armoredSig, d.signatureAddress(), nil
+	return passphraseArm, sigArm, d.signatureAddress(), nil
 }
 
-func (d *standaloneDriver) reencryptNodeName(linkID, name string, destinationKR *crypto.KeyRing) (string, error) {
+// reencryptNodeName re-encrypts a node's name for a new destination keyring.
+func (d *standaloneDriver) reencryptNodeName(linkID, name string, destKR *crypto.KeyRing) (string, error) {
 	material, ok := d.getStoredNodeSecrets(linkID)
 	if !ok || material.NameSessionKey == nil {
-		return getEncryptedName(name, d.state.defaultAddrKR, destinationKR)
+		return getEncryptedName(name, d.state.defaultAddrKR, destKR)
 	}
-	message, err := material.NameSessionKey.EncryptAndSign(crypto.NewPlainMessageFromString(name), d.state.defaultAddrKR)
+	encMsg, err := material.NameSessionKey.EncryptAndSign(crypto.NewPlainMessageFromString(name), d.state.defaultAddrKR)
 	if err != nil {
 		return "", err
 	}
-	split, err := crypto.NewPGPMessage(message).SplitMessage()
+	split, err := crypto.NewPGPMessage(encMsg).SplitMessage()
 	if err != nil {
 		return "", err
 	}
-	keyPacket, err := destinationKR.EncryptSessionKey(material.NameSessionKey)
+	keyPacket, err := destKR.EncryptSessionKey(material.NameSessionKey)
 	if err != nil {
 		return "", err
 	}
-	pgp := crypto.NewPGPSplitMessage(keyPacket, split.GetBinaryDataPacket())
-	return pgp.GetArmored()
+	return crypto.NewPGPSplitMessage(keyPacket, split.GetBinaryDataPacket()).GetArmored()
 }
 
+// signatureAddress returns the email address to use for PGP signatures on
+// drive operations. Prefers the share creator, falls back to the first enabled
+// address.
 func (d *standaloneDriver) signatureAddress() string {
 	if d.state != nil && d.state.mainShare.Creator != "" {
 		return d.state.mainShare.Creator
@@ -573,37 +603,43 @@ func (d *standaloneDriver) signatureAddress() string {
 	return ""
 }
 
-func (d *standaloneDriver) generateNodeMaterial(parentKR *crypto.KeyRing) (string, *nodeSecretMaterial, string, string, *crypto.KeyRing, error) {
+// generateNodeMaterial creates all the cryptographic material needed for a new
+// node: key pair, passphrase session key, name session key, encrypted
+// passphrase, and unlocked keyring.
+func (d *standaloneDriver) generateNodeMaterial(parentKR *crypto.KeyRing) (nodeKey string, secrets *nodeSecretMaterial, passphraseEnc, passphraseSig string, nodeKR *crypto.KeyRing, err error) {
 	passphrase, keyArmored, err := generateCryptoKey()
 	if err != nil {
-		return "", nil, "", "", nil, err
+		return
 	}
 	passphraseSK, err := generateSessionKey()
 	if err != nil {
-		return "", nil, "", "", nil, err
+		return
 	}
 	nameSK, err := generateSessionKey()
 	if err != nil {
-		return "", nil, "", "", nil, err
+		return
 	}
-	passphraseEnc, passphraseSig, err := encryptWithSignature(parentKR, d.state.defaultAddrKR, []byte(passphrase))
+	passphraseEnc, passphraseSig, err = encryptWithSignature(parentKR, d.state.defaultAddrKR, []byte(passphrase))
 	if err != nil {
-		return "", nil, "", "", nil, err
+		return
 	}
-	keyring, err := getKeyRing(parentKR, d.state.defaultAddrKR, keyArmored, passphraseEnc, passphraseSig)
+	nodeKR, err = getKeyRing(parentKR, d.state.defaultAddrKR, keyArmored, passphraseEnc, passphraseSig)
 	if err != nil {
-		return "", nil, "", "", nil, err
+		return
 	}
-	return keyArmored, &nodeSecretMaterial{Passphrase: []byte(passphrase), PassphraseSessionKey: passphraseSK, NameSessionKey: nameSK}, passphraseEnc, passphraseSig, keyring, nil
+	nodeKey = keyArmored
+	secrets = &nodeSecretMaterial{Passphrase: []byte(passphrase), PassphraseSessionKey: passphraseSK, NameSessionKey: nameSK}
+	return
 }
 
-func bootstrapDriveState(ctx context.Context, manager *proton.Manager, client *proton.Client, user proton.User, addresses []proton.Address, userKR *crypto.KeyRing, addrKRs map[string]*crypto.KeyRing, saltedKeyPass []byte) (*driveState, error) {
+// bootstrapDriveState initializes the authenticated drive state by fetching the
+// active volume, main share, root link, and building the necessary keyrings.
+func bootstrapDriveState(ctx context.Context, client *proton.Client, user proton.User, addresses []proton.Address, userKR *crypto.KeyRing, addrKRs map[string]*crypto.KeyRing, saltedKeyPass []byte) (*driveState, error) {
 	volumes, err := client.ListVolumes(ctx)
 	if err != nil {
 		return nil, err
 	}
-	mainShareID := ""
-	activeVolumeID := ""
+	var activeVolumeID, mainShareID string
 	for _, volume := range volumes {
 		if volume.State == proton.VolumeStateActive {
 			activeVolumeID = volume.VolumeID
@@ -630,7 +666,6 @@ func bootstrapDriveState(ctx context.Context, manager *proton.Manager, client *p
 	if err != nil {
 		return nil, err
 	}
-	_ = manager
 	return &driveState{
 		volumeID:         activeVolumeID,
 		user:             user,
@@ -646,692 +681,7 @@ func bootstrapDriveState(ctx context.Context, manager *proton.Manager, client *p
 	}, nil
 }
 
-func nodeFromLink(link proton.Link, name string) Node {
-	nodeType := NodeTypeFile
-	if link.Type == proton.LinkTypeFolder {
-		nodeType = NodeTypeFolder
-	}
-	return Node{
-		ID:           link.LinkID,
-		ParentID:     link.ParentLinkID,
-		Name:         name,
-		Type:         nodeType,
-		Size:         link.Size,
-		MIMEType:     link.MIMEType,
-		ModTime:      time.Unix(link.ModifyTime, 0),
-		CreateTime:   time.Unix(link.CreateTime, 0),
-		OriginalSHA1: "",
-	}
-}
-
-func generatePassphrase() (string, error) {
-	token, err := crypto.RandomToken(32)
-	if err != nil {
-		return "", err
-	}
-	return base64.StdEncoding.EncodeToString(token), nil
-}
-
-func generateSessionKey() (*crypto.SessionKey, error) {
-	return crypto.GenerateSessionKey()
-}
-
-func generateCryptoKey() (string, string, error) {
-	passphrase, err := generatePassphrase()
-	if err != nil {
-		return "", "", err
-	}
-	armored, err := helper.GenerateKey("Drive key", "noreply@protonmail.com", []byte(passphrase), "x25519", 0)
-	if err != nil {
-		return "", "", err
-	}
-	return passphrase, armored, nil
-}
-
-func encryptWithSignature(kr, addrKR *crypto.KeyRing, data []byte) (string, string, error) {
-	enc, err := kr.Encrypt(crypto.NewPlainMessage(data), nil)
-	if err != nil {
-		return "", "", err
-	}
-	encArm, err := enc.GetArmored()
-	if err != nil {
-		return "", "", err
-	}
-	sig, err := addrKR.SignDetached(crypto.NewPlainMessage(data))
-	if err != nil {
-		return "", "", err
-	}
-	sigArm, err := sig.GetArmored()
-	if err != nil {
-		return "", "", err
-	}
-	return encArm, sigArm, nil
-}
-
-func getKeyRing(kr, addrKR *crypto.KeyRing, key, passphrase, passphraseSignature string) (*crypto.KeyRing, error) {
-	enc, err := crypto.NewPGPMessageFromArmored(passphrase)
-	if err != nil {
-		return nil, err
-	}
-	dec, err := kr.Decrypt(enc, nil, crypto.GetUnixTime())
-	if err != nil {
-		return nil, err
-	}
-	sig, err := crypto.NewPGPSignatureFromArmored(passphraseSignature)
-	if err != nil {
-		return nil, err
-	}
-	if err := addrKR.VerifyDetached(dec, sig, crypto.GetUnixTime()); err != nil {
-		return nil, err
-	}
-	lockedKey, err := crypto.NewKeyFromArmored(key)
-	if err != nil {
-		return nil, err
-	}
-	unlockedKey, err := lockedKey.Unlock(dec.GetBinary())
-	if err != nil {
-		return nil, err
-	}
-	return crypto.NewKeyRing(unlockedKey)
-}
-
-func mustEncryptArmored(kr *crypto.KeyRing, data []byte) string {
-	enc, err := kr.Encrypt(crypto.NewPlainMessage(data), nil)
-	if err != nil {
-		panic(err)
-	}
-	armored, err := enc.GetArmored()
-	if err != nil {
-		panic(err)
-	}
-	return armored
-}
-
-func encryptNodeHashKey(nodeKR *crypto.KeyRing) (string, error) {
-	token, err := crypto.RandomToken(32)
-	if err != nil {
-		return "", err
-	}
-	enc, err := nodeKR.Encrypt(crypto.NewPlainMessage(token), nodeKR)
-	if err != nil {
-		return "", err
-	}
-	return enc.GetArmored()
-}
-
-func getNameHash(name string, hashKey []byte) string {
-	h := hmac.New(sha256.New, hashKey)
-	_, _ = h.Write([]byte(name))
-	return hex.EncodeToString(h.Sum(nil))
-}
-
-func (d *standaloneDriver) getRevisionAttrs(ctx context.Context, nodeID string) (RevisionAttrs, error) {
-	link, err := d.getLink(ctx, nodeID)
-	if err != nil {
-		return RevisionAttrs{}, err
-	}
-	if link.Type != proton.LinkTypeFile {
-		return RevisionAttrs{}, fmt.Errorf("link %s is not a file", nodeID)
-	}
-	activeRevision, err := d.getActiveRevisionMetadata(ctx, link)
-	if err != nil {
-		return RevisionAttrs{}, err
-	}
-	attrs := RevisionAttrs{
-		Size:          activeRevision.Size,
-		ModTime:       time.Unix(link.ModifyTime, 0),
-		Digests:       map[string]string{},
-		BlockSizes:    nil,
-		EncryptedSize: link.Size,
-	}
-	revision, err := d.getRevisionAllBlocks(ctx, link.LinkID, activeRevision.ID)
-	if err != nil {
-		return RevisionAttrs{}, err
-	}
-	attrs.BlockSizes = make([]int64, 0, len(revision.Blocks))
-	for range revision.Blocks {
-		attrs.BlockSizes = append(attrs.BlockSizes, 4*1024*1024)
-	}
-	if len(attrs.BlockSizes) > 0 {
-		remaining := attrs.Size
-		for i := range attrs.BlockSizes {
-			if remaining <= 0 {
-				attrs.BlockSizes[i] = 0
-				continue
-			}
-			if remaining < attrs.BlockSizes[i] {
-				attrs.BlockSizes[i] = remaining
-			}
-			remaining -= attrs.BlockSizes[i]
-		}
-	}
-	return attrs, nil
-}
-
-func (d *standaloneDriver) getActiveRevisionMetadata(ctx context.Context, link proton.Link) (proton.RevisionMetadata, error) {
-	revisions, err := d.client.ListRevisions(ctx, d.state.mainShare.ShareID, link.LinkID)
-	if err != nil {
-		return proton.RevisionMetadata{}, err
-	}
-	var active *proton.RevisionMetadata
-	for i := range revisions {
-		if revisions[i].State == proton.RevisionStateActive {
-			if active != nil {
-				return proton.RevisionMetadata{}, fmt.Errorf("multiple active revisions for %s", link.LinkID)
-			}
-			active = &revisions[i]
-		}
-	}
-	if active == nil {
-		return proton.RevisionMetadata{}, fmt.Errorf("no active revision for %s", link.LinkID)
-	}
-	return *active, nil
-}
-
-func (d *standaloneDriver) getRevisionAllBlocks(ctx context.Context, linkID, revisionID string) (proton.Revision, error) {
-	const pageSize = 150
-	fromBlock := 1
-	var full proton.Revision
-	for {
-		revision, err := d.client.GetRevision(ctx, d.state.mainShare.ShareID, linkID, revisionID, fromBlock, pageSize)
-		if err != nil {
-			return proton.Revision{}, err
-		}
-		if fromBlock == 1 {
-			full.RevisionMetadata = revision.RevisionMetadata
-		}
-		full.Blocks = append(full.Blocks, revision.Blocks...)
-		if len(revision.Blocks) < pageSize {
-			break
-		}
-		fromBlock = len(full.Blocks) + 1
-	}
-	return full, nil
-}
-
-type fileDownloadReader struct {
-	driver     *standaloneDriver
-	ctx        context.Context
-	link       *proton.Link
-	data       *bytes.Buffer
-	nodeKR     *crypto.KeyRing
-	sessionKey *crypto.SessionKey
-	revision   *proton.Revision
-	nextBlock  int
-	isEOF      bool
-}
-
-func (r *fileDownloadReader) Read(p []byte) (int, error) {
-	if r.data.Len() == 0 {
-		r.data = bytes.NewBuffer(nil)
-		if err := r.populate(); err != nil {
-			return 0, err
-		}
-		if r.isEOF {
-			return 0, io.EOF
-		}
-	}
-	return r.data.Read(p)
-}
-
-func (r *fileDownloadReader) Close() error {
-	r.driver = nil
-	return nil
-}
-
-func (r *fileDownloadReader) populate() error {
-	if r.revision == nil || len(r.revision.Blocks) == 0 || r.nextBlock >= len(r.revision.Blocks) {
-		r.isEOF = true
-		return nil
-	}
-	block := r.revision.Blocks[r.nextBlock]
-	blockReader, err := r.driver.client.GetBlock(r.ctx, block.BareURL, block.Token)
-	if err != nil {
-		return err
-	}
-	defer blockReader.Close()
-	verificationKR, err := r.driver.buildSignatureVerificationKR([]string{block.SignatureEmail}, r.nodeKR)
-	if err != nil {
-		return err
-	}
-	if err := decryptBlockIntoBuffer(r.sessionKey, verificationKR, r.nodeKR, block.Hash, block.EncSignature, r.data, blockReader); err != nil {
-		return err
-	}
-	r.nextBlock++
-	return nil
-}
-
-func (d *standaloneDriver) buildSignatureVerificationKR(emails []string, extra ...*crypto.KeyRing) (*crypto.KeyRing, error) {
-	ret, err := crypto.NewKeyRing(nil)
-	if err != nil {
-		return nil, err
-	}
-	for _, email := range emails {
-		for _, address := range d.state.addresses {
-			if address.Email != email {
-				continue
-			}
-			if kr := d.state.addrKRs[address.ID]; kr != nil {
-				if err := addKeysFromKR(ret, kr); err != nil {
-					return nil, err
-				}
-			}
-		}
-	}
-	if err := addKeysFromKR(ret, extra...); err != nil {
-		return nil, err
-	}
-	if ret.CountEntities() == 0 {
-		return nil, fmt.Errorf("no keys available for signature verification")
-	}
-	return ret, nil
-}
-
-func addKeysFromKR(kr *crypto.KeyRing, newKRs ...*crypto.KeyRing) error {
-	for _, newKR := range newKRs {
-		if newKR == nil {
-			continue
-		}
-		for _, key := range newKR.GetKeys() {
-			if err := kr.AddKey(key); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func decryptBlockIntoBuffer(sessionKey *crypto.SessionKey, addrKR, nodeKR *crypto.KeyRing, originalHash, encSignature string, buffer io.Writer, block io.ReadCloser) error {
-	data, err := io.ReadAll(block)
-	if err != nil {
-		return err
-	}
-	plainMessage, err := sessionKey.Decrypt(data)
-	if err != nil {
-		return err
-	}
-	encSignatureArm, err := crypto.NewPGPMessageFromArmored(encSignature)
-	if err != nil {
-		return err
-	}
-	if err := addrKR.VerifyDetachedEncrypted(plainMessage, encSignatureArm, nodeKR, crypto.GetUnixTime()); err != nil {
-		return err
-	}
-	if _, err := io.Copy(buffer, plainMessage.NewReader()); err != nil {
-		return err
-	}
-	h := sha256.New()
-	h.Write(data)
-	if base64.StdEncoding.EncodeToString(h.Sum(nil)) != originalHash {
-		return fmt.Errorf("downloaded block hash verification failed")
-	}
-	return nil
-}
-
-func locateBlockOffset(blockSizes []int64, offset int64) (int, int64, error) {
-	if offset < 0 {
-		return 0, 0, fmt.Errorf("offset must be non-negative")
-	}
-	cumulative := int64(0)
-	for i, size := range blockSizes {
-		if offset < cumulative+size {
-			return i, offset - cumulative, nil
-		}
-		cumulative += size
-	}
-	if offset == cumulative {
-		return len(blockSizes), 0, nil
-	}
-	return 0, 0, io.EOF
-}
-
-func decryptLinkName(link proton.Link, parentKR, verificationKR *crypto.KeyRing) (string, error) {
-	name, err := link.GetName(parentKR, verificationKR)
-	if err == nil {
-		return name, nil
-	}
-	encName, parseErr := crypto.NewPGPMessageFromArmored(link.Name)
-	if parseErr != nil {
-		return "", err
-	}
-	decName, decryptErr := parentKR.Decrypt(encName, nil, crypto.GetUnixTime())
-	if decryptErr != nil {
-		return "", err
-	}
-	return decName.GetString(), nil
-}
-
-func (d *standaloneDriver) uploadFile(ctx context.Context, parentID, name string, body io.Reader, options UploadOptions) (Node, RevisionAttrs, error) {
-	parent, err := d.getLink(ctx, parentID)
-	if err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	mimeType := options.MediaType
-	if mimeType == "" {
-		mimeType = mime.TypeByExtension(filepath.Ext(name))
-	}
-	if mimeType == "" {
-		mimeType = "application/octet-stream"
-	}
-	if options.KnownSize >= 0 && options.KnownSize <= 4*1024*1024 {
-		return d.uploadSmallFileFlow(ctx, parent, parentID, name, mimeType, body, options)
-	}
-	linkID, revisionID, sessionKey, nodeKR, err := d.createFileUploadDraftV2(ctx, parent, name, mimeType, options.KnownSize)
-	if err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	manifestSignatureData, fileSize, blockSizes, sha1Digest, blockTokens, err := d.uploadAndCollectBlockData(ctx, sessionKey, nodeKR, body, linkID, revisionID)
-	if err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	modTime := options.ModTime
-	if modTime.IsZero() {
-		modTime = time.Now().UTC()
-	}
-	xAttrCommon := &revisionXAttrCommon{
-		ModificationTime: modTime.Format("2006-01-02T15:04:05-0700"),
-		Size:             fileSize,
-		BlockSizes:       blockSizes,
-		Digests: map[string]string{
-			"SHA1": sha1Digest,
-		},
-	}
-	_ = xAttrCommon
-	if err := d.commitNewRevision(ctx, nodeKR, xAttrCommon, manifestSignatureData, linkID, revisionID, blockTokens); err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	d.ClearCache()
-	node := Node{ID: linkID, ParentID: parentID, Name: name, Type: NodeTypeFile, Size: fileSize, MIMEType: mimeType, ModTime: modTime, CreateTime: time.Now().UTC(), OriginalSHA1: sha1Digest}
-	attrs := RevisionAttrs{Size: fileSize, ModTime: modTime, Digests: map[string]string{"SHA1": sha1Digest}, BlockSizes: blockSizes, EncryptedSize: fileSize}
-	return node, attrs, nil
-}
-
-func (d *standaloneDriver) uploadSmallFileFlow(ctx context.Context, parent proton.Link, parentID, name, mimeType string, body io.Reader, options UploadOptions) (Node, RevisionAttrs, error) {
-	parentKR, err := d.getLinkKR(ctx, parent)
-	if err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	newNodeKey, nodeSecrets, newNodePassphraseEnc, newNodePassphraseSignature, newNodeKR, err := d.generateNodeMaterial(parentKR)
-	if err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	parentHashKey, err := parent.GetHashKey(parentKR)
-	if err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	contentSessionKey, contentKeyPacket, contentKeyPacketSignature, err := createContentKeyPacketAndSignature(newNodeKR)
-	if err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	content, err := io.ReadAll(body)
-	if err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	if options.KnownSize >= 0 && int64(len(content)) != options.KnownSize {
-		return Node{}, RevisionAttrs{}, fmt.Errorf("content size %d does not match expected size %d", len(content), options.KnownSize)
-	}
-	plain := crypto.NewPlainMessage(content)
-	encryptedBlock, err := contentSessionKey.Encrypt(plain)
-	if err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	armoredBlockSignature, err := signEncryptedBlock(d.state.defaultAddrKR, plain, newNodeKR)
-	if err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	contentKeyPacketBytes, err := base64.StdEncoding.DecodeString(contentKeyPacket)
-	if err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	var verificationCode []byte
-	if len(contentKeyPacketBytes) >= 32 {
-		verificationCode = contentKeyPacketBytes[len(contentKeyPacketBytes)-32:]
-	} else {
-		verificationCode = contentKeyPacketBytes
-	}
-	verificationToken := computeVerificationToken(verificationCode, encryptedBlock)
-	sha256Digest := sha256.Sum256(encryptedBlock)
-	sha1Digest := sha1.Sum(content)
-	modTime := options.ModTime
-	if modTime.IsZero() {
-		modTime = time.Now().UTC()
-	}
-	xAttrCommon := &revisionXAttrCommon{
-		ModificationTime: modTime.Format("2006-01-02T15:04:05-0700"),
-		Size:             int64(len(content)),
-		BlockSizes:       []int64{int64(len(content))},
-		Digests: map[string]string{
-			"SHA1": hex.EncodeToString(sha1Digest[:]),
-		},
-	}
-	manifestSignatureData := sha256Digest[:]
-	manifestSignature, err := d.state.defaultAddrKR.SignDetached(crypto.NewPlainMessage(manifestSignatureData))
-	if err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	manifestSignatureString, err := manifestSignature.GetArmored()
-	if err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	commitReq := commitRevisionReq{ManifestSignature: manifestSignatureString, SignatureAddress: d.signatureAddress()}
-	if err := commitReq.setEncXAttrString(d.state.defaultAddrKR, newNodeKR, xAttrCommon); err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	resp, err := d.uploadSmallFile(ctx, smallFileMetadata{
-		ParentLinkID:                  parent.LinkID,
-		Name:                          mustEncryptArmored(parentKR, []byte(name)),
-		NameHash:                      getNameHash(name, parentHashKey),
-		NodePassphrase:                newNodePassphraseEnc,
-		NodePassphraseSignature:       newNodePassphraseSignature,
-		SignatureEmail:                d.signatureAddress(),
-		NodeKey:                       newNodeKey,
-		MIMEType:                      mimeType,
-		ContentKeyPacket:              contentKeyPacket,
-		ContentKeyPacketSignature:     contentKeyPacketSignature,
-		ManifestSignature:             commitReq.ManifestSignature,
-		ContentBlockEncSignature:      armoredBlockSignature,
-		ContentBlockVerificationToken: base64.StdEncoding.EncodeToString(verificationToken),
-		XAttr:                         commitReq.XAttr,
-		Photo:                         nil,
-	}, encryptedBlock)
-	if err != nil {
-		return Node{}, RevisionAttrs{}, err
-	}
-	d.storeNodeSecrets(resp.LinkID, nodeSecrets)
-	d.ClearCache()
-	node := Node{ID: resp.LinkID, ParentID: parentID, Name: name, Type: NodeTypeFile, Size: int64(len(content)), MIMEType: mimeType, ModTime: modTime, CreateTime: time.Now().UTC(), OriginalSHA1: hex.EncodeToString(sha1Digest[:])}
-	attrs := RevisionAttrs{Size: int64(len(content)), ModTime: modTime, Digests: map[string]string{"SHA1": hex.EncodeToString(sha1Digest[:])}, BlockSizes: []int64{int64(len(content))}, EncryptedSize: int64(len(content))}
-	return node, attrs, nil
-}
-
-func computeVerificationToken(verificationCode []byte, encryptedData []byte) []byte {
-	token := make([]byte, len(verificationCode))
-	for i := range verificationCode {
-		if i < len(encryptedData) {
-			token[i] = verificationCode[i] ^ encryptedData[i]
-		} else {
-			token[i] = verificationCode[i]
-		}
-	}
-	return token
-}
-
-func signEncryptedBlock(signingKR *crypto.KeyRing, plain *crypto.PlainMessage, nodeKR *crypto.KeyRing) (string, error) {
-	encSignature, err := signingKR.SignDetachedEncrypted(plain, nodeKR)
-	if err != nil {
-		return "", err
-	}
-	return encSignature.GetArmored()
-}
-
-func mustEncryptSessionKeyPacket(nodeKR *crypto.KeyRing, sessionKey *crypto.SessionKey) []byte {
-	packet, err := nodeKR.EncryptSessionKey(sessionKey)
-	if err != nil {
-		panic(err)
-	}
-	return packet
-}
-
-func (d *standaloneDriver) createFileUploadDraftV2(ctx context.Context, parent proton.Link, filename, mimeType string, intendedSize int64) (string, string, *crypto.SessionKey, *crypto.KeyRing, error) {
-	parentKR, err := d.getLinkKR(ctx, parent)
-	if err != nil {
-		return "", "", nil, nil, err
-	}
-	newNodeKey, _, newNodePassphraseEnc, newNodePassphraseSignature, newNodeKR, err := d.generateNodeMaterial(parentKR)
-	if err != nil {
-		return "", "", nil, nil, err
-	}
-	parentHashKey, err := parent.GetHashKey(parentKR)
-	if err != nil {
-		return "", "", nil, nil, err
-	}
-	contentSessionKey, contentKeyPacket, contentKeyPacketSignature, err := createContentKeyPacketAndSignature(newNodeKR)
-	if err != nil {
-		return "", "", nil, nil, err
-	}
-	var intendedUploadSize *int64
-	if intendedSize > 0 {
-		size := intendedSize
-		intendedUploadSize = &size
-	}
-	createFileResp, err := d.createDraftFile(ctx, draftFileReq{
-		ParentLinkID:              parent.LinkID,
-		Name:                      mustEncryptArmored(parentKR, []byte(filename)),
-		Hash:                      getNameHash(filename, parentHashKey),
-		MIMEType:                  mimeType,
-		ClientUID:                 nil,
-		IntendedUploadSize:        intendedUploadSize,
-		NodeKey:                   newNodeKey,
-		NodePassphrase:            newNodePassphraseEnc,
-		NodePassphraseSignature:   newNodePassphraseSignature,
-		ContentKeyPacket:          contentKeyPacket,
-		ContentKeyPacketSignature: contentKeyPacketSignature,
-		SignatureAddress:          d.signatureAddress(),
-	})
-	if err != nil {
-		return "", "", nil, nil, err
-	}
-	return createFileResp.File.ID, createFileResp.File.RevisionID, contentSessionKey, newNodeKR, nil
-}
-
-func (d *standaloneDriver) uploadAndCollectBlockData(ctx context.Context, sessionKey *crypto.SessionKey, nodeKR *crypto.KeyRing, file io.Reader, linkID, revisionID string) ([]byte, int64, []int64, string, []proton.BlockToken, error) {
-	const uploadBlockSize = 4 * 1024 * 1024
-	verificationInput, err := d.getVerificationInput(ctx, linkID, revisionID)
-	if err != nil {
-		return nil, 0, nil, "", nil, fmt.Errorf("fetch verification input: %w", err)
-	}
-	verificationCode, err := base64.StdEncoding.DecodeString(verificationInput.VerificationCode)
-	if err != nil {
-		return nil, 0, nil, "", nil, fmt.Errorf("decode verification code: %w", err)
-	}
-	type pendingUploadBlock struct {
-		index        int
-		size         int64
-		encSignature string
-		hash         []byte
-		verifier     []byte
-		encData      []byte
-	}
-	totalFileSize := int64(0)
-	manifestSignatureData := make([]byte, 0)
-	pending := make([]pendingUploadBlock, 0)
-	sha1Digests := sha1.New()
-	blockSizes := make([]int64, 0)
-	tokens := make([]proton.BlockToken, 0)
-	for index := 1; ; index++ {
-		data := make([]byte, uploadBlockSize)
-		readBytes, err := io.ReadFull(file, data)
-		if err != nil {
-			if err == io.EOF || err == io.ErrUnexpectedEOF {
-				if readBytes == 0 {
-					break
-				}
-				data = data[:readBytes]
-			} else {
-				return nil, 0, nil, "", nil, err
-			}
-		} else {
-			data = data[:readBytes]
-		}
-		totalFileSize += int64(len(data))
-		sha1Digests.Write(data)
-		blockSizes = append(blockSizes, int64(len(data)))
-		plain := crypto.NewPlainMessage(data)
-		encData, err := sessionKey.EncryptAndSign(plain, d.state.defaultAddrKR)
-		if err != nil {
-			return nil, 0, nil, "", nil, err
-		}
-		signature, err := d.state.defaultAddrKR.SignDetached(plain)
-		if err != nil {
-			return nil, 0, nil, "", nil, err
-		}
-		signaturePlaintext := crypto.NewPlainMessage(signature.GetBinary())
-		signatureDataPacket, err := sessionKey.Encrypt(signaturePlaintext)
-		if err != nil {
-			return nil, 0, nil, "", nil, err
-		}
-		keyPacket, err := nodeKR.EncryptSessionKey(sessionKey)
-		if err != nil {
-			return nil, 0, nil, "", nil, err
-		}
-		encryptedSignatureMessage := crypto.NewPGPSplitMessage(keyPacket, signatureDataPacket)
-		encSignatureArmored, err := encryptedSignatureMessage.GetArmored()
-		if err != nil {
-			return nil, 0, nil, "", nil, err
-		}
-		verificationToken := computeVerificationToken(verificationCode, encData)
-		h := sha256.New()
-		h.Write(encData)
-		hash := h.Sum(nil)
-		manifestSignatureData = append(manifestSignatureData, hash...)
-		pending = append(pending, pendingUploadBlock{index: index, size: int64(len(encData)), encSignature: encSignatureArmored, hash: append([]byte(nil), hash...), verifier: verificationToken, encData: encData})
-	}
-	if len(pending) == 0 {
-		return nil, 0, nil, "", nil, nil
-	}
-	request := blockUploadReqV2{
-		AddressID:     d.state.mainShare.AddressID,
-		VolumeID:      d.state.volumeID,
-		LinkID:        linkID,
-		RevisionID:    revisionID,
-		BlockList:     make([]blockUploadInfoV2, 0, len(pending)),
-		ThumbnailList: []any{},
-	}
-	for _, item := range pending {
-		request.BlockList = append(request.BlockList, blockUploadInfoV2{
-			Index:        item.index,
-			Size:         item.size,
-			EncSignature: item.encSignature,
-			Hash:         item.hash,
-			Verifier:     blockUploadVerifier{Token: base64.StdEncoding.EncodeToString(item.verifier)},
-		})
-	}
-	blockUploadResp, err := d.requestBlockUploadV2(ctx, request)
-	if err != nil {
-		return nil, 0, nil, "", nil, err
-	}
-	if len(blockUploadResp.UploadLinks) != len(pending) {
-		return nil, 0, nil, "", nil, fmt.Errorf("unexpected block upload target count: got %d want %d", len(blockUploadResp.UploadLinks), len(pending))
-	}
-	for i := range blockUploadResp.UploadLinks {
-		if err := d.client.UploadBlock(ctx, blockUploadResp.UploadLinks[i].BareURL, blockUploadResp.UploadLinks[i].Token, byteMultipartStream(pending[i].encData)); err != nil {
-			return nil, 0, nil, "", nil, err
-		}
-		tokens = append(tokens, proton.BlockToken{Index: pending[i].index, Token: blockUploadResp.UploadLinks[i].Token})
-	}
-	return manifestSignatureData, totalFileSize, blockSizes, hex.EncodeToString(sha1Digests.Sum(nil)), tokens, nil
-}
-
-func (d *standaloneDriver) commitNewRevision(ctx context.Context, nodeKR *crypto.KeyRing, xAttrCommon *revisionXAttrCommon, manifestSignatureData []byte, linkID, revisionID string, blockTokens []proton.BlockToken) error {
-	manifestSignature, err := d.state.defaultAddrKR.SignDetached(crypto.NewPlainMessage(manifestSignatureData))
-	if err != nil {
-		return err
-	}
-	manifestSignatureString, err := manifestSignature.GetArmored()
-	if err != nil {
-		return err
-	}
-	_ = nodeKR
-	_ = xAttrCommon
-	return d.client.UpdateRevision(ctx, d.state.mainShare.ShareID, linkID, revisionID, proton.UpdateRevisionReq{BlockList: blockTokens, State: proton.RevisionStateActive, ManifestSignature: manifestSignatureString, SignatureAddress: d.signatureAddress()})
+// detectMIMEType guesses the MIME type from a filename's extension.
+func detectMIMEType(filename string) string {
+	return mime.TypeByExtension(filepath.Ext(filename))
 }
