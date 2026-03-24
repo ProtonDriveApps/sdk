@@ -1,0 +1,13 @@
+{
+  "username": "your-proton-username",
+  "password": "your-proton-password",
+  "mailbox_password": "optional-mailbox-password",
+  "two_factor_code": "optional-2fa-code",
+  "app_version": "external-drive-rclone@1.0.0",
+  "user_agent": "rclone/protondrive-sdk-integration",
+  "enable_caching": false,
+  "replace_existing_draft": true,
+  "expected_root_id": "",
+  "test_folder_id": "",
+  "test_file_id": ""
+}

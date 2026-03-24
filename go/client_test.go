@@ -74,3 +74,20 @@ func TestSessionValidity(t *testing.T) {
 		t.Fatal("expected session to be valid")
 	}
 }
+
+func TestNewDialerCreatesStandaloneDriver(t *testing.T) {
+	client, err := NewClient(context.Background(), NewDialer(), LoginOptions{
+		Username:   "user",
+		Password:   "pass",
+		AppVersion: "external-drive-rclone@1.0.0",
+	}, SessionHooks{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if client.Session().UID != "user" {
+		t.Fatalf("expected username-backed placeholder session, got %#v", client.Session())
+	}
+	if _, err := client.About(context.Background()); !errors.Is(err, ErrNotImplemented) {
+		t.Fatalf("expected ErrNotImplemented from standalone driver, got %v", err)
+	}
+}

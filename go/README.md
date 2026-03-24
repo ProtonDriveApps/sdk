@@ -14,36 +14,26 @@ What is implemented now:
 
 - the public API contracts for sessions, login/resume options, filesystem operations, and hooks
 - a `Client` wrapper that centralizes validation and session/deauth hook behavior
+- a package-owned standalone `Dialer` and placeholder `Driver` in `go/dialer.go` and `go/standalone_driver.go`
 - test doubles to make the package easy to integrate and evolve safely
-- an optional transitional `BridgeDialer` implementation behind the `protonbridge` build tag that adapts the current `github.com/rclone/Proton-API-Bridge` package to this narrower API
-- bridge-specific config, session, node, and revision conversion helpers that isolate bridge details from the public package surface
+- integration credentials loading and an integration test harness scaffold in `go/integration_config.go` and `go/integration_test.go`
+- a compatibility checklist and integration test plan in `go/COMPATIBILITY.md` and `go/INTEGRATION.md`
 
 What is intentionally not implemented yet:
 
-- a native implementation that replaces `Proton-API-Bridge`
-- dependency reduction work to peel the package off bridge-era mail and crypto transitive dependencies
-- cache implementation owned directly by this package instead of the transitional bridge backend
-
-Transitional adapter boundary:
-
-- `go/bridge_proton.go` keeps the bridge-backed `Dialer` and `Driver` wiring only
-- `go/bridge_adapter.go` keeps bridge-specific config, session, node, and revision conversion logic only
-- the long-term replacement plan is to swap the helper logic in `go/bridge_adapter.go` for package-owned implementations without changing the public `Client` API
+- real Proton authentication and reusable session refresh
+- real root/share discovery and encrypted metadata traversal
+- encrypted uploads, downloads, and revision handling
+- package-owned cache semantics aligned with rclone mutations
 
 Planned implementation order:
 
-1. validate rclone compatibility using the transitional bridge-backed dialer
-2. move login/session bootstrap behind package-owned interfaces and tests
-3. replace bridge-backed operations incrementally with package-owned implementations
-4. own revision attrs plus streaming offset downloads directly
-5. own uploads and cache invalidation directly
+1. implement real session bootstrap and session refresh against Proton APIs
+2. implement root/share discovery and directory traversal
+3. implement revision attrs and offset-based streaming downloads
+4. implement known-size uploads and server-side mutations
+5. add integration coverage with real credentials and harden cache behavior
 
-The package is being shaped around the operations used today by `rclone/backend/protondrive`, so that a future rclone PR can replace `github.com/rclone/Proton-API-Bridge` with this module incrementally.
+The package is being shaped around the operations used today by `rclone/backend/protondrive`, so that a future rclone PR can replace `Proton-API-Bridge` with this module incrementally.
 
-Using the transitional bridge-backed dialer:
-
-```sh
-go test -tags protonbridge ./...
-```
-
-That build tag is optional. Without it, the package stays dependency-light and `NewBridgeDialer()` returns `ErrBridgeDialerUnavailable`.
+See `go/COMPATIBILITY.md` for the current rclone parity checklist and `go/INTEGRATION.md` for the integration-test plan.
