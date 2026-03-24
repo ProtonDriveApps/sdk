@@ -327,3 +327,87 @@ func TestIntegrationLogout(t *testing.T) {
 		t.Fatalf("expected logout to clear session, got %#v", client.Session())
 	}
 }
+
+func TestIntegrationResume(t *testing.T) {
+	testContext := requireIntegrationTestContext(t)
+	client, err := NewClient(context.Background(), NewDialer(), testContext.Config.LoginOptions(), SessionHooks{})
+	if err != nil {
+		t.Fatalf("unexpected login error: %v", err)
+	}
+	session := client.Session()
+	if !session.Valid() {
+		t.Fatalf("expected valid session after login, got %#v", session)
+	}
+
+	resumedClient, err := NewClientWithSession(context.Background(), NewDialer(), ResumeOptions{
+		Session:    session,
+		BaseURL:    testContext.Config.BaseURL,
+		AppVersion: defaultIntegrationAppVersion,
+	}, SessionHooks{})
+	if err != nil {
+		t.Fatalf("unexpected resume error: %v", err)
+	}
+	if !resumedClient.Session().Valid() {
+		t.Fatalf("expected valid session after resume, got %#v", resumedClient.Session())
+	}
+	usage, err := resumedClient.About(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected about error after resume: %v", err)
+	}
+	if usage.Total < usage.Used {
+		t.Fatalf("expected total >= used after resume, got %+v", usage)
+	}
+}
+
+func TestIntegrationDownloadWithOffset(t *testing.T) {
+	testContext := requireIntegrationTestContext(t)
+	client, err := NewClient(context.Background(), NewDialer(), testContext.Config.LoginOptions(), SessionHooks{})
+	if err != nil {
+		t.Fatalf("unexpected login error: %v", err)
+	}
+	defer client.Logout(context.Background())
+	content := "abcdefghijklmnopqrstuvwxyz0123456789"
+	_, folderID, _ := createIntegrationFolderFixture(t, testContext, client)
+	filename := integrationFileName()
+	node, _, err := client.UploadFile(context.Background(), folderID, filename, strings.NewReader(content), UploadOptions{
+		KnownSize: int64(len(content)),
+		ModTime:   time.Now().UTC(),
+	})
+	if err != nil {
+		t.Fatalf("unexpected upload error: %v", err)
+	}
+	const offset = 10
+	result, err := client.DownloadFile(context.Background(), node.ID, offset)
+	if err != nil {
+		t.Fatalf("unexpected download error: %v", err)
+	}
+	defer result.Reader.Close()
+	data, err := io.ReadAll(result.Reader)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+	expected := content[offset:]
+	if string(data) != expected {
+		t.Fatalf("expected %q at offset %d, got %q", expected, offset, string(data))
+	}
+}
+
+func TestIntegrationSearchChildPositiveMatch(t *testing.T) {
+	testContext := requireIntegrationTestContext(t)
+	client, err := NewClient(context.Background(), NewDialer(), testContext.Config.LoginOptions(), SessionHooks{})
+	if err != nil {
+		t.Fatalf("unexpected login error: %v", err)
+	}
+	defer client.Logout(context.Background())
+	_, folderID, folderName := createIntegrationFolderFixture(t, testContext, client)
+	found, err := client.SearchChild(context.Background(), clientSessionRootID(t, client), folderName, NodeTypeFolder)
+	if err != nil {
+		t.Fatalf("unexpected search error: %v", err)
+	}
+	if found == nil {
+		t.Fatalf("expected to find folder %q", folderName)
+	}
+	if found.ID != folderID {
+		t.Fatalf("expected folder id %s, got %s", folderID, found.ID)
+	}
+}
