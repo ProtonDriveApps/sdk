@@ -42,37 +42,6 @@ func TestStandaloneIntegrationHarnessBootstrapsFromConfig(t *testing.T) {
 	}
 }
 
-func TestCompatibilityCoverageEnumeratesAllRcloneOperations(t *testing.T) {
-	coverage := integrationCoverageChecklist()
-	required := []string{
-		"Login",
-		"RootID",
-		"ListDirectory",
-		"SearchChild",
-		"CreateFolder",
-		"GetRevisionAttrs",
-		"DownloadFile",
-		"UploadFile",
-		"MoveFile",
-		"MoveFolder",
-		"TrashFile",
-		"TrashFolder",
-		"EmptyTrash",
-		"About",
-		"ClearCache",
-		"Logout",
-	}
-
-	for _, operation := range required {
-		if _, ok := coverage[operation]; !ok {
-			t.Fatalf("expected coverage checklist to include %q", operation)
-		}
-	}
-	if len(coverage) != len(required) {
-		t.Fatalf("expected %d checklist items, got %d", len(required), len(coverage))
-	}
-}
-
 func TestIntegrationConfigValidatesCredentialPresence(t *testing.T) {
 	config := IntegrationConfig{}
 	if err := config.Validate(); err == nil {
@@ -84,15 +53,6 @@ func TestIntegrationConfigValidatesCredentialPresence(t *testing.T) {
 	config.Password = "pass"
 	if err := config.Validate(); err != nil {
 		t.Fatalf("unexpected validation error: %v", err)
-	}
-}
-
-func TestIntegrationCoverageChecklistStatuses(t *testing.T) {
-	coverage := integrationCoverageChecklist()
-	for operation, status := range coverage {
-		if !strings.Contains("implemented scaffolded planned", status) {
-			t.Fatalf("unexpected status %q for operation %q", status, operation)
-		}
 	}
 }
 

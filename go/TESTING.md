@@ -32,8 +32,7 @@ Edit the file with your test account details:
 {
   "base_url": "https://mail.proton.me/api",
   "username": "your-username@proton.me",
-  "password": "your-password",
-  "mailbox_password": ""
+  "password": "your-password"
 }
 ```
 

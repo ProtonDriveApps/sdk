@@ -61,27 +61,6 @@ func requireIntegrationClient(t *testing.T, testContext *integrationTestContext)
 	return integrationClient
 }
 
-func integrationCoverageChecklist() map[string]string {
-	return map[string]string{
-		"Login":            "implemented",
-		"RootID":           "implemented",
-		"ListDirectory":    "implemented",
-		"SearchChild":      "implemented",
-		"CreateFolder":     "implemented",
-		"GetRevisionAttrs": "implemented",
-		"DownloadFile":     "implemented",
-		"UploadFile":       "implemented",
-		"MoveFile":         "implemented",
-		"MoveFolder":       "implemented",
-		"TrashFile":        "implemented",
-		"TrashFolder":      "implemented",
-		"EmptyTrash":       "implemented",
-		"About":            "implemented",
-		"ClearCache":       "implemented",
-		"Logout":           "implemented",
-	}
-}
-
 func clientSessionRootID(t *testing.T, client *Client) string {
 	t.Helper()
 	rootID, err := client.RootID(context.Background())

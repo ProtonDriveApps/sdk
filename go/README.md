@@ -12,7 +12,6 @@ dependency line.
 
 - pure Go module with no cgo or native runtime dependencies
 - stable session import/export for credential-free reconnection
-- backend-oriented API suitable for tools like rclone
 - minimal public surface for upstream maintainability
 
 ## What Is Implemented
@@ -29,7 +28,6 @@ dependency line.
 
 ```go
 client, err := protondrive.NewClient(ctx, protondrive.NewDialer(), protondrive.LoginOptions{
-    BaseURL:    "https://mail.proton.me/api",
     Username:   "user@proton.me",
     Password:   "secret",
     AppVersion: "my-app@1.0.0",
@@ -69,4 +67,3 @@ See [go/USAGE.md](USAGE.md) for complete examples covering all operations.
 
 - [go/USAGE.md](USAGE.md) — complete operation examples
 - [go/TESTING.md](TESTING.md) — unit and integration test instructions
-- [go/COMPATIBILITY.md](COMPATIBILITY.md) — functionality checklist
