@@ -51,7 +51,7 @@ actor PhotoUploadsManager {
             cancellationHandle: cancellationHandle
         )
 
-        let uploadController = try await uploadFromFile(
+        let uploadOperation = try await uploadFromFile(
             fileUploaderHandle: uploaderHandle,
             fileURL: fileURL,
             progressCallback: progressCallback,
@@ -60,7 +60,7 @@ actor PhotoUploadsManager {
             thumbnails: thumbnails,
             expectedSHA1: expectedSHA1
         )
-        return uploadController
+        return uploadOperation
     }
 
     private func uploadFromFile(

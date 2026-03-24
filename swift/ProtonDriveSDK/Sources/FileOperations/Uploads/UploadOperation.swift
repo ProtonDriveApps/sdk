@@ -4,6 +4,7 @@ import CProtonDriveSDK
 public enum UploadOperationResult: Sendable {
     case succeeded(UploadedFileIdentifiers)
     case pausedOnError(Error)
+    case pausedByClient(Error)
     case failed(Error)
 }
 
@@ -54,12 +55,19 @@ public final class UploadOperation: Sendable {
         let result = await awaitUploadCompletion(cleanUpTemporaryState: true)
         switch result {
         case .succeeded(let uploadResult):
+            // Sucesfully completed
             return uploadResult
 
         case .failed(let error):
+            // Non-retriable error
+            throw error
+
+        case let .pausedByClient(error):
+            // Throw the cancellation error, the caller will be able to handle it and keep reference to `UploadOperation`
             throw error
 
         case .pausedOnError(let error):
+            // This should be retriable error. We retry with resilience and only clean temporary state when needed
             do {
                 onPauseErrorReceived(error)
                 return try await operationalResilience.performRetry(retryCounter, error) {
@@ -99,10 +107,16 @@ public final class UploadOperation: Sendable {
             do {
                 let isPaused = try await isPaused()
                 if isPaused {
-                    // if the operation is paused, we can try recovering from the error
-                    // this is why this is the only scenario in which we do NOT clean up the temporary state
-                    // the resume relies on that temporary state to be there
-                    return .pausedOnError(error)
+                    // The operation was paused, either due to retriable error or explicitly by the client
+                    // We don't want to clean up local state to allow resumability
+                    if let sdkError = error as? ProtonDriveSDKError,
+                       sdkError.domain == .successfulCancellation {
+                        // The operation was explicitly paused
+                        return .pausedByClient(error)
+                    } else {
+                        // The SDK paused the operation due to encountering a recoverable error
+                        return .pausedOnError(error)
+                    }
                 } else {
                     if cleanUpTemporaryState {
                         try? await self.cleanUpTemporaryState()
