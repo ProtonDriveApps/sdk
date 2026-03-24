@@ -36,4 +36,4 @@ Run integration-only tests with:
 go test -tags integration ./...
 ```
 
-At the moment these tests only verify config loading and harness bootstrapping. They are intended to evolve into real Proton-backed integration tests as the standalone implementation replaces the placeholders.
+At the moment these tests include credential-gated coverage for every operation rclone requires. Most of them still assert `ErrNotImplemented` until the standalone Proton backend is implemented, but the test structure is now in place so real behavior can be turned on method-by-method as functionality lands.

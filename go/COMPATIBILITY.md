@@ -60,5 +60,6 @@ Legend:
 - `done` credentials file loader in `go/integration_config.go`
 - `done` example credentials config in `go/integration/protondrive.test.json.example`
 - `done` integration build-tag harness in `go/integration_test.go`
-- `missing` real integration tests once credentials are available
+- `done` credential-gated integration test coverage placeholders for all rclone-required operations
+- `missing` real Proton-backed implementations behind those tests
 - `missing` CI strategy for gated/manual integration test execution

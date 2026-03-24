@@ -30,5 +30,7 @@ config.json
 # Tests
 tests/storage
 tests/test-results
+go/integration/protondrive.test.json
+go/integration/*.local.json
 
 .tmp-tools

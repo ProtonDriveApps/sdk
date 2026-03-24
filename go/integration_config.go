@@ -2,6 +2,7 @@ package protondrive
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -51,4 +52,17 @@ func (c IntegrationConfig) LoginOptions() LoginOptions {
 		UserAgent:       c.UserAgent,
 		EnableCaching:   c.EnableCaching,
 	}
+}
+
+func (c IntegrationConfig) Validate() error {
+	if strings.TrimSpace(c.Username) == "" {
+		return errors.New("username is required")
+	}
+	if strings.TrimSpace(c.Password) == "" {
+		return errors.New("password is required")
+	}
+	if strings.TrimSpace(c.AppVersion) == "" {
+		return errors.New("app_version is required")
+	}
+	return nil
 }
