@@ -69,11 +69,12 @@ func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionH
 	}
 
 	driver := newStandaloneDriver(standaloneDriverConfig{
-		manager: manager,
-		client:  client,
-		hooks:   hooks,
-		session: session,
-		state:   state,
+		manager:    manager,
+		client:     client,
+		appVersion: options.AppVersion,
+		hooks:      hooks,
+		session:    session,
+		state:      state,
 	})
 	attachSessionHooks(client, driver, hooks)
 	hooks.emitSession(session)
@@ -117,11 +118,12 @@ func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks Sessio
 	}
 
 	driver := newStandaloneDriver(standaloneDriverConfig{
-		manager: manager,
-		client:  client,
-		hooks:   hooks,
-		session: session,
-		state:   state,
+		manager:    manager,
+		client:     client,
+		appVersion: options.AppVersion,
+		hooks:      hooks,
+		session:    session,
+		state:      state,
 	})
 	attachSessionHooks(client, driver, hooks)
 	hooks.emitSession(session)

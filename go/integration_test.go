@@ -8,6 +8,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestLoadIntegrationConfigMissingFile(t *testing.T) {
@@ -224,9 +225,20 @@ func TestIntegrationDownloadFile(t *testing.T) {
 func TestIntegrationUploadFile(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	_, _, err := client.UploadFile(context.Background(), resolveIntegrationFolderID(t, testContext, client), "sdk-upload.txt", strings.NewReader("hello world"), UploadOptions{KnownSize: int64(len("hello world"))})
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
+	filename := "sdk-upload-" + integrationFolderName() + ".txt"
+	node, attrs, err := client.UploadFile(context.Background(), resolveIntegrationFolderID(t, testContext, client), filename, strings.NewReader("hello world"), UploadOptions{KnownSize: int64(len("hello world")), ModTime: time.Now().UTC()})
+	if err != nil {
+		t.Fatalf("unexpected upload error: %v", err)
+	}
+	if node.ID == "" || attrs.Size <= 0 {
+		t.Fatalf("expected uploaded file metadata, got node=%#v attrs=%#v", node, attrs)
+	}
+	resolved, err := client.SearchChild(context.Background(), resolveIntegrationFolderID(t, testContext, client), filename, NodeTypeFile)
+	if err != nil {
+		t.Fatalf("unexpected search after upload error: %v", err)
+	}
+	if resolved == nil || resolved.ID != node.ID {
+		t.Fatalf("expected uploaded file to be discoverable, got %#v", resolved)
 	}
 }
 

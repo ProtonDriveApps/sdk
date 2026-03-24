@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"context"
 	"crypto/hmac"
+	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io"
+	"mime"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -18,6 +21,7 @@ import (
 )
 
 type driveState struct {
+	volumeID      string
 	user          proton.User
 	addresses     []proton.Address
 	userKR        *crypto.KeyRing
@@ -30,33 +34,36 @@ type driveState struct {
 }
 
 type standaloneDriverConfig struct {
-	manager *proton.Manager
-	client  *proton.Client
-	hooks   SessionHooks
-	session Session
-	state   *driveState
+	manager    *proton.Manager
+	client     *proton.Client
+	appVersion string
+	hooks      SessionHooks
+	session    Session
+	state      *driveState
 }
 
 type standaloneDriver struct {
-	mu      sync.RWMutex
-	manager *proton.Manager
-	client  *proton.Client
-	session Session
-	hooks   SessionHooks
-	cache   map[string]Node
-	rootID  string
-	state   *driveState
+	mu         sync.RWMutex
+	manager    *proton.Manager
+	client     *proton.Client
+	appVersion string
+	session    Session
+	hooks      SessionHooks
+	cache      map[string]Node
+	rootID     string
+	state      *driveState
 }
 
 func newStandaloneDriver(config standaloneDriverConfig) *standaloneDriver {
 	driver := &standaloneDriver{
-		manager: config.manager,
-		client:  config.client,
-		session: config.session,
-		hooks:   config.hooks,
-		cache:   make(map[string]Node),
-		rootID:  "root",
-		state:   config.state,
+		manager:    config.manager,
+		client:     config.client,
+		appVersion: config.appVersion,
+		session:    config.session,
+		hooks:      config.hooks,
+		cache:      make(map[string]Node),
+		rootID:     "root",
+		state:      config.state,
 	}
 	if config.state != nil {
 		driver.rootID = config.state.rootLink.LinkID
@@ -269,8 +276,8 @@ func (d *standaloneDriver) DownloadFile(ctx context.Context, nodeID string, offs
 	return DownloadResult{Reader: reader, Attrs: attrs, ServerSize: link.Size}, nil
 }
 
-func (d *standaloneDriver) UploadFile(context.Context, string, string, io.Reader, UploadOptions) (Node, RevisionAttrs, error) {
-	return Node{}, RevisionAttrs{}, ErrNotImplemented
+func (d *standaloneDriver) UploadFile(ctx context.Context, parentID, name string, body io.Reader, options UploadOptions) (Node, RevisionAttrs, error) {
+	return d.uploadFile(ctx, parentID, name, body, options)
 }
 
 func (d *standaloneDriver) MoveFile(context.Context, string, string, string) error {
@@ -417,8 +424,10 @@ func bootstrapDriveState(ctx context.Context, manager *proton.Manager, client *p
 		return nil, err
 	}
 	mainShareID := ""
+	activeVolumeID := ""
 	for _, volume := range volumes {
 		if volume.State == proton.VolumeStateActive {
+			activeVolumeID = volume.VolumeID
 			mainShareID = volume.Share.ShareID
 			break
 		}
@@ -444,6 +453,7 @@ func bootstrapDriveState(ctx context.Context, manager *proton.Manager, client *p
 	}
 	_ = manager
 	return &driveState{
+		volumeID:      activeVolumeID,
 		user:          user,
 		addresses:     addresses,
 		userKR:        userKR,
@@ -805,4 +815,301 @@ func decryptLinkName(link proton.Link, parentKR, verificationKR *crypto.KeyRing)
 		return "", err
 	}
 	return decName.GetString(), nil
+}
+
+func (d *standaloneDriver) uploadFile(ctx context.Context, parentID, name string, body io.Reader, options UploadOptions) (Node, RevisionAttrs, error) {
+	parent, err := d.getLink(ctx, parentID)
+	if err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	mimeType := options.MediaType
+	if mimeType == "" {
+		mimeType = mime.TypeByExtension(filepath.Ext(name))
+	}
+	if mimeType == "" {
+		mimeType = "application/octet-stream"
+	}
+	if options.KnownSize >= 0 && options.KnownSize <= 4*1024*1024 {
+		return d.uploadSmallFileFlow(ctx, parent, parentID, name, mimeType, body, options)
+	}
+	linkID, revisionID, sessionKey, nodeKR, err := d.createFileUploadDraft(ctx, parent, name, mimeType)
+	if err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	manifestSignatureData, fileSize, blockSizes, sha1Digest, blockTokens, err := d.uploadAndCollectBlockData(ctx, sessionKey, nodeKR, body, linkID, revisionID)
+	if err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	modTime := options.ModTime
+	if modTime.IsZero() {
+		modTime = time.Now().UTC()
+	}
+	xAttrCommon := &revisionXAttrCommon{
+		ModificationTime: modTime.Format("2006-01-02T15:04:05-0700"),
+		Size:             fileSize,
+		BlockSizes:       blockSizes,
+		Digests: map[string]string{
+			"SHA1": sha1Digest,
+		},
+	}
+	_ = xAttrCommon
+	if err := d.commitNewRevision(ctx, nodeKR, xAttrCommon, manifestSignatureData, linkID, revisionID, blockTokens); err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	d.ClearCache()
+	node := Node{ID: linkID, ParentID: parentID, Name: name, Type: NodeTypeFile, Size: fileSize, MIMEType: mimeType, ModTime: modTime, CreateTime: time.Now().UTC(), OriginalSHA1: sha1Digest}
+	attrs := RevisionAttrs{Size: fileSize, ModTime: modTime, Digests: map[string]string{"SHA1": sha1Digest}, BlockSizes: blockSizes, EncryptedSize: fileSize}
+	return node, attrs, nil
+}
+
+func (d *standaloneDriver) uploadSmallFileFlow(ctx context.Context, parent proton.Link, parentID, name, mimeType string, body io.Reader, options UploadOptions) (Node, RevisionAttrs, error) {
+	parentKR, err := d.getLinkKR(ctx, parent)
+	if err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	newNodeKey, newNodePassphraseEnc, newNodePassphraseSignature, newNodeKR, err := d.generateNodeMaterial(parentKR)
+	if err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	parentHashKey, err := parent.GetHashKey(parentKR)
+	if err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	contentSessionKey, contentKeyPacket, contentKeyPacketSignature, err := createContentKeyPacketAndSignature(newNodeKR)
+	if err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	content, err := io.ReadAll(body)
+	if err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	if options.KnownSize >= 0 && int64(len(content)) != options.KnownSize {
+		return Node{}, RevisionAttrs{}, fmt.Errorf("content size %d does not match expected size %d", len(content), options.KnownSize)
+	}
+	plain := crypto.NewPlainMessage(content)
+	encryptedBlock, err := contentSessionKey.Encrypt(plain)
+	if err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	armoredBlockSignature, err := signEncryptedBlock(d.state.defaultAddrKR, plain, newNodeKR)
+	if err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	verificationToken, err := d.computeVerificationToken(contentKeyPacket, newNodeKR, encryptedBlock, content)
+	if err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	sha256Digest := sha256.Sum256(encryptedBlock)
+	sha1Digest := sha1.Sum(content)
+	modTime := options.ModTime
+	if modTime.IsZero() {
+		modTime = time.Now().UTC()
+	}
+	xAttrCommon := &revisionXAttrCommon{
+		ModificationTime: modTime.Format("2006-01-02T15:04:05-0700"),
+		Size:             int64(len(content)),
+		BlockSizes:       []int64{int64(len(content))},
+		Digests: map[string]string{
+			"SHA1": hex.EncodeToString(sha1Digest[:]),
+		},
+	}
+	manifestSignatureData := sha256Digest[:]
+	manifestSignature, err := d.state.defaultAddrKR.SignDetached(crypto.NewPlainMessage(manifestSignatureData))
+	if err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	manifestSignatureString, err := manifestSignature.GetArmored()
+	if err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	commitReq := commitRevisionReq{ManifestSignature: manifestSignatureString, SignatureAddress: d.signatureAddress()}
+	if err := commitReq.setEncXAttrString(d.state.defaultAddrKR, newNodeKR, xAttrCommon); err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	resp, err := d.uploadSmallFile(ctx, smallFileMetadata{
+		ParentLinkID:                  parent.LinkID,
+		Name:                          mustEncryptArmored(parentKR, []byte(name)),
+		NameHash:                      getNameHash(name, parentHashKey),
+		NodePassphrase:                newNodePassphraseEnc,
+		NodePassphraseSignature:       newNodePassphraseSignature,
+		SignatureEmail:                d.signatureAddress(),
+		NodeKey:                       newNodeKey,
+		MIMEType:                      mimeType,
+		ContentKeyPacket:              contentKeyPacket,
+		ContentKeyPacketSignature:     contentKeyPacketSignature,
+		ManifestSignature:             commitReq.ManifestSignature,
+		ContentBlockEncSignature:      armoredBlockSignature,
+		ContentBlockVerificationToken: base64.StdEncoding.EncodeToString(verificationToken),
+		XAttr:                         commitReq.XAttr,
+		Photo:                         nil,
+	}, encryptedBlock)
+	if err != nil {
+		return Node{}, RevisionAttrs{}, err
+	}
+	d.ClearCache()
+	node := Node{ID: resp.LinkID, ParentID: parentID, Name: name, Type: NodeTypeFile, Size: int64(len(content)), MIMEType: mimeType, ModTime: modTime, CreateTime: time.Now().UTC(), OriginalSHA1: hex.EncodeToString(sha1Digest[:])}
+	attrs := RevisionAttrs{Size: int64(len(content)), ModTime: modTime, Digests: map[string]string{"SHA1": hex.EncodeToString(sha1Digest[:])}, BlockSizes: []int64{int64(len(content))}, EncryptedSize: int64(len(content))}
+	return node, attrs, nil
+}
+
+func (d *standaloneDriver) computeVerificationToken(base64ContentKeyPacket string, nodeKR *crypto.KeyRing, encryptedBlock []byte, plainData []byte) ([]byte, error) {
+	contentKeyPacket, err := base64.StdEncoding.DecodeString(base64ContentKeyPacket)
+	if err != nil {
+		return nil, err
+	}
+	sessionKey, err := nodeKR.DecryptSessionKey(contentKeyPacket)
+	if err != nil {
+		return nil, err
+	}
+	decrypted, err := sessionKey.Decrypt(encryptedBlock)
+	if err != nil {
+		return nil, err
+	}
+	plainPrefix := plainData
+	if len(plainPrefix) > 16 {
+		plainPrefix = plainPrefix[:16]
+	}
+	decryptedPrefix, err := io.ReadAll(io.LimitReader(decrypted.NewReader(), int64(len(plainPrefix))))
+	if err != nil {
+		return nil, err
+	}
+	if !bytes.Equal(decryptedPrefix, plainPrefix) {
+		return nil, fmt.Errorf("session key and encrypted block mismatch during verification")
+	}
+	verificationToken := make([]byte, 32)
+	for i := range verificationToken {
+		var b byte
+		if i < len(encryptedBlock) {
+			b = encryptedBlock[i]
+		}
+		verificationToken[i] = contentKeyPacket[len(contentKeyPacket)-32+i] ^ b
+	}
+	return verificationToken, nil
+}
+
+func signEncryptedBlock(signingKR *crypto.KeyRing, plain *crypto.PlainMessage, nodeKR *crypto.KeyRing) (string, error) {
+	encSignature, err := signingKR.SignDetachedEncrypted(plain, nodeKR)
+	if err != nil {
+		return "", err
+	}
+	return encSignature.GetArmored()
+}
+
+func (d *standaloneDriver) createFileUploadDraft(ctx context.Context, parent proton.Link, filename, mimeType string) (string, string, *crypto.SessionKey, *crypto.KeyRing, error) {
+	parentKR, err := d.getLinkKR(ctx, parent)
+	if err != nil {
+		return "", "", nil, nil, err
+	}
+	newNodeKey, newNodePassphraseEnc, newNodePassphraseSignature, newNodeKR, err := d.generateNodeMaterial(parentKR)
+	if err != nil {
+		return "", "", nil, nil, err
+	}
+	parentHashKey, err := parent.GetHashKey(parentKR)
+	if err != nil {
+		return "", "", nil, nil, err
+	}
+	contentSessionKey, contentKeyPacket, contentKeyPacketSignature, err := createContentKeyPacketAndSignature(newNodeKR)
+	if err != nil {
+		return "", "", nil, nil, err
+	}
+	req := proton.CreateFileReq{
+		ParentLinkID:              parent.LinkID,
+		Name:                      mustEncryptArmored(parentKR, []byte(filename)),
+		Hash:                      getNameHash(filename, parentHashKey),
+		MIMEType:                  mimeType,
+		ContentKeyPacket:          contentKeyPacket,
+		ContentKeyPacketSignature: contentKeyPacketSignature,
+		NodeKey:                   newNodeKey,
+		NodePassphrase:            newNodePassphraseEnc,
+		NodePassphraseSignature:   newNodePassphraseSignature,
+		SignatureAddress:          d.signatureAddress(),
+	}
+	createFileResp, err := d.client.CreateFile(ctx, d.state.mainShare.ShareID, req)
+	if err != nil {
+		return "", "", nil, nil, err
+	}
+	return createFileResp.ID, createFileResp.RevisionID, contentSessionKey, newNodeKR, nil
+}
+
+func (d *standaloneDriver) uploadAndCollectBlockData(ctx context.Context, sessionKey *crypto.SessionKey, nodeKR *crypto.KeyRing, file io.Reader, linkID, revisionID string) ([]byte, int64, []int64, string, []proton.BlockToken, error) {
+	const uploadBlockSize = 4 * 1024 * 1024
+	type pendingUploadBlock struct {
+		info    proton.BlockUploadInfo
+		encData []byte
+	}
+	totalFileSize := int64(0)
+	manifestSignatureData := make([]byte, 0)
+	pending := make([]pendingUploadBlock, 0)
+	sha1Digests := sha1.New()
+	blockSizes := make([]int64, 0)
+	tokens := make([]proton.BlockToken, 0)
+	for index := 1; ; index++ {
+		data := make([]byte, uploadBlockSize)
+		readBytes, err := io.ReadFull(file, data)
+		if err != nil {
+			if err == io.EOF || err == io.ErrUnexpectedEOF {
+				if readBytes == 0 {
+					break
+				}
+				data = data[:readBytes]
+			} else {
+				return nil, 0, nil, "", nil, err
+			}
+		} else {
+			data = data[:readBytes]
+		}
+		totalFileSize += int64(len(data))
+		sha1Digests.Write(data)
+		blockSizes = append(blockSizes, int64(len(data)))
+		plain := crypto.NewPlainMessage(data)
+		encData, err := sessionKey.Encrypt(plain)
+		if err != nil {
+			return nil, 0, nil, "", nil, err
+		}
+		encSignature, err := d.state.defaultAddrKR.SignDetachedEncrypted(plain, nodeKR)
+		if err != nil {
+			return nil, 0, nil, "", nil, err
+		}
+		encSignatureStr, err := encSignature.GetArmored()
+		if err != nil {
+			return nil, 0, nil, "", nil, err
+		}
+		h := sha256.New()
+		h.Write(encData)
+		hash := h.Sum(nil)
+		manifestSignatureData = append(manifestSignatureData, hash...)
+		pending = append(pending, pendingUploadBlock{info: proton.BlockUploadInfo{Index: index, Size: int64(len(encData)), EncSignature: encSignatureStr, Hash: base64.StdEncoding.EncodeToString(hash)}, encData: encData})
+	}
+	if len(pending) == 0 {
+		return nil, 0, nil, "", nil, nil
+	}
+	blockUploadReq := proton.BlockUploadReq{AddressID: d.state.mainShare.AddressID, ShareID: d.state.mainShare.ShareID, LinkID: linkID, RevisionID: revisionID, BlockList: make([]proton.BlockUploadInfo, 0, len(pending))}
+	for _, item := range pending {
+		blockUploadReq.BlockList = append(blockUploadReq.BlockList, item.info)
+	}
+	blockUploadResp, err := d.client.RequestBlockUpload(ctx, blockUploadReq)
+	if err != nil {
+		return nil, 0, nil, "", nil, err
+	}
+	for i := range blockUploadResp {
+		if err := d.client.UploadBlock(ctx, blockUploadResp[i].BareURL, blockUploadResp[i].Token, byteMultipartStream(pending[i].encData)); err != nil {
+			return nil, 0, nil, "", nil, err
+		}
+		tokens = append(tokens, proton.BlockToken{Index: pending[i].info.Index, Token: blockUploadResp[i].Token})
+	}
+	return manifestSignatureData, totalFileSize, blockSizes, hex.EncodeToString(sha1Digests.Sum(nil)), tokens, nil
+}
+
+func (d *standaloneDriver) commitNewRevision(ctx context.Context, nodeKR *crypto.KeyRing, xAttrCommon *revisionXAttrCommon, manifestSignatureData []byte, linkID, revisionID string, blockTokens []proton.BlockToken) error {
+	manifestSignature, err := d.state.defaultAddrKR.SignDetached(crypto.NewPlainMessage(manifestSignatureData))
+	if err != nil {
+		return err
+	}
+	manifestSignatureString, err := manifestSignature.GetArmored()
+	if err != nil {
+		return err
+	}
+	_ = nodeKR
+	_ = xAttrCommon
+	return d.client.UpdateRevision(ctx, d.state.mainShare.ShareID, linkID, revisionID, proton.UpdateRevisionReq{BlockList: blockTokens, State: proton.RevisionStateActive, ManifestSignature: manifestSignatureString, SignatureAddress: d.signatureAddress()})
 }
