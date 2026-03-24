@@ -22,7 +22,8 @@ internal static class InteropProtonDriveClient
             request.ClientOptions.HasBindingsLanguage ? request.ClientOptions.BindingsLanguage : null,
             request.ClientOptions.HasUid ? request.ClientOptions.Uid : null,
             request.ClientOptions.HasApiCallTimeout ? request.ClientOptions.ApiCallTimeout : null,
-            request.ClientOptions.HasStorageCallTimeout ? request.ClientOptions.StorageCallTimeout : null);
+            request.ClientOptions.HasStorageCallTimeout ? request.ClientOptions.StorageCallTimeout : null,
+            request.ClientOptions.HasBlockTransferDegreeOfParallelism ? request.ClientOptions.BlockTransferDegreeOfParallelism : null);
 
         var httpClientFactory = new InteropHttpClientFactory(
             bindingsHandle,
@@ -76,7 +77,10 @@ internal static class InteropProtonDriveClient
     {
         var session = Interop.GetFromHandle<ProtonApiSession>(request.SessionHandle);
 
-        var client = new ProtonDriveClient(session);
+        var client = new ProtonDriveClient(
+            session,
+            request.HasUid ? request.Uid : null,
+            request.HasBlockTransferDegreeOfParallelism ? request.BlockTransferDegreeOfParallelism : null);
 
         return new Int64Value { Value = Interop.AllocHandle(client) };
     }

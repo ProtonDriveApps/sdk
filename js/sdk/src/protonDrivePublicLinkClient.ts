@@ -1,6 +1,7 @@
 import { MemoryCache } from './cache';
 import { getConfig } from './config';
 import { DriveCrypto, OpenPGPCrypto, PrivateKey, SRPModule, SessionKey } from './crypto';
+import { configureOpenPgpWorkerPool } from './crypto/parallelism';
 import {
     ProtonDriveHTTPClient,
     ProtonDriveTelemetry,
@@ -130,6 +131,7 @@ export class ProtonDrivePublicLinkClient {
         const cryptoCache = new MemoryCache<CachedCryptoMaterial>();
 
         const fullConfig = getConfig(config);
+        configureOpenPgpWorkerPool(openPGPCryptoModule, fullConfig.upload.cryptoWorkerPoolSize, this.logger);
         this.sdkEvents = new SDKEvents(telemetry);
 
         const apiService = new UnauthDriveAPIService(
@@ -176,6 +178,7 @@ export class ProtonDrivePublicLinkClient {
             fullConfig.clientUid,
             // Public links do not support small file upload.
             false,
+            fullConfig.upload,
         );
 
         this.experimental = {

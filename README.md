@@ -52,6 +52,102 @@ These dependencies must be supplied by the integrating application. Reference im
 
 We are preparing the documentation for the SDK. It will be available in the future.
 
+## Upload Parallelism Tuning
+
+The SDK supports upload parallelism tuning to improve throughput in CPU- and network-rich environments.
+
+### JavaScript
+
+```ts
+import { MemoryCache, OpenPGPCryptoWithCryptoProxy, ProtonDriveClient } from 'proton-drive-sdk';
+
+const client = new ProtonDriveClient({
+	httpClient,
+	entitiesCache: new MemoryCache(),
+	cryptoCache: new MemoryCache(),
+	account,
+	openPGPCryptoModule: new OpenPGPCryptoWithCryptoProxy(cryptoProxy),
+	config: {
+		upload: {
+			encryptionConcurrency: 4,
+			maxUploadingBlocks: 8,
+			maxBufferedBlocks: 24,
+			maxConcurrentFileUploads: 8,
+			maxConcurrentUploadSizeInBlocks: 16,
+			useWorkerHashing: true,
+			cryptoWorkerPoolSize: 4,
+		},
+	},
+});
+```
+
+### C#
+
+```csharp
+var options = new ProtonDriveClientOptions(
+	BindingsLanguage: "csharp",
+	Uid: "my-client-uid",
+	OverrideDefaultApiTimeoutSeconds: null,
+	OverrideStorageApiTimeoutSeconds: null,
+	BlockTransferDegreeOfParallelism: 6);
+
+var client = new ProtonDriveClient(
+	httpClientFactory,
+	accountClient,
+	entityCacheRepository,
+	secretCacheRepository,
+	featureFlagProvider,
+	telemetry,
+	options);
+
+// Session-based constructor variant:
+var sessionClient = new ProtonDriveClient(session, uid: "my-client-uid", blockTransferDegreeOfParallelism: 6);
+```
+
+### Swift
+
+```swift
+let configuration = ProtonDriveClientConfiguration(
+	baseURL: "https://drive-api.proton.me",
+	clientUID: "my-client-uid",
+	uploadBlockTransferDegreeOfParallelism: 6
+)
+
+let client = try await ProtonDriveClient(configuration: configuration, sdkClientProvider: provider)
+```
+
+### Kotlin
+
+```kotlin
+val request = ClientCreateRequest(
+	baseUrl = "https://drive-api.proton.me/",
+	loggerProvider = loggerProvider,
+	uid = "my-client-uid",
+	blockTransferDegreeOfParallelism = 6,
+)
+
+val client = ProtonDriveSdk.protonDriveClientCreate(
+	coroutineScope = scope,
+	userId = userId,
+	apiProvider = apiProvider,
+	request = request,
+	userAddressResolver = userAddressResolver,
+	publicAddressResolver = publicAddressResolver,
+)
+
+// Session-based variant:
+val sessionClient = session.protonDriveClientCreate(
+	uid = "my-client-uid",
+	blockTransferDegreeOfParallelism = 6,
+)
+```
+
+Notes:
+
+- Tune gradually and benchmark on representative networks/devices.
+- Extremely high values can increase memory usage and trigger server-side throttling.
+- C# `BlockTransferDegreeOfParallelism` is clamped to SDK-supported limits.
+
 ## License
 
 This project is licensed under the MIT License. See [LICENSE.md](./LICENSE.md) for details.

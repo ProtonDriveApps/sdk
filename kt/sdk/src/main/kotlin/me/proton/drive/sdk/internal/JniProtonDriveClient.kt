@@ -27,10 +27,16 @@ import proton.sdk.telemetry
 
 class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
 
-    suspend fun createFromSession(sessionHandle: Long) =
+    suspend fun createFromSession(
+        sessionHandle: Long,
+        uid: String? = null,
+        blockTransferDegreeOfParallelism: Int? = null,
+    ) =
         executeOnce("createFromSession", LongResponseCallback) {
             driveClientCreateFromSession = driveClientCreateFromSessionRequest {
                 this.sessionHandle = sessionHandle
+                uid?.let { this.uid = it }
+                blockTransferDegreeOfParallelism?.let { this.blockTransferDegreeOfParallelism = it }
             }
         }
 
@@ -75,6 +81,7 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
                     request.uid?.let { uid = it }
                     request.apiCallTimeout?.let { apiCallTimeout = it }
                     request.storageCallTimeout?.let { storageCallTimeout = it }
+                    request.blockTransferDegreeOfParallelism?.let { blockTransferDegreeOfParallelism = it }
                 }
             }
         }

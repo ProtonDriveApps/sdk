@@ -22,6 +22,7 @@ import {
 } from './interface';
 import { getConfig } from './config';
 import { DriveCrypto } from './crypto';
+import { configureOpenPgpWorkerPool } from './crypto/parallelism';
 import { Telemetry } from './telemetry';
 import {
     convertInternalMissingPhotoNodeIterator,
@@ -97,6 +98,7 @@ export class ProtonDrivePhotosClient {
         this.logger = telemetry.getLogger('photos-interface');
 
         const fullConfig = getConfig(config);
+        configureOpenPgpWorkerPool(openPGPCryptoModule, fullConfig.upload.cryptoWorkerPoolSize, this.logger);
         this.sdkEvents = new SDKEvents(telemetry);
         const cryptoModule = new DriveCrypto(telemetry, openPGPCryptoModule, srpModule);
         const apiService = new DriveAPIService(
@@ -154,6 +156,7 @@ export class ProtonDrivePhotosClient {
             this.nodes.access,
             featureFlagProvider,
             fullConfig.clientUid,
+            fullConfig.upload,
         );
 
         // These are used to keep the internal cache up to date

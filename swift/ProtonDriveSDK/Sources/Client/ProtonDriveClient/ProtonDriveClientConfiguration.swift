@@ -28,6 +28,7 @@ public struct ProtonDriveClientConfiguration: Sendable {
     
     let httpApiCallsTimeout: Int32?
     let httpStorageCallsTimeout: Int32?
+    let uploadBlockTransferDegreeOfParallelism: Int32?
     
     let downloadOperationalResilience: OperationalResilience
     let uploadOperationalResilience: OperationalResilience
@@ -45,6 +46,7 @@ public struct ProtonDriveClientConfiguration: Sendable {
         httpTransferBufferSize: Int = defaultHttpTransportBufferSize,
         httpApiCallsTimeout: Int32? = nil, // if not set, default value from SDK is used
         httpStorageCallsTimeout: Int32? = nil, // if not set, default value from SDK is used
+        uploadBlockTransferDegreeOfParallelism: Int32? = nil, // if not set, SDK auto-computes parallelism
         downloadOperationalResilience: OperationalResilience = BasicOperationalResilience.default,
         uploadOperationalResilience: OperationalResilience = BasicOperationalResilience.default,
         boundStreamsCreator: @Sendable @escaping () throws -> (InputStream, OutputStream, Int) = defaultBoundStreamsCreator,
@@ -58,6 +60,7 @@ public struct ProtonDriveClientConfiguration: Sendable {
         self.httpTransferBufferSize = httpTransferBufferSize
         self.httpApiCallsTimeout = httpApiCallsTimeout
         self.httpStorageCallsTimeout = httpStorageCallsTimeout
+        self.uploadBlockTransferDegreeOfParallelism = uploadBlockTransferDegreeOfParallelism
         self.downloadOperationalResilience = downloadOperationalResilience
         self.uploadOperationalResilience = uploadOperationalResilience
         self.boundStreamsCreator = boundStreamsCreator

@@ -15,3 +15,34 @@ const sdk = new ProtonDriveClient({
     openPGPCryptoModule: new OpenPGPCryptoWithCryptoProxy(cryptoProxy),
 });
 ```
+
+## Upload Performance Tuning
+
+You can tune upload concurrency and hashing behavior through `config.upload`:
+
+```js
+const sdk = new ProtonDriveClient({
+    httpClient,
+    entitiesCache: new MemoryCache(),
+    cryptoCache: new MemoryCache(),
+    account,
+    openPGPCryptoModule: new OpenPGPCryptoWithCryptoProxy(cryptoProxy),
+    config: {
+        upload: {
+            encryptionConcurrency: 4,
+            maxUploadingBlocks: 8,
+            maxBufferedBlocks: 24,
+            maxConcurrentFileUploads: 8,
+            maxConcurrentUploadSizeInBlocks: 16,
+            useWorkerHashing: true,
+            cryptoWorkerPoolSize: 4,
+        },
+    },
+});
+```
+
+Tips:
+
+- Increase values gradually and benchmark on your target hardware/network.
+- Higher values increase memory usage.
+- If your OpenPGP module does not expose worker-pool controls, `cryptoWorkerPoolSize` is ignored.

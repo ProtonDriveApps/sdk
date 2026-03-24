@@ -10,6 +10,8 @@ import { UploadManager } from './manager';
 import { UploadQueue } from './queue';
 import { SmallFileRevisionUploader, SmallFileUploader } from './smallFileUploader';
 import { UploadTelemetry } from './telemetry';
+import { UploadTuningOptions } from './options';
+import { FILE_CHUNK_SIZE } from './streamUploader';
 
 const SMALL_FILE_SIZE_LIMIT = 128 * 1024; // 128 KiB
 
@@ -29,6 +31,7 @@ export function initUploadModule(
     featureFlagProvider: FeatureFlagProvider,
     clientUid?: string,
     allowSmallFileUpload: boolean = true,
+    tuning?: UploadTuningOptions,
 ) {
     const api = new UploadAPIService(apiService, clientUid);
     const cryptoService = new UploadCryptoService(telemetry, driveCrypto, nodesService, featureFlagProvider);
@@ -36,7 +39,12 @@ export function initUploadModule(
     const uploadTelemetry = new UploadTelemetry(telemetry, sharesService);
     const manager = new UploadManager(telemetry, api, cryptoService, nodesService, clientUid);
 
-    const queue = new UploadQueue();
+    const queue = new UploadQueue(
+        tuning?.maxConcurrentFileUploads,
+        tuning?.maxConcurrentUploadSizeInBlocks
+            ? tuning.maxConcurrentUploadSizeInBlocks * FILE_CHUNK_SIZE
+            : undefined,
+    );
 
     async function useSmallFileUpload(metadata: UploadMetadata): Promise<boolean> {
         const isEnabled =
@@ -77,6 +85,7 @@ export function initUploadModule(
                 signal,
                 parentFolderUid,
                 name,
+                tuning,
             );
         }
 
@@ -90,6 +99,7 @@ export function initUploadModule(
             metadata,
             onFinish,
             signal,
+            tuning,
         );
     }
 
@@ -121,6 +131,7 @@ export function initUploadModule(
                 onFinish,
                 signal,
                 nodeUid,
+                tuning,
             );
         }
 
@@ -133,6 +144,7 @@ export function initUploadModule(
             metadata,
             onFinish,
             signal,
+            tuning,
         );
     }
 

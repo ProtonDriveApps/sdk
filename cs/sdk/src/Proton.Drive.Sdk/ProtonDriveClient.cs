@@ -28,11 +28,12 @@ public sealed class ProtonDriveClient
     /// <param name="session">Authenticated API session.</param>
     /// <param name="uid">Unique ID for this client to allow it to resume drafts across instances.</param>
     /// <remarks>If no UID is not provided, one will be generated for the duration of this instance.</remarks>
-    public ProtonDriveClient(ProtonApiSession session, string? uid = null)
+    public ProtonDriveClient(ProtonApiSession session, string? uid = null, int? blockTransferDegreeOfParallelism = null)
         : this(
             session,
             (defaultApiHttpClient, storageApiHttpClient) => new DriveApiClients(defaultApiHttpClient, storageApiHttpClient),
-            uid)
+            uid,
+            blockTransferDegreeOfParallelism)
     {
     }
 
@@ -54,14 +55,16 @@ public sealed class ProtonDriveClient
             featureFlagProvider,
             telemetry,
             (defaultApiHttpClient, storageApiHttpClient) => new DriveApiClients(defaultApiHttpClient, storageApiHttpClient),
-            creationParameters?.Uid ?? Guid.NewGuid().ToString())
+                creationParameters?.Uid ?? Guid.NewGuid().ToString(),
+                creationParameters?.BlockTransferDegreeOfParallelism)
     {
     }
 
     internal ProtonDriveClient(
         ProtonApiSession session,
         Func<HttpClient, HttpClient, IDriveApiClients> driveApiClientsFactory,
-        string? uid = null)
+        string? uid = null,
+        int? blockTransferDegreeOfParallelism = null)
         : this(
             session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonApiDefaults.DefaultTimeoutSeconds)),
             session.GetHttpClient(
@@ -73,7 +76,8 @@ public sealed class ProtonDriveClient
             session.ClientConfiguration.FeatureFlagProvider,
             session.ClientConfiguration.Telemetry,
             driveApiClientsFactory,
-            uid ?? Guid.NewGuid().ToString())
+            uid ?? Guid.NewGuid().ToString(),
+            blockTransferDegreeOfParallelism)
     {
     }
 
@@ -96,7 +100,8 @@ public sealed class ProtonDriveClient
             featureFlagProvider,
             telemetry,
             driveApiClientsFactory,
-            creationParameters?.Uid ?? Guid.NewGuid().ToString())
+            creationParameters?.Uid ?? Guid.NewGuid().ToString(),
+            creationParameters?.BlockTransferDegreeOfParallelism)
     {
     }
 
@@ -119,8 +124,11 @@ public sealed class ProtonDriveClient
         Telemetry = telemetry;
         FeatureFlagProvider = featureFlagProvider;
 
-        var maxDegreeOfBlockTransferParallelism = blockTransferDegreeOfParallelism
-            ?? Math.Max(Math.Min(Environment.ProcessorCount / 2, MaxDegreeOfBlockTransferParallelism), MinDegreeOfBlockTransferParallelism);
+        var maxDegreeOfBlockTransferParallelism = Math.Clamp(
+            blockTransferDegreeOfParallelism
+            ?? Math.Max(Math.Min(Environment.ProcessorCount / 2, MaxDegreeOfBlockTransferParallelism), MinDegreeOfBlockTransferParallelism),
+            MinDegreeOfBlockTransferParallelism,
+            MaxDegreeOfBlockTransferParallelism);
 
         var maxDegreeOfBlockProcessingParallelism = maxDegreeOfBlockTransferParallelism + Math.Min(Math.Max(maxDegreeOfBlockTransferParallelism / 2, 2), 4);
 
@@ -141,7 +149,8 @@ public sealed class ProtonDriveClient
         IFeatureFlagProvider featureFlagProvider,
         ITelemetry telemetry,
         Func<HttpClient, HttpClient, IDriveApiClients> driveApiClientsFactory,
-        string uid)
+        string uid,
+        int? blockTransferDegreeOfParallelism = null)
         : this(
             accountClient,
             driveApiClientsFactory.Invoke(defaultApiHttpClient, storageApiHttpClient),
@@ -149,7 +158,8 @@ public sealed class ProtonDriveClient
             new BlockVerifierFactory(defaultApiHttpClient),
             featureFlagProvider,
             telemetry,
-            uid)
+            uid,
+            blockTransferDegreeOfParallelism)
     {
     }
 

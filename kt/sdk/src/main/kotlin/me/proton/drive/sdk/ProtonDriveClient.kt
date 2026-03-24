@@ -226,10 +226,17 @@ class ProtonDriveClient internal constructor(
     }
 }
 
-suspend fun Session.protonDriveClientCreate(): ProtonDriveClient = factory(JniProtonDriveClient()) {
+suspend fun Session.protonDriveClientCreate(
+    uid: String? = null,
+    blockTransferDegreeOfParallelism: Int? = null,
+): ProtonDriveClient = factory(JniProtonDriveClient()) {
     ProtonDriveClient(
         session = this@protonDriveClientCreate,
-        handle = createFromSession(sessionHandle = handle),
+        handle = createFromSession(
+            sessionHandle = handle,
+            uid = uid,
+            blockTransferDegreeOfParallelism = blockTransferDegreeOfParallelism,
+        ),
         bridge = this,
     )
 }

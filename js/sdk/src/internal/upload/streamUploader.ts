@@ -16,6 +16,7 @@ import { NodeRevisionDraft, EncryptedBlock, EncryptedThumbnail, EncryptedBlockMe
 import { UploadTelemetry } from './telemetry';
 import { ChunkStreamReader } from './chunkStreamReader';
 import { UploadManager } from './manager';
+import { UploadTuningOptions } from './options';
 
 /**
  * File chunk size in bytes representing the size of each block.
@@ -26,13 +27,13 @@ export const FILE_CHUNK_SIZE = 4 * 1024 * 1024;
  * Maximum number of blocks that can be buffered before upload.
  * This is to prevent using too much memory.
  */
-const MAX_BUFFERED_BLOCKS = 15;
+const MAX_BUFFERED_BLOCKS = 24;
 
 /**
  * Maximum number of blocks that can be uploaded at the same time.
  * This is to prevent overloading the server with too many requests.
  */
-const MAX_UPLOADING_BLOCKS = 5;
+const MAX_UPLOADING_BLOCKS = 8;
 
 /**
  * Maximum number of retries for block encryption.
@@ -56,6 +57,8 @@ const MAX_BLOCK_UPLOAD_RETRIES = 3;
  */
 export class StreamUploader {
     protected maxUploadingBlocks = MAX_UPLOADING_BLOCKS;
+    protected maxBufferedBlocks = MAX_BUFFERED_BLOCKS;
+    protected encryptionConcurrency = 2;
 
     protected logger: Logger;
 
@@ -76,6 +79,7 @@ export class StreamUploader {
     >();
     protected uploadedThumbnails: ({ type: ThumbnailType } & EncryptedBlockMetadata)[] = [];
     protected uploadedBlocks: ({ index: number } & EncryptedBlockMetadata)[] = [];
+    protected ongoingEncryptions = new Set<Promise<void>>();
 
     // Error of the whole upload - either encryption or upload error.
     protected error: unknown | undefined;
@@ -91,6 +95,7 @@ export class StreamUploader {
         protected onFinish: (failure: boolean) => Promise<void>,
         protected uploadController: UploadController,
         protected abortController: AbortController,
+        tuning?: UploadTuningOptions,
     ) {
         this.telemetry = telemetry;
         this.logger = telemetry.getLoggerForRevision(revisionDraft.nodeRevisionUid);
@@ -101,7 +106,11 @@ export class StreamUploader {
         this.metadata = metadata;
         this.onFinish = onFinish;
 
-        this.digests = new UploadDigests();
+        this.maxUploadingBlocks = tuning?.maxUploadingBlocks ?? MAX_UPLOADING_BLOCKS;
+        this.maxBufferedBlocks = tuning?.maxBufferedBlocks ?? MAX_BUFFERED_BLOCKS;
+        this.encryptionConcurrency = Math.max(1, tuning?.encryptionConcurrency ?? 2);
+
+        this.digests = new UploadDigests({ useWorkerHashing: tuning?.useWorkerHashing ?? true });
         this.controller = uploadController;
         this.abortController = abortController;
     }
@@ -151,6 +160,9 @@ export class StreamUploader {
             this.uploadedBlocks = [];
             this.uploadedThumbnails = [];
             this.encryptionFinished = false;
+            this.ongoingEncryptions.clear();
+
+            await this.digests.dispose();
 
             await this.onFinish(failure);
         }
@@ -221,7 +233,7 @@ export class StreamUploader {
     }
 
     protected async commitFile(thumbnails: Thumbnail[]) {
-        const digests = this.digests.digests();
+        const digests = await this.digests.digests();
         this.verifyIntegrity(thumbnails, digests);
 
         const extendedAttributes = {
@@ -243,18 +255,23 @@ export class StreamUploader {
             throw new Error(`Duplicate thumbnail types`);
         }
 
-        for (const thumbnail of thumbnails) {
-            if (this.isUploadAborted) {
-                break;
-            }
+        await Promise.all(
+            thumbnails.map(async (thumbnail) => {
+                if (this.isUploadAborted) {
+                    return;
+                }
 
-            this.logger.debug(`Encrypting thumbnail ${thumbnail.type}`);
-            const encryptedThumbnail = await this.cryptoService.encryptThumbnail(
-                this.revisionDraft.nodeKeys,
-                thumbnail,
-            );
-            this.encryptedThumbnails.set(thumbnail.type, encryptedThumbnail);
-        }
+                this.logger.debug(`Encrypting thumbnail ${thumbnail.type}`);
+                const encryptedThumbnail = await this.cryptoService.encryptThumbnail(
+                    this.revisionDraft.nodeKeys,
+                    thumbnail,
+                );
+
+                if (!this.isUploadAborted) {
+                    this.encryptedThumbnails.set(thumbnail.type, encryptedThumbnail);
+                }
+            }),
+        );
     }
 
     private async encryptBlocks(stream: ReadableStream) {
@@ -273,51 +290,71 @@ export class StreamUploader {
                     break;
                 }
 
-                this.logger.debug(`Encrypting block ${index}`);
-                let attempt = 0;
-                let integrityError = false;
-                let encryptedBlock;
-                while (!encryptedBlock) {
-                    attempt++;
+                const blockIndex = index;
+                const encryptionTask = this.encryptSingleBlock(block, blockIndex)
+                    .then((encryptedBlock) => {
+                        this.encryptedBlocks.set(blockIndex, encryptedBlock);
+                    })
+                    .finally(() => {
+                        this.ongoingEncryptions.delete(encryptionTask);
+                    });
 
-                    try {
-                        encryptedBlock = await this.cryptoService.encryptBlock(
-                            (encryptedBlock) => this.blockVerifier.verifyBlock(encryptedBlock),
-                            this.revisionDraft.nodeKeys,
-                            block,
-                            index,
-                        );
-                        if (integrityError) {
-                            void this.telemetry.logBlockVerificationError(true);
-                        }
-                    } catch (error: unknown) {
-                        // Do not retry or report anything if the upload was aborted.
-                        if (error instanceof AbortError) {
-                            throw error;
-                        }
-
-                        if (error instanceof IntegrityError) {
-                            integrityError = true;
-                        }
-
-                        if (attempt <= MAX_BLOCK_ENCRYPTION_RETRIES) {
-                            this.logger.warn(
-                                `Block encryption failed #${attempt}, retrying: ${getErrorMessage(error)}`,
-                            );
-                            continue;
-                        }
-
-                        this.logger.error(`Failed to encrypt block ${index}`, error);
-                        if (integrityError) {
-                            void this.telemetry.logBlockVerificationError(false);
-                        }
-                        throw error;
-                    }
-                }
-                this.encryptedBlocks.set(index, encryptedBlock);
+                this.ongoingEncryptions.add(encryptionTask);
             }
+
+            if (this.isUploadAborted) {
+                await Promise.allSettled(this.ongoingEncryptions);
+                return;
+            }
+
+            await Promise.all(this.ongoingEncryptions);
         } finally {
             this.encryptionFinished = true;
+        }
+    }
+
+    private async encryptSingleBlock(block: Uint8Array<ArrayBuffer>, index: number): Promise<EncryptedBlock> {
+        this.logger.debug(`Encrypting block ${index}`);
+
+        let attempt = 0;
+        let integrityError = false;
+
+        while (true) {
+            attempt++;
+
+            try {
+                const encryptedBlock = await this.cryptoService.encryptBlock(
+                    (encryptedBlock) => this.blockVerifier.verifyBlock(encryptedBlock),
+                    this.revisionDraft.nodeKeys,
+                    block,
+                    index,
+                );
+
+                if (integrityError) {
+                    void this.telemetry.logBlockVerificationError(true);
+                }
+
+                return encryptedBlock;
+            } catch (error: unknown) {
+                if (error instanceof AbortError) {
+                    throw error;
+                }
+
+                if (error instanceof IntegrityError) {
+                    integrityError = true;
+                }
+
+                if (attempt <= MAX_BLOCK_ENCRYPTION_RETRIES) {
+                    this.logger.warn(`Block encryption failed #${attempt}, retrying: ${getErrorMessage(error)}`);
+                    continue;
+                }
+
+                this.logger.error(`Failed to encrypt block ${index}`, error);
+                if (integrityError) {
+                    void this.telemetry.logBlockVerificationError(false);
+                }
+                throw error;
+            }
         }
     }
 
@@ -576,12 +613,16 @@ export class StreamUploader {
     }
 
     private async waitForBufferCapacity() {
-        if (this.encryptedBlocks.size >= MAX_BUFFERED_BLOCKS) {
+        while (
+            this.ongoingEncryptions.size >= this.encryptionConcurrency ||
+            this.encryptedBlocks.size + this.ongoingEncryptions.size >= this.maxBufferedBlocks
+        ) {
+            if (!this.ongoingEncryptions.size) {
+                break;
+            }
+
             try {
-                await waitForCondition(
-                    () => this.encryptedBlocks.size < MAX_BUFFERED_BLOCKS,
-                    this.abortController.signal,
-                );
+                await Promise.race(this.ongoingEncryptions);
             } catch (error: unknown) {
                 if (error instanceof AbortError) {
                     return;

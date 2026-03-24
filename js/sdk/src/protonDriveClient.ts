@@ -1,5 +1,6 @@
 import { getConfig } from './config';
 import { DriveCrypto, SessionKey } from './crypto';
+import { configureOpenPgpWorkerPool } from './crypto/parallelism';
 import { NullFeatureFlagProvider } from './featureFlags';
 import {
     Logger,
@@ -134,6 +135,7 @@ export class ProtonDriveClient {
         this.logger = telemetry.getLogger('interface');
 
         const fullConfig = getConfig(config);
+        configureOpenPgpWorkerPool(openPGPCryptoModule, fullConfig.upload.cryptoWorkerPoolSize, this.logger);
         this.sdkEvents = new SDKEvents(telemetry);
         const cryptoModule = new DriveCrypto(telemetry, openPGPCryptoModule, srpModule);
         const apiService = new DriveAPIService(
@@ -180,6 +182,8 @@ export class ProtonDriveClient {
             this.nodes.access,
             featureFlagProvider,
             fullConfig.clientUid,
+            true,
+            fullConfig.upload,
         );
         this.devices = initDevicesModule(
             telemetry,

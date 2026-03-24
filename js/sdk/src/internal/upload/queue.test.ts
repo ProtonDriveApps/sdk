@@ -20,8 +20,8 @@ describe('UploadQueue', () => {
     });
 
     it('should resolve immediately when under file upload limit', async () => {
-        // Fill queue with 4 uploads (limit is 5)
-        for (let i = 0; i < 4; i++) {
+        // Fill queue with 7 uploads (limit is 8)
+        for (let i = 0; i < 7; i++) {
             await queue.waitForCapacity(0);
         }
 
@@ -30,8 +30,8 @@ describe('UploadQueue', () => {
     });
 
     it('should wait when max concurrent file uploads is reached', async () => {
-        // Fill queue to max (5 uploads)
-        for (let i = 0; i < 5; i++) {
+        // Fill queue to max (8 uploads)
+        for (let i = 0; i < 8; i++) {
             await queue.waitForCapacity(0);
         }
 
@@ -52,7 +52,7 @@ describe('UploadQueue', () => {
 
     it('should wait when max concurrent upload size is reached', async () => {
         // Fill queue with one large file that exceeds size limit
-        const largeSize = 10 * FILE_CHUNK_SIZE;
+        const largeSize = 16 * FILE_CHUNK_SIZE;
         await queue.waitForCapacity(largeSize);
 
         let resolved = false;
@@ -77,7 +77,7 @@ describe('UploadQueue', () => {
         await queue.waitForCapacity(size1);
         await queue.waitForCapacity(size2);
 
-        // Total is 9 * FILE_CHUNK_SIZE, limit is 10 * FILE_CHUNK_SIZE
+        // Total is 9 * FILE_CHUNK_SIZE, limit is 16 * FILE_CHUNK_SIZE
         // So next upload should still be allowed immediately
         const promise = queue.waitForCapacity(3 * FILE_CHUNK_SIZE);
         await promise;
@@ -99,7 +99,7 @@ describe('UploadQueue', () => {
 
     it('should reject when signal is aborted', async () => {
         // Fill queue to max
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 8; i++) {
             await queue.waitForCapacity(0);
         }
 
@@ -116,7 +116,7 @@ describe('UploadQueue', () => {
 
     it('should reject immediately if signal is already aborted', async () => {
         // Fill queue to max
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 8; i++) {
             await queue.waitForCapacity(0);
         }
 

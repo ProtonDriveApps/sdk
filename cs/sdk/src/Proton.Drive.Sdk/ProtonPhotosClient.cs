@@ -16,12 +16,13 @@ public sealed class ProtonPhotosClient : IDisposable
 {
     private readonly HttpClient _httpClient;
 
-    public ProtonPhotosClient(ProtonApiSession session, string? uid = null)
+    public ProtonPhotosClient(ProtonApiSession session, string? uid = null, int? blockTransferDegreeOfParallelism = null)
     {
         DriveClient = new ProtonDriveClient(
             session,
-            (defaultApiHttpClient, storageApiHttpClient) => new DriveApiClients(defaultApiHttpClient, storageApiHttpClient),
-            uid);
+            (defaultApiHttpClient, storageApiHttpClient) => new PhotosApiClients(defaultApiHttpClient, storageApiHttpClient),
+            uid,
+            blockTransferDegreeOfParallelism);
 
         _httpClient = session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonApiDefaults.DefaultTimeoutSeconds));
 

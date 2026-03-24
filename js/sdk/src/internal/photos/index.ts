@@ -19,6 +19,8 @@ import { SharesCryptoService } from '../shares/cryptoService';
 import { NodesService as UploadNodesService } from '../upload/interface';
 import { UploadTelemetry } from '../upload/telemetry';
 import { UploadQueue } from '../upload/queue';
+import { FILE_CHUNK_SIZE } from '../upload/streamUploader';
+import { UploadTuningOptions } from '../upload/options';
 import { AlbumsManager } from './albumsManager';
 import { AlbumsCryptoService } from './albumsCrypto';
 import { PhotosAPIService } from './apiService';
@@ -151,6 +153,7 @@ export function initPhotoUploadModule(
     nodesService: UploadNodesService,
     featureFlagProvider: FeatureFlagProvider,
     clientUid?: string,
+    tuning?: UploadTuningOptions,
 ) {
     const api = new PhotoUploadAPIService(apiService, clientUid);
     const cryptoService = new PhotoUploadCryptoService(telemetry, driveCrypto, nodesService, featureFlagProvider);
@@ -158,7 +161,12 @@ export function initPhotoUploadModule(
     const uploadTelemetry = new UploadTelemetry(telemetry, sharesService);
     const manager = new PhotoUploadManager(telemetry, api, cryptoService, nodesService, clientUid);
 
-    const queue = new UploadQueue();
+    const queue = new UploadQueue(
+        tuning?.maxConcurrentFileUploads,
+        tuning?.maxConcurrentUploadSizeInBlocks
+            ? tuning.maxConcurrentUploadSizeInBlocks * FILE_CHUNK_SIZE
+            : undefined,
+    );
 
     async function getFileUploader(
         parentFolderUid: string,
@@ -182,6 +190,7 @@ export function initPhotoUploadModule(
             metadata,
             onFinish,
             signal,
+            tuning,
         );
     }
 

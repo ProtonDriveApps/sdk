@@ -10,6 +10,7 @@ import { UploadDigests } from './digests';
 import { Uploader } from './fileUploader';
 import { NodeRevisionDraft, NodeCrypto } from './interface';
 import { UploadManager } from './manager';
+import { UploadTuningOptions } from './options';
 import { readStreamToUint8Array } from './streamReader';
 import { MAX_BLOCK_ENCRYPTION_RETRIES } from './streamUploader';
 import { UploadTelemetry } from './telemetry';
@@ -36,8 +37,9 @@ abstract class SmallUploader extends Uploader {
         metadata: UploadMetadata,
         onFinish: () => void,
         signal: AbortSignal | undefined,
+        tuning?: UploadTuningOptions,
     ) {
-        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal);
+        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal, tuning);
         this.logger = telemetry.getLoggerForSmallUpload();
     }
     protected async createRevisionDraft(): Promise<{
@@ -127,9 +129,10 @@ abstract class SmallUploader extends Uploader {
             });
         }
 
-        const digests = new UploadDigests();
+        const digests = new UploadDigests({ useWorkerHashing: this.tuning?.useWorkerHashing ?? true });
         digests.update(content);
-        const contentSha1 = digests.digests().sha1;
+        const contentSha1 = (await digests.digests()).sha1;
+        await digests.dispose();
 
         if (this.metadata.expectedSha1 && contentSha1 !== this.metadata.expectedSha1) {
             throw new IntegrityError(new Error('File hash does not match expected hash').message, {
@@ -148,13 +151,13 @@ abstract class SmallUploader extends Uploader {
         nodeKeys: NodeKeys,
         thumbnails: Thumbnail[],
     ): Promise<{ type: ThumbnailType; encryptedData: Uint8Array<ArrayBuffer> }[]> {
-        const result = [];
-        for (const thumbnail of thumbnails) {
-            this.logger.debug(`Encrypting thumbnail ${thumbnail.type}`);
-            const enc = await this.cryptoService.encryptThumbnail(nodeKeys, thumbnail);
-            result.push({ type: thumbnail.type, encryptedData: enc.encryptedData });
-        }
-        return result;
+        return Promise.all(
+            thumbnails.map(async (thumbnail) => {
+                this.logger.debug(`Encrypting thumbnail ${thumbnail.type}`);
+                const enc = await this.cryptoService.encryptThumbnail(nodeKeys, thumbnail);
+                return { type: thumbnail.type, encryptedData: enc.encryptedData };
+            }),
+        );
     }
 
     private async encryptContentBlock(
@@ -274,8 +277,9 @@ export class SmallFileUploader extends SmallUploader {
         signal: AbortSignal | undefined,
         private parentFolderUid: string,
         private name: string,
+        tuning?: UploadTuningOptions,
     ) {
-        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal);
+        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal, tuning);
         this.parentFolderUid = parentFolderUid;
         this.name = name;
     }
@@ -324,8 +328,9 @@ export class SmallFileRevisionUploader extends SmallUploader {
         onFinish: () => void,
         signal: AbortSignal | undefined,
         private nodeUid: string,
+        tuning?: UploadTuningOptions,
     ) {
-        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal);
+        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal, tuning);
         this.nodeUid = nodeUid;
     }
 

@@ -4,4 +4,5 @@ public record struct ProtonDriveClientOptions(
     string? BindingsLanguage,
     string? Uid,
     int? OverrideDefaultApiTimeoutSeconds,
-    int? OverrideStorageApiTimeoutSeconds);
+    int? OverrideStorageApiTimeoutSeconds,
+    int? BlockTransferDegreeOfParallelism);

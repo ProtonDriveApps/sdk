@@ -19,6 +19,7 @@ import { NodeRevisionDraft, NodesService } from '../upload/interface';
 import { UploadManager } from '../upload/manager';
 import { StreamUploader } from '../upload/streamUploader';
 import { UploadTelemetry } from '../upload/telemetry';
+import { UploadTuningOptions } from '../upload/options';
 
 type PostCommitRevisionRequest = Extract<
     drivePaths['/drive/v2/volumes/{volumeID}/files/{linkID}/revisions/{revisionID}']['put']['requestBody'],
@@ -48,8 +49,9 @@ export class PhotoFileUploader extends FileUploader {
         metadata: PhotoUploadMetadata,
         onFinish: () => void,
         signal?: AbortSignal,
+        tuning?: UploadTuningOptions,
     ) {
-        super(telemetry, apiService, cryptoService, manager, parentFolderUid, name, metadata, onFinish, signal);
+        super(telemetry, apiService, cryptoService, manager, parentFolderUid, name, metadata, onFinish, signal, tuning);
         this.photoApiService = apiService;
         this.photoManager = manager;
         this.photoMetadata = metadata;
@@ -71,6 +73,7 @@ export class PhotoFileUploader extends FileUploader {
             onFinish,
             this.controller,
             this.signal,
+            this.tuning,
         );
     }
 }
@@ -90,6 +93,7 @@ export class PhotoStreamUploader extends StreamUploader {
         onFinish: (failure: boolean) => Promise<void>,
         controller: UploadController,
         signal?: AbortSignal,
+        tuning?: UploadTuningOptions,
     ) {
         const abortController = new AbortController();
         if (signal) {
@@ -109,13 +113,14 @@ export class PhotoStreamUploader extends StreamUploader {
             onFinish,
             controller,
             abortController,
+            tuning,
         );
         this.photoUploadManager = uploadManager;
         this.photoMetadata = metadata;
     }
 
     async commitFile(thumbnails: Thumbnail[]) {
-        const digests = this.digests.digests();
+        const digests = await this.digests.digests();
         this.verifyIntegrity(thumbnails, digests);
 
         const extendedAttributes = {

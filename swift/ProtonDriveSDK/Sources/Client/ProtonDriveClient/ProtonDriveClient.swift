@@ -91,6 +91,9 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
                 if let httpStorageCallsTimeout = configuration.httpStorageCallsTimeout {
                     $0.storageCallTimeout = httpStorageCallsTimeout
                 }
+                if let uploadBlockTransferDegreeOfParallelism = configuration.uploadBlockTransferDegreeOfParallelism {
+                    $0.blockTransferDegreeOfParallelism = uploadBlockTransferDegreeOfParallelism
+                }
             }
         }
 

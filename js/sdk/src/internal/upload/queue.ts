@@ -8,7 +8,7 @@ import { FILE_CHUNK_SIZE } from './streamUploader';
  * below also limits that, but if the file is empty, we still need to make
  * a reasonable number of requests.
  */
-const MAX_CONCURRENT_FILE_UPLOADS = 5;
+const DEFAULT_MAX_CONCURRENT_FILE_UPLOADS = 8;
 
 /**
  * Maximum total file size that can be uploaded concurrently.
@@ -17,7 +17,7 @@ const MAX_CONCURRENT_FILE_UPLOADS = 5;
  * connection we don't do too many things at the same time that all fail due
  * to network issues.
  */
-const MAX_CONCURRENT_UPLOAD_SIZE = 10 * FILE_CHUNK_SIZE;
+const DEFAULT_MAX_CONCURRENT_UPLOAD_SIZE = 16 * FILE_CHUNK_SIZE;
 
 /**
  * A queue that limits the number of concurrent uploads.
@@ -34,6 +34,11 @@ const MAX_CONCURRENT_UPLOAD_SIZE = 10 * FILE_CHUNK_SIZE;
  * more performant for many small file uploads.
  */
 export class UploadQueue {
+    constructor(
+        private readonly maxConcurrentFileUploads: number = DEFAULT_MAX_CONCURRENT_FILE_UPLOADS,
+        private readonly maxConcurrentUploadSize: number = DEFAULT_MAX_CONCURRENT_UPLOAD_SIZE,
+    ) {}
+
     private totalFileUploads = 0;
 
     private totalExpectedSize = 0;
@@ -41,8 +46,8 @@ export class UploadQueue {
     async waitForCapacity(expectedSize: number, signal?: AbortSignal) {
         await waitForCondition(
             () =>
-                this.totalFileUploads < MAX_CONCURRENT_FILE_UPLOADS &&
-                this.totalExpectedSize < MAX_CONCURRENT_UPLOAD_SIZE,
+                this.totalFileUploads < this.maxConcurrentFileUploads &&
+                this.totalExpectedSize < this.maxConcurrentUploadSize,
             signal,
         );
         this.totalFileUploads++;

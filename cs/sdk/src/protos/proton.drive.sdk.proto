@@ -221,6 +221,7 @@ message ProtonDriveClientOptions {
     
     int32 api_call_timeout = 3; // Optional
     int32 storage_call_timeout = 4; // Optional
+    int32 block_transfer_degree_of_parallelism = 5; // Optional, clamped to SDK-supported range
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of ProtonDriveClient.
@@ -256,6 +257,12 @@ message DriveClientCreateRequest {
 // The response value must be an Int64Value carrying a handle to an instance of ProtonDriveClient.
 message DriveClientCreateFromSessionRequest {
     int64 session_handle = 1;
+
+    // Client UID, optional
+    // If a null value is provided, the SDK automatically generates a UUID during initialization
+    string uid = 2;
+
+    int32 block_transfer_degree_of_parallelism = 3; // Optional, clamped to SDK-supported range
 }
 
 // The response must not have a value.
@@ -637,6 +644,8 @@ message DrivePhotosClientCreateFromSessionRequest {
     // Client UID, optional
     // If a null value is provided, the SDK automatically generates a UUID during initialization
     string uid = 2;
+
+    int32 block_transfer_degree_of_parallelism = 3; // Optional, clamped to SDK-supported range
 }
 
 // The response must not have a value.

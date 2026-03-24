@@ -5,6 +5,7 @@ import { UploadController } from './controller';
 import { UploadCryptoService } from './cryptoService';
 import { NodeRevisionDraft } from './interface';
 import { UploadManager } from './manager';
+import { UploadTuningOptions } from './options';
 import { StreamUploader } from './streamUploader';
 import { UploadTelemetry } from './telemetry';
 
@@ -27,6 +28,7 @@ export abstract class Uploader {
         protected metadata: UploadMetadata,
         protected onFinish: () => void,
         protected signal?: AbortSignal,
+        protected tuning?: UploadTuningOptions,
     ) {
         this.telemetry = telemetry;
         this.apiService = apiService;
@@ -130,6 +132,7 @@ export abstract class Uploader {
             onFinish,
             this.controller,
             this.abortController,
+            this.tuning,
         );
     }
 
@@ -155,8 +158,9 @@ export class FileUploader extends Uploader {
         metadata: UploadMetadata,
         onFinish: () => void,
         signal?: AbortSignal,
+        tuning?: UploadTuningOptions,
     ) {
-        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal);
+        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal, tuning);
 
         this.parentFolderUid = parentFolderUid;
         this.name = name;
@@ -207,8 +211,9 @@ export class FileRevisionUploader extends Uploader {
         metadata: UploadMetadata,
         onFinish: () => void,
         signal?: AbortSignal,
+        tuning?: UploadTuningOptions,
     ) {
-        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal);
+        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal, tuning);
 
         this.nodeUid = nodeUid;
     }

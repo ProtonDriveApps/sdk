@@ -102,12 +102,19 @@ class ProtonPhotosClient internal constructor(
     }
 }
 
-suspend fun Session.protonPhotosClientCreate(): ProtonPhotosClient =
+suspend fun Session.protonPhotosClientCreate(
+    uid: String? = null,
+    blockTransferDegreeOfParallelism: Int? = null,
+): ProtonPhotosClient =
     factory(JniProtonPhotosClient()) {
         val session = this@protonPhotosClientCreate
         ProtonPhotosClient(
             session = session,
-            handle = createFromSession(sessionHandle = handle),
+            handle = createFromSession(
+                sessionHandle = handle,
+                uid = uid,
+                blockTransferDegreeOfParallelism = blockTransferDegreeOfParallelism,
+            ),
             bridge = this,
         )
     }
