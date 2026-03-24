@@ -23,8 +23,10 @@ type moveLinkReq struct {
 	OriginalHash            string `json:"OriginalHash"`
 	Hash                    string `json:"Hash"`
 	NodePassphrase          string `json:"NodePassphrase"`
-	NodePassphraseSignature string `json:"NodePassphraseSignature"`
-	SignatureAddress        string `json:"SignatureAddress"`
+	NodePassphraseSignature string `json:"NodePassphraseSignature,omitempty"`
+	NameSignatureEmail      string `json:"NameSignatureEmail"`
+	SignatureAddress        string `json:"SignatureEmail,omitempty"`
+	ContentHash             string `json:"ContentHash,omitempty"`
 }
 
 type createRevisionRes struct {
@@ -74,6 +76,25 @@ type smallFileResponse struct {
 type verificationInputResponse struct {
 	VerificationCode string `json:"VerificationCode"`
 	ContentKeyPacket string `json:"ContentKeyPacket"`
+}
+
+type linkBatchReq struct {
+	LinkIDs []string `json:"LinkIDs"`
+}
+
+type batchLinkResponse struct {
+	Responses map[string]struct {
+		Code  int    `json:"Code"`
+		Error string `json:"Error"`
+	} `json:"Responses"`
+}
+
+type renameLinkReq struct {
+	Name               string `json:"Name"`
+	NameSignatureEmail string `json:"NameSignatureEmail"`
+	Hash               string `json:"Hash,omitempty"`
+	OriginalHash       string `json:"OriginalHash,omitempty"`
+	MediaType          string `json:"MIMEType,omitempty"`
 }
 
 func (req *moveLinkReq) setName(name string, addrKR, nodeKR *crypto.KeyRing) error {
@@ -249,4 +270,24 @@ func (d *standaloneDriver) getVerificationInput(ctx context.Context, linkID, rev
 	var result verificationInputResponse
 	err := d.doJSON(ctx, http.MethodGet, "/drive/v2/volumes/"+d.state.volumeID+"/links/"+linkID+"/revisions/"+revisionID+"/verification", nil, &result)
 	return result, err
+}
+
+func (d *standaloneDriver) renameLink(ctx context.Context, linkID string, req renameLinkReq) error {
+	return d.doJSON(ctx, http.MethodPut, "/drive/v2/volumes/"+d.state.volumeID+"/links/"+linkID+"/rename", req, nil)
+}
+
+func (d *standaloneDriver) trashLinks(ctx context.Context, linkIDs []string) error {
+	return d.doJSON(ctx, http.MethodPost, "/drive/v2/volumes/"+d.state.volumeID+"/trash_multiple", linkBatchReq{LinkIDs: linkIDs}, nil)
+}
+
+func (d *standaloneDriver) deleteTrashedLinks(ctx context.Context, linkIDs []string) error {
+	return d.doJSON(ctx, http.MethodPost, "/drive/v2/volumes/"+d.state.volumeID+"/trash/delete_multiple", linkBatchReq{LinkIDs: linkIDs}, nil)
+}
+
+func (d *standaloneDriver) deleteLinks(ctx context.Context, linkIDs []string) error {
+	return d.doJSON(ctx, http.MethodPost, "/drive/v2/volumes/"+d.state.volumeID+"/delete_multiple", linkBatchReq{LinkIDs: linkIDs}, nil)
+}
+
+func (d *standaloneDriver) emptyTrash(ctx context.Context) error {
+	return d.doJSON(ctx, http.MethodDelete, "/drive/volumes/"+d.state.volumeID+"/trash", nil, nil)
 }

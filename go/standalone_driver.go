@@ -21,16 +21,23 @@ import (
 )
 
 type driveState struct {
-	volumeID      string
-	user          proton.User
-	addresses     []proton.Address
-	userKR        *crypto.KeyRing
-	addrKRs       map[string]*crypto.KeyRing
-	mainShare     proton.Share
-	rootLink      proton.Link
-	mainShareKR   *crypto.KeyRing
-	defaultAddrKR *crypto.KeyRing
-	saltedKeyPass []byte
+	volumeID         string
+	user             proton.User
+	addresses        []proton.Address
+	userKR           *crypto.KeyRing
+	addrKRs          map[string]*crypto.KeyRing
+	mainShare        proton.Share
+	rootLink         proton.Link
+	mainShareKR      *crypto.KeyRing
+	defaultAddrKR    *crypto.KeyRing
+	saltedKeyPass    []byte
+	nodeKeysByLinkID map[string]*nodeSecretMaterial
+}
+
+type nodeSecretMaterial struct {
+	Passphrase           []byte
+	PassphraseSessionKey *crypto.SessionKey
+	NameSessionKey       *crypto.SessionKey
 }
 
 type standaloneDriverConfig struct {
@@ -176,7 +183,7 @@ func (d *standaloneDriver) CreateFolder(ctx context.Context, parentID, name stri
 	if err != nil {
 		return "", err
 	}
-	newNodeKey, nodePassphraseEnc, nodePassphraseSignature, newNodeKR, err := d.generateNodeMaterial(parentKR)
+	newNodeKey, nodeSecrets, nodePassphraseEnc, nodePassphraseSignature, newNodeKR, err := d.generateNodeMaterial(parentKR)
 	if err != nil {
 		return "", err
 	}
@@ -202,6 +209,7 @@ func (d *standaloneDriver) CreateFolder(ctx context.Context, parentID, name stri
 	if err != nil {
 		return "", err
 	}
+	d.storeNodeSecrets(created.ID, nodeSecrets)
 	d.ClearCache()
 	return created.ID, nil
 }
@@ -280,24 +288,25 @@ func (d *standaloneDriver) UploadFile(ctx context.Context, parentID, name string
 	return d.uploadFile(ctx, parentID, name, body, options)
 }
 
-func (d *standaloneDriver) MoveFile(context.Context, string, string, string) error {
-	return ErrNotImplemented
+func (d *standaloneDriver) MoveFile(ctx context.Context, nodeID, parentID, name string) error {
+	return d.moveNode(ctx, nodeID, parentID, name)
 }
 
-func (d *standaloneDriver) MoveFolder(context.Context, string, string, string) error {
-	return ErrNotImplemented
+func (d *standaloneDriver) MoveFolder(ctx context.Context, nodeID, parentID, name string) error {
+	return d.moveNode(ctx, nodeID, parentID, name)
 }
 
-func (d *standaloneDriver) TrashFile(context.Context, string) error {
-	return ErrNotImplemented
+func (d *standaloneDriver) TrashFile(ctx context.Context, nodeID string) error {
+	return d.trashLinks(ctx, []string{nodeID})
 }
 
-func (d *standaloneDriver) TrashFolder(context.Context, string, bool) error {
-	return ErrNotImplemented
+func (d *standaloneDriver) TrashFolder(ctx context.Context, nodeID string, recursive bool) error {
+	_ = recursive
+	return d.trashLinks(ctx, []string{nodeID})
 }
 
-func (d *standaloneDriver) EmptyTrash(context.Context) error {
-	return ErrNotImplemented
+func (d *standaloneDriver) EmptyTrash(ctx context.Context) error {
+	return d.emptyTrash(ctx)
 }
 
 func (d *standaloneDriver) ClearCache() {
@@ -390,6 +399,165 @@ func (d *standaloneDriver) cacheNode(node Node) {
 	d.cache[node.ID] = node
 }
 
+func (d *standaloneDriver) storeNodeSecrets(linkID string, material *nodeSecretMaterial) {
+	if d.state == nil || linkID == "" || material == nil {
+		return
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if d.state.nodeKeysByLinkID == nil {
+		d.state.nodeKeysByLinkID = map[string]*nodeSecretMaterial{}
+	}
+	copyMaterial := &nodeSecretMaterial{Passphrase: append([]byte(nil), material.Passphrase...)}
+	if material.PassphraseSessionKey != nil {
+		copyMaterial.PassphraseSessionKey = crypto.NewSessionKeyFromToken(material.PassphraseSessionKey.Key, material.PassphraseSessionKey.Algo)
+	}
+	if material.NameSessionKey != nil {
+		copyMaterial.NameSessionKey = crypto.NewSessionKeyFromToken(material.NameSessionKey.Key, material.NameSessionKey.Algo)
+	}
+	d.state.nodeKeysByLinkID[linkID] = copyMaterial
+}
+
+func (d *standaloneDriver) getStoredNodeSecrets(linkID string) (*nodeSecretMaterial, bool) {
+	if d.state == nil || linkID == "" {
+		return nil, false
+	}
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	value, ok := d.state.nodeKeysByLinkID[linkID]
+	if !ok {
+		return nil, false
+	}
+	copyMaterial := &nodeSecretMaterial{Passphrase: append([]byte(nil), value.Passphrase...)}
+	if value.PassphraseSessionKey != nil {
+		copyMaterial.PassphraseSessionKey = crypto.NewSessionKeyFromToken(value.PassphraseSessionKey.Key, value.PassphraseSessionKey.Algo)
+	}
+	if value.NameSessionKey != nil {
+		copyMaterial.NameSessionKey = crypto.NewSessionKeyFromToken(value.NameSessionKey.Key, value.NameSessionKey.Algo)
+	}
+	return copyMaterial, true
+}
+
+func (d *standaloneDriver) moveNode(ctx context.Context, nodeID, parentID, name string) error {
+	link, err := d.getLink(ctx, nodeID)
+	if err != nil {
+		return err
+	}
+	if link.ParentLinkID == "" {
+		return fmt.Errorf("cannot move root node")
+	}
+	destinationParent, err := d.getLink(ctx, parentID)
+	if err != nil {
+		return err
+	}
+	destinationKR, err := d.getLinkKR(ctx, destinationParent)
+	if err != nil {
+		return err
+	}
+	originParent, err := d.getLink(ctx, link.ParentLinkID)
+	if err != nil {
+		return err
+	}
+	originParentKR, err := d.getLinkKR(ctx, originParent)
+	if err != nil {
+		return err
+	}
+	originalHashKey, err := originParent.GetHashKey(originParentKR)
+	if err != nil {
+		return err
+	}
+	originalName, err := decryptLinkName(link, originParentKR, d.state.defaultAddrKR)
+	if err != nil {
+		return err
+	}
+	if name == "" {
+		name = originalName
+	}
+	destinationHashKey, err := destinationParent.GetHashKey(destinationKR)
+	if err != nil {
+		return err
+	}
+	nameEnc, err := d.reencryptNodeName(nodeID, name, destinationKR)
+	if err != nil {
+		return err
+	}
+	originalHash := getNameHash(originalName, originalHashKey)
+	newHash := getNameHash(name, destinationHashKey)
+	passphrasePacket, passphraseSignature, signatureEmail, err := d.reencryptNodePassphrase(nodeID, destinationKR)
+	if err != nil {
+		return err
+	}
+	passphraseSignature = ""
+	signatureEmail = ""
+	if err := d.moveLink(ctx, nodeID, moveLinkReq{
+		ParentLinkID:            parentID,
+		Name:                    nameEnc,
+		OriginalHash:            originalHash,
+		Hash:                    newHash,
+		NodePassphrase:          passphrasePacket,
+		NodePassphraseSignature: passphraseSignature,
+		NameSignatureEmail:      d.signatureAddress(),
+		SignatureAddress:        signatureEmail,
+	}); err != nil {
+		return err
+	}
+	d.ClearCache()
+	return nil
+}
+
+func (d *standaloneDriver) reencryptNodePassphrase(linkID string, destinationKR *crypto.KeyRing) (string, string, string, error) {
+	material, ok := d.getStoredNodeSecrets(linkID)
+	if !ok || material.PassphraseSessionKey == nil {
+		return "", "", "", fmt.Errorf("node passphrase for %s is not available in local cache", linkID)
+	}
+	messageDataPacket, err := material.PassphraseSessionKey.Encrypt(crypto.NewPlainMessage(material.Passphrase))
+	if err != nil {
+		return "", "", "", err
+	}
+	detachedSignature, err := d.state.defaultAddrKR.SignDetached(crypto.NewPlainMessage(material.Passphrase))
+	if err != nil {
+		return "", "", "", err
+	}
+	signatureDataPacket, err := material.PassphraseSessionKey.Encrypt(crypto.NewPlainMessage(detachedSignature.GetBinary()))
+	if err != nil {
+		return "", "", "", err
+	}
+	keyPacket, err := destinationKR.EncryptSessionKey(material.PassphraseSessionKey)
+	if err != nil {
+		return "", "", "", err
+	}
+	enc, err := crypto.NewPGPSplitMessage(keyPacket, messageDataPacket).GetArmored()
+	if err != nil {
+		return "", "", "", err
+	}
+	armoredSig, err := crypto.NewPGPSplitMessage(keyPacket, signatureDataPacket).GetArmored()
+	if err != nil {
+		return "", "", "", err
+	}
+	return enc, armoredSig, d.signatureAddress(), nil
+}
+
+func (d *standaloneDriver) reencryptNodeName(linkID, name string, destinationKR *crypto.KeyRing) (string, error) {
+	material, ok := d.getStoredNodeSecrets(linkID)
+	if !ok || material.NameSessionKey == nil {
+		return getEncryptedName(name, d.state.defaultAddrKR, destinationKR)
+	}
+	message, err := material.NameSessionKey.EncryptAndSign(crypto.NewPlainMessageFromString(name), d.state.defaultAddrKR)
+	if err != nil {
+		return "", err
+	}
+	split, err := crypto.NewPGPMessage(message).SplitMessage()
+	if err != nil {
+		return "", err
+	}
+	keyPacket, err := destinationKR.EncryptSessionKey(material.NameSessionKey)
+	if err != nil {
+		return "", err
+	}
+	pgp := crypto.NewPGPSplitMessage(keyPacket, split.GetBinaryDataPacket())
+	return pgp.GetArmored()
+}
+
 func (d *standaloneDriver) signatureAddress() string {
 	if d.state != nil && d.state.mainShare.Creator != "" {
 		return d.state.mainShare.Creator
@@ -402,20 +570,28 @@ func (d *standaloneDriver) signatureAddress() string {
 	return ""
 }
 
-func (d *standaloneDriver) generateNodeMaterial(parentKR *crypto.KeyRing) (string, string, string, *crypto.KeyRing, error) {
+func (d *standaloneDriver) generateNodeMaterial(parentKR *crypto.KeyRing) (string, *nodeSecretMaterial, string, string, *crypto.KeyRing, error) {
 	passphrase, keyArmored, err := generateCryptoKey()
 	if err != nil {
-		return "", "", "", nil, err
+		return "", nil, "", "", nil, err
+	}
+	passphraseSK, err := generateSessionKey()
+	if err != nil {
+		return "", nil, "", "", nil, err
+	}
+	nameSK, err := generateSessionKey()
+	if err != nil {
+		return "", nil, "", "", nil, err
 	}
 	passphraseEnc, passphraseSig, err := encryptWithSignature(parentKR, d.state.defaultAddrKR, []byte(passphrase))
 	if err != nil {
-		return "", "", "", nil, err
+		return "", nil, "", "", nil, err
 	}
 	keyring, err := getKeyRing(parentKR, d.state.defaultAddrKR, keyArmored, passphraseEnc, passphraseSig)
 	if err != nil {
-		return "", "", "", nil, err
+		return "", nil, "", "", nil, err
 	}
-	return keyArmored, passphraseEnc, passphraseSig, keyring, nil
+	return keyArmored, &nodeSecretMaterial{Passphrase: []byte(passphrase), PassphraseSessionKey: passphraseSK, NameSessionKey: nameSK}, passphraseEnc, passphraseSig, keyring, nil
 }
 
 func bootstrapDriveState(ctx context.Context, manager *proton.Manager, client *proton.Client, user proton.User, addresses []proton.Address, userKR *crypto.KeyRing, addrKRs map[string]*crypto.KeyRing, saltedKeyPass []byte) (*driveState, error) {
@@ -453,16 +629,17 @@ func bootstrapDriveState(ctx context.Context, manager *proton.Manager, client *p
 	}
 	_ = manager
 	return &driveState{
-		volumeID:      activeVolumeID,
-		user:          user,
-		addresses:     addresses,
-		userKR:        userKR,
-		addrKRs:       addrKRs,
-		mainShare:     mainShare,
-		rootLink:      rootLink,
-		mainShareKR:   mainShareKR,
-		defaultAddrKR: defaultAddrKR,
-		saltedKeyPass: append([]byte(nil), saltedKeyPass...),
+		volumeID:         activeVolumeID,
+		user:             user,
+		addresses:        addresses,
+		userKR:           userKR,
+		addrKRs:          addrKRs,
+		mainShare:        mainShare,
+		rootLink:         rootLink,
+		mainShareKR:      mainShareKR,
+		defaultAddrKR:    defaultAddrKR,
+		saltedKeyPass:    append([]byte(nil), saltedKeyPass...),
+		nodeKeysByLinkID: map[string]*nodeSecretMaterial{},
 	}, nil
 }
 
@@ -490,6 +667,10 @@ func generatePassphrase() (string, error) {
 		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(token), nil
+}
+
+func generateSessionKey() (*crypto.SessionKey, error) {
+	return crypto.GenerateSessionKey()
 }
 
 func generateCryptoKey() (string, string, error) {
@@ -867,7 +1048,7 @@ func (d *standaloneDriver) uploadSmallFileFlow(ctx context.Context, parent proto
 	if err != nil {
 		return Node{}, RevisionAttrs{}, err
 	}
-	newNodeKey, newNodePassphraseEnc, newNodePassphraseSignature, newNodeKR, err := d.generateNodeMaterial(parentKR)
+	newNodeKey, nodeSecrets, newNodePassphraseEnc, newNodePassphraseSignature, newNodeKR, err := d.generateNodeMaterial(parentKR)
 	if err != nil {
 		return Node{}, RevisionAttrs{}, err
 	}
@@ -946,6 +1127,7 @@ func (d *standaloneDriver) uploadSmallFileFlow(ctx context.Context, parent proto
 	if err != nil {
 		return Node{}, RevisionAttrs{}, err
 	}
+	d.storeNodeSecrets(resp.LinkID, nodeSecrets)
 	d.ClearCache()
 	node := Node{ID: resp.LinkID, ParentID: parentID, Name: name, Type: NodeTypeFile, Size: int64(len(content)), MIMEType: mimeType, ModTime: modTime, CreateTime: time.Now().UTC(), OriginalSHA1: hex.EncodeToString(sha1Digest[:])}
 	attrs := RevisionAttrs{Size: int64(len(content)), ModTime: modTime, Digests: map[string]string{"SHA1": hex.EncodeToString(sha1Digest[:])}, BlockSizes: []int64{int64(len(content))}, EncryptedSize: int64(len(content))}
@@ -1000,7 +1182,7 @@ func (d *standaloneDriver) createFileUploadDraft(ctx context.Context, parent pro
 	if err != nil {
 		return "", "", nil, nil, err
 	}
-	newNodeKey, newNodePassphraseEnc, newNodePassphraseSignature, newNodeKR, err := d.generateNodeMaterial(parentKR)
+	newNodeKey, _, newNodePassphraseEnc, newNodePassphraseSignature, newNodeKR, err := d.generateNodeMaterial(parentKR)
 	if err != nil {
 		return "", "", nil, nil, err
 	}

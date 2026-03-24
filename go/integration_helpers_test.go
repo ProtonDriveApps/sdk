@@ -5,8 +5,10 @@ package protondrive
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -19,6 +21,7 @@ var (
 	integrationClientOnce sync.Once
 	integrationClient     *Client
 	integrationClientErr  error
+	integrationFixtureSeq uint64
 )
 
 func newIntegrationTestContext(t *testing.T) *integrationTestContext {
@@ -99,7 +102,40 @@ func clientSessionRootID(t *testing.T, client *Client) string {
 }
 
 func integrationFolderName() string {
-	return "sdk-integration-" + time.Now().UTC().Format("20060102-150405")
+	seq := atomic.AddUint64(&integrationFixtureSeq, 1)
+	return fmt.Sprintf("sdk-integration-%s-%03d", time.Now().UTC().Format("20060102-150405"), seq)
+}
+
+func integrationFileName() string {
+	return integrationFolderName() + ".txt"
+}
+
+func createIntegrationFolderFixture(t *testing.T, testContext *integrationTestContext, client *Client) (parentID, folderID, folderName string) {
+	t.Helper()
+	parentID = clientSessionRootID(t, client)
+	folderName = integrationFolderName()
+	folderID, err := client.CreateFolder(context.Background(), parentID, folderName)
+	if err != nil {
+		t.Fatalf("create integration folder fixture: %v", err)
+	}
+	return parentID, folderID, folderName
+}
+
+func createIntegrationFileFixture(t *testing.T, testContext *integrationTestContext, client *Client) (parentID, fileID, fileName string) {
+	t.Helper()
+	parentID = clientSessionRootID(t, client)
+	fileName = integrationFileName()
+	node, _, err := client.UploadFile(
+		context.Background(),
+		parentID,
+		fileName,
+		strings.NewReader("integration-mutation-fixture"),
+		UploadOptions{KnownSize: int64(len("integration-mutation-fixture")), ModTime: time.Now().UTC()},
+	)
+	if err != nil {
+		t.Fatalf("create integration file fixture: %v", err)
+	}
+	return parentID, node.ID, fileName
 }
 
 func resolveIntegrationFolderID(t *testing.T, testContext *integrationTestContext, client *Client) string {
@@ -111,15 +147,26 @@ func resolveIntegrationFolderID(t *testing.T, testContext *integrationTestContex
 	if looksLikeLinkID(configured) {
 		return configured
 	}
+	if folderID := findNodeRecursivelyByName(t, client, clientSessionRootID(t, client), configured, NodeTypeFolder); folderID != "" {
+		return folderID
+	}
 	parentID := clientSessionRootID(t, client)
-	folder, err := client.SearchChild(context.Background(), parentID, configured, NodeTypeFolder)
-	if err != nil {
-		t.Fatalf("resolve test folder by name: %v", err)
+	parts := strings.Split(configured, "/")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		folder, err := client.SearchChild(context.Background(), parentID, part, NodeTypeFolder)
+		if err != nil {
+			t.Fatalf("resolve test folder by name: %v", err)
+		}
+		if folder == nil {
+			t.Skipf("test folder path %q not found under root", configured)
+		}
+		parentID = folder.ID
 	}
-	if folder == nil {
-		t.Fatalf("test folder %q not found under root", configured)
-	}
-	return folder.ID
+	return parentID
 }
 
 func resolveIntegrationFileID(t *testing.T, testContext *integrationTestContext, client *Client) string {
@@ -131,9 +178,14 @@ func resolveIntegrationFileID(t *testing.T, testContext *integrationTestContext,
 	if looksLikeLinkID(configured) {
 		return configured
 	}
-	searchParents := []string{resolveIntegrationFolderID(t, testContext, client)}
+	searchParents := make([]string, 0, 2)
+	if strings.TrimSpace(testContext.Config.TestFolderID) != "" {
+		if folderID := resolveIntegrationFolderIDMaybe(t, testContext, client); folderID != "" {
+			searchParents = append(searchParents, folderID)
+		}
+	}
 	rootID := clientSessionRootID(t, client)
-	if searchParents[0] != rootID {
+	if len(searchParents) == 0 || searchParents[0] != rootID {
 		searchParents = append(searchParents, rootID)
 	}
 	for _, parentID := range searchParents {
@@ -145,8 +197,36 @@ func resolveIntegrationFileID(t *testing.T, testContext *integrationTestContext,
 			return file.ID
 		}
 	}
+	if fileID := findNodeRecursivelyByName(t, client, rootID, configured, NodeTypeFile); fileID != "" {
+		return fileID
+	}
 	t.Fatalf("test file %q not found under configured test folder or root", configured)
 	return ""
+}
+
+func resolveIntegrationFolderIDMaybe(t *testing.T, testContext *integrationTestContext, client *Client) string {
+	t.Helper()
+	configured := strings.TrimSpace(testContext.Config.TestFolderID)
+	if configured == "" {
+		return ""
+	}
+	if looksLikeLinkID(configured) {
+		return configured
+	}
+	parentID := clientSessionRootID(t, client)
+	parts := strings.Split(configured, "/")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		folder, err := client.SearchChild(context.Background(), parentID, part, NodeTypeFolder)
+		if err != nil || folder == nil {
+			return ""
+		}
+		parentID = folder.ID
+	}
+	return parentID
 }
 
 func looksLikeLinkID(value string) bool {
@@ -158,4 +238,31 @@ func looksLikeLinkID(value string) bool {
 		return false
 	}
 	return len(trimmed) >= 40 && (strings.Contains(trimmed, "=") || strings.Contains(trimmed, "_") || strings.Contains(trimmed, "-"))
+}
+
+func findNodeRecursivelyByName(t *testing.T, client *Client, rootID, target string, nodeType NodeType) string {
+	t.Helper()
+	seen := map[string]bool{}
+	queue := []string{rootID}
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+		if seen[current] {
+			continue
+		}
+		seen[current] = true
+		entries, err := client.ListDirectory(context.Background(), current)
+		if err != nil {
+			t.Fatalf("recursive fixture lookup failed at %s: %v", current, err)
+		}
+		for _, entry := range entries {
+			if entry.Node.Name == target && entry.Node.Type == nodeType {
+				return entry.Node.ID
+			}
+			if entry.IsFolder {
+				queue = append(queue, entry.Node.ID)
+			}
+		}
+	}
+	return ""
 }

@@ -245,36 +245,56 @@ func TestIntegrationUploadFile(t *testing.T) {
 func TestIntegrationMoveFile(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	err := client.MoveFile(context.Background(), resolveIntegrationFileID(t, testContext, client), resolveIntegrationFolderID(t, testContext, client), "renamed.txt")
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
+	_, folderID, _ := createIntegrationFolderFixture(t, testContext, client)
+	_, fileID, _ := createIntegrationFileFixture(t, testContext, client)
+	err := client.MoveFile(context.Background(), fileID, folderID, "renamed.txt")
+	if err != nil {
+		t.Fatalf("unexpected move file error: %v", err)
+	}
+	moved, err := client.SearchChild(context.Background(), folderID, "renamed.txt", NodeTypeFile)
+	if err != nil {
+		t.Fatalf("search moved file: %v", err)
+	}
+	if moved == nil || moved.ID != fileID {
+		t.Fatalf("expected moved file in destination folder, got %#v", moved)
 	}
 }
 
 func TestIntegrationMoveFolder(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	err := client.MoveFolder(context.Background(), resolveIntegrationFolderID(t, testContext, client), clientSessionRootID(t, client), "renamed-folder")
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
+	_, parentFolderID, _ := createIntegrationFolderFixture(t, testContext, client)
+	_, childFolderID, _ := createIntegrationFolderFixture(t, testContext, client)
+	err := client.MoveFolder(context.Background(), childFolderID, parentFolderID, "renamed-folder")
+	if err != nil {
+		t.Fatalf("unexpected move folder error: %v", err)
+	}
+	moved, err := client.SearchChild(context.Background(), parentFolderID, "renamed-folder", NodeTypeFolder)
+	if err != nil {
+		t.Fatalf("search moved folder: %v", err)
+	}
+	if moved == nil || moved.ID != childFolderID {
+		t.Fatalf("expected moved folder in destination folder, got %#v", moved)
 	}
 }
 
 func TestIntegrationTrashFile(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	err := client.TrashFile(context.Background(), resolveIntegrationFileID(t, testContext, client))
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
+	_, fileID, _ := createIntegrationFileFixture(t, testContext, client)
+	err := client.TrashFile(context.Background(), fileID)
+	if err != nil {
+		t.Fatalf("unexpected trash file error: %v", err)
 	}
 }
 
 func TestIntegrationTrashFolder(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	err := client.TrashFolder(context.Background(), resolveIntegrationFolderID(t, testContext, client), true)
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
+	_, folderID, _ := createIntegrationFolderFixture(t, testContext, client)
+	err := client.TrashFolder(context.Background(), folderID, true)
+	if err != nil {
+		t.Fatalf("unexpected trash folder error: %v", err)
 	}
 }
 
@@ -282,8 +302,8 @@ func TestIntegrationEmptyTrash(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
 	err := client.EmptyTrash(context.Background())
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
+	if err != nil {
+		t.Fatalf("unexpected empty trash error: %v", err)
 	}
 }
 
