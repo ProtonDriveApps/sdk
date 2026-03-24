@@ -5,6 +5,8 @@ import (
 	"io"
 )
 
+// FakeDialer is a test double that implements Dialer. It returns preconfigured
+// Driver instances and records the last options received.
 type FakeDialer struct {
 	LoginDriver  Driver
 	ResumeDriver Driver
@@ -14,6 +16,7 @@ type FakeDialer struct {
 	LastResume   ResumeOptions
 }
 
+// Login records the options and returns the preconfigured LoginDriver.
 func (f *FakeDialer) Login(_ context.Context, options LoginOptions, hooks SessionHooks) (Driver, error) {
 	f.LastLogin = options
 	if f.LoginErr != nil {
@@ -25,6 +28,7 @@ func (f *FakeDialer) Login(_ context.Context, options LoginOptions, hooks Sessio
 	return f.LoginDriver, nil
 }
 
+// Resume records the options and returns the preconfigured ResumeDriver.
 func (f *FakeDialer) Resume(_ context.Context, options ResumeOptions, hooks SessionHooks) (Driver, error) {
 	f.LastResume = options
 	if f.ResumeErr != nil {
@@ -36,6 +40,8 @@ func (f *FakeDialer) Resume(_ context.Context, options ResumeOptions, hooks Sess
 	return f.ResumeDriver, nil
 }
 
+// FakeDriver is a test double that implements Driver with configurable return
+// values for every method.
 type FakeDriver struct {
 	SessionValue    Session
 	AboutValue      AccountUsage

@@ -1,3 +1,5 @@
+// Package protondrive provides a pure-Go client for basic Proton Drive operations
+// including login, directory listing, file upload/download, move, and trash.
 package protondrive
 
 import (
@@ -6,6 +8,8 @@ import (
 	"time"
 )
 
+// LoginOptions holds the credentials and configuration needed to authenticate
+// with Proton Drive.
 type LoginOptions struct {
 	BaseURL         string
 	Username        string
@@ -17,6 +21,8 @@ type LoginOptions struct {
 	EnableCaching   bool
 }
 
+// ResumeOptions holds a previously persisted session for reconnecting without
+// re-entering credentials.
 type ResumeOptions struct {
 	BaseURL       string
 	Session       Session
@@ -25,6 +31,7 @@ type ResumeOptions struct {
 	EnableCaching bool
 }
 
+// NodeType identifies whether a drive node is a file or folder.
 type NodeType string
 
 const (
@@ -32,12 +39,14 @@ const (
 	NodeTypeFolder NodeType = "folder"
 )
 
+// AccountUsage reports storage quota information for the authenticated account.
 type AccountUsage struct {
 	Total int64
 	Used  int64
 	Free  int64
 }
 
+// Node represents a file or folder in the Proton Drive tree.
 type Node struct {
 	ID           string
 	ParentID     string
@@ -50,6 +59,8 @@ type Node struct {
 	OriginalSHA1 string
 }
 
+// RevisionAttrs contains metadata about a file revision including size,
+// checksums, and block layout.
 type RevisionAttrs struct {
 	Size          int64
 	ModTime       time.Time
@@ -58,11 +69,13 @@ type RevisionAttrs struct {
 	EncryptedSize int64
 }
 
+// DirectoryEntry pairs a Node with a flag indicating whether it is a folder.
 type DirectoryEntry struct {
 	Node     Node
 	IsFolder bool
 }
 
+// UploadOptions configures optional parameters for file uploads.
 type UploadOptions struct {
 	ReplaceExistingDraft bool
 	MediaType            string
@@ -70,12 +83,16 @@ type UploadOptions struct {
 	KnownSize            int64
 }
 
+// DownloadResult wraps an open reader, revision metadata, and server-reported
+// size for a downloaded file.
 type DownloadResult struct {
 	Reader     io.ReadCloser
 	Attrs      RevisionAttrs
 	ServerSize int64
 }
 
+// Driver is the core interface that concrete Proton Drive backends must
+// implement. The public Client type delegates all operations to a Driver.
 type Driver interface {
 	About(context.Context) (AccountUsage, error)
 	RootID(context.Context) (string, error)
@@ -95,6 +112,7 @@ type Driver interface {
 	Logout(context.Context) error
 }
 
+// Dialer creates Driver instances by performing login or session-resume flows.
 type Dialer interface {
 	Login(context.Context, LoginOptions, SessionHooks) (Driver, error)
 	Resume(context.Context, ResumeOptions, SessionHooks) (Driver, error)

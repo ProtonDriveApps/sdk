@@ -8,8 +8,12 @@ import (
 	"strings"
 )
 
+// DefaultIntegrationConfigPath is the default filesystem path for the
+// integration test credentials file.
 const DefaultIntegrationConfigPath = "integration/protondrive.test.json"
 
+// IntegrationConfig holds the credentials needed to run integration tests
+// against a live Proton Drive account.
 type IntegrationConfig struct {
 	BaseURL         string `json:"base_url"`
 	Username        string `json:"username"`
@@ -23,6 +27,8 @@ const (
 	defaultIntegrationUserAgent  = "proton-drive-go-sdk-integration"
 )
 
+// LoadIntegrationConfig reads and parses the JSON credentials file at the
+// given path. If path is empty, DefaultIntegrationConfigPath is used.
 func LoadIntegrationConfig(path string) (IntegrationConfig, error) {
 	if strings.TrimSpace(path) == "" {
 		path = DefaultIntegrationConfigPath
@@ -41,6 +47,8 @@ func LoadIntegrationConfig(path string) (IntegrationConfig, error) {
 	return config, nil
 }
 
+// LoginOptions converts the integration config into a LoginOptions value
+// suitable for passing to NewClient.
 func (c IntegrationConfig) LoginOptions() LoginOptions {
 	return LoginOptions{
 		BaseURL:         c.BaseURL,
@@ -53,6 +61,7 @@ func (c IntegrationConfig) LoginOptions() LoginOptions {
 	}
 }
 
+// Validate checks that all required credential fields are present.
 func (c IntegrationConfig) Validate() error {
 	if strings.TrimSpace(c.BaseURL) == "" {
 		return errors.New("base_url is required")

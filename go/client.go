@@ -7,11 +7,15 @@ import (
 	"strings"
 )
 
+// Client is the public entry point for Proton Drive operations. It delegates
+// all work to a Driver and validates inputs before forwarding calls.
 type Client struct {
 	driver Driver
 	hooks  SessionHooks
 }
 
+// NewClient authenticates with Proton Drive using the provided Dialer and
+// login credentials, returning a ready-to-use Client.
 func NewClient(ctx context.Context, dialer Dialer, options LoginOptions, hooks SessionHooks) (*Client, error) {
 	if dialer == nil {
 		return nil, fmt.Errorf("dialer is required")
@@ -29,6 +33,8 @@ func NewClient(ctx context.Context, dialer Dialer, options LoginOptions, hooks S
 	return &Client{driver: driver, hooks: hooks}, nil
 }
 
+// NewClientWithSession resumes a previously authenticated session without
+// re-entering credentials.
 func NewClientWithSession(ctx context.Context, dialer Dialer, options ResumeOptions, hooks SessionHooks) (*Client, error) {
 	if dialer == nil {
 		return nil, fmt.Errorf("dialer is required")
@@ -46,6 +52,8 @@ func NewClientWithSession(ctx context.Context, dialer Dialer, options ResumeOpti
 	return &Client{driver: driver, hooks: hooks}, nil
 }
 
+// NewClientFromDriver wraps an already-authenticated Driver in a Client. This
+// is primarily useful in tests where a FakeDriver is injected directly.
 func NewClientFromDriver(driver Driver, hooks SessionHooks) (*Client, error) {
 	if driver == nil {
 		return nil, ErrNotAuthenticated
@@ -53,6 +61,7 @@ func NewClientFromDriver(driver Driver, hooks SessionHooks) (*Client, error) {
 	return &Client{driver: driver, hooks: hooks}, nil
 }
 
+// Session returns the current authentication session.
 func (c *Client) Session() Session {
 	if c == nil || c.driver == nil {
 		return Session{}
@@ -60,6 +69,7 @@ func (c *Client) Session() Session {
 	return c.driver.Session()
 }
 
+// About returns storage quota information for the authenticated account.
 func (c *Client) About(ctx context.Context) (AccountUsage, error) {
 	if c == nil || c.driver == nil {
 		return AccountUsage{}, ErrNotAuthenticated
@@ -67,6 +77,7 @@ func (c *Client) About(ctx context.Context) (AccountUsage, error) {
 	return c.driver.About(ctx)
 }
 
+// RootID returns the identifier of the root node in the drive volume.
 func (c *Client) RootID(ctx context.Context) (string, error) {
 	if c == nil || c.driver == nil {
 		return "", ErrNotAuthenticated
@@ -74,6 +85,7 @@ func (c *Client) RootID(ctx context.Context) (string, error) {
 	return c.driver.RootID(ctx)
 }
 
+// ListDirectory returns the direct children of the given folder node.
 func (c *Client) ListDirectory(ctx context.Context, parentID string) ([]DirectoryEntry, error) {
 	if c == nil || c.driver == nil {
 		return nil, ErrNotAuthenticated
@@ -81,6 +93,7 @@ func (c *Client) ListDirectory(ctx context.Context, parentID string) ([]Director
 	return c.driver.ListDirectory(ctx, parentID)
 }
 
+// SearchChild looks up a child node by name and type under the given parent.
 func (c *Client) SearchChild(ctx context.Context, parentID, name string, nodeType NodeType) (*Node, error) {
 	if c == nil || c.driver == nil {
 		return nil, ErrNotAuthenticated
@@ -88,6 +101,8 @@ func (c *Client) SearchChild(ctx context.Context, parentID, name string, nodeTyp
 	return c.driver.SearchChild(ctx, parentID, name, nodeType)
 }
 
+// CreateFolder creates a new folder with the given name under parentID and
+// returns its node ID.
 func (c *Client) CreateFolder(ctx context.Context, parentID, name string) (string, error) {
 	if c == nil || c.driver == nil {
 		return "", ErrNotAuthenticated
@@ -95,6 +110,7 @@ func (c *Client) CreateFolder(ctx context.Context, parentID, name string) (strin
 	return c.driver.CreateFolder(ctx, parentID, name)
 }
 
+// GetRevisionAttrs returns metadata for the current revision of the given file node.
 func (c *Client) GetRevisionAttrs(ctx context.Context, nodeID string) (RevisionAttrs, error) {
 	if c == nil || c.driver == nil {
 		return RevisionAttrs{}, ErrNotAuthenticated
@@ -102,6 +118,7 @@ func (c *Client) GetRevisionAttrs(ctx context.Context, nodeID string) (RevisionA
 	return c.driver.GetRevisionAttrs(ctx, nodeID)
 }
 
+// DownloadFile opens a reader for the file content starting at the given byte offset.
 func (c *Client) DownloadFile(ctx context.Context, nodeID string, offset int64) (DownloadResult, error) {
 	if c == nil || c.driver == nil {
 		return DownloadResult{}, ErrNotAuthenticated
@@ -109,30 +126,35 @@ func (c *Client) DownloadFile(ctx context.Context, nodeID string, offset int64) 
 	return c.driver.DownloadFile(ctx, nodeID, offset)
 }
 
-func (c *Client) UploadFile(ctx context.Context, parentID, name string, body io.Reader, options UploadOptions) (Node, RevisionAttrs, error) {
+// UploadFile uploads body as a file with the given name under destParentID.
+// The KnownSize field in options must be set to a non-negative value.
+func (c *Client) UploadFile(ctx context.Context, destParentID, name string, body io.Reader, options UploadOptions) (Node, RevisionAttrs, error) {
 	if c == nil || c.driver == nil {
 		return Node{}, RevisionAttrs{}, ErrNotAuthenticated
 	}
 	if options.KnownSize < 0 {
 		return Node{}, RevisionAttrs{}, ErrUnknownSizeUpload
 	}
-	return c.driver.UploadFile(ctx, parentID, name, body, options)
+	return c.driver.UploadFile(ctx, destParentID, name, body, options)
 }
 
-func (c *Client) MoveFile(ctx context.Context, nodeID, parentID, name string) error {
+// MoveFile relocates the file node to a new parent folder with a new name.
+func (c *Client) MoveFile(ctx context.Context, nodeID, newParentID, name string) error {
 	if c == nil || c.driver == nil {
 		return ErrNotAuthenticated
 	}
-	return c.driver.MoveFile(ctx, nodeID, parentID, name)
+	return c.driver.MoveFile(ctx, nodeID, newParentID, name)
 }
 
-func (c *Client) MoveFolder(ctx context.Context, nodeID, parentID, name string) error {
+// MoveFolder relocates the folder node to a new parent folder with a new name.
+func (c *Client) MoveFolder(ctx context.Context, nodeID, newParentID, name string) error {
 	if c == nil || c.driver == nil {
 		return ErrNotAuthenticated
 	}
-	return c.driver.MoveFolder(ctx, nodeID, parentID, name)
+	return c.driver.MoveFolder(ctx, nodeID, newParentID, name)
 }
 
+// TrashFile moves the file to the trash.
 func (c *Client) TrashFile(ctx context.Context, nodeID string) error {
 	if c == nil || c.driver == nil {
 		return ErrNotAuthenticated
@@ -140,6 +162,8 @@ func (c *Client) TrashFile(ctx context.Context, nodeID string) error {
 	return c.driver.TrashFile(ctx, nodeID)
 }
 
+// TrashFolder moves the folder to the trash. The recursive parameter is accepted
+// for interface consistency but the Proton API trashes folders as a unit.
 func (c *Client) TrashFolder(ctx context.Context, nodeID string, recursive bool) error {
 	if c == nil || c.driver == nil {
 		return ErrNotAuthenticated
@@ -147,6 +171,7 @@ func (c *Client) TrashFolder(ctx context.Context, nodeID string, recursive bool)
 	return c.driver.TrashFolder(ctx, nodeID, recursive)
 }
 
+// EmptyTrash permanently deletes all items in the trash.
 func (c *Client) EmptyTrash(ctx context.Context) error {
 	if c == nil || c.driver == nil {
 		return ErrNotAuthenticated
@@ -154,6 +179,7 @@ func (c *Client) EmptyTrash(ctx context.Context) error {
 	return c.driver.EmptyTrash(ctx)
 }
 
+// ClearCache drops any in-memory node cache held by the driver.
 func (c *Client) ClearCache() {
 	if c == nil || c.driver == nil {
 		return
@@ -161,6 +187,7 @@ func (c *Client) ClearCache() {
 	c.driver.ClearCache()
 }
 
+// Logout ends the session and emits a deauthentication hook on success.
 func (c *Client) Logout(ctx context.Context) error {
 	if c == nil || c.driver == nil {
 		return ErrNotAuthenticated
