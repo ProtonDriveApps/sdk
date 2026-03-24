@@ -9,13 +9,14 @@ import (
 )
 
 // LoginOptions holds the credentials and configuration needed to authenticate
-// with Proton Drive.
+// with Proton Drive. BaseURL is optional and defaults to the production API.
 type LoginOptions struct {
 	BaseURL         string
 	Username        string
 	Password        string
 	MailboxPassword string
-	TwoFactorCode   string
+	TwoFactorCode   string // Pre-generated 6-digit TOTP code (used if TOTPSecret is empty)
+	TOTPSecret      string // Base32 TOTP secret; if set, the 2FA code is generated automatically
 	AppVersion      string
 	UserAgent       string
 	EnableCaching   bool

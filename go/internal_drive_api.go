@@ -3,7 +3,6 @@ package protondrive
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -26,11 +25,6 @@ type moveLinkReq struct {
 	NameSignatureEmail      string `json:"NameSignatureEmail"`
 	SignatureAddress        string `json:"SignatureEmail,omitempty"`
 	ContentHash             string `json:"ContentHash,omitempty"`
-}
-
-// createRevisionRes is the inner response from creating a file revision.
-type createRevisionRes struct {
-	ID string `json:"ID"`
 }
 
 // draftFileReq is the JSON body for POST /drive/v2/volumes/{volumeID}/files
@@ -56,20 +50,6 @@ type draftFileRes struct {
 		ID         string `json:"ID"`
 		RevisionID string `json:"RevisionID"`
 	} `json:"File"`
-}
-
-// draftRevisionReq is the JSON body for creating a new revision on an existing file.
-type draftRevisionReq struct {
-	CurrentRevisionID  string  `json:"CurrentRevisionID"`
-	ClientUID          *string `json:"ClientUID"`
-	IntendedUploadSize *int64  `json:"IntendedUploadSize"`
-}
-
-// draftRevisionRes is the response from creating a new revision.
-type draftRevisionRes struct {
-	Revision struct {
-		ID string `json:"ID"`
-	} `json:"Revision"`
 }
 
 // blockUploadVerifier wraps the base64-encoded verification token for a block.
@@ -162,47 +142,9 @@ type verificationInputResponse struct {
 	ContentKeyPacket string `json:"ContentKeyPacket"`
 }
 
-// blockVerificationInput is the response for block verification requests.
-type blockVerificationInput struct {
-	Token string `json:"Token"`
-}
-
 // linkBatchReq is the JSON body for batch link operations (trash, delete).
 type linkBatchReq struct {
 	LinkIDs []string `json:"LinkIDs"`
-}
-
-// batchLinkResponse is the response from batch link operations.
-type batchLinkResponse struct {
-	Responses map[string]struct {
-		Code  int    `json:"Code"`
-		Error string `json:"Error"`
-	} `json:"Responses"`
-}
-
-// renameLinkReq is the JSON body for PUT .../links/{linkID}/rename.
-type renameLinkReq struct {
-	Name               string `json:"Name"`
-	NameSignatureEmail string `json:"NameSignatureEmail"`
-	Hash               string `json:"Hash,omitempty"`
-	OriginalHash       string `json:"OriginalHash,omitempty"`
-	MediaType          string `json:"MIMEType,omitempty"`
-}
-
-// setName encrypts the name and sets it on the move request.
-func (req *moveLinkReq) setName(name string, addrKR, nodeKR *crypto.KeyRing) error {
-	encName, err := getEncryptedName(name, addrKR, nodeKR)
-	if err != nil {
-		return err
-	}
-	req.Name = encName
-	return nil
-}
-
-// setHash computes and sets the HMAC name hash on the move request.
-func (req *moveLinkReq) setHash(name string, hashKey []byte) error {
-	req.Hash = getNameHash(name, hashKey)
-	return nil
 }
 
 // setEncXAttrString encrypts the extended attributes JSON and sets the
@@ -234,25 +176,6 @@ func (d *standaloneDriver) moveLink(ctx context.Context, linkID string, req move
 	return d.doJSON(ctx, http.MethodPut, "/drive/shares/"+d.state.mainShare.ShareID+"/links/"+linkID+"/move", req, nil)
 }
 
-// createRevision calls POST .../files/{linkID}/revisions to start a new revision.
-func (d *standaloneDriver) createRevision(ctx context.Context, linkID string) (createRevisionRes, error) {
-	var res struct {
-		Revision createRevisionRes `json:"Revision"`
-	}
-	err := d.doJSON(ctx, http.MethodPost, "/drive/shares/"+d.state.mainShare.ShareID+"/files/"+linkID+"/revisions", nil, &res)
-	return res.Revision, err
-}
-
-// commitRevision calls PUT .../revisions/{revisionID} to finalize a revision.
-func (d *standaloneDriver) commitRevision(ctx context.Context, linkID, revisionID string, req commitRevisionReq) error {
-	return d.doJSON(ctx, http.MethodPut, "/drive/shares/"+d.state.mainShare.ShareID+"/files/"+linkID+"/revisions/"+revisionID, req, nil)
-}
-
-// deleteRevision calls DELETE .../revisions/{revisionID} to discard a draft revision.
-func (d *standaloneDriver) deleteRevision(ctx context.Context, linkID, revisionID string) error {
-	return d.doJSON(ctx, http.MethodDelete, "/drive/shares/"+d.state.mainShare.ShareID+"/files/"+linkID+"/revisions/"+revisionID, nil, nil)
-}
-
 // doJSON makes an authenticated JSON request to the Proton API. If body is
 // non-nil, it is JSON-encoded and sent. If out is non-nil, the response body
 // is JSON-decoded into it.
@@ -279,7 +202,7 @@ func (d *standaloneDriver) doJSON(ctx context.Context, method, path string, body
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // best-effort close on response body
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		data, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("unexpected Proton status %d: %s", resp.StatusCode, strings.TrimSpace(string(data)))
@@ -331,7 +254,7 @@ func (d *standaloneDriver) uploadSmallFile(ctx context.Context, metadata smallFi
 	if err != nil {
 		return result, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // best-effort close on response body
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		data, _ := io.ReadAll(resp.Body)
 		return result, fmt.Errorf("unexpected Proton status %d: %s", resp.StatusCode, strings.TrimSpace(string(data)))
@@ -358,13 +281,6 @@ func (d *standaloneDriver) createDraftFile(ctx context.Context, req draftFileReq
 	return result, err
 }
 
-// createDraftRevision calls POST to create a new revision on an existing file.
-func (d *standaloneDriver) createDraftRevision(ctx context.Context, linkID string, req draftRevisionReq) (draftRevisionRes, error) {
-	var result draftRevisionRes
-	err := d.doJSON(ctx, http.MethodPost, "/drive/v2/volumes/"+d.state.volumeID+"/files/"+linkID+"/revisions", req, &result)
-	return result, err
-}
-
 // requestBlockUploadV2 calls POST /drive/blocks to get signed upload URLs for
 // a batch of encrypted blocks.
 func (d *standaloneDriver) requestBlockUploadV2(ctx context.Context, req blockUploadReqV2) (blockUploadResV2, error) {
@@ -373,34 +289,9 @@ func (d *standaloneDriver) requestBlockUploadV2(ctx context.Context, req blockUp
 	return result, err
 }
 
-// getBlockVerificationToken sends a verification token for a specific block
-// and returns the server's confirmed token.
-func (d *standaloneDriver) getBlockVerificationToken(ctx context.Context, linkID, revisionID string, blockIndex int, verificationToken []byte) (string, error) {
-	var result blockVerificationInput
-	err := d.doJSON(ctx, http.MethodPost, fmt.Sprintf("/drive/v2/volumes/%s/links/%s/revisions/%s/blocks/%d/verification", d.state.volumeID, linkID, revisionID, blockIndex), map[string]string{
-		"VerificationToken": base64.StdEncoding.EncodeToString(verificationToken),
-	}, &result)
-	return result.Token, err
-}
-
-// renameLink calls PUT .../links/{linkID}/rename to change a link's name.
-func (d *standaloneDriver) renameLink(ctx context.Context, linkID string, req renameLinkReq) error {
-	return d.doJSON(ctx, http.MethodPut, "/drive/v2/volumes/"+d.state.volumeID+"/links/"+linkID+"/rename", req, nil)
-}
-
 // trashLinks calls POST .../trash_multiple to move links to the trash.
 func (d *standaloneDriver) trashLinks(ctx context.Context, linkIDs []string) error {
 	return d.doJSON(ctx, http.MethodPost, "/drive/v2/volumes/"+d.state.volumeID+"/trash_multiple", linkBatchReq{LinkIDs: linkIDs}, nil)
-}
-
-// deleteTrashedLinks permanently deletes links that are already in the trash.
-func (d *standaloneDriver) deleteTrashedLinks(ctx context.Context, linkIDs []string) error {
-	return d.doJSON(ctx, http.MethodPost, "/drive/v2/volumes/"+d.state.volumeID+"/trash/delete_multiple", linkBatchReq{LinkIDs: linkIDs}, nil)
-}
-
-// deleteLinks permanently deletes links (not via trash).
-func (d *standaloneDriver) deleteLinks(ctx context.Context, linkIDs []string) error {
-	return d.doJSON(ctx, http.MethodPost, "/drive/v2/volumes/"+d.state.volumeID+"/delete_multiple", linkBatchReq{LinkIDs: linkIDs}, nil)
 }
 
 // emptyTrash calls DELETE .../trash to permanently delete all trashed items.

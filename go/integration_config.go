@@ -48,14 +48,15 @@ func LoadIntegrationConfig(path string) (IntegrationConfig, error) {
 }
 
 // LoginOptions converts the integration config into a LoginOptions value
-// suitable for passing to NewClient.
+// suitable for passing to NewClient. The config's two_factor_code field is
+// treated as a TOTP secret and used to auto-generate the 2FA code.
 func (c IntegrationConfig) LoginOptions() LoginOptions {
 	return LoginOptions{
 		BaseURL:         c.BaseURL,
 		Username:        c.Username,
 		Password:        c.Password,
 		MailboxPassword: c.MailboxPassword,
-		TwoFactorCode:   c.TwoFactorCode,
+		TOTPSecret:      c.TwoFactorCode,
 		AppVersion:      defaultIntegrationAppVersion,
 		UserAgent:       defaultIntegrationUserAgent,
 	}

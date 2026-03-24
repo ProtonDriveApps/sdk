@@ -144,7 +144,7 @@ func (r *fileDownloadReader) populate() error {
 	if err != nil {
 		return err
 	}
-	defer blockReader.Close()
+	defer blockReader.Close() //nolint:errcheck // best-effort close on response body
 	verificationKR, err := r.driver.buildSignatureVerificationKR([]string{block.SignatureEmail}, r.nodeKR)
 	if err != nil {
 		return err

@@ -228,7 +228,7 @@ func TestDownloadFile(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	data, err := io.ReadAll(got.Reader)
-	got.Reader.Close()
+	_ = got.Reader.Close()
 	if err != nil {
 		t.Fatalf("unexpected error reading: %v", err)
 	}

@@ -3,5 +3,5 @@
   "username": "your-proton-username",
   "password": "your-proton-password",
   "mailbox_password": "optional-mailbox-password",
-  "two_factor_code": "optional-2fa-code"
+  "two_factor_code": "optional-base32-totp-secret"
 }

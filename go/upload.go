@@ -358,17 +358,6 @@ func signEncryptedBlock(signingKR *crypto.KeyRing, plain *crypto.PlainMessage, n
 	return encSignature.GetArmored()
 }
 
-// mustEncryptSessionKeyPacket encrypts a session key to the given keyring and
-// panics on failure, matching the "must" helper convention used in hot paths
-// where a keyring error indicates a corrupted driver state.
-func mustEncryptSessionKeyPacket(nodeKR *crypto.KeyRing, sessionKey *crypto.SessionKey) []byte {
-	packet, err := nodeKR.EncryptSessionKey(sessionKey)
-	if err != nil {
-		panic(err)
-	}
-	return packet
-}
-
 // last32 returns the last 32 bytes of data, or the entire slice if shorter.
 func last32(data []byte) []byte {
 	if len(data) >= 32 {

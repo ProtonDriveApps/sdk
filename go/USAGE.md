@@ -8,11 +8,22 @@ import protondrive "github.com/ProtonDriveApps/sdk/go"
 
 ## Creating a Client
 
-### Login with credentials
+### Login (simplest)
+
+`BaseURL` is optional and defaults to the production API.
 
 ```go
 client, err := protondrive.NewClient(ctx, protondrive.NewDialer(), protondrive.LoginOptions{
-    BaseURL:    "https://mail.proton.me/api",
+    Username:   "user@proton.me",
+    Password:   "your-password",
+    AppVersion: "my-app@1.0.0",
+}, protondrive.SessionHooks{})
+```
+
+### Login with session persistence hooks
+
+```go
+client, err := protondrive.NewClient(ctx, protondrive.NewDialer(), protondrive.LoginOptions{
     Username:   "user@proton.me",
     Password:   "your-password",
     AppVersion: "my-app@1.0.0",
@@ -32,6 +43,56 @@ if err != nil {
 defer client.Logout(ctx)
 ```
 
+### Login with TOTP two-factor authentication
+
+Provide the base32 TOTP secret key and the SDK generates the 6-digit code
+automatically at login time.
+
+```go
+client, err := protondrive.NewClient(ctx, protondrive.NewDialer(), protondrive.LoginOptions{
+    Username:   "user@proton.me",
+    Password:   "your-password",
+    TOTPSecret: "JBSWY3DPEHPK3PXP", // base32-encoded TOTP secret
+    AppVersion: "my-app@1.0.0",
+}, protondrive.SessionHooks{})
+```
+
+Alternatively, pass a pre-generated 6-digit code via `TwoFactorCode`:
+
+```go
+client, err := protondrive.NewClient(ctx, protondrive.NewDialer(), protondrive.LoginOptions{
+    Username:      "user@proton.me",
+    Password:      "your-password",
+    TwoFactorCode: "123456",
+    AppVersion:    "my-app@1.0.0",
+}, protondrive.SessionHooks{})
+```
+
+### Login with mailbox password (two-password mode)
+
+Some Proton accounts use a separate mailbox password for key decryption. Provide
+it via `MailboxPassword`.
+
+```go
+client, err := protondrive.NewClient(ctx, protondrive.NewDialer(), protondrive.LoginOptions{
+    Username:        "user@proton.me",
+    Password:        "login-password",
+    MailboxPassword: "mailbox-password",
+    AppVersion:      "my-app@1.0.0",
+}, protondrive.SessionHooks{})
+```
+
+### Login to a staging environment
+
+```go
+client, err := protondrive.NewClient(ctx, protondrive.NewDialer(), protondrive.LoginOptions{
+    BaseURL:    "https://protonmail.blue/api",
+    Username:   "user@proton.me",
+    Password:   "your-password",
+    AppVersion: "my-app@1.0.0",
+}, protondrive.SessionHooks{})
+```
+
 ### Resume a saved session
 
 ```go
@@ -42,12 +103,8 @@ client, err := protondrive.NewClientWithSession(ctx, protondrive.NewDialer(), pr
         RefreshToken:  savedRefreshToken,
         SaltedKeyPass: savedSaltedKeyPass,
     },
-    BaseURL:    "https://mail.proton.me/api",
     AppVersion: "my-app@1.0.0",
 }, protondrive.SessionHooks{})
-if err != nil {
-    log.Fatal(err)
-}
 ```
 
 ### Inject a fake driver (for tests)

@@ -47,12 +47,21 @@ func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionH
 	client := manager.NewClient(auth.UID, auth.AccessToken, auth.RefreshToken)
 
 	if auth.TwoFA.Enabled&proton.HasTOTP != 0 {
-		if options.TwoFactorCode == "" {
+		totpCode := strings.TrimSpace(options.TwoFactorCode)
+		if strings.TrimSpace(options.TOTPSecret) != "" {
+			totpCode, err = generateTOTP(options.TOTPSecret)
+			if err != nil {
+				client.Close()
+				manager.Close()
+				return nil, fmt.Errorf("generate TOTP: %w", err)
+			}
+		}
+		if totpCode == "" {
 			client.Close()
 			manager.Close()
 			return nil, fmt.Errorf("two-factor code is required")
 		}
-		if err := client.Auth2FA(ctx, proton.Auth2FAReq{TwoFactorCode: options.TwoFactorCode}); err != nil {
+		if err := client.Auth2FA(ctx, proton.Auth2FAReq{TwoFactorCode: totpCode}); err != nil {
 			client.Close()
 			manager.Close()
 			return nil, err
@@ -242,7 +251,7 @@ func fetchAuthInfo(ctx context.Context, options LoginOptions) (authInfoResponse,
 	if err != nil {
 		return out, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // best-effort close on response body
 	body, _ := io.ReadAll(resp.Body)
 	if err := json.Unmarshal(body, &out); err != nil {
 		return out, err
@@ -279,7 +288,7 @@ func performAuth(ctx context.Context, options LoginOptions, srpSession string, p
 	if err != nil {
 		return out, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // best-effort close on response body
 	body, _ := io.ReadAll(resp.Body)
 	if err := json.Unmarshal(body, &out); err != nil {
 		return out, err
