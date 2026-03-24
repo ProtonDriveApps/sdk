@@ -9,7 +9,7 @@ interface DownloadController : AutoCloseable, Cancellable {
 
     suspend fun awaitCompletion()
     suspend fun pause()
-    suspend fun resume(coroutineScope: CoroutineScope)
+    suspend fun tryResume(coroutineScope: CoroutineScope): Boolean
     suspend fun isPaused(): Boolean
     suspend fun isDownloadCompleteWithVerificationIssue(): Boolean
 }
