@@ -65,30 +65,21 @@ func integrationCoverageChecklist() map[string]string {
 	return map[string]string{
 		"Login":            "implemented",
 		"RootID":           "implemented",
-		"ListDirectory":    "planned",
-		"SearchChild":      "planned",
-		"CreateFolder":     "planned",
-		"GetRevisionAttrs": "planned",
-		"DownloadFile":     "planned",
-		"UploadFile":       "planned",
-		"MoveFile":         "planned",
-		"MoveFolder":       "planned",
-		"TrashFile":        "planned",
-		"TrashFolder":      "planned",
-		"EmptyTrash":       "planned",
-		"About":            "planned",
+		"ListDirectory":    "implemented",
+		"SearchChild":      "implemented",
+		"CreateFolder":     "implemented",
+		"GetRevisionAttrs": "implemented",
+		"DownloadFile":     "implemented",
+		"UploadFile":       "implemented",
+		"MoveFile":         "implemented",
+		"MoveFolder":       "implemented",
+		"TrashFile":        "implemented",
+		"TrashFolder":      "implemented",
+		"EmptyTrash":       "implemented",
+		"About":            "implemented",
 		"ClearCache":       "implemented",
 		"Logout":           "implemented",
 	}
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if value != "" {
-			return value
-		}
-	}
-	return ""
 }
 
 func clientSessionRootID(t *testing.T, client *Client) string {

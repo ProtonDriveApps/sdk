@@ -15,12 +15,17 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 )
 
+// NewDialer returns a Dialer that creates standalone Driver instances backed
+// by the official Proton Mail Go client library.
 func NewDialer() Dialer {
 	return &dialer{}
 }
 
 type dialer struct{}
 
+// Login performs SRP authentication with Proton, handles optional TOTP
+// two-factor verification, unlocks the account keyring, and returns a ready
+// Driver. Panics from the upstream library are caught and returned as errors.
 func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionHooks) (_ Driver, err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
@@ -32,9 +37,8 @@ func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionH
 	options.MailboxPassword = strings.TrimSpace(options.MailboxPassword)
 	options.TwoFactorCode = strings.TrimSpace(options.TwoFactorCode)
 	options.AppVersion = strings.TrimSpace(options.AppVersion)
-	options.UserAgent = strings.TrimSpace(options.UserAgent)
 
-	manager := newManager(options.BaseURL, options.AppVersion, options.UserAgent)
+	manager := newManager(options.BaseURL, options.AppVersion)
 	auth, err := loginWithSRP(ctx, options)
 	if err != nil {
 		manager.Close()
@@ -65,7 +69,7 @@ func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionH
 		keyPass = []byte(options.MailboxPassword)
 	}
 
-	state, err := bootstrapDriveStateFromPassword(ctx, manager, client, keyPass)
+	state, err := bootstrapDriveStateFromPassword(ctx, client, keyPass)
 	if err != nil {
 		client.Close()
 		manager.Close()
@@ -93,6 +97,8 @@ func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionH
 	return driver, nil
 }
 
+// Resume reconnects to Proton using a previously persisted session (refresh
+// token + salted key passphrase), avoiding re-entering the password.
 func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks SessionHooks) (_ Driver, err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
@@ -104,9 +110,8 @@ func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks Sessio
 	options.Session.RefreshToken = strings.TrimSpace(options.Session.RefreshToken)
 	options.Session.SaltedKeyPass = strings.TrimSpace(options.Session.SaltedKeyPass)
 	options.AppVersion = strings.TrimSpace(options.AppVersion)
-	options.UserAgent = strings.TrimSpace(options.UserAgent)
 
-	manager := newManager(options.BaseURL, options.AppVersion, options.UserAgent)
+	manager := newManager(options.BaseURL, options.AppVersion)
 	client, auth, err := manager.NewClientWithRefresh(ctx, options.Session.UID, options.Session.RefreshToken)
 	if err != nil {
 		manager.Close()
@@ -120,7 +125,7 @@ func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks Sessio
 		return nil, fmt.Errorf("decode salted key pass: %w", err)
 	}
 
-	state, err := bootstrapDriveStateFromSaltedPass(ctx, manager, client, saltedKeyPass)
+	state, err := bootstrapDriveStateFromSaltedPass(ctx, client, saltedKeyPass)
 	if err != nil {
 		client.Close()
 		manager.Close()
@@ -148,15 +153,16 @@ func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks Sessio
 	return driver, nil
 }
 
-func newManager(baseURL, appVersion, userAgent string) *proton.Manager {
+// newManager creates a proton.Manager with the given base URL and app version.
+func newManager(baseURL, appVersion string) *proton.Manager {
 	options := []proton.Option{proton.WithAppVersion(appVersion)}
 	if strings.TrimSpace(baseURL) != "" {
 		options = append(options, proton.WithHostURL(ensureAPIBaseURL(baseURL)))
 	}
-	_ = userAgent
 	return proton.New(options...)
 }
 
+// authInfoResponse is the raw JSON response from POST /auth/v4/info.
 type authInfoResponse struct {
 	Code            int              `json:"Code"`
 	Error           string           `json:"Error"`
@@ -168,6 +174,7 @@ type authInfoResponse struct {
 	TwoFA           proton.TwoFAInfo `json:"2FA"`
 }
 
+// authResponse is the raw JSON response from POST /auth/v4.
 type authResponse struct {
 	Code         int                 `json:"Code"`
 	Error        string              `json:"Error"`
@@ -179,6 +186,10 @@ type authResponse struct {
 	TwoFA        proton.TwoFAInfo    `json:"2FA"`
 }
 
+// loginWithSRP performs the SRP authentication handshake directly against the
+// Proton API, bypassing the upstream NewClientWithLogin helper which panics in
+// this environment. It fetches SRP parameters, generates client proofs,
+// performs the auth exchange, and verifies the server's proof.
 func loginWithSRP(ctx context.Context, options LoginOptions) (proton.Auth, error) {
 	info, err := fetchAuthInfo(ctx, options)
 	if err != nil {
@@ -213,6 +224,8 @@ func loginWithSRP(ctx context.Context, options LoginOptions) (proton.Auth, error
 	}, nil
 }
 
+// fetchAuthInfo calls POST /auth/v4/info to retrieve the SRP parameters
+// (modulus, server ephemeral, salt) needed for password verification.
 func fetchAuthInfo(ctx context.Context, options LoginOptions) (authInfoResponse, error) {
 	var out authInfoResponse
 	payload, err := json.Marshal(map[string]string{"Username": options.Username})
@@ -243,6 +256,8 @@ func fetchAuthInfo(ctx context.Context, options LoginOptions) (authInfoResponse,
 	return out, nil
 }
 
+// performAuth calls POST /auth/v4 with the SRP client proof and ephemeral
+// to complete the authentication exchange.
 func performAuth(ctx context.Context, options LoginOptions, srpSession string, proofs *srp.Proofs) (authResponse, error) {
 	var out authResponse
 	payload, err := json.Marshal(map[string]string{
@@ -278,6 +293,8 @@ func performAuth(ctx context.Context, options LoginOptions, srpSession string, p
 	return out, nil
 }
 
+// ensureAPIBaseURL normalizes a base URL to include the /api suffix. If
+// baseURL is empty, it returns the production default.
 func ensureAPIBaseURL(baseURL string) string {
 	trimmed := strings.TrimRight(strings.TrimSpace(baseURL), "/")
 	if trimmed == "" {
@@ -289,6 +306,8 @@ func ensureAPIBaseURL(baseURL string) string {
 	return trimmed + "/api"
 }
 
+// attachSessionHooks wires the Proton client's auth/deauth handlers to update
+// the driver's session state and emit hooks to the consumer.
 func attachSessionHooks(client *proton.Client, driver *standaloneDriver, hooks SessionHooks) {
 	client.AddAuthHandler(func(auth proton.Auth) {
 		driver.setSession(Session{
@@ -305,22 +324,28 @@ func attachSessionHooks(client *proton.Client, driver *standaloneDriver, hooks S
 	})
 }
 
-func bootstrapDriveStateFromPassword(ctx context.Context, manager *proton.Manager, client *proton.Client, keyPass []byte) (*driveState, error) {
+// bootstrapDriveStateFromPassword derives the salted key passphrase from the
+// raw password, then bootstraps the full drive state.
+func bootstrapDriveStateFromPassword(ctx context.Context, client *proton.Client, keyPass []byte) (*driveState, error) {
 	user, addresses, userKR, addrKRs, saltedKeyPass, err := unlockAccount(ctx, client, keyPass, nil)
 	if err != nil {
 		return nil, err
 	}
-	return bootstrapDriveState(ctx, manager, client, user, addresses, userKR, addrKRs, saltedKeyPass)
+	return bootstrapDriveState(ctx, client, user, addresses, userKR, addrKRs, saltedKeyPass)
 }
 
-func bootstrapDriveStateFromSaltedPass(ctx context.Context, manager *proton.Manager, client *proton.Client, saltedKeyPass []byte) (*driveState, error) {
+// bootstrapDriveStateFromSaltedPass uses a previously cached salted key
+// passphrase to unlock the account and bootstrap the drive state.
+func bootstrapDriveStateFromSaltedPass(ctx context.Context, client *proton.Client, saltedKeyPass []byte) (*driveState, error) {
 	user, addresses, userKR, addrKRs, _, err := unlockAccount(ctx, client, nil, saltedKeyPass)
 	if err != nil {
 		return nil, err
 	}
-	return bootstrapDriveState(ctx, manager, client, user, addresses, userKR, addrKRs, saltedKeyPass)
+	return bootstrapDriveState(ctx, client, user, addresses, userKR, addrKRs, saltedKeyPass)
 }
 
+// unlockAccount fetches the user profile and addresses, optionally derives the
+// salted key passphrase from the raw password, and unlocks all PGP keyrings.
 func unlockAccount(ctx context.Context, client *proton.Client, keyPass, saltedKeyPass []byte) (proton.User, []proton.Address, *crypto.KeyRing, map[string]*crypto.KeyRing, []byte, error) {
 	user, err := client.GetUser(ctx)
 	if err != nil {
@@ -351,6 +376,9 @@ func unlockAccount(ctx context.Context, client *proton.Client, keyPass, saltedKe
 	return user, addresses, userKR, addrKRs, saltedKeyPass, nil
 }
 
+// primaryOrFirstKey returns the primary key from a set, falling back to the
+// first key if none is marked primary. This guards against accounts where
+// Keys.Primary() might not be set correctly.
 func primaryOrFirstKey(keys proton.Keys) (proton.Key, error) {
 	for _, key := range keys {
 		if key.Primary {
