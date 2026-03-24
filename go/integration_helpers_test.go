@@ -5,13 +5,20 @@ package protondrive
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
+	"time"
 )
 
 type integrationTestContext struct {
 	Config IntegrationConfig
-	Client *Client
 }
+
+var (
+	integrationClientOnce sync.Once
+	integrationClient     *Client
+	integrationClientErr  error
+)
 
 func newIntegrationTestContext(t *testing.T) *integrationTestContext {
 	t.Helper()
@@ -41,15 +48,13 @@ func requireIntegrationTestContext(t *testing.T) *integrationTestContext {
 
 func requireIntegrationClient(t *testing.T, testContext *integrationTestContext) *Client {
 	t.Helper()
-	if testContext.Client != nil {
-		return testContext.Client
+	integrationClientOnce.Do(func() {
+		integrationClient, integrationClientErr = NewClient(context.Background(), NewDialer(), testContext.Config.LoginOptions(), SessionHooks{})
+	})
+	if integrationClientErr != nil {
+		t.Fatalf("create integration client: %v", integrationClientErr)
 	}
-	client, err := NewClient(context.Background(), NewDialer(), testContext.Config.LoginOptions(), SessionHooks{})
-	if err != nil {
-		t.Fatalf("create integration client: %v", err)
-	}
-	testContext.Client = client
-	return client
+	return integrationClient
 }
 
 func integrationCoverageChecklist() map[string]string {
@@ -81,4 +86,17 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func clientSessionRootID(t *testing.T, client *Client) string {
+	t.Helper()
+	rootID, err := client.RootID(context.Background())
+	if err != nil {
+		t.Fatalf("load root id: %v", err)
+	}
+	return rootID
+}
+
+func integrationFolderName() string {
+	return "sdk-integration-" + time.Now().UTC().Format("20060102-150405")
 }

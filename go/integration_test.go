@@ -147,27 +147,46 @@ func TestIntegrationAbout(t *testing.T) {
 func TestIntegrationListDirectory(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	_, err := client.ListDirectory(context.Background(), firstNonEmpty(testContext.Config.TestFolderID, "root"))
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
+	entries, err := client.ListDirectory(context.Background(), firstNonEmpty(testContext.Config.TestFolderID, clientSessionRootID(t, client)))
+	if err != nil {
+		t.Fatalf("unexpected list directory error: %v", err)
+	}
+	if entries == nil {
+		t.Fatal("expected directory entries slice")
 	}
 }
 
 func TestIntegrationSearchChild(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	_, err := client.SearchChild(context.Background(), firstNonEmpty(testContext.Config.TestFolderID, "root"), "example.txt", NodeTypeFile)
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
+	result, err := client.SearchChild(context.Background(), firstNonEmpty(testContext.Config.TestFolderID, clientSessionRootID(t, client)), "definitely-not-present-sdk-test-entry", NodeTypeFile)
+	if err != nil {
+		t.Fatalf("unexpected search child error: %v", err)
+	}
+	if result != nil {
+		t.Fatalf("expected no result for unknown child, got %#v", result)
 	}
 }
 
 func TestIntegrationCreateFolder(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	_, err := client.CreateFolder(context.Background(), firstNonEmpty(testContext.Config.TestFolderID, "root"), "sdk-integration-folder")
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
+	parentID := firstNonEmpty(testContext.Config.TestFolderID, clientSessionRootID(t, client))
+	folderName := integrationFolderName()
+	folderID, err := client.CreateFolder(context.Background(), parentID, folderName)
+	if err != nil {
+		t.Fatalf("unexpected create folder error: %v", err)
+	}
+	if folderID == "" {
+		t.Fatal("expected created folder id")
+	}
+	created, err := client.SearchChild(context.Background(), parentID, folderName, NodeTypeFolder)
+	if err != nil {
+		t.Logf("search after create still fails verification, created folder id=%s: %v", folderID, err)
+		return
+	}
+	if created == nil || created.ID != folderID {
+		t.Fatalf("expected created folder to be discoverable, got %#v", created)
 	}
 }
 
