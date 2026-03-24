@@ -1,5 +1,9 @@
 # Changelog
 
+## cs/v0.10.0 (2026-03-24)
+
+* Enable resuming of uploads from Swift bindings
+
 ## cs/v0.9.4 (2026-03-23)
 
 * Fix wrong volume type for photo events
