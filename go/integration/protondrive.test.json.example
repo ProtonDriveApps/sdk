@@ -12,6 +12,6 @@
   "enable_caching": false,
   "replace_existing_draft": true,
   "expected_root_id": "",
-  "test_folder_id": "",
-  "test_file_id": ""
+  "test_folder_id": "folder-link-id-or-folder-name-under-root",
+  "test_file_id": "file-link-id-or-file-name-under-test-folder"
 }

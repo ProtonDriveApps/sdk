@@ -148,7 +148,7 @@ func TestIntegrationAbout(t *testing.T) {
 func TestIntegrationListDirectory(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	entries, err := client.ListDirectory(context.Background(), firstNonEmpty(testContext.Config.TestFolderID, clientSessionRootID(t, client)))
+	entries, err := client.ListDirectory(context.Background(), resolveIntegrationFolderID(t, testContext, client))
 	if err != nil {
 		t.Fatalf("unexpected list directory error: %v", err)
 	}
@@ -160,7 +160,7 @@ func TestIntegrationListDirectory(t *testing.T) {
 func TestIntegrationSearchChild(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	result, err := client.SearchChild(context.Background(), firstNonEmpty(testContext.Config.TestFolderID, clientSessionRootID(t, client)), "definitely-not-present-sdk-test-entry", NodeTypeFile)
+	result, err := client.SearchChild(context.Background(), resolveIntegrationFolderID(t, testContext, client), "definitely-not-present-sdk-test-entry", NodeTypeFile)
 	if err != nil {
 		t.Fatalf("unexpected search child error: %v", err)
 	}
@@ -172,7 +172,7 @@ func TestIntegrationSearchChild(t *testing.T) {
 func TestIntegrationCreateFolder(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	parentID := firstNonEmpty(testContext.Config.TestFolderID, clientSessionRootID(t, client))
+	parentID := resolveIntegrationFolderID(t, testContext, client)
 	folderName := integrationFolderName()
 	folderID, err := client.CreateFolder(context.Background(), parentID, folderName)
 	if err != nil {
@@ -193,11 +193,8 @@ func TestIntegrationCreateFolder(t *testing.T) {
 
 func TestIntegrationGetRevisionAttrs(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
-	if testContext.Config.TestFileID == "" {
-		t.Skip("integration config missing test_file_id")
-	}
 	client := requireIntegrationClient(t, testContext)
-	attrs, err := client.GetRevisionAttrs(context.Background(), testContext.Config.TestFileID)
+	attrs, err := client.GetRevisionAttrs(context.Background(), resolveIntegrationFileID(t, testContext, client))
 	if err != nil {
 		t.Fatalf("unexpected revision attrs error: %v", err)
 	}
@@ -208,11 +205,8 @@ func TestIntegrationGetRevisionAttrs(t *testing.T) {
 
 func TestIntegrationDownloadFile(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
-	if testContext.Config.TestFileID == "" {
-		t.Skip("integration config missing test_file_id")
-	}
 	client := requireIntegrationClient(t, testContext)
-	result, err := client.DownloadFile(context.Background(), testContext.Config.TestFileID, 0)
+	result, err := client.DownloadFile(context.Background(), resolveIntegrationFileID(t, testContext, client), 0)
 	if err != nil {
 		t.Fatalf("unexpected download error: %v", err)
 	}
@@ -230,7 +224,7 @@ func TestIntegrationDownloadFile(t *testing.T) {
 func TestIntegrationUploadFile(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
 	client := requireIntegrationClient(t, testContext)
-	_, _, err := client.UploadFile(context.Background(), firstNonEmpty(testContext.Config.TestFolderID, "root"), "sdk-upload.txt", strings.NewReader("hello world"), UploadOptions{KnownSize: int64(len("hello world"))})
+	_, _, err := client.UploadFile(context.Background(), resolveIntegrationFolderID(t, testContext, client), "sdk-upload.txt", strings.NewReader("hello world"), UploadOptions{KnownSize: int64(len("hello world"))})
 	if !errors.Is(err, ErrNotImplemented) {
 		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
 	}
@@ -238,11 +232,8 @@ func TestIntegrationUploadFile(t *testing.T) {
 
 func TestIntegrationMoveFile(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
-	if testContext.Config.TestFileID == "" {
-		t.Skip("integration config missing test_file_id")
-	}
 	client := requireIntegrationClient(t, testContext)
-	err := client.MoveFile(context.Background(), testContext.Config.TestFileID, firstNonEmpty(testContext.Config.TestFolderID, "root"), "renamed.txt")
+	err := client.MoveFile(context.Background(), resolveIntegrationFileID(t, testContext, client), resolveIntegrationFolderID(t, testContext, client), "renamed.txt")
 	if !errors.Is(err, ErrNotImplemented) {
 		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
 	}
@@ -250,11 +241,8 @@ func TestIntegrationMoveFile(t *testing.T) {
 
 func TestIntegrationMoveFolder(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
-	if testContext.Config.TestFolderID == "" {
-		t.Skip("integration config missing test_folder_id")
-	}
 	client := requireIntegrationClient(t, testContext)
-	err := client.MoveFolder(context.Background(), testContext.Config.TestFolderID, "root", "renamed-folder")
+	err := client.MoveFolder(context.Background(), resolveIntegrationFolderID(t, testContext, client), clientSessionRootID(t, client), "renamed-folder")
 	if !errors.Is(err, ErrNotImplemented) {
 		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
 	}
@@ -262,11 +250,8 @@ func TestIntegrationMoveFolder(t *testing.T) {
 
 func TestIntegrationTrashFile(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
-	if testContext.Config.TestFileID == "" {
-		t.Skip("integration config missing test_file_id")
-	}
 	client := requireIntegrationClient(t, testContext)
-	err := client.TrashFile(context.Background(), testContext.Config.TestFileID)
+	err := client.TrashFile(context.Background(), resolveIntegrationFileID(t, testContext, client))
 	if !errors.Is(err, ErrNotImplemented) {
 		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
 	}
@@ -274,11 +259,8 @@ func TestIntegrationTrashFile(t *testing.T) {
 
 func TestIntegrationTrashFolder(t *testing.T) {
 	testContext := requireIntegrationTestContext(t)
-	if testContext.Config.TestFolderID == "" {
-		t.Skip("integration config missing test_folder_id")
-	}
 	client := requireIntegrationClient(t, testContext)
-	err := client.TrashFolder(context.Background(), testContext.Config.TestFolderID, true)
+	err := client.TrashFolder(context.Background(), resolveIntegrationFolderID(t, testContext, client), true)
 	if !errors.Is(err, ErrNotImplemented) {
 		t.Fatalf("expected placeholder ErrNotImplemented, got %v", err)
 	}

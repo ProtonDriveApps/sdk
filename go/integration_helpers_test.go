@@ -5,6 +5,7 @@ package protondrive
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -99,4 +100,62 @@ func clientSessionRootID(t *testing.T, client *Client) string {
 
 func integrationFolderName() string {
 	return "sdk-integration-" + time.Now().UTC().Format("20060102-150405")
+}
+
+func resolveIntegrationFolderID(t *testing.T, testContext *integrationTestContext, client *Client) string {
+	t.Helper()
+	configured := strings.TrimSpace(testContext.Config.TestFolderID)
+	if configured == "" {
+		return clientSessionRootID(t, client)
+	}
+	if looksLikeLinkID(configured) {
+		return configured
+	}
+	parentID := clientSessionRootID(t, client)
+	folder, err := client.SearchChild(context.Background(), parentID, configured, NodeTypeFolder)
+	if err != nil {
+		t.Fatalf("resolve test folder by name: %v", err)
+	}
+	if folder == nil {
+		t.Fatalf("test folder %q not found under root", configured)
+	}
+	return folder.ID
+}
+
+func resolveIntegrationFileID(t *testing.T, testContext *integrationTestContext, client *Client) string {
+	t.Helper()
+	configured := strings.TrimSpace(testContext.Config.TestFileID)
+	if configured == "" {
+		t.Skip("integration config missing test_file_id")
+	}
+	if looksLikeLinkID(configured) {
+		return configured
+	}
+	searchParents := []string{resolveIntegrationFolderID(t, testContext, client)}
+	rootID := clientSessionRootID(t, client)
+	if searchParents[0] != rootID {
+		searchParents = append(searchParents, rootID)
+	}
+	for _, parentID := range searchParents {
+		file, err := client.SearchChild(context.Background(), parentID, configured, NodeTypeFile)
+		if err != nil {
+			t.Fatalf("resolve test file by name: %v", err)
+		}
+		if file != nil {
+			return file.ID
+		}
+	}
+	t.Fatalf("test file %q not found under configured test folder or root", configured)
+	return ""
+}
+
+func looksLikeLinkID(value string) bool {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return false
+	}
+	if strings.Contains(trimmed, "/") || strings.Contains(trimmed, ".") || strings.Contains(trimmed, " ") {
+		return false
+	}
+	return len(trimmed) >= 40 && (strings.Contains(trimmed, "=") || strings.Contains(trimmed, "_") || strings.Contains(trimmed, "-"))
 }

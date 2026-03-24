@@ -16,6 +16,11 @@ and fill in the account details.
 
 The config file is intentionally untracked and should never be committed.
 
+`test_folder_id` and `test_file_id` may be either real Proton link IDs or human-readable names:
+
+- `test_folder_id`: a folder link ID, or a folder name located directly under the Drive root
+- `test_file_id`: a file link ID, or a file name located inside the configured test folder
+
 ## Planned Integration Coverage
 
 1. `Login` with username/password and optional mailbox password / 2FA
