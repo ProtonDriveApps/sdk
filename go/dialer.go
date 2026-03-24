@@ -1,12 +1,17 @@
 package protondrive
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"strings"
 
 	proton "github.com/ProtonMail/go-proton-api"
+	"github.com/ProtonMail/go-srp"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 )
 
@@ -30,11 +35,12 @@ func (d *dialer) Login(ctx context.Context, options LoginOptions, hooks SessionH
 	options.UserAgent = strings.TrimSpace(options.UserAgent)
 
 	manager := newManager(options.BaseURL, options.AppVersion, options.UserAgent)
-	client, auth, err := manager.NewClientWithLogin(ctx, options.Username, []byte(options.Password))
+	auth, err := loginWithSRP(ctx, options)
 	if err != nil {
 		manager.Close()
 		return nil, err
 	}
+	client := manager.NewClient(auth.UID, auth.AccessToken, auth.RefreshToken)
 
 	if auth.TwoFA.Enabled&proton.HasTOTP != 0 {
 		if options.TwoFactorCode == "" {
@@ -145,15 +151,142 @@ func (d *dialer) Resume(ctx context.Context, options ResumeOptions, hooks Sessio
 func newManager(baseURL, appVersion, userAgent string) *proton.Manager {
 	options := []proton.Option{proton.WithAppVersion(appVersion)}
 	if strings.TrimSpace(baseURL) != "" {
-		options = append(options, proton.WithHostURL(normalizeProtonHostURL(baseURL)))
+		options = append(options, proton.WithHostURL(ensureAPIBaseURL(baseURL)))
 	}
 	_ = userAgent
 	return proton.New(options...)
 }
 
-func normalizeProtonHostURL(baseURL string) string {
+type authInfoResponse struct {
+	Code            int              `json:"Code"`
+	Error           string           `json:"Error"`
+	Version         int              `json:"Version"`
+	Modulus         string           `json:"Modulus"`
+	ServerEphemeral string           `json:"ServerEphemeral"`
+	Salt            string           `json:"Salt"`
+	SRPSession      string           `json:"SRPSession"`
+	TwoFA           proton.TwoFAInfo `json:"2FA"`
+}
+
+type authResponse struct {
+	Code         int                 `json:"Code"`
+	Error        string              `json:"Error"`
+	UID          string              `json:"UID"`
+	AccessToken  string              `json:"AccessToken"`
+	RefreshToken string              `json:"RefreshToken"`
+	ServerProof  string              `json:"ServerProof"`
+	PasswordMode proton.PasswordMode `json:"PasswordMode"`
+	TwoFA        proton.TwoFAInfo    `json:"2FA"`
+}
+
+func loginWithSRP(ctx context.Context, options LoginOptions) (proton.Auth, error) {
+	info, err := fetchAuthInfo(ctx, options)
+	if err != nil {
+		return proton.Auth{}, err
+	}
+	srpAuth, err := srp.NewAuth(info.Version, options.Username, []byte(options.Password), info.Salt, info.Modulus, info.ServerEphemeral)
+	if err != nil {
+		return proton.Auth{}, err
+	}
+	proofs, err := srpAuth.GenerateProofs(2048)
+	if err != nil {
+		return proton.Auth{}, err
+	}
+	auth, err := performAuth(ctx, options, info.SRPSession, proofs)
+	if err != nil {
+		return proton.Auth{}, err
+	}
+	serverProof, err := base64.StdEncoding.DecodeString(auth.ServerProof)
+	if err != nil {
+		return proton.Auth{}, err
+	}
+	if !bytes.Equal(serverProof, proofs.ExpectedServerProof) {
+		return proton.Auth{}, proton.ErrInvalidProof
+	}
+	return proton.Auth{
+		UID:          auth.UID,
+		AccessToken:  auth.AccessToken,
+		RefreshToken: auth.RefreshToken,
+		ServerProof:  auth.ServerProof,
+		PasswordMode: auth.PasswordMode,
+		TwoFA:        auth.TwoFA,
+	}, nil
+}
+
+func fetchAuthInfo(ctx context.Context, options LoginOptions) (authInfoResponse, error) {
+	var out authInfoResponse
+	payload, err := json.Marshal(map[string]string{"Username": options.Username})
+	if err != nil {
+		return out, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ensureAPIBaseURL(options.BaseURL)+"/auth/v4/info", bytes.NewReader(payload))
+	if err != nil {
+		return out, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-pm-appversion", options.AppVersion)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return out, err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if err := json.Unmarshal(body, &out); err != nil {
+		return out, err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 || out.Code != 1000 {
+		if out.Error == "" {
+			out.Error = strings.TrimSpace(string(body))
+		}
+		return out, fmt.Errorf("auth info failed: %s", out.Error)
+	}
+	return out, nil
+}
+
+func performAuth(ctx context.Context, options LoginOptions, srpSession string, proofs *srp.Proofs) (authResponse, error) {
+	var out authResponse
+	payload, err := json.Marshal(map[string]string{
+		"Username":        options.Username,
+		"ClientProof":     base64.StdEncoding.EncodeToString(proofs.ClientProof),
+		"ClientEphemeral": base64.StdEncoding.EncodeToString(proofs.ClientEphemeral),
+		"SRPSession":      srpSession,
+	})
+	if err != nil {
+		return out, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ensureAPIBaseURL(options.BaseURL)+"/auth/v4", bytes.NewReader(payload))
+	if err != nil {
+		return out, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-pm-appversion", options.AppVersion)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return out, err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if err := json.Unmarshal(body, &out); err != nil {
+		return out, err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 || (out.Code != 1000 && out.Code != 1001) {
+		if out.Error == "" {
+			out.Error = strings.TrimSpace(string(body))
+		}
+		return out, fmt.Errorf("auth failed: %s", out.Error)
+	}
+	return out, nil
+}
+
+func ensureAPIBaseURL(baseURL string) string {
 	trimmed := strings.TrimRight(strings.TrimSpace(baseURL), "/")
-	return strings.TrimSuffix(trimmed, "/api")
+	if trimmed == "" {
+		return "https://mail.proton.me/api"
+	}
+	if strings.HasSuffix(trimmed, "/api") {
+		return trimmed
+	}
+	return trimmed + "/api"
 }
 
 func attachSessionHooks(client *proton.Client, driver *standaloneDriver, hooks SessionHooks) {
@@ -198,11 +331,15 @@ func unlockAccount(ctx context.Context, client *proton.Client, keyPass, saltedKe
 		return proton.User{}, nil, nil, nil, nil, err
 	}
 	if saltedKeyPass == nil {
+		userKey, err := primaryOrFirstKey(user.Keys)
+		if err != nil {
+			return proton.User{}, nil, nil, nil, nil, err
+		}
 		salts, err := client.GetSalts(ctx)
 		if err != nil {
 			return proton.User{}, nil, nil, nil, nil, err
 		}
-		saltedKeyPass, err = salts.SaltForKey(keyPass, user.Keys.Primary().ID)
+		saltedKeyPass, err = salts.SaltForKey(keyPass, userKey.ID)
 		if err != nil {
 			return proton.User{}, nil, nil, nil, nil, err
 		}
@@ -212,4 +349,16 @@ func unlockAccount(ctx context.Context, client *proton.Client, keyPass, saltedKe
 		return proton.User{}, nil, nil, nil, nil, err
 	}
 	return user, addresses, userKR, addrKRs, saltedKeyPass, nil
+}
+
+func primaryOrFirstKey(keys proton.Keys) (proton.Key, error) {
+	for _, key := range keys {
+		if key.Primary {
+			return key, nil
+		}
+	}
+	if len(keys) > 0 {
+		return keys[0], nil
+	}
+	return proton.Key{}, fmt.Errorf("no user key available for account bootstrap")
 }

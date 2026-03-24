@@ -19,7 +19,7 @@ type IntegrationConfig struct {
 }
 
 const (
-	defaultIntegrationAppVersion = "proton-drive-go-sdk-integration@1.0.0"
+	defaultIntegrationAppVersion = "web-drive@5.2.0"
 	defaultIntegrationUserAgent  = "proton-drive-go-sdk-integration"
 )
 
