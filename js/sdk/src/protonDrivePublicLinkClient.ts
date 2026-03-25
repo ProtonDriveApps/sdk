@@ -33,6 +33,7 @@ import {
 import { initDownloadModule } from './internal/download';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharingPublicModule, UnauthDriveAPIService } from './internal/sharingPublic';
+import { SharingPublicLinkSession } from './internal/sharingPublic/session';
 import { initUploadModule } from './internal/upload';
 import { NullFeatureFlagProvider } from './featureFlags';
 import { NodesSecurityScanResult } from './internal/sharingPublic/nodesSecurity';
@@ -56,6 +57,7 @@ export class ProtonDrivePublicLinkClient {
     private sharingPublic: ReturnType<typeof initSharingPublicModule>;
     private download: ReturnType<typeof initDownloadModule>;
     private upload: ReturnType<typeof initUploadModule>;
+    private session: SharingPublicLinkSession;
 
     public experimental: {
         /**
@@ -86,6 +88,14 @@ export class ProtonDrivePublicLinkClient {
          * Experimental feature to create a document (Proton Docs or Proton Sheets) in the public link.
          */
         createDocument: (parentNodeUid: NodeOrUid, documentName: string, documentType: 1 | 2) => Promise<MaybeNode>;
+        /**
+         * Experimental feature to get the session info for the public link.
+         *
+         * This helper is used to set the session for metrics requests.
+         * Returns the session UID and access token that were obtained during
+         * authentication.
+         */
+        getSessionInfo: () => { uid: string; accessToken: string | undefined };
     };
 
     constructor({
@@ -102,6 +112,7 @@ export class ProtonDrivePublicLinkClient {
         publicRootNodeUid,
         isAnonymousContext,
         publicRole,
+        session,
     }: {
         httpClient: ProtonDriveHTTPClient;
         account: ProtonDriveAccount;
@@ -116,6 +127,7 @@ export class ProtonDrivePublicLinkClient {
         publicRootNodeUid: string;
         isAnonymousContext: boolean;
         publicRole: MemberRole;
+        session: SharingPublicLinkSession;
     }) {
         if (!telemetry) {
             telemetry = new Telemetry();
@@ -124,6 +136,7 @@ export class ProtonDrivePublicLinkClient {
             featureFlagProvider = new NullFeatureFlagProvider();
         }
         this.logger = telemetry.getLogger('publicLink-interface');
+        this.session = session;
 
         // Use only in memory cache for public link as there are no events to keep it up to date if persisted.
         const entitiesCache = new MemoryCache<string>();
@@ -197,7 +210,7 @@ export class ProtonDrivePublicLinkClient {
                 if (!keys.passphrase) {
                     throw new Error('Node does not have a passphrase');
                 }
-                return keys.passphrase
+                return keys.passphrase;
             },
             scanHashes: async (hashes: string[]): Promise<NodesSecurityScanResult> => {
                 this.logger.debug(`Scanning ${hashes.length} hashes`);
@@ -210,8 +223,16 @@ export class ProtonDrivePublicLinkClient {
             ): Promise<MaybeNode> => {
                 this.logger.debug(`Creating document in ${getUid(parentNodeUid)}`);
                 return convertInternalNodePromise(
-                    this.sharingPublic.nodes.management.createDocument(getUid(parentNodeUid), documentName, documentType),
+                    this.sharingPublic.nodes.management.createDocument(
+                        getUid(parentNodeUid),
+                        documentName,
+                        documentType,
+                    ),
                 );
+            },
+            getSessionInfo: (): { uid: string; accessToken: string | undefined } => {
+                this.logger.debug(`Getting session info`);
+                return this.session.session;
             },
         };
     }
