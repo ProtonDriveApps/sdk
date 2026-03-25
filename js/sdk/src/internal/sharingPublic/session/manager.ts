@@ -87,6 +87,7 @@ export class SharingPublicSessionManager {
         shareKey: PrivateKey;
         rootUid: string;
         publicRole: MemberRole;
+        session: SharingPublicLinkSession;
     }> {
         let info = this.infosPerToken.get(token);
         if (!info) {
@@ -105,6 +106,7 @@ export class SharingPublicSessionManager {
             shareKey,
             rootUid,
             publicRole: permissionsToMemberRole(this.logger, encryptedShare.publicPermissions),
+            session,
         };
     }
 
