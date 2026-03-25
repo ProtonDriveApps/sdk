@@ -232,7 +232,7 @@ export class ProtonDriveClient {
                 const { token, password: urlPassword } = getTokenAndPasswordFromUrl(url);
                 this.logger.info(`Authenticating public link token ${token}`);
 
-                const { httpClient, shareKey, rootUid, publicRole } = await this.publicSessionManager.auth(
+                const { httpClient, shareKey, rootUid, publicRole, session } = await this.publicSessionManager.auth(
                     token,
                     urlPassword,
                     customPassword,
@@ -250,6 +250,7 @@ export class ProtonDriveClient {
                     publicRootNodeUid: rootUid,
                     isAnonymousContext,
                     publicRole,
+                    session,
                 });
             },
         };
