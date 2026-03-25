@@ -1,5 +1,9 @@
 # Changelog
 
+## js/v0.14.1 (2026-03-25)
+
+* Add experimental getSessionInfo helper
+
 ## js/v0.14.0 (2026-03-23)
 
 * Allow saving photos when deleting albums
