@@ -1,5 +1,13 @@
 # Changelog
 
+## cs/v0.11.1 (2026-03-25)
+
+* Wrap SDK exception into IO exception for android network library to handle it
+
+## cs/v0.11.0 (2026-03-24)
+
+* Surface non-resumable upload and download as typed exceptions
+
 ## cs/v0.10.0 (2026-03-24)
 
 * Enable resuming of uploads from Swift bindings
