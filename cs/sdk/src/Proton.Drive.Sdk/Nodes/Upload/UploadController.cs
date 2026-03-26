@@ -79,17 +79,14 @@ public sealed class UploadController : IAsyncDisposable
 
                 try
                 {
-                    if (exception is not null)
+                    if (exception is not null and not OperationCanceledException && _onFailedAsync is not null)
                     {
                         var numberOfPlainBytesDone = draft?.NumberOfPlainBytesDone ?? 0;
 
-                        if (_onFailedAsync is not null)
-                        {
-                            await _onFailedAsync.Invoke(exception, numberOfPlainBytesDone).ConfigureAwait(false);
-                        }
+                        await _onFailedAsync.Invoke(exception, numberOfPlainBytesDone).ConfigureAwait(false);
                     }
                 }
-                catch
+                finally
                 {
                     if (draft is not null)
                     {
