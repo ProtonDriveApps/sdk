@@ -77,7 +77,7 @@ public sealed class DownloadController : IAsyncDisposable
 
                 try
                 {
-                    if (exception is not null && _onFailedAsync is not null)
+                    if (exception is not null and not OperationCanceledException && _onFailedAsync is not null)
                     {
                         await _onFailedAsync.Invoke(
                             exception,
@@ -85,7 +85,7 @@ public sealed class DownloadController : IAsyncDisposable
                             downloadState?.GetNumberOfBytesWritten() ?? 0).ConfigureAwait(false);
                     }
                 }
-                catch
+                finally
                 {
                     if (downloadState is not null)
                     {
@@ -152,15 +152,15 @@ public sealed class DownloadController : IAsyncDisposable
 
     private async ValueTask FinalizeDownloadAsync()
     {
+        if (_outputStreamToDispose is not null)
+        {
+            await _outputStreamToDispose.FlushAsync().ConfigureAwait(false);
+        }
+
         var onSucceededHandler = _onSucceededAsync;
         if (onSucceededHandler is null)
         {
             return;
-        }
-
-        if (_outputStreamToDispose is not null)
-        {
-            await _outputStreamToDispose.FlushAsync().ConfigureAwait(false);
         }
 
         var downloadState = await _downloadStateTask.ConfigureAwait(false);

@@ -42,7 +42,7 @@ internal static class TelemetryErrorResolver
         };
     }
 
-    public static UploadError? GetUploadErrorFromException(Exception exception)
+    public static UploadError GetUploadErrorFromException(Exception exception)
     {
         return exception switch
         {

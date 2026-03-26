@@ -115,13 +115,13 @@ public sealed partial class FileDownloader : IFileDownloader
         {
             var downloadEvent = await TelemetryEventFactory.CreateDownloadEventAsync(_client, _revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
 
-            // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize
             downloadEvent.ClaimedFileSize = claimedFileSize;
             downloadEvent.ApproximateClaimedFileSize = Privacy.ReduceSizePrecision(claimedFileSize);
             downloadEvent.DownloadedSize = downloadedByteCount;
             downloadEvent.ApproximateDownloadedSize = Privacy.ReduceSizePrecision(downloadedByteCount);
             downloadEvent.Error = TelemetryErrorResolver.GetDownloadErrorFromException(ex);
             downloadEvent.OriginalError = ex;
+
             RaiseTelemetryEvent(downloadEvent);
         }
 
@@ -129,7 +129,6 @@ public sealed partial class FileDownloader : IFileDownloader
         {
             var downloadEvent = await TelemetryEventFactory.CreateDownloadEventAsync(_client, _revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
 
-            // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize
             downloadEvent.ClaimedFileSize = claimedFileSize;
             downloadEvent.ApproximateClaimedFileSize = Privacy.ReduceSizePrecision(claimedFileSize);
             downloadEvent.DownloadedSize = downloadedByteCount;
