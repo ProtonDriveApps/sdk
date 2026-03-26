@@ -154,6 +154,7 @@ public sealed partial class FileUploader : IDisposable
             uploadEvent.ApproximateUploadedSize = Privacy.ReduceSizePrecision(uploadedByteCount);
             uploadEvent.Error = TelemetryErrorResolver.GetUploadErrorFromException(ex);
             uploadEvent.OriginalError = ex;
+
             RaiseTelemetryEvent(uploadEvent);
         }
 
@@ -164,6 +165,7 @@ public sealed partial class FileUploader : IDisposable
 
             uploadEvent.UploadedSize = uploadedByteCount;
             uploadEvent.ApproximateUploadedSize = Privacy.ReduceSizePrecision(uploadedByteCount);
+
             RaiseTelemetryEvent(uploadEvent);
         }
     }
