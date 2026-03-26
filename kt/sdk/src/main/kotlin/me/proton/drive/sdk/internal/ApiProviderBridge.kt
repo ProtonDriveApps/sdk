@@ -8,6 +8,7 @@ import me.proton.core.network.data.ApiProvider
 import me.proton.core.network.data.ProtonErrorException
 import me.proton.core.network.domain.ApiResult
 import me.proton.drive.sdk.HttpSdkApi
+import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.extension.read
 import me.proton.drive.sdk.extension.readAsStream
 import okhttp3.ResponseBody
@@ -115,11 +116,19 @@ internal class ApiProviderBridge(
         val headers = request.headersList.associate { header ->
             header.name to header.valuesList.joinToString(",")
         }
-        val body = if (request.isUploadBlock) {
+        val streamingRequest = request.isUploadBlock
+        val body = if (streamingRequest) {
             httpStream.readAsStream(request)
         } else {
             httpStream.read(request)
         }
+
+        val bodyMessage = when {
+            !request.hasSdkContentHandle() -> "no"
+            streamingRequest -> "streaming"
+            else -> "${body.contentLength()}-byte"
+        }
+        logger("--> $method $url ($bodyMessage body)")
         return when (method.uppercase()) {
             "GET" -> if (request.isDownloadBlock) {
                 getStreaming(url, headers)
@@ -131,7 +140,15 @@ internal class ApiProviderBridge(
             "PUT" -> put(url, headers, body)
             "DELETE" -> delete(url, headers, body)
             else -> throw IllegalArgumentException("Unsupported method: $method")
+        }.also { response ->
+            val contentLength = response.body()?.contentLength()
+            val bodySize = if (contentLength != -1L) "$contentLength-byte" else "unknown-length"
+            logger(
+                "<-- ${response.code()} ${response.message()} $url ($bodySize body)"
+            )
         }
     }
+
+    fun logger(message: String) = JniBase.globalSdkLogger(DEBUG, "network", message)
 }
 

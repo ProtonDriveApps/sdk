@@ -164,12 +164,12 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
         parser = ProtonSdk.HttpRequest::parseFrom,
     ) { httpRequest ->
         logger(
-            DEBUG,
+            VERBOSE,
             "send http request for ${httpRequest.method} ${httpRequest.url} of size: ${data.capacity()}"
         )
         val httpResponse = httpClientRequest(httpRequest)
         logger(
-            DEBUG,
+            VERBOSE,
             "receive http response ${httpResponse.statusCode} for ${httpRequest.method} ${httpRequest.url}"
         )
         response { value = httpResponse.asAny("proton.sdk.HttpResponse") }
