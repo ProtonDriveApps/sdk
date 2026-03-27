@@ -3,12 +3,11 @@ import { AbortError, IntegrityError } from '../../errors';
 import { Logger, Thumbnail, ThumbnailType, UploadMetadata } from '../../interface';
 import { getErrorMessage } from '../errors';
 import { generateFileExtendedAttributes } from '../nodes';
-import { UploadAPIService } from './apiService';
-import { BlockVerifier, verifyBlockWithContentKey } from './blockVerifier';
+import { mergeUint8Arrays } from '../utils';
+import { verifyBlockWithContentKey } from './blockVerifier';
 import { UploadCryptoService } from './cryptoService';
 import { UploadDigests } from './digests';
-import { Uploader } from './fileUploader';
-import { NodeRevisionDraft, NodeCrypto } from './interface';
+import { NodeCrypto } from './interface';
 import { UploadManager } from './manager';
 import { readStreamToUint8Array } from './streamReader';
 import { MAX_BLOCK_ENCRYPTION_RETRIES } from './streamUploader';
@@ -25,34 +24,23 @@ export type NodeKeys = {
  * Base uploader for small file and small revision uploads.
  * Shares the single-request flow: read content, get node crypto, encrypt, then call API.
  */
-abstract class SmallUploader extends Uploader {
+abstract class SmallUploader {
     protected logger: Logger;
+    protected abortController: AbortController;
 
     constructor(
-        telemetry: UploadTelemetry,
-        apiService: UploadAPIService,
-        cryptoService: UploadCryptoService,
-        manager: UploadManager,
-        metadata: UploadMetadata,
-        onFinish: () => void,
-        signal: AbortSignal | undefined,
+        protected telemetry: UploadTelemetry,
+        protected cryptoService: UploadCryptoService,
+        protected manager: UploadManager,
+        protected metadata: UploadMetadata,
+        protected onFinish: () => void,
+        protected signal: AbortSignal | undefined,
     ) {
-        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal);
         this.logger = telemetry.getLoggerForSmallUpload();
-    }
-    protected async createRevisionDraft(): Promise<{
-        revisionDraft: NodeRevisionDraft;
-        blockVerifier: BlockVerifier;
-    }> {
-        throw new Error('Small upload does not use revision draft');
+        this.abortController = new AbortController();
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    protected async deleteRevisionDraft(revisionDraft: NodeRevisionDraft): Promise<void> {
-        throw new Error('Small upload does not use revision draft');
-    }
-
-    protected async startUpload(
+    async upload(
         stream: ReadableStream,
         thumbnails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,
@@ -105,7 +93,8 @@ abstract class SmallUploader extends Uploader {
             this.encryptThumbnails(nodeKeys, thumbnails),
             this.encryptContentBlock(nodeKeys, content.data),
         ]);
-        const commitPayload = await this.encryptCommitPayload(nodeKeys, content.sha1, encryptedBlock);
+        const manifest = await this.getManifest(encryptedBlock, encryptedThumbnails);
+        const commitPayload = await this.encryptCommitPayload(nodeKeys, content.sha1, manifest);
 
         return {
             commitPayload,
@@ -147,12 +136,22 @@ abstract class SmallUploader extends Uploader {
     private async encryptThumbnails(
         nodeKeys: NodeKeys,
         thumbnails: Thumbnail[],
-    ): Promise<{ type: ThumbnailType; encryptedData: Uint8Array<ArrayBuffer> }[]> {
+    ): Promise<
+        {
+            type: ThumbnailType;
+            encryptedData: Uint8Array<ArrayBuffer>;
+            blockHash: Uint8Array<ArrayBuffer>;
+        }[]
+    > {
         const result = [];
         for (const thumbnail of thumbnails) {
             this.logger.debug(`Encrypting thumbnail ${thumbnail.type}`);
             const enc = await this.cryptoService.encryptThumbnail(nodeKeys, thumbnail);
-            result.push({ type: thumbnail.type, encryptedData: enc.encryptedData });
+            result.push({
+                type: thumbnail.type,
+                encryptedData: enc.encryptedData,
+                blockHash: await enc.hashPromise,
+            });
         }
         return result;
     }
@@ -228,21 +227,35 @@ abstract class SmallUploader extends Uploader {
         };
     }
 
-    private async encryptCommitPayload(
-        nodeKeys: NodeKeys,
-        contentSha1: string,
+    private async getManifest(
         encryptedBlock:
             | {
                   blockHash: Uint8Array<ArrayBuffer>;
               }
             | undefined,
+        encryptedThumbnails: {
+            type: ThumbnailType;
+            blockHash: Uint8Array<ArrayBuffer>;
+        }[],
+    ): Promise<Uint8Array<ArrayBuffer>> {
+        encryptedThumbnails.sort((a, b) => a.type - b.type);
+        const hashes = [
+            ...(await Promise.all(encryptedThumbnails.map(({ blockHash }) => blockHash))),
+            ...(encryptedBlock ? [encryptedBlock.blockHash] : []),
+        ];
+        return mergeUint8Arrays(hashes);
+    }
+
+    private async encryptCommitPayload(
+        nodeKeys: NodeKeys,
+        contentSha1: string,
+        manifest: Uint8Array<ArrayBuffer>,
     ): Promise<{
         armoredManifestSignature: string;
         armoredExtendedAttributes: string;
     }> {
         this.logger.debug(`Preparing commit payload`);
 
-        const manifest = encryptedBlock ? encryptedBlock.blockHash : new Uint8Array(0);
         const extendedAttributes = generateFileExtendedAttributes(
             {
                 modificationTime: this.metadata.modificationTime,
@@ -266,7 +279,6 @@ abstract class SmallUploader extends Uploader {
 export class SmallFileUploader extends SmallUploader {
     constructor(
         telemetry: UploadTelemetry,
-        apiService: UploadAPIService,
         cryptoService: UploadCryptoService,
         manager: UploadManager,
         metadata: UploadMetadata,
@@ -275,7 +287,7 @@ export class SmallFileUploader extends SmallUploader {
         private parentFolderUid: string,
         private name: string,
     ) {
-        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal);
+        super(telemetry, cryptoService, manager, metadata, onFinish, signal);
         this.parentFolderUid = parentFolderUid;
         this.name = name;
     }
@@ -317,7 +329,6 @@ export class SmallFileUploader extends SmallUploader {
 export class SmallFileRevisionUploader extends SmallUploader {
     constructor(
         telemetry: UploadTelemetry,
-        apiService: UploadAPIService,
         cryptoService: UploadCryptoService,
         manager: UploadManager,
         metadata: UploadMetadata,
@@ -325,7 +336,7 @@ export class SmallFileRevisionUploader extends SmallUploader {
         signal: AbortSignal | undefined,
         private nodeUid: string,
     ) {
-        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal);
+        super(telemetry, cryptoService, manager, metadata, onFinish, signal);
         this.nodeUid = nodeUid;
     }
 

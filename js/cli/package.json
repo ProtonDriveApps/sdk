@@ -33,6 +33,13 @@
         "vite-plugin-dts": "^4.2.4"
     },
     "dependencies": {
+        "@jimp/core": "1.6.0",
+        "@jimp/js-bmp": "1.6.0",
+        "@jimp/js-gif": "1.6.0",
+        "@jimp/js-jpeg": "1.6.0",
+        "@jimp/js-png": "1.6.0",
+        "@jimp/js-tiff": "1.6.0",
+        "@jimp/plugin-resize": "1.6.0",
         "@noble/hashes": "^1.8.0",
         "@protontech/pmcrypto": "^8.8.1",
         "bcryptjs": "^2.4.3",
