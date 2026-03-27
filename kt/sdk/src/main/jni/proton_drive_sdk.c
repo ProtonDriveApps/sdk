@@ -10,18 +10,18 @@ void onDriveSdkResponse(intptr_t bindings_handle, ByteArray value) {
 
 void Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_handleRequest(
         JNIEnv *env,
-        jobject obj,
+        jclass clazz,
+        jlong ref,
         jbyteArray request
 ) {
     jbyte *bufferElems = (*env)->GetByteArrayElements(env, request, 0);
     ByteArray byteArray;
     byteArray.pointer = (const uint8_t *) bufferElems;
     byteArray.length = (*env)->GetArrayLength(env, request);
-    intptr_t weakObjRef = (intptr_t) (*env)->NewWeakGlobalRef(env, obj);
 
     proton_drive_sdk_handle_request(
             byteArray,
-            weakObjRef,
+            (intptr_t) ref,
             onDriveSdkResponse
     );
 
@@ -198,13 +198,4 @@ jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getSha1Pointe
         jclass clazz
 ) {
     return (jlong) (intptr_t) &onSha1;
-}
-
-jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_createWeakGlobalRef(JNIEnv* env, jobject obj) {
-    jweak weakRef = (*env)->NewWeakGlobalRef(env, obj);
-    return (jlong)(intptr_t) weakRef;
-}
-
-void Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_deleteWeakGlobalRef(JNIEnv* env, jclass clazz, jlong weakRef) {
-    (*env)->DeleteWeakGlobalRef(env, (jweak) weakRef);
 }
