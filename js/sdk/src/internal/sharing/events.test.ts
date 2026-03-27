@@ -4,6 +4,7 @@ import { SharingCache } from './cache';
 import { SharingAccess } from './sharingAccess';
 import { SharingEventHandler } from './events';
 import { SharesManager } from '../shares/manager';
+import { NodesService } from './interface';
 
 // FIXME: test tree_refresh and tree_remove
 
@@ -11,6 +12,7 @@ describe('handleSharedByMeNodes', () => {
     let cache: SharingCache;
     let sharingEventHandler: SharingEventHandler;
     let sharesManager: SharesManager;
+    let nodesService: NodesService;
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -26,7 +28,11 @@ describe('handleSharedByMeNodes', () => {
         sharesManager = {
             isOwnVolume: jest.fn(async (volumeId: string) => volumeId === 'MyVolume1'),
         } as any;
-        sharingEventHandler = new SharingEventHandler(getMockLogger(), cache, sharesManager);
+        // @ts-expect-error No need to implement all methods for mocking
+        nodesService = {
+            notifyNodeChanged: jest.fn(),
+        };
+        sharingEventHandler = new SharingEventHandler(getMockLogger(), cache, sharesManager, nodesService);
     });
 
     it('should add if new own shared node is created', async () => {
@@ -138,12 +144,14 @@ describe('handleSharedWithMeNodes', () => {
     let cache: SharingCache;
     let sharingAccess: SharingAccess;
     let sharesManager: SharesManager;
+    let nodesService: NodesService;
 
     beforeEach(() => {
         jest.clearAllMocks();
 
         // @ts-expect-error No need to implement all methods for mocking
         cache = {
+            hasSharedWithMeNodeUidsLoaded: jest.fn().mockResolvedValue(false),
             getSharedWithMeNodeUids: jest.fn(),
             setSharedWithMeNodeUids: jest.fn(),
         };
@@ -154,6 +162,10 @@ describe('handleSharedWithMeNodes', () => {
         sharesManager = {
             isOwnVolume: jest.fn(async (volumeId: string) => volumeId === 'MyVolume1'),
         } as any;
+        // @ts-expect-error No need to implement all methods for mocking
+        nodesService = {
+            notifyNodeChanged: jest.fn(),
+        };
     });
 
     it('should update cache', async () => {
@@ -163,11 +175,32 @@ describe('handleSharedWithMeNodes', () => {
             treeEventScopeId: 'core',
         };
 
-        const sharingEventHandler = new SharingEventHandler(getMockLogger(), cache, sharesManager);
+        const sharingEventHandler = new SharingEventHandler(getMockLogger(), cache, sharesManager, nodesService);
         await sharingEventHandler.handleDriveEvent(event);
 
         expect(cache.setSharedWithMeNodeUids).toHaveBeenCalledWith(undefined);
         expect(cache.getSharedWithMeNodeUids).not.toHaveBeenCalled();
         expect(sharingAccess.iterateSharedNodesWithMe).not.toHaveBeenCalled();
+        expect(nodesService.notifyNodeChanged).not.toHaveBeenCalled();
+    });
+
+    it('should notify nodes changes', async () => {
+        cache.hasSharedWithMeNodeUidsLoaded = jest.fn().mockResolvedValue(true);
+        cache.getSharedWithMeNodeUids = jest.fn().mockResolvedValue(['nodeUid1', 'nodeUid2']);
+
+        const event: DriveEvent = {
+            type: DriveEventType.SharedWithMeUpdated,
+            eventId: 'event1',
+            treeEventScopeId: 'core',
+        };
+
+        const sharingEventHandler = new SharingEventHandler(getMockLogger(), cache, sharesManager, nodesService);
+        await sharingEventHandler.handleDriveEvent(event);
+
+        expect(cache.setSharedWithMeNodeUids).toHaveBeenCalledWith(undefined);
+        expect(cache.getSharedWithMeNodeUids).toHaveBeenCalled();
+        expect(nodesService.notifyNodeChanged).toHaveBeenCalledTimes(2);
+        expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('nodeUid1');
+        expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('nodeUid2');
     });
 });
