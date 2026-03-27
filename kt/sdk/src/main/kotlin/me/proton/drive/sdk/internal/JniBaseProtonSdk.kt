@@ -2,6 +2,7 @@ package me.proton.drive.sdk.internal
 
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
+import me.proton.drive.sdk.LoggerProvider.Level.WARN
 import proton.sdk.ProtonSdk.Request
 import proton.sdk.RequestKt
 import proton.sdk.request
@@ -9,14 +10,17 @@ import proton.sdk.request
 abstract class JniBaseProtonSdk : JniBase() {
 
     private var clients = emptyList<ProtonSdkNativeClient>()
+    private var permanentClients = emptyList<ProtonSdkNativeClient>()
 
     fun dispatch(
         name: String,
         block: RequestKt.Dsl.() -> Unit,
     ) {
         val nativeClient = ProtonSdkNativeClient(
-            method(name),
-            IgnoredIntegerOrErrorResponse(),
+            name = method(name),
+            response = { client, _ ->
+                client.release()
+            },
         )
         nativeClient.handleRequest(request(block))
     }
@@ -66,7 +70,13 @@ abstract class JniBaseProtonSdk : JniBase() {
     }
 
     fun releaseAll() {
-        clients.forEach { client -> client.release() }
-        clients = emptyList()
+        permanentClients.forEach { client -> client.release() }
+        permanentClients = emptyList()
+        if (clients.isNotEmpty()) {
+            internalLogger(
+                WARN,
+                "Pending clients waiting for a response: ${clients.size}, ${clients.map { it.name }}"
+            )
+        }
     }
 }

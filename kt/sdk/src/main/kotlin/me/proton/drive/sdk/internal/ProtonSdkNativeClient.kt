@@ -4,6 +4,7 @@ import me.proton.drive.sdk.LoggerProvider.Level
 import me.proton.drive.sdk.LoggerProvider.Level.VERBOSE
 import proton.sdk.ProtonSdk.Request
 import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicBoolean
 
 class ProtonSdkNativeClient internal constructor(
     val name: String,
@@ -11,34 +12,40 @@ class ProtonSdkNativeClient internal constructor(
     val callback: (ByteBuffer) -> Unit = { error("callback not configured for $name") },
     val logger: (Level, String) -> Unit = { _, _ -> }
 ) {
+    private val clientWeakRef: Long = JniWeakReference.create(this)
+    private val released = AtomicBoolean(false)
 
     fun release() {
-        // do nothing as C code use weak reference
-        // keep this method to force user to keep a strong reference to the native client until they are done
+        if (released.compareAndSet(false, true)) {
+            JniWeakReference.delete(clientWeakRef)
+        } else {
+            logger(VERBOSE, "Native client for $name already release")
+        }
     }
 
     fun handleRequest(
         request: Request,
     ) {
         logger(VERBOSE, "handle request ${request.payloadCase.name} for $name")
-        handleRequest(request.toByteArray())
+        handleRequest(clientWeakRef, request.toByteArray())
     }
 
-    external fun handleRequest(
-        request: ByteArray,
-    )
-
+    @Suppress("unused") // Called by JNI
     fun onResponse(data: ByteBuffer) {
         logger(VERBOSE, "response for $name of size: ${data.capacity()}")
         response(this, data)
     }
 
+    @Suppress("unused") // Called by JNI
     fun onCallback(data: ByteBuffer) {
         logger(VERBOSE, "callback for $name of size: ${data.capacity()}")
         callback(data)
     }
 
     companion object {
+        @JvmStatic
+        external fun handleRequest(ref: Long, request: ByteArray)
+
         @JvmStatic
         external fun getCallbackPointer(): Long
     }

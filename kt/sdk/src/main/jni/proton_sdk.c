@@ -10,18 +10,18 @@ void onSdkResponse(intptr_t bindings_handle, ByteArray value) {
 
 void Java_me_proton_drive_sdk_internal_ProtonSdkNativeClient_handleRequest(
         JNIEnv *env,
-        jobject obj,
+        jclass clazz,
+        jlong ref,
         jbyteArray request
 ) {
     jbyte *bufferElems = (*env)->GetByteArrayElements(env, request, 0);
     ByteArray byteArray;
     byteArray.pointer = (const uint8_t *) bufferElems;
     byteArray.length = (*env)->GetArrayLength(env, request);
-    intptr_t weakObjRef = (intptr_t) (*env)->NewWeakGlobalRef(env, obj);
 
     proton_sdk_handle_request(
             byteArray,
-            weakObjRef,
+            (intptr_t) ref,
             onSdkResponse
     );
 

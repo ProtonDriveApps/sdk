@@ -3,6 +3,7 @@ package me.proton.drive.sdk.internal
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import me.proton.drive.sdk.LoggerProvider.Level.VERBOSE
+import me.proton.drive.sdk.LoggerProvider.Level.WARN
 import proton.drive.sdk.ProtonDriveSdk.Request
 import proton.drive.sdk.RequestKt
 import proton.drive.sdk.request
@@ -12,6 +13,7 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
 
     private var released = false
     private var clients = emptyList<ProtonDriveSdkNativeClient<*>>()
+    private var permanentClients = emptyList<ProtonDriveSdkNativeClient<*>>()
 
     fun dispatch(
         name: String,
@@ -19,8 +21,10 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
     ) {
         check(released.not()) { "Cannot dispatch ${method(name)} after release" }
         val nativeClient = ProtonDriveSdkNativeClient<Nothing>(
-            method(name),
-            IgnoredIntegerOrErrorResponse(),
+            name = method(name),
+            response = { client, _ ->
+                client.release()
+            },
             logger = internalLogger,
         )
         nativeClient.handleRequest(request(block))
@@ -37,9 +41,9 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
         val nativeClient = ProtonDriveSdkNativeClient<Nothing>(
             name = method(name),
             response = { client, buffer ->
-                responseCallback(buffer)
                 client.release()
                 clients -= client
+                responseCallback(buffer)
             },
             logger = internalLogger,
         )
@@ -61,9 +65,9 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
         val nativeClient = ProtonDriveSdkNativeClient(
             name = method(name),
             response = { client, buffer ->
-                responseCallback(buffer)
                 client.release()
                 clients -= client
+                responseCallback(buffer)
             },
             enumerateHandler = EnumerateHandler.create(enumerate, parser) ,
             logger = internalLogger,
@@ -79,14 +83,22 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
     ): T = suspendCancellableCoroutine { continuation ->
         val nativeClient = clientBuilder(continuation)
         check(released.not()) { "Cannot executePersistent ${method(nativeClient.name)} after release" }
-        clients += nativeClient
+        permanentClients += nativeClient
         nativeClient.handleRequest(requestBuilder(nativeClient))
     }
 
     fun releaseAll() {
         internalLogger(VERBOSE, "Releasing all for ${javaClass.simpleName}")
         released = true
-        clients.forEach { client -> client.release() }
-        clients = emptyList()
+        permanentClients.forEach { client ->
+            client.release()
+        }
+        permanentClients = emptyList()
+        if (clients.isNotEmpty()) {
+            internalLogger(
+                WARN,
+                "Pending clients waiting for a response: ${clients.size}, ${clients.map { it.name }}"
+            )
+        }
     }
 }
