@@ -48,6 +48,7 @@ export function initSharingModule(
         telemetry.getLogger('sharing-event-handler'),
         cache,
         sharesService,
+        nodesService,
     );
 
     return {
