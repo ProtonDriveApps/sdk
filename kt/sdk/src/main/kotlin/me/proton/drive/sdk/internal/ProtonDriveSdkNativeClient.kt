@@ -26,6 +26,7 @@ import proton.sdk.ProtonSdk.HttpResponse
 import proton.sdk.ProtonSdk.Response
 import proton.sdk.response
 import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicBoolean
 
 class ProtonDriveSdkNativeClient<E> internal constructor(
     val name: String,
@@ -44,24 +45,25 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
     val logger: (Level, String) -> Unit = { _, _ -> },
     private val coroutineScopeProvider: CoroutineScopeProvider = { null },
 ) {
-    @Volatile
-    private var nativeWeakReference: Long? = null
+    private val clientWeakRef: Long = JniWeakReference.create(this)
+    private val released = AtomicBoolean(false)
     private val weakReferenceLock = Any()
     val inactiveJobWeakReferences = ArrayDeque<Long>()
 
     private val byteArrayPointers = ByteArrayPointers()
 
     fun release() {
-        byteArrayPointers.releaseAll()
-        synchronized(weakReferenceLock) {
-            nativeWeakReference?.let { ref ->
-                deleteWeakGlobalRef(ref)
-                nativeWeakReference = null
+        if (released.compareAndSet(false, true)) {
+            JniWeakReference.delete(clientWeakRef)
+            byteArrayPointers.releaseAll()
+            synchronized(weakReferenceLock) {
+                inactiveJobWeakReferences.forEach { ref ->
+                    JniWeakReference.delete(ref)
+                }
+                inactiveJobWeakReferences.clear()
             }
-            inactiveJobWeakReferences.forEach { ref ->
-                JniJob.deleteWeakGlobalRef(ref)
-            }
-            inactiveJobWeakReferences.clear()
+        } else {
+            logger(VERBOSE, "Native client for $name already release")
         }
     }
 
@@ -69,12 +71,8 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
         request: ProtonDriveSdk.Request,
     ) {
         logger(VERBOSE, "handle request ${request.payloadCase.name} for $name")
-        handleRequest(request.toByteArray())
+        handleRequest(clientWeakRef, request.toByteArray())
     }
-
-    external fun handleRequest(
-        request: ByteArray,
-    )
 
     fun handleResponse(
         sdkHandle: Long,
@@ -94,11 +92,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
 
     fun getByteArrayPointer(data: ByteArray): Long = byteArrayPointers.allocate(data)
 
-    fun asWeakReference(): Long = synchronized(weakReferenceLock) {
-        nativeWeakReference ?: createWeakGlobalRef().also { ref -> nativeWeakReference = ref }
-    }
-
-    external fun createWeakGlobalRef(): Long
+    fun asWeakReference(): Long = clientWeakRef
 
     @Suppress("unused") // Called by JNI
     fun onResponse(data: ByteBuffer) {
@@ -382,14 +376,14 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
         return scope
     }
 
-    private fun Job.trackWeakReference(): Long = JniJob.createWeakGlobalRef(this).also { ref ->
+    private fun Job.trackWeakReference(): Long = JniWeakReference.create(this).also { ref ->
         invokeOnCompletion {
             synchronized(weakReferenceLock) {
                 inactiveJobWeakReferences.addLast(ref)
                 // Clean up oldest refs if we exceed the limit
                 while (inactiveJobWeakReferences.size > MAX_INACTIVE_JOB_WEAK_REFERENCES) {
                     inactiveJobWeakReferences.removeFirstOrNull()?.let { oldestRef ->
-                        JniJob.deleteWeakGlobalRef(oldestRef)
+                        JniWeakReference.delete(oldestRef)
                     }
                 }
             }
@@ -399,6 +393,9 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
     @Suppress("TooManyFunctions")
     companion object {
         private const val MAX_INACTIVE_JOB_WEAK_REFERENCES = 128
+
+        @JvmStatic
+        external fun handleRequest(ref: Long, request: ByteArray)
 
         @JvmStatic
         external fun handleResponse(sdkHandle: Long, response: ByteArray)
@@ -435,8 +432,5 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
 
         @JvmStatic
         external fun getSha1Pointer(): Long
-
-        @JvmStatic
-        external fun deleteWeakGlobalRef(ref: Long)
     }
 }
