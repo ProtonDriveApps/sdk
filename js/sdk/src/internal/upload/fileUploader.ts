@@ -5,6 +5,7 @@ import { UploadController } from './controller';
 import { UploadCryptoService } from './cryptoService';
 import { NodeRevisionDraft } from './interface';
 import { UploadManager } from './manager';
+import { SmallFileRevisionUploader, SmallFileUploader } from './smallFileUploader';
 import { StreamUploader } from './streamUploader';
 import { UploadTelemetry } from './telemetry';
 
@@ -26,6 +27,7 @@ export abstract class Uploader {
         protected manager: UploadManager,
         protected metadata: UploadMetadata,
         protected onFinish: () => void,
+        protected shouldUseSmallFileUpload: (expectedSize: number) => Promise<boolean>,
         protected signal?: AbortSignal,
     ) {
         this.telemetry = telemetry;
@@ -34,6 +36,7 @@ export abstract class Uploader {
         this.manager = manager;
         this.metadata = metadata;
         this.onFinish = onFinish;
+        this.shouldUseSmallFileUpload = shouldUseSmallFileUpload;
 
         this.signal = signal;
         this.abortController = new AbortController();
@@ -97,9 +100,27 @@ export abstract class Uploader {
         thumbnails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,
     ): Promise<{ nodeRevisionUid: string; nodeUid: string }> {
+        const expectedEncryptedTotalSize = this.getExpectedEncryptedTotalSize(thumbnails);
+        if (await this.shouldUseSmallFileUpload(expectedEncryptedTotalSize)) {
+            return this.initSmallFileUploader(stream, thumbnails, onProgress);
+        }
+
         const uploader = await this.initStreamUploader();
         return uploader.start(stream, thumbnails, onProgress);
     }
+
+    private getExpectedEncryptedTotalSize(thumbnails: Thumbnail[]): number {
+        const thumbnailSize = thumbnails.reduce((acc, thumbnail) => acc + thumbnail.thumbnail.length, 0);
+        const totalSize = this.metadata.expectedSize + thumbnailSize;
+        const expectedEncryptedTotalSize = totalSize * 1.1; // 10% margin for encryption overhead
+        return expectedEncryptedTotalSize;
+    }
+
+    protected abstract initSmallFileUploader(
+        stream: ReadableStream,
+        thumbnails: Thumbnail[],
+        onProgress?: (uploadedBytes: number) => void,
+    ): Promise<{ nodeRevisionUid: string; nodeUid: string }>;
 
     protected async initStreamUploader(): Promise<StreamUploader> {
         const { revisionDraft, blockVerifier } = await this.createRevisionDraft();
@@ -154,9 +175,10 @@ export class FileUploader extends Uploader {
         private name: string,
         metadata: UploadMetadata,
         onFinish: () => void,
+        protected shouldUseSmallFileUpload: (expectedSize: number) => Promise<boolean>,
         signal?: AbortSignal,
     ) {
-        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal);
+        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, shouldUseSmallFileUpload, signal);
 
         this.parentFolderUid = parentFolderUid;
         this.name = name;
@@ -192,6 +214,24 @@ export class FileUploader extends Uploader {
     protected async deleteRevisionDraft(revisionDraft: NodeRevisionDraft): Promise<void> {
         await this.manager.deleteDraftNode(revisionDraft.nodeUid);
     }
+
+    protected async initSmallFileUploader(
+        stream: ReadableStream,
+        thumbnails: Thumbnail[],
+        onProgress?: (uploadedBytes: number) => void,
+    ): Promise<{ nodeRevisionUid: string; nodeUid: string }> {
+        const uploader = new SmallFileUploader(
+            this.telemetry,
+            this.cryptoService,
+            this.manager,
+            this.metadata,
+            this.onFinish,
+            this.signal,
+            this.parentFolderUid,
+            this.name,
+        );
+        return uploader.upload(stream, thumbnails, onProgress);
+    }
 }
 
 /**
@@ -206,9 +246,10 @@ export class FileRevisionUploader extends Uploader {
         private nodeUid: string,
         metadata: UploadMetadata,
         onFinish: () => void,
+        protected shouldUseSmallFileUpload: (expectedSize: number) => Promise<boolean>,
         signal?: AbortSignal,
     ) {
-        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, signal);
+        super(telemetry, apiService, cryptoService, manager, metadata, onFinish, shouldUseSmallFileUpload, signal);
 
         this.nodeUid = nodeUid;
     }
@@ -242,5 +283,22 @@ export class FileRevisionUploader extends Uploader {
 
     protected async deleteRevisionDraft(revisionDraft: NodeRevisionDraft): Promise<void> {
         await this.manager.deleteDraftRevision(revisionDraft.nodeRevisionUid);
+    }
+
+    protected async initSmallFileUploader(
+        stream: ReadableStream,
+        thumbnails: Thumbnail[],
+        onProgress?: (uploadedBytes: number) => void,
+    ): Promise<{ nodeRevisionUid: string; nodeUid: string }> {
+        const uploader = new SmallFileRevisionUploader(
+            this.telemetry,
+            this.cryptoService,
+            this.manager,
+            this.metadata,
+            this.onFinish,
+            this.signal,
+            this.nodeUid,
+        );
+        return uploader.upload(stream, thumbnails, onProgress);
     }
 }

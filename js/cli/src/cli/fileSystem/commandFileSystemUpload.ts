@@ -1,10 +1,10 @@
 import path from 'node:path';
 import { ParseArgsConfig } from 'util';
 
-import { Thumbnail } from '../../../../sdk/src';
 import { Command, ActionArgs } from '../interface';
 import { PathType } from '../paths';
 import { printObject } from '../formatters';
+import { generateThumbnails } from './generateThumbnails';
 
 export class CommandFileSystemUpload implements Command {
     group = 'filesystem';
@@ -60,7 +60,7 @@ export class CommandFileSystemUpload implements Command {
             console.log(`Uploading ${name} (${metadata.expectedSize || 'N/A'} bytes)`);
         }
 
-        const thumbnails: Thumbnail[] = []; // TODO
+        const thumbnails = await generateThumbnails(metadata.mediaType || '', localPath);
         const controller = await uploader.uploadFromStream(file.stream(), thumbnails, (writtenBytes) => {
             if (!json) {
                 console.log(`Uploaded ${writtenBytes} bytes`);
