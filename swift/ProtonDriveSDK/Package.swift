@@ -26,7 +26,7 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "CProtonDriveSDK",
-            path: "./Libraries/ProtonDriveSDK.xcframework"
+            path: "./Libraries/CProtonDriveSDK.xcframework"
         ),
         .target(
             name: "ProtonDriveSDK",
