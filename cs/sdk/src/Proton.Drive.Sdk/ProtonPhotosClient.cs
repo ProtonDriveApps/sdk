@@ -12,10 +12,8 @@ using Proton.Sdk.Telemetry;
 
 namespace Proton.Drive.Sdk;
 
-public sealed class ProtonPhotosClient : IDisposable
+public sealed class ProtonPhotosClient
 {
-    private readonly HttpClient _httpClient;
-
     public ProtonPhotosClient(ProtonApiSession session, string? uid = null)
     {
         DriveClient = new ProtonDriveClient(
@@ -23,9 +21,9 @@ public sealed class ProtonPhotosClient : IDisposable
             (defaultApiHttpClient, storageApiHttpClient) => new DriveApiClients(defaultApiHttpClient, storageApiHttpClient),
             uid);
 
-        _httpClient = session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonApiDefaults.DefaultTimeoutSeconds));
+        var httpClient = session.GetHttpClient(ProtonDriveDefaults.DriveBaseRoute, TimeSpan.FromSeconds(ProtonApiDefaults.DefaultTimeoutSeconds));
 
-        PhotosApi = new PhotosApiClient(_httpClient);
+        PhotosApi = new PhotosApiClient(httpClient);
     }
 
     public ProtonPhotosClient(
@@ -47,10 +45,10 @@ public sealed class ProtonPhotosClient : IDisposable
             (defaultApiHttpClient, storageApiHttpClient) => new DriveApiClients(defaultApiHttpClient, storageApiHttpClient),
             creationParameters);
 
-        _httpClient = new SdkHttpClientFactoryDecorator(httpClientFactory).CreateClientWithTimeout(
+        var httpClient = new SdkHttpClientFactoryDecorator(httpClientFactory).CreateClientWithTimeout(
             creationParameters?.OverrideDefaultApiTimeoutSeconds ?? ProtonApiDefaults.DefaultTimeoutSeconds);
 
-        PhotosApi = new PhotosApiClient(_httpClient);
+        PhotosApi = new PhotosApiClient(httpClient);
     }
 
     internal IPhotosApiClient PhotosApi { get; }
@@ -105,11 +103,6 @@ public sealed class ProtonPhotosClient : IDisposable
         CancellationToken cancellationToken = default)
     {
         return FileOperations.EnumerateThumbnailsAsync(DriveClient, photoUids, thumbnailType, forPhotos: true, cancellationToken);
-    }
-
-    public void Dispose()
-    {
-        _httpClient.Dispose();
     }
 
     [Experimental("Photos")]
