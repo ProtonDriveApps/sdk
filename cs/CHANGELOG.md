@@ -1,5 +1,11 @@
 # Changelog
 
+## cs/v0.11.2 (2026-03-27)
+
+* Stream trash enumeration instead of loading all items at once
+* Fix regression in disposal of file transfer controllers
+* Update Swift binding to get trash error
+
 ## cs/v0.11.1 (2026-03-25)
 
 * Wrap SDK exception into IO exception for android network library to handle it
