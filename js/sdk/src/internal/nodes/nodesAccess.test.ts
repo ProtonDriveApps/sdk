@@ -1,6 +1,6 @@
 import { getMockTelemetry } from '../../tests/telemetry';
 import { PrivateKey } from '../../crypto';
-import { DecryptionError } from '../../errors';
+import { DecryptionError, ProtonDriveError } from '../../errors';
 import { NodeAPIService } from './apiService';
 import { NodesCache } from './cache';
 import { NodesCryptoCache } from './cryptoCache';
@@ -327,11 +327,12 @@ describe('nodesAccess', () => {
                 const node2 = await generator.next();
                 expect(node2.value).toMatchObject({ uid: 'volumeId~node3' });
                 const node3 = generator.next();
-                await expect(node3).rejects.toThrow('Failed to decrypt some nodes');
+                await expect(node3).rejects.toThrow('Failed to load some items');
                 try {
                     await node3;
                 } catch (error: any) {
-                    expect(error.cause).toEqual([new DecryptionError('Decryption failed')]);
+                    expect(error.cause).toEqual([new ProtonDriveError('Failed to load some nodes')]);
+                    expect(error.cause[0].cause).toEqual([new DecryptionError('Decryption failed')]);
                 }
             });
 

@@ -1,3 +1,7 @@
+import { c } from 'ttag';
+
+import { ProtonDriveError } from '../errors';
+
 const DEFAULT_BATCH_LOADING = 10;
 
 /**
@@ -27,6 +31,8 @@ export class BatchLoading<ID, ITEM> {
     private iterateItems: (ids: ID[]) => AsyncGenerator<ITEM>;
 
     private itemsToFetch: ID[];
+
+    private errors: unknown[] = [];
 
     constructor(options: {
         loadItems?: (ids: ID[]) => Promise<ITEM[]>;
@@ -58,17 +64,27 @@ export class BatchLoading<ID, ITEM> {
         this.itemsToFetch.push(nodeUid);
 
         if (this.itemsToFetch.length >= this.batchSize) {
-            yield* this.iterateItems(this.itemsToFetch);
+            yield* this.iterateItemsWithErrorHandling(this.itemsToFetch);
             this.itemsToFetch = [];
         }
     }
 
     async *loadRest() {
-        if (this.itemsToFetch.length === 0) {
-            return;
+        if (this.itemsToFetch.length > 0) {
+            yield* this.iterateItemsWithErrorHandling(this.itemsToFetch);
+            this.itemsToFetch = [];
         }
 
-        yield* this.iterateItems(this.itemsToFetch);
-        this.itemsToFetch = [];
+        if (this.errors.length > 0) {
+            throw new ProtonDriveError(c('Error').t`Failed to load some items`, { cause: this.errors });
+        }
+    }
+
+    private async *iterateItemsWithErrorHandling(items: ID[]) {
+        try {
+            yield* this.iterateItems(items);
+        } catch (error) {
+            this.errors.push(error);
+        }
     }
 }
