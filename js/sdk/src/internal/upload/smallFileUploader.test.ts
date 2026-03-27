@@ -6,9 +6,10 @@ import { UploadAPIService } from './apiService';
 import { UploadCryptoService } from './cryptoService';
 import { UploadManager } from './manager';
 import { NodeCrypto } from './interface';
+import { mergeUint8Arrays } from '../utils';
 
-const MOCK_BLOCK_HASH = new Uint8Array(32).fill(1);
-const MOCK_VERIFICATION_TOKEN = new Uint8Array(16).fill(2);
+const MOCK_BLOCK_HASH = new Uint8Array(32).fill(4);
+const MOCK_VERIFICATION_TOKEN = new Uint8Array(16).fill(5);
 
 function createStream(bytes: number[]): ReadableStream<Uint8Array> {
     return new ReadableStream({
@@ -108,7 +109,7 @@ describe('SmallFileUploader', () => {
                 encryptedData: new Uint8Array(thumbnail.thumbnail),
                 originalSize: thumbnail.thumbnail.length,
                 encryptedSize: thumbnail.thumbnail.length + 100,
-                hash: 'thumbnailHash',
+                hashPromise: Promise.resolve(new Uint8Array(32).fill(thumbnail.type)),
             })),
             encryptBlock: jest.fn().mockImplementation(mockEncryptBlock),
             verifyBlock: jest.fn().mockResolvedValue({ verificationToken: MOCK_VERIFICATION_TOKEN }),
@@ -138,7 +139,6 @@ describe('SmallFileUploader', () => {
     function createUploader() {
         return new SmallFileUploader(
             telemetry,
-            apiService,
             cryptoService,
             uploadManager,
             metadata,
@@ -157,23 +157,12 @@ describe('SmallFileUploader', () => {
             const uploader = createUploader();
             const stream = createStream([1, 2, 3]);
 
-            const controller = await uploader.uploadFromStream(stream, thumbnails, onProgress);
-            const result = await controller.completion();
+            const result = await uploader.upload(stream, thumbnails, onProgress);
 
             expect(uploadManager.generateNewFileCrypto).toHaveBeenCalledWith(parentFolderUid, name);
             expect(uploadManager.uploadFile).toHaveBeenCalledTimes(1);
             expect(result).toEqual({ nodeUid: 'nodeUid', nodeRevisionUid: 'nodeRevisionUid' });
             expect(onProgress).toHaveBeenCalledWith(metadata.expectedSize);
-        });
-
-        it('should throw if upload already started', async () => {
-            const uploader = createUploader();
-            const stream = createStream([1, 2, 3]);
-
-            await uploader.uploadFromStream(stream, thumbnails, onProgress);
-            await expect(uploader.uploadFromStream(stream, thumbnails, onProgress)).rejects.toThrow(
-                'Upload already started',
-            );
         });
     });
 
@@ -186,8 +175,7 @@ describe('SmallFileUploader', () => {
                 { type: ThumbnailType.Type2, thumbnail: new Uint8Array([30, 40, 50]) },
             ];
 
-            await uploader.uploadFromStream(stream, thumbnails, undefined);
-            await (uploader as any).controller.completion();
+            await uploader.upload(stream, thumbnails, undefined);
 
             expect(uploadManager.uploadFile).toHaveBeenCalledWith(
                 parentFolderUid,
@@ -203,8 +191,16 @@ describe('SmallFileUploader', () => {
                     verificationToken: MOCK_VERIFICATION_TOKEN,
                 }),
                 [
-                    { type: ThumbnailType.Type1, encryptedData: expect.any(Uint8Array) },
-                    { type: ThumbnailType.Type2, encryptedData: expect.any(Uint8Array) },
+                    {
+                        type: ThumbnailType.Type1,
+                        encryptedData: expect.any(Uint8Array),
+                        blockHash: new Uint8Array(32).fill(ThumbnailType.Type1),
+                    },
+                    {
+                        type: ThumbnailType.Type2,
+                        encryptedData: expect.any(Uint8Array),
+                        blockHash: new Uint8Array(32).fill(ThumbnailType.Type2),
+                    },
                 ],
             );
 
@@ -212,7 +208,11 @@ describe('SmallFileUploader', () => {
             expect(cryptoService.encryptThumbnail).toHaveBeenCalledTimes(2);
             expect(cryptoService.commitFile).toHaveBeenCalledWith(
                 expect.anything(),
-                MOCK_BLOCK_HASH,
+                mergeUint8Arrays([
+                    new Uint8Array(32).fill(ThumbnailType.Type1),
+                    new Uint8Array(32).fill(ThumbnailType.Type2),
+                    MOCK_BLOCK_HASH,
+                ]),
                 expect.any(String),
             );
         });
@@ -223,8 +223,7 @@ describe('SmallFileUploader', () => {
             metadata.expectedSize = content.length;
             const stream = createStream(content);
 
-            await uploader.uploadFromStream(stream, [], undefined);
-            await (uploader as any).controller.completion();
+            await uploader.upload(stream, [], undefined);
 
             expect(cryptoService.encryptBlock).toHaveBeenCalledWith(
                 expect.any(Function),
@@ -241,8 +240,7 @@ describe('SmallFileUploader', () => {
             ];
             const stream = createStream([1, 2, 3]);
 
-            await uploader.uploadFromStream(stream, thumbnails, undefined);
-            await (uploader as any).controller.completion();
+            await uploader.upload(stream, thumbnails, undefined);
 
             expect(cryptoService.encryptThumbnail).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -259,8 +257,7 @@ describe('SmallFileUploader', () => {
             const uploader = createUploader();
             const stream = createStream([1, 2, 3]);
 
-            await uploader.uploadFromStream(stream, [], undefined);
-            await (uploader as any).controller.completion();
+            await uploader.upload(stream, [], undefined);
 
             const [nodeKeys, manifest, extendedAttributes] = (cryptoService.commitFile as jest.Mock).mock.calls[0];
             expect(manifest).toEqual(MOCK_BLOCK_HASH);
@@ -275,10 +272,10 @@ describe('SmallFileUploader', () => {
             metadata.expectedSize = 5;
             const stream = createStream([1, 2, 3]); // only 3 bytes
 
-            const controller = await uploader.uploadFromStream(stream, [], undefined);
+            const promise = uploader.upload(stream, [], undefined);
 
-            await expect(controller.completion()).rejects.toThrow(IntegrityError);
-            await expect(controller.completion()).rejects.toMatchObject({
+            await expect(promise).rejects.toThrow(IntegrityError);
+            await expect(promise).rejects.toMatchObject({
                 debug: { actual: 3, expected: 5 },
             });
         });
@@ -288,10 +285,10 @@ describe('SmallFileUploader', () => {
             metadata.expectedSha1 = 'a'.repeat(40); // wrong sha1
             const stream = createStream([1, 2, 3]);
 
-            const controller = await uploader.uploadFromStream(stream, [], undefined);
+            const promise = uploader.upload(stream, [], undefined);
 
-            await expect(controller.completion()).rejects.toThrow(IntegrityError);
-            await expect(controller.completion()).rejects.toMatchObject({
+            await expect(promise).rejects.toThrow(IntegrityError);
+            await expect(promise).rejects.toMatchObject({
                 debug: expect.objectContaining({
                     expectedSha1: 'a'.repeat(40),
                 }),
@@ -306,8 +303,7 @@ describe('SmallFileUploader', () => {
             const stream = createStream([]);
             const onProgress = jest.fn();
 
-            const controller = await uploader.uploadFromStream(stream, [], onProgress);
-            const result = await controller.completion();
+            const result = await uploader.upload(stream, [], onProgress);
 
             expect(result).toEqual({ nodeUid: 'nodeUid', nodeRevisionUid: 'nodeRevisionUid' });
             expect(cryptoService.encryptBlock).not.toHaveBeenCalled();
@@ -430,7 +426,6 @@ describe('SmallFileRevisionUploader', () => {
     function createUploader() {
         return new SmallFileRevisionUploader(
             telemetry,
-            apiService,
             cryptoService,
             uploadManager,
             metadata,
@@ -444,8 +439,7 @@ describe('SmallFileRevisionUploader', () => {
         const uploader = createUploader();
         const stream = createStream([1, 2, 3]);
 
-        const controller = await uploader.uploadFromStream(stream, [], undefined);
-        const result = await controller.completion();
+        const result = await uploader.upload(stream, [], undefined);
 
         expect(result).toEqual({ nodeUid: 'nodeUid', nodeRevisionUid: 'nodeRevisionUid' });
         expect(cryptoService.encryptBlock).toHaveBeenCalledWith(expect.any(Function), expect.anything(), Uint8Array.from([1, 2, 3]), 0);
@@ -471,8 +465,7 @@ describe('SmallFileRevisionUploader', () => {
         const uploader = createUploader();
         const stream = createStream([]);
 
-        const controller = await uploader.uploadFromStream(stream, [], undefined);
-        const result = await controller.completion();
+        const result = await uploader.upload(stream, [], undefined);
 
         expect(result).toEqual({ nodeUid: 'nodeUid', nodeRevisionUid: 'nodeRevisionUid' });
         expect(cryptoService.encryptBlock).not.toHaveBeenCalled();

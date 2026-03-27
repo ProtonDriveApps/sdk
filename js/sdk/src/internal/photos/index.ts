@@ -181,6 +181,8 @@ export function initPhotoUploadModule(
             name,
             metadata,
             onFinish,
+            // Small-file upload is not supported for photos yet.
+            () => Promise.resolve(false),
             signal,
         );
     }

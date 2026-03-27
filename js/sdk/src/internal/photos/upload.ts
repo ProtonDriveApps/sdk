@@ -47,9 +47,21 @@ export class PhotoFileUploader extends FileUploader {
         name: string,
         metadata: PhotoUploadMetadata,
         onFinish: () => void,
+        shouldUseSmallFileUpload: (expectedSize: number) => Promise<boolean>,
         signal?: AbortSignal,
     ) {
-        super(telemetry, apiService, cryptoService, manager, parentFolderUid, name, metadata, onFinish, signal);
+        super(
+            telemetry,
+            apiService,
+            cryptoService,
+            manager,
+            parentFolderUid,
+            name,
+            metadata,
+            onFinish,
+            shouldUseSmallFileUpload,
+            signal,
+        );
         this.photoApiService = apiService;
         this.photoManager = manager;
         this.photoMetadata = metadata;

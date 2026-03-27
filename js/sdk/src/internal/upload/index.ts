@@ -8,7 +8,6 @@ import { FileUploader as FileUploaderClass, FileRevisionUploader } from './fileU
 import { NodesService, SharesService } from './interface';
 import { UploadManager } from './manager';
 import { UploadQueue } from './queue';
-import { SmallFileRevisionUploader, SmallFileUploader } from './smallFileUploader';
 import { UploadTelemetry } from './telemetry';
 
 const SMALL_FILE_SIZE_LIMIT = 128 * 1024; // 128 KiB
@@ -38,13 +37,13 @@ export function initUploadModule(
 
     const queue = new UploadQueue();
 
-    async function useSmallFileUpload(metadata: UploadMetadata): Promise<boolean> {
+    async function shouldUseSmallFileUpload(expectedSize: number): Promise<boolean> {
         const isEnabled =
             allowSmallFileUpload && (await featureFlagProvider.isEnabled(FeatureFlags.DriveSmallFileUpload));
         if (!isEnabled) {
             return false;
         }
-        return metadata.expectedSize < SMALL_FILE_SIZE_LIMIT;
+        return expectedSize < SMALL_FILE_SIZE_LIMIT;
     }
 
     /**
@@ -66,20 +65,6 @@ export function initUploadModule(
             queue.releaseCapacity(metadata.expectedSize);
         };
 
-        if (await useSmallFileUpload(metadata)) {
-            return new SmallFileUploader(
-                uploadTelemetry,
-                api,
-                cryptoService,
-                manager,
-                metadata,
-                onFinish,
-                signal,
-                parentFolderUid,
-                name,
-            );
-        }
-
         return new FileUploaderClass(
             uploadTelemetry,
             api,
@@ -89,6 +74,7 @@ export function initUploadModule(
             name,
             metadata,
             onFinish,
+            shouldUseSmallFileUpload,
             signal,
         );
     }
@@ -111,19 +97,6 @@ export function initUploadModule(
             queue.releaseCapacity(metadata.expectedSize);
         };
 
-        if (await useSmallFileUpload(metadata)) {
-            return new SmallFileRevisionUploader(
-                uploadTelemetry,
-                api,
-                cryptoService,
-                manager,
-                metadata,
-                onFinish,
-                signal,
-                nodeUid,
-            );
-        }
-
         return new FileRevisionUploader(
             uploadTelemetry,
             api,
@@ -132,6 +105,7 @@ export function initUploadModule(
             nodeUid,
             metadata,
             onFinish,
+            shouldUseSmallFileUpload,
             signal,
         );
     }

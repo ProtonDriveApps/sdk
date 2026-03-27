@@ -129,6 +129,7 @@ describe('FileUploader', () => {
             'name',
             metadata,
             onFinish,
+            () => Promise.resolve(false),
             abortController.signal,
         );
 
