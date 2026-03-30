@@ -139,12 +139,14 @@ extension ProtonPhotosClient {
     public func downloadThumbnails(
         photoUids: [SDKNodeUid],
         type: ThumbnailData.ThumbnailType,
-        cancellationToken: UUID
-    ) async throws -> [ThumbnailDataWithId] {
+        cancellationToken: UUID,
+        onThumbnailDownloaded: @escaping ThumbnailCallback
+    ) async throws {
         try await thumbnailsManager.downloadPhotoThumbnails(
             photoUids: photoUids,
             type: type,
-            cancellationToken: cancellationToken
+            cancellationToken: cancellationToken,
+            onThumbnailDownloaded: onThumbnailDownloaded
         )
     }
 
