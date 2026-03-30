@@ -2,7 +2,6 @@ package me.proton.drive.sdk.internal
 
 import com.google.protobuf.Any
 import kotlinx.coroutines.CoroutineScope
-import me.proton.drive.sdk.converter.FileThumbnailListConverter
 import me.proton.drive.sdk.converter.NodeResultConverter
 import me.proton.drive.sdk.converter.PhotosTimelineListConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
@@ -76,13 +75,6 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
             }
         }
     })
-
-    suspend fun getThumbnails(
-        request: ProtonDriveSdk.DrivePhotosClientGetThumbnailsRequest,
-    ): ProtonDriveSdk.FileThumbnailList =
-        executeOnce("getThumbnails", FileThumbnailListConverter().asCallback) {
-            drivePhotosClientEnumeratePhotosThumbnails = request
-        }
 
     suspend fun enumerateThumbnails(
         coroutineScope: CoroutineScope,
