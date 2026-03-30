@@ -10,7 +10,7 @@ internal fun FileRevisionUploaderRequest.toProtobuf(
 ) = driveClientGetFileRevisionUploaderRequest {
     this.clientHandle = clientHandle
     this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
-    this.currentActiveRevisionUid = this@toProtobuf.currentActiveRevisionUid
+    this.currentActiveRevisionUid = this@toProtobuf.currentActiveRevisionUid.value
     this.size = this@toProtobuf.size
     this.lastModificationTime = this@toProtobuf.lastModificationTime.toTimestamp()
 }

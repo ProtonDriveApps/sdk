@@ -1,12 +1,13 @@
 package me.proton.drive.sdk.extension
 
 import me.proton.drive.sdk.entity.FileRevision
+import me.proton.drive.sdk.entity.RevisionUid
 import proton.drive.sdk.ProtonDriveSdk
 import proton.drive.sdk.claimedModificationTimeOrNull
 import proton.drive.sdk.contentAuthorOrNull
 
 fun ProtonDriveSdk.FileRevision.toEntity() = FileRevision(
-    uid = uid,
+    uid = RevisionUid(uid),
     creationTime = creationTime.toInstant(),
     sizeOnCloudStorage = sizeOnCloudStorage,
     claimedSize = if (hasClaimedSize()) claimedSize else null,

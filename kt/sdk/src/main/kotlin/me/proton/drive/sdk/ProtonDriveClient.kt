@@ -9,6 +9,7 @@ import me.proton.drive.sdk.entity.FolderNode
 import me.proton.drive.sdk.entity.NodeResult
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.entity.NodeResultPair
+import me.proton.drive.sdk.entity.NodeUid
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toProto
 import me.proton.drive.sdk.extension.toTimestamp
@@ -38,13 +39,13 @@ class ProtonDriveClient internal constructor(
 ) : SdkNode(session), AutoCloseable {
 
     suspend fun getAvailableName(
-        parentFolderUid: String,
+        parentFolderUid: NodeUid,
         name: String,
     ): String = cancellationCoroutineScope { source ->
         log(DEBUG, "getAvailableName")
         bridge.getAvailableName(
             driveClientGetAvailableNameRequest {
-                this.parentFolderUid = parentFolderUid
+                this.parentFolderUid = parentFolderUid.value
                 this.name = name
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
@@ -57,13 +58,13 @@ class ProtonDriveClient internal constructor(
         replaceWith = ReplaceWith("enumerateThumbnails(fileUids, type)"),
     )
     suspend fun getThumbnails(
-        fileUids: List<String>,
+        fileUids: List<NodeUid>,
         type: ThumbnailType,
     ): List<FileThumbnail> = cancellationCoroutineScope { source ->
         log(INFO, "getThumbnails($type)")
         bridge.getThumbnails(
             driveClientGetThumbnailsRequest {
-                this.fileUids += fileUids
+                this.fileUids += fileUids.map { it.value }
                 this.type = type.toProto()
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
@@ -74,7 +75,7 @@ class ProtonDriveClient internal constructor(
     }
 
     fun enumerateThumbnails(
-        fileUids: List<String>,
+        fileUids: List<NodeUid>,
         type: ThumbnailType,
     ): Flow<FileThumbnail> = channelFlow {
         log(INFO, "enumerateThumbnails(${fileUids.size}, $type)")
@@ -82,7 +83,7 @@ class ProtonDriveClient internal constructor(
             bridge.enumerateThumbnails(
                 coroutineScope = this@channelFlow,
                 request = driveClientEnumerateThumbnailsRequest {
-                    this.fileUids += fileUids
+                    this.fileUids += fileUids.map { it.value }
                     this.type = type.toProto()
                     clientHandle = handle
                     cancellationTokenSourceHandle = source.handle
@@ -96,14 +97,14 @@ class ProtonDriveClient internal constructor(
     }
 
     suspend fun rename(
-        nodeUid: String,
+        nodeUid: NodeUid,
         name: String,
         mediaType: String? = null,
     ): Unit = cancellationCoroutineScope { source ->
         log(INFO, "rename")
         bridge.rename(
             driveClientRenameRequest {
-                this.nodeUid = nodeUid
+                this.nodeUid = nodeUid.value
                 newName = name
                 mediaType?.let {
                     newMediaType = mediaType
@@ -115,14 +116,14 @@ class ProtonDriveClient internal constructor(
     }
 
     suspend fun createFolder(
-        parentFolderUid: String,
+        parentFolderUid: NodeUid,
         name: String,
         lastModification: Instant? = null,
     ): FolderNode = cancellationCoroutineScope { source ->
         log(INFO, "createFolder")
         bridge.createFolder(
             driveClientCreateFolderRequest {
-                this.parentFolderUid = parentFolderUid
+                this.parentFolderUid = parentFolderUid.value
                 folderName = name
                 lastModification?.let {
                     lastModificationTime = lastModification.toTimestamp()
@@ -144,12 +145,12 @@ class ProtonDriveClient internal constructor(
     }
 
     suspend fun enumerateFolderChildren(
-        folderUid: String,
+        folderUid: NodeUid,
     ): List<NodeResult> = cancellationCoroutineScope { source ->
         log(DEBUG, "enumerateFolderChildren")
         bridge.enumerateFolderChildren(
             driveClientEnumerateFolderChildrenRequest {
-                this.folderUid = folderUid
+                this.folderUid = folderUid.value
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }
@@ -157,12 +158,12 @@ class ProtonDriveClient internal constructor(
     }
 
     suspend fun trashNodes(
-        nodeUids: List<String>,
+        nodeUids: List<NodeUid>,
     ): List<NodeResultPair> = cancellationCoroutineScope { source ->
         log(INFO, "trashNodes(${nodeUids.size} nodes)")
         bridge.trashNodes(
             driveClientTrashNodesRequest {
-                this.nodeUids += nodeUids
+                this.nodeUids += nodeUids.map { it.value }
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }
@@ -170,12 +171,12 @@ class ProtonDriveClient internal constructor(
     }
 
     suspend fun deleteNodes(
-        nodeUids: List<String>,
+        nodeUids: List<NodeUid>,
     ): List<NodeResultPair> = cancellationCoroutineScope { source ->
         log(INFO, "deleteNodes(${nodeUids.size} nodes)")
         bridge.deleteNodes(
             driveClientDeleteNodesRequest {
-                this.nodeUids += nodeUids
+                this.nodeUids += nodeUids.map { it.value }
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }
@@ -183,12 +184,12 @@ class ProtonDriveClient internal constructor(
     }
 
     suspend fun restoreNodes(
-        nodeUids: List<String>,
+        nodeUids: List<NodeUid>,
     ): List<NodeResultPair> = cancellationCoroutineScope { source ->
         log(INFO, "restoreNodes(${nodeUids.size} nodes)")
         bridge.restoreNodes(
             driveClientRestoreNodesRequest {
-                this.nodeUids += nodeUids
+                this.nodeUids += nodeUids.map { it.value }
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }

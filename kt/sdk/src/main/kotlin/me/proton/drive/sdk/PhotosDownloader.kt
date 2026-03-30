@@ -5,6 +5,7 @@ import kotlinx.coroutines.withTimeout
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
+import me.proton.drive.sdk.entity.NodeUid
 import me.proton.drive.sdk.extension.seek
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toPercentageString
@@ -77,7 +78,7 @@ class PhotosDownloader internal constructor(
 }
 
 suspend fun ProtonPhotosClient.downloader(
-    photoUid: String,
+    photoUid: NodeUid,
     timeout: Duration,
 ): Downloader = withTimeout(timeout) {
     cancellationCoroutineScope { source ->

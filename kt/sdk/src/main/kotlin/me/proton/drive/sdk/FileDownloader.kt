@@ -5,6 +5,7 @@ import kotlinx.coroutines.withTimeout
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
+import me.proton.drive.sdk.entity.RevisionUid
 import me.proton.drive.sdk.extension.seek
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toPercentageString
@@ -76,7 +77,7 @@ class FileDownloader internal constructor(
 }
 
 suspend fun ProtonDriveClient.downloader(
-    revisionUid: String,
+    revisionUid: RevisionUid,
     timeout: Duration,
 ): Downloader = withTimeout(timeout) {
     cancellationCoroutineScope { source ->

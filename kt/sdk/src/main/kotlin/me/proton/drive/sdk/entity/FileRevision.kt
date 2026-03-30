@@ -3,7 +3,7 @@ package me.proton.drive.sdk.entity
 import java.time.Instant
 
 data class FileRevision(
-    val uid: String,
+    val uid: RevisionUid,
     val creationTime: Instant,
     val sizeOnCloudStorage: Long,
     val claimedSize: Long?,
