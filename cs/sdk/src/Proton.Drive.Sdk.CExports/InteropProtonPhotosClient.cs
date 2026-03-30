@@ -128,36 +128,6 @@ internal static class InteropProtonPhotosClient
         return new Int64Value { Value = Interop.AllocHandle(downloader) };
     }
 
-    public static async ValueTask<IMessage> HandleEnumeratePhotosThumbnailsAsync(DrivePhotosClientGetThumbnailsRequest request)
-    {
-        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
-        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
-
-        var thumbnailsEnumerable = client.EnumerateThumbnailsAsync(
-            request.PhotoUids.Select(NodeUid.Parse),
-            (Nodes.ThumbnailType)request.Type,
-            cancellationToken);
-
-        var thumbnails = await thumbnailsEnumerable
-            .Select(x =>
-            {
-                var thumbnail = new FileThumbnail { FileUid = x.FileUid.ToString() };
-                if (x.Result.TryGetValueElseError(out var data, out var error))
-                {
-                    thumbnail.Data = ByteString.CopyFrom(data.Span);
-                }
-                else
-                {
-                    thumbnail.Error = InteropProtonDriveClient.ConvertToDriveError(error);
-                }
-
-                return thumbnail;
-            })
-            .ToListAsync(cancellationToken).ConfigureAwait(false);
-
-        return new FileThumbnailList { Thumbnails = { thumbnails } };
-    }
-
     public static async ValueTask<IMessage?> HandleEnumerateThumbnailsAsync(DrivePhotosClientEnumerateThumbnailsRequest request, nint bindingsHandle)
     {
         var iterateFunction = new InteropAction<nint, InteropArray<byte>>(request.IterateAction);

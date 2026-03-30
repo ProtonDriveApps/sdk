@@ -4,7 +4,6 @@ import com.google.protobuf.Any
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
 import me.proton.drive.sdk.converter.NodeResultListResponseConverter
-import me.proton.drive.sdk.converter.FileThumbnailListConverter
 import me.proton.drive.sdk.converter.FolderChildrenListConverter
 import me.proton.drive.sdk.converter.FolderNodeConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
@@ -92,13 +91,6 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
     ): Unit = executeOnce("rename", UnitResponseCallback) {
         driveClientRename = request
     }
-
-    suspend fun getThumbnails(
-        request: ProtonDriveSdk.DriveClientGetThumbnailsRequest,
-    ): ProtonDriveSdk.FileThumbnailList =
-        executeOnce("getThumbnails", FileThumbnailListConverter().asCallback) {
-            driveClientGetThumbnails = request
-        }
 
     suspend fun enumerateThumbnails(
         coroutineScope: CoroutineScope,

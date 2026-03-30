@@ -26,7 +26,6 @@ import proton.drive.sdk.driveClientEnumerateThumbnailsRequest
 import proton.drive.sdk.driveClientEnumerateTrashRequest
 import proton.drive.sdk.driveClientGetAvailableNameRequest
 import proton.drive.sdk.driveClientGetMyFilesFolderRequest
-import proton.drive.sdk.driveClientGetThumbnailsRequest
 import proton.drive.sdk.driveClientRenameRequest
 import proton.drive.sdk.driveClientRestoreNodesRequest
 import proton.drive.sdk.driveClientTrashNodesRequest
@@ -51,27 +50,6 @@ class ProtonDriveClient internal constructor(
                 cancellationTokenSourceHandle = source.handle
             }
         )
-    }
-
-    @Deprecated(
-        message = "Use enumerateThumbnails instead for streaming results.",
-        replaceWith = ReplaceWith("enumerateThumbnails(fileUids, type)"),
-    )
-    suspend fun getThumbnails(
-        fileUids: List<NodeUid>,
-        type: ThumbnailType,
-    ): List<FileThumbnail> = cancellationCoroutineScope { source ->
-        log(INFO, "getThumbnails($type)")
-        bridge.getThumbnails(
-            driveClientGetThumbnailsRequest {
-                this.fileUids += fileUids.map { it.value }
-                this.type = type.toProto()
-                clientHandle = handle
-                cancellationTokenSourceHandle = source.handle
-            }
-        ).thumbnailsList.map { fileThumbnail ->
-            fileThumbnail.toEntity()
-        }
     }
 
     fun enumerateThumbnails(

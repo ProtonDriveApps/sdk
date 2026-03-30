@@ -16,17 +16,16 @@ message Request {
         DriveClientGetFileRevisionUploaderRequest drive_client_get_file_revision_uploader = 1004;
         DriveClientGetFileDownloaderRequest drive_client_get_file_downloader = 1005;
         DriveClientGetAvailableNameRequest drive_client_get_available_name = 1006;
-        DriveClientGetThumbnailsRequest drive_client_get_thumbnails = 1007;
-        DriveClientRenameRequest drive_client_rename = 1008;
-        DriveClientCreateFolderRequest drive_client_create_folder = 1009;
-        DriveClientTrashNodesRequest drive_client_trash_nodes = 1010;
-        DriveClientEnumerateFolderChildrenRequest drive_client_enumerate_folder_children = 1011;
-        DriveClientGetMyFilesFolderRequest drive_client_get_my_files_folder = 1012;
-        DriveClientDeleteNodesRequest drive_client_delete_nodes = 1013;
-        DriveClientRestoreNodesRequest drive_client_restore_nodes = 1014;
-        DriveClientEnumerateTrashRequest drive_client_enumerate_trash = 1015;
-        DriveClientEmptyTrashRequest drive_client_empty_trash = 1016;
-        DriveClientEnumerateThumbnailsRequest drive_client_enumerate_thumbnails = 1017;
+        DriveClientRenameRequest drive_client_rename = 1007;
+        DriveClientCreateFolderRequest drive_client_create_folder = 1008;
+        DriveClientTrashNodesRequest drive_client_trash_nodes = 1009;
+        DriveClientEnumerateFolderChildrenRequest drive_client_enumerate_folder_children = 1010;
+        DriveClientGetMyFilesFolderRequest drive_client_get_my_files_folder = 1011;
+        DriveClientDeleteNodesRequest drive_client_delete_nodes = 1012;
+        DriveClientRestoreNodesRequest drive_client_restore_nodes = 1013;
+        DriveClientEnumerateTrashRequest drive_client_enumerate_trash = 1014;
+        DriveClientEmptyTrashRequest drive_client_empty_trash = 1015;
+        DriveClientEnumerateThumbnailsRequest drive_client_enumerate_thumbnails = 1016;
 
         UploadFromStreamRequest upload_from_stream = 1100;
         UploadFromFileRequest upload_from_file = 1101;
@@ -51,19 +50,18 @@ message Request {
         DrivePhotosClientCreateRequest drive_photos_client_create = 1300;
         DrivePhotosClientCreateFromSessionRequest drive_photos_client_create_from_session = 1301;
         DrivePhotosClientFreeRequest drive_photos_client_free = 1302;
-        DrivePhotosClientGetThumbnailsRequest drive_photos_client_enumerate_photos_thumbnails = 1303;
-        DrivePhotosClientGetPhotoDownloaderRequest drive_photos_client_get_photo_downloader = 1304;
-        DrivePhotosClientDownloadToStreamRequest drive_photos_client_download_to_stream = 1305;
-        DrivePhotosClientDownloadToFileRequest drive_photos_client_download_to_file = 1306;
-        DrivePhotosClientDownloaderFreeRequest drive_photos_client_downloader_free = 1307;
-        DrivePhotosClientGetNodeRequest drive_photos_client_get_node = 1308;
-        DrivePhotosClientEnumerateTimelineRequest drive_photos_client_enumerate_timeline = 1309;
-        DrivePhotosClientGetPhotoUploaderRequest drive_photos_client_get_photo_uploader = 1310;
-        DrivePhotosClientFindDuplicatesRequest drive_photos_client_find_duplicates = 1311;
-        DrivePhotosClientUploadFromStreamRequest drive_photos_client_upload_from_stream = 1312;
-        DrivePhotosClientUploadFromFileRequest drive_photos_client_upload_from_file = 1313;
-        DrivePhotosClientUploaderFreeRequest drive_photos_client_uploader_free = 1314;
-        DrivePhotosClientEnumerateThumbnailsRequest drive_photos_client_enumerate_thumbnails = 1315;
+        DrivePhotosClientGetPhotoDownloaderRequest drive_photos_client_get_photo_downloader = 1303;
+        DrivePhotosClientDownloadToStreamRequest drive_photos_client_download_to_stream = 1304;
+        DrivePhotosClientDownloadToFileRequest drive_photos_client_download_to_file = 1305;
+        DrivePhotosClientDownloaderFreeRequest drive_photos_client_downloader_free = 1306;
+        DrivePhotosClientGetNodeRequest drive_photos_client_get_node = 1307;
+        DrivePhotosClientEnumerateTimelineRequest drive_photos_client_enumerate_timeline = 1308;
+        DrivePhotosClientGetPhotoUploaderRequest drive_photos_client_get_photo_uploader = 1309;
+        DrivePhotosClientFindDuplicatesRequest drive_photos_client_find_duplicates = 1310;
+        DrivePhotosClientUploadFromStreamRequest drive_photos_client_upload_from_stream = 1311;
+        DrivePhotosClientUploadFromFileRequest drive_photos_client_upload_from_file = 1312;
+        DrivePhotosClientUploaderFreeRequest drive_photos_client_uploader_free = 1313;
+        DrivePhotosClientEnumerateThumbnailsRequest drive_photos_client_enumerate_thumbnails = 1314;
     };
 }
 
@@ -422,14 +420,6 @@ message DriveClientEmptyTrashRequest {
     int64 cancellation_token_source_handle = 2;
 }
 
-// The response message must be of type FileThumbnailList.
-message DriveClientGetThumbnailsRequest {
-    int64 client_handle = 1;
-    repeated string file_uids = 2;
-    ThumbnailType type = 3;
-    int64 cancellation_token_source_handle = 4;
-}
-
 // The response must not have a value, iterate_action will be call for each item.
 message DriveClientEnumerateThumbnailsRequest {
     int64 client_handle = 1;
@@ -643,14 +633,6 @@ message DrivePhotosClientCreateFromSessionRequest {
 // The response must not have a value.
 message DrivePhotosClientFreeRequest {
     int64 client_handle = 1;
-}
-
-// The response message must be of type FileThumbnailList.
-message DrivePhotosClientGetThumbnailsRequest {
-    int64 client_handle = 1;
-    repeated string photo_uids = 2;
-    ThumbnailType type = 3;
-    int64 cancellation_token_source_handle = 4;
 }
 
 // The response must not have a value, iterate_action will be call for each item.

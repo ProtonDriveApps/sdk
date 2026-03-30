@@ -20,34 +20,12 @@ import me.proton.drive.sdk.internal.toLogId
 import proton.drive.sdk.drivePhotosClientEnumerateThumbnailsRequest
 import proton.drive.sdk.drivePhotosClientEnumerateTimelineRequest
 import proton.drive.sdk.drivePhotosClientGetNodeRequest
-import proton.drive.sdk.drivePhotosClientGetThumbnailsRequest
 
 class ProtonPhotosClient internal constructor(
     internal val handle: Long,
     private val bridge: JniProtonPhotosClient,
     session: Session? = null,
 ) : SdkNode(session), AutoCloseable {
-
-    @Deprecated(
-        message = "Use enumerateThumbnails instead for streaming results.",
-        replaceWith = ReplaceWith("enumerateThumbnails(photoUids, type)"),
-    )
-    suspend fun getThumbnails(
-        photoUids: List<NodeUid>,
-        type: ThumbnailType,
-    ): List<FileThumbnail> = cancellationCoroutineScope { source ->
-        log(INFO, "getThumbnails($type)")
-        bridge.getThumbnails(
-            drivePhotosClientGetThumbnailsRequest {
-                this.photoUids += photoUids.map { it.value }
-                this.type = type.toProto()
-                clientHandle = handle
-                cancellationTokenSourceHandle = source.handle
-            }
-        ).thumbnailsList.map { fileThumbnail ->
-            fileThumbnail.toEntity()
-        }
-    }
 
     fun enumerateThumbnails(
         photoUids: List<NodeUid>,
