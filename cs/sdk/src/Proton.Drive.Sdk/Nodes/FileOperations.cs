@@ -6,6 +6,8 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal static class FileOperations
 {
+    private const int MaxThumbnailIdsPerRequest = 30;
+
     public static async ValueTask<Result<FileSecrets, DegradedFileSecrets>> GetSecretsAsync(
         ProtonDriveClient client,
         NodeUid fileUid,
@@ -118,39 +120,45 @@ internal static class FileOperations
                 continue;
             }
 
-            var response = await client.Api.Files.GetThumbnailBlocksAsync(volumeId, thumbnailIds.Keys, cancellationToken).ConfigureAwait(false);
-
-            var tasks = new Queue<Task<FileThumbnail>>();
-            var processedThumbnailIds = new HashSet<string>();
-            foreach (var block in response.Blocks)
+            // Naive implementation: thumbnails from a batch won't start downloading until all thumbnails from the previous batch have finished downloading,
+            // even if there are available download slots in the queue.
+            // TODO: allow parallelization across the batch boundaries
+            foreach (var thumbnailIdBatch in thumbnailIds.Keys.Chunk(MaxThumbnailIdsPerRequest))
             {
-                processedThumbnailIds.Add(block.ThumbnailId);
-                var nodeInfo = thumbnailIds[block.ThumbnailId];
+                var response = await client.Api.Files.GetThumbnailBlocksAsync(volumeId, thumbnailIdBatch, cancellationToken).ConfigureAwait(false);
 
-                if (!client.ThumbnailBlockDownloader.Queue.TryStartBlock())
+                var tasks = new Queue<Task<FileThumbnail>>();
+                var processedThumbnailIds = new HashSet<string>();
+                foreach (var block in response.Blocks)
                 {
-                    if (tasks.Count > 0)
+                    processedThumbnailIds.Add(block.ThumbnailId);
+                    var nodeInfo = thumbnailIds[block.ThumbnailId];
+
+                    if (!client.ThumbnailBlockDownloader.Queue.TryStartBlock())
                     {
-                        yield return await tasks.Dequeue().ConfigureAwait(false);
+                        if (tasks.Count > 0)
+                        {
+                            yield return await tasks.Dequeue().ConfigureAwait(false);
+                        }
+
+                        await client.ThumbnailBlockDownloader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
                     }
 
-                    await client.ThumbnailBlockDownloader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
+                    tasks.Enqueue(DownloadThumbnailAsync(client, nodeInfo.ActiveRevisionUid, block, cancellationToken));
                 }
 
-                tasks.Enqueue(DownloadThumbnailAsync(client, nodeInfo.ActiveRevisionUid, block, cancellationToken));
-            }
-
-            // TODO: cancel other thumbnail downloads if one fails
-            while (tasks.TryDequeue(out var task))
-            {
-                yield return await task.ConfigureAwait(false);
-            }
-
-            foreach (var (thumbnailId, nodeInfo) in thumbnailIds)
-            {
-                if (!processedThumbnailIds.Contains(thumbnailId))
+                // TODO: cancel other thumbnail downloads if one fails
+                while (tasks.TryDequeue(out var task))
                 {
-                    yield return new FileThumbnail(nodeInfo.Uid, new ProtonDriveError("Thumbnail not found"));
+                    yield return await task.ConfigureAwait(false);
+                }
+
+                foreach (var (thumbnailId, nodeInfo) in thumbnailIds)
+                {
+                    if (!processedThumbnailIds.Contains(thumbnailId))
+                    {
+                        yield return new FileThumbnail(nodeInfo.Uid, new ProtonDriveError("Thumbnail not found"));
+                    }
                 }
             }
         }
