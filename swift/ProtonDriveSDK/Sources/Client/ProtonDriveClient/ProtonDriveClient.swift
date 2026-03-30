@@ -325,12 +325,14 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
     public func downloadThumbnails(
         fileUids: [SDKNodeUid],
         type: ThumbnailData.ThumbnailType,
-        cancellationToken: UUID
-    ) async throws -> [ThumbnailDataWithId] {
+        cancellationToken: UUID,
+        onThumbnailDownloaded: @escaping ThumbnailCallback
+    ) async throws {
         try await thumbnailsManager.downloadThumbnails(
             fileUids: fileUids,
             type: type,
-            cancellationToken: cancellationToken
+            cancellationToken: cancellationToken,
+            onThumbnailDownloaded: onThumbnailDownloaded
         )
     }
 

@@ -22,8 +22,9 @@ actor DownloadThumbnailsManager {
     func downloadThumbnails(
         fileUids: [SDKNodeUid],
         type: ThumbnailData.ThumbnailType,
-        cancellationToken: UUID
-    ) async throws -> [ThumbnailDataWithId] {
+        cancellationToken: UUID,
+        onThumbnailDownloaded: @escaping ThumbnailCallback
+    ) async throws {
         let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
         activeDownloads[cancellationToken] = cancellationTokenSource
 
@@ -34,27 +35,31 @@ actor DownloadThumbnailsManager {
             }
         }
 
-        let thumbnailsRequest = Proton_Drive_Sdk_DriveClientGetThumbnailsRequest.with {
+        let thumbnailsRequest = Proton_Drive_Sdk_DriveClientEnumerateThumbnailsRequest.with {
             $0.clientHandle = Int64(clientHandle)
-            $0.type = type.sdkType
             $0.fileUids = fileUids.map(\.sdkCompatibleIdentifier)
+            $0.type = type.sdkType
             $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+            $0.iterateAction = Int64(ObjectHandle(callback: cThumbnailEnumerationCallback))
         }
 
-        let thumbnailsList: Proton_Drive_Sdk_FileThumbnailList = try await SDKRequestHandler.send(
+        let callbackState = ThumbnailEnumerationCallbackWrapper(callback: onThumbnailDownloaded)
+
+        let _: Void = try await SDKRequestHandler.send(
             thumbnailsRequest,
+            state: WeakReference(value: callbackState),
+            scope: .ownerManaged,
+            owner: callbackState,
             logger: logger
         )
-        return thumbnailsList.thumbnails.compactMap {
-            ThumbnailDataWithId(fileThumbnail: $0)
-        }
     }
 
     func downloadPhotoThumbnails(
         photoUids: [SDKNodeUid],
         type: ThumbnailData.ThumbnailType,
-        cancellationToken: UUID
-    ) async throws -> [ThumbnailDataWithId] {
+        cancellationToken: UUID,
+        onThumbnailDownloaded: @escaping ThumbnailCallback
+    ) async throws {
         let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
         activeDownloads[cancellationToken] = cancellationTokenSource
 
@@ -65,20 +70,23 @@ actor DownloadThumbnailsManager {
             }
         }
 
-        let thumbnailsRequest = Proton_Drive_Sdk_DrivePhotosClientGetThumbnailsRequest.with {
+        let thumbnailsRequest = Proton_Drive_Sdk_DrivePhotosClientEnumerateThumbnailsRequest.with {
             $0.clientHandle = Int64(clientHandle)
             $0.photoUids = photoUids.map(\.sdkCompatibleIdentifier)
             $0.type = type.sdkType
             $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+            $0.iterateAction = Int64(ObjectHandle(callback: cThumbnailEnumerationCallback))
         }
 
-        let thumbnailsList: Proton_Drive_Sdk_FileThumbnailList = try await SDKRequestHandler.send(
+        let callbackState = ThumbnailEnumerationCallbackWrapper(callback: onThumbnailDownloaded)
+
+        let _: Void = try await SDKRequestHandler.send(
             thumbnailsRequest,
+            state: WeakReference(value: callbackState),
+            scope: .ownerManaged,
+            owner: callbackState,
             logger: logger
         )
-        return thumbnailsList.thumbnails.compactMap {
-            ThumbnailDataWithId(fileThumbnail: $0)
-        }
     }
 
     func cancelDownload(with cancellationToken: UUID) async throws {

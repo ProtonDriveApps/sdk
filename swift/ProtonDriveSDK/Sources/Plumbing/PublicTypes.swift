@@ -257,6 +257,9 @@ public struct FileOperationProgress {
     }
 }
 
+/// Callback for thumbnail updates
+public typealias ThumbnailCallback = @Sendable (Result<ThumbnailDataWithId?, Error>) -> Void
+
 /// Thumbnail with file id
 public struct ThumbnailDataWithId: Sendable {
     public let fileUid: SDKNodeUid
@@ -277,4 +280,18 @@ public struct ThumbnailDataWithId: Sendable {
             return nil
         }
     }
+
+    #if DEBUG
+    // Only for test
+    public init?(uid: SDKNodeUid, successData: Data?, errorMessage: String?) {
+        self.fileUid = uid
+        if let successData {
+            self.result = .success(successData)
+        } else if let errorMessage {
+            self.result = .failure(.init(message: errorMessage))
+        } else {
+            return nil
+        }
+    }
+    #endif
 }

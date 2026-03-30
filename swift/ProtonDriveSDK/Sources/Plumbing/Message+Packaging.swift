@@ -91,9 +91,9 @@ extension Message {
                 $0.payload = .driveClientTrashNodes(request)
             }
 
-        case let request as Proton_Drive_Sdk_DriveClientGetThumbnailsRequest:
+        case let request as Proton_Drive_Sdk_DriveClientEnumerateThumbnailsRequest:
             Proton_Drive_Sdk_Request.with {
-                $0.payload = .driveClientGetThumbnails(request)
+                $0.payload = .driveClientEnumerateThumbnails(request)
             }
 
             // MARK: - Uploads
@@ -202,9 +202,9 @@ extension Message {
                 $0.payload = .drivePhotosClientFree(request)
             }
 
-        case let request as Proton_Drive_Sdk_DrivePhotosClientGetThumbnailsRequest:
+        case let request as Proton_Drive_Sdk_DrivePhotosClientEnumerateThumbnailsRequest:
             Proton_Drive_Sdk_Request.with {
-                $0.payload = .drivePhotosClientEnumeratePhotosThumbnails(request)
+                $0.payload = .drivePhotosClientEnumerateThumbnails(request)
             }
 
         case let request as Proton_Drive_Sdk_DrivePhotosClientEnumerateTimelineRequest:
