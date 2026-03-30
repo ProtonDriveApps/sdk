@@ -5,9 +5,6 @@
   },
   "contexts": {
     "Error": {
-      "Album contains photos not in timeline": [
-        "L'àlbum conté fotos que no són a la línia temporal"
-      ],
       "Bookmark password is not available": [
         "La contrasenya d'adreces d'interès no està disponible."
       ],
