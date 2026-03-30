@@ -2,14 +2,19 @@ package me.proton.drive.sdk
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.internal.CoroutineScopeConsumer
 import me.proton.drive.sdk.internal.JniDownloadController
 import me.proton.drive.sdk.internal.toLogId
 import java.nio.channels.Channel
+import kotlin.time.Duration.Companion.milliseconds
 
 class CommonDownloadController internal constructor(
     downloader: SdkNode,
@@ -38,7 +43,10 @@ class CommonDownloadController internal constructor(
             log(INFO, "completed")
         }.recoverCatching { error ->
             if (error is CancellationException) {
-                log(INFO, "interrupted")
+                log(INFO, "interrupted, will pause")
+                withContext(NonCancellable) {
+                    pause()
+                }
                 throw error
             }
             if (isPaused()) {
@@ -85,6 +93,16 @@ class CommonDownloadController internal constructor(
     override suspend fun cancel() {
         log(INFO, "cancel")
         super.cancel()
+        runCatching {
+            withTimeout(500.milliseconds) { awaitCompletion() }
+        }.recoverCatching { error ->
+            if (error is TimeoutCancellationException) {
+                log(DEBUG, "Stop waiting for completion: ${error.message}")
+            } else if (error is CancellationException) {
+                throw error
+            }
+            log(DEBUG, "Error during waiting for completion: ${error.message}")
+        }
     }
 
     private fun log(level: LoggerProvider.Level, message: String) {
