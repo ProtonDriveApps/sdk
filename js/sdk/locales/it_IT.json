@@ -5,9 +5,6 @@
   },
   "contexts": {
     "Error": {
-      "Album contains photos not in timeline": [
-        "L'album contiene foto non presenti nella cronologia"
-      ],
       "Bookmark password is not available": [
         "La password del segnalibro non è disponibile."
       ],

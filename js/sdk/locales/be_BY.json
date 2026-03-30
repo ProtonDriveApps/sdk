@@ -5,9 +5,6 @@
   },
   "contexts": {
     "Error": {
-      "Album contains photos not in timeline": [
-        "Альбом змяшчае фатаграфіі, якіх няма ў шкале часу"
-      ],
       "Bookmark password is not available": [
         "Пароль закладкі недаступны"
       ],

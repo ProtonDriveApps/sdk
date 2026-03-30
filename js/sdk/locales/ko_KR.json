@@ -5,9 +5,6 @@
   },
   "contexts": {
     "Error": {
-      "Album contains photos not in timeline": [
-        "앨범에 타임라인에 존재하지 않는 사진이 포함되어 있습니다"
-      ],
       "Bookmark password is not available": [
         "북마크 비밀번호를 사용할 수 없습니다"
       ],
