@@ -89,6 +89,8 @@ internal sealed class InteropStream : Stream
 
         using var memoryHandle = buffer.Pin();
 
+        cancellationToken.ThrowIfCancellationRequested();
+
         var (readTask, operationHandle) = _readFunction.Value.InvokeWithBuffer<Int32Value>(_bindingsHandle, buffer.Span);
         _operationHandle = operationHandle;
 
@@ -155,6 +157,8 @@ internal sealed class InteropStream : Stream
         }
 
         using var memoryHandle = buffer.Pin();
+
+        cancellationToken.ThrowIfCancellationRequested();
 
         var (writeTask, operationHandle) = _writeFunction.Value.InvokeWithBuffer(_bindingsHandle, buffer.Span);
         _operationHandle = operationHandle;
