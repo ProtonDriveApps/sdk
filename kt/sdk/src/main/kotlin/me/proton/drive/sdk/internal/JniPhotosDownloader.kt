@@ -1,5 +1,6 @@
 package me.proton.drive.sdk.internal
 
+import me.proton.drive.sdk.entity.NodeUid
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.toLongResponse
 import proton.drive.sdk.ProtonDriveSdk
@@ -13,10 +14,10 @@ class JniPhotosDownloader internal constructor() : JniBaseProtonDriveSdk() {
     suspend fun getPhotoDownloader(
         clientHandle: Long,
         cancellationTokenSourceHandle: Long,
-        photoUid: String,
+        photoUid: NodeUid,
     ): Long = executeOnce("create", LongResponseCallback) {
         drivePhotosClientGetPhotoDownloader = drivePhotosClientGetPhotoDownloaderRequest {
-            this.photoUid = photoUid
+            this.photoUid = photoUid.value
             this.clientHandle = clientHandle
             this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
         }
