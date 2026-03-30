@@ -1,8 +1,10 @@
 import { DriveAPIService, drivePaths, ObserverStream } from '../apiService';
+import { batch } from '../batch';
 import { makeNodeThumbnailUid, splitNodeRevisionUid, splitNodeThumbnailUid } from '../uids';
 import { BlockMetadata } from './interface';
 
 const BLOCKS_PAGE_SIZE = 20;
+const MAX_THUMBNAIL_IDS_PER_REQUEST = 30;
 
 type GetRevisionResponse =
     drivePaths['/drive/v2/volumes/{volumeID}/files/{linkID}/revisions/{revisionID}']['get']['responses']['200']['content']['application/json'];
@@ -118,37 +120,39 @@ export class DownloadAPIService {
         }
 
         for (const [volumeId, thumbnailIds] of thumbnailIdsByVolumeId.entries()) {
-            const result = await this.apiService.post<PostGetThumbnailsRequest, PostGetThumbnailsResponse>(
-                `drive/volumes/${volumeId}/thumbnails`,
-                {
-                    ThumbnailIDs: thumbnailIds.map(({ thumbnailId }) => thumbnailId),
-                },
-                signal,
-            );
+            for (const thumbnailIdBatch of batch(thumbnailIds, MAX_THUMBNAIL_IDS_PER_REQUEST)) {
+                const result = await this.apiService.post<PostGetThumbnailsRequest, PostGetThumbnailsResponse>(
+                    `drive/volumes/${volumeId}/thumbnails`,
+                    {
+                        ThumbnailIDs: thumbnailIdBatch.map(({ thumbnailId }) => thumbnailId),
+                    },
+                    signal,
+                );
 
-            for (const thumbnail of result.Thumbnails) {
-                const id = thumbnailIds.find(({ thumbnailId }) => thumbnailId === thumbnail.ThumbnailID);
-                if (!id) {
-                    continue;
+                for (const thumbnail of result.Thumbnails) {
+                    const id = thumbnailIdBatch.find(({ thumbnailId }) => thumbnailId === thumbnail.ThumbnailID);
+                    if (!id) {
+                        continue;
+                    }
+                    yield {
+                        uid: makeNodeThumbnailUid(id.volumeId, id.nodeId, thumbnail.ThumbnailID),
+                        ok: true,
+                        bareUrl: thumbnail.BareURL,
+                        token: thumbnail.Token,
+                    };
                 }
-                yield {
-                    uid: makeNodeThumbnailUid(id.volumeId, id.nodeId, thumbnail.ThumbnailID),
-                    ok: true,
-                    bareUrl: thumbnail.BareURL,
-                    token: thumbnail.Token,
-                };
-            }
 
-            for (const error of result.Errors) {
-                const id = thumbnailIds.find(({ thumbnailId }) => thumbnailId === error.ThumbnailID);
-                if (!id) {
-                    continue;
+                for (const error of result.Errors) {
+                    const id = thumbnailIdBatch.find(({ thumbnailId }) => thumbnailId === error.ThumbnailID);
+                    if (!id) {
+                        continue;
+                    }
+                    yield {
+                        uid: makeNodeThumbnailUid(id.volumeId, id.nodeId, error.ThumbnailID),
+                        ok: false,
+                        error: error.Error,
+                    };
                 }
-                yield {
-                    uid: makeNodeThumbnailUid(id.volumeId, id.nodeId, error.ThumbnailID),
-                    ok: false,
-                    error: error.Error,
-                };
             }
         }
     }
