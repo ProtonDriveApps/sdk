@@ -3,7 +3,7 @@ package me.proton.drive.sdk.entity
 import java.time.Instant
 
 data class FileUploaderRequest(
-    val parentFolderUid: String,
+    val parentFolderUid: NodeUid,
     val name: String,
     val mediaType: String,
     val fileSize: Long,

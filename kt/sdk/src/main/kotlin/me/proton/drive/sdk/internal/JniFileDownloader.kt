@@ -1,5 +1,6 @@
 package me.proton.drive.sdk.internal
 
+import me.proton.drive.sdk.entity.RevisionUid
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.toLongResponse
 import proton.drive.sdk.ProtonDriveSdk
@@ -14,10 +15,10 @@ class JniFileDownloader internal constructor() : JniBaseProtonDriveSdk() {
     suspend fun getFileDownloader(
         clientHandle: Long,
         cancellationTokenSourceHandle: Long,
-        revisionUid: String,
+        revisionUid: RevisionUid,
     ): Long = executeOnce("create", LongResponseCallback) {
         driveClientGetFileDownloader = driveClientGetFileDownloaderRequest {
-            this.revisionUid = revisionUid
+            this.revisionUid = revisionUid.value
             this.clientHandle = clientHandle
             this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
         }

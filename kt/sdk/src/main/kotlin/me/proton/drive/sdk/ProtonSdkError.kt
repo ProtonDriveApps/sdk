@@ -1,5 +1,8 @@
 package me.proton.drive.sdk
 
+import me.proton.drive.sdk.entity.NodeUid
+import me.proton.drive.sdk.entity.RevisionUid
+
 data class ProtonSdkError(
     val message: String,
     val type: String,
@@ -29,8 +32,8 @@ data class ProtonSdkError(
 
         data class NodeNameConflict(
             val conflictingNodeIsFileDraft: Boolean,
-            val conflictingNodeUid: String,
-            val conflictingRevisionUid: String,
+            val conflictingNodeUid: NodeUid,
+            val conflictingRevisionUid: RevisionUid,
         ) : Data<NodeNameConflict> {
             override fun toSafe() = this
         }

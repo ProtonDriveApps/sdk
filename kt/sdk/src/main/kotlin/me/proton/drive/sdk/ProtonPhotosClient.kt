@@ -7,6 +7,7 @@ import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.entity.FileThumbnail
 import me.proton.drive.sdk.entity.NodeResult
+import me.proton.drive.sdk.entity.NodeUid
 import me.proton.drive.sdk.entity.PhotosTimelineItem
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
@@ -32,13 +33,13 @@ class ProtonPhotosClient internal constructor(
         replaceWith = ReplaceWith("enumerateThumbnails(photoUids, type)"),
     )
     suspend fun getThumbnails(
-        photoUids: List<String>,
+        photoUids: List<NodeUid>,
         type: ThumbnailType,
     ): List<FileThumbnail> = cancellationCoroutineScope { source ->
         log(INFO, "getThumbnails($type)")
         bridge.getThumbnails(
             drivePhotosClientGetThumbnailsRequest {
-                this.photoUids += photoUids
+                this.photoUids += photoUids.map { it.value }
                 this.type = type.toProto()
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
@@ -49,7 +50,7 @@ class ProtonPhotosClient internal constructor(
     }
 
     fun enumerateThumbnails(
-        photoUids: List<String>,
+        photoUids: List<NodeUid>,
         type: ThumbnailType,
     ): Flow<FileThumbnail> = channelFlow {
         log(INFO, "enumerateThumbnails(${photoUids.size}, $type)")
@@ -57,7 +58,7 @@ class ProtonPhotosClient internal constructor(
             bridge.enumerateThumbnails(
                 coroutineScope = this@channelFlow,
                 request = drivePhotosClientEnumerateThumbnailsRequest {
-                    this.photoUids += photoUids
+                    this.photoUids += photoUids.map { it.value }
                     this.type = type.toProto()
                     clientHandle = handle
                     cancellationTokenSourceHandle = source.handle
@@ -80,11 +81,11 @@ class ProtonPhotosClient internal constructor(
         ).toEntity()
     }
 
-    suspend fun getNode(nodeUid: String): NodeResult? = cancellationCoroutineScope { source ->
+    suspend fun getNode(nodeUid: NodeUid): NodeResult? = cancellationCoroutineScope { source ->
         log(DEBUG, "getNode")
         bridge.getNode(
             drivePhotosClientGetNodeRequest {
-                this.nodeUid = nodeUid
+                this.nodeUid = nodeUid.value
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }
