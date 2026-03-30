@@ -164,37 +164,6 @@ internal static class InteropProtonDriveClient
         return new StringValue { Value = availableName };
     }
 
-    public static async ValueTask<IMessage> HandleGetThumbnailsAsync(DriveClientGetThumbnailsRequest request)
-    {
-        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
-
-        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
-
-        var thumbnailsEnumerable = client.EnumerateThumbnailsAsync(
-            request.FileUids.Select(NodeUid.Parse),
-            (Nodes.ThumbnailType)request.Type,
-            cancellationToken);
-
-        var thumbnails = await thumbnailsEnumerable
-            .Select(x =>
-            {
-                var thumbnail = new FileThumbnail { FileUid = x.FileUid.ToString() };
-                if (x.Result.TryGetValueElseError(out var data, out var error))
-                {
-                    thumbnail.Data = ByteString.CopyFrom(data.Span);
-                }
-                else
-                {
-                    thumbnail.Error = ConvertToDriveError(error);
-                }
-
-                return thumbnail;
-            })
-            .ToListAsync(cancellationToken).ConfigureAwait(false);
-
-        return new FileThumbnailList { Thumbnails = { thumbnails } };
-    }
-
     public static async ValueTask<IMessage?> HandleEnumerateThumbnailsAsync(DriveClientEnumerateThumbnailsRequest request, nint bindingsHandle)
     {
         var iterateFunction = new InteropAction<nint, InteropArray<byte>>(request.IterateAction);

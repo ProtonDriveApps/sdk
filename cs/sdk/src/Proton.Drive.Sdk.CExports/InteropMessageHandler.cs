@@ -58,9 +58,6 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DriveClientCreateFolder
                     => await InteropProtonDriveClient.HandleCreateFolderAsync(request.DriveClientCreateFolder).ConfigureAwait(false),
 
-                Request.PayloadOneofCase.DriveClientGetThumbnails
-                    => await InteropProtonDriveClient.HandleGetThumbnailsAsync(request.DriveClientGetThumbnails).ConfigureAwait(false),
-
                 Request.PayloadOneofCase.DriveClientEnumerateThumbnails
                     => await InteropProtonDriveClient.HandleEnumerateThumbnailsAsync(
                         request.DriveClientEnumerateThumbnails,
@@ -135,10 +132,6 @@ internal static class InteropMessageHandler
 
                 Request.PayloadOneofCase.DrivePhotosClientFree
                     => InteropProtonPhotosClient.HandleFree(request.DrivePhotosClientFree),
-
-                Request.PayloadOneofCase.DrivePhotosClientEnumeratePhotosThumbnails
-                    => await InteropProtonPhotosClient.HandleEnumeratePhotosThumbnailsAsync(
-                        request.DrivePhotosClientEnumeratePhotosThumbnails).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DrivePhotosClientEnumerateThumbnails
                     => await InteropProtonPhotosClient.HandleEnumerateThumbnailsAsync(
