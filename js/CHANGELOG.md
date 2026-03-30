@@ -1,5 +1,11 @@
 # Changelog
 
+## js/v0.14.2 (2026-03-30)
+
+* Return all possible items from batch loading
+* Update nodes after shared with me updated event
+* Handle thumbnails in small file upload
+
 ## js/v0.14.1 (2026-03-25)
 
 * Add experimental getSessionInfo helper
