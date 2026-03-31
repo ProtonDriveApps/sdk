@@ -1,27 +1,21 @@
 package me.proton.drive.sdk
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.withTimeout
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
-import me.proton.drive.sdk.entity.NodeUid
 import me.proton.drive.sdk.extension.seek
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toPercentageString
 import me.proton.drive.sdk.internal.JniDownloadController
 import me.proton.drive.sdk.internal.JniPhotosDownloader
-import me.proton.drive.sdk.internal.cancellationCoroutineScope
-import me.proton.drive.sdk.internal.factory
 import me.proton.drive.sdk.internal.toLogId
 import java.nio.channels.SeekableByteChannel
 import java.nio.channels.WritableByteChannel
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 class PhotosDownloader internal constructor(
-    client: ProtonPhotosClient,
+    client: SdkNode,
     internal val handle: Long,
     private val bridge: JniPhotosDownloader,
     override val cancellationTokenSource: CancellationTokenSource
@@ -77,22 +71,3 @@ class PhotosDownloader internal constructor(
     }
 }
 
-suspend fun ProtonPhotosClient.downloader(
-    photoUid: NodeUid,
-    timeout: Duration,
-): Downloader = withTimeout(timeout) {
-    cancellationCoroutineScope { source ->
-        factory(JniPhotosDownloader()) {
-            PhotosDownloader(
-                client = this@downloader,
-                handle = getPhotoDownloader(
-                    clientHandle = handle,
-                    cancellationTokenSourceHandle = source.handle,
-                    photoUid = photoUid,
-                ),
-                bridge = this,
-                cancellationTokenSource = source,
-            )
-        }
-    }
-}

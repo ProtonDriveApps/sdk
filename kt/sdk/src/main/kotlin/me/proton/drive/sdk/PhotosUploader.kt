@@ -1,24 +1,20 @@
 package me.proton.drive.sdk
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.withTimeout
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
-import me.proton.drive.sdk.entity.PhotosUploaderRequest
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toPercentageString
 import me.proton.drive.sdk.internal.JniPhotosUploader
 import me.proton.drive.sdk.internal.JniUploadController
-import me.proton.drive.sdk.internal.cancellationCoroutineScope
 import me.proton.drive.sdk.internal.toLogId
 import java.nio.channels.ReadableByteChannel
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.time.Duration
 
 class PhotosUploader(
-    client: ProtonPhotosClient,
+    client: SdkNode,
     internal val handle: Long,
     private val bridge: JniPhotosUploader,
     override val cancellationTokenSource: CancellationTokenSource,
@@ -69,22 +65,3 @@ class PhotosUploader(
     }
 }
 
-suspend fun ProtonPhotosClient.uploader(
-    request: PhotosUploaderRequest,
-    timeout: Duration,
-): Uploader = withTimeout(timeout) {
-    cancellationCoroutineScope { source ->
-        JniPhotosUploader().run {
-            PhotosUploader(
-                client = this@uploader,
-                handle = getPhotoUploader(
-                    clientHandle = handle,
-                    cancellationTokenSourceHandle = source.handle,
-                    request = request,
-                ),
-                bridge = this,
-                cancellationTokenSource = source,
-            )
-        }
-    }
-}
