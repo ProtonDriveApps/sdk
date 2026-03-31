@@ -1,26 +1,21 @@
 package me.proton.drive.sdk
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.withTimeout
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
-import me.proton.drive.sdk.entity.RevisionUid
 import me.proton.drive.sdk.extension.seek
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toPercentageString
 import me.proton.drive.sdk.internal.JniDownloadController
 import me.proton.drive.sdk.internal.JniFileDownloader
-import me.proton.drive.sdk.internal.cancellationCoroutineScope
-import me.proton.drive.sdk.internal.factory
 import me.proton.drive.sdk.internal.toLogId
 import java.nio.channels.SeekableByteChannel
 import java.nio.channels.WritableByteChannel
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.time.Duration
 
 class FileDownloader internal constructor(
-    client: ProtonDriveClient,
+    client: SdkNode,
     internal val handle: Long,
     private val bridge: JniFileDownloader,
     override val cancellationTokenSource: CancellationTokenSource
@@ -76,22 +71,3 @@ class FileDownloader internal constructor(
     }
 }
 
-suspend fun ProtonDriveClient.downloader(
-    revisionUid: RevisionUid,
-    timeout: Duration,
-): Downloader = withTimeout(timeout) {
-    cancellationCoroutineScope { source ->
-        factory(JniFileDownloader()) {
-            FileDownloader(
-                client = this@downloader,
-                handle = getFileDownloader(
-                    clientHandle = handle,
-                    cancellationTokenSourceHandle = source.handle,
-                    revisionUid = revisionUid,
-                ),
-                bridge = this,
-                cancellationTokenSource = source,
-            )
-        }
-    }
-}
