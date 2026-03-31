@@ -81,7 +81,9 @@ export class EventsAPIService {
                 const type = VOLUME_EVENT_TYPE_MAP[event.EventType];
                 const uids = {
                     nodeUid: makeNodeUid(volumeId, event.Link.LinkID),
-                    parentNodeUid: makeNodeUid(volumeId, event.Link.ParentLinkID as string),
+                    parentNodeUid: event.Link.ParentLinkID
+                        ? makeNodeUid(volumeId, event.Link.ParentLinkID)
+                        : undefined,
                 };
                 return {
                     type,
