@@ -9,11 +9,13 @@ import me.proton.drive.sdk.entity.SessionBeginRequest
 import me.proton.drive.sdk.entity.SessionResumeRequest
 import me.proton.drive.sdk.internal.AccountClientBridge
 import me.proton.drive.sdk.internal.ApiProviderBridge
+import me.proton.drive.sdk.internal.InteropProtonDriveClient
+import me.proton.drive.sdk.internal.InteropProtonPhotosClient
 import me.proton.drive.sdk.internal.JniCancellationTokenSource
-import me.proton.drive.sdk.internal.JniProtonDriveClient
-import me.proton.drive.sdk.internal.JniProtonPhotosClient
 import me.proton.drive.sdk.internal.JniLoggerProvider
 import me.proton.drive.sdk.internal.JniNativeLibrary
+import me.proton.drive.sdk.internal.JniProtonDriveClient
+import me.proton.drive.sdk.internal.JniProtonPhotosClient
 import me.proton.drive.sdk.internal.JniSession
 import me.proton.drive.sdk.internal.ProtonDriveSdkNativeClient
 import me.proton.drive.sdk.internal.cancellationCoroutineScope
@@ -61,7 +63,7 @@ object ProtonDriveSdk {
         featureEnabled: suspend (String) -> Boolean = { false },
     ): ProtonDriveClient = JniProtonDriveClient().run {
         clientLogger(DEBUG, "ProtonDriveSdk protonDriveClientCreate(${userId.id.take(8)})")
-        ProtonDriveClient(
+        InteropProtonDriveClient(
             create(
                 coroutineScope = coroutineScope,
                 request = request,
@@ -89,7 +91,7 @@ object ProtonDriveSdk {
         featureEnabled: suspend (String) -> Boolean = { false },
     ): ProtonPhotosClient = JniProtonPhotosClient().run {
         clientLogger(DEBUG, "ProtonDriveSdk protonPhotosClientCreate(${userId.id.take(8)})")
-        ProtonPhotosClient(
+        InteropProtonPhotosClient(
             create(
                 coroutineScope = coroutineScope,
                 request = request,
