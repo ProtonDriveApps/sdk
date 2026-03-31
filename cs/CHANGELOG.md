@@ -1,5 +1,17 @@
 # Changelog
 
+## cs/v0.12.0 (2026-03-30)
+
+* Remove get thumbnails in favor of enumerate thumbnails
+* Introduce uids in the kotlin bindings
+* Move native weak reference management to kotlin
+* Do not call interop functions if cancelled
+* Fix thumbnail enumeration to stay within API limits
+* Fix cancellation in download and upload
+* Log network calls with body size
+* Add streaming thumbnails enumeration to Swift bindings
+* Remove the need to dispose of Photos client
+
 ## cs/v0.11.2 (2026-03-27)
 
 * Stream trash enumeration instead of loading all items at once
