@@ -9,7 +9,7 @@ import proton.drive.sdk.trashTimeOrNull
 
 fun ProtonDriveSdk.DegradedFolderNode.toEntity() = DegradedFolderNode(
     uid = NodeUid(uid),
-    parentUid = ParentNodeUid(parentUid),
+    parentUid = parentUid.takeIf { hasParentUid() }?.let(::ParentNodeUid),
     treeEventScopeId = ScopeId(treeEventScopeId),
     name = name.toEntity(),
     creationTime = creationTime.toInstant(),
