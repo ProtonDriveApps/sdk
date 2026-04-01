@@ -10,7 +10,7 @@ import proton.drive.sdk.trashTimeOrNull
 
 fun ProtonDriveSdk.DegradedFileNode.toEntity() = DegradedFileNode(
     uid = NodeUid(uid),
-    parentUid = ParentNodeUid(parentUid),
+    parentUid = parentUid.takeIf { hasParentUid() }?.let(::ParentNodeUid),
     treeEventScopeId = ScopeId(treeEventScopeId),
     name = name.toEntity(),
     mediaType = mediaType,

@@ -216,10 +216,9 @@ internal static class InteropProtonDriveClient
 
         var folderNode = await client.GetMyFilesFolderAsync(cancellationToken).ConfigureAwait(false);
 
-        return new FolderNode
+        var folderNodeProto = new FolderNode
         {
             Uid = folderNode.Uid.ToString(),
-            ParentUid = folderNode.ParentUid?.ToString() ?? string.Empty,
             TreeEventScopeId = folderNode.TreeEventScopeId,
             Name = folderNode.Name,
             CreationTime = folderNode.CreationTime.ToUniversalTime().ToTimestamp(),
@@ -228,6 +227,13 @@ internal static class InteropProtonDriveClient
             Author = ParseAuthorResult(folderNode.Author),
             OwnedBy = MapOwnedByToProto(folderNode.OwnedBy),
         };
+
+        if (folderNode.ParentUid != null)
+        {
+            folderNodeProto.ParentUid = folderNode.ParentUid.ToString();
+        }
+
+        return folderNodeProto;
     }
 
     public static async ValueTask<IMessage> HandleGetFileDownloaderAsync(DriveClientGetFileDownloaderRequest request)
@@ -349,21 +355,31 @@ internal static class InteropProtonDriveClient
 
         if (result.TryGetValueElseError(out var author, out var error))
         {
-            authorResult.Value = new Author
+            var authorResultValue = new Author();
+            if (authorResultValue.EmailAddress != null)
             {
-                EmailAddress = author.EmailAddress,
-            };
+                authorResultValue.EmailAddress = author.EmailAddress;
+            }
+
+            authorResult.Value = authorResultValue;
         }
         else
         {
+            var claimedAuthor = new Author();
+            if (error.ClaimedAuthor.EmailAddress != null)
+            {
+                claimedAuthor.EmailAddress = error.ClaimedAuthor.EmailAddress;
+            }
+
             authorResult.Error = new SignatureVerificationError
             {
-                ClaimedAuthor = new Author
-                {
-                    EmailAddress = error.ClaimedAuthor.EmailAddress,
-                },
-                Message = error.Message,
+                ClaimedAuthor = claimedAuthor,
             };
+
+            if (error.Message != null)
+            {
+                authorResult.Error.Message = error.Message;
+            }
         }
 
         return authorResult;
@@ -371,11 +387,17 @@ internal static class InteropProtonDriveClient
 
     internal static DriveError ConvertToDriveError(ProtonDriveError error)
     {
-        return new DriveError
+        var driveError = new DriveError
         {
-            Message = error.Message ?? string.Empty,
             InnerError = error.InnerError != null ? ConvertToDriveError(error.InnerError) : null,
         };
+
+        if (error.Message != null)
+        {
+            driveError.Message = error.Message;
+        }
+
+        return driveError;
     }
 
     private static NodeResultListResponse ConvertToNodeResultListResponse(IReadOnlyDictionary<NodeUid, Result<Exception>> results)
@@ -433,7 +455,6 @@ internal static class InteropProtonDriveClient
                 result.Folder = new FolderNode
                 {
                     Uid = folderNode.Uid.ToString(),
-                    ParentUid = folderNode.ParentUid?.ToString() ?? string.Empty,
                     TreeEventScopeId = folderNode.TreeEventScopeId,
                     Name = folderNode.Name,
                     CreationTime = folderNode.CreationTime.ToUniversalTime().ToTimestamp(),
@@ -442,13 +463,18 @@ internal static class InteropProtonDriveClient
                     Author = ParseAuthorResult(folderNode.Author),
                     OwnedBy = MapOwnedByToProto(folderNode.OwnedBy),
                 };
+
+                if (folderNode.ParentUid != null)
+                {
+                    result.Folder.ParentUid = folderNode.ParentUid.ToString();
+                }
+
                 break;
 
             case Nodes.FileNode fileNode:
                 var fileNodeProto = new FileNode
                 {
                     Uid = fileNode.Uid.ToString(),
-                    ParentUid = fileNode.ParentUid?.ToString() ?? string.Empty,
                     TreeEventScopeId = fileNode.TreeEventScopeId,
                     Name = fileNode.Name,
                     MediaType = fileNode.MediaType,
@@ -468,6 +494,11 @@ internal static class InteropProtonDriveClient
                         ClaimedDigests = new FileContentDigests(),
                     },
                 };
+
+                if (fileNode.ParentUid != null)
+                {
+                    fileNodeProto.ParentUid = fileNode.ParentUid.ToString();
+                }
 
                 if (fileNode.ActiveRevision.ClaimedDigests.Sha1.HasValue)
                 {
@@ -515,7 +546,6 @@ internal static class InteropProtonDriveClient
                 var degradedFolder = new DegradedFolderNode
                 {
                     Uid = degradedFolderNode.Uid.ToString(),
-                    ParentUid = degradedFolderNode.ParentUid?.ToString() ?? string.Empty,
                     TreeEventScopeId = degradedFolderNode.TreeEventScopeId,
                     Name = ConvertStringToStringResult(degradedFolderNode.Name),
                     CreationTime = degradedFolderNode.CreationTime.ToUniversalTime().ToTimestamp(),
@@ -525,6 +555,11 @@ internal static class InteropProtonDriveClient
                     OwnedBy = MapOwnedByToProto(degradedFolderNode.OwnedBy),
                 };
 
+                if (degradedFolderNode.ParentUid != null)
+                {
+                    degradedFolder.ParentUid = degradedFolderNode.ParentUid.ToString();
+                }
+
                 degradedFolder.Errors.AddRange(degradedFolderNode.Errors.Select(ConvertToDriveError));
                 result.Folder = degradedFolder;
                 break;
@@ -533,7 +568,6 @@ internal static class InteropProtonDriveClient
                 var degradedFile = new DegradedFileNode
                 {
                     Uid = degradedFileNode.Uid.ToString(),
-                    ParentUid = degradedFileNode.ParentUid?.ToString() ?? string.Empty,
                     TreeEventScopeId = degradedFileNode.TreeEventScopeId,
                     Name = ConvertStringToStringResult(degradedFileNode.Name),
                     MediaType = degradedFileNode.MediaType,
@@ -544,6 +578,11 @@ internal static class InteropProtonDriveClient
                     TotalStorageQuotaUsage = degradedFileNode.TotalStorageQuotaUsage,
                     OwnedBy = MapOwnedByToProto(degradedFileNode.OwnedBy),
                 };
+
+                if (degradedFileNode.ParentUid != null)
+                {
+                    degradedFile.ParentUid = degradedFileNode.ParentUid.ToString();
+                }
 
                 if (degradedFileNode.ActiveRevision is not null)
                 {

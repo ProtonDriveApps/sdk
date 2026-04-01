@@ -4,7 +4,7 @@ import java.time.Instant
 
 data class DegradedFileNode(
     override val uid: NodeUid,
-    override val parentUid: ParentNodeUid,
+    override val parentUid: ParentNodeUid?,
     override val treeEventScopeId: ScopeId,
     override val name: Result<String>,
     val mediaType: String,

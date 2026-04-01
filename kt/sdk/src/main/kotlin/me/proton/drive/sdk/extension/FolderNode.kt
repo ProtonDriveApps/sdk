@@ -9,7 +9,7 @@ import proton.drive.sdk.trashTimeOrNull
 
 fun ProtonDriveSdk.FolderNode.toEntity() = FolderNode(
     uid = NodeUid(uid),
-    parentUid = ParentNodeUid(parentUid),
+    parentUid = parentUid.takeIf { hasParentUid() }?.let(::ParentNodeUid),
     treeEventScopeId = ScopeId(treeEventScopeId),
     name = name,
     creationTime = creationTime.toInstant(),
