@@ -9,7 +9,7 @@ import proton.drive.sdk.trashTimeOrNull
 
 fun ProtonDriveSdk.FileNode.toEntity() = FileNode(
     uid = NodeUid(uid),
-    parentUid = ParentNodeUid(parentUid),
+    parentUid = parentUid.takeIf { hasParentUid() }?.let(::ParentNodeUid),
     treeEventScopeId = ScopeId(treeEventScopeId),
     name = name,
     mediaType = mediaType,
