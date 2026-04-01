@@ -80,7 +80,10 @@ public sealed class ProtonPhotosClient
 
     public ValueTask<Result<Node, DegradedNode>?> GetNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
     {
-        return DriveClient.GetNodeAsync(nodeUid, cancellationToken);
+        return NodeOperations
+            .EnumerateNodesAsync(DriveClient, nodeUid.VolumeId, [nodeUid.LinkId], forPhotos: true, cancellationToken)
+            .Select(x => (Result<Node, DegradedNode>?)x)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(IEnumerable<NodeUid> nodeUids, CancellationToken cancellationToken = default)
