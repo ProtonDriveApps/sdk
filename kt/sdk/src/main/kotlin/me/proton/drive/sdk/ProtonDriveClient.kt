@@ -1,5 +1,6 @@
 package me.proton.drive.sdk
 
+import kotlinx.coroutines.flow.Flow
 import me.proton.drive.sdk.entity.FileRevisionUploaderRequest
 import me.proton.drive.sdk.entity.FileUploaderRequest
 import me.proton.drive.sdk.entity.FolderNode
@@ -14,7 +15,7 @@ interface ProtonDriveClient : ProtonSdkClient {
     suspend fun rename(nodeUid: NodeUid, name: String, mediaType: String? = null)
     suspend fun createFolder(parentFolderUid: NodeUid, name: String, lastModification: Instant? = null): FolderNode
     suspend fun getMyFilesFolder(): FolderNode
-    suspend fun enumerateFolderChildren(folderUid: NodeUid): List<NodeResult>
+    fun enumerateFolderChildren(folderUid: NodeUid): Flow<NodeResult>
     suspend fun downloader(revisionUid: RevisionUid, timeout: Duration): Downloader
     suspend fun uploader(request: FileUploaderRequest, timeout: Duration): Uploader
     suspend fun uploader(request: FileRevisionUploaderRequest, timeout: Duration): Uploader

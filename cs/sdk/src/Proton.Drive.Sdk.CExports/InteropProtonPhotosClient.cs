@@ -115,14 +115,14 @@ internal static class InteropProtonPhotosClient
 
     public static async ValueTask<IMessage?> HandleEnumerateTrashAsync(DrivePhotosClientEnumerateTrashRequest request, nint bindingsHandle)
     {
-        var iterateFunction = new InteropAction<nint, InteropArray<byte>>(request.IterateAction);
+        var yieldFunction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
         var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
 
         await foreach (var x in client.EnumerateTrashAsync(cancellationToken).ConfigureAwait(false))
         {
-            iterateFunction.InvokeWithMessage(bindingsHandle, InteropProtonDriveClient.ConvertToNodeResult(x));
+            yieldFunction.InvokeWithMessage(bindingsHandle, InteropProtonDriveClient.ConvertToNodeResult(x));
         }
 
         return null;
@@ -163,21 +163,22 @@ internal static class InteropProtonPhotosClient
         return InteropProtonDriveClient.ConvertToNodeResult(nodeResult.Value);
     }
 
-    public static async ValueTask<IMessage> HandleEnumeratePhotosTimelineAsync(DrivePhotosClientEnumerateTimelineRequest request)
+    public static async ValueTask<IMessage?> HandleEnumeratePhotosTimelineAsync(DrivePhotosClientEnumerateTimelineRequest request, nint bindingsHandle)
     {
+        var yieldFunction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
         var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
-        var timelineEnumerable = client.EnumerateTimelineAsync(cancellationToken);
 
-        var items = await timelineEnumerable
-            .Select(x => new PhotosTimelineItem
+        await foreach (var x in client.EnumerateTimelineAsync(cancellationToken).ConfigureAwait(false))
+        {
+            yieldFunction.InvokeWithMessage(bindingsHandle, new PhotosTimelineItem
             {
                 NodeUid = x.Uid.ToString(),
                 CaptureTime = x.CaptureTime.ToUniversalTime().ToTimestamp(),
-            })
-            .ToListAsync(cancellationToken).ConfigureAwait(false);
+            });
+        }
 
-        return new PhotosTimelineList { Items = { items } };
+        return null;
     }
 
     public static async ValueTask<IMessage> HandleGetPhotosDownloaderAsync(DrivePhotosClientGetPhotoDownloaderRequest request)
@@ -195,7 +196,7 @@ internal static class InteropProtonPhotosClient
 
     public static async ValueTask<IMessage?> HandleEnumerateThumbnailsAsync(DrivePhotosClientEnumerateThumbnailsRequest request, nint bindingsHandle)
     {
-        var iterateFunction = new InteropAction<nint, InteropArray<byte>>(request.IterateAction);
+        var yieldFunction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
         var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
@@ -217,7 +218,7 @@ internal static class InteropProtonPhotosClient
                 thumbnail.Error = InteropProtonDriveClient.ConvertToDriveError(error);
             }
 
-            iterateFunction.InvokeWithMessage(bindingsHandle, thumbnail);
+            yieldFunction.InvokeWithMessage(bindingsHandle, thumbnail);
         }
 
         return null;

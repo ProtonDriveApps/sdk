@@ -64,7 +64,9 @@ internal static class InteropMessageHandler
                         bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DriveClientEnumerateFolderChildren
-                    => await InteropProtonDriveClient.HandleEnumerateFolderChildrenAsync(request.DriveClientEnumerateFolderChildren).ConfigureAwait(false),
+                    => await InteropProtonDriveClient.HandleEnumerateFolderChildrenAsync(
+                        request.DriveClientEnumerateFolderChildren,
+                        bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DriveClientGetMyFilesFolder
                     => await InteropProtonDriveClient.HandleGetMyFilesFolderAsync(request.DriveClientGetMyFilesFolder).ConfigureAwait(false),
@@ -139,7 +141,7 @@ internal static class InteropMessageHandler
 
                 Request.PayloadOneofCase.DrivePhotosClientEnumerateTimeline
                     => await InteropProtonPhotosClient.HandleEnumeratePhotosTimelineAsync(
-                        request.DrivePhotosClientEnumerateTimeline).ConfigureAwait(false),
+                        request.DrivePhotosClientEnumerateTimeline, bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DrivePhotosClientGetNode
                     => await InteropProtonPhotosClient.HandleGetNodeAsync(request.DrivePhotosClientGetNode).ConfigureAwait(false),

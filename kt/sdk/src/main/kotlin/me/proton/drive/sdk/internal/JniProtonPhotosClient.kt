@@ -5,7 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
 import me.proton.drive.sdk.converter.NodeResultConverter
 import me.proton.drive.sdk.converter.NodeResultListResponseConverter
-import me.proton.drive.sdk.converter.PhotosTimelineListConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
 import me.proton.drive.sdk.entity.NodeResult
 import me.proton.drive.sdk.extension.LongResponseCallback
@@ -82,11 +81,11 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
     suspend fun enumerateThumbnails(
         coroutineScope: CoroutineScope,
         request: ProtonDriveSdk.DrivePhotosClientEnumerateThumbnailsRequest,
-        enumerate: suspend (ProtonDriveSdk.FileThumbnail) -> Unit,
+        yield: suspend (ProtonDriveSdk.FileThumbnail) -> Unit,
     ): Unit = executeEnumerate(
         name = "enumerateThumbnails",
         callback = UnitResponseCallback,
-        enumerate = enumerate,
+        yield = yield,
         parser = ProtonDriveSdk.FileThumbnail::parseFrom,
         coroutineScopeProvider = { coroutineScope },
     ) {
@@ -94,11 +93,18 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
     }
 
     suspend fun enumerateTimeline(
+        coroutineScope: CoroutineScope,
         request: ProtonDriveSdk.DrivePhotosClientEnumerateTimelineRequest,
-    ): ProtonDriveSdk.PhotosTimelineList =
-        executeOnce("enumerateTimeline", PhotosTimelineListConverter().asCallback) {
-            drivePhotosClientEnumerateTimeline = request
-        }
+        yield: suspend (ProtonDriveSdk.PhotosTimelineItem) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "enumerateTimeline",
+        callback = UnitResponseCallback,
+        yield = yield,
+        parser = ProtonDriveSdk.PhotosTimelineItem::parseFrom,
+        coroutineScopeProvider = { coroutineScope },
+    ) {
+        drivePhotosClientEnumerateTimeline = request
+    }
 
     suspend fun getNode(
         request: ProtonDriveSdk.DrivePhotosClientGetNodeRequest,
@@ -131,11 +137,11 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
     suspend fun enumerateTrash(
         coroutineScope: ProducerScope<NodeResult>,
         request: ProtonDriveSdk.DrivePhotosClientEnumerateTrashRequest,
-        enumerate: suspend (ProtonDriveSdk.NodeResult) -> Unit,
+        yield: suspend (ProtonDriveSdk.NodeResult) -> Unit,
     ): Unit = executeEnumerate(
             name = "enumerateTrash",
             callback = UnitResponseCallback,
-            enumerate = enumerate,
+            yield = yield,
             parser = ProtonDriveSdk.NodeResult::parseFrom,
             coroutineScopeProvider = { coroutineScope }
         ) {
