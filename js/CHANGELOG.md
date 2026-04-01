@@ -1,5 +1,10 @@
 # Changelog
 
+## js/v0.14.3 (2026-03-31)
+
+* Remove casting for parentNodeUid
+* Fix thumbnail enumeration to stay within API limits
+
 ## js/v0.14.2 (2026-03-30)
 
 * Return all possible items from batch loading
