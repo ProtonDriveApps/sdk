@@ -166,7 +166,7 @@ internal static class InteropProtonDriveClient
 
     public static async ValueTask<IMessage?> HandleEnumerateThumbnailsAsync(DriveClientEnumerateThumbnailsRequest request, nint bindingsHandle)
     {
-        var iterateFunction = new InteropAction<nint, InteropArray<byte>>(request.IterateAction);
+        var yieldFunction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
@@ -188,27 +188,25 @@ internal static class InteropProtonDriveClient
                 thumbnail.Error = ConvertToDriveError(error);
             }
 
-            iterateFunction.InvokeWithMessage(bindingsHandle, thumbnail);
+            yieldFunction.InvokeWithMessage(bindingsHandle, thumbnail);
         }
 
         return null;
     }
 
-    public static async ValueTask<IMessage> HandleEnumerateFolderChildrenAsync(DriveClientEnumerateFolderChildrenRequest request)
+    public static async ValueTask<IMessage?> HandleEnumerateFolderChildrenAsync(DriveClientEnumerateFolderChildrenRequest request, nint bindingsHandle)
     {
+        var yieldFunction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
 
-        var childrenEnumerable = client.EnumerateFolderChildrenAsync(
-            NodeUid.Parse(request.FolderUid),
-            cancellationToken);
+        await foreach (var x in client.EnumerateFolderChildrenAsync(NodeUid.Parse(request.FolderUid), cancellationToken).ConfigureAwait(false))
+        {
+            yieldFunction.InvokeWithMessage(bindingsHandle, ConvertToNodeResult(x));
+        }
 
-        var children = await childrenEnumerable
-            .Select(ConvertToNodeResult)
-            .ToListAsync(cancellationToken).ConfigureAwait(false);
-
-        return new FolderChildrenList { Children = { children } };
+        return null;
     }
 
     public static async ValueTask<IMessage> HandleGetMyFilesFolderAsync(DriveClientGetMyFilesFolderRequest request)
@@ -298,14 +296,14 @@ internal static class InteropProtonDriveClient
 
     public static async ValueTask<IMessage?> HandleEnumerateTrashAsync(DriveClientEnumerateTrashRequest request, nint bindingsHandle)
     {
-        var iterateFunction = new InteropAction<nint, InteropArray<byte>>(request.IterateAction);
+        var yieldFunction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
 
         await foreach (var x in client.EnumerateTrashAsync(cancellationToken).ConfigureAwait(false))
         {
-            iterateFunction.InvokeWithMessage(bindingsHandle, ConvertToNodeResult(x));
+            yieldFunction.InvokeWithMessage(bindingsHandle, ConvertToNodeResult(x));
         }
 
         return null;

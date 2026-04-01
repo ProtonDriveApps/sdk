@@ -54,7 +54,7 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
     suspend fun <T, E> executeEnumerate(
         name: String,
         callback: (CancellableContinuation<T>) -> ResponseCallback,
-        enumerate: suspend (E) -> Unit,
+        yield: suspend (E) -> Unit,
         parser: (ByteBuffer) -> E,
         coroutineScopeProvider: CoroutineScopeProvider,
         block: RequestKt.Dsl.() -> Unit,
@@ -69,7 +69,7 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
                 clients -= client
                 responseCallback(buffer)
             },
-            enumerateHandler = EnumerateHandler.create(enumerate, parser) ,
+            yieldHandler = YieldHandler.create(yield, parser) ,
             logger = internalLogger,
             coroutineScopeProvider = coroutineScopeProvider,
         )

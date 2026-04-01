@@ -73,9 +73,9 @@ internal class InteropProtonDriveClient internal constructor(
                     this.type = type.toProto()
                     clientHandle = handle
                     cancellationTokenSourceHandle = source.handle
-                    iterateAction = ProtonDriveSdkNativeClient.getEnumeratePointer()
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
                 },
-                enumerate = { fileThumbnail ->
+                yield = { fileThumbnail ->
                     send(fileThumbnail.toEntity())
                 }
             )
@@ -130,17 +130,24 @@ internal class InteropProtonDriveClient internal constructor(
         ).toEntity()
     }
 
-    override suspend fun enumerateFolderChildren(
+    override fun enumerateFolderChildren(
         folderUid: NodeUid,
-    ): List<NodeResult> = cancellationCoroutineScope { source ->
+    ): Flow<NodeResult> = channelFlow {
         log(DEBUG, "enumerateFolderChildren")
-        bridge.enumerateFolderChildren(
-            driveClientEnumerateFolderChildrenRequest {
-                this.folderUid = folderUid.value
-                clientHandle = handle
-                cancellationTokenSourceHandle = source.handle
-            }
-        ).toEntity()
+        cancellationCoroutineScope { source ->
+            bridge.enumerateFolderChildren(
+                coroutineScope = this@channelFlow,
+                request = driveClientEnumerateFolderChildrenRequest {
+                    this.folderUid = folderUid.value
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { nodeResult ->
+                    send(nodeResult.toEntity())
+                }
+            )
+        }
     }
 
     override suspend fun trashNodes(
@@ -190,9 +197,9 @@ internal class InteropProtonDriveClient internal constructor(
                 request = driveClientEnumerateTrashRequest {
                     clientHandle = handle
                     cancellationTokenSourceHandle = source.handle
-                    iterateAction = ProtonDriveSdkNativeClient.getEnumeratePointer()
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
                 },
-                enumerate = { nodeResult ->
+                yield = { nodeResult ->
                     send(nodeResult.toEntity())
                 }
             )
