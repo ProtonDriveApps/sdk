@@ -51,23 +51,30 @@ internal class InteropProtonPhotosClient internal constructor(
                     this.type = type.toProto()
                     clientHandle = handle
                     cancellationTokenSourceHandle = source.handle
-                    iterateAction = ProtonDriveSdkNativeClient.getEnumeratePointer()
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
                 },
-                enumerate = { fileThumbnail ->
+                yield = { fileThumbnail ->
                     send(fileThumbnail.toEntity())
                 }
             )
         }
     }
 
-    override suspend fun enumerateTimeline(): List<PhotosTimelineItem> = cancellationCoroutineScope { source ->
+    override fun enumerateTimeline(): Flow<PhotosTimelineItem> = channelFlow {
         log(DEBUG, "enumerateTimeline")
-        bridge.enumerateTimeline(
-            drivePhotosClientEnumerateTimelineRequest {
-                clientHandle = handle
-                cancellationTokenSourceHandle = source.handle
-            }
-        ).toEntity()
+        cancellationCoroutineScope { source ->
+            bridge.enumerateTimeline(
+                coroutineScope = this@channelFlow,
+                request = drivePhotosClientEnumerateTimelineRequest {
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { timelineItem ->
+                    send(timelineItem.toEntity())
+                }
+            )
+        }
     }
 
     override suspend fun getNode(nodeUid: NodeUid): NodeResult? = cancellationCoroutineScope { source ->
@@ -128,9 +135,9 @@ internal class InteropProtonPhotosClient internal constructor(
                 drivePhotosClientEnumerateTrashRequest {
                     clientHandle = handle
                     cancellationTokenSourceHandle = source.handle
-                    iterateAction = ProtonDriveSdkNativeClient.getEnumeratePointer()
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
                 },
-                enumerate = { nodeResult ->
+                yield = { nodeResult ->
                     send(nodeResult.toEntity())
                 }
             )

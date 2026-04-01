@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class ProtonDriveSdkNativeClient<E> internal constructor(
     val name: String,
     val response: ClientResponseCallback<ProtonDriveSdkNativeClient<E>> = { _, _ -> error("response not configured for $name") },
-    val enumerateHandler: EnumerateHandler<E> = EnumerateHandler.notConfigured(name),
+    val yieldHandler: YieldHandler<E> = YieldHandler.notConfigured(name),
     val read: suspend (ByteBuffer) -> Int = { error("read not configured for $name") },
     val write: suspend (ByteBuffer) -> Unit = { error("write not configured for $name") },
     val seek: (suspend (Long, Int) -> Long)? = null,
@@ -101,11 +101,11 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
     }
 
     @Suppress("unused") // Called by JNI
-    fun onEnumerate(data: ByteBuffer) = onCallback(
-        callback = "enumerate",
+    fun onYield(data: ByteBuffer) = onCallback(
+        callback = "yield",
         data = data,
-        parser = enumerateHandler.parser,
-        block = enumerateHandler.callback,
+        parser = yieldHandler.parser,
+        block = yieldHandler.callback,
     )
 
     @Suppress("unused") // Called by JNI
@@ -410,7 +410,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
         external fun getSeekPointer(): Long
 
         @JvmStatic
-        external fun getEnumeratePointer(): Long
+        external fun getYieldPointer(): Long
 
         @JvmStatic
         external fun getProgressPointer(): Long

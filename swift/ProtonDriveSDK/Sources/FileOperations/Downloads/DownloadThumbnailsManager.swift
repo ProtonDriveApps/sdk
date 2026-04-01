@@ -40,7 +40,7 @@ actor DownloadThumbnailsManager {
             $0.fileUids = fileUids.map(\.sdkCompatibleIdentifier)
             $0.type = type.sdkType
             $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
-            $0.iterateAction = Int64(ObjectHandle(callback: cThumbnailEnumerationCallback))
+            $0.yieldAction = Int64(ObjectHandle(callback: cThumbnailEnumerationCallback))
         }
 
         let callbackState = ThumbnailEnumerationCallbackWrapper(callback: onThumbnailDownloaded)
@@ -75,7 +75,7 @@ actor DownloadThumbnailsManager {
             $0.photoUids = photoUids.map(\.sdkCompatibleIdentifier)
             $0.type = type.sdkType
             $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
-            $0.iterateAction = Int64(ObjectHandle(callback: cThumbnailEnumerationCallback))
+            $0.yieldAction = Int64(ObjectHandle(callback: cThumbnailEnumerationCallback))
         }
 
         let callbackState = ThumbnailEnumerationCallbackWrapper(callback: onThumbnailDownloaded)

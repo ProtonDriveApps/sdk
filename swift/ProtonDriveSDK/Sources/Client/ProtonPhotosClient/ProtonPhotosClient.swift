@@ -123,14 +123,23 @@ extension ProtonPhotosClient {
         }
 
         let cancellationHandle = cancellationTokenSource.handle
+        let accumulator = TimelineItemAccumulator()
 
         let request = Proton_Drive_Sdk_DrivePhotosClientEnumerateTimelineRequest.with {
             $0.clientHandle = Int64(clientHandle)
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
+            $0.yieldAction = Int64(ObjectHandle(callback: cTimelineEnumerationCallback))
         }
 
-        let list: Proton_Drive_Sdk_PhotosTimelineList = try await SDKRequestHandler.send(request, logger: logger)
-        return list.items.compactMap { PhotoTimelineItem(item: $0) }
+        let _: Void = try await SDKRequestHandler.send(
+            request,
+            state: WeakReference(value: accumulator),
+            scope: .ownerManaged,
+            owner: accumulator,
+            logger: logger
+        )
+
+        return accumulator.items
     }
 }
 
