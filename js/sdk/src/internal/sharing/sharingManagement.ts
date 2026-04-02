@@ -77,11 +77,13 @@ export class SharingManagement {
             return;
         }
 
+        const { volumeId } = splitNodeUid(nodeUid);
+
         const [protonInvitations, nonProtonInvitations, members, publicLink, share] = await Promise.all([
             Array.fromAsync(this.iterateShareInvitations(node.shareId)),
             Array.fromAsync(this.iterateShareExternalInvitations(node.shareId)),
             Array.fromAsync(this.iterateShareMembers(node.shareId)),
-            this.getPublicLink(node.shareId),
+            this.getPublicLink(node.shareId, volumeId),
             this.sharesService.loadEncryptedShare(node.shareId),
         ]);
 
@@ -115,11 +117,18 @@ export class SharingManagement {
         }
     }
 
-    private async getPublicLink(shareId: string): Promise<PublicLinkWithCreatorEmail | undefined> {
+    private async getPublicLink(shareId: string, volumeId: string): Promise<PublicLinkWithCreatorEmail | undefined> {
+        const rootIds = await this.sharesService.getRootIDs();
+        // Public links are encrypted by address key, thus it can work only for the owner for now.
+        if (volumeId !== rootIds.volumeId) {
+            return;
+        }
+
         const encryptedPublicLink = await this.apiService.getPublicLink(shareId);
         if (!encryptedPublicLink) {
             return;
         }
+
         return this.cryptoService.decryptPublicLink(encryptedPublicLink);
     }
 
@@ -604,6 +613,11 @@ export class SharingManagement {
         share: Share,
         options: SharePublicLinkSettingsObject,
     ): Promise<PublicLinkWithCreatorEmail> {
+        const rootIds = await this.sharesService.getRootIDs();
+        if (share.volumeId !== rootIds.volumeId) {
+            throw new ValidationError(c('Error').t`Cannot create public link for volume not owned by the user`);
+        }
+
         const generatedPassword = await this.cryptoService.generatePublicLinkPassword();
         const password = options.customPassword ? `${generatedPassword}${options.customPassword}` : generatedPassword;
 
@@ -638,6 +652,11 @@ export class SharingManagement {
         publicLink: PublicLinkWithCreatorEmail,
         options: SharePublicLinkSettingsObject,
     ): Promise<PublicLinkWithCreatorEmail> {
+        const rootIds = await this.sharesService.getRootIDs();
+        if (share.volumeId !== rootIds.volumeId) {
+            throw new ValidationError(c('Error').t`Cannot update public link for volume not owned by the user`);
+        }
+
         const generatedPassword = publicLink.url.split('#')[1];
         // Legacy public links didn't have generated password or had various lengths.
         if (!generatedPassword || generatedPassword.length !== PUBLIC_LINK_GENERATED_PASSWORD_LENGTH) {
