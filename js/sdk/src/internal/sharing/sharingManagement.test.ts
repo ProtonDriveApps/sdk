@@ -106,6 +106,7 @@ describe('SharingManagement', () => {
                 creatorEmail: 'address@example.com',
                 passphraseSessionKey: 'sharePassphraseSessionKey',
             }),
+            getRootIDs: jest.fn().mockResolvedValue({ volumeId: 'volumeId' }),
         };
         // @ts-expect-error No need to implement all methods for mocking
         nodesService = {
@@ -146,7 +147,7 @@ describe('SharingManagement', () => {
             const invitation = { uid: 'invitaiton', addedByEmail: 'email' };
             apiService.getShareInvitations = jest.fn().mockResolvedValue([invitation]);
 
-            const sharingInfo = await sharingManagement.getSharingInfo('nodeUid');
+            const sharingInfo = await sharingManagement.getSharingInfo('volumeId~nodeUid');
 
             expect(sharingInfo).toEqual({
                 protonInvitations: [invitation],
@@ -161,7 +162,7 @@ describe('SharingManagement', () => {
             const externalInvitation = { uid: 'external-invitation', addedByEmail: 'email' };
             apiService.getShareExternalInvitations = jest.fn().mockResolvedValue([externalInvitation]);
 
-            const sharingInfo = await sharingManagement.getSharingInfo('nodeUid');
+            const sharingInfo = await sharingManagement.getSharingInfo('volumeId~nodeUid');
 
             expect(sharingInfo).toEqual({
                 protonInvitations: [],
@@ -176,7 +177,7 @@ describe('SharingManagement', () => {
             const member = { uid: 'member', addedByEmail: 'email' };
             apiService.getShareMembers = jest.fn().mockResolvedValue([member]);
 
-            const sharingInfo = await sharingManagement.getSharingInfo('nodeUid');
+            const sharingInfo = await sharingManagement.getSharingInfo('volumeId~nodeUid');
 
             expect(sharingInfo).toEqual({
                 protonInvitations: [],
@@ -193,7 +194,7 @@ describe('SharingManagement', () => {
             };
             apiService.getPublicLink = jest.fn().mockResolvedValue(publicLink);
 
-            const sharingInfo = await sharingManagement.getSharingInfo('nodeUid');
+            const sharingInfo = await sharingManagement.getSharingInfo('volumeId~nodeUid');
 
             expect(sharingInfo).toEqual({
                 protonInvitations: [],
@@ -202,6 +203,19 @@ describe('SharingManagement', () => {
                 publicLink: publicLink,
             });
             expect(cryptoService.decryptPublicLink).toHaveBeenCalledWith(publicLink);
+        });
+
+        it('should NOT return public link when volume ID does not match', async () => {
+            apiService.getPublicLink = jest.fn().mockResolvedValue(null);
+            const sharingInfo = await sharingManagement.getSharingInfo('zolumeId~nodeUid');
+            expect(sharingInfo).toEqual({
+                protonInvitations: [],
+                nonProtonInvitations: [],
+                members: [],
+                publicLink: undefined,
+            });
+            expect(apiService.getPublicLink).not.toHaveBeenCalled();
+            expect(cryptoService.decryptPublicLink).not.toHaveBeenCalled();
         });
     });
 
@@ -887,6 +901,19 @@ describe('SharingManagement', () => {
                     }),
                 ).rejects.toThrow('Expiration date cannot be in the past');
                 expect(apiService.createStandardShare).not.toHaveBeenCalled();
+                expect(apiService.createPublicLink).not.toHaveBeenCalled();
+            });
+
+            it('should not allow creating public link for volume not owned by user', async () => {
+                sharesService.getRootIDs = jest.fn().mockResolvedValue({ volumeId: 'differentVolumeId' });
+                await expect(
+                    sharingManagement.shareNode(nodeUid, {
+                        publicLink: {
+                            role: MemberRole.Viewer,
+                        },
+                    }),
+                ).rejects.toThrow('Cannot create public link for volume not owned by the user');
+
                 expect(apiService.createPublicLink).not.toHaveBeenCalled();
             });
         });
