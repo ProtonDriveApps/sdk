@@ -1,5 +1,15 @@
 # Changelog
 
+## cs/v0.13.0 (2026-04-02)
+
+* Keep http request body in kotlin memory for retries
+* Fix illegal assignments of null values to Protobuf fields for authorship results
+* Enable streaming of results when enumerating folder children and Photos timeline
+* Fix function to get node from Photos client not using Photos API
+* Log network body for tests by chunk
+* Extract clients interfaces
+* Add trash management to Photos
+
 ## cs/v0.12.0 (2026-03-30)
 
 * Remove get thumbnails in favor of enumerate thumbnails
