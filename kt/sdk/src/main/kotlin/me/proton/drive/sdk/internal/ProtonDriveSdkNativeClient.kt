@@ -3,7 +3,6 @@ package me.proton.drive.sdk.internal
 import com.google.protobuf.Any
 import com.google.protobuf.Int32Value
 import com.google.protobuf.Int64Value
-import com.google.protobuf.StringValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +18,7 @@ import me.proton.drive.sdk.LoggerProvider.Level.ERROR
 import me.proton.drive.sdk.LoggerProvider.Level.VERBOSE
 import me.proton.drive.sdk.LoggerProvider.Level.WARN
 import me.proton.drive.sdk.extension.asAny
+import me.proton.drive.sdk.extension.decodeToString
 import me.proton.drive.sdk.extension.toProtonSdkError
 import proton.drive.sdk.ProtonDriveSdk
 import proton.sdk.ProtonSdk
@@ -208,9 +208,8 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
     fun onFeatureEnabled(data: ByteBuffer): Long = onFunction(
         operation = "featureEnabled",
         data = data,
-        parser = StringValue::parseFrom,
-    ) { value ->
-        val name = value.value
+        parser = { buffer -> buffer.decodeToString() },
+    ) { name ->
         runCatching {
             if (featureEnabled(name)) 1L else 0L
         }.getOrElse { error ->
