@@ -1,5 +1,9 @@
 # Changelog
 
+## js/v0.14.4 (2026-04-02)
+
+* Get public link of share only for my own nodes
+
 ## js/v0.14.3 (2026-03-31)
 
 * Remove casting for parentNodeUid
