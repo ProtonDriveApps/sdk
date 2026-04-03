@@ -59,11 +59,12 @@ class CommonDownloadController internal constructor(
     }
 
     override suspend fun tryResume(coroutineScope: CoroutineScope): Boolean {
-        log(INFO, "resume")
+        log(DEBUG, "tryResume")
         coroutineScopeConsumer(coroutineScope)
         if (!isPaused()) {
             return false
         }
+        log(INFO, "resume")
         bridge.resume(handle).also { isPaused() }
         return true
     }
