@@ -1,5 +1,6 @@
 package me.proton.drive.sdk.internal
 
+import kotlinx.coroutines.CancellableContinuation
 import me.proton.drive.sdk.converter.AnyConverter
 import proton.sdk.ProtonSdk.Response.ResultCase.ERROR
 import proton.sdk.ProtonSdk.Response.ResultCase.RESULT_NOT_SET
@@ -8,7 +9,7 @@ import java.nio.ByteBuffer
 import kotlin.coroutines.Continuation
 
 class ContinuationValueOrNullResponse<T>(
-    continuation: Continuation<T?>,
+    continuation: CancellableContinuation<T?>,
     private val anyConverter: AnyConverter<T>,
 ) : BaseContinuationResponse<T?>(continuation) {
     override fun invoke(data: ByteBuffer) = parse(data) { response ->
