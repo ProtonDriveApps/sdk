@@ -19,15 +19,15 @@ object RetryAfterDelay {
     suspend operator fun invoke(
         isEnabled: Boolean,
         strategy: Duration.(Int, Double) -> Duration = Duration::exponentialDelay,
-        block: suspend () -> ApiResult<Response<ResponseBody>>,
+        block: suspend (Int) -> ApiResult<Response<ResponseBody>>,
     ): ApiResult<Response<ResponseBody>> {
-        var attempts = 0
+        var attempt = 0
         var remaining = MAX_DELAY_DURATION
         var result: ApiResult<Response<ResponseBody>>
         do {
-            result = block()
+            result = block(attempt)
             if (!isEnabled) break
-            attempts++
+            attempt++
             val duration = when (result) {
                 is ApiResult.Error.Http -> {
                     when (result.httpCode) {
@@ -36,7 +36,7 @@ object RetryAfterDelay {
                             maxValue = MAX_RETRY_AFTER_DURATION,
                         )
                         in 500..599 -> DEFAULT_SERVER_ERROR_DURATION
-                            .strategy(attempts, 2.0)
+                            .strategy(attempt, 2.0)
                             .coerceAtMost(remaining)
                         else -> break
                     }
@@ -45,7 +45,7 @@ object RetryAfterDelay {
             }
             remaining -= duration
             delay(duration)
-        } while (remaining.isPositive() && attempts < MAX_FAILURES)
+        } while (remaining.isPositive() && attempt < MAX_FAILURES)
         return result
     }
 }
