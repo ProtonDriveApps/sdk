@@ -1,16 +1,17 @@
 package me.proton.drive.sdk.internal
 
 import com.google.protobuf.kotlin.toByteString
+import kotlinx.coroutines.CancellableContinuation
+import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.ProtonDriveSdkException
 import me.proton.drive.sdk.extension.toError
 import proton.sdk.ProtonSdk
 import java.nio.ByteBuffer
-import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 abstract class BaseContinuationResponse<T>(
-    private val continuation: Continuation<T>,
+    private val continuation: CancellableContinuation<T>,
 ) : ResponseCallback {
 
     private val callSite = CallerException("Called from")
@@ -24,9 +25,28 @@ abstract class BaseContinuationResponse<T>(
                 )
             }
             .mapCatching(block)
-            .onSuccess(continuation::resume)
-            .onFailure(continuation::resumeWithException)
+            .onSuccess { value ->
+                if (continuation.isActive) {
+                    continuation.resume(value)
+                } else {
+                    logger("Cannot resume inactive continuation")
+                }
+            }
+            .onFailure { error ->
+                if (continuation.isActive) {
+                    continuation.resumeWithException(error)
+                } else {
+                    logger(
+                        "Cannot resume with exception inactive continuation: ${error.message}" +
+                            "\n${error.stackTraceToString()}"
+                    )
+                }
+            }
     }
+
+    private fun logger(
+        message: String,
+    ) = JniBase.globalSdkLogger(DEBUG, "drive.sdk.continuation", message)
 
     protected fun error(message: String): Nothing = throw ProtonDriveSdkException(
         message = message,
