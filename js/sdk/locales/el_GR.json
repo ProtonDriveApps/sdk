@@ -11,11 +11,17 @@
       "Cannot add photo to album without a valid name": [
         "Δεν είναι δυνατή η προσθήκη φωτογραφίας στο άλμπουμ χωρίς έγκυρο όνομα"
       ],
+      "Cannot create public link for volume not owned by the user": [
+        "Δεν είναι δυνατή η δημιουργία του δημόσιου συνδέσμου για όγκο που δεν ανήκει στον χρήστη"
+      ],
       "Cannot download a folder": [
         "Δεν είναι δυνατή η λήψη ενός φακέλου"
       ],
       "Cannot share root folder": [
         "Δεν είναι δυνατή η κοινοποίηση του κεντρικού φακέλου"
+      ],
+      "Cannot update public link for volume not owned by the user": [
+        "Δεν είναι δυνατή η ενημέρωση του δημόσιου συνδέσμου για όγκο που δεν ανήκει στον χρήστη"
       ],
       "Content key packet is required for small revision upload": [
         "Το πακέτο κλειδιού περιεχομένου απαιτείται για τη μεταφόρτωση μικρής αναθεώρησης"
@@ -74,9 +80,6 @@
       "Failed to decrypt node key: ${ message }": [
         "Αποτυχία αποκρυπτογράφησης κλειδιού κόμβου: ${ message }"
       ],
-      "Failed to decrypt some nodes": [
-        "Αποτυχία αποκρυπτογράφησης κάποιων κόμβων"
-      ],
       "Failed to decrypt thumbnail: ${ message }": [
         "Αποτυχία αποκρυπτογράφησης μικρογραφίας: ${ message }"
       ],
@@ -88,6 +91,9 @@
       ],
       "Failed to get verification keys": [
         "Αποτυχία λήψης κλειδιών επαλήθευσης"
+      ],
+      "Failed to load some items": [
+        "Αποτυχία φόρτωσης κάποιων στοιχείων"
       ],
       "Failed to load some nodes": [
         "Αποτυχία φόρτωσης κάποιων κόμβων"

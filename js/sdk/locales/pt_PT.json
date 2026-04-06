@@ -59,9 +59,6 @@
       "Failed to decrypt node key: ${ message }": [
         "Erro ao desencriptar chave do nó: ${ message }"
       ],
-      "Failed to decrypt some nodes": [
-        "Erro ao desencriptar alguns nós"
-      ],
       "Failed to decrypt thumbnail: ${ message }": [
         "Erro ao desencriptar a miniatura: ${ message }"
       ],

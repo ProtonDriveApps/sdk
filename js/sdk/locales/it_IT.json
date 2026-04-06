@@ -11,11 +11,17 @@
       "Cannot add photo to album without a valid name": [
         "Impossibile aggiungere la foto all’album senza un nome valido."
       ],
+      "Cannot create public link for volume not owned by the user": [
+        "Impossibile creare un collegamento pubblico per un volume non di proprietà dell'utente"
+      ],
       "Cannot download a folder": [
         "Impossibile scaricare una cartella"
       ],
       "Cannot share root folder": [
         "Impossibile condividere la cartella principale"
+      ],
+      "Cannot update public link for volume not owned by the user": [
+        "Impossibile aggiornare il collegamento pubblico per un volume non di proprietà dell'utente"
       ],
       "Content key packet is required for small revision upload": [
         "Il pacchetto chiave di contenuto è richiesto per il caricamento di piccole revisioni"
@@ -74,9 +80,6 @@
       "Failed to decrypt node key: ${ message }": [
         "Impossibile decriptare la chiave del nodo: ${ message }"
       ],
-      "Failed to decrypt some nodes": [
-        "Impossibile decriptare alcuni nodi"
-      ],
       "Failed to decrypt thumbnail: ${ message }": [
         "Impossibile decriptare la miniatura: ${ message }"
       ],
@@ -88,6 +91,9 @@
       ],
       "Failed to get verification keys": [
         "Impossibile ottenere le chiavi di verifica"
+      ],
+      "Failed to load some items": [
+        "Impossibile caricare alcuni elementi"
       ],
       "Failed to load some nodes": [
         "Impossibile caricare alcuni nodi"

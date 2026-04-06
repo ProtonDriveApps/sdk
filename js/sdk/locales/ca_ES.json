@@ -11,11 +11,17 @@
       "Cannot add photo to album without a valid name": [
         "No es pot afegir la fotografia a l'àlbum sense un nom vàlid"
       ],
+      "Cannot create public link for volume not owned by the user": [
+        "No es pot crear l'enllaç públic d'un volum que no és propietat de l'usuari"
+      ],
       "Cannot download a folder": [
         "No es pot descarregar una carpeta"
       ],
       "Cannot share root folder": [
         "No es pot compartir la carpeta arrel"
+      ],
+      "Cannot update public link for volume not owned by the user": [
+        "No es pot actualitzar l'enllaç públic d'un volum que no és propietat de l'usuari"
       ],
       "Content key packet is required for small revision upload": [
         "Es requereix el paquet de claus de contingut per carregar revisions petites"
@@ -74,9 +80,6 @@
       "Failed to decrypt node key: ${ message }": [
         "No s'ha pogut desxifrar la clau del node: ${ message }"
       ],
-      "Failed to decrypt some nodes": [
-        "No s'han pogut desxifrar alguns nodes"
-      ],
       "Failed to decrypt thumbnail: ${ message }": [
         "No s'ha pogut desxifrar la miniatura: ${ message }"
       ],
@@ -88,6 +91,9 @@
       ],
       "Failed to get verification keys": [
         "No s'han pogut obtenir les claus de verificació"
+      ],
+      "Failed to load some items": [
+        "No s'han pogut carregar alguns elements"
       ],
       "Failed to load some nodes": [
         "No s'han pogut carregar alguns nodes"

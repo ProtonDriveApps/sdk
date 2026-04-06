@@ -11,11 +11,17 @@
       "Cannot add photo to album without a valid name": [
         "Kan geen foto aan album toevoegen zonder geldige naam"
       ],
+      "Cannot create public link for volume not owned by the user": [
+        "Kan geen openbare link aanmaken voor een volume dat geen eigendom is van de gebruiker."
+      ],
       "Cannot download a folder": [
         "Kan geen map downloaden"
       ],
       "Cannot share root folder": [
         "Kan hoofdmap niet delen"
+      ],
+      "Cannot update public link for volume not owned by the user": [
+        "Het is niet mogelijk om de openbare link bij te werken voor een volume dat geen eigendom is van de gebruiker."
       ],
       "Content key packet is required for small revision upload": [
         "Content key packet is vereist voor kleine revisie upload"
@@ -74,9 +80,6 @@
       "Failed to decrypt node key: ${ message }": [
         "Fout bij het ontsleutelen van de nodesleutel: ${ message }"
       ],
-      "Failed to decrypt some nodes": [
-        "Fout bij het ontsleutelen van sommige nodes"
-      ],
       "Failed to decrypt thumbnail: ${ message }": [
         "Fout bij het ontsleutelen van de miniatuur: ${ message }"
       ],
@@ -88,6 +91,9 @@
       ],
       "Failed to get verification keys": [
         "Fout bij het ophalen van verificatiesleutels"
+      ],
+      "Failed to load some items": [
+        "Fout bij het laden van sommige items"
       ],
       "Failed to load some nodes": [
         "Fout bij het laden van sommige nodes"

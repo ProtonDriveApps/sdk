@@ -11,11 +11,20 @@
       "Cannot add photo to album without a valid name": [
         "Нельга дадаць фатаграфію ў альбом без сапраўднай назвы"
       ],
+      "Cannot create public link for volume not owned by the user": [
+        "Немагчыма стварыць публічную спасылку для тома, які не належыць карыстальніку"
+      ],
       "Cannot download a folder": [
         "Немагчыма спампаваць папку"
       ],
       "Cannot share root folder": [
         "Немагчыма абагуліць каранёвую папку"
+      ],
+      "Cannot update public link for volume not owned by the user": [
+        "Немагчыма абнавіць публічную спасылку для тома, які не належыць карыстальніку"
+      ],
+      "Content key packet is required for small revision upload": [
+        "Пакет ключа змесціва патрабуецца для запампоўвання невялікіх рэдакцый"
       ],
       "Copy operation aborted": [
         "Аперацыя капіявання перарвана"
@@ -71,9 +80,6 @@
       "Failed to decrypt node key: ${ message }": [
         "Не ўдалося расшыфраваць ключ вузла: ${ message }"
       ],
-      "Failed to decrypt some nodes": [
-        "Не ўдалося расшыфраваць некаторыя вузлы"
-      ],
       "Failed to decrypt thumbnail: ${ message }": [
         "Не ўдалося расшыфраваць мініяцюру: ${ message }"
       ],
@@ -85,6 +91,9 @@
       ],
       "Failed to get verification keys": [
         "Не ўдалося атрымаць ключы праверкі"
+      ],
+      "Failed to load some items": [
+        "Не ўдалося загрузіць некаторыя элементы"
       ],
       "Failed to load some nodes": [
         "Не ўдалося загрузіць некаторыя вузлы"
