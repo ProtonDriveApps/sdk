@@ -65,9 +65,6 @@
       "Failed to decrypt node key: ${ message }": [
         "Nie udało się odszyfrować klucza węzła: ${ message }"
       ],
-      "Failed to decrypt some nodes": [
-        "Nie udało się odszyfrować niektórych węzłów"
-      ],
       "Failed to decrypt thumbnail: ${ message }": [
         "Nie udało się odszyfrować podglądu: ${ message }"
       ],

@@ -74,9 +74,6 @@
       "Failed to decrypt node key: ${ message }": [
         "노드 키 복호화 실패: ${ message }"
       ],
-      "Failed to decrypt some nodes": [
-        "일부 노드를 복호화할 수 없음"
-      ],
       "Failed to decrypt thumbnail: ${ message }": [
         "섬내일 복호화 실패: ${ message }"
       ],
