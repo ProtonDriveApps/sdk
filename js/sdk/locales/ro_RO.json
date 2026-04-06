@@ -11,11 +11,17 @@
       "Cannot add photo to album without a valid name": [
         "Nu se poate adăuga o fotografie în album fără un nume valid."
       ],
+      "Cannot create public link for volume not owned by the user": [
+        "Nu se poate crea legătura web publică pentru volumul care nu este deținut de utilizator."
+      ],
       "Cannot download a folder": [
         "Nu se poate descărca un folder."
       ],
       "Cannot share root folder": [
         "Nu se poate partaja folderul rădăcină."
+      ],
+      "Cannot update public link for volume not owned by the user": [
+        "Nu se poate actualiza legătura web publică pentru volumul care nu este deținut de utilizator."
       ],
       "Content key packet is required for small revision upload": [
         "Pentru încărcarea revizuirilor mici este necesar pachetul cheii conținutului."
@@ -74,9 +80,6 @@
       "Failed to decrypt node key: ${ message }": [
         "Nu s-a reușit decriptarea cheii nodului: ${ message }"
       ],
-      "Failed to decrypt some nodes": [
-        "Nu s-a reușit decriptarea unor noduri."
-      ],
       "Failed to decrypt thumbnail: ${ message }": [
         "Nu s-a reușit decriptarea miniaturii: ${ message }"
       ],
@@ -88,6 +91,9 @@
       ],
       "Failed to get verification keys": [
         "Obținerea cheilor de verificare a eșuat."
+      ],
+      "Failed to load some items": [
+        "Nu s-a reușit încărcarea unor articole."
       ],
       "Failed to load some nodes": [
         "Nu s-a reușit încărcarea unor noduri."

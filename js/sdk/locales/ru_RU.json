@@ -59,9 +59,6 @@
       "Failed to decrypt node key: ${ message }": [
         "Не удалось расшифровать ключ узла: ${ message }"
       ],
-      "Failed to decrypt some nodes": [
-        "Не удалось расшифровать некоторые узлы"
-      ],
       "Failed to decrypt thumbnail: ${ message }": [
         "Не удалось расшифровать значок: ${ message }"
       ],

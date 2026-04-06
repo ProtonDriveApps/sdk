@@ -11,11 +11,17 @@
       "Cannot add photo to album without a valid name": [
         "Geçerli bir ad olmadan fotoğraf albüme eklenemez"
       ],
+      "Cannot create public link for volume not owned by the user": [
+        "Kullanıcıya ait olmayan birimin herkese açık bağlantısı oluşturulamaz"
+      ],
       "Cannot download a folder": [
         "Bir klasör indirilemedi"
       ],
       "Cannot share root folder": [
         "Kök klasör paylaşılamaz"
+      ],
+      "Cannot update public link for volume not owned by the user": [
+        "Kullanıcıya ait olmayan birimin herkese açık bağlantısı güncellenemez"
       ],
       "Content key packet is required for small revision upload": [
         "Küçük sürüm yüklemeleri için içerik anahtarı paketi gereklidir"
@@ -74,9 +80,6 @@
       "Failed to decrypt node key: ${ message }": [
         "Düğüm anahtarının şifresi çözülemedi: ${ message }"
       ],
-      "Failed to decrypt some nodes": [
-        "Bazı düğümlerin şifresi çözülemedi"
-      ],
       "Failed to decrypt thumbnail: ${ message }": [
         "Küçük görselin şifresi çözülemedi: ${ message }"
       ],
@@ -88,6 +91,9 @@
       ],
       "Failed to get verification keys": [
         "Doğrulama anahtarları alınamadı"
+      ],
+      "Failed to load some items": [
+        "Bazı ögeler yüklenemedi"
       ],
       "Failed to load some nodes": [
         "Bazı düğümler yüklenemedi"

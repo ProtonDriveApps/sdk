@@ -68,9 +68,6 @@
       "Failed to decrypt node key: ${ message }": [
         "Falha ao descriptografar a chave do nó: ${ message }"
       ],
-      "Failed to decrypt some nodes": [
-        "Falha ao descriptografar alguns nós"
-      ],
       "Failed to decrypt thumbnail: ${ message }": [
         "Erro ao descriptografar a miniatura: ${ message }"
       ],
@@ -94,6 +91,9 @@
       ],
       "File has no content key": [
         "O arquivo não tem chave de conteúdo."
+      ],
+      "File has no revision": [
+        "O arquivo não possui revisão"
       ],
       "File hash does not match expected hash": [
         "O hash do arquivo não corresponde ao hash esperado"
@@ -159,8 +159,14 @@
       "Operation aborted": [
         "Operação abortada"
       ],
+      "Operation failed, try again later": [
+        "Falha na operação, tente novamente mais tarde"
+      ],
       "Parent cannot be decrypted": [
         "O elemento principal não pode ser descriptografado."
+      ],
+      "Photo is already in the target album": [
+        "A foto já está no álbum de destino"
       ],
       "Photo not found": [
         "Foto não encontrada"
