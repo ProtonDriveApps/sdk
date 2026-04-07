@@ -15,6 +15,7 @@ dist
 
 # JS CLI
 js/cli/proton-drive
+js/cli/proton-drive-internal
 auth.txt
 auth-session.json
 cache*.sqlite
