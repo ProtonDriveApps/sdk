@@ -8,6 +8,7 @@ import {
     MaybeNode,
     MaybeMissingNode,
     NodeResult,
+    NodeResultWithError,
     NodeResultWithNewUid,
     Revision,
     RevisionOrUid,
@@ -420,7 +421,7 @@ export class ProtonDriveClient {
         nodeUids: NodeOrUid[],
         newParentNodeUid: NodeOrUid,
         signal?: AbortSignal,
-    ): AsyncGenerator<NodeResult> {
+    ): AsyncGenerator<NodeResultWithError> {
         this.logger.info(`Moving ${nodeUids.length} nodes to ${getUid(newParentNodeUid)}`);
         yield* this.nodes.management.moveNodes(getUids(nodeUids), getUid(newParentNodeUid), signal);
     }
