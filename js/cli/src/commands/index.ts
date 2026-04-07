@@ -1,0 +1,1 @@
+export { COMMANDS } from './registry';

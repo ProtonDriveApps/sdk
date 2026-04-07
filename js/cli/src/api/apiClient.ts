@@ -1,6 +1,7 @@
 import ky, { type AfterResponseHook, type KyInstance } from 'ky';
 
-import { Logger } from '../../../sdk/src';
+import { Logger } from '@protontech/drive-sdk';
+
 import type { Config } from '../config';
 import { Credentials } from '../credentials';
 import type { paths as AuthPaths } from './api-auth-types';

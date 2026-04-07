@@ -1,4 +1,5 @@
-import type { Logger, ProtonDriveCache } from '../../../sdk/src';
+import type { Logger, ProtonDriveCache } from '@protontech/drive-sdk';
+
 import { Credentials } from '../credentials';
 import { Config } from '../config';
 import { SQLiteEntititesCache } from './sqliteCache';

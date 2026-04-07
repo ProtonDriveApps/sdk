@@ -5,20 +5,20 @@ import {
     OpenPGPCryptoWithCryptoProxy,
     OpenPGPCryptoProxy,
     FeatureFlags,
-} from '../../sdk/src';
-import { ProtonDrivePhotosClient } from '../../sdk/src/protonDrivePhotosClient';
-import { initDiagnostic } from '../../sdk/src/diagnostic';
+} from '@protontech/drive-sdk';
+import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
+import { initDiagnostic } from '@protontech/drive-sdk/diagnostic';
 
 import { initApi } from './api';
 import { createEntitiesCache } from './cache';
-import { getConfig } from './config';
+import { Paths } from './cli';
+import { getConfig, InitConfig } from './config';
 import { initCredentials } from './credentials';
-import { Paths } from './cli/paths';
 import { Api as CryptoApi } from './crypto/lib/worker/api';
 import { initTelemetry } from './telemetry';
 
-export async function init(debug: boolean) {
-    const config = getConfig(debug);
+export async function init(configOptions: InitConfig) {
+    const config = getConfig(configOptions);
     const telemetry = initTelemetry(config.cacheDir, config.enableConsoleLog);
     const logger = telemetry.getLogger('cli');
 
@@ -30,7 +30,7 @@ export async function init(debug: boolean) {
     const sdkDependencies = {
         config: {
             baseUrl: config.baseUrl,
-            clientUid: 'proton-drive-sdk-js-cli-test',
+            clientUid: config.clientUid,
         },
         httpClient,
         entitiesCache,

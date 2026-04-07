@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 
-import { Logger } from '../../../sdk/src';
+import { Logger } from '@protontech/drive-sdk';
+
 import type { SessionInfo, CredentialsStore } from './interface';
 
 export class Credentials {

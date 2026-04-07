@@ -11,6 +11,8 @@ module.exports = {
   },
   moduleNameMapper: {
     '^@openpgp/web-stream-tools$': '<rootDir>/node_modules/@openpgp/web-stream-tools/lib/index.js',
+    '^@protontech/drive-sdk$': '<rootDir>/../sdk/src/index.ts',
+    '^@protontech/drive-sdk/(.*)$': '<rootDir>/../sdk/src/$1',
   },
   reporters: ['default'],
   testEnvironment: 'node',
