@@ -1,4 +1,11 @@
+export interface InitConfig {
+    debug?: boolean;
+    appVersion: string;
+    clientUid: string;
+}
+
 export interface Config {
+    clientUid: string;
     appVersion: string;
     baseUrl: string;
     cacheDir: string;
@@ -7,19 +14,17 @@ export interface Config {
     unsafeCache: boolean;
 }
 
-export function getConfig(debug: boolean): Config {
+export function getConfig(options: InitConfig): Config {
     const unsafeSecrets = ['yes', 'y', '1', 'true'].includes(
         process.env.PROTON_DRIVE_UNSAFE_SECRETS?.toLowerCase() ?? '',
     );
 
     return {
-        // App version must have two or three parts, no more or less, separated by dash.
-        // First part is platform name, second is product name, third is optional section.
-        // That's why we have sdkclijs instead of sdk-cli-js.
-        appVersion: 'external-drive-sdkclijs@1.0.0',
+        clientUid: options.clientUid,
+        appVersion: options.appVersion,
         baseUrl: process.env.PROTON_DRIVE_BASE_URL || 'drive-api.proton.me',
         cacheDir: process.env.PROTON_DRIVE_CACHE_DIR || process.cwd(),
-        enableConsoleLog: debug,
+        enableConsoleLog: options.debug ?? false,
         unsafeSecrets,
         unsafeCache: unsafeSecrets,
     };

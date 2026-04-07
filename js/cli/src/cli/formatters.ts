@@ -1,6 +1,6 @@
 import { inspect } from 'util';
 
-import { Author, MemberRole } from '../../../sdk/src';
+import { Author, MemberRole } from '@protontech/drive-sdk';
 
 export function printObject(object: object | undefined, json: boolean) {
     if (json) {

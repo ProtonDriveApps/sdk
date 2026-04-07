@@ -1,7 +1,8 @@
-import { Logger } from '../../../sdk/src';
-import { type ApiInterface as CryptoApiInterface } from '../crypto/lib/worker/api';
+import { Logger } from '@protontech/drive-sdk';
+
 import type { Config } from '../config';
 import type { Credentials } from '../credentials';
+import { type ApiInterface as CryptoApiInterface } from '../crypto/lib/worker/api';
 import { AccountApi } from './accountApi';
 import { Addresses } from './addresses';
 import { ApiClient } from './apiClient';

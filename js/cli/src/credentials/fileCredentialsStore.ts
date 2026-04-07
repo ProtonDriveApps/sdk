@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { unlink } from 'node:fs/promises';
 
-import { Logger } from '../../../sdk/src';
+import { Logger } from '@protontech/drive-sdk';
+
 import type { Credentials, CredentialsStore } from './interface';
 import { parseStoredSnapshot } from './parseCredentials';
 

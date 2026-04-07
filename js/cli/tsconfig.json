@@ -1,11 +1,16 @@
 {
     "compilerOptions": {
         "allowJs": false,
+        "baseUrl": ".",
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "incremental": true,
         "module": "esnext",
         "moduleResolution": "node",
+        "paths": {
+            "@protontech/drive-sdk": ["../sdk/src/index.ts"],
+            "@protontech/drive-sdk/*": ["../sdk/src/*"]
+        },
         "noEmit": false,
         "noImplicitAny": true,
         "strict": true,

@@ -1,4 +1,5 @@
-import { ProtonDriveAccountAddress, Logger } from '../../../sdk/src';
+import { ProtonDriveAccountAddress, Logger } from '@protontech/drive-sdk';
+
 import { Credentials } from '../credentials';
 import { PrivateKeyReference, PublicKeyReference, VERIFICATION_STATUS } from '../crypto/lib';
 import { type ApiInterface as CryptoApiInterface } from '../crypto/lib/worker/api';

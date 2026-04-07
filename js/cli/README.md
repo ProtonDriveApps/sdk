@@ -4,7 +4,6 @@ The app implements and integrates dependencies for the SDK, such as HTTP client,
 
 The integration implements only limited capabilities to run simplest run of the SDK. For example, 2FA or other than simple username and password authentication is not supported, crypto module is copy-paste from the clients monorepo without using the web workers.
 
-This module is intended for testing purposes mainly and is in no way recommended to use for any real users.
 
 ## Installation
 
@@ -18,33 +17,36 @@ bun install
 
 ## Build
 
-To build the executable, run the following command.
+From `js/cli`:
 
 ```bash
 bun run build
 ```
 
-The executable will be located in the same directory as `proton-drive`.
+Artifacts are written to the **current working directory** (typically `js/cli/` when you run the commands above).
 
 ## Run
 
-First, you will need to log in.
+Sign in via the browser (no username/password arguments needed):
 
 ```bash
-./proton-drive auth login USER
+./proton-drive auth login
 ```
 
-Then, you can call any command, for example list nodes in _My files_ section.
+Start the interactive shell:
 
 ```bash
-./proton-drive fs list /my-files
+./proton-drive
 ```
 
-Run the executable without any parameter to get help.
+Get help:
+
+```bash
+./proton-drive help
+```
 
 ## Environment variables
 
 | Name                     | Description                                                       | Default Value               |
 |--------------------------|-------------------------------------------------------------------|-----------------------------|
-| `PROTON_DRIVE_BASE_URL`  | URL for the API.                                                  | `drive-api.proton.me`       |
 | `PROTON_DRIVE_CACHE_DIR` | Directory where the SQLite and other caches, or logs, are stored. | Current working directory   |

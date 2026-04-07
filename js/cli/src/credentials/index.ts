@@ -1,9 +1,10 @@
-import { Logger } from '../../../sdk/src';
+import { Logger } from '@protontech/drive-sdk';
+
 import type { Config } from '../config';
+import { Credentials } from './credentials';
 import type { CredentialsStore } from './interface';
 import { PlaintextFileSessionStore } from './fileCredentialsStore';
 import { SecretsSessionStore } from './secretCredentialsStore';
-import { Credentials } from './credentials';
 
 export type { Credentials } from './credentials';
 

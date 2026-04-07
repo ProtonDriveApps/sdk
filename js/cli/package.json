@@ -4,7 +4,8 @@
     "version": "0.0.1",
     "main": "dist/main.js",
     "scripts": {
-        "build": "NODE_ENV=production bun build --compile ./src/proton-drive.ts --minify-identifiers --conditions=browser",
+        "build": "NODE_ENV=production bun build --compile ./src/proton-drive.ts --outfile=proton-drive --minify-identifiers --conditions=browser",
+        "build:internal": "NODE_ENV=production bun build --compile ./src/internal-cli/proton-drive-internal.ts --outfile=proton-drive-internal --minify-identifiers --conditions=browser",
         "check-types": "tsc --noEmit",
         "generate-types": "bunx openapi-typescript ../../api/openapi-core.json -o ./src/account/api-core-types.ts && bunx openapi-typescript ../../api/openapi-auth.json -o ./src/account/api-auth-types.ts",
         "lint": "eslint src integration-tests --ext .ts --cache --ignore-pattern '**/api/*-types.ts'",
@@ -41,6 +42,7 @@
         "@jimp/js-tiff": "1.6.0",
         "@jimp/plugin-resize": "1.6.0",
         "@noble/hashes": "^1.8.0",
+        "@protontech/drive-sdk": "file:../sdk",
         "@protontech/pmcrypto": "^8.8.1",
         "bcryptjs": "^2.4.3",
         "ky": "^1.7.2",

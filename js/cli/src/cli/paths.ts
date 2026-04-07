@@ -1,8 +1,10 @@
 import path from 'node:path';
-import { ProtonDriveClient, MaybeNode, MaybeMissingNode } from '../../../sdk/src';
-import { ProtonDrivePhotosClient } from '../../../sdk/src/protonDrivePhotosClient';
+
+import { ProtonDriveClient, MaybeNode, MaybeMissingNode } from '@protontech/drive-sdk';
+import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
+import { ProtonDrivePublicLinkClient } from '@protontech/drive-sdk/protonDrivePublicLinkClient';
+
 import { getName } from './node';
-import { ProtonDrivePublicLinkClient } from '../../../sdk/src/protonDrivePublicLinkClient';
 
 export enum PathType {
     Root = 'root',

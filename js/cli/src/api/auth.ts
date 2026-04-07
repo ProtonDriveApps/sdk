@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 
-import { Logger } from '../../../sdk/src';
+import { Logger } from '@protontech/drive-sdk';
+
 import { Credentials } from '../credentials';
 import { VERIFICATION_STATUS } from '../crypto/lib';
 import { type ApiInterface as CryptoApiInterface } from '../crypto/lib/worker/api';

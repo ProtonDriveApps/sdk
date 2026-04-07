@@ -1,8 +1,9 @@
-import { Logger } from '../../../sdk/src';
+import { Logger } from '@protontech/drive-sdk';
+
 import type { Credentials, CredentialsStore } from './interface';
 import { parseStoredSnapshot } from './parseCredentials';
 
-const SECRET_SERVICE = 'ch.proton.drive-sdk-cli';
+const SECRET_SERVICE = 'ch.proton.drive/drive-sdk-cli';
 const SECRET_NAME = 'auth-session';
 
 export class SecretsSessionStore implements CredentialsStore {

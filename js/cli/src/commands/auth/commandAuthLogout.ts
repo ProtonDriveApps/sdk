@@ -1,4 +1,4 @@
-import { Command, ActionArgs } from '../interface';
+import { type Command, type ActionArgs } from '../../cli';
 
 export class CommandAuthLogout implements Command {
     group = 'auth';
