@@ -1,5 +1,15 @@
 # Changelog
 
+## cs/v0.13.2 (2026-04-07)
+
+* Resume continuation only when active
+* Log network error and retries in kotlin
+
+## cs/v0.13.1 (2026-04-03)
+
+* Update logs from kotlin resume api
+* Fix feature flag parsing in kotlin
+
 ## cs/v0.13.0 (2026-04-02)
 
 * Keep http request body in kotlin memory for retries
