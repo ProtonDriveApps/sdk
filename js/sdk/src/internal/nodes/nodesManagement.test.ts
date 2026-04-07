@@ -4,9 +4,9 @@ import { NodesCryptoService } from './cryptoService';
 import { NodesAccess } from './nodesAccess';
 import { DecryptedNode } from './interface';
 import { NodesManagement } from './nodesManagement';
-import { NodeResult } from '../../interface';
+import { NodeResult, NodeResultWithError } from '../../interface';
 import { NodeOutOfSyncError } from './errors';
-import { ValidationError } from '../../errors';
+import { NodeWithSameNameExistsValidationError, ValidationError } from '../../errors';
 
 describe('NodesManagement', () => {
     let apiService: NodeAPIService;
@@ -261,6 +261,42 @@ describe('NodesManagement', () => {
                 ...encryptedCrypto,
             },
         );
+    });
+
+    it('moveNodes yields NodeWithSameNameExistsValidationError in case of duplicate node name', async () => {
+        const encryptedCrypto = {
+            encryptedName: 'movedArmoredNodeName',
+            hash: 'movedHash',
+            armoredNodePassphrase: 'movedArmoredNodePassphrase',
+            armoredNodePassphraseSignature: 'movedArmoredNodePassphraseSignature',
+            signatureEmail: 'movedSignatureEmail',
+            nameSignatureEmail: 'movedNameSignatureEmail',
+        };
+        cryptoService.encryptNodeWithNewParent = jest.fn().mockResolvedValue(encryptedCrypto);
+        const error = new NodeWithSameNameExistsValidationError('Node with same name exists', 2500, 'existingNodeUid');
+        apiService.moveNode = jest.fn().mockRejectedValue(error);
+
+        const results: NodeResultWithError[] = [];
+        for await (const result of management.moveNodes(['nodeUid'], 'newParentNodeUid')) {
+            results.push(result);
+        }
+
+        expect(results).toHaveLength(1);
+        expect(results[0]).toEqual({ uid: 'nodeUid', ok: false, error });
+        expect(results[0].ok === false && results[0].error).toBeInstanceOf(NodeWithSameNameExistsValidationError);
+    });
+
+    it('moveNodes yields NodeResultWithError with Error on failure', async () => {
+        const error = new Error('move failed');
+        cryptoService.encryptNodeWithNewParent = jest.fn().mockRejectedValue(error);
+
+        const results: NodeResultWithError[] = [];
+        for await (const result of management.moveNodes(['nodeUid'], 'newParentNodeUid')) {
+            results.push(result);
+        }
+
+        expect(results).toHaveLength(1);
+        expect(results[0]).toEqual({ uid: 'nodeUid', ok: false, error });
     });
 
     it('copyNode manages copy and updates cache', async () => {

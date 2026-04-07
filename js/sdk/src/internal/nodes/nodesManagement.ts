@@ -1,6 +1,14 @@
 import { c } from 'ttag';
 
-import { MemberRole, NodeType, NodeResult, NodeResultWithNewUid, resultOk, InvalidNameError } from '../../interface';
+import {
+    MemberRole,
+    NodeType,
+    NodeResult,
+    NodeResultWithNewUid,
+    resultOk,
+    InvalidNameError,
+    NodeResultWithError,
+} from '../../interface';
 import { AbortError, ValidationError } from '../../errors';
 import { createErrorFromUnknown, getErrorMessage } from '../errors';
 import { splitNodeUid } from '../uids';
@@ -107,7 +115,11 @@ export abstract class NodesManagementBase<
     }
 
     // Improvement requested: move nodes in parallel
-    async *moveNodes(nodeUids: string[], newParentNodeUid: string, signal?: AbortSignal): AsyncGenerator<NodeResult> {
+    async *moveNodes(
+        nodeUids: string[],
+        newParentNodeUid: string,
+        signal?: AbortSignal,
+    ): AsyncGenerator<NodeResultWithError> {
         for (const nodeUid of nodeUids) {
             if (signal?.aborted) {
                 throw new AbortError(c('Error').t`Move operation aborted`);
@@ -122,7 +134,7 @@ export abstract class NodesManagementBase<
                 yield {
                     uid: nodeUid,
                     ok: false,
-                    error: getErrorMessage(error),
+                    error: error instanceof Error ? error : new Error(getErrorMessage(error), { cause: error }),
                 };
             }
         }
