@@ -43,7 +43,7 @@ export function initNodesModule(
     const cache = new NodesCache(telemetry.getLogger('nodes-cache'), driveEntitiesCache);
     const cryptoCache = new NodesCryptoCache(telemetry.getLogger('nodes-cache'), driveCryptoCache);
     const cryptoReporter = new NodesCryptoReporter(telemetry, sharesService);
-    const cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, cryptoReporter);
+    const cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, sharesService, cryptoReporter);
     const nodesAccess = new NodesAccess(telemetry, api, cache, cryptoCache, cryptoService, sharesService);
     const nodesEventHandler = new NodesEventsHandler(telemetry.getLogger('nodes-events'), cache);
     const nodesManagement = new NodesManagement(api, cryptoCache, cryptoService, nodesAccess);
