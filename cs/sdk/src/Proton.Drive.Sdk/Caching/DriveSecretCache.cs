@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Nodes;
@@ -22,11 +22,12 @@ internal sealed class DriveSecretCache(ICacheRepository repository) : IDriveSecr
 
     public async ValueTask<PgpPrivateKey?> TryGetShareKeyAsync(ShareId shareId, CancellationToken cancellationToken)
     {
-        var serializedValue = await _repository.TryGetAsync(GetShareKeyCacheKey(shareId), cancellationToken).ConfigureAwait(false);
+        var (exists, shareKey) = await _repository.TryGetDeserializedValueAsync(
+            GetShareKeyCacheKey(shareId),
+            SecretsSerializerContext.Default.PgpPrivateKey,
+            cancellationToken).ConfigureAwait(false);
 
-        return serializedValue is not null
-            ? JsonSerializer.Deserialize(serializedValue, SecretsSerializerContext.Default.PgpPrivateKey)
-            : null;
+        return exists ? shareKey : null;
     }
 
     public ValueTask SetFolderSecretsAsync(
@@ -41,11 +42,12 @@ internal sealed class DriveSecretCache(ICacheRepository repository) : IDriveSecr
 
     public async ValueTask<Result<FolderSecrets, DegradedFolderSecrets>?> TryGetFolderSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken)
     {
-        var serializedValue = await _repository.TryGetAsync(GetFolderSecretsCacheKey(nodeId), cancellationToken).ConfigureAwait(false);
+        var (exists, folderSecrets) = await _repository.TryGetDeserializedValueAsync(
+            GetFolderSecretsCacheKey(nodeId),
+            DriveSecretsSerializerContext.Default.NullableResultFolderSecretsDegradedFolderSecrets,
+            cancellationToken).ConfigureAwait(false);
 
-        return serializedValue is not null
-            ? JsonSerializer.Deserialize(serializedValue, DriveSecretsSerializerContext.Default.NullableResultFolderSecretsDegradedFolderSecrets)
-            : null;
+        return exists ? folderSecrets : null;
     }
 
     public ValueTask SetFileSecretsAsync(
@@ -60,11 +62,12 @@ internal sealed class DriveSecretCache(ICacheRepository repository) : IDriveSecr
 
     public async ValueTask<Result<FileSecrets, DegradedFileSecrets>?> TryGetFileSecretsAsync(NodeUid nodeId, CancellationToken cancellationToken)
     {
-        var serializedValue = await _repository.TryGetAsync(GetFileSecretsCacheKey(nodeId), cancellationToken).ConfigureAwait(false);
+        var (exists, fileSecrets) = await _repository.TryGetDeserializedValueAsync(
+            GetFileSecretsCacheKey(nodeId),
+            DriveSecretsSerializerContext.Default.NullableResultFileSecretsDegradedFileSecrets,
+            cancellationToken).ConfigureAwait(false);
 
-        return serializedValue is not null
-            ? JsonSerializer.Deserialize(serializedValue, DriveSecretsSerializerContext.Default.NullableResultFileSecretsDegradedFileSecrets)
-            : null;
+        return exists ? fileSecrets : null;
     }
 
     public ValueTask ClearAsync()

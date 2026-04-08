@@ -12,6 +12,29 @@ internal static class CacheRepositoryExtensions
         return repository.SetAsync(key, value, [], cancellationToken);
     }
 
+    public static async ValueTask<(bool Exists, T? Value)> TryGetDeserializedValueAsync<T>(
+        this ICacheRepository repository,
+        string key,
+        JsonTypeInfo<T> typeInfo,
+        CancellationToken cancellationToken)
+    {
+        var serializedValue = await repository.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+        if (serializedValue is null)
+        {
+            return default;
+        }
+
+        try
+        {
+            return (true, JsonSerializer.Deserialize(serializedValue, typeInfo));
+        }
+        catch
+        {
+            await repository.RemoveAsync(key, cancellationToken).ConfigureAwait(false);
+            return default;
+        }
+    }
+
     public static async ValueTask SetCompleteCollection<T>(
         this ICacheRepository repository,
         IEnumerable<T> values,

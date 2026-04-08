@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Serialization;
@@ -38,11 +38,10 @@ internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEnti
 
     public async ValueTask<(bool Exists, VolumeId? VolumeId)> TryGetMainVolumeIdAsync(CancellationToken cancellationToken)
     {
-        var serializedValue = await _repository.TryGetAsync(MainVolumeIdCacheKey, cancellationToken).ConfigureAwait(false);
-
-        return serializedValue is not null
-            ? (true, JsonSerializer.Deserialize(serializedValue, DriveEntitiesSerializerContext.Default.NullableVolumeId))
-            : (false, null);
+        return await _repository.TryGetDeserializedValueAsync(
+            MainVolumeIdCacheKey,
+            DriveEntitiesSerializerContext.Default.NullableVolumeId,
+            cancellationToken).ConfigureAwait(false);
     }
 
     public ValueTask SetPhotosVolumeIdAsync(VolumeId? volumeId, CancellationToken cancellationToken)
@@ -54,11 +53,10 @@ internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEnti
 
     public async ValueTask<(bool Exists, VolumeId? VolumeId)> TryGetPhotosVolumeIdAsync(CancellationToken cancellationToken)
     {
-        var serializedValue = await _repository.TryGetAsync(PhotosVolumeIdCacheKey, cancellationToken).ConfigureAwait(false);
-
-        return serializedValue is not null
-            ? (true, JsonSerializer.Deserialize(serializedValue, DriveEntitiesSerializerContext.Default.NullableVolumeId))
-            : (false, null);
+        return await _repository.TryGetDeserializedValueAsync(
+            PhotosVolumeIdCacheKey,
+            DriveEntitiesSerializerContext.Default.NullableVolumeId,
+            cancellationToken).ConfigureAwait(false);
     }
 
     public ValueTask SetMyFilesShareIdAsync(ShareId shareId, CancellationToken cancellationToken)
@@ -68,9 +66,12 @@ internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEnti
 
     public async ValueTask<ShareId?> TryGetMyFilesShareIdAsync(CancellationToken cancellationToken)
     {
-        var value = await _repository.TryGetAsync(MyFilesShareIdCacheKey, cancellationToken).ConfigureAwait(false);
+        var (exists, value) = await _repository.TryGetDeserializedValueAsync(
+            MyFilesShareIdCacheKey,
+            DriveEntitiesSerializerContext.Default.ShareId,
+            cancellationToken).ConfigureAwait(false);
 
-        return value is not null ? (ShareId)value : null;
+        return exists ? value : null;
     }
 
     public ValueTask SetPhotosShareIdAsync(ShareId shareId, CancellationToken cancellationToken)
@@ -80,9 +81,12 @@ internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEnti
 
     public async ValueTask<ShareId?> TryGetPhotosShareIdAsync(CancellationToken cancellationToken)
     {
-        var value = await _repository.TryGetAsync(PhotosShareIdCacheKey, cancellationToken).ConfigureAwait(false);
+        var (exists, value) = await _repository.TryGetDeserializedValueAsync(
+            PhotosShareIdCacheKey,
+            DriveEntitiesSerializerContext.Default.ShareId,
+            cancellationToken).ConfigureAwait(false);
 
-        return value is not null ? (ShareId)value : null;
+        return exists ? value : null;
     }
 
     public ValueTask SetShareAsync(Share share, CancellationToken cancellationToken)
@@ -94,11 +98,12 @@ internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEnti
 
     public async ValueTask<Share?> TryGetShareAsync(ShareId shareId, CancellationToken cancellationToken)
     {
-        var serializedValue = await _repository.TryGetAsync(GetShareCacheKey(shareId), cancellationToken).ConfigureAwait(false);
+        var (exists, share) = await _repository.TryGetDeserializedValueAsync(
+            GetShareCacheKey(shareId),
+            DriveEntitiesSerializerContext.Default.Share,
+            cancellationToken).ConfigureAwait(false);
 
-        return serializedValue is not null
-            ? JsonSerializer.Deserialize(serializedValue, DriveEntitiesSerializerContext.Default.Share)
-            : null;
+        return exists ? share : null;
     }
 
     public ValueTask SetNodeAsync(
@@ -117,11 +122,12 @@ internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEnti
 
     public async ValueTask<CachedNodeInfo?> TryGetNodeAsync(NodeUid nodeId, CancellationToken cancellationToken)
     {
-        var serializedValue = await _repository.TryGetAsync(GetNodeCacheKey(nodeId), cancellationToken).ConfigureAwait(false);
+        var (exists, node) = await _repository.TryGetDeserializedValueAsync(
+            GetNodeCacheKey(nodeId),
+            DriveEntitiesSerializerContext.Default.CachedNodeInfo,
+            cancellationToken).ConfigureAwait(false);
 
-        return serializedValue is not null
-            ? JsonSerializer.Deserialize(serializedValue, DriveEntitiesSerializerContext.Default.CachedNodeInfo)
-            : null;
+        return exists ? node : null;
     }
 
     public async ValueTask RemoveNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
