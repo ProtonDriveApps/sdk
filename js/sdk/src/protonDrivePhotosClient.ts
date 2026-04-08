@@ -13,6 +13,7 @@ import {
     ShareNodeSettings,
     ShareResult,
     UnshareNodeSettings,
+    ProtonInvitation,
     ProtonInvitationOrUid,
     NonProtonInvitationOrUid,
     ProtonInvitationWithNode,
@@ -406,6 +407,22 @@ export class ProtonDrivePhotosClient {
             this.logger.info(`Partially unsharing ${getUid(nodeUid)}`);
         }
         return this.sharing.management.unshareNode(getUid(nodeUid), settings);
+    }
+
+    /**
+     * Convert a non-Proton invitation to an internal invitation.
+     * This is called automatically in the background when the SDK receives
+     * a metadata update event, but can also be triggered manually.
+     *
+     * @param nodeUid - Node entity or its UID string.
+     * @param invitationOrUid - Non-Proton invitation entity or its UID string.
+     */
+    async convertNonProtonInvitation(
+        nodeUid: NodeOrUid,
+        invitationOrUid: NonProtonInvitationOrUid,
+    ): Promise<ProtonInvitation> {
+        this.logger.info(`Converting non-Proton invitation ${getUid(invitationOrUid)} for node ${getUid(nodeUid)}`);
+        return this.sharing.management.convertNonProtonInvitation(getUid(nodeUid), getUid(invitationOrUid));
     }
 
     /**

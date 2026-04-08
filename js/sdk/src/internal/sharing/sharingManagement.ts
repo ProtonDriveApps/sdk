@@ -16,7 +16,7 @@ import {
     SharePublicLinkSettingsObject,
 } from '../../interface';
 import { ErrorCode } from '../apiService';
-import { splitNodeUid } from '../uids';
+import { splitNodeUid, splitInvitationUid } from '../uids';
 import { getErrorMessage } from '../errors';
 import { SharingAPIService } from './apiService';
 import { PUBLIC_LINK_GENERATED_PASSWORD_LENGTH, SharingCryptoService } from './cryptoService';
@@ -596,8 +596,52 @@ export class SharingManagement {
         await this.apiService.deleteExternalInvitation(invitationUid);
     }
 
-    private async convertExternalInvitationsToInternal(): Promise<void> {
-        // FIXME
+    async convertNonProtonInvitation(nodeUid: string, nonProtonInvitationUid: string): Promise<ProtonInvitation> {
+        const { invitationId: externalInvitationId } = splitInvitationUid(nonProtonInvitationUid);
+
+        const node = await this.nodesService.getNode(nodeUid);
+        if (node.directRole !== MemberRole.Admin) {
+            throw new ValidationError(c('Error').t`Only admins can convert non-Proton invitations`);
+        }
+
+        const [currentSharing, inviter] = await Promise.all([
+            this.getInternalSharingInfo(nodeUid),
+            this.nodesService.getRootNodeEmailKey(nodeUid),
+        ]);
+        if (!currentSharing) {
+            throw new ValidationError(c('Error').t`The node is not shared anymore`);
+        }
+
+        const externalInvitation = currentSharing.nonProtonInvitations.find(
+            (invitation) => invitation.uid === nonProtonInvitationUid,
+        );
+        if (!externalInvitation) {
+            throw new ValidationError(c('Error').t`Invitation not found`);
+        }
+        this.logger.info(
+            `Converting non-Proton invitation for ${externalInvitation.inviteeEmail} to internal for node ${nodeUid}`,
+        );
+        const invitationCrypto = await this.cryptoService.encryptInvitation(
+            currentSharing.share.passphraseSessionKey,
+            inviter.addressKey,
+            externalInvitation.inviteeEmail,
+            true, // Force refresh keys: the invitee just created a Proton account, so we have "absent" keys in cache
+        );
+        const encryptedInvitation = await this.apiService.inviteProtonUser(
+            currentSharing.share.shareId,
+            {
+                addedByEmail: inviter.email,
+                inviteeEmail: externalInvitation.inviteeEmail,
+                role: externalInvitation.role,
+                ...invitationCrypto,
+            },
+            {},
+            externalInvitationId,
+        );
+        return {
+            ...encryptedInvitation,
+            addedByEmail: resultOk(encryptedInvitation.addedByEmail),
+        };
     }
 
     private async removeMember(memberUid: string): Promise<void> {

@@ -1138,4 +1138,77 @@ describe('SharingManagement', () => {
             expect(apiService.resendExternalInvitationEmail).not.toHaveBeenCalled();
         });
     });
+
+    describe('convertNonProtonInvitation', () => {
+        const nodeUid = 'volumeId~nodeId';
+        const externalInvitationId = 'inv123';
+        const externalInvitationUid = `${DEFAULT_SHARE_ID}~${externalInvitationId}`;
+        const externalInvitation: NonProtonInvitation = {
+            uid: externalInvitationUid,
+            inviteeEmail: 'external@example.com',
+            addedByEmail: resultOk('inviter@example.com'),
+            role: MemberRole.Viewer,
+            invitationTime: new Date(),
+            state: NonProtonInvitationState.Pending,
+        };
+
+        beforeEach(() => {
+            nodesService.getNode = jest.fn().mockResolvedValue({
+                nodeUid,
+                shareId: DEFAULT_SHARE_ID,
+                directRole: MemberRole.Admin,
+                name: { ok: true, value: 'name' },
+            });
+            apiService.getShareExternalInvitations = jest.fn().mockResolvedValue([externalInvitation]);
+        });
+
+        it('should throw if caller is not admin', async () => {
+            nodesService.getNode = jest.fn().mockResolvedValue({
+                nodeUid,
+                shareId: DEFAULT_SHARE_ID,
+                directRole: MemberRole.Viewer,
+                name: { ok: true, value: 'name' },
+            });
+
+            await expect(
+                sharingManagement.convertNonProtonInvitation(nodeUid, externalInvitationUid),
+            ).rejects.toThrow(ValidationError);
+        });
+
+        it('should throw if no sharing info found', async () => {
+            nodesService.getNode = jest.fn().mockResolvedValue({
+                nodeUid,
+                shareId: undefined,
+                directRole: MemberRole.Admin,
+                name: { ok: true, value: 'name' },
+            });
+
+            await expect(
+                sharingManagement.convertNonProtonInvitation(nodeUid, externalInvitationUid),
+            ).rejects.toThrow(ValidationError);
+        });
+
+        it('should throw if external invitation ID is not found', async () => {
+            await expect(
+                sharingManagement.convertNonProtonInvitation(nodeUid, 'unknownShareId~unknownInvId'),
+            ).rejects.toThrow(ValidationError);
+        });
+
+        it('should invite proton user with force-refreshed keys and the external invitation ID', async () => {
+            await sharingManagement.convertNonProtonInvitation(nodeUid, externalInvitationUid);
+
+            expect(cryptoService.encryptInvitation).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                externalInvitation.inviteeEmail,
+                true,
+            );
+            expect(apiService.inviteProtonUser).toHaveBeenCalledWith(
+                DEFAULT_SHARE_ID,
+                expect.objectContaining({ inviteeEmail: externalInvitation.inviteeEmail, role: externalInvitation.role }),
+                {},
+                externalInvitationId,
+            );
+        });
+    });
 });
