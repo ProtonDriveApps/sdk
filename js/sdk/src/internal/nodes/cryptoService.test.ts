@@ -86,6 +86,10 @@ describe('nodesCryptoService', () => {
         };
         // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
+            getRootIDs: jest.fn(async () => ({
+                volumeId: 'volumeId',
+                rootNodeId: 'rootNodeId',
+            })),
             getMyFilesShareMemberEmailKey: jest.fn(async () => ({
                 email: 'email',
                 addressKey: 'key' as unknown as PrivateKey,
@@ -94,7 +98,7 @@ describe('nodesCryptoService', () => {
         };
 
         const nodesCryptoReporter = new NodesCryptoReporter(telemetry, sharesService);
-        cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, nodesCryptoReporter);
+        cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, sharesService, nodesCryptoReporter);
     });
 
     const parentKey = 'parentKey' as unknown as PrivateKey;
@@ -579,6 +583,7 @@ describe('nodesCryptoService', () => {
         const encryptedNode = {
             uid: 'volumeId~nodeId',
             parentUid: 'volumeId~parentId',
+            creationTime: new Date('2026-01-01'),
             encryptedCrypto: {
                 signatureEmail: 'signatureEmail',
                 nameSignatureEmail: 'nameSignatureEmail',
@@ -786,7 +791,13 @@ describe('nodesCryptoService', () => {
                         }) as any,
                 );
 
-                const result = await cryptoService.decryptNode(encryptedNode, parentKey);
+                const result = await cryptoService.decryptNode(
+                    {
+                        ...encryptedNode,
+                        creationTime: new Date('2026-01-01'),
+                    },
+                    parentKey,
+                );
                 verifyResult(result, {
                     keyAuthor: {
                         ok: false,
@@ -796,9 +807,47 @@ describe('nodesCryptoService', () => {
                         },
                     },
                 });
+                expect(account.getOwnAddresses).not.toHaveBeenCalled();
                 verifyLogEventVerificationError({
                     field: 'nodeContentKey',
                     error: 'verification error',
+                });
+            });
+
+            it('on content key packet with skipped fallback verification for non-own volume', async () => {
+                driveCrypto.decryptAndVerifySessionKey = jest.fn(
+                    async () =>
+                        Promise.resolve({
+                            sessionKey: 'contentKeyPacketSessionKey',
+                            verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                            verificationErrors: [new Error('verification error')],
+                        }) as any,
+                );
+
+                const result = await cryptoService.decryptNode(
+                    {
+                        ...encryptedNode,
+                        uid: 'otherVolumeId~nodeId',
+                        creationTime: new Date('2022-01-01'),
+                    },
+                    parentKey,
+                );
+
+                verifyResult(result, {
+                    keyAuthor: {
+                        ok: false,
+                        error: {
+                            claimedAuthor: 'signatureEmail',
+                            error: 'Signature verification for content key failed: verification error',
+                        },
+                    },
+                });
+                expect(account.getOwnAddresses).not.toHaveBeenCalled();
+                verifyLogEventVerificationError({
+                    field: 'nodeContentKey',
+                    error: 'verification error',
+                    uid: 'otherVolumeId~nodeId',
+                    fromBefore2024: true,
                 });
             });
 
@@ -829,6 +878,7 @@ describe('nodesCryptoService', () => {
                     parentKey,
                 );
                 verifyResult(result);
+                expect(account.getOwnAddresses).toHaveBeenCalled();
                 expect(driveCrypto.decryptAndVerifySessionKey).toHaveBeenCalledTimes(2);
                 expect(driveCrypto.decryptAndVerifySessionKey).toHaveBeenCalledWith(
                     'base64ContentKeyPacket',

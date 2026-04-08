@@ -100,7 +100,13 @@ export function initSharingPublicNodesModule(
     const cache = new NodesCache(telemetry.getLogger('nodes-cache'), driveEntitiesCache);
     const cryptoCache = new NodesCryptoCache(telemetry.getLogger('nodes-cache'), driveCryptoCache);
     const cryptoReporter = new SharingPublicCryptoReporter(telemetry);
-    const cryptoService = new SharingPublicNodesCryptoService(telemetry, driveCrypto, account, cryptoReporter);
+    const cryptoService = new SharingPublicNodesCryptoService(
+        telemetry,
+        driveCrypto,
+        account,
+        sharesService,
+        cryptoReporter,
+    );
     const nodesAccess = new SharingPublicNodesAccess(
         telemetry,
         api,
