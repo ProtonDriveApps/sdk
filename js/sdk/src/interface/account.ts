@@ -28,9 +28,10 @@ export interface ProtonDriveAccount {
      *
      * Does not throw if there is no public key for given email, but returns empty array.
      *
+     * @param forceRefresh If true, bypasses the cache and fetches fresh keys from the API.
      * @throws Error Only if there is an error while fetching keys.
      */
-    getPublicKeys(email: string): Promise<PublicKey[]>;
+    getPublicKeys(email: string, forceRefresh?: boolean): Promise<PublicKey[]>;
 }
 
 export interface ProtonDriveAccountAddress {

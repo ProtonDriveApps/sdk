@@ -182,11 +182,12 @@ export class SharingCryptoService {
         shareSessionKey: SessionKey,
         inviterKey: PrivateKey,
         inviteeEmail: string,
+        forceRefreshKeys?: boolean,
     ): Promise<{
         base64KeyPacket: string;
         base64KeyPacketSignature: string;
     }> {
-        const inviteePublicKeys = await this.account.getPublicKeys(inviteeEmail);
+        const inviteePublicKeys = await this.account.getPublicKeys(inviteeEmail, forceRefreshKeys);
         const result = await this.driveCrypto.encryptInvitation(shareSessionKey, inviteePublicKeys[0], inviterKey);
         return result;
     }
