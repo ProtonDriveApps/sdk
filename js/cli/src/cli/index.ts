@@ -54,6 +54,7 @@ import { CommandRevisionDelete } from './revision/commandRevisionDelete';
 import { CommandRevisionDownload } from './revision/commandRevisionDownload';
 import { CommandRevisionList } from './revision/commandRevisionList';
 import { CommandRevisionRestore } from './revision/commandRevisionRestore';
+import { CommandSharingConvertNonProtonInvitation } from './sharing/commandSharingConvertNonProtonInvitation';
 import { CommandSharingInvite } from './sharing/commandSharingInvite';
 import { CommandSharingRemove } from './sharing/commandSharingRemove';
 import { CommandSharingRemoveUrl } from './sharing/commandSharingRemoveUrl';
@@ -97,6 +98,7 @@ const COMMANDS = [
     new CommandRevisionDelete(),
     new CommandSharingStatus(),
     new CommandSharingInvite(),
+    new CommandSharingConvertNonProtonInvitation(),
     new CommandSharingRemove(),
     new CommandSharingSetUrl(),
     new CommandSharingRemoveUrl(),

@@ -433,6 +433,7 @@ export class SharingAPIService {
         shareId: string,
         invitation: EncryptedInvitationRequest,
         emailDetails: { message?: string; nodeName?: string } = {},
+        externalInvitationId: string | null = null,
     ): Promise<EncryptedInvitation> {
         const response = await this.apiService.post<PostInviteProtonUserRequest, PostInviteProtonUserResponse>(
             `drive/v2/shares/${shareId}/invitations`,
@@ -443,7 +444,7 @@ export class SharingAPIService {
                     Permissions: memberRoleToPermission(invitation.role),
                     KeyPacket: invitation.base64KeyPacket,
                     KeyPacketSignature: invitation.base64KeyPacketSignature,
-                    ExternalInvitationID: null,
+                    ExternalInvitationID: externalInvitationId,
                 },
                 EmailDetails: {
                     Message: emailDetails.message,
