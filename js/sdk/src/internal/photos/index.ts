@@ -123,7 +123,7 @@ export function initPhotosNodesModule(
     const cache = new PhotosNodesCache(telemetry.getLogger('nodes-cache'), driveEntitiesCache);
     const cryptoCache = new NodesCryptoCache(telemetry.getLogger('nodes-cache'), driveCryptoCache);
     const cryptoReporter = new NodesCryptoReporter(telemetry, sharesService);
-    const cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, cryptoReporter);
+    const cryptoService = new NodesCryptoService(telemetry, driveCrypto, account, sharesService, cryptoReporter);
     const nodesAccess = new PhotosNodesAccess(telemetry, api, cache, cryptoCache, cryptoService, sharesService);
     const nodesEventHandler = new NodesEventsHandler(telemetry.getLogger('nodes-events'), cache);
     const nodesManagement = new PhotosNodesManagement(api, cryptoCache, cryptoService, nodesAccess);

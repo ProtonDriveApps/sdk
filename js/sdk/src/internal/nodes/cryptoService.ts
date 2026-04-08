@@ -33,7 +33,9 @@ import {
     DecryptedUnparsedRevision,
     NodeSigningKeys,
     EncryptedNodeFileCrypto,
+    SharesService,
 } from './interface';
+import { splitNodeUid } from '../uids';
 
 export interface NodesCryptoReporter {
     handleClaimedAuthor(
@@ -76,6 +78,7 @@ export class NodesCryptoService {
         telemetry: ProtonDriveTelemetry,
         protected driveCrypto: DriveCrypto,
         private account: ProtonDriveAccount,
+        private sharesService: Pick<SharesService, 'getRootIDs'>,
         private reporter: NodesCryptoReporter,
     ) {
         this.logger = telemetry.getLogger('nodes-crypto');
@@ -538,6 +541,15 @@ export class NodesCryptoService {
             return result;
         }
 
+        const { volumeId: ownVolumeId } = await this.sharesService.getRootIDs();
+        const { volumeId: nodesVolumeId } = splitNodeUid(node.uid);
+
+        // If the node is not in the own volume, skip the fallback verification,
+        // because it is not possible to load all owners' address keys.
+        if (ownVolumeId !== nodesVolumeId) {
+            return result;
+        }
+
         const allAddresses = await this.account.getOwnAddresses();
         const allKeys = allAddresses.flatMap((address) => address.keys.map(({ key }) => key));
 
@@ -745,7 +757,10 @@ export class NodesCryptoService {
         };
     }
 
-    async generateNameHashes(parentHashKey: Uint8Array<ArrayBuffer>, names: string[]): Promise<{ name: string; hash: string }[]> {
+    async generateNameHashes(
+        parentHashKey: Uint8Array<ArrayBuffer>,
+        names: string[],
+    ): Promise<{ name: string; hash: string }[]> {
         return Promise.all(
             names.map(async (name) => ({
                 name,
