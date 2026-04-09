@@ -206,6 +206,61 @@ describe('PhotosNodesCache', () => {
 });
 
 describe('PhotosNodesAccess', () => {
+    describe('getParentKeys', () => {
+        let access: PhotosNodesAccess;
+        let getNodeKeysMock: jest.Mock;
+        let getSharePrivateKeyMock: jest.Mock;
+
+        beforeEach(() => {
+            getNodeKeysMock = jest.fn().mockResolvedValue({ key: 'key', hashKey: 'hashKey' });
+            getSharePrivateKeyMock = jest.fn().mockResolvedValue('shareKey');
+            access = new PhotosNodesAccess(
+                getMockTelemetry(),
+                // @ts-expect-error No need to implement for this test
+                {},
+                {},
+                { getNodeKeys: jest.fn().mockRejectedValue(new Error()) },
+                {},
+                { getSharePrivateKey: getSharePrivateKeyMock },
+            );
+            jest.spyOn(access, 'getNodeKeys').mockImplementation(getNodeKeysMock);
+        });
+
+        it('should use parentUid path when set, ignoring shareId', async () => {
+            await access.getParentKeys({
+                uid: 'v~node',
+                parentUid: 'v~parent',
+                shareId: 'publicLinkShareId',
+                photo: undefined,
+            });
+            expect(getNodeKeysMock).toHaveBeenCalledWith('v~parent');
+            expect(getSharePrivateKeyMock).not.toHaveBeenCalled();
+        });
+
+        it('should use album key when no parentUid but has albums, even when shareId is set', async () => {
+            await access.getParentKeys({
+                uid: 'v~node',
+                parentUid: undefined,
+                shareId: 'publicLinkShareId',
+                // @ts-expect-error No need to implement for this test
+                photo: { albums: [{ nodeUid: 'v~album' }] },
+            });
+            expect(getNodeKeysMock).toHaveBeenCalledWith('v~album');
+            expect(getSharePrivateKeyMock).not.toHaveBeenCalled();
+        });
+
+        it('should fall back to shareId when no parentUid and no albums', async () => {
+            await access.getParentKeys({
+                uid: 'v~node',
+                parentUid: undefined,
+                shareId: 'rootShareId',
+                // @ts-expect-error No need to implement for this test
+                photo: { albums: [] },
+            });
+            expect(getSharePrivateKeyMock).toHaveBeenCalledWith('rootShareId');
+        });
+    });
+
     describe('parseNode', () => {
         it('should keep photo type and add photo object', async () => {
             const telemetry = getMockTelemetry();
@@ -222,7 +277,14 @@ describe('PhotosNodesAccess', () => {
             const sharesService: SharesService = {};
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const nodesAccess = new PhotosNodesAccess(telemetry, apiService, cacheService, cryptoCache, cryptoService, sharesService);
+            const nodesAccess = new PhotosNodesAccess(
+                telemetry,
+                apiService,
+                cacheService,
+                cryptoCache,
+                cryptoService,
+                sharesService,
+            );
 
             const unparsedNode = {
                 uid: 'volumeId~linkId',
