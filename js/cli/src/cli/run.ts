@@ -1,5 +1,7 @@
 import { parseArgs } from 'util';
 
+import { ProtonDriveError } from '@protontech/drive-sdk';
+
 import { init } from '../init';
 import { InitConfig } from '../config';
 import { AuthRequiredError } from './errors';
@@ -18,6 +20,11 @@ export async function runSingleInvocation(
     try {
         await runCommand(commands, argv, initOptions, session);
     } catch (error: unknown) {
+        if (error instanceof ProtonDriveError) {
+            console.error(error.message);
+            process.exit(1);
+            return;
+        }
         reportFatalError(error);
         process.exit(1);
     }

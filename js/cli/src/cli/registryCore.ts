@@ -41,7 +41,7 @@ export function getCommand(commands: Command[], groupName: string, commandName: 
     }
 
     printUsage(commands);
-    throw new CommandNotFoundError();
+    throw new CommandNotFoundError(`Command not found: ${groupName} ${commandName}`);
 }
 
 export function validateCommandArguments(command: Command, args: string[], values: { [name: string]: unknown }) {
@@ -51,7 +51,11 @@ export function validateCommandArguments(command: Command, args: string[], value
     }
 
     if (command.args) {
-        if (args.length !== command.args.length) {
+        const hasVariableArgs = command.args.some((arg) => arg.endsWith('...'));
+        const hasExpectedArgs = hasVariableArgs
+            ? args.length >= command.args.length
+            : args.length === command.args.length;
+        if (!hasExpectedArgs) {
             printCommandUsage(command);
             throw new InvalidCommandArgumentsError(`Expected ${command.args.length} arguments, got ${args.length}`);
         }

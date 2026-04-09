@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { ProtonDriveClient, MaybeNode, MaybeMissingNode } from '@protontech/drive-sdk';
+import { ProtonDriveClient, MaybeNode, MaybeMissingNode, ValidationError } from '@protontech/drive-sdk';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 import { ProtonDrivePublicLinkClient } from '@protontech/drive-sdk/protonDrivePublicLinkClient';
 
@@ -49,8 +49,49 @@ export class Paths {
         ].map((path) => `/${path}`);
     }
 
-    getPath(path: string): Path {
-        return new Path(this.sdk, this.photosSdk, path);
+    async getNodes(pathStrings: string[], supportedTypes?: PathType[]): Promise<MaybeNode[]> {
+        const paths = this.getPaths(pathStrings, supportedTypes);
+        const nodes = [];
+        for (const path of paths) {
+            nodes.push(await path.getNode());
+        }
+        return nodes;
+    }
+
+    getPaths(pathStrings: string[], supportedTypes?: PathType[]): Path[] {
+        let pathType: PathType | undefined;
+
+        if (pathStrings.length === 0) {
+            throw new ValidationError('At least one path is required');
+        }
+
+        const paths = [];
+        for (const pathString of pathStrings) {
+            const path = this.getPath(pathString, supportedTypes);
+
+            if (pathType === undefined) {
+                pathType = path.type;
+            } else if (pathType !== path.type) {
+                throw new ValidationError(`Operation across Drive and Photos is not supported`);
+            }
+
+            paths.push(path);
+        }
+
+        return paths;
+    }
+
+    async getNode(pathString: string, supportedTypes?: PathType[]): Promise<MaybeNode> {
+        const path = this.getPath(pathString, supportedTypes);
+        return await path.getNode();
+    }
+
+    getPath(path: string, supportedTypes?: PathType[]): Path {
+        const p = new Path(this.sdk, this.photosSdk, path);
+        if (supportedTypes && !supportedTypes.includes(p.type)) {
+            throw new ValidationError(`Path "${path}" is not supported`);
+        }
+        return p;
     }
 
     getPublicLinkPath(path: string): PublicLinkPath {
@@ -64,7 +105,7 @@ export class Paths {
         const { isCustomPasswordProtected } = await this.sdk.experimental.getPublicLinkInfo(url);
 
         if (isCustomPasswordProtected && !customPassword) {
-            throw new Error('Custom password is required');
+            throw new ValidationError('Custom password is required');
         }
 
         const isAnonymousContext = !this.auth.isLoggedIn();
@@ -118,7 +159,7 @@ export class Path {
         if (this.fullPath.startsWith(`${path.sep}albums`)) {
             return PathType.Albums;
         }
-        throw new Error(`Path "${this.fullPath}" not supported`);
+        throw new ValidationError(`Path "${this.fullPath}" not supported`);
     }
 
     get parentPath() {
@@ -155,7 +196,7 @@ export class Path {
         if (this.type === PathType.Trash || this.type === PathType.PhotosTrash) {
             const parts = this.sectionPath.split(path.sep);
             if (parts.length > 1) {
-                throw new Error('Browsing trashed folders is not supported');
+                throw new ValidationError('Browsing trashed folders is not supported');
             }
             return this.getTrashedNode(parts[0]);
         }
@@ -169,7 +210,7 @@ export class Path {
         if (this.type === PathType.Albums) {
             return this.getAlbumNodeByPath(this.sectionPath);
         }
-        throw new Error('Not implemented');
+        throw new ValidationError('Not implemented');
     }
 
     async getChild(name: string) {
@@ -198,7 +239,7 @@ export class Path {
                 return maybeNode;
             }
         }
-        throw new Error('Root node not found');
+        throw new ValidationError('Root node not found');
     }
 
     private async getTrashedNode(name: string) {
@@ -207,7 +248,7 @@ export class Path {
                 return maybeNode;
             }
         }
-        throw new Error('Trashed node not found');
+        throw new ValidationError('Trashed node not found');
     }
 
     private async getDevicesRootFolder(): Promise<MaybeNode> {
@@ -217,12 +258,12 @@ export class Path {
                 const [maybeMissingNode] = await Array.fromAsync(this.sdk.iterateNodes([device.rootFolderUid]));
                 const maybeNode = getMaybeNodeAndIgnoreMissingNode(maybeMissingNode);
                 if (!maybeNode) {
-                    throw new Error(`Node not found`);
+                    throw new ValidationError(`Node not found`);
                 }
                 return maybeNode;
             }
         }
-        throw new Error('Device not found');
+        throw new ValidationError('Device not found');
     }
 
     private async getNodeByPath(parentNode: MaybeNode, pathString: string) {
@@ -247,7 +288,7 @@ export class Path {
                 return maybeChild;
             }
         }
-        throw new Error(`Node not found: ${name}`);
+        throw new ValidationError(`Node not found: ${name}`);
     }
 
     private async getPhotoNodeByPath(pathString: string): Promise<MaybeNode> {
@@ -268,7 +309,7 @@ export class Path {
                 return maybeNode;
             }
         }
-        throw new Error(`Photo not found: ${name}`);
+        throw new ValidationError(`Photo not found: ${name}`);
     }
 
     private async getAlbumNodeByPath(pathString: string): Promise<MaybeNode> {
@@ -284,7 +325,7 @@ export class Path {
                 return maybeAlbum;
             }
         }
-        throw new Error(`Album not found: ${name}`);
+        throw new ValidationError(`Album not found: ${name}`);
     }
 }
 
@@ -330,7 +371,7 @@ export class PublicLinkPath {
                 return maybeChild;
             }
         }
-        throw new Error(`Node not found: ${name}`);
+        throw new ValidationError(`Node not found: ${name}`);
     }
 }
 

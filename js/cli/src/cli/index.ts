@@ -13,7 +13,7 @@ export {
     printIterable,
     printObject,
 } from './formatters';
-export { getClaimedSize, getName, getNode } from './node';
+export { getClaimedSize, getName, findName, getNode, getNodeUid } from './node';
 export { Path, Paths, PathType } from './paths';
 export { openBrowserUrl } from './openBrowserUrl';
 export { readPasswordLine } from './readPasswordLine';
