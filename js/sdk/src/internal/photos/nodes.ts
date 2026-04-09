@@ -151,7 +151,18 @@ export class PhotosNodesAccess extends NodesAccessBase<EncryptedPhotoNode, Decry
     async getParentKeys(
         node: Pick<EncryptedPhotoNode, 'uid' | 'parentUid' | 'shareId' | 'photo'>,
     ): Promise<Pick<DecryptedNodeKeys, 'key' | 'hashKey'>> {
-        if (node.parentUid || node.shareId) {
+        // In regular case, the parent should be used first as it is guaranteed that
+        // the root node without parent will have a share with direct membership for
+        // the user that can be used to decrypt the node.
+        // For photos, the parent might be missing but then an album (or more) plays
+        // the role of the parent. It must be used first before fallbacking to share
+        // because the node might be shared but user is not directly invited and thus
+        // cannot decrypt via the share (user's address cannot decrypt).
+        // Using parent path first should stay as if present, it will be fastest way
+        // to decrypt for the owner - all photos in the timeline can use already
+        // cached key without the need to load albums as well.
+
+        if (node.parentUid) {
             return super.getParentKeys(node);
         }
 
@@ -174,6 +185,10 @@ export class PhotosNodesAccess extends NodesAccessBase<EncryptedPhotoNode, Decry
 
             const albumNodeUid = node.photo.albums[0].nodeUid;
             return this.getNodeKeys(albumNodeUid);
+        }
+
+        if (node.shareId) {
+            return super.getParentKeys(node);
         }
 
         // This is bug that should not happen.
