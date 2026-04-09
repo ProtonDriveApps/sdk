@@ -1,4 +1,4 @@
-import { ProtonDriveError } from '../errors';
+import { AbortError, ProtonDriveError } from '../errors';
 import { BatchLoading } from './batchLoading';
 
 describe('BatchLoading', () => {
@@ -122,6 +122,36 @@ describe('BatchLoading', () => {
         expect(iterateItems).toHaveBeenCalledTimes(2);
         expect(thrown).toBeInstanceOf(ProtonDriveError);
         expect((thrown as ProtonDriveError).cause).toEqual([expect.objectContaining({ message: 'iterator failed' })]);
+    });
+
+    it('should rethrow AbortError immediately without accumulating', async () => {
+        const abortError = new AbortError();
+        const result: string[] = [];
+        const iterateItems = jest.fn(async function* (items: string[]) {
+            if (items.includes('a')) {
+                throw abortError;
+            }
+            for (const item of items) {
+                yield `loaded:${item}`;
+            }
+        });
+
+        batchLoading = new BatchLoading<string, string>({ iterateItems, batchSize: 2 });
+
+        let thrown: unknown;
+        try {
+            for (const item of ['a', 'b', 'c', 'd']) {
+                for await (const loadedItem of batchLoading.load(item)) {
+                    result.push(loadedItem);
+                }
+            }
+        } catch (e) {
+            thrown = e;
+        }
+
+        expect(result).toEqual([]);
+        expect(thrown).toBe(abortError);
+        expect(iterateItems).toHaveBeenCalledTimes(1);
     });
 
     it('should throw ProtonDriveError with causes when multiple batches fail', async () => {
