@@ -1,6 +1,6 @@
 import { c } from 'ttag';
 
-import { ProtonDriveError } from '../errors';
+import { AbortError, ProtonDriveError } from '../errors';
 
 const DEFAULT_BATCH_LOADING = 10;
 
@@ -84,6 +84,9 @@ export class BatchLoading<ID, ITEM> {
         try {
             yield* this.iterateItems(items);
         } catch (error) {
+            if (error instanceof AbortError) {
+                throw error;
+            }
             this.errors.push(error);
         }
     }
