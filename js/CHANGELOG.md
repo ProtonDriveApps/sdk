@@ -1,5 +1,16 @@
 # Changelog
 
+## js/v0.14.6 (2026-04-09)
+
+* Correctly catch AbortError in batchLoading
+* Fix issue when listing photos of shared album
+
+## js/v0.14.5 (2026-04-08)
+
+* Support NonProtonInvitation conversion
+* Avoid crypto key fallback for non-owners
+* Change move function to support returning validation error
+
 ## js/v0.14.4 (2026-04-02)
 
 * Get public link of share only for my own nodes
