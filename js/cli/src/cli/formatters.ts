@@ -11,7 +11,7 @@ export function printObject(object: object | undefined, json: boolean) {
 }
 
 export async function printIterable<T extends object>(
-    iterable: AsyncIterable<T>,
+    iterable: AsyncIterable<T> | T[],
     json: boolean,
     humanReadableWriter: (item: T) => void = (item) => console.log(formatReadableJson(item)),
     jsonTransform: (item: T) => object = (json) => json,

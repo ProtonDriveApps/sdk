@@ -1,0 +1,51 @@
+import { ParseArgsConfig } from 'node:util';
+
+import { ProtonDriveClient, MaybeNode, ValidationError } from '@protontech/drive-sdk';
+
+import { printIterable, type Command, type ActionArgs, PathType, getNodeUid, getName, findName } from '../../cli';
+
+const SUPPORTED_PATH_TYPES = [PathType.MyFiles, PathType.Devices, PathType.SharedWithMe];
+
+export class CommandFileSystemCopy implements Command {
+    group = 'filesystem';
+    name = 'copy';
+    args = ['sourcePath...', 'targetPath'];
+    options: ParseArgsConfig['options'] = {
+        name: {
+            type: 'string',
+            short: 'n',
+            default: '',
+        },
+    };
+
+    async action({ sdk, paths, args, options: { name, json } }: ActionArgs) {
+        const sourcePathStrings = args.slice(0, -1);
+        const targetPathString = args[args.length - 1];
+
+        if (sourcePathStrings.length > 1 && name !== '') {
+            throw new ValidationError('Cannot specify name when copying multiple files');
+        }
+
+        const sourceNodes = await paths.getNodes(sourcePathStrings, SUPPORTED_PATH_TYPES);
+        const targetNode = await paths.getNode(targetPathString, SUPPORTED_PATH_TYPES);
+
+        if (sourceNodes.length === 1) {
+            await this.copyNode(sdk, sourceNodes[0], targetNode, json, name || getName(sourceNodes[0]));
+        } else {
+            await this.copyNodes(sdk, sourceNodes, targetNode, json);
+        }
+    }
+
+    private async copyNode(sdk: ProtonDriveClient, sourceNode: MaybeNode, targetNode: MaybeNode, json: boolean, name: string) {
+        await printIterable(sdk.copyNodes([{ uid: getNodeUid(sourceNode), name }], targetNode), json, (result) => {
+            console.log(result.ok ? `✅ ${name}` : `❌ ${name}: ${result.error}`);
+        });
+    }
+
+    private async copyNodes(sdk: ProtonDriveClient, sourceNodes: MaybeNode[], targetNode: MaybeNode, json: boolean) {
+        await printIterable(sdk.copyNodes(sourceNodes, targetNode), json, (result) => {
+            const nodeName = findName(sourceNodes, result.uid);
+            console.log(result.ok ? `✅ ${nodeName}` : `❌ ${nodeName}: ${result.error}`);
+        });
+    }
+}
