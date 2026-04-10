@@ -78,7 +78,7 @@ export interface OpenPGPCryptoProxy {
         armoredSignature?: string;
         binarySignature?: Uint8Array<ArrayBuffer>;
         verificationKeys: PublicKey | PublicKey[];
-        signatureContext?: { critical: boolean; value: string };
+        signatureContext?: { required: boolean; value: string };
     }) => Promise<{
         verificationStatus: VERIFICATION_STATUS;
         errors?: Error[];
@@ -327,7 +327,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
             binaryData: data,
             armoredSignature,
             verificationKeys,
-            signatureContext: signatureContext ? { critical: true, value: signatureContext } : undefined,
+            signatureContext: signatureContext ? { required: true, value: signatureContext } : undefined,
         });
 
         return {
