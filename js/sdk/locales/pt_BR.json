@@ -156,6 +156,9 @@
       "Node not found": [
         "Nó não encontrado"
       ],
+      "Only admins can convert non-Proton invitations": [
+        "Apenas administradores podem converter convites que não sejam da Proton"
+      ],
       "Operation aborted": [
         "Operação abortada"
       ],
@@ -197,6 +200,9 @@
       ],
       "Some file parts failed to upload": [
         "Algumas partes do arquivo falharam ao enviar"
+      ],
+      "The node is not shared anymore": [
+        "O nó não é mais compartilhado"
       ],
       "Thumbnail not found": [
         "Miniatura não encontrada"
