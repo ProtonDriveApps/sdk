@@ -175,6 +175,9 @@
       "Node not found": [
         "Nod negăsit."
       ],
+      "Only admins can convert non-Proton invitations": [
+        "Doar administratorii pot converti invitațiile non-Proton."
+      ],
       "Operation aborted": [
         "Operație anulată"
       ],
@@ -216,6 +219,9 @@
       ],
       "Some file parts failed to upload": [
         "Unele părți ale fișierului nu s-au încărcat."
+      ],
+      "The node is not shared anymore": [
+        "Nodul nu mai este partajat."
       ],
       "Thumbnail not found": [
         "Miniatură negăsită"

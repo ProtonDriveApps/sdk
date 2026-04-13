@@ -176,6 +176,9 @@
       "Node not found": [
         "Uzol nebol nájdený"
       ],
+      "Only admins can convert non-Proton invitations": [
+        "Pozvánky, ktoré nie sú od služby Proton, môžu zmeniť len správcovia"
+      ],
       "Operation aborted": [
         "Operácia prerušená"
       ],
@@ -217,6 +220,9 @@
       ],
       "Some file parts failed to upload": [
         "Niektoré časti súboru sa nepodarilo nahrať"
+      ],
+      "The node is not shared anymore": [
+        "Uzol už nie je zdieľaný"
       ],
       "Thumbnail not found": [
         "Miniatúra nenájdená"
