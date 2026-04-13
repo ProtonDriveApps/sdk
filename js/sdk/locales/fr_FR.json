@@ -174,6 +174,9 @@
       "Node not found": [
         "Le nœud est introuvable."
       ],
+      "Only admins can convert non-Proton invitations": [
+        "Seuls les administrateurs peuvent convertir des invitations non-Proton."
+      ],
       "Operation aborted": [
         "L'opération a été annulée."
       ],
@@ -215,6 +218,9 @@
       ],
       "Some file parts failed to upload": [
         "Certaines parties de fichier n'ont pas pu être importées."
+      ],
+      "The node is not shared anymore": [
+        "Ce nœud n'est plus partagé."
       ],
       "Thumbnail not found": [
         "La vignette n'a pas été trouvée."
