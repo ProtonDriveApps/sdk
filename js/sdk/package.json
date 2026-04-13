@@ -2,7 +2,7 @@
     "name": "@protontech/drive-sdk",
     "version": "0.0.1",
     "description": "Proton Drive SDK",
-    "license": "GPL-3.0",
+    "license": "MIT",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "files": [
