@@ -1,5 +1,9 @@
 # Changelog
 
+## cs/v0.13.3 (2026-04-16)
+
+* Fix failure to upload new revision on single file sharing
+
 ## cs/v0.13.2 (2026-04-07)
 
 * Resume continuation only when active
