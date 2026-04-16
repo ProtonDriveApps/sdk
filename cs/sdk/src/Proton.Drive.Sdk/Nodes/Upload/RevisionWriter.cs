@@ -102,17 +102,32 @@ internal sealed partial class RevisionWriter : IDisposable
 
             var sha1Digest = _draft.Sha1.GetCurrentHash();
 
-            var hashKey = _draft.HashKey
-                ?? await NodeOperations.GetParentFolderHashKeyAsync(_client, _draft.Uid.NodeUid, cancellationToken).ConfigureAwait(false);
+            RevisionUpdateRequest request;
 
-            var request = CreateRevisionUpdateRequest(
-                metadata,
-                expectedContentLength,
-                expectedThumbnailBlockCount,
-                expectedSha1Provider,
-                sha1Digest,
-                hashKey,
-                signingEmailAddress);
+            if (metadata is PhotosFileUploadMetadata photoMetadata)
+            {
+                var hashKey = _draft.ParentHashKey
+                    ?? await NodeOperations.GetParentFolderHashKeyAsync(_client, _draft.Uid.NodeUid, cancellationToken).ConfigureAwait(false);
+
+                request = CreatePhotosRevisionUpdateRequest(
+                    photoMetadata,
+                    expectedContentLength,
+                    expectedThumbnailBlockCount,
+                    expectedSha1Provider,
+                    sha1Digest,
+                    hashKey,
+                    signingEmailAddress);
+            }
+            else
+            {
+                request = CreateRevisionUpdateRequest(
+                    metadata,
+                    expectedContentLength,
+                    expectedThumbnailBlockCount,
+                    expectedSha1Provider,
+                    sha1Digest,
+                    signingEmailAddress);
+            }
 
             LogSealingRevision(_draft.Uid);
 
@@ -167,7 +182,6 @@ internal sealed partial class RevisionWriter : IDisposable
         int expectedThumbnailBlockCount,
         Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         byte[] sha1Digest,
-        ReadOnlyMemory<byte> hashKey,
         string signingEmailAddress)
     {
         var manifest = new byte[(_draft.OrderedThumbnailUploadResults.Count + _draft.OrderedContentBlockStates.Count) * SHA256.HashSizeInBytes];
@@ -259,18 +273,35 @@ internal sealed partial class RevisionWriter : IDisposable
             ExtendedAttributes = encryptedExtendedAttributes,
         };
 
-        if (metadata is PhotosFileUploadMetadata photoMetadata)
-        {
-            var captureTime = photoMetadata.CaptureTime ?? metadata.LastModificationTime ?? DateTime.UtcNow;
+        return request;
+    }
 
-            request.PhotosAttributes = new PhotosAttributesDto
-            {
-                CaptureTime = captureTime.UtcDateTime,
-                ContentHashDigest = HMACSHA256.HashData(hashKey.Span, Encoding.ASCII.GetBytes(Convert.ToHexStringLower(sha1Digest))),
-                MainPhotoLinkId = photoMetadata.MainPhotoUid?.LinkId,
-                Tags = photoMetadata.Tags?.ToHashSet() ?? [],
-            };
-        }
+    private RevisionUpdateRequest CreatePhotosRevisionUpdateRequest(
+        PhotosFileUploadMetadata metadata,
+        long expectedContentLength,
+        int expectedThumbnailBlockCount,
+        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
+        byte[] sha1Digest,
+        ReadOnlyMemory<byte> parentHashKey,
+        string signingEmailAddress)
+    {
+        var request = CreateRevisionUpdateRequest(
+            metadata,
+            expectedContentLength,
+            expectedThumbnailBlockCount,
+            expectedSha1Provider,
+            sha1Digest,
+            signingEmailAddress);
+
+        var captureTime = metadata.CaptureTime ?? metadata.LastModificationTime ?? DateTime.UtcNow;
+
+        request.PhotosAttributes = new PhotosAttributesDto
+        {
+            CaptureTime = captureTime.UtcDateTime,
+            ContentHashDigest = HMACSHA256.HashData(parentHashKey.Span, Encoding.ASCII.GetBytes(Convert.ToHexStringLower(sha1Digest))),
+            MainPhotoLinkId = metadata.MainPhotoUid?.LinkId,
+            Tags = metadata.Tags?.ToHashSet() ?? [],
+        };
 
         return request;
     }
