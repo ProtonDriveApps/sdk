@@ -74,7 +74,7 @@ internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
             fileSecrets.Key,
             fileSecrets.ContentKey,
             signingKey,
-            hashKey: null,
+            parentHashKey: null,
             membershipAddress,
             blockVerifier,
             ct => DeleteDraftAsync(draftRevisionUid, ct),
