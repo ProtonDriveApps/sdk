@@ -1,5 +1,10 @@
 # Changelog
 
+## js/v0.14.7 (2026-04-17)
+
+* Add experimental iterate by uids for albums and shared with me albums
+* Fix verifying signature contexts
+
 ## js/v0.14.6 (2026-04-09)
 
 * Correctly catch AbortError in batchLoading
