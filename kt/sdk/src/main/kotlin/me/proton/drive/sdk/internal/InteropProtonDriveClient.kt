@@ -33,9 +33,11 @@ import proton.drive.sdk.driveClientEnumerateThumbnailsRequest
 import proton.drive.sdk.driveClientEnumerateTrashRequest
 import proton.drive.sdk.driveClientGetAvailableNameRequest
 import proton.drive.sdk.driveClientGetMyFilesFolderRequest
+import proton.drive.sdk.driveClientGetNodeRequest
 import proton.drive.sdk.driveClientRenameRequest
 import proton.drive.sdk.driveClientRestoreNodesRequest
 import proton.drive.sdk.driveClientTrashNodesRequest
+import proton.drive.sdk.drivePhotosClientGetNodeRequest
 import java.time.Instant
 import kotlin.time.Duration
 
@@ -148,6 +150,19 @@ internal class InteropProtonDriveClient internal constructor(
                 }
             )
         }
+    }
+
+    override suspend fun getNode(
+        nodeUid: NodeUid,
+    ): NodeResult? = cancellationCoroutineScope { source ->
+        log(DEBUG, "getNode")
+        bridge.getNode(
+            driveClientGetNodeRequest {
+                this.nodeUid = nodeUid.value
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        )?.toEntity()
     }
 
     override suspend fun trashNodes(
