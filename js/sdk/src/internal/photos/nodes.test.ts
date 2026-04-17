@@ -47,6 +47,7 @@ function generateAPIAlbumNode(linkOverrides = {}, overrides = {}) {
         Album: {
             PhotoCount: 1,
             CoverLinkID: 'coverLinkId',
+            LastActivityTime: 1700002000,
         },
         Folder: null,
         ...overrides,
@@ -121,6 +122,7 @@ describe('PhotosNodesAPIService', () => {
             expect(nodes[0].album).toBeDefined();
             expect(nodes[0].album?.photoCount).toEqual(1);
             expect(nodes[0].album?.coverPhotoNodeUid).toBe('volumeId~coverLinkId');
+            expect(nodes[0].album?.lastActivityTime).toEqual(new Date(1700002000 * 1000));
         });
 
         it('should convert photo (type 2) to photo node with photo attributes', async () => {
@@ -170,6 +172,7 @@ describe('PhotosNodesCache', () => {
                 album: {
                     photoCount: 1,
                     coverPhotoNodeUid: 'volumeId~coverLinkId',
+                    lastActivityTime: '2023-11-15T10:33:20.000Z',
                 },
             });
 
@@ -183,6 +186,8 @@ describe('PhotosNodesCache', () => {
             expect(node.album).toBeDefined();
             expect(node.album?.photoCount).toEqual(1);
             expect(node.album?.coverPhotoNodeUid).toBe('volumeId~coverLinkId');
+            expect(node.album?.lastActivityTime).toBeInstanceOf(Date);
+            expect(node.album?.lastActivityTime).toEqual(new Date('2023-11-15T10:33:20.000Z'));
         });
 
         it('should handle node without photo attributes', () => {
@@ -323,6 +328,7 @@ describe('PhotosNodesAccess', () => {
                 album: {
                     photoCount: 1,
                     coverPhotoNodeUid: 'volumeId~coverLinkId',
+                    lastActivityTime: new Date('2023-11-15T10:33:20.000Z'),
                 },
             };
 
@@ -336,6 +342,7 @@ describe('PhotosNodesAccess', () => {
             expect(parsedNode.album).toBeDefined();
             expect(parsedNode.album?.photoCount).toEqual(1);
             expect(parsedNode.album?.coverPhotoNodeUid).toBe('volumeId~coverLinkId');
+            expect(parsedNode.album?.lastActivityTime).toEqual(new Date('2023-11-15T10:33:20.000Z'));
         });
     });
 });
