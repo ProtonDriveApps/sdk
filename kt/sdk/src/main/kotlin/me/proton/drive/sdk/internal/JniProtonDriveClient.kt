@@ -3,6 +3,7 @@ package me.proton.drive.sdk.internal
 import com.google.protobuf.Any
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
+import me.proton.drive.sdk.converter.NodeResultConverter
 import me.proton.drive.sdk.converter.NodeResultListResponseConverter
 import me.proton.drive.sdk.converter.FolderNodeConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
@@ -11,6 +12,7 @@ import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.StringResponseCallback
 import me.proton.drive.sdk.extension.UnitResponseCallback
 import me.proton.drive.sdk.extension.asCallback
+import me.proton.drive.sdk.extension.asNullableCallback
 import me.proton.drive.sdk.extension.toLongResponse
 import proton.drive.sdk.ProtonDriveSdk
 import proton.drive.sdk.driveClientCreateFromSessionRequest
@@ -116,6 +118,13 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
     ): ProtonDriveSdk.FolderNode = executeOnce("getMyFilesFolder", FolderNodeConverter().asCallback) {
         driveClientGetMyFilesFolder = request
     }
+
+    suspend fun getNode(
+        request: ProtonDriveSdk.DriveClientGetNodeRequest,
+    ): ProtonDriveSdk.NodeResult? =
+        executeOnce("getNode", NodeResultConverter().asNullableCallback) {
+            driveClientGetNode = request
+        }
 
     suspend fun enumerateFolderChildren(
         coroutineScope: CoroutineScope,

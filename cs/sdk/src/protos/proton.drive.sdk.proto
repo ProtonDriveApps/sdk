@@ -26,6 +26,7 @@ message Request {
         DriveClientEnumerateTrashRequest drive_client_enumerate_trash = 1014;
         DriveClientEmptyTrashRequest drive_client_empty_trash = 1015;
         DriveClientEnumerateThumbnailsRequest drive_client_enumerate_thumbnails = 1016;
+        DriveClientGetNodeRequest drive_client_get_node = 1017;
 
         UploadFromStreamRequest upload_from_stream = 1100;
         UploadFromFileRequest upload_from_file = 1101;
@@ -446,6 +447,13 @@ message DriveClientEnumerateFolderChildrenRequest {
 message DriveClientGetMyFilesFolderRequest {
     int64 client_handle = 1;
     int64 cancellation_token_source_handle = 2;
+}
+
+// The response message must be of type NodeResult (nullable).
+message DriveClientGetNodeRequest {
+    int64 client_handle = 1;
+    string node_uid = 2;
+    int64 cancellation_token_source_handle = 3;
 }
 
 message FolderChildrenList {
