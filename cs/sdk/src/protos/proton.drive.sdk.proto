@@ -304,7 +304,7 @@ message UploadFromStreamRequest {
     int64 progress_action = 4; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 5;
     int64 cancel_action = 6; // Optional, C signature: void on_cancel(intptr_t bindings_handle); Signals the bindings to cancel the current stream operation.
-    int64 sha1_function = 7; // Optional - C signature: ByteArray get_sha1(intptr_t bindings_handle);
+    int64 sha1_function = 7; // Optional - C signature: void write_expected_sha1(intptr_t bindings_handle, ByteArray output_buffer); writes SHA-1 digest bytes into output_buffer (20 bytes).
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of UploadController.
@@ -314,7 +314,7 @@ message UploadFromFileRequest {
     string file_path = 3;
     int64 progress_action = 4; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 5;
-    int64 sha1_function = 7; // Optional - C signature: ByteArray get_sha1(intptr_t bindings_handle);
+    int64 sha1_function = 7; // Optional - C signature: void write_expected_sha1(intptr_t bindings_handle, ByteArray output_buffer); writes SHA-1 digest bytes into output_buffer (20 bytes).
 }
 
 // The response must not have a value.
@@ -754,7 +754,7 @@ message DrivePhotosClientUploadFromStreamRequest {
     int64 read_action = 3; // C signature: void handle_stream_operation(intptr_t bindings_handle, ByteArray buffer, intptr_t sdk_handle);
     int64 progress_action = 4; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 5;
-    int64 sha1_function = 7; // Optional - C signature: ByteArray get_sha1(intptr_t bindings_handle);
+    int64 sha1_function = 7; // Optional - C signature: void write_expected_sha1(intptr_t bindings_handle, ByteArray output_buffer); writes SHA-1 digest bytes into output_buffer (20 bytes).
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of UploadController.
@@ -764,7 +764,7 @@ message DrivePhotosClientUploadFromFileRequest {
     string file_path = 3;
     int64 progress_action = 4; // See array_action in C header file for signature
     int64 cancellation_token_source_handle = 5;
-    int64 sha1_function = 7; // Optional - C signature: ByteArray get_sha1(intptr_t bindings_handle);
+    int64 sha1_function = 7; // Optional - C signature: void write_expected_sha1(intptr_t bindings_handle, ByteArray output_buffer); writes SHA-1 digest bytes into output_buffer (20 bytes).
 }
 
 // The response must not have a value.
