@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 import CProtonDriveSDK
 
@@ -258,16 +259,25 @@ final class UploadOperationState: Sendable {
     }
 }
 
-let cExpectedSha1CallbackForUpload: CCallbackWithByteArrayReturn = { statePointer in
+let cExpectedSha1CallbackForUpload: CCallback = { statePointer, byteArray in
     typealias BoxType = BoxedCompletionBlock<Int, WeakReference<UploadOperationState>>
     guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        assertionFailure("cExpectedSha1ProviderCallback.statePointer is nil")
-        return ByteArray(pointer: nil, length: 0)
+        assertionFailure("cExpectedSha1CallbackForUpload.statePointer is nil")
+        return
     }
 
     let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
-    guard let expectedSHA1 = stateTypedPointer.takeUnretainedValue().state.value?.expectedSHA1 else {
-        return ByteArray(pointer: nil, length: 0)
+    guard
+        let expectedSHA1 = stateTypedPointer.takeUnretainedValue().state.value?.expectedSHA1,
+        let destBase = byteArray.pointer
+    else { return }
+
+    let dest = UnsafeMutableRawPointer(mutating: destBase)
+    let outLen = Int(byteArray.length)
+    let n = min(outLen, expectedSHA1.count)
+    expectedSHA1.withUnsafeBytes { src in
+        if let p = src.baseAddress {
+            dest.copyMemory(from: p, byteCount: n)
+        }
     }
-    return ByteArray(data: expectedSHA1)
 }

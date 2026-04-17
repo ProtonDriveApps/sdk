@@ -117,10 +117,11 @@ long onFeatureEnabled(
     return pushDataToLongMethod(bindings_handle, value, "onFeatureEnabled");
 }
 
-ByteArray onSha1(
-        intptr_t bindings_handle
+void onSha1(
+        intptr_t bindings_handle,
+        ByteArray output
 ) {
-    return callByteBufferMethod(bindings_handle, "onSha1");
+    pushDataToVoidMethod(bindings_handle, output, "onSha1");
 }
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getReadPointer(

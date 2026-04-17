@@ -173,7 +173,8 @@ internal sealed partial class RevisionWriter : IDisposable
     {
         return ex is not ProtonApiException { TransportCode: >= 400 and < 500 }
             and not NodeWithSameNameExistsException
-            and not IntegrityException;
+            and not IntegrityException
+            and not InvalidOperationException;
     }
 
     private RevisionUpdateRequest CreateRevisionUpdateRequest(

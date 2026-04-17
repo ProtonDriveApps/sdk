@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes.Upload;
@@ -28,8 +29,7 @@ internal static class InteropFileUploader
 
         var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
 
-        var expectedSha1Provider = request.HasSha1Function ?
-            CreateSha1Provider(bindingsHandle, request.Sha1Function) : null;
+        var expectedSha1Provider = request.HasSha1Function ? CreateSha1Provider(bindingsHandle, request.Sha1Function) : null;
 
         var uploadController = uploader.UploadFromStream(
             stream,
@@ -58,8 +58,7 @@ internal static class InteropFileUploader
 
         var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
 
-        var expectedSha1Provider = request.HasSha1Function ?
-            CreateSha1Provider(bindingsHandle, request.Sha1Function) : null;
+        var expectedSha1Provider = request.HasSha1Function ? CreateSha1Provider(bindingsHandle, request.Sha1Function) : null;
 
         var uploadController = uploader.UploadFromFile(
             request.FilePath,
@@ -82,11 +81,21 @@ internal static class InteropFileUploader
 
     internal static Func<ReadOnlyMemory<byte>> CreateSha1Provider(nint bindingsHandle, long functionPointer)
     {
-        var function = new InteropFunction<nint, InteropArray<byte>>(functionPointer);
         return () =>
         {
-            var result = function.Invoke(bindingsHandle);
-            return result.ToArray();
+            var sha1Buffer = new byte[SHA1.HashSizeInBytes];
+
+            unsafe
+            {
+                fixed (byte* sha1BufferPointer = sha1Buffer)
+                {
+                    var function = new InteropAction<nint, InteropArray<byte>>(functionPointer);
+
+                    function.Invoke(bindingsHandle, new InteropArray<byte>(sha1BufferPointer, sha1Buffer.Length));
+                }
+            }
+
+            return sha1Buffer;
         };
     }
 }

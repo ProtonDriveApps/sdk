@@ -220,18 +220,18 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
     }
 
     @Suppress("TooGenericExceptionCaught", "unused") // Called by JNI
-    fun onSha1(): ByteBuffer = onFunction(operation = "sha1Provider") {
+    fun onSha1(output: ByteBuffer): Unit = onFunction(operation = "sha1Provider") {
         runCatching {
-            sha1Provider().let { sha1 ->
-                ByteBuffer.allocateDirect(sha1.size).apply {
-                    put(sha1)
-                    flip()
-                }
+            val sha1 = sha1Provider()
+            if (output.capacity() < sha1.size) {
+                logger(WARN, "SHA1 output buffer too small: ${output.capacity()} < ${sha1.size}")
+                return@onFunction
             }
-        }.getOrElse { error ->
+            output.put(sha1)
+            Unit
+        }.onFailure { error ->
             logger(WARN, "Cannot get expected SHA1")
             logger(WARN, error.stackTraceToString())
-            ByteBuffer.allocateDirect(0)
         }
     }
 

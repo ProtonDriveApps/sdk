@@ -148,7 +148,8 @@ internal sealed partial class RevisionReader : IDisposable
     {
         return ex is not DataIntegrityException
             and not ProtonApiException { TransportCode: >= 400 and < 500 }
-            and not CompletedDownloadManifestVerificationException;
+            and not CompletedDownloadManifestVerificationException
+            and not InvalidOperationException;
     }
 
     private async Task WriteNextBlockToOutputAsync(
