@@ -33,6 +33,7 @@ import {
     getUids,
 } from './transformers';
 import { DriveAPIService } from './internal/apiService';
+import { makeNodeUid } from './internal/uids';
 import { initDownloadModule } from './internal/download';
 import { DriveEventsService, DriveListener, EventSubscription } from './internal/events';
 import {
@@ -75,6 +76,12 @@ export class ProtonDrivePhotosClient {
          * See `ProtonDriveClient.experimental.getNodeUrl` for more information.
          */
         getNodeUrl: (nodeUid: NodeOrUid) => Promise<string>;
+        /**
+         * Iterates albums sorted by last activity time (most recent first).
+         *
+         * @param signal - An optional abort signal to cancel the operation.
+         */
+        iterateAlbumUids: (signal?: AbortSignal) => AsyncGenerator<string>;
     };
 
     constructor({
@@ -175,6 +182,10 @@ export class ProtonDrivePhotosClient {
                 this.logger.debug(`Getting node URL for ${getUid(nodeUid)}`);
                 return this.nodes.access.getNodeUrl(getUid(nodeUid));
             },
+            iterateAlbumUids: (signal?: AbortSignal) => {
+                this.logger.debug('Iterating album UIDs');
+                return this.photos.albums.iterateAlbumUids(signal);
+            },
         };
     }
 
@@ -206,6 +217,25 @@ export class ProtonDrivePhotosClient {
     async subscribeToDriveEvents(callback: DriveListener): Promise<EventSubscription> {
         this.logger.debug('Subscribing to core updates');
         return this.events.subscribeToCoreEvents(callback);
+    }
+
+    /**
+     * Provides the node UID for the given raw share and node IDs.
+     *
+     * This is required only for the internal implementation to provide
+     * backward compatibility with the old Drive web setup.
+     *
+     * If you are having volume ID, use `generateNodeUid` instead.
+     *
+     * @deprecated This method is not part of the public API.
+     * @param shareId - Context share of the node.
+     * @param nodeId - Node/link ID (not UID).
+     * @returns The node UID.
+     */
+    async getNodeUid(shareId: string, nodeId: string): Promise<string> {
+        this.logger.info(`Getting node UID for share ${shareId} and node ${nodeId}`);
+        const share = await this.photoShares.loadEncryptedShare(shareId);
+        return makeNodeUid(share.volumeId, nodeId);
     }
 
     /**

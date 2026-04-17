@@ -49,6 +49,14 @@ export class AlbumsManager {
         yield* batchLoading.loadRest();
     }
 
+    async *iterateAlbumUids(signal?: AbortSignal): AsyncGenerator<string> {
+        const { volumeId } = await this.photoShares.getRootIDs();
+
+        for await (const album of this.apiService.iterateAlbums(volumeId, signal)) {
+            yield album.albumUid;
+        }
+    }
+
     async *iterateAlbum(albumNodeUid: string, signal?: AbortSignal): AsyncGenerator<AlbumItem> {
         yield* this.apiService.iterateAlbumChildren(albumNodeUid, signal);
     }

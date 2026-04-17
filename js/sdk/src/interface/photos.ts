@@ -1,5 +1,5 @@
-import { Result } from "./result";
-import { DegradedNode, NodeEntity, NodeType, MissingNode } from "./nodes";
+import { Result } from './result';
+import { DegradedNode, NodeEntity, NodeType, MissingNode } from './nodes';
 
 /**
  * Node representing a photo or album for Photos SDK.
@@ -95,4 +95,8 @@ export type AlbumAttributes = {
      * UID of the cover photo node of the album.
      */
     coverPhotoNodeUid?: string;
-}
+    /**
+     * Timestamp of the last activity in the album.
+     */
+    lastActivityTime: Date;
+};

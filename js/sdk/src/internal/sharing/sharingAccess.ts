@@ -83,7 +83,7 @@ export class SharingAccess {
         setCache: (nodeUids: string[]) => Promise<void>,
         signal?: AbortSignal,
     ): AsyncGenerator<DecryptedNode> {
-        const loadedNodeUids = [];
+        const loadedNodeUids: string[] = [];
         const batchLoading = new BatchLoading<string, DecryptedNode>({
             iterateItems: (nodeUids) => this.iterateNodesAndIgnoreMissingOnes(nodeUids, signal),
             batchSize: BATCH_LOADING_SIZE,

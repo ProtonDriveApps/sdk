@@ -83,6 +83,7 @@ export class PhotosNodesAPIService extends NodeAPIServiceBase<
                     coverPhotoNodeUid: link.Album.CoverLinkID
                         ? makeNodeUid(volumeId, link.Album.CoverLinkID)
                         : undefined,
+                    lastActivityTime: new Date(link.Album.LastActivityTime * 1000),
                 },
                 encryptedCrypto: {
                     ...baseCryptoNodeMetadata,
@@ -142,6 +143,12 @@ export class PhotosNodesCache extends NodesCacheBase<DecryptedPhotoNode> {
                           nodeUid: album.nodeUid,
                           additionTime: new Date(album.additionTime),
                       })),
+                  },
+            album: !node.album
+                ? undefined
+                : {
+                      ...node.album,
+                      lastActivityTime: new Date(node.album.lastActivityTime),
                   },
         } as DecryptedPhotoNode;
     }
