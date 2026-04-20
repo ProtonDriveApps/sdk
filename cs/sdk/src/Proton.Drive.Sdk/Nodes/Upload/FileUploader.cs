@@ -65,7 +65,7 @@ public sealed partial class FileUploader : IDisposable
             ownsContentStream: true,
             thumbnails,
             onProgress,
-            expectedSha1Provider: expectedSha1Provider,
+            expectedSha1Provider,
             cancellationToken);
     }
 
@@ -123,11 +123,13 @@ public sealed partial class FileUploader : IDisposable
 
         var revisionDraftTaskCompletionSource = new TaskCompletionSource<RevisionDraft>();
 
+        var expectedSha1 = expectedSha1Provider is not null ? new Lazy<ReadOnlyMemory<byte>>(expectedSha1Provider) : null;
+
         var uploadFunction = (CancellationToken ct) => UploadFromStreamAsync(
             contentStream,
             thumbnails,
             progress => onProgress?.Invoke(progress, FileSize),
-            expectedSha1Provider,
+            expectedSha1,
             revisionDraftTaskCompletionSource,
             ct);
 
@@ -174,7 +176,7 @@ public sealed partial class FileUploader : IDisposable
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
         Action<long>? onProgress,
-        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
+        Lazy<ReadOnlyMemory<byte>>? expectedSha1,
         TaskCompletionSource<RevisionDraft> revisionDraftTaskCompletionSource,
         CancellationToken cancellationToken)
     {
@@ -190,7 +192,7 @@ public sealed partial class FileUploader : IDisposable
             contentStream,
             thumbnails,
             onProgress,
-            expectedSha1Provider,
+            expectedSha1,
             cancellationToken).ConfigureAwait(false);
 
         await UpdateActiveRevisionInCacheAsync(revisionDraft.Uid, contentStream.Length, cancellationToken).ConfigureAwait(false);
@@ -229,7 +231,7 @@ public sealed partial class FileUploader : IDisposable
         Stream contentStream,
         IEnumerable<Thumbnail> thumbnails,
         Action<long>? onProgress,
-        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
+        Lazy<ReadOnlyMemory<byte>>? expectedSha1,
         CancellationToken cancellationToken)
     {
         using var revisionWriter = await RevisionOperations.OpenForWritingAsync(_client, revisionDraft, ReleaseBlocks, cancellationToken).ConfigureAwait(false);
@@ -237,7 +239,7 @@ public sealed partial class FileUploader : IDisposable
         await revisionWriter.WriteAsync(
             contentStream,
             FileSize,
-            expectedSha1Provider,
+            expectedSha1,
             thumbnails,
             _metadata,
             onProgress,
