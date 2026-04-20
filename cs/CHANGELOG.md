@@ -1,5 +1,11 @@
 # Changelog
 
+## cs/v0.13.4 (2026-04-20)
+
+* Improve download initialization speed by parallelizing some server round-trips
+* Add get node for Kotlin drive client
+* Fix memory leak on SHA1 provision through interop
+
 ## cs/v0.13.3 (2026-04-16)
 
 * Fix failure to upload new revision on single file sharing
