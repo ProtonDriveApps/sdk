@@ -27,23 +27,31 @@ internal static class RevisionOperations
         Action<int> releaseBlockListingAction,
         CancellationToken cancellationToken)
     {
-        var fileSecretsResult = await FileOperations.GetSecretsAsync(client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
-
-        var (key, contentKey) = fileSecretsResult.TryGetValueElseError(out var fileSecrets, out var degradedFileSecrets)
-            ? (fileSecrets.Key, fileSecrets.ContentKey)
-            : (degradedFileSecrets.Key ?? throw new InvalidOperationException($"Node key not available for file {revisionUid.NodeUid}"),
-               degradedFileSecrets.ContentKey ?? throw new InvalidOperationException($"Content key not available for file {revisionUid.NodeUid}"));
-
         var (fileUid, revisionId) = revisionUid;
 
-        var revisionResponse = await client.Api.Files.GetRevisionAsync(
+        var secretsTask = FileOperations.GetSecretsAsync(
+            client,
+            revisionUid.NodeUid,
+            cancellationToken).AsTask();
+
+        var revisionTask = client.Api.Files.GetRevisionAsync(
             fileUid.VolumeId,
             fileUid.LinkId,
             revisionId,
             RevisionReader.MinBlockIndex,
             RevisionReader.DefaultBlockPageSize,
             withoutBlockUrls: false,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken).AsTask();
+
+        await Task.WhenAll(secretsTask, revisionTask).ConfigureAwait(false);
+
+        var fileSecretsResult = await secretsTask.ConfigureAwait(false);
+        var revisionResponse = await revisionTask.ConfigureAwait(false);
+
+        var (key, contentKey) = fileSecretsResult.TryGetValueElseError(out var fileSecrets, out var degradedFileSecrets)
+            ? (fileSecrets.Key, fileSecrets.ContentKey)
+            : (degradedFileSecrets.Key ?? throw new InvalidOperationException($"Node key not available for file {revisionUid.NodeUid}"),
+                degradedFileSecrets.ContentKey ?? throw new InvalidOperationException($"Content key not available for file {revisionUid.NodeUid}"));
 
         releaseBlockListingAction.Invoke(1);
 
