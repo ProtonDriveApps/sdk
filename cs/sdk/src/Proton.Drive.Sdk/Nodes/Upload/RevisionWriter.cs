@@ -45,7 +45,7 @@ internal sealed partial class RevisionWriter : IDisposable
     public async ValueTask WriteAsync(
         Stream contentStream,
         long expectedContentLength,
-        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
+        Lazy<ReadOnlyMemory<byte>>? expectedSha1,
         IEnumerable<Thumbnail> thumbnails,
         FileUploadMetadata metadata,
         Action<long>? onProgress,
@@ -113,7 +113,7 @@ internal sealed partial class RevisionWriter : IDisposable
                     photoMetadata,
                     expectedContentLength,
                     expectedThumbnailBlockCount,
-                    expectedSha1Provider,
+                    expectedSha1,
                     sha1Digest,
                     hashKey,
                     signingEmailAddress);
@@ -124,7 +124,7 @@ internal sealed partial class RevisionWriter : IDisposable
                     metadata,
                     expectedContentLength,
                     expectedThumbnailBlockCount,
-                    expectedSha1Provider,
+                    expectedSha1,
                     sha1Digest,
                     signingEmailAddress);
             }
@@ -181,7 +181,7 @@ internal sealed partial class RevisionWriter : IDisposable
         FileUploadMetadata metadata,
         long expectedContentLength,
         int expectedThumbnailBlockCount,
-        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
+        Lazy<ReadOnlyMemory<byte>>? expectedSha1,
         byte[] sha1Digest,
         string signingEmailAddress)
     {
@@ -234,14 +234,13 @@ internal sealed partial class RevisionWriter : IDisposable
         }
 
         var checksumVerified = false;
-        if (expectedSha1Provider is not null)
+        if (expectedSha1 is not null)
         {
-            var expectedSha1 = expectedSha1Provider.Invoke();
-            if (!expectedSha1.Span.SequenceEqual(sha1Digest))
+            if (!expectedSha1.Value.Span.SequenceEqual(sha1Digest))
             {
                 throw new ChecksumMismatchIntegrityException(
                     actualChecksum: sha1Digest,
-                    expectedChecksum: expectedSha1.ToArray());
+                    expectedChecksum: expectedSha1.Value.ToArray());
             }
 
             checksumVerified = true;
@@ -281,7 +280,7 @@ internal sealed partial class RevisionWriter : IDisposable
         PhotosFileUploadMetadata metadata,
         long expectedContentLength,
         int expectedThumbnailBlockCount,
-        Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
+        Lazy<ReadOnlyMemory<byte>>? expectedSha1,
         byte[] sha1Digest,
         ReadOnlyMemory<byte> parentHashKey,
         string signingEmailAddress)
@@ -290,7 +289,7 @@ internal sealed partial class RevisionWriter : IDisposable
             metadata,
             expectedContentLength,
             expectedThumbnailBlockCount,
-            expectedSha1Provider,
+            expectedSha1,
             sha1Digest,
             signingEmailAddress);
 

@@ -173,7 +173,7 @@ internal static class InteropProtonDriveClient
 
         var thumbnailsEnumerable = client.EnumerateThumbnailsAsync(
             request.FileUids.Select(NodeUid.Parse),
-            (Proton.Drive.Sdk.Nodes.ThumbnailType)request.Type,
+            (Sdk.Nodes.ThumbnailType)request.Type,
             cancellationToken);
 
         await foreach (var x in thumbnailsEnumerable.ConfigureAwait(false))
@@ -350,7 +350,7 @@ internal static class InteropProtonDriveClient
         return null;
     }
 
-    public static NodeResult ConvertToNodeResult(Result<Proton.Drive.Sdk.Nodes.Node, Proton.Drive.Sdk.Nodes.DegradedNode> result)
+    public static NodeResult ConvertToNodeResult(Result<Sdk.Nodes.Node, Sdk.Nodes.DegradedNode> result)
     {
         var nodeResult = new NodeResult();
 
@@ -441,7 +441,7 @@ internal static class InteropProtonDriveClient
         };
     }
 
-    private static OwnedBy MapOwnedByToProto(Proton.Drive.Sdk.Nodes.OwnedBy? ownedBy)
+    private static OwnedBy MapOwnedByToProto(Sdk.Nodes.OwnedBy? ownedBy)
     {
         if (ownedBy is null)
         {
