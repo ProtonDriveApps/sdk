@@ -1,7 +1,5 @@
 import { parseArgs } from 'util';
 
-import { VERSION } from '../../sdk/src';
-
 import { init } from './init';
 import { getCommand, validateCommandArguments, formatReadableJson } from './cli';
 
@@ -21,25 +19,10 @@ validateCommandArguments(command, args, options);
 
 const debug = !options.json;
 
-const { account, sdk, photosSdk, sdkDiagnostic, paths } = await init(debug);
+const { auth, sdk, photosSdk, sdkDiagnostic, paths } = await init(debug);
 
-if (debug) {
-    console.log(`Proton Drive SDK for web v${VERSION}`);
-}
-
-if (!command.isAuthAction && !command.isPublicAction && !account.session) {
+if (!command.isAuthAction && !command.isPublicAction && !auth.isLoggedIn()) {
     throw new Error('You need to login first');
-}
-
-if (!command.isAuthAction && account.session) {
-    if (debug) {
-        console.time('Account initialization');
-        console.log('Initializing user keys...');
-    }
-    await account.loadPrimaryKeys();
-    if (debug) {
-        console.timeEnd('Account initialization');
-    }
 }
 
 if (debug) {
@@ -48,7 +31,7 @@ if (debug) {
 
 try {
     await command.action({
-        account,
+        auth,
         sdk,
         photosSdk,
         sdkDiagnostic,

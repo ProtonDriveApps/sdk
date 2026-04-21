@@ -7,7 +7,7 @@
         "build": "NODE_ENV=production bun build --compile ./src/proton-drive.ts --minify-identifiers --conditions=browser",
         "check-types": "tsc --noEmit",
         "generate-types": "bunx openapi-typescript ../../api/openapi-core.json -o ./src/account/api-core-types.ts && bunx openapi-typescript ../../api/openapi-auth.json -o ./src/account/api-auth-types.ts",
-        "lint": "eslint src integration-tests --ext .ts --cache --ignore-pattern '**/account/*-types.ts'",
+        "lint": "eslint src integration-tests --ext .ts --cache --ignore-pattern '**/api/*-types.ts'",
         "pretty": "prettier --write $(find src integration-tests -type f -name '*.ts')",
         "postinstall": "patch-package",
         "test": "jest",

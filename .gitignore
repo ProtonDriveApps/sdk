@@ -16,10 +16,12 @@ dist
 # JS CLI
 js/cli/proton-drive
 auth.txt
+auth-session.json
 cache*.sqlite
 *.log
 *.bun-build
 config.json
+*.map
 
 # IDEs
 .vs

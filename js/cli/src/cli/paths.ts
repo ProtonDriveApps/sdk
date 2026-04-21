@@ -24,8 +24,8 @@ export class Paths {
     constructor(
         private sdk: ProtonDriveClient,
         private photosSdk: ProtonDrivePhotosClient,
-        private account: {
-            isLoggedIn(): Promise<boolean>;
+        private auth: {
+            isLoggedIn(): boolean;
         },
     ) {
         this.sdk = sdk;
@@ -65,7 +65,7 @@ export class Paths {
             throw new Error('Custom password is required');
         }
 
-        const isAnonymousContext = !(await this.account.isLoggedIn());
+        const isAnonymousContext = !this.auth.isLoggedIn();
         this.publicLinkSdk = await this.sdk.experimental.authPublicLink(url, customPassword, isAnonymousContext);
         return this.publicLinkSdk;
     }

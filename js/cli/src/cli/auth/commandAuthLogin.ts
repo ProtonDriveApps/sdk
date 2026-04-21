@@ -1,6 +1,9 @@
 import { ParseArgsConfig } from 'util';
 
+import { printObject } from '../formatters';
 import { Command, ActionArgs } from '../interface';
+import { readPasswordLine } from '../readPasswordLine';
+import { openBrowserUrl } from '../openBrowserUrl';
 
 export class CommandAuthLogin implements Command {
     group = 'auth';
@@ -12,18 +15,27 @@ export class CommandAuthLogin implements Command {
             type: 'string',
             default: '',
         },
+        web: {
+            type: 'boolean',
+            default: false,
+        },
     };
 
-    async action({ account, args: [username], options: { password, json } }: ActionArgs) {
-        if (!password) {
-            console.log('Password:');
-            // FIXME hide password when typing
-            for await (const line of console) {
-                password = line.trim();
-                break;
+    async action({ auth, args: [username], options: { password, web, json } }: ActionArgs) {
+        if (web) {
+            const session = await auth.authViaWeb((signInUrl) => {
+                openBrowserUrl(signInUrl);
+                console.log('Sign in in your browser (URL also printed if it did not open automatically):');
+                console.log(signInUrl);
+            });
+            printObject(session, json);
+        } else {
+            if (!password) {
+                password = await readPasswordLine('Password: ');
             }
+
+            const session = await auth.authViaPassword(username, password);
+            printObject(session, json);
         }
-        await account.auth(username, password, !json);
-        console.log(account.session);
     }
 }
