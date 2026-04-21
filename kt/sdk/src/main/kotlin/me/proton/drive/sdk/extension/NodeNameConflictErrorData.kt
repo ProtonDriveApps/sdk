@@ -6,7 +6,7 @@ import me.proton.drive.sdk.entity.RevisionUid
 import proton.drive.sdk.ProtonDriveSdk
 
 fun ProtonDriveSdk.NodeNameConflictErrorData.toEntity() = ProtonSdkError.Data.NodeNameConflict(
-    conflictingNodeIsFileDraft = conflictingNodeIsFileDraft,
-    conflictingNodeUid = NodeUid(conflictingNodeUid),
-    conflictingRevisionUid = RevisionUid(conflictingRevisionUid),
+    conflictingNodeIsFileDraft = takeIf { hasConflictingNodeIsFileDraft() }?.let { conflictingNodeIsFileDraft },
+    conflictingNodeUid = takeIf { hasConflictingNodeUid() }?.let { NodeUid(conflictingNodeUid) },
+    conflictingRevisionUid = takeIf { hasConflictingRevisionUid() }?.let { RevisionUid(conflictingRevisionUid) },
 )
