@@ -31,9 +31,9 @@ data class ProtonSdkError(
         fun toSafe(): S
 
         data class NodeNameConflict(
-            val conflictingNodeIsFileDraft: Boolean,
-            val conflictingNodeUid: NodeUid,
-            val conflictingRevisionUid: RevisionUid,
+            val conflictingNodeIsFileDraft: Boolean?,
+            val conflictingNodeUid: NodeUid?,
+            val conflictingRevisionUid: RevisionUid?,
         ) : Data<NodeNameConflict> {
             override fun toSafe() = this
         }
