@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Volumes;
 
@@ -124,8 +125,10 @@ internal static class TelemetryEventFactory
 
             return VolumeType.Shared;
         }
-        catch
+        catch (Exception ex)
         {
+            client.Telemetry.GetLogger("TelemetryEventFactory")
+                .LogDebug(ex, "Failed to resolve volume type for node {NodeUid}", nodeUid);
             return VolumeType.Unknown;
         }
     }
