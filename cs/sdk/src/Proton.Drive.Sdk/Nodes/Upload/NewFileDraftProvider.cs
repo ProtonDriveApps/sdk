@@ -151,7 +151,7 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
 
                 result = (response, fileSecrets);
             }
-            catch (ProtonApiException<RevisionConflictResponse> e)
+            catch (ProtonApiException<RevisionErrorResponse> e)
                 when (e.Response is { Conflict: { LinkId: { } conflictingLinkId, RevisionId: null, DraftRevisionId: not null } }
                     && (e.Response.Conflict.DraftClientUid == _client.Uid || _overrideExistingDraftByOtherClient)
                     && remainingNumberOfAttempts-- > 0)
@@ -170,9 +170,13 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
                     throw deletionException;
                 }
             }
-            catch (ProtonApiException<RevisionConflictResponse> e)
+            catch (ProtonApiException<RevisionErrorResponse> e) when (e.Code is ResponseCode.AlreadyExists)
             {
                 throw new NodeWithSameNameExistsException(_parentUid.VolumeId, e);
+            }
+            catch (ProtonApiException<RevisionErrorResponse> e) when (e.Code is ResponseCode.TooManyChildren)
+            {
+                throw new TooManyChildrenException(e.Message, e);
             }
         }
 

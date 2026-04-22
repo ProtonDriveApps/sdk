@@ -15,7 +15,7 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
     public async ValueTask<FileCreationResponse> CreateFileAsync(VolumeId volumeId, FileCreationRequest request, CancellationToken cancellationToken)
     {
         return await _httpClient
-            .Expecting(DriveApiSerializerContext.Default.FileCreationResponse, DriveApiSerializerContext.Default.RevisionConflictResponse)
+            .Expecting(DriveApiSerializerContext.Default.FileCreationResponse, DriveApiSerializerContext.Default.RevisionErrorResponse)
             .PostAsync($"v2/volumes/{volumeId}/files", request, DriveApiSerializerContext.Default.FileCreationRequest, cancellationToken)
             .ConfigureAwait(false);
     }
@@ -27,7 +27,7 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
         CancellationToken cancellationToken)
     {
         return await _httpClient
-            .Expecting(DriveApiSerializerContext.Default.RevisionCreationResponse, DriveApiSerializerContext.Default.RevisionConflictResponse)
+            .Expecting(DriveApiSerializerContext.Default.RevisionCreationResponse, DriveApiSerializerContext.Default.RevisionErrorResponse)
             .PostAsync(
                 $"v2/volumes/{volumeId}/files/{linkId}/revisions",
                 request,
