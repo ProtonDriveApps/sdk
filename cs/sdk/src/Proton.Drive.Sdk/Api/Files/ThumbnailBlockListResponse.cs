@@ -7,4 +7,7 @@ internal sealed class ThumbnailBlockListResponse : ApiResponse
 {
     [JsonPropertyName("Thumbnails")]
     public required IReadOnlyList<ThumbnailBlock> Blocks { get; init; }
+
+    [JsonPropertyName("Errors")]
+    public required IReadOnlyList<ThumbnailBlockError> Errors { get; init; }
 }
