@@ -1,5 +1,6 @@
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Sdk;
+using Proton.Sdk.Api;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
@@ -48,14 +49,14 @@ internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
 
                 revisionId = revisionResponse.Identity.RevisionId;
             }
-            catch (ProtonApiException<RevisionConflictResponse> e)
+            catch (ProtonApiException<RevisionErrorResponse> e)
                 when (e.Response is { Conflict.DraftRevisionId: { } draftRevisionId }
                     && (e.Response.Conflict.DraftClientUid == _client.Uid)
                     && remainingNumberOfAttempts-- > 0)
             {
                 await _client.Api.Files.DeleteRevisionAsync(_fileUid.VolumeId, _fileUid.LinkId, draftRevisionId, cancellationToken).ConfigureAwait(false);
             }
-            catch (ProtonApiException<RevisionConflictResponse> e)
+            catch (ProtonApiException<RevisionErrorResponse> e) when (e.Code is ResponseCode.AlreadyExists)
             {
                 throw new RevisionDraftConflictException("Cannot create revision", e);
             }
