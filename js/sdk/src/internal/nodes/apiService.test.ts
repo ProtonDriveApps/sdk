@@ -5,7 +5,7 @@ import { DriveAPIService, ErrorCode, InvalidRequirementsAPIError } from '../apiS
 import { groupNodeUidsByVolumeAndIteratePerBatch, NodeAPIService } from './apiService';
 import { NodeOutOfSyncError } from './errors';
 
-function generateAPIFileNode(linkOverrides = {}, overrides = {}) {
+function generateAPIFileNode(linkOverrides = {}, overrides = {}, fileOverrides = {}) {
     const node = generateAPINode();
     return {
         Link: {
@@ -25,6 +25,7 @@ function generateAPIFileNode(linkOverrides = {}, overrides = {}) {
                 XAttr: '{file}',
                 EncryptedSize: 12,
             },
+            ...fileOverrides,
         },
         ...overrides,
     };
@@ -225,7 +226,7 @@ describe('nodeAPIService', () => {
             );
 
             const nodes = await Array.fromAsync(api.iterateNodes(['volumeId~nodeId'], ownVolumeId));
-            expect(nodes).toStrictEqual([expectedNode]);
+            expect(nodes).toStrictEqual(expectedNode ? [expectedNode] : []);
         }
 
         it('should get folder node', async () => {
@@ -241,6 +242,10 @@ describe('nodeAPIService', () => {
 
         it('should get file node', async () => {
             await testIterateNodes(generateAPIFileNode(), generateFileNode());
+        });
+
+        fit('should skip file draft node without an error', async () => {
+            await testIterateNodes(generateAPIFileNode({}, {}, { ActiveRevision: null }), undefined);
         });
 
         it('should get album node', async () => {
