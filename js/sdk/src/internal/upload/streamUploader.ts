@@ -23,6 +23,39 @@ import { UploadManager } from './manager';
 export const FILE_CHUNK_SIZE = 4 * 1024 * 1024;
 
 /**
+ * Creates an upload progress callback isolated from the caller's scope.
+ *
+ * When a closure is defined inside a function, the JS engine attaches it to
+ * the entire lexical environment of that function — all variables in scope,
+ * whether the closure uses them or not. This means an inline `onProgress`
+ * lambda defined inside `uploadBlockData` would keep `encryptedData` (the
+ * 4 MB buffer) alive for as long as the HTTP client holds the callback,
+ * even though the lambda never references `encryptedData`.
+ *
+ * By defining this factory at module level, the returned closures only see
+ * `reported` and `onProgress`. The encrypted data is invisible to them and
+ * can be garbage collected as soon as the upload completes.
+ */
+function createProgressCallback(onProgress?: (n: number) => void): {
+    callback: (uploadedBytes: number) => void;
+    rollback: () => void;
+} {
+    let reported = 0;
+    return {
+        callback: (uploadedBytes: number) => {
+            reported += uploadedBytes;
+            onProgress?.(uploadedBytes);
+        },
+        rollback: () => {
+            if (reported !== 0) {
+                onProgress?.(-reported);
+                reported = 0;
+            }
+        },
+    };
+}
+
+/**
  * Maximum number of blocks that can be buffered before upload.
  * This is to prevent using too much memory.
  */
@@ -71,7 +104,6 @@ export class StreamUploader {
         {
             index?: number;
             uploadPromise: Promise<void>;
-            encryptedBlock: EncryptedBlock | EncryptedThumbnail;
         }
     >();
     protected uploadedThumbnails: ({ type: ThumbnailType } & EncryptedBlockMetadata)[] = [];
@@ -364,7 +396,6 @@ export class StreamUploader {
                     // Help the garbage collector to clean up the memory.
                     encryptedThumbnail = undefined;
                 }),
-                encryptedBlock: encryptedThumbnail,
             });
         }
 
@@ -385,7 +416,6 @@ export class StreamUploader {
                     // Help the garbage collector to clean up the memory.
                     encryptedBlock = undefined;
                 }),
-                encryptedBlock,
             });
         }
     }
@@ -401,8 +431,8 @@ export class StreamUploader {
         );
         logger.info(`Upload started`);
 
-        let blockProgress = 0;
         let attempt = 0;
+        const { callback: progressCallback, rollback: rollbackProgress } = createProgressCallback(onProgress);
 
         while (true) {
             attempt++;
@@ -412,10 +442,7 @@ export class StreamUploader {
                     uploadToken.bareUrl,
                     uploadToken.token,
                     encryptedThumbnail.encryptedData,
-                    (uploadedBytes) => {
-                        blockProgress += uploadedBytes;
-                        onProgress?.(uploadedBytes);
-                    },
+                    progressCallback,
                     this.abortController.signal,
                 );
                 this.uploadedThumbnails.push({
@@ -431,10 +458,7 @@ export class StreamUploader {
                     throw error;
                 }
 
-                if (blockProgress !== 0) {
-                    onProgress?.(-blockProgress);
-                    blockProgress = 0;
-                }
+                rollbackProgress();
 
                 // Note: We don't handle token expiration for thumbnails, because
                 // the API requires the thumbnails to be requested with the first
@@ -468,8 +492,8 @@ export class StreamUploader {
         const logger = new LoggerWithPrefix(this.logger, `block ${uploadToken.index}:${uploadToken.token}`);
         logger.info(`Upload started`);
 
-        let blockProgress = 0;
         let attempt = 0;
+        const { callback: progressCallback, rollback: rollbackProgress } = createProgressCallback(onProgress);
 
         while (true) {
             if (this.isUploadAborted) {
@@ -483,10 +507,7 @@ export class StreamUploader {
                     uploadToken.bareUrl,
                     uploadToken.token,
                     encryptedBlock.encryptedData,
-                    (uploadedBytes) => {
-                        blockProgress += uploadedBytes;
-                        onProgress?.(uploadedBytes);
-                    },
+                    progressCallback,
                     this.abortController.signal,
                 );
                 this.uploadedBlocks.push({
@@ -502,10 +523,7 @@ export class StreamUploader {
                     throw error;
                 }
 
-                if (blockProgress !== 0) {
-                    onProgress?.(-blockProgress);
-                    blockProgress = 0;
-                }
+                rollbackProgress();
 
                 if (error instanceof Error && error.name === 'TimeoutError') {
                     logger.warn(`Upload timeout, limiting upload capacity to 1 block`);
