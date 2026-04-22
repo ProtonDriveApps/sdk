@@ -1,5 +1,9 @@
 # Changelog
 
+## cs/v0.13.6 (2026-04-22)
+
+* Handle too many children exception when creating a new draft
+
 ## cs/v0.13.5 (2026-04-22)
 
 * Add thumbnail error handling from API response
