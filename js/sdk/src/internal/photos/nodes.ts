@@ -18,10 +18,7 @@ type PostLoadLinksMetadataRequest = Extract<
 type PostLoadLinksMetadataResponse =
     drivePaths['/drive/photos/volumes/{volumeID}/links']['post']['responses']['200']['content']['application/json'];
 
-export class PhotosNodesAPIService extends NodeAPIServiceBase<
-    EncryptedPhotoNode,
-    PostLoadLinksMetadataResponse['Links'][0]
-> {
+export class PhotosNodesAPIService extends NodeAPIServiceBase<EncryptedPhotoNode, PostLoadLinksMetadataResponse['Links'][0]> {
     protected async fetchNodeMetadata(volumeId: string, linkIds: string[], signal?: AbortSignal) {
         const response = await this.apiService.post<PostLoadLinksMetadataRequest, PostLoadLinksMetadataResponse>(
             `drive/photos/volumes/${volumeId}/links`,
@@ -37,7 +34,7 @@ export class PhotosNodesAPIService extends NodeAPIServiceBase<
         volumeId: string,
         link: PostLoadLinksMetadataResponse['Links'][0],
         isOwnVolumeId: boolean,
-    ): EncryptedPhotoNode {
+    ): EncryptedPhotoNode | undefined {
         const { baseNodeMetadata, baseCryptoNodeMetadata } = linkToEncryptedNodeBaseMetadata(
             this.logger,
             volumeId,
@@ -45,13 +42,23 @@ export class PhotosNodesAPIService extends NodeAPIServiceBase<
             isOwnVolumeId,
         );
 
-        if (link.Link.Type === 2 && link.Photo && link.Photo.ActiveRevision) {
+        if (link.Link.Type === 2 && link.Photo) {
             const node = linkToEncryptedNode(
                 this.logger,
                 volumeId,
                 { ...link, File: link.Photo, Folder: null },
                 isOwnVolumeId,
             );
+            if (!node) {
+                return undefined;
+            }
+            // Capture time is not present only for draft nodes.
+            // Draft nodes are not exposed to the client and are internal to
+            // upload module only.
+            if (!link.Photo.CaptureTime) {
+                this.logger.warn(`Requested draft photo node, skipping from the result`);
+                return undefined;
+            }
             return {
                 ...node,
                 type: NodeType.Photo,

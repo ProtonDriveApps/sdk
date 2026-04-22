@@ -82,9 +82,12 @@ export class SharingPublicNodesAPIService extends NodeAPIService {
         volumeId: string,
         link: PostLoadLinksMetadataResponse['Links'][0],
         isOwnVolumeId: boolean,
-    ): EncryptedNode {
+    ): EncryptedNode | undefined {
         const nodeUid = makeNodeUid(volumeId, link.Link.LinkID);
         const encryptedNode = linkToEncryptedNode(this.logger, volumeId, link, isOwnVolumeId);
+        if (!encryptedNode) {
+            return undefined;
+        }
 
         // TODO: This affects the cache. At this moment, the public link is not cached
         // anywhere, thus OK. To avoid issues when public links reuses the same cache,

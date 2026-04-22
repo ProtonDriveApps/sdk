@@ -212,7 +212,7 @@ export abstract class NodeAPIServiceBase<
             for (const link of responseLinks) {
                 try {
                     const encryptedNode = this.linkToEncryptedNode(volumeId, link, isOwnVolumeId);
-                    if (filterOptions?.type && encryptedNode.type !== filterOptions.type) {
+                    if (!encryptedNode || (filterOptions?.type && encryptedNode.type !== filterOptions.type)) {
                         continue;
                     }
                     yield encryptedNode;
@@ -232,7 +232,17 @@ export abstract class NodeAPIServiceBase<
         signal?: AbortSignal,
     ): Promise<TMetadataResponseLink[]>;
 
-    protected abstract linkToEncryptedNode(volumeId: string, link: TMetadataResponseLink, isOwnVolumeId: boolean): T;
+    /**
+     * Converts a link from the API payload to an encrypted node entity.
+     *
+     * Returns undefined if the link is a draft as drafts are not exposed
+     * to the client and are internal to upload module only.
+     */
+    protected abstract linkToEncryptedNode(
+        volumeId: string,
+        link: TMetadataResponseLink,
+        isOwnVolumeId: boolean,
+    ): T | undefined;
 
     // Improvement requested: load next page sooner before all IDs are yielded.
     async *iterateChildrenNodeUids(
@@ -623,7 +633,7 @@ export class NodeAPIService extends NodeAPIServiceBase {
         volumeId: string,
         link: PostLoadLinksMetadataResponse['Links'][0],
         isOwnVolumeId: boolean,
-    ): EncryptedNode {
+    ): EncryptedNode | undefined {
         return linkToEncryptedNode(this.logger, volumeId, link, isOwnVolumeId);
     }
 }
@@ -683,7 +693,7 @@ export function linkToEncryptedNode(
     volumeId: string,
     link: Pick<PostLoadLinksMetadataResponse['Links'][0], 'Link' | 'Membership' | 'Sharing' | 'Folder' | 'File'>,
     isAdmin: boolean,
-): EncryptedNode {
+): EncryptedNode | undefined {
     const { baseNodeMetadata, baseCryptoNodeMetadata } = linkToEncryptedNodeBaseMetadata(
         logger,
         volumeId,
@@ -704,7 +714,12 @@ export function linkToEncryptedNode(
         };
     }
 
-    if (link.Link.Type === 2 && link.File && link.File.ActiveRevision) {
+    if (link.Link.Type === 2 && link.File) {
+        if (!link.File.ActiveRevision) {
+            logger.warn(`Requested draft file node, skipping from the result`);
+            return undefined;
+        }
+
         return {
             ...baseNodeMetadata,
             totalStorageSize: link.File.TotalEncryptedSize,
