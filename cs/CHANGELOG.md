@@ -1,5 +1,10 @@
 # Changelog
 
+## cs/v0.13.5 (2026-04-22)
+
+* Add thumbnail error handling from API response
+* Ensure expected SHA1 provider is called only once during upload
+
 ## cs/v0.13.4 (2026-04-20)
 
 * Improve download initialization speed by parallelizing some server round-trips
