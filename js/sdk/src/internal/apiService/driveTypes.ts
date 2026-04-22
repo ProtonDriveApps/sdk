@@ -2684,27 +2684,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/drive/shares/{shareID}/property": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Update properties of a share
-         * @deprecated
-         * @description Update the values on one or more properties of the Share. For now, only allowed changing editorsCanShare attribute
-         */
-        post: operations["post_drive-shares-{shareID}-property"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/drive/migrations/shareaccesswithnode": {
         parameters: {
             query?: never;
@@ -3434,13 +3413,15 @@ export interface components {
         };
         /** @description Address ID */
         AddressID: string;
+        /** @description An encrypted ID */
+        LongId: string;
         ShareDataDto: {
             AddressID: components["schemas"]["AddressID"];
             Key: components["schemas"]["PGPPrivateKey"];
             Passphrase: components["schemas"]["PGPMessage"];
             PassphraseSignature: components["schemas"]["PGPSignature"];
             /** @description User's encrypted AddressKeyID. Must be the primary key from the AddressID */
-            AddressKeyID?: components["schemas"]["Id"] | null;
+            AddressKeyID?: components["schemas"]["LongId"] | null;
         };
         LinkDataDto: {
             /** @description Root folder name */
@@ -3700,7 +3681,7 @@ export interface components {
         BookmarkShareURLRequestDto: {
             EncryptedUrlPassword?: components["schemas"]["PGPMessage"] | null;
             AddressID: components["schemas"]["AddressID"];
-            AddressKeyID: components["schemas"]["Id"];
+            AddressKeyID: components["schemas"]["LongId"];
         };
         CreateBookmarkShareURLRequestDto: {
             BookmarkShareURL: components["schemas"]["BookmarkShareURLRequestDto"];
@@ -3711,7 +3692,7 @@ export interface components {
          */
         BookmarkShareURLState: 1 | 3;
         BookmarkShareURLResponseDto: {
-            UserID: components["schemas"]["Id"];
+            UserID: components["schemas"]["LongId"];
             Token: string;
             ShareURLID: components["schemas"]["Id"];
             EncryptedUrlPassword: components["schemas"]["PGPMessage"] | null;
@@ -3823,7 +3804,7 @@ export interface components {
             Passphrase: components["schemas"]["PGPMessage"];
             PassphraseSignature: components["schemas"]["PGPSignature"];
             /** @description User's encrypted AddressKeyID. Must be the primary key from the AddressID */
-            AddressKeyID?: components["schemas"]["Id"] | null;
+            AddressKeyID?: components["schemas"]["LongId"] | null;
             /**
              * @deprecated
              * @default null
@@ -3971,8 +3952,10 @@ export interface components {
              */
             Code: 1000;
         };
+        /** @description An encrypted ID */
+        ShortId: string;
         LatestEventIDResponseDto: {
-            EventID: components["schemas"]["Id"];
+            EventID: components["schemas"]["ShortId"];
             /**
              * ProtonResponseCode
              * @example 1000
@@ -4285,7 +4268,7 @@ export interface components {
             } | null;
         };
         EventResponseDto: {
-            EventID: components["schemas"]["Id"];
+            EventID: components["schemas"]["ShortId"];
             EventType: components["schemas"]["EventType"];
             /** @description Event creation timestamp */
             CreateTime: number;
@@ -4330,7 +4313,7 @@ export interface components {
         ListEventsResponseDto: {
             Events: components["schemas"]["EventResponseDto"][];
             /** @description Last event ID that can be used on the next call. Will be latest/newest-event-id if requested last-event-id does not exist. */
-            EventID: components["schemas"]["Id"];
+            EventID: components["schemas"]["ShortId"];
             /**
              * @description 1 if there is more to pull, i.e. there are more events than returned in one call
              * @enum {integer}
@@ -4355,18 +4338,20 @@ export interface components {
             IsTrashed: boolean;
         };
         EventV2ResponseDto: {
-            EventID: components["schemas"]["Id"];
+            EventID: components["schemas"]["ShortId"];
             EventType: components["schemas"]["EventType"];
             Link: components["schemas"]["EventLinkDataDto"];
         };
         ListEventsV2ResponseDto: {
             Events: components["schemas"]["EventV2ResponseDto"][];
             /** @description Last event ID that can be used on the next call. Will be latest/newest-event-id if requested last-event-id does not exist. */
-            EventID: components["schemas"]["Id"];
+            EventID: components["schemas"]["ShortId"];
             /** @description true if there is more to pull, i.e. there are more events than returned in one call */
             More: boolean;
             /** @description true if client needs to refresh from scratch as their provided event does not exist anymore, i.e. too much time passed since the last event sync */
             Refresh: boolean;
+            /** @description true if client should skip SDK-side quota checks (e.g. user has an active free upload timer) */
+            DisableSdkQuotaChecks: boolean;
             /**
              * ProtonResponseCode
              * @example 1000
@@ -4497,6 +4482,7 @@ export interface components {
         PhotosDto: {
             /** @description Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ] */
             ContentHash: string;
+            /** @default [] */
             RelatedPhotos: components["schemas"]["RelatedPhotoDto"][];
         };
         CopyLinkRequestDto: {
@@ -4667,7 +4653,7 @@ export interface components {
         };
         MembershipDto: {
             ShareID: components["schemas"]["Id"];
-            MembershipID: components["schemas"]["Id"];
+            MembershipID: components["schemas"]["ShortId"];
             /**
              * @description Permission bitfield, valid permissions:
              *      - 4: read access
@@ -4911,7 +4897,7 @@ export interface components {
             NodesWithMissingNodeHashKey: components["schemas"]["UpdateMissingHashKeyItemDto"][];
         };
         CommitRevisionPhotoDto: {
-            /** @description Photo capture timestamp */
+            /** @description Photo capture timestamp, use negative values for times before 1970 */
             CaptureTime: number;
             /** @description Photo content hash, lowercase hex representation of HMAC SHA256 of SHA1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ] */
             ContentHash: string;
@@ -5538,8 +5524,10 @@ export interface components {
         };
         PhotoFileDto: {
             ActiveRevision: components["schemas"]["ActivePhotoRevisionDto"] | null;
-            CaptureTime: number;
+            /** @description Timestamp of the photo capture in seconds since the Unix epoch; null on draft links */
+            CaptureTime?: number | null;
             MainPhotoLinkID: components["schemas"]["Id"] | null;
+            /** @description Photo content hash, lowercase hex representation of HMAC SHA256 of SHA1 content using parent folder's hash key; Null on draft links */
             ContentHash: string | null;
             RelatedPhotosLinkIDs: components["schemas"]["Id"][];
             Albums: components["schemas"]["PhotoAlbumDto"][];
@@ -5902,7 +5890,7 @@ export interface components {
         };
         PhotoResponseDto: {
             LinkID: components["schemas"]["Id"];
-            /** @description Unix timestamp of when the photo was taken as extracted by client from exif */
+            /** @description Unix timestamp of when the photo was taken as extracted by client from exif. Negative values represent times before 1970 */
             CaptureTime: number;
             MainPhotoLinkID: components["schemas"]["Id"] | null;
             /** @description File name hash */
@@ -6231,7 +6219,7 @@ export interface components {
             Key: components["schemas"]["PGPPrivateKey"];
             Passphrase: components["schemas"]["PGPMessage"];
             PassphraseSignature: components["schemas"]["PGPSignature"];
-            AddressID: components["schemas"]["Id"];
+            AddressID: components["schemas"]["LongId"];
             InviterSharePassphraseKeyPacketSignature?: components["schemas"]["PGPSignature"] | null;
             InviteeSharePassphraseSessionKeySignature?: components["schemas"]["PGPSignature"] | null;
         };
@@ -6276,10 +6264,10 @@ export interface components {
          */
         ShareMemberState: 1 | 2 | 3;
         MemberResponseDto: {
-            MemberID: components["schemas"]["Id"];
+            MemberID: components["schemas"]["ShortId"];
             ShareID: components["schemas"]["Id"];
-            AddressID: components["schemas"]["Id"];
-            AddressKeyID: components["schemas"]["Id"];
+            AddressID: components["schemas"]["LongId"];
+            AddressKeyID: components["schemas"]["LongId"];
             /** Format: email */
             Inviter: string;
             /**
@@ -6311,8 +6299,8 @@ export interface components {
             Unlockable: boolean | null;
         };
         KeyPacketResponseDto: {
-            AddressID: components["schemas"]["Id"];
-            AddressKeyID: components["schemas"]["Id"];
+            AddressID: components["schemas"]["LongId"];
+            AddressKeyID: components["schemas"]["LongId"];
             KeyPacket: components["schemas"]["BinaryString"];
             /** @description 1=active, 3=locked */
             State: components["schemas"]["ShareMemberState"];
@@ -6357,12 +6345,12 @@ export interface components {
             Passphrase: components["schemas"]["PGPMessage"];
             PassphraseSignature: components["schemas"]["PGPSignature"];
             /** @description Address ID of the current user's address for the membership of this share. Can be missing if the user is not a direct member of the share. */
-            AddressID: components["schemas"]["Id"] | null;
+            AddressID: components["schemas"]["LongId"] | null;
             /**
              * @deprecated
              * @description Clients should not use this field but pass the address keyring when validating and decrypting related fields.
              */
-            AddressKeyID?: components["schemas"]["Id"] | null;
+            AddressKeyID?: components["schemas"]["LongId"] | null;
             /** @description Your own memberships */
             Memberships: components["schemas"]["MemberResponseDto"][];
             /**
@@ -6433,13 +6421,6 @@ export interface components {
         UpdateShareEditorsCanShareRequestDto: {
             /** @description Indicates if editor members of this share could reshare it or not */
             Value: boolean;
-        };
-        UpdateSharePropertyRequestDto: {
-            /**
-             * @description Indicates if editor members of this share could reshare it or not
-             * @default null
-             */
-            EditorsCanShare: boolean | null;
         };
         ShareKPMigrationData: {
             /** @description Share to migrate. Can only be Active (State=1) Shares of Type=2 */
@@ -6563,7 +6544,7 @@ export interface components {
             Code: 1000;
         };
         ExternalInvitationRequestDto: {
-            InviterAddressID: components["schemas"]["Id"];
+            InviterAddressID: components["schemas"]["LongId"];
             /** Format: email */
             InviteeEmail: string;
             /**
@@ -6593,7 +6574,7 @@ export interface components {
          */
         ExternalInvitationState: 1 | 2 | 4;
         ExternalInvitationResponseDto: {
-            ExternalInvitationID: components["schemas"]["Id"];
+            ExternalInvitationID: components["schemas"]["ShortId"];
             /** Format: email */
             InviterEmail: string;
             /** Format: email */
@@ -6633,12 +6614,12 @@ export interface components {
         UserRegisteredExternalInvitationItemDto: {
             VolumeID: components["schemas"]["Id"];
             ShareID: components["schemas"]["Id"];
-            ExternalInvitationID: components["schemas"]["Id"];
+            ExternalInvitationID: components["schemas"]["ShortId"];
         };
         ListUserRegisteredExternalInvitationResponseDto: {
             ExternalInvitations: components["schemas"]["UserRegisteredExternalInvitationItemDto"][];
             /** @description Used for pagination, pass to the next call to get the next page of results */
-            AnchorID: components["schemas"]["Id"] | null;
+            AnchorID: components["schemas"]["ShortId"] | null;
             /** @description Indicates if there is a next page of results */
             More: boolean;
             /**
@@ -6680,7 +6661,7 @@ export interface components {
             /** @description Signature of the above member key packet with the private key of the user (inviter) and the signature context `drive.share-member.inviter`, base64 encoded */
             KeyPacketSignature: components["schemas"]["BinaryString"];
             /** @default null */
-            ExternalInvitationID: components["schemas"]["Id"] | null;
+            ExternalInvitationID: components["schemas"]["ShortId"] | null;
         };
         InviteUserRequestDto: {
             Invitation: components["schemas"]["InvitationRequestDto"];
@@ -6688,7 +6669,7 @@ export interface components {
             EmailDetails: components["schemas"]["InvitationEmailDetailsRequestDto"] | null;
         };
         InvitationResponseDto: {
-            InvitationID: components["schemas"]["Id"];
+            InvitationID: components["schemas"]["ShortId"];
             /** Format: email */
             InviterEmail: string;
             /** Format: email */
@@ -6741,7 +6722,7 @@ export interface components {
         PendingInvitationItemDto: {
             VolumeID: components["schemas"]["Id"];
             ShareID: components["schemas"]["Id"];
-            InvitationID: components["schemas"]["Id"];
+            InvitationID: components["schemas"]["ShortId"];
             /** @description The target type of the Share that is corresponding to this invitation.
              *                 This should not be used as source of information to know what NodeType or MIMEType the targeted Share is. */
             ShareTargetType: components["schemas"]["TargetType"];
@@ -6749,7 +6730,7 @@ export interface components {
         ListPendingInvitationResponseDto: {
             Invitations: components["schemas"]["PendingInvitationItemDto"][];
             /** @description Used for pagination, pass to the next call to get the next page of results */
-            AnchorID: components["schemas"]["Id"] | null;
+            AnchorID: components["schemas"]["ShortId"] | null;
             /** @description Indicates if there is a next page of results */
             More: boolean;
             /**
@@ -6816,7 +6797,7 @@ export interface components {
             Code: 1000;
         };
         MemberResponseDto2: {
-            MemberID: components["schemas"]["Id"];
+            MemberID: components["schemas"]["ShortId"];
             /** Format: email */
             InviterEmail: string;
             /** Format: email */
@@ -6968,7 +6949,7 @@ export interface components {
         CreateOrgVolumeRequestDto: {
             AddressID: components["schemas"]["AddressID"];
             /** @description XX's encrypted AddressKeyID. Must be the primary key from the AddressID */
-            AddressKeyID: components["schemas"]["Id"];
+            AddressKeyID: components["schemas"]["LongId"];
             ShareKey: components["schemas"]["PGPPrivateKey"];
             SharePassphrase: components["schemas"]["PGPMessage"];
             SharePassphraseSignature: components["schemas"]["PGPSignature"];
@@ -6977,7 +6958,7 @@ export interface components {
             FolderPassphrase: components["schemas"]["PGPMessage"];
             FolderPassphraseSignature: components["schemas"]["PGPSignature"];
             FolderHashKey: components["schemas"]["PGPMessage"];
-            OrganizationID: components["schemas"]["Id"];
+            OrganizationID: components["schemas"]["LongId"];
             /** @description Name of the org. volume. It's plain text so that name can be displayed in UI menu */
             VolumeName: string;
         };
@@ -7026,7 +7007,7 @@ export interface components {
             FolderPassphraseSignature: components["schemas"]["PGPSignature"];
             FolderHashKey: components["schemas"]["PGPMessage"];
             /** @description User's encrypted AddressKeyID. Must be the primary key from the AddressID */
-            AddressKeyID?: components["schemas"]["Id"] | null;
+            AddressKeyID?: components["schemas"]["LongId"] | null;
             /**
              * @deprecated
              * @default null
@@ -7039,8 +7020,8 @@ export interface components {
             ShareName: string | null;
         };
         OrgVolumeResponseDto: {
-            ShareID: components["schemas"]["Id"];
-            VolumeID: components["schemas"]["Id"];
+            ShareID: components["schemas"]["ShortId"];
+            VolumeID: components["schemas"]["ShortId"];
             /** @description Name of the org. volume */
             Name: string;
             /** @description Membership creation time */
@@ -7056,7 +7037,7 @@ export interface components {
             Code: 1000;
         };
         OrgVolumeForAdminResponseDto: {
-            VolumeID: components["schemas"]["Id"];
+            VolumeID: components["schemas"]["ShortId"];
             /** @description Name of the org. volume */
             Name: string;
         };
@@ -7110,7 +7091,7 @@ export interface components {
             /** @default [] */
             PhotoShares: components["schemas"]["RestoreRootShareDto"][];
             /** @description User's encrypted AddressKeyID. Must be the primary key from the signatureAddress */
-            AddressKeyID?: components["schemas"]["Id"] | null;
+            AddressKeyID?: components["schemas"]["LongId"] | null;
         };
         AddPhotoToAlbumWithLinkIDResponseDto: Record<string, never>;
         MultiResponsesPerLinkFactory: {
@@ -12466,33 +12447,6 @@ export interface operations {
             };
         };
     };
-    "post_drive-shares-{shareID}-property": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                shareID: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["UpdateSharePropertyRequestDto"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    "x-pm-code": 1000;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SuccessfulResponse"];
-                };
-            };
-        };
-    };
     "post_drive-migrations-shareaccesswithnode": {
         parameters: {
             query?: never;
@@ -13071,6 +13025,7 @@ export interface operations {
                          *      - 200502: key packet signature is invalid
                          *      - 200600: maximum number of invitations and members reached for current share
                          *      - 200202: Sharing with groups is not available yet.
+                         *      - 2011: You do not have permission to invite this group. Please reach out to the group admin.
                          *      */
                         Code: number;
                     };
