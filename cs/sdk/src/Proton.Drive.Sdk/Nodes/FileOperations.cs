@@ -147,6 +147,17 @@ internal static class FileOperations
                     tasks.Enqueue(DownloadThumbnailAsync(client, nodeInfo.ActiveRevisionUid, block, cancellationToken));
                 }
 
+                foreach (var error in response.Errors)
+                {
+                    if (!thumbnailIds.TryGetValue(error.ThumbnailId, out var nodeInfo))
+                    {
+                        continue;
+                    }
+
+                    processedThumbnailIds.Add(error.ThumbnailId);
+                    yield return new FileThumbnail(nodeInfo.Uid, new ProtonDriveError(error.Error));
+                }
+
                 // TODO: cancel other thumbnail downloads if one fails
                 while (tasks.TryDequeue(out var task))
                 {
