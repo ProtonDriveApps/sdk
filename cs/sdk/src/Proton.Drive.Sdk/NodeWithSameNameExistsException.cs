@@ -21,7 +21,7 @@ public sealed class NodeWithSameNameExistsException : ProtonDriveException
     {
     }
 
-    internal NodeWithSameNameExistsException(VolumeId volumeId, ProtonApiException<RevisionConflictResponse> innerException)
+    internal NodeWithSameNameExistsException(VolumeId volumeId, ProtonApiException<RevisionErrorResponse> innerException)
         : base(innerException.Message, innerException)
     {
         if (innerException.Response is not { } response)
