@@ -1,5 +1,10 @@
 # Changelog
 
+## cs/v0.13.7 (2026-04-23)
+
+* Remove unnecessary too many children exception
+* Log error when volume type is unknown
+
 ## cs/v0.13.6 (2026-04-22)
 
 * Handle too many children exception when creating a new draft
