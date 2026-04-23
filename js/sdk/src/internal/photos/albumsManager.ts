@@ -53,6 +53,15 @@ export class AlbumsManager {
         const { volumeId } = await this.photoShares.getRootIDs();
 
         for await (const album of this.apiService.iterateAlbums(volumeId, signal)) {
+            // Patch fresh album metadata into the node cache so that the subsequent
+            // iterateNodes call returns up-to-date photoCount/coverNodeUid without
+            // an extra API round-trip. The fresh data comes from the /albums endpoint
+            // which always reflects the current state.
+            void this.nodesService.updateAlbumMetadataCache(album.albumUid, {
+                photoCount: album.photoCount,
+                coverNodeUid: album.coverNodeUid,
+                lastActivityTime: album.lastActivityTime,
+            });
             yield album.albumUid;
         }
     }
