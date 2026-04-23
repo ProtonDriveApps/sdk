@@ -174,10 +174,6 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
             {
                 throw new NodeWithSameNameExistsException(_parentUid.VolumeId, e);
             }
-            catch (ProtonApiException<RevisionErrorResponse> e) when (e.Code is ResponseCode.TooManyChildren)
-            {
-                throw new TooManyChildrenException(e.Message, e);
-            }
         }
 
         return result.Value;
