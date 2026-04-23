@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="$(NativeLibPrefix)proton_drive_sdk" />
+    <InternalsVisibleTo Include="Proton.Sdk.CExports.Tests" />
   </ItemGroup>
 
   <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('ios'))">

@@ -36,6 +36,7 @@
     <InternalsVisibleTo Include="Proton.Photos.Sdk" />
     <InternalsVisibleTo Include="Proton.Drive.Sdk.Tests" />
     <InternalsVisibleTo Include="Proton.Drive.Sdk.CExports.Tests" />
+    <InternalsVisibleTo Include="Proton.Sdk.CExports.Tests" />
     <InternalsVisibleTo Include="$(NativeLibPrefix)proton_sdk" />
     <InternalsVisibleTo Include="$(NativeLibPrefix)proton_drive_sdk" />
   </ItemGroup>
