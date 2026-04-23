@@ -11,7 +11,7 @@ internal static class ExceptionExtensions
 
         var error = new Error
         {
-            Type = exception.GetType().FullName ?? $"{nameof(System)}.{nameof(Exception)}",
+            Type = GetTypeName(exception.GetType()),
             Message = exception.Message,
         };
 
@@ -26,5 +26,18 @@ internal static class ExceptionExtensions
         error.InnerError = exception.InnerException?.ToProtoError(setDomainAndCodesFunction);
 
         return error;
+    }
+
+    private static string GetTypeName(Type type)
+    {
+        if (!type.IsGenericType)
+        {
+            return type.FullName ?? $"{nameof(System)}.{nameof(Exception)}";
+        }
+
+        var baseName = type.GetGenericTypeDefinition().FullName!;
+        baseName = baseName[..baseName.IndexOf('`')];
+        var argNames = type.GetGenericArguments().Select(GetTypeName);
+        return baseName + "[" + string.Join(",", argNames) + "]";
     }
 }
