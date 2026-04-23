@@ -293,6 +293,47 @@ describe('Albums', () => {
         });
     });
 
+    describe('iterateAlbumUids', () => {
+        it('yields album uids and patches metadata into cache', async () => {
+            const album1 = {
+                albumUid: 'volumeId~album1',
+                photoCount: 3,
+                coverNodeUid: 'volumeId~cover1',
+                lastActivityTime: new Date('2024-01-01T00:00:00.000Z'),
+            };
+            const album2 = {
+                albumUid: 'volumeId~album2',
+                photoCount: 0,
+                coverNodeUid: undefined,
+                lastActivityTime: new Date('2024-02-01T00:00:00.000Z'),
+            };
+
+            apiService.iterateAlbums = jest.fn().mockImplementation(async function* () {
+                yield album1;
+                yield album2;
+            });
+            nodesService.updateAlbumMetadataCache = jest.fn().mockResolvedValue(undefined);
+
+            const uids: string[] = [];
+            for await (const uid of albums.iterateAlbumUids()) {
+                uids.push(uid);
+            }
+
+            expect(uids).toEqual(['volumeId~album1', 'volumeId~album2']);
+            expect(nodesService.updateAlbumMetadataCache).toHaveBeenCalledTimes(2);
+            expect(nodesService.updateAlbumMetadataCache).toHaveBeenCalledWith('volumeId~album1', {
+                photoCount: 3,
+                coverNodeUid: 'volumeId~cover1',
+                lastActivityTime: album1.lastActivityTime,
+            });
+            expect(nodesService.updateAlbumMetadataCache).toHaveBeenCalledWith('volumeId~album2', {
+                photoCount: 0,
+                coverNodeUid: undefined,
+                lastActivityTime: album2.lastActivityTime,
+            });
+        });
+    });
+
     describe('removePhotos', () => {
         it('notifies nodes service only for successfully removed photos', async () => {
             apiService.removePhotosFromAlbum = jest.fn().mockImplementation(async function* () {
