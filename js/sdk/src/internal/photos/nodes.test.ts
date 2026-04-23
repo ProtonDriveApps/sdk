@@ -3,6 +3,7 @@ import { NodeType, MemberRole } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
 import { getMockTelemetry } from '../../tests/telemetry';
 import { DriveAPIService } from '../apiService';
+import { DecryptedPhotoNode } from './interface';
 import { PhotosNodesAPIService, PhotosNodesCache, PhotosNodesAccess, PhotosNodesCryptoService } from './nodes';
 
 function generateAPINode() {
@@ -263,6 +264,47 @@ describe('PhotosNodesAccess', () => {
                 photo: { albums: [] },
             });
             expect(getSharePrivateKeyMock).toHaveBeenCalledWith('rootShareId');
+        });
+    });
+
+    describe('updateAlbumMetadataCache', () => {
+        let access: PhotosNodesAccess;
+        let mockCache: { getNode: jest.Mock; setNode: jest.Mock };
+
+        beforeEach(() => {
+            mockCache = { getNode: jest.fn(), setNode: jest.fn() };
+            access = new PhotosNodesAccess(
+                getMockTelemetry(),
+                // @ts-expect-error Mocking for testing purposes
+                {},
+                mockCache,
+                { getNodeKeys: jest.fn().mockRejectedValue(new Error()) },
+                {},
+                {},
+            );
+        });
+
+        it('updates album metadata in cache', async () => {
+            const existing = { uid: 'v~album1', type: NodeType.Album, album: { photoCount: 1, coverPhotoNodeUid: 'v~old', lastActivityTime: new Date('2024-01-01') } } as DecryptedPhotoNode;
+            mockCache.getNode.mockResolvedValue(existing);
+
+            await access.updateAlbumMetadataCache('v~album1', { photoCount: 5, coverNodeUid: 'v~new', lastActivityTime: new Date('2024-06-01') });
+
+            expect(mockCache.setNode).toHaveBeenCalledWith(expect.objectContaining({
+                album: { photoCount: 5, coverPhotoNodeUid: 'v~new', lastActivityTime: new Date('2024-06-01') },
+            }));
+        });
+
+        it('does nothing when node is not in cache', async () => {
+            mockCache.getNode.mockRejectedValue(new Error('Entity not found'));
+            await expect(access.updateAlbumMetadataCache('v~missing', { photoCount: 3, coverNodeUid: undefined, lastActivityTime: new Date() })).resolves.toBeUndefined();
+            expect(mockCache.setNode).not.toHaveBeenCalled();
+        });
+
+        it('does nothing when cached node has no album field', async () => {
+            mockCache.getNode.mockResolvedValue({ uid: 'v~folder1', type: NodeType.Folder } as DecryptedPhotoNode);
+            await access.updateAlbumMetadataCache('v~folder1', { photoCount: 2, coverNodeUid: undefined, lastActivityTime: new Date() });
+            expect(mockCache.setNode).not.toHaveBeenCalled();
         });
     });
 

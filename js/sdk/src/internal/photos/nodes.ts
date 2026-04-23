@@ -237,6 +237,35 @@ export class PhotosNodesAccess extends NodesAccessBase<EncryptedPhotoNode, Decry
 
         return parseNodeBase(this.logger, unparsedNode);
     }
+
+    /**
+     * Update album metadata fields in the cache without invalidating the node.
+     * Used by iterateAlbumUids to patch fresh API data (photoCount, coverNodeUid,
+     * lastActivityTime) into already-cached nodes so iterateNodes doesn't re-fetch
+     * the full node just to get up-to-date album attributes.
+     */
+    async updateAlbumMetadataCache(
+        albumUid: string,
+        metadata: { photoCount: number; coverNodeUid?: string; lastActivityTime: Date },
+    ): Promise<void> {
+        try {
+            const cached = await this.cache.getNode(albumUid);
+            if (!cached?.album) {
+                return;
+            }
+            await this.cache.setNode({
+                ...cached,
+                album: {
+                    ...cached.album,
+                    photoCount: metadata.photoCount,
+                    coverPhotoNodeUid: metadata.coverNodeUid,
+                    lastActivityTime: metadata.lastActivityTime,
+                },
+            });
+        } catch {
+            // Cache miss is fine — node will be fetched fresh by iterateNodes anyway.
+        }
+    }
 }
 
 export class PhotosNodesCryptoService extends NodesCryptoService {
