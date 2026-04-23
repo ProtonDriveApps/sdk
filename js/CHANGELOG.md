@@ -1,5 +1,11 @@
 # Changelog
 
+## js/v0.14.8 (2026-04-23)
+
+* Update album metadata cache after albums api request
+* Report checksum verification
+* Prevent encrypted block buffers from leaking via onProgress closure
+
 ## js/v0.14.7 (2026-04-17)
 
 * Add experimental iterate by uids for albums and shared with me albums
