@@ -95,12 +95,16 @@ class CommonUploadController internal constructor(
         runCatching {
             withTimeout(500.milliseconds) { awaitCompletion() }
         }.recoverCatching { error ->
-            if (error is TimeoutCancellationException) {
-                log(DEBUG, "Stop waiting for completion: ${error.message}")
-            } else if (error is CancellationException) {
-                throw error
+            when (error) {
+                is TimeoutCancellationException -> log(
+                    DEBUG,
+                    "Stop waiting for completion: ${error.message}"
+                )
+
+                is CancellationException -> throw error
+                is UploadAbortedException -> Unit // do nothing
+                else -> log(DEBUG, "Error during waiting for completion: ${error.message}")
             }
-            log(DEBUG, "Error during waiting for completion: ${error.message}")
         }
     }
 
