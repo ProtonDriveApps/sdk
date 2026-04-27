@@ -1,5 +1,12 @@
 # Changelog
 
+## cs/v0.13.8 (2026-04-27)
+
+* Fix nullable data in name conflict error
+* Add extension to aborted exception
+* Reduce log in controllers
+* Improve exception type names in error reports
+
 ## cs/v0.13.7 (2026-04-23)
 
 * Remove unnecessary too many children exception
