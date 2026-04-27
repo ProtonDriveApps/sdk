@@ -102,7 +102,7 @@ internal static class FileOperations
                         .Select(thumbnail => (thumbnail.Id, Info: fileNodeInfo))
                         .ToAsyncEnumerable();
                 })
-                .ToDictionaryAsync(x => x.Id, x => x.Info, cancellationToken)
+                .ToDictionaryAsync(thumbnail => thumbnail.Id, thumbnail => thumbnail.Info, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
             errors.AddRange(

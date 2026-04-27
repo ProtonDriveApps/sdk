@@ -15,7 +15,6 @@
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
     <PackageReference Include="Proton.Cryptography" PrivateAssets="compile" />
-    <PackageReference Include="System.Linq.Async" />
   </ItemGroup>
 
   <ItemGroup Condition="!$(RuntimeIdentifier.StartsWith('ios')) And !$(RuntimeIdentifier.StartsWith('osx'))">

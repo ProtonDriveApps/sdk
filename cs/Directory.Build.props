@@ -1,10 +1,11 @@
 <Project>
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsPackable>false</IsPackable>
+    <PublishAotUsingRuntimePack>true </PublishAotUsingRuntimePack>
 
     <!-- Without this property, building with AOT for some platforms will fail -->
     <PublishAotUsingRuntimePack>true</PublishAotUsingRuntimePack>
