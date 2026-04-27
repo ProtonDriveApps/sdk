@@ -691,6 +691,21 @@ export class ProtonDrivePhotosClient {
     }
 
     /**
+     * Saves photos to the timeline.
+     *
+     * @param photoNodeUids - The UIDs of the photos to save to the timeline.
+     * @param signal - An optional abort signal to cancel the operation.
+     * @returns An async generator of per-photo results.
+     */
+    async *savePhotosToTimeline(
+        photoNodeUids: NodeOrUid[],
+        signal?: AbortSignal,
+    ): AsyncGenerator<NodeResultWithError> {
+        this.logger.info(`Saving ${photoNodeUids.length} photos to timeline`);
+        yield* this.photos.photos.saveToTimeline(getUids(photoNodeUids), signal);
+    }
+
+    /**
      * Updates photos with the given settings: add or remove tags.
      *
      * Assigning a favorite tag to a photo that is not in the timeline will
