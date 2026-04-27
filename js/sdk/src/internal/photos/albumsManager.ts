@@ -220,7 +220,11 @@ export class AlbumsManager {
             this.logger,
             signal,
         );
-        yield* process.execute(photoNodeUids);
+        try {
+            yield* process.execute(photoNodeUids);
+        } finally {
+            await this.nodesService.notifyNodeChanged(albumNodeUid);
+        }
     }
 
     async *removePhotos(
@@ -228,11 +232,15 @@ export class AlbumsManager {
         photoNodeUids: string[],
         signal?: AbortSignal,
     ): AsyncGenerator<NodeResultWithError> {
-        for await (const result of this.apiService.removePhotosFromAlbum(albumNodeUid, photoNodeUids, signal)) {
-            if (result.ok) {
-                await this.nodesService.notifyNodeChanged(result.uid);
+        try {
+            for await (const result of this.apiService.removePhotosFromAlbum(albumNodeUid, photoNodeUids, signal)) {
+                if (result.ok) {
+                    await this.nodesService.notifyNodeChanged(result.uid);
+                }
+                yield result;
             }
-            yield result;
+        } finally {
+            await this.nodesService.notifyNodeChanged(albumNodeUid);
         }
     }
 
