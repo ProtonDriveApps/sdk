@@ -1,5 +1,9 @@
 # Changelog
 
+## js/v0.14.10 (2026-04-27)
+
+* Update cached album photo count after adding or removing photo
+
 ## js/v0.14.9 (2026-04-27)
 
 * Expose savePhotosToTimeline
