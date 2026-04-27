@@ -1,5 +1,9 @@
 # Changelog
 
+## js/v0.14.9 (2026-04-27)
+
+* Expose savePhotosToTimeline
+
 ## js/v0.14.8 (2026-04-23)
 
 * Update album metadata cache after albums api request
