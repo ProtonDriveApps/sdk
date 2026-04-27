@@ -7,16 +7,16 @@ namespace Proton.Drive.Sdk.Nodes.Download;
 public sealed partial class FileDownloader : IFileDownloader
 {
     private readonly ProtonDriveClient _client;
+    private readonly long _queueToken;
     private readonly RevisionUid _revisionUid;
     private readonly ILogger _logger;
-    private volatile int _remainingNumberOfBlocksToList;
 
-    private FileDownloader(ProtonDriveClient client, RevisionUid revisionUid, ILogger logger)
+    private FileDownloader(ProtonDriveClient client, long queueToken, RevisionUid revisionUid, ILogger logger)
     {
         _client = client;
+        _queueToken = queueToken;
         _revisionUid = revisionUid;
         _logger = logger;
-        _remainingNumberOfBlocksToList = 1;
     }
 
     public DownloadController DownloadToStream(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
@@ -33,30 +33,37 @@ public sealed partial class FileDownloader : IFileDownloader
 
     public void Dispose()
     {
-        ReleaseRemainingBlockListing();
+        _client.DownloadQueue.RemoveFileFromQueue(_queueToken);
+    }
+
+    internal static FileDownloader? TryCreate(ProtonDriveClient client, RevisionUid revisionUid)
+    {
+        const int initialEstimatedNumberOfBlocks = 1;
+
+        if (client.DownloadQueue.TryEnqueueFile(initialEstimatedNumberOfBlocks) is not { } queueToken)
+        {
+            return null;
+        }
+
+        return new FileDownloader(
+            client,
+            queueToken,
+            revisionUid,
+            client.Telemetry.GetLogger("File downloader"));
     }
 
     internal static async ValueTask<FileDownloader> CreateAsync(ProtonDriveClient client, RevisionUid revisionUid, CancellationToken cancellationToken)
     {
-        var logger = client.Telemetry.GetLogger("File downloader");
+        const int initialEstimatedNumberOfBlocks = 1;
 
-        LogAcquiringBlockListingSemaphore(logger, revisionUid, 1);
+        var queueToken = await client.DownloadQueue.EnqueueFileAsync(initialEstimatedNumberOfBlocks, cancellationToken).ConfigureAwait(false);
 
-        await client.BlockListingSemaphore.EnterAsync(1, cancellationToken).ConfigureAwait(false);
-
-        LogAcquiredBlockListingSemaphore(logger, revisionUid, 1);
-
-        return new FileDownloader(client, revisionUid, logger);
+        return new FileDownloader(
+            client,
+            queueToken,
+            revisionUid,
+            client.Telemetry.GetLogger("File downloader"));
     }
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Trying to acquire {Count} from block listing semaphore for revision \"{RevisionUid}\"")]
-    private static partial void LogAcquiringBlockListingSemaphore(ILogger logger, RevisionUid revisionUid, int count);
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Acquired {Count} from block listing semaphore for revision \"{RevisionUid}\"")]
-    private static partial void LogAcquiredBlockListingSemaphore(ILogger logger, RevisionUid revisionUid, int count);
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Released {Count} from block listing semaphore for revision \"{RevisionUid}\"")]
-    private static partial void LogReleasedBlockListingSemaphore(ILogger logger, RevisionUid revisionUid, int count);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to record telemetry event")]
     private static partial void LogTelemetryEventFailed(ILogger logger, Exception exception);
@@ -65,23 +72,22 @@ public sealed partial class FileDownloader : IFileDownloader
         Stream contentOutputStream,
         Action<long, long> onProgress,
         TaskCompletionSource<DownloadState> downloadStateTaskCompletionSource,
+        long queueToken,
         CancellationToken cancellationToken)
     {
         var downloadState = downloadStateTaskCompletionSource.Task.GetResultIfCompletedSuccessfully();
         if (downloadState is null)
         {
             downloadState = await RevisionOperations.CreateDownloadStateAsync(
-                    _client,
-                    _revisionUid,
-                    ReleaseBlockListing,
-                    cancellationToken).ConfigureAwait(false);
+                _client,
+                _revisionUid,
+                queueToken,
+                cancellationToken).ConfigureAwait(false);
 
             downloadStateTaskCompletionSource.SetResult(downloadState);
         }
 
-        await _client.BlockDownloader.Queue.StartFileAsync(cancellationToken).ConfigureAwait(false);
-
-        using var revisionReader = RevisionOperations.OpenForReading(_client, downloadState, ReleaseBlockListing);
+        var revisionReader = RevisionOperations.OpenForReading(_client, downloadState);
 
         await revisionReader.ReadAsync(contentOutputStream, onProgress, cancellationToken).ConfigureAwait(false);
     }
@@ -100,6 +106,7 @@ public sealed partial class FileDownloader : IFileDownloader
             contentOutputStream,
             onProgress,
             downloadStateTaskCompletionSource,
+            _queueToken,
             ct);
 
         return new DownloadController(
@@ -148,32 +155,5 @@ public sealed partial class FileDownloader : IFileDownloader
         {
             LogTelemetryEventFailed(_logger, ex);
         }
-    }
-
-    private void ReleaseBlockListing(int numberOfBlockListings)
-    {
-        var newRemainingNumberOfBlocks = Interlocked.Add(ref _remainingNumberOfBlocksToList, -numberOfBlockListings);
-
-        var amountToRelease = Math.Max(
-            newRemainingNumberOfBlocks >= 0
-                ? numberOfBlockListings
-                : newRemainingNumberOfBlocks + numberOfBlockListings,
-            0);
-
-        _client.BlockListingSemaphore.Release(amountToRelease);
-        LogReleasedBlockListingSemaphore(_logger, _revisionUid, amountToRelease);
-    }
-
-    private void ReleaseRemainingBlockListing()
-    {
-        if (_remainingNumberOfBlocksToList <= 0)
-        {
-            return;
-        }
-
-        _client.BlockListingSemaphore.Release(_remainingNumberOfBlocksToList);
-        LogReleasedBlockListingSemaphore(_logger, _revisionUid, _remainingNumberOfBlocksToList);
-
-        _remainingNumberOfBlocksToList = 0;
     }
 }

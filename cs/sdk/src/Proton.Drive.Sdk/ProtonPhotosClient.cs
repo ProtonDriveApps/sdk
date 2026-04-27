@@ -48,7 +48,7 @@ public sealed class ProtonPhotosClient
             creationParameters);
 
         var httpClient = new SdkHttpClientFactoryDecorator(httpClientFactory).CreateClientWithTimeout(
-            creationParameters?.OverrideDefaultApiTimeoutSeconds ?? ProtonApiDefaults.DefaultTimeoutSeconds);
+            creationParameters?.DefaultApiTimeoutSecondsOverride ?? ProtonApiDefaults.DefaultTimeoutSeconds);
 
         PhotosApi = new PhotosApiClient(httpClient);
     }
@@ -56,6 +56,22 @@ public sealed class ProtonPhotosClient
     internal IPhotosApiClient PhotosApi { get; }
 
     internal ProtonDriveClient DriveClient { get; }
+
+    [Experimental("TryTransferQueuing")]
+    public async ValueTask<FileUploader?> TryGetFileUploaderAsync(
+        string name,
+        string mediaType,
+        long size,
+        PhotosFileUploadMetadata metadata,
+        bool overrideExistingDraftByOtherClient,
+        CancellationToken cancellationToken)
+    {
+        var photosRoot = await PhotosNodeOperations.GetOrCreatePhotosFolderAsync(DriveClient, cancellationToken).ConfigureAwait(false);
+
+        var draftProvider = new NewFileDraftProvider(DriveClient, photosRoot.Uid, name, mediaType, overrideExistingDraftByOtherClient);
+
+        return FileUploader.TryCreate(DriveClient, draftProvider, photosRoot.Uid, size, metadata);
+    }
 
     public async ValueTask<FileUploader> GetFileUploaderAsync(
         string name,
@@ -95,6 +111,12 @@ public sealed class ProtonPhotosClient
     public IAsyncEnumerable<PhotosTimelineItem> EnumerateTimelineAsync(CancellationToken cancellationToken)
     {
         return PhotosNodeOperations.EnumeratePhotosTimelineAsync(DriveClient, cancellationToken);
+    }
+
+    [Experimental("TryTransferQueuing")]
+    public PhotosFileDownloader? TryGetPhotosDownloader(NodeUid photoUid)
+    {
+        return PhotosFileDownloader.TryCreate(this, photoUid);
     }
 
     public async ValueTask<PhotosFileDownloader> GetPhotosDownloaderAsync(NodeUid photoUid, CancellationToken cancellationToken)

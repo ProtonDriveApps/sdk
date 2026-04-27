@@ -2,6 +2,8 @@ using System.Text.Json;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes;
+using Proton.Drive.Sdk.Nodes.Download;
+using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Sdk;
 using Proton.Sdk.Caching;
 using Proton.Sdk.CExports;
@@ -19,10 +21,11 @@ internal static class InteropProtonDriveClient
         }
 
         var protonDriveClientOptions = new Sdk.ProtonDriveClientOptions(
-            request.ClientOptions.HasBindingsLanguage ? request.ClientOptions.BindingsLanguage : null,
             request.ClientOptions.HasUid ? request.ClientOptions.Uid : null,
+            request.ClientOptions.HasBindingsLanguage ? request.ClientOptions.BindingsLanguage : null,
             request.ClientOptions.HasApiCallTimeout ? request.ClientOptions.ApiCallTimeout : null,
-            request.ClientOptions.HasStorageCallTimeout ? request.ClientOptions.StorageCallTimeout : null);
+            request.ClientOptions.HasStorageCallTimeout ? request.ClientOptions.StorageCallTimeout : null,
+            request.ClientOptions.HasBlockTransferParallelism ? request.ClientOptions.BlockTransferParallelism : null);
 
         var httpClientFactory = new InteropHttpClientFactory(
             bindingsHandle,
@@ -110,24 +113,45 @@ internal static class InteropProtonDriveClient
     public static async ValueTask<IMessage> HandleGetFileUploaderAsync(DriveClientGetFileUploaderRequest request)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
-
-        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
-
         var additionalMetadata = request.AdditionalMetadata is { Count: > 0 }
             ? request.AdditionalMetadata.Select(x =>
                 new Nodes.AdditionalMetadataProperty(x.Name, JsonDocument.Parse(x.Utf8JsonValue.Memory).RootElement))
             : null;
 
-        var fileUploader = await client.GetFileUploaderAsync(
-            NodeUid.Parse(request.ParentFolderUid),
-            request.Name,
-            request.MediaType,
-            request.Size,
-            new FileUploadMetadata { LastModificationTime = request.LastModificationTime.ToDateTimeFixed(), AdditionalMetadata = additionalMetadata },
-            request.OverrideExistingDraftByOtherClient,
-            cancellationToken).ConfigureAwait(false);
+        var metadata = new FileUploadMetadata
+        {
+            LastModificationTime = request.LastModificationTime.ToDateTimeFixed(),
+            AdditionalMetadata = additionalMetadata,
+        };
 
-        return new Int64Value { Value = Interop.AllocHandle(fileUploader) };
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        FileUploader? fileUploader;
+        if (request is { HasNoWaiting: true, NoWaiting: true })
+        {
+#pragma warning disable TryTransferQueuing
+            fileUploader = client.TryGetFileUploader(
+                NodeUid.Parse(request.ParentFolderUid),
+                request.Name,
+                request.MediaType,
+                request.Size,
+                metadata,
+                request.OverrideExistingDraftByOtherClient);
+#pragma warning restore TryTransferQueuing
+        }
+        else
+        {
+            fileUploader = await client.GetFileUploaderAsync(
+                NodeUid.Parse(request.ParentFolderUid),
+                request.Name,
+                request.MediaType,
+                request.Size,
+                metadata,
+                request.OverrideExistingDraftByOtherClient,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        return new Int64Value { Value = fileUploader is null ? 0 : Interop.AllocHandle(fileUploader) };
     }
 
     public static async ValueTask<IMessage> HandleGetFileRevisionUploaderAsync(DriveClientGetFileRevisionUploaderRequest request)
@@ -141,13 +165,32 @@ internal static class InteropProtonDriveClient
                 new Nodes.AdditionalMetadataProperty(x.Name, JsonDocument.Parse(x.Utf8JsonValue.Memory).RootElement))
             : null;
 
-        var fileUploader = await client.GetFileRevisionUploaderAsync(
+        var metadata = new FileUploadMetadata
+        {
+            LastModificationTime = request.LastModificationTime.ToDateTimeFixed(),
+            AdditionalMetadata = additionalMetadata,
+        };
+
+        FileUploader? fileUploader;
+        if (request is { HasNoWaiting: true, NoWaiting: true })
+        {
+#pragma warning disable TryTransferQueuing
+            fileUploader = client.TryGetFileRevisionUploader(
+                RevisionUid.Parse(request.CurrentActiveRevisionUid),
+                request.Size,
+                metadata);
+#pragma warning restore TryTransferQueuing
+        }
+        else
+        {
+            fileUploader = await client.GetFileRevisionUploaderAsync(
             RevisionUid.Parse(request.CurrentActiveRevisionUid),
             request.Size,
-            new FileUploadMetadata { LastModificationTime = request.LastModificationTime.ToDateTimeFixed(), AdditionalMetadata = additionalMetadata },
+            metadata,
             cancellationToken).ConfigureAwait(false);
+        }
 
-        return new Int64Value { Value = Interop.AllocHandle(fileUploader) };
+        return new Int64Value { Value = fileUploader is null ? 0 : Interop.AllocHandle(fileUploader) };
     }
 
     public static async ValueTask<IMessage> HandleGetAvailableNameAsync(DriveClientGetAvailableNameRequest request)
@@ -173,7 +216,7 @@ internal static class InteropProtonDriveClient
 
         var thumbnailsEnumerable = client.EnumerateThumbnailsAsync(
             request.FileUids.Select(NodeUid.Parse),
-            (Sdk.Nodes.ThumbnailType)request.Type,
+            (Nodes.ThumbnailType)request.Type,
             cancellationToken);
 
         await foreach (var x in thumbnailsEnumerable.ConfigureAwait(false))
@@ -239,12 +282,22 @@ internal static class InteropProtonDriveClient
     public static async ValueTask<IMessage> HandleGetFileDownloaderAsync(DriveClientGetFileDownloaderRequest request)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
-
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+        var revisionUid = RevisionUid.Parse(request.RevisionUid);
 
-        var fileUploader = await client.GetFileDownloaderAsync(RevisionUid.Parse(request.RevisionUid), cancellationToken).ConfigureAwait(false);
+        FileDownloader? fileDownloader;
+        if (request is { HasNoWaiting: true, NoWaiting: true })
+        {
+#pragma warning disable TryTransferQueuing
+            fileDownloader = client.TryGetFileDownloader(revisionUid);
+#pragma warning restore TryTransferQueuing
+        }
+        else
+        {
+            fileDownloader = await client.GetFileDownloaderAsync(revisionUid, cancellationToken).ConfigureAwait(false);
+        }
 
-        return new Int64Value { Value = Interop.AllocHandle(fileUploader) };
+        return new Int64Value { Value = fileDownloader is null ? 0 : Interop.AllocHandle(fileDownloader) };
     }
 
     public static async ValueTask<IMessage?> HandleRenameAsync(DriveClientRenameRequest request)
@@ -350,7 +403,7 @@ internal static class InteropProtonDriveClient
         return null;
     }
 
-    public static NodeResult ConvertToNodeResult(Result<Sdk.Nodes.Node, Sdk.Nodes.DegradedNode> result)
+    public static NodeResult ConvertToNodeResult(Result<Nodes.Node, Nodes.DegradedNode> result)
     {
         var nodeResult = new NodeResult();
 
@@ -441,7 +494,7 @@ internal static class InteropProtonDriveClient
         };
     }
 
-    private static OwnedBy MapOwnedByToProto(Sdk.Nodes.OwnedBy? ownedBy)
+    private static OwnedBy MapOwnedByToProto(Nodes.OwnedBy? ownedBy)
     {
         if (ownedBy is null)
         {

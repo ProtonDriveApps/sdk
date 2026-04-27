@@ -5,31 +5,30 @@ using Proton.Sdk.Threading;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
-public sealed partial class FileUploader : IDisposable
+public sealed class FileUploader : IDisposable
 {
     private readonly ProtonDriveClient _client;
+    private readonly long _queueToken;
     private readonly IRevisionDraftProvider _revisionDraftProvider;
     private readonly NodeUid _telemetryContextNodeUid;
     private readonly FileUploadMetadata _metadata;
     private readonly ILogger _logger;
 
-    private volatile int _remainingNumberOfBlocks;
-
     private FileUploader(
         ProtonDriveClient client,
+        long queueToken,
         IRevisionDraftProvider revisionDraftProvider,
         NodeUid telemetryContextNodeUid,
         long size,
         FileUploadMetadata metadata,
-        int expectedNumberOfBlocks,
         ILogger logger)
     {
         _client = client;
+        _queueToken = queueToken;
         _revisionDraftProvider = revisionDraftProvider;
         _telemetryContextNodeUid = telemetryContextNodeUid;
         FileSize = size;
         _metadata = metadata;
-        _remainingNumberOfBlocks = expectedNumberOfBlocks;
         _logger = logger;
     }
 
@@ -71,7 +70,31 @@ public sealed partial class FileUploader : IDisposable
 
     public void Dispose()
     {
-        ReleaseRemainingBlocks();
+        _client.UploadQueue.RemoveFileFromQueue(_queueToken);
+    }
+
+    internal static FileUploader? TryCreate(
+        ProtonDriveClient client,
+        IRevisionDraftProvider revisionDraftProvider,
+        NodeUid telemetryContextNodeUid,
+        long size,
+        FileUploadMetadata metadata)
+    {
+        var expectedNumberOfBlocks = (int)size.DivideAndRoundUp(RevisionWriter.DefaultBlockSize);
+
+        if (client.UploadQueue.TryEnqueueFile(expectedNumberOfBlocks) is not { } queueToken)
+        {
+            return null;
+        }
+
+        return new FileUploader(
+            client,
+            queueToken,
+            revisionDraftProvider,
+            telemetryContextNodeUid,
+            size,
+            metadata,
+            client.Telemetry.GetLogger("File uploader"));
     }
 
     internal static async ValueTask<FileUploader> CreateAsync(
@@ -82,34 +105,19 @@ public sealed partial class FileUploader : IDisposable
         FileUploadMetadata metadata,
         CancellationToken cancellationToken)
     {
-        var logger = client.Telemetry.GetLogger("File uploader");
-
         var expectedNumberOfBlocks = (int)size.DivideAndRoundUp(RevisionWriter.DefaultBlockSize);
 
-        LogAcquiringRevisionCreationSemaphore(logger, expectedNumberOfBlocks);
-
-        await client.RevisionCreationSemaphore.EnterAsync(expectedNumberOfBlocks, cancellationToken).ConfigureAwait(false);
-
-        LogAcquiredRevisionCreationSemaphore(logger, expectedNumberOfBlocks);
+        var queueToken = await client.UploadQueue.EnqueueFileAsync(expectedNumberOfBlocks, cancellationToken).ConfigureAwait(false);
 
         return new FileUploader(
             client,
+            queueToken,
             revisionDraftProvider,
             telemetryContextNodeUid,
             size,
             metadata,
-            expectedNumberOfBlocks,
-            logger);
+            client.Telemetry.GetLogger("File uploader"));
     }
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Trying to acquire {Count} from revision creation semaphore")]
-    private static partial void LogAcquiringRevisionCreationSemaphore(ILogger logger, int count);
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Acquired {Count} from revision creation semaphore")]
-    private static partial void LogAcquiredRevisionCreationSemaphore(ILogger logger, int count);
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Released {Count} from revision creation semaphore")]
-    private static partial void LogReleasedRevisionCreationSemaphore(ILogger logger, int count);
 
     private UploadController UploadFromStream(
         Stream contentStream,
@@ -234,7 +242,7 @@ public sealed partial class FileUploader : IDisposable
         Lazy<ReadOnlyMemory<byte>>? expectedSha1,
         CancellationToken cancellationToken)
     {
-        using var revisionWriter = await RevisionOperations.OpenForWritingAsync(_client, revisionDraft, ReleaseBlocks, cancellationToken).ConfigureAwait(false);
+        var revisionWriter = RevisionOperations.OpenForWriting(_client, revisionDraft, _queueToken);
 
         await revisionWriter.WriteAsync(
             contentStream,
@@ -244,31 +252,6 @@ public sealed partial class FileUploader : IDisposable
             _metadata,
             onProgress,
             cancellationToken).ConfigureAwait(false);
-    }
-
-    private void ReleaseBlocks(int numberOfBlocks)
-    {
-        var newRemainingNumberOfBlocks = Interlocked.Add(ref _remainingNumberOfBlocks, -numberOfBlocks);
-
-        var amountToRelease = Math.Max(newRemainingNumberOfBlocks >= 0 ? numberOfBlocks : newRemainingNumberOfBlocks + numberOfBlocks, 0);
-
-        _client.RevisionCreationSemaphore.Release(amountToRelease);
-
-        LogReleasedRevisionCreationSemaphore(_logger, amountToRelease);
-    }
-
-    private void ReleaseRemainingBlocks()
-    {
-        if (_remainingNumberOfBlocks <= 0)
-        {
-            return;
-        }
-
-        _client.RevisionCreationSemaphore.Release(_remainingNumberOfBlocks);
-
-        LogReleasedRevisionCreationSemaphore(_logger, _remainingNumberOfBlocks);
-
-        _remainingNumberOfBlocks = 0;
     }
 
     private void RaiseTelemetryEvent(UploadEvent uploadEvent)

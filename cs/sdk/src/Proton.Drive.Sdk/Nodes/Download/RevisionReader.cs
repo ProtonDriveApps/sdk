@@ -1,12 +1,13 @@
 ﻿using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
+using Microsoft.IO;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 
-internal sealed partial class RevisionReader : IDisposable
+internal sealed partial class RevisionReader
 {
     public const int MinBlockIndex = 1;
     public const int DefaultBlockPageSize = 10;
@@ -14,24 +15,16 @@ internal sealed partial class RevisionReader : IDisposable
 
     private readonly ProtonDriveClient _client;
     private readonly DownloadState _state;
-    private readonly Action<int> _releaseBlockListingAction;
-    private readonly Action _releaseFileSemaphoreAction;
     private readonly int _blockPageSize;
     private readonly ILogger _logger;
-
-    private bool _fileSemaphoreReleased;
 
     internal RevisionReader(
         ProtonDriveClient client,
         DownloadState state,
-        Action<int> releaseBlockListingAction,
-        Action releaseFileSemaphoreAction,
         int blockPageSize = DefaultBlockPageSize)
     {
         _client = client;
         _state = state;
-        _releaseBlockListingAction = releaseBlockListingAction;
-        _releaseFileSemaphoreAction = releaseFileSemaphoreAction;
         _blockPageSize = blockPageSize;
         _logger = client.Telemetry.GetLogger("Revision reader");
     }
@@ -40,14 +33,13 @@ internal sealed partial class RevisionReader : IDisposable
     {
         try
         {
-            var downloadTasks = new Queue<Task<BlockDownloadResult>>(_client.BlockDownloader.Queue.Depth);
+            var revisionDto = _state.RevisionDto;
+            var downloadedBlockDigests = _state.GetDownloadedBlockDigests();
+
             var manifestStream = ProtonDriveClient.MemoryStreamManager.GetStream();
 
             await using (manifestStream)
             {
-                var downloadedBlockDigests = _state.GetDownloadedBlockDigests();
-                var revisionDto = _state.RevisionDto;
-
                 if (revisionDto.Thumbnails is { } thumbnails)
                 {
                     foreach (var sha256Digest in thumbnails.OrderBy(t => t.Type).Select(x => x.HashDigest))
@@ -61,59 +53,7 @@ internal sealed partial class RevisionReader : IDisposable
                     manifestStream.Write(digest.Span);
                 }
 
-                try
-                {
-                    try
-                    {
-                        var startBlockIndex = _state.GetNextBlockIndexToDownload();
-
-                        await foreach (var (block, _) in GetBlocksAsync(startBlockIndex, cancellationToken).ConfigureAwait(false))
-                        {
-                            if (!_client.BlockDownloader.Queue.TryStartBlock())
-                            {
-                                if (downloadTasks.Count > 0)
-                                {
-                                    await WriteNextBlockToOutputAsync(downloadTasks, contentOutputStream, manifestStream, onProgress, cancellationToken)
-                                        .ConfigureAwait(false);
-                                }
-
-                                await _client.BlockDownloader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
-                            }
-
-                            var downloadTask = DownloadBlockAsync(block, cancellationToken);
-
-                            downloadTasks.Enqueue(downloadTask);
-                        }
-                    }
-                    finally
-                    {
-                        _releaseFileSemaphoreAction.Invoke();
-                        _fileSemaphoreReleased = true;
-                    }
-
-                    while (downloadTasks.Count > 0)
-                    {
-                        await WriteNextBlockToOutputAsync(downloadTasks, contentOutputStream, manifestStream, onProgress, cancellationToken)
-                            .ConfigureAwait(false);
-                    }
-                }
-                catch when (downloadTasks.Count > 0)
-                {
-                    try
-                    {
-                        await Task.WhenAll(downloadTasks).ConfigureAwait(false);
-                    }
-                    catch
-                    {
-                        // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
-                    }
-                    finally
-                    {
-                        _client.BlockDownloader.Queue.FinishBlocks(downloadTasks.Count);
-                    }
-
-                    throw;
-                }
+                await DownloadBlocks(contentOutputStream, onProgress, manifestStream, cancellationToken).ConfigureAwait(false);
 
                 manifestStream.Seek(0, SeekOrigin.Begin);
 
@@ -136,20 +76,76 @@ internal sealed partial class RevisionReader : IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        if (!_fileSemaphoreReleased)
-        {
-            _releaseFileSemaphoreAction.Invoke();
-        }
-    }
-
     private static bool IsResumableError(Exception ex)
     {
         return ex is not DataIntegrityException
             and not ProtonApiException { TransportCode: >= 400 and < 500 }
             and not CompletedDownloadManifestVerificationException
             and not InvalidOperationException;
+    }
+
+    private async ValueTask DownloadBlocks(
+        Stream contentOutputStream,
+        Action<long, long> onProgress,
+        RecyclableMemoryStream manifestStream,
+        CancellationToken cancellationToken)
+    {
+        var startBlockIndex = _state.GetNextBlockIndexToDownload();
+
+        var downloadTasks = new Queue<Task<BlockDownloadResult>>(_client.DownloadQueue.Depth);
+
+        try
+        {
+            await _client.DownloadQueue.StartBlockQueueingAsync(cancellationToken).ConfigureAwait(false);
+
+            try
+            {
+                await foreach (var (block, _) in GetBlocksAsync(startBlockIndex, cancellationToken).ConfigureAwait(false))
+                {
+                    if (!_client.DownloadQueue.TryEnqueueBlock())
+                    {
+                        if (downloadTasks.Count > 0)
+                        {
+                            await WriteNextBlockToOutputAsync(downloadTasks, contentOutputStream, manifestStream, onProgress, cancellationToken)
+                                .ConfigureAwait(false);
+                        }
+
+                        await _client.DownloadQueue.EnqueueBlockAsync(cancellationToken).ConfigureAwait(false);
+                    }
+
+                    var downloadTask = DownloadBlockAsync(block, cancellationToken);
+
+                    downloadTasks.Enqueue(downloadTask);
+                }
+            }
+            finally
+            {
+                _client.DownloadQueue.FinishBlockQueueing();
+            }
+
+            while (downloadTasks.Count > 0)
+            {
+                await WriteNextBlockToOutputAsync(downloadTasks, contentOutputStream, manifestStream, onProgress, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+        }
+        catch when (downloadTasks.Count > 0)
+        {
+            try
+            {
+                await Task.WhenAll(downloadTasks).ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
+            }
+            finally
+            {
+                _client.DownloadQueue.DequeueBlocks(downloadTasks.Count);
+            }
+
+            throw;
+        }
     }
 
     private async Task WriteNextBlockToOutputAsync(
@@ -197,6 +193,8 @@ internal sealed partial class RevisionReader : IDisposable
                     _state.AddDownloadedBlockDigest(blockDigest);
                     manifestStream.Write(blockDigest.Span);
 
+                    _client.DownloadQueue.DecreaseFileRemainingBlockCount(_state.QueueToken, 1);
+
                     onProgress(_state.GetNumberOfBytesWritten(), _state.RevisionDto.Size);
                 }
                 finally
@@ -206,7 +204,7 @@ internal sealed partial class RevisionReader : IDisposable
             }
             finally
             {
-                _client.BlockDownloader.Queue.FinishBlocks(1);
+                _client.DownloadQueue.DequeueBlocks(1);
             }
         }
     }
@@ -250,89 +248,88 @@ internal sealed partial class RevisionReader : IDisposable
         int startBlockIndex,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        try
+        var mustTryNextPageOfBlocks = true;
+        var nextExpectedIndex = startBlockIndex;
+        var outstandingBlock = default(BlockDto);
+        var currentPageBlocks = new List<BlockDto>(_blockPageSize);
+
+        // Fetch the first page of blocks starting from the desired index
+        var revisionResponse = await _client.Api.Files.GetRevisionAsync(
+            _state.Uid.NodeUid.VolumeId,
+            _state.Uid.NodeUid.LinkId,
+            _state.Uid.RevisionId,
+            startBlockIndex,
+            _blockPageSize,
+            withoutBlockUrls: false,
+            cancellationToken).ConfigureAwait(false);
+
+        var revisionDto = revisionResponse.Revision;
+
+        // The first block is already in the queue, so we subtract it from the first page of block results
+        var initialQueueCountToSubtract = 1;
+
+        while (mustTryNextPageOfBlocks)
         {
-            var mustTryNextPageOfBlocks = true;
-            var nextExpectedIndex = startBlockIndex;
-            var outstandingBlock = default(BlockDto);
-            var currentPageBlocks = new List<BlockDto>(_blockPageSize);
+            currentPageBlocks.Clear();
 
-            // Fetch the first page of blocks starting from the desired index
-            var revisionResponse = await _client.Api.Files.GetRevisionAsync(
-                _state.Uid.NodeUid.VolumeId,
-                _state.Uid.NodeUid.LinkId,
-                _state.Uid.RevisionId,
-                startBlockIndex,
-                _blockPageSize,
-                withoutBlockUrls: false,
-                cancellationToken).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
 
-            var revisionDto = revisionResponse.Revision;
-
-            while (mustTryNextPageOfBlocks)
+            if (revisionDto.Blocks.Count == 0)
             {
-                currentPageBlocks.Clear();
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (revisionDto.Blocks.Count == 0)
-                {
-                    break;
-                }
-
-                mustTryNextPageOfBlocks = revisionDto.Blocks.Count >= _blockPageSize;
-
-                currentPageBlocks.AddRange(revisionDto.Blocks);
-                currentPageBlocks.Sort((a, b) => a.Index.CompareTo(b.Index));
-
-                var blocksExceptLast = currentPageBlocks.Take(currentPageBlocks.Count - 1);
-                var blocksToReturn = outstandingBlock is not null ? blocksExceptLast.Prepend(outstandingBlock) : blocksExceptLast;
-
-                outstandingBlock = currentPageBlocks[^1];
-                var lastKnownIndex = outstandingBlock.Index;
-
-                foreach (var block in blocksToReturn)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    if (block.Index != nextExpectedIndex)
-                    {
-                        LogMissingBlock(block.Index, _state.Uid);
-
-                        throw new ProtonDriveException("File contents are incomplete");
-                    }
-
-                    ++nextExpectedIndex;
-
-                    yield return (block, false);
-                }
-
-                if (mustTryNextPageOfBlocks)
-                {
-                    revisionResponse =
-                        await _client.Api.Files.GetRevisionAsync(
-                            _state.Uid.NodeUid.VolumeId,
-                            _state.Uid.NodeUid.LinkId,
-                            _state.Uid.RevisionId,
-                            lastKnownIndex + 1,
-                            _blockPageSize,
-                            false,
-                            cancellationToken).ConfigureAwait(false);
-
-                    revisionDto = revisionResponse.Revision;
-                }
+                break;
             }
 
-            if (outstandingBlock is not null)
+            mustTryNextPageOfBlocks = revisionDto.Blocks.Count >= _blockPageSize;
+
+            currentPageBlocks.AddRange(revisionDto.Blocks);
+            currentPageBlocks.Sort((a, b) => a.Index.CompareTo(b.Index));
+
+            _client.DownloadQueue.IncreaseFileRemainingBlockCount(_state.QueueToken, currentPageBlocks.Count - initialQueueCountToSubtract);
+            initialQueueCountToSubtract = 0;
+
+            var blocksExceptLast = currentPageBlocks.Take(currentPageBlocks.Count - 1);
+            var blocksToReturn = outstandingBlock is not null ? blocksExceptLast.Prepend(outstandingBlock) : blocksExceptLast;
+
+            outstandingBlock = currentPageBlocks[^1];
+            var lastKnownIndex = outstandingBlock.Index;
+
+            foreach (var block in blocksToReturn)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                yield return (outstandingBlock, true);
+                if (block.Index != nextExpectedIndex)
+                {
+                    LogMissingBlock(block.Index, _state.Uid);
+
+                    throw new ProtonDriveException("File contents are incomplete");
+                }
+
+                ++nextExpectedIndex;
+
+                yield return (block, false);
+            }
+
+            if (mustTryNextPageOfBlocks)
+            {
+                revisionResponse =
+                    await _client.Api.Files.GetRevisionAsync(
+                        _state.Uid.NodeUid.VolumeId,
+                        _state.Uid.NodeUid.LinkId,
+                        _state.Uid.RevisionId,
+                        lastKnownIndex + 1,
+                        _blockPageSize,
+                        false,
+                        cancellationToken).ConfigureAwait(false);
+
+                revisionDto = revisionResponse.Revision;
             }
         }
-        finally
+
+        if (outstandingBlock is not null)
         {
-            _releaseBlockListingAction.Invoke(1);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            yield return (outstandingBlock, true);
         }
     }
 

@@ -13,15 +13,11 @@ internal sealed partial class BlockDownloader
     private readonly ProtonDriveClient _client;
     private readonly ILogger _logger;
 
-    internal BlockDownloader(ProtonDriveClient client, int maxDegreeOfParallelism)
+    internal BlockDownloader(ProtonDriveClient client)
     {
         _client = client;
         _logger = client.Telemetry.GetLogger("Block downloader");
-
-        Queue = new TransferQueue(maxDegreeOfParallelism, client.Telemetry.GetLogger("Block downloader queue"));
     }
-
-    public TransferQueue Queue { get; }
 
     public async ValueTask<ReadOnlyMemory<byte>> DownloadAsync(
         RevisionUid revisionUid,

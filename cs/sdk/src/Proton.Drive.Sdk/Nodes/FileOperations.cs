@@ -134,14 +134,14 @@ internal static class FileOperations
                     processedThumbnailIds.Add(block.ThumbnailId);
                     var nodeInfo = thumbnailIds[block.ThumbnailId];
 
-                    if (!client.ThumbnailBlockDownloader.Queue.TryStartBlock())
+                    if (!client.ThumbnailDownloadQueue.TryEnqueueBlock())
                     {
                         if (tasks.Count > 0)
                         {
                             yield return await tasks.Dequeue().ConfigureAwait(false);
                         }
 
-                        await client.ThumbnailBlockDownloader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
+                        await client.ThumbnailDownloadQueue.EnqueueBlockAsync(cancellationToken).ConfigureAwait(false);
                     }
 
                     tasks.Enqueue(DownloadThumbnailAsync(client, nodeInfo.ActiveRevisionUid, block, cancellationToken));
@@ -213,7 +213,7 @@ internal static class FileOperations
         }
         finally
         {
-            client.ThumbnailBlockDownloader.Queue.FinishBlocks(1);
+            client.ThumbnailDownloadQueue.DequeueBlocks(1);
         }
     }
 

@@ -9,6 +9,7 @@ internal sealed partial class DownloadState(
     PgpPrivateKey nodeKey,
     PgpSessionKey contentKey,
     BlockListingRevisionDto revisionDto,
+    long queueToken,
     ILogger logger) : IAsyncDisposable
 {
     private readonly List<ReadOnlyMemory<byte>> _downloadedBlockDigests = [];
@@ -20,6 +21,7 @@ internal sealed partial class DownloadState(
 
     public RevisionUid Uid { get; } = uid;
     public BlockListingRevisionDto RevisionDto { get; } = revisionDto;
+    public long QueueToken { get; } = queueToken;
     public PgpPrivateKey NodeKey { get; } = nodeKey;
     public PgpSessionKey ContentKey { get; } = contentKey;
     public bool IsResumable { get; set; } = true;

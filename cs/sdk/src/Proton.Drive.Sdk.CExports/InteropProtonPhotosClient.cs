@@ -2,6 +2,8 @@ using System.Text.Json;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes;
+using Proton.Drive.Sdk.Nodes.Download;
+using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Sdk;
 using Proton.Sdk.Caching;
 using Proton.Sdk.CExports;
@@ -19,10 +21,11 @@ internal static class InteropProtonPhotosClient
         }
 
         var protonDriveClientOptions = new Sdk.ProtonDriveClientOptions(
-            request.ClientOptions.HasBindingsLanguage ? request.ClientOptions.BindingsLanguage : null,
             request.ClientOptions.HasUid ? request.ClientOptions.Uid : null,
+            request.ClientOptions.HasBindingsLanguage ? request.ClientOptions.BindingsLanguage : null,
             request.ClientOptions.HasApiCallTimeout ? request.ClientOptions.ApiCallTimeout : null,
-            request.ClientOptions.HasStorageCallTimeout ? request.ClientOptions.StorageCallTimeout : null);
+            request.ClientOptions.HasStorageCallTimeout ? request.ClientOptions.StorageCallTimeout : null,
+            request.ClientOptions.HasBlockTransferParallelism ? request.ClientOptions.BlockTransferParallelism : null);
 
         var httpClientFactory = new InteropHttpClientFactory(
             bindingsHandle,
@@ -187,11 +190,21 @@ internal static class InteropProtonPhotosClient
 
         var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
 
-        var downloader = await client.GetPhotosDownloaderAsync(
-            NodeUid.Parse(request.PhotoUid),
-            cancellationToken).ConfigureAwait(false);
+        var photoUid = NodeUid.Parse(request.PhotoUid);
 
-        return new Int64Value { Value = Interop.AllocHandle(downloader) };
+        PhotosFileDownloader? downloader;
+        if (request is { HasNoWaiting: true, NoWaiting: true })
+        {
+#pragma warning disable TryTransferQueuing
+            downloader = client.TryGetPhotosDownloader(photoUid);
+#pragma warning restore TryTransferQueuing
+        }
+        else
+        {
+            downloader = await client.GetPhotosDownloaderAsync(photoUid, cancellationToken).ConfigureAwait(false);
+        }
+
+        return new Int64Value { Value = downloader is null ? 0 : Interop.AllocHandle(downloader) };
     }
 
     public static async ValueTask<IMessage?> HandleEnumerateThumbnailsAsync(DrivePhotosClientEnumerateThumbnailsRequest request, nint bindingsHandle)
@@ -203,7 +216,7 @@ internal static class InteropProtonPhotosClient
 
         var thumbnailsEnumerable = client.EnumerateThumbnailsAsync(
             request.PhotoUids.Select(NodeUid.Parse),
-            (Sdk.Nodes.ThumbnailType)request.Type,
+            (Nodes.ThumbnailType)request.Type,
             cancellationToken);
 
         await foreach (var x in thumbnailsEnumerable.ConfigureAwait(false))
@@ -248,15 +261,31 @@ internal static class InteropProtonPhotosClient
 
         var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
 
-        var uploader = await client.GetFileUploaderAsync(
-            request.Name,
-            request.MediaType,
-            request.Size,
-            metadata,
-            request.OverrideExistingDraftByOtherClient,
-            cancellationToken).ConfigureAwait(false);
+        FileUploader? uploader;
+        if (request is { HasNoWaiting: true, NoWaiting: true })
+        {
+#pragma warning disable TryTransferQueuing
+            uploader = await client.TryGetFileUploaderAsync(
+                request.Name,
+                request.MediaType,
+                request.Size,
+                metadata,
+                request.OverrideExistingDraftByOtherClient,
+                cancellationToken).ConfigureAwait(false);
+#pragma warning restore TryTransferQueuing
+        }
+        else
+        {
+            uploader = await client.GetFileUploaderAsync(
+                request.Name,
+                request.MediaType,
+                request.Size,
+                metadata,
+                request.OverrideExistingDraftByOtherClient,
+                cancellationToken).ConfigureAwait(false);
+        }
 
-        return new Int64Value { Value = Interop.AllocHandle(uploader) };
+        return new Int64Value { Value = uploader is null ? 0 : Interop.AllocHandle(uploader) };
     }
 
     public static async ValueTask<IMessage> HandleFindDuplicatesAsync(DrivePhotosClientFindDuplicatesRequest request, nint bindingsHandle)
