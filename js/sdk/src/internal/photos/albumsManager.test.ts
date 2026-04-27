@@ -357,9 +357,10 @@ describe('Albums', () => {
                 ['photo1', 'photo2', 'photo3'],
                 undefined,
             );
-            expect(nodesService.notifyNodeChanged).toHaveBeenCalledTimes(2);
+            expect(nodesService.notifyNodeChanged).toHaveBeenCalledTimes(3);
             expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('photo1');
             expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('photo3');
+            expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('albumNodeUid');
             expect(nodesService.notifyNodeChanged).not.toHaveBeenCalledWith('photo2');
         });
     });
