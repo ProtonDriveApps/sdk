@@ -217,14 +217,16 @@ message HttpClient {
 }
 
 message ProtonDriveClientOptions {
-    string bindings_language = 1; // Optional
-
     // Client UID, optional
     // If a null value is provided, the SDK automatically generates a UUID during initialization
-    string uid = 2;
-    
+    string uid = 1;
+
+    string bindings_language = 2; // Optional
+        
     int32 api_call_timeout = 3; // Optional
     int32 storage_call_timeout = 4; // Optional
+
+    int32 block_transfer_parallelism = 5; // Optional
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of ProtonDriveClient.
@@ -274,7 +276,7 @@ message AdditionalMetadataProperty {
     bytes utf8_json_value = 2;
 }
 
-// The response value must be an Int64Value carrying a handle to an instance of FileUploader.
+// The response value must be an Int64Value carrying a handle to an instance of FileUploader (or 0 if no_waiting is true and no slot was free)..
 message DriveClientGetFileUploaderRequest {
     int64 client_handle = 1;
     string parent_folder_uid = 2;
@@ -284,17 +286,23 @@ message DriveClientGetFileUploaderRequest {
     google.protobuf.Timestamp last_modification_time = 6;
     repeated AdditionalMetadataProperty additional_metadata = 7; // Optional
     bool override_existing_draft_by_other_client = 8;
-    int64 cancellation_token_source_handle = 9;
+    // When unset or false, waits for a slot in the queue (uses cancellation_token_source_handle).
+    // When true, only reserves a slot if immediately available (cancellation_token_source_handle is ignored).
+    bool no_waiting = 9;
+    int64 cancellation_token_source_handle = 10;
 }
 
-// The response value must be an Int64Value carrying a handle to an instance of FileUploader.
+// The response value must be an Int64Value carrying a handle to an instance of FileUploader (or 0 if no_waiting is true and no slot was free).
 message DriveClientGetFileRevisionUploaderRequest {
     int64 client_handle = 1;
     string current_active_revision_uid = 2;
     int64 size = 3;
     google.protobuf.Timestamp last_modification_time = 4;
     repeated AdditionalMetadataProperty additional_metadata = 5; // Optional
-    int64 cancellation_token_source_handle = 6;
+    // When unset or false, waits for a slot in the queue (uses cancellation_token_source_handle).
+    // When true, only reserves a slot if immediately available (cancellation_token_source_handle is ignored).
+    bool no_waiting = 6;
+    int64 cancellation_token_source_handle = 7;
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of UploadController.
@@ -549,11 +557,14 @@ message DegradedRevision {
 
 // Drive - downloads
 
-// The response value must be an Int64Value carrying a handle to an instance of FileDownloader.
+// The response value must be an Int64Value carrying a handle to an instance of FileDownloader (or 0 if no_waiting is true and no slot was free).
 message DriveClientGetFileDownloaderRequest {
     int64 client_handle = 1;
     string revision_uid = 2;
-    int64 cancellation_token_source_handle = 3;
+    // When unset or false, waits for a slot in the queue (uses cancellation_token_source_handle).
+    // When true, only reserves a slot if immediately available (cancellation_token_source_handle is ignored).
+    bool no_waiting = 3;
+    int64 cancellation_token_source_handle = 4;
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of DownloadController.
@@ -681,14 +692,17 @@ message PhotosTimelineItem {
     google.protobuf.Timestamp capture_time = 2;
 }
 
-// The response value must be an Int64Value carrying a handle to an instance of PhotosFileDownloader.
+// The response value must be an Int64Value carrying a handle to an instance of PhotosFileDownloader (or 0 if no_waiting is true and no slot was free)..
 message DrivePhotosClientGetPhotoDownloaderRequest {
     int64 client_handle = 1;
     string photo_uid = 2;
-    int64 cancellation_token_source_handle = 3;
+    // When unset or false, waits for a slot in the queue (uses cancellation_token_source_handle).
+    // When true, only reserves a slot if immediately available (cancellation_token_source_handle is ignored).
+    bool no_waiting = 3;
+    int64 cancellation_token_source_handle = 4;
 }
 
-// Photo downloader
+// Photos file downloader
 
 // The response value must be an Int64Value carrying a handle to an instance of DownloadController.
 message DrivePhotosClientDownloadToStreamRequest {
@@ -723,7 +737,10 @@ message DrivePhotosClientGetPhotoUploaderRequest {
     int64 size = 4;
     PhotosFileUploadMetadata metadata = 5;
     bool override_existing_draft_by_other_client = 6;
-    int64 cancellation_token_source_handle = 7;
+    // When unset or false, waits for a slot in the queue.
+    // When true, only reserves a slot if immediately available.
+    bool no_waiting = 7;
+    int64 cancellation_token_source_handle = 8;
 }
 
 message PhotosFileUploadMetadata {

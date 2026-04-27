@@ -18,15 +18,11 @@ internal sealed partial class BlockUploader
     private readonly ProtonDriveClient _client;
     private readonly ILogger _logger;
 
-    internal BlockUploader(ProtonDriveClient client, int maxDegreeOfParallelism)
+    internal BlockUploader(ProtonDriveClient client)
     {
         _client = client;
         _logger = client.Telemetry.GetLogger("Block uploader");
-
-        Queue = new TransferQueue(maxDegreeOfParallelism, client.Telemetry.GetLogger("Block uploader queue"));
     }
-
-    public TransferQueue Queue { get; }
 
     public async ValueTask<BlockUploadResult> UploadContentAsync(
         RevisionDraft draft,
