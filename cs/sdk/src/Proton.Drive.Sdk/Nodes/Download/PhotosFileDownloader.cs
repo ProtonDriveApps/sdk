@@ -7,16 +7,15 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
 {
     private readonly ProtonPhotosClient _client;
     private readonly NodeUid _photoUid;
+    private readonly long _queueToken;
     private readonly ILogger _logger;
 
-    private volatile int _remainingNumberOfBlocksToList;
-
-    private PhotosFileDownloader(ProtonPhotosClient client, NodeUid photoUid, ILogger logger)
+    private PhotosFileDownloader(ProtonPhotosClient client, NodeUid photoUid, long queueToken, ILogger logger)
     {
         _client = client;
         _photoUid = photoUid;
+        _queueToken = queueToken;
         _logger = logger;
-        _remainingNumberOfBlocksToList = 1;
     }
 
     public DownloadController DownloadToStream(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
@@ -27,32 +26,43 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
     public DownloadController DownloadToFile(string filePath, Action<long, long> onProgress, CancellationToken cancellationToken)
     {
         var stream = File.Open(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+
         return DownloadToStream(stream, ownsOutputStream: true, onProgress, cancellationToken);
     }
 
     public void Dispose()
     {
-        ReleaseRemainingBlockListing();
+        _client.DriveClient.DownloadQueue.RemoveFileFromQueue(_queueToken);
+    }
+
+    internal static PhotosFileDownloader? TryCreate(ProtonPhotosClient client, NodeUid photoUid)
+    {
+        const int initialEstimatedNumberOfBlocks = 1;
+
+        if (client.DriveClient.DownloadQueue.TryEnqueueFile(initialEstimatedNumberOfBlocks) is not { } queueToken)
+        {
+            return null;
+        }
+
+        return new PhotosFileDownloader(
+            client,
+            photoUid,
+            queueToken,
+            client.DriveClient.Telemetry.GetLogger("Photos file downloader"));
     }
 
     internal static async ValueTask<PhotosFileDownloader> CreateAsync(ProtonPhotosClient client, NodeUid photoUid, CancellationToken cancellationToken)
     {
-        var logger = client.DriveClient.Telemetry.GetLogger("Photo downloader");
-        LogEnteringBlockListingSemaphore(logger, photoUid, 1);
-        await client.DriveClient.BlockListingSemaphore.EnterAsync(1, cancellationToken).ConfigureAwait(false);
-        LogEnteredBlockListingSemaphore(logger, photoUid, 1);
+        const int initialEstimatedNumberOfBlocks = 1;
 
-        return new PhotosFileDownloader(client, photoUid, logger);
+        var queuePosition = await client.DriveClient.DownloadQueue.EnqueueFileAsync(initialEstimatedNumberOfBlocks, cancellationToken).ConfigureAwait(false);
+
+        return new PhotosFileDownloader(
+            client,
+            photoUid,
+            queuePosition,
+            client.DriveClient.Telemetry.GetLogger("Photos file downloader"));
     }
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Trying to enter block listing semaphore for photo {PhotoUid} with {Increment}")]
-    private static partial void LogEnteringBlockListingSemaphore(ILogger logger, NodeUid photoUid, int increment);
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Entered block listing semaphore for photo {PhotoUid} with {Increment}")]
-    private static partial void LogEnteredBlockListingSemaphore(ILogger logger, NodeUid photoUid, int increment);
-
-    [LoggerMessage(Level = LogLevel.Trace, Message = "Released {Decrement} from block listing semaphore for photo {PhotoUid}")]
-    private static partial void LogReleasedBlockListingSemaphore(ILogger logger, NodeUid photoUid, int decrement);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to record telemetry event")]
     private static partial void LogTelemetryEventFailed(ILogger logger, Exception exception);
@@ -75,7 +85,7 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
             var state = await RevisionOperations.CreateDownloadStateAsync(
                 _client.DriveClient,
                 fileNode.ActiveRevision.Uid,
-                ReleaseBlockListing,
+                _queueToken,
                 cancellationToken).ConfigureAwait(false);
 
             downloadStateTaskCompletionSource.SetResult(state);
@@ -83,9 +93,7 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
 
         var downloadState = await downloadStateTaskCompletionSource.Task.ConfigureAwait(false);
 
-        await _client.DriveClient.BlockDownloader.Queue.StartFileAsync(cancellationToken).ConfigureAwait(false);
-
-        using var revisionReader = RevisionOperations.OpenForReading(_client.DriveClient, downloadState, ReleaseBlockListing);
+        var revisionReader = RevisionOperations.OpenForReading(_client.DriveClient, downloadState);
 
         await revisionReader.ReadAsync(contentOutputStream, onProgress, cancellationToken).ConfigureAwait(false);
     }
@@ -153,32 +161,5 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
         {
             LogTelemetryEventFailed(_logger, ex);
         }
-    }
-
-    private void ReleaseBlockListing(int numberOfBlockListings)
-    {
-        var newRemainingNumberOfBlocks = Interlocked.Add(ref _remainingNumberOfBlocksToList, -numberOfBlockListings);
-
-        var amountToRelease = Math.Max(
-            newRemainingNumberOfBlocks >= 0
-                ? numberOfBlockListings
-                : newRemainingNumberOfBlocks + numberOfBlockListings,
-            0);
-
-        _client.DriveClient.BlockListingSemaphore.Release(amountToRelease);
-        LogReleasedBlockListingSemaphore(_logger, _photoUid, amountToRelease);
-    }
-
-    private void ReleaseRemainingBlockListing()
-    {
-        if (_remainingNumberOfBlocksToList <= 0)
-        {
-            return;
-        }
-
-        _client.DriveClient.BlockListingSemaphore.Release(_remainingNumberOfBlocksToList);
-        LogReleasedBlockListingSemaphore(_logger, _photoUid, _remainingNumberOfBlocksToList);
-
-        _remainingNumberOfBlocksToList = 0;
     }
 }

@@ -5,26 +5,18 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal static class RevisionOperations
 {
-    public static async ValueTask<RevisionWriter> OpenForWritingAsync(
+    public static RevisionWriter OpenForWriting(
         ProtonDriveClient client,
         RevisionDraft draft,
-        Action<int> releaseBlocksAction,
-        CancellationToken cancellationToken)
+        long queueToken)
     {
-        await client.BlockUploader.Queue.StartFileAsync(cancellationToken).ConfigureAwait(false);
-
-        return new RevisionWriter(
-            client,
-            draft,
-            releaseBlocksAction,
-            () => client.BlockUploader.Queue.FinishFile(),
-            client.TargetBlockSize);
+        return new RevisionWriter(client, draft, queueToken, client.TargetBlockSize);
     }
 
     internal static async ValueTask<DownloadState> CreateDownloadStateAsync(
         ProtonDriveClient client,
         RevisionUid revisionUid,
-        Action<int> releaseBlockListingAction,
+        long queueToken,
         CancellationToken cancellationToken)
     {
         var (fileUid, revisionId) = revisionUid;
@@ -53,25 +45,17 @@ internal static class RevisionOperations
             : (degradedFileSecrets.Key ?? throw new InvalidOperationException($"Node key not available for file {revisionUid.NodeUid}"),
                 degradedFileSecrets.ContentKey ?? throw new InvalidOperationException($"Content key not available for file {revisionUid.NodeUid}"));
 
-        releaseBlockListingAction.Invoke(1);
-
         return new DownloadState(
             revisionUid,
             key,
             contentKey,
             revisionResponse.Revision,
+            queueToken,
             client.Telemetry.GetLogger("Download state"));
     }
 
-    internal static RevisionReader OpenForReading(
-        ProtonDriveClient client,
-        DownloadState downloadState,
-        Action<int> releaseBlockListingAction)
+    internal static RevisionReader OpenForReading(ProtonDriveClient client, DownloadState downloadState)
     {
-        return new RevisionReader(
-            client,
-            downloadState,
-            releaseBlockListingAction,
-            () => client.BlockDownloader.Queue.FinishFile());
+        return new RevisionReader(client, downloadState);
     }
 }

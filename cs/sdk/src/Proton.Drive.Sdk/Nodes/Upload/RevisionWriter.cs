@@ -12,32 +12,27 @@ using Proton.Sdk.Api;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
-internal sealed partial class RevisionWriter : IDisposable
+internal sealed partial class RevisionWriter
 {
     public const int DefaultBlockSize = 1 << 22; // 4 MiB
     private static readonly TimeSpan SourceReadingCancellationDelay = TimeSpan.FromMilliseconds(500);
 
     private readonly ProtonDriveClient _client;
     private readonly RevisionDraft _draft;
-    private readonly Action<int> _releaseBlocksAction;
-    private readonly Action _releaseFileSemaphoreAction;
+    private readonly long _queueToken;
     private readonly ILogger _logger;
 
     private readonly int _targetBlockSize;
 
-    private bool _fileReleased;
-
     internal RevisionWriter(
         ProtonDriveClient client,
         RevisionDraft draft,
-        Action<int> releaseBlocksAction,
-        Action releaseFileSemaphoreAction,
+        long queueToken,
         int targetBlockSize = DefaultBlockSize)
     {
         _client = client;
         _draft = draft;
-        _releaseBlocksAction = releaseBlocksAction;
-        _releaseFileSemaphoreAction = releaseFileSemaphoreAction;
+        _queueToken = queueToken;
         _targetBlockSize = targetBlockSize;
         _logger = client.Telemetry.GetLogger("Revision writer");
     }
@@ -53,52 +48,9 @@ internal sealed partial class RevisionWriter : IDisposable
     {
         try
         {
-            var uploadTasks = new Queue<Task<BlockUploadResult>>(_client.BlockUploader.Queue.Depth);
-
             var signingEmailAddress = _draft.MembershipAddress.EmailAddress;
 
-            int expectedThumbnailBlockCount;
-
-            var hashingContentStream = new HashingReadStream(contentStream, _draft.Sha1, leaveOpen: true);
-
-            await using (hashingContentStream.ConfigureAwait(false))
-            {
-                try
-                {
-                    try
-                    {
-                        expectedThumbnailBlockCount = await UploadThumbnailBlocksAsync(thumbnails, uploadTasks, cancellationToken).ConfigureAwait(false);
-
-                        await UploadContentBlocksAsync(onProgress, hashingContentStream, uploadTasks, cancellationToken).ConfigureAwait(false);
-                    }
-                    finally
-                    {
-                        _releaseFileSemaphoreAction.Invoke();
-                        _fileReleased = true;
-                    }
-
-                    while (uploadTasks.TryDequeue(out var uploadTask))
-                    {
-                        await uploadTask.ConfigureAwait(false);
-                    }
-                }
-                catch when (uploadTasks.Count > 0)
-                {
-                    foreach (var uploadTask in uploadTasks)
-                    {
-                        try
-                        {
-                            await uploadTask.ConfigureAwait(false);
-                        }
-                        catch
-                        {
-                            // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
-                        }
-                    }
-
-                    throw;
-                }
-            }
+            var expectedThumbnailBlockCount = await UploadBlocksAsync(contentStream, thumbnails, onProgress, cancellationToken).ConfigureAwait(false);
 
             var sha1Digest = _draft.Sha1.GetCurrentHash();
 
@@ -161,20 +113,66 @@ internal sealed partial class RevisionWriter : IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        if (!_fileReleased)
-        {
-            _releaseFileSemaphoreAction.Invoke();
-        }
-    }
-
     private static bool IsResumableError(Exception ex)
     {
         return ex is not ProtonApiException { TransportCode: >= 400 and < 500 }
             and not NodeWithSameNameExistsException
             and not IntegrityException
             and not InvalidOperationException;
+    }
+
+    private async ValueTask<int> UploadBlocksAsync(
+        Stream contentStream,
+        IEnumerable<Thumbnail> thumbnails,
+        Action<long>? onProgress,
+        CancellationToken cancellationToken)
+    {
+        int expectedThumbnailBlockCount;
+        var hashingContentStream = new HashingReadStream(contentStream, _draft.Sha1, leaveOpen: true);
+
+        await using (hashingContentStream.ConfigureAwait(false))
+        {
+            var uploadTasks = new Queue<Task<BlockUploadResult>>(_client.UploadQueue.Depth);
+
+            try
+            {
+                await _client.UploadQueue.StartBlockQueueingAsync(cancellationToken).ConfigureAwait(false);
+
+                try
+                {
+                    expectedThumbnailBlockCount = await UploadThumbnailBlocksAsync(thumbnails, uploadTasks, cancellationToken).ConfigureAwait(false);
+
+                    await UploadContentBlocksAsync(onProgress, hashingContentStream, uploadTasks, cancellationToken).ConfigureAwait(false);
+                }
+                finally
+                {
+                    _client.UploadQueue.FinishBlockQueueing();
+                }
+
+                while (uploadTasks.TryDequeue(out var uploadTask))
+                {
+                    await uploadTask.ConfigureAwait(false);
+                }
+            }
+            catch when (uploadTasks.Count > 0)
+            {
+                foreach (var uploadTask in uploadTasks)
+                {
+                    try
+                    {
+                        await uploadTask.ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
+                    }
+                }
+
+                throw;
+            }
+        }
+
+        return expectedThumbnailBlockCount;
     }
 
     private RevisionUpdateRequest CreateRevisionUpdateRequest(
@@ -321,18 +319,13 @@ internal sealed partial class RevisionWriter : IDisposable
 
             await plainData.DisposeAsync().ConfigureAwait(false);
 
+            _client.UploadQueue.DecreaseFileRemainingBlockCount(_queueToken, 1);
+
             return result;
         }
         finally
         {
-            try
-            {
-                _client.BlockUploader.Queue.FinishBlocks(1);
-            }
-            finally
-            {
-                _releaseBlocksAction.Invoke(1);
-            }
+            _client.UploadQueue.DequeueBlocks(1);
         }
     }
 
@@ -345,6 +338,8 @@ internal sealed partial class RevisionWriter : IDisposable
 
         foreach (var thumbnail in thumbnails)
         {
+            _client.UploadQueue.IncreaseFileRemainingBlockCount(_queueToken, 1);
+
             ++blockCount;
 
             if (_draft.ThumbnailBlockWasAlreadyUploaded(thumbnail.Type))
@@ -370,18 +365,13 @@ internal sealed partial class RevisionWriter : IDisposable
 
             _draft.SetThumbnailUploadResult(thumbnail.Type, result);
 
+            _client.UploadQueue.DecreaseFileRemainingBlockCount(_queueToken, 1);
+
             return result;
         }
         finally
         {
-            try
-            {
-                _client.BlockUploader.Queue.FinishBlocks(1);
-            }
-            finally
-            {
-                _client.RevisionCreationSemaphore.Release(1);
-            }
+            _client.UploadQueue.DequeueBlocks(1);
         }
     }
 
@@ -491,14 +481,14 @@ internal sealed partial class RevisionWriter : IDisposable
 
     private async ValueTask WaitForBlockUploaderAsync(Queue<Task<BlockUploadResult>> uploadTasks, CancellationToken cancellationToken)
     {
-        if (!_client.BlockUploader.Queue.TryStartBlock())
+        if (!_client.UploadQueue.TryEnqueueBlock())
         {
             if (uploadTasks.TryDequeue(out var uploadTask))
             {
                 await uploadTask.ConfigureAwait(false);
             }
 
-            await _client.BlockUploader.Queue.StartBlockAsync(cancellationToken).ConfigureAwait(false);
+            await _client.UploadQueue.EnqueueBlockAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 

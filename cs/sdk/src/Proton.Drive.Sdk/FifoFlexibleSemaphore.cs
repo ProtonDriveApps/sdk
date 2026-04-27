@@ -18,6 +18,22 @@ internal sealed class FifoFlexibleSemaphore
     public int MaximumCount { get; }
     public int CurrentCount { get; private set; }
 
+    public bool TryEnter(int count)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
+
+        lock (_waitingQueue)
+        {
+            if (CurrentCount <= 0)
+            {
+                return false;
+            }
+
+            CurrentCount -= count;
+            return true;
+        }
+    }
+
     public async ValueTask EnterAsync(int count, CancellationToken cancellationToken = default)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(count);
@@ -56,18 +72,26 @@ internal sealed class FifoFlexibleSemaphore
         }
     }
 
+    public void DecreaseCount(int count)
+    {
+        lock (_waitingQueue)
+        {
+            CurrentCount -= count;
+        }
+    }
+
     public void Release(int count)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(count);
 
         lock (_waitingQueue)
         {
-            CurrentCount += count;
-
-            if (CurrentCount > MaximumCount)
+            if (CurrentCount + count > MaximumCount)
             {
-                CurrentCount = MaximumCount;
+                throw new InvalidOperationException("Releasing would increase the count beyond the maximum.");
             }
+
+            CurrentCount += count;
 
             while (CurrentCount > 0 && _waitingQueue.TryDequeue(out var queuedEntry))
             {

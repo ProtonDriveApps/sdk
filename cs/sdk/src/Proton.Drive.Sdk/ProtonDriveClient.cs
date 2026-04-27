@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Microsoft.IO;
 using Proton.Cryptography.Pgp;
@@ -19,8 +20,8 @@ namespace Proton.Drive.Sdk;
 
 public sealed class ProtonDriveClient
 {
-    private const int MinDegreeOfBlockTransferParallelism = 2;
-    private const int MaxDegreeOfBlockTransferParallelism = 6;
+    private const int DefaultDegreeOfBlockTransferParallelism = 6;
+    private const int MaxDegreeOfThumbnailDownloadParallelism = 8;
 
     /// <summary>
     /// Creates a new instance of <see cref="ProtonDriveClient"/>.
@@ -46,15 +47,16 @@ public sealed class ProtonDriveClient
         ProtonDriveClientOptions? creationParameters = null)
         : this(
             new SdkHttpClientFactoryDecorator(httpClientFactory, creationParameters?.BindingsLanguage).CreateClientWithTimeout(
-                creationParameters?.OverrideDefaultApiTimeoutSeconds ?? ProtonApiDefaults.DefaultTimeoutSeconds),
+                creationParameters?.DefaultApiTimeoutSecondsOverride ?? ProtonApiDefaults.DefaultTimeoutSeconds),
             new SdkHttpClientFactoryDecorator(httpClientFactory, creationParameters?.BindingsLanguage).CreateClientWithTimeout(
-                creationParameters?.OverrideStorageApiTimeoutSeconds ?? ProtonDriveDefaults.StorageApiTimeoutSeconds),
+                creationParameters?.StorageApiTimeoutSecondsOverride ?? ProtonDriveDefaults.StorageApiTimeoutSeconds),
             accountClient,
             new DriveClientCache(entityCacheRepository, secretCacheRepository),
             featureFlagProvider,
             telemetry,
             (defaultApiHttpClient, storageApiHttpClient) => new DriveApiClients(defaultApiHttpClient, storageApiHttpClient),
-            creationParameters?.Uid ?? Guid.NewGuid().ToString())
+            creationParameters?.Uid,
+            creationParameters?.DegreeOfBlockTransferParallelismOverride)
     {
     }
 
@@ -73,7 +75,8 @@ public sealed class ProtonDriveClient
             session.ClientConfiguration.FeatureFlagProvider,
             session.ClientConfiguration.Telemetry,
             driveApiClientsFactory,
-            uid ?? Guid.NewGuid().ToString())
+            uid,
+            degreeOfBlockTransferParallelism: null)
     {
     }
 
@@ -88,15 +91,16 @@ public sealed class ProtonDriveClient
         ProtonDriveClientOptions? creationParameters = null)
         : this(
             new SdkHttpClientFactoryDecorator(httpClientFactory, creationParameters?.BindingsLanguage).CreateClientWithTimeout(
-                creationParameters?.OverrideDefaultApiTimeoutSeconds ?? ProtonApiDefaults.DefaultTimeoutSeconds),
+                creationParameters?.DefaultApiTimeoutSecondsOverride ?? ProtonApiDefaults.DefaultTimeoutSeconds),
             new SdkHttpClientFactoryDecorator(httpClientFactory, creationParameters?.BindingsLanguage).CreateClientWithTimeout(
-                creationParameters?.OverrideStorageApiTimeoutSeconds ?? ProtonDriveDefaults.StorageApiTimeoutSeconds),
+                creationParameters?.StorageApiTimeoutSecondsOverride ?? ProtonDriveDefaults.StorageApiTimeoutSeconds),
             accountClient,
             new DriveClientCache(entityCacheRepository, secretCacheRepository),
             featureFlagProvider,
             telemetry,
             driveApiClientsFactory,
-            creationParameters?.Uid ?? Guid.NewGuid().ToString())
+            creationParameters?.Uid,
+            creationParameters?.DegreeOfBlockTransferParallelismOverride)
     {
     }
 
@@ -107,10 +111,10 @@ public sealed class ProtonDriveClient
         IBlockVerifierFactory blockVerifierFactory,
         IFeatureFlagProvider featureFlagProvider,
         ITelemetry telemetry,
-        string uid,
-        int? blockTransferDegreeOfParallelism = null)
+        string? uid,
+        int? degreeOfBlockTransferParallelism = null)
     {
-        Uid = uid;
+        Uid = uid ?? Guid.NewGuid().ToString();
 
         Account = accountClient;
         Api = api;
@@ -119,17 +123,15 @@ public sealed class ProtonDriveClient
         Telemetry = telemetry;
         FeatureFlagProvider = featureFlagProvider;
 
-        var maxDegreeOfBlockTransferParallelism = blockTransferDegreeOfParallelism
-            ?? Math.Max(Math.Min(Environment.ProcessorCount / 2, MaxDegreeOfBlockTransferParallelism), MinDegreeOfBlockTransferParallelism);
+        var maxDegreeOfBlockTransferParallelism = degreeOfBlockTransferParallelism ?? DefaultDegreeOfBlockTransferParallelism;
 
-        var maxDegreeOfBlockProcessingParallelism = maxDegreeOfBlockTransferParallelism + Math.Min(Math.Max(maxDegreeOfBlockTransferParallelism / 2, 2), 4);
+        DownloadQueue = new TransferQueue(maxDegreeOfBlockTransferParallelism, telemetry.GetLogger("Download queue"));
+        UploadQueue = new TransferQueue(maxDegreeOfBlockTransferParallelism, telemetry.GetLogger("Upload queue"));
+        ThumbnailDownloadQueue = new TransferQueue(MaxDegreeOfThumbnailDownloadParallelism, telemetry.GetLogger("Thumbnail download queue"));
 
-        RevisionCreationSemaphore = new FifoFlexibleSemaphore(maxDegreeOfBlockProcessingParallelism);
-        BlockListingSemaphore = new FifoFlexibleSemaphore(maxDegreeOfBlockProcessingParallelism);
-
-        BlockUploader = new BlockUploader(this, maxDegreeOfBlockTransferParallelism);
-        BlockDownloader = new BlockDownloader(this, maxDegreeOfBlockTransferParallelism);
-        ThumbnailBlockDownloader = new BlockDownloader(this, 8);
+        BlockUploader = new BlockUploader(this);
+        BlockDownloader = new BlockDownloader(this);
+        ThumbnailBlockDownloader = new BlockDownloader(this);
         PgpEnvironment.DefaultAeadStreamingChunkLength = PgpAeadStreamingChunkLength.ChunkLength;
     }
 
@@ -141,7 +143,8 @@ public sealed class ProtonDriveClient
         IFeatureFlagProvider featureFlagProvider,
         ITelemetry telemetry,
         Func<HttpClient, HttpClient, IDriveApiClients> driveApiClientsFactory,
-        string uid)
+        string? uid,
+        int? degreeOfBlockTransferParallelism = null)
         : this(
             accountClient,
             driveApiClientsFactory.Invoke(defaultApiHttpClient, storageApiHttpClient),
@@ -149,7 +152,8 @@ public sealed class ProtonDriveClient
             new BlockVerifierFactory(defaultApiHttpClient),
             featureFlagProvider,
             telemetry,
-            uid)
+            uid,
+            degreeOfBlockTransferParallelism)
     {
     }
 
@@ -165,8 +169,9 @@ public sealed class ProtonDriveClient
     internal ITelemetry Telemetry { get; }
     internal IFeatureFlagProvider FeatureFlagProvider { get; }
 
-    internal FifoFlexibleSemaphore RevisionCreationSemaphore { get; }
-    internal FifoFlexibleSemaphore BlockListingSemaphore { get; }
+    internal TransferQueue UploadQueue { get; }
+    internal TransferQueue DownloadQueue { get; }
+    internal TransferQueue ThumbnailDownloadQueue { get; }
 
     internal int TargetBlockSize { get; set; } = RevisionWriter.DefaultBlockSize;
 
@@ -212,6 +217,20 @@ public sealed class ProtonDriveClient
         return FileOperations.EnumerateThumbnailsAsync(this, fileUids, type, forPhotos: false, cancellationToken);
     }
 
+    [Experimental("TryTransferQueuing")]
+    public FileUploader? TryGetFileUploader(
+        NodeUid parentFolderUid,
+        string name,
+        string mediaType,
+        long size,
+        FileUploadMetadata metadata,
+        bool overrideExistingDraftByOtherClient)
+    {
+        var draftProvider = new NewFileDraftProvider(this, parentFolderUid, name, mediaType, overrideExistingDraftByOtherClient);
+
+        return FileUploader.TryCreate(this, draftProvider, parentFolderUid, size, metadata);
+    }
+
     public async ValueTask<FileUploader> GetFileUploaderAsync(
         NodeUid parentFolderUid,
         string name,
@@ -223,7 +242,18 @@ public sealed class ProtonDriveClient
     {
         var draftProvider = new NewFileDraftProvider(this, parentFolderUid, name, mediaType, overrideExistingDraftByOtherClient);
 
-        return await GetFileUploaderAsync(draftProvider, parentFolderUid, size, metadata, cancellationToken).ConfigureAwait(false);
+        return await FileUploader.CreateAsync(this, draftProvider, parentFolderUid, size, metadata, cancellationToken).ConfigureAwait(false);
+    }
+
+    [Experimental("TryTransferQueuing")]
+    public FileUploader? TryGetFileRevisionUploader(
+        RevisionUid currentActiveRevisionUid,
+        long size,
+        FileUploadMetadata metadata)
+    {
+        var draftProvider = new NewRevisionDraftProvider(this, currentActiveRevisionUid.NodeUid, currentActiveRevisionUid.RevisionId);
+
+        return FileUploader.TryCreate(this, draftProvider, currentActiveRevisionUid.NodeUid, size, metadata);
     }
 
     public async ValueTask<FileUploader> GetFileRevisionUploaderAsync(
@@ -234,7 +264,13 @@ public sealed class ProtonDriveClient
     {
         var draftProvider = new NewRevisionDraftProvider(this, currentActiveRevisionUid.NodeUid, currentActiveRevisionUid.RevisionId);
 
-        return await GetFileUploaderAsync(draftProvider, currentActiveRevisionUid.NodeUid, size, metadata, cancellationToken).ConfigureAwait(false);
+        return await FileUploader.CreateAsync(this, draftProvider, currentActiveRevisionUid.NodeUid, size, metadata, cancellationToken).ConfigureAwait(false);
+    }
+
+    [Experimental("TryTransferQueuing")]
+    public FileDownloader? TryGetFileDownloader(RevisionUid revisionUid)
+    {
+        return FileDownloader.TryCreate(this, revisionUid);
     }
 
     public async ValueTask<FileDownloader> GetFileDownloaderAsync(RevisionUid revisionUid, CancellationToken cancellationToken)
@@ -302,15 +338,5 @@ public sealed class ProtonDriveClient
         }
 
         await VolumeOperations.EmptyTrashAsync(this, volumeId.Value, cancellationToken).ConfigureAwait(false);
-    }
-
-    private async ValueTask<FileUploader> GetFileUploaderAsync(
-        IRevisionDraftProvider revisionDraftProvider,
-        NodeUid telemetryContextNodeUid,
-        long size,
-        FileUploadMetadata metadata,
-        CancellationToken cancellationToken)
-    {
-        return await FileUploader.CreateAsync(this, revisionDraftProvider, telemetryContextNodeUid, size, metadata, cancellationToken).ConfigureAwait(false);
     }
 }
