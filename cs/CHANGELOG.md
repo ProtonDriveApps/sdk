@@ -1,5 +1,13 @@
 # Changelog
 
+## cs/v0.14.0 (2026-04-28)
+
+* Fix name conflict handling regression
+* Reduce log level for draft deletion failure from error to warning
+* Evict non-deserializable entries from cache
+* Upgrade to .NET 10
+* Fix download queuing not blocking on full queue
+
 ## cs/v0.13.8 (2026-04-27)
 
 * Fix nullable data in name conflict error
