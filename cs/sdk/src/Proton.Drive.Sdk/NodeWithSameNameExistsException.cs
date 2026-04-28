@@ -29,19 +29,21 @@ public sealed class NodeWithSameNameExistsException : ProtonDriveException
             return;
         }
 
-        ConflictingNodeIsFileDraft = response.Conflict is { RevisionId: null, DraftRevisionId: not null };
+        var conflict = RevisionConflict.FromErrorResponse(response);
 
-        if (response.Conflict is { LinkId: { } linkId })
+        ConflictingNodeIsFileDraft = conflict is { RevisionId: null, DraftRevisionId: not null };
+
+        if (conflict is { LinkId: { } linkId })
         {
             var conflictingNodeUid = new NodeUid(volumeId, linkId);
 
             ConflictingNodeUid = conflictingNodeUid;
 
-            if (response.Conflict.RevisionId is { } revisionId)
+            if (conflict.RevisionId is { } revisionId)
             {
                 ConflictingRevisionUid = new RevisionUid(conflictingNodeUid, revisionId);
             }
-            else if (response.Conflict.DraftRevisionId is { } draftRevisionId)
+            else if (conflict.DraftRevisionId is { } draftRevisionId)
             {
                 ConflictingRevisionUid = new RevisionUid(conflictingNodeUid, draftRevisionId);
                 ConflictingNodeIsFileDraft = true;
