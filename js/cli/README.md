@@ -1,9 +1,6 @@
-# Slim CLI application for JavaScript version of Drive SDK
+# Proton Drive CLI
 
-The app implements and integrates dependencies for the SDK, such as HTTP client, logging, crypto module or account interface with authenticating user.
-
-The integration implements only limited capabilities to run simplest run of the SDK. For example, 2FA or other than simple username and password authentication is not supported, crypto module is copy-paste from the clients monorepo without using the web workers.
-
+The CLI provides dependencies for the SDK (such as HTTP client, logging, crypto module or account interface) and implements a simple interactive shell to run commands. The CLI is currently built using Bun and can be run on any platform that Bun supports.
 
 ## Installation
 
@@ -11,19 +8,21 @@ First, you need to install Bun.
 
 Then you need to install CLI dependencies.
 
+From `js/cli`:
+
 ```bash
 bun install
 ```
 
-## Build
-
-From `js/cli`:
+Then you can build the CLI.
 
 ```bash
 bun run build
 ```
 
-Artifacts are written to the **current working directory** (typically `js/cli/` when you run the commands above).
+Executable is written to the **release** folder when you run the command above.
+
+Note: The CLI requires the sharp package for generating thumbnails during upload. The library is not bundled with the CLI as it requires a native module depending on the platform. You need to install the sharp package separately when running the CLI outside of the CLI directory. Either install it globally (`bun install -g sharp`) and provide `NODE_PATH` environment variable to the CLI executable, or install it locally by running `bun install sharp` in the directory with the CLI executable.
 
 ## Run
 
