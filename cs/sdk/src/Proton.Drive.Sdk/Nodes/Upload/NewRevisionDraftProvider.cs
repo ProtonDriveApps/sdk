@@ -50,8 +50,8 @@ internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
                 revisionId = revisionResponse.Identity.RevisionId;
             }
             catch (ProtonApiException<RevisionErrorResponse> e)
-                when (e.Response is { Conflict.DraftRevisionId: { } draftRevisionId }
-                    && (e.Response.Conflict.DraftClientUid == _client.Uid)
+                when (RevisionConflict.FromErrorResponse(e.Response) is { DraftRevisionId: { } draftRevisionId } conflict
+                    && (conflict.DraftClientUid == _client.Uid)
                     && remainingNumberOfAttempts-- > 0)
             {
                 await _client.Api.Files.DeleteRevisionAsync(_fileUid.VolumeId, _fileUid.LinkId, draftRevisionId, cancellationToken).ConfigureAwait(false);

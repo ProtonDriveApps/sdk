@@ -152,8 +152,8 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
                 result = (response, fileSecrets);
             }
             catch (ProtonApiException<RevisionErrorResponse> e)
-                when (e.Response is { Conflict: { LinkId: { } conflictingLinkId, RevisionId: null, DraftRevisionId: not null } }
-                    && (e.Response.Conflict.DraftClientUid == _client.Uid || _overrideExistingDraftByOtherClient)
+                when (RevisionConflict.FromErrorResponse(e.Response) is { LinkId: { } conflictingLinkId, RevisionId: null, DraftRevisionId: not null } conflict
+                    && (conflict.DraftClientUid == _client.Uid || _overrideExistingDraftByOtherClient)
                     && remainingNumberOfAttempts-- > 0)
             {
                 var conflictingNodeUid = new NodeUid(_parentUid.VolumeId, conflictingLinkId);
