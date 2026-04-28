@@ -4,7 +4,6 @@ import { ParseArgsConfig } from 'node:util';
 
 import {
     NodeWithSameNameExistsValidationError,
-    Thumbnail,
     ValidationError,
     MaybeNode,
     type ProtonDriveClient,
@@ -22,12 +21,14 @@ import {
     type QueueItemDirectory,
     type QueueItemFile,
 } from './transferQueue';
+import { generateThumbnails } from './generateThumbnails';
 
 const SUPPORTED_REMOTE_PATH_TYPES = [PathType.MyFiles, PathType.Devices, PathType.SharedWithMe];
 
 type UploadContext = {
     sdk: ProtonDriveClient;
     json: boolean;
+    skipThumbnails: boolean;
     progress?: TransferProgressInterface;
     uploadQueue: UploadQueue;
     conflictResolver: TransferConflictResolver;
@@ -53,6 +54,11 @@ export class CommandFileSystemUpload implements Command {
             short: 'd',
             default: '',
         },
+        'skip-thumbnails': {
+            type: 'boolean',
+            short: 't',
+            default: false,
+        },
     };
 
     async action({
@@ -65,6 +71,7 @@ export class CommandFileSystemUpload implements Command {
             'conflict-strategy': conflictStrategy,
             'file-conflict-strategy': fileConflictStrategy,
             'folder-conflict-strategy': folderConflictStrategy,
+            'skip-thumbnails': skipThumbnails,
         },
     }: ActionArgs) {
         if (args.length < 2) {
@@ -109,6 +116,7 @@ export class CommandFileSystemUpload implements Command {
         const ctx: UploadContext = {
             sdk,
             json,
+            skipThumbnails,
             progress,
             uploadQueue,
             conflictResolver,
@@ -162,10 +170,7 @@ export class CommandFileSystemUpload implements Command {
         }
     }
 
-    private async uploadFile(
-        ctx: UploadContext,
-        item: QueueItemFile<{ parentNode: MaybeNode }>,
-    ): Promise<void> {
+    private async uploadFile(ctx: UploadContext, item: QueueItemFile<{ parentNode: MaybeNode }>): Promise<void> {
         const expectedSha1 = await this.getSha1(item.localPath);
         const file = Bun.file(item.localPath);
         const metadata = {
@@ -179,6 +184,8 @@ export class CommandFileSystemUpload implements Command {
         let name = item.baseName;
         let newRevisionForNodeUid: string | undefined;
 
+        const thumbnails = ctx.skipThumbnails ? [] : await generateThumbnails(metadata.mediaType || '', item.localPath);
+
         while (true) {
             const progressTracker = ctx.progress?.trackItem(item.baseName, file.size);
 
@@ -187,7 +194,6 @@ export class CommandFileSystemUpload implements Command {
                     ? await ctx.sdk.getFileRevisionUploader(newRevisionForNodeUid, metadata)
                     : await ctx.sdk.getFileUploader(item.parentNode, name, metadata);
 
-                const thumbnails: Thumbnail[] = [];
                 const controller = await uploader.uploadFromStream(file.stream(), thumbnails, (uploadedBytes) => {
                     // file.size is raw size while uploadedBytes is encrypted
                     // size. Encrypted size will be a bit higher. It is enough

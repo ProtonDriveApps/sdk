@@ -14,8 +14,7 @@ tsconfig.tsbuildinfo
 dist
 
 # JS CLI
-js/cli/proton-drive
-js/cli/proton-drive-internal
+js/cli/release
 auth.txt
 auth-session.json
 cache*.sqlite
