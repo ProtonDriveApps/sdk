@@ -1,10 +1,12 @@
 import ky, { type AfterResponseHook, type KyInstance } from 'ky';
 
-import { Logger } from '@protontech/drive-sdk';
+import { Logger, VERSION } from '@protontech/drive-sdk';
 
 import type { Config } from '../config';
 import { Credentials } from '../credentials';
 import type { paths as AuthPaths } from './api-auth-types';
+import { SUPPORTED_REQUIREMENT_MASK_BY_SCOPE, processDriveRequirementHeaders } from './apiRequirements';
+import { MessageEmitter } from './messageEmitter';
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 
@@ -17,6 +19,7 @@ export class ApiClient {
     private unauthenticatedClient: KyInstance;
 
     private activeRefreshPromise: Promise<boolean> | null = null;
+    private readonly driveRequirementNoticeOnce = new MessageEmitter();
 
     readonly baseUrlWithProtocol: string;
 
@@ -34,14 +37,20 @@ export class ApiClient {
             },
             timeout: DEFAULT_TIMEOUT_MS,
         };
+        const driveApiRequirementsHook = this.createDriveApiRequirementsAfterResponseHook();
         this.authenticatedClientBase = ky.create({
             ...baseClientOptions,
             hooks: {
-                afterResponse: [this.createRefreshSessionAfterResponseHook()],
+                afterResponse: [this.createRefreshSessionAfterResponseHook(), driveApiRequirementsHook],
             },
         });
         this.authenticatedClient = this.authenticatedClientBase;
-        this.unauthenticatedClient = ky.create(baseClientOptions);
+        this.unauthenticatedClient = ky.create({
+            ...baseClientOptions,
+            hooks: {
+                afterResponse: [driveApiRequirementsHook],
+            },
+        });
         this.updateAuthenticatedClientHeaders();
 
         credentials.on('sessionInfoChanged', () => this.updateAuthenticatedClientHeaders());
@@ -62,6 +71,36 @@ export class ApiClient {
 
     get unauthenticatedRequest(): KyInstance {
         return this.unauthenticatedClient;
+    }
+
+    private createDriveApiRequirementsAfterResponseHook(): AfterResponseHook {
+        return (_request, _options, response) => {
+            processDriveRequirementHeaders(response.headers, {
+                clientSdkVersion: VERSION,
+                supportedRequirementMasksByScope: SUPPORTED_REQUIREMENT_MASK_BY_SCOPE,
+                onUnsupportedFeature: (scope, requiredMask) => {
+                    const message = `Update needed: unsupported feature for ${scope}`;
+                    this.driveRequirementNoticeOnce.emitOnce(message, (msg) => {
+                        this.logger.warn(`${msg} (required feature bit mask: ${requiredMask})`);
+                        process.stderr.write(msg + '\n');
+                    });
+                },
+                onRequiredUpdate: (requiredVersion) => {
+                    const message = `Update required: required SDK version ${requiredVersion} or newer (currently using ${VERSION})`;
+                    this.driveRequirementNoticeOnce.emitOnce(message, (msg) => {
+                        this.logger.warn(msg);
+                        process.stderr.write(msg + '\n');
+                    });
+                },
+                onSuggestedUpdate: (suggestedVersion) => {
+                    const message = `Update recommended: suggested SDK version ${suggestedVersion} or newer (currently using ${VERSION})`;
+                    this.driveRequirementNoticeOnce.emitOnce(message, (msg) => {
+                        this.logger.warn(msg);
+                        process.stderr.write(msg + '\n');
+                    });
+                },
+            });
+        };
     }
 
     private createRefreshSessionAfterResponseHook(): AfterResponseHook {
