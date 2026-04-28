@@ -287,7 +287,17 @@ export class UploadAPIService {
         const formData = new FormData();
         formData.append('Block', new Blob([block]), 'blob');
 
-        await this.apiService.postBlockStream(url, token, formData, onProgress, signal);
+        let onProgressCalled = false;
+        const onProgressHandler = (uploadedBytes: number) => {
+            onProgressCalled = true;
+            onProgress?.(uploadedBytes);
+        };
+
+        await this.apiService.postBlockStream(url, token, formData, onProgressHandler, signal);
+
+        if (!onProgressCalled) {
+            onProgress?.(block.length);
+        }
     }
 
     async isRevisionUploaded(nodeRevisionUid: string): Promise<boolean> {

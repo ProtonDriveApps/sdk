@@ -5,6 +5,7 @@ import { CommandAuthLogout } from './auth/commandAuthLogout';
 import { CommandFileSystemCopy } from './fileSystem/commandFileSystemCopy';
 import { CommandFileSystemCreateFolder } from './fileSystem/commandFileSystemCreateFolder';
 import { CommandFileSystemDelete } from './fileSystem/commandFileSystemDelete';
+import { CommandFileSystemDownload } from './fileSystem/commandFileSystemDownload';
 import { CommandFileSystemEmptyTrash } from './fileSystem/commandFileSystemEmptyTrash';
 import { CommandFileSystemInfo } from './fileSystem/commandFileSystemInfo';
 import { CommandFileSystemList } from './fileSystem/commandFileSystemList';
@@ -12,6 +13,7 @@ import { CommandFileSystemMove } from './fileSystem/commandFileSystemMove';
 import { CommandFileSystemRename } from './fileSystem/commandFileSystemRename';
 import { CommandFileSystemRestore } from './fileSystem/commandFileSystemRestore';
 import { CommandFileSystemTrash } from './fileSystem/commandFileSystemTrash';
+import { CommandFileSystemUpload } from './fileSystem/commandFileSystemUpload';
 
 export const COMMANDS = applyDefaultCliOptions([
     new CommandAuthLogin(),
@@ -19,6 +21,8 @@ export const COMMANDS = applyDefaultCliOptions([
     new CommandFileSystemList(),
     new CommandFileSystemInfo(),
     new CommandFileSystemCreateFolder(),
+    new CommandFileSystemUpload(),
+    new CommandFileSystemDownload(),
     new CommandFileSystemRename(),
     new CommandFileSystemCopy(),
     new CommandFileSystemMove(),

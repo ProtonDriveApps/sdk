@@ -5,6 +5,7 @@ import {
     OpenPGPCryptoWithCryptoProxy,
     OpenPGPCryptoProxy,
     FeatureFlags,
+    Logger,
 } from '@protontech/drive-sdk';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 import { initDiagnostic } from '@protontech/drive-sdk/diagnostic';
@@ -49,6 +50,7 @@ export async function init(configOptions: InitConfig) {
     const paths = new Paths(sdk, photosSdk, auth);
 
     return {
+        logger: logger as Logger,
         auth,
         addresses,
         sdk,

@@ -82,6 +82,7 @@ async function dispatchAction(
     }
     try {
         await command.action({
+            logger: session.logger,
             auth: session.auth,
             sdk: session.sdk,
             photosSdk: session.photosSdk,
