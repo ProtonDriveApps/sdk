@@ -141,6 +141,6 @@ internal sealed partial class RevisionDraft(
         }
     }
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "Draft deletion failed for revision {RevisionUid}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Draft deletion failed for revision {RevisionUid}")]
     private partial void LogDraftDeletionFailure(Exception exception, RevisionUid revisionUid);
 }
