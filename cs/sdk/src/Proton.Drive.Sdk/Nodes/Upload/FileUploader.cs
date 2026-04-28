@@ -14,6 +14,8 @@ public sealed class FileUploader : IDisposable
     private readonly FileUploadMetadata _metadata;
     private readonly ILogger _logger;
 
+    private bool _isDisposed;
+
     private FileUploader(
         ProtonDriveClient client,
         long queueToken,
@@ -70,7 +72,19 @@ public sealed class FileUploader : IDisposable
 
     public void Dispose()
     {
-        _client.UploadQueue.RemoveFileFromQueue(_queueToken);
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        try
+        {
+            _client.UploadQueue.RemoveFileFromQueue(_queueToken);
+        }
+        finally
+        {
+            _isDisposed = true;
+        }
     }
 
     internal static FileUploader? TryCreate(
