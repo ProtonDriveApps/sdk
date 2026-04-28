@@ -512,6 +512,16 @@ export class ProtonDrivePhotosClient {
     }
 
     /**
+     * Returns an available name for a new node in the given parent folder.
+     *
+     * See `ProtonDriveClient.getAvailableName` for more information.
+     */
+    async getAvailableName(parentFolderUid: NodeOrUid, name: string): Promise<string> {
+        this.logger.info(`Getting available name in photos folder ${getUid(parentFolderUid)}`);
+        return this.nodes.management.findAvailableName(getUid(parentFolderUid), name);
+    }
+
+    /**
      * Check if the photo is a duplicate.
      *
      * For given photo name, find existing photos with the same name
