@@ -1,6 +1,6 @@
 import { ParseArgsConfig } from 'util';
 
-import { ProtonDriveClient } from '@protontech/drive-sdk';
+import { ProtonDriveClient, Logger } from '@protontech/drive-sdk';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 import { Diagnostic } from '@protontech/drive-sdk/diagnostic';
 
@@ -19,6 +19,7 @@ export interface Command {
 }
 
 export interface ActionArgs {
+    logger: Logger;
     auth: Auth;
     sdk: ProtonDriveClient;
     photosSdk: ProtonDrivePhotosClient;

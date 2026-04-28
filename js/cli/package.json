@@ -11,8 +11,9 @@
         "lint": "eslint src integration-tests --ext .ts --cache --ignore-pattern '**/api/*-types.ts'",
         "pretty": "prettier --write $(find src integration-tests -type f -name '*.ts')",
         "postinstall": "patch-package",
-        "test": "jest",
-        "test:watch": "jest --watch --coverage=false"
+        "test": "jest src",
+        "test:watch": "jest src --watch --coverage=false",
+        "test:integration": "jest integration-tests"
     },
     "devDependencies": {
         "@swc/core": "^1.12.3",
@@ -45,7 +46,7 @@
         "@protontech/drive-sdk": "file:../sdk",
         "@protontech/pmcrypto": "^8.8.1",
         "bcryptjs": "^2.4.3",
-        "ky": "^1.7.2",
+        "ky": "^1.14.3",
         "ttag": "^1.8.7"
     },
     "patchedDependencies": {

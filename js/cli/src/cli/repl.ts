@@ -1,5 +1,3 @@
-import * as readline from 'node:readline/promises';
-
 import { ProtonDriveError } from '@protontech/drive-sdk';
 
 import { AccountApiError } from '../api/accountApi';
@@ -8,45 +6,32 @@ import { init } from '../init';
 import { CommandError } from './errors';
 import { Command } from './interface';
 import { ReplUnclosedQuoteError, splitQuotedLine } from './splitQuotedLine';
+import { question } from './readline';
 import { runCommand } from './run';
 
 export async function startRepl(commands: Command[], initOptions: InitConfig): Promise<void> {
     const session = await init(initOptions);
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-    try {
-        while (true) {
-            const line = await rl.question('proton-drive> ');
-            const trimmed = line.trim();
-            if (trimmed === '') {
+    while (true) {
+        const line = await question('proton-drive> ');
+        const trimmed = line.trim();
+        if (trimmed === '') {
+            continue;
+        }
+        if (trimmed === 'exit' || trimmed === 'quit') {
+            break;
+        }
+        try {
+            const parts = splitQuotedLine(trimmed);
+            const syntheticArgv = ['', '', ...parts];
+            await runCommand(commands, syntheticArgv, initOptions, session);
+        } catch (error: unknown) {
+            if (isRecoverableReplError(error)) {
+                console.error(error);
                 continue;
             }
-            if (trimmed === 'exit' || trimmed === 'quit') {
-                break;
-            }
-            let parts: string[];
-            try {
-                parts = splitQuotedLine(trimmed);
-            } catch (error: unknown) {
-                if (isRecoverableReplError(error)) {
-                    console.error(error);
-                    continue;
-                }
-                throw error;
-            }
-            const syntheticArgv = ['', '', ...parts];
-            try {
-                await runCommand(commands, syntheticArgv, initOptions, session);
-            } catch (error: unknown) {
-                if (isRecoverableReplError(error)) {
-                    console.error(error);
-                    continue;
-                }
-                throw error;
-            }
+            throw error;
         }
-    } finally {
-        rl.close();
     }
 }
 

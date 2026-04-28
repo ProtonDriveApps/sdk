@@ -1,28 +1,15 @@
-import * as readline from 'readline';
+import { question } from './readline';
 
 /**
  * Read one line from stdin without echoing (TTY). Non-TTY falls back to visible readline.
  */
-export function readPasswordLine(prompt: string): Promise<string> {
+export async function readPasswordLine(prompt: string): Promise<string> {
     const stdin = process.stdin;
     const stdout = process.stdout;
 
     if (!stdin.isTTY || typeof stdin.setRawMode !== 'function') {
-        const rl = readline.createInterface({ input: stdin, output: stdout });
-        return new Promise((resolve) => {
-            let settled = false;
-            const finish = (answer: string) => {
-                if (settled) {
-                    return;
-                }
-                settled = true;
-                rl.close();
-                resolve(answer.trim());
-            };
-
-            rl.question(prompt, (answer) => finish(answer));
-            rl.once('close', () => finish(''));
-        });
+        const answer = await question(prompt);
+        return answer.trim();
     }
 
     return new Promise((resolve) => {
