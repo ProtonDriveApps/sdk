@@ -2,9 +2,10 @@ import { mkdir, readdir, rm, stat, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { ParseArgsConfig } from 'node:util';
 
-import { FileDownloader, MaybeNode, type ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
+import { FileDownloader, IntegrityError, type Logger, MaybeNode, type ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 
 import { type ActionArgs, type Command, getClaimedSize, PathType } from '../../cli';
+import { getSha1 } from './digest';
 import { assertDownloadDestination, assertValidDownloadRoot, assertValidPathSegment } from './downloadPathValidation';
 import {
     ConflictChoice,
@@ -23,6 +24,7 @@ const FILE_DOWNLOAD_CONFLICT_STRATEGIES = [
 ];
 
 type DownloadContext = {
+    logger: Logger;
     sdk: ProtonDriveClient;
     json: boolean;
     progress?: TransferProgressInterface;
@@ -99,6 +101,7 @@ export class CommandFileSystemDownload implements Command {
         });
 
         const ctx: DownloadContext = {
+            logger,
             sdk,
             json,
             progress,
@@ -189,8 +192,13 @@ export class CommandFileSystemDownload implements Command {
                 }
             }
 
+            const expectedSha1 =
+                item.remoteNode.ok && item.remoteNode.value.activeRevision?.claimedDigests?.sha1Verified
+                    ? item.remoteNode.value.activeRevision?.claimedDigests?.sha1
+                    : undefined;
+
             const downloader = await ctx.sdk.getFileDownloader(item.remoteNode);
-            await this.downloadToPath(ctx, item, downloader, targetPath);
+            await this.downloadToPath(ctx, item, downloader, targetPath, expectedSha1);
             return;
         }
     }
@@ -200,6 +208,7 @@ export class CommandFileSystemDownload implements Command {
         item: QueueItemFile<{ remoteNode: MaybeNode }>,
         downloader: FileDownloader,
         localPath: string,
+        expectedSha1: string | undefined,
     ): Promise<void> {
         assertDownloadDestination(ctx.downloadRoot, localPath);
 
@@ -228,9 +237,22 @@ export class CommandFileSystemDownload implements Command {
         try {
             await controller.completion();
             await writer.end();
+
+            if (expectedSha1) {
+                const computedSha1 = await getSha1(localPath);
+                if (computedSha1 !== expectedSha1) {
+                    ctx.logger.error(
+                        `Integrity verification failed: computedSha1=${computedSha1} expectedSha1=${expectedSha1}`,
+                    );
+                    throw new IntegrityError('Integrity verification failed', {
+                        computedSha1,
+                        expectedSha1,
+                    });
+                }
+            }
         } catch (error: unknown) {
-            await writer.end(error instanceof Error ? error : new Error('Unknown error', { cause: error }));
             await unlink(localPath).catch(() => {});
+            await writer.end(error instanceof Error ? error : new Error('Unknown error', { cause: error }));
             throw error;
         } finally {
             progressTracker?.onFinished();

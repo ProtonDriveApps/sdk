@@ -1,5 +1,3 @@
-import { createHash } from 'node:crypto';
-import { createReadStream } from 'node:fs';
 import { ParseArgsConfig } from 'node:util';
 
 import {
@@ -10,12 +8,9 @@ import {
 } from '@protontech/drive-sdk';
 
 import { type ActionArgs, type Command, PathType } from '../../cli';
+import { getSha1 } from './digest';
 import { generateThumbnails } from './generateThumbnails';
-import {
-    ConflictChoice,
-    ConflictTargetKind,
-    TransferConflictResolver,
-} from './transferConflictResolver';
+import { ConflictChoice, ConflictTargetKind, TransferConflictResolver } from './transferConflictResolver';
 import { createTransferProgress, TransferProgressInterface } from './transferProgress';
 import {
     type QueueItemDirectory,
@@ -171,7 +166,7 @@ export class CommandFileSystemUpload implements Command {
     }
 
     private async uploadFile(ctx: UploadContext, item: QueueItemFile<{ parentNode: MaybeNode }>): Promise<void> {
-        const expectedSha1 = await this.getSha1(item.localPath);
+        const expectedSha1 = await getSha1(item.localPath);
         const file = Bun.file(item.localPath);
         const metadata = {
             mediaType: file.type,
@@ -235,14 +230,6 @@ export class CommandFileSystemUpload implements Command {
                 progressTracker?.onFinished();
             }
         }
-    }
-
-    private async getSha1(localPath: string): Promise<string> {
-        const hash = createHash('sha1');
-        for await (const chunk of createReadStream(localPath)) {
-            hash.update(chunk as Buffer);
-        }
-        return hash.digest('hex');
     }
 
     private async trashConflictingNode(ctx: UploadContext, node: MaybeNode): Promise<void> {
