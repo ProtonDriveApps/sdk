@@ -2,19 +2,12 @@ import '@protontech/drive-sdk/polyfill';
 
 import { CryptoProxy } from '@protontech/crypto';
 import { Api as CryptoApi } from '@protontech/crypto/proxy/endpoint/api.ts';
-import {
-    CachedCryptoMaterial,
-    FeatureFlags,
-    Logger,
-    MemoryCache,
-    OpenPGPCryptoWithCryptoProxy,
-    ProtonDriveClient,
-} from '@protontech/drive-sdk';
+import { FeatureFlags, Logger, OpenPGPCryptoWithCryptoProxy, ProtonDriveClient } from '@protontech/drive-sdk';
 import { initDiagnostic } from '@protontech/drive-sdk/diagnostic';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 
 import { initApi } from './api';
-import { createEntitiesCache } from './cache';
+import { createCaches } from './cache';
 import { Paths } from './cli';
 import { getConfig, InitConfig } from './config';
 import { initCredentials } from './credentials';
@@ -35,15 +28,15 @@ export async function init(configOptions: InitConfig) {
     const credentials = initCredentials(config, logger);
     const { auth, addresses, srp, httpClient } = await initApi(config, credentials, logger);
 
-    const entitiesCache = createEntitiesCache(config, credentials, logger);
+    const caches = createCaches(config, credentials, logger);
     const sdkDependencies = {
         config: {
             baseUrl: config.baseUrl,
             clientUid: config.clientUid,
         },
         httpClient,
-        entitiesCache,
-        cryptoCache: new MemoryCache<CachedCryptoMaterial>(),
+        entitiesCache: caches.entitiesCache,
+        cryptoCache: caches.cryptoCache,
         telemetry,
         openPGPCryptoModule,
         account: addresses,

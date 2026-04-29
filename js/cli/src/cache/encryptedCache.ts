@@ -1,21 +1,21 @@
 import { Logger } from '@protontech/drive-sdk';
 
 import { decryptCacheValue, encryptCacheValue } from './crypto';
-import { SQLiteEntititesCache } from './sqliteCache';
+import { SQLiteCache } from './sqliteCache';
 
 /**
- * SQLite entity cache that encrypts values at rest (HKDF-SHA256 + AES-256-GCM),
+ * SQLite cache that encrypts values at rest (HKDF-SHA256 + AES-256-GCM),
  * matching `Proton.Sdk.Caching.EncryptedCacheRepository` in the C# SDK.
  */
-export class EncryptedSQLiteEntitiesCache extends SQLiteEntititesCache {
+export class EncryptedSQLiteCache extends SQLiteCache {
     private encryptionKeyMaterialPromise?: Promise<Buffer>;
 
     constructor(
-        cacheDir: string,
+        cacheFile: string,
         private readonly getEncryptionPassword: () => Promise<string>,
         private readonly logger: Logger,
     ) {
-        super(cacheDir);
+        super(cacheFile);
     }
 
     override async setEntity(key: string, data: string, tags?: string[]) {
