@@ -65,17 +65,16 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.core.user.domain)
     implementation(libs.core.network.data)
+    // used internally by csharp sdk, wanted as a transitive dependency
+    implementation(libs.crypto.android.golib)
     testImplementation(libs.bundles.test.jvm)
     androidTestImplementation(libs.coroutines.test)
     androidTestImplementation(libs.androidx.test.core.ktx)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.rules)
-    androidTestImplementation(files("$rootDir/gopenpgp-v2-v3/gopenpgp.aar"))
     androidTestImplementation(libs.core.auth.domain)
     androidTestImplementation(libs.core.network.data)
-    androidTestImplementation(libs.core.crypto.android) {
-        exclude("me.proton.crypto", "android-golib")
-    }
+    androidTestImplementation(libs.core.crypto.android)
     androidTestImplementation(libs.core.domain)
     androidTestImplementation(libs.core.account.dagger)
     androidTestImplementation(libs.core.accountManager.dagger) {
@@ -85,9 +84,7 @@ dependencies {
         exclude("me.proton.core", "auth-presentation")
     }
     androidTestImplementation(libs.core.accountRecovery.dagger)
-    androidTestImplementation(libs.core.crypto.dagger){
-        exclude("me.proton.crypto", "android-golib")
-    }
+    androidTestImplementation(libs.core.crypto.dagger)
     androidTestImplementation(libs.core.featureFlag.dagger)
     androidTestImplementation(libs.core.key.dagger)
     androidTestImplementation(libs.core.plan.dagger)
