@@ -43,7 +43,9 @@ export async function init(configOptions: InitConfig) {
         account: addresses,
         srpModule: srp,
         latestEventIdProvider: eventsProvider,
-        featureFlagProvider: await FeatureFlagProvider.fromJsonFile(config.cacheDir + '/config.json'),
+        featureFlagProvider: configOptions.flags
+            ? new FeatureFlagProvider(configOptions.flags)
+            : await FeatureFlagProvider.fromJsonFile(config.cacheDir + '/config.json'),
     };
     const sdk = new ProtonDriveClient(sdkDependencies);
     const photosSdk = new ProtonDrivePhotosClient(sdkDependencies);
