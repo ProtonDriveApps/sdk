@@ -1,13 +1,11 @@
-import path from 'node:path';
 import { Database } from 'bun:sqlite';
 
 import type { EntityResult, ProtonDriveCache } from '@protontech/drive-sdk';
 
-export class SQLiteEntititesCache implements ProtonDriveCache<string> {
+export class SQLiteCache implements ProtonDriveCache<string> {
     private db: Database;
 
-    constructor(cacheDir: string) {
-        const cacheFile = path.join(cacheDir, 'cache-entities.sqlite');
+    constructor(cacheFile: string) {
         this.db = new Database(cacheFile, { create: true });
         this.db.run('CREATE TABLE IF NOT EXISTS entities (key TEXT PRIMARY KEY, value TEXT)');
         this.db.run('CREATE TABLE IF NOT EXISTS entities_labels (label TEXT, key TEXT, UNIQUE (label, key))');
