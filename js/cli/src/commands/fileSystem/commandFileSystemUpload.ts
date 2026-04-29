@@ -3,13 +3,14 @@ import { createReadStream } from 'node:fs';
 import { ParseArgsConfig } from 'node:util';
 
 import {
-    NodeWithSameNameExistsValidationError,
-    ValidationError,
     MaybeNode,
+    NodeWithSameNameExistsValidationError,
     type ProtonDriveClient,
+    ValidationError,
 } from '@protontech/drive-sdk';
 
 import { type ActionArgs, type Command, PathType } from '../../cli';
+import { generateThumbnails } from './generateThumbnails';
 import {
     ConflictChoice,
     ConflictTargetKind,
@@ -17,11 +18,10 @@ import {
 } from './transferConflictResolver';
 import { createTransferProgress, TransferProgressInterface } from './transferProgress';
 import {
-    UploadQueue,
     type QueueItemDirectory,
     type QueueItemFile,
+    UploadQueue,
 } from './transferQueue';
-import { generateThumbnails } from './generateThumbnails';
 
 const SUPPORTED_REMOTE_PATH_TYPES = [PathType.MyFiles, PathType.Devices, PathType.SharedWithMe];
 

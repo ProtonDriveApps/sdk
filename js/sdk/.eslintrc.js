@@ -10,10 +10,28 @@ module.exports =  {
         sourceType: "module"
     },
     rules: {
+        "simple-import-sort/imports": [
+            "error",
+            {
+                groups: [
+                    ["^\u0000"],
+                    ["^node:"],
+                    ["^(?!@protontech/)@?\\w"],
+                    ["^@protontech/"],
+                    ["^\\."],
+                ],
+            },
+        ],
+        "simple-import-sort/exports": "error",
+        "comma-spacing": ["error", { before: false, after: true }],
         "tsdoc/syntax": "warn",
         "no-console": "error",
         "@typescript-eslint/no-floating-promises": "error",
         "@typescript-eslint/consistent-type-exports": "error",
+        'no-restricted-properties': ['error', {
+            object: 'CryptoProxy',
+            message: '`CryptoProxy` is not meant to be used in the SDK. Use `OpenPGPCryptoWithCryptoProxy` instead.'
+        }],
     },
     overrides: [
         {
@@ -30,6 +48,7 @@ module.exports =  {
     ],
     plugins: [
         "@typescript-eslint/eslint-plugin",
-        "eslint-plugin-tsdoc"
+        "eslint-plugin-tsdoc",
+        "simple-import-sort",
     ]
 };

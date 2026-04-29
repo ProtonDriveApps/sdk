@@ -2,8 +2,8 @@ import { Logger } from '@protontech/drive-sdk';
 
 import type { Config } from '../config';
 import { Credentials } from './credentials';
-import type { CredentialsStore } from './interface';
 import { PlaintextFileSessionStore } from './fileCredentialsStore';
+import type { CredentialsStore } from './interface';
 import { SecretsSessionStore } from './secretCredentialsStore';
 
 export type { Credentials } from './credentials';

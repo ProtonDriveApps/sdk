@@ -1,15 +1,15 @@
 import { c } from 'ttag';
 
 import { PrivateKey, SessionKey } from '../../crypto';
+import { NodeWithSameNameExistsValidationError, ValidationError } from '../../errors';
 import { Logger, ProtonDriveTelemetry, ThumbnailType, UploadMetadata } from '../../interface';
-import { ValidationError, NodeWithSameNameExistsValidationError } from '../../errors';
+import { reduceSizePrecision } from '../../telemetry';
 import { ErrorCode } from '../apiService';
 import { generateFileExtendedAttributes } from '../nodes';
+import { makeNodeUid, splitNodeUid } from '../uids';
 import { UploadAPIService } from './apiService';
 import { UploadCryptoService } from './cryptoService';
-import { NodeRevisionDraft, NodesService, NodeCrypto } from './interface';
-import { makeNodeUid, splitNodeUid } from '../uids';
-import { reduceSizePrecision } from '../../telemetry';
+import { NodeCrypto, NodeRevisionDraft, NodesService } from './interface';
 
 /**
  * UploadManager is responsible for creating and deleting draft nodes

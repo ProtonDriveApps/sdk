@@ -1,5 +1,4 @@
 import { sha1 } from '@noble/hashes/legacy';
-import { bytesToHex } from '@noble/hashes/utils';
 
 /**
  * A WritableStream that computes SHA1 hash on the fly.
@@ -23,7 +22,7 @@ export class IntegrityVerificationStream extends WritableStream<Uint8Array> {
             },
             close: () => {
                 if (!this._isClosed) {
-                    this._computedSha1 = bytesToHex(this.sha1Hash.digest());
+                    this._computedSha1 = this.sha1Hash.digest().toHex();
                     this._isClosed = true;
                 }
             },

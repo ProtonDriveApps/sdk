@@ -1,4 +1,4 @@
-import { ProtonDriveEntitiesCache, Logger } from '../../interface';
+import { Logger, ProtonDriveEntitiesCache } from '../../interface';
 import { getErrorMessage } from '../errors';
 import { Volume } from './interface';
 

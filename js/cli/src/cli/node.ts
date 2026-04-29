@@ -1,4 +1,4 @@
-import { MaybeNode, NodeEntity, DegradedNode } from '@protontech/drive-sdk';
+import { DegradedNode, MaybeNode, NodeEntity } from '@protontech/drive-sdk';
 
 export function getNodeUid(maybeNode: MaybeNode): string {
     return maybeNode.ok ? maybeNode.value.uid : maybeNode.error.uid;

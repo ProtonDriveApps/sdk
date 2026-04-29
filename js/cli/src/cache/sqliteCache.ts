@@ -1,7 +1,7 @@
-import { Database } from 'bun:sqlite';
 import path from 'node:path';
+import { Database } from 'bun:sqlite';
 
-import type { ProtonDriveCache, EntityResult } from '@protontech/drive-sdk';
+import type { EntityResult, ProtonDriveCache } from '@protontech/drive-sdk';
 
 export class SQLiteEntititesCache implements ProtonDriveCache<string> {
     private db: Database;

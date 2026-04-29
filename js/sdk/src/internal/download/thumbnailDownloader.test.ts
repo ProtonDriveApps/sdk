@@ -1,9 +1,9 @@
 import { ProtonDriveTelemetry } from '../../interface';
 import { getMockTelemetry } from '../../tests/telemetry';
-import { ThumbnailDownloader } from './thumbnailDownloader';
 import { DownloadAPIService } from './apiService';
 import { DownloadCryptoService } from './cryptoService';
 import { NodesService } from './interface';
+import { ThumbnailDownloader } from './thumbnailDownloader';
 
 describe('ThumbnailDownloader', () => {
     let telemetry: ProtonDriveTelemetry;

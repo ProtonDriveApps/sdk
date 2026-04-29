@@ -1,5 +1,5 @@
-import { getMockLogger } from '../../tests/logger';
 import { DriveCrypto } from '../../crypto';
+import { getMockLogger } from '../../tests/logger';
 import { makeNodeUid } from '../uids';
 import { PhotosAPIService } from './apiService';
 import { PhotosNodesAccess } from './nodes';

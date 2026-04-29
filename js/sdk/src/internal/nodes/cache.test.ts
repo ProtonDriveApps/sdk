@@ -1,5 +1,5 @@
 import { MemoryCache } from '../../cache';
-import { NodeType, MemberRole, RevisionState, resultOk, Result } from '../../interface';
+import { MemberRole, NodeType, Result, resultOk, RevisionState } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
 import { CACHE_TAG_KEYS, NodesCache } from './cache';
 import { DecryptedNode, DecryptedRevision } from './interface';

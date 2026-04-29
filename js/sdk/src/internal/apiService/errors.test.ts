@@ -1,7 +1,7 @@
 import { AbortError } from '../../errors';
-import { apiErrorFactory } from './errors';
-import * as errors from './errors';
 import { ErrorCode } from './errorCodes';
+import * as errors from './errors';
+import { apiErrorFactory } from './errors';
 
 function mockAPIResponseAndResult(options: {
     httpStatusCode?: number;

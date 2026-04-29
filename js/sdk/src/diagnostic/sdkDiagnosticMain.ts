@@ -7,9 +7,9 @@ import {
     ExpectedTreeNode,
     TreeNode,
 } from './interface';
-import { zipGenerators } from './zipGenerators';
-import { getNodeType, getNodeName, getTreeNodeChildByNodeName, getActiveRevision } from './nodeUtils';
+import { getActiveRevision, getNodeName, getNodeType, getTreeNodeChildByNodeName } from './nodeUtils';
 import { SDKDiagnosticBase } from './sdkDiagnosticBase';
+import { zipGenerators } from './zipGenerators';
 
 /**
  * Diagnostic tool that uses the main Drive SDK to traverse and verify

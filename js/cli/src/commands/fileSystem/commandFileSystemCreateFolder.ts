@@ -1,4 +1,4 @@
-import { printObject, type Command, type ActionArgs, PathType } from '../../cli';
+import { type ActionArgs, type Command, PathType, printObject } from '../../cli';
 
 export class CommandFileSystemCreateFolder implements Command {
     group = 'filesystem';

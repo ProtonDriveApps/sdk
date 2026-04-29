@@ -1,41 +1,40 @@
 import { c } from 'ttag';
 
 import {
-    base64StringToUint8Array,
     DriveCrypto,
     PrivateKey,
     PublicKey,
     SessionKey,
     VERIFICATION_STATUS,
 } from '../../crypto';
+import { ValidationError } from '../../errors';
 import {
-    resultOk,
-    resultError,
-    Result,
-    Author,
     AnonymousUser,
-    ProtonDriveTelemetry,
+    Author,
     Logger,
+    Membership,
     MetricsDecryptionErrorField,
     MetricVerificationErrorField,
-    Membership,
     ProtonDriveAccount,
+    ProtonDriveTelemetry,
+    Result,
+    resultError,
+    resultOk,
 } from '../../interface';
-import { ValidationError } from '../../errors';
 import { getErrorMessage } from '../errors';
+import { splitNodeUid } from '../uids';
 import {
-    EncryptedNode,
-    EncryptedNodeFolderCrypto,
-    DecryptedUnparsedNode,
     DecryptedNode,
     DecryptedNodeKeys,
-    EncryptedRevision,
+    DecryptedUnparsedNode,
     DecryptedUnparsedRevision,
-    NodeSigningKeys,
+    EncryptedNode,
     EncryptedNodeFileCrypto,
+    EncryptedNodeFolderCrypto,
+    EncryptedRevision,
+    NodeSigningKeys,
     SharesService,
 } from './interface';
-import { splitNodeUid } from '../uids';
 
 export interface NodesCryptoReporter {
     handleClaimedAuthor(
@@ -213,7 +212,7 @@ export class NodesCryptoService {
         let contentKeyPacketAuthor;
         let contentKeyPacket: Uint8Array<ArrayBuffer> | undefined;
         if ('file' in node.encryptedCrypto) {
-            contentKeyPacket = base64StringToUint8Array(node.encryptedCrypto.file.base64ContentKeyPacket);
+            contentKeyPacket = Uint8Array.fromBase64(node.encryptedCrypto.file.base64ContentKeyPacket);
             const [activeRevisionPromise, contentKeyPacketSessionKeyPromise] = [
                 this.decryptRevision(node.uid, node.encryptedCrypto.activeRevision, key),
                 this.decryptContentKeyPacket(node, node.encryptedCrypto, key, keyVerificationKeys),

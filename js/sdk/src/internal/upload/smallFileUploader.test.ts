@@ -1,12 +1,12 @@
 import { IntegrityError } from '../../errors';
 import { Thumbnail, ThumbnailType, UploadMetadata } from '../../interface';
-import { SmallFileUploader, SmallFileRevisionUploader } from './smallFileUploader';
-import { UploadTelemetry } from './telemetry';
+import { mergeUint8Arrays } from '../utils';
 import { UploadAPIService } from './apiService';
 import { UploadCryptoService } from './cryptoService';
-import { UploadManager } from './manager';
 import { NodeCrypto } from './interface';
-import { mergeUint8Arrays } from '../utils';
+import { UploadManager } from './manager';
+import { SmallFileRevisionUploader, SmallFileUploader } from './smallFileUploader';
+import { UploadTelemetry } from './telemetry';
 
 const MOCK_BLOCK_HASH = new Uint8Array(32).fill(4);
 const MOCK_VERIFICATION_TOKEN = new Uint8Array(16).fill(5);

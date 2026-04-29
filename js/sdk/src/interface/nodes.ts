@@ -1,5 +1,5 @@
-import { Result } from './result';
 import { Author } from './author';
+import { Result } from './result';
 
 /**
  * Node representing a file or folder in the system.

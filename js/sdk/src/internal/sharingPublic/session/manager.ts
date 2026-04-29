@@ -1,5 +1,5 @@
-import { Logger, MemberRole, ProtonDriveHTTPClient, ProtonDriveTelemetry } from '../../../interface';
 import { DriveCrypto, PrivateKey, SRPModule } from '../../../crypto';
+import { Logger, MemberRole, ProtonDriveHTTPClient, ProtonDriveTelemetry } from '../../../interface';
 import { DriveAPIService, permissionsToMemberRole } from '../../apiService';
 import { SharingPublicSessionAPIService } from './apiService';
 import { SharingPublicSessionHttpClient } from './httpClient';

@@ -1,13 +1,13 @@
-import { getMockTelemetry } from '../../tests/telemetry';
 import { PrivateKey } from '../../crypto';
 import { DecryptionError, ProtonDriveError } from '../../errors';
+import { NodeType } from '../../interface';
+import { getMockTelemetry } from '../../tests/telemetry';
 import { NodeAPIService } from './apiService';
 import { NodesCache } from './cache';
 import { NodesCryptoCache } from './cryptoCache';
 import { NodesCryptoService } from './cryptoService';
+import { DecryptedNode, DecryptedNodeKeys, DecryptedUnparsedNode, EncryptedNode, SharesService } from './interface';
 import { NodesAccess } from './nodesAccess';
-import { SharesService, DecryptedNode, DecryptedUnparsedNode, EncryptedNode, DecryptedNodeKeys } from './interface';
-import { NodeType } from '../../interface';
 
 describe('nodesAccess', () => {
     let apiService: NodeAPIService;

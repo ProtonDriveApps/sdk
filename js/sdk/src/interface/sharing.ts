@@ -1,6 +1,6 @@
-import { Result } from './result';
 import { UnverifiedAuthorError } from './author';
-import { NodeType, MemberRole, InvalidNameError } from './nodes';
+import { InvalidNameError, MemberRole, NodeType } from './nodes';
+import { Result } from './result';
 
 export type Member = {
     uid: string;

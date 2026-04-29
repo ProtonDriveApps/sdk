@@ -1,10 +1,10 @@
-import { FeatureFlagProvider, FeatureFlags, ProtonDriveTelemetry, UploadMetadata } from '../../interface';
-import type { FileUploader } from '../../interface';
-import { DriveAPIService } from '../apiService';
 import { DriveCrypto } from '../../crypto';
+import type { FileUploader } from '../../interface';
+import { FeatureFlagProvider, FeatureFlags, ProtonDriveTelemetry, UploadMetadata } from '../../interface';
+import { DriveAPIService } from '../apiService';
 import { UploadAPIService } from './apiService';
 import { UploadCryptoService } from './cryptoService';
-import { FileUploader as FileUploaderClass, FileRevisionUploader } from './fileUploader';
+import { FileRevisionUploader, FileUploader as FileUploaderClass } from './fileUploader';
 import { NodesService, SharesService } from './interface';
 import { UploadManager } from './manager';
 import { UploadQueue } from './queue';

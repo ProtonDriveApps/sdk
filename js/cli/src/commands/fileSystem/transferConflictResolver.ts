@@ -1,4 +1,4 @@
-import { ValidationError, Logger } from '@protontech/drive-sdk';
+import { Logger, ValidationError } from '@protontech/drive-sdk';
 
 import { question } from '../../cli/readline';
 

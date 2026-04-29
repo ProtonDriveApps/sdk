@@ -1,5 +1,5 @@
 import { MetricEvent } from '../interface';
-import { LogRecord, LogLevel } from '../telemetry';
+import { LogLevel, LogRecord } from '../telemetry';
 import { EventsGenerator } from './eventsGenerator';
 
 /**

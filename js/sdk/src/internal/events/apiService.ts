@@ -1,6 +1,6 @@
-import { DriveAPIService, drivePaths, corePaths } from '../apiService';
+import { corePaths, DriveAPIService, drivePaths } from '../apiService';
 import { makeNodeUid } from '../uids';
-import { DriveEventsListWithStatus, DriveEvent, DriveEventType, NodeEvent, NodeEventType } from './interface';
+import { DriveEvent, DriveEventsListWithStatus, DriveEventType, NodeEvent, NodeEventType } from './interface';
 
 type GetCoreLatestEventResponse =
     corePaths['/core/{_version}/events/latest']['get']['responses']['200']['content']['application/json'];

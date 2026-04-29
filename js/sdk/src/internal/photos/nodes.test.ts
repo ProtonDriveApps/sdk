@@ -1,10 +1,10 @@
 import { MemoryCache } from '../../cache';
-import { NodeType, MemberRole } from '../../interface';
+import { MemberRole, NodeType } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
 import { getMockTelemetry } from '../../tests/telemetry';
 import { DriveAPIService } from '../apiService';
 import { DecryptedPhotoNode } from './interface';
-import { PhotosNodesAPIService, PhotosNodesCache, PhotosNodesAccess, PhotosNodesCryptoService } from './nodes';
+import { PhotosNodesAccess, PhotosNodesAPIService, PhotosNodesCache, PhotosNodesCryptoService } from './nodes';
 
 function generateAPINode() {
     return {

@@ -8,8 +8,8 @@ import {
     resultOk,
 } from '../../interface';
 import { getMockTelemetry } from '../../tests/telemetry';
-import { SharesService } from './interface';
 import { PUBLIC_LINK_GENERATED_PASSWORD_LENGTH, SharingCryptoService } from './cryptoService';
+import { SharesService } from './interface';
 
 describe('SharingCryptoService', () => {
     let telemetry: ProtonDriveTelemetry;

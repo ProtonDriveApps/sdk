@@ -1,4 +1,4 @@
-import { printIterable, type Command, type ActionArgs, PathType, findName } from '../../cli';
+import { type ActionArgs, type Command, findName, PathType, printIterable } from '../../cli';
 
 const SUPPORTED_PATH_TYPES = [PathType.Trash, PathType.PhotosTrash];
 

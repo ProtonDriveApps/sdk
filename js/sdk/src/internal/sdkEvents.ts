@@ -1,4 +1,4 @@
-import { ProtonDriveTelemetry, Logger, SDKEvent } from '../interface';
+import { Logger, ProtonDriveTelemetry, SDKEvent } from '../interface';
 
 export class SDKEvents {
     private logger: Logger;

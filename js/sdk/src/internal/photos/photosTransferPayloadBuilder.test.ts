@@ -2,8 +2,8 @@ import { ValidationError } from '../../errors';
 import { resultOk } from '../../interface';
 import { AlbumsCryptoService } from './albumsCrypto';
 import { DecryptedPhotoNode } from './interface';
-import { PhotoTransferPayloadBuilder } from './photosTransferPayloadBuilder';
 import { PhotosNodesAccess } from './nodes';
+import { PhotoTransferPayloadBuilder } from './photosTransferPayloadBuilder';
 
 /**
  * Helper to create a mock photo node with minimal required properties.

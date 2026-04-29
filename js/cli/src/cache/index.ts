@@ -1,9 +1,9 @@
 import type { Logger, ProtonDriveCache } from '@protontech/drive-sdk';
 
-import { Credentials } from '../credentials';
 import { Config } from '../config';
-import { SQLiteEntititesCache } from './sqliteCache';
+import { Credentials } from '../credentials';
 import { EncryptedSQLiteEntitiesCache } from './encryptedCache';
+import { SQLiteEntititesCache } from './sqliteCache';
 
 export function createEntitiesCache(
     config: Config,

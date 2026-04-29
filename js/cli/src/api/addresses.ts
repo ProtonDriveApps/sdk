@@ -1,10 +1,9 @@
-import { ProtonDriveAccountAddress, Logger } from '@protontech/drive-sdk';
+import { CryptoProxy, PrivateKeyReference, PublicKeyReference, VERIFICATION_STATUS } from '@protontech/crypto';
+import { Logger, ProtonDriveAccountAddress } from '@protontech/drive-sdk';
 
 import { Credentials } from '../credentials';
-import { PrivateKeyReference, PublicKeyReference, VERIFICATION_STATUS } from '../crypto/lib';
-import { type ApiInterface as CryptoApiInterface } from '../crypto/lib/worker/api';
-import type { components as coreComponents } from './api-core-types';
 import { AccountApi, AddressNotFoundError } from './accountApi';
+import type { components as coreComponents } from './api-core-types';
 
 interface UserData {
     userPrimaryPrivateKeys: PrivateKeyReference[];
@@ -27,7 +26,6 @@ export class Addresses {
     > = new Map();
 
     constructor(
-        private readonly cryptoApi: CryptoApiInterface,
         private readonly accountApi: AccountApi,
         private readonly credentials: Credentials,
         private readonly logger: Logger,
@@ -155,7 +153,7 @@ export class Addresses {
 
             const publicKeys = await Promise.all(
                 (response.Address?.Keys || []).map((key) => {
-                    return this.cryptoApi.importPublicKey({ armoredKey: key.PublicKey });
+                    return CryptoProxy.importPublicKey({ armoredKey: key.PublicKey });
                 }),
             );
             resolve(publicKeys);
@@ -195,13 +193,13 @@ export class Addresses {
             const userPrimaryPublicKeys: PublicKeyReference[] = [];
             for (const userKey of userKeys || []) {
                 try {
-                    const userPrimaryPrivateKey = await this.cryptoApi.importPrivateKey({
+                    const userPrimaryPrivateKey = await CryptoProxy.importPrivateKey({
                         armoredKey: userKey?.PrivateKey,
                         passphrase: userKeyPassword,
                     });
 
-                    const userPrimaryPublicKey = await this.cryptoApi.importPublicKey({
-                        binaryKey: await this.cryptoApi.exportPublicKey({
+                    const userPrimaryPublicKey = await CryptoProxy.importPublicKey({
+                        binaryKey: await CryptoProxy.exportPublicKey({
                             key: userPrimaryPrivateKey,
                             format: 'binary',
                         }),
@@ -275,7 +273,7 @@ export class Addresses {
                     throw new Error('User key password is not set');
                 }
 
-                const privateKey = await this.cryptoApi.importPrivateKey({
+                const privateKey = await CryptoProxy.importPrivateKey({
                     armoredKey: key?.PrivateKey,
                     passphrase: userKeyPassword,
                 });
@@ -283,14 +281,14 @@ export class Addresses {
                 resolve({
                     id: keyId,
                     privateKey,
-                    publicKey: await this.cryptoApi.importPublicKey({
-                        binaryKey: await this.cryptoApi.exportPublicKey({ key: privateKey, format: 'binary' }),
+                    publicKey: await CryptoProxy.importPublicKey({
+                        binaryKey: await CryptoProxy.exportPublicKey({ key: privateKey, format: 'binary' }),
                     }),
                 });
                 return promise;
             }
 
-            const { data: decryptedToken, verificationStatus } = await this.cryptoApi.decryptMessage({
+            const { data: decryptedToken, verificationStatus } = await CryptoProxy.decryptMessage({
                 armoredMessage: key?.Token || '',
                 armoredSignature: key?.Signature || '',
                 decryptionKeys: userPrimaryPrivateKeys,
@@ -301,12 +299,12 @@ export class Addresses {
                 throw new Error('Failed to verify address key');
             }
 
-            const privateKey = await this.cryptoApi.importPrivateKey({
+            const privateKey = await CryptoProxy.importPrivateKey({
                 armoredKey: key?.PrivateKey || '',
                 passphrase: decryptedToken.toString(),
             });
-            const publicKey = await this.cryptoApi.importPublicKey({
-                binaryKey: await this.cryptoApi.exportPublicKey({ key: privateKey, format: 'binary' }),
+            const publicKey = await CryptoProxy.importPublicKey({
+                binaryKey: await CryptoProxy.exportPublicKey({ key: privateKey, format: 'binary' }),
             });
 
             resolve({

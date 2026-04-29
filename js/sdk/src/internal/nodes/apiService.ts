@@ -1,7 +1,7 @@
 import { c } from 'ttag';
 
 import { NodeWithSameNameExistsValidationError, ProtonDriveError, ValidationError } from '../../errors';
-import { Logger, NodeResult, MemberRole, RevisionState, AnonymousUser } from '../../interface';
+import { AnonymousUser, Logger, MemberRole, NodeResult, RevisionState } from '../../interface';
 import {
     DriveAPIService,
     drivePaths,
@@ -13,7 +13,7 @@ import {
 } from '../apiService';
 import { asyncIteratorRace } from '../asyncIteratorRace';
 import { batch } from '../batch';
-import { splitNodeUid, makeNodeUid, makeNodeRevisionUid, splitNodeRevisionUid, makeNodeThumbnailUid } from '../uids';
+import { makeNodeRevisionUid, makeNodeThumbnailUid, makeNodeUid, splitNodeRevisionUid, splitNodeUid } from '../uids';
 import { NodeOutOfSyncError } from './errors';
 import { EncryptedNode, EncryptedRevision, FilterOptions, Thumbnail } from './interface';
 

@@ -1,5 +1,5 @@
 import { Auth } from '../../api';
-import { openBrowserUrl, type ActionArgs, type Command } from '../../cli';
+import { type ActionArgs, type Command, openBrowserUrl } from '../../cli';
 
 export class CommandAuthLogin implements Command {
     group = 'auth';

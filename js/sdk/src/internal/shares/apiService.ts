@@ -1,6 +1,6 @@
 import { DriveAPIService, drivePaths } from '../apiService';
 import { makeMemberUid } from '../uids';
-import { EncryptedShare, EncryptedRootShare, EncryptedShareCrypto, ShareType } from './interface';
+import { EncryptedRootShare, EncryptedShare, EncryptedShareCrypto, ShareType } from './interface';
 
 type PostCreateVolumeRequest = Extract<
     drivePaths['/drive/volumes']['post']['requestBody'],

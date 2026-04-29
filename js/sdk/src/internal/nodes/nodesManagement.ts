@@ -1,15 +1,15 @@
 import { c } from 'ttag';
 
-import {
-    MemberRole,
-    NodeType,
-    NodeResult,
-    NodeResultWithNewUid,
-    resultOk,
-    InvalidNameError,
-    NodeResultWithError,
-} from '../../interface';
 import { AbortError, ValidationError } from '../../errors';
+import {
+    InvalidNameError,
+    MemberRole,
+    NodeResult,
+    NodeResultWithError,
+    NodeResultWithNewUid,
+    NodeType,
+    resultOk,
+} from '../../interface';
 import { createErrorFromUnknown, getErrorMessage } from '../errors';
 import { splitNodeUid } from '../uids';
 import { NodeAPIServiceBase } from './apiService';
@@ -18,9 +18,9 @@ import { NodesCryptoService } from './cryptoService';
 import { NodeOutOfSyncError } from './errors';
 import { generateFolderExtendedAttributes } from './extendedAttributes';
 import { DecryptedNode, EncryptedNode } from './interface';
-import { splitExtension, joinNameAndExtension } from './nodeName';
-import { NodesAccessBase } from './nodesAccess';
 import { FOLDER_MEDIA_TYPE } from './mediaTypes';
+import { joinNameAndExtension, splitExtension } from './nodeName';
+import { NodesAccessBase } from './nodesAccess';
 import { validateNodeName } from './validations';
 
 const AVAILABLE_NAME_BATCH_SIZE = 10;

@@ -4,6 +4,8 @@ import { Device, MaybeNode, NodeType, ProtonDriveClient, ValidationError } from 
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 
 import {
+    type ActionArgs,
+    type Command,
     formatAuthor,
     formatDate,
     formatMemberRole,
@@ -14,8 +16,6 @@ import {
     Paths,
     PathType,
     printIterable,
-    type ActionArgs,
-    type Command,
 } from '../../cli';
 
 export class CommandFileSystemList implements Command {

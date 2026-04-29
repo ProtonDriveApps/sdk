@@ -1,16 +1,16 @@
 import { PrivateKey, SessionKey } from '../../crypto';
 import {
-    NodeEntity,
-    Result,
-    InvalidNameError,
+    AnonymousUser,
     Author,
+    InvalidNameError,
     MemberRole,
-    NodeType,
-    ThumbnailType,
     MetricVolumeType,
+    NodeEntity,
+    NodeType,
+    Result,
     Revision,
     RevisionState,
-    AnonymousUser,
+    ThumbnailType,
 } from '../../interface';
 
 export type FilterOptions = {

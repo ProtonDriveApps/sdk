@@ -1,5 +1,5 @@
-import { Result } from './result';
 import { InvalidNameError } from './nodes';
+import { Result } from './result';
 
 export type Device = {
     uid: string;

@@ -1,19 +1,19 @@
+import { DriveCrypto } from '../../crypto';
 import {
-    ProtonDriveEntitiesCache,
-    ProtonDriveCryptoCache,
     ProtonDriveAccount,
+    ProtonDriveCryptoCache,
+    ProtonDriveEntitiesCache,
     ProtonDriveTelemetry,
 } from '../../interface';
-import { DriveCrypto } from '../../crypto';
 import { DriveAPIService } from '../apiService';
 import { SharesAPIService } from './apiService';
-import { SharesCryptoCache } from './cryptoCache';
 import { SharesCache } from './cache';
+import { SharesCryptoCache } from './cryptoCache';
 import { SharesCryptoService } from './cryptoService';
 import { SharesManager } from './manager';
 
-export { ShareTargetType } from './interface';
 export type { EncryptedShare } from './interface';
+export { ShareTargetType } from './interface';
 
 /**
  * Provides facade for the whole shares module.

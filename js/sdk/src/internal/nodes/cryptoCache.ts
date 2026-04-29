@@ -1,4 +1,4 @@
-import { ProtonDriveCryptoCache, Logger } from '../../interface';
+import { Logger, ProtonDriveCryptoCache } from '../../interface';
 import { DecryptedNodeKeys } from './interface';
 
 /**

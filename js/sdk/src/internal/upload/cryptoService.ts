@@ -1,14 +1,16 @@
 import { c } from 'ttag';
 
+import { computeSHA256 } from '@protontech/crypto/subtle/hash.ts';
+
 import { DriveCrypto, PrivateKey, SessionKey } from '../../crypto';
 import { IntegrityError } from '../../errors';
 import {
-    Thumbnail,
     AnonymousUser,
     FeatureFlagProvider,
     FeatureFlags,
-    ProtonDriveTelemetry,
     Logger,
+    ProtonDriveTelemetry,
+    Thumbnail,
 } from '../../interface';
 import {
     EncryptedBlock,
@@ -133,14 +135,14 @@ export class UploadCryptoService {
             nodeRevisionDraftKeys.signingKeys.contentSigningKey,
         );
 
-        const digestPromise = crypto.subtle.digest('SHA-256', encryptedData);
+        const digestPromise = computeSHA256(encryptedData);
 
         return {
             type: thumbnail.type,
             encryptedData: encryptedData,
             originalSize: thumbnail.thumbnail.length,
             encryptedSize: encryptedData.length,
-            hashPromise: digestPromise.then((digest) => new Uint8Array<ArrayBuffer>(digest)),
+            hashPromise: digestPromise,
         };
     }
 
@@ -158,7 +160,7 @@ export class UploadCryptoService {
             nodeRevisionDraftKeys.contentKeyPacketSessionKey,
             nodeRevisionDraftKeys.signingKeys.contentSigningKey,
         );
-        const digestPromise = crypto.subtle.digest('SHA-256', encryptedData);
+        const digestPromise = computeSHA256(encryptedData);
         const { verificationToken } = await verifyBlock(encryptedData);
 
         return {
@@ -168,7 +170,7 @@ export class UploadCryptoService {
             verificationToken,
             originalSize: block.length,
             encryptedSize: encryptedData.length,
-            hashPromise: digestPromise.then((digest) => new Uint8Array<ArrayBuffer>(digest)),
+            hashPromise: digestPromise,
         };
     }
 

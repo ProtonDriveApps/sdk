@@ -1,8 +1,8 @@
 import { ParseArgsConfig } from 'node:util';
 
-import { ProtonDriveClient, MaybeNode, ValidationError } from '@protontech/drive-sdk';
+import { MaybeNode, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 
-import { printIterable, type Command, type ActionArgs, PathType, getNodeUid, getName, findName } from '../../cli';
+import { type ActionArgs, type Command, findName, getName, getNodeUid, PathType, printIterable } from '../../cli';
 
 const SUPPORTED_PATH_TYPES = [PathType.MyFiles, PathType.Devices, PathType.SharedWithMe];
 

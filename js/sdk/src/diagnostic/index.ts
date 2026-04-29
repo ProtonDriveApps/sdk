@@ -1,18 +1,18 @@
 import { MemoryCache, NullCache } from '../cache';
 import { ProtonDriveClientContructorParameters } from '../interface';
 import { ProtonDriveClient } from '../protonDriveClient';
-import { Diagnostic as DiagnosticClass } from './diagnostic';
-import { Diagnostic } from './interface';
-import { DiagnosticHTTPClient } from './httpClient';
-import { DiagnosticTelemetry } from './telemetry';
 import { ProtonDrivePhotosClient } from '../protonDrivePhotosClient';
+import { Diagnostic as DiagnosticClass } from './diagnostic';
+import { DiagnosticHTTPClient } from './httpClient';
+import { Diagnostic } from './interface';
+import { DiagnosticTelemetry } from './telemetry';
 
 export type {
     Diagnostic,
     DiagnosticOptions,
-    ExpectedTreeNode,
     DiagnosticProgressCallback,
     DiagnosticResult,
+    ExpectedTreeNode,
 } from './interface';
 
 /**

@@ -1,31 +1,31 @@
 import { SRPVerifier } from '../../crypto';
-import { MemberRole, NonProtonInvitationState, Logger } from '../../interface';
+import { Logger, MemberRole, NonProtonInvitationState } from '../../interface';
 import {
     DriveAPIService,
     drivePaths,
+    memberRoleToPermission,
     nodeTypeNumberToNodeType,
     permissionsToMemberRole,
-    memberRoleToPermission,
 } from '../apiService';
 import { ShareTargetType } from '../shares';
 import {
-    makeNodeUid,
-    splitNodeUid,
     makeInvitationUid,
-    splitInvitationUid,
     makeMemberUid,
-    splitMemberUid,
+    makeNodeUid,
     makePublicLinkUid,
+    splitInvitationUid,
+    splitMemberUid,
+    splitNodeUid,
     splitPublicLinkUid,
 } from '../uids';
 import {
-    EncryptedInvitationRequest,
-    EncryptedInvitation,
-    EncryptedInvitationWithNode,
-    EncryptedExternalInvitation,
-    EncryptedMember,
     EncryptedBookmark,
+    EncryptedExternalInvitation,
     EncryptedExternalInvitationRequest,
+    EncryptedInvitation,
+    EncryptedInvitationRequest,
+    EncryptedInvitationWithNode,
+    EncryptedMember,
     EncryptedPublicLink,
     EncryptedPublicLinkCrypto,
 } from './interface';

@@ -3,7 +3,7 @@ import { ProtonDriveTelemetry } from '../../interface';
 import { DriveAPIService } from '../apiService';
 import { DevicesAPIService } from './apiService';
 import { DevicesCryptoService } from './cryptoService';
-import { SharesService, NodesService, NodesManagementService } from './interface';
+import { NodesManagementService, NodesService, SharesService } from './interface';
 import { DevicesManager } from './manager';
 
 /**

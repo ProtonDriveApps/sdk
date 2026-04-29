@@ -1,11 +1,10 @@
 import { c } from 'ttag';
 
-import { base64StringToUint8Array, uint8ArrayToBase64String } from '../../crypto';
 import { AnonymousUser } from '../../interface';
-import { APICodeError, DriveAPIService, drivePaths, isCodeOk } from '../apiService';
-import { splitNodeUid, makeNodeUid, splitNodeRevisionUid, makeNodeRevisionUid } from '../uids';
-import { UploadTokens } from './interface';
 import { ThumbnailType } from '../../interface';
+import { APICodeError, DriveAPIService, drivePaths, isCodeOk } from '../apiService';
+import { makeNodeRevisionUid, makeNodeUid, splitNodeRevisionUid, splitNodeUid } from '../uids';
+import { UploadTokens } from './interface';
 
 type PostCreateDraftRequest = Extract<
     drivePaths['/drive/v2/volumes/{volumeID}/files']['post']['requestBody'],
@@ -171,7 +170,7 @@ export class UploadAPIService {
         );
 
         return {
-            verificationCode: base64StringToUint8Array(result.VerificationCode),
+            verificationCode: Uint8Array.fromBase64(result.VerificationCode),
             base64ContentKeyPacket: result.ContentKeyPacket,
         };
     }
@@ -210,7 +209,7 @@ export class UploadAPIService {
                 Index: block.index,
                 EncSignature: block.armoredSignature,
                 Verifier: {
-                    Token: uint8ArrayToBase64String(block.verificationToken),
+                    Token: block.verificationToken.toBase64(),
                 },
             })),
             ThumbnailList: (blocks.thumbnails || []).map((block) => ({
@@ -365,7 +364,7 @@ export class UploadAPIService {
             ManifestSignature: content.armoredManifestSignature,
             ContentBlockEncSignature: content.block ? content.block.armoredSignature : null,
             ContentBlockVerificationToken: content.block
-                ? uint8ArrayToBase64String(content.block.verificationToken)
+                ? content.block.verificationToken.toBase64()
                 : null,
             XAttr: metadata.armoredExtendedAttributes,
             ChecksumVerified: content.checksumVerified || false,
@@ -433,7 +432,7 @@ export class UploadAPIService {
             ManifestSignature: content.armoredManifestSignature,
             ContentBlockEncSignature: content.block ? content.block.armoredSignature : null,
             ContentBlockVerificationToken: content.block
-                ? uint8ArrayToBase64String(content.block.verificationToken)
+                ? content.block.verificationToken.toBase64()
                 : null,
             XAttr: metadata.armoredExtendedAttributes,
             ChecksumVerified: content.checksumVerified || false,

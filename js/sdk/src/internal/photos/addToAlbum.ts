@@ -6,8 +6,8 @@ import { splitNodeUid } from '../uids';
 import { AlbumsCryptoService } from './albumsCrypto';
 import { PhotosAPIService } from './apiService';
 import { MissingRelatedPhotosError } from './errors';
-import { PhotoTransferPayloadBuilder, TransferEncryptedPhotoPayload } from './photosTransferPayloadBuilder';
 import { PhotosNodesAccess } from './nodes';
+import { PhotoTransferPayloadBuilder, TransferEncryptedPhotoPayload } from './photosTransferPayloadBuilder';
 
 /**
  * The number of photos that are loaded in parallel to prepare the payloads.

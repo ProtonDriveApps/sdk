@@ -1,19 +1,19 @@
-import { Author, FileDownloader, MaybeNode, NodeOrUid, NodeType, ThumbnailType, ThumbnailResult } from '../interface';
+import { Author, FileDownloader, MaybeNode, NodeOrUid, NodeType, ThumbnailResult, ThumbnailType } from '../interface';
 import { isProtonDocument, isProtonSheet } from '../internal/nodes/mediaTypes';
-import {
-    DiagnosticOptions,
-    DiagnosticResult,
-    ExpectedTreeNode,
-    DiagnosticProgressCallback,
-} from './interface';
 import { IntegrityVerificationStream } from './integrityVerificationStream';
 import {
-    getNodeType,
-    getNodeDetails,
+    DiagnosticOptions,
+    DiagnosticProgressCallback,
+    DiagnosticResult,
+    ExpectedTreeNode,
+} from './interface';
+import {
     getActiveRevision,
-    getMediaType,
     getExpectedTreeNodeDetails,
+    getMediaType,
+    getNodeDetails,
     getNodeName,
+    getNodeType,
 } from './nodeUtils';
 
 const PROGRESS_REPORT_INTERVAL = 500;

@@ -2,47 +2,37 @@ import { getConfig } from './config';
 import { DriveCrypto, SessionKey } from './crypto';
 import { NullFeatureFlagProvider } from './featureFlags';
 import {
+    BookmarkOrUid,
+    Device,
+    DeviceOrUid,
+    DeviceType,
+    FileDownloader,
+    FileUploader,
     Logger,
-    ProtonDriveClientContructorParameters,
-    NodeOrUid,
-    MaybeNode,
+    MaybeBookmark,
     MaybeMissingNode,
+    MaybeNode,
+    MemberRole,
+    NodeOrUid,
     NodeResult,
     NodeResultWithError,
     NodeResultWithNewUid,
-    Revision,
-    RevisionOrUid,
-    ShareNodeSettings,
-    UnshareNodeSettings,
+    NodeType,
+    NonProtonInvitationOrUid,
+    ProtonDriveClientContructorParameters,
     ProtonInvitation,
     ProtonInvitationOrUid,
-    NonProtonInvitationOrUid,
     ProtonInvitationWithNode,
-    MaybeBookmark,
-    BookmarkOrUid,
-    ShareResult,
-    Device,
-    DeviceType,
-    DeviceOrUid,
-    UploadMetadata,
-    FileDownloader,
-    FileUploader,
-    ThumbnailType,
-    ThumbnailResult,
+    Revision,
+    RevisionOrUid,
     SDKEvent,
-    NodeType,
-    MemberRole,
+    ShareNodeSettings,
+    ShareResult,
+    ThumbnailResult,
+    ThumbnailType,
+    UnshareNodeSettings,
+    UploadMetadata,
 } from './interface';
-import {
-    getUid,
-    getUids,
-    convertInternalNodePromise,
-    convertInternalNodeIterator,
-    convertInternalMissingNodeIterator,
-    convertInternalNode,
-    convertInternalRevisionIterator,
-} from './transformers';
-import { Telemetry } from './telemetry';
 import { DriveAPIService } from './internal/apiService';
 import { initDevicesModule } from './internal/devices';
 import { initDownloadModule } from './internal/download';
@@ -51,10 +41,20 @@ import { initNodesModule } from './internal/nodes';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharesModule } from './internal/shares';
 import { initSharingModule } from './internal/sharing';
-import { SharingPublicSessionManager, getTokenAndPasswordFromUrl } from './internal/sharingPublic';
-import { initUploadModule } from './internal/upload';
+import { getTokenAndPasswordFromUrl, SharingPublicSessionManager } from './internal/sharingPublic';
 import { makeNodeUid } from './internal/uids';
+import { initUploadModule } from './internal/upload';
 import { ProtonDrivePublicLinkClient } from './protonDrivePublicLinkClient';
+import { Telemetry } from './telemetry';
+import {
+    convertInternalMissingNodeIterator,
+    convertInternalNode,
+    convertInternalNodeIterator,
+    convertInternalNodePromise,
+    convertInternalRevisionIterator,
+    getUid,
+    getUids,
+} from './transformers';
 
 /**
  * ProtonDriveClient is the main interface for the ProtonDrive SDK.

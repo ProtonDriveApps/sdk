@@ -5,7 +5,7 @@ import { Logger, VERSION } from '@protontech/drive-sdk';
 import type { Config } from '../config';
 import { Credentials } from '../credentials';
 import type { paths as AuthPaths } from './api-auth-types';
-import { SUPPORTED_REQUIREMENT_MASK_BY_SCOPE, processDriveRequirementHeaders } from './apiRequirements';
+import { processDriveRequirementHeaders, SUPPORTED_REQUIREMENT_MASK_BY_SCOPE } from './apiRequirements';
 import { MessageEmitter } from './messageEmitter';
 
 const DEFAULT_TIMEOUT_MS = 30_000;

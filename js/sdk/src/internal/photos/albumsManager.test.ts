@@ -1,8 +1,8 @@
-import { NodeType } from '../../interface';
 import { ValidationError } from '../../errors';
+import { NodeType } from '../../interface';
 import { getMockTelemetry } from '../../tests/telemetry';
-import { AlbumsManager } from './albumsManager';
 import { AlbumsCryptoService } from './albumsCrypto';
+import { AlbumsManager } from './albumsManager';
 import { PhotosAPIService } from './apiService';
 import { AlbumContainsPhotosNotInTimelineError } from './errors';
 import { DecryptedPhotoNode } from './interface';

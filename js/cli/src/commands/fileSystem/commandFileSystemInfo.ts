@@ -1,4 +1,4 @@
-import { printObject, type Command, type ActionArgs } from '../../cli';
+import { type ActionArgs, type Command, printObject } from '../../cli';
 
 export class CommandFileSystemInfo implements Command {
     group = 'filesystem';
