@@ -34,6 +34,7 @@ export class ApiClient {
         const baseClientOptions = {
             headers: {
                 'x-pm-appversion': this.config.appVersion,
+                'x-pm-drive-sdk-version': this.config.sdkVersion,
             },
             timeout: DEFAULT_TIMEOUT_MS,
         };

@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "main": "dist/main.js",
     "scripts": {
-        "build": "bun ./scripts/build-cli.mjs",
+        "build": "bun ./scripts/build-cli.mjs main",
         "build:internal": "bun ./scripts/build-cli.mjs internal",
         "check-types": "tsc --noEmit",
         "generate-types": "bunx openapi-typescript ../../api/openapi-core.json -o ./src/api/api-core-types.ts && bunx openapi-typescript ../../api/openapi-auth.json -o ./src/api/api-auth-types.ts",
