@@ -5,99 +5,99 @@ import { ProtonDriveAccount } from './account';
 import { ProtonDriveConfig } from './config';
 import { FeatureFlagProvider } from './featureFlags';
 import { ProtonDriveHTTPClient } from './httpClient';
-import { Telemetry, MetricEvent } from './telemetry';
+import { MetricEvent, Telemetry } from './telemetry';
 
-export type { Result } from './result';
-export { resultOk, resultError } from './result';
 export type { ProtonDriveAccount, ProtonDriveAccountAddress } from './account';
-export type { Author, UnverifiedAuthorError, AnonymousUser } from './author';
+export type { AnonymousUser, Author, UnverifiedAuthorError } from './author';
 export type { ProtonDriveConfig } from './config';
 export type { Device, DeviceOrUid } from './devices';
-export type { FeatureFlagProvider } from './featureFlags';
-export { FeatureFlags } from './featureFlags';
 export { DeviceType } from './devices';
-export type { FileDownloader, DownloadController, SeekableReadableStream } from './download';
+export type { DownloadController, FileDownloader, SeekableReadableStream } from './download';
 export type {
-    DriveListener,
-    LatestEventIdProvider,
     DriveEvent,
-    NodeEvent,
+    DriveListener,
     FastForwardEvent,
+    LatestEventIdProvider,
+    NodeEvent,
+    SharedWithMeUpdated,
     TreeRefreshEvent,
     TreeRemovalEvent,
-    SharedWithMeUpdated,
 } from './events';
 export { DriveEventType, SDKEvent } from './events';
+export type { FeatureFlagProvider } from './featureFlags';
+export { FeatureFlags } from './featureFlags';
 export type {
     ProtonDriveHTTPClient,
-    ProtonDriveHTTPClientJsonRequest,
     ProtonDriveHTTPClientBlobRequest,
+    ProtonDriveHTTPClientJsonRequest,
 } from './httpClient';
 export type {
-    MaybeNode,
-    NodeEntity,
     DegradedNode,
-    MaybeMissingNode,
-    MissingNode,
     InvalidNameError,
-    Revision,
+    MaybeMissingNode,
+    MaybeNode,
+    Membership,
+    MissingNode,
+    NodeEntity,
     NodeOrUid,
-    RevisionOrUid,
     NodeResult,
     NodeResultWithError,
     NodeResultWithNewUid,
-    Membership,
+    Revision,
+    RevisionOrUid,
 } from './nodes';
-export { NodeType, MemberRole, RevisionState } from './nodes';
+export { MemberRole, NodeType, RevisionState } from './nodes';
 export type {
-    MaybePhotoNode,
-    MaybeMissingPhotoNode,
-    PhotoNode,
-    DegradedPhotoNode,
-    PhotoAttributes,
     AlbumAttributes,
+    DegradedPhotoNode,
+    MaybeMissingPhotoNode,
+    MaybePhotoNode,
+    PhotoAttributes,
+    PhotoNode,
 } from './photos';
 export { PhotoTag } from './photos';
+export type { Result } from './result';
+export { resultError, resultOk } from './result';
 export type {
-    ProtonInvitation,
-    ProtonInvitationWithNode,
-    NonProtonInvitation,
-    Member,
-    PublicLink,
-    MaybeBookmark,
     Bookmark,
-    DegradedBookmark,
-    ProtonInvitationOrUid,
-    NonProtonInvitationOrUid,
     BookmarkOrUid,
-    ShareNodeSettings,
-    UnshareNodeSettings,
+    DegradedBookmark,
+    MaybeBookmark,
+    Member,
+    NonProtonInvitation,
+    NonProtonInvitationOrUid,
+    ProtonInvitation,
+    ProtonInvitationOrUid,
+    ProtonInvitationWithNode,
+    PublicLink,
     ShareMembersSettings,
+    ShareNodeSettings,
     SharePublicLinkSettings,
     SharePublicLinkSettingsObject,
     ShareResult,
+    UnshareNodeSettings,
 } from './sharing';
 export { NonProtonInvitationState } from './sharing';
 export type {
-    Telemetry,
     Logger,
     MetricAPIRetrySucceededEvent,
-    MetricUploadEvent,
-    MetricsUploadErrorType,
-    MetricDownloadEvent,
-    MetricsDownloadErrorType,
+    MetricBlockVerificationErrorEvent,
     MetricDecryptionErrorEvent,
+    MetricDownloadEvent,
+    MetricEvent,
     MetricsDecryptionErrorField,
+    MetricsDownloadErrorType,
+    MetricsUploadErrorType,
+    MetricUploadEvent,
     MetricVerificationErrorEvent,
     MetricVerificationErrorField,
-    MetricBlockVerificationErrorEvent,
     MetricVolumeEventsSubscriptionsChangedEvent,
-    MetricEvent,
+    Telemetry,
 } from './telemetry';
 export { MetricVolumeType } from './telemetry';
-export type { FileUploader, UploadController, UploadMetadata } from './upload';
 export type { Thumbnail, ThumbnailResult } from './thumbnail';
 export { ThumbnailType } from './thumbnail';
+export type { FileUploader, UploadController, UploadMetadata } from './upload';
 
 export type ProtonDriveTelemetry = Telemetry<MetricEvent>;
 export type ProtonDriveEntitiesCache = ProtonDriveCache<string>;

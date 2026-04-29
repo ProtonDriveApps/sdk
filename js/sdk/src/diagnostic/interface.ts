@@ -1,4 +1,4 @@
-import { Author, MaybeNode, MetricEvent, NodeType, AnonymousUser } from '../interface';
+import { AnonymousUser, Author, MaybeNode, MetricEvent, NodeType } from '../interface';
 import { LogRecord } from '../telemetry';
 
 export interface Diagnostic {

@@ -1,14 +1,14 @@
 import { VERIFICATION_STATUS } from '../../crypto';
 import {
-    resultOk,
-    resultError,
-    Author,
     AnonymousUser,
-    ProtonDriveTelemetry,
+    Author,
     Logger,
     MetricsDecryptionErrorField,
     MetricVerificationErrorField,
     MetricVolumeType,
+    ProtonDriveTelemetry,
+    resultError,
+    resultOk,
 } from '../../interface';
 import { getVerificationMessage, isNotApplicationError } from '../errors';
 import { splitNodeUid } from '../uids';

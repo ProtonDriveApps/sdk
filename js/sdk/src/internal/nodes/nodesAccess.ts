@@ -1,6 +1,7 @@
 import { c } from 'ttag';
 
 import { PrivateKey, SessionKey } from '../../crypto';
+import { DecryptionError, ProtonDriveError } from '../../errors';
 import {
     InvalidNameError,
     Logger,
@@ -11,10 +12,9 @@ import {
     resultError,
     resultOk,
 } from '../../interface';
-import { DecryptionError, ProtonDriveError } from '../../errors';
 import { asyncIteratorMap } from '../asyncIteratorMap';
-import { getErrorMessage } from '../errors';
 import { BatchLoading } from '../batchLoading';
+import { getErrorMessage } from '../errors';
 import { makeNodeUid, splitNodeUid } from '../uids';
 import { NodeAPIServiceBase } from './apiService';
 import { NodesCacheBase } from './cache';
@@ -23,16 +23,16 @@ import { NodesCryptoService } from './cryptoService';
 import { NodesDebouncer } from './debouncer';
 import { parseFileExtendedAttributes, parseFolderExtendedAttributes } from './extendedAttributes';
 import {
-    SharesService,
-    EncryptedNode,
-    DecryptedUnparsedNode,
     DecryptedNode,
     DecryptedNodeKeys,
+    DecryptedUnparsedNode,
+    EncryptedNode,
     FilterOptions,
     NodeSigningKeys,
+    SharesService,
 } from './interface';
-import { validateNodeName } from './validations';
 import { isProtonDocument, isProtonSheet } from './mediaTypes';
+import { validateNodeName } from './validations';
 
 // This is the number of nodes that are loaded in parallel.
 // It is a trade-off between initial wait time and overhead of API calls.

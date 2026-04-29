@@ -1,7 +1,7 @@
 import { getMockLogger } from '../../tests/logger';
 import { EventsAPIService } from './apiService';
-import { DriveEvent, DriveEventsListWithStatus, DriveEventType } from './interface';
 import { CoreEventManager } from './coreEventManager';
+import { DriveEvent, DriveEventsListWithStatus, DriveEventType } from './interface';
 
 describe('CoreEventManager', () => {
     let mockApiService: jest.Mocked<EventsAPIService>;

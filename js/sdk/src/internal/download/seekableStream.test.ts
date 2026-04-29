@@ -1,4 +1,4 @@
-import { SeekableReadableStream, BufferedSeekableStream, UnderlyingSeekableSource } from './seekableStream';
+import { BufferedSeekableStream, SeekableReadableStream, UnderlyingSeekableSource } from './seekableStream';
 
 describe('SeekableReadableStream', () => {
     it('should call the seek callback when seek is called', async () => {

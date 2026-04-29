@@ -1,14 +1,14 @@
-import { ProtonDriveAccount, ProtonDriveEntitiesCache, ProtonDriveTelemetry } from '../../interface';
 import { DriveCrypto } from '../../crypto';
+import { ProtonDriveAccount, ProtonDriveEntitiesCache, ProtonDriveTelemetry } from '../../interface';
 import { DriveAPIService } from '../apiService';
 import { ShareTargetType } from '../shares';
 import { SharingAPIService } from './apiService';
 import { SharingCache } from './cache';
 import { SharingCryptoService } from './cryptoService';
+import { SharingEventHandler } from './events';
+import { NodesService, SharesService } from './interface';
 import { SharingAccess } from './sharingAccess';
 import { SharingManagement } from './sharingManagement';
-import { SharesService, NodesService } from './interface';
-import { SharingEventHandler } from './events';
 
 // Root shares are not allowed to be shared.
 // Photos and Albums are not supported in main volume (core Drive).

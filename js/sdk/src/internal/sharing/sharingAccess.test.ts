@@ -1,11 +1,11 @@
-import { getMockLogger } from '../../tests/logger';
-import { NodeType, resultError, resultOk, MemberRole } from '../../interface';
 import { ValidationError } from '../../errors';
+import { MemberRole, NodeType, resultError, resultOk } from '../../interface';
+import { getMockLogger } from '../../tests/logger';
 import { SharingAPIService } from './apiService';
 import { SharingCache } from './cache';
 import { SharingCryptoService } from './cryptoService';
-import { SharesService, NodesService } from './interface';
-import { SharingAccess, BATCH_LOADING_SIZE } from './sharingAccess';
+import { NodesService, SharesService } from './interface';
+import { BATCH_LOADING_SIZE, SharingAccess } from './sharingAccess';
 
 describe('SharingAccess', () => {
     let apiService: SharingAPIService;

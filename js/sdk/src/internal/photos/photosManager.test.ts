@@ -1,11 +1,11 @@
-import { resultOk, PhotoTag } from '../../interface';
+import { PhotoTag, resultOk } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
-import { PhotosManager, UpdatePhotoSettings } from './photosManager';
-import { PhotosAPIService } from './apiService';
 import { AlbumsCryptoService } from './albumsCrypto';
-import { PhotosNodesAccess } from './nodes';
-import { DecryptedPhotoNode } from './interface';
+import { PhotosAPIService } from './apiService';
 import { MissingRelatedPhotosError } from './errors';
+import { DecryptedPhotoNode } from './interface';
+import { PhotosNodesAccess } from './nodes';
+import { PhotosManager, UpdatePhotoSettings } from './photosManager';
 
 function createMockPhotoNode(uid: string, overrides: Partial<DecryptedPhotoNode> = {}): DecryptedPhotoNode {
     return {

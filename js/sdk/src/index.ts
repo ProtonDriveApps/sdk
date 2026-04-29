@@ -4,12 +4,12 @@
 
 import { makeNodeUid } from './internal/uids';
 
-export * from './interface';
 export * from './cache';
-export * from './errors';
-export type { OpenPGPCrypto, OpenPGPCryptoProxy } from './crypto';
+export type { OpenPGPCrypto } from './crypto';
 export { OpenPGPCryptoWithCryptoProxy } from './crypto';
+export * from './errors';
 export { NullFeatureFlagProvider } from './featureFlags';
+export * from './interface';
 export { ProtonDriveClient } from './protonDriveClient';
 export { VERSION } from './version';
 

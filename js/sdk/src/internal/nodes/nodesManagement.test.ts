@@ -1,12 +1,12 @@
+import { NodeWithSameNameExistsValidationError, ValidationError } from '../../errors';
+import { NodeResult, NodeResultWithError } from '../../interface';
 import { NodeAPIService } from './apiService';
 import { NodesCryptoCache } from './cryptoCache';
 import { NodesCryptoService } from './cryptoService';
-import { NodesAccess } from './nodesAccess';
-import { DecryptedNode } from './interface';
-import { NodesManagement } from './nodesManagement';
-import { NodeResult, NodeResultWithError } from '../../interface';
 import { NodeOutOfSyncError } from './errors';
-import { NodeWithSameNameExistsValidationError, ValidationError } from '../../errors';
+import { DecryptedNode } from './interface';
+import { NodesAccess } from './nodesAccess';
+import { NodesManagement } from './nodesManagement';
 
 describe('NodesManagement', () => {
     let apiService: NodeAPIService;

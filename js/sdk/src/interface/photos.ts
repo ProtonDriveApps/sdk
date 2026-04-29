@@ -1,5 +1,5 @@
+import { DegradedNode, MissingNode, NodeEntity, NodeType } from './nodes';
 import { Result } from './result';
-import { DegradedNode, NodeEntity, NodeType, MissingNode } from './nodes';
 
 /**
  * Node representing a photo or album for Photos SDK.

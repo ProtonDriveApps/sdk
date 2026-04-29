@@ -1,10 +1,10 @@
 import { Logger, ProtonDriveTelemetry } from '../../interface';
 import { DriveAPIService } from '../apiService';
-import { DriveEvent, DriveListener, EventSubscription, LatestEventIdProvider, SharesService } from './interface';
 import { EventsAPIService } from './apiService';
 import { CoreEventManager } from './coreEventManager';
-import { VolumeEventManager } from './volumeEventManager';
 import { EventManager } from './eventManager';
+import { DriveEvent, DriveListener, EventSubscription, LatestEventIdProvider, SharesService } from './interface';
+import { VolumeEventManager } from './volumeEventManager';
 
 export type { DriveEvent, DriveListener, EventSubscription } from './interface';
 export { DriveEventType } from './interface';

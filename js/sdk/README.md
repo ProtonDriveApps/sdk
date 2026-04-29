@@ -15,3 +15,8 @@ const sdk = new ProtonDriveClient({
     openPGPCryptoModule: new OpenPGPCryptoWithCryptoProxy(cryptoProxy),
 });
 ```
+
+### Polyfills
+
+The library uses some modern JS features that might not be available across Node versions or browsers.
+The corresponding polyfills are available under `src/polyfill`, which should be manually imported by library users if needed (NB: polyfills should be loaded only once in a given global JS context, which is why this is left as a manual step).

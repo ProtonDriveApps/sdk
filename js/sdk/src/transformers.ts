@@ -1,16 +1,16 @@
 import {
-    MaybeNode as PublicMaybeNode,
-    MaybeMissingNode as PublicMaybeMissingNode,
     DegradedNode as PublicDegradedNode,
-    Revision as PublicRevision,
-    Result,
-    resultOk,
-    resultError,
-    MissingNode,
-    MaybePhotoNode as PublicMaybePhotoNode,
-    MaybeMissingPhotoNode as PublicMaybeMissingPhotoNode,
-    PhotoNode as PublicPhotoNode,
     DegradedPhotoNode as PublicDegradedPhotoNode,
+    MaybeMissingNode as PublicMaybeMissingNode,
+    MaybeMissingPhotoNode as PublicMaybeMissingPhotoNode,
+    MaybeNode as PublicMaybeNode,
+    MaybePhotoNode as PublicMaybePhotoNode,
+    MissingNode,
+    PhotoNode as PublicPhotoNode,
+    Result,
+    resultError,
+    resultOk,
+    Revision as PublicRevision,
 } from './interface';
 import { DecryptedNode as InternalNode, DecryptedRevision as InternalRevision } from './internal/nodes';
 import { DecryptedPhotoNode as InternalPartialPhotoNode } from './internal/photos';

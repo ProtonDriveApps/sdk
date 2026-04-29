@@ -1,9 +1,9 @@
-import { Device, DeviceType, Logger } from '../../interface';
 import { ValidationError } from '../../errors';
+import { Device, DeviceType, Logger } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
 import { DevicesAPIService } from './apiService';
 import { DevicesCryptoService } from './cryptoService';
-import { SharesService, NodesService, NodesManagementService, DeviceMetadata } from './interface';
+import { DeviceMetadata, NodesManagementService, NodesService, SharesService } from './interface';
 import { DevicesManager } from './manager';
 
 describe('DevicesManager', () => {

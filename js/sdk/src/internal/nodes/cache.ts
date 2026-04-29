@@ -1,5 +1,5 @@
 import { EntityResult } from '../../cache';
-import { ProtonDriveEntitiesCache, Logger, resultOk, Result } from '../../interface';
+import { Logger, ProtonDriveEntitiesCache, Result, resultOk } from '../../interface';
 import { splitNodeUid } from '../uids';
 import { DecryptedNode, DecryptedRevision } from './interface';
 

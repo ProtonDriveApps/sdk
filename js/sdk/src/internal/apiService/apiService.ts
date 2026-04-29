@@ -1,10 +1,10 @@
 import { c } from 'ttag';
 
+import { AbortError, ProtonDriveError, RateLimitedError, ServerError } from '../../errors';
+import { Logger, ProtonDriveHTTPClient, ProtonDriveTelemetry } from '../../interface';
 import { VERSION } from '../../version';
-import { ProtonDriveHTTPClient, ProtonDriveTelemetry, Logger } from '../../interface';
-import { AbortError, ServerError, RateLimitedError, ProtonDriveError } from '../../errors';
-import { waitSeconds } from '../wait';
 import { SDKEvents } from '../sdkEvents';
+import { waitSeconds } from '../wait';
 import { HTTPErrorCode, isCodeOk, isCodeOkAsync } from './errorCodes';
 import { apiErrorFactory } from './errors';
 

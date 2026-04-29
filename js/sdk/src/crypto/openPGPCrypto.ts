@@ -1,97 +1,13 @@
 import { c } from 'ttag';
 
-import { OpenPGPCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from './interface';
-import { uint8ArrayToBase64String } from './utils';
-
-/**
- * Interface matching CryptoProxy interface from client's monorepo:
- * clients/packages/crypto/lib/proxy/proxy.ts.
- */
-export interface OpenPGPCryptoProxy {
-    generateKey: (options: {
-        userIDs: { name: string }[];
-        type: 'ecc';
-        curve: 'ed25519Legacy';
-        config?: { aeadProtect: boolean };
-    }) => Promise<PrivateKey>;
-    exportPrivateKey: (options: { privateKey: PrivateKey; passphrase: string | null }) => Promise<string>;
-    importPrivateKey: (options: { armoredKey: string; passphrase: string | null }) => Promise<PrivateKey>;
-    generateSessionKey: (options: {
-        recipientKeys: PublicKey[];
-        config?: { ignoreSEIPDv2FeatureFlag: boolean };
-    }) => Promise<SessionKey>;
-    encryptSessionKey: (
-        options: SessionKey & {
-            format: 'binary';
-            encryptionKeys?: PublicKey | PublicKey[];
-            passwords?: string[];
-        },
-    ) => Promise<Uint8Array<ArrayBuffer>>;
-    decryptSessionKey: (options: {
-        armoredMessage?: string;
-        binaryMessage?: Uint8Array<ArrayBuffer>;
-        decryptionKeys: PrivateKey | PrivateKey[];
-    }) => Promise<SessionKey | undefined>;
-    encryptMessage: <Format extends 'armored' | 'binary' = 'armored', Detached extends boolean = false>(options: {
-        format?: Format;
-        binaryData: Uint8Array<ArrayBuffer>;
-        sessionKey?: SessionKey;
-        encryptionKeys: PublicKey[];
-        signingKeys?: PrivateKey;
-        detached?: Detached;
-        compress?: boolean;
-        config?: { ignoreSEIPDv2FeatureFlag: boolean };
-    }) => Promise<
-        Detached extends true
-            ? {
-                  message: Format extends 'binary' ? Uint8Array<ArrayBuffer> : string;
-                  signature: Format extends 'binary' ? Uint8Array<ArrayBuffer> : string;
-              }
-            : {
-                  message: Format extends 'binary' ? Uint8Array<ArrayBuffer> : string;
-              }
-    >;
-    decryptMessage: <Format extends 'utf8' | 'binary' = 'utf8'>(options: {
-        format: Format;
-        armoredMessage?: string;
-        binaryMessage?: Uint8Array<ArrayBuffer>;
-        armoredSignature?: string;
-        binarySignature?: Uint8Array<ArrayBuffer>;
-        sessionKeys?: SessionKey;
-        passwords?: string[];
-        decryptionKeys?: PrivateKey | PrivateKey[];
-        verificationKeys?: PublicKey | PublicKey[];
-    }) => Promise<{
-        data: Format extends 'binary' ? Uint8Array<ArrayBuffer> : string;
-        verificationStatus: VERIFICATION_STATUS;
-        verificationErrors?: Error[];
-    }>;
-    signMessage: <Format extends 'binary' | 'armored' = 'armored'>(options: {
-        format: Format;
-        binaryData: Uint8Array<ArrayBuffer>;
-        signingKeys: PrivateKey | PrivateKey[];
-        detached: boolean;
-        signatureContext?: { critical: boolean; value: string };
-    }) => Promise<Format extends 'binary' ? Uint8Array<ArrayBuffer> : string>;
-    verifyMessage: (options: {
-        binaryData: Uint8Array<ArrayBuffer>;
-        armoredSignature?: string;
-        binarySignature?: Uint8Array<ArrayBuffer>;
-        verificationKeys: PublicKey | PublicKey[];
-        signatureContext?: { required: boolean; value: string };
-    }) => Promise<{
-        verificationStatus: VERIFICATION_STATUS;
-        errors?: Error[];
-    }>;
-}
+import type { CryptoApiInterface, OpenPGPCrypto, PrivateKey, PublicKey, SessionKey } from './interface';
 
 /**
  * Implementation of OpenPGPCrypto interface using CryptoProxy from clients
- * monorepo that must be passed as dependency. In the future, CryptoProxy
- * will be published separately and this implementation will use it directly.
+ * monorepo that must be passed as dependency.
  */
 export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
-    constructor(private cryptoProxy: OpenPGPCryptoProxy) {
+    constructor(private cryptoProxy: CryptoApiInterface) {
         this.cryptoProxy = cryptoProxy;
     }
 
@@ -99,7 +15,7 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         const value = crypto.getRandomValues(new Uint8Array(32));
         // TODO: Once all clients can use non-ascii bytes, switch to simple
         // generating of random bytes without encoding it into base64.
-        return uint8ArrayToBase64String(value);
+        return value.toBase64();
     }
 
     async generateSessionKey(encryptionKeys: PublicKey[], options: { enableAeadWithEncryptionKeys: boolean }) {

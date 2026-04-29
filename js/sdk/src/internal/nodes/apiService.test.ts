@@ -2,7 +2,7 @@ import { NodeWithSameNameExistsValidationError, ValidationError } from '../../er
 import { MemberRole, NodeType } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
 import { DriveAPIService, ErrorCode, InvalidRequirementsAPIError } from '../apiService';
-import { NodeAPIService, groupNodeUidsByVolumeAndIteratePerBatch } from './apiService';
+import { groupNodeUidsByVolumeAndIteratePerBatch, NodeAPIService } from './apiService';
 import { NodeOutOfSyncError } from './errors';
 
 function generateAPIFileNode(linkOverrides = {}, overrides = {}) {

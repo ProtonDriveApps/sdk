@@ -1,20 +1,20 @@
+import { MemoryCache } from '../../cache';
+import { DriveCrypto } from '../../crypto';
 import {
-    ProtonDriveEntitiesCache,
-    ProtonDriveCryptoCache,
-    ProtonDriveAccount,
     MemberRole,
     NodeType,
+    ProtonDriveAccount,
+    ProtonDriveCryptoCache,
+    ProtonDriveEntitiesCache,
 } from '../../interface';
-import { DriveCrypto } from '../../crypto';
-import { MemoryCache } from '../../cache';
+import { getMockLogger } from '../../tests/logger';
 import { getMockTelemetry } from '../../tests/telemetry';
 import { DriveAPIService } from '../apiService';
 import { DriveEventType } from '../events';
 import { makeNodeUid } from '../uids';
-import { SharesService, DecryptedNode } from './interface';
-import { initNodesModule } from './index';
 import { NodesCache } from './cache';
-import { getMockLogger } from '../../tests/logger';
+import { initNodesModule } from './index';
+import { DecryptedNode, SharesService } from './interface';
 
 function generateNode(uid: string, parentUid = 'volumeId~root', params: Partial<DecryptedNode> = {}): DecryptedNode {
     return {

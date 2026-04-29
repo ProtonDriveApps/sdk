@@ -1,9 +1,9 @@
 import { AbortError } from '../../errors';
-import { ProtonDriveHTTPClient, SDKEvent, Telemetry, MetricEvent } from '../../interface';
+import { MetricEvent, ProtonDriveHTTPClient, SDKEvent, Telemetry } from '../../interface';
 import { getMockTelemetry } from '../../tests/telemetry';
 import { SDKEvents } from '../sdkEvents';
 import { DriveAPIService } from './apiService';
-import { HTTPErrorCode, ErrorCode } from './errorCodes';
+import { ErrorCode, HTTPErrorCode } from './errorCodes';
 
 jest.useFakeTimers();
 

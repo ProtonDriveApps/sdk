@@ -1,15 +1,10 @@
 import { c } from 'ttag';
 
-import {
-    DriveCrypto,
-    PrivateKey,
-    PublicKey,
-    SessionKey,
-    uint8ArrayToBase64String,
-    VERIFICATION_STATUS,
-} from '../../crypto';
-import { ProtonDriveAccount, Revision } from '../../interface';
+import { computeSHA256 } from '@protontech/crypto/subtle/hash.ts';
+
+import { DriveCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from '../../crypto';
 import { DecryptionError, IntegrityError } from '../../errors';
+import { ProtonDriveAccount, Revision } from '../../interface';
 import { getErrorMessage } from '../errors';
 import { mergeUint8Arrays } from '../utils';
 import { RevisionKeys, SignatureVerificationError } from './interface';
@@ -73,8 +68,8 @@ export class DownloadCryptoService {
     }
 
     async verifyBlockIntegrity(encryptedBlock: Uint8Array<ArrayBuffer>, base64sha256Hash: string): Promise<void> {
-        const digest = await crypto.subtle.digest('SHA-256', encryptedBlock);
-        const expectedHash = uint8ArrayToBase64String(new Uint8Array(digest));
+        const digest = await computeSHA256(encryptedBlock);
+        const expectedHash = new Uint8Array(digest).toBase64();
 
         if (expectedHash !== base64sha256Hash) {
             throw new IntegrityError(c('Error').t`Data integrity check of one part failed`, {

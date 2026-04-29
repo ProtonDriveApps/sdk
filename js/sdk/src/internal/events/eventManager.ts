@@ -1,5 +1,5 @@
 import { Logger } from '../../interface';
-import { EventManagerInterface, Event, EventSubscription } from './interface';
+import { Event, EventManagerInterface, EventSubscription } from './interface';
 
 const FIBONACCI_LIST = [1, 1, 2, 3, 5, 8, 13];
 

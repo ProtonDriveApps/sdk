@@ -1,10 +1,10 @@
 import { getMockLogger } from '../../tests/logger';
 import { DriveEvent, DriveEventType } from '../events';
-import { SharingCache } from './cache';
-import { SharingAccess } from './sharingAccess';
-import { SharingEventHandler } from './events';
 import { SharesManager } from '../shares/manager';
+import { SharingCache } from './cache';
+import { SharingEventHandler } from './events';
 import { NodesService } from './interface';
+import { SharingAccess } from './sharingAccess';
 
 // FIXME: test tree_refresh and tree_remove
 

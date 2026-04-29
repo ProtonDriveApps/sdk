@@ -1,6 +1,8 @@
 import { DriveCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from '../../crypto';
 import { MemberRole, ProtonDriveAccount, ProtonDriveTelemetry, RevisionState } from '../../interface';
 import { getMockTelemetry } from '../../tests/telemetry';
+import { NodesCryptoReporter } from './cryptoReporter';
+import { NodesCryptoService } from './cryptoService';
 import {
     DecryptedNode,
     DecryptedNodeKeys,
@@ -9,8 +11,6 @@ import {
     NodeSigningKeys,
     SharesService,
 } from './interface';
-import { NodesCryptoService } from './cryptoService';
-import { NodesCryptoReporter } from './cryptoReporter';
 
 describe('nodesCryptoService', () => {
     let telemetry: ProtonDriveTelemetry;

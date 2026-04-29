@@ -3,12 +3,12 @@ import { c } from 'ttag';
 import { AbortError } from '../../errors';
 import { Logger, NodeResultWithError, PhotoTag } from '../../interface';
 import { batch } from '../batch';
-import { PhotosAPIService } from './apiService';
-import { PhotoAlreadyInTargetError, PhotoTransferPayloadBuilder, TransferEncryptedPhotoPayload } from './photosTransferPayloadBuilder';
-import { PhotosNodesAccess } from './nodes';
-import { AlbumsCryptoService } from './albumsCrypto';
 import { createBatches } from './addToAlbum';
+import { AlbumsCryptoService } from './albumsCrypto';
+import { PhotosAPIService } from './apiService';
 import { MissingRelatedPhotosError } from './errors';
+import { PhotosNodesAccess } from './nodes';
+import { PhotoAlreadyInTargetError, PhotoTransferPayloadBuilder, TransferEncryptedPhotoPayload } from './photosTransferPayloadBuilder';
 
 /**
  * The number of photos that are loaded in parallel to prepare the payloads.

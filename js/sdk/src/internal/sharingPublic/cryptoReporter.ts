@@ -1,18 +1,18 @@
 import { c } from 'ttag';
 
 import { VERIFICATION_STATUS } from '../../crypto';
-import { getVerificationMessage, isNotApplicationError } from '../errors';
 import {
-    resultOk,
-    resultError,
-    Author,
     AnonymousUser,
-    ProtonDriveTelemetry,
+    Author,
+    Logger,
+    MetricsDecryptionErrorField,
     MetricVerificationErrorField,
     MetricVolumeType,
-    MetricsDecryptionErrorField,
-    Logger,
+    ProtonDriveTelemetry,
+    resultError,
+    resultOk,
 } from '../../interface';
+import { getVerificationMessage, isNotApplicationError } from '../errors';
 
 export class SharingPublicCryptoReporter {
     private logger: Logger;

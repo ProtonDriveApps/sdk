@@ -1,4 +1,4 @@
-import { RateLimitedError, ValidationError, DecryptionError, IntegrityError } from '../../errors';
+import { DecryptionError, IntegrityError, RateLimitedError, ValidationError } from '../../errors';
 import { ProtonDriveTelemetry } from '../../interface';
 import { APIHTTPError } from '../apiService';
 import { SharesService } from './interface';

@@ -1,53 +1,6 @@
-// TODO: Use CryptoProxy once available.
-export interface PublicKey {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    readonly _idx: any;
-    readonly _keyContentHash: [string, string];
+import type { CryptoApiInterface, PrivateKeyReference as PrivateKey, PublicKeyReference as PublicKey, SessionKey, VERIFICATION_STATUS } from '@protontech/crypto';
 
-    getVersion(): number;
-    getFingerprint(): string;
-    getSHA256Fingerprints(): string[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getKeyID(): any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getKeyIDs(): any[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getAlgorithmInfo(): any;
-    getCreationTime(): Date;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    isPrivate: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    isPrivateKeyV4: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    isPrivateKeyV6: any;
-    getExpirationTime(): Date | number | null;
-    getUserIDs(): string[];
-    isWeak(): boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    equals(otherKey: any, ignoreOtherCerts?: boolean): boolean;
-    subkeys: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        getAlgorithmInfo(): any;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        getKeyID(): any;
-    }[];
-}
-
-export interface PrivateKey extends PublicKey {
-    readonly _dummyType: 'private';
-}
-
-export interface SessionKey {
-    data: Uint8Array<ArrayBuffer>;
-    algorithm: string | null;
-    aeadAlgorithm: string | null;
-}
-
-export enum VERIFICATION_STATUS {
-    NOT_SIGNED = 0,
-    SIGNED_AND_VALID = 1,
-    SIGNED_AND_INVALID = 2,
-}
+export type { CryptoApiInterface, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS };
 
 export interface SRPModule {
     getSrp: (
@@ -63,6 +16,7 @@ export interface SRPModule {
     }>;
     getSrpVerifier: (password: string) => Promise<SRPVerifier>;
     computeKeyPassword: (password: string, salt: string) => Promise<string>;
+    generateKeySalt: () => string;
 }
 
 export type SRPVerifier = {

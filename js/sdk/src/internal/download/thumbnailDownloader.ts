@@ -1,12 +1,12 @@
 import { c } from 'ttag';
 
-import {  ThumbnailType, ProtonDriveTelemetry, Logger, ThumbnailResult } from '../../interface';
 import { ValidationError } from '../../errors';
+import {  Logger, ProtonDriveTelemetry, ThumbnailResult, ThumbnailType } from '../../interface';
 import { LoggerWithPrefix } from '../../telemetry';
+import { getErrorMessage } from '../errors';
 import { DownloadAPIService } from './apiService';
 import { DownloadCryptoService } from './cryptoService';
 import { NodesService } from './interface';
-import { getErrorMessage } from '../errors';
 
 /**
  * Maximum number of thumbnails that can be downloaded at the same time.

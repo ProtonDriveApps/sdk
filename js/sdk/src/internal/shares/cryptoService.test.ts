@@ -1,8 +1,8 @@
 import { DriveCrypto, PrivateKey, SessionKey, VERIFICATION_STATUS } from '../../crypto';
 import { ProtonDriveAccount, ProtonDriveTelemetry } from '../../interface';
 import { getMockTelemetry } from '../../tests/telemetry';
-import { EncryptedRootShare, ShareType } from './interface';
 import { SharesCryptoService } from './cryptoService';
+import { EncryptedRootShare, ShareType } from './interface';
 
 describe('SharesCryptoService', () => {
     let telemetry: ProtonDriveTelemetry;

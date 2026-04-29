@@ -2,15 +2,15 @@ import { c } from 'ttag';
 
 import { DriveCrypto } from '../../crypto';
 import { ValidationError } from '../../errors';
-import { ProtonDriveAccount, ProtonDriveTelemetry, NodeType, ThumbnailType, ThumbnailResult } from '../../interface';
+import { NodeType, ProtonDriveAccount, ProtonDriveTelemetry, ThumbnailResult, ThumbnailType } from '../../interface';
 import { DriveAPIService } from '../apiService';
+import { makeNodeUidFromRevisionUid } from '../uids';
 import { DownloadAPIService } from './apiService';
 import { DownloadCryptoService } from './cryptoService';
-import { NodesService, RevisionsService, SharesService } from './interface';
 import { FileDownloader } from './fileDownloader';
+import { NodesService, RevisionsService, SharesService } from './interface';
 import { DownloadQueue } from './queue';
 import { DownloadTelemetry } from './telemetry';
-import { makeNodeUidFromRevisionUid } from '../uids';
 import { ThumbnailDownloader } from './thumbnailDownloader';
 
 export function initDownloadModule(
