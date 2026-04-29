@@ -2,6 +2,7 @@ import { IntegrityError, RateLimitedError, ValidationError } from '../../errors'
 import { Logger, MetricsUploadErrorType, MetricVolumeType, ProtonDriveTelemetry } from '../../interface';
 import { LoggerWithPrefix, reduceSizePrecision } from '../../telemetry';
 import { APIHTTPError } from '../apiService';
+import { isNetworkError } from '../errors';
 import { splitNodeRevisionUid, splitNodeUid } from '../uids';
 import { SharesService } from './interface';
 
@@ -124,11 +125,7 @@ function getErrorCategory(error: unknown): MetricsUploadErrorType | undefined {
         if (error.name === 'TimeoutError') {
             return 'server_error';
         }
-        if (
-            error.name === 'OfflineError' ||
-            error.name === 'NetworkError' ||
-            error.message?.toLowerCase() === 'network error'
-        ) {
+        if (isNetworkError(error)) {
             return 'network_error';
         }
         if (error.name === 'AbortError') {

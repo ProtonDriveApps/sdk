@@ -67,3 +67,18 @@ export function isNotApplicationError(error?: unknown): boolean {
 
     return false;
 }
+
+export function isNetworkError(error: unknown): boolean {
+    if (!(error instanceof Error)) {
+        return false;
+    }
+    return (
+        error.name === 'OfflineError' ||
+        error.name === 'NetworkError' ||
+        error.message?.toLowerCase() === 'network error' ||
+        (error.name === 'TypeError' &&
+            ['Failed to fetch', 'NetworkError when attempting to fetch resource', 'Load failed'].includes(
+                error.message,
+            ))
+    );
+}
