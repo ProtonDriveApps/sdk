@@ -139,5 +139,11 @@ describe('DownloadTelemetry', () => {
             await downloadTelemetry.downloadFailed(revisionUid, error, 100, 200);
             verifyErrorCategory('network_error');
         });
+
+        it('should detect "network_error" for TypeError', async () => {
+            const error = new TypeError('Failed to fetch');
+            await downloadTelemetry.downloadFailed(revisionUid, error, 100, 200);
+            verifyErrorCategory('network_error');
+        });
     });
 });
