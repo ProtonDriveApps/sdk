@@ -1,4 +1,3 @@
-import bcrypt from 'bcryptjs';
 import { c } from 'ttag';
 
 import {
@@ -6,42 +5,37 @@ import {
     PrivateKey,
     SessionKey,
     SRPVerifier,
-    uint8ArrayToBase64String,
     VERIFICATION_STATUS,
 } from '../../crypto';
+import { DecryptionError } from '../../errors';
 import {
+    Author,
+    InvalidNameError,
+    Member,
+    MetricVolumeType,
+    NonProtonInvitation,
     ProtonDriveAccount,
+    ProtonDriveTelemetry,
     ProtonInvitation,
     ProtonInvitationWithNode,
-    NonProtonInvitation,
-    Author,
     Result,
-    Member,
-    UnverifiedAuthorError,
     resultError,
     resultOk,
-    InvalidNameError,
-    ProtonDriveTelemetry,
-    MetricVolumeType,
+    UnverifiedAuthorError,
 } from '../../interface';
-import { validateNodeName } from '../nodes/validations';
 import { getErrorMessage, getVerificationMessage } from '../errors';
+import { validateNodeName } from '../nodes/validations';
 import { EncryptedShare } from '../shares';
 import {
+    EncryptedBookmark,
+    EncryptedExternalInvitation,
     EncryptedInvitation,
     EncryptedInvitationWithNode,
-    EncryptedExternalInvitation,
     EncryptedMember,
     EncryptedPublicLink,
     PublicLinkWithCreatorEmail,
-    EncryptedBookmark,
     SharesService,
 } from './interface';
-import { DecryptionError } from '../../errors';
-
-// Version 2 of bcrypt with 2**10 rounds.
-// https://en.wikipedia.org/wiki/Bcrypt#Description
-const BCRYPT_PREFIX = '$2y$10$';
 
 export const PUBLIC_LINK_GENERATED_PASSWORD_LENGTH = 12;
 
@@ -325,13 +319,10 @@ export class SharingCryptoService {
         const address = await this.account.getOwnAddress(creatorEmail);
         const addressKey = address.keys[address.primaryKeyIndex].key;
 
-        const { base64Salt: base64SharePasswordSalt, bcryptPassphrase } =
-            await this.computeKeySaltAndPassphrase(password);
-        const { base64SharePassphraseKeyPacket, armoredPassword, srp } =
+        const { base64SharePasswordSalt, base64SharePassphraseKeyPacket, armoredPassword, srp } =
             await this.driveCrypto.encryptPublicLinkPasswordAndSessionKey(
                 password,
                 addressKey,
-                bcryptPassphrase,
                 shareSessionKey,
             );
 
@@ -355,22 +346,6 @@ export class SharingCryptoService {
         }
 
         return result;
-    }
-
-    private async computeKeySaltAndPassphrase(password: string) {
-        if (!password) {
-            throw new Error('Password required.');
-        }
-
-        const salt = crypto.getRandomValues(new Uint8Array(16));
-        const hash: string = await bcrypt.hash(password, BCRYPT_PREFIX + bcrypt.encodeBase64(salt, 16));
-        // Remove bcrypt prefix and salt (first 29 characters)
-        const bcryptPassphrase = hash.slice(29);
-
-        return {
-            base64Salt: uint8ArrayToBase64String(salt),
-            bcryptPassphrase,
-        };
     }
 
     async decryptPublicLink(encryptedPublicLink: EncryptedPublicLink): Promise<PublicLinkWithCreatorEmail> {

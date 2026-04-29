@@ -1,7 +1,7 @@
 import { c } from 'ttag';
 
-import { Thumbnail, Logger, ThumbnailType, UploadMetadata } from '../../interface';
 import { AbortError, IntegrityError } from '../../errors';
+import { Logger, Thumbnail, ThumbnailType, UploadMetadata } from '../../interface';
 import { LoggerWithPrefix } from '../../telemetry';
 import { APIHTTPError, HTTPErrorCode, NotFoundAPIError } from '../apiService';
 import { getErrorMessage } from '../errors';
@@ -9,13 +9,13 @@ import { mergeUint8Arrays } from '../utils';
 import { waitForCondition } from '../wait';
 import { UploadAPIService } from './apiService';
 import { BlockVerifier } from './blockVerifier';
+import { ChunkStreamReader } from './chunkStreamReader';
 import { UploadController } from './controller';
 import { UploadCryptoService } from './cryptoService';
 import { UploadDigests } from './digests';
-import { NodeRevisionDraft, EncryptedBlock, EncryptedThumbnail, EncryptedBlockMetadata } from './interface';
-import { UploadTelemetry } from './telemetry';
-import { ChunkStreamReader } from './chunkStreamReader';
+import { EncryptedBlock, EncryptedBlockMetadata, EncryptedThumbnail, NodeRevisionDraft } from './interface';
 import { UploadManager } from './manager';
+import { UploadTelemetry } from './telemetry';
 
 /**
  * File chunk size in bytes representing the size of each block.

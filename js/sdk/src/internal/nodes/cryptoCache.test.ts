@@ -1,5 +1,5 @@
-import { PrivateKey, SessionKey } from '../../crypto';
 import { MemoryCache } from '../../cache';
+import { PrivateKey, SessionKey } from '../../crypto';
 import { CachedCryptoMaterial } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
 import { NodesCryptoCache } from './cryptoCache';

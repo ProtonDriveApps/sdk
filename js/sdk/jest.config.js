@@ -1,6 +1,6 @@
 module.exports = {
     moduleDirectories: ['<rootDir>/node_modules', 'node_modules'],
-    testPathIgnorePatterns: [],
+    testPathIgnorePatterns: ['<rootDir>/dist'],
     collectCoverage: false,
     transformIgnorePatterns: [],
     transform: {
@@ -8,4 +8,5 @@ module.exports = {
     },
     moduleNameMapper: {},
     reporters: ['default'],
+    setupFiles: ['<rootDir>/src/polyfill.ts']
 };

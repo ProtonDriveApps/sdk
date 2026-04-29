@@ -1,6 +1,6 @@
-import { ProtonDriveClient, MaybeNode } from '@protontech/drive-sdk';
+import { MaybeNode, ProtonDriveClient } from '@protontech/drive-sdk';
 
-import { printIterable, type Command, type ActionArgs, PathType, findName } from '../../cli';
+import { type ActionArgs, type Command, findName, PathType, printIterable } from '../../cli';
 
 const SUPPORTED_PATH_TYPES = [PathType.MyFiles, PathType.Devices];
 

@@ -1,5 +1,4 @@
 import { applyDefaultCliOptions } from '../cli';
-
 import { CommandAuthLogin } from './auth/commandAuthLogin';
 import { CommandAuthLogout } from './auth/commandAuthLogout';
 import { CommandFileSystemCopy } from './fileSystem/commandFileSystemCopy';

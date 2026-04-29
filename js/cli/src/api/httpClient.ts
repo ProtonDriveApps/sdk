@@ -1,4 +1,4 @@
-import { ProtonDriveHTTPClientJsonRequest, ProtonDriveHTTPClientBlobRequest } from '@protontech/drive-sdk';
+import { ProtonDriveHTTPClientBlobRequest, ProtonDriveHTTPClientJsonRequest } from '@protontech/drive-sdk';
 
 import { ApiClient } from './apiClient';
 

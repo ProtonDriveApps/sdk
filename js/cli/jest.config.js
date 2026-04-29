@@ -13,8 +13,12 @@ module.exports = {
     '^@openpgp/web-stream-tools$': '<rootDir>/node_modules/@openpgp/web-stream-tools/lib/index.js',
     '^@protontech/drive-sdk$': '<rootDir>/../sdk/src/index.ts',
     '^@protontech/drive-sdk/(.*)$': '<rootDir>/../sdk/src/$1',
+    // this rewrite affects pmcrypto and it's also covered by a bun patch, but in the CI integration tests
+    // npm is used instead of bun for now, hence the patch is not applied, and we also manually apply
+    // the change this way instead
+    '^openpgp/lightweight$': 'openpgp'
   },
   reporters: ['default'],
   testEnvironment: 'node',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  setupFiles: ['<rootDir>/src/tests/polyfill.ts']
 };

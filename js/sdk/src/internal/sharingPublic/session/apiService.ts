@@ -1,7 +1,7 @@
 import { Logger } from '../../../interface';
 import { DriveAPIService, drivePaths, permissionsToMemberRole } from '../../apiService';
 import { makeNodeUid } from '../../uids';
-import { PublicLinkInfo, PublicLinkSrpAuth, PublicLinkSession, EncryptedShareCrypto } from './interface';
+import { EncryptedShareCrypto, PublicLinkInfo, PublicLinkSession, PublicLinkSrpAuth } from './interface';
 
 type GetPublicLinkInfoResponse =
     drivePaths['/drive/urls/{token}/info']['get']['responses']['200']['content']['application/json'];

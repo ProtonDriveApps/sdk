@@ -1,11 +1,11 @@
-import { Logger, MetricVolumeType, ProtonDriveAccount } from '../../interface';
 import { PrivateKey } from '../../crypto';
+import { Logger, MetricVolumeType, ProtonDriveAccount } from '../../interface';
 import { NotFoundAPIError } from '../apiService';
 import { SharesAPIService } from './apiService';
 import { SharesCache } from './cache';
 import { SharesCryptoCache } from './cryptoCache';
 import { SharesCryptoService } from './cryptoService';
-import { VolumeShareNodeIDs, EncryptedShare, EncryptedRootShare } from './interface';
+import { EncryptedRootShare, EncryptedShare, VolumeShareNodeIDs } from './interface';
 
 /**
  * Provides high-level actions for managing shares.

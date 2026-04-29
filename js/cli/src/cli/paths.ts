@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { ProtonDriveClient, MaybeNode, MaybeMissingNode, ValidationError } from '@protontech/drive-sdk';
+import { MaybeMissingNode, MaybeNode, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 import { ProtonDrivePublicLinkClient } from '@protontech/drive-sdk/protonDrivePublicLinkClient';
 

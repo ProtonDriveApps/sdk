@@ -1,31 +1,39 @@
+import '@protontech/drive-sdk/polyfill';
+
+import { CryptoProxy } from '@protontech/crypto';
+import { Api as CryptoApi } from '@protontech/crypto/proxy/endpoint/api.ts';
 import {
-    ProtonDriveClient,
-    MemoryCache,
     CachedCryptoMaterial,
-    OpenPGPCryptoWithCryptoProxy,
-    OpenPGPCryptoProxy,
     FeatureFlags,
     Logger,
+    MemoryCache,
+    OpenPGPCryptoWithCryptoProxy,
+    ProtonDriveClient,
 } from '@protontech/drive-sdk';
-import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 import { initDiagnostic } from '@protontech/drive-sdk/diagnostic';
+import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 
 import { initApi } from './api';
 import { createEntitiesCache } from './cache';
 import { Paths } from './cli';
 import { getConfig, InitConfig } from './config';
 import { initCredentials } from './credentials';
-import { Api as CryptoApi } from './crypto/lib/worker/api';
 import { initTelemetry } from './telemetry';
+
+function initOpenPGPCryptoModule() {
+    CryptoApi.init({});
+    CryptoProxy.setEndpoint(new CryptoApi(), endpoint => endpoint.clearKeyStore());
+    return new OpenPGPCryptoWithCryptoProxy(CryptoProxy)
+}
 
 export async function init(configOptions: InitConfig) {
     const config = getConfig(configOptions);
     const telemetry = initTelemetry(config.cacheDir, config.enableConsoleLog);
     const logger = telemetry.getLogger('cli');
 
-    const cryptoApi = initCrypto();
+    const openPGPCryptoModule = initOpenPGPCryptoModule();
     const credentials = initCredentials(config, logger);
-    const { auth, addresses, srp, httpClient } = await initApi(config, cryptoApi, credentials, logger);
+    const { auth, addresses, srp, httpClient } = await initApi(config, credentials, logger);
 
     const entitiesCache = createEntitiesCache(config, credentials, logger);
     const sdkDependencies = {
@@ -37,7 +45,7 @@ export async function init(configOptions: InitConfig) {
         entitiesCache,
         cryptoCache: new MemoryCache<CachedCryptoMaterial>(),
         telemetry,
-        openPGPCryptoModule: new OpenPGPCryptoWithCryptoProxy(cryptoApi as OpenPGPCryptoProxy),
+        openPGPCryptoModule,
         account: addresses,
         srpModule: srp,
         latestEventIdProvider: new NoLatestEventIdProvider(),
@@ -58,11 +66,6 @@ export async function init(configOptions: InitConfig) {
         sdkDiagnostic,
         paths,
     };
-}
-
-function initCrypto() {
-    CryptoApi.init();
-    return new CryptoApi();
 }
 
 class NoLatestEventIdProvider {

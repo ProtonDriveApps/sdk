@@ -1,11 +1,11 @@
 import { DriveCrypto } from '../../crypto';
 import {
-    ProtonDriveTelemetry,
-    UploadMetadata,
-    Thumbnail,
     AnonymousUser,
     FeatureFlagProvider,
     PhotoTag,
+    ProtonDriveTelemetry,
+    Thumbnail,
+    UploadMetadata,
 } from '../../interface';
 import { DriveAPIService, drivePaths } from '../apiService';
 import { generateFileExtendedAttributes } from '../nodes';

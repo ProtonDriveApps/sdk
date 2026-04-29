@@ -2,16 +2,16 @@ import { mkdir, readdir, rm, stat, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { ParseArgsConfig } from 'node:util';
 
-import { FileDownloader, MaybeNode, ValidationError, type ProtonDriveClient } from '@protontech/drive-sdk';
+import { FileDownloader, MaybeNode, type ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 
 import { type ActionArgs, type Command, getClaimedSize, PathType } from '../../cli';
+import { assertDownloadDestination, assertValidDownloadRoot, assertValidPathSegment } from './downloadPathValidation';
 import {
     ConflictChoice,
     ConflictTargetKind,
     TransferConflictResolver,
 } from './transferConflictResolver';
 import { createTransferProgress, TransferProgressInterface } from './transferProgress';
-import { assertDownloadDestination, assertValidDownloadRoot, assertValidPathSegment } from './downloadPathValidation';
 import { DownloadQueue, type QueueItemDirectory, type QueueItemFile } from './transferQueue';
 
 const SUPPORTED_REMOTE_PATH_TYPES = [PathType.MyFiles, PathType.Devices, PathType.SharedWithMe];

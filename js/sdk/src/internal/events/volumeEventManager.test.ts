@@ -1,8 +1,8 @@
 import { getMockLogger } from '../../tests/logger';
 import { NotFoundAPIError } from '../apiService';
 import { EventsAPIService } from './apiService';
-import { VolumeEventManager } from './volumeEventManager';
 import { DriveEventsListWithStatus, DriveEventType } from './interface';
+import { VolumeEventManager } from './volumeEventManager';
 
 jest.mock('./apiService');
 

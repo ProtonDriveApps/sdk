@@ -1,4 +1,4 @@
-import { getMockLogger } from '../../tests/logger';
+import { ValidationError } from '../../errors';
 import {
     Logger,
     Member,
@@ -10,13 +10,13 @@ import {
     PublicLink,
     resultOk,
 } from '../../interface';
+import { getMockLogger } from '../../tests/logger';
+import { ErrorCode } from '../apiService';
 import { SharingAPIService } from './apiService';
 import { SharingCache } from './cache';
 import { SharingCryptoService } from './cryptoService';
-import { SharesService, NodesService } from './interface';
+import { NodesService, SharesService } from './interface';
 import { SharingManagement } from './sharingManagement';
-import { ValidationError } from '../../errors';
-import { ErrorCode } from '../apiService';
 
 const DEFAULT_SHARE_ID = 'shareId';
 

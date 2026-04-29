@@ -4,24 +4,24 @@ import { PrivateKey, SessionKey } from '../../crypto';
 import { ValidationError } from '../../errors';
 import {
     Logger,
-    MemberRole,
-    ShareNodeSettings,
-    UnshareNodeSettings,
-    ShareResult,
-    ProtonInvitation,
-    NonProtonInvitation,
     Member,
-    resultOk,
+    MemberRole,
+    NonProtonInvitation,
     ProtonDriveAccount,
+    ProtonInvitation,
+    resultOk,
+    ShareNodeSettings,
     SharePublicLinkSettingsObject,
+    ShareResult,
+    UnshareNodeSettings,
 } from '../../interface';
 import { ErrorCode } from '../apiService';
-import { splitNodeUid, splitInvitationUid } from '../uids';
 import { getErrorMessage } from '../errors';
+import { splitInvitationUid, splitNodeUid } from '../uids';
 import { SharingAPIService } from './apiService';
-import { PUBLIC_LINK_GENERATED_PASSWORD_LENGTH, SharingCryptoService } from './cryptoService';
-import { SharesService, NodesService, ShareResultWithCreatorEmail, PublicLinkWithCreatorEmail } from './interface';
 import { SharingCache } from './cache';
+import { PUBLIC_LINK_GENERATED_PASSWORD_LENGTH, SharingCryptoService } from './cryptoService';
+import { NodesService, PublicLinkWithCreatorEmail, ShareResultWithCreatorEmail, SharesService } from './interface';
 
 interface InternalShareResult extends ShareResultWithCreatorEmail {
     share: Share;

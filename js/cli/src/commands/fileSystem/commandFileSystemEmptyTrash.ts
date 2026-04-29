@@ -1,4 +1,4 @@
-import { type Command, type ActionArgs } from '../../cli';
+import { type ActionArgs, type Command } from '../../cli';
 
 export class CommandFileSystemEmptyTrash implements Command {
     group = 'filesystem';

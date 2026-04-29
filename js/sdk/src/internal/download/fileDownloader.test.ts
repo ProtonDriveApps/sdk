@@ -1,11 +1,11 @@
+import { IntegrityError } from '../..';
 import { APIHTTPError, HTTPErrorCode } from '../apiService';
 import { DecryptedRevision } from '../nodes';
-import { FileDownloader } from './fileDownloader';
-import { DownloadTelemetry } from './telemetry';
 import { DownloadAPIService } from './apiService';
 import { DownloadCryptoService } from './cryptoService';
+import { FileDownloader } from './fileDownloader';
 import { SignatureVerificationError } from './interface';
-import { IntegrityError } from '../..';
+import { DownloadTelemetry } from './telemetry';
 
 function mockBlockDownload(_: string, token: string, onProgress: (downloadedBytes: number) => void) {
     const index = parseInt(token.slice(5, 6));

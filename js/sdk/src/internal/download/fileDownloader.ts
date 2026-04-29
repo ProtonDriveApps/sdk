@@ -1,6 +1,6 @@
 import { c } from 'ttag';
 
-import { PrivateKey, SessionKey, base64StringToUint8Array } from '../../crypto';
+import { PrivateKey, SessionKey } from '../../crypto';
 import { AbortError, IntegrityError } from '../../errors';
 import { Logger } from '../../interface';
 import { LoggerWithPrefix } from '../../telemetry';
@@ -185,7 +185,7 @@ export class FileDownloader {
                     continue;
                 }
 
-                allBlockHashes.push(base64StringToUint8Array(blockMetadata.base64sha256Hash));
+                allBlockHashes.push(Uint8Array.fromBase64(blockMetadata.base64sha256Hash));
                 if (blockMetadata.type === 'thumbnail') {
                     continue;
                 }
@@ -235,10 +235,12 @@ export class FileDownloader {
 
             void this.telemetry.downloadFinished(this.revision.uid, fileProgress);
             this.logger.info(`Download succeeded`);
-            try {
-                writer.releaseLock();
-            } catch (error: unknown) {
-                this.logger.error(`Failed to release writer lock`, error);
+            if ('releaseLock' in writer) {
+                try {
+                    writer.releaseLock();
+                } catch (error: unknown) {
+                    this.logger.error(`Failed to release writer lock`, error);
+                }
             }
         } catch (error: unknown) {
             if (error instanceof SignatureVerificationError) {

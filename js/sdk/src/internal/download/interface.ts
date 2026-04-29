@@ -1,6 +1,6 @@
 import { PrivateKey, PublicKey, SessionKey } from '../../crypto';
 import { IntegrityError } from '../../errors';
-import { NodeType, Result, MissingNode, MetricVolumeType } from '../../interface';
+import { MetricVolumeType, MissingNode, NodeType, Result } from '../../interface';
 import { DecryptedNode, DecryptedRevision } from '../nodes';
 
 export type BlockMetadata = {

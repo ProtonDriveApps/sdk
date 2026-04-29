@@ -1,13 +1,13 @@
 import { c } from 'ttag';
 
-import { MaybeBookmark, ProtonInvitationWithNode, resultError, resultOk } from '../../interface';
 import { ValidationError } from '../../errors';
-import { DecryptedNode } from '../nodes';
+import { MaybeBookmark, ProtonInvitationWithNode, resultError, resultOk } from '../../interface';
 import { BatchLoading } from '../batchLoading';
+import { DecryptedNode } from '../nodes';
 import { SharingAPIService } from './apiService';
 import { SharingCache } from './cache';
 import { SharingCryptoService } from './cryptoService';
-import { SharesService, NodesService } from './interface';
+import { NodesService, SharesService } from './interface';
 
 // This is the number of nodes that are loaded in parallel.
 // It is a trade-off between initial wait time and overhead of API calls.

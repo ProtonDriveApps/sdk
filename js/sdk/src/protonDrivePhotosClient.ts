@@ -1,28 +1,45 @@
-import {
-    Logger,
-    ProtonDriveClientContructorParameters,
-    NodeOrUid,
-    MaybeMissingPhotoNode,
-    UploadMetadata,
-    FileDownloader,
-    FileUploader,
-    SDKEvent,
-    MaybePhotoNode,
-    ThumbnailType,
-    ThumbnailResult,
-    ShareNodeSettings,
-    ShareResult,
-    UnshareNodeSettings,
-    ProtonInvitation,
-    ProtonInvitationOrUid,
-    NonProtonInvitationOrUid,
-    ProtonInvitationWithNode,
-    NodeResult,
-    NodeResultWithError,
-    PhotoTag,
-} from './interface';
 import { getConfig } from './config';
 import { DriveCrypto } from './crypto';
+import { NullFeatureFlagProvider } from './featureFlags';
+import {
+    FileDownloader,
+    FileUploader,
+    Logger,
+    MaybeMissingPhotoNode,
+    MaybePhotoNode,
+    NodeOrUid,
+    NodeResult,
+    NodeResultWithError,
+    NonProtonInvitationOrUid,
+    PhotoTag,
+    ProtonDriveClientContructorParameters,
+    ProtonInvitation,
+    ProtonInvitationOrUid,
+    ProtonInvitationWithNode,
+    SDKEvent,
+    ShareNodeSettings,
+    ShareResult,
+    ThumbnailResult,
+    ThumbnailType,
+    UnshareNodeSettings,
+    UploadMetadata,
+} from './interface';
+import { DriveAPIService } from './internal/apiService';
+import { initDownloadModule } from './internal/download';
+import { DriveEventsService, DriveListener, EventSubscription } from './internal/events';
+import {
+    AlbumItem,
+    initPhotoSharesModule,
+    initPhotosModule,
+    initPhotosNodesModule,
+    initPhotoUploadModule,
+    PHOTOS_SHARE_TARGET_TYPES,
+    TimelineItem,
+} from './internal/photos';
+import { SDKEvents } from './internal/sdkEvents';
+import { initSharesModule } from './internal/shares';
+import { initSharingModule } from './internal/sharing';
+import { makeNodeUid } from './internal/uids';
 import { Telemetry } from './telemetry';
 import {
     convertInternalMissingPhotoNodeIterator,
@@ -32,23 +49,6 @@ import {
     getUid,
     getUids,
 } from './transformers';
-import { DriveAPIService } from './internal/apiService';
-import { makeNodeUid } from './internal/uids';
-import { initDownloadModule } from './internal/download';
-import { DriveEventsService, DriveListener, EventSubscription } from './internal/events';
-import {
-    PHOTOS_SHARE_TARGET_TYPES,
-    initPhotosModule,
-    initPhotoSharesModule,
-    initPhotoUploadModule,
-    initPhotosNodesModule,
-    AlbumItem,
-    TimelineItem,
-} from './internal/photos';
-import { SDKEvents } from './internal/sdkEvents';
-import { initSharesModule } from './internal/shares';
-import { initSharingModule } from './internal/sharing';
-import { NullFeatureFlagProvider } from './featureFlags';
 
 /**
  * ProtonDrivePhotosClient is the interface to access Photos functionality.

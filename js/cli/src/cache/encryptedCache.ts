@@ -1,6 +1,6 @@
 import { Logger } from '@protontech/drive-sdk';
 
-import { encryptCacheValue, decryptCacheValue } from './crypto';
+import { decryptCacheValue, encryptCacheValue } from './crypto';
 import { SQLiteEntititesCache } from './sqliteCache';
 
 /**

@@ -5,9 +5,9 @@ import { InitConfig } from '../config';
 import { init } from '../init';
 import { CommandError } from './errors';
 import { Command } from './interface';
-import { ReplUnclosedQuoteError, splitQuotedLine } from './splitQuotedLine';
 import { question } from './readline';
 import { runCommand } from './run';
+import { ReplUnclosedQuoteError, splitQuotedLine } from './splitQuotedLine';
 
 export async function startRepl(commands: Command[], initOptions: InitConfig): Promise<void> {
     const session = await init(initOptions);

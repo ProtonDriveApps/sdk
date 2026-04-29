@@ -1,8 +1,8 @@
 import { getMockLogger } from '../../tests/logger';
 import { DriveEvent, DriveEventType } from '../events';
+import { NodesCache } from './cache';
 import { NodesEventsHandler } from './events';
 import { DecryptedNode } from './interface';
-import { NodesCache } from './cache';
 
 describe('NodesEventsHandler', () => {
     const logger = getMockLogger();

@@ -1,3 +1,5 @@
+import { importKey as importHmacKey, signData as computeHmacSignature } from '@protontech/crypto/subtle/hmac.ts';
+
 import { ProtonDriveTelemetry } from '../interface';
 import {
     OpenPGPCrypto,
@@ -8,9 +10,6 @@ import {
     SRPVerifier,
     VERIFICATION_STATUS,
 } from './interface';
-import { uint8ArrayToBase64String, base64StringToUint8Array } from './utils';
-// TODO: Switch to CryptoProxy module once available.
-import { importHmacKey, computeHmacSignature } from './hmac';
 
 enum SIGNING_CONTEXTS {
     SHARING_INVITER = 'drive.share-member.inviter',
@@ -138,7 +137,7 @@ export class DriveCrypto {
         return {
             encrypted: {
                 contentKeyPacket: keyPacket,
-                base64ContentKeyPacket: uint8ArrayToBase64String(keyPacket),
+                base64ContentKeyPacket: keyPacket.toBase64(),
                 armoredContentKeyPacketSignature,
             },
             decrypted: {
@@ -244,25 +243,41 @@ export class DriveCrypto {
     }> {
         const { keyPacket } = await this.openPGPCrypto.encryptSessionKey(sessionKey, [encryptionKey]);
         return {
-            base64KeyPacket: uint8ArrayToBase64String(keyPacket),
+            base64KeyPacket: keyPacket.toBase64(),
+        };
+    }
+
+    private async computeSrpKeySaltAndPassphrase(password: string) {
+        if (!password) {
+            throw new Error('Password required.');
+        }
+
+        const base64Salt = this.srpModule.generateKeySalt();
+        const saltedPassphrase = await this.srpModule.computeKeyPassword(password, base64Salt);
+
+        return {
+            base64Salt,
+            saltedPassphrase,
         };
     }
 
     /**
      * It encrypts password with provided address key that can be used to
      * manage the public link, encrypts share passphrase session key using
-     * provided bcrypt passphrase and generates SRP verifier.
+     * the srp-compatible salted passphrase and generates the corresponding SRP verifier.
      */
     async encryptPublicLinkPasswordAndSessionKey(
         password: string,
         addressKey: PrivateKey,
-        bcryptPassphrase: string,
         sharePassphraseSessionKey: SessionKey,
     ): Promise<{
         armoredPassword: string;
         base64SharePassphraseKeyPacket: string;
+        base64SharePasswordSalt: string;
         srp: SRPVerifier;
     }> {
+        const { saltedPassphrase, base64Salt: base64SharePasswordSalt } =
+            await this.computeSrpKeySaltAndPassphrase(password);
         const [{ armoredData: armoredPassword }, { keyPacket }, srp] = await Promise.all([
             this.openPGPCrypto.encryptArmored(
                 new TextEncoder().encode(password),
@@ -271,22 +286,23 @@ export class DriveCrypto {
                 // See note in the interface documentation about AEAD encryption.
                 { enableAeadWithEncryptionKeys: false },
             ),
-            this.openPGPCrypto.encryptSessionKeyWithPassword(sharePassphraseSessionKey, bcryptPassphrase),
+            this.openPGPCrypto.encryptSessionKeyWithPassword(sharePassphraseSessionKey, saltedPassphrase),
             this.srpModule.getSrpVerifier(password),
         ]);
 
         return {
             armoredPassword,
-            base64SharePassphraseKeyPacket: uint8ArrayToBase64String(keyPacket),
+            base64SharePassphraseKeyPacket: keyPacket.toBase64(),
+            base64SharePasswordSalt,
             srp,
         };
     }
 
     /**
-     * It decrypts the key using the password via SRP protocol.
+     * It decrypts the key using the password that was verified via SRP protocol.
      *
-     * The function follows the same functionality as `decryptKey` but uses SRP
-     * protocol to decrypt the passphrase of the key. It is used for saved
+     * The function follows the same functionality as `decryptKey` but it uses the password
+     * that was used for authentication via SRP protocol to decrypt the passphrase of the key. It is used for saved
      * public links where user saved the link with password and is not direct
      * member of the share.
      */
@@ -329,7 +345,7 @@ export class DriveCrypto {
         verified?: VERIFICATION_STATUS;
         verificationErrors?: Error[];
     }> {
-        const data = base64StringToUint8Array(base64data);
+        const data = Uint8Array.fromBase64(base64data);
 
         const sessionKey = await this.openPGPCrypto.decryptSessionKey(data, decryptionKeys);
 
@@ -424,7 +440,7 @@ export class DriveCrypto {
         const key = await importHmacKey(parentHashKey);
 
         const signature = await computeHmacSignature(key, new TextEncoder().encode(newName));
-        return arrayToHexString(signature);
+        return signature.toHex();
     }
 
     /**
@@ -585,8 +601,8 @@ export class DriveCrypto {
             SIGNING_CONTEXTS.SHARING_INVITER,
         );
         return {
-            base64KeyPacket: uint8ArrayToBase64String(keyPacket),
-            base64KeyPacketSignature: uint8ArrayToBase64String(keyPacketSignature),
+            base64KeyPacket: keyPacket.toBase64(),
+            base64KeyPacketSignature: keyPacketSignature.toBase64(),
         };
     }
 
@@ -599,7 +615,7 @@ export class DriveCrypto {
         verificationErrors?: Error[];
     }> {
         const { verified, verificationErrors } = await this.openPGPCrypto.verifyArmored(
-            base64StringToUint8Array(base64KeyPacket),
+            Uint8Array.fromBase64(base64KeyPacket),
             armoredKeyPacketSignature,
             verificationKeys,
             SIGNING_CONTEXTS.SHARING_INVITER,
@@ -614,7 +630,7 @@ export class DriveCrypto {
         base64SessionKeySignature: string;
     }> {
         const sessionKey = await this.openPGPCrypto.decryptSessionKey(
-            base64StringToUint8Array(base64KeyPacket),
+            Uint8Array.fromBase64(base64KeyPacket),
             signingKey,
         );
 
@@ -625,7 +641,7 @@ export class DriveCrypto {
         );
 
         return {
-            base64SessionKeySignature: uint8ArrayToBase64String(signature),
+            base64SessionKeySignature: signature.toBase64(),
         };
     }
 
@@ -636,7 +652,7 @@ export class DriveCrypto {
     ): Promise<{
         base64ExternalInvitationSignature: string;
     }> {
-        const data = inviteeEmail.concat('|').concat(uint8ArrayToBase64String(shareSessionKey.data));
+        const data = inviteeEmail.concat('|').concat(shareSessionKey.data.toBase64());
 
         const { signature: externalInviationSignature } = await this.openPGPCrypto.sign(
             new TextEncoder().encode(data),
@@ -644,7 +660,7 @@ export class DriveCrypto {
             SIGNING_CONTEXTS.SHARING_INVITER_EXTERNAL_INVITATION,
         );
         return {
-            base64ExternalInvitationSignature: uint8ArrayToBase64String(externalInviationSignature),
+            base64ExternalInvitationSignature: externalInviationSignature.toBase64(),
         };
     }
 
@@ -807,17 +823,3 @@ export class DriveCrypto {
 export function uint8ArrayToUtf8(input: Uint8Array<ArrayBuffer>): string {
     return new TextDecoder('utf-8', { fatal: true }).decode(input);
 }
-
-/**
- * Convert an array of 8-bit integers to a hex string
- * @param bytes - Array of 8-bit integers to convert
- * @returns Hexadecimal representation of the array
- */
-export const arrayToHexString = (bytes: Uint8Array<ArrayBuffer>) => {
-    const hexAlphabet = '0123456789abcdef';
-    let s = '';
-    bytes.forEach((v) => {
-        s += hexAlphabet[v >> 4] + hexAlphabet[v & 15];
-    });
-    return s;
-};

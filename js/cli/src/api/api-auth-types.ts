@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    '/auth/{_version}/devices/{deviceId}': {
+    "/auth/{_version}/devices/{deviceId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -13,14 +13,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations['post_auth-{_version}-devices-{deviceId}'];
-        delete: operations['delete_auth-{_version}-devices-{deviceId}'];
+        post: operations["post_auth-{_version}-devices-{deviceId}"];
+        delete: operations["delete_auth-{_version}-devices-{deviceId}"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/devices/{deviceId}/associate': {
+    "/auth/{_version}/devices/{deviceId}/associate": {
         parameters: {
             query?: never;
             header?: never;
@@ -29,30 +29,30 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations['post_auth-{_version}-devices-{deviceId}-associate'];
+        post: operations["post_auth-{_version}-devices-{deviceId}-associate"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/devices': {
+    "/auth/{_version}/devices": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations['get_auth-{_version}-devices'];
+        get: operations["get_auth-{_version}-devices"];
         put?: never;
-        post: operations['post_auth-{_version}-devices'];
-        delete: operations['delete_auth-{_version}-devices'];
+        post: operations["post_auth-{_version}-devices"];
+        delete: operations["delete_auth-{_version}-devices"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/devices/{deviceId}/admin': {
+    "/auth/{_version}/devices/{deviceId}/admin": {
         parameters: {
             query?: never;
             header?: never;
@@ -60,7 +60,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations['put_auth-{_version}-devices-{deviceId}-admin'];
+        put: operations["put_auth-{_version}-devices-{deviceId}-admin"];
         post?: never;
         delete?: never;
         options?: never;
@@ -68,7 +68,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/devices/{deviceId}/reject': {
+    "/auth/{_version}/devices/{deviceId}/reject": {
         parameters: {
             query?: never;
             header?: never;
@@ -76,7 +76,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations['put_auth-{_version}-devices-{deviceId}-reject'];
+        put: operations["put_auth-{_version}-devices-{deviceId}-reject"];
         post?: never;
         delete?: never;
         options?: never;
@@ -84,14 +84,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/sessions/uuid': {
+    "/auth/{_version}/sessions/uuid": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations['get_auth-{_version}-sessions-uuid'];
+        get: operations["get_auth-{_version}-sessions-uuid"];
         put?: never;
         post?: never;
         delete?: never;
@@ -100,23 +100,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/sessions/forks': {
+    "/auth/{_version}/sessions/forks": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations['get_auth-{_version}-sessions-forks'];
+        get: operations["get_auth-{_version}-sessions-forks"];
         put?: never;
-        post: operations['post_auth-{_version}-sessions-forks'];
+        post: operations["post_auth-{_version}-sessions-forks"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/sessions/forks/{selector}': {
+    "/auth/{_version}/sessions/forks/{selector}": {
         parameters: {
             query?: never;
             header?: never;
@@ -127,20 +127,20 @@ export interface paths {
          * Get a forked session.
          * @description Obtains a child session, and can only be used once per parent fork call
          */
-        get: operations['get_auth-{_version}-sessions-forks-{selector}'];
+        get: operations["get_auth-{_version}-sessions-forks-{selector}"];
         put?: never;
         post?: never;
         /**
          * Invalidate the selector.
          * @description Invalidates the forking selector, without forking the session.
          */
-        delete: operations['delete_auth-{_version}-sessions-forks-{selector}'];
+        delete: operations["delete_auth-{_version}-sessions-forks-{selector}"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/sessions': {
+    "/auth/{_version}/sessions": {
         parameters: {
             query?: never;
             header?: never;
@@ -148,18 +148,18 @@ export interface paths {
             cookie?: never;
         };
         /** Get active sessions. */
-        get: operations['get_auth-{_version}-sessions'];
+        get: operations["get_auth-{_version}-sessions"];
         put?: never;
         /** Issues a new session (and related UID) */
-        post: operations['post_auth-{_version}-sessions'];
+        post: operations["post_auth-{_version}-sessions"];
         /** Revoke all other access tokens, locked. */
-        delete: operations['delete_auth-{_version}-sessions'];
+        delete: operations["delete_auth-{_version}-sessions"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/sessions/payload': {
+    "/auth/{_version}/sessions/payload": {
         parameters: {
             query?: never;
             header?: never;
@@ -173,14 +173,14 @@ export interface paths {
          * @description Most clients should submit fingerprints synchronously during session creation.
          *     Used by web client, b/c we don't want to slow down loading of the app by fingerprinting.
          */
-        post: operations['post_auth-{_version}-sessions-payload'];
+        post: operations["post_auth-{_version}-sessions-payload"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/sessions/{uid}': {
+    "/auth/{_version}/sessions/{uid}": {
         parameters: {
             query?: never;
             header?: never;
@@ -191,13 +191,13 @@ export interface paths {
         put?: never;
         post?: never;
         /** Revoke a session by UID, locked. */
-        delete: operations['delete_auth-{_version}-sessions-{uid}'];
+        delete: operations["delete_auth-{_version}-sessions-{uid}"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/sessions/local/key': {
+    "/auth/{_version}/sessions/local/key": {
         parameters: {
             query?: never;
             header?: never;
@@ -208,9 +208,9 @@ export interface paths {
          * Get the local storage key.
          * @description Use to encrypt the local storage data
          */
-        get: operations['get_auth-{_version}-sessions-local-key'];
+        get: operations["get_auth-{_version}-sessions-local-key"];
         /** Set or Update the local storage key. */
-        put: operations['put_auth-{_version}-sessions-local-key'];
+        put: operations["put_auth-{_version}-sessions-local-key"];
         post?: never;
         delete?: never;
         options?: never;
@@ -218,7 +218,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/sessions/local': {
+    "/auth/{_version}/sessions/local": {
         parameters: {
             query?: never;
             header?: never;
@@ -232,7 +232,7 @@ export interface paths {
          *     - The session does not require cookies;
          *     - The client provides a valid access cookie for it (expired is also OK).
          */
-        get: operations['get_auth-{_version}-sessions-local'];
+        get: operations["get_auth-{_version}-sessions-local"];
         put?: never;
         post?: never;
         delete?: never;
@@ -241,7 +241,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/mnemonic/validate': {
+    "/auth/{_version}/mnemonic/validate": {
         parameters: {
             query?: never;
             header?: never;
@@ -249,23 +249,23 @@ export interface paths {
             cookie?: never;
         };
         /** Validate mnemonic */
-        get: operations['get_auth-{_version}-mnemonic-validate'];
+        get: operations["get_auth-{_version}-mnemonic-validate"];
         /** Validate mnemonic */
-        put: operations['put_auth-{_version}-mnemonic-validate'];
+        put: operations["put_auth-{_version}-mnemonic-validate"];
         /** Validate mnemonic */
-        post: operations['post_auth-{_version}-mnemonic-validate'];
+        post: operations["post_auth-{_version}-mnemonic-validate"];
         /** Validate mnemonic */
-        delete: operations['delete_auth-{_version}-mnemonic-validate'];
+        delete: operations["delete_auth-{_version}-mnemonic-validate"];
         /** Validate mnemonic */
-        options: operations['options_auth-{_version}-mnemonic-validate'];
+        options: operations["options_auth-{_version}-mnemonic-validate"];
         /** Validate mnemonic */
-        head: operations['head_auth-{_version}-mnemonic-validate'];
+        head: operations["head_auth-{_version}-mnemonic-validate"];
         /** Validate mnemonic */
-        patch: operations['patch_auth-{_version}-mnemonic-validate'];
+        patch: operations["patch_auth-{_version}-mnemonic-validate"];
         /** Validate mnemonic */
-        trace: operations['trace_auth-{_version}-mnemonic-validate'];
+        trace: operations["trace_auth-{_version}-mnemonic-validate"];
     };
-    '/auth/{_version}/info': {
+    "/auth/{_version}/info": {
         parameters: {
             query?: never;
             header?: never;
@@ -275,14 +275,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Set up SRP authentication request. */
-        post: operations['post_auth-{_version}-info'];
+        post: operations["post_auth-{_version}-info"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/sso/{token}': {
+    "/auth/{_version}/sso/{token}": {
         parameters: {
             query?: never;
             header?: never;
@@ -290,7 +290,7 @@ export interface paths {
             cookie?: never;
         };
         /** Initiate SSO flow using token from POST /auth/info */
-        get: operations['get_auth-{_version}-sso-{token}'];
+        get: operations["get_auth-{_version}-sso-{token}"];
         put?: never;
         post?: never;
         delete?: never;
@@ -299,7 +299,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/saml': {
+    "/auth/{_version}/saml": {
         parameters: {
             query?: never;
             header?: never;
@@ -309,14 +309,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** HTTP-POST binding for SAML authentication. Only to be called by an IdP. */
-        post: operations['post_auth-{_version}-saml'];
+        post: operations["post_auth-{_version}-saml"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}': {
+    "/auth/{_version}": {
         parameters: {
             query?: never;
             header?: never;
@@ -326,15 +326,15 @@ export interface paths {
         get?: never;
         put?: never;
         /** Authenticate. */
-        post: operations['post_auth-{_version}'];
+        post: operations["post_auth-{_version}"];
         /** Revoke a token. */
-        delete: operations['delete_auth-{_version}'];
+        delete: operations["delete_auth-{_version}"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/jwt': {
+    "/auth/{_version}/jwt": {
         parameters: {
             query?: never;
             header?: never;
@@ -344,14 +344,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Authenticate using pre-issued JWT. */
-        post: operations['post_auth-{_version}-jwt'];
+        post: operations["post_auth-{_version}-jwt"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/2fa': {
+    "/auth/{_version}/2fa": {
         parameters: {
             query?: never;
             header?: never;
@@ -361,14 +361,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Submit second factor. */
-        post: operations['post_auth-{_version}-2fa'];
+        post: operations["post_auth-{_version}-2fa"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/modulus': {
+    "/auth/{_version}/modulus": {
         parameters: {
             query?: never;
             header?: never;
@@ -376,7 +376,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get random SRP modulus. */
-        get: operations['get_auth-{_version}-modulus'];
+        get: operations["get_auth-{_version}-modulus"];
         put?: never;
         post?: never;
         delete?: never;
@@ -385,7 +385,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/scopes': {
+    "/auth/{_version}/scopes": {
         parameters: {
             query?: never;
             header?: never;
@@ -396,7 +396,7 @@ export interface paths {
          * Get the current user scopes.
          * @description Note that the bitmap of scopes is a string to avoid truncations of big numbers.
          */
-        get: operations['get_auth-{_version}-scopes'];
+        get: operations["get_auth-{_version}-scopes"];
         put?: never;
         post?: never;
         delete?: never;
@@ -405,7 +405,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/refresh': {
+    "/auth/{_version}/refresh": {
         parameters: {
             query?: never;
             header?: never;
@@ -429,14 +429,14 @@ export interface paths {
          *     }
          *     ```
          */
-        post: operations['post_auth-{_version}-refresh'];
+        post: operations["post_auth-{_version}-refresh"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/cookies': {
+    "/auth/{_version}/cookies": {
         parameters: {
             query?: never;
             header?: never;
@@ -451,14 +451,14 @@ export interface paths {
          *     For non-persistent sessions cookie expiration is set to 0 and the client should garbage collect them at the end
          *     of the session.
          */
-        post: operations['post_auth-{_version}-cookies'];
+        post: operations["post_auth-{_version}-cookies"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/credentialless': {
+    "/auth/{_version}/credentialless": {
         parameters: {
             query?: never;
             header?: never;
@@ -468,14 +468,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Create and authenticate a credential-less user. */
-        post: operations['post_auth-{_version}-credentialless'];
+        post: operations["post_auth-{_version}-credentialless"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/mnemonic/info': {
+    "/auth/{_version}/mnemonic/info": {
         parameters: {
             query?: never;
             header?: never;
@@ -485,14 +485,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Set up Mnemonic SRP authentication request. */
-        post: operations['post_auth-{_version}-mnemonic-info'];
+        post: operations["post_auth-{_version}-mnemonic-info"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/mnemonic': {
+    "/auth/{_version}/mnemonic": {
         parameters: {
             query?: never;
             header?: never;
@@ -502,14 +502,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Authenticate with mnemonic. */
-        post: operations['post_auth-{_version}-mnemonic'];
+        post: operations["post_auth-{_version}-mnemonic"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    '/auth/{_version}/mnemonic/reauth': {
+    "/auth/{_version}/mnemonic/reauth": {
         parameters: {
             query?: never;
             header?: never;
@@ -519,7 +519,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Re-authenticate with mnemonic and add Password scope to the session if the authentication is successful. */
-        post: operations['post_auth-{_version}-mnemonic-reauth'];
+        post: operations["post_auth-{_version}-mnemonic-reauth"];
         delete?: never;
         options?: never;
         head?: never;
@@ -536,7 +536,7 @@ export interface components {
          */
         ResponseCodeSuccess: 1000;
         ProtonSuccess: {
-            Code: components['schemas']['ResponseCodeSuccess'];
+            Code: components["schemas"]["ResponseCodeSuccess"];
         };
         ProtonError: {
             /** ErrorCode */
@@ -561,7 +561,7 @@ export interface components {
             DownloadTokenExpirationTimeInSec?: 1800;
         };
         ActivateAuthDeviceInput: {
-            EncryptedSecret: components['schemas']['BinaryString'];
+            EncryptedSecret: components["schemas"]["BinaryString"];
         };
         /** @description An encrypted ID */
         Id: string;
@@ -571,7 +571,7 @@ export interface components {
         };
         CreateAuthDeviceInput: {
             /** @description Optional. If the user is already set-up, a 32-byte random token encoded as base64 and encrypted to the primary address key */
-            ActivationToken?: components['schemas']['PGPMessage'] | null;
+            ActivationToken?: components["schemas"]["PGPMessage"] | null;
             /**
              * @description User-facing device name
              * @example Fairphone 4
@@ -583,7 +583,7 @@ export interface components {
             Payload?: string | null;
             /** @description Expected ClientID of the child */
             ChildClientID: string;
-            Independent: components['schemas']['BoolInt'];
+            Independent: components["schemas"]["BoolInt"];
             /** @description 8-char-base32-crockford */
             UserCode?: string | null;
         };
@@ -600,34 +600,34 @@ export interface components {
                  * Format: base64
                  * @example ++3dreJ+cHBSeEXvkxjLCRrf1...
                  */
-                'random-id-1'?: string;
+                "random-id-1"?: string;
                 /**
                  * Format: base64
                  * @example Xv5df3dreJ+cHBvkxjSeEXvkx...
                  */
-                'random-id-2'?: string;
+                "random-id-2"?: string;
                 /**
                  * Format: base64
                  * @example <base64_encoded_android_attestation_token>
                  */
-                'random-id-3'?: string;
+                "random-id-3"?: string;
                 /**
                  * Format: base64
                  * @example <base64_encoded_ios_device_check_token>
                  */
-                'random-id-4'?: string;
+                "random-id-4"?: string;
             };
         };
         AssociateAuthDeviceOutput: {
-            ID: components['schemas']['Id'];
-            EncryptedSecret: components['schemas']['BinaryString2'];
+            ID: components["schemas"]["Id"];
+            EncryptedSecret: components["schemas"]["BinaryString2"];
         };
         AuthDeviceOutput: {
-            ID: components['schemas']['Id'];
-            State: components['schemas']['AuthDeviceState'];
+            ID: components["schemas"]["Id"];
+            State: components["schemas"]["AuthDeviceState"];
             /** @description The device name */
             Name: string;
-            LocalizedClientName: components['schemas']['TranslatedStringInterface'];
+            LocalizedClientName: components["schemas"]["TranslatedStringInterface"];
             /** @description The device platform */
             Platform?: string | null;
             /**
@@ -651,9 +651,9 @@ export interface components {
              */
             LastActivityTime: string;
             /** @description PGP message encrypted to the AddressID containing a 64-char random hex-encoded token */
-            ActivationToken?: components['schemas']['PGPMessage2'] | null;
-            ActivationAddressID?: components['schemas']['Id'] | null;
-            MemberID?: components['schemas']['Id'] | null;
+            ActivationToken?: components["schemas"]["PGPMessage2"] | null;
+            ActivationAddressID?: components["schemas"]["Id"] | null;
+            MemberID?: components["schemas"]["Id"] | null;
             /**
              * @description DeviceToken of the created device
              * @example wfih0367aa7dc0359bf5c42d15a93e6c
@@ -760,22 +760,22 @@ export interface components {
                  * Format: base64
                  * @example ++3dreJ+cHBSeEXvkxjLCRrf1...
                  */
-                'random-id-1'?: string;
+                "random-id-1"?: string;
                 /**
                  * Format: base64
                  * @example Xv5df3dreJ+cHBvkxjSeEXvkx...
                  */
-                'random-id-2'?: string;
+                "random-id-2"?: string;
                 /**
                  * Format: base64
                  * @example <base64_encoded_android_attestation_token>
                  */
-                'random-id-3'?: string;
+                "random-id-3"?: string;
                 /**
                  * Format: base64
                  * @example <base64_encoded_ios_device_check_token>
                  */
-                'random-id-4'?: string;
+                "random-id-4"?: string;
             };
             /**
              * @deprecated
@@ -821,11 +821,11 @@ export interface components {
         ProtonSuccessResponse: {
             headers: {
                 /** @description The same as the body code */
-                'X-Pm-Code'?: 1000;
+                "X-Pm-Code"?: 1000;
                 [name: string]: unknown;
             };
             content: {
-                'application/json': components['schemas']['ProtonSuccess'];
+                "application/json": components["schemas"]["ProtonSuccess"];
             };
         };
         /** @description General Error */
@@ -834,7 +834,7 @@ export interface components {
                 [name: string]: unknown;
             };
             content: {
-                'application/json': components['schemas']['ProtonError'];
+                "application/json": components["schemas"]["ProtonError"];
             };
         };
     };
@@ -845,7 +845,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    'post_auth-{_version}-devices-{deviceId}': {
+    "post_auth-{_version}-devices-{deviceId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -854,14 +854,14 @@ export interface operations {
                  * @description the device id
                  * @example ACXDmTaBub14w==
                  */
-                deviceId: components['schemas']['Id'];
+                deviceId: components["schemas"]["Id"];
                 _version: string;
             };
             cookie?: never;
         };
         requestBody?: {
             content: {
-                'application/json': components['schemas']['ActivateAuthDeviceInput'];
+                "application/json": components["schemas"]["ActivateAuthDeviceInput"];
             };
         };
         responses: {
@@ -871,20 +871,20 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                     };
                 };
             };
         };
     };
-    'delete_auth-{_version}-devices-{deviceId}': {
+    "delete_auth-{_version}-devices-{deviceId}": {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                deviceId: components['schemas']['Id'];
+                deviceId: components["schemas"]["Id"];
             };
             cookie?: never;
         };
@@ -896,14 +896,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                     };
                 };
             };
         };
     };
-    'post_auth-{_version}-devices-{deviceId}-associate': {
+    "post_auth-{_version}-devices-{deviceId}-associate": {
         parameters: {
             query?: never;
             header?: never;
@@ -912,14 +912,14 @@ export interface operations {
                  * @description the device id
                  * @example ACXDmTaBub14w==
                  */
-                deviceId: components['schemas']['Id'];
+                deviceId: components["schemas"]["Id"];
                 _version: string;
             };
             cookie?: never;
         };
         requestBody?: {
             content: {
-                'application/json': components['schemas']['AssociateAuthDeviceInput'];
+                "application/json": components["schemas"]["AssociateAuthDeviceInput"];
             };
         };
         responses: {
@@ -929,15 +929,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
-                        Device?: components['schemas']['AssociateAuthDeviceOutput'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                        Device?: components["schemas"]["AssociateAuthDeviceOutput"];
                     };
                 };
             };
         };
     };
-    'get_auth-{_version}-devices': {
+    "get_auth-{_version}-devices": {
         parameters: {
             query?: never;
             header?: never;
@@ -954,15 +954,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
-                        AuthDevices?: components['schemas']['AuthDeviceOutput'][];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                        AuthDevices?: components["schemas"]["AuthDeviceOutput"][];
                     };
                 };
             };
         };
     };
-    'post_auth-{_version}-devices': {
+    "post_auth-{_version}-devices": {
         parameters: {
             query?: never;
             header?: never;
@@ -973,7 +973,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': components['schemas']['CreateAuthDeviceInput'];
+                "application/json": components["schemas"]["CreateAuthDeviceInput"];
             };
         };
         responses: {
@@ -983,15 +983,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
-                        Device?: components['schemas']['AuthDeviceOutput'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                        Device?: components["schemas"]["AuthDeviceOutput"];
                     };
                 };
             };
         };
     };
-    'delete_auth-{_version}-devices': {
+    "delete_auth-{_version}-devices": {
         parameters: {
             query?: never;
             header?: never;
@@ -1008,20 +1008,20 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                     };
                 };
             };
         };
     };
-    'put_auth-{_version}-devices-{deviceId}-admin': {
+    "put_auth-{_version}-devices-{deviceId}-admin": {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 _version: string;
-                deviceId: components['schemas']['Id'];
+                deviceId: components["schemas"]["Id"];
             };
             cookie?: never;
         };
@@ -1033,14 +1033,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                     };
                 };
             };
         };
     };
-    'put_auth-{_version}-devices-{deviceId}-reject': {
+    "put_auth-{_version}-devices-{deviceId}-reject": {
         parameters: {
             query?: never;
             header?: never;
@@ -1049,7 +1049,7 @@ export interface operations {
                  * @description the device id
                  * @example ACXDmTaBub14w==
                  */
-                deviceId: components['schemas']['Id'];
+                deviceId: components["schemas"]["Id"];
                 _version: string;
             };
             cookie?: never;
@@ -1062,14 +1062,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                     };
                 };
             };
         };
     };
-    'get_auth-{_version}-sessions-uuid': {
+    "get_auth-{_version}-sessions-uuid": {
         parameters: {
             query?: never;
             header?: never;
@@ -1086,8 +1086,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /**
                          * @description Apple transaction UUID for the current user
                          * @example f81d4fae-7dec-11d0-a765-00a0c91e6bf6
@@ -1098,7 +1098,7 @@ export interface operations {
             };
         };
     };
-    'get_auth-{_version}-sessions-forks': {
+    "get_auth-{_version}-sessions-forks": {
         parameters: {
             query?: never;
             header?: never;
@@ -1117,7 +1117,7 @@ export interface operations {
             };
         };
     };
-    'post_auth-{_version}-sessions-forks': {
+    "post_auth-{_version}-sessions-forks": {
         parameters: {
             query?: never;
             header?: never;
@@ -1128,7 +1128,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': components['schemas']['PushForkSessionInput'];
+                "application/json": components["schemas"]["PushForkSessionInput"];
             };
         };
         responses: {
@@ -1138,8 +1138,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example random-string */
                         Selector?: string;
                     };
@@ -1147,7 +1147,7 @@ export interface operations {
             };
         };
     };
-    'get_auth-{_version}-sessions-forks-{selector}': {
+    "get_auth-{_version}-sessions-forks-{selector}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1165,8 +1165,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example base64-encrypted-payload */
                         Payload?: string;
                         /** @example 1 */
@@ -1197,7 +1197,7 @@ export interface operations {
             };
         };
     };
-    'delete_auth-{_version}-sessions-forks-{selector}': {
+    "delete_auth-{_version}-sessions-forks-{selector}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1215,8 +1215,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                     };
                 };
             };
@@ -1226,7 +1226,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
+                    "application/json": {
                         /** @example 2001 */
                         Code?: number;
                         /** @example Invalid selector */
@@ -1238,7 +1238,7 @@ export interface operations {
             };
         };
     };
-    'get_auth-{_version}-sessions': {
+    "get_auth-{_version}-sessions": {
         parameters: {
             query?: never;
             header?: never;
@@ -1255,9 +1255,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
-                        Sessions?: (components['schemas']['Session'] & {
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                        Sessions?: (components["schemas"]["Session"] & {
                             /**
                              * @deprecated
                              * @example gony7nIW...KkhhFxA==
@@ -1279,7 +1279,7 @@ export interface operations {
             };
         };
     };
-    'post_auth-{_version}-sessions': {
+    "post_auth-{_version}-sessions": {
         parameters: {
             query?: never;
             header?: never;
@@ -1290,7 +1290,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -1299,13 +1299,13 @@ export interface operations {
                     /** @description optional field, frontend fingerprints */
                     Payload?: {
                         /** @example ++3dreJ+cHBSeEXvkxjLCRrf1... */
-                        'random-id-1'?: string;
+                        "random-id-1"?: string;
                         /** @example Xv5df3dreJ+cHBvkxjSeEXvkx... */
-                        'random-id-2'?: string;
+                        "random-id-2"?: string;
                         /** @example <base64_encoded_android_attestation_token> */
-                        'random-id-3'?: string;
+                        "random-id-3"?: string;
                         /** @example <base64_encoded_ios_device_check_token> */
-                        'random-id-4'?: string;
+                        "random-id-4"?: string;
                     };
                 };
             };
@@ -1317,8 +1317,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example hnnamrzvsgdbxvx74rjadbovyjy63vz4 */
                         AccessToken?: string;
                         /** @example kafe30367aa7dc09bf5c48ghaza93e65 */
@@ -1334,7 +1334,7 @@ export interface operations {
             };
         };
     };
-    'delete_auth-{_version}-sessions': {
+    "delete_auth-{_version}-sessions": {
         parameters: {
             query?: never;
             header?: never;
@@ -1351,14 +1351,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                     };
                 };
             };
         };
     };
-    'post_auth-{_version}-sessions-payload': {
+    "post_auth-{_version}-sessions-payload": {
         parameters: {
             query?: never;
             header?: never;
@@ -1369,7 +1369,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -1378,13 +1378,13 @@ export interface operations {
                     /** @description optional field, frontend fingerprints */
                     Payload?: {
                         /** @example ++3dreJ+cHBSeEXvkxjLCRrf1... */
-                        'random-id-1'?: string;
+                        "random-id-1"?: string;
                         /** @example Xv5df3dreJ+cHBvkxjSeEXvkx... */
-                        'random-id-2'?: string;
+                        "random-id-2"?: string;
                         /** @example <base64_encoded_android_attestation_token> */
-                        'random-id-3'?: string;
+                        "random-id-3"?: string;
                         /** @example <base64_encoded_ios_device_check_token> */
-                        'random-id-4'?: string;
+                        "random-id-4"?: string;
                     };
                 };
             };
@@ -1396,14 +1396,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                     };
                 };
             };
         };
     };
-    'delete_auth-{_version}-sessions-{uid}': {
+    "delete_auth-{_version}-sessions-{uid}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1421,14 +1421,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                     };
                 };
             };
         };
     };
-    'get_auth-{_version}-sessions-local-key': {
+    "get_auth-{_version}-sessions-local-key": {
         parameters: {
             query?: never;
             header?: never;
@@ -1445,8 +1445,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example 32-byte-random-base64-encoded or null */
                         ClientKey?: string;
                     };
@@ -1454,7 +1454,7 @@ export interface operations {
             };
         };
     };
-    'put_auth-{_version}-sessions-local-key': {
+    "put_auth-{_version}-sessions-local-key": {
         parameters: {
             query?: never;
             header?: never;
@@ -1465,7 +1465,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /** @example 32-byte-base64-encrypted-key */
                     Key?: string;
                 };
@@ -1478,14 +1478,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                     };
                 };
             };
         };
     };
-    'get_auth-{_version}-sessions-local': {
+    "get_auth-{_version}-sessions-local": {
         parameters: {
             query?: {
                 /**
@@ -1508,8 +1508,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         Sessions?: {
                             /** @example null */
                             Username?: string;
@@ -1527,7 +1527,7 @@ export interface operations {
             };
         };
     };
-    'get_auth-{_version}-mnemonic-validate': {
+    "get_auth-{_version}-mnemonic-validate": {
         parameters: {
             query?: never;
             header?: never;
@@ -1538,7 +1538,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -1565,8 +1565,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example <base64_encoded_proof> */
                         ServerProof?: string;
                     };
@@ -1578,7 +1578,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
+                    "application/json": {
                         /** @example 8002 */
                         Code?: number;
                         /** @example Incorrect login credentials. Please try again. */
@@ -1588,7 +1588,7 @@ export interface operations {
             };
         };
     };
-    'put_auth-{_version}-mnemonic-validate': {
+    "put_auth-{_version}-mnemonic-validate": {
         parameters: {
             query?: never;
             header?: never;
@@ -1599,7 +1599,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -1626,8 +1626,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example <base64_encoded_proof> */
                         ServerProof?: string;
                     };
@@ -1639,7 +1639,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
+                    "application/json": {
                         /** @example 8002 */
                         Code?: number;
                         /** @example Incorrect login credentials. Please try again. */
@@ -1649,7 +1649,7 @@ export interface operations {
             };
         };
     };
-    'post_auth-{_version}-mnemonic-validate': {
+    "post_auth-{_version}-mnemonic-validate": {
         parameters: {
             query?: never;
             header?: never;
@@ -1660,7 +1660,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -1687,8 +1687,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example <base64_encoded_proof> */
                         ServerProof?: string;
                     };
@@ -1700,7 +1700,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
+                    "application/json": {
                         /** @example 8002 */
                         Code?: number;
                         /** @example Incorrect login credentials. Please try again. */
@@ -1710,7 +1710,7 @@ export interface operations {
             };
         };
     };
-    'delete_auth-{_version}-mnemonic-validate': {
+    "delete_auth-{_version}-mnemonic-validate": {
         parameters: {
             query?: never;
             header?: never;
@@ -1721,7 +1721,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -1748,8 +1748,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example <base64_encoded_proof> */
                         ServerProof?: string;
                     };
@@ -1761,7 +1761,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
+                    "application/json": {
                         /** @example 8002 */
                         Code?: number;
                         /** @example Incorrect login credentials. Please try again. */
@@ -1771,7 +1771,7 @@ export interface operations {
             };
         };
     };
-    'options_auth-{_version}-mnemonic-validate': {
+    "options_auth-{_version}-mnemonic-validate": {
         parameters: {
             query?: never;
             header?: never;
@@ -1782,7 +1782,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -1809,8 +1809,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example <base64_encoded_proof> */
                         ServerProof?: string;
                     };
@@ -1822,7 +1822,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
+                    "application/json": {
                         /** @example 8002 */
                         Code?: number;
                         /** @example Incorrect login credentials. Please try again. */
@@ -1832,7 +1832,7 @@ export interface operations {
             };
         };
     };
-    'head_auth-{_version}-mnemonic-validate': {
+    "head_auth-{_version}-mnemonic-validate": {
         parameters: {
             query?: never;
             header?: never;
@@ -1843,7 +1843,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -1870,8 +1870,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example <base64_encoded_proof> */
                         ServerProof?: string;
                     };
@@ -1883,7 +1883,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
+                    "application/json": {
                         /** @example 8002 */
                         Code?: number;
                         /** @example Incorrect login credentials. Please try again. */
@@ -1893,7 +1893,7 @@ export interface operations {
             };
         };
     };
-    'patch_auth-{_version}-mnemonic-validate': {
+    "patch_auth-{_version}-mnemonic-validate": {
         parameters: {
             query?: never;
             header?: never;
@@ -1904,7 +1904,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -1931,8 +1931,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example <base64_encoded_proof> */
                         ServerProof?: string;
                     };
@@ -1944,7 +1944,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
+                    "application/json": {
                         /** @example 8002 */
                         Code?: number;
                         /** @example Incorrect login credentials. Please try again. */
@@ -1954,7 +1954,7 @@ export interface operations {
             };
         };
     };
-    'trace_auth-{_version}-mnemonic-validate': {
+    "trace_auth-{_version}-mnemonic-validate": {
         parameters: {
             query?: never;
             header?: never;
@@ -1965,7 +1965,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -1992,8 +1992,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example <base64_encoded_proof> */
                         ServerProof?: string;
                     };
@@ -2005,7 +2005,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
+                    "application/json": {
                         /** @example 8002 */
                         Code?: number;
                         /** @example Incorrect login credentials. Please try again. */
@@ -2015,7 +2015,7 @@ export interface operations {
             };
         };
     };
-    'post_auth-{_version}-info': {
+    "post_auth-{_version}-info": {
         parameters: {
             query?: never;
             header?: never;
@@ -2026,7 +2026,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -2039,7 +2039,7 @@ export interface operations {
                      * @example auto
                      * @enum {string}
                      */
-                    Intent?: 'Proton' | 'SSO' | 'Auto';
+                    Intent?: "Proton" | "SSO" | "Auto";
                     /**
                      * @description optional field, to start a testing sso login flow
                      * @example true
@@ -2055,40 +2055,38 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json':
-                        | {
-                              /**
-                               * @description If Intent SSO or Auto, token to pass to GET /auth/sso/{token} for initiating the SSO flow
-                               * @example a5fd396fcbb
-                               */
-                              SSOChallengeToken?: string;
-                          }
-                        | {
-                              Code?: components['schemas']['ResponseCodeSuccess'];
-                              /** @example -----BEGIN PGP SIGNED MESSAGE-----*-----END SIGNATURE----- */
-                              Modulus?: string;
-                              /** @example <base64_encoded_server_ephemeral> */
-                              ServerEphemeral?: string;
-                              /** @example 4 */
-                              Version?: number;
-                              /** @example <base64_encoded_salt> */
-                              Salt?: string;
-                              /** @example <hex_encoded_session_key> */
-                              SRPSession?: string;
-                              /** @description Only if already authenticated (not on login) */
-                              '2FA'?: {
-                                  /**
-                                   * @description 0 for disabled, 1 for OTP, 2 for FIDO2, 3 for both
-                                   * @example 3
-                                   */
-                                  Enabled?: number;
-                                  FIDO2?: {
-                                      /** @description Refer to the definition of PublicKeyCredentialRequestOptions in the WebAuthn spec. Binary data is encoded as Uint8Array. */
-                                      AuthenticationOptions?: Record<string, never>;
-                                      RegisteredKeys?: components['schemas']['Fido2RegisteredKey'][];
-                                  };
-                              };
-                          };
+                    "application/json": {
+                        /**
+                         * @description If Intent SSO or Auto, token to pass to GET /auth/sso/{token} for initiating the SSO flow
+                         * @example a5fd396fcbb
+                         */
+                        SSOChallengeToken?: string;
+                    } | {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
+                        /** @example -----BEGIN PGP SIGNED MESSAGE-----*-----END SIGNATURE----- */
+                        Modulus?: string;
+                        /** @example <base64_encoded_server_ephemeral> */
+                        ServerEphemeral?: string;
+                        /** @example 4 */
+                        Version?: number;
+                        /** @example <base64_encoded_salt> */
+                        Salt?: string;
+                        /** @example <hex_encoded_session_key> */
+                        SRPSession?: string;
+                        /** @description Only if already authenticated (not on login) */
+                        "2FA"?: {
+                            /**
+                             * @description 0 for disabled, 1 for OTP, 2 for FIDO2, 3 for both
+                             * @example 3
+                             */
+                            Enabled?: number;
+                            FIDO2?: {
+                                /** @description Refer to the definition of PublicKeyCredentialRequestOptions in the WebAuthn spec. Binary data is encoded as Uint8Array. */
+                                AuthenticationOptions?: Record<string, never>;
+                                RegisteredKeys?: components["schemas"]["Fido2RegisteredKey"][];
+                            };
+                        };
+                    };
                 };
             };
             /** @description Bad Request */
@@ -2097,7 +2095,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
+                    "application/json": {
                         /**
                          * @description Session is not tied to a user and Username is null
                          * @enum {integer}
@@ -2116,45 +2114,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json':
-                        | {
-                              /**
-                               * @description User doesn't have SSO. Returned if Intent=SSO or Intent=Auto on backend's whim
-                               * @enum {integer}
-                               */
-                              Code?: 8101;
-                              /** @example Email domain not found, please sign in with a password */
-                              Error?: string;
-                              /** @description Empty */
-                              Details?: Record<string, never>;
-                          }
-                        | {
-                              /**
-                               * @description User has SSO. Returned if Intent=Proton or Intent=Auto on backend's whim
-                               * @enum {integer}
-                               */
-                              Code?: 8100;
-                              /** @example Email domain associated to an existing organization. Please sign in with SSO */
-                              Error?: string;
-                              /** @description Empty */
-                              Details?: Record<string, never>;
-                          }
-                        | {
-                              /**
-                               * @description Upgrade the app to call the endpoint this way
-                               * @enum {integer}
-                               */
-                              Code?: 5003;
-                              /** @example You need to update this app in order to perform this operation */
-                              Error?: string;
-                              /** @description Empty */
-                              Details?: Record<string, never>;
-                          };
+                    "application/json": {
+                        /**
+                         * @description User doesn't have SSO. Returned if Intent=SSO or Intent=Auto on backend's whim
+                         * @enum {integer}
+                         */
+                        Code?: 8101;
+                        /** @example Email domain not found, please sign in with a password */
+                        Error?: string;
+                        /** @description Empty */
+                        Details?: Record<string, never>;
+                    } | {
+                        /**
+                         * @description User has SSO. Returned if Intent=Proton or Intent=Auto on backend's whim
+                         * @enum {integer}
+                         */
+                        Code?: 8100;
+                        /** @example Email domain associated to an existing organization. Please sign in with SSO */
+                        Error?: string;
+                        /** @description Empty */
+                        Details?: Record<string, never>;
+                    } | {
+                        /**
+                         * @description Upgrade the app to call the endpoint this way
+                         * @enum {integer}
+                         */
+                        Code?: 5003;
+                        /** @example You need to update this app in order to perform this operation */
+                        Error?: string;
+                        /** @description Empty */
+                        Details?: Record<string, never>;
+                    };
                 };
             };
         };
     };
-    'get_auth-{_version}-sso-{token}': {
+    "get_auth-{_version}-sso-{token}": {
         parameters: {
             query?: {
                 FinalRedirectBaseUrl?: string | null;
@@ -2180,7 +2175,7 @@ export interface operations {
             };
         };
     };
-    'post_auth-{_version}-saml': {
+    "post_auth-{_version}-saml": {
         parameters: {
             query?: never;
             header?: never;
@@ -2191,7 +2186,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': components['schemas']['IdpResponseVO'];
+                "application/json": components["schemas"]["IdpResponseVO"];
             };
         };
         responses: {
@@ -2203,7 +2198,7 @@ export interface operations {
             };
         };
     };
-    'post_auth-{_version}': {
+    "post_auth-{_version}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2214,7 +2209,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': components['schemas']['AuthInput'];
+                "application/json": components["schemas"]["AuthInput"];
             };
         };
         responses: {
@@ -2224,8 +2219,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /**
                          * @description Session unique ID
                          * @example 6f3c4f52cf499c2066e6c5669a293177c1f43755
@@ -2273,7 +2268,7 @@ export interface operations {
                          * @example 0
                          */
                         TemporaryPassword?: number;
-                        '2FA'?: {
+                        "2FA"?: {
                             /**
                              * @description 0 for disabled, 1 for OTP, 2 for FIDO2, 3 for both
                              * @example 3
@@ -2282,7 +2277,7 @@ export interface operations {
                             FIDO2?: {
                                 /** @description Refer to the definition of PublicKeyCredentialRequestOptions in the WebAuthn spec. Binary data is encoded as Uint8Array. */
                                 AuthenticationOptions?: Record<string, never>;
-                                RegisteredKeys?: components['schemas']['Fido2RegisteredKey'][];
+                                RegisteredKeys?: components["schemas"]["Fido2RegisteredKey"][];
                             };
                         };
                     };
@@ -2290,7 +2285,7 @@ export interface operations {
             };
         };
     };
-    'delete_auth-{_version}': {
+    "delete_auth-{_version}": {
         parameters: {
             query?: {
                 /** @description if 1 log out this child only */
@@ -2312,14 +2307,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                     };
                 };
             };
         };
     };
-    'post_auth-{_version}-jwt': {
+    "post_auth-{_version}-jwt": {
         parameters: {
             query?: never;
             header?: never;
@@ -2330,7 +2325,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /** @example eyJhbGciOiJIUzI1Ni...yJV_adQssw5c */
                     Token?: string;
                     /**
@@ -2348,8 +2343,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example 3af9b9780014cacb4b72bc5c73c1d7c4bad6c1e3 */
                         AccessToken?: string;
                         /**
@@ -2374,7 +2369,7 @@ export interface operations {
             };
         };
     };
-    'post_auth-{_version}-2fa': {
+    "post_auth-{_version}-2fa": {
         parameters: {
             query?: never;
             header?: never;
@@ -2385,7 +2380,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description either this or the FIDO2 object
                      * @example 123456 or recovery code
@@ -2413,8 +2408,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /**
                          * @deprecated
                          * @example full <other_scopes>
@@ -2426,7 +2421,7 @@ export interface operations {
             };
         };
     };
-    'get_auth-{_version}-modulus': {
+    "get_auth-{_version}-modulus": {
         parameters: {
             query?: never;
             header?: never;
@@ -2443,8 +2438,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example -----BEGIN PGP SIGNED MESSAGE-----.*-----END PGP SIGNATURE----- */
                         Modulus?: string;
                         /** @example Oq_JB_IkrOx5WlpxzlRPocN3_NhJ80V7DGav77eRtSDkOtLxW2jfI3nUpEqANGpboOyN-GuzEFXadlpxgVp7_g== */
@@ -2454,7 +2449,7 @@ export interface operations {
             };
         };
     };
-    'get_auth-{_version}-scopes': {
+    "get_auth-{_version}-scopes": {
         parameters: {
             query?: never;
             header?: never;
@@ -2471,8 +2466,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /**
                          * @deprecated
                          * @example 217017207043915776
@@ -2484,7 +2479,7 @@ export interface operations {
             };
         };
     };
-    'post_auth-{_version}-refresh': {
+    "post_auth-{_version}-refresh": {
         parameters: {
             query?: never;
             header?: never;
@@ -2495,7 +2490,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /** @example token */
                     ResponseType?: string;
                     /** @example refresh_token */
@@ -2520,8 +2515,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example abcDecryptedTokenAndNoSaltAndNoPrivateKey123 */
                         AccessToken?: string;
                         /**
@@ -2553,7 +2548,7 @@ export interface operations {
             };
         };
     };
-    'post_auth-{_version}-cookies': {
+    "post_auth-{_version}-cookies": {
         parameters: {
             query?: never;
             header?: never;
@@ -2564,7 +2559,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /** @example token */
                     ResponseType?: string;
                     /** @example refresh_token */
@@ -2588,8 +2583,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example 6f3c4f52cf499c2066e6c5669a293177c1f43755 */
                         UID?: string;
                         /** @example 0 */
@@ -2604,7 +2599,7 @@ export interface operations {
             };
         };
     };
-    'post_auth-{_version}-credentialless': {
+    "post_auth-{_version}-credentialless": {
         parameters: {
             query?: never;
             header?: never;
@@ -2615,7 +2610,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': components['schemas']['CreateCredentiallessUserInput'];
+                "application/json": components["schemas"]["CreateCredentiallessUserInput"];
             };
         };
         responses: {
@@ -2625,12 +2620,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': components['schemas']['CreateCredentiallessUserOutput'];
+                    "application/json": components["schemas"]["CreateCredentiallessUserOutput"];
                 };
             };
         };
     };
-    'post_auth-{_version}-mnemonic-info': {
+    "post_auth-{_version}-mnemonic-info": {
         parameters: {
             query?: never;
             header?: never;
@@ -2641,7 +2636,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -2659,8 +2654,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example -----BEGIN PGP SIGNED MESSAGE-----*-----END SIGNATURE----- */
                         Modulus?: string;
                         /** @example <base64_encoded_server_ephemeral> */
@@ -2676,7 +2671,7 @@ export interface operations {
             };
         };
     };
-    'post_auth-{_version}-mnemonic': {
+    "post_auth-{_version}-mnemonic": {
         parameters: {
             query?: never;
             header?: never;
@@ -2687,7 +2682,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -2716,8 +2711,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /**
                          * @description only if the session is not in cookie mode
                          * @example hnnamrzvsgdbxvx74rjadbovyjy63vz4
@@ -2753,7 +2748,7 @@ export interface operations {
                         /** @example 2 */
                         PasswordMode?: number;
                         /** @description To notify the user if 2FA is being disabled */
-                        '2FA'?: {
+                        "2FA"?: {
                             /**
                              * @description 0 for disabled, 1 for OTP, 2 for FIDO2, 3 for both
                              * @example 3
@@ -2765,7 +2760,7 @@ export interface operations {
             };
         };
     };
-    'post_auth-{_version}-mnemonic-reauth': {
+    "post_auth-{_version}-mnemonic-reauth": {
         parameters: {
             query?: never;
             header?: never;
@@ -2776,7 +2771,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                'application/json': {
+                "application/json": {
                     /**
                      * @description Client-specific secret only necessary to access the admin panel
                      * @example demopass
@@ -2805,8 +2800,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
-                        Code?: components['schemas']['ResponseCodeSuccess'];
+                    "application/json": {
+                        Code?: components["schemas"]["ResponseCodeSuccess"];
                         /** @example <base64_encoded_proof> */
                         ServerProof?: string;
                     };
@@ -2818,7 +2813,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    'application/json': {
+                    "application/json": {
                         /** @example 8002 */
                         Code?: number;
                         /** @example Incorrect login credentials. Please try again. */

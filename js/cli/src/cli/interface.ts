@@ -1,8 +1,8 @@
 import { ParseArgsConfig } from 'util';
 
-import { ProtonDriveClient, Logger } from '@protontech/drive-sdk';
-import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
+import { Logger, ProtonDriveClient } from '@protontech/drive-sdk';
 import { Diagnostic } from '@protontech/drive-sdk/diagnostic';
+import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 
 import { Auth } from '../api';
 import { Paths } from './paths';

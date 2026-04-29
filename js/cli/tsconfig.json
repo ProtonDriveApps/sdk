@@ -6,7 +6,7 @@
         "forceConsistentCasingInFileNames": true,
         "incremental": true,
         "module": "esnext",
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "paths": {
             "@protontech/drive-sdk": ["../sdk/src/index.ts"],
             "@protontech/drive-sdk/*": ["../sdk/src/*"]
@@ -20,6 +20,8 @@
         "sourceMap": true,
         "outDir": "dist",
         "resolveJsonModule": true,
+        "allowImportingTsExtensions": true,
+        "rewriteRelativeImportExtensions": true,
         "types": [
             "bun",
             "jest"

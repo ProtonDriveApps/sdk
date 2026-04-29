@@ -1,6 +1,5 @@
 import { PrivateKey, SessionKey } from '../../crypto';
-
-import { MetricVolumeType, ThumbnailType, Result, Revision, AnonymousUser } from '../../interface';
+import { AnonymousUser, MetricVolumeType, Result, Revision, ThumbnailType } from '../../interface';
 import { DecryptedNode } from '../nodes';
 
 export type NodeRevisionDraft = {

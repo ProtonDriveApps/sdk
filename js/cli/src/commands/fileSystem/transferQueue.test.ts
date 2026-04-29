@@ -1,7 +1,7 @@
 import { Dirent } from 'node:fs';
 import path from 'node:path';
 
-import { ValidationError, NodeType, ProtonDriveClient, MaybeNode, MemberRole } from '@protontech/drive-sdk';
+import { MaybeNode, MemberRole, NodeType, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 import { getMockLogger } from '@protontech/drive-sdk/tests/logger';
 
 jest.mock('../../cli', () => jest.requireActual('../../cli/node'));
@@ -11,9 +11,9 @@ jest.mock('node:fs/promises', () => ({
     lstat: jest.fn(),
 }));
 
-import { readdir, lstat } from 'node:fs/promises';
+import { lstat, readdir } from 'node:fs/promises';
 
-import { MAX_CONCURRENT_ITEMS, UploadQueue, DownloadQueue, QueueItem } from './transferQueue';
+import { DownloadQueue, MAX_CONCURRENT_ITEMS, QueueItem, UploadQueue } from './transferQueue';
 
 const readdirMock = readdir as jest.MockedFunction<typeof readdir>;
 const lstatMock = lstat as jest.MockedFunction<typeof lstat>;

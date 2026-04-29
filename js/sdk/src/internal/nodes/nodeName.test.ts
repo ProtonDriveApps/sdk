@@ -1,4 +1,4 @@
-import { splitExtension, joinNameAndExtension } from './nodeName';
+import { joinNameAndExtension, splitExtension } from './nodeName';
 
 describe('nodeName', () => {
     describe('splitExtension', () => {

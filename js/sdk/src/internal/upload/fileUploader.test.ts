@@ -1,12 +1,12 @@
 import { Thumbnail, UploadMetadata } from '../../interface';
-import { FileUploader } from './fileUploader';
-import { UploadTelemetry } from './telemetry';
 import { UploadAPIService } from './apiService';
-import { UploadCryptoService } from './cryptoService';
-import { UploadController } from './controller';
 import { BlockVerifier } from './blockVerifier';
+import { UploadController } from './controller';
+import { UploadCryptoService } from './cryptoService';
+import { FileUploader } from './fileUploader';
 import { NodeRevisionDraft } from './interface';
 import { UploadManager } from './manager';
+import { UploadTelemetry } from './telemetry';
 
 const BLOCK_ENCRYPTION_OVERHEAD = 10000;
 

@@ -1,8 +1,8 @@
 import type { Stats } from 'node:fs';
-import { readdir, lstat } from 'node:fs/promises';
+import { lstat, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
-import { ValidationError, MaybeNode, NodeType, ProtonDriveClient, Logger } from '@protontech/drive-sdk';
+import { Logger, MaybeNode, NodeType, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 
 import { getName, getNode } from '../../cli';
 

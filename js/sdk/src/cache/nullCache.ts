@@ -1,4 +1,4 @@
-import type { ProtonDriveCache, EntityResult } from './interface';
+import type { EntityResult, ProtonDriveCache } from './interface';
 
 /**
  * Null cache implementation for Proton Drive SDK.

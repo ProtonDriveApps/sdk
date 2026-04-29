@@ -1,7 +1,7 @@
-import { NodeType, MemberRole, NonProtonInvitationState, MissingNode, ShareResult, PublicLink } from '../../interface';
 import { PrivateKey, SessionKey } from '../../crypto';
-import { EncryptedShare } from '../shares';
+import { MemberRole, MissingNode, NodeType, NonProtonInvitationState, PublicLink, ShareResult } from '../../interface';
 import { DecryptedNode } from '../nodes';
+import { EncryptedShare } from '../shares';
 
 export enum SharingType {
     SharedByMe = 'sharedByMe',

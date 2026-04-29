@@ -1,7 +1,7 @@
 import { MaybeNode, NodeType, Revision } from '../interface';
 import {
-    NodeDetails,
     ExpectedTreeNode,
+    NodeDetails,
 } from './interface';
 
 export function getNodeDetails(node: MaybeNode): NodeDetails {

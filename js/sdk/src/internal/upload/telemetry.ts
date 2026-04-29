@@ -1,8 +1,8 @@
-import { RateLimitedError, ValidationError, IntegrityError } from '../../errors';
-import { ProtonDriveTelemetry, MetricsUploadErrorType, Logger, MetricVolumeType } from '../../interface';
+import { IntegrityError, RateLimitedError, ValidationError } from '../../errors';
+import { Logger, MetricsUploadErrorType, MetricVolumeType, ProtonDriveTelemetry } from '../../interface';
 import { LoggerWithPrefix, reduceSizePrecision } from '../../telemetry';
 import { APIHTTPError } from '../apiService';
-import { splitNodeUid, splitNodeRevisionUid } from '../uids';
+import { splitNodeRevisionUid, splitNodeUid } from '../uids';
 import { SharesService } from './interface';
 
 export class UploadTelemetry {

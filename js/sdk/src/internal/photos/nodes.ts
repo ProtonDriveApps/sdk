@@ -2,14 +2,14 @@ import { PrivateKey } from '../../crypto';
 import { DecryptionError } from '../../errors';
 import { NodeType } from '../../interface';
 import { drivePaths } from '../apiService';
-import { NodeAPIServiceBase, linkToEncryptedNode, linkToEncryptedNodeBaseMetadata } from '../nodes/apiService';
-import { NodesCacheBase, serialiseNode, deserialiseNode } from '../nodes/cache';
+import { linkToEncryptedNode, linkToEncryptedNodeBaseMetadata, NodeAPIServiceBase } from '../nodes/apiService';
+import { deserialiseNode, NodesCacheBase, serialiseNode } from '../nodes/cache';
 import { NodesCryptoService } from '../nodes/cryptoService';
 import { DecryptedNodeKeys } from '../nodes/interface';
 import { NodesAccessBase, parseNode as parseNodeBase } from '../nodes/nodesAccess';
 import { NodesManagementBase } from '../nodes/nodesManagement';
 import { makeNodeUid } from '../uids';
-import { EncryptedPhotoNode, DecryptedPhotoNode, DecryptedUnparsedPhotoNode } from './interface';
+import { DecryptedPhotoNode, DecryptedUnparsedPhotoNode, EncryptedPhotoNode } from './interface';
 
 type PostLoadLinksMetadataRequest = Extract<
     drivePaths['/drive/photos/volumes/{volumeID}/links']['post']['requestBody'],

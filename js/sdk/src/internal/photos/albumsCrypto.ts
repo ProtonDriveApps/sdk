@@ -1,4 +1,5 @@
 import { c } from 'ttag';
+
 import { DriveCrypto, PrivateKey, SessionKey } from '../../crypto';
 import { ValidationError } from '../../errors';
 import { InvalidNameError, Result } from '../../interface';

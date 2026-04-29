@@ -1,15 +1,15 @@
-import { Logger, Thumbnail, ThumbnailType, UploadMetadata } from '../../interface';
 import { IntegrityError } from '../../errors';
+import { Logger, Thumbnail, ThumbnailType, UploadMetadata } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
 import { APIHTTPError, HTTPErrorCode } from '../apiService';
-import { FILE_CHUNK_SIZE, StreamUploader } from './streamUploader';
-import { UploadTelemetry } from './telemetry';
 import { UploadAPIService } from './apiService';
-import { UploadCryptoService } from './cryptoService';
-import { UploadController } from './controller';
 import { BlockVerifier } from './blockVerifier';
+import { UploadController } from './controller';
+import { UploadCryptoService } from './cryptoService';
 import { NodeRevisionDraft } from './interface';
 import { UploadManager } from './manager';
+import { FILE_CHUNK_SIZE, StreamUploader } from './streamUploader';
+import { UploadTelemetry } from './telemetry';
 
 const BLOCK_ENCRYPTION_OVERHEAD = 10000;
 

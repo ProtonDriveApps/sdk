@@ -2,9 +2,9 @@ import { Logger } from '../../interface';
 import { makeNodeUidFromRevisionUid } from '../uids';
 import { NodeAPIServiceBase } from './apiService';
 import { NodesCryptoService } from './cryptoService';
-import { NodesAccess } from './nodesAccess';
 import { parseFileExtendedAttributes } from './extendedAttributes';
 import { DecryptedRevision } from './interface';
+import { NodesAccess } from './nodesAccess';
 
 /**
  * Provides access to revisions metadata.

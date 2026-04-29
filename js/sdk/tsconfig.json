@@ -4,8 +4,8 @@
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "incremental": true,
-        "module": "commonjs",
-        "moduleResolution": "node",
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
         "noEmit": false,
         "noImplicitAny": true,
         // Many variables are unused during prototyping - uncomment later once more modules are implemented.
@@ -17,11 +17,13 @@
         "sourceMap": true,
         "outDir": "dist",
         "rootDir": "src",
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
+        "types": ["@protontech/global-types", "mocha", "jest", "node"],
+        "allowImportingTsExtensions": true,
+        "rewriteRelativeImportExtensions": true
     },
     "include": [
         "src/**/*.ts",
-        "typings/index.d.ts",
     ],
     "exclude": [
         "**/node_modules/*",

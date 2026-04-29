@@ -1,5 +1,5 @@
-import { RateLimitedError, ValidationError, DecryptionError, IntegrityError } from '../../errors';
-import { ProtonDriveTelemetry, MetricsDownloadErrorType, Logger, MetricVolumeType } from '../../interface';
+import { DecryptionError, IntegrityError, RateLimitedError, ValidationError } from '../../errors';
+import { Logger, MetricsDownloadErrorType, MetricVolumeType, ProtonDriveTelemetry } from '../../interface';
 import { LoggerWithPrefix, reduceSizePrecision } from '../../telemetry';
 import { APIHTTPError } from '../apiService';
 import { splitNodeRevisionUid, splitNodeUid } from '../uids';

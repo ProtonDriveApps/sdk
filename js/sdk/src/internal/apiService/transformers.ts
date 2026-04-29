@@ -1,4 +1,4 @@
-import { Logger, NodeType, MemberRole } from '../../interface';
+import { Logger, MemberRole, NodeType } from '../../interface';
 
 enum ShareTargetType {
     Root = 0,

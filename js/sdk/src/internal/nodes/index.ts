@@ -1,24 +1,24 @@
-import { DriveAPIService } from '../apiService';
 import { DriveCrypto } from '../../crypto';
 import {
-    ProtonDriveEntitiesCache,
-    ProtonDriveCryptoCache,
     ProtonDriveAccount,
+    ProtonDriveCryptoCache,
+    ProtonDriveEntitiesCache,
     ProtonDriveTelemetry,
 } from '../../interface';
+import { DriveAPIService } from '../apiService';
 import { NodeAPIService } from './apiService';
 import { NodesCache } from './cache';
 import { NodesCryptoCache } from './cryptoCache';
-import { NodesCryptoService } from './cryptoService';
 import { NodesCryptoReporter } from './cryptoReporter';
+import { NodesCryptoService } from './cryptoService';
+import { NodesEventsHandler } from './events';
 import { SharesService } from './interface';
 import { NodesAccess } from './nodesAccess';
 import { NodesManagement } from './nodesManagement';
 import { NodesRevisons } from './nodesRevisions';
-import { NodesEventsHandler } from './events';
 
-export type { DecryptedNode, DecryptedRevision } from './interface';
 export { generateFileExtendedAttributes } from './extendedAttributes';
+export type { DecryptedNode, DecryptedRevision } from './interface';
 
 /**
  * Provides facade for the whole nodes module.

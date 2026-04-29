@@ -1,20 +1,20 @@
+import { DriveCrypto, PrivateKey, VERIFICATION_STATUS } from '../../crypto';
 import {
-    ProtonDriveAccount,
-    resultOk,
-    resultError,
-    Result,
-    UnverifiedAuthorError,
-    ProtonDriveTelemetry,
     Logger,
     MetricVolumeType,
+    ProtonDriveAccount,
+    ProtonDriveTelemetry,
+    Result,
+    resultError,
+    resultOk,
+    UnverifiedAuthorError,
 } from '../../interface';
-import { DriveCrypto, PrivateKey, VERIFICATION_STATUS } from '../../crypto';
 import { getVerificationMessage, isNotApplicationError } from '../errors';
 import {
-    EncryptedRootShare,
     DecryptedRootShare,
-    EncryptedShareCrypto,
     DecryptedShareKey,
+    EncryptedRootShare,
+    EncryptedShareCrypto,
     ShareType,
 } from './interface';
 

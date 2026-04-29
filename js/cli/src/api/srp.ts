@@ -1,11 +1,9 @@
-import { type ApiInterface as CryptoApiInterface } from '../crypto/lib/worker/api';
-import { getSrp, getRandomSrpVerifier } from '../srp/lib/srp';
-import { computeKeyPassword } from '../srp/lib/keys';
+import { computeKeyPassword, generateKeySalt, getRandomSrpVerifier, getSrp } from '@protontech/crypto/srp';
+
 import { AccountApi } from './accountApi';
 
 export class Srp {
     constructor(
-        private readonly cryptoApi: CryptoApiInterface,
         private readonly accountApi: AccountApi,
     ) {}
 
@@ -21,7 +19,6 @@ export class Srp {
         clientEphemeral: string;
     }> {
         return getSrp(
-            this.cryptoApi,
             {
                 Version: version,
                 Modulus: modulus,
@@ -39,7 +36,6 @@ export class Srp {
         }
 
         const { version, salt, verifier } = await getRandomSrpVerifier(
-            this.cryptoApi,
             {
                 Modulus: result.Modulus,
             },
@@ -55,5 +51,9 @@ export class Srp {
 
     async computeKeyPassword(password: string, salt: string) {
         return await computeKeyPassword(password, salt);
+    }
+
+    generateKeySalt(): string {
+        return generateKeySalt();
     }
 }

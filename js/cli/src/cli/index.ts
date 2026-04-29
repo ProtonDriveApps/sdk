@@ -3,7 +3,6 @@ import { Command } from './interface';
 import { startRepl } from './repl';
 import { runSingleInvocation } from './run';
 
-export type { Command, ActionArgs } from './interface';
 export {
     formatAuthor,
     formatDate,
@@ -13,9 +12,10 @@ export {
     printIterable,
     printObject,
 } from './formatters';
-export { getClaimedSize, getName, findName, getNode, getNodeUid } from './node';
-export { Path, Paths, PathType } from './paths';
+export type { ActionArgs, Command } from './interface';
+export { findName, getClaimedSize, getName, getNode, getNodeUid } from './node';
 export { openBrowserUrl } from './openBrowserUrl';
+export { Path, Paths, PathType } from './paths';
 export { readPasswordLine } from './readPasswordLine';
 export { applyDefaultCliOptions } from './registryCore';
 export type { CliSession } from './run';

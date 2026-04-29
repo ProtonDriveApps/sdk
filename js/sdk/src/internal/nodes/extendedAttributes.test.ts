@@ -1,11 +1,11 @@
 import { getMockLogger } from '../../tests/logger';
 import {
-    FolderExtendedAttributes,
     FileExtendedAttributesParsed,
-    generateFolderExtendedAttributes,
+    FolderExtendedAttributes,
     generateFileExtendedAttributes,
-    parseFolderExtendedAttributes,
+    generateFolderExtendedAttributes,
     parseFileExtendedAttributes,
+    parseFolderExtendedAttributes,
 } from './extendedAttributes';
 
 describe('extended attrbiutes', () => {

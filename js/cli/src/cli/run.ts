@@ -2,8 +2,8 @@ import { parseArgs } from 'util';
 
 import { ProtonDriveError } from '@protontech/drive-sdk';
 
-import { init } from '../init';
 import { InitConfig } from '../config';
+import { init } from '../init';
 import { AuthRequiredError } from './errors';
 import { formatReadableJson } from './formatters';
 import { Command } from './interface';

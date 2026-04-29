@@ -12,14 +12,12 @@ export class SecretsSessionStore implements CredentialsStore {
     async load(): Promise<Credentials | null> {
         this.logger.debug(`Loading session ${SECRET_NAME} from secrets`);
         const raw =
-            // @ts-expect-error: Bun.secrets is not typed.
             (await Bun.secrets.get({ service: SECRET_SERVICE, name: SECRET_NAME })) as string | null;
         return parseStoredSnapshot(raw);
     }
 
     async save(snapshot: Credentials): Promise<void> {
         this.logger.debug(`Saving session ${SECRET_NAME} to secrets`);
-        // @ts-expect-error: Bun.secrets is not typed.
         await Bun.secrets.set({
             service: SECRET_SERVICE,
             name: SECRET_NAME,
@@ -29,7 +27,6 @@ export class SecretsSessionStore implements CredentialsStore {
 
     async remove(): Promise<void> {
         this.logger.debug(`Removing session ${SECRET_NAME} from secrets`);
-        // @ts-expect-error: Bun.secrets is not typed.
         await Bun.secrets.delete({ service: SECRET_SERVICE, name: SECRET_NAME });
     }
 }

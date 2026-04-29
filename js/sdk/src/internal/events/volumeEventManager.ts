@@ -1,5 +1,6 @@
 import { Logger } from '../../interface';
 import { LoggerWithPrefix } from '../../telemetry';
+import { NotFoundAPIError } from '../apiService';
 import { EventsAPIService } from './apiService';
 import {
     DriveEvent,
@@ -8,7 +9,6 @@ import {
     EventManagerInterface,
     UnsubscribeFromEventsSourceError,
 } from './interface';
-import { NotFoundAPIError } from '../apiService';
 
 /**
  * Combines API and event manager to provide a service for listening to

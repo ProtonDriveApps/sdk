@@ -1,14 +1,6 @@
-import bcrypt from 'bcryptjs';
-
 import { Logger } from '@protontech/drive-sdk';
 
 import { Credentials } from '../credentials';
-import { VERIFICATION_STATUS } from '../crypto/lib';
-import { type ApiInterface as CryptoApiInterface } from '../crypto/lib/worker/api';
-import { uint8ArrayToBinaryString, binaryStringToUint8Array, mergeUint8Arrays } from '../crypto/lib/utils';
-import { generateProofs } from '../srp/lib/srp';
-import { expandHash } from '../srp/lib/passwords';
-import { BCRYPT_PREFIX, SRP_LEN, SRP_MODULUS_KEY } from '../srp/lib/constants';
 import { AccountApi, AccountApiError } from './accountApi';
 import {
     FORK_INITIAL_DELAY_MS,
@@ -18,14 +10,17 @@ import {
     parseUserKeyPassword,
 } from './authWeb';
 import { sleepMs } from './sleep';
+import { Srp } from './srp';
 
 export class Auth {
+    private readonly srpModule: Srp;
     constructor(
-        private readonly cryptoApi: CryptoApiInterface,
         private readonly accountApi: AccountApi,
         private readonly credentials: Credentials,
         private readonly logger: Logger,
-    ) {}
+    ) {
+        this.srpModule = new Srp(accountApi);
+    }
 
     isLoggedIn(): boolean {
         return this.credentials.isLoggedIn();
@@ -50,38 +45,33 @@ export class Auth {
         this.logger.debug('Getting auth info');
         const info = await this.accountApi.info(username);
 
-        const publicKey = await this.cryptoApi.importPublicKey({ armoredKey: SRP_MODULUS_KEY });
-        const modulusResult = await this.cryptoApi.verifyCleartextMessage({
-            armoredCleartextMessage: info.Modulus || '',
-            verificationKeys: publicKey,
-        });
-
-        if (modulusResult.verificationStatus !== VERIFICATION_STATUS.SIGNED_AND_VALID) {
-            throw new Error('Failed to verify auth response');
+        if (!info.Version || !info.Modulus || !info.SRPSession || !info.ServerEphemeral || !info.Salt) {
+            throw new Error('Missing required auth info fields');
         }
 
         this.logger.debug('Generating proofs');
-        const results = await this.generateAuthProofs({
-            loginPassword: password,
-            modulusData: modulusResult.data,
-            serverEphemeral: info.ServerEphemeral || '',
-            salt: info.Salt || '',
-        });
+        const { clientEphemeral, clientProof, expectedServerProof } = await this.srpModule.getSrp(
+            info.Version,
+            info.Modulus,
+            info.ServerEphemeral,
+            info.Salt,
+            password
+        );
 
         this.logger.debug('Authenticating');
         const authResponse = await this.accountApi.auth({
             Username: username,
-            SRPSession: info.SRPSession || '',
+            SRPSession: info.SRPSession,
             PersistentCookies: 1,
             Payload: {},
-            ClientProof: results.clientProof,
-            ClientEphemeral: results.clientEphemeral,
+            ClientProof: clientProof,
+            ClientEphemeral: clientEphemeral,
         });
 
         if (!authResponse.ServerProof) {
             throw new Error('Missing ServerProof');
         }
-        if (authResponse.ServerProof !== results.expectedServerProof) {
+        if (authResponse.ServerProof !== expectedServerProof) {
             throw new Error('Server proof verification failed');
         }
         if (!authResponse.UID || !authResponse.AccessToken) {
@@ -106,45 +96,6 @@ export class Auth {
         };
     }
 
-    private async generateAuthProofs(params: {
-        loginPassword: string;
-        modulusData: string;
-        serverEphemeral: string;
-        salt: string;
-    }): Promise<{
-        clientEphemeral: string;
-        clientProof: string;
-        expectedServerProof: string;
-    }> {
-        const modulusArray = Uint8Array.fromBase64(params.modulusData) as Uint8Array<ArrayBuffer>;
-        const serverEphemeralArray = Uint8Array.fromBase64(params.serverEphemeral) as Uint8Array<ArrayBuffer>;
-        const saltBytes = Uint8Array.fromBase64(params.salt);
-        const saltBinary = binaryStringToUint8Array(`${uint8ArrayToBinaryString(saltBytes)}proton`);
-        const unexpandedHash = await bcrypt.hash(
-            params.loginPassword,
-            BCRYPT_PREFIX + bcrypt.encodeBase64(saltBinary, 16),
-        );
-        const hashedPasswordArray = await expandHash(
-            this.cryptoApi,
-            mergeUint8Arrays([binaryStringToUint8Array(unexpandedHash), modulusArray]),
-        );
-
-        const { clientEphemeral, clientProof, expectedServerProof } = await generateProofs(this.cryptoApi, {
-            byteLength: SRP_LEN,
-            modulusArray,
-            hashedPasswordArray,
-            serverEphemeralArray,
-        });
-
-        const results = {
-            clientEphemeral: clientEphemeral.toBase64(),
-            clientProof: clientProof.toBase64(),
-            expectedServerProof: expectedServerProof.toBase64(),
-        };
-
-        return results;
-    }
-
     private async getUserKeyPassword(loginPassword: string): Promise<string> {
         const salts = await this.accountApi.salts();
         const userKeySalt = salts.KeySalts?.at(0)?.KeySalt;
@@ -152,12 +103,7 @@ export class Auth {
             throw new Error('Missing KeySalt');
         }
 
-        const keyPassword = (
-            await bcrypt.hash(
-                loginPassword,
-                BCRYPT_PREFIX + bcrypt.encodeBase64(Uint8Array.fromBase64(userKeySalt), 16),
-            )
-        ).slice(29);
+        const keyPassword = await this.srpModule.computeKeyPassword(loginPassword, userKeySalt);
         return keyPassword;
     }
 

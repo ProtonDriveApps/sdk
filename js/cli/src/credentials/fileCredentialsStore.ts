@@ -1,5 +1,5 @@
-import path from 'node:path';
 import { unlink } from 'node:fs/promises';
+import path from 'node:path';
 
 import { Logger } from '@protontech/drive-sdk';
 

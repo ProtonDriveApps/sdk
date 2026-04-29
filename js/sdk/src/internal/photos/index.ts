@@ -7,9 +7,9 @@ import {
     ProtonDriveTelemetry,
 } from '../../interface';
 import { DriveAPIService } from '../apiService';
-import { NodesCryptoService } from '../nodes/cryptoService';
-import { NodesCryptoReporter } from '../nodes/cryptoReporter';
 import { NodesCryptoCache } from '../nodes/cryptoCache';
+import { NodesCryptoReporter } from '../nodes/cryptoReporter';
+import { NodesCryptoService } from '../nodes/cryptoService';
 import { NodesEventsHandler } from '../nodes/events';
 import { NodesRevisons } from '../nodes/nodesRevisions';
 import { ShareTargetType } from '../shares';
@@ -17,16 +17,16 @@ import { SharesCache } from '../shares/cache';
 import { SharesCryptoCache } from '../shares/cryptoCache';
 import { SharesCryptoService } from '../shares/cryptoService';
 import { NodesService as UploadNodesService } from '../upload/interface';
-import { UploadTelemetry } from '../upload/telemetry';
 import { UploadQueue } from '../upload/queue';
-import { AlbumsManager } from './albumsManager';
+import { UploadTelemetry } from '../upload/telemetry';
 import { AlbumsCryptoService } from './albumsCrypto';
+import { AlbumsManager } from './albumsManager';
 import { PhotosAPIService } from './apiService';
 import { SharesService } from './interface';
-import { PhotosNodesAPIService, PhotosNodesAccess, PhotosNodesCache, PhotosNodesManagement } from './nodes';
+import { PhotosNodesAccess, PhotosNodesAPIService, PhotosNodesCache, PhotosNodesManagement } from './nodes';
+import { PhotosManager } from './photosManager';
 import { PhotoSharesManager } from './shares';
 import { PhotosTimeline } from './timeline';
-import { PhotosManager } from './photosManager';
 import {
     PhotoFileUploader,
     PhotoUploadAPIService,
@@ -35,7 +35,7 @@ import {
     PhotoUploadMetadata,
 } from './upload';
 
-export type { DecryptedPhotoNode, TimelineItem, AlbumItem } from './interface';
+export type { AlbumItem, DecryptedPhotoNode, TimelineItem } from './interface';
 
 // Only photos and albums can be shared in photos volume.
 export const PHOTOS_SHARE_TARGET_TYPES = [ShareTargetType.Photo, ShareTargetType.Album];
