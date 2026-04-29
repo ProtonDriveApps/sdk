@@ -5,7 +5,10 @@ androidx-room = "2.7.2"
 androidx-test = "1.5.0"
 # Android tools
 android-tools = "1.1.5"
+# Core
 core = "36.3.2"
+# Crypto
+android-golib = "2.9.0-3"
 # Dagger
 dagger = "2.53.1"
 # Desugar
@@ -61,6 +64,9 @@ core-user-domain = { module = "me.proton.core:user-domain", version.ref = "core"
 core-userSettings-dagger = { module = "me.proton.core:user-settings-dagger", version.ref = "core" }
 core-utilAndroidDatetime = { module = "me.proton.core:util-android-datetime", version.ref = "core" }
 core-utilKotlin = { module = "me.proton.core:util-kotlin", version.ref = "core" }
+
+# Crypto
+crypto-android-golib = { module = "me.proton.crypto:android-golib", version.ref = "android-golib" }
 
 # Dagger
 dagger-hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "dagger" }
