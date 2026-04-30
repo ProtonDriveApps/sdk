@@ -54,6 +54,7 @@ export class EventManager<T extends Event> {
                 const index = this.listeners.indexOf(callback);
                 this.listeners.splice(index, 1);
             },
+            getLatestEventId: () => this.latestEventId ?? null,
         };
     }
 
