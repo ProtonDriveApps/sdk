@@ -10,7 +10,7 @@ internal static class TelemetryRecorder
     public static async Task TryRecordDecryptionErrorAsync(
         ProtonDriveClient client,
         DegradedNode degradedNode,
-        IEnumerable<EncryptedField> failedFields,
+        IReadOnlyDictionary<EncryptedField, ProtonDriveError> failedFields,
         CancellationToken cancellationToken)
     {
         try
