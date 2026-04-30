@@ -494,7 +494,7 @@ export class PhotosAPIService {
     ): AsyncGenerator<NodeResultWithError> {
         const { volumeId, nodeId: albumLinkId } = splitNodeUid(albumNodeUid);
 
-        const batchSize = 50;
+        const batchSize = 10;
 
         for (const photoNodeUidsBatch of batch(photoNodeUids, batchSize)) {
             const linkIds = photoNodeUidsBatch.map((nodeUid) => splitNodeUid(nodeUid).nodeId);
