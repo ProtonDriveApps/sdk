@@ -283,7 +283,7 @@ internal static class DtoToMetadataConverter
         return new FileMetadata(node, secrets, membershipDto?.ShareId, linkDto.NameHashDigest);
     }
 
-    private static (DegradedFileMetadata Metadata, List<EncryptedField> FailedDecryptionFields) CreateDegradedFileMetadata(
+    private static (DegradedFileMetadata Metadata, Dictionary<EncryptedField, ProtonDriveError> FailedDecryptionFields) CreateDegradedFileMetadata(
         LinkDetailsDto linkDetailsDto,
         FileDecryptionResult decryptionResult,
         Result<string, ProtonDriveError> nameResult,
@@ -298,34 +298,34 @@ internal static class DtoToMetadataConverter
         PgpSessionKey? nameSessionKey,
         ShareMembershipSummaryDto? membershipDto)
     {
-        List<EncryptedField> failedDecryptionFields = [];
+        Dictionary<EncryptedField, ProtonDriveError> failedDecryptionFields = [];
         List<ProtonDriveError> errors = [];
 
         if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
         {
             errors.Add(new DecryptionError("Passphrase decryption failed", passphraseError));
-            failedDecryptionFields.Add(EncryptedField.NodeKey);
+            failedDecryptionFields.Add(EncryptedField.NodeKey, passphraseError);
         }
         else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
         {
             errors.Add(new DecryptionError("Node key decryption failed", nodeKeyError));
-            failedDecryptionFields.Add(EncryptedField.NodeKey);
+            failedDecryptionFields.Add(EncryptedField.NodeKey, nodeKeyError);
         }
-        else if (decryptionResult.ContentKey.IsFailure)
+        else if (decryptionResult.ContentKey.TryGetError(out var contentKeyError))
         {
-            failedDecryptionFields.Add(EncryptedField.NodeContentKey);
+            failedDecryptionFields.Add(EncryptedField.NodeContentKey, contentKeyError);
         }
 
-        if (nameResult.IsFailure)
+        if (nameResult.TryGetError(out var nameError))
         {
-            failedDecryptionFields.Add(EncryptedField.NodeName);
+            failedDecryptionFields.Add(EncryptedField.NodeName, nameError);
         }
 
         var revisionErrors = new List<ProtonDriveError>();
         if (decryptionResult.ExtendedAttributes.TryGetError(out var extendedAttributesError))
         {
             revisionErrors.Add(new DecryptionError("Extended attributes decryption failed", extendedAttributesError));
-            failedDecryptionFields.Add(EncryptedField.NodeExtendedAttributes);
+            failedDecryptionFields.Add(EncryptedField.NodeExtendedAttributes, extendedAttributesError);
         }
 
         var nodeAuthor = decryptionResult.Link.Passphrase.Merge(
@@ -485,7 +485,7 @@ internal static class DtoToMetadataConverter
         return new FolderMetadata(node, secrets, membershipDto?.ShareId, linkDto.NameHashDigest);
     }
 
-    private static (DegradedFolderMetadata Metadata, List<EncryptedField> FailedDecryptionFields) CreateDegradedFolderMetadata(
+    private static (DegradedFolderMetadata Metadata, Dictionary<EncryptedField, ProtonDriveError> FailedDecryptionFields) CreateDegradedFolderMetadata(
         FolderDecryptionResult decryptionResult,
         Result<string, ProtonDriveError> nameResult,
         NodeUid uid,
@@ -494,28 +494,28 @@ internal static class DtoToMetadataConverter
         PgpSessionKey? nameSessionKey,
         ShareMembershipSummaryDto? membershipDto)
     {
-        List<EncryptedField> failedDecryptionFields = [];
+        Dictionary<EncryptedField, ProtonDriveError> failedDecryptionFields = [];
         List<ProtonDriveError> errors = [];
 
         if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
         {
             errors.Add(new DecryptionError("Passphrase decryption failed", passphraseError));
-            failedDecryptionFields.Add(EncryptedField.NodeKey);
+            failedDecryptionFields.Add(EncryptedField.NodeKey, passphraseError);
         }
         else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
         {
             errors.Add(new DecryptionError("Node key decryption failed", nodeKeyError));
-            failedDecryptionFields.Add(EncryptedField.NodeKey);
+            failedDecryptionFields.Add(EncryptedField.NodeKey, nodeKeyError);
         }
-        else if (decryptionResult.HashKey.TryGetError(out var error))
+        else if (decryptionResult.HashKey.TryGetError(out var hashKeyError))
         {
-            errors.Add(new DecryptionError("Hash key decryption failed", error));
-            failedDecryptionFields.Add(EncryptedField.NodeHashKey);
+            errors.Add(new DecryptionError("Hash key decryption failed", hashKeyError));
+            failedDecryptionFields.Add(EncryptedField.NodeHashKey, hashKeyError);
         }
 
-        if (nameResult.IsFailure)
+        if (nameResult.TryGetError(out var nameError))
         {
-            failedDecryptionFields.Add(EncryptedField.NodeName);
+            failedDecryptionFields.Add(EncryptedField.NodeName, nameError);
         }
 
         var nodeAuthorFromPassphrase = decryptionResult.Link.Passphrase.Merge(

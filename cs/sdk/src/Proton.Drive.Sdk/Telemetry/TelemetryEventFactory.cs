@@ -14,7 +14,7 @@ internal static class TelemetryEventFactory
     public static async Task<IEnumerable<DecryptionErrorEvent>> CreateDecryptionErrorEventsAsync(
         ProtonDriveClient client,
         DegradedNode degradedNode,
-        IEnumerable<EncryptedField> failedFields,
+        IReadOnlyDictionary<EncryptedField, ProtonDriveError> failedFields,
         CancellationToken cancellationToken)
     {
         var fromBefore2024 = degradedNode.CreationTime.CompareTo(LegacyBoundary) < 1;
@@ -24,9 +24,10 @@ internal static class TelemetryEventFactory
         return failedFields.Select(field => new DecryptionErrorEvent
         {
             Uid = degradedNode.Uid,
-            Field = field,
+            Field = field.Key,
             VolumeType = volumeType,
             FromBefore2024 = fromBefore2024,
+            Error = field.Value.Message,
         });
     }
 
