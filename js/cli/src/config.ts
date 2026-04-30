@@ -1,12 +1,12 @@
 export interface InitConfig {
     debug?: boolean;
     appVersion: string;
-    clientUid: string;
+    clientUidPrefix: string;
     enablePersistedEvents?: boolean;
 }
 
 export interface Config {
-    clientUid: string;
+    clientUidPrefix: string;
     appVersion: string;
     baseUrl: string;
     cacheDir: string;
@@ -22,7 +22,7 @@ export function getConfig(options: InitConfig): Config {
     );
 
     return {
-        clientUid: options.clientUid,
+        clientUidPrefix: options.clientUidPrefix,
         appVersion: options.appVersion,
         baseUrl: process.env.PROTON_DRIVE_BASE_URL || 'drive-api.proton.me',
         cacheDir: process.env.PROTON_DRIVE_CACHE_DIR || process.cwd(),

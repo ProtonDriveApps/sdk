@@ -126,9 +126,8 @@ export class ApiClient {
             headers.set('x-pm-appversion', this.config.appVersion);
             headers.set('x-pm-uid', uid);
             headers.set('Authorization', `Bearer ${accessToken}`);
-            options.headers = headers;
 
-            return this.authenticatedClient(request, options);
+            return this.authenticatedClient(request, { ...options, headers });
         };
     }
 
