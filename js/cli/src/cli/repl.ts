@@ -12,26 +12,30 @@ import { ReplUnclosedQuoteError, splitQuotedLine } from './splitQuotedLine';
 export async function startRepl(commands: Command[], initOptions: InitConfig): Promise<void> {
     const session = await init(initOptions);
 
-    while (true) {
-        const line = await question('proton-drive> ');
-        const trimmed = line.trim();
-        if (trimmed === '') {
-            continue;
-        }
-        if (trimmed === 'exit' || trimmed === 'quit') {
-            break;
-        }
-        try {
-            const parts = splitQuotedLine(trimmed);
-            const syntheticArgv = ['', '', ...parts];
-            await runCommand(commands, syntheticArgv, initOptions, session);
-        } catch (error: unknown) {
-            if (isRecoverableReplError(error)) {
-                console.error(error);
+    try {
+        while (true) {
+            const line = await question('proton-drive> ');
+            const trimmed = line.trim();
+            if (trimmed === '') {
                 continue;
             }
-            throw error;
+            if (trimmed === 'exit' || trimmed === 'quit') {
+                break;
+            }
+            try {
+                const parts = splitQuotedLine(trimmed);
+                const syntheticArgv = ['', '', ...parts];
+                await runCommand(commands, syntheticArgv, initOptions, session);
+            } catch (error: unknown) {
+                if (isRecoverableReplError(error)) {
+                    console.error(error);
+                    continue;
+                }
+                throw error;
+            }
         }
+    } finally {
+        await session.dispose();
     }
 }
 

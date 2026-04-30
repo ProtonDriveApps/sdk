@@ -15,6 +15,14 @@ export interface Event {
 
 export interface EventSubscription {
     dispose(): void;
+    /**
+     * Returns the latest event ID for the subscription.
+     *
+     * @deprecated This is experimental to provide a way to the client to know
+     * the latest event ID before getting any events. It will be removed and
+     * replaced with a more robust solution.
+     */
+    getLatestEventId(): string | null;
 }
 
 export interface LatestEventIdProvider {

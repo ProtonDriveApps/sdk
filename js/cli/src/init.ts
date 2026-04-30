@@ -11,13 +11,8 @@ import { createCaches } from './cache';
 import { Paths } from './cli';
 import { getConfig, InitConfig } from './config';
 import { initCredentials } from './credentials';
+import { Manager, NoEventsProvider, PersistedEventsProvider } from './events';
 import { initTelemetry } from './telemetry';
-
-function initOpenPGPCryptoModule() {
-    CryptoApi.init({});
-    CryptoProxy.setEndpoint(new CryptoApi(), endpoint => endpoint.clearKeyStore());
-    return new OpenPGPCryptoWithCryptoProxy(CryptoProxy)
-}
 
 export async function init(configOptions: InitConfig) {
     const config = getConfig(configOptions);
@@ -29,6 +24,10 @@ export async function init(configOptions: InitConfig) {
     const { auth, addresses, srp, httpClient } = await initApi(config, credentials, logger);
 
     const caches = createCaches(config, credentials, logger);
+    const eventsProvider = config.enablePersistedEvents
+        ? await PersistedEventsProvider.open(logger, config.cacheDir)
+        : new NoEventsProvider();
+
     const sdkDependencies = {
         config: {
             baseUrl: config.baseUrl,
@@ -41,14 +40,16 @@ export async function init(configOptions: InitConfig) {
         openPGPCryptoModule,
         account: addresses,
         srpModule: srp,
-        latestEventIdProvider: new NoLatestEventIdProvider(),
+        latestEventIdProvider: eventsProvider,
         featureFlagProvider: await FeatureFlagProvider.fromJsonFile(config.cacheDir + '/config.json'),
     };
     const sdk = new ProtonDriveClient(sdkDependencies);
     const photosSdk = new ProtonDrivePhotosClient(sdkDependencies);
     const sdkDiagnostic = initDiagnostic(sdkDependencies);
 
-    const paths = new Paths(sdk, photosSdk, auth);
+    const eventsManager = await Manager.create(logger, sdk, photosSdk, eventsProvider);
+
+    const paths = new Paths(sdk, photosSdk, auth, eventsManager);
 
     return {
         logger: logger as Logger,
@@ -58,13 +59,18 @@ export async function init(configOptions: InitConfig) {
         photosSdk,
         sdkDiagnostic,
         paths,
+        eventsManager,
+        eventsProvider,
+        dispose: async () => {
+            await eventsManager.dispose();
+        },
     };
 }
 
-class NoLatestEventIdProvider {
-    async getLatestEventId(): Promise<string | null> {
-        return null;
-    }
+function initOpenPGPCryptoModule() {
+    CryptoApi.init({});
+    CryptoProxy.setEndpoint(new CryptoApi(), endpoint => endpoint.clearKeyStore());
+    return new OpenPGPCryptoWithCryptoProxy(CryptoProxy)
 }
 
 class FeatureFlagProvider {
