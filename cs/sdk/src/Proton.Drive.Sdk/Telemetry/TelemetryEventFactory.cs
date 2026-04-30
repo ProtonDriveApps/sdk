@@ -32,25 +32,6 @@ internal static class TelemetryEventFactory
     }
 
     /// <summary>
-    /// Creates a DecryptionErrorEvent for a single field using a node UID.
-    /// </summary>
-    public static async Task<DecryptionErrorEvent> CreateDecryptionErrorEventAsync(
-        ProtonDriveClient client,
-        NodeUid nodeUid,
-        EncryptedField field,
-        DateTime creationTime,
-        CancellationToken cancellationToken)
-    {
-        return new DecryptionErrorEvent
-        {
-            Uid = nodeUid,
-            Field = field,
-            VolumeType = await ResolveVolumeTypeAsync(client, nodeUid, cancellationToken).ConfigureAwait(false),
-            FromBefore2024 = creationTime.CompareTo(LegacyBoundary) < 1,
-        };
-    }
-
-    /// <summary>
     /// Creates a VerificationErrorEvent using a node UID.
     /// </summary>
     public static async Task<VerificationErrorEvent> CreateVerificationErrorEventAsync(
@@ -58,6 +39,7 @@ internal static class TelemetryEventFactory
         NodeUid nodeUid,
         EncryptedField field,
         DateTime creationTime,
+        string? error,
         CancellationToken cancellationToken)
     {
         return new VerificationErrorEvent
@@ -66,6 +48,7 @@ internal static class TelemetryEventFactory
             Field = field,
             VolumeType = await ResolveVolumeTypeAsync(client, nodeUid, cancellationToken).ConfigureAwait(false),
             FromBefore2024 = creationTime.CompareTo(LegacyBoundary) < 1,
+            Error = error,
         };
     }
 
