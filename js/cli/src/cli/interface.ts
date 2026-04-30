@@ -5,6 +5,7 @@ import { Diagnostic } from '@protontech/drive-sdk/diagnostic';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 
 import { Auth } from '../api';
+import type { Manager } from '../events';
 import { Paths } from './paths';
 
 export interface Command {
@@ -25,6 +26,7 @@ export interface ActionArgs {
     photosSdk: ProtonDrivePhotosClient;
     sdkDiagnostic: Diagnostic;
     paths: Paths;
+    eventsManager: Manager;
     args: string[];
     options: { [name: string]: any }; // eslint-disable-line @typescript-eslint/no-explicit-any
 }

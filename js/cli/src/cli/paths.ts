@@ -4,6 +4,7 @@ import { MaybeMissingNode, MaybeNode, ProtonDriveClient, ValidationError } from 
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 import { ProtonDrivePublicLinkClient } from '@protontech/drive-sdk/protonDrivePublicLinkClient';
 
+import type { Manager } from '../events/manager';
 import { getName } from './node';
 
 export enum PathType {
@@ -29,6 +30,7 @@ export class Paths {
         private auth: {
             isLoggedIn(): boolean;
         },
+        private readonly eventsManager: Manager,
     ) {
         this.sdk = sdk;
         this.photosSdk = photosSdk;
@@ -87,7 +89,7 @@ export class Paths {
     }
 
     getPath(path: string, supportedTypes?: PathType[]): Path {
-        const p = new Path(this.sdk, this.photosSdk, path);
+        const p = new Path(this.sdk, this.photosSdk, path, this.eventsManager);
         if (supportedTypes && !supportedTypes.includes(p.type)) {
             throw new ValidationError(`Path "${path}" is not supported`);
         }
@@ -119,6 +121,7 @@ export class Path {
         private driveSdk: ProtonDriveClient,
         private photosSdk: ProtonDrivePhotosClient,
         public fullPath: string,
+        private readonly eventsManager: Manager,
     ) {
         this.driveSdk = driveSdk;
         this.photosSdk = photosSdk;
@@ -163,7 +166,7 @@ export class Path {
     }
 
     get parentPath() {
-        return new Path(this.driveSdk, this.photosSdk, path.dirname(this.fullPath));
+        return new Path(this.driveSdk, this.photosSdk, path.dirname(this.fullPath), this.eventsManager);
     }
 
     get name() {
@@ -171,6 +174,13 @@ export class Path {
     }
 
     get sdk(): ProtonDriveClient | ProtonDrivePhotosClient {
+        if (this.usePhotoSdk()) {
+            return this.photosSdk;
+        }
+        return this.driveSdk;
+    }
+
+    private usePhotoSdk(): boolean {
         const photoPaths = [
             PathType.Albums,
             PathType.Photos,
@@ -178,20 +188,30 @@ export class Path {
             PathType.PhotosSharedWithMe,
             PathType.PhotosTrash,
         ];
-        if (photoPaths.includes(this.type)) {
-            return this.photosSdk;
-        }
-        return this.driveSdk;
+        return photoPaths.includes(this.type);
     }
 
     async getNode(): Promise<MaybeNode> {
+        const node = await this.getNodeInternal();
+
+        const scopeId = node.ok ? node.value.treeEventScopeId : node.error.treeEventScopeId;
+        if (this.usePhotoSdk()) {
+            await this.eventsManager.subscribePhotosScope(scopeId);
+        } else {
+            await this.eventsManager.subscribeDriveScope(scopeId);
+        }
+
+        return node;
+    }
+
+    private async getNodeInternal(): Promise<MaybeNode> {
         if (this.type === PathType.MyFiles) {
             const rootNode = await this.driveSdk.getMyFilesRootFolder();
             return this.getNodeByPath(rootNode, this.sectionPath);
         }
         if (this.type === PathType.SharedWithMe || this.type === PathType.PhotosSharedWithMe) {
-            const rootNodeName = await this.getSharedWithMeRootFolder();
-            return this.getNodeByPath(rootNodeName, this.sectionPathWithoutRoot);
+            const rootNode = await this.getSharedWithMeRootFolder();
+            return this.getNodeByPath(rootNode, this.sectionPathWithoutRoot);
         }
         if (this.type === PathType.Trash || this.type === PathType.PhotosTrash) {
             const parts = this.sectionPath.split(path.sep);
@@ -201,8 +221,8 @@ export class Path {
             return this.getTrashedNode(parts[0]);
         }
         if (this.type === PathType.Devices) {
-            const rootNodeName = await this.getDevicesRootFolder();
-            return this.getNodeByPath(rootNodeName, this.sectionPathWithoutRoot);
+            const rootNode = await this.getDevicesRootFolder();
+            return this.getNodeByPath(rootNode, this.sectionPathWithoutRoot);
         }
         if (this.type === PathType.Photos) {
             return this.getPhotoNodeByPath(this.sectionPath);

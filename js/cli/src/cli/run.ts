@@ -44,9 +44,16 @@ export async function runCommand(
     }
 
     const debug = initOptions.debug === undefined ? !options.json : initOptions.debug;
+    const oneOffSession = !session;
     session = session ?? await init({ ...initOptions, debug });
     verifyAuthentication(command, session);
-    await dispatchAction(command, session, args, options, debug);
+    try {
+        await dispatchAction(command, session, args, options, debug);
+    } finally {
+        if (oneOffSession) {
+            await session.dispose();
+        }
+    }
 }
 
 function parseCliInvocation(commands: Command[], argv: string[]) {
@@ -88,6 +95,7 @@ async function dispatchAction(
             photosSdk: session.photosSdk,
             sdkDiagnostic: session.sdkDiagnostic,
             paths: session.paths,
+            eventsManager: session.eventsManager,
             args,
             options,
         });

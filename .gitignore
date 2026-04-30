@@ -18,6 +18,8 @@ js/cli/release
 auth.txt
 auth-session.json
 cache*.sqlite
+events.json
+events.lock
 *.log
 *.bun-build
 config.json

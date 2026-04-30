@@ -2,6 +2,7 @@ export interface InitConfig {
     debug?: boolean;
     appVersion: string;
     clientUid: string;
+    enablePersistedEvents?: boolean;
 }
 
 export interface Config {
@@ -9,6 +10,7 @@ export interface Config {
     appVersion: string;
     baseUrl: string;
     cacheDir: string;
+    enablePersistedEvents: boolean;
     enableConsoleLog: boolean;
     unsafeSecrets: boolean;
     unsafeCache: boolean;
@@ -24,7 +26,8 @@ export function getConfig(options: InitConfig): Config {
         appVersion: options.appVersion,
         baseUrl: process.env.PROTON_DRIVE_BASE_URL || 'drive-api.proton.me',
         cacheDir: process.env.PROTON_DRIVE_CACHE_DIR || process.cwd(),
-        enableConsoleLog: options.debug ?? false,
+        enablePersistedEvents: options.enablePersistedEvents || false,
+        enableConsoleLog: options.debug || false,
         unsafeSecrets,
         unsafeCache: unsafeSecrets,
     };
