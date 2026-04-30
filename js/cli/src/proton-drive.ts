@@ -1,12 +1,12 @@
 import { run } from './cli';
 import { COMMANDS } from './commands';
 
-const CLIENT_UID = 'proton-drive-sdk-js-cli';
+const CLIENT_UID_PREFIX = 'sdk-js-cli';
 // Two or three dash-separated parts: platform, product, optional section (e.g. sdkclijs not sdk-cli-js).
-const APP_VERSION = 'external-drive-sdkclijs@1.0.0';
+const APP_VERSION = 'external-drive-sdkclijs@0.0.1';
 
 await run(COMMANDS, {
-    clientUid: CLIENT_UID,
+    clientUidPrefix: CLIENT_UID_PREFIX,
     appVersion: APP_VERSION,
     debug: false,
     enablePersistedEvents: true,

@@ -9,6 +9,7 @@ import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotos
 import { initApi } from './api';
 import { createCaches } from './cache';
 import { Paths } from './cli';
+import { getOrGenerateClientUid } from './clientUid';
 import { getConfig, InitConfig } from './config';
 import { initCredentials } from './credentials';
 import { Manager, NoEventsProvider, PersistedEventsProvider } from './events';
@@ -23,6 +24,7 @@ export async function init(configOptions: InitConfig) {
     const credentials = initCredentials(config, logger);
     const { auth, addresses, srp, httpClient } = await initApi(config, credentials, logger);
 
+    const clientUid = await getOrGenerateClientUid(config, logger);
     const caches = createCaches(config, credentials, logger);
     const eventsProvider = config.enablePersistedEvents
         ? await PersistedEventsProvider.open(logger, config.cacheDir)
@@ -31,7 +33,7 @@ export async function init(configOptions: InitConfig) {
     const sdkDependencies = {
         config: {
             baseUrl: config.baseUrl,
-            clientUid: config.clientUid,
+            clientUid,
         },
         httpClient,
         entitiesCache: caches.entitiesCache,

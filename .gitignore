@@ -20,6 +20,7 @@ auth-session.json
 cache*.sqlite
 events.json
 events.lock
+clientUid.json
 *.log
 *.bun-build
 config.json
