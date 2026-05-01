@@ -19,17 +19,21 @@ public class ProtonApiException : Exception
     {
     }
 
-    internal ProtonApiException(HttpStatusCode statusCode, ApiResponse response)
-        : this(response.ErrorMessage)
+    public ProtonApiException(string? message, int? transportCode, ResponseCode code)
+        : this(message)
     {
-        Code = response.Code;
-        TransportCode = (int)statusCode;
+        Code = code;
+        TransportCode = transportCode;
+    }
+
+    internal ProtonApiException(HttpStatusCode statusCode, ApiResponse response)
+        : this(response.ErrorMessage, (int)statusCode, response.Code)
+    {
     }
 
     internal ProtonApiException(ApiResponse response)
-        : this(response.ErrorMessage)
+        : this(response.ErrorMessage, null, response.Code)
     {
-        Code = response.Code;
     }
 
     public ResponseCode Code { get; }
