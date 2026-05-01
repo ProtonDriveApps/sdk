@@ -1,5 +1,11 @@
 # Changelog
 
+## cs/v0.14.1 (2026-05-01)
+
+* Refactor Proton API exception to consolidate constructor initialization
+* Add error for verification error event
+* Include error details in decryption telemetry events
+
 ## cs/v0.14.0 (2026-04-28)
 
 * Fix name conflict handling regression
