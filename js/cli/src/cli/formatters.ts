@@ -1,10 +1,12 @@
+import { stripVTControlCharacters } from 'node:util';
+
 import { inspect } from 'util';
 
 import { Author, MemberRole } from '@protontech/drive-sdk';
 
 export function printObject(object: object | undefined, json: boolean) {
     if (json) {
-        console.log(JSON.stringify(object));
+        console.log(sanitizeTerminalText(JSON.stringify(object)));
     } else {
         console.log(object ? formatReadableJson(object) : 'N/A');
     }
@@ -37,7 +39,8 @@ export async function printIterable<T extends object>(
 
 export function formatReadableJson(json: object) {
     // Prints the JSON in a readable format without the depth limit.
-    return inspect(json, { showHidden: false, depth: null, colors: true });
+    // No styling: `colors` would add VT sequences that must not mix with unsanitized user strings.
+    return sanitizeTerminalText(inspect(json, { showHidden: false, depth: null, colors: false }));
 }
 
 export function formatAuthor(author: Author) {
@@ -81,4 +84,8 @@ export function formatMemberRole(memberRole: MemberRole): string {
         case MemberRole.Admin:
             return '👑';
     }
+}
+
+export function sanitizeTerminalText(value: unknown): string {
+    return stripVTControlCharacters(String(value));
 }

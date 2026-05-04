@@ -11,6 +11,7 @@ export {
     formatSize,
     printIterable,
     printObject,
+    sanitizeTerminalText,
 } from './formatters';
 export type { ActionArgs, Command } from './interface';
 export { findName, getClaimedSize, getName, getNode, getNodeUid } from './node';

@@ -1,4 +1,4 @@
-import { type ActionArgs, type Command, findName, PathType, printIterable } from '../../cli';
+import { type ActionArgs, type Command, findName, PathType, printIterable, sanitizeTerminalText } from '../../cli';
 
 const SUPPORTED_PATH_TYPES = [PathType.Trash, PathType.PhotosTrash];
 
@@ -13,7 +13,7 @@ export class CommandFileSystemRestore implements Command {
 
         await printIterable(nodePaths[0].sdk.restoreNodes(nodes), json, (result) => {
             const nodeName = findName(nodes, result.uid);
-            console.log(result.ok ? `✅ ${nodeName}` : `❌ ${nodeName}: ${result.error}`);
+            console.log(sanitizeTerminalText(result.ok ? `✅ ${nodeName}` : `❌ ${nodeName}: ${result.error}`));
         });
     }
 }

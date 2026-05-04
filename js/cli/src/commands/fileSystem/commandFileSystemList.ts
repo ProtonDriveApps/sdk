@@ -16,6 +16,7 @@ import {
     Paths,
     PathType,
     printIterable,
+    sanitizeTerminalText,
 } from '../../cli';
 
 export class CommandFileSystemList implements Command {
@@ -41,7 +42,7 @@ export class CommandFileSystemList implements Command {
         switch (path.type) {
             case PathType.Root:
                 const rootPaths = paths.rootPaths.map((path) => ({ path }));
-                await printIterable(rootPaths, json, (item) => console.log(item.path));
+                await printIterable(rootPaths, json, (item) => console.log(sanitizeTerminalText(item.path)));
                 break;
             case PathType.MyFiles:
                 await this.printChildren(sdk, paths, pathString, { json, nodeType });
@@ -134,10 +135,10 @@ export class CommandFileSystemList implements Command {
         const claimedSize = getClaimedSize(maybeNode);
         const size = claimedSize ? formatSize(claimedSize) : '-';
         const name = getName(maybeNode);
-        console.log(`${type}${sharedFlag}${permissionFlag} ${author} ${created} ${size} ${name}`);
+        console.log(sanitizeTerminalText(`${type}${sharedFlag}${permissionFlag} ${author} ${created} ${size} ${name}`));
     }
 
     private printDeviceHuman(device: Device): void {
-        console.log(`${device.type} ${device.name.ok ? device.name.value : device.name.error.name}`);
+        console.log(sanitizeTerminalText(`${device.type} ${device.name.ok ? device.name.value : device.name.error.name}`));
     }
 }

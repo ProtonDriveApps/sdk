@@ -2,7 +2,7 @@ import { ParseArgsConfig } from 'node:util';
 
 import { MaybeNode, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 
-import { type ActionArgs, type Command, findName, getName, getNodeUid, PathType, printIterable } from '../../cli';
+import { type ActionArgs, type Command, findName, getName, getNodeUid, PathType, printIterable, sanitizeTerminalText } from '../../cli';
 
 const SUPPORTED_PATH_TYPES = [PathType.MyFiles, PathType.Devices, PathType.SharedWithMe];
 
@@ -38,14 +38,14 @@ export class CommandFileSystemCopy implements Command {
 
     private async copyNode(sdk: ProtonDriveClient, sourceNode: MaybeNode, targetNode: MaybeNode, json: boolean, name: string) {
         await printIterable(sdk.copyNodes([{ uid: getNodeUid(sourceNode), name }], targetNode), json, (result) => {
-            console.log(result.ok ? `✅ ${name}` : `❌ ${name}: ${result.error}`);
+            console.log(sanitizeTerminalText(result.ok ? `✅ ${name}` : `❌ ${name}: ${result.error}`));
         });
     }
 
     private async copyNodes(sdk: ProtonDriveClient, sourceNodes: MaybeNode[], targetNode: MaybeNode, json: boolean) {
         await printIterable(sdk.copyNodes(sourceNodes, targetNode), json, (result) => {
             const nodeName = findName(sourceNodes, result.uid);
-            console.log(result.ok ? `✅ ${nodeName}` : `❌ ${nodeName}: ${result.error}`);
+            console.log(sanitizeTerminalText(result.ok ? `✅ ${nodeName}` : `❌ ${nodeName}: ${result.error}`));
         });
     }
 }
