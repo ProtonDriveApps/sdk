@@ -3,10 +3,10 @@ import ProtonCoreDataModel
 import SwiftProtobuf
 
 public protocol AccountClientProtocol: Sendable {
-    func getAddress(addressId: String) -> Address
-    func getDefaultAddress() -> Address
-    func getAddressPrimaryPrivateKey(addressId: String) -> Data
-    func getAddressPrivateKeys(addressId: String) -> [Data]
+    func getAddress(addressId: String) -> Address?
+    func getDefaultAddress() -> Address?
+    func getAddressPrimaryPrivateKey(addressId: String) -> Data?
+    func getAddressPrivateKeys(addressId: String) -> [Data]?
     func getAddressPublicKeysRequest(emailAddress: String) -> [Data]
 }
 
@@ -33,21 +33,37 @@ let cCompatibleAccountClientRequest: CCallbackWithCallbackPointer = { statePoint
 
         switch request.payload {
         case .getAddress(let request):
-            let address = accountClient.getAddress(addressId: request.addressID)
+            guard let address = accountClient.getAddress(addressId: request.addressID) else {
+                SDKResponseHandler.sendInteropErrorToSDK(message: "cCompatibleAccountClientRequest.address is null",
+                                                         callbackPointer: callbackPointer)
+                return
+            }
             let protoAddress = address.makeProtoAddress()
             SDKResponseHandler.send(callbackPointer: callbackPointer, message: protoAddress)
         case .getDefaultAddress(let request):
-            let address = accountClient.getDefaultAddress()
+            guard let address = accountClient.getDefaultAddress() else {
+                SDKResponseHandler.sendInteropErrorToSDK(message: "cCompatibleAccountClientRequest.defaultAddress is null",
+                                                         callbackPointer: callbackPointer)
+                return
+            }
             let protoAddress = address.makeProtoAddress()
             SDKResponseHandler.send(callbackPointer: callbackPointer, message: protoAddress)
         case .getAddressPrimaryPrivateKey(let request):
-            let key = accountClient.getAddressPrimaryPrivateKey(addressId: request.addressID)
+            guard let key = accountClient.getAddressPrimaryPrivateKey(addressId: request.addressID) else {
+                SDKResponseHandler.sendInteropErrorToSDK(message: "cCompatibleAccountClientRequest.key is null",
+                                                         callbackPointer: callbackPointer)
+                return
+            }
             let bytesValue = Google_Protobuf_BytesValue.with {
                 $0.value = key
             }
             SDKResponseHandler.send(callbackPointer: callbackPointer, message: bytesValue)
         case .getAddressPrivateKeys(let request):
-            let privateKeys = accountClient.getAddressPrivateKeys(addressId: request.addressID)
+            guard let privateKeys = accountClient.getAddressPrivateKeys(addressId: request.addressID) else {
+                SDKResponseHandler.sendInteropErrorToSDK(message: "cCompatibleAccountClientRequest.privateKeys is null",
+                                                         callbackPointer: callbackPointer)
+                return
+            }
             let repeatedBytes = Proton_Sdk_RepeatedBytesValue.with {
                 $0.value = privateKeys
             }
