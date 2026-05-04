@@ -4,7 +4,7 @@ namespace Proton.Sdk.Http;
 
 internal sealed class CryptographyTimeProvisionHandler : DelegatingHandler
 {
-    private readonly CryptographyTimeProvider _cryptographyTimeProvider = new();
+    private static readonly CryptographyTimeProvider CryptographyTimeProvider = new();
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
@@ -12,20 +12,10 @@ internal sealed class CryptographyTimeProvisionHandler : DelegatingHandler
 
         if (responseMessage.Headers.Date is { } time)
         {
-            _cryptographyTimeProvider.ServerTime = time;
-            PgpEnvironment.DefaultTimeProviderOverride = _cryptographyTimeProvider;
+            CryptographyTimeProvider.UpdateTime(time);
+            PgpEnvironment.DefaultTimeProviderOverride = CryptographyTimeProvider;
         }
 
         return responseMessage;
-    }
-
-    private sealed class CryptographyTimeProvider : TimeProvider
-    {
-        public DateTimeOffset ServerTime { get; set; }
-
-        public override DateTimeOffset GetUtcNow()
-        {
-            return ServerTime;
-        }
     }
 }
