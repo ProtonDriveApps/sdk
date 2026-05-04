@@ -1,5 +1,6 @@
 import { Logger, ValidationError } from '@protontech/drive-sdk';
 
+import { sanitizeTerminalText } from '../../cli/formatters';
 import { question } from '../../cli/readline';
 
 export enum ConflictChoice {
@@ -114,7 +115,7 @@ export class TransferConflictResolver {
         const choices = kind === ConflictTargetKind.File ? this.fileStrategyChoices : this.folderStrategyChoices;
         const hint = `Type a strategy (${choices.join(', ')}; or abbreviations), or [a]pply-to-all`;
         while (true) {
-            const line = await question(`Conflict on "${name}" (${kind}). ${hint}\n> `);
+            const line = await question(`Conflict on "${sanitizeTerminalText(name)}" (${kind}). ${hint}\n> `);
             const trimmed = line.trim().toLowerCase();
             if (trimmed === 'a' || trimmed === 'apply' || trimmed === 'apply-to-all') {
                 const applyAllLine = await question(`Default for all ${kind} conflicts:\n> `);

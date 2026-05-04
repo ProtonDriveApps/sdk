@@ -1,4 +1,4 @@
-import { formatSize } from "src/cli/formatters";
+import { formatSize, sanitizeTerminalText } from 'src/cli/formatters';
 
 const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
@@ -165,7 +165,8 @@ class TransferProgress implements TransferProgressInterface {
                 ? []
                 : Array.from(
                       this.active.values(),
-                      (item) => `${frame} ${getProgressPercentage(item)} ${item.name} (${formatSize(item.size, true)})`,
+                      (item) =>
+                          `${frame} ${getProgressPercentage(item)} ${sanitizeTerminalText(item.name)} (${formatSize(item.size, true)})`,
                   );
 
         if (lines.length === 0 && this.previousLineCount === 0) {
@@ -188,9 +189,9 @@ class TransferProgress implements TransferProgressInterface {
     }
 }
 
-function getProgressPercentage(item: { progress: number, size?: number }): string {
+function getProgressPercentage(item: { progress: number; size?: number }): string {
     if (item.size === undefined) {
         return '';
     }
-    return `${(item.progress / item.size * 100).toFixed(2)}%`;
+    return `${((item.progress / item.size) * 100).toFixed(2)}%`;
 }
