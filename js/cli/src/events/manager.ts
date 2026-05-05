@@ -32,13 +32,20 @@ export class Manager {
         driveSdk: TreeSdk,
         photosSdk: TreeSdk,
         provider: EventsProvider,
+        startSubscriptions: boolean = true,
     ): Promise<Manager> {
         const manager = new Manager(logger, driveSdk, photosSdk, provider);
-        if (provider.canListenForEvents()) {
-            await manager.subscribeCoreEvents();
-            await manager.subscribeInitialScopesFromProvider();
+        if (startSubscriptions) {
+            await manager.startSubscriptions();
         }
         return manager;
+    }
+
+    async startSubscriptions() {
+        if (this.provider.canListenForEvents()) {
+            await this.subscribeCoreEvents();
+            await this.subscribeInitialScopesFromProvider();
+        }
     }
 
     private async subscribeCoreEvents(): Promise<void> {
@@ -116,6 +123,11 @@ export class Manager {
                 resolve();
             }
         };
+    }
+
+    async clear(): Promise<void> {
+        await this.dispose();
+        await this.provider.clear();
     }
 
     async dispose(): Promise<void> {

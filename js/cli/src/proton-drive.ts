@@ -15,7 +15,6 @@ const CLIENT_UID_PREFIX = 'sdk-js-cli';
         appVersion: APP_VERSION,
         sdkVersion: SDK_VERSION,
         enablePersistedEvents: true,
-        debug: false,
         // TODO: Configure flags via Unleash.
         flags: {
             [FeatureFlags.DriveCryptoEncryptBlocksWithPgpAead]: true,

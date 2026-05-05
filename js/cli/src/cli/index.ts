@@ -22,12 +22,6 @@ export { applyDefaultCliOptions } from './registryCore';
 export type { CliSession } from './run';
 
 export async function run(commands: Command[], initOptions: InitConfig) {
-    if (Bun.argv[2] === '-v' || Bun.argv[2] === '--version') {
-        console.log(`Proton Drive CLI ${initOptions.appVersion}`);
-        console.log(`Proton Drive SDK ${initOptions.sdkVersion}`);
-        return;
-    }
-
     if (shouldStartRepl(Bun.argv)) {
         await startRepl(commands, initOptions);
     } else {

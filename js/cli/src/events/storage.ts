@@ -70,6 +70,10 @@ export class EventsFileStore {
         const body = JSON.stringify(this.scopes, null, 2);
         await fs.writeFile(filePath, body, 'utf8');
     }
+
+    async clear(): Promise<void> {
+        await fs.unlink(eventsJsonPath(this.cacheDir));
+    }
 }
 
 function eventsJsonPath(cacheDir: string): string {

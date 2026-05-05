@@ -9,7 +9,14 @@
         "moduleResolution": "bundler",
         "paths": {
             "@protontech/drive-sdk": ["../sdk/src/index.ts"],
-            "@protontech/drive-sdk/*": ["../sdk/src/*"]
+            "@protontech/drive-sdk/*": ["../sdk/src/*"],
+            // Use the patched version of crypto.
+            "@protontech/crypto": [
+                "./node_modules/@protontech/crypto/src/index.ts"
+            ],
+            "@protontech/crypto/*": [
+                "./node_modules/@protontech/crypto/src/*"
+            ]
         },
         "noEmit": false,
         "noImplicitAny": true,

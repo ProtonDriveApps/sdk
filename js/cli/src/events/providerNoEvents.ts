@@ -22,5 +22,7 @@ export class NoEventsProvider implements EventsProvider {
 
     async removeScope(context: EventsContext, treeEventScopeId: string): Promise<void> {}
 
+    async clear(): Promise<void> {}
+
     async dispose(): Promise<void> {}
 }

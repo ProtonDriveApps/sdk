@@ -6,8 +6,9 @@ export class CommandAuthLogin implements Command {
     name = 'login';
     isAuthAction = true;
 
-    async action({ auth }: ActionArgs) {
+    async action({ auth, eventsManager }: ActionArgs) {
         await this.handleAuthViaWeb(auth);
+        await eventsManager.startSubscriptions();
     }
 
     protected async handleAuthViaWeb(auth: Auth) {

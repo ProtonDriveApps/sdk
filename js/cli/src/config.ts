@@ -1,5 +1,7 @@
+import { LogLevel } from '@protontech/drive-sdk/telemetry';
+
 export interface InitConfig {
-    debug?: boolean;
+    enableConsoleLog?: boolean;
     appVersion: string;
     sdkVersion?: string;
     clientUidPrefix: string;
@@ -15,6 +17,7 @@ export interface Config {
     cacheDir: string;
     enablePersistedEvents: boolean;
     enableConsoleLog: boolean;
+    logLevel: LogLevel;
     unsafeSecrets: boolean;
     unsafeCache: boolean;
 }
@@ -24,6 +27,9 @@ export function getConfig(options: InitConfig): Config {
         process.env.PROTON_DRIVE_UNSAFE_SECRETS?.toLowerCase() ?? '',
     );
 
+    const logLevelOption = process.env.PROTON_DRIVE_LOG_LEVEL?.toUpperCase() ?? 'DEBUG';
+    const logLevel = LogLevel[logLevelOption as keyof typeof LogLevel] ?? LogLevel.DEBUG;
+
     return {
         clientUidPrefix: options.clientUidPrefix,
         appVersion: options.appVersion,
@@ -31,7 +37,8 @@ export function getConfig(options: InitConfig): Config {
         baseUrl: process.env.PROTON_DRIVE_BASE_URL || 'drive-api.proton.me',
         cacheDir: process.env.PROTON_DRIVE_CACHE_DIR || process.cwd(),
         enablePersistedEvents: options.enablePersistedEvents || false,
-        enableConsoleLog: options.debug || false,
+        enableConsoleLog: options.enableConsoleLog || false,
+        logLevel,
         unsafeSecrets,
         unsafeCache: unsafeSecrets,
     };

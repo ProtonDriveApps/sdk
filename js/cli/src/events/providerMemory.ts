@@ -23,9 +23,7 @@ export class MemoryEventsProvider implements EventsProvider {
 
     async getLatestEventId(treeEventScopeId: string): Promise<string | null> {
         return (
-            this.lastByContext.drive.get(treeEventScopeId) ??
-            this.lastByContext.photos.get(treeEventScopeId) ??
-            null
+            this.lastByContext.drive.get(treeEventScopeId) ?? this.lastByContext.photos.get(treeEventScopeId) ?? null
         );
     }
 
@@ -35,6 +33,11 @@ export class MemoryEventsProvider implements EventsProvider {
 
     async removeScope(context: EventsContext, treeEventScopeId: string): Promise<void> {
         this.lastByContext[context].delete(treeEventScopeId);
+    }
+
+    async clear(): Promise<void> {
+        this.lastByContext.drive.clear();
+        this.lastByContext.photos.clear();
     }
 
     async dispose(): Promise<void> {}

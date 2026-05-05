@@ -1,5 +1,6 @@
-import { ParseArgsConfig } from 'util';
+import { parseArgs, ParseArgsConfig } from 'util';
 
+import { InitConfig } from '../config';
 import { CommandNotFoundError, InvalidCommandArgumentsError } from './errors';
 import { Command } from './interface';
 
@@ -15,13 +16,26 @@ export function applyDefaultCliOptions(commands: Command[]): Command[] {
             short: 'j',
             default: false,
         };
+        command.options['verbose'] = {
+            type: 'boolean',
+            short: 'v',
+            default: false,
+        };
     }
     return commands;
 }
 
-export function getCommand(commands: Command[], groupName: string, commandName: string): Command {
-    if (groupName === 'help') {
+export function getCommand(
+    commands: Command[],
+    groupName: string,
+    commandName: string,
+    initOptions: InitConfig,
+): Command {
+    if (groupName === 'help' || commandName === '--help' || commandName === '-h') {
         return new CommandHelp(commands);
+    }
+    if (groupName === 'version' || commandName === '--version' || commandName === '-v') {
+        return new CommandVersion(initOptions);
     }
 
     if (groupName === 'fs') {
@@ -33,9 +47,7 @@ export function getCommand(commands: Command[], groupName: string, commandName: 
         return matches[0];
     }
 
-    matches = commands.filter(
-        (command) => command.group.startsWith(groupName) && command.name.startsWith(commandName),
-    );
+    matches = commands.filter((command) => command.group.startsWith(groupName) && command.name.startsWith(commandName));
     if (matches.length === 1) {
         return matches[0];
     }
@@ -44,12 +56,37 @@ export function getCommand(commands: Command[], groupName: string, commandName: 
     throw new CommandNotFoundError(`Command not found: ${groupName} ${commandName}`);
 }
 
-export function validateCommandArguments(command: Command, args: string[], values: { [name: string]: unknown }) {
-    // Do not validate arguments when help is requested.
-    if (values['help']) {
-        return;
+export function getCommandArguments(
+    command: Command,
+    argv: string[],
+): { options: { [name: string]: unknown }; args: string[] } {
+    if (command instanceof CommandHelp || command instanceof CommandVersion) {
+        return { options: {}, args: [] };
     }
 
+    try {
+        const { values: options, positionals } = parseArgs({
+            args: argv,
+            options: command.options || {},
+            strict: true,
+            allowPositionals: true,
+        });
+        const args = positionals.slice(4);
+        validateCommandArguments(command, args, options);
+        return { options, args };
+    } catch (error) {
+        if (error instanceof InvalidCommandArgumentsError) {
+            throw error;
+        }
+        if (error instanceof TypeError) {
+            printCommandUsage(command);
+            throw new InvalidCommandArgumentsError(error.message);
+        }
+        throw error;
+    }
+}
+
+function validateCommandArguments(command: Command, args: string[], values: { [name: string]: unknown }) {
     if (command.args) {
         const hasVariableArgs = command.args.some((arg) => arg.endsWith('...'));
         const hasExpectedArgs = hasVariableArgs
@@ -85,14 +122,28 @@ class CommandHelp implements Command {
     }
 }
 
+class CommandVersion implements Command {
+    group = 'version';
+    name = 'version';
+    isAuthAction = true;
+
+    constructor(private initOptions: InitConfig) {}
+
+    async action() {
+        console.log(`Proton Drive CLI ${this.initOptions.appVersion}`);
+        console.log(`Proton Drive SDK ${this.initOptions.sdkVersion}`);
+    }
+}
+
 function printUsage(commands: Command[]) {
     console.log('Usage:');
     commands.map((command) => {
         printCommandManual(command);
     });
     console.log('General options:');
-    console.log('  --help: Show help for a command');
-    console.log('  -j, --json: Output in JSON format');
+    console.log('  -h|--help: Show help for a command');
+    console.log('  -j|--json: Output in JSON format');
+    console.log('  -v|--verbose: Enable verbose output');
 }
 
 export function printCommandUsage(command: Command) {

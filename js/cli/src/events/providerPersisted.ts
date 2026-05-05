@@ -63,6 +63,10 @@ export class PersistedEventsProvider implements EventsProvider {
         await this.store.flush();
     }
 
+    async clear(): Promise<void> {
+        await this.store.clear();
+    }
+
     async dispose(): Promise<void> {
         if (this.holdsLock) {
             await releaseEventsLock(this.logger, this.cacheDir);
