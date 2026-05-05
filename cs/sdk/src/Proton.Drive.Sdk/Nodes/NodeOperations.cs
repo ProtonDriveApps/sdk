@@ -177,7 +177,23 @@ internal static class NodeOperations
 
         using var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
 
-        var destinationFolderSecrets = await FolderOperations.GetSecretsAsync(client, newParentUid, cancellationToken).ConfigureAwait(false);
+        var destinationFolderSecretsResult = await FolderOperations.GetSecretsAsync(client, newParentUid, cancellationToken).ConfigureAwait(false);
+
+        PgpPrivateKey destinationKey;
+        ReadOnlyMemory<byte> destinationHashKey;
+
+        if (destinationFolderSecretsResult.TryGetValueElseError(out var destinationFolderSecrets, out var degradedDestinationFolderSecrets))
+        {
+            destinationKey = destinationFolderSecrets.Key;
+            destinationHashKey = destinationFolderSecrets.HashKey;
+        }
+        else
+        {
+            destinationKey = degradedDestinationFolderSecrets.Key
+                ?? throw new ProtonDriveException($"Destination folder key not available for {newParentUid}");
+            destinationHashKey = degradedDestinationFolderSecrets.HashKey
+                ?? throw new ProtonDriveException($"Destination folder hash key not available for {newParentUid}");
+        }
 
         if (uid == newParentUid)
         {
@@ -195,14 +211,14 @@ internal static class NodeOperations
 
         GetNameParameters(
             newName ?? originNode.Name, // FIXME: validate name
-            destinationFolderSecrets.Key,
-            destinationFolderSecrets.HashKey.Span,
+            destinationKey,
+            destinationHashKey.Span,
             originSecrets.NameSessionKey,
             signingKey,
             out var encryptedName,
             out var nameHashDigest);
 
-        var passphraseKeyPacket = destinationFolderSecrets.Key.EncryptSessionKey(originSecrets.PassphraseSessionKey);
+        var passphraseKeyPacket = destinationKey.EncryptSessionKey(originSecrets.PassphraseSessionKey);
 
         ReadOnlyMemory<byte>? passphraseSignature = null;
         string? signatureEmailAddress = null;
@@ -245,7 +261,23 @@ internal static class NodeOperations
 
         using var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
 
-        var destinationFolderSecrets = await FolderOperations.GetSecretsAsync(client, newParentUid, cancellationToken).ConfigureAwait(false);
+        var destinationFolderSecretsResult = await FolderOperations.GetSecretsAsync(client, newParentUid, cancellationToken).ConfigureAwait(false);
+
+        PgpPrivateKey destinationKey;
+        ReadOnlyMemory<byte> destinationHashKey;
+
+        if (destinationFolderSecretsResult.TryGetValueElseError(out var destinationFolderSecrets, out var degradedDestinationFolderSecrets))
+        {
+            destinationKey = destinationFolderSecrets.Key;
+            destinationHashKey = destinationFolderSecrets.HashKey;
+        }
+        else
+        {
+            destinationKey = degradedDestinationFolderSecrets.Key
+                ?? throw new ProtonDriveException($"Destination folder key not available for {newParentUid}");
+            destinationHashKey = degradedDestinationFolderSecrets.HashKey
+                ?? throw new ProtonDriveException($"Destination folder hash key not available for {newParentUid}");
+        }
 
         var batch = new List<MoveMultipleLinksItem>();
 
@@ -262,14 +294,14 @@ internal static class NodeOperations
 
             GetNameParameters(
                 newName ?? originNode.Name, // FIXME: validate name
-                destinationFolderSecrets.Key,
-                destinationFolderSecrets.HashKey.Span,
+                destinationKey,
+                destinationHashKey.Span,
                 originSecrets.NameSessionKey,
                 signingKey,
                 out var encryptedName,
                 out var nameHashDigest);
 
-            var passphraseKeyPacket = destinationFolderSecrets.Key.EncryptSessionKey(originSecrets.PassphraseSessionKey);
+            var passphraseKeyPacket = destinationKey.EncryptSessionKey(originSecrets.PassphraseSessionKey);
 
             var itemRequest = new MoveMultipleLinksItem
             {
@@ -317,12 +349,12 @@ internal static class NodeOperations
 
         var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
 
-        var parentFolderSecrets = await FolderOperations.GetSecretsAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
+        var (parentKey, parentHashKey) = await FolderOperations.GetKeyAndHashKeyAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
 
         GetNameParameters(
             newName, // FIXME: validate name
-            parentFolderSecrets.Key,
-            parentFolderSecrets.HashKey.Span,
+            parentKey,
+            parentHashKey.Span,
             secrets.NameSessionKey,
             signingKey,
             out var encryptedName,
@@ -492,7 +524,11 @@ internal static class NodeOperations
     {
         const int batchSize = 10;
 
-        var folderSecrets = await FolderOperations.GetSecretsAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
+        var folderSecretsResult = await FolderOperations.GetSecretsAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
+
+        var folderHashKey = folderSecretsResult.TryGetValueElseError(out var folderSecrets, out var degradedFolderSecrets)
+            ? folderSecrets.HashKey : degradedFolderSecrets.HashKey
+            ?? throw new ProtonDriveException($"Folder hash key not available for {parentUid}");
 
         var digestsToNamesMap = new Dictionary<string, string>(batchSize);
 
@@ -508,7 +544,7 @@ internal static class NodeOperations
 
             foreach (var candidateName in batchEnumerator.Current)
             {
-                var digest = Convert.ToHexStringLower(NodeCrypto.HashNodeName(candidateName, folderSecrets.HashKey.Span));
+                var digest = Convert.ToHexStringLower(NodeCrypto.HashNodeName(candidateName, folderHashKey.Span));
                 digestsToNamesMap[digest] = candidateName;
             }
 
@@ -586,9 +622,9 @@ internal static class NodeOperations
             throw new InvalidOperationException("Root node does not have a parent folder");
         }
 
-        var parentFolderSecrets = await FolderOperations.GetSecretsAsync(client, parentUid.Value, cancellationToken).ConfigureAwait(false);
+        var (_, hashKey) = await FolderOperations.GetKeyAndHashKeyAsync(client, parentUid.Value, cancellationToken).ConfigureAwait(false);
 
-        return parentFolderSecrets.HashKey;
+        return hashKey;
     }
 
     private static async ValueTask<FolderNode?> GetFreshExistingMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
