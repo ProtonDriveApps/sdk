@@ -31,10 +31,12 @@ internal sealed class VolumeTrashBatchLoader(ProtonDriveClient client, VolumeId 
             {
                 if (!_parentKeys.TryGetValue(parentId, out parentKey))
                 {
-                    var folderSecrets = await FolderOperations.GetSecretsAsync(_client, new NodeUid(_volumeId, parentId), cancellationToken)
+                    var folderSecretsResult = await FolderOperations.GetSecretsAsync(_client, new NodeUid(_volumeId, parentId), cancellationToken)
                         .ConfigureAwait(false);
 
-                    parentKey = folderSecrets.Key;
+                    parentKey = folderSecretsResult.TryGetValueElseError(out var folderSecrets, out var degradedFolderSecrets)
+                        ? folderSecrets.Key : degradedFolderSecrets.Key
+                        ?? throw new ProtonDriveException($"Folder key not available for {parentId}");
 
                     _parentKeys[parentId] = parentKey;
                 }
