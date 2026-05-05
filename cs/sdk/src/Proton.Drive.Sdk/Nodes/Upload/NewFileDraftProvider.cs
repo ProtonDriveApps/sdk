@@ -33,7 +33,7 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
     {
         ArgumentOutOfRangeException.ThrowIfNegative(intendedUploadSize);
 
-        var parentSecrets = await FolderOperations.GetSecretsAsync(_client, _parentUid, cancellationToken).ConfigureAwait(false);
+        var (parentKey, parentHashKey) = await FolderOperations.GetKeyAndHashKeyAsync(_client, _parentUid, cancellationToken).ConfigureAwait(false);
 
         var membershipAddress = await NodeOperations.GetMembershipAddressAsync(_client, _parentUid, cancellationToken).ConfigureAwait(false);
 
@@ -41,7 +41,8 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
 
         var (response, fileSecrets) = await CreateDraftAsync(
             intendedUploadSize,
-            parentSecrets,
+            parentKey,
+            parentHashKey,
             signingKey,
             membershipAddress.EmailAddress,
             cancellationToken).ConfigureAwait(false);
@@ -58,7 +59,7 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
             fileSecrets.Key,
             fileSecrets.ContentKey,
             signingKey,
-            parentSecrets.HashKey,
+            parentHashKey,
             membershipAddress,
             blockVerifier,
             intendedUploadSize,
@@ -72,7 +73,8 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
         NodeUid parentUid,
         string name,
         string mediaType,
-        FolderSecrets parentSecrets,
+        PgpPrivateKey parentKey,
+        ReadOnlyMemory<byte> parentHashKey,
         PgpPrivateKey signingKey,
         string membershipEmailAddress,
         bool useAeadFeatureFlag,
@@ -85,8 +87,8 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
 
         NodeOperations.GetCommonCreationParameters(
             name,
-            parentSecrets.Key,
-            parentSecrets.HashKey.Span,
+            parentKey,
+            parentHashKey.Span,
             signingKey,
             pgpProfile,
             out nodeKey,
@@ -119,7 +121,8 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
 
     private async ValueTask<(FileCreationResponse Response, FileSecrets FileSecrets)> CreateDraftAsync(
         long intendedUploadSize,
-        FolderSecrets parentSecrets,
+        PgpPrivateKey parentKey,
+        ReadOnlyMemory<byte> parentHashKey,
         PgpPrivateKey signingKey,
         string membershipEmailAddress,
         CancellationToken cancellationToken)
@@ -139,7 +142,8 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
                 _parentUid,
                 _name,
                 _mediaType,
-                parentSecrets,
+                parentKey,
+                parentHashKey,
                 signingKey,
                 membershipEmailAddress,
                 useAeadFeatureFlag,
