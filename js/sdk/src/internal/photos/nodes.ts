@@ -55,7 +55,7 @@ export class PhotosNodesAPIService extends NodeAPIServiceBase<EncryptedPhotoNode
             // Capture time is not present only for draft nodes.
             // Draft nodes are not exposed to the client and are internal to
             // upload module only.
-            if (!link.Photo.CaptureTime) {
+            if (link.Photo.CaptureTime === null || link.Photo.CaptureTime === undefined) {
                 this.logger.warn(`Requested draft photo node, skipping from the result`);
                 return undefined;
             }

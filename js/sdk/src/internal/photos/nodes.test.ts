@@ -55,7 +55,7 @@ function generateAPIAlbumNode(linkOverrides = {}, overrides = {}) {
     };
 }
 
-function generateAPIPhotoNode(linkOverrides = {}, overrides = {}) {
+function generateAPIPhotoNode(linkOverrides = {}, photoOverrides = {}, overrides = {}) {
     const node = generateAPINode();
     return {
         ...node,
@@ -84,6 +84,7 @@ function generateAPIPhotoNode(linkOverrides = {}, overrides = {}) {
             MediaType: 'image/jpeg',
             ContentKeyPacket: 'contentKeyPacket',
             ContentKeyPacketSignature: 'contentKeyPacketSig',
+            ...photoOverrides,
         },
         Folder: null,
         ...overrides,
@@ -103,12 +104,16 @@ describe('PhotosNodesAPIService', () => {
     });
 
     describe('linkToEncryptedNode', () => {
-        async function testIterateNodes(mockedLink: object, expectedType: NodeType) {
+        async function testIterateNodes(mockedLink: object, expectedType?: NodeType) {
             apiMock.post = jest.fn().mockResolvedValue({ Links: [mockedLink] });
 
             const nodes = await Array.fromAsync(api.iterateNodes(['volumeId~nodeId'], 'volumeId'));
-            expect(nodes).toHaveLength(1);
-            expect(nodes[0].type).toBe(expectedType);
+            if (expectedType) {
+                expect(nodes).toHaveLength(1);
+                expect(nodes[0].type).toBe(expectedType);
+            } else {
+                expect(nodes).toHaveLength(0);
+            }
 
             return nodes;
         }
@@ -135,6 +140,17 @@ describe('PhotosNodesAPIService', () => {
             expect(nodes[0].photo?.albums).toHaveLength(1);
             expect(nodes[0].photo?.albums[0].nodeUid).toBe('volumeId~albumLinkId1');
             expect(nodes[0].photo?.albums[0].additionTime).toEqual(new Date(1700001000 * 1000));
+        });
+
+        it('should handle photo node with null capture time', async () => {
+            await testIterateNodes(generateAPIPhotoNode({}, { CaptureTime: null }), undefined);
+        });
+
+        it('should handle photo node with capture time set to zero', async () => {
+            const nodes = await testIterateNodes(generateAPIPhotoNode({}, { CaptureTime: 0 }), NodeType.Photo);
+
+            expect(nodes[0].photo).toBeDefined();
+            expect(nodes[0].photo?.captureTime).toEqual(new Date(0));
         });
     });
 });
