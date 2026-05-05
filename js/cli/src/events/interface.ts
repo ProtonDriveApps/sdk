@@ -7,5 +7,6 @@ export interface EventsProvider extends LatestEventIdProvider {
     getInitialSubscriptionScopeIds(): { context: EventsContext; treeEventScopeIds: string[] }[];
     setLatestEventId(context: EventsContext, treeEventScopeId: string, eventId: string): Promise<void>;
     removeScope(context: EventsContext, treeEventScopeId: string): Promise<void>;
+    clear(): Promise<void>;
     dispose(): Promise<void>;
 }

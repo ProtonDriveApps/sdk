@@ -49,3 +49,4 @@ Get help:
 | Name                     | Description                                                       | Default Value               |
 |--------------------------|-------------------------------------------------------------------|-----------------------------|
 | `PROTON_DRIVE_CACHE_DIR` | Directory where the SQLite and other caches, or logs, are stored. | Current working directory   |
+| `PROTON_DRIVE_LOG_LEVEL` | Log level to use for the logging.                                 | DEBUG                       |

@@ -1,13 +1,9 @@
-import { parseArgs } from 'util';
-
-import { ProtonDriveError } from '@protontech/drive-sdk';
-
 import { InitConfig } from '../config';
 import { init } from '../init';
-import { AuthRequiredError } from './errors';
+import { AuthRequiredError, isRecoverableReplError } from './errors';
 import { formatReadableJson } from './formatters';
 import { Command } from './interface';
-import { getCommand, printCommandUsage, validateCommandArguments } from './registryCore';
+import { getCommand, getCommandArguments, printCommandUsage } from './registryCore';
 
 export type CliSession = Awaited<ReturnType<typeof init>>;
 
@@ -20,8 +16,8 @@ export async function runSingleInvocation(
     try {
         await runCommand(commands, argv, initOptions, session);
     } catch (error: unknown) {
-        if (error instanceof ProtonDriveError) {
-            console.error(error.message);
+        if (isRecoverableReplError(error)) {
+            console.error(error instanceof Error ? error.message : String(error));
             process.exit(1);
             return;
         }
@@ -36,19 +32,22 @@ export async function runCommand(
     initOptions: InitConfig,
     session?: CliSession,
 ): Promise<void> {
-    const { command, options, args } = parseCliInvocation(commands, argv);
+    const { command, options, args } = parseCliInvocation(commands, argv, initOptions);
 
     if (options['help']) {
         printCommandUsage(command);
         return;
     }
 
-    const debug = initOptions.debug === undefined ? !options.json : initOptions.debug;
     const oneOffSession = !session;
-    session = session ?? await init({ ...initOptions, debug });
+    session = session ?? (await init({ ...initOptions, enableConsoleLog: !!options.verbose }));
     verifyAuthentication(command, session);
     try {
-        await dispatchAction(command, session, args, options, debug);
+        await command.action({
+            ...session,
+            args,
+            options,
+        });
     } finally {
         if (oneOffSession) {
             await session.dispose();
@@ -56,53 +55,17 @@ export async function runCommand(
     }
 }
 
-function parseCliInvocation(commands: Command[], argv: string[]) {
+function parseCliInvocation(commands: Command[], argv: string[], initOptions: InitConfig) {
     const groupName = argv[2]!;
     const commandName = argv[3]!;
-    const command = getCommand(commands, groupName, commandName);
-    const { values: options, positionals } = parseArgs({
-        args: argv,
-        options: command.options || {},
-        strict: true,
-        allowPositionals: true,
-    });
-    const args = positionals.slice(4);
-    validateCommandArguments(command, args, options);
+    const command = getCommand(commands, groupName, commandName, initOptions);
+    const { options, args } = getCommandArguments(command, argv);
     return { command, options, args };
 }
 
 function verifyAuthentication(command: Command, session: CliSession) {
     if (!command.isAuthAction && !command.isPublicAction && !session.auth.isLoggedIn()) {
         throw new AuthRequiredError();
-    }
-}
-
-async function dispatchAction(
-    command: Command,
-    session: CliSession,
-    args: string[],
-    options: { [name: string]: unknown },
-    debug: boolean,
-) {
-    if (debug) {
-        console.time('Command execution');
-    }
-    try {
-        await command.action({
-            logger: session.logger,
-            auth: session.auth,
-            sdk: session.sdk,
-            photosSdk: session.photosSdk,
-            sdkDiagnostic: session.sdkDiagnostic,
-            paths: session.paths,
-            eventsManager: session.eventsManager,
-            args,
-            options,
-        });
-    } finally {
-        if (debug) {
-            console.timeEnd('Command execution');
-        }
     }
 }
 

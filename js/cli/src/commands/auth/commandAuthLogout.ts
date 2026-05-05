@@ -5,7 +5,8 @@ export class CommandAuthLogout implements Command {
     name = 'logout';
     isAuthAction = true;
 
-    async action({ auth }: ActionArgs) {
+    async action({ auth, clearCaches }: ActionArgs) {
         await auth.logout();
+        await clearCaches();
     }
 }

@@ -17,7 +17,7 @@ import { initTelemetry } from './telemetry';
 
 export async function init(configOptions: InitConfig) {
     const config = getConfig(configOptions);
-    const telemetry = initTelemetry(config.cacheDir, config.enableConsoleLog);
+    const telemetry = initTelemetry(config);
     const logger = telemetry.getLogger('cli');
 
     const openPGPCryptoModule = initOpenPGPCryptoModule();
@@ -51,7 +51,7 @@ export async function init(configOptions: InitConfig) {
     const photosSdk = new ProtonDrivePhotosClient(sdkDependencies);
     const sdkDiagnostic = initDiagnostic(sdkDependencies);
 
-    const eventsManager = await Manager.create(logger, sdk, photosSdk, eventsProvider);
+    const eventsManager = await Manager.create(logger, sdk, photosSdk, eventsProvider, auth.isLoggedIn());
 
     const paths = new Paths(sdk, photosSdk, auth, eventsManager);
 
@@ -67,6 +67,10 @@ export async function init(configOptions: InitConfig) {
         eventsProvider,
         dispose: async () => {
             await eventsManager.dispose();
+        },
+        clearCaches: async () => {
+            logger.debug('Clearing caches');
+            await Promise.allSettled([eventsManager.clear(), caches.cryptoCache.clear(), caches.entitiesCache.clear()]);
         },
     };
 }

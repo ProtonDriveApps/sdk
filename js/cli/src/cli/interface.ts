@@ -27,6 +27,7 @@ export interface ActionArgs {
     sdkDiagnostic: Diagnostic;
     paths: Paths;
     eventsManager: Manager;
+    clearCaches: () => Promise<void>;
     args: string[];
     options: { [name: string]: any }; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
