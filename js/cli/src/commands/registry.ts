@@ -13,6 +13,14 @@ import { CommandFileSystemRename } from './fileSystem/commandFileSystemRename';
 import { CommandFileSystemRestore } from './fileSystem/commandFileSystemRestore';
 import { CommandFileSystemTrash } from './fileSystem/commandFileSystemTrash';
 import { CommandFileSystemUpload } from './fileSystem/commandFileSystemUpload';
+import { CommandInvitationAccept } from './sharing/commandInvitationAccept';
+import { CommandInvitationList } from './sharing/commandInvitationList';
+import { CommandInvitationReject } from './sharing/commandInvitationReject';
+import { CommandSharingInvite } from './sharing/commandSharingInvite';
+import { CommandSharingRemove } from './sharing/commandSharingRemove';
+import { CommandSharingRemoveUrl } from './sharing/commandSharingRemoveUrl';
+import { CommandSharingSetUrl } from './sharing/commandSharingSetUrl';
+import { CommandSharingStatus } from './sharing/commandSharingStatus';
 
 export const COMMANDS = applyDefaultCliOptions([
     new CommandAuthLogin(),
@@ -29,4 +37,12 @@ export const COMMANDS = applyDefaultCliOptions([
     new CommandFileSystemRestore(),
     new CommandFileSystemDelete(),
     new CommandFileSystemEmptyTrash(),
+    new CommandSharingStatus(),
+    new CommandSharingInvite(),
+    new CommandSharingRemove(),
+    new CommandSharingSetUrl(),
+    new CommandSharingRemoveUrl(),
+    new CommandInvitationList(),
+    new CommandInvitationAccept(),
+    new CommandInvitationReject(),
 ]);
