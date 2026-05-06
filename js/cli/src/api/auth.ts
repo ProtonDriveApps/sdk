@@ -138,7 +138,8 @@ export class Auth {
             } catch (error) {
                 // The API returns 422 if the authentication is not yet ready.
                 if (error instanceof AccountApiError && error.httpCode === 422) {
-                    this.logger.debug('Authentication not yet ready');
+                    const debug = error.debug as { Error?: string };
+                    this.logger.debug(`Authentication not yet ready (${error.code}: ${debug.Error})`);
                     await sleepMs(FORK_POLL_INTERVAL_MS, signal);
                     continue;
                 }

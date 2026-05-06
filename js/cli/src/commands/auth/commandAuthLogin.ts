@@ -6,16 +6,26 @@ export class CommandAuthLogin implements Command {
     name = 'login';
     isAuthAction = true;
 
-    async action({ auth, eventsManager }: ActionArgs) {
-        await this.handleAuthViaWeb(auth);
+    async action({ auth, eventsManager, options: { json } }: ActionArgs) {
+        await this.handleAuthViaWeb(auth, json);
+        if (!json) {
+            console.log('Authentication successful');
+        }
         await eventsManager.startSubscriptions();
     }
 
-    protected async handleAuthViaWeb(auth: Auth) {
+    protected async handleAuthViaWeb(auth: Auth, json: boolean) {
         return auth.authViaWeb((signInUrl) => {
             openBrowserUrl(signInUrl);
-            console.log('Sign in in your browser (URL also printed if it did not open automatically):');
-            console.log(sanitizeTerminalText(signInUrl));
+            if (json) {
+                console.log(sanitizeTerminalText(JSON.stringify({ signInUrl })));
+            } else {
+                console.log(
+                    'Sign in in your browser. Keep the terminal open. Waiting for authentication to complete...',
+                );
+                console.log('Open following URL manually if browser did not open automatically:');
+                console.log(sanitizeTerminalText(signInUrl));
+            }
         });
     }
 }
