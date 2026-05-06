@@ -1,5 +1,15 @@
 # Changelog
 
+## js/v0.15.0 (2026-05-06)
+
+* Fix detecting photo drafts
+* Handle loading drafts
+* BatchSize for remove_multiple on photos should be 10
+* Add events subscriptions for CLI
+* Fix TypeError not being recognized as NetworkError
+* Integrate @protontech/crypto
+* Add upload and download commands
+
 ## js/v0.14.10 (2026-04-27)
 
 * Update cached album photo count after adding or removing photo
