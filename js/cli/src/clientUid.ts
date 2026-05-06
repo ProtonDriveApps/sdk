@@ -16,7 +16,7 @@ interface ClientUidFile {
  * stored as plain JSON in cache directory.
  */
 export async function getOrGenerateClientUid(config: Config, logger: Logger): Promise<string> {
-    const path = join(config.cacheDir, CLIENT_UID_FILE);
+    const path = join(config.appDir, CLIENT_UID_FILE);
     const file = Bun.file(path);
 
     if (await file.exists()) {
@@ -32,7 +32,7 @@ export async function getOrGenerateClientUid(config: Config, logger: Logger): Pr
     }
 
     const clientUid = `${config.clientUidPrefix}-${crypto.randomUUID()}`;
-    await mkdir(config.cacheDir, { recursive: true });
+    await mkdir(config.appDir, { recursive: true });
     const payload: ClientUidFile = { clientUid };
     await Bun.write(path, `${JSON.stringify(payload, null, 2)}\n`);
 
