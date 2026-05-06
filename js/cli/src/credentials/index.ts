@@ -15,7 +15,7 @@ export function initCredentials(config: Config, logger: Logger): Credentials {
 
 function createAuthSessionStore(config: Config, logger: Logger): CredentialsStore {
     if (config.unsafeSecrets) {
-        return new PlaintextFileSessionStore(config.cacheDir, logger);
+        return new PlaintextFileSessionStore(config.appDir, logger);
     }
     return new SecretsSessionStore(logger);
 }

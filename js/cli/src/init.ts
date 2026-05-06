@@ -1,5 +1,8 @@
 import '@protontech/drive-sdk/polyfill';
 
+import { mkdir } from 'node:fs/promises';
+import path from 'node:path';
+
 import { CryptoProxy } from '@protontech/crypto';
 import { Api as CryptoApi } from '@protontech/crypto/proxy/endpoint/api.ts';
 import { FeatureFlags, Logger, OpenPGPCryptoWithCryptoProxy, ProtonDriveClient } from '@protontech/drive-sdk';
@@ -17,6 +20,12 @@ import { initTelemetry } from './telemetry';
 
 export async function init(configOptions: InitConfig) {
     const config = getConfig(configOptions);
+    await Promise.all([
+        mkdir(config.cacheDir, { recursive: true }),
+        mkdir(config.appDir, { recursive: true }),
+        mkdir(config.logDir, { recursive: true }),
+    ]);
+
     const telemetry = initTelemetry(config);
     const logger = telemetry.getLogger('cli');
 
@@ -27,7 +36,7 @@ export async function init(configOptions: InitConfig) {
     const clientUid = await getOrGenerateClientUid(config, logger);
     const caches = createCaches(config, credentials, logger);
     const eventsProvider = config.enablePersistedEvents
-        ? await PersistedEventsProvider.open(logger, config.cacheDir)
+        ? await PersistedEventsProvider.open(logger, config.appDir)
         : new NoEventsProvider();
 
     const sdkDependencies = {
@@ -45,7 +54,7 @@ export async function init(configOptions: InitConfig) {
         latestEventIdProvider: eventsProvider,
         featureFlagProvider: configOptions.flags
             ? new FeatureFlagProvider(configOptions.flags)
-            : await FeatureFlagProvider.fromJsonFile(config.cacheDir + '/config.json'),
+            : await FeatureFlagProvider.fromJsonFile(path.join(config.appDir, 'config.json')),
     };
     const sdk = new ProtonDriveClient(sdkDependencies);
     const photosSdk = new ProtonDrivePhotosClient(sdkDependencies);
