@@ -1,5 +1,11 @@
 # Changelog
 
+## cs/v0.14.2 (2026-05-06)
+
+* Dispose upload controller in test to see events
+* Make cryptography time monotonic
+* Optional AccountClientProtocol + interop nil handling
+
 ## cs/v0.14.1 (2026-05-01)
 
 * Refactor Proton API exception to consolidate constructor initialization
