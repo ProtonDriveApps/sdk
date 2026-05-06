@@ -37,7 +37,6 @@ import proton.drive.sdk.driveClientGetNodeRequest
 import proton.drive.sdk.driveClientRenameRequest
 import proton.drive.sdk.driveClientRestoreNodesRequest
 import proton.drive.sdk.driveClientTrashNodesRequest
-import proton.drive.sdk.drivePhotosClientGetNodeRequest
 import java.time.Instant
 import kotlin.time.Duration
 
@@ -235,6 +234,7 @@ internal class InteropProtonDriveClient internal constructor(
         revisionUid: RevisionUid,
         timeout: Duration,
     ): Downloader = withTimeout(timeout) {
+        log(INFO, "downloader")
         cancellationCoroutineScope { source ->
             factory(JniFileDownloader()) {
                 FileDownloader(
@@ -255,6 +255,7 @@ internal class InteropProtonDriveClient internal constructor(
         request: FileUploaderRequest,
         timeout: Duration,
     ): Uploader = withTimeout(timeout) {
+        log(INFO, "fileUploader")
         cancellationCoroutineScope { source ->
             JniFileUploader().run {
                 FileUploader(
@@ -275,6 +276,7 @@ internal class InteropProtonDriveClient internal constructor(
         request: FileRevisionUploaderRequest,
         timeout: Duration,
     ): Uploader = withTimeout(timeout) {
+        log(INFO, "fileRevisionUploader")
         cancellationCoroutineScope { source ->
             JniFileUploader().run {
                 FileUploader(
