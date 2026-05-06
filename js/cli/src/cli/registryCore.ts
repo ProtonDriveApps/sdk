@@ -154,7 +154,7 @@ export function printCommandUsage(command: Command) {
 function printCommandManual(command: Command) {
     const args = (command.args || []).map((arg) => `<${arg}>`).join(' ');
     const options = Object.entries(command.options || {})
-        .filter(([name]) => name !== 'help' && name !== 'json')
+        .filter(([name]) => name !== 'help' && name !== 'json' && name !== 'verbose')
         .map(([name, { type, short }]) => {
             const flag = short ? `-${short}|--${name}` : `--${name}`;
             return type === 'boolean' ? flag : `${flag} <${type}>`;
