@@ -77,7 +77,9 @@ internal class InteropProtonPhotosClient internal constructor(
         }
     }
 
-    override suspend fun getNode(nodeUid: NodeUid): NodeResult? = cancellationCoroutineScope { source ->
+    override suspend fun getNode(
+        nodeUid: NodeUid,
+    ): NodeResult? = cancellationCoroutineScope { source ->
         log(DEBUG, "getNode")
         bridge.getNode(
             drivePhotosClientGetNodeRequest {
@@ -158,6 +160,7 @@ internal class InteropProtonPhotosClient internal constructor(
         photoUid: NodeUid,
         timeout: Duration,
     ): Downloader = withTimeout(timeout) {
+        log(INFO, "downloader")
         cancellationCoroutineScope { source ->
             factory(JniPhotosDownloader()) {
                 PhotosDownloader(
@@ -178,6 +181,7 @@ internal class InteropProtonPhotosClient internal constructor(
         request: PhotosUploaderRequest,
         timeout: Duration,
     ): Uploader = withTimeout(timeout) {
+        log(INFO, "photosUploader")
         cancellationCoroutineScope { source ->
             JniPhotosUploader().run {
                 PhotosUploader(
