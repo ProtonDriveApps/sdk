@@ -426,7 +426,7 @@ describe('NodesManagement', () => {
     });
 
     it('copyNode throws error if name is invalid', async () => {
-        const promise = management.copyNode('nodeUid', 'newParentNodeUid', 'invalid/name');
+        const promise = management.copyNode('nodeUid', 'newParentNodeUid', '');
         await expect(promise).rejects.toThrow(ValidationError);
     });
 

@@ -134,11 +134,11 @@ describe('nodesAccess', () => {
             const decryptedUnparsedNode = {
                 uid: 'volumeId~nodeId',
                 parentUid: 'volumeId~parentNodeid',
-                name: { ok: true, value: 'foo/bar' },
+                name: { ok: true, value: '' },
             } as DecryptedUnparsedNode;
             const decryptedNode = {
                 ...decryptedUnparsedNode,
-                name: { ok: false, error: { name: 'foo/bar', error: "Name must not contain the character '/'" } },
+                name: { ok: false, error: { name: '', error: "Name must not be empty" } },
                 treeEventScopeId: 'volumeId',
             } as DecryptedNode;
             const decryptedKeys = { key: 'key' } as any as DecryptedNodeKeys;

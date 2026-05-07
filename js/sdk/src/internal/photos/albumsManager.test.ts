@@ -152,7 +152,7 @@ describe('Albums', () => {
         });
 
         it('throws validation error for invalid album name', async () => {
-            await expect(albums.createAlbum('invalid/name')).rejects.toThrow(ValidationError);
+            await expect(albums.createAlbum('')).rejects.toThrow(ValidationError);
         });
 
         it('throws error when parent hash key is not available', async () => {
@@ -228,7 +228,7 @@ describe('Albums', () => {
         });
 
         it('throws validation error for invalid album name', async () => {
-            await expect(albums.updateAlbum('albumNodeUid', { name: 'invalid/name' })).rejects.toThrow(ValidationError);
+            await expect(albums.updateAlbum('albumNodeUid', { name: '' })).rejects.toThrow(ValidationError);
         });
     });
 

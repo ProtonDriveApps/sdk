@@ -40,8 +40,5 @@ export function getClaimedSize(maybeNode: MaybeNode): number | undefined {
 }
 
 function validateName(name: string): boolean {
-    if (name.length == 0 || name.includes('/')) {
-        return false;
-    }
-    return true;
+    return name.length > 0;
 }

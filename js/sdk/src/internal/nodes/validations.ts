@@ -5,7 +5,7 @@ import { ValidationError } from '../../errors';
 const MAX_NODE_NAME_LENGTH = 255;
 
 /**
- * @throws Error if the name is empty, long, or includes slash in the name.
+ * @throws Error if the name is empty or long.
  */
 export function validateNodeName(name: string): void {
     if (!name) {
@@ -19,8 +19,5 @@ export function validateNodeName(name: string): void {
                 MAX_NODE_NAME_LENGTH,
             ),
         );
-    }
-    if (name.includes('/')) {
-        throw new ValidationError(c('Error').t`Name must not contain the character '/'`);
     }
 }
