@@ -18,6 +18,7 @@ namespace Proton.Drive.Sdk.Nodes;
 internal static class NodeOperations
 {
     private const int MaximumBatchCount = 150;
+    private const int MaxNodeNameLength = 255;
 
     public static async ValueTask<FolderNode> GetOrCreateMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
     {
@@ -565,9 +566,9 @@ internal static class NodeOperations
             return false;
         }
 
-        if (name.Contains('/'))
+        if (name.Length > MaxNodeNameLength)
         {
-            nameResult = new InvalidNameError(name, "Name must not contain the character '/'");
+            nameResult = new InvalidNameError(name, $"Name must be {MaxNodeNameLength} characters long at most");
             return false;
         }
 

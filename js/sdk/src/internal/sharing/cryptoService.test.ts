@@ -169,7 +169,7 @@ describe('SharingCryptoService', () => {
 
         it('should handle invalid node name', async () => {
             driveCrypto.decryptNodeName = jest.fn().mockResolvedValue({
-                name: 'invalid/name',
+                name: '',
             });
 
             const result = await cryptoService.decryptBookmark(encryptedBookmark);
@@ -177,8 +177,8 @@ describe('SharingCryptoService', () => {
             expect(result).toMatchObject({
                 url: resultOk('https://drive.proton.me/urls/tokenId#urlPassword'),
                 nodeName: resultError({
-                    name: 'invalid/name',
-                    error: "Name must not contain the character '/'",
+                    name: '',
+                    error: "Name must not be empty",
                 }),
             });
         });

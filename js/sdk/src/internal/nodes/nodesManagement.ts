@@ -236,12 +236,12 @@ export abstract class NodesManagementBase<
     }
 
     async copyNode(nodeUid: string, newParentUid: string, name?: string): Promise<TDecryptedNode> {
-        if (name) {
+        if (name !== undefined) {
             validateNodeName(name);
         }
 
         const node = await this.nodesAccess.getNode(nodeUid);
-        const nodeName = name ? resultOk<string, Error | InvalidNameError>(name) : node.name;
+        const nodeName = name !== undefined ? resultOk<string, Error | InvalidNameError>(name) : node.name;
 
         const [keys, newParentKeys, signingKeys] = await Promise.all([
             this.nodesAccess.getNodePrivateAndSessionKeys(nodeUid),

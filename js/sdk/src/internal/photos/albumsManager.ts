@@ -133,7 +133,7 @@ export class AlbumsManager {
             coverPhotoNodeUid?: string;
         },
     ): Promise<DecryptedPhotoNode> {
-        if (updates.name) {
+        if (updates.name !== undefined) {
             validateNodeName(updates.name);
         }
 
