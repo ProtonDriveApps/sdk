@@ -399,7 +399,7 @@ internal sealed partial class RevisionWriter
 
                 currentBlockNumber = newBlockNumber;
 
-                _client.UploadQueue.SetFileTotalBlockCount(_queueToken, currentBlockNumber.Value + expectedThumbnailBlockCount);
+                _client.UploadQueue.ApplyFileMinimumTotalBlockCount(_queueToken, currentBlockNumber.Value + expectedThumbnailBlockCount);
 
                 // ReSharper disable once PossiblyMistakenUseOfCancellationToken
                 await WaitForBlockUploaderAsync(uploadTasks, cancellationToken).ConfigureAwait(false);

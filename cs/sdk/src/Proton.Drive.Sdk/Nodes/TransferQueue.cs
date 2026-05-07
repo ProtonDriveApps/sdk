@@ -86,7 +86,10 @@ internal sealed partial class TransferQueue(int maxDegreeOfParallelism, ILogger 
         return queuePosition;
     }
 
-    public void SetFileTotalBlockCount(long queueToken, int total)
+    /// <summary>
+    /// Increases the total and remaining block counts for a file if the given total is greater than the current one.
+    /// </summary>
+    public void ApplyFileMinimumTotalBlockCount(long queueToken, int total)
     {
         lock (_fileBlocksLock)
         {
@@ -95,16 +98,14 @@ internal sealed partial class TransferQueue(int maxDegreeOfParallelism, ILogger 
                 : throw new InvalidOperationException($"Queue token {queueToken} not found in transfer queue.");
 
             var delta = total - currentTotal;
+            if (delta <= 0)
+            {
+                return;
+            }
 
-            if (delta > 0)
-            {
-                FileQueueSemaphore.DecreaseCount(delta);
-                LogDecreasedFileQueueSemaphoreCount(delta, FileQueueSemaphore.CurrentCount);
-            }
-            else
-            {
-                RemoveBlocksFromFileQueue(-delta);
-            }
+            FileQueueSemaphore.DecreaseCount(delta);
+
+            LogDecreasedFileQueueSemaphoreCount(delta, FileQueueSemaphore.CurrentCount);
 
             _fileBlocks[queueToken] = (currentRemaining + delta, total);
         }
