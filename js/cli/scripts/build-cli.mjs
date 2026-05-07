@@ -22,6 +22,8 @@ const args = [
     `--target=${target}`,
     // Slower compile, bigger bundle size, faster execution.
     '--bytecode',
+    // Use modern ESM format to allow await syntax in the entry file.
+    '--format=esm',
     // Reduce bundle size (not much, the biggest part is the embedded Bun itself).
     '--minify',
     // Include source maps for readable stack traces.
