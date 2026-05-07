@@ -1,5 +1,4 @@
-import { ProtonDriveClient, ProtonInvitationWithNode } from '@protontech/drive-sdk';
-import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
+import { ProtonInvitationWithNode } from '@protontech/drive-sdk';
 
 import {
     type ActionArgs,
@@ -17,24 +16,28 @@ export class CommandInvitationList implements Command {
     name = 'list';
 
     async action({ sdk, photosSdk, options: { json } }: ActionArgs) {
-        await this.printInvitations(sdk, 'drive', json);
-        await this.printInvitations(photosSdk, 'photos', json);
-    }
-
-    private async printInvitations(
-        sdk: ProtonDriveClient | ProtonDrivePhotosClient,
-        context: 'drive' | 'photos',
-        json: boolean,
-    ): Promise<void> {
         await printIterable(
-            sdk.iterateInvitations(),
+            this.iterateInvitations({ sdk, photosSdk }),
             json,
-            (invitation) => this.printInvitationHuman(invitation, getInvitationUid(context, invitation.uid)),
-            (invitation) => ({
+            ({ invitation, context }) =>
+                this.printInvitationHuman(invitation, getInvitationUid(context, invitation.uid)),
+            ({ invitation, context }) => ({
                 ...invitation,
                 uid: getInvitationUid(context, invitation.uid),
             }),
         );
+    }
+
+    private async *iterateInvitations({ sdk, photosSdk }: Pick<ActionArgs, 'sdk' | 'photosSdk'>): AsyncIterable<{
+        invitation: ProtonInvitationWithNode;
+        context: 'drive' | 'photos';
+    }> {
+        for await (const invitation of sdk.iterateInvitations()) {
+            yield { invitation, context: 'drive' };
+        }
+        for await (const invitation of photosSdk.iterateInvitations()) {
+            yield { invitation, context: 'photos' };
+        }
     }
 
     private printInvitationHuman(invitation: ProtonInvitationWithNode, uid: string): void {
