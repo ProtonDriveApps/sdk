@@ -17,7 +17,7 @@ export async function initApi(config: Config, credentials: Credentials, logger: 
     const apiClient = new ApiClient(config, credentials, logger);
     const accountApi = new AccountApi(apiClient);
     const addresses = new Addresses(accountApi, credentials, logger);
-    const auth = new Auth(accountApi, credentials, logger);
+    const auth = new Auth(config.authClientId, accountApi, credentials, logger);
     const srp = new Srp(accountApi);
     const httpClient = new HTTPClient(apiClient);
 
