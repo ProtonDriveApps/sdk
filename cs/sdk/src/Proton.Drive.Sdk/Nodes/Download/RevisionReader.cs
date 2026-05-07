@@ -284,7 +284,7 @@ internal sealed partial class RevisionReader
             currentPageBlocks.AddRange(revisionDto.Blocks);
             currentPageBlocks.Sort((a, b) => a.Index.CompareTo(b.Index));
 
-            _client.DownloadQueue.IncreaseFileRemainingBlockCount(_state.QueueToken, currentPageBlocks.Count - initialQueueCountToSubtract);
+            _client.DownloadQueue.IncreaseFileBlockCount(_state.QueueToken, currentPageBlocks.Count - initialQueueCountToSubtract);
             initialQueueCountToSubtract = 0;
 
             var blocksExceptLast = currentPageBlocks.Take(currentPageBlocks.Count - 1);

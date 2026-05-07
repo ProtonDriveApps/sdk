@@ -9,4 +9,6 @@ internal struct RevisionCreationRequest
 
     [JsonPropertyName("ClientUID")]
     public string? ClientId { get; init; }
+
+    public long? IntendedUploadSize { get; init; }
 }

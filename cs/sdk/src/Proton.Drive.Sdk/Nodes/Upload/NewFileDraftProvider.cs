@@ -29,16 +29,22 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
         _overrideExistingDraftByOtherClient = overrideExistingDraftByOtherClient;
     }
 
-    public async ValueTask<RevisionDraft> GetDraftAsync(CancellationToken cancellationToken)
+    public async ValueTask<RevisionDraft> GetDraftAsync(long intendedUploadSize, CancellationToken cancellationToken)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(intendedUploadSize);
+
         var parentSecrets = await FolderOperations.GetSecretsAsync(_client, _parentUid, cancellationToken).ConfigureAwait(false);
 
         var membershipAddress = await NodeOperations.GetMembershipAddressAsync(_client, _parentUid, cancellationToken).ConfigureAwait(false);
 
         var signingKey = await _client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
 
-        var (response, fileSecrets) = await CreateDraftAsync(parentSecrets, signingKey, membershipAddress.EmailAddress, cancellationToken)
-            .ConfigureAwait(false);
+        var (response, fileSecrets) = await CreateDraftAsync(
+            intendedUploadSize,
+            parentSecrets,
+            signingKey,
+            membershipAddress.EmailAddress,
+            cancellationToken).ConfigureAwait(false);
 
         var draftNodeUid = new NodeUid(_parentUid.VolumeId, response.Identifiers.LinkId);
         var draftRevisionUid = new RevisionUid(draftNodeUid, response.Identifiers.RevisionId);
@@ -55,11 +61,13 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
             parentSecrets.HashKey,
             membershipAddress,
             blockVerifier,
+            intendedUploadSize,
             ct => DeleteDraftAsync(draftRevisionUid, ct),
             _client.Telemetry.GetLogger("New file draft"));
     }
 
     private static FileCreationRequest GetFileCreationRequest(
+        long intendedUploadSize,
         string clientUid,
         NodeUid parentUid,
         string name,
@@ -105,10 +113,12 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
             MediaType = mediaType,
             ContentKeyPacket = nodeKey.EncryptSessionKey(contentKey),
             ContentKeySignature = nodeKey.Sign(contentKey.Export()),
+            IntendedUploadSize = intendedUploadSize,
         };
     }
 
     private async ValueTask<(FileCreationResponse Response, FileSecrets FileSecrets)> CreateDraftAsync(
+        long intendedUploadSize,
         FolderSecrets parentSecrets,
         PgpPrivateKey signingKey,
         string membershipEmailAddress,
@@ -124,6 +134,7 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
         while (result is null)
         {
             var request = GetFileCreationRequest(
+                intendedUploadSize,
                 _client.Uid,
                 _parentUid,
                 _name,
