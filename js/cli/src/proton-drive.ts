@@ -9,7 +9,7 @@ declare const SDK_VERSION: string | undefined;
 
 const CLIENT_UID_PREFIX = 'sdk-js-cli';
 
-(async () => {
+try {
     await run(COMMANDS, {
         clientUidPrefix: CLIENT_UID_PREFIX,
         appVersion: APP_VERSION,
@@ -22,7 +22,7 @@ const CLIENT_UID_PREFIX = 'sdk-js-cli';
         },
     });
     process.exit(0);
-})().catch((err) => {
-    console.error(err);
+} catch (error: unknown) {
+    console.error(error);
     process.exit(1);
-});
+}
