@@ -15,6 +15,7 @@ import { Srp } from './srp';
 export class Auth {
     private readonly srpModule: Srp;
     constructor(
+        private readonly authClientId: string,
         private readonly accountApi: AccountApi,
         private readonly credentials: Credentials,
         private readonly logger: Logger,
@@ -55,7 +56,7 @@ export class Auth {
             info.Modulus,
             info.ServerEphemeral,
             info.Salt,
-            password
+            password,
         );
 
         this.logger.debug('Authenticating');
@@ -118,7 +119,7 @@ export class Auth {
         this.logger.debug('Authenticating via web');
         const forkResponse = await this.accountApi.sessionForksInit();
 
-        const { encryptionKey, signInUrl } = generateSignInUrl(forkResponse.UserCode);
+        const { encryptionKey, signInUrl } = generateSignInUrl(this.authClientId, forkResponse.UserCode);
 
         await onSignInUrl(signInUrl);
 

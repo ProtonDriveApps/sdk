@@ -19,6 +19,8 @@ export interface Config {
     clientUidPrefix: string;
     /** Version of the CLI. */
     appVersion: string;
+    /** Client ID for the authentication. cli-drive for the official CLI, external-drive for 3p forks. */
+    authClientId: string;
     /** Version of the SDK used by the CLI. */
     sdkVersion?: string;
     /** Base URL for the API. */
@@ -57,6 +59,7 @@ export function getConfig(options: InitConfig): Config {
     return {
         clientUidPrefix: options.clientUidPrefix,
         appVersion: options.appVersion,
+        authClientId: options.appVersion.startsWith('cli-drive') ? 'cli-drive' : 'external-drive',
         sdkVersion: options.sdkVersion,
         baseUrl: process.env.PROTON_DRIVE_BASE_URL || 'drive-api.proton.me',
         cacheDir,
