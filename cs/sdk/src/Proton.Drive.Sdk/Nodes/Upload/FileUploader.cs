@@ -94,7 +94,7 @@ public sealed class FileUploader : IDisposable
         long size,
         FileUploadMetadata metadata)
     {
-        var expectedNumberOfBlocks = (int)size.DivideAndRoundUp(RevisionWriter.DefaultBlockSize);
+        var expectedNumberOfBlocks = (int)size.DivideAndRoundUp(client.TargetBlockSize);
 
         if (client.UploadQueue.TryEnqueueFile(expectedNumberOfBlocks) is not { } queueToken)
         {
@@ -119,7 +119,7 @@ public sealed class FileUploader : IDisposable
         FileUploadMetadata metadata,
         CancellationToken cancellationToken)
     {
-        var expectedNumberOfBlocks = (int)size.DivideAndRoundUp(RevisionWriter.DefaultBlockSize);
+        var expectedNumberOfBlocks = (int)size.DivideAndRoundUp(client.TargetBlockSize);
 
         var queueToken = await client.UploadQueue.EnqueueFileAsync(expectedNumberOfBlocks, cancellationToken).ConfigureAwait(false);
 
@@ -205,7 +205,7 @@ public sealed class FileUploader : IDisposable
         var revisionDraft = revisionDraftTaskCompletionSource.Task.GetResultIfCompletedSuccessfully();
         if (revisionDraft is null)
         {
-            revisionDraft = await _revisionDraftProvider.GetDraftAsync(cancellationToken).ConfigureAwait(false);
+            revisionDraft = await _revisionDraftProvider.GetDraftAsync(FileSize, cancellationToken).ConfigureAwait(false);
             revisionDraftTaskCompletionSource.SetResult(revisionDraft);
         }
 
@@ -260,7 +260,6 @@ public sealed class FileUploader : IDisposable
 
         await revisionWriter.WriteAsync(
             contentStream,
-            FileSize,
             expectedSha1,
             thumbnails,
             _metadata,

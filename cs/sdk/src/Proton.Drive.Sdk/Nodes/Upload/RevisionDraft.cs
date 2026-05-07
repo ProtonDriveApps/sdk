@@ -17,6 +17,7 @@ internal sealed partial class RevisionDraft(
     ReadOnlyMemory<byte>? parentHashKey,
     Address membershipAddress,
     IBlockVerifier blockVerifier,
+    long intendedUploadSize,
     Func<CancellationToken, ValueTask> deleteDraftFunction,
     ILogger logger) : IAsyncDisposable
 {
@@ -42,6 +43,8 @@ internal sealed partial class RevisionDraft(
     public bool IsCompleted { get; set; }
     public bool IsResumable { get; set; } = true;
     public long NumberOfPlainBytesDone { get; set; }
+
+    public long IntendedUploadSize { get; } = intendedUploadSize;
 
     public void SetContentBlockPlainData(int blockNumber, BlockUploadPlainData plainData)
     {

@@ -22,12 +22,15 @@ internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
         _lastKnownRevisionId = lastKnownRevisionId;
     }
 
-    public async ValueTask<RevisionDraft> GetDraftAsync(CancellationToken cancellationToken)
+    public async ValueTask<RevisionDraft> GetDraftAsync(long intendedUploadSize, CancellationToken cancellationToken)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(intendedUploadSize);
+
         var parameters = new RevisionCreationRequest
         {
             CurrentRevisionId = _lastKnownRevisionId,
             ClientId = _client.Uid,
+            IntendedUploadSize = intendedUploadSize,
         };
 
         var fileSecretsResult = await FileOperations.GetSecretsAsync(_client, _fileUid, cancellationToken).ConfigureAwait(false);
@@ -78,6 +81,7 @@ internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
             parentHashKey: null,
             membershipAddress,
             blockVerifier,
+            intendedUploadSize,
             ct => DeleteDraftAsync(draftRevisionUid, ct),
             _client.Telemetry.GetLogger("New file draft"));
     }
