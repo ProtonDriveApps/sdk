@@ -13,14 +13,13 @@ export function parseInvitationUid(input: string): {
     if (input.startsWith('drive~')) {
         return {
             isForPhotos: false,
-            uid: input.slice(5),
+            uid: input.slice('drive~'.length),
         };
     } else if (input.startsWith('photos~')) {
         return {
             isForPhotos: true,
-            uid: input.slice(6),
+            uid: input.slice('photos~'.length),
         };
-    } else {
-        throw new ValidationError(`Invalid invitation UID: ${input}`);
     }
+    throw new ValidationError(`Invalid invitation UID: ${input}`);
 }
