@@ -15,7 +15,7 @@ namespace Proton.Drive.Sdk.Nodes;
 /// Next, the transfer has to start queuing blocks, but only one file can be queuing blocks at a time,
 /// so a call to <see cref="StartBlockQueueingAsync"/> is required. Once all the blocks have been queued, or if the queuing needs to be stopped for any reason,
 /// a call to <see cref="FinishBlockQueueing"/> is required to allow other files to start queuing their blocks.
-/// When new blocks are discovered for a file during queuing, they can be added to the file's block count using <see cref="IncreaseFileRemainingBlockCount"/>.
+/// When new blocks are discovered for a file during queuing, they can be added to the file's block count using <see cref="IncreaseFileBlockCount"/>.
 /// When blocks have been transferred, they can be removed from the file's block count using <see cref="DecreaseFileRemainingBlockCount"/>.
 /// </para>
 /// <para>
@@ -31,7 +31,7 @@ namespace Proton.Drive.Sdk.Nodes;
 internal sealed partial class TransferQueue(int maxDegreeOfParallelism, ILogger logger)
 {
     private readonly ILogger _logger = logger;
-    private readonly Dictionary<long, int> _fileBlocks = [];
+    private readonly Dictionary<long, (int Remaining, int Total)> _fileBlocks = [];
     private readonly Lock _fileBlocksLock = new();
 
     private long _lastEntryId;
@@ -60,7 +60,7 @@ internal sealed partial class TransferQueue(int maxDegreeOfParallelism, ILogger 
 
         lock (_fileBlocksLock)
         {
-            _fileBlocks.Add(queuePosition, initialBlockCount);
+            _fileBlocks.Add(queuePosition, (initialBlockCount, initialBlockCount));
         }
 
         return queuePosition;
@@ -80,31 +80,55 @@ internal sealed partial class TransferQueue(int maxDegreeOfParallelism, ILogger 
 
         lock (_fileBlocksLock)
         {
-            _fileBlocks.Add(queuePosition, initialBlockCount);
+            _fileBlocks.Add(queuePosition, (initialBlockCount, initialBlockCount));
         }
 
         return queuePosition;
     }
 
-    public void IncreaseFileRemainingBlockCount(long queueToken, int additionalBlockCount)
+    public void SetFileTotalBlockCount(long queueToken, int total)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(additionalBlockCount);
+        lock (_fileBlocksLock)
+        {
+            var (currentRemaining, currentTotal) = _fileBlocks.TryGetValue(queueToken, out var blockCount)
+                ? blockCount
+                : throw new InvalidOperationException($"Queue token {queueToken} not found in transfer queue.");
 
-        FileQueueSemaphore.DecreaseCount(additionalBlockCount);
+            var delta = total - currentTotal;
 
-        LogDecreasedFileQueueSemaphoreCount(additionalBlockCount, FileQueueSemaphore.CurrentCount);
+            if (delta > 0)
+            {
+                FileQueueSemaphore.DecreaseCount(delta);
+                LogDecreasedFileQueueSemaphoreCount(delta, FileQueueSemaphore.CurrentCount);
+            }
+            else
+            {
+                RemoveBlocksFromFileQueue(-delta);
+            }
+
+            _fileBlocks[queueToken] = (currentRemaining + delta, total);
+        }
+    }
+
+    public void IncreaseFileBlockCount(long queueToken, int amount)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(amount);
+
+        FileQueueSemaphore.DecreaseCount(amount);
+
+        LogDecreasedFileQueueSemaphoreCount(amount, FileQueueSemaphore.CurrentCount);
 
         lock (_fileBlocksLock)
         {
             var currentBlockCount = _fileBlocks.GetValueOrDefault(queueToken);
 
-            _fileBlocks[queueToken] = currentBlockCount + additionalBlockCount;
+            _fileBlocks[queueToken] = (currentBlockCount.Remaining + amount, currentBlockCount.Total + amount);
         }
     }
 
-    public void DecreaseFileRemainingBlockCount(long queueToken, int count)
+    public void DecreaseFileRemainingBlockCount(long queueToken, int amount)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(amount);
 
         lock (_fileBlocksLock)
         {
@@ -113,9 +137,9 @@ internal sealed partial class TransferQueue(int maxDegreeOfParallelism, ILogger 
                 throw new InvalidOperationException($"Queue token {queueToken} not found in transfer queue.");
             }
 
-            _fileBlocks[queueToken] = currentBlockCount - count;
+            RemoveBlocksFromFileQueue(amount);
 
-            RemoveBlocksFromFileQueue(count);
+            _fileBlocks[queueToken] = (currentBlockCount.Remaining - amount, currentBlockCount.Total);
         }
     }
 
@@ -128,7 +152,7 @@ internal sealed partial class TransferQueue(int maxDegreeOfParallelism, ILogger 
                 throw new InvalidOperationException($"Queue token {queueToken} not found in transfer queue.");
             }
 
-            RemoveBlocksFromFileQueue(blockCount);
+            RemoveBlocksFromFileQueue(blockCount.Remaining);
         }
     }
 

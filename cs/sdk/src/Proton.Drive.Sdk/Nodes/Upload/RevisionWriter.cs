@@ -39,7 +39,6 @@ internal sealed partial class RevisionWriter
 
     public async ValueTask WriteAsync(
         Stream contentStream,
-        long expectedContentLength,
         Lazy<ReadOnlyMemory<byte>>? expectedSha1,
         IEnumerable<Thumbnail> thumbnails,
         FileUploadMetadata metadata,
@@ -63,7 +62,6 @@ internal sealed partial class RevisionWriter
 
                 request = CreatePhotosRevisionUpdateRequest(
                     photoMetadata,
-                    expectedContentLength,
                     expectedThumbnailBlockCount,
                     expectedSha1,
                     sha1Digest,
@@ -74,7 +72,6 @@ internal sealed partial class RevisionWriter
             {
                 request = CreateRevisionUpdateRequest(
                     metadata,
-                    expectedContentLength,
                     expectedThumbnailBlockCount,
                     expectedSha1,
                     sha1Digest,
@@ -142,7 +139,8 @@ internal sealed partial class RevisionWriter
                 {
                     expectedThumbnailBlockCount = await UploadThumbnailBlocksAsync(thumbnails, uploadTasks, cancellationToken).ConfigureAwait(false);
 
-                    await UploadContentBlocksAsync(onProgress, hashingContentStream, uploadTasks, cancellationToken).ConfigureAwait(false);
+                    await UploadContentBlocksAsync(onProgress, hashingContentStream, uploadTasks, expectedThumbnailBlockCount, cancellationToken)
+                        .ConfigureAwait(false);
                 }
                 finally
                 {
@@ -177,7 +175,6 @@ internal sealed partial class RevisionWriter
 
     private RevisionUpdateRequest CreateRevisionUpdateRequest(
         FileUploadMetadata metadata,
-        long expectedContentLength,
         int expectedThumbnailBlockCount,
         Lazy<ReadOnlyMemory<byte>>? expectedSha1,
         byte[] sha1Digest,
@@ -217,11 +214,11 @@ internal sealed partial class RevisionWriter
             uploadedContentSize += plaintextSize;
         }
 
-        if (uploadedContentSize != expectedContentLength)
+        if (uploadedContentSize != _draft.IntendedUploadSize)
         {
             throw new ContentSizeMismatchIntegrityException(
                 uploadedSize: uploadedContentSize,
-                expectedSize: expectedContentLength);
+                expectedSize: _draft.IntendedUploadSize);
         }
 
         if (expectedThumbnailBlockCount != _draft.OrderedThumbnailUploadResults.Count)
@@ -276,7 +273,6 @@ internal sealed partial class RevisionWriter
 
     private RevisionUpdateRequest CreatePhotosRevisionUpdateRequest(
         PhotosFileUploadMetadata metadata,
-        long expectedContentLength,
         int expectedThumbnailBlockCount,
         Lazy<ReadOnlyMemory<byte>>? expectedSha1,
         byte[] sha1Digest,
@@ -285,7 +281,6 @@ internal sealed partial class RevisionWriter
     {
         var request = CreateRevisionUpdateRequest(
             metadata,
-            expectedContentLength,
             expectedThumbnailBlockCount,
             expectedSha1,
             sha1Digest,
@@ -338,14 +333,14 @@ internal sealed partial class RevisionWriter
 
         foreach (var thumbnail in thumbnails)
         {
-            _client.UploadQueue.IncreaseFileRemainingBlockCount(_queueToken, 1);
-
             ++blockCount;
 
             if (_draft.ThumbnailBlockWasAlreadyUploaded(thumbnail.Type))
             {
                 continue;
             }
+
+            _client.UploadQueue.IncreaseFileBlockCount(_queueToken, 1);
 
             await WaitForBlockUploaderAsync(uploadTasks, cancellationToken).ConfigureAwait(false);
 
@@ -379,6 +374,7 @@ internal sealed partial class RevisionWriter
         Action<long>? onProgress,
         HashingReadStream hashingContentStream,
         Queue<Task<BlockUploadResult>> uploadTasks,
+        int expectedThumbnailBlockCount,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -402,6 +398,8 @@ internal sealed partial class RevisionWriter
                 cancellationToken.ThrowIfCancellationRequested();
 
                 currentBlockNumber = newBlockNumber;
+
+                _client.UploadQueue.SetFileTotalBlockCount(_queueToken, currentBlockNumber.Value + expectedThumbnailBlockCount);
 
                 // ReSharper disable once PossiblyMistakenUseOfCancellationToken
                 await WaitForBlockUploaderAsync(uploadTasks, cancellationToken).ConfigureAwait(false);
