@@ -625,13 +625,14 @@ export class DriveCrypto {
 
     async acceptInvitation(
         base64KeyPacket: string,
+        decryptionKeys: PrivateKey[],
         signingKey: PrivateKey,
     ): Promise<{
         base64SessionKeySignature: string;
     }> {
         const sessionKey = await this.openPGPCrypto.decryptSessionKey(
             Uint8Array.fromBase64(base64KeyPacket),
-            signingKey,
+            decryptionKeys,
         );
 
         const { signature } = await this.openPGPCrypto.sign(
