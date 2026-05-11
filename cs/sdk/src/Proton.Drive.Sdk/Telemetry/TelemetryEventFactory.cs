@@ -27,7 +27,7 @@ internal static class TelemetryEventFactory
             Field = field.Key,
             VolumeType = volumeType,
             FromBefore2024 = fromBefore2024,
-            Error = field.Value.Message,
+            Error = field.Value.FlattenMessage(),
         });
     }
 
