@@ -1,7 +1,9 @@
+using System.Net;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using Proton.Drive.Sdk.Telemetry;
 using Proton.Sdk.CExports;
+using Proton.Sdk.Http;
 using Proton.Sdk.Telemetry;
 
 namespace Proton.Drive.Sdk.CExports;
@@ -138,8 +140,8 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
     {
         return statusCode switch
         {
-            429 => Telemetry.UploadError.RateLimited,
-            >= 400 and < 500 => Telemetry.UploadError.HttpClientSideError,
+            (int)HttpStatusCode.TooManyRequests => Telemetry.UploadError.RateLimited,
+            >= StatusCodes.MinClientErrorCode and <= StatusCodes.MaxClientErrorCode => Telemetry.UploadError.HttpClientSideError,
             _ => Telemetry.UploadError.ServerError,
         };
     }
@@ -166,8 +168,8 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
     {
         return statusCode switch
         {
-            429 => Telemetry.DownloadError.RateLimited,
-            >= 400 and < 500 => Telemetry.DownloadError.HttpClientSideError,
+            (int)HttpStatusCode.TooManyRequests => Telemetry.DownloadError.RateLimited,
+            >= StatusCodes.MinClientErrorCode and <= StatusCodes.MaxClientErrorCode => Telemetry.DownloadError.HttpClientSideError,
             _ => Telemetry.DownloadError.ServerError,
         };
     }
