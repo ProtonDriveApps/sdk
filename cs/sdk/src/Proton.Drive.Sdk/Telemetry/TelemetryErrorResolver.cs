@@ -4,6 +4,7 @@ using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Sdk;
+using Proton.Sdk.Http;
 
 namespace Proton.Drive.Sdk.Telemetry;
 
@@ -24,12 +25,15 @@ internal static class TelemetryErrorResolver
 
             HttpRequestException { HttpRequestError: HttpRequestError.InvalidResponse or HttpRequestError.ResponseEnded } => DownloadError.ServerError,
             HttpRequestException { StatusCode: HttpStatusCode.RequestTimeout } => DownloadError.ServerError,
-            HttpRequestException { StatusCode: >= (HttpStatusCode)400 and < (HttpStatusCode)500 } => DownloadError.HttpClientSideError,
-            HttpRequestException { StatusCode: >= (HttpStatusCode)500 and < (HttpStatusCode)600 } => DownloadError.ServerError,
+            HttpRequestException { StatusCode: >= (HttpStatusCode)StatusCodes.MinClientErrorCode and <= (HttpStatusCode)StatusCodes.MaxClientErrorCode } =>
+                DownloadError.HttpClientSideError,
+            HttpRequestException { StatusCode: >= (HttpStatusCode)StatusCodes.MinServerErrorCode and <= (HttpStatusCode)StatusCodes.MaxServerErrorCode } =>
+                DownloadError.ServerError,
             HttpRequestException => DownloadError.NetworkError,
 
             ProtonApiException { TransportCode: (int)HttpStatusCode.TooManyRequests } => DownloadError.RateLimited,
-            ProtonApiException { TransportCode: >= 400 and < 500 } => DownloadError.HttpClientSideError,
+            ProtonApiException { TransportCode: >= StatusCodes.MinClientErrorCode and <= StatusCodes.MaxClientErrorCode } => DownloadError.HttpClientSideError,
+            ProtonApiException { TransportCode: >= StatusCodes.MinServerErrorCode and <= StatusCodes.MaxServerErrorCode } => DownloadError.ServerError,
 
             // TODO: How to better distinguish network errors, that were subject to retry in the HTTP request handler, but resulted in TimeoutException?
             TimeoutException => DownloadError.ServerError,
@@ -51,12 +55,15 @@ internal static class TelemetryErrorResolver
 
             HttpRequestException { HttpRequestError: HttpRequestError.InvalidResponse or HttpRequestError.ResponseEnded } => UploadError.ServerError,
             HttpRequestException { StatusCode: HttpStatusCode.RequestTimeout } => UploadError.ServerError,
-            HttpRequestException { StatusCode: >= (HttpStatusCode)400 and < (HttpStatusCode)500 } => UploadError.HttpClientSideError,
-            HttpRequestException { StatusCode: >= (HttpStatusCode)500 and < (HttpStatusCode)600 } => UploadError.ServerError,
+            HttpRequestException { StatusCode: >= (HttpStatusCode)StatusCodes.MinClientErrorCode and <= (HttpStatusCode)StatusCodes.MaxClientErrorCode } =>
+                UploadError.HttpClientSideError,
+            HttpRequestException { StatusCode: >= (HttpStatusCode)StatusCodes.MinServerErrorCode and <= (HttpStatusCode)StatusCodes.MaxServerErrorCode } =>
+                UploadError.ServerError,
             HttpRequestException => UploadError.NetworkError,
 
             ProtonApiException { TransportCode: (int)HttpStatusCode.TooManyRequests } => UploadError.RateLimited,
-            ProtonApiException { TransportCode: >= 400 and < 500 } => UploadError.HttpClientSideError,
+            ProtonApiException { TransportCode: >= StatusCodes.MinClientErrorCode and <= StatusCodes.MaxClientErrorCode } => UploadError.HttpClientSideError,
+            ProtonApiException { TransportCode: >= StatusCodes.MinServerErrorCode and <= StatusCodes.MaxServerErrorCode } => UploadError.ServerError,
 
             // TODO: How to better distinguish network errors, that were subject to retry in the HTTP request handler, but resulted in TimeoutException?
             TimeoutException => UploadError.ServerError,

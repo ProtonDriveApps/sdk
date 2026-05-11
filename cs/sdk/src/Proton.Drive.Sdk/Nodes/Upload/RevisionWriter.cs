@@ -9,6 +9,7 @@ using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Serialization;
 using Proton.Sdk;
 using Proton.Sdk.Api;
+using Proton.Sdk.Http;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
@@ -112,7 +113,7 @@ internal sealed partial class RevisionWriter
 
     private static bool IsResumableError(Exception ex)
     {
-        return ex is not ProtonApiException { TransportCode: >= 400 and < 500 }
+        return ex is not ProtonApiException { TransportCode: >= StatusCodes.MinClientErrorCode and <= StatusCodes.MaxClientErrorCode }
             and not NodeWithSameNameExistsException
             and not IntegrityException
             and not InvalidOperationException;
