@@ -1,5 +1,17 @@
 # Changelog
 
+## cs/v0.14.3 (2026-05-11)
+
+* Handle degraded folder secrets in upload and node operations
+* Classify HTTP response code 499 as server error
+* Flatten messages of decryption errors reported to telemetry
+* Reproduce content size mismatch
+* Add an E2E tests for conflict name with draft
+* Add info log for uploader and downloader
+* Fix upload failing to resume when blocks were uploaded out of order
+* Fix handling of mismatch between uploaded and intended sizes
+* Remove slash validation name after decryption
+
 ## cs/v0.14.2 (2026-05-06)
 
 * Dispose upload controller in test to see events
