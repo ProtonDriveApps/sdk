@@ -4,6 +4,7 @@ using Microsoft.IO;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Sdk;
+using Proton.Sdk.Http;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 
@@ -79,7 +80,7 @@ internal sealed partial class RevisionReader
     private static bool IsResumableError(Exception ex)
     {
         return ex is not DataIntegrityException
-            and not ProtonApiException { TransportCode: >= 400 and < 500 }
+            and not ProtonApiException { TransportCode: >= StatusCodes.MinClientErrorCode and <= StatusCodes.MaxClientErrorCode }
             and not CompletedDownloadManifestVerificationException
             and not InvalidOperationException;
     }
