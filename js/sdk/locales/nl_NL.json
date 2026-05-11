@@ -156,9 +156,6 @@
       "Name must not be empty": [
         "Naam mag niet leeg zijn"
       ],
-      "Name must not contain the character '/'": [
-        "Naam mag het teken '/' niet bevatten"
-      ],
       "No available name found": [
         "Geen beschikbare naam gevonden"
       ],

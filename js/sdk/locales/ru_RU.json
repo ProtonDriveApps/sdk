@@ -119,9 +119,6 @@
       "Name must not be empty": [
         "Название не может быть пустым"
       ],
-      "Name must not contain the character '/'": [
-        "Имя не должно содержать символ «/»"
-      ],
       "Node has no thumbnail": [
         "У узла нет значка"
       ],

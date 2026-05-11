@@ -138,9 +138,6 @@
       "Name must not be empty": [
         "O nome não pode estar vazio"
       ],
-      "Name must not contain the character '/'": [
-        "O nome não pode conter o caractere \"/\""
-      ],
       "No available name found": [
         "Nenhum nome disponível encontrado"
       ],
