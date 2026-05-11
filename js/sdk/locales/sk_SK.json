@@ -158,9 +158,6 @@
       "Name must not be empty": [
         "Názov nesmie byť prázdny"
       ],
-      "Name must not contain the character '/'": [
-        "Názov nesmie obsahovať znak '/'"
-      ],
       "No available name found": [
         "Nenašiel sa žiadny dostupný názov"
       ],

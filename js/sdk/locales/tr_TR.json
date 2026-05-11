@@ -156,9 +156,6 @@
       "Name must not be empty": [
         "Ad boş olamaz"
       ],
-      "Name must not contain the character '/'": [
-        "Ad içinde \"/\" karakteri bulunamaz."
-      ],
       "No available name found": [
         "Kullanılabilecek bir ad bulunamadı"
       ],

@@ -108,9 +108,6 @@
       "Name must not be empty": [
         "O nome não pode estar vazio."
       ],
-      "Name must not contain the character '/'": [
-        "O nome não deve conter barras «/»."
-      ],
       "Node has no thumbnail": [
         "O nó não tem miniatura."
       ],

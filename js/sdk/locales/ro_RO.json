@@ -157,9 +157,6 @@
       "Name must not be empty": [
         "Numele nu poate fi gol."
       ],
-      "Name must not contain the character '/'": [
-        "Numele nu trebuie să conțină caracterul „/”."
-      ],
       "No available name found": [
         "Nu a fost găsit niciun nume disponibil."
       ],
