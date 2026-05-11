@@ -448,7 +448,8 @@ internal static class InteropProtonDriveClient
 
             if (error.Message != null)
             {
-                authorResult.Error.Message = error.Message;
+                // TODO change message to be a DriveError
+                authorResult.Error.Message = error.FlattenMessage();
             }
         }
 
