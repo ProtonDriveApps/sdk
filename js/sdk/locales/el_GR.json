@@ -156,9 +156,6 @@
       "Name must not be empty": [
         "Το όνομα δεν πρέπει να είναι κενό"
       ],
-      "Name must not contain the character '/'": [
-        "Το όνομα δεν πρέπει να περιέχει τον χαρακτήρα '/'"
-      ],
       "No available name found": [
         "Δεν βρέθηκε διαθέσιμο όνομα"
       ],

@@ -156,9 +156,6 @@
       "Name must not be empty": [
         "El nom no pot estar buit."
       ],
-      "Name must not contain the character '/'": [
-        "El nom no pot contenir el caràcter '/'"
-      ],
       "No available name found": [
         "No s'ha trobat cap nom disponible"
       ],

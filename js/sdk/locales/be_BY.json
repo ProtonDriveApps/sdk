@@ -158,9 +158,6 @@
       "Name must not be empty": [
         "Назва не можа быць пустой"
       ],
-      "Name must not contain the character '/'": [
-        "Назва не павінна змяшчаць сімвал '/'"
-      ],
       "No available name found": [
         "Даступная назва не знойдзена"
       ],
