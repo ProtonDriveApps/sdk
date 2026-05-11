@@ -29,6 +29,7 @@ internal static class ExceptionExtensions
         return new ProtonDriveError(exception.Message, exception.InnerException?.ToProtonDriveError());
     }
 
+    // TODO: Find a way to share the share this logic with ProtonDriveErrorExtensions.FlattenMessage
     public static string FlattenMessage(this Exception exception)
     {
         var previousMessage = string.Empty;
