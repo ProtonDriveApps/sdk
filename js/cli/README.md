@@ -8,7 +8,11 @@ The CLI is built with [Bun](https://bun.sh) and uses the Drive SDK under the hoo
 
 - [Bun](https://bun.sh) (for development builds from this repository)
 - A Proton account and browser access for sign-in
-- **[sharp](https://www.npmjs.com/package/sharp/)** if you want thumbnails generated on image upload (see [Thumbnails](#thumbnails))
+- A secret store provided by your OS:
+    - Windows: Windows Credential Manager
+    - macOS: Keychain Services
+    - Linux: libsecret (e.g., GNOME Keyring, KWallet)
+- [sharp](https://www.npmjs.com/package/sharp/) if you want thumbnails generated on image upload (see [Thumbnails](#thumbnails))
 
 ## Install and build (from source)
 
@@ -92,6 +96,6 @@ Unless `PROTON_DRIVE_CACHE_DIR` is set:
 | **App data** (`clientUid.json`, `config.json`, `events.json`) | `~/Library/Application Support/proton-drive-cli` | `%LOCALAPPDATA%\proton-drive-cli\Data` | `$XDG_DATA_HOME/proton-drive-cli` or `~/.local/share/proton-drive-cli` |
 | **Logs** (`proton-drive.log`) | `~/Library/Logs/proton-drive-cli` | `%LOCALAPPDATA%\proton-drive-cli\Logs` | `$XDG_STATE_HOME/proton-drive-cli` or `~/.local/state/proton-drive-cli` |
 
-**Credentials** are stored in keychain under service `ch.proton.drive/drive-sdk-cli`.
+**Credentials** are stored in the OS secret store (see [Requirements](#requirements)) under the service `ch.proton.drive/drive-sdk-cli`.
 
 To reset local state for troubleshooting, stop the CLI, then remove the relevant directories (or the single override directory).
