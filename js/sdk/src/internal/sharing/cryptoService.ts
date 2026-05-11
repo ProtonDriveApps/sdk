@@ -193,12 +193,12 @@ export class SharingCryptoService {
         encryptedInvitation: EncryptedInvitationWithNode,
     ): Promise<ProtonInvitationWithNode> {
         const inviteeAddress = await this.account.getOwnAddress(encryptedInvitation.inviteeEmail);
-        const inviteeKey = inviteeAddress.keys[inviteeAddress.primaryKeyIndex].key;
+        const inviteeKeys = inviteeAddress.keys.map(k => k.key);
 
         const shareKey = await this.driveCrypto.decryptUnsignedKey(
             encryptedInvitation.share.armoredKey,
             encryptedInvitation.share.armoredPassphrase,
-            inviteeKey,
+            inviteeKeys,
         );
 
         let nodeName: Result<string, Error>;
@@ -246,7 +246,8 @@ export class SharingCryptoService {
     }> {
         const inviteeAddress = await this.account.getOwnAddress(encryptedInvitation.inviteeEmail);
         const inviteeKey = inviteeAddress.keys[inviteeAddress.primaryKeyIndex].key;
-        const result = await this.driveCrypto.acceptInvitation(encryptedInvitation.base64KeyPacket, inviteeKey);
+        const inviteeKeys = inviteeAddress.keys.map(k => k.key);
+        const result = await this.driveCrypto.acceptInvitation(encryptedInvitation.base64KeyPacket, inviteeKeys, inviteeKey);
         return result;
     }
 
