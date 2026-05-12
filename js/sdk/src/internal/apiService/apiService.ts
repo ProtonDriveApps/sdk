@@ -3,6 +3,7 @@ import { c } from 'ttag';
 import { AbortError, ProtonDriveError, RateLimitedError, ServerError } from '../../errors';
 import { Logger, ProtonDriveHTTPClient, ProtonDriveTelemetry } from '../../interface';
 import { VERSION } from '../../version';
+import { isNetworkError } from '../errors';
 import { SDKEvents } from '../sdkEvents';
 import { waitSeconds } from '../wait';
 import { HTTPErrorCode, isCodeOk, isCodeOkAsync } from './errorCodes';
@@ -22,6 +23,11 @@ const DEFAULT_STORAGE_TIMEOUT_MS = 600_000;
  * Maximum number of retry attempts for a timeout error.
  */
 const MAX_TIMEOUT_ERROR_RETRY_ATTEMPTS = 3;
+
+/**
+ * Maximum number of retry attempts for a network error.
+ */
+const MAX_NETWORK_ERROR_RETRY_ATTEMPTS = 3;
 
 /**
  * How many subsequent 429 errors are allowed before we stop further requests.
@@ -56,6 +62,11 @@ const TOO_MANY_SUBSEQUENT_OFFLINE_ERRORS = 10;
 const SERVER_ERROR_RETRY_DELAY_SECONDS = 1;
 
 /**
+ * After how long to re-try after network error.
+ */
+const NETWORK_ERROR_RETRY_DELAY_SECONDS = 5;
+
+/**
  * After how long to re-try after offline error.
  */
 const OFFLINE_RETRY_DELAY_SECONDS = 5;
@@ -80,7 +91,7 @@ const GENERAL_RETRY_DELAY_SECONDS = 1;
  *
  * * exception from HTTP client
  *   * retry on offline exc. (with delay from OFFLINE_RETRY_DELAY_SECONDS)
- *   * retry on timeout exc. (with delay from SERVER_ERROR_RETRY_DELAY_SECONDS)
+ *   * retry on transient network exc. (with delay from SERVER_ERROR_RETRY_DELAY_SECONDS)
  *   * retry ONCE on any exc. (with delay from GENERAL_RETRY_DELAY_SECONDS)
  * * HTTP status 429
  *   * retry (with delay from `retry-after` header or DEFAULT_429_RETRY_DELAY_SECONDS)
@@ -318,6 +329,12 @@ export class DriveAPIService {
                     await waitSeconds(SERVER_ERROR_RETRY_DELAY_SECONDS);
                     return this.fetch(request, callback, { attempt: attempt + 1, previousError: error });
                 }
+
+                if (isNetworkError(error) && attempt + 1 < MAX_NETWORK_ERROR_RETRY_ATTEMPTS) {
+                    this.logger.warn(`${request.method} ${request.url}: Network error, retrying`);
+                    await waitSeconds(NETWORK_ERROR_RETRY_DELAY_SECONDS);
+                    return this.fetch(request, callback, { attempt: attempt + 1, previousError: error });
+                }
             }
             if (attempt === 0) {
                 this.logger.error(`${request.method} ${request.url}: failed, retrying once`, error);
@@ -367,7 +384,8 @@ export class DriveAPIService {
                     !(previousError instanceof Error) ||
                     (previousError instanceof Error &&
                         previousError.name !== 'TimeoutError' &&
-                        previousError.name !== 'OfflineError');
+                        previousError.name !== 'OfflineError' &&
+                        !isNetworkError(previousError));
 
                 if (isWarning) {
                     this.telemetry.recordMetric({

@@ -223,6 +223,22 @@ describe('DriveAPIService', () => {
             expect(telemetry.recordMetric).not.toHaveBeenCalled();
         });
 
+        it('on transient socket / transport error', async () => {
+            const error = new Error('The socket connection was closed unexpectedly');
+            httpClient.fetchJson = jest
+                .fn()
+                .mockRejectedValueOnce(error)
+                .mockRejectedValueOnce(error)
+                .mockResolvedValueOnce(generateOkResponse());
+
+            const result = api.get('test');
+
+            await expect(result).resolves.toEqual({ Code: ErrorCode.OK });
+            expect(httpClient.fetchJson).toHaveBeenCalledTimes(3);
+            expectSDKEvents();
+            expect(telemetry.recordMetric).not.toHaveBeenCalled();
+        });
+
         it('on general error', async () => {
             const error = new Error('Error');
             httpClient.fetchJson = jest.fn().mockRejectedValueOnce(error).mockResolvedValueOnce(generateOkResponse());
