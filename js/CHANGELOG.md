@@ -1,5 +1,10 @@
 # Changelog
 
+## js/v0.15.1 (2026-05-12)
+
+* Allow all address keys to be used for decryption when listing invitations
+* Remove slash validation name after decryption
+
 ## js/v0.15.0 (2026-05-06)
 
 * Fix detecting photo drafts
