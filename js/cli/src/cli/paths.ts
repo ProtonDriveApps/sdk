@@ -7,6 +7,9 @@ import { ProtonDrivePublicLinkClient } from '@protontech/drive-sdk/protonDrivePu
 import type { Manager } from '../events/manager';
 import { getName } from './node';
 
+// Virtual Drive paths are always POSIX (/my-files/...) regardless of the host OS.
+const PATH = path.posix;
+
 export enum PathType {
     Root = 'root',
     MyFiles = 'my-files',
@@ -129,48 +132,48 @@ export class Path {
     }
 
     get type() {
-        if (this.fullPath === `${path.sep}`) {
+        if (this.fullPath === PATH.sep) {
             return PathType.Root;
         }
-        if (this.fullPath.startsWith(`${path.sep}my-files`)) {
+        if (this.fullPath.startsWith(`${PATH.sep}my-files`)) {
             return PathType.MyFiles;
         }
-        if (this.fullPath.startsWith(`${path.sep}devices`)) {
+        if (this.fullPath.startsWith(`${PATH.sep}devices`)) {
             return PathType.Devices;
         }
-        if (this.fullPath.startsWith(`${path.sep}shared-by-me`)) {
+        if (this.fullPath.startsWith(`${PATH.sep}shared-by-me`)) {
             return PathType.SharedByMe;
         }
-        if (this.fullPath.startsWith(`${path.sep}shared-with-me`)) {
+        if (this.fullPath.startsWith(`${PATH.sep}shared-with-me`)) {
             return PathType.SharedWithMe;
         }
-        if (this.fullPath.startsWith(`${path.sep}trash`)) {
+        if (this.fullPath.startsWith(`${PATH.sep}trash`)) {
             return PathType.Trash;
         }
-        if (this.fullPath.startsWith(`${path.sep}photos-shared-by-me`)) {
+        if (this.fullPath.startsWith(`${PATH.sep}photos-shared-by-me`)) {
             return PathType.PhotosSharedByMe;
         }
-        if (this.fullPath.startsWith(`${path.sep}photos-shared-with-me`)) {
+        if (this.fullPath.startsWith(`${PATH.sep}photos-shared-with-me`)) {
             return PathType.PhotosSharedWithMe;
         }
-        if (this.fullPath.startsWith(`${path.sep}photos-trash`)) {
+        if (this.fullPath.startsWith(`${PATH.sep}photos-trash`)) {
             return PathType.PhotosTrash;
         }
-        if (this.fullPath.startsWith(`${path.sep}photos`)) {
+        if (this.fullPath.startsWith(`${PATH.sep}photos`)) {
             return PathType.Photos;
         }
-        if (this.fullPath.startsWith(`${path.sep}albums`)) {
+        if (this.fullPath.startsWith(`${PATH.sep}albums`)) {
             return PathType.Albums;
         }
         throw new ValidationError(`Path "${this.fullPath}" not supported`);
     }
 
     get parentPath() {
-        return new Path(this.driveSdk, this.photosSdk, path.dirname(this.fullPath), this.eventsManager);
+        return new Path(this.driveSdk, this.photosSdk, PATH.dirname(this.fullPath), this.eventsManager);
     }
 
     get name() {
-        return path.basename(this.fullPath);
+        return PATH.basename(this.fullPath);
     }
 
     get sdk(): ProtonDriveClient | ProtonDrivePhotosClient {
@@ -214,7 +217,7 @@ export class Path {
             return this.getNodeByPath(rootNode, this.sectionPathWithoutRoot);
         }
         if (this.type === PathType.Trash || this.type === PathType.PhotosTrash) {
-            const parts = this.sectionPath.split(path.sep);
+            const parts = this.sectionPath.split(PATH.sep);
             if (parts.length > 1) {
                 throw new ValidationError('Browsing trashed folders is not supported');
             }
@@ -240,17 +243,17 @@ export class Path {
 
     private get sectionPath() {
         // /my-files/foo/bar/baz -> foo/bar/baz
-        return this.fullPath.split(path.sep).slice(2).join(path.sep);
+        return this.fullPath.split(PATH.sep).slice(2).join(PATH.sep);
     }
 
     private get sectionRootNodeName() {
         // /shared-with-me/foo/bar/baz -> foo
-        return this.sectionPath.split(path.sep)[0];
+        return this.sectionPath.split(PATH.sep)[0];
     }
 
     private get sectionPathWithoutRoot() {
         // /shared-with-me/foo/bar/baz -> bar/baz
-        return this.fullPath.split(path.sep).slice(3).join(path.sep);
+        return this.fullPath.split(PATH.sep).slice(3).join(PATH.sep);
     }
 
     private async getSharedWithMeRootFolder() {
@@ -288,7 +291,7 @@ export class Path {
 
     private async getNodeByPath(parentNode: MaybeNode, pathString: string) {
         let node = parentNode;
-        const pathParts = pathString.split(path.sep);
+        const pathParts = pathString.split(PATH.sep);
         for (const part of pathParts) {
             if (part === '') {
                 continue;
@@ -375,7 +378,7 @@ export class PublicLinkPath {
 
     private async getNodeByPath(parentNode: MaybeNode, pathString: string) {
         let node = parentNode;
-        const pathParts = pathString.split(path.sep);
+        const pathParts = pathString.split(PATH.sep);
         for (const part of pathParts) {
             if (part === '') {
                 continue;
