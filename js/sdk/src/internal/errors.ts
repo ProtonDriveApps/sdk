@@ -72,7 +72,7 @@ export function isNetworkError(error: unknown): boolean {
     if (!(error instanceof Error)) {
         return false;
     }
-    return (
+    if (
         error.name === 'OfflineError' ||
         error.name === 'NetworkError' ||
         error.message?.toLowerCase() === 'network error' ||
@@ -80,5 +80,44 @@ export function isNetworkError(error: unknown): boolean {
             ['Failed to fetch', 'NetworkError when attempting to fetch resource', 'Load failed'].includes(
                 error.message,
             ))
+    ) {
+        return true;
+    }
+    if (errorMessageIndicatesTransientTransportFailure(error.message) || errorHasTransientTransportCode(error)) {
+        return true;
+    }
+    if (error.cause instanceof Error) {
+        return (
+            errorMessageIndicatesTransientTransportFailure(error.cause.message) ||
+            errorHasTransientTransportCode(error.cause)
+        );
+    }
+    return false;
+}
+
+function errorMessageIndicatesTransientTransportFailure(message: string | undefined): boolean {
+    if (!message) {
+        return false;
+    }
+    const lower = message.toLowerCase();
+    return (
+        // Remote end closed TLS/TCP without a complete response.
+        lower.includes('socket connection was closed unexpectedly') ||
+        // Remote end sent RST or closed the write side mid-request.
+        lower.includes('other side closed') ||
+        // Remote end closed the socket abruptly.
+        lower.includes('socket hang up')
+    );
+}
+
+function errorHasTransientTransportCode(error: Error): boolean {
+    const code = (error as NodeJS.ErrnoException).code;
+    return (
+        // TCP RST or equivalent: common under flaky networks or after server restart.
+        code === 'ECONNRESET' ||
+        // Writing to a socket whose other end is gone (often grouped with reset/hang-up).
+        code === 'EPIPE' ||
+        // Socket-level failure after connect (e.g. unexpected close on the wire).
+        code === 'UND_ERR_SOCKET'
     );
 }
