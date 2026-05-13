@@ -299,17 +299,25 @@ internal static class DtoToMetadataConverter
         ShareMembershipSummaryDto? membershipDto)
     {
         Dictionary<EncryptedField, ProtonDriveError> failedDecryptionFields = [];
-        List<ProtonDriveError> errors = [];
+        List<ProtonDriveError> nodeKeyErrors = [];
 
         if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
         {
-            errors.Add(new DecryptionError("Passphrase decryption failed", passphraseError));
-            failedDecryptionFields.Add(EncryptedField.NodeKey, passphraseError);
+            nodeKeyErrors.Add(passphraseError);
+
+            if (passphraseError is DecryptionError)
+            {
+                failedDecryptionFields.Add(EncryptedField.NodeKey, passphraseError);
+            }
         }
         else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
         {
-            errors.Add(new DecryptionError("Node key decryption failed", nodeKeyError));
-            failedDecryptionFields.Add(EncryptedField.NodeKey, nodeKeyError);
+            nodeKeyErrors.Add(nodeKeyError);
+
+            if (passphraseError is DecryptionError)
+            {
+                failedDecryptionFields.Add(EncryptedField.NodeKey, nodeKeyError);
+            }
         }
         else if (decryptionResult.ContentKey.TryGetError(out var contentKeyError))
         {
@@ -324,8 +332,12 @@ internal static class DtoToMetadataConverter
         var revisionErrors = new List<ProtonDriveError>();
         if (decryptionResult.ExtendedAttributes.TryGetError(out var extendedAttributesError))
         {
-            revisionErrors.Add(new DecryptionError("Extended attributes decryption failed", extendedAttributesError));
-            failedDecryptionFields.Add(EncryptedField.NodeExtendedAttributes, extendedAttributesError);
+            revisionErrors.Add(extendedAttributesError);
+
+            if (extendedAttributesError is DecryptionError)
+            {
+                failedDecryptionFields.Add(EncryptedField.NodeExtendedAttributes, extendedAttributesError);
+            }
         }
 
         var nodeAuthor = decryptionResult.Link.Passphrase.Merge(
@@ -369,7 +381,7 @@ internal static class DtoToMetadataConverter
                 MediaType = fileDto.MediaType,
                 ActiveRevision = degradedRevision,
                 TotalStorageQuotaUsage = fileDto.TotalSizeOnStorage,
-                Errors = errors,
+                Errors = nodeKeyErrors,
                 CaptureTime = linkDetailsDto.Photo.CaptureTime,
                 AlbumUids = linkDetailsDto.Photo.AlbumInclusions.Select(a => new NodeUid(uid.VolumeId, a.Id)).ToList(),
                 OwnedBy = ownedBy,
@@ -386,7 +398,7 @@ internal static class DtoToMetadataConverter
                 MediaType = fileDto.MediaType,
                 ActiveRevision = degradedRevision,
                 TotalStorageQuotaUsage = fileDto.TotalSizeOnStorage,
-                Errors = errors,
+                Errors = nodeKeyErrors,
                 OwnedBy = ownedBy,
             };
 
@@ -495,25 +507,34 @@ internal static class DtoToMetadataConverter
         ShareMembershipSummaryDto? membershipDto)
     {
         Dictionary<EncryptedField, ProtonDriveError> failedDecryptionFields = [];
-        List<ProtonDriveError> errors = [];
+        List<ProtonDriveError> nodeKeyAndHashKeyErrors = [];
 
         if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
         {
-            errors.Add(new DecryptionError("Passphrase decryption failed", passphraseError));
-            failedDecryptionFields.Add(EncryptedField.NodeKey, passphraseError);
+            nodeKeyAndHashKeyErrors.Add(passphraseError);
+
+            if (passphraseError is DecryptionError)
+            {
+                failedDecryptionFields.Add(EncryptedField.NodeKey, passphraseError);
+            }
         }
         else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
         {
-            errors.Add(new DecryptionError("Node key decryption failed", nodeKeyError));
-            failedDecryptionFields.Add(EncryptedField.NodeKey, nodeKeyError);
+            nodeKeyAndHashKeyErrors.Add(nodeKeyError);
+
+            if (nodeKeyError is DecryptionError)
+            {
+                failedDecryptionFields.Add(EncryptedField.NodeKey, nodeKeyError);
+            }
         }
         else if (decryptionResult.HashKey.TryGetError(out var hashKeyError))
         {
-            errors.Add(new DecryptionError("Hash key decryption failed", hashKeyError));
+            nodeKeyAndHashKeyErrors.Add(hashKeyError);
+
             failedDecryptionFields.Add(EncryptedField.NodeHashKey, hashKeyError);
         }
 
-        if (nameResult.TryGetError(out var nameError))
+        if (nameResult.TryGetError(out var nameError) && nameError is DecryptionError)
         {
             failedDecryptionFields.Add(EncryptedField.NodeName, nameError);
         }
@@ -541,7 +562,7 @@ internal static class DtoToMetadataConverter
             CreationTime = linkDto.CreationTime,
             TrashTime = linkDto.TrashTime,
             Author = nodeAuthor,
-            Errors = errors,
+            Errors = nodeKeyAndHashKeyErrors,
             OwnedBy = MapOwnedBy(linkDto.OwnedBy),
         };
 
