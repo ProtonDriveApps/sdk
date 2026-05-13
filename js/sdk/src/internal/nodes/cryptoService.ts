@@ -73,6 +73,8 @@ type NodesCryptoReporterNode = {
 export class NodesCryptoService {
     private logger: Logger;
 
+    protected allowContentKeyPacketFallbackVerification = true;
+
     constructor(
         telemetry: ProtonDriveTelemetry,
         protected driveCrypto: DriveCrypto,
@@ -538,6 +540,10 @@ export class NodesCryptoService {
         // or moved, it could change the address but without updating the
         // content key packet, which is now failing.
         if (result.verified !== VERIFICATION_STATUS.SIGNED_AND_INVALID || node.creationTime > new Date(2023, 0, 1)) {
+            return result;
+        }
+
+        if (!this.allowContentKeyPacketFallbackVerification) {
             return result;
         }
 

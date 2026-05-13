@@ -17,6 +17,9 @@ import { makeNodeUid, splitNodeUid } from '../uids';
 import { SharingPublicSharesManager } from './shares';
 
 export class SharingPublicNodesCryptoService extends NodesCryptoService {
+    // Do not allow fallback verification for public links, because it is not possible to load owners' address keys.
+    protected allowContentKeyPacketFallbackVerification = false;
+
     async generateDocument(
         parentKeys: { key: PrivateKey; hashKey: Uint8Array<ArrayBuffer> },
         signingKeys: NodeSigningKeys,
