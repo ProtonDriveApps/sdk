@@ -265,30 +265,36 @@ internal static class NodeCrypto
             return new ProtonDriveError("Cannot get node key", error);
         }
 
+        ArraySegment<byte> serializedExtendedAttributes;
+        AuthorshipVerificationFailure? authorshipVerificationFailure;
         try
         {
-            var serializedExtendedAttributes = DecryptMessage(
+            serializedExtendedAttributes = DecryptMessage(
                 encryptedExtendedAttributes.Value,
                 detachedSignature: null,
                 nodeKey,
                 authorshipClaim.GetKeyRing(nodeKey),
                 out _,
-                out var author);
-
-            try
-            {
-                var extendedAttributes = JsonSerializer.Deserialize(serializedExtendedAttributes, DriveApiSerializerContext.Default.ExtendedAttributes);
-
-                return new DecryptionOutput<ExtendedAttributes?>(extendedAttributes, author);
-            }
-            catch (Exception e)
-            {
-                return new ProtonDriveError("Failed to deserialize extended attributes", e.ToProtonDriveError());
-            }
+                out authorshipVerificationFailure);
         }
         catch (Exception e)
         {
-            return new ProtonDriveError("Failed to decrypt extended attributes", e.ToProtonDriveError());
+            return new DecryptionError("Failed to decrypt extended attributes", e.ToProtonDriveError());
+        }
+
+        try
+        {
+            var extendedAttributes = JsonSerializer.Deserialize(serializedExtendedAttributes, DriveApiSerializerContext.Default.ExtendedAttributes);
+
+            return new DecryptionOutput<ExtendedAttributes?>(extendedAttributes, authorshipVerificationFailure);
+        }
+        catch (JsonException e)
+        {
+            return new ExtendedAttributesDeserializationError(e.ToProtonDriveError());
+        }
+        catch (Exception e)
+        {
+            return new ProtonDriveError("Unknown error while deserializing extended attributes", e.ToProtonDriveError());
         }
     }
 
