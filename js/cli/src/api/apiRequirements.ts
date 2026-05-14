@@ -138,7 +138,7 @@ function compareSemverLoose(a: string, b: string): number | null {
 
 function parseSemverParts(v: string): [number, number, number] | null {
     const trimmed = v.trim();
-    const m = trimmed.match(/^(\d+)\.(\d+)\.(\d+)/);
+    const m = trimmed.match(/(\d+)\.(\d+)\.(\d+)/);
     if (!m) {
         return null;
     }

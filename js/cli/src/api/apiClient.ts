@@ -1,6 +1,6 @@
 import ky, { type AfterResponseHook, type KyInstance } from 'ky';
 
-import { Logger, VERSION } from '@protontech/drive-sdk';
+import { Logger } from '@protontech/drive-sdk';
 
 import type { Config } from '../config';
 import { Credentials } from '../credentials';
@@ -77,7 +77,7 @@ export class ApiClient {
     private createDriveApiRequirementsAfterResponseHook(): AfterResponseHook {
         return (_request, _options, response) => {
             processDriveRequirementHeaders(response.headers, {
-                clientSdkVersion: VERSION,
+                clientSdkVersion: this.config.sdkVersion ?? '',
                 supportedRequirementMasksByScope: SUPPORTED_REQUIREMENT_MASK_BY_SCOPE,
                 onUnsupportedFeature: (scope, requiredMask) => {
                     const message = `Update needed: unsupported feature for ${scope}`;
@@ -87,14 +87,14 @@ export class ApiClient {
                     });
                 },
                 onRequiredUpdate: (requiredVersion) => {
-                    const message = `Update required: required SDK version ${requiredVersion} or newer (currently using ${VERSION})`;
+                    const message = `Update required: required SDK version ${requiredVersion} or newer (currently using ${this.config.sdkVersion ?? '0.0.1'})`;
                     this.driveRequirementNoticeOnce.emitOnce(message, (msg) => {
                         this.logger.warn(msg);
                         process.stderr.write(msg + '\n');
                     });
                 },
                 onSuggestedUpdate: (suggestedVersion) => {
-                    const message = `Update recommended: suggested SDK version ${suggestedVersion} or newer (currently using ${VERSION})`;
+                    const message = `Update recommended: suggested SDK version ${suggestedVersion} or newer (currently using ${this.config.sdkVersion ?? '0.0.1'})`;
                     this.driveRequirementNoticeOnce.emitOnce(message, (msg) => {
                         this.logger.warn(msg);
                         process.stderr.write(msg + '\n');

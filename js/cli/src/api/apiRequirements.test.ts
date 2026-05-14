@@ -22,7 +22,7 @@ function generateHeaders(options?: {
 
 describe('processDriveRequirementHeaders', () => {
     const options = {
-        clientSdkVersion: '1.0.0',
+        clientSdkVersion: 'js@1.0.0-beta.1+abcdef01',
         supportedRequirementMasksByScope: {
             [RequirementScope.Drive]: TEST_FEATURE_MASK | TEST_FEATURE_MASK_2,
             [RequirementScope.Photos]: TEST_FEATURE_MASK,
