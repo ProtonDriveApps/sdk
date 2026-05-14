@@ -14,7 +14,7 @@ export class NodesRevisons {
         private logger: Logger,
         private apiService: NodeAPIServiceBase,
         private cryptoService: NodesCryptoService,
-        private nodesAccess: Pick<NodesAccess, 'getNodeKeys'>,
+        private nodesAccess: Pick<NodesAccess, 'getNodeKeys' | 'notifyNodeChanged'>,
     ) {
         this.logger = logger;
         this.apiService = apiService;
@@ -67,6 +67,10 @@ export class NodesRevisons {
 
     async restoreRevision(nodeRevisionUid: string): Promise<void> {
         await this.apiService.restoreRevision(nodeRevisionUid);
+
+        // Restoring a revision creates a new active revision.
+        const nodeUid = makeNodeUidFromRevisionUid(nodeRevisionUid);
+        await this.nodesAccess.notifyNodeChanged(nodeUid);
     }
 
     async deleteRevision(nodeRevisionUid: string): Promise<void> {
