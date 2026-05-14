@@ -2,8 +2,9 @@ import { InitConfig } from '../config';
 import { init } from '../init';
 import { AuthRequiredError, isRecoverableReplError } from './errors';
 import { formatReadableJson } from './formatters';
+import { printCommandUsage } from './help';
 import { Command } from './interface';
-import { getCommand, getCommandArguments, printCommandUsage } from './registryCore';
+import { getCommand, getCommandArguments } from './registryCore';
 
 export type CliSession = Awaited<ReturnType<typeof init>>;
 

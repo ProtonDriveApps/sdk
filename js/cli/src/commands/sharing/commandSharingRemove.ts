@@ -1,25 +1,25 @@
-import { ParseArgsConfig } from 'util';
-
 import { MaybeNode, ProtonDriveClient } from '@protontech/drive-sdk';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 
-import { type ActionArgs, type Command, printObject } from '../../cli';
+import { type ActionArgs, type Command, Options, printObject } from '../../cli';
 
 export class CommandSharingRemove implements Command {
     group = 'sharing';
     name = 'remove';
     args = ['path'];
-    options: ParseArgsConfig['options'] = {
+    options: Options = {
         email: {
             type: 'string',
             short: 'e',
             multiple: true,
             default: [],
+            help: 'Email addresses of the users to remove.',
         },
         everyone: {
             type: 'boolean',
             short: 'a',
             default: false,
+            help: 'Remove access for everyone.',
         },
     };
 
@@ -39,9 +39,9 @@ export class CommandSharingRemove implements Command {
         const sharingInfo = await sdk.getSharingInfo(node);
 
         return [
-            ...sharingInfo?.members.map((member) => member.inviteeEmail) || [],
-            ...sharingInfo?.protonInvitations.map((invitation) => invitation.inviteeEmail) || [],
-            ...sharingInfo?.nonProtonInvitations.map((invitation) => invitation.inviteeEmail) || [],
-        ]
+            ...(sharingInfo?.members.map((member) => member.inviteeEmail) || []),
+            ...(sharingInfo?.protonInvitations.map((invitation) => invitation.inviteeEmail) || []),
+            ...(sharingInfo?.nonProtonInvitations.map((invitation) => invitation.inviteeEmail) || []),
+        ];
     }
 }

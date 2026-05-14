@@ -1,34 +1,37 @@
-import { ParseArgsConfig } from 'util';
-
 import { MemberRole, ValidationError } from '@protontech/drive-sdk';
 
-import { type ActionArgs, type Command, printObject } from '../../cli';
+import { type ActionArgs, type Command, Options, printObject } from '../../cli';
 
 export class CommandSharingInvite implements Command {
     group = 'sharing';
     name = 'invite';
     args = ['path'];
-    options: ParseArgsConfig['options'] = {
+    options: Options = {
         user: {
             type: 'string',
             short: 'u',
             multiple: true,
             default: [],
+            help: 'Email addresses of the users to invite.',
         },
         role: {
             type: 'string',
             short: 'r',
             default: 'viewer',
+            allowedValues: Object.values(MemberRole),
+            help: 'Role of the users to invite.',
         },
         message: {
             type: 'string',
             short: 'm',
             default: '',
+            help: 'Message to be included in the invitation email.',
         },
         'include-node-name': {
             type: 'boolean',
             short: 'n',
             default: false,
+            help: 'Whether to include the node name in the invitation email.',
         },
     };
 

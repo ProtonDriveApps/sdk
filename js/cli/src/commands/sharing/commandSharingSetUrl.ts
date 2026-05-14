@@ -1,25 +1,27 @@
-import { ParseArgsConfig } from 'util';
-
 import { MemberRole, ValidationError } from '@protontech/drive-sdk';
 
-import { type ActionArgs, type Command, printObject } from '../../cli';
+import { type ActionArgs, type Command, Options, printObject } from '../../cli';
 
 export class CommandSharingSetUrl implements Command {
     group = 'sharing';
     name = 'set-url';
     args = ['path'];
-    options: ParseArgsConfig['options'] = {
+    options: Options = {
         role: {
             type: 'string',
             default: 'viewer',
+            allowedValues: Object.values(MemberRole),
+            help: 'Role of the users to invite.',
         },
         password: {
             type: 'string',
             default: '',
+            help: 'Custom password for the shared link.',
         },
         expiration: {
             type: 'string',
             default: '',
+            help: 'Expiration date of the shared link in ISO format (e.g. 2025-06-06).',
         },
     };
 

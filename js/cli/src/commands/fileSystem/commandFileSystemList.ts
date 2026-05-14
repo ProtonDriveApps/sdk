@@ -1,5 +1,3 @@
-import { ParseArgsConfig } from 'node:util';
-
 import { Device, MaybeNode, NodeType, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 
@@ -13,6 +11,7 @@ import {
     getClaimedSize,
     getName,
     getNode,
+    Options,
     Paths,
     PathType,
     printIterable,
@@ -23,11 +22,13 @@ export class CommandFileSystemList implements Command {
     group = 'filesystem';
     name = 'list';
     args = ['path'];
-    options: ParseArgsConfig['options'] = {
+    options: Options = {
         type: {
             type: 'string',
             short: 't',
             default: '',
+            allowedValues: Object.values(NodeType),
+            help: 'Type of the node to filter by.',
         },
     };
 
@@ -105,7 +106,12 @@ export class CommandFileSystemList implements Command {
         await printIterable(sdk.iterateDevices(), options.json, (device) => this.printDeviceHuman(device));
     }
 
-    private async printChildren(sdk: ProtonDriveClient, paths: Paths, pathString: string, options: { json: boolean; nodeType?: NodeType }) {
+    private async printChildren(
+        sdk: ProtonDriveClient,
+        paths: Paths,
+        pathString: string,
+        options: { json: boolean; nodeType?: NodeType },
+    ) {
         const parentNode = await paths.getNode(pathString);
         const filterOptions = options.nodeType ? { type: options.nodeType } : undefined;
         const childrenIterator = sdk.iterateFolderChildren(parentNode, filterOptions);
@@ -139,6 +145,8 @@ export class CommandFileSystemList implements Command {
     }
 
     private printDeviceHuman(device: Device): void {
-        console.log(sanitizeTerminalText(`${device.type} ${device.name.ok ? device.name.value : device.name.error.name}`));
+        console.log(
+            sanitizeTerminalText(`${device.type} ${device.name.ok ? device.name.value : device.name.error.name}`),
+        );
     }
 }
