@@ -1,10 +1,9 @@
 import { mkdir, readdir, rm, stat, unlink } from 'node:fs/promises';
 import path from 'node:path';
-import { ParseArgsConfig } from 'node:util';
 
 import { FileDownloader, IntegrityError, type Logger, MaybeNode, type ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 
-import { type ActionArgs, type Command, getClaimedSize, PathType } from '../../cli';
+import { type ActionArgs, type Command, getClaimedSize, Options, PathType } from '../../cli';
 import { getSha1 } from './digest';
 import { assertDownloadDestination, assertValidDownloadRoot, assertValidPathSegment } from './downloadPathValidation';
 import {
@@ -36,22 +35,28 @@ type DownloadContext = {
 export class CommandFileSystemDownload implements Command {
     group = 'filesystem';
     name = 'download';
-    args = ['remotes...', 'localFolder'];
-    options: ParseArgsConfig['options'] = {
+    args = ['path...', 'localFolder'];
+    options: Options = {
         'conflict-strategy': {
             type: 'string',
             short: 'c',
             default: '',
+            allowedValues: ['merge', 'keep-both', 'replace', 'skip'],
+            help: 'Conflict strategy applied to all files and folders.',
         },
         'file-conflict-strategy': {
             type: 'string',
             short: 'f',
             default: '',
+            allowedValues: ['keep-both', 'replace', 'skip'],
+            help: 'Conflict strategy applied to files.',
         },
         'folder-conflict-strategy': {
             type: 'string',
             short: 'd',
             default: '',
+            allowedValues: ['merge', 'keep-both', 'replace', 'skip'],
+            help: 'Conflict strategy applied to folders.',
         },
     };
 

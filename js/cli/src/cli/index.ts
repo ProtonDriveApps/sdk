@@ -13,7 +13,7 @@ export {
     printObject,
     sanitizeTerminalText,
 } from './formatters';
-export type { ActionArgs, Command } from './interface';
+export type { ActionArgs, Command, Options } from './interface';
 export { findName, getClaimedSize, getName, getNode, getNodeUid } from './node';
 export { openBrowserUrl } from './openBrowserUrl';
 export { Path, Paths, PathType } from './paths';

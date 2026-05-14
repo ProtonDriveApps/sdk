@@ -1,5 +1,3 @@
-import { ParseArgsConfig } from 'node:util';
-
 import {
     MaybeNode,
     NodeWithSameNameExistsValidationError,
@@ -7,16 +5,12 @@ import {
     ValidationError,
 } from '@protontech/drive-sdk';
 
-import { type ActionArgs, type Command, PathType } from '../../cli';
+import { type ActionArgs, type Command, Options, PathType } from '../../cli';
 import { getSha1 } from './digest';
 import { generateThumbnails } from './generateThumbnails';
 import { ConflictChoice, ConflictTargetKind, TransferConflictResolver } from './transferConflictResolver';
 import { createTransferProgress, TransferProgressInterface } from './transferProgress';
-import {
-    type QueueItemDirectory,
-    type QueueItemFile,
-    UploadQueue,
-} from './transferQueue';
+import { type QueueItemDirectory, type QueueItemFile, UploadQueue } from './transferQueue';
 
 const SUPPORTED_REMOTE_PATH_TYPES = [PathType.MyFiles, PathType.Devices, PathType.SharedWithMe];
 
@@ -32,27 +26,34 @@ type UploadContext = {
 export class CommandFileSystemUpload implements Command {
     group = 'filesystem';
     name = 'upload';
-    args = ['sources...', 'parentPath'];
-    options: ParseArgsConfig['options'] = {
+    args = ['localPath...', 'parentPath'];
+    options: Options = {
         'conflict-strategy': {
             type: 'string',
             short: 'c',
             default: '',
+            allowedValues: ['merge', 'keep-both', 'replace', 'skip'],
+            help: 'Conflict strategy applied to all files and folders.',
         },
         'file-conflict-strategy': {
             type: 'string',
             short: 'f',
             default: '',
+            allowedValues: ['merge', 'keep-both', 'replace', 'skip'],
+            help: 'Conflict strategy applied to files.',
         },
         'folder-conflict-strategy': {
             type: 'string',
             short: 'd',
             default: '',
+            allowedValues: ['merge', 'keep-both', 'replace', 'skip'],
+            help: 'Conflict strategy applied to folders.',
         },
         'skip-thumbnails': {
             type: 'boolean',
             short: 't',
             default: false,
+            help: 'Skip generating thumbnails.',
         },
     };
 

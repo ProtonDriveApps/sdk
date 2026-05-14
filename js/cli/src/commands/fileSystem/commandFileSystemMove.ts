@@ -7,7 +7,7 @@ const SUPPORTED_PATH_TYPES = [PathType.MyFiles, PathType.Devices];
 export class CommandFileSystemMove implements Command {
     group = 'filesystem';
     name = 'move';
-    args = ['sourcePath...', 'targetPath'];
+    args = ['sourcePath...', 'targetParentPath'];
 
     async action({ sdk, paths, args, options: { json } }: ActionArgs) {
         const sourcePathStrings = args.slice(0, -1);

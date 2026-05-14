@@ -1,4 +1,4 @@
-import { ParseArgsConfig } from 'util';
+import { ParseArgsOptionDescriptor } from 'util';
 
 import { Logger, ProtonDriveClient } from '@protontech/drive-sdk';
 import { Diagnostic } from '@protontech/drive-sdk/diagnostic';
@@ -14,10 +14,19 @@ export interface Command {
     isAuthAction?: boolean;
     isPublicAction?: boolean;
     args?: string[];
-    options?: ParseArgsConfig['options'];
+    options?: Options;
 
     action: (args: ActionArgs) => Promise<void>;
 }
+
+export interface Options {
+    [longOption: string]: Option;
+}
+
+export type Option = ParseArgsOptionDescriptor & {
+    allowedValues?: string[];
+    help?: string;
+};
 
 export interface ActionArgs {
     logger: Logger;
