@@ -314,7 +314,7 @@ internal static class DtoToMetadataConverter
         {
             nodeKeyErrors.Add(nodeKeyError);
 
-            if (passphraseError is DecryptionError)
+            if (nodeKeyError is DecryptionError)
             {
                 failedDecryptionFields.Add(EncryptedField.NodeKey, nodeKeyError);
             }
