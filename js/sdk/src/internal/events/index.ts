@@ -1,11 +1,12 @@
 import { Logger, ProtonDriveTelemetry } from '../../interface';
 import { DriveAPIService } from '../apiService';
-import { EventsAPIService } from './apiService';
+import { CoreApiEvent, EventsAPIService } from './apiService';
 import { CoreEventManager } from './coreEventManager';
 import { EventManager } from './eventManager';
 import { DriveEvent, DriveListener, EventSubscription, LatestEventIdProvider, SharesService } from './interface';
 import { VolumeEventManager } from './volumeEventManager';
 
+export type { CoreApiEvent } from './apiService';
 export type { DriveEvent, DriveListener, EventSubscription } from './interface';
 export { DriveEventType } from './interface';
 
@@ -37,7 +38,9 @@ export class DriveEventsService {
         this.volumeEventManagers = {};
     }
 
-    // FIXME: Allow to pass own core events manager from the public interface.
+    /**
+     * @deprecated Use `processCoreEvent` instead.
+     */
     async subscribeToCoreEvents(callback: DriveListener): Promise<EventSubscription> {
         let manager = this.coreEventManager;
         const started = !!manager;
@@ -70,6 +73,21 @@ export class DriveEventsService {
         }
 
         return eventManager;
+    }
+
+    /**
+     * Process a raw core API event fetched by the caller's own event loop.
+     * The SDK derives drive-relevant events from it, updates internal caches,
+     * and notifies all listeners registered via `subscribeToPushedCoreEvents`.
+     */
+    async processCoreEvent(rawEvent: CoreApiEvent): Promise<DriveEvent[]> {
+        const driveEvents = EventsAPIService.getDriveEventsFromCoreEvent(rawEvent);
+        for (const event of driveEvents) {
+            for (const listener of this.cacheEventListeners) {
+                await listener(event);
+            }
+        }
+        return driveEvents;
     }
 
     /**
