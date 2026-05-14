@@ -1,5 +1,9 @@
 # Changelog
 
+## cs/v0.14.4 (2026-05-14)
+
+* Fix incorrect reporting of decryption errors
+
 ## cs/v0.14.3 (2026-05-11)
 
 * Handle degraded folder secrets in upload and node operations
