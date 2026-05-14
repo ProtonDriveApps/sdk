@@ -4,7 +4,7 @@ import { DriveEvent, DriveEventsListWithStatus, DriveEventType, NodeEvent, NodeE
 
 type GetCoreLatestEventResponse =
     corePaths['/core/{_version}/events/latest']['get']['responses']['200']['content']['application/json'];
-type GetCoreEventResponse =
+export type CoreApiEvent =
     corePaths['/core/{_version}/events/{id}']['get']['responses']['200']['content']['application/json'];
 
 type GetVolumeLatestEventResponse =
@@ -40,26 +40,31 @@ export class EventsAPIService {
 
     async getCoreEvents(eventId: string): Promise<DriveEventsListWithStatus> {
         // TODO: Switch to v6 endpoint?
-        const result = await this.apiService.get<GetCoreEventResponse>(`core/v5/events/${eventId}`);
+        const result = await this.apiService.get<CoreApiEvent>(`core/v5/events/${eventId}`);
+        const driveEvents = EventsAPIService.getDriveEventsFromCoreEvent(result);
         // in core/v5/events, refresh is always all apps, value 255
         const refresh = result.Refresh > 0;
-        const events: DriveEvent[] =
-            refresh || result.DriveShareRefresh?.Action === 2
-                ? [
-                      {
-                          type: DriveEventType.SharedWithMeUpdated,
-                          eventId: result.EventID,
-                          treeEventScopeId: 'core',
-                      },
-                  ]
-                : [];
-
         return {
             latestEventId: result.EventID,
             more: result.More === 1,
             refresh,
-            events,
+            events: driveEvents,
         };
+    }
+
+    static getDriveEventsFromCoreEvent(result: CoreApiEvent): DriveEvent[] {
+        // in core/v5/events, refresh is always all apps, value 255
+        const refresh = result.Refresh > 0;
+        if (refresh || result.DriveShareRefresh?.Action === 2) {
+            return [
+                {
+                    type: DriveEventType.SharedWithMeUpdated,
+                    eventId: result.EventID,
+                    treeEventScopeId: 'core',
+                },
+            ];
+        }
+        return [];
     }
 
     async getVolumeLatestEventId(volumeId: string): Promise<string> {
@@ -81,9 +86,7 @@ export class EventsAPIService {
                 const type = VOLUME_EVENT_TYPE_MAP[event.EventType];
                 const uids = {
                     nodeUid: makeNodeUid(volumeId, event.Link.LinkID),
-                    parentNodeUid: event.Link.ParentLinkID
-                        ? makeNodeUid(volumeId, event.Link.ParentLinkID)
-                        : undefined,
+                    parentNodeUid: event.Link.ParentLinkID ? makeNodeUid(volumeId, event.Link.ParentLinkID) : undefined,
                 };
                 return {
                     type,

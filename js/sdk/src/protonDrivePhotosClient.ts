@@ -2,6 +2,7 @@ import { getConfig } from './config';
 import { DriveCrypto } from './crypto';
 import { NullFeatureFlagProvider } from './featureFlags';
 import {
+    DriveEvent,
     FileDownloader,
     FileUploader,
     Logger,
@@ -26,7 +27,7 @@ import {
 } from './interface';
 import { DriveAPIService } from './internal/apiService';
 import { initDownloadModule } from './internal/download';
-import { DriveEventsService, DriveListener, EventSubscription } from './internal/events';
+import { CoreApiEvent, DriveEventsService, DriveListener, EventSubscription } from './internal/events';
 import {
     AlbumItem,
     initPhotoSharesModule,
@@ -82,6 +83,12 @@ export class ProtonDrivePhotosClient {
          * @param signal - An optional abort signal to cancel the operation.
          */
         iterateAlbumUids: (signal?: AbortSignal) => AsyncGenerator<string>;
+        /**
+         * Feed a raw core API event response into the SDK.
+         *
+         * See `ProtonDriveClient.experimental.processCoreEvent` for more information.
+         */
+        processCoreEvent: (rawEvent: CoreApiEvent) => Promise<DriveEvent[]>;
     };
 
     constructor({
@@ -186,6 +193,10 @@ export class ProtonDrivePhotosClient {
                 this.logger.debug('Iterating album UIDs');
                 return this.photos.albums.iterateAlbumUids(signal);
             },
+            processCoreEvent: async (rawEvent: CoreApiEvent) => {
+                this.logger.debug(`Processing core event ${rawEvent.EventID}`);
+                return this.events.processCoreEvent(rawEvent);
+            },
         };
     }
 
@@ -213,6 +224,8 @@ export class ProtonDrivePhotosClient {
      * Subscribes to the remote general data updates.
      *
      * See `ProtonDriveClient.subscribeToDriveEvents` for more information.
+     *
+     * @deprecated Use `experimental.processCoreEvent` instead.
      */
     async subscribeToDriveEvents(callback: DriveListener): Promise<EventSubscription> {
         this.logger.debug('Subscribing to core updates');
@@ -707,10 +720,7 @@ export class ProtonDrivePhotosClient {
      * @param signal - An optional abort signal to cancel the operation.
      * @returns An async generator of per-photo results.
      */
-    async *savePhotosToTimeline(
-        photoNodeUids: NodeOrUid[],
-        signal?: AbortSignal,
-    ): AsyncGenerator<NodeResultWithError> {
+    async *savePhotosToTimeline(photoNodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResultWithError> {
         this.logger.info(`Saving ${photoNodeUids.length} photos to timeline`);
         yield* this.photos.photos.saveToTimeline(getUids(photoNodeUids), signal);
     }
