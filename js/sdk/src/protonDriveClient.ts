@@ -6,6 +6,7 @@ import {
     Device,
     DeviceOrUid,
     DeviceType,
+    DriveEvent,
     FileDownloader,
     FileUploader,
     Logger,
@@ -36,7 +37,7 @@ import {
 import { DriveAPIService } from './internal/apiService';
 import { initDevicesModule } from './internal/devices';
 import { initDownloadModule } from './internal/download';
-import { DriveEventsService, DriveListener, EventSubscription } from './internal/events';
+import { CoreApiEvent, DriveEventsService, DriveListener, EventSubscription } from './internal/events';
 import { initNodesModule } from './internal/nodes';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharesModule } from './internal/shares';
@@ -113,6 +114,16 @@ export class ProtonDriveClient {
             customPassword?: string,
             isAnonymousContext?: boolean,
         ) => Promise<ProtonDrivePublicLinkClient>;
+        /**
+         * Feed a raw core API event response into the SDK.
+         *
+         * The SDK will derive drive-relevant events (e.g. `SharedWithMeUpdated`)
+         * from it, update internal caches, and return the derived events.
+         *
+         * The `rawEvent` shape matches the response of the
+         * `core/v5/events/{id}` endpoint.
+         */
+        processCoreEvent: (rawEvent: CoreApiEvent) => Promise<DriveEvent[]>;
     };
 
     constructor({
@@ -255,6 +266,10 @@ export class ProtonDriveClient {
                     session,
                 });
             },
+            processCoreEvent: async (rawEvent: CoreApiEvent) => {
+                this.logger.debug(`Processing core event ${rawEvent.EventID}`);
+                return this.events.processCoreEvent(rawEvent);
+            },
         };
     }
 
@@ -293,6 +308,8 @@ export class ProtonDriveClient {
      * Subscribes to the remote general data updates.
      *
      * Only one instance of the SDK should subscribe to updates.
+     *
+     * @deprecated Use `experimental.processCoreEvent` instead.
      */
     async subscribeToDriveEvents(callback: DriveListener): Promise<EventSubscription> {
         this.logger.debug('Subscribing to core updates');
