@@ -5,6 +5,7 @@ import path from 'node:path';
 import { Logger, MaybeNode, NodeType, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 
 import { getName, getNode } from '../../cli';
+import { resolveLocalPaths } from './localPath';
 
 export const MAX_CONCURRENT_ITEMS = 5;
 
@@ -62,29 +63,30 @@ class TransferQueue<RemoteDataType> {
 export class UploadQueue extends TransferQueue<{ parentNode: MaybeNode }> {
     async enqueueLocalPaths(localPaths: string[], parentNode: MaybeNode): Promise<void> {
         for (const localPath of localPaths) {
-            await this.enqueueLocalPath(localPath, parentNode);
+            const expanded = await resolveLocalPaths(localPath);
+            for (const absolutePath of expanded) {
+                await this.enqueueLocalPath(absolutePath, parentNode);
+            }
         }
     }
 
-    async enqueueLocalDirectoryChildren(localPath: string, parentNode: MaybeNode): Promise<void> {
-        const resolvedDir = path.resolve(localPath);
-        const parentStats = await lstat(resolvedDir);
-        assertLocalPathIsUploadable(resolvedDir, parentStats);
+    async enqueueLocalDirectoryChildren(absolutePath: string, parentNode: MaybeNode): Promise<void> {
+        const parentStats = await lstat(absolutePath);
+        assertLocalPathIsUploadable(absolutePath, parentStats);
         if (!parentStats.isDirectory()) {
-            throw new ValidationError(`Not a directory: ${resolvedDir}`);
+            throw new ValidationError(`Not a directory: ${absolutePath}`);
         }
-        const entries = await readdir(resolvedDir, { withFileTypes: true });
+        const entries = await readdir(absolutePath, { withFileTypes: true });
         for (const ent of entries) {
             if (ent.name === '.' || ent.name === '..') {
                 continue;
             }
-            const absolutePath = path.join(resolvedDir, ent.name);
-            await this.enqueueLocalPath(absolutePath, parentNode, parentStats.dev);
+            const childPath = path.join(absolutePath, ent.name);
+            await this.enqueueLocalPath(childPath, parentNode, parentStats.dev);
         }
     }
 
-    private async enqueueLocalPath(localPath: string, parentNode: MaybeNode, parentDevice?: number): Promise<void> {
-        const absolutePath = path.resolve(localPath);
+    private async enqueueLocalPath(absolutePath: string, parentNode: MaybeNode, parentDevice?: number): Promise<void> {
         const stats = await lstat(absolutePath);
         assertLocalPathIsUploadable(absolutePath, stats);
         if (parentDevice !== undefined && stats.dev !== parentDevice) {

@@ -6,6 +6,7 @@ import { FileDownloader, IntegrityError, type Logger, MaybeNode, type ProtonDriv
 import { type ActionArgs, type Command, getClaimedSize, Options, PathType } from '../../cli';
 import { getSha1 } from './digest';
 import { assertDownloadDestination, assertValidDownloadRoot, assertValidPathSegment } from './downloadPathValidation';
+import { resolveLocalPaths } from './localPath';
 import {
     ConflictChoice,
     ConflictTargetKind,
@@ -79,7 +80,11 @@ export class CommandFileSystemDownload implements Command {
             throw new ValidationError('At least one remote path and a local folder are required');
         }
 
-        const downloadRoot = assertValidDownloadRoot(localFolder);
+        const resolvedLocalPaths = await resolveLocalPaths(localFolder);
+        if (resolvedLocalPaths.length !== 1) {
+            throw new ValidationError('Expected exactly one local path');
+        }
+        const downloadRoot = assertValidDownloadRoot(resolvedLocalPaths[0]);
         await mkdir(downloadRoot, { recursive: true });
 
         const progress = json ? undefined : createTransferProgress();
