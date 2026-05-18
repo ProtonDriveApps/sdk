@@ -1,5 +1,10 @@
 # Changelog
 
+## cs/v0.14.5 (2026-05-18)
+
+* Fix missing disposal of reader in Sqlite cache repository
+* Fix error mapping for decryption
+
 ## cs/v0.14.4 (2026-05-14)
 
 * Fix incorrect reporting of decryption errors
