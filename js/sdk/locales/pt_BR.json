@@ -77,6 +77,9 @@
       "Failed to get verification keys": [
         "Não foi possível obter a chave de verificação"
       ],
+      "Failed to load some items": [
+        "Erro ao carregar alguns itens"
+      ],
       "Failed to load some nodes": [
         "Erro ao carregar alguns nós"
       ],
