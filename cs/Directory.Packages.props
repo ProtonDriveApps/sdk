@@ -3,7 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Data.Sqlite.Core" Version="9.0.10" />
     <PackageVersion Include="Polly" Version="8.6.6" />
     <PackageVersion Include="SQLitePCLRaw.bundle_sqlite3" Version="2.1.10" />
