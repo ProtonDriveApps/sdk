@@ -228,15 +228,17 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
         // Read value
         command.CommandText = "SELECT Value FROM Entries WHERE Key = @key";
         command.Parameters.AddWithValue("@key", key);
-        var reader = command.ExecuteReader();
 
-        if (!reader.Read())
+        string value;
+        using (var reader = command.ExecuteReader())
         {
-            return null;
-        }
+            if (!reader.Read())
+            {
+                return null;
+            }
 
-        var value = reader.GetFieldValue<string>("Value");
-        reader.Close();
+            value = reader.GetFieldValue<string>("Value");
+        }
 
         // Update timestamp
         command.CommandText = "UPDATE Entries SET LastAccessedUtc = @timestamp WHERE Key = @key";
@@ -376,7 +378,11 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
     {
         using var command = connection.CreateCommand();
 
-        command.CommandText = "PRAGMA journal_mode = 'wal'";
+        command.CommandText = "PRAGMA journal_mode = WAL";
+
+        command.ExecuteNonQuery();
+
+        command.CommandText = "PRAGMA synchronous = NORMAL";
 
         command.ExecuteNonQuery();
 
@@ -393,6 +399,7 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
         command.ExecuteNonQuery();
 
         command.CommandText = "CREATE INDEX IF NOT EXISTS idx_entries_last_accessed ON Entries(LastAccessedUtc)";
+
         command.ExecuteNonQuery();
 
         command.CommandText =
