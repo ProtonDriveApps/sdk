@@ -38,6 +38,8 @@ const args = [
     `APP_VERSION=${JSON.stringify(`${process.env.CLI_APP_VERSION_NAME || 'external-drive-sdkclijs'}@${getVersion('cli') || '0.0.0'}`)}`,
     '--define',
     `SDK_VERSION=${JSON.stringify(`js@${getVersion('js')}`)}`,
+    '--define',
+    `SENTRY_DSN=${JSON.stringify(process.env.SENTRY_DSN)}`,
     entry,
     `--outfile=${outfile}${outfileSuffix}`,
 ];

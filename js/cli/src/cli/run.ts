@@ -1,5 +1,6 @@
 import { InitConfig } from '../config';
 import { init } from '../init';
+import { captureException, flushSentry } from '../sentry';
 import { AuthRequiredError, isRecoverableReplError } from './errors';
 import { formatReadableJson } from './formatters';
 import { printCommandUsage } from './help';
@@ -23,6 +24,8 @@ export async function runSingleInvocation(
             return;
         }
         reportFatalError(error);
+        captureException(error);
+        await flushSentry();
         process.exit(1);
     }
 }
