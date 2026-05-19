@@ -358,7 +358,7 @@ export class PhotosAPIService {
     /**
      * Add photos from the same volume to an album.
      *
-     * To add photos from different volumes, use the {@link copyPhotoToAlbum} method.
+     * To add photos from different volumes, use the {@link copyPhoto} method.
      *
      * In the future, these two methods will be merged into a single one.
      */
@@ -432,26 +432,26 @@ export class PhotosAPIService {
     }
 
     /**
-     * Copy a photo to a shared album on a different volume.
+     * Copy a photo from a different volume to an album or to the user's own timeline root.
      *
      * To add photos from the same volume to an album, use the {@link addPhotosToAlbum} method.
      *
      * In the future, these two methods will be merged into a single one.
      */
-    async copyPhotoToAlbum(
-        albumNodeUid: string,
+    async copyPhoto(
+        targetNodeUid: string,
         payload: TransferEncryptedPhotoPayload,
         signal?: AbortSignal,
     ): Promise<string> {
         const { volumeId: sourceVolumeId, nodeId: sourceLinkId } = splitNodeUid(payload.nodeUid);
-        const { volumeId: targetVolumeId, nodeId: targetAlbumLinkId } = splitNodeUid(albumNodeUid);
+        const { volumeId: targetVolumeId, nodeId: targetNodeId } = splitNodeUid(targetNodeUid);
 
         try {
             const response = await this.apiService.post<PostCopyLinkRequest, PostCopyLinkResponse>(
                 `drive/volumes/${sourceVolumeId}/links/${sourceLinkId}/copy`,
                 {
                     TargetVolumeID: targetVolumeId,
-                    TargetParentLinkID: targetAlbumLinkId,
+                    TargetParentLinkID: targetNodeId,
                     Hash: payload.nameHash,
                     Name: payload.encryptedName,
                     NameSignatureEmail: payload.nameSignatureEmail,

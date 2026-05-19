@@ -118,7 +118,7 @@ export class AddToAlbumProcess {
 
             for (const payload of payloads) {
                 try {
-                    const newPhotoNodeUid = await this.apiService.copyPhotoToAlbum(
+                    const newPhotoNodeUid = await this.apiService.copyPhoto(
                         this.albumNodeUid,
                         payload,
                         this.signal,

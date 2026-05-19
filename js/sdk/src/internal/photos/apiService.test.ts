@@ -147,7 +147,7 @@ describe('photosAPIService', () => {
         });
     });
 
-    describe('copyPhotoToAlbum', () => {
+    describe('copyPhoto', () => {
         const photoPayloads = [
             {
                 nodeUid: 'volumeId2~photoNodeId1',
@@ -181,7 +181,7 @@ describe('photosAPIService', () => {
                 LinkID: 'photoNodeId1',
             });
 
-            const result = await api.copyPhotoToAlbum(albumNodeUid, photoPayloads[0]);
+            const result = await api.copyPhoto(albumNodeUid, photoPayloads[0]);
 
             expect(result).toEqual('volumeId1~photoNodeId1');
             expect(apiMock.post).toHaveBeenCalledWith(
@@ -215,7 +215,7 @@ describe('photosAPIService', () => {
                 },
             ));
 
-            const promise = api.copyPhotoToAlbum(albumNodeUid, photoPayloads[0]);
+            const promise = api.copyPhoto(albumNodeUid, photoPayloads[0]);
 
             await expect(promise).rejects.toThrow(MissingRelatedPhotosError);
             try {
@@ -229,7 +229,7 @@ describe('photosAPIService', () => {
             const error = new APICodeError('Some error', 3000);
             apiMock.post = jest.fn().mockRejectedValue(error);
 
-            const promise = api.copyPhotoToAlbum(albumNodeUid, photoPayloads[0]);
+            const promise = api.copyPhoto(albumNodeUid, photoPayloads[0]);
 
             await expect(promise).rejects.toThrow(error);
         });

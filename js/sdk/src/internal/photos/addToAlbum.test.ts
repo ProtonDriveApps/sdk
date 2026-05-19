@@ -69,7 +69,7 @@ describe('AddToAlbumProcess', () => {
         // @ts-expect-error Mocking for testing purposes
         apiService = {
             addPhotosToAlbum: jest.fn(),
-            copyPhotoToAlbum: jest.fn(),
+            copyPhoto: jest.fn(),
         };
 
         // @ts-expect-error Mocking for testing purposes
@@ -154,7 +154,7 @@ describe('AddToAlbumProcess', () => {
         });
 
         let copyToAlbumReturnedMissing = false;
-        apiService.copyPhotoToAlbum.mockImplementation(async (albumUid, payload) => {
+        apiService.copyPhoto.mockImplementation(async (albumUid, payload) => {
             let error: Error | undefined;
             if (payload.nodeUid.includes('missingRelatedTwice')) {
                 error = new MissingRelatedPhotosError(['volume2~missingRelatedTwice1']);
@@ -322,7 +322,7 @@ describe('AddToAlbumProcess', () => {
             const photoUids = Array.from({ length: 25 }, (_, i) => `volume2~photo${i}`);
 
             let copyPhotoCallCount = 0;
-            apiService.copyPhotoToAlbum.mockImplementation(async (albumUid, payload) => {
+            apiService.copyPhoto.mockImplementation(async (albumUid, payload) => {
                 copyPhotoCallCount++;
 
                 // First few calls should happen before all 25 photos are prepared
@@ -351,8 +351,8 @@ describe('AddToAlbumProcess', () => {
                 uid: mainPhotoUid,
                 ok: true,
             }])
-            expect(apiService.copyPhotoToAlbum).toHaveBeenCalledTimes(1);
-            const params = apiService.copyPhotoToAlbum.mock.calls[0];
+            expect(apiService.copyPhoto).toHaveBeenCalledTimes(1);
+            const params = apiService.copyPhoto.mock.calls[0];
             expect(params[1].relatedPhotos?.length).toBe(15);
         });
 
@@ -366,7 +366,7 @@ describe('AddToAlbumProcess', () => {
                 ok: true,
             }]);
             expect(nodesService.iterateNodes).toHaveBeenCalledTimes(3); // main photo + related photo + missing related photo
-            expect(apiService.copyPhotoToAlbum).toHaveBeenCalledTimes(2); // two attempts
+            expect(apiService.copyPhoto).toHaveBeenCalledTimes(2); // two attempts
         });
 
         it('should return error if missing related photos error occurs twice', async () => {
@@ -380,7 +380,7 @@ describe('AddToAlbumProcess', () => {
                 error: new MissingRelatedPhotosError(['volume2~missingRelatedOnce1']),
             }]);
             expect(nodesService.iterateNodes).toHaveBeenCalledTimes(3); // main photo + related photo + missing related photo
-            expect(apiService.copyPhotoToAlbum).toHaveBeenCalledTimes(2); // two attempts
+            expect(apiService.copyPhoto).toHaveBeenCalledTimes(2); // two attempts
         });
 
         it('should return error when crypto service fails', async () => {
@@ -428,7 +428,7 @@ describe('AddToAlbumProcess', () => {
         it('should not notify for failed photo copies', async () => {
             const photoUid = 'volume2~photo1';
 
-            apiService.copyPhotoToAlbum.mockRejectedValue(new Error('API error'));
+            apiService.copyPhoto.mockRejectedValue(new Error('API error'));
 
             const results = await executeProcess([photoUid]);
 
@@ -467,9 +467,9 @@ describe('AddToAlbumProcess', () => {
             expect(nodesService.iterateNodes.mock.calls[1][0]).toMatchObject(differentVolumeUids);
             expect(apiService.addPhotosToAlbum).toHaveBeenCalledTimes(1);
             expect(apiService.addPhotosToAlbum.mock.calls[0][1].map(({ nodeUid }) => nodeUid)).toMatchObject(sameVolumeUids);
-            expect(apiService.copyPhotoToAlbum).toHaveBeenCalledTimes(2);
-            expect(apiService.copyPhotoToAlbum.mock.calls[0][1].nodeUid).toBe(differentVolumeUids[0]);
-            expect(apiService.copyPhotoToAlbum.mock.calls[1][1].nodeUid).toBe(differentVolumeUids[1]);
+            expect(apiService.copyPhoto).toHaveBeenCalledTimes(2);
+            expect(apiService.copyPhoto.mock.calls[0][1].nodeUid).toBe(differentVolumeUids[0]);
+            expect(apiService.copyPhoto.mock.calls[1][1].nodeUid).toBe(differentVolumeUids[1]);
         });
 
         it('should prepare payloads in parallel for both queues', async () => {
@@ -496,7 +496,7 @@ describe('AddToAlbumProcess', () => {
             expect(results[1].ok).toBe(true);
             expect(nodesService.iterateNodes).toHaveBeenCalledTimes(3 + 3); // main photo + related photo + missing related photo
             expect(apiService.addPhotosToAlbum).toHaveBeenCalledTimes(2); // two attempts
-            expect(apiService.copyPhotoToAlbum).toHaveBeenCalledTimes(2); // two attempts
+            expect(apiService.copyPhoto).toHaveBeenCalledTimes(2); // two attempts
         });
 
         it('should notify correctly for both volumes', async () => {
