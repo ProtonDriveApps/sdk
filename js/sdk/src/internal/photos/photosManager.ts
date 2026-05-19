@@ -3,12 +3,17 @@ import { c } from 'ttag';
 import { AbortError } from '../../errors';
 import { Logger, NodeResultWithError, PhotoTag } from '../../interface';
 import { batch } from '../batch';
+import { splitNodeUid } from '../uids';
 import { createBatches } from './addToAlbum';
 import { AlbumsCryptoService } from './albumsCrypto';
 import { PhotosAPIService } from './apiService';
 import { MissingRelatedPhotosError } from './errors';
 import { PhotosNodesAccess } from './nodes';
-import { PhotoAlreadyInTargetError, PhotoTransferPayloadBuilder, TransferEncryptedPhotoPayload } from './photosTransferPayloadBuilder';
+import {
+    PhotoAlreadyInTargetError,
+    PhotoTransferPayloadBuilder,
+    TransferEncryptedPhotoPayload,
+} from './photosTransferPayloadBuilder';
 
 /**
  * The number of photos that are loaded in parallel to prepare the payloads.
@@ -39,13 +44,14 @@ export class PhotosManager {
 
     async *saveToTimeline(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResultWithError> {
         const rootNode = await this.nodesService.getVolumeRootFolder();
+        const { volumeId: userVolumeId } = splitNodeUid(rootNode.uid);
         const volumeRootKeys = await this.nodesService.getNodeKeys(rootNode.uid);
         const signingKeys = await this.nodesService.getNodeSigningKeys({ nodeUid: rootNode.uid });
 
-        const queue: {
-            photoNodeUid: string;
-            additionalRelatedPhotoNodeUids: string[];
-        }[] = nodeUids.map((nodeUid) => ({ photoNodeUid: nodeUid, additionalRelatedPhotoNodeUids: [] }));
+        const queue: { photoNodeUid: string; additionalRelatedPhotoNodeUids: string[] }[] = nodeUids.map((nodeUid) => ({
+            photoNodeUid: nodeUid,
+            additionalRelatedPhotoNodeUids: [],
+        }));
         const retriedPhotoUids = new Set<string>();
 
         while (queue.length > 0) {
@@ -62,7 +68,10 @@ export class PhotosManager {
                 yield { uid, ok: false, error };
             }
 
-            for (const batch of createBatches(payloads)) {
+            const sameVolumePayloads = payloads.filter((p) => splitNodeUid(p.nodeUid).volumeId === userVolumeId);
+            const crossVolumePayloads = payloads.filter((p) => splitNodeUid(p.nodeUid).volumeId !== userVolumeId);
+
+            for (const batch of createBatches(sameVolumePayloads)) {
                 for await (const result of this.apiService.transferPhotos(rootNode.uid, batch, signal)) {
                     if (
                         !result.ok &&
@@ -79,14 +88,46 @@ export class PhotosManager {
                         });
                         continue;
                     }
-
                     if (result.ok) {
                         await this.nodesService.notifyNodeChanged(result.uid);
                     }
                     yield result;
                 }
             }
+
+            // Cross-volume photos (e.g. from shared-with-me albums): copy into the user's own
+            // timeline root using the generic copy endpoint.
+            for (const payload of crossVolumePayloads) {
+                try {
+                    await this.copyPhoto(payload, signal);
+                    await this.nodesService.notifyChildCreated(rootNode.uid);
+                    yield { uid: payload.nodeUid, ok: true };
+                } catch (error) {
+                    if (error instanceof MissingRelatedPhotosError && !retriedPhotoUids.has(payload.nodeUid)) {
+                        retriedPhotoUids.add(payload.nodeUid);
+                        this.logger.info(
+                            `Missing related photos for saving ${payload.nodeUid}, re-queuing: ${error.missingNodeUids.join(', ')}`,
+                        );
+                        queue.push({
+                            photoNodeUid: payload.nodeUid,
+                            additionalRelatedPhotoNodeUids: error.missingNodeUids,
+                        });
+                        continue;
+                    }
+                    yield {
+                        uid: payload.nodeUid,
+                        ok: false,
+                        error:
+                            error instanceof Error ? error : new Error(c('Error').t`Unknown error`, { cause: error }),
+                    };
+                }
+            }
         }
+    }
+
+    private async copyPhoto(payload: TransferEncryptedPhotoPayload, signal?: AbortSignal): Promise<string> {
+        const rootNode = await this.nodesService.getVolumeRootFolder();
+        return this.apiService.copyPhoto(rootNode.uid, payload, signal);
     }
 
     async *updatePhotos(photos: UpdatePhotoSettings[], signal?: AbortSignal): AsyncGenerator<NodeResultWithError> {
