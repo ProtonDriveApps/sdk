@@ -1,5 +1,13 @@
 # Changelog
 
+## js/v0.15.2 (2026-05-19)
+
+* Support copy on save for not owned album
+* Avoid content key packet verification fallback on publicly shared nodes
+* Update cached node after revision restore
+* Allow client to pass core events from external subscription
+* Retry network errors more times and with bigger delay
+
 ## js/v0.15.1 (2026-05-12)
 
 * Allow all address keys to be used for decryption when listing invitations
