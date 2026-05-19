@@ -58,7 +58,7 @@ async function collectSaveToTimelineResults(manager: PhotosManager, nodeUids: st
 describe('PhotosManager', () => {
     let logger: ReturnType<typeof getMockLogger>;
     let apiService: jest.Mocked<
-        Pick<PhotosAPIService, 'addPhotoTags' | 'removePhotoTags' | 'setPhotoFavorite' | 'transferPhotos'>
+        Pick<PhotosAPIService, 'addPhotoTags' | 'removePhotoTags' | 'setPhotoFavorite' | 'transferPhotos' | 'copyPhoto'>
     >;
     let cryptoService: jest.Mocked<Pick<AlbumsCryptoService, 'encryptPhotoForAlbum'>>;
     let nodesService: jest.Mocked<
@@ -70,6 +70,7 @@ describe('PhotosManager', () => {
             | 'iterateNodes'
             | 'getNodePrivateAndSessionKeys'
             | 'notifyNodeChanged'
+            | 'notifyChildCreated'
         >
     >;
     let manager: PhotosManager;
@@ -92,6 +93,7 @@ describe('PhotosManager', () => {
             removePhotoTags: jest.fn().mockResolvedValue(undefined),
             setPhotoFavorite: jest.fn().mockResolvedValue(undefined),
             transferPhotos: jest.fn().mockImplementation(async function* () {}),
+            copyPhoto: jest.fn().mockResolvedValue('volume1~newPhoto'),
         };
 
         cryptoService = {
@@ -122,6 +124,7 @@ describe('PhotosManager', () => {
                 passphraseSessionKey: 'passphraseSessionKey' as any,
             }),
             notifyNodeChanged: jest.fn().mockResolvedValue(undefined),
+            notifyChildCreated: jest.fn().mockResolvedValue(undefined),
         };
 
         manager = new PhotosManager(logger, apiService as any, cryptoService as any, nodesService as any);
@@ -303,6 +306,38 @@ describe('PhotosManager', () => {
                 `Missing related photos for saving volume1~photo1, re-queuing: ${missingRelatedUid}`,
             );
             expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('volume1~photo1');
+        });
+
+        it('copies cross-volume photo and notifies parent root folder', async () => {
+            apiService.copyPhoto.mockResolvedValue('volume1~newPhoto1');
+
+            const results = await collectSaveToTimelineResults(manager, ['volume2~photo1']);
+
+            expect(results).toEqual([{ uid: 'volume2~photo1', ok: true }]);
+            expect(apiService.copyPhoto).toHaveBeenCalledTimes(1);
+            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('volume1~root');
+            expect(nodesService.notifyNodeChanged).not.toHaveBeenCalled();
+        });
+
+        it('re-queues cross-volume photo once on MissingRelatedPhotosError then succeeds', async () => {
+            const missingRelatedUid = 'volume2~related1';
+            let copyCall = 0;
+            apiService.copyPhoto.mockImplementation(async () => {
+                copyCall++;
+                if (copyCall === 1) {
+                    throw new MissingRelatedPhotosError([missingRelatedUid]);
+                }
+                return 'volume1~newPhoto1';
+            });
+
+            const results = await collectSaveToTimelineResults(manager, ['volume2~photo1']);
+
+            expect(results).toEqual([{ uid: 'volume2~photo1', ok: true }]);
+            expect(apiService.copyPhoto).toHaveBeenCalledTimes(2);
+            expect(logger.info).toHaveBeenCalledWith(
+                `Missing related photos for saving volume2~photo1, re-queuing: ${missingRelatedUid}`,
+            );
+            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('volume1~root');
         });
     });
 });
