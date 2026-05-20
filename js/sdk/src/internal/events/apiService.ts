@@ -4,8 +4,10 @@ import { DriveEvent, DriveEventsListWithStatus, DriveEventType, NodeEvent, NodeE
 
 type GetCoreLatestEventResponse =
     corePaths['/core/{_version}/events/latest']['get']['responses']['200']['content']['application/json'];
-export type CoreApiEvent =
+type GetCoreApiEvent =
     corePaths['/core/{_version}/events/{id}']['get']['responses']['200']['content']['application/json'];
+
+export type CoreApiEvent = Pick<GetCoreApiEvent, 'Refresh' | 'EventID' | 'DriveShareRefresh'>;
 
 type GetVolumeLatestEventResponse =
     drivePaths['/drive/volumes/{volumeID}/events/latest']['get']['responses']['200']['content']['application/json'];
@@ -40,7 +42,7 @@ export class EventsAPIService {
 
     async getCoreEvents(eventId: string): Promise<DriveEventsListWithStatus> {
         // TODO: Switch to v6 endpoint?
-        const result = await this.apiService.get<CoreApiEvent>(`core/v5/events/${eventId}`);
+        const result = await this.apiService.get<GetCoreApiEvent>(`core/v5/events/${eventId}`);
         const driveEvents = EventsAPIService.getDriveEventsFromCoreEvent(result);
         // in core/v5/events, refresh is always all apps, value 255
         const refresh = result.Refresh > 0;
