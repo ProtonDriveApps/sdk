@@ -290,7 +290,7 @@ internal static class NodeCrypto
         }
         catch (JsonException e)
         {
-            return new ExtendedAttributesDeserializationError(e.ToProtonDriveError());
+            return new ExtendedAttributesDeserializationError(e.EnrichJsonException(serializedExtendedAttributes));
         }
         catch (Exception e)
         {
