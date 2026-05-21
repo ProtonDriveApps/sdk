@@ -10,6 +10,7 @@ import { HTTPClient } from './httpClient';
 import { Srp } from './srp';
 
 export type { Addresses } from './addresses';
+export type { ApiClient } from './apiClient';
 export type { Auth } from './auth';
 export type { Srp } from './srp';
 
@@ -28,6 +29,7 @@ export async function initApi(config: Config, credentials: Credentials, logger: 
         addresses,
         auth,
         srp,
+        apiClient,
         httpClient,
     };
 }

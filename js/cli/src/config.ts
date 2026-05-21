@@ -6,11 +6,12 @@ import { LogLevel } from '@protontech/drive-sdk/telemetry';
 const APP_DIR_NAME = 'proton-drive-cli';
 
 export interface InitConfig {
-    enableConsoleLog?: boolean;
     appVersion: string;
     sdkVersion?: string;
     clientUidPrefix: string;
     enablePersistedEvents?: boolean;
+    enableConsoleLog?: boolean;
+    enableMetrics?: boolean;
     flags?: Record<string, boolean>;
 }
 
@@ -37,6 +38,8 @@ export interface Config {
     enablePersistedEvents: boolean;
     /** Whether to enable printing logs to the console. */
     enableConsoleLog: boolean;
+    /** Whether to enable sending anonymized operational metrics. */
+    enableMetrics: boolean;
     /** Level of logging to both console and log file. */
     logLevel: LogLevel;
 
@@ -67,6 +70,7 @@ export function getConfig(options: InitConfig): Config {
         logDir,
         enablePersistedEvents: options.enablePersistedEvents || false,
         enableConsoleLog: options.enableConsoleLog || false,
+        enableMetrics: options.enableMetrics || false,
         logLevel,
         unsafeSecrets,
         unsafeCache: unsafeSecrets,

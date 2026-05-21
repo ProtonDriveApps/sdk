@@ -2,7 +2,7 @@ import { FeatureFlags } from '@protontech/drive-sdk';
 
 import { run } from './cli';
 import { COMMANDS } from './commands';
-import { captureException, flushSentry, initSentry } from './sentry';
+import { captureException, flushSentry, initSentry } from './telemetry';
 
 // Two or three dash-separated parts: platform, product, optional section (e.g. sdkclijs not sdk-cli-js).
 declare const APP_VERSION: string;
@@ -19,6 +19,9 @@ try {
         appVersion: APP_VERSION,
         sdkVersion: SDK_VERSION,
         enablePersistedEvents: true,
+        // Only official builds should send metrics.
+        // Only official builds have a SENTRY_DSN set.
+        enableMetrics: !!SENTRY_DSN,
         // TODO: Configure flags via Unleash.
         flags: {
             [FeatureFlags.DriveCryptoEncryptBlocksWithPgpAead]: true,

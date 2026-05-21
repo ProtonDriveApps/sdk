@@ -26,12 +26,15 @@ export async function init(configOptions: InitConfig) {
         mkdir(config.logDir, { recursive: true }),
     ]);
 
-    const telemetry = initTelemetry(config);
+    const { telemetry, initMetrics, flush: flushTelemetry } = initTelemetry(config);
     const logger = telemetry.getLogger('cli');
 
     const openPGPCryptoModule = initOpenPGPCryptoModule();
     const credentials = initCredentials(config, logger);
-    const { auth, addresses, srp, httpClient } = await initApi(config, credentials, logger);
+    const { auth, addresses, srp, httpClient, apiClient } = await initApi(config, credentials, logger);
+
+    // TODO: Once we have Account SDK, get the user plan from the auth object.
+    initMetrics(apiClient, 'unknown');
 
     const clientUid = await getOrGenerateClientUid(config, logger);
     const caches = createCaches(config, credentials, logger);
@@ -75,7 +78,7 @@ export async function init(configOptions: InitConfig) {
         eventsManager,
         eventsProvider,
         dispose: async () => {
-            await eventsManager.dispose();
+            await Promise.all([flushTelemetry(), eventsManager.dispose()]);
         },
         clearCaches: async () => {
             logger.debug('Clearing caches');

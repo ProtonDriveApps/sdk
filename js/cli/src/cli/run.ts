@@ -1,6 +1,6 @@
 import { InitConfig } from '../config';
 import { init } from '../init';
-import { captureException, flushSentry } from '../sentry';
+import { captureException, flushSentry } from '../telemetry';
 import { AuthRequiredError, isRecoverableReplError } from './errors';
 import { formatReadableJson } from './formatters';
 import { printCommandUsage } from './help';
@@ -9,14 +9,9 @@ import { getCommand, getCommandArguments } from './registryCore';
 
 export type CliSession = Awaited<ReturnType<typeof init>>;
 
-export async function runSingleInvocation(
-    commands: Command[],
-    argv: string[],
-    initOptions: InitConfig,
-    session?: CliSession,
-): Promise<void> {
+export async function runSingleInvocation(commands: Command[], argv: string[], initOptions: InitConfig): Promise<void> {
     try {
-        await runCommand(commands, argv, initOptions, session);
+        await runCommand(commands, argv, initOptions);
     } catch (error: unknown) {
         if (isRecoverableReplError(error)) {
             console.error(error instanceof Error ? error.message : String(error));
