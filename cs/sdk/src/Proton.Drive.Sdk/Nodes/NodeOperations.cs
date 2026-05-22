@@ -64,7 +64,7 @@ internal static class NodeOperations
         {
             if (useCacheOnly)
             {
-                throw new ProtonDriveException("Node \"{uid}\" not found in cache");
+                throw new NodeNotFoundException(uid);
             }
 
             metadataResult = await GetFreshNodeMetadataAsync(client, uid, knownShareAndKey, cancellationToken).ConfigureAwait(false);
@@ -159,7 +159,7 @@ internal static class NodeOperations
         return await DtoToMetadataConverter.ConvertDtoToNodeMetadataAsync(
             client,
             uid.VolumeId,
-            response.Links is { Count: > 0 } links ? links[0] : throw new ProtonDriveException($"Node \"{uid}\" not found"),
+            response.Links is { Count: > 0 } links ? links[0] : throw new NodeNotFoundException(uid),
             knownShareAndKey,
             cancellationToken)
             .ConfigureAwait(false);

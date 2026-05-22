@@ -66,6 +66,12 @@ data class ProtonSdkError(
             override fun toSafe() = this
         }
 
+        data class NodeNotFound(
+            val nodeUid: NodeUid?,
+        ) : Data<NodeNotFound> {
+            override fun toSafe() = this
+        }
+
         class ChecksumMismatch(
             val actualChecksum: ByteArray?,
             val expectedChecksum: ByteArray?,

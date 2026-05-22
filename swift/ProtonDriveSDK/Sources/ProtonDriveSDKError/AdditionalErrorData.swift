@@ -8,6 +8,7 @@ struct AdditionalErrorDataFactory {
             ?? ContentSizeMismatchErrorData(data: data)
             ?? ThumbnailCountMismatchErrorData(data: data)
             ?? ChecksumMismatchErrorData(data: data)
+            ?? NodeNotFoundErrorData(data: data)
     }
 }
 
@@ -129,6 +130,33 @@ public struct ThumbnailCountMismatchErrorData: AdditionalErrorData {
 
     public func errorDescription() -> String {
         "uploadedBlockCount: \(uploadedBlockCount), expectedBlockCount: \(expectedBlockCount)"
+    }
+}
+
+public struct NodeNotFoundErrorData: AdditionalErrorData {
+    public let nodeUID: SDKNodeUid?
+
+    init?(data: Google_Protobuf_Any) {
+        do {
+            let errorData = try Proton_Drive_Sdk_NodeNotFoundErrorData(unpackingAny: data)
+            let nodeUIDStr = errorData.hasNodeUid ? errorData.nodeUid : ""
+            self.nodeUID = SDKNodeUid(sdkCompatibleIdentifier: nodeUIDStr)
+        } catch {
+            return nil
+        }
+    }
+
+    public func toProtobufAny() -> Google_Protobuf_Any? {
+        let errorData = Proton_Drive_Sdk_NodeNotFoundErrorData.with {
+            if let nodeUID = nodeUID {
+                $0.nodeUid = nodeUID.sdkCompatibleIdentifier
+            }
+        }
+        return try? Google_Protobuf_Any(message: errorData)
+    }
+
+    public func errorDescription() -> String {
+        "nodeUID: \(String(describing: nodeUID))"
     }
 }
 

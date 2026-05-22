@@ -1,5 +1,6 @@
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
+using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
@@ -72,6 +73,21 @@ internal static class InteropDriveErrorConverter
                 break;
 
             case NodeWithSameNameExistsException e:
+                if (e.Code is not null)
+                {
+                    error.PrimaryCode = (long)e.Code.Value;
+                }
+
+                error.Domain = ErrorDomain.BusinessLogic;
+                error.AdditionalData = Any.Pack(ToAdditionalData(e));
+                break;
+
+            case NodeNotFoundException e:
+                if (e.Code is not null)
+                {
+                    error.PrimaryCode = (long)e.Code.Value;
+                }
+
                 error.Domain = ErrorDomain.BusinessLogic;
                 error.AdditionalData = Any.Pack(ToAdditionalData(e));
                 break;
@@ -158,6 +174,17 @@ internal static class InteropDriveErrorConverter
         if (e.ConflictingRevisionUid is { } conflictingRevisionUid)
         {
             data.ConflictingRevisionUid = conflictingRevisionUid.ToString();
+        }
+
+        return data;
+    }
+
+    private static NodeNotFoundErrorData ToAdditionalData(NodeNotFoundException e)
+    {
+        var data = new NodeNotFoundErrorData();
+        if (e.NodeUid is { } nodeUid)
+        {
+            data.NodeUid = nodeUid.ToString();
         }
 
         return data;
