@@ -7,7 +7,7 @@ data class FileUploaderRequest(
     val name: String,
     val mediaType: String,
     val fileSize: Long,
-    val lastModificationTime: Instant,
+    val lastModificationTime: Instant?,
     val overrideExistingDraftByOtherClient: Boolean,
     val additionalMetadata: Map<String, ByteArray> = emptyMap(),
 )
