@@ -57,10 +57,12 @@ public struct ApiRetrySucceededEventPayload: Sendable {
 }
 
 public struct BlockVerificationErrorEventPayload: Sendable {
-    
+
+    public let volumeType: VolumeType
     public let retryHelped: Bool
-    
+
     init(sdkEventPayload: Proton_Drive_Sdk_BlockVerificationErrorEventPayload) {
+        self.volumeType = .init(sdkVolumeType: sdkEventPayload.volumeType)
         self.retryHelped = sdkEventPayload.retryHelped
     }
 }
