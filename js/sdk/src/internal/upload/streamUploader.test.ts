@@ -106,8 +106,8 @@ describe('StreamUploader', () => {
         };
 
         revisionDraft = {
-            nodeRevisionUid: 'revisionUid',
-            nodeUid: 'nodeUid',
+            nodeRevisionUid: 'testVol~testNode~testRev',
+            nodeUid: 'testVol~testNode',
             nodeKeys: {
                 signingKeys: {
                     addressId: 'addressId',
@@ -149,8 +149,8 @@ describe('StreamUploader', () => {
             const result = await uploader.start(stream, thumbnails, onProgress);
 
             expect(result).toEqual({
-                nodeRevisionUid: 'revisionUid',
-                nodeUid: 'nodeUid',
+                nodeRevisionUid: 'testVol~testNode~testRev',
+                nodeUid: 'testVol~testNode',
             });
 
             const numberOfExpectedBlocks = Math.ceil(metadata.expectedSize / FILE_CHUNK_SIZE);
@@ -177,7 +177,7 @@ describe('StreamUploader', () => {
                 },
             );
             expect(telemetry.uploadFinished).toHaveBeenCalledTimes(1);
-            expect(telemetry.uploadFinished).toHaveBeenCalledWith('revisionUid', metadata.expectedSize + thumbnailSize);
+            expect(telemetry.uploadFinished).toHaveBeenCalledWith('testVol~testNode~testRev', metadata.expectedSize + thumbnailSize);
             expect(telemetry.uploadFailed).not.toHaveBeenCalled();
             expect(onFinish).toHaveBeenCalledTimes(1);
             expect(onFinish).toHaveBeenCalledWith(false);
@@ -194,7 +194,7 @@ describe('StreamUploader', () => {
             expect(telemetry.uploadFinished).not.toHaveBeenCalled();
             expect(telemetry.uploadFailed).toHaveBeenCalledTimes(1);
             expect(telemetry.uploadFailed).toHaveBeenCalledWith(
-                'revisionUid',
+                'testVol~testNode~testRev',
                 new Error(error),
                 uploadedBytes === undefined ? expect.anything() : uploadedBytes,
                 expectedSize,
@@ -545,7 +545,7 @@ describe('StreamUploader', () => {
             it('should report block verification error', async () => {
                 blockVerifier.verifyBlock = jest.fn().mockRejectedValue(new IntegrityError('Block verification error'));
                 await verifyFailure('Block verification error', 0);
-                expect(telemetry.logBlockVerificationError).toHaveBeenCalledWith(false);
+                expect(telemetry.logBlockVerificationError).toHaveBeenCalledWith('testVol~testNode', false);
             });
 
             it('should report block verification error when retry helped', async () => {
@@ -556,7 +556,7 @@ describe('StreamUploader', () => {
                         verificationToken: new Uint8Array(),
                     });
                 await verifySuccess();
-                expect(telemetry.logBlockVerificationError).toHaveBeenCalledWith(true);
+                expect(telemetry.logBlockVerificationError).toHaveBeenCalledWith('testVol~testNode', true);
             });
 
             it('should throw an error if block count does not match', async () => {

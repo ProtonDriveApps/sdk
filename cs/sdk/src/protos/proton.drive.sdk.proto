@@ -907,7 +907,8 @@ message VerificationErrorEventPayload {
 }
 
 message BlockVerificationErrorEventPayload {
-    bool retry_helped = 1;
+    VolumeType volume_type = 1;
+    bool retry_helped = 2;
 }
 
 message NodeNameConflictErrorData {
