@@ -283,7 +283,7 @@ message DriveClientGetFileUploaderRequest {
     string name = 3;
     string mediaType = 4;
     int64 size = 5;
-    google.protobuf.Timestamp last_modification_time = 6;
+    google.protobuf.Timestamp last_modification_time = 6; // Optional
     repeated AdditionalMetadataProperty additional_metadata = 7; // Optional
     bool override_existing_draft_by_other_client = 8;
     // When unset or false, waits for a slot in the queue (uses cancellation_token_source_handle).
@@ -297,7 +297,7 @@ message DriveClientGetFileRevisionUploaderRequest {
     int64 client_handle = 1;
     string current_active_revision_uid = 2;
     int64 size = 3;
-    google.protobuf.Timestamp last_modification_time = 4;
+    google.protobuf.Timestamp last_modification_time = 4; // Optional
     repeated AdditionalMetadataProperty additional_metadata = 5; // Optional
     // When unset or false, waits for a slot in the queue (uses cancellation_token_source_handle).
     // When true, only reserves a slot if immediately available (cancellation_token_source_handle is ignored).
