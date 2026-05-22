@@ -13,7 +13,7 @@ internal fun FileUploaderRequest.toProtobuf(
     mediaType = this@toProtobuf.mediaType
     size = this@toProtobuf.fileSize
     parentFolderUid = this@toProtobuf.parentFolderUid.value
-    lastModificationTime = this@toProtobuf.lastModificationTime.toTimestamp()
+    this@toProtobuf.lastModificationTime?.toTimestamp()?.let { lastModificationTime = it }
     overrideExistingDraftByOtherClient = this@toProtobuf.overrideExistingDraftByOtherClient
     additionalMetadata += this@toProtobuf.additionalMetadata.map { (name, data) ->
         additionalMetadataProperty {

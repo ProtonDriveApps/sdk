@@ -105,16 +105,14 @@ internal class InteropProtonDriveClient internal constructor(
     override suspend fun createFolder(
         parentFolderUid: NodeUid,
         name: String,
-        lastModification: Instant?,
+        lastModificationTime: Instant?,
     ): FolderNode = cancellationCoroutineScope { source ->
         log(INFO, "createFolder")
         bridge.createFolder(
             driveClientCreateFolderRequest {
                 this.parentFolderUid = parentFolderUid.value
                 folderName = name
-                lastModification?.let {
-                    lastModificationTime = lastModification.toTimestamp()
-                }
+                lastModificationTime?.toTimestamp()?.let { this.lastModificationTime = it }
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }

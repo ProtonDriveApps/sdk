@@ -120,7 +120,7 @@ internal static class InteropProtonDriveClient
 
         var metadata = new FileUploadMetadata
         {
-            LastModificationTime = request.LastModificationTime.ToDateTimeFixed(),
+            LastModificationTime = request.LastModificationTime?.ToDateTimeFixed(),
             AdditionalMetadata = additionalMetadata,
         };
 
@@ -167,7 +167,7 @@ internal static class InteropProtonDriveClient
 
         var metadata = new FileUploadMetadata
         {
-            LastModificationTime = request.LastModificationTime.ToDateTimeFixed(),
+            LastModificationTime = request.LastModificationTime?.ToDateTimeFixed(),
             AdditionalMetadata = additionalMetadata,
         };
 
