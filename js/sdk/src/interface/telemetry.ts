@@ -109,6 +109,7 @@ export type MetricVerificationErrorField =
 
 export interface MetricBlockVerificationErrorEvent {
     eventName: 'blockVerificationError';
+    volumeType: MetricVolumeType;
     retryHelped: boolean;
 }
 

@@ -24,8 +24,7 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
             UploadEvent me => GetUploadEventPayload(me),
             DownloadEvent me => GetDownloadEventPayload(me),
             DecryptionErrorEvent me => GetDecryptionErrorPayload(me),
-
-            // FIXME support error metrics
+            BlockVerificationErrorEvent me => GetBlockVerificationErrorPayload(me),
             _ => null,
         };
 
@@ -94,6 +93,15 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
         }
 
         return payload;
+    }
+
+    private static BlockVerificationErrorEventPayload GetBlockVerificationErrorPayload(BlockVerificationErrorEvent me)
+    {
+        return new BlockVerificationErrorEventPayload
+        {
+            VolumeType = (VolumeType)me.VolumeType,
+            RetryHelped = me.RetryHelped,
+        };
     }
 
     private static DecryptionErrorEventPayload GetDecryptionErrorPayload(DecryptionErrorEvent me)

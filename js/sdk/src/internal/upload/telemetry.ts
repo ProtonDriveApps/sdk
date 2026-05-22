@@ -26,9 +26,17 @@ export class UploadTelemetry {
         return new LoggerWithPrefix(this.logger, `revision ${revisionUid}`);
     }
 
-    logBlockVerificationError(retryHelped: boolean) {
+    async logBlockVerificationError(nodeUid: string, retryHelped: boolean) {
+        const { volumeId } = splitNodeUid(nodeUid);
+        let volumeType = MetricVolumeType.Unknown;
+        try {
+            volumeType = await this.sharesService.getVolumeMetricContext(volumeId);
+        } catch (error: unknown) {
+            this.logger.error('Failed to get metric volume type', error);
+        }
         this.telemetry.recordMetric({
             eventName: 'blockVerificationError',
+            volumeType,
             retryHelped,
         });
     }

@@ -194,7 +194,7 @@ abstract class SmallUploader {
                     0,
                 );
                 if (integrityError) {
-                    void this.telemetry.logBlockVerificationError(true);
+                    void this.telemetry.logBlockVerificationError(this.getTelemetryContextUid(), true);
                 }
             } catch (error: unknown) {
                 // Do not retry or report anything if the upload was aborted.
@@ -213,7 +213,7 @@ abstract class SmallUploader {
 
                 this.logger.error(`Failed to encrypt block`, error);
                 if (integrityError) {
-                    void this.telemetry.logBlockVerificationError(false);
+                    void this.telemetry.logBlockVerificationError(this.getTelemetryContextUid(), false);
                 }
                 throw error;
             }

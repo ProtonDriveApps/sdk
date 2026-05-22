@@ -5,6 +5,7 @@ import { Logger, Thumbnail, ThumbnailType, UploadMetadata } from '../../interfac
 import { LoggerWithPrefix } from '../../telemetry';
 import { APIHTTPError, HTTPErrorCode, NotFoundAPIError } from '../apiService';
 import { getErrorMessage } from '../errors';
+import { makeNodeUidFromRevisionUid } from '../uids';
 import { mergeUint8Arrays } from '../utils';
 import { waitForCondition } from '../wait';
 import { UploadAPIService } from './apiService';
@@ -321,7 +322,7 @@ export class StreamUploader {
                             index,
                         );
                         if (integrityError) {
-                            void this.telemetry.logBlockVerificationError(true);
+                            void this.telemetry.logBlockVerificationError(makeNodeUidFromRevisionUid(this.revisionDraft.nodeRevisionUid), true);
                         }
                     } catch (error: unknown) {
                         // Do not retry or report anything if the upload was aborted.
@@ -342,7 +343,7 @@ export class StreamUploader {
 
                         this.logger.error(`Failed to encrypt block ${index}`, error);
                         if (integrityError) {
-                            void this.telemetry.logBlockVerificationError(false);
+                            void this.telemetry.logBlockVerificationError(makeNodeUidFromRevisionUid(this.revisionDraft.nodeRevisionUid), false);
                         }
                         throw error;
                     }
