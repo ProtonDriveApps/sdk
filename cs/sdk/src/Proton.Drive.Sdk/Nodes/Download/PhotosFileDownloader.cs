@@ -77,7 +77,7 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
 
         if (result is null || !result.Value.TryGetValueElseError(out var node, out _) || node is not FileNode fileNode)
         {
-            throw new ProtonDriveException($"Revision not found for photo with ID {_photoUid}");
+            throw new NodeNotFoundException(_photoUid);
         }
 
         if (!downloadStateTaskCompletionSource.Task.IsCompletedSuccessfully)
@@ -125,6 +125,11 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
 
         async ValueTask OnFailedAsync(Exception ex, long claimedFileSize, long downloadedByteCount)
         {
+            if (ex is ValidationException)
+            {
+                return;
+            }
+
             var downloadEvent = await TelemetryEventFactory.CreateDownloadEventAsync(_client.DriveClient, _photoUid, cancellationToken).ConfigureAwait(false);
 
             // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize

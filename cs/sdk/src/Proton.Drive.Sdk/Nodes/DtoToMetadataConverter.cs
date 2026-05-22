@@ -686,7 +686,7 @@ internal static class DtoToMetadataConverter
 
             return response.Links is { Count: > 0 } links
                 ? links[0]
-                : throw new ProtonDriveException($"Node \"{new NodeUid(volumeId, linkId)}\" not found");
+                : throw new NodeNotFoundException(new NodeUid(volumeId, linkId));
         }
     }
 

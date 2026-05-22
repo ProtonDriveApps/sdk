@@ -166,7 +166,7 @@ public sealed class FileUploader : IDisposable
 
         async ValueTask OnFailedAsync(Exception ex, long uploadedByteCount)
         {
-            if (ex is NodeWithSameNameExistsException)
+            if (ex is ValidationException)
             {
                 return;
             }

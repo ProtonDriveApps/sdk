@@ -51,5 +51,8 @@ private fun Any.toData() = when (typeUrl) {
     "type.googleapis.com/proton.drive.sdk.ChecksumMismatchErrorData" ->
         ProtonDriveSdk.ChecksumMismatchErrorData.parseFrom(value).toEntity()
 
+    "type.googleapis.com/proton.drive.sdk.NodeNotFoundErrorData" ->
+        ProtonDriveSdk.NodeNotFoundErrorData.parseFrom(value).toEntity()
+
     else -> null
 }

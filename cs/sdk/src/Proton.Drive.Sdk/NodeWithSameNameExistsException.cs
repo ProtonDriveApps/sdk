@@ -5,7 +5,7 @@ using Proton.Sdk;
 
 namespace Proton.Drive.Sdk;
 
-public sealed class NodeWithSameNameExistsException : ProtonDriveException
+public sealed class NodeWithSameNameExistsException : ValidationException
 {
     public NodeWithSameNameExistsException()
     {
@@ -28,6 +28,8 @@ public sealed class NodeWithSameNameExistsException : ProtonDriveException
         {
             return;
         }
+
+        Code = response.Code;
 
         var conflict = RevisionConflict.FromErrorResponse(response);
 
