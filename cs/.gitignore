@@ -351,6 +351,11 @@ vcpkg_installed/
 build/output
 .vscode
 
+# DocFX
+docfx/api/
+docfx/_site/
+.tools/
+
 # macOS
 *.DS_Store
 .AppleDouble
