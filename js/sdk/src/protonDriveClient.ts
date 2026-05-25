@@ -459,7 +459,7 @@ export class ProtonDriveClient {
      * If one of the nodes fails to copy, the operation continues with the
      * rest of the nodes. Use `NodeResult` to check the status of the action.
      *
-     * @param nodeUids - List of node entities or their UIDs.
+     * @param nodesOrNodeUidsOrWithNames - List of node entities or their UIDs.
      * @param newParentNodeUid - Node entity or its UID string.
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the results of the copy operation
@@ -675,7 +675,7 @@ export class ProtonDriveClient {
     /**
      * Reject the invitation to the shared node.
      *
-     * @param invitationOrUid - Invitation entity or its UID string.
+     * @param invitationUid - Invitation entity or its UID string.
      */
     async rejectInvitation(invitationUid: ProtonInvitationOrUid): Promise<void> {
         this.logger.info(`Rejecting invitation ${getUid(invitationUid)}`);
@@ -964,7 +964,8 @@ export class ProtonDriveClient {
     /**
      * Creates a new device.
      *
-     * @param nodeUid - Device entity or its UID string.
+     * @param name - Name of the device.
+     * @param deviceType - Type of the device.
      * @returns The created device entity.
      * @throws {@link ValidationError} If the name is empty, too long, or contains a slash.
      */
