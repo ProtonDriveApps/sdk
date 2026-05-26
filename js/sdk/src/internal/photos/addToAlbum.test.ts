@@ -1,4 +1,4 @@
-import { NodeResultWithError } from '../../interface';
+import { NodeResult } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
 import { AddToAlbumProcess } from './addToAlbum';
 import { AlbumsCryptoService } from './albumsCrypto';
@@ -10,10 +10,7 @@ import { PhotosNodesAccess } from './nodes';
 /**
  * Helper to create a mock photo node with minimal required properties.
  */
-function createMockPhotoNode(
-    uid: string,
-    overrides: Partial<DecryptedPhotoNode> = {},
-): DecryptedPhotoNode {
+function createMockPhotoNode(uid: string, overrides: Partial<DecryptedPhotoNode> = {}): DecryptedPhotoNode {
     return {
         uid,
         parentUid: 'volume1~parent',
@@ -86,7 +83,7 @@ describe('AddToAlbumProcess', () => {
         };
     });
 
-    function executeProcess(photoUids: string[]): Promise<NodeResultWithError[]> {
+    function executeProcess(photoUids: string[]): Promise<NodeResult[]> {
         const process = new AddToAlbumProcess(
             'volume1~album',
             albumKeys as any,
@@ -109,7 +106,10 @@ describe('AddToAlbumProcess', () => {
                 if (relatedMatch) {
                     const [, volumeId, mainPhoto, countStr] = relatedMatch;
                     const count = parseInt(countStr, 10);
-                    photoNode.photo!.relatedPhotoNodeUids = Array.from({ length: count }, (_, idx) => `${volumeId}~related${idx + 1}`);
+                    photoNode.photo!.relatedPhotoNodeUids = Array.from(
+                        { length: count },
+                        (_, idx) => `${volumeId}~related${idx + 1}`,
+                    );
                 }
 
                 yield photoNode;
@@ -169,7 +169,7 @@ describe('AddToAlbumProcess', () => {
             }
             return `volume1~copied${payload.nodeUid}`;
         });
-    })
+    });
 
     describe('Adding photos to the same volume', () => {
         it('should prepare photo payloads in parallel without blocking', async () => {
@@ -209,10 +209,12 @@ describe('AddToAlbumProcess', () => {
 
             const results = await executeProcess([mainPhotoUid]);
 
-            expect(results).toMatchObject([{
-                uid: mainPhotoUid,
-                ok: true,
-            }])
+            expect(results).toMatchObject([
+                {
+                    uid: mainPhotoUid,
+                    ok: true,
+                },
+            ]);
 
             expect(apiService.addPhotosToAlbum).toHaveBeenCalledTimes(1);
             const params = apiService.addPhotosToAlbum.mock.calls[0];
@@ -234,10 +236,12 @@ describe('AddToAlbumProcess', () => {
             );
             const results = await Array.fromAsync(process.execute([photoUid]));
 
-            expect(results).toMatchObject([{
-                uid: photoUid,
-                ok: true,
-            }])
+            expect(results).toMatchObject([
+                {
+                    uid: photoUid,
+                    ok: true,
+                },
+            ]);
             expect(nodesService.iterateNodes).toHaveBeenCalledTimes(3); // main photo + related photo + missing related photo
             expect(apiService.addPhotosToAlbum).toHaveBeenCalledTimes(2); // two attempts
         });
@@ -247,11 +251,13 @@ describe('AddToAlbumProcess', () => {
 
             const results = await executeProcess([photoUid]);
 
-            expect(results).toMatchObject([{
-                uid: photoUid,
-                ok: false,
-                error: new MissingRelatedPhotosError(['volume1~missingRelatedOnce1']),
-            }])
+            expect(results).toMatchObject([
+                {
+                    uid: photoUid,
+                    ok: false,
+                    error: new MissingRelatedPhotosError(['volume1~missingRelatedOnce1']),
+                },
+            ]);
             expect(nodesService.iterateNodes).toHaveBeenCalledTimes(3); // main photo + related photo + missing related photo
             expect(apiService.addPhotosToAlbum).toHaveBeenCalledTimes(2); // two attempts
         });
@@ -264,11 +270,13 @@ describe('AddToAlbumProcess', () => {
 
             const results = await executeProcess([photoUid]);
 
-            expect(results).toMatchObject([{
-                uid: photoUid,
-                ok: false,
-                error: cryptoError,
-            }])
+            expect(results).toMatchObject([
+                {
+                    uid: photoUid,
+                    ok: false,
+                    error: cryptoError,
+                },
+            ]);
         });
 
         it('should return error when getNodePrivateAndSessionKeys fails', async () => {
@@ -279,21 +287,25 @@ describe('AddToAlbumProcess', () => {
 
             const results = await executeProcess([photoUid]);
 
-            expect(results).toMatchObject([{
-                uid: photoUid,
-                ok: false,
-                error: keysError,
-            }])
+            expect(results).toMatchObject([
+                {
+                    uid: photoUid,
+                    ok: false,
+                    error: keysError,
+                },
+            ]);
         });
 
         it('should notify node changed for successfully added photos', async () => {
             const photoUid = 'volume1~photo1';
             const results = await executeProcess([photoUid]);
 
-            expect(results).toMatchObject([{
-                uid: photoUid,
-                ok: true,
-            }])
+            expect(results).toMatchObject([
+                {
+                    uid: photoUid,
+                    ok: true,
+                },
+            ]);
             expect(nodesService.notifyNodeChanged).toHaveBeenCalledTimes(1);
             expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith(photoUid);
         });
@@ -307,11 +319,13 @@ describe('AddToAlbumProcess', () => {
 
             const results = await executeProcess([photoUid]);
 
-            expect(results).toMatchObject([{
-                uid: photoUid,
-                ok: false,
-                error: new Error('API error'),
-            }])
+            expect(results).toMatchObject([
+                {
+                    uid: photoUid,
+                    ok: false,
+                    error: new Error('API error'),
+                },
+            ]);
             expect(nodesService.notifyNodeChanged).not.toHaveBeenCalled();
         });
     });
@@ -347,10 +361,12 @@ describe('AddToAlbumProcess', () => {
 
             const results = await executeProcess([mainPhotoUid]);
 
-            expect(results).toMatchObject([{
-                uid: mainPhotoUid,
-                ok: true,
-            }])
+            expect(results).toMatchObject([
+                {
+                    uid: mainPhotoUid,
+                    ok: true,
+                },
+            ]);
             expect(apiService.copyPhoto).toHaveBeenCalledTimes(1);
             const params = apiService.copyPhoto.mock.calls[0];
             expect(params[1].relatedPhotos?.length).toBe(15);
@@ -361,10 +377,12 @@ describe('AddToAlbumProcess', () => {
 
             const results = await executeProcess([photoUid]);
 
-            expect(results).toMatchObject([{
-                uid: photoUid,
-                ok: true,
-            }]);
+            expect(results).toMatchObject([
+                {
+                    uid: photoUid,
+                    ok: true,
+                },
+            ]);
             expect(nodesService.iterateNodes).toHaveBeenCalledTimes(3); // main photo + related photo + missing related photo
             expect(apiService.copyPhoto).toHaveBeenCalledTimes(2); // two attempts
         });
@@ -374,11 +392,13 @@ describe('AddToAlbumProcess', () => {
 
             const results = await executeProcess([photoUid]);
 
-            expect(results).toMatchObject([{
-                uid: photoUid,
-                ok: false,
-                error: new MissingRelatedPhotosError(['volume2~missingRelatedOnce1']),
-            }]);
+            expect(results).toMatchObject([
+                {
+                    uid: photoUid,
+                    ok: false,
+                    error: new MissingRelatedPhotosError(['volume2~missingRelatedOnce1']),
+                },
+            ]);
             expect(nodesService.iterateNodes).toHaveBeenCalledTimes(3); // main photo + related photo + missing related photo
             expect(apiService.copyPhoto).toHaveBeenCalledTimes(2); // two attempts
         });
@@ -391,11 +411,13 @@ describe('AddToAlbumProcess', () => {
 
             const results = await executeProcess([photoUid]);
 
-            expect(results).toMatchObject([{
-                uid: photoUid,
-                ok: false,
-                error: cryptoError,
-            }]);
+            expect(results).toMatchObject([
+                {
+                    uid: photoUid,
+                    ok: false,
+                    error: cryptoError,
+                },
+            ]);
         });
 
         it('should return error when getNodePrivateAndSessionKeys fails', async () => {
@@ -406,21 +428,25 @@ describe('AddToAlbumProcess', () => {
 
             const results = await executeProcess([photoUid]);
 
-            expect(results).toMatchObject([{
-                uid: photoUid,
-                ok: false,
-                error: keysError,
-            }]);
+            expect(results).toMatchObject([
+                {
+                    uid: photoUid,
+                    ok: false,
+                    error: keysError,
+                },
+            ]);
         });
 
         it('should notify child created for successfully copied photos', async () => {
             const photoUid = 'volume2~photo1';
             const results = await executeProcess([photoUid]);
 
-            expect(results).toMatchObject([{
-                uid: photoUid,
-                ok: true,
-            }])
+            expect(results).toMatchObject([
+                {
+                    uid: photoUid,
+                    ok: true,
+                },
+            ]);
             expect(nodesService.notifyChildCreated).toHaveBeenCalledTimes(1);
             expect(nodesService.notifyChildCreated.mock.calls[0][0]).toContain('volume1~copied');
         });
@@ -432,11 +458,13 @@ describe('AddToAlbumProcess', () => {
 
             const results = await executeProcess([photoUid]);
 
-            expect(results).toMatchObject([{
-                uid: photoUid,
-                ok: false,
-                error: new Error('API error'),
-            }])
+            expect(results).toMatchObject([
+                {
+                    uid: photoUid,
+                    ok: false,
+                    error: new Error('API error'),
+                },
+            ]);
             expect(nodesService.notifyChildCreated).not.toHaveBeenCalled();
         });
     });
@@ -449,24 +477,31 @@ describe('AddToAlbumProcess', () => {
 
             const results = await executeProcess(allUids);
 
-            expect(results).toMatchObject([{
-                uid: sameVolumeUids[0],
-                ok: true,
-            }, {
-                uid: sameVolumeUids[1],
-                ok: true,
-            }, {
-                uid: differentVolumeUids[0],
-                ok: true,
-            }, {
-                uid: differentVolumeUids[1],
-                ok: true,
-            }]);
+            expect(results).toMatchObject([
+                {
+                    uid: sameVolumeUids[0],
+                    ok: true,
+                },
+                {
+                    uid: sameVolumeUids[1],
+                    ok: true,
+                },
+                {
+                    uid: differentVolumeUids[0],
+                    ok: true,
+                },
+                {
+                    uid: differentVolumeUids[1],
+                    ok: true,
+                },
+            ]);
             expect(nodesService.iterateNodes).toHaveBeenCalledTimes(2);
             expect(nodesService.iterateNodes.mock.calls[0][0]).toMatchObject(sameVolumeUids);
             expect(nodesService.iterateNodes.mock.calls[1][0]).toMatchObject(differentVolumeUids);
             expect(apiService.addPhotosToAlbum).toHaveBeenCalledTimes(1);
-            expect(apiService.addPhotosToAlbum.mock.calls[0][1].map(({ nodeUid }) => nodeUid)).toMatchObject(sameVolumeUids);
+            expect(apiService.addPhotosToAlbum.mock.calls[0][1].map(({ nodeUid }) => nodeUid)).toMatchObject(
+                sameVolumeUids,
+            );
             expect(apiService.copyPhoto).toHaveBeenCalledTimes(2);
             expect(apiService.copyPhoto.mock.calls[0][1].nodeUid).toBe(differentVolumeUids[0]);
             expect(apiService.copyPhoto.mock.calls[1][1].nodeUid).toBe(differentVolumeUids[1]);

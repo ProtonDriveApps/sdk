@@ -1,6 +1,6 @@
 import { c } from 'ttag';
 
-import { NodeResultWithError, PhotoTag } from '../../interface';
+import { NodeResult, PhotoTag } from '../../interface';
 import { APICodeError, DriveAPIService, drivePaths, InvalidRequirementsAPIError, isCodeOk } from '../apiService';
 import { batch } from '../batch';
 import { EncryptedRootShare, EncryptedShareCrypto, ShareType } from '../shares/interface';
@@ -366,7 +366,7 @@ export class PhotosAPIService {
         albumNodeUid: string,
         photoPayloads: TransferEncryptedPhotoPayload[],
         signal?: AbortSignal,
-    ): AsyncGenerator<NodeResultWithError> {
+    ): AsyncGenerator<NodeResult> {
         const { volumeId, nodeId: albumLinkId } = splitNodeUid(albumNodeUid);
 
         const allPhotoPayloads = photoPayloads.flatMap((photoPayload) => [photoPayload, ...photoPayload.relatedPhotos]);
@@ -491,7 +491,7 @@ export class PhotosAPIService {
         albumNodeUid: string,
         photoNodeUids: string[],
         signal?: AbortSignal,
-    ): AsyncGenerator<NodeResultWithError> {
+    ): AsyncGenerator<NodeResult> {
         const { volumeId, nodeId: albumLinkId } = splitNodeUid(albumNodeUid);
 
         const batchSize = 10;
@@ -574,7 +574,7 @@ export class PhotosAPIService {
         newParentNodeUid: string,
         photoPayloads: TransferEncryptedPhotoPayload[],
         signal?: AbortSignal,
-    ): AsyncGenerator<NodeResultWithError> {
+    ): AsyncGenerator<NodeResult> {
         const { volumeId, nodeId: newParentNodeId } = splitNodeUid(newParentNodeUid);
 
         if (photoPayloads.length === 0) {

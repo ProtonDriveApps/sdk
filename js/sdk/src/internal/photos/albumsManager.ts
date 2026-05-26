@@ -1,4 +1,4 @@
-import { Logger, MemberRole, NodeResultWithError, NodeType, ProtonDriveTelemetry, resultOk } from '../../interface';
+import { Logger, MemberRole, NodeResult, NodeType, ProtonDriveTelemetry, resultOk } from '../../interface';
 import { BatchLoading } from '../batchLoading';
 import { DecryptedNode } from '../nodes';
 import { ALBUM_MEDIA_TYPE } from '../nodes/mediaTypes';
@@ -199,11 +199,7 @@ export class AlbumsManager {
         await this.nodesService.notifyNodeDeleted(nodeUid);
     }
 
-    async *addPhotos(
-        albumNodeUid: string,
-        photoNodeUids: string[],
-        signal?: AbortSignal,
-    ): AsyncGenerator<NodeResultWithError> {
+    async *addPhotos(albumNodeUid: string, photoNodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         const albumKeys = await this.nodesService.getNodeKeys(albumNodeUid);
         if (!albumKeys.hashKey) {
             throw new Error('Cannot add photos to album: album hash key not available');
@@ -231,7 +227,7 @@ export class AlbumsManager {
         albumNodeUid: string,
         photoNodeUids: string[],
         signal?: AbortSignal,
-    ): AsyncGenerator<NodeResultWithError> {
+    ): AsyncGenerator<NodeResult> {
         try {
             for await (const result of this.apiService.removePhotosFromAlbum(albumNodeUid, photoNodeUids, signal)) {
                 if (result.ok) {

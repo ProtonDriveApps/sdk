@@ -16,7 +16,6 @@ import {
     MemberRole,
     NodeOrUid,
     NodeResult,
-    NodeResultWithError,
     NodeResultWithNewUid,
     NodeType,
     NonProtonInvitationOrUid,
@@ -542,7 +541,7 @@ export class ProtonDriveClient {
         nodeUids: NodeOrUid[],
         newParentNodeUid: NodeOrUid,
         signal?: AbortSignal,
-    ): AsyncGenerator<NodeResultWithError> {
+    ): AsyncGenerator<NodeResult> {
         this.logger.info(`Moving ${nodeUids.length} nodes to ${getUid(newParentNodeUid)}`);
         yield* this.nodes.management.moveNodes(getUids(nodeUids), getUid(newParentNodeUid), signal);
     }

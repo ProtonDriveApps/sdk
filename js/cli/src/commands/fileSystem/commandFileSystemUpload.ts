@@ -236,7 +236,7 @@ export class CommandFileSystemUpload implements Command {
     private async trashConflictingNode(ctx: UploadContext, node: MaybeNode): Promise<void> {
         for await (const result of ctx.sdk.trashNodes([node])) {
             if (!result.ok) {
-                throw new ValidationError(result.error);
+                throw result.error;
             }
         }
     }
