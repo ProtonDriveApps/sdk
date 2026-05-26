@@ -101,6 +101,19 @@ export abstract class NodesAccessBase<
         return node;
     }
 
+    async getNodeHierarchy(nodeUid: string, visitedNodeUids: string[] = []): Promise<TDecryptedNode[]> {
+        if (visitedNodeUids.includes(nodeUid)) {
+            throw new Error(`Node hierarchy loop detected: ${nodeUid}`);
+        }
+
+        const node = await this.getNode(nodeUid);
+        if (!node.parentUid) {
+            return [node];
+        }
+        const parents = await this.getNodeHierarchy(node.parentUid, [...visitedNodeUids, nodeUid]);
+        return [...parents, node];
+    }
+
     async *iterateFolderChildrenNodeUids(
         parentNodeUid: string,
         filterOptions?: FilterOptions,
@@ -522,8 +535,8 @@ export abstract class NodesAccessBase<
     }
 
     private async getRootNode(nodeUid: string): Promise<TDecryptedNode> {
-        const node = await this.getNode(nodeUid);
-        return node.parentUid ? this.getRootNode(node.parentUid) : node;
+        const hierarchy = await this.getNodeHierarchy(nodeUid);
+        return hierarchy[0];
     }
 }
 

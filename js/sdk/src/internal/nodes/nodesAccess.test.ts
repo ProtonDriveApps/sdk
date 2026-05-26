@@ -155,6 +155,91 @@ describe('nodesAccess', () => {
         });
     });
 
+    describe('getNodeHierarchy', () => {
+        it('should reject when node does not exist', async () => {
+            cache.getNode = jest.fn(() => Promise.reject(new Error('Entity not found')));
+            apiService.getNode = jest.fn(() => Promise.reject(new Error('Node not found')));
+
+            await expect(access.getNodeHierarchy('volumeId~missingNodeId')).rejects.toThrow('Node not found');
+        });
+
+        it('should return single node when asking for root', async () => {
+            const rootNode = { uid: 'volumeId~rootNodeId', parentUid: undefined, isStale: false } as DecryptedNode;
+            cache.getNode = jest.fn(() => Promise.resolve(rootNode));
+
+            const result = await access.getNodeHierarchy('volumeId~rootNodeId');
+
+            expect(result).toEqual([rootNode]);
+            expect(cache.getNode).toHaveBeenCalledTimes(1);
+            expect(cache.getNode).toHaveBeenCalledWith('volumeId~rootNodeId');
+        });
+
+        it('should return hierarchy from root to node', async () => {
+            const rootNode = { uid: 'volumeId~rootNodeId', parentUid: undefined, isStale: false } as DecryptedNode;
+            const parentNode = {
+                uid: 'volumeId~parentNodeId',
+                parentUid: 'volumeId~rootNodeId',
+                isStale: false,
+            } as DecryptedNode;
+            const childNode = {
+                uid: 'volumeId~childNodeId',
+                parentUid: 'volumeId~parentNodeId',
+                isStale: false,
+            } as DecryptedNode;
+            const nodes: Record<string, DecryptedNode> = {
+                'volumeId~rootNodeId': rootNode,
+                'volumeId~parentNodeId': parentNode,
+                'volumeId~childNodeId': childNode,
+            };
+            cache.getNode = jest.fn((uid: string) => {
+                const node = nodes[uid];
+                if (!node) {
+                    return Promise.reject(new Error('Entity not found'));
+                }
+                return Promise.resolve(node);
+            });
+
+            const result = await access.getNodeHierarchy('volumeId~childNodeId');
+
+            expect(result).toEqual([rootNode, parentNode, childNode]);
+            expect(cache.getNode).toHaveBeenCalledTimes(3);
+            expect(cache.getNode).toHaveBeenNthCalledWith(1, 'volumeId~childNodeId');
+            expect(cache.getNode).toHaveBeenNthCalledWith(2, 'volumeId~parentNodeId');
+            expect(cache.getNode).toHaveBeenNthCalledWith(3, 'volumeId~rootNodeId');
+        });
+
+        it('should reject when node hierarchy contains a loop', async () => {
+            const nodeA = {
+                uid: 'volumeId~nodeA',
+                parentUid: 'volumeId~nodeB',
+                isStale: false,
+            } as DecryptedNode;
+            const nodeB = {
+                uid: 'volumeId~nodeB',
+                parentUid: 'volumeId~nodeA',
+                isStale: false,
+            } as DecryptedNode;
+            const nodes: Record<string, DecryptedNode> = {
+                'volumeId~nodeA': nodeA,
+                'volumeId~nodeB': nodeB,
+            };
+            cache.getNode = jest.fn((uid: string) => {
+                const node = nodes[uid];
+                if (!node) {
+                    return Promise.reject(new Error('Entity not found'));
+                }
+                return Promise.resolve(node);
+            });
+
+            await expect(access.getNodeHierarchy('volumeId~nodeA')).rejects.toThrow(
+                'Node hierarchy loop detected: volumeId~nodeA',
+            );
+            expect(cache.getNode).toHaveBeenCalledTimes(2);
+            expect(cache.getNode).toHaveBeenNthCalledWith(1, 'volumeId~nodeA');
+            expect(cache.getNode).toHaveBeenNthCalledWith(2, 'volumeId~nodeB');
+        });
+    });
+
     describe('iterate methods', () => {
         beforeEach(() => {
             cryptoCache.getNodeKeys = jest
