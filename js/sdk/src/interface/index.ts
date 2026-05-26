@@ -41,7 +41,6 @@ export type {
     NodeEntity,
     NodeOrUid,
     NodeResult,
-    NodeResultWithError,
     NodeResultWithNewUid,
     Revision,
     RevisionOrUid,

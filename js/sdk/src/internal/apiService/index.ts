@@ -5,3 +5,9 @@ export { ErrorCode, HTTPErrorCode, isCodeOk, isCodeOkAsync } from './errorCodes'
 export * from './errors';
 export { ObserverStream } from './observerStream';
 export { memberRoleToPermission, nodeTypeNumberToNodeType, permissionsToMemberRole } from './transformers';
+
+import { apiErrorFactory } from './errors';
+
+export function getErrorFromResult(result: { Code?: number; Error?: string }) {
+    return apiErrorFactory({ result });
+}

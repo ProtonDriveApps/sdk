@@ -1,15 +1,7 @@
 import { c } from 'ttag';
 
 import { AbortError, ValidationError } from '../../errors';
-import {
-    InvalidNameError,
-    MemberRole,
-    NodeResult,
-    NodeResultWithError,
-    NodeResultWithNewUid,
-    NodeType,
-    resultOk,
-} from '../../interface';
+import { InvalidNameError, MemberRole, NodeResult, NodeResultWithNewUid, NodeType, resultOk } from '../../interface';
 import { createErrorFromUnknown, getErrorMessage } from '../errors';
 import { splitNodeUid } from '../uids';
 import { NodeAPIServiceBase } from './apiService';
@@ -115,11 +107,7 @@ export abstract class NodesManagementBase<
     }
 
     // Improvement requested: move nodes in parallel
-    async *moveNodes(
-        nodeUids: string[],
-        newParentNodeUid: string,
-        signal?: AbortSignal,
-    ): AsyncGenerator<NodeResultWithError> {
+    async *moveNodes(nodeUids: string[], newParentNodeUid: string, signal?: AbortSignal): AsyncGenerator<NodeResult> {
         for (const nodeUid of nodeUids) {
             if (signal?.aborted) {
                 throw new AbortError(c('Error').t`Move operation aborted`);

@@ -13,7 +13,7 @@ export class CommandFileSystemDelete implements Command {
 
         await printIterable(nodePaths[0].sdk.deleteNodes(nodes), json, (result) => {
             const nodeName = findName(nodes, result.uid);
-            console.log(sanitizeTerminalText(result.ok ? `✅ ${nodeName}` : `❌ ${nodeName}: ${result.error}`));
+            console.log(sanitizeTerminalText(result.ok ? `✅ ${nodeName}` : `❌ ${nodeName}: ${result.error.message}`));
         });
     }
 }

@@ -8,7 +8,7 @@ export function apiErrorFactory({
     result,
     error,
 }: {
-    response: Response;
+    response?: Response;
     result?: unknown;
     error?: unknown;
 }): ServerError {
@@ -19,9 +19,9 @@ export function apiErrorFactory({
     // Backend responses with 404 both in the response and body code.
     // In such a case we want to stick to APIHTTPError to be very clear
     // it is not NotFoundAPIError.
-    if (response.status === HTTPErrorCode.NOT_FOUND || !result) {
+    if (response?.status === HTTPErrorCode.NOT_FOUND || !result) {
         const fallbackMessage = error instanceof Error ? error.message : c('Error').t`Unknown error`;
-        const apiHttpError = new APIHTTPError(response.statusText || fallbackMessage, response.status);
+        const apiHttpError = new APIHTTPError(response?.statusText || fallbackMessage, response?.status || 500);
         apiHttpError.cause = error;
         return apiHttpError;
     }

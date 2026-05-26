@@ -53,14 +53,14 @@ export class CommandFileSystemCopy implements Command {
         name: string,
     ) {
         await printIterable(sdk.copyNodes([{ uid: getNodeUid(sourceNode), name }], targetNode), json, (result) => {
-            console.log(sanitizeTerminalText(result.ok ? `✅ ${name}` : `❌ ${name}: ${result.error}`));
+            console.log(sanitizeTerminalText(result.ok ? `✅ ${name}` : `❌ ${name}: ${result.error.message}`));
         });
     }
 
     private async copyNodes(sdk: ProtonDriveClient, sourceNodes: MaybeNode[], targetNode: MaybeNode, json: boolean) {
         await printIterable(sdk.copyNodes(sourceNodes, targetNode), json, (result) => {
             const nodeName = findName(sourceNodes, result.uid);
-            console.log(sanitizeTerminalText(result.ok ? `✅ ${nodeName}` : `❌ ${nodeName}: ${result.error}`));
+            console.log(sanitizeTerminalText(result.ok ? `✅ ${nodeName}` : `❌ ${nodeName}: ${result.error.message}`));
         });
     }
 }

@@ -1,7 +1,7 @@
 import { c } from 'ttag';
 
 import { AbortError } from '../../errors';
-import { Logger, NodeResultWithError, PhotoTag } from '../../interface';
+import { Logger, NodeResult, PhotoTag } from '../../interface';
 import { batch } from '../batch';
 import { splitNodeUid } from '../uids';
 import { createBatches } from './addToAlbum';
@@ -42,7 +42,7 @@ export class PhotosManager {
         this.payloadBuilder = new PhotoTransferPayloadBuilder(albumsCryptoService, nodesService);
     }
 
-    async *saveToTimeline(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResultWithError> {
+    async *saveToTimeline(nodeUids: string[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         const rootNode = await this.nodesService.getVolumeRootFolder();
         const { volumeId: userVolumeId } = splitNodeUid(rootNode.uid);
         const volumeRootKeys = await this.nodesService.getNodeKeys(rootNode.uid);
@@ -130,7 +130,7 @@ export class PhotosManager {
         return this.apiService.copyPhoto(rootNode.uid, payload, signal);
     }
 
-    async *updatePhotos(photos: UpdatePhotoSettings[], signal?: AbortSignal): AsyncGenerator<NodeResultWithError> {
+    async *updatePhotos(photos: UpdatePhotoSettings[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         for await (const {
             photoSettings: { nodeUid, tagsToAdd, tagsToRemove },
             payloadForFavorite,
