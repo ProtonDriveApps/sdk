@@ -26,6 +26,8 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
     private var remainingBytes: [UInt8] = []
     private let writingQueue = DispatchQueue(label: "StreamForUpload.WritingQueue", qos: .userInitiated)
 
+    /// `inputStream`'s lifecycle is owned by URLSession (it opens, reads, and closes it).
+    /// Only `outputStream`'s lifecycle is owned by this class.
     init(inputStream: InputStream, outputStream: OutputStream, bufferLength: Int, sdkContentHandle: Int64, logger: Logger) throws {
         self.bufferLength = bufferLength
         self.sdkContentHandle = sdkContentHandle
@@ -174,7 +176,7 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
         }
         guard shouldClose else { return }
         output.close()
-        input.close()
+        // input is opened by URLSession (Apple Forum 76675); not the producer's to close.
     }
 
     deinit {
