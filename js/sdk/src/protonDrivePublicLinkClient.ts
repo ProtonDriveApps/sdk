@@ -257,9 +257,25 @@ export class ProtonDrivePublicLinkClient {
     }
 
     /**
+     * Iterates the UIDs of the children of the given parent node.
+     *
+     * See `ProtonDriveClient.iterateFolderChildrenNodeUids` for more information.
+     */
+    async *iterateFolderChildrenNodeUids(
+        parentUid: NodeOrUid,
+        filterOptions?: { type?: NodeType },
+        signal?: AbortSignal,
+    ): AsyncGenerator<string> {
+        this.logger.info(`Iterating children of ${getUid(parentUid)}`);
+        yield* this.sharingPublic.nodes.access.iterateFolderChildrenNodeUids(getUid(parentUid), filterOptions, signal);
+    }
+
+    /**
      * Iterates the children of the given parent node.
      *
      * See `ProtonDriveClient.iterateFolderChildren` for more information.
+     *
+     * @deprecated Use `iterateFolderChildrenNodeUids` instead.
      */
     async *iterateFolderChildren(
         parentUid: NodeOrUid,

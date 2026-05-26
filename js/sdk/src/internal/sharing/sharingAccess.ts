@@ -35,6 +35,18 @@ export class SharingAccess {
         this.nodesService = nodesService;
     }
 
+    async *iterateSharedNodeUids(signal?: AbortSignal): AsyncGenerator<string> {
+        const { volumeId } = await this.sharesService.getRootIDs();
+        yield* this.apiService.iterateSharedNodeUids(volumeId, signal);
+    }
+
+    async *iterateSharedWithMeNodeUids(signal?: AbortSignal): AsyncGenerator<string> {
+        yield* this.apiService.iterateSharedWithMeNodeUids(signal);
+    }
+
+    /**
+     * @deprecated Use `iterateSharedNodeUids` instead.
+     */
     async *iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
         try {
             const nodeUids = await this.cache.getSharedByMeNodeUids();
@@ -50,6 +62,9 @@ export class SharingAccess {
         }
     }
 
+    /**
+     * @deprecated Use `iterateSharedWithMeNodeUids` instead.
+     */
     async *iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<DecryptedNode> {
         try {
             const nodeUids = await this.cache.getSharedWithMeNodeUids();
