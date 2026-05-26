@@ -5,6 +5,7 @@ import path from 'node:path';
 import { Logger, MaybeNode, NodeType, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 
 import { getName, getNode } from '../../cli';
+import { sanitizePathSegmentForLocalFilesystem } from './downloadPathValidation';
 import { resolveLocalPaths } from './localPath';
 
 export const MAX_CONCURRENT_ITEMS = 5;
@@ -126,7 +127,7 @@ export class DownloadQueue extends TransferQueue<{ remoteNode: MaybeNode }> {
         const absoluteLocalDir = path.resolve(localDir);
         for (const pathString of remotePathStrings) {
             const node = await resolveRemoteNode(pathString);
-            const baseName = getName(node);
+            const baseName = sanitizePathSegmentForLocalFilesystem(getName(node));
             const targetPath = path.join(absoluteLocalDir, baseName);
             await this.enqueueRemoteNode(node, targetPath);
         }
@@ -134,7 +135,7 @@ export class DownloadQueue extends TransferQueue<{ remoteNode: MaybeNode }> {
 
     async enqueueRemoteFolderChildren(folderRemoteNode: MaybeNode, localParentPath: string): Promise<void> {
         for await (const child of this.sdk.iterateFolderChildren(folderRemoteNode)) {
-            const baseName = getName(child);
+            const baseName = sanitizePathSegmentForLocalFilesystem(getName(child));
             const childPath = path.join(localParentPath, baseName);
             await this.enqueueRemoteNode(child, childPath);
         }

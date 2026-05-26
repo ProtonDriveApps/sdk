@@ -331,6 +331,21 @@ describe('DownloadQueue', () => {
         expect(dirPath).toBe(path.join(path.resolve('/local/out'), 'remoteDir'));
     });
 
+    it('enqueueRemotePaths sanitizes names that are not valid as local path segments', async () => {
+        const invalidNameFile = mockFileMaybe('bad/name.txt', 'uid');
+        const sdk = { iterateFolderChildren: jest.fn() };
+        const q = createQueue(sdk);
+        await q.enqueueRemotePaths(['/x'], '/local/out', async () => invalidNameFile);
+        expect(q['queue']).toEqual([
+            {
+                kind: 'file',
+                remoteNode: invalidNameFile,
+                baseName: 'bad_name.txt',
+                localPath: path.join(path.resolve('/local/out'), 'bad_name.txt'),
+            },
+        ]);
+    });
+
     it('enqueueRemoteNode rejects unsupported node types', async () => {
         const albumNode = {
             ok: true,
