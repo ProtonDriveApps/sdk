@@ -6,6 +6,7 @@ import {
     DriveAPIService,
     drivePaths,
     ErrorCode,
+    getErrorFromResult,
     InvalidRequirementsAPIError,
     isCodeOk,
     nodeTypeNumberToNodeType,
@@ -444,8 +445,7 @@ export abstract class NodeAPIServiceBase<
                 signal,
             );
 
-            // TODO: remove `as` when backend fixes OpenAPI schema.
-            yield* handleResponseErrors(batchNodeUids, volumeId, response.Responses as LinkResponse[]);
+            yield * handleResponseErrors(batchNodeUids, volumeId, response.Responses);
         }
     }
 
@@ -463,8 +463,7 @@ export abstract class NodeAPIServiceBase<
                 signal,
             );
 
-            // TODO: remove `as` when backend fixes OpenAPI schema.
-            yield* handleResponseErrors(batchNodeUids, volumeId, response.Responses as LinkResponse[]);
+            yield * handleResponseErrors(batchNodeUids, volumeId, response.Responses);
         }
     }
 
@@ -478,8 +477,7 @@ export abstract class NodeAPIServiceBase<
                 signal,
             );
 
-            // TODO: remove `as` when backend fixes OpenAPI schema.
-            yield* handleResponseErrors(batchNodeUids, volumeId, response.Responses as LinkResponse[]);
+            yield * handleResponseErrors(batchNodeUids, volumeId, response.Responses);
         }
     }
 
@@ -493,8 +491,7 @@ export abstract class NodeAPIServiceBase<
                 signal,
             );
 
-            // TODO: remove `as` when backend fixes OpenAPI schema.
-            yield* handleResponseErrors(batchNodeUids, volumeId, response.Responses as LinkResponse[]);
+            yield * handleResponseErrors(batchNodeUids, volumeId, response.Responses);
         }
     }
 
@@ -656,7 +653,7 @@ function* handleResponseErrors(
     responses.forEach((response) => {
         if (!response.Response.Code || !isCodeOk(response.Response.Code) || response.Response.Error) {
             const nodeUid = makeNodeUid(volumeId, response.LinkID);
-            errors.set(nodeUid, response.Response.Error || c('Error').t`Unknown error ${response.Response.Code}`);
+            errors.set(nodeUid, getErrorFromResult(response.Response));
         }
     });
 

@@ -1,5 +1,5 @@
 import { NodeWithSameNameExistsValidationError, ValidationError } from '../../errors';
-import { NodeResult, NodeResultWithError } from '../../interface';
+import { NodeResult } from '../../interface';
 import { NodeAPIService } from './apiService';
 import { NodesCryptoCache } from './cryptoCache';
 import { NodesCryptoService } from './cryptoService';
@@ -276,7 +276,7 @@ describe('NodesManagement', () => {
         const error = new NodeWithSameNameExistsValidationError('Node with same name exists', 2500, 'existingNodeUid');
         apiService.moveNode = jest.fn().mockRejectedValue(error);
 
-        const results: NodeResultWithError[] = [];
+        const results: NodeResult[] = [];
         for await (const result of management.moveNodes(['nodeUid'], 'newParentNodeUid')) {
             results.push(result);
         }
@@ -286,11 +286,11 @@ describe('NodesManagement', () => {
         expect(results[0].ok === false && results[0].error).toBeInstanceOf(NodeWithSameNameExistsValidationError);
     });
 
-    it('moveNodes yields NodeResultWithError with Error on failure', async () => {
+    it('moveNodes yields NodeResult with Error on failure', async () => {
         const error = new Error('move failed');
         cryptoService.encryptNodeWithNewParent = jest.fn().mockRejectedValue(error);
 
-        const results: NodeResultWithError[] = [];
+        const results: NodeResult[] = [];
         for await (const result of management.moveNodes(['nodeUid'], 'newParentNodeUid')) {
             results.push(result);
         }

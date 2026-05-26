@@ -10,7 +10,6 @@ import {
     MaybePhotoNode,
     NodeOrUid,
     NodeResult,
-    NodeResultWithError,
     NonProtonInvitationOrUid,
     PhotoTag,
     ProtonDriveClientContructorParameters,
@@ -760,7 +759,7 @@ export class ProtonDrivePhotosClient {
         albumNodeUid: NodeOrUid,
         photoNodeUids: NodeOrUid[],
         signal?: AbortSignal,
-    ): AsyncGenerator<NodeResultWithError> {
+    ): AsyncGenerator<NodeResult> {
         this.logger.info(`Adding ${photoNodeUids.length} photos to album ${getUid(albumNodeUid)}`);
         yield* this.photos.albums.addPhotos(getUid(albumNodeUid), getUids(photoNodeUids), signal);
     }
@@ -781,7 +780,7 @@ export class ProtonDrivePhotosClient {
         albumNodeUid: NodeOrUid,
         photoNodeUids: NodeOrUid[],
         signal?: AbortSignal,
-    ): AsyncGenerator<NodeResultWithError> {
+    ): AsyncGenerator<NodeResult> {
         this.logger.info(`Removing ${photoNodeUids.length} photos from album ${getUid(albumNodeUid)}`);
         yield* this.photos.albums.removePhotos(getUid(albumNodeUid), getUids(photoNodeUids), signal);
     }
@@ -793,7 +792,7 @@ export class ProtonDrivePhotosClient {
      * @param signal - An optional abort signal to cancel the operation.
      * @returns An async generator of per-photo results.
      */
-    async *savePhotosToTimeline(photoNodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResultWithError> {
+    async *savePhotosToTimeline(photoNodeUids: NodeOrUid[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         this.logger.info(`Saving ${photoNodeUids.length} photos to timeline`);
         yield* this.photos.photos.saveToTimeline(getUids(photoNodeUids), signal);
     }
@@ -817,7 +816,7 @@ export class ProtonDrivePhotosClient {
             tagsToRemove?: PhotoTag[];
         }[],
         signal?: AbortSignal,
-    ): AsyncGenerator<NodeResultWithError> {
+    ): AsyncGenerator<NodeResult> {
         this.logger.info(`Updating ${photos.length} photos`);
         yield* this.photos.photos.updatePhotos(
             photos.map((p) => ({

@@ -1,6 +1,6 @@
 import { c } from 'ttag';
 
-import { Logger, NodeResultWithError } from '../../interface';
+import { Logger, NodeResult } from '../../interface';
 import { DecryptedNodeKeys, NodeSigningKeys } from '../nodes/interface';
 import { splitNodeUid } from '../uids';
 import { AlbumsCryptoService } from './albumsCrypto';
@@ -62,14 +62,14 @@ export class AddToAlbumProcess {
         this.payloadBuilder = new PhotoTransferPayloadBuilder(cryptoService, nodesService);
     }
 
-    async *execute(photoNodeUids: string[]): AsyncGenerator<NodeResultWithError> {
+    async *execute(photoNodeUids: string[]): AsyncGenerator<NodeResult> {
         const { sameVolumeQueue, differentVolumeQueue } = splitByVolume(photoNodeUids, this.albumVolumeId);
 
         yield* this.processSameVolumeQueue(sameVolumeQueue);
         yield* this.processDifferentVolumeQueue(differentVolumeQueue);
     }
 
-    private async *processSameVolumeQueue(queue: PhotoQueueItem[]): AsyncGenerator<NodeResultWithError> {
+    private async *processSameVolumeQueue(queue: PhotoQueueItem[]): AsyncGenerator<NodeResult> {
         while (queue.length > 0) {
             const items = queue.splice(0, BATCH_LOADING_SIZE);
             const { payloads, errors } = await this.payloadBuilder.preparePhotoPayloads(
@@ -101,7 +101,7 @@ export class AddToAlbumProcess {
         }
     }
 
-    private async *processDifferentVolumeQueue(queue: PhotoQueueItem[]): AsyncGenerator<NodeResultWithError> {
+    private async *processDifferentVolumeQueue(queue: PhotoQueueItem[]): AsyncGenerator<NodeResult> {
         while (queue.length > 0) {
             const items = queue.splice(0, BATCH_LOADING_SIZE);
             const { payloads, errors } = await this.payloadBuilder.preparePhotoPayloads(
@@ -118,11 +118,7 @@ export class AddToAlbumProcess {
 
             for (const payload of payloads) {
                 try {
-                    const newPhotoNodeUid = await this.apiService.copyPhoto(
-                        this.albumNodeUid,
-                        payload,
-                        this.signal,
-                    );
+                    const newPhotoNodeUid = await this.apiService.copyPhoto(this.albumNodeUid, payload, this.signal);
                     await this.nodesService.notifyChildCreated(newPhotoNodeUid);
                     yield { uid: payload.nodeUid, ok: true };
                 } catch (error) {
@@ -148,7 +144,7 @@ export class AddToAlbumProcess {
      * If the result indicates a MissingRelatedPhotosError that hasn't
      * been retried, returns a retry queue item. Otherwise returns undefined.
      */
-    private handleMissingRelatedPhotosError(result: NodeResultWithError): PhotoQueueItem | undefined {
+    private handleMissingRelatedPhotosError(result: NodeResult): PhotoQueueItem | undefined {
         if (!result.ok && result.error instanceof MissingRelatedPhotosError) {
             return this.createRetryQueueItem(result.uid, result.error);
         }

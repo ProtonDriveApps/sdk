@@ -1,7 +1,7 @@
 import { NodeWithSameNameExistsValidationError, ValidationError } from '../../errors';
 import { MemberRole, NodeType } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
-import { DriveAPIService, ErrorCode, InvalidRequirementsAPIError } from '../apiService';
+import { APICodeError, DriveAPIService, ErrorCode, InvalidRequirementsAPIError } from '../apiService';
 import { groupNodeUidsByVolumeAndIteratePerBatch, NodeAPIService } from './apiService';
 import { NodeOutOfSyncError } from './errors';
 
@@ -244,7 +244,7 @@ describe('nodeAPIService', () => {
             await testIterateNodes(generateAPIFileNode(), generateFileNode());
         });
 
-        fit('should skip file draft node without an error', async () => {
+        it('should skip file draft node without an error', async () => {
             await testIterateNodes(generateAPIFileNode({}, {}, { ActiveRevision: null }), undefined);
         });
 
@@ -479,8 +479,8 @@ describe('nodeAPIService', () => {
                         {
                             LinkID: 'nodeId2',
                             Response: {
-                                Code: 2027,
-                                Error: 'INSUFFICIENT_SCOPE',
+                                Code: 2011,
+                                Error: 'not enough permissions',
                             },
                         },
                     ],
@@ -490,7 +490,7 @@ describe('nodeAPIService', () => {
             const result = await Array.fromAsync(api.trashNodes(['volumeId~nodeId1', 'volumeId~nodeId2']));
             expect(result).toEqual([
                 { uid: 'volumeId~nodeId1', ok: true },
-                { uid: 'volumeId~nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
+                { uid: 'volumeId~nodeId2', ok: false, error: new ValidationError('not enough permissions') },
             ]);
         });
 
@@ -548,14 +548,14 @@ describe('nodeAPIService', () => {
                         {
                             LinkID: 'nodeId2',
                             Response: {
-                                Code: 2027,
-                                Error: 'INSUFFICIENT_SCOPE',
+                                Code: 2011,
+                                Error: 'not enough permissions',
                             },
                         },
                         {
                             LinkID: 'nodeId3',
                             Response: {
-                                Code: 2000,
+                                Code: 123456,
                             },
                         },
                     ],
@@ -567,8 +567,8 @@ describe('nodeAPIService', () => {
             );
             expect(result).toEqual([
                 { uid: 'volumeId~nodeId1', ok: true },
-                { uid: 'volumeId~nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
-                { uid: 'volumeId~nodeId3', ok: false, error: 'Unknown error 2000' },
+                { uid: 'volumeId~nodeId2', ok: false, error: new ValidationError('not enough permissions') },
+                { uid: 'volumeId~nodeId3', ok: false, error: new APICodeError('Unknown error', 123456) },
             ]);
         });
 
@@ -608,8 +608,8 @@ describe('nodeAPIService', () => {
                         {
                             LinkID: 'nodeId2',
                             Response: {
-                                Code: 2027,
-                                Error: 'INSUFFICIENT_SCOPE',
+                                Code: 2011,
+                                Error: 'not enough permissions',
                             },
                         },
                     ],
@@ -619,7 +619,7 @@ describe('nodeAPIService', () => {
             const result = await Array.fromAsync(api.deleteTrashedNodes(['volumeId~nodeId1', 'volumeId~nodeId2']));
             expect(result).toEqual([
                 { uid: 'volumeId~nodeId1', ok: true },
-                { uid: 'volumeId~nodeId2', ok: false, error: 'INSUFFICIENT_SCOPE' },
+                { uid: 'volumeId~nodeId2', ok: false, error: new ValidationError('not enough permissions') },
             ]);
         });
 
