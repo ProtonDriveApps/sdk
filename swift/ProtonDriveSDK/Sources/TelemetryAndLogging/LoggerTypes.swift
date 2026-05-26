@@ -11,7 +11,14 @@ public struct LogEvent: Sendable {
     public let function: String
     public let line: UInt
 
-    public init(level: LogLevel, message: String, category: String, timestamp: Date = .now, thread: UInt, file: String, function: String, line: UInt) {
+    public init(level: LogLevel,
+                message: String,
+                category: String,
+                timestamp: Date = .now,
+                thread: UInt,
+                file: String,
+                function: String,
+                line: UInt) {
         self.level = level
         self.message = message
         self.category = category
