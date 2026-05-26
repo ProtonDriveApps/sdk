@@ -438,6 +438,21 @@ export class ProtonDriveClient {
     }
 
     /**
+     * Get the node hierarchy for the given node.
+     *
+     * The hierarchy is returned as a list of nodes. The first node is the root
+     * node, the last node is the given node.
+     *
+     * @param nodeUid - Node entity or its UID string.
+     * @returns The list of nodes from root to the given node.
+     */
+    async getNodeHierarchy(nodeUid: NodeOrUid): Promise<MaybeNode[]> {
+        this.logger.info(`Getting node hierarchy for ${getUid(nodeUid)}`);
+        const hierarchy = await this.nodes.access.getNodeHierarchy(getUid(nodeUid));
+        return hierarchy.map(convertInternalNode);
+    }
+
+    /**
      * Rename the node.
      *
      * @param nodeUid - Node entity or its UID string.
