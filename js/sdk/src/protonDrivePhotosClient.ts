@@ -277,9 +277,21 @@ export class ProtonDrivePhotosClient {
     }
 
     /**
+     * Iterates the UIDs of the trashed nodes.
+     *
+     * See `ProtonDriveClient.iterateTrashedNodeUids` for more information.
+     */
+    async *iterateTrashedNodeUids(signal?: AbortSignal): AsyncGenerator<string> {
+        this.logger.info('Iterating trashed node UIDs');
+        yield* this.nodes.access.iterateTrashedNodeUids(signal);
+    }
+
+    /**
      * Iterates the trashed nodes.
      *
      * See `ProtonDriveClient.iterateTrashedNodes` for more information.
+     *
+     * @deprecated Use `iterateTrashedNodeUids` instead.
      */
     async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<MaybePhotoNode> {
         this.logger.info('Iterating trashed nodes');
@@ -356,9 +368,31 @@ export class ProtonDrivePhotosClient {
     }
 
     /**
+     * Iterates the UIDs of the nodes shared by the user.
+     *
+     * See `ProtonDriveClient.iterateSharedNodeUids` for more information.
+     */
+    async *iterateSharedNodeUids(signal?: AbortSignal): AsyncGenerator<string> {
+        this.logger.info('Iterating shared nodes by me');
+        yield* this.sharing.access.iterateSharedNodeUids(signal);
+    }
+
+    /**
+     * Iterates the UIDs of the nodes shared with the user.
+     *
+     * See `ProtonDriveClient.iterateSharedWithMeNodeUids` for more information.
+     */
+    async *iterateSharedWithMeNodeUids(signal?: AbortSignal): AsyncGenerator<string> {
+        this.logger.info('Iterating shared nodes with me');
+        yield* this.sharing.access.iterateSharedWithMeNodeUids(signal);
+    }
+
+    /**
      * Iterates the nodes shared by the user.
      *
      * See `ProtonDriveClient.iterateSharedNodes` for more information.
+     *
+     * @deprecated Use `iterateSharedNodeUids` instead.
      */
     async *iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<MaybePhotoNode> {
         this.logger.info('Iterating shared nodes by me');
@@ -369,6 +403,8 @@ export class ProtonDrivePhotosClient {
      * Iterates the nodes shared with the user.
      *
      * See `ProtonDriveClient.iterateSharedNodesWithMe` for more information.
+     *
+     * @deprecated Use `iterateSharedWithMeNodeUids` instead.
      */
     async *iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<MaybePhotoNode> {
         this.logger.info('Iterating shared nodes with me');
