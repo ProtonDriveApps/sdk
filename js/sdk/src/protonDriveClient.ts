@@ -344,6 +344,38 @@ export class ProtonDriveClient {
     }
 
     /**
+     * Iterates the UIDs of the children of the given parent node.
+     *
+     * The output is not sorted and the order of the UIDs is not guaranteed.
+     *
+     * @param parentNodeUid - Node entity or its UID string.
+     * @param filterOptions - Filter options.
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the UIDs of the children of the given parent node.
+     */
+    async *iterateFolderChildrenNodeUids(
+        parentNodeUid: NodeOrUid,
+        filterOptions?: { type?: NodeType },
+        signal?: AbortSignal,
+    ): AsyncGenerator<string> {
+        this.logger.info(`Iterating children of ${getUid(parentNodeUid)}`);
+        yield* this.nodes.access.iterateFolderChildrenNodeUids(getUid(parentNodeUid), filterOptions, signal);
+    }
+
+    /**
+     * Iterates the UIDs of the trashed nodes.
+     *
+     * The output is not sorted and the order of the UIDs is not guaranteed.
+     *
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the UIDs of the trashed nodes.
+     */
+    async *iterateTrashedNodeUids(signal?: AbortSignal): AsyncGenerator<string> {
+        this.logger.info('Iterating trashed node UIDs');
+        yield* this.nodes.access.iterateTrashedNodeUids(signal);
+    }
+
+    /**
      * Iterates the children of the given parent node.
      *
      * The output is not sorted and the order of the children is not guaranteed.
@@ -351,6 +383,7 @@ export class ProtonDriveClient {
      * @param parentNodeUid - Node entity or its UID string.
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the children of the given parent node.
+     * @deprecated Use `iterateFolderChildrenNodeUids` instead.
      */
     async *iterateFolderChildren(
         parentNodeUid: NodeOrUid,
@@ -372,6 +405,7 @@ export class ProtonDriveClient {
      *
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the trashed nodes.
+     * @deprecated Use `iterateTrashedNodeUids` instead.
      */
     async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
         this.logger.info('Iterating trashed nodes');
@@ -607,12 +641,39 @@ export class ProtonDriveClient {
     }
 
     /**
+     * Iterates the UIDs of the nodes shared by the user.
+     *
+     * The output is not sorted and the order of the UIDs is not guaranteed.
+     *
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the UIDs of the shared nodes by the user.
+     */
+    async *iterateSharedNodeUids(signal?: AbortSignal): AsyncGenerator<string> {
+        this.logger.info('Iterating shared nodes by me');
+        yield* this.sharing.access.iterateSharedNodeUids(signal);
+    }
+
+    /**
+     * Iterates the UIDs of the nodes shared with the user.
+     *
+     * The output is not sorted and the order of the UIDs is not guaranteed.
+     *
+     * @param signal - Signal to abort the operation.
+     * @returns An async generator of the UIDs of the shared nodes with the user.
+     */
+    async *iterateSharedWithMeNodeUids(signal?: AbortSignal): AsyncGenerator<string> {
+        this.logger.info('Iterating shared nodes with me');
+        yield* this.sharing.access.iterateSharedWithMeNodeUids(signal);
+    }
+
+    /**
      * Iterates the nodes shared by the user.
      *
      * The output is not sorted and the order of the shared nodes is not guaranteed.
      *
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the shared nodes.
+     * @deprecated Use `iterateSharedNodeUids` instead.
      */
     async *iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
         this.logger.info('Iterating shared nodes by me');
@@ -630,6 +691,7 @@ export class ProtonDriveClient {
      *
      * @param signal - Signal to abort the operation.
      * @returns An async generator of the shared nodes.
+     * @deprecated Use `iterateSharedWithMeNodeUids` instead.
      */
     async *iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
         this.logger.info('Iterating shared nodes with me');

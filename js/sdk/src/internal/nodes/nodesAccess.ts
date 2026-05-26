@@ -101,6 +101,30 @@ export abstract class NodesAccessBase<
         return node;
     }
 
+    async *iterateFolderChildrenNodeUids(
+        parentNodeUid: string,
+        filterOptions?: FilterOptions,
+        signal?: AbortSignal,
+    ): AsyncGenerator<string> {
+        const parentNode = await this.getNode(parentNodeUid);
+
+        // TODO: Requires API to support other types.
+        if (filterOptions?.type !== undefined && filterOptions.type !== NodeType.Folder) {
+            throw Error('Filter options supports only folders');
+        }
+
+        const onlyFolders = filterOptions?.type === NodeType.Folder;
+        yield* this.apiService.iterateChildrenNodeUids(parentNode.uid, onlyFolders, signal);
+    }
+
+    async *iterateTrashedNodeUids(signal?: AbortSignal): AsyncGenerator<string> {
+        const { volumeId } = await this.shareService.getRootIDs();
+        yield* this.apiService.iterateTrashedNodeUids(volumeId, signal);
+    }
+
+    /**
+     * @deprecated Use `iterateFolderChildrenNodeUids` instead.
+     */
     async *iterateFolderChildren(
         parentNodeUid: string,
         filterOptions?: FilterOptions,
@@ -157,7 +181,9 @@ export abstract class NodesAccessBase<
         }
     }
 
-    // Improvement requested: keep status of loaded trash and leverage cache.
+    /**
+     * @deprecated Use `iterateTrashedNodeUids` instead.
+     */
     async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<TDecryptedNode> {
         const { volumeId } = await this.shareService.getRootIDs();
         const batchLoading = new BatchLoading<string, TDecryptedNode>({
