@@ -151,6 +151,25 @@ public struct FolderNode: Sendable {
     public let author: Author
     public let errors: [ProtonDriveSDKDriveError]
 
+    public init(uid: SDKNodeUid,
+                parentUid: SDKNodeUid?,
+                name: Result<String, ProtonDriveSDKDriveError>,
+                creationTime: Double,
+                trashTime: Double?,
+                nameAuthor: Author,
+                author: Author,
+                errors: [ProtonDriveSDKDriveError])
+    {
+        self.uid = uid
+        self.parentUid = parentUid
+        self.name = name
+        self.creationTime = creationTime
+        self.trashTime = trashTime
+        self.nameAuthor = nameAuthor
+        self.author = author
+        self.errors = errors
+    }
+
     init(sdkFolderNode: Proton_Drive_Sdk_FolderNode) throws {
         guard let uid = SDKNodeUid(sdkCompatibleIdentifier: sdkFolderNode.uid) else {
             throw ProtonDriveSDKError(interopError: .incorrectIDFormat(id: sdkFolderNode.uid))
@@ -168,8 +187,13 @@ public struct FolderNode: Sendable {
 
 // FIXME: Preserve distinction between verified and claimed email addresses to match original interface.
 public struct Author: Sendable {
-    let emailAddress: String?
-    let signatureVerificationError: String?
+    public let emailAddress: String?
+    public let signatureVerificationError: String?
+
+    public init(emailAddress: String?, signatureVerificationError: String?) {
+        self.emailAddress = emailAddress
+        self.signatureVerificationError = signatureVerificationError
+    }
 
     init(result: Proton_Drive_Sdk_AuthorResult) {
         switch result.result {
@@ -187,13 +211,29 @@ public struct Author: Sendable {
 }
 
 public struct FileNode: Sendable {
-    let uid: String
-    let parentUid: String
+    public let uid: String
+    public let parentUid: String
     public let name: Result<String, ProtonDriveSDKDriveError>
-    let mediaType: String
-    let totalSizeOnCloudStorage: Int64
-    let activeRevision: FileRevision
-    let errors: [ProtonDriveSDKDriveError]
+    public let mediaType: String
+    public let totalSizeOnCloudStorage: Int64
+    public let activeRevision: FileRevision
+    public let errors: [ProtonDriveSDKDriveError]
+
+    public init(uid: String,
+                parentUid: String,
+                name: Result<String, ProtonDriveSDKDriveError>,
+                mediaType: String,
+                totalSizeOnCloudStorage: Int64,
+                activeRevision: FileRevision,
+                errors: [ProtonDriveSDKDriveError]) {
+        self.uid = uid
+        self.parentUid = parentUid
+        self.name = name
+        self.mediaType = mediaType
+        self.totalSizeOnCloudStorage = totalSizeOnCloudStorage
+        self.activeRevision = activeRevision
+        self.errors = errors
+    }
 
     init(sdkFileNode: Proton_Drive_Sdk_FileNode) {
         self.uid = sdkFileNode.uid
@@ -207,11 +247,23 @@ public struct FileNode: Sendable {
 }
 
 public struct FileRevision: Sendable {
-    let uid: String
-    let creationTime: Double
-    let sizeOnCloudStorage: Int64
-    let claimedSize: Int64?
-    let claimedModificationTime: Double?
+    public let uid: String
+    public let creationTime: Double
+    public let sizeOnCloudStorage: Int64
+    public let claimedSize: Int64?
+    public let claimedModificationTime: Double?
+
+    public init(uid: String,
+                creationTime: Double,
+                sizeOnCloudStorage: Int64,
+                claimedSize: Int64?,
+                claimedModificationTime: Double?) {
+        self.uid = uid
+        self.creationTime = creationTime
+        self.sizeOnCloudStorage = sizeOnCloudStorage
+        self.claimedSize = claimedSize
+        self.claimedModificationTime = claimedModificationTime
+    }
 
     init(sdkFileRevision: Proton_Drive_Sdk_FileRevision) {
         self.uid = sdkFileRevision.uid
@@ -244,6 +296,11 @@ public struct UploadedFileIdentifiers: Sendable {
     public let nodeUid: SDKNodeUid
     public let revisionUid: SDKRevisionUid
 
+    public init(nodeUid: SDKNodeUid, revisionUid: SDKRevisionUid) {
+        self.nodeUid = nodeUid
+        self.revisionUid = revisionUid
+    }
+
     init?(interopUploadResult: Proton_Drive_Sdk_UploadResult) {
         guard let nodeUid = SDKNodeUid(sdkCompatibleIdentifier: interopUploadResult.nodeUid),
               let revisionUid = SDKRevisionUid(sdkCompatibleIdentifier: interopUploadResult.revisionUid)
@@ -257,6 +314,11 @@ public struct PhotoTimelineItem: Sendable {
     public let nodeUid: SDKNodeUid
     public let captureTime: Double
 
+    public init(nodeUid: SDKNodeUid, captureTime: Double) {
+        self.nodeUid = nodeUid
+        self.captureTime = captureTime
+    }
+
     init?(item: Proton_Drive_Sdk_PhotosTimelineItem) {
         guard let nodeUid = SDKNodeUid(sdkCompatibleIdentifier: item.nodeUid) else { return nil }
         self.nodeUid = nodeUid
@@ -267,6 +329,11 @@ public struct PhotoTimelineItem: Sendable {
 public struct TrashNodeResult: Sendable {
     public let nodeUid: SDKNodeUid
     public let error: ProtonDriveSDKError?
+
+    public init(nodeUid: SDKNodeUid, error: ProtonDriveSDKError?) {
+        self.nodeUid = nodeUid
+        self.error = error
+    }
 }
 
 /// Callback for progress updates
@@ -300,6 +367,12 @@ public typealias ThumbnailCallback = @Sendable (Result<ThumbnailDataWithId?, Err
 public struct ThumbnailDataWithId: Sendable {
     public let fileUid: SDKNodeUid
     public let result: Result<Data, ProtonDriveSDKDriveError>
+
+    public init(fileUid: SDKNodeUid,
+                result: Result<Data, ProtonDriveSDKDriveError>) {
+        self.fileUid = fileUid
+        self.result = result
+    }
 
     init?(fileThumbnail: Proton_Drive_Sdk_FileThumbnail) {
         guard let fileUid = SDKNodeUid(sdkCompatibleIdentifier: fileThumbnail.fileUid) else {
