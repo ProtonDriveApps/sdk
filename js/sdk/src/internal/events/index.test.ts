@@ -9,7 +9,7 @@ describe('DriveEventsService', () => {
         function createService(cacheEventListeners: DriveListener[] = []) {
             const telemetry = getMockTelemetry();
             const apiService = {} as unknown as DriveAPIService;
-            const sharesService = { isOwnVolume: jest.fn() };
+            const sharesService = { isOwnVolume: jest.fn(), getRootIDs: jest.fn() };
             return new DriveEventsService(telemetry, apiService, sharesService, cacheEventListeners);
         }
 

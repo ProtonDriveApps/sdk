@@ -30,12 +30,12 @@ export class VolumeEventManager implements EventManagerInterface<DriveEvent> {
         return this.logger;
     }
 
-    async *getEvents(eventId: string): AsyncIterable<DriveEvent> {
+    async *getEvents(eventId: string, signal?: AbortSignal): AsyncIterable<DriveEvent> {
         try {
             let events: DriveEventsListWithStatus;
             let more = true;
             while (more) {
-                events = await this.apiService.getVolumeEvents(this.volumeId, eventId);
+                events = await this.apiService.getVolumeEvents(this.volumeId, eventId, signal);
                 more = events.more;
                 if (events.refresh) {
                     yield {

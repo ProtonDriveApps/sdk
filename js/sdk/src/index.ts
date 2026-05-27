@@ -10,7 +10,7 @@ export { OpenPGPCryptoWithCryptoProxy } from './crypto';
 export * from './errors';
 export { NullFeatureFlagProvider } from './featureFlags';
 export * from './interface';
-export type { CoreApiEvent, EventSubscription } from './internal/events';
+export type { CoreApiEvent, EventScheduler, EventSubscription } from './internal/events';
 export { ProtonDriveClient } from './protonDriveClient';
 export { VERSION } from './version';
 

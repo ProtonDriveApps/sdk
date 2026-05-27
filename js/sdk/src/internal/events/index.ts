@@ -3,10 +3,19 @@ import { DriveAPIService } from '../apiService';
 import { CoreApiEvent, EventsAPIService } from './apiService';
 import { CoreEventManager } from './coreEventManager';
 import { EventManager } from './eventManager';
-import { DriveEvent, DriveListener, EventSubscription, LatestEventIdProvider, SharesService } from './interface';
+import { EventScheduler } from './eventScheduler';
+import {
+    DriveEvent,
+    DriveEventType,
+    DriveListener,
+    EventSubscription,
+    LatestEventIdProvider,
+    SharesService,
+} from './interface';
 import { VolumeEventManager } from './volumeEventManager';
 
 export type { CoreApiEvent } from './apiService';
+export type { EventScheduler } from './eventScheduler';
 export type { DriveEvent, DriveListener, EventSubscription } from './interface';
 export { DriveEventType } from './interface';
 
@@ -91,7 +100,45 @@ export class DriveEventsService {
     }
 
     /**
+     * Returns a scheduler that invokes the callback on a timer for each
+     * registered tree event scope. Own volumes poll at the foreground rate;
+     * shared volumes poll at the background rate unless promoted via
+     * `setForeground`. Only one non-own volume can be in the foreground at
+     * a time.
+     */
+    async getEventScheduler(callback: (eventTreeScopeId: string) => Promise<void>): Promise<EventScheduler> {
+        const { volumeId: ownVolumeId } = await this.sharesService.getRootIDs();
+        return new EventScheduler(callback, ownVolumeId);
+    }
+
+    /**
+     * Provides drive events for a given tree scope. When no lastEventId is
+     * provided, the latest event ID is fetched and a FastForward event is
+     * yielded.
+     */
+    async *iterateEvents(
+        treeEventScopeId: string,
+        lastEventId?: string,
+        signal?: AbortSignal,
+    ): AsyncGenerator<DriveEvent> {
+        const volumeId = treeEventScopeId;
+        const volumeEventManager = new VolumeEventManager(this.logger, this.apiService, volumeId);
+        if (!lastEventId) {
+            lastEventId = await volumeEventManager.getLatestEventId();
+            yield {
+                type: DriveEventType.FastForward,
+                treeEventScopeId,
+                eventId: lastEventId,
+            };
+            return;
+        }
+        yield* volumeEventManager.getEvents(lastEventId, signal);
+    }
+
+    /**
      * Subscribe to drive events. The treeEventScopeId can be obtained from a node.
+     *
+     * @deprecated Use `iterateEvents` instead.
      */
     async subscribeToTreeEvents(treeEventScopeId: string, callback: DriveListener): Promise<EventSubscription> {
         const volumeId = treeEventScopeId;
