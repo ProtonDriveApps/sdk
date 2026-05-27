@@ -33,11 +33,11 @@ internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
             IntendedUploadSize = intendedUploadSize,
         };
 
-        var fileSecretsResult = await FileOperations.GetSecretsAsync(_client, _fileUid, cancellationToken).ConfigureAwait(false);
+        var fileSecrets = await FileOperations.GetSecretsAsync(_client, _fileUid, cancellationToken).ConfigureAwait(false);
 
-        if (!fileSecretsResult.TryGetValueElseError(out var fileSecrets, out _))
+        if (fileSecrets is not { Key: { } nodeKey, ContentKey: { } contentKey })
         {
-            throw new InvalidOperationException($"Cannot create draft for file {_fileUid} with degraded secrets");
+            throw new InvalidOperationException($"Cannot create draft for file {_fileUid} with missing secrets");
         }
 
         var remainingNumberOfAttempts = MaxNumberOfDraftCreationAttempts;
@@ -71,12 +71,12 @@ internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
 
         var signingKey = await _client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
 
-        var blockVerifier = await _client.BlockVerifierFactory.CreateAsync(draftRevisionUid, fileSecrets.Key, cancellationToken).ConfigureAwait(false);
+        var blockVerifier = await _client.BlockVerifierFactory.CreateAsync(draftRevisionUid, nodeKey, cancellationToken).ConfigureAwait(false);
 
         return new RevisionDraft(
             draftRevisionUid,
-            fileSecrets.Key,
-            fileSecrets.ContentKey,
+            nodeKey,
+            contentKey,
             signingKey,
             parentHashKey: null,
             membershipAddress,

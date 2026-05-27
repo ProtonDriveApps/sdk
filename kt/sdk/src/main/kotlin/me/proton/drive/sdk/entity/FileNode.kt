@@ -6,7 +6,7 @@ data class FileNode(
     override val uid: NodeUid,
     override val parentUid: ParentNodeUid?,
     override val treeEventScopeId: ScopeId,
-    override val name: String,
+    override val name: Result<String>,
     val mediaType: String,
     override val creationTime: Instant,
     override val trashTime: Instant?,
@@ -14,4 +14,5 @@ data class FileNode(
     override val author: Result<Author>,
     val activeRevision: FileRevision,
     val totalSizeOnCloudStorage: Long,
+    override val errors: List<DriveError>,
 ) : Node

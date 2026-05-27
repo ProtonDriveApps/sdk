@@ -4,5 +4,5 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal sealed class FileSecrets : NodeSecrets
 {
-    public required PgpSessionKey ContentKey { get; init; }
+    public PgpSessionKey? ContentKey { get; init; }
 }

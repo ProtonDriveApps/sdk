@@ -14,7 +14,7 @@ import me.proton.drive.sdk.SdkNode
 import me.proton.drive.sdk.Session
 import me.proton.drive.sdk.Uploader
 import me.proton.drive.sdk.entity.FileThumbnail
-import me.proton.drive.sdk.entity.NodeResult
+import me.proton.drive.sdk.entity.Node
 import me.proton.drive.sdk.entity.NodeResultPair
 import me.proton.drive.sdk.entity.NodeUid
 import me.proton.drive.sdk.entity.PhotosTimelineItem
@@ -79,7 +79,7 @@ internal class InteropProtonPhotosClient internal constructor(
 
     override suspend fun getNode(
         nodeUid: NodeUid,
-    ): NodeResult? = cancellationCoroutineScope { source ->
+    ): Node? = cancellationCoroutineScope { source ->
         log(DEBUG, "getNode")
         bridge.getNode(
             drivePhotosClientGetNodeRequest {
@@ -129,7 +129,7 @@ internal class InteropProtonPhotosClient internal constructor(
         ).toEntity()
     }
 
-    override fun enumerateTrash(): Flow<NodeResult> = channelFlow {
+    override fun enumerateTrash(): Flow<Node> = channelFlow {
         log(DEBUG, "enumerateTrash")
         cancellationCoroutineScope { source ->
             bridge.enumerateTrash(

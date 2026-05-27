@@ -3,6 +3,7 @@ package me.proton.drive.sdk.extension
 import me.proton.drive.sdk.entity.FileRevision
 import me.proton.drive.sdk.entity.RevisionUid
 import proton.drive.sdk.ProtonDriveSdk
+import proton.drive.sdk.claimedDigestsOrNull
 import proton.drive.sdk.claimedModificationTimeOrNull
 import proton.drive.sdk.contentAuthorOrNull
 
@@ -11,7 +12,7 @@ fun ProtonDriveSdk.FileRevision.toEntity() = FileRevision(
     creationTime = creationTime.toInstant(),
     sizeOnCloudStorage = sizeOnCloudStorage,
     claimedSize = if (hasClaimedSize()) claimedSize else null,
-    claimedDigests = claimedDigests.toEntity(),
+    claimedDigests = claimedDigestsOrNull?.toEntity(),
     claimedModificationTime = claimedModificationTimeOrNull?.toInstant(),
     thumbnails = thumbnailsList.map { it.toEntity() },
     additionalClaimedMetadata = if (additionalClaimedMetadataList.isNotEmpty()) {

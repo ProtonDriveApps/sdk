@@ -96,18 +96,7 @@ internal static class InteropProtonDriveClient
             request.LastModificationTime?.ToDateTimeFixed(),
             cancellationToken).ConfigureAwait(false);
 
-        return new FolderNode
-        {
-            Uid = createdFolder.Uid.ToString(),
-            ParentUid = createdFolder.ParentUid.ToString(),
-            TreeEventScopeId = createdFolder.TreeEventScopeId,
-            Name = createdFolder.Name,
-            CreationTime = createdFolder.CreationTime.ToUniversalTime().ToTimestamp(),
-            TrashTime = createdFolder.TrashTime?.ToUniversalTime().ToTimestamp(),
-            NameAuthor = ParseAuthorResult(createdFolder.NameAuthor),
-            Author = ParseAuthorResult(createdFolder.Author),
-            OwnedBy = MapOwnedByToProto(createdFolder.OwnedBy),
-        };
+        return createdFolder.ToInterop();
     }
 
     public static async ValueTask<IMessage> HandleGetFileUploaderAsync(DriveClientGetFileUploaderRequest request)
@@ -222,13 +211,14 @@ internal static class InteropProtonDriveClient
         await foreach (var x in thumbnailsEnumerable.ConfigureAwait(false))
         {
             var thumbnail = new FileThumbnail { FileUid = x.FileUid.ToString() };
+
             if (x.Result.TryGetValueElseError(out var data, out var error))
             {
                 thumbnail.Data = ByteString.CopyFrom(data.Span);
             }
             else
             {
-                thumbnail.Error = ConvertToDriveError(error);
+                thumbnail.Error = error.ToInterop();
             }
 
             yieldFunction.InvokeWithMessage(bindingsHandle, thumbnail);
@@ -246,7 +236,7 @@ internal static class InteropProtonDriveClient
 
         await foreach (var x in client.EnumerateFolderChildrenAsync(NodeUid.Parse(request.FolderUid), cancellationToken).ConfigureAwait(false))
         {
-            yieldFunction.InvokeWithMessage(bindingsHandle, ConvertToNodeResult(x));
+            yieldFunction.InvokeWithMessage(bindingsHandle, x.ToInterop());
         }
 
         return null;
@@ -259,24 +249,7 @@ internal static class InteropProtonDriveClient
 
         var folderNode = await client.GetMyFilesFolderAsync(cancellationToken).ConfigureAwait(false);
 
-        var folderNodeProto = new FolderNode
-        {
-            Uid = folderNode.Uid.ToString(),
-            TreeEventScopeId = folderNode.TreeEventScopeId,
-            Name = folderNode.Name,
-            CreationTime = folderNode.CreationTime.ToUniversalTime().ToTimestamp(),
-            TrashTime = folderNode.TrashTime?.ToUniversalTime().ToTimestamp(),
-            NameAuthor = ParseAuthorResult(folderNode.NameAuthor),
-            Author = ParseAuthorResult(folderNode.Author),
-            OwnedBy = MapOwnedByToProto(folderNode.OwnedBy),
-        };
-
-        if (folderNode.ParentUid != null)
-        {
-            folderNodeProto.ParentUid = folderNode.ParentUid.ToString();
-        }
-
-        return folderNodeProto;
+        return folderNode.ToInterop();
     }
 
     public static async ValueTask<IMessage> HandleGetFileDownloaderAsync(DriveClientGetFileDownloaderRequest request)
@@ -324,7 +297,7 @@ internal static class InteropProtonDriveClient
             request.NodeUids.Select(NodeUid.Parse),
             cancellationToken).ConfigureAwait(false);
 
-        return ConvertToNodeResultListResponse(results);
+        return results.ToInterop();
     }
 
     public static async ValueTask<IMessage> HandleDeleteNodesAsync(DriveClientDeleteNodesRequest request)
@@ -337,7 +310,7 @@ internal static class InteropProtonDriveClient
             request.NodeUids.Select(NodeUid.Parse),
             cancellationToken).ConfigureAwait(false);
 
-        return ConvertToNodeResultListResponse(results);
+        return results.ToInterop();
     }
 
     public static async ValueTask<IMessage> HandleRestoreNodesAsync(DriveClientRestoreNodesRequest request)
@@ -350,7 +323,7 @@ internal static class InteropProtonDriveClient
             request.NodeUids.Select(NodeUid.Parse),
             cancellationToken).ConfigureAwait(false);
 
-        return ConvertToNodeResultListResponse(results);
+        return results.ToInterop();
     }
 
     public static async ValueTask<IMessage?> HandleEnumerateTrashAsync(DriveClientEnumerateTrashRequest request, nint bindingsHandle)
@@ -362,7 +335,7 @@ internal static class InteropProtonDriveClient
 
         await foreach (var x in client.EnumerateTrashAsync(cancellationToken).ConfigureAwait(false))
         {
-            yieldFunction.InvokeWithMessage(bindingsHandle, ConvertToNodeResult(x));
+            yieldFunction.InvokeWithMessage(bindingsHandle, x.ToInterop());
         }
 
         return null;
@@ -373,16 +346,11 @@ internal static class InteropProtonDriveClient
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
 
-        var nodeResult = await client.GetNodeAsync(
+        var node = await client.GetNodeAsync(
             NodeUid.Parse(request.NodeUid),
             cancellationToken).ConfigureAwait(false);
 
-        if (nodeResult == null)
-        {
-            return null;
-        }
-
-        return ConvertToNodeResult(nodeResult.Value);
+        return node?.ToInterop();
     }
 
     public static async ValueTask<IMessage?> HandleEmptyTrashAsync(DriveClientEmptyTrashRequest request)
@@ -401,330 +369,5 @@ internal static class InteropProtonDriveClient
         Interop.FreeHandle<ProtonDriveClient>(request.ClientHandle);
 
         return null;
-    }
-
-    public static NodeResult ConvertToNodeResult(Result<Nodes.Node, Nodes.DegradedNode> result)
-    {
-        var nodeResult = new NodeResult();
-
-        if (result.TryGetValueElseError(out var node, out var degradedNode))
-        {
-            nodeResult.Value = ConvertToNode(node);
-        }
-        else
-        {
-            nodeResult.Error = ConvertToDegradedNode(degradedNode);
-        }
-
-        return nodeResult;
-    }
-
-    public static AuthorResult ParseAuthorResult(Result<Sdk.Author, Nodes.SignatureVerificationError> result)
-    {
-        var authorResult = new AuthorResult();
-
-        if (result.TryGetValueElseError(out var author, out var error))
-        {
-            var authorResultValue = new Author();
-            if (authorResultValue.EmailAddress != null)
-            {
-                authorResultValue.EmailAddress = author.EmailAddress;
-            }
-
-            authorResult.Value = authorResultValue;
-        }
-        else
-        {
-            var claimedAuthor = new Author();
-            if (error.ClaimedAuthor.EmailAddress != null)
-            {
-                claimedAuthor.EmailAddress = error.ClaimedAuthor.EmailAddress;
-            }
-
-            authorResult.Error = new SignatureVerificationError
-            {
-                ClaimedAuthor = claimedAuthor,
-            };
-
-            if (error.Message != null)
-            {
-                // TODO change message to be a DriveError
-                authorResult.Error.Message = error.FlattenMessage();
-            }
-        }
-
-        return authorResult;
-    }
-
-    internal static DriveError ConvertToDriveError(ProtonDriveError error)
-    {
-        var driveError = new DriveError
-        {
-            InnerError = error.InnerError != null ? ConvertToDriveError(error.InnerError) : null,
-        };
-
-        if (error.Message != null)
-        {
-            driveError.Message = error.Message;
-        }
-
-        return driveError;
-    }
-
-    private static NodeResultListResponse ConvertToNodeResultListResponse(IReadOnlyDictionary<NodeUid, Result<Exception>> results)
-    {
-        return new NodeResultListResponse
-        {
-            Results =
-            {
-                results.Select(pair =>
-                {
-                    var result = new NodeResultPair
-                    {
-                        NodeUid = pair.Key.ToString(),
-                    };
-
-                    if (pair.Value.TryGetError(out var exception))
-                    {
-                        result.Error = exception.ToProtoError(InteropDriveErrorConverter.SetDomainAndCodes);
-                    }
-
-                    return result;
-                }),
-            },
-        };
-    }
-
-    private static OwnedBy MapOwnedByToProto(Nodes.OwnedBy? ownedBy)
-    {
-        if (ownedBy is null)
-        {
-            return new OwnedBy();
-        }
-
-        var result = new OwnedBy();
-        if (ownedBy.Email != null)
-        {
-            result.Email = ownedBy.Email;
-        }
-
-        if (ownedBy.Organization != null)
-        {
-            result.Organization = ownedBy.Organization;
-        }
-
-        return result;
-    }
-
-    private static Node ConvertToNode(Nodes.Node node)
-    {
-        var result = new Node();
-
-        switch (node)
-        {
-            case Nodes.FolderNode folderNode:
-                result.Folder = new FolderNode
-                {
-                    Uid = folderNode.Uid.ToString(),
-                    TreeEventScopeId = folderNode.TreeEventScopeId,
-                    Name = folderNode.Name,
-                    CreationTime = folderNode.CreationTime.ToUniversalTime().ToTimestamp(),
-                    TrashTime = folderNode.TrashTime?.ToUniversalTime().ToTimestamp(),
-                    NameAuthor = ParseAuthorResult(folderNode.NameAuthor),
-                    Author = ParseAuthorResult(folderNode.Author),
-                    OwnedBy = MapOwnedByToProto(folderNode.OwnedBy),
-                };
-
-                if (folderNode.ParentUid != null)
-                {
-                    result.Folder.ParentUid = folderNode.ParentUid.ToString();
-                }
-
-                break;
-
-            case Nodes.FileNode fileNode:
-                var fileNodeProto = new FileNode
-                {
-                    Uid = fileNode.Uid.ToString(),
-                    TreeEventScopeId = fileNode.TreeEventScopeId,
-                    Name = fileNode.Name,
-                    MediaType = fileNode.MediaType,
-                    CreationTime = fileNode.CreationTime.ToUniversalTime().ToTimestamp(),
-                    TrashTime = fileNode.TrashTime?.ToUniversalTime().ToTimestamp(),
-                    NameAuthor = ParseAuthorResult(fileNode.NameAuthor),
-                    Author = ParseAuthorResult(fileNode.Author),
-                    TotalSizeOnCloudStorage = fileNode.TotalSizeOnCloudStorage,
-                    OwnedBy = MapOwnedByToProto(fileNode.OwnedBy),
-                    ActiveRevision = new FileRevision
-                    {
-                        Uid = fileNode.ActiveRevision.Uid.ToString(),
-                        CreationTime = fileNode.ActiveRevision.CreationTime.ToUniversalTime().ToTimestamp(),
-                        SizeOnCloudStorage = fileNode.ActiveRevision.SizeOnCloudStorage,
-                        ClaimedSize = fileNode.ActiveRevision.ClaimedSize ?? 0,
-                        ClaimedModificationTime = fileNode.ActiveRevision.ClaimedModificationTime?.ToUniversalTime().ToTimestamp(),
-                        ClaimedDigests = new FileContentDigests(),
-                    },
-                };
-
-                if (fileNode.ParentUid != null)
-                {
-                    fileNodeProto.ParentUid = fileNode.ParentUid.ToString();
-                }
-
-                if (fileNode.ActiveRevision.ClaimedDigests.Sha1.HasValue)
-                {
-                    fileNodeProto.ActiveRevision.ClaimedDigests.Sha1 = ByteString.CopyFrom(fileNode.ActiveRevision.ClaimedDigests.Sha1.Value.Span);
-                }
-
-                fileNodeProto.ActiveRevision.ClaimedDigests.Sha1Verified = fileNode.ActiveRevision.ClaimedDigests.Sha1Verified;
-
-                fileNodeProto.ActiveRevision.Thumbnails.AddRange(
-                    fileNode.ActiveRevision.Thumbnails.Select(t => new ThumbnailHeader
-                    {
-                        Id = t.Id,
-                        Type = (ThumbnailType)(int)t.Type,
-                    }));
-
-                if (fileNode.ActiveRevision.AdditionalClaimedMetadata is not null)
-                {
-                    fileNodeProto.ActiveRevision.AdditionalClaimedMetadata.AddRange(
-                        fileNode.ActiveRevision.AdditionalClaimedMetadata.Select(m => new AdditionalMetadataProperty
-                        {
-                            Name = m.Name,
-                            Utf8JsonValue = ByteString.CopyFromUtf8(m.Value.ToString()),
-                        }));
-                }
-
-                if (fileNode.ActiveRevision.ContentAuthor.HasValue)
-                {
-                    fileNodeProto.ActiveRevision.ContentAuthor = ParseAuthorResult(fileNode.ActiveRevision.ContentAuthor.Value);
-                }
-
-                result.File = fileNodeProto;
-                break;
-        }
-
-        return result;
-    }
-
-    private static DegradedNode ConvertToDegradedNode(Nodes.DegradedNode degradedNode)
-    {
-        var result = new DegradedNode();
-
-        switch (degradedNode)
-        {
-            case Nodes.DegradedFolderNode degradedFolderNode:
-                var degradedFolder = new DegradedFolderNode
-                {
-                    Uid = degradedFolderNode.Uid.ToString(),
-                    TreeEventScopeId = degradedFolderNode.TreeEventScopeId,
-                    Name = ConvertStringToStringResult(degradedFolderNode.Name),
-                    CreationTime = degradedFolderNode.CreationTime.ToUniversalTime().ToTimestamp(),
-                    TrashTime = degradedFolderNode.TrashTime?.ToUniversalTime().ToTimestamp(),
-                    NameAuthor = ParseAuthorResult(degradedFolderNode.NameAuthor),
-                    Author = ParseAuthorResult(degradedFolderNode.Author),
-                    OwnedBy = MapOwnedByToProto(degradedFolderNode.OwnedBy),
-                };
-
-                if (degradedFolderNode.ParentUid != null)
-                {
-                    degradedFolder.ParentUid = degradedFolderNode.ParentUid.ToString();
-                }
-
-                degradedFolder.Errors.AddRange(degradedFolderNode.Errors.Select(ConvertToDriveError));
-                result.Folder = degradedFolder;
-                break;
-
-            case Nodes.DegradedFileNode degradedFileNode:
-                var degradedFile = new DegradedFileNode
-                {
-                    Uid = degradedFileNode.Uid.ToString(),
-                    TreeEventScopeId = degradedFileNode.TreeEventScopeId,
-                    Name = ConvertStringToStringResult(degradedFileNode.Name),
-                    MediaType = degradedFileNode.MediaType,
-                    CreationTime = degradedFileNode.CreationTime.ToUniversalTime().ToTimestamp(),
-                    TrashTime = degradedFileNode.TrashTime?.ToUniversalTime().ToTimestamp(),
-                    NameAuthor = ParseAuthorResult(degradedFileNode.NameAuthor),
-                    Author = ParseAuthorResult(degradedFileNode.Author),
-                    TotalStorageQuotaUsage = degradedFileNode.TotalStorageQuotaUsage,
-                    OwnedBy = MapOwnedByToProto(degradedFileNode.OwnedBy),
-                };
-
-                if (degradedFileNode.ParentUid != null)
-                {
-                    degradedFile.ParentUid = degradedFileNode.ParentUid.ToString();
-                }
-
-                if (degradedFileNode.ActiveRevision is not null)
-                {
-                    degradedFile.ActiveRevision = new DegradedRevision
-                    {
-                        Uid = degradedFileNode.ActiveRevision.Uid.ToString(),
-                        CreationTime = degradedFileNode.ActiveRevision.CreationTime.ToUniversalTime().ToTimestamp(),
-                        SizeOnCloudStorage = degradedFileNode.ActiveRevision.SizeOnCloudStorage,
-                        ClaimedSize = degradedFileNode.ActiveRevision.ClaimedSize ?? 0,
-                        ClaimedModificationTime = degradedFileNode.ActiveRevision.ClaimedModificationTime?.ToUniversalTime().ToTimestamp(),
-                        CanDecrypt = degradedFileNode.ActiveRevision.CanDecrypt,
-                    };
-
-                    if (degradedFileNode.ActiveRevision.ClaimedDigests.HasValue)
-                    {
-                        degradedFile.ActiveRevision.ClaimedDigests = new FileContentDigests
-                        {
-                            Sha1Verified = degradedFileNode.ActiveRevision.ClaimedDigests.Value.Sha1Verified,
-                        };
-                        if (degradedFileNode.ActiveRevision.ClaimedDigests.Value.Sha1.HasValue)
-                        {
-                            degradedFile.ActiveRevision.ClaimedDigests.Sha1 =
-                                ByteString.CopyFrom(degradedFileNode.ActiveRevision.ClaimedDigests.Value.Sha1.Value.Span);
-                        }
-                    }
-
-                    degradedFile.ActiveRevision.Thumbnails.AddRange(
-                        degradedFileNode.ActiveRevision.Thumbnails.Select(t => new ThumbnailHeader
-                        {
-                            Id = t.Id,
-                            Type = (ThumbnailType)(int)t.Type,
-                        }));
-
-                    if (degradedFileNode.ActiveRevision.AdditionalClaimedMetadata is not null)
-                    {
-                        degradedFile.ActiveRevision.AdditionalClaimedMetadata.AddRange(
-                            degradedFileNode.ActiveRevision.AdditionalClaimedMetadata.Select(m => new AdditionalMetadataProperty
-                            {
-                                Name = m.Name,
-                                Utf8JsonValue = ByteString.CopyFromUtf8(m.Value.ToString()),
-                            }));
-                    }
-
-                    if (degradedFileNode.ActiveRevision.ContentAuthor.HasValue)
-                    {
-                        degradedFile.ActiveRevision.ContentAuthor = ParseAuthorResult(degradedFileNode.ActiveRevision.ContentAuthor.Value);
-                    }
-
-                    degradedFile.ActiveRevision.Errors.AddRange(degradedFileNode.ActiveRevision.Errors.Select(ConvertToDriveError));
-                }
-
-                degradedFile.Errors.AddRange(degradedFileNode.Errors.Select(ConvertToDriveError));
-                result.File = degradedFile;
-                break;
-        }
-
-        return result;
-    }
-
-    private static StringResult ConvertStringToStringResult(Result<string, ProtonDriveError> result)
-    {
-        var stringResult = new StringResult();
-        if (result.TryGetValueElseError(out var value, out var error))
-        {
-            stringResult.Value = value;
-        }
-        else
-        {
-            stringResult.Error = ConvertToDriveError(error);
-        }
-
-        return stringResult;
     }
 }

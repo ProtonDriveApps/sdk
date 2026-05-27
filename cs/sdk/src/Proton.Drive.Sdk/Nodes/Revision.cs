@@ -8,7 +8,7 @@ public sealed record Revision
     public required DateTime CreationTime { get; init; }
     public required long SizeOnCloudStorage { get; init; }
     public long? ClaimedSize { get; init; }
-    public required FileContentDigests ClaimedDigests { get; init; }
+    public FileContentDigests ClaimedDigests { get; init; }
     public DateTime? ClaimedModificationTime { get; init; }
     public required IReadOnlyList<ThumbnailHeader> Thumbnails { get; init; }
     public required IReadOnlyList<AdditionalMetadataProperty>? AdditionalClaimedMetadata { get; init; }

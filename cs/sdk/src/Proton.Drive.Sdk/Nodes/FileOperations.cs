@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using Proton.Drive.Sdk.Api.Files;
-using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
 
@@ -8,22 +7,19 @@ internal static class FileOperations
 {
     private const int MaxThumbnailIdsPerRequest = 30;
 
-    public static async ValueTask<Result<FileSecrets, DegradedFileSecrets>> GetSecretsAsync(
-        ProtonDriveClient client,
-        NodeUid fileUid,
-        CancellationToken cancellationToken)
+    public static async ValueTask<FileSecrets> GetSecretsAsync(ProtonDriveClient client, NodeUid fileUid, CancellationToken cancellationToken)
     {
-        var fileSecretsResult = await client.Cache.Secrets.TryGetFileSecretsAsync(fileUid, cancellationToken).ConfigureAwait(false);
+        var fileSecrets = await client.Cache.Secrets.TryGetFileSecretsAsync(fileUid, cancellationToken).ConfigureAwait(false);
 
-        if (fileSecretsResult is null)
+        if (fileSecrets is null)
         {
-            var metadataResult = await NodeOperations.GetFreshNodeMetadataAsync(client, fileUid, knownShareAndKey: null, cancellationToken)
+            var metadata = await NodeOperations.GetFreshNodeMetadataAsync(client, fileUid, knownShareAndKey: null, cancellationToken)
                 .ConfigureAwait(false);
 
-            fileSecretsResult = metadataResult.GetFileSecretsOrThrow();
+            fileSecrets = metadata.GetFileSecretsOrThrow();
         }
 
-        return (Result<FileSecrets, DegradedFileSecrets>)fileSecretsResult;
+        return fileSecrets;
     }
 
     public static async IAsyncEnumerable<FileThumbnail> EnumerateThumbnailsAsync(
@@ -45,56 +41,32 @@ internal static class FileOperations
             var errors = new List<FileThumbnail>();
 
             var thumbnailIds = await nodeResults
-                .Select(FileNodeInfo? (nodeResult) =>
+                .Select(FileNodeInfo? (node) =>
                 {
-                    nodeResult.TryGetValueElseError(out var node, out var degradedNode);
+                    unprocessedLinkIds.Remove(node.Uid.LinkId);
 
-                    if ((node?.Uid.LinkId ?? degradedNode?.Uid.LinkId) is { } processedLinkId)
+                    if (!node.TryGetFileElseFolder(out var fileNode, out _))
                     {
-                        unprocessedLinkIds.Remove(processedLinkId);
-                    }
-
-                    if (node is FileNode fileNode)
-                    {
-                        return new FileNodeInfo(fileNode.Uid, fileNode.ActiveRevision.Uid, fileNode.ActiveRevision.Thumbnails);
-                    }
-
-                    if (degradedNode is DegradedFileNode { ActiveRevision: { } degradedRevision } degradedFileNode)
-                    {
-                        if (degradedRevision.CanDecrypt)
-                        {
-                            return new FileNodeInfo(degradedFileNode.Uid, degradedRevision.Uid, degradedRevision.Thumbnails);
-                        }
-
-                        // TODO: yield error results immediately instead of collecting them in a list,
-                        // to stream results back to the client as fast as possible (similarly to thumbnail content).
-                        errors.Add(
-                            degradedRevision.ContentAuthor?.TryGetValueElseError(out _, out var error) == false
-                                ? new FileThumbnail(degradedFileNode.Uid, new ProtonDriveError("Cannot decrypt degraded file", error))
-                                : new FileThumbnail(degradedFileNode.Uid, new ProtonDriveError("Cannot decrypt degraded file")));
-
+                        errors.Add(new FileThumbnail(node.Uid, new ProtonDriveError("Node is not a file")));
                         return null;
                     }
 
-                    if (node?.Uid is { } nonFileNodeUid)
-                    {
-                        errors.Add(new FileThumbnail(nonFileNodeUid, new ProtonDriveError("Node is not a file")));
-                    }
+                    var revision = fileNode.ActiveRevision;
 
-                    return null;
+                    return new FileNodeInfo(fileNode.Uid, revision.Uid, revision.Thumbnails);
                 })
                 .Where(x => x.HasValue)
                 .Select(x => x!.Value)
                 .SelectMany(fileNodeInfo =>
                 {
                     var thumbnails = fileNodeInfo.Thumbnails;
-                    if (thumbnails.Count == 0)
+                    if (thumbnails.All(thumbnail => thumbnail.Type != thumbnailType))
                     {
-                        errors.Add(new FileThumbnail(fileNodeInfo.Uid, new ProtonDriveError("Node has no thumbnails")));
-                    }
-                    else if (thumbnails.All(thumbnail => thumbnail.Type != thumbnailType))
-                    {
-                        errors.Add(new FileThumbnail(fileNodeInfo.Uid, new ProtonDriveError($"Node has no thumbnail of type {thumbnailType}")));
+                        var errorMessage = thumbnails.Count != 0
+                            ? $"Node {fileNodeInfo.Uid} has no thumbnail of type {thumbnailType}"
+                            : $"Node {fileNodeInfo.Uid} has no thumbnails";
+
+                        errors.Add(new FileThumbnail(fileNodeInfo.Uid, new ProtonDriveError(errorMessage)));
                     }
 
                     return thumbnails
@@ -188,11 +160,10 @@ internal static class FileOperations
             var outputStream = new MemoryStream(initialBufferLength);
             await using (outputStream.ConfigureAwait(false))
             {
-                var fileSecretsResult = await GetSecretsAsync(client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
+                var fileSecrets = await GetSecretsAsync(client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
 
-                var contentKey = fileSecretsResult.TryGetValueElseError(out var fileSecrets, out var degradedFileSecrets)
-                    ? fileSecrets.ContentKey
-                    : degradedFileSecrets.ContentKey ?? throw new InvalidOperationException($"Content key not available for file {revisionUid.NodeUid}");
+                var contentKey = fileSecrets.ContentKey
+                    ?? throw new InvalidOperationException($"Content key not available for file {revisionUid.NodeUid}");
 
                 await client.ThumbnailBlockDownloader.DownloadAsync(
                     revisionUid,
@@ -217,10 +188,5 @@ internal static class FileOperations
         }
     }
 
-    private readonly struct FileNodeInfo(NodeUid uid, RevisionUid activeRevisionUid, IReadOnlyList<ThumbnailHeader> thumbnails)
-    {
-        public NodeUid Uid { get; } = uid;
-        public RevisionUid ActiveRevisionUid { get; } = activeRevisionUid;
-        public IReadOnlyList<ThumbnailHeader> Thumbnails { get; } = thumbnails;
-    }
+    private readonly record struct FileNodeInfo(NodeUid Uid, RevisionUid ActiveRevisionUid, IReadOnlyList<ThumbnailHeader> Thumbnails);
 }

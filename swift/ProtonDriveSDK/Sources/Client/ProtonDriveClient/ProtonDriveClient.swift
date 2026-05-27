@@ -405,7 +405,10 @@ extension ProtonDriveClient {
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
         }
 
-        let sdkFolderNode: Proton_Drive_Sdk_FolderNode = try await SDKRequestHandler.send(createFolderRequest, logger: logger)
+        let sdkNode: Proton_Drive_Sdk_Node = try await SDKRequestHandler.send(createFolderRequest, logger: logger)
+        guard case .folder(let sdkFolderNode) = sdkNode.node else {
+            throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "createFolder expected FolderNode, got \(sdkNode.node as Any)"))
+        }
         return try FolderNode(sdkFolderNode: sdkFolderNode)
     }
 

@@ -75,7 +75,7 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
     {
         var result = await _client.GetNodeAsync(_photoUid, cancellationToken).ConfigureAwait(false);
 
-        if (result is null || !result.Value.TryGetValueElseError(out var node, out _) || node is not FileNode fileNode)
+        if (result is not FileNode fileNode)
         {
             throw new NodeNotFoundException(_photoUid);
         }

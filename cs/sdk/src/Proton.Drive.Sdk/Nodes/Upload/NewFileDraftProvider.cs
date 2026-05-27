@@ -39,7 +39,7 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
 
         var signingKey = await _client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
 
-        var (response, fileSecrets) = await CreateDraftAsync(
+        var (revisionUid, key, contentKey) = await CreateDraftAsync(
             intendedUploadSize,
             parentKey,
             parentHashKey,
@@ -47,23 +47,18 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
             membershipAddress.EmailAddress,
             cancellationToken).ConfigureAwait(false);
 
-        var draftNodeUid = new NodeUid(_parentUid.VolumeId, response.Identifiers.LinkId);
-        var draftRevisionUid = new RevisionUid(draftNodeUid, response.Identifiers.RevisionId);
-
-        await _client.Cache.Secrets.SetFileSecretsAsync(draftNodeUid, fileSecrets, cancellationToken).ConfigureAwait(false);
-
-        var blockVerifier = await _client.BlockVerifierFactory.CreateAsync(draftRevisionUid, fileSecrets.Key, cancellationToken).ConfigureAwait(false);
+        var blockVerifier = await _client.BlockVerifierFactory.CreateAsync(revisionUid, key, cancellationToken).ConfigureAwait(false);
 
         return new RevisionDraft(
-            draftRevisionUid,
-            fileSecrets.Key,
-            fileSecrets.ContentKey,
+            revisionUid,
+            key,
+            contentKey,
             signingKey,
             parentHashKey,
             membershipAddress,
             blockVerifier,
             intendedUploadSize,
-            ct => DeleteDraftAsync(draftRevisionUid, ct),
+            ct => DeleteDraftAsync(revisionUid, ct),
             _client.Telemetry.GetLogger("New file draft"));
     }
 
@@ -119,7 +114,7 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
         };
     }
 
-    private async ValueTask<(FileCreationResponse Response, FileSecrets FileSecrets)> CreateDraftAsync(
+    private async ValueTask<(RevisionUid RevisionUid, PgpPrivateKey Key, PgpSessionKey ContentKey)> CreateDraftAsync(
         long intendedUploadSize,
         PgpPrivateKey parentKey,
         ReadOnlyMemory<byte> parentHashKey,
@@ -129,7 +124,7 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
     {
         var remainingNumberOfAttempts = MaxNumberOfDraftCreationAttempts;
 
-        (FileCreationResponse Response, FileSecrets FileSecrets)? result = null;
+        (RevisionUid RevisionUid, PgpPrivateKey Key, PgpSessionKey ContentKey)? result = null;
 
         var useAeadFeatureFlag = await _client.FeatureFlagProvider.IsEnabledAsync(FeatureFlags.DriveCryptoEncryptBlocksWithPgpAead, cancellationToken)
             .ConfigureAwait(false);
@@ -164,7 +159,12 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
                     ContentKey = contentKey,
                 };
 
-                result = (response, fileSecrets);
+                var draftNodeUid = new NodeUid(_parentUid.VolumeId, response.Identifiers.LinkId);
+                var draftRevisionUid = new RevisionUid(draftNodeUid, response.Identifiers.RevisionId);
+
+                await _client.Cache.Secrets.SetFileSecretsAsync(draftNodeUid, fileSecrets, cancellationToken).ConfigureAwait(false);
+
+                result = (draftRevisionUid, nodeKey, contentKey);
             }
             catch (ProtonApiException<RevisionErrorResponse> e)
                 when (RevisionConflict.FromErrorResponse(e.Response) is { LinkId: { } conflictingLinkId, RevisionId: null, DraftRevisionId: not null } conflict

@@ -37,13 +37,11 @@ internal static class RevisionOperations
 
         await Task.WhenAll(secretsTask, revisionTask).ConfigureAwait(false);
 
-        var fileSecretsResult = await secretsTask.ConfigureAwait(false);
+        var fileSecrets = await secretsTask.ConfigureAwait(false);
         var revisionResponse = await revisionTask.ConfigureAwait(false);
 
-        var (key, contentKey) = fileSecretsResult.TryGetValueElseError(out var fileSecrets, out var degradedFileSecrets)
-            ? (fileSecrets.Key, fileSecrets.ContentKey)
-            : (degradedFileSecrets.Key ?? throw new InvalidOperationException($"Node key not available for file {revisionUid.NodeUid}"),
-                degradedFileSecrets.ContentKey ?? throw new InvalidOperationException($"Content key not available for file {revisionUid.NodeUid}"));
+        var key = fileSecrets.Key ?? throw new InvalidOperationException($"Node key not available for file {revisionUid.NodeUid}");
+        var contentKey = fileSecrets.ContentKey ?? throw new InvalidOperationException($"Content key not available for file {revisionUid.NodeUid}");
 
         return new DownloadState(
             revisionUid,
