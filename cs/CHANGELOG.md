@@ -1,5 +1,20 @@
 # Changelog
 
+## cs/v0.15.0 (2026-05-27)
+
+* Report extended attributes size for download progress instead of revision size
+* Fix cache not evicting incompatible entries
+* Do not close the input stream in Swift's StreamForUpload
+* Fix interop account client requesting empty address instead of default address
+* Use single type hierarchy for nodes
+* Retry block encryption and report metric
+* Wrap node not found into a dedicated exception
+
+## cs/v0.14.6 (2026-05-22)
+
+* Make last modification time optional for file uploads
+* Show what was actually in the JSON when extended attributes cannot be parsed
+
 ## cs/v0.14.5 (2026-05-18)
 
 * Fix missing disposal of reader in Sqlite cache repository
