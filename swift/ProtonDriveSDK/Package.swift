@@ -2,7 +2,6 @@
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
-import Foundation
 
 let package = Package(
     name: "ProtonDriveSDK",
@@ -17,6 +16,10 @@ let package = Package(
             name: "ProtonDriveSDK",
             targets: ["ProtonDriveSDK"]
         ),
+        .library(
+            name: "ProtonDriveSDKTestingToolkit",
+            targets: ["ProtonDriveSDKTestingToolkit"]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.33.3"),
@@ -26,7 +29,8 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "CProtonDriveSDK",
-            path: "./Libraries/CProtonDriveSDK.xcframework"
+            url: "https://github.com/ProtonDriveApps/sdk-swift/releases/download/{VERSION}/CProtonDriveSDK.xcframework.zip",
+            checksum: "{XCFRAMEWORK_CHECKSUM}"
         ),
         .target(
             name: "ProtonDriveSDK",
@@ -45,7 +49,12 @@ let package = Package(
                 .linkedFramework("GSS"),
                 .linkedLibrary("sqlite3"),
                 .linkedLibrary("icucore"),
-
+                .unsafeFlags([
+                    // path used in normal builds
+                    "-L${BUILD_DIR}/../../SourcePackages/checkouts/sdk-swift/Resources",
+                    // path used in archive builds
+                    "-L${BUILD_DIR}/../../../../../SourcePackages/checkouts/sdk-swift/Resources",
+                ]),
                 .unsafeFlags([
                     // the bootstrapper contains the code to start the dotNET runtime – it asks the system API
                     // to spawn a new thread for garbage collector, allocate the memory to be managed by dotNET etc.
@@ -53,6 +62,23 @@ let package = Package(
                     "-llibbootstrapperdll.osx-x64.o",
                 ], .when(platforms: [.macOS])),
             ],
+        ),
+        .target(
+            name: "ProtonDriveSDKTestingToolkit",
+            path: "TestingToolkit",
+            linkerSettings: [
+                .unsafeFlags([
+                    // path used in normal builds
+                    "-L${BUILD_DIR}/../../SourcePackages/checkouts/sdk-swift/Resources",
+                    // path used in archive builds
+                    "-L${BUILD_DIR}/../../../../../SourcePackages/checkouts/sdk-swift/Resources",
+                ]),
+                .unsafeFlags([
+                    // the bootstrapper contains the code to start the dotNET runtime – it asks the system API
+                    // to spawn a new thread for garbage collector, allocate the memory to be managed by dotNET etc.
+                    "-llibbootstrapperdll.iossimulator-arm64.o",
+                ], .when(platforms: [.iOS])),
+            ]
         ),
     ]
 )
