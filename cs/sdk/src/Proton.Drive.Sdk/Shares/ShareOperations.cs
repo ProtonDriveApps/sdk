@@ -1,6 +1,5 @@
 ﻿using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Nodes;
-using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Shares;
 
@@ -48,12 +47,12 @@ internal static class ShareOperations
 
     public static async ValueTask<ShareAndKey> GetContextShareAsync(
         ProtonDriveClient client,
-        Result<NodeMetadata, DegradedNodeMetadata> nodeResult,
+        NodeMetadata nodeMetadata,
         bool useCacheOnly,
         CancellationToken cancellationToken)
     {
-        var contextRoot = await TraversalOperations.FindRootForNode(client, nodeResult, useCacheOnly, cancellationToken).ConfigureAwait(false);
-        var contextShareId = contextRoot.Merge(x => x.MembershipShareId, x => x.MembershipShareId);
+        var contextRoot = await TraversalOperations.FindRootForNode(client, nodeMetadata, useCacheOnly, cancellationToken).ConfigureAwait(false);
+        var contextShareId = contextRoot.MembershipShareId;
 
         if (!contextShareId.HasValue)
         {

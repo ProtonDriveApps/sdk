@@ -9,17 +9,13 @@ internal static class TelemetryRecorder
     /// </summary>
     public static async Task TryRecordDecryptionErrorAsync(
         ProtonDriveClient client,
-        DegradedNode degradedNode,
+        Node node,
         IReadOnlyDictionary<EncryptedField, ProtonDriveError> failedFields,
         CancellationToken cancellationToken)
     {
         try
         {
-            var events = await TelemetryEventFactory.CreateDecryptionErrorEventsAsync(
-                client,
-                degradedNode,
-                failedFields,
-                cancellationToken).ConfigureAwait(false);
+            var events = await TelemetryEventFactory.CreateDecryptionErrorEventsAsync(client, node, failedFields, cancellationToken).ConfigureAwait(false);
 
             foreach (var @event in events)
             {
@@ -45,13 +41,8 @@ internal static class TelemetryRecorder
     {
         try
         {
-            var @event = await TelemetryEventFactory.CreateVerificationErrorEventAsync(
-                client,
-                nodeUid,
-                field,
-                creationTime,
-                error,
-                cancellationToken).ConfigureAwait(false);
+            var @event = await TelemetryEventFactory.CreateVerificationErrorEventAsync(client, nodeUid, field, creationTime, error, cancellationToken)
+                .ConfigureAwait(false);
 
             client.Telemetry.RecordMetric(@event);
         }

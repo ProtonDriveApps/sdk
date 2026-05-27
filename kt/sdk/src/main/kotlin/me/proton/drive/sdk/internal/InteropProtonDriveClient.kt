@@ -17,7 +17,7 @@ import me.proton.drive.sdk.entity.FileRevisionUploaderRequest
 import me.proton.drive.sdk.entity.FileThumbnail
 import me.proton.drive.sdk.entity.FileUploaderRequest
 import me.proton.drive.sdk.entity.FolderNode
-import me.proton.drive.sdk.entity.NodeResult
+import me.proton.drive.sdk.entity.Node
 import me.proton.drive.sdk.entity.NodeResultPair
 import me.proton.drive.sdk.entity.NodeUid
 import me.proton.drive.sdk.entity.RevisionUid
@@ -131,7 +131,7 @@ internal class InteropProtonDriveClient internal constructor(
 
     override fun enumerateFolderChildren(
         folderUid: NodeUid,
-    ): Flow<NodeResult> = channelFlow {
+    ): Flow<Node> = channelFlow {
         log(DEBUG, "enumerateFolderChildren")
         cancellationCoroutineScope { source ->
             bridge.enumerateFolderChildren(
@@ -142,8 +142,8 @@ internal class InteropProtonDriveClient internal constructor(
                     cancellationTokenSourceHandle = source.handle
                     yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
                 },
-                yield = { nodeResult ->
-                    send(nodeResult.toEntity())
+                yield = { node ->
+                    send(node.toEntity())
                 }
             )
         }
@@ -151,7 +151,7 @@ internal class InteropProtonDriveClient internal constructor(
 
     override suspend fun getNode(
         nodeUid: NodeUid,
-    ): NodeResult? = cancellationCoroutineScope { source ->
+    ): Node? = cancellationCoroutineScope { source ->
         log(DEBUG, "getNode")
         bridge.getNode(
             driveClientGetNodeRequest {
@@ -201,7 +201,7 @@ internal class InteropProtonDriveClient internal constructor(
         ).toEntity()
     }
 
-    override fun enumerateTrash(): Flow<NodeResult> = channelFlow {
+    override fun enumerateTrash(): Flow<Node> = channelFlow {
         log(DEBUG, "enumerateTrash")
         cancellationCoroutineScope { source ->
             bridge.enumerateTrash(

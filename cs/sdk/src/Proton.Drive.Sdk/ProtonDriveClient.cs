@@ -186,15 +186,14 @@ public sealed class ProtonDriveClient
         return NodeOperations.GetOrCreateMyFilesFolderAsync(this, cancellationToken);
     }
 
-    public ValueTask<Result<Node, DegradedNode>?> GetNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
+    public ValueTask<Node?> GetNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
     {
         return NodeOperations
             .EnumerateNodesAsync(this, nodeUid.VolumeId, [nodeUid.LinkId], forPhotos: false, cancellationToken)
-            .Select(x => (Result<Node, DegradedNode>?)x)
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(IEnumerable<NodeUid> nodeUids, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Node> EnumerateNodesAsync(IEnumerable<NodeUid> nodeUids, CancellationToken cancellationToken = default)
     {
         return NodeOperations.EnumerateNodesAsync(this, nodeUids, forPhotos: false, cancellationToken);
     }
@@ -204,7 +203,7 @@ public sealed class ProtonDriveClient
         return FolderOperations.CreateAsync(this, parentId, name, lastModificationTime, cancellationToken);
     }
 
-    public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateFolderChildrenAsync(NodeUid folderId, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Node> EnumerateFolderChildrenAsync(NodeUid folderId, CancellationToken cancellationToken = default)
     {
         return FolderOperations.EnumerateChildrenAsync(this, folderId, cancellationToken);
     }
@@ -313,7 +312,7 @@ public sealed class ProtonDriveClient
         return NodeOperations.RestoreFromTrashAsync(this, uids, cancellationToken);
     }
 
-    public async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateTrashAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<Node> EnumerateTrashAsync([EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var volumeId = await VolumeOperations.TryGetMainVolumeIdAsync(this, cancellationToken).ConfigureAwait(false);
         if (volumeId is null)

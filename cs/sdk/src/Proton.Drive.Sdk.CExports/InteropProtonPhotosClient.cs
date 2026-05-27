@@ -87,7 +87,7 @@ internal static class InteropProtonPhotosClient
             request.NodeUids.Select(NodeUid.Parse),
             cancellationToken).ConfigureAwait(false);
 
-        return ConvertToNodeResultListResponse(results);
+        return results.ToInterop();
     }
 
     public static async ValueTask<IMessage> HandleDeleteNodesAsync(DrivePhotosClientDeleteNodesRequest request)
@@ -100,7 +100,7 @@ internal static class InteropProtonPhotosClient
             request.NodeUids.Select(NodeUid.Parse),
             cancellationToken).ConfigureAwait(false);
 
-        return ConvertToNodeResultListResponse(results);
+        return results.ToInterop();
     }
 
     public static async ValueTask<IMessage> HandleRestoreNodesAsync(DrivePhotosClientRestoreNodesRequest request)
@@ -113,7 +113,7 @@ internal static class InteropProtonPhotosClient
             request.NodeUids.Select(NodeUid.Parse),
             cancellationToken).ConfigureAwait(false);
 
-        return ConvertToNodeResultListResponse(results);
+        return results.ToInterop();
     }
 
     public static async ValueTask<IMessage?> HandleEnumerateTrashAsync(DrivePhotosClientEnumerateTrashRequest request, nint bindingsHandle)
@@ -125,7 +125,7 @@ internal static class InteropProtonPhotosClient
 
         await foreach (var x in client.EnumerateTrashAsync(cancellationToken).ConfigureAwait(false))
         {
-            yieldFunction.InvokeWithMessage(bindingsHandle, InteropProtonDriveClient.ConvertToNodeResult(x));
+            yieldFunction.InvokeWithMessage(bindingsHandle, x.ToInterop());
         }
 
         return null;
@@ -154,16 +154,9 @@ internal static class InteropProtonPhotosClient
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
         var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
 
-        var nodeResult = await client.GetNodeAsync(
-            NodeUid.Parse(request.NodeUid),
-            cancellationToken).ConfigureAwait(false);
+        var node = await client.GetNodeAsync(NodeUid.Parse(request.NodeUid), cancellationToken).ConfigureAwait(false);
 
-        if (nodeResult == null)
-        {
-            return null;
-        }
-
-        return InteropProtonDriveClient.ConvertToNodeResult(nodeResult.Value);
+        return node?.ToInterop();
     }
 
     public static async ValueTask<IMessage?> HandleEnumeratePhotosTimelineAsync(DrivePhotosClientEnumerateTimelineRequest request, nint bindingsHandle)
@@ -228,7 +221,7 @@ internal static class InteropProtonPhotosClient
             }
             else
             {
-                thumbnail.Error = InteropProtonDriveClient.ConvertToDriveError(error);
+                thumbnail.Error = error.ToInterop();
             }
 
             yieldFunction.InvokeWithMessage(bindingsHandle, thumbnail);
@@ -305,29 +298,5 @@ internal static class InteropProtonPhotosClient
         {
             // TODO: Implement SHA1 generation callback
         }
-    }
-
-    private static NodeResultListResponse ConvertToNodeResultListResponse(IReadOnlyDictionary<NodeUid, Result<Exception>> results)
-    {
-        return new NodeResultListResponse
-        {
-            Results =
-            {
-                results.Select(pair =>
-                {
-                    var result = new NodeResultPair
-                    {
-                        NodeUid = pair.Key.ToString(),
-                    };
-
-                    if (pair.Value.TryGetError(out var exception))
-                    {
-                        result.Error = exception.ToProtoError(InteropDriveErrorConverter.SetDomainAndCodes);
-                    }
-
-                    return result;
-                }),
-            },
-        };
     }
 }

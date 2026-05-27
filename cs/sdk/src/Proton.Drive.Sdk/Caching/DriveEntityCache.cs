@@ -4,7 +4,6 @@ using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Serialization;
 using Proton.Drive.Sdk.Shares;
 using Proton.Drive.Sdk.Volumes;
-using Proton.Sdk;
 using Proton.Sdk.Caching;
 
 namespace Proton.Drive.Sdk.Caching;
@@ -108,13 +107,13 @@ internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEnti
 
     public ValueTask SetNodeAsync(
         NodeUid nodeId,
-        Result<Node, DegradedNode> nodeProvisionResult,
+        Node node,
         ShareId? membershipShareId,
         ReadOnlyMemory<byte> nameHashDigest,
         CancellationToken cancellationToken)
     {
         var serializedValue = JsonSerializer.Serialize(
-            new CachedNodeInfo(nodeProvisionResult, membershipShareId, nameHashDigest),
+            new CachedNodeInfo(node, membershipShareId, nameHashDigest),
             DriveEntitiesSerializerContext.Default.CachedNodeInfo);
 
         return _repository.SetAsync(GetNodeCacheKey(nodeId), serializedValue, cancellationToken);

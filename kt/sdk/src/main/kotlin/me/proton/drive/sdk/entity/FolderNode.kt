@@ -6,10 +6,10 @@ data class FolderNode(
     override val uid: NodeUid,
     override val parentUid: ParentNodeUid?,
     override val treeEventScopeId: ScopeId,
-    override val name: String,
+    override val name: Result<String>,
     override val creationTime: Instant,
     override val trashTime: Instant?,
     override val nameAuthor: Result<Author>,
     override val author: Result<Author>,
+    override val errors: List<DriveError>,
 ) : Node
-

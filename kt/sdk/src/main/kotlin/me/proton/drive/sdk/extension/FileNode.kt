@@ -11,7 +11,7 @@ fun ProtonDriveSdk.FileNode.toEntity() = FileNode(
     uid = NodeUid(uid),
     parentUid = parentUid.takeIf { hasParentUid() }?.let(::ParentNodeUid),
     treeEventScopeId = ScopeId(treeEventScopeId),
-    name = name,
+    name = name.toEntity(),
     mediaType = mediaType,
     creationTime = creationTime.toInstant(),
     trashTime = trashTimeOrNull?.toInstant(),
@@ -19,4 +19,5 @@ fun ProtonDriveSdk.FileNode.toEntity() = FileNode(
     author = author.toEntity(),
     activeRevision = activeRevision.toEntity(),
     totalSizeOnCloudStorage = totalSizeOnCloudStorage,
+    errors = errorsList.map { it.toEntity() },
 )

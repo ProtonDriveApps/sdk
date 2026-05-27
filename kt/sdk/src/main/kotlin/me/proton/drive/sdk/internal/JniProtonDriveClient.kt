@@ -3,16 +3,16 @@ package me.proton.drive.sdk.internal
 import com.google.protobuf.Any
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
-import me.proton.drive.sdk.converter.NodeResultConverter
+import me.proton.drive.sdk.converter.NodeConverter
 import me.proton.drive.sdk.converter.NodeResultListResponseConverter
-import me.proton.drive.sdk.converter.FolderNodeConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
-import me.proton.drive.sdk.entity.NodeResult
+import me.proton.drive.sdk.entity.Node
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.StringResponseCallback
 import me.proton.drive.sdk.extension.UnitResponseCallback
 import me.proton.drive.sdk.extension.asCallback
 import me.proton.drive.sdk.extension.asNullableCallback
+import me.proton.drive.sdk.extension.toFolder
 import me.proton.drive.sdk.extension.toLongResponse
 import proton.drive.sdk.ProtonDriveSdk
 import proton.drive.sdk.driveClientCreateFromSessionRequest
@@ -109,32 +109,32 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
 
     suspend fun createFolder(
         request: ProtonDriveSdk.DriveClientCreateFolderRequest,
-    ): ProtonDriveSdk.FolderNode = executeOnce("createFolder", FolderNodeConverter().asCallback) {
+    ): ProtonDriveSdk.FolderNode = executeOnce("createFolder", NodeConverter().asCallback) {
         driveClientCreateFolder = request
-    }
+    }.toFolder()
 
     suspend fun getMyFilesFolder(
         request: ProtonDriveSdk.DriveClientGetMyFilesFolderRequest,
-    ): ProtonDriveSdk.FolderNode = executeOnce("getMyFilesFolder", FolderNodeConverter().asCallback) {
+    ): ProtonDriveSdk.FolderNode = executeOnce("getMyFilesFolder", NodeConverter().asCallback) {
         driveClientGetMyFilesFolder = request
-    }
+    }.toFolder()
 
     suspend fun getNode(
         request: ProtonDriveSdk.DriveClientGetNodeRequest,
-    ): ProtonDriveSdk.NodeResult? =
-        executeOnce("getNode", NodeResultConverter().asNullableCallback) {
+    ): ProtonDriveSdk.Node? =
+        executeOnce("getNode", NodeConverter().asNullableCallback) {
             driveClientGetNode = request
         }
 
     suspend fun enumerateFolderChildren(
         coroutineScope: CoroutineScope,
         request: ProtonDriveSdk.DriveClientEnumerateFolderChildrenRequest,
-        yield: suspend (ProtonDriveSdk.NodeResult) -> Unit,
+        yield: suspend (ProtonDriveSdk.Node) -> Unit,
     ): Unit = executeEnumerate(
         name = "enumerateFolderChildren",
         callback = UnitResponseCallback,
         yield = yield,
-        parser = ProtonDriveSdk.NodeResult::parseFrom,
+        parser = ProtonDriveSdk.Node::parseFrom,
         coroutineScopeProvider = { coroutineScope },
     ) {
         driveClientEnumerateFolderChildren = request
@@ -162,14 +162,14 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
         }
 
     suspend fun enumerateTrash(
-        coroutineScope: ProducerScope<NodeResult>,
+        coroutineScope: ProducerScope<Node>,
         request: ProtonDriveSdk.DriveClientEnumerateTrashRequest,
-        yield: suspend (ProtonDriveSdk.NodeResult) -> Unit,
+        yield: suspend (ProtonDriveSdk.Node) -> Unit,
     ): Unit = executeEnumerate(
         name = "enumerateTrash",
         callback = UnitResponseCallback,
         yield = yield,
-        parser = ProtonDriveSdk.NodeResult::parseFrom,
+        parser = ProtonDriveSdk.Node::parseFrom,
         coroutineScopeProvider = { coroutineScope }
     ) {
         driveClientEnumerateTrash = request

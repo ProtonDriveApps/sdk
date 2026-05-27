@@ -7,7 +7,7 @@ data class FileRevision(
     val creationTime: Instant,
     val sizeOnCloudStorage: Long,
     val claimedSize: Long?,
-    val claimedDigests: FileContentDigests,
+    val claimedDigests: FileContentDigests?,
     val claimedModificationTime: Instant?,
     val thumbnails: List<ThumbnailHeader>,
     val additionalClaimedMetadata: List<AdditionalMetadataProperty>?,

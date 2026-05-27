@@ -131,7 +131,7 @@ message FileNode {
     string uid = 1;
     string parent_uid = 2;
     string tree_event_scope_id = 3;
-    string name = 4;
+    StringResult name = 4;
     string media_type = 5;
     google.protobuf.Timestamp creation_time = 6;
     google.protobuf.Timestamp trash_time = 7; // optional
@@ -140,18 +140,20 @@ message FileNode {
     FileRevision active_revision = 10;
     int64 total_size_on_cloud_storage = 11;
     OwnedBy owned_by = 12;
+    repeated DriveError errors = 13;
 }
 
 message FolderNode {
     string uid = 1;
     string parent_uid = 2; // optional
     string tree_event_scope_id = 3;
-    string name = 4;
+    StringResult name = 4;
     google.protobuf.Timestamp creation_time = 5;
     google.protobuf.Timestamp trash_time = 6; // optional
     AuthorResult name_author = 7;
     AuthorResult author = 8;
     OwnedBy owned_by = 9;
+    repeated DriveError errors = 10;
 }
 
 message SignatureVerificationError {
@@ -424,8 +426,8 @@ message DriveClientEnumerateTrashRequest {
     int64 cancellation_token_source_handle = 3;
 }
 
-message TrashChildrenList {
-    repeated NodeResult children = 1;
+message TrashedNodeList {
+    repeated Node nodes = 1;
 }
 
 // The response must not have a value.
@@ -457,36 +459,17 @@ message DriveClientGetMyFilesFolderRequest {
     int64 cancellation_token_source_handle = 2;
 }
 
-// The response message must be of type NodeResult (nullable).
+// The response message must be of type Node (nullable).
 message DriveClientGetNodeRequest {
     int64 client_handle = 1;
     string node_uid = 2;
     int64 cancellation_token_source_handle = 3;
 }
 
-message FolderChildrenList {
-    repeated NodeResult children = 1;
-}
-
-// Generic result type for Node operations - contains either a successful node or a degraded node with errors
-message NodeResult {
-    oneof result {
-        Node value = 1;
-        DegradedNode error = 2;
-    }
-}
-
 message Node {
     oneof node {
         FolderNode folder = 1;
         FileNode file = 2;
-    }
-}
-
-message DegradedNode {
-    oneof node {
-        DegradedFolderNode folder = 1;
-        DegradedFileNode file = 2;
     }
 }
 
@@ -502,35 +485,6 @@ message StringResult {
     }
 }
 
-message DegradedFolderNode {
-    string uid = 1;
-    string parent_uid = 2; // optional
-    string tree_event_scope_id = 3;
-    StringResult name = 4;
-    google.protobuf.Timestamp creation_time = 5;
-    google.protobuf.Timestamp trash_time = 6; // optional
-    AuthorResult name_author = 7;
-    AuthorResult author = 8;
-    repeated DriveError errors = 9;
-    OwnedBy owned_by = 10;
-}
-
-message DegradedFileNode {
-    string uid = 1;
-    string parent_uid = 2;
-    string tree_event_scope_id = 3;
-    StringResult name = 4;
-    string media_type = 5;
-    google.protobuf.Timestamp creation_time = 6;
-    google.protobuf.Timestamp trash_time = 7; // optional
-    AuthorResult name_author = 8;
-    AuthorResult author = 9;
-    DegradedRevision active_revision = 10; // optional
-    int64 total_storage_quota_usage = 11;
-    repeated DriveError errors = 12;
-    OwnedBy owned_by = 13;
-}
-
 message FileContentDigests {
     bytes sha1 = 1; // optional
     bool sha1_verified = 2;
@@ -539,20 +493,6 @@ message FileContentDigests {
 message ThumbnailHeader {
     string id = 1;
     ThumbnailType type = 2;
-}
-
-message DegradedRevision {
-    string uid = 1;
-    google.protobuf.Timestamp creation_time = 2;
-    int64 size_on_cloud_storage = 3;
-    int64 claimed_size = 4; // optional
-    FileContentDigests claimed_digests = 5; // optional
-    google.protobuf.Timestamp claimed_modification_time = 6; // optional
-    repeated ThumbnailHeader thumbnails = 7;
-    repeated AdditionalMetadataProperty additional_claimed_metadata = 8; // optional
-    AuthorResult content_author = 9; // optional
-    bool can_decrypt = 10;
-    repeated DriveError errors = 11;
 }
 
 // Drive - downloads
@@ -676,15 +616,11 @@ message DrivePhotosClientEnumerateTimelineRequest {
     int64 cancellation_token_source_handle = 3;
 }
 
-// The response message must be of type NodeResult (nullable).
+// The response message must be of type Node (nullable).
 message DrivePhotosClientGetNodeRequest {
     int64 client_handle = 1;
     string node_uid = 2;
     int64 cancellation_token_source_handle = 3;
-}
-
-message PhotosTimelineList {
-  repeated PhotosTimelineItem items = 1;
 }
 
 message PhotosTimelineItem {
@@ -818,7 +754,7 @@ message DrivePhotosClientRestoreNodesRequest {
     int64 cancellation_token_source_handle = 3;
 }
 
-// The response message must be of type TrashChildrenList
+// The response must not have a value, yield_action will be called for each item.
 message DrivePhotosClientEnumerateTrashRequest {
     int64 client_handle = 1;
     int64 yield_action = 3;
