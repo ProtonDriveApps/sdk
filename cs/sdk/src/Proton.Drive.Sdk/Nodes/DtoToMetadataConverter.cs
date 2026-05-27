@@ -17,7 +17,7 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal static class DtoToMetadataConverter
 {
-    public static async Task<Result<NodeMetadata, DegradedNodeMetadata>> ConvertDtoToNodeMetadataAsync(
+    public static async Task<NodeMetadata> ConvertDtoToNodeMetadataAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
@@ -43,7 +43,7 @@ internal static class DtoToMetadataConverter
             cancellationToken).ConfigureAwait(false);
     }
 
-    public static async Task<Result<NodeMetadata, DegradedNodeMetadata>> ConvertDtoToNodeMetadataAsync(
+    public static async Task<NodeMetadata> ConvertDtoToNodeMetadataAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
@@ -55,31 +55,28 @@ internal static class DtoToMetadataConverter
         var nodeMetadata = linkType switch
         {
             LinkType.Folder =>
-                (await ConvertDtoToFolderMetadataAsync(
+                NodeMetadata.FromFolder(await ConvertDtoToFolderMetadataAsync(
                     client,
                     volumeId,
                     linkDetailsDto,
                     parentKey,
-                    cancellationToken).ConfigureAwait(false))
-                .Convert(NodeMetadata.FromFolder, DegradedNodeMetadata.FromFolder),
+                    cancellationToken).ConfigureAwait(false)),
 
             LinkType.File =>
-                (await ConvertDtoToFileMetadataAsync(
+                NodeMetadata.FromFile(await ConvertDtoToFileMetadataAsync(
                     client,
                     volumeId,
                     linkDetailsDto,
                     parentKey,
-                    cancellationToken).ConfigureAwait(false))
-                .Convert(NodeMetadata.FromFile, DegradedNodeMetadata.FromFile),
+                    cancellationToken).ConfigureAwait(false)),
 
             LinkType.Album =>
-                (await ConvertDtoToAlbumMetadataAsync(
+                NodeMetadata.FromFolder(await ConvertDtoToAlbumMetadataAsync(
                     client,
                     volumeId,
                     linkDetailsDto,
                     parentKey,
-                    cancellationToken).ConfigureAwait(false))
-                .Convert(NodeMetadata.FromFolder, DegradedNodeMetadata.FromFolder),
+                    cancellationToken).ConfigureAwait(false)),
 
             // FIXME: handle other existing node types, and determine a way for forward compatibility or degraded result in case a new node type is introduced
             _ => throw new NotSupportedException($"Link type {linkType} is not supported."),
@@ -88,7 +85,7 @@ internal static class DtoToMetadataConverter
         return nodeMetadata;
     }
 
-    public static async ValueTask<Result<FolderMetadata, DegradedFolderMetadata>> ConvertDtoToFolderMetadataAsync(
+    public static async ValueTask<FolderMetadata> ConvertDtoToFolderMetadataAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
@@ -109,7 +106,7 @@ internal static class DtoToMetadataConverter
             cancellationToken).ConfigureAwait(false);
     }
 
-    public static async ValueTask<Result<FolderMetadata, DegradedFolderMetadata>> ConvertDtoToAlbumMetadataAsync(
+    public static async ValueTask<FolderMetadata> ConvertDtoToAlbumMetadataAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
@@ -130,7 +127,7 @@ internal static class DtoToMetadataConverter
             cancellationToken).ConfigureAwait(false);
     }
 
-    public static async Task<Result<FileMetadata, DegradedFileMetadata>> ConvertDtoToFileMetadataAsync(
+    public static async Task<FileMetadata> ConvertDtoToFileMetadataAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
@@ -181,7 +178,7 @@ internal static class DtoToMetadataConverter
             || !extendedAttributesIsValid
             || !contentKeyIsValid)
         {
-            var (degradedFileMetadata, failedDecryptionFields) = CreateDegradedFileMetadata(
+            var (partialFileMetadata, failedDecryptionFields) = CreatePartialFileMetadata(
                 linkDetailsDto,
                 decryptionResult,
                 nameResult,
@@ -196,18 +193,18 @@ internal static class DtoToMetadataConverter
                 nameSessionKey,
                 membershipDto);
 
-            await client.Cache.Secrets.SetFileSecretsAsync(uid, degradedFileMetadata.Secrets, cancellationToken).ConfigureAwait(false);
+            await client.Cache.Secrets.SetFileSecretsAsync(uid, partialFileMetadata.Secrets, cancellationToken).ConfigureAwait(false);
 
-            await client.Cache.Entities.SetNodeAsync(uid, degradedFileMetadata.Node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken)
+            await client.Cache.Entities.SetNodeAsync(uid, partialFileMetadata.Node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken)
                 .ConfigureAwait(false);
 
             await TelemetryRecorder.TryRecordDecryptionErrorAsync(
                 client,
-                DegradedNodeMetadata.FromFile(degradedFileMetadata).Node,
+                partialFileMetadata.Node,
                 failedDecryptionFields,
                 cancellationToken).ConfigureAwait(false);
 
-            return degradedFileMetadata;
+            return partialFileMetadata;
         }
 
         var secrets = new FileSecrets
@@ -260,6 +257,7 @@ internal static class DtoToMetadataConverter
                 CaptureTime = linkDetailsDto.Photo.CaptureTime,
                 AlbumUids = linkDetailsDto.Photo.AlbumInclusions.Select(a => new NodeUid(uid.VolumeId, a.Id)).ToList(),
                 OwnedBy = ownedBy,
+                Errors = [],
             }
             : new FileNode
             {
@@ -274,6 +272,7 @@ internal static class DtoToMetadataConverter
                 ActiveRevision = activeRevision,
                 TotalSizeOnCloudStorage = fileDto.TotalSizeOnStorage,
                 OwnedBy = ownedBy,
+                Errors = [],
             };
 
         await client.Cache.Secrets.SetFileSecretsAsync(uid, secrets, cancellationToken).ConfigureAwait(false);
@@ -283,7 +282,7 @@ internal static class DtoToMetadataConverter
         return new FileMetadata(node, secrets, membershipDto?.ShareId, linkDto.NameHashDigest);
     }
 
-    private static (DegradedFileMetadata Metadata, Dictionary<EncryptedField, ProtonDriveError> FailedDecryptionFields) CreateDegradedFileMetadata(
+    private static (FileMetadata Metadata, Dictionary<EncryptedField, ProtonDriveError> FailedDecryptionFields) CreatePartialFileMetadata(
         LinkDetailsDto linkDetailsDto,
         FileDecryptionResult decryptionResult,
         Result<string, ProtonDriveError> nameResult,
@@ -299,11 +298,11 @@ internal static class DtoToMetadataConverter
         ShareMembershipSummaryDto? membershipDto)
     {
         Dictionary<EncryptedField, ProtonDriveError> failedDecryptionFields = [];
-        List<ProtonDriveError> nodeKeyErrors = [];
+        List<ProtonDriveError> nodeErrors = [];
 
         if (decryptionResult.Link.Passphrase.TryGetError(out var passphraseError))
         {
-            nodeKeyErrors.Add(passphraseError);
+            nodeErrors.Add(passphraseError);
 
             if (passphraseError is DecryptionError)
             {
@@ -312,7 +311,7 @@ internal static class DtoToMetadataConverter
         }
         else if (decryptionResult.Link.NodeKey.TryGetError(out var nodeKeyError))
         {
-            nodeKeyErrors.Add(nodeKeyError);
+            nodeErrors.Add(nodeKeyError);
 
             if (nodeKeyError is DecryptionError)
             {
@@ -329,10 +328,9 @@ internal static class DtoToMetadataConverter
             failedDecryptionFields.Add(EncryptedField.NodeName, nameError);
         }
 
-        var revisionErrors = new List<ProtonDriveError>();
         if (decryptionResult.ExtendedAttributes.TryGetError(out var extendedAttributesError))
         {
-            revisionErrors.Add(extendedAttributesError);
+            nodeErrors.Add(extendedAttributesError);
 
             if (extendedAttributesError is DecryptionError)
             {
@@ -352,7 +350,7 @@ internal static class DtoToMetadataConverter
             x => decryptionResult.ContentAuthorshipClaim.ToAuthorshipResult(x.AuthorshipVerificationFailure),
             error => new SignatureVerificationError(decryptionResult.ContentAuthorshipClaim.Author, "Content key decryption failed", error));
 
-        var degradedRevision = new DegradedRevision
+        var partialRevision = new Revision
         {
             Uid = new RevisionUid(uid, activeRevisionDto.Id),
             CreationTime = activeRevisionDto.CreationTime,
@@ -363,13 +361,11 @@ internal static class DtoToMetadataConverter
             Thumbnails = thumbnails.AsReadOnly(),
             AdditionalClaimedMetadata = additionalMetadata,
             ContentAuthor = contentAuthor,
-            CanDecrypt = decryptionResult.ContentKey.IsSuccess,
-            Errors = revisionErrors,
         };
 
         var ownedBy = MapOwnedBy(linkDto.OwnedBy);
-        var degradedNode = linkDetailsDto.Photo is not null
-            ? new DegradedPhotoNode
+        var partialNode = linkDetailsDto.Photo is not null
+            ? new PhotoNode
             {
                 Uid = uid,
                 ParentUid = parentUid,
@@ -379,14 +375,14 @@ internal static class DtoToMetadataConverter
                 TrashTime = linkDto.TrashTime,
                 Author = nodeAuthor,
                 MediaType = fileDto.MediaType,
-                ActiveRevision = degradedRevision,
-                TotalStorageQuotaUsage = fileDto.TotalSizeOnStorage,
-                Errors = nodeKeyErrors,
+                ActiveRevision = partialRevision,
+                TotalSizeOnCloudStorage = fileDto.TotalSizeOnStorage,
+                Errors = nodeErrors,
                 CaptureTime = linkDetailsDto.Photo.CaptureTime,
                 AlbumUids = linkDetailsDto.Photo.AlbumInclusions.Select(a => new NodeUid(uid.VolumeId, a.Id)).ToList(),
                 OwnedBy = ownedBy,
             }
-            : new DegradedFileNode
+            : new FileNode
             {
                 Uid = uid,
                 ParentUid = parentUid,
@@ -396,13 +392,13 @@ internal static class DtoToMetadataConverter
                 TrashTime = linkDto.TrashTime,
                 Author = nodeAuthor,
                 MediaType = fileDto.MediaType,
-                ActiveRevision = degradedRevision,
-                TotalStorageQuotaUsage = fileDto.TotalSizeOnStorage,
-                Errors = nodeKeyErrors,
+                ActiveRevision = partialRevision,
+                TotalSizeOnCloudStorage = fileDto.TotalSizeOnStorage,
+                Errors = nodeErrors,
                 OwnedBy = ownedBy,
             };
 
-        var degradedSecrets = new DegradedFileSecrets
+        var partialSecrets = new FileSecrets
         {
             Key = decryptionResult.Link.NodeKey.Merge(x => (PgpPrivateKey?)x, _ => null),
             PassphraseSessionKey = decryptionResult.Link.Passphrase.Merge(x => (PgpSessionKey?)x.SessionKey, _ => null),
@@ -410,10 +406,10 @@ internal static class DtoToMetadataConverter
             ContentKey = decryptionResult.ContentKey.Merge(x => (PgpSessionKey?)x.Data, _ => null),
         };
 
-        return (new DegradedFileMetadata(degradedNode, degradedSecrets, membershipDto?.ShareId, linkDto.NameHashDigest), failedDecryptionFields);
+        return (new FileMetadata(partialNode, partialSecrets, membershipDto?.ShareId, linkDto.NameHashDigest), failedDecryptionFields);
     }
 
-    private static async ValueTask<Result<FolderMetadata, DegradedFolderMetadata>> ConvertDtoToFolderMetadataAsync(
+    private static async ValueTask<FolderMetadata> ConvertDtoToFolderMetadataAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
@@ -439,7 +435,7 @@ internal static class DtoToMetadataConverter
             || !nodeKeyIsValid
             || !hashKeyIsValid)
         {
-            var (degradedFolderMetadata, failedDecryptionFields) = CreateDegradedFolderMetadata(
+            var (partialFolderMetadata, failedDecryptionFields) = CreatePartialFolderMetadata(
                 decryptionResult,
                 nameResult,
                 uid,
@@ -448,18 +444,18 @@ internal static class DtoToMetadataConverter
                 nameSessionKey,
                 membershipDto);
 
-            await client.Cache.Secrets.SetFolderSecretsAsync(uid, degradedFolderMetadata.Secrets, cancellationToken).ConfigureAwait(false);
+            await client.Cache.Secrets.SetFolderSecretsAsync(uid, partialFolderMetadata.Secrets, cancellationToken).ConfigureAwait(false);
 
-            await client.Cache.Entities.SetNodeAsync(uid, degradedFolderMetadata.Node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken)
+            await client.Cache.Entities.SetNodeAsync(uid, partialFolderMetadata.Node, membershipDto?.ShareId, linkDto.NameHashDigest, cancellationToken)
                 .ConfigureAwait(false);
 
             await TelemetryRecorder.TryRecordDecryptionErrorAsync(
                 client,
-                DegradedNodeMetadata.FromFolder(degradedFolderMetadata).Node,
+                partialFolderMetadata.Node,
                 failedDecryptionFields,
                 cancellationToken).ConfigureAwait(false);
 
-            return degradedFolderMetadata;
+            return partialFolderMetadata;
         }
 
         var secrets = new FolderSecrets
@@ -488,6 +484,7 @@ internal static class DtoToMetadataConverter
             CreationTime = linkDto.CreationTime,
             TrashTime = linkDto.TrashTime,
             OwnedBy = MapOwnedBy(linkDto.OwnedBy),
+            Errors = [],
         };
 
         await client.Cache.Secrets.SetFolderSecretsAsync(uid, secrets, cancellationToken).ConfigureAwait(false);
@@ -497,7 +494,7 @@ internal static class DtoToMetadataConverter
         return new FolderMetadata(node, secrets, membershipDto?.ShareId, linkDto.NameHashDigest);
     }
 
-    private static (DegradedFolderMetadata Metadata, Dictionary<EncryptedField, ProtonDriveError> FailedDecryptionFields) CreateDegradedFolderMetadata(
+    private static (FolderMetadata Metadata, Dictionary<EncryptedField, ProtonDriveError> FailedDecryptionFields) CreatePartialFolderMetadata(
         FolderDecryptionResult decryptionResult,
         Result<string, ProtonDriveError> nameResult,
         NodeUid uid,
@@ -553,7 +550,7 @@ internal static class DtoToMetadataConverter
             x => decryptionResult.Link.NameAuthorshipClaim.ToAuthorshipResult(x.AuthorshipVerificationFailure),
             _ => new SignatureVerificationError(decryptionResult.Link.NameAuthorshipClaim.Author, "Name decryption failed"));
 
-        var degradedNode = new DegradedFolderNode
+        var partialNode = new FolderNode
         {
             Uid = uid,
             ParentUid = parentUid,
@@ -566,7 +563,7 @@ internal static class DtoToMetadataConverter
             OwnedBy = MapOwnedBy(linkDto.OwnedBy),
         };
 
-        var degradedSecrets = new DegradedFolderSecrets
+        var partialSecrets = new FolderSecrets
         {
             Key = decryptionResult.Link.NodeKey.TryGetValue(out var key) ? key : null,
             PassphraseSessionKey = decryptionResult.Link.Passphrase.Merge(x => (PgpSessionKey?)x.SessionKey, _ => null),
@@ -574,7 +571,7 @@ internal static class DtoToMetadataConverter
             HashKey = decryptionResult.HashKey.Merge(x => (ReadOnlyMemory<byte>?)x.Data, _ => null),
         };
 
-        return (new DegradedFolderMetadata(degradedNode, degradedSecrets, membershipDto?.ShareId, linkDto.NameHashDigest), failedDecryptionFields);
+        return (new FolderMetadata(partialNode, partialSecrets, membershipDto?.ShareId, linkDto.NameHashDigest), failedDecryptionFields);
     }
 
     private static async ValueTask<PgpPrivateKey> GetEntryPointKeyOrThrowAsync(
@@ -610,9 +607,9 @@ internal static class DtoToMetadataConverter
 
             var nodeUid = new NodeUid(volumeId, currentId.Value);
 
-            var folderSecretsResult = await secretCache.TryGetFolderSecretsAsync(nodeUid, cancellationToken).ConfigureAwait(false);
+            var folderSecrets = await secretCache.TryGetFolderSecretsAsync(nodeUid, cancellationToken).ConfigureAwait(false);
 
-            var folderKey = folderSecretsResult?.Merge(x => x.Key, x => x.Key);
+            var folderKey = folderSecrets?.Key;
 
             if (folderKey is not null)
             {

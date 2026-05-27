@@ -14,15 +14,14 @@ namespace Proton.Drive.Sdk.Serialization;
     Converters =
     [
         typeof(RefResultJsonConverter<string, InvalidNameError>),
+        typeof(RefResultJsonConverter<string, ProtonDriveError>),
         typeof(ValResultJsonConverter<Author, SignatureVerificationError>),
-        typeof(RefResultJsonConverter<Node, DegradedNode>),
     ])]
 #pragma warning restore SA1114, SA1118
 [JsonSerializable(typeof(Share))]
-[JsonSerializable(typeof(FolderNode))]
 [JsonSerializable(typeof(CachedNodeInfo))]
 [JsonSerializable(typeof(VolumeId?))]
+[JsonSerializable(typeof(SerializableRefResult<string, ProtonDriveError>))]
 [JsonSerializable(typeof(SerializableRefResult<string, string>))]
 [JsonSerializable(typeof(SerializableValResult<Author, SignatureVerificationError>))]
-[JsonSerializable(typeof(SerializableRefResult<Node, DegradedNode>))]
 internal sealed partial class DriveEntitiesSerializerContext : JsonSerializerContext;

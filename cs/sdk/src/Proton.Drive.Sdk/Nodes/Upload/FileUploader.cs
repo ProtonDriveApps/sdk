@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Proton.Drive.Sdk.Telemetry;
-using Proton.Sdk;
 using Proton.Sdk.Threading;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
@@ -226,8 +225,7 @@ public sealed class FileUploader : IDisposable
     {
         var cachedNodeInfo = await _client.Cache.Entities.TryGetNodeAsync(revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
 
-        if (cachedNodeInfo is not var (nodeProvisionResult, membershipShareId, nameHashDigest) || !nodeProvisionResult.TryGetValue(out var node) ||
-            node is not FileNode fileNode)
+        if (cachedNodeInfo is not (FileNode fileNode, var membershipShareId, var nameHashDigest))
         {
             await _client.Cache.Entities.RemoveNodeAsync(revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
             return;

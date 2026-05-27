@@ -16,7 +16,7 @@ public abstract record Node
 
     public string TreeEventScopeId => Uid.VolumeId.ToString();
 
-    public required string Name { get; init; }
+    public required Result<string, ProtonDriveError> Name { get; init; }
 
     public required DateTime CreationTime { get; init; }
 
@@ -27,4 +27,6 @@ public abstract record Node
     public required Result<Author, SignatureVerificationError> Author { get; init; }
 
     public required OwnedBy OwnedBy { get; init; }
+
+    public required IReadOnlyList<ProtonDriveError> Errors { get; init; }
 }

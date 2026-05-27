@@ -44,7 +44,7 @@ internal static class PhotosNodeOperations
             useCacheOnly: false,
             cancellationToken).ConfigureAwait(false);
 
-        return (FolderNode)metadata.GetValueOrThrow().Node;
+        return metadata.GetFolderNodeOrThrow();
     }
 
     public static async IAsyncEnumerable<PhotosTimelineItem> EnumeratePhotosTimelineAsync(
@@ -102,7 +102,7 @@ internal static class PhotosNodeOperations
             shareKey,
             cancellationToken).ConfigureAwait(false);
 
-        return metadataResult.GetValueOrThrow().Node;
+        return metadataResult.Node;
     }
 
     private static async ValueTask<FolderNode> CreatePhotosFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)

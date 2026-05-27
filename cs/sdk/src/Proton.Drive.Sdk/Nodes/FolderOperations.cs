@@ -6,13 +6,12 @@ using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Serialization;
-using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
 
 internal static class FolderOperations
 {
-    public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateChildrenAsync(
+    public static async IAsyncEnumerable<Node> EnumerateChildrenAsync(
         ProtonDriveClient client,
         NodeUid folderUid,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -22,9 +21,7 @@ internal static class FolderOperations
 
         var folderSecretsResult = await GetSecretsAsync(client, folderUid, cancellationToken).ConfigureAwait(false);
 
-        var folderKey = folderSecretsResult.TryGetValueElseError(out var folderSecrets, out var degradedFolderSecrets)
-            ? folderSecrets.Key
-            : degradedFolderSecrets.Key ?? throw new ProtonDriveException($"Folder key not available for {folderUid}");
+        var folderKey = folderSecretsResult.Key ?? throw new ProtonDriveException($"Node key not available for folder {folderUid}");
 
         var batchLoader = new FolderChildrenBatchLoader(client, folderUid.VolumeId, folderKey);
 
@@ -44,19 +41,19 @@ internal static class FolderOperations
 
                 if (cachedChildNodeInfo is null)
                 {
-                    foreach (var nodeResult in await batchLoader.QueueAndTryLoadBatchAsync(childLinkId, cancellationToken).ConfigureAwait(false))
+                    await foreach (var nodeResult in batchLoader.QueueAndTryLoadBatchAsync(childLinkId, cancellationToken).ConfigureAwait(false))
                     {
                         yield return nodeResult;
                     }
                 }
                 else
                 {
-                    yield return cachedChildNodeInfo.Value.NodeProvisionResult;
+                    yield return cachedChildNodeInfo.Value.Node;
                 }
             }
         }
 
-        foreach (var node in await batchLoader.LoadRemainingAsync(cancellationToken).ConfigureAwait(false))
+        await foreach (var node in batchLoader.LoadRemainingAsync(cancellationToken).ConfigureAwait(false))
         {
             yield return node;
         }
@@ -75,9 +72,7 @@ internal static class FolderOperations
             throw new InvalidOperationException("Parent node not found.");
         }
 
-        var parentOwnedBy = parentResult.Value.TryGetValueElseError(out var parentNode, out var parentDegraded)
-            ? parentNode.OwnedBy
-            : parentDegraded.OwnedBy;
+        var parentOwnedBy = parentResult.OwnedBy;
 
         var (parentKey, parentHashKey) = await GetKeyAndHashKeyAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
 
@@ -152,6 +147,7 @@ internal static class FolderOperations
             Author = author,
             CreationTime = DateTime.UtcNow,
             OwnedBy = parentOwnedBy,
+            Errors = [],
         };
 
         await client.Cache.Entities.SetNodeAsync(folderUid, folderNode, membershipShareId: null, nameHashDigest, cancellationToken).ConfigureAwait(false);
@@ -159,7 +155,7 @@ internal static class FolderOperations
         return folderNode;
     }
 
-    public static async ValueTask<Result<FolderSecrets, DegradedFolderSecrets>> GetSecretsAsync(
+    public static async ValueTask<FolderSecrets> GetSecretsAsync(
         ProtonDriveClient client,
         NodeUid folderUid,
         CancellationToken cancellationToken)
@@ -168,13 +164,13 @@ internal static class FolderOperations
 
         if (result is null)
         {
-            var nodeProvisionResult = await NodeOperations.GetFreshNodeMetadataAsync(client, folderUid, knownShareAndKey: null, cancellationToken)
+            var nodeMetadata = await NodeOperations.GetFreshNodeMetadataAsync(client, folderUid, knownShareAndKey: null, cancellationToken)
                 .ConfigureAwait(false);
 
-            result = nodeProvisionResult.GetFolderSecretsOrThrow();
+            result = nodeMetadata.GetFolderSecretsOrThrow();
         }
 
-        return result.Value;
+        return result;
     }
 
     public static async ValueTask<(PgpPrivateKey Key, ReadOnlyMemory<byte> HashKey)> GetKeyAndHashKeyAsync(
@@ -184,13 +180,8 @@ internal static class FolderOperations
     {
         var secretsResult = await GetSecretsAsync(client, folderUid, cancellationToken).ConfigureAwait(false);
 
-        if (secretsResult.TryGetValueElseError(out var secrets, out var degradedSecrets))
-        {
-            return (secrets.Key, secrets.HashKey);
-        }
-
-        var key = degradedSecrets.Key ?? throw new ProtonDriveException($"Parent folder key not available for {folderUid}");
-        var hashKey = degradedSecrets.HashKey ?? throw new ProtonDriveException($"Parent folder hash key not available for {folderUid}");
+        var key = secretsResult.Key ?? throw new ProtonDriveException($"Parent folder key not available for {folderUid}");
+        var hashKey = secretsResult.HashKey ?? throw new ProtonDriveException($"Parent folder hash key not available for {folderUid}");
 
         return (key, hashKey);
     }

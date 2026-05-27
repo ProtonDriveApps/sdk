@@ -94,15 +94,14 @@ public sealed class ProtonPhotosClient
         throw new NotImplementedException();
     }
 
-    public ValueTask<Result<Node, DegradedNode>?> GetNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
+    public ValueTask<Node?> GetNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
     {
         return NodeOperations
             .EnumerateNodesAsync(DriveClient, nodeUid.VolumeId, [nodeUid.LinkId], forPhotos: true, cancellationToken)
-            .Select(x => (Result<Node, DegradedNode>?)x)
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(IEnumerable<NodeUid> nodeUids, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Node> EnumerateNodesAsync(IEnumerable<NodeUid> nodeUids, CancellationToken cancellationToken = default)
     {
         return NodeOperations.EnumerateNodesAsync(DriveClient, nodeUids, forPhotos: true, cancellationToken);
     }
@@ -147,7 +146,7 @@ public sealed class ProtonPhotosClient
         return NodeOperations.RestoreFromTrashAsync(DriveClient, uids, cancellationToken);
     }
 
-    public async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateTrashAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<Node> EnumerateTrashAsync([EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var volumeId = await VolumeOperations.TryGetPhotosVolumeIdAsync(DriveClient, cancellationToken).ConfigureAwait(false);
 

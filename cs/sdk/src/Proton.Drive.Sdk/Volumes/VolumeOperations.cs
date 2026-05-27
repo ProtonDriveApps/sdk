@@ -5,7 +5,6 @@ using Proton.Drive.Sdk.Api.Volumes;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Shares;
-using Proton.Sdk;
 using Proton.Sdk.Addresses;
 
 namespace Proton.Drive.Sdk.Volumes;
@@ -42,6 +41,7 @@ internal static class VolumeOperations
             Author = new Author { EmailAddress = defaultAddress.EmailAddress },
             CreationTime = DateTime.UtcNow,
             OwnedBy = new OwnedBy(Email: defaultAddress.EmailAddress),
+            Errors = [],
         };
 
         // The volume root folder never has siblings and does not need a name hash digest
@@ -58,7 +58,7 @@ internal static class VolumeOperations
         return (volume, share, rootFolder);
     }
 
-    public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateTrashAsync(
+    public static async IAsyncEnumerable<Node> EnumerateTrashAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -81,22 +81,22 @@ internal static class VolumeOperations
                 foreach (var linkId in linkIds)
                 {
                     var uid = new NodeUid(volumeId, linkId);
-                    var cachedNodeInfo = await client.Cache.Entities.TryGetNodeAsync(uid, cancellationToken).ConfigureAwait(false);
+                    var cachedNodeInfoOrNull = await client.Cache.Entities.TryGetNodeAsync(uid, cancellationToken).ConfigureAwait(false);
 
-                    if (cachedNodeInfo is null)
+                    if (cachedNodeInfoOrNull is not var (node, _, _))
                     {
-                        foreach (var nodeResult in await batchLoader.QueueAndTryLoadBatchAsync(linkId, cancellationToken).ConfigureAwait(false))
+                        await foreach (var nodeResult in batchLoader.QueueAndTryLoadBatchAsync(linkId, cancellationToken).ConfigureAwait(false))
                         {
                             yield return nodeResult;
                         }
                     }
                     else
                     {
-                        yield return cachedNodeInfo.Value.NodeProvisionResult;
+                        yield return node;
                     }
                 }
 
-                foreach (var node in await batchLoader.LoadRemainingAsync(cancellationToken).ConfigureAwait(false))
+                await foreach (var node in batchLoader.LoadRemainingAsync(cancellationToken).ConfigureAwait(false))
                 {
                     yield return node;
                 }
@@ -133,6 +133,7 @@ internal static class VolumeOperations
             Author = new Author { EmailAddress = defaultAddress.EmailAddress },
             CreationTime = DateTime.UtcNow,
             OwnedBy = new OwnedBy(Email: defaultAddress.EmailAddress),
+            Errors = [],
         };
 
         // The volume root folder never has siblings and does not need a name hash digest
@@ -192,12 +193,17 @@ internal static class VolumeOperations
     {
         rootShareKey = CryptoGenerator.GeneratePrivateKey();
 
+        var rootFolderKey = CryptoGenerator.GeneratePrivateKey();
+        var rootFolderPassphraseSessionKey = CryptoGenerator.GenerateSessionKey();
+        var rootFolderNameSessionKey = CryptoGenerator.GenerateSessionKey();
+        var rootFolderHashKey = CryptoGenerator.GenerateFolderHashKey();
+
         rootFolderSecrets = new FolderSecrets
         {
-            Key = CryptoGenerator.GeneratePrivateKey(),
-            PassphraseSessionKey = CryptoGenerator.GenerateSessionKey(),
-            NameSessionKey = CryptoGenerator.GenerateSessionKey(),
-            HashKey = CryptoGenerator.GenerateFolderHashKey(),
+            Key = rootFolderKey,
+            PassphraseSessionKey = rootFolderPassphraseSessionKey,
+            NameSessionKey = rootFolderNameSessionKey,
+            HashKey = rootFolderHashKey,
         };
 
         Span<byte> sharePassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
@@ -208,19 +214,20 @@ internal static class VolumeOperations
 
         Span<byte> folderPassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
         var folderPassphrase = CryptoGenerator.GeneratePassphrase(folderPassphraseBuffer);
-        using var lockedFolderKey = rootFolderSecrets.Key.Lock(folderPassphrase);
 
-        var folderPassphraseEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderSecrets.PassphraseSessionKey);
+        using var lockedFolderKey = rootFolderKey.Lock(folderPassphrase);
+
+        var folderPassphraseEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderPassphraseSessionKey);
         var encryptedFolderPassphrase = PgpEncrypter.EncryptAndSign(
             folderPassphrase,
             folderPassphraseEncryptionSecrets,
             addressKey,
             out var folderPassphraseSignature);
 
-        var nameEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderSecrets.NameSessionKey);
+        var nameEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderNameSessionKey);
         var encryptedName = PgpEncrypter.EncryptAndSignText(RootFolderName, nameEncryptionSecrets, addressKey);
 
-        var encryptedHashKey = rootFolderSecrets.Key.EncryptAndSign(rootFolderSecrets.HashKey.Span, addressKey);
+        var encryptedHashKey = rootFolderKey.EncryptAndSign(rootFolderHashKey, addressKey);
 
         return new VolumeCreationRequest
         {
@@ -246,12 +253,17 @@ internal static class VolumeOperations
     {
         rootShareKey = CryptoGenerator.GeneratePrivateKey();
 
+        var rootFolderKey = CryptoGenerator.GeneratePrivateKey();
+        var rootFolderPassphraseSessionKey = CryptoGenerator.GenerateSessionKey();
+        var rootFolderNameSessionKey = CryptoGenerator.GenerateSessionKey();
+        var rootFolderHashKey = CryptoGenerator.GenerateFolderHashKey();
+
         rootFolderSecrets = new FolderSecrets
         {
-            Key = CryptoGenerator.GeneratePrivateKey(),
-            PassphraseSessionKey = CryptoGenerator.GenerateSessionKey(),
-            NameSessionKey = CryptoGenerator.GenerateSessionKey(),
-            HashKey = CryptoGenerator.GenerateFolderHashKey(),
+            Key = rootFolderKey,
+            PassphraseSessionKey = rootFolderPassphraseSessionKey,
+            NameSessionKey = rootFolderNameSessionKey,
+            HashKey = rootFolderHashKey,
         };
 
         Span<byte> sharePassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
@@ -262,19 +274,20 @@ internal static class VolumeOperations
 
         Span<byte> folderPassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
         var folderPassphrase = CryptoGenerator.GeneratePassphrase(folderPassphraseBuffer);
-        using var lockedFolderKey = rootFolderSecrets.Key.Lock(folderPassphrase);
 
-        var folderPassphraseEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderSecrets.PassphraseSessionKey);
+        using var lockedFolderKey = rootFolderKey.Lock(folderPassphrase);
+
+        var folderPassphraseEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderPassphraseSessionKey);
         var encryptedFolderPassphrase = PgpEncrypter.EncryptAndSign(
             folderPassphrase,
             folderPassphraseEncryptionSecrets,
             addressKey,
             out var folderPassphraseSignature);
 
-        var nameEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderSecrets.NameSessionKey);
+        var nameEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderNameSessionKey);
         var encryptedName = PgpEncrypter.EncryptAndSignText(RootFolderName, nameEncryptionSecrets, addressKey);
 
-        var encryptedHashKey = rootFolderSecrets.Key.EncryptAndSign(rootFolderSecrets.HashKey.Span, addressKey);
+        var encryptedHashKey = rootFolderKey.EncryptAndSign(rootFolderHashKey, addressKey);
 
         return new PhotosVolumeCreationRequest
         {

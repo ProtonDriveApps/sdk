@@ -3,10 +3,10 @@ package me.proton.drive.sdk.internal
 import com.google.protobuf.Any
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
-import me.proton.drive.sdk.converter.NodeResultConverter
+import me.proton.drive.sdk.converter.NodeConverter
 import me.proton.drive.sdk.converter.NodeResultListResponseConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
-import me.proton.drive.sdk.entity.NodeResult
+import me.proton.drive.sdk.entity.Node
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.UnitResponseCallback
 import me.proton.drive.sdk.extension.asCallback
@@ -108,8 +108,8 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
 
     suspend fun getNode(
         request: ProtonDriveSdk.DrivePhotosClientGetNodeRequest,
-    ): ProtonDriveSdk.NodeResult? =
-        executeOnce("getNode", NodeResultConverter().asNullableCallback) {
+    ): ProtonDriveSdk.Node? =
+        executeOnce("getNode", NodeConverter().asNullableCallback) {
             drivePhotosClientGetNode = request
         }
 
@@ -135,14 +135,14 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
         }
 
     suspend fun enumerateTrash(
-        coroutineScope: ProducerScope<NodeResult>,
+        coroutineScope: ProducerScope<Node>,
         request: ProtonDriveSdk.DrivePhotosClientEnumerateTrashRequest,
-        yield: suspend (ProtonDriveSdk.NodeResult) -> Unit,
+        yield: suspend (ProtonDriveSdk.Node) -> Unit,
     ): Unit = executeEnumerate(
             name = "enumerateTrash",
             callback = UnitResponseCallback,
             yield = yield,
-            parser = ProtonDriveSdk.NodeResult::parseFrom,
+            parser = ProtonDriveSdk.Node::parseFrom,
             coroutineScopeProvider = { coroutineScope }
         ) {
             drivePhotosClientEnumerateTrash = request

@@ -48,10 +48,10 @@ internal static class NodeOperations
         var metadata = await GetNodeMetadataAsync(client, shareAndKey.Share.RootFolderId, shareAndKey, useCacheOnly: false, cancellationToken)
             .ConfigureAwait(false);
 
-        return (FolderNode)metadata.GetValueOrThrow().Node;
+        return metadata.GetFolderNodeOrThrow();
     }
 
-    public static async ValueTask<Result<NodeMetadata, DegradedNodeMetadata>> GetNodeMetadataAsync(
+    public static async ValueTask<NodeMetadata> GetNodeMetadataAsync(
         ProtonDriveClient client,
         NodeUid uid,
         ShareAndKey? knownShareAndKey,
@@ -70,10 +70,10 @@ internal static class NodeOperations
             metadataResult = await GetFreshNodeMetadataAsync(client, uid, knownShareAndKey, cancellationToken).ConfigureAwait(false);
         }
 
-        return (Result<NodeMetadata, DegradedNodeMetadata>)metadataResult;
+        return metadataResult.Value;
     }
 
-    public static IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(
+    public static IAsyncEnumerable<Node> EnumerateNodesAsync(
         ProtonDriveClient client,
         IEnumerable<NodeUid> nodeUids,
         bool forPhotos,
@@ -84,7 +84,7 @@ internal static class NodeOperations
             .SelectMany(linkGroup => EnumerateNodesAsync(client, linkGroup.Key, linkGroup, forPhotos, cancellationToken));
     }
 
-    public static async IAsyncEnumerable<Result<Node, DegradedNode>> EnumerateNodesAsync(
+    public static async IAsyncEnumerable<Node> EnumerateNodesAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         IEnumerable<LinkId> linkIds,
@@ -97,20 +97,20 @@ internal static class NodeOperations
         {
             var cachedChildNodeInfo = await client.Cache.Entities.TryGetNodeAsync(new NodeUid(volumeId, linkId), cancellationToken).ConfigureAwait(false);
 
-            if (cachedChildNodeInfo is null)
+            if (cachedChildNodeInfo is not { Node: { } node })
             {
-                foreach (var nodeResult in await batchLoader.QueueAndTryLoadBatchAsync(linkId, cancellationToken).ConfigureAwait(false))
+                await foreach (var nodeResult in batchLoader.QueueAndTryLoadBatchAsync(linkId, cancellationToken).ConfigureAwait(false))
                 {
                     yield return nodeResult;
                 }
+
+                continue;
             }
-            else
-            {
-                yield return cachedChildNodeInfo.Value.NodeProvisionResult;
-            }
+
+            yield return node;
         }
 
-        foreach (var nodeResult in await batchLoader.LoadRemainingAsync(cancellationToken).ConfigureAwait(false))
+        await foreach (var nodeResult in batchLoader.LoadRemainingAsync(cancellationToken).ConfigureAwait(false))
         {
             yield return nodeResult;
         }
@@ -148,7 +148,7 @@ internal static class NodeOperations
         GetNameParameters(name, parentFolderKey, parentFolderHashKey, nameSessionKey, signingKey, out encryptedName, out nameHashDigest);
     }
 
-    public static async ValueTask<Result<NodeMetadata, DegradedNodeMetadata>> GetFreshNodeMetadataAsync(
+    public static async ValueTask<NodeMetadata> GetFreshNodeMetadataAsync(
         ProtonDriveClient client,
         NodeUid uid,
         ShareAndKey? knownShareAndKey,
@@ -177,23 +177,13 @@ internal static class NodeOperations
 
         using var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
 
-        var destinationFolderSecretsResult = await FolderOperations.GetSecretsAsync(client, newParentUid, cancellationToken).ConfigureAwait(false);
+        var destinationFolderSecrets = await FolderOperations.GetSecretsAsync(client, newParentUid, cancellationToken).ConfigureAwait(false);
 
-        PgpPrivateKey destinationKey;
-        ReadOnlyMemory<byte> destinationHashKey;
+        var destinationKey = destinationFolderSecrets.Key
+            ?? throw new ProtonDriveException($"Destination folder key not available for {newParentUid}");
 
-        if (destinationFolderSecretsResult.TryGetValueElseError(out var destinationFolderSecrets, out var degradedDestinationFolderSecrets))
-        {
-            destinationKey = destinationFolderSecrets.Key;
-            destinationHashKey = destinationFolderSecrets.HashKey;
-        }
-        else
-        {
-            destinationKey = degradedDestinationFolderSecrets.Key
-                ?? throw new ProtonDriveException($"Destination folder key not available for {newParentUid}");
-            destinationHashKey = degradedDestinationFolderSecrets.HashKey
-                ?? throw new ProtonDriveException($"Destination folder hash key not available for {newParentUid}");
-        }
+        var destinationHashKey = destinationFolderSecrets.HashKey
+            ?? throw new ProtonDriveException($"Destination folder hash key not available for {newParentUid}");
 
         if (uid == newParentUid)
         {
@@ -205,20 +195,27 @@ internal static class NodeOperations
             throw new InvalidOperationException($"Node {uid} cannot have destination node {newParentUid} as parent as they are not on the same volume");
         }
 
-        // FIXME: Try to use the degraded node if it has enough for the move to be successful
-        var (originNode, originSecrets, membershipShareId, originNameHashDigest) =
-            (await GetNodeMetadataAsync(client, uid, null, useCacheOnly: false, cancellationToken).ConfigureAwait(false)).GetValueOrThrow();
+        var originMetadata = await GetNodeMetadataAsync(client, uid, null, useCacheOnly: false, cancellationToken).ConfigureAwait(false);
+        var (originNode, originSecrets, membershipShareId, originNameHashDigest) = originMetadata;
+
+        var originName = originNode.Name.GetValueOrThrow();
+
+        var originNameSessionKey = originSecrets.NameSessionKey
+            ?? throw new ProtonDriveException($"Name session key not available for {uid}");
+
+        var originPassphraseSessionKey = originSecrets.PassphraseSessionKey
+            ?? throw new ProtonDriveException($"Passphrase session key not available for {uid}");
 
         GetNameParameters(
-            newName ?? originNode.Name, // FIXME: validate name
+            newName ?? originName, // FIXME: validate name
             destinationKey,
             destinationHashKey.Span,
-            originSecrets.NameSessionKey,
+            originNameSessionKey,
             signingKey,
             out var encryptedName,
             out var nameHashDigest);
 
-        var passphraseKeyPacket = destinationKey.EncryptSessionKey(originSecrets.PassphraseSessionKey);
+        var passphraseKeyPacket = destinationKey.EncryptSessionKey(originPassphraseSessionKey);
 
         ReadOnlyMemory<byte>? passphraseSignature = null;
         string? signatureEmailAddress = null;
@@ -243,7 +240,7 @@ internal static class NodeOperations
 
         await client.Api.Links.MoveAsync(newParentUid.VolumeId, uid.LinkId, request, cancellationToken).ConfigureAwait(false);
 
-        var newNode = originNode with { ParentUid = newParentUid, Name = newName ?? originNode.Name };
+        var newNode = originNode with { ParentUid = newParentUid, Name = newName ?? originName };
 
         await client.Cache.Entities.SetNodeAsync(uid, newNode, membershipShareId, nameHashDigest, cancellationToken).ConfigureAwait(false);
     }
@@ -261,23 +258,13 @@ internal static class NodeOperations
 
         using var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
 
-        var destinationFolderSecretsResult = await FolderOperations.GetSecretsAsync(client, newParentUid, cancellationToken).ConfigureAwait(false);
+        var destinationFolderSecrets = await FolderOperations.GetSecretsAsync(client, newParentUid, cancellationToken).ConfigureAwait(false);
 
-        PgpPrivateKey destinationKey;
-        ReadOnlyMemory<byte> destinationHashKey;
+        var destinationKey = destinationFolderSecrets.Key
+            ?? throw new ProtonDriveException($"Destination folder key not available for {newParentUid}");
 
-        if (destinationFolderSecretsResult.TryGetValueElseError(out var destinationFolderSecrets, out var degradedDestinationFolderSecrets))
-        {
-            destinationKey = destinationFolderSecrets.Key;
-            destinationHashKey = destinationFolderSecrets.HashKey;
-        }
-        else
-        {
-            destinationKey = degradedDestinationFolderSecrets.Key
-                ?? throw new ProtonDriveException($"Destination folder key not available for {newParentUid}");
-            destinationHashKey = degradedDestinationFolderSecrets.HashKey
-                ?? throw new ProtonDriveException($"Destination folder hash key not available for {newParentUid}");
-        }
+        var destinationHashKey = destinationFolderSecrets.HashKey
+            ?? throw new ProtonDriveException($"Destination folder hash key not available for {newParentUid}");
 
         var batch = new List<MoveMultipleLinksItem>();
 
@@ -290,18 +277,26 @@ internal static class NodeOperations
 
             // FIXME: Try to use the degraded node if it has enough for the move to be successful
             var (originNode, originSecrets, _, originNameHashDigest) =
-                (await GetNodeMetadataAsync(client, uid, null, useCacheOnly: false, cancellationToken).ConfigureAwait(false)).GetValueOrThrow();
+                await GetNodeMetadataAsync(client, uid, null, useCacheOnly: false, cancellationToken).ConfigureAwait(false);
+
+            var originName = originNode.Name.GetValueOrThrow();
+
+            var originNameSessionKey = originSecrets.NameSessionKey
+                ?? throw new ProtonDriveException($"Name session key not available for {uid}");
+
+            var originPassphraseSessionKey = originSecrets.PassphraseSessionKey
+                ?? throw new ProtonDriveException($"Passphrase session key not available for {uid}");
 
             GetNameParameters(
-                newName ?? originNode.Name, // FIXME: validate name
+                newName ?? originName, // FIXME: validate name
                 destinationKey,
                 destinationHashKey.Span,
-                originSecrets.NameSessionKey,
+                originNameSessionKey,
                 signingKey,
                 out var encryptedName,
                 out var nameHashDigest);
 
-            var passphraseKeyPacket = destinationKey.EncryptSessionKey(originSecrets.PassphraseSessionKey);
+            var passphraseKeyPacket = destinationKey.EncryptSessionKey(originPassphraseSessionKey);
 
             var itemRequest = new MoveMultipleLinksItem
             {
@@ -338,7 +333,7 @@ internal static class NodeOperations
     {
         // FIXME: Try to use the degraded node if it has enough for the move to be successful
         var (node, secrets, membershipShareId, originalNameHashDigest) =
-            (await GetNodeMetadataAsync(client, uid, knownShareAndKey: null, useCacheOnly: false, cancellationToken).ConfigureAwait(false)).GetValueOrThrow();
+            await GetNodeMetadataAsync(client, uid, knownShareAndKey: null, useCacheOnly: false, cancellationToken).ConfigureAwait(false);
 
         if (node.ParentUid is not { } parentUid)
         {
@@ -351,11 +346,14 @@ internal static class NodeOperations
 
         var (parentKey, parentHashKey) = await FolderOperations.GetKeyAndHashKeyAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
 
+        var nameSessionKey = secrets.NameSessionKey
+            ?? throw new ProtonDriveException($"Name session key not available for {uid}");
+
         GetNameParameters(
             newName, // FIXME: validate name
             parentKey,
             parentHashKey.Span,
-            secrets.NameSessionKey,
+            nameSessionKey,
             signingKey,
             out var encryptedName,
             out var nameHashDigest);
@@ -430,15 +428,15 @@ internal static class NodeOperations
 
                     var cachedNodeInfo = await client.Cache.Entities.TryGetNodeAsync(uid, cancellationToken).ConfigureAwait(false);
 
-                    if (cachedNodeInfo is var (nodeProvisionResult, membershipShareId, nameHashDigest))
+                    if (cachedNodeInfo is var (node, membershipShareId, nameHashDigest))
                     {
                         // TODO: have the back-end return the trash time so that the cached value be exactly the same
-                        var newNodeProvisionResult = nodeProvisionResult.Convert(
-                            node => node with { TrashTime = DateTime.UtcNow },
-                            degradedNode => degradedNode with { TrashTime = DateTime.UtcNow });
-
-                        await client.Cache.Entities.SetNodeAsync(uid, newNodeProvisionResult, membershipShareId, nameHashDigest, cancellationToken)
-                            .ConfigureAwait(false);
+                        await client.Cache.Entities.SetNodeAsync(
+                            uid,
+                            node with { TrashTime = DateTime.UtcNow },
+                            membershipShareId,
+                            nameHashDigest,
+                            cancellationToken).ConfigureAwait(false);
                     }
 
                     var result = response.IsSuccess ? Result<Exception>.Success : new ProtonApiException(response);
@@ -524,11 +522,9 @@ internal static class NodeOperations
     {
         const int batchSize = 10;
 
-        var folderSecretsResult = await FolderOperations.GetSecretsAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
+        var folderSecrets = await FolderOperations.GetSecretsAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
 
-        var folderHashKey = folderSecretsResult.TryGetValueElseError(out var folderSecrets, out var degradedFolderSecrets)
-            ? folderSecrets.HashKey : degradedFolderSecrets.HashKey
-            ?? throw new ProtonDriveException($"Folder hash key not available for {parentUid}");
+        var folderHashKey = folderSecrets.HashKey ?? throw new ProtonDriveException($"Folder hash key not available for {parentUid}");
 
         var digestsToNamesMap = new Dictionary<string, string>(batchSize);
 
@@ -614,15 +610,14 @@ internal static class NodeOperations
 
     public static async Task<ReadOnlyMemory<byte>> GetParentFolderHashKeyAsync(ProtonDriveClient client, NodeUid uid, CancellationToken cancellationToken)
     {
-        var nodeMetadataResult = await GetNodeMetadataAsync(client, uid, knownShareAndKey: null, useCacheOnly: false, cancellationToken).ConfigureAwait(false);
+        var (node, _, _, _) = await GetNodeMetadataAsync(client, uid, knownShareAndKey: null, useCacheOnly: false, cancellationToken).ConfigureAwait(false);
 
-        var parentUid = nodeMetadataResult.Merge(x => x.Node.ParentUid, x => x.Node.ParentUid);
-        if (parentUid is null)
+        if (node.ParentUid is not { } parentUid)
         {
             throw new InvalidOperationException("Root node does not have a parent folder");
         }
 
-        var (_, hashKey) = await FolderOperations.GetKeyAndHashKeyAsync(client, parentUid.Value, cancellationToken).ConfigureAwait(false);
+        var (_, hashKey) = await FolderOperations.GetKeyAndHashKeyAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
 
         return hashKey;
     }
@@ -649,15 +644,14 @@ internal static class NodeOperations
         await client.Cache.Secrets.SetShareKeyAsync(share.Id, shareKey, cancellationToken).ConfigureAwait(false);
         await client.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
 
-        var metadataResult = await DtoToMetadataConverter.ConvertDtoToFolderMetadataAsync(
-                client,
-                volumeDto.Id,
-                linkDetailsDto,
-                shareKey,
-                cancellationToken)
-            .ConfigureAwait(false);
+        var (node, _, _, _) = await DtoToMetadataConverter.ConvertDtoToFolderMetadataAsync(
+            client,
+            volumeDto.Id,
+            linkDetailsDto,
+            shareKey,
+            cancellationToken).ConfigureAwait(false);
 
-        return metadataResult.GetValueOrThrow().Node;
+        return node;
     }
 
     private static void GetNameParameters(
@@ -685,59 +679,29 @@ internal static class NodeOperations
         }
     }
 
-    private static async ValueTask<Result<NodeMetadata, DegradedNodeMetadata>?> TryGetNodeMetadataFromCacheAsync(
+    private static async ValueTask<NodeMetadata?> TryGetNodeMetadataFromCacheAsync(
         ProtonDriveClient client,
         NodeUid uid,
         CancellationToken cancellationToken)
     {
-        var cachedNodeInfoResult = await client.Cache.Entities.TryGetNodeAsync(uid, cancellationToken).ConfigureAwait(false);
-        if (cachedNodeInfoResult is not { } cachedNodeInfo)
+        var cachedNodeInfoOrNull = await client.Cache.Entities.TryGetNodeAsync(uid, cancellationToken).ConfigureAwait(false);
+        if (cachedNodeInfoOrNull is not var (node, membershipShareId, nameHashDigest))
         {
             return null;
         }
 
-        if (!cachedNodeInfo.NodeProvisionResult.TryGetValueElseError(out var node, out var degradedNode))
+        return node switch
         {
-            switch (degradedNode)
-            {
-                case DegradedFolderNode degradedFolderNode:
-                    var folderSecretsResult = await client.Cache.Secrets.TryGetFolderSecretsAsync(uid, cancellationToken).ConfigureAwait(false);
+            FolderNode folderNode => await client.Cache.Secrets.TryGetFolderSecretsAsync(uid, cancellationToken).ConfigureAwait(false) is { } folderSecrets
+                ? new NodeMetadata(folderNode, folderSecrets, membershipShareId, nameHashDigest)
+                : null,
 
-                    return folderSecretsResult is not null && folderSecretsResult.Value.TryGetError(out var degradedFolderSecrets)
-                        ? new DegradedNodeMetadata(degradedFolderNode, degradedFolderSecrets, cachedNodeInfo.MembershipShareId, cachedNodeInfo.NameHashDigest)
-                        : (Result<NodeMetadata, DegradedNodeMetadata>?)null;
+            FileNode fileNode => await client.Cache.Secrets.TryGetFileSecretsAsync(uid, cancellationToken).ConfigureAwait(false) is { } fileSecrets
+                ? new NodeMetadata(fileNode, fileSecrets, membershipShareId, nameHashDigest)
+                : null,
 
-                case DegradedFileNode degradedFileNode:
-                    var fileSecretsResult = await client.Cache.Secrets.TryGetFileSecretsAsync(uid, cancellationToken).ConfigureAwait(false);
-
-                    return fileSecretsResult is not null && fileSecretsResult.Value.TryGetError(out var degradedFileSecrets)
-                        ? new DegradedNodeMetadata(degradedFileNode, degradedFileSecrets, cachedNodeInfo.MembershipShareId, cachedNodeInfo.NameHashDigest)
-                        : (Result<NodeMetadata, DegradedNodeMetadata>?)null;
-
-                default:
-                    throw new InvalidOperationException($"Degraded node type \"{node?.GetType().Name}\" is not supported");
-            }
-        }
-
-        switch (node)
-        {
-            case FolderNode folderNode:
-                var folderSecretsResult = await client.Cache.Secrets.TryGetFolderSecretsAsync(uid, cancellationToken).ConfigureAwait(false);
-
-                return folderSecretsResult is not null && folderSecretsResult.Value.TryGetValue(out var folderSecrets)
-                    ? new NodeMetadata(folderNode, folderSecrets, cachedNodeInfo.MembershipShareId, cachedNodeInfo.NameHashDigest)
-                    : null;
-
-            case FileNode fileNode:
-                var fileSecretsResult = await client.Cache.Secrets.TryGetFileSecretsAsync(uid, cancellationToken).ConfigureAwait(false);
-
-                return fileSecretsResult is not null && fileSecretsResult.Value.TryGetValue(out var fileSecrets)
-                    ? new NodeMetadata(fileNode, fileSecrets, cachedNodeInfo.MembershipShareId, cachedNodeInfo.NameHashDigest)
-                    : null;
-
-            default:
-                throw new InvalidOperationException($"Node type \"{node.GetType().Name}\" is not supported");
-        }
+            _ => throw new InvalidOperationException($"Node type \"{node.GetType().Name}\" is not supported"),
+        };
     }
 
     private static async ValueTask<FolderNode> CreateMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)

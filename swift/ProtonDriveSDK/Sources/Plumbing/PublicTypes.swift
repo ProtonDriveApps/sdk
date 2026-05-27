@@ -127,14 +127,29 @@ public struct AdditionalMetadata: Sendable {
     }
 }
 
+private struct StringResultParser {
+    func parse(_ result: Proton_Drive_Sdk_StringResult) -> Result<String, ProtonDriveSDKDriveError> {
+        switch result.result {
+        case .value(let string):
+            return .success(string)
+        case .error(let error):
+            return .failure(.init(error: error))
+        case .none:
+            assertionFailure("Unexpected case")
+            return .failure(.init(message: "no value or error set"))
+        }
+    }
+}
+
 public struct FolderNode: Sendable {
     public let uid: SDKNodeUid
     public let parentUid: SDKNodeUid?
-    public let name: String
+    public let name: Result<String, ProtonDriveSDKDriveError>
     public let creationTime: Double
     public let trashTime: Double?
     public let nameAuthor: Author
     public let author: Author
+    public let errors: [ProtonDriveSDKDriveError]
 
     init(sdkFolderNode: Proton_Drive_Sdk_FolderNode) throws {
         guard let uid = SDKNodeUid(sdkCompatibleIdentifier: sdkFolderNode.uid) else {
@@ -142,11 +157,12 @@ public struct FolderNode: Sendable {
         }
         self.uid = uid
         self.parentUid = sdkFolderNode.hasParentUid ? .init(sdkCompatibleIdentifier: sdkFolderNode.parentUid) : nil
-        self.name = sdkFolderNode.name
+        self.name = StringResultParser().parse(sdkFolderNode.name)
         self.creationTime = sdkFolderNode.creationTime.timeIntervalSince1970
-        self.trashTime = sdkFolderNode.trashTime.timeIntervalSince1970
+        self.trashTime = sdkFolderNode.hasTrashTime ? sdkFolderNode.trashTime.timeIntervalSince1970 : nil
         self.nameAuthor = Author(result: sdkFolderNode.nameAuthor)
         self.author = Author(result: sdkFolderNode.author)
+        self.errors = sdkFolderNode.errors.map { ProtonDriveSDKDriveError(error: $0) }
     }
 }
 
@@ -173,18 +189,20 @@ public struct Author: Sendable {
 public struct FileNode: Sendable {
     let uid: String
     let parentUid: String
-    let name: String
+    public let name: Result<String, ProtonDriveSDKDriveError>
     let mediaType: String
     let totalSizeOnCloudStorage: Int64
     let activeRevision: FileRevision
+    let errors: [ProtonDriveSDKDriveError]
 
     init(sdkFileNode: Proton_Drive_Sdk_FileNode) {
         self.uid = sdkFileNode.uid
         self.parentUid = sdkFileNode.parentUid
-        self.name = sdkFileNode.name
+        self.name = StringResultParser().parse(sdkFileNode.name)
         self.mediaType = sdkFileNode.mediaType
         self.totalSizeOnCloudStorage = sdkFileNode.totalSizeOnCloudStorage
         self.activeRevision = FileRevision(sdkFileRevision: sdkFileNode.activeRevision)
+        self.errors = sdkFileNode.errors.map { ProtonDriveSDKDriveError(error: $0) }
     }
 }
 
@@ -199,8 +217,26 @@ public struct FileRevision: Sendable {
         self.uid = sdkFileRevision.uid
         self.creationTime = sdkFileRevision.creationTime.timeIntervalSince1970
         self.sizeOnCloudStorage = sdkFileRevision.sizeOnCloudStorage
-        self.claimedSize = sdkFileRevision.claimedSize
-        self.claimedModificationTime = sdkFileRevision.claimedModificationTime.timeIntervalSince1970
+        self.claimedSize = sdkFileRevision.hasClaimedSize ? sdkFileRevision.claimedSize : nil
+        self.claimedModificationTime = sdkFileRevision.hasClaimedModificationTime
+            ? sdkFileRevision.claimedModificationTime.timeIntervalSince1970
+            : nil
+    }
+}
+
+public enum DriveNode: Sendable {
+    case folder(FolderNode)
+    case file(FileNode)
+
+    init(sdkNode: Proton_Drive_Sdk_Node) throws {
+        switch sdkNode.node {
+        case .folder(let folder):
+            self = .folder(try FolderNode(sdkFolderNode: folder))
+        case .file(let file):
+            self = .file(try FileNode(sdkFileNode: file))
+        case .none:
+            throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Invalid Node: no folder or file set"))
+        }
     }
 }
 

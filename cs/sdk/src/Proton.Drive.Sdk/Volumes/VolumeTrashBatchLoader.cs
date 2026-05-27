@@ -1,13 +1,13 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Nodes;
-using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Volumes;
 
 internal sealed class VolumeTrashBatchLoader(ProtonDriveClient client, VolumeId volumeId, PgpPrivateKey shareKey)
-    : BatchLoaderBase<LinkId, Result<Node, DegradedNode>>
+    : BatchLoaderBase<LinkId, Node>
 {
     private readonly ProtonDriveClient _client = client;
     private readonly VolumeId _volumeId = volumeId;
@@ -15,13 +15,9 @@ internal sealed class VolumeTrashBatchLoader(ProtonDriveClient client, VolumeId 
 
     private readonly Dictionary<LinkId, PgpPrivateKey> _parentKeys = [];
 
-    protected override async ValueTask<IReadOnlyList<Result<Node, DegradedNode>>> LoadBatchAsync(
-        ReadOnlyMemory<LinkId> ids,
-        CancellationToken cancellationToken)
+    protected override async IAsyncEnumerable<Node> LoadBatchAsync(ReadOnlyMemory<LinkId> ids, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var response = await _client.Api.Links.GetDetailsAsync(_volumeId, MemoryMarshal.ToEnumerable(ids), cancellationToken).ConfigureAwait(false);
-
-        var nodeResults = new List<Result<Node, DegradedNode>>(ids.Length);
 
         foreach (var linkDetails in response.Links)
         {
@@ -34,9 +30,8 @@ internal sealed class VolumeTrashBatchLoader(ProtonDriveClient client, VolumeId 
                     var folderSecretsResult = await FolderOperations.GetSecretsAsync(_client, new NodeUid(_volumeId, parentId), cancellationToken)
                         .ConfigureAwait(false);
 
-                    parentKey = folderSecretsResult.TryGetValueElseError(out var folderSecrets, out var degradedFolderSecrets)
-                        ? folderSecrets.Key : degradedFolderSecrets.Key
-                        ?? throw new ProtonDriveException($"Folder key not available for {parentId}");
+                    // FIXME: This should not throw, but rather return a Result with an appropriate error.
+                    parentKey = folderSecretsResult.Key ?? throw new ProtonDriveException($"Folder key not available for {parentId}");
 
                     _parentKeys[parentId] = parentKey;
                 }
@@ -46,7 +41,7 @@ internal sealed class VolumeTrashBatchLoader(ProtonDriveClient client, VolumeId 
                 parentKey = _shareKey;
             }
 
-            var nodeMetadataResult = await DtoToMetadataConverter.ConvertDtoToNodeMetadataAsync(
+            var (node, _, _, _) = await DtoToMetadataConverter.ConvertDtoToNodeMetadataAsync(
                 _client,
                 _volumeId,
                 linkDetails,
@@ -54,11 +49,7 @@ internal sealed class VolumeTrashBatchLoader(ProtonDriveClient client, VolumeId 
                 cancellationToken)
                 .ConfigureAwait(false);
 
-            var nodeResult = nodeMetadataResult.ToNodeResult();
-
-            nodeResults.Add(nodeResult);
+            yield return node;
         }
-
-        return nodeResults;
     }
 }
