@@ -2,5 +2,5 @@
 
 internal sealed class FolderSecrets : NodeSecrets
 {
-    public ReadOnlyMemory<byte>? HashKey { get; init; }
+    public required ReadOnlyMemory<byte>? HashKey { get; init; }
 }

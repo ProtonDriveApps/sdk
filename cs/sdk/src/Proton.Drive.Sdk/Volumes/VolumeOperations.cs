@@ -204,6 +204,7 @@ internal static class VolumeOperations
             PassphraseSessionKey = rootFolderPassphraseSessionKey,
             NameSessionKey = rootFolderNameSessionKey,
             HashKey = rootFolderHashKey,
+            PassphraseForAnonymousMove = null,
         };
 
         Span<byte> sharePassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
@@ -264,6 +265,7 @@ internal static class VolumeOperations
             PassphraseSessionKey = rootFolderPassphraseSessionKey,
             NameSessionKey = rootFolderNameSessionKey,
             HashKey = rootFolderHashKey,
+            PassphraseForAnonymousMove = null,
         };
 
         Span<byte> sharePassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];

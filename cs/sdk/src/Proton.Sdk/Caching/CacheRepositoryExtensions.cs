@@ -99,7 +99,8 @@ internal static class CacheRepositoryExtensions
     /// </summary>
     /// <remarks>
     /// This marking indicates that the results of a query by the given tag reflect the complete "truth" related to that tag at a point in time.
-    /// Consequently, if that marking is present and the query by that tag returns an empty set, then that emptiness is the information, rather than a lack of information in cache.
+    /// Consequently, if that marking is present and the query by that tag returns an empty set, then that emptiness is the information,
+    /// rather than a lack of information in cache.
     /// </remarks>
     private static async ValueTask MarkTagAsCompleteAsync(this ICacheRepository repository, string tag, CancellationToken cancellationToken)
     {

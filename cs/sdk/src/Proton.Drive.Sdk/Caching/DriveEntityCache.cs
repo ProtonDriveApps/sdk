@@ -60,7 +60,9 @@ internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEnti
 
     public ValueTask SetMyFilesShareIdAsync(ShareId shareId, CancellationToken cancellationToken)
     {
-        return _repository.SetAsync(MyFilesShareIdCacheKey, shareId.ToString(), cancellationToken);
+        var serializedValue = JsonSerializer.Serialize(shareId, DriveEntitiesSerializerContext.Default.ShareId);
+
+        return _repository.SetAsync(MyFilesShareIdCacheKey, serializedValue, cancellationToken);
     }
 
     public async ValueTask<ShareId?> TryGetMyFilesShareIdAsync(CancellationToken cancellationToken)
@@ -75,7 +77,9 @@ internal sealed class DriveEntityCache(ICacheRepository repository) : IDriveEnti
 
     public ValueTask SetPhotosShareIdAsync(ShareId shareId, CancellationToken cancellationToken)
     {
-        return _repository.SetAsync(PhotosShareIdCacheKey, shareId.ToString(), cancellationToken);
+        var serializedValue = JsonSerializer.Serialize(shareId, DriveEntitiesSerializerContext.Default.ShareId);
+
+        return _repository.SetAsync(PhotosShareIdCacheKey, serializedValue, cancellationToken);
     }
 
     public async ValueTask<ShareId?> TryGetPhotosShareIdAsync(CancellationToken cancellationToken)

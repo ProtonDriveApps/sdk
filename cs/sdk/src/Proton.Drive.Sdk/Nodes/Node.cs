@@ -14,6 +14,7 @@ public abstract record Node
 
     public required NodeUid? ParentUid { get; init; }
 
+    [JsonIgnore]
     public string TreeEventScopeId => Uid.VolumeId.ToString();
 
     public required Result<string, ProtonDriveError> Name { get; init; }
