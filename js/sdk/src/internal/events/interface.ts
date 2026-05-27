@@ -123,4 +123,5 @@ export interface EventManagerInterface<T> {
 
 export interface SharesService {
     isOwnVolume(volumeId: string): Promise<boolean>;
+    getRootIDs(): Promise<{ volumeId: string }>;
 }

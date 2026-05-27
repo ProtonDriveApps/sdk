@@ -37,7 +37,7 @@ import {
 import { DriveAPIService } from './internal/apiService';
 import { initDevicesModule } from './internal/devices';
 import { initDownloadModule } from './internal/download';
-import { CoreApiEvent, DriveEventsService, DriveListener, EventSubscription } from './internal/events';
+import { CoreApiEvent, DriveEventsService, DriveListener, EventScheduler, EventSubscription } from './internal/events';
 import { initNodesModule } from './internal/nodes';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharesModule } from './internal/shares';
@@ -289,6 +289,49 @@ export class ProtonDriveClient {
     }
 
     /**
+     * Provides the remote data updates for all files and folders in a given
+     * tree scope.
+     *
+     * In order to keep local data up to date, the client must call this method
+     * to receive events on updates and to keep the SDK cache in sync.
+     *
+     * When no lastEventId is provided, the FastForward with the latest event
+     * ID is yielded.
+     *
+     * Use `getEventScheduler` to schedule the polling of the events.
+     *
+     * @param treeEventScopeId - The scope ID of the tree to read events for (same as `treeEventScopeId` on nodes)
+     * @param lastEventId - The last event ID you have fully processed for this scope; omit to start from the latest event
+     * @param signal - Signal to abort the operation
+     * @returns An async generator of the events for the given scope.
+     */
+    async *iterateEvents(
+        treeEventScopeId: string,
+        lastEventId?: string,
+        signal?: AbortSignal,
+    ): AsyncGenerator<DriveEvent> {
+        this.logger.info(`Iterating events for tree scope ${treeEventScopeId}`);
+        yield* this.events.iterateEvents(treeEventScopeId, lastEventId, signal);
+    }
+
+    /**
+     * Provides a scheduler that invokes the callback on a timer for each
+     * registered tree event scope. Own volumes poll at the foreground rate;
+     * shared volumes poll at the background rate unless promoted via
+     * `setForeground`. Only one non-own volume can be in the foreground at
+     * a time.
+     *
+     * Only one instance of the SDK should subscribe to updates.
+     *
+     * @param callback - Callback to be called when the events should be polled.
+     * @returns The event scheduler.
+     */
+    async getEventScheduler(callback: (eventTreeScopeId: string) => Promise<void>): Promise<EventScheduler> {
+        this.logger.info('Getting event scheduler');
+        return this.events.getEventScheduler(callback);
+    }
+
+    /**
      * Subscribes to the remote data updates for all files and folders in a
      * tree.
      *
@@ -298,6 +341,8 @@ export class ProtonDriveClient {
      * The `treeEventScopeId` can be obtained from node properties.
      *
      * Only one instance of the SDK should subscribe to updates.
+     *
+     * @deprecated Use `iterateEvents` instead.
      */
     async subscribeToTreeEvents(treeEventScopeId: string, callback: DriveListener): Promise<EventSubscription> {
         this.logger.debug('Subscribing to node updates');

@@ -76,9 +76,10 @@ export class EventsAPIService {
         return result.EventID;
     }
 
-    async getVolumeEvents(volumeId: string, eventId: string): Promise<DriveEventsListWithStatus> {
+    async getVolumeEvents(volumeId: string, eventId: string, signal?: AbortSignal): Promise<DriveEventsListWithStatus> {
         const result = await this.apiService.get<GetVolumeEventResponse>(
             `drive/v2/volumes/${volumeId}/events/${eventId}`,
+            signal,
         );
         return {
             latestEventId: result.EventID,
