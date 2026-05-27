@@ -30,7 +30,7 @@ internal sealed partial class RevisionReader
         _logger = client.Telemetry.GetLogger("Revision reader");
     }
 
-    public async ValueTask ReadAsync(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
+    public async ValueTask ReadAsync(Stream contentOutputStream, Action<long, long?> onProgress, CancellationToken cancellationToken)
     {
         try
         {
@@ -54,7 +54,11 @@ internal sealed partial class RevisionReader
                     manifestStream.Write(digest.Span);
                 }
 
-                await DownloadBlocks(contentOutputStream, onProgress, manifestStream, cancellationToken).ConfigureAwait(false);
+                await DownloadBlocks(
+                    contentOutputStream,
+                    downloaded => onProgress(downloaded, _state.ClaimedSize),
+                    manifestStream,
+                    cancellationToken).ConfigureAwait(false);
 
                 manifestStream.Seek(0, SeekOrigin.Begin);
 
@@ -87,7 +91,7 @@ internal sealed partial class RevisionReader
 
     private async ValueTask DownloadBlocks(
         Stream contentOutputStream,
-        Action<long, long> onProgress,
+        Action<long> onProgress,
         RecyclableMemoryStream manifestStream,
         CancellationToken cancellationToken)
     {
@@ -153,7 +157,7 @@ internal sealed partial class RevisionReader
         Queue<Task<BlockDownloadResult>> downloadTasks,
         Stream outputStream,
         Stream manifestStream,
-        Action<long, long> onProgress,
+        Action<long> onProgress,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -196,7 +200,7 @@ internal sealed partial class RevisionReader
 
                     _client.DownloadQueue.DecreaseFileRemainingBlockCount(_state.QueueToken, 1);
 
-                    onProgress(_state.GetNumberOfBytesWritten(), _state.RevisionDto.Size);
+                    onProgress(_state.GetNumberOfBytesWritten());
                 }
                 finally
                 {

@@ -9,6 +9,7 @@ internal sealed partial class DownloadState(
     PgpPrivateKey nodeKey,
     PgpSessionKey contentKey,
     BlockListingRevisionDto revisionDto,
+    long? claimedSize,
     long queueToken,
     ILogger logger) : IAsyncDisposable
 {
@@ -21,6 +22,7 @@ internal sealed partial class DownloadState(
 
     public RevisionUid Uid { get; } = uid;
     public BlockListingRevisionDto RevisionDto { get; } = revisionDto;
+    public long? ClaimedSize { get; } = claimedSize;
     public long QueueToken { get; } = queueToken;
     public PgpPrivateKey NodeKey { get; } = nodeKey;
     public PgpSessionKey ContentKey { get; } = contentKey;
