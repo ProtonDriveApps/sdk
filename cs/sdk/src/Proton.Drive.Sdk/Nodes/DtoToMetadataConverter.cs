@@ -404,6 +404,7 @@ internal static class DtoToMetadataConverter
             PassphraseSessionKey = decryptionResult.Link.Passphrase.Merge(x => (PgpSessionKey?)x.SessionKey, _ => null),
             NameSessionKey = nameSessionKey,
             ContentKey = decryptionResult.ContentKey.Merge(x => (PgpSessionKey?)x.Data, _ => null),
+            PassphraseForAnonymousMove = null,
         };
 
         return (new FileMetadata(partialNode, partialSecrets, membershipDto?.ShareId, linkDto.NameHashDigest), failedDecryptionFields);
@@ -569,6 +570,7 @@ internal static class DtoToMetadataConverter
             PassphraseSessionKey = decryptionResult.Link.Passphrase.Merge(x => (PgpSessionKey?)x.SessionKey, _ => null),
             NameSessionKey = nameSessionKey,
             HashKey = decryptionResult.HashKey.Merge(x => (ReadOnlyMemory<byte>?)x.Data, _ => null),
+            PassphraseForAnonymousMove = null,
         };
 
         return (new FolderMetadata(partialNode, partialSecrets, membershipDto?.ShareId, linkDto.NameHashDigest), failedDecryptionFields);

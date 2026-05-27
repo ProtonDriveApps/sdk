@@ -13,6 +13,7 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSourceGenerationOptions(
 #if DEBUG
     WriteIndented = true,
+    RespectRequiredConstructorParameters = true,
 #endif
     Converters =
     [

@@ -1,14 +1,10 @@
 ﻿using System.Text.Json.Serialization;
-using Proton.Sdk.Addresses;
 using Proton.Sdk.Api;
 using Proton.Sdk.Api.Addresses;
 using Proton.Sdk.Api.Authentication;
 using Proton.Sdk.Api.Events;
 using Proton.Sdk.Api.Keys;
 using Proton.Sdk.Api.Users;
-using Proton.Sdk.Authentication;
-using Proton.Sdk.Events;
-using Proton.Sdk.Users;
 
 namespace Proton.Sdk.Serialization;
 
@@ -16,6 +12,7 @@ namespace Proton.Sdk.Serialization;
 [JsonSourceGenerationOptions(
 #if DEBUG
     WriteIndented = true,
+    RespectRequiredConstructorParameters = true,
 #endif
     Converters =
     [
@@ -23,12 +20,6 @@ namespace Proton.Sdk.Serialization;
         typeof(PgpArmoredSignatureJsonConverter),
         typeof(PgpArmoredPrivateKeyJsonConverter),
         typeof(PgpArmoredPublicKeyJsonConverter),
-        typeof(StrongIdJsonConverter<SessionId>),
-        typeof(StrongIdJsonConverter<UserId>),
-        typeof(StrongIdJsonConverter<UserKeyId>),
-        typeof(StrongIdJsonConverter<AddressId>),
-        typeof(StrongIdJsonConverter<AddressKeyId>),
-        typeof(StrongIdJsonConverter<EventId>),
     ])]
 #pragma warning restore SA1114, SA1118
 [JsonSerializable(typeof(ApiResponse))]
