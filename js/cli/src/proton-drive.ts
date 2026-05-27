@@ -1,6 +1,6 @@
 import { FeatureFlags } from '@protontech/drive-sdk';
 
-import { run } from './cli';
+import { ExitError, run } from './cli';
 import { COMMANDS } from './commands';
 import { captureException, flushSentry, initSentry } from './telemetry';
 
@@ -30,6 +30,9 @@ try {
     });
     process.exit(0);
 } catch (error: unknown) {
+    if (error instanceof ExitError) {
+        process.exit(2);
+    }
     console.error(error);
     captureException(error);
     await flushSentry();

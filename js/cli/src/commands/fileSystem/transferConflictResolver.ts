@@ -116,6 +116,9 @@ export class TransferConflictResolver {
         const hint = `Type a strategy (${choices.join(', ')}; or abbreviations), or [a]pply-to-all`;
         while (true) {
             const line = await question(`Conflict on "${sanitizeTerminalText(name)}" (${kind}). ${hint}\n> `);
+            if (line === null) {
+                return ConflictChoice.Skip;
+            }
             const trimmed = line.trim().toLowerCase();
             if (trimmed === 'a' || trimmed === 'apply' || trimmed === 'apply-to-all') {
                 const applyAllLine = await question(`Default for all ${kind} conflicts:\n> `);
@@ -137,7 +140,10 @@ export class TransferConflictResolver {
         }
     }
 
-    private parsePromptStrategy(line: string, choices: readonly ConflictChoice[]): ConflictChoice | undefined {
+    private parsePromptStrategy(line: string | null, choices: readonly ConflictChoice[]): ConflictChoice | undefined {
+        if (line === null) {
+            return ConflictChoice.Skip;
+        }
         try {
             const result = resolveConflictStrategy(line, choices);
             if (!result) {

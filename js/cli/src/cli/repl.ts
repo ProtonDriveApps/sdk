@@ -1,6 +1,6 @@
 import { InitConfig } from '../config';
 import { init } from '../init';
-import { isRecoverableReplError } from './errors';
+import { ExitError, isRecoverableReplError } from './errors';
 import { Command } from './interface';
 import { question } from './readline';
 import { runCommand } from './run';
@@ -12,12 +12,15 @@ export async function startRepl(commands: Command[], initOptions: InitConfig): P
     try {
         while (true) {
             const line = await question('proton-drive> ');
+            if (line === null) {
+                throw new ExitError();
+            }
             const trimmed = line.trim();
             if (trimmed === '') {
                 continue;
             }
             if (trimmed === 'exit' || trimmed === 'quit') {
-                break;
+                throw new ExitError();
             }
             try {
                 const parts = splitQuotedLine(trimmed);
