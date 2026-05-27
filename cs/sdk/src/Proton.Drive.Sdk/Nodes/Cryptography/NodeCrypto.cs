@@ -79,6 +79,54 @@ internal static class NodeCrypto
         }
     }
 
+    public static Result<DecryptionOutput<ExtendedAttributes?>, ProtonDriveError> DecryptExtendedAttributes(
+        PgpArmoredMessage? encryptedExtendedAttributes,
+        Result<PgpPrivateKey, ProtonDriveError> nodeKeyResult,
+        AuthorshipClaim authorshipClaim)
+    {
+        if (encryptedExtendedAttributes is null)
+        {
+            return new DecryptionOutput<ExtendedAttributes?>(null);
+        }
+
+        if (!nodeKeyResult.TryGetValueElseError(out var nodeKey, out var error))
+        {
+            return new ProtonDriveError("Cannot get node key", error);
+        }
+
+        ArraySegment<byte> serializedExtendedAttributes;
+        AuthorshipVerificationFailure? authorshipVerificationFailure;
+        try
+        {
+            serializedExtendedAttributes = DecryptMessage(
+                encryptedExtendedAttributes.Value,
+                detachedSignature: null,
+                nodeKey,
+                authorshipClaim.GetKeyRing(nodeKey),
+                out _,
+                out authorshipVerificationFailure);
+        }
+        catch (Exception e)
+        {
+            return new DecryptionError("Failed to decrypt extended attributes", e.ToProtonDriveError());
+        }
+
+        try
+        {
+            var extendedAttributes = JsonSerializer.Deserialize(serializedExtendedAttributes, DriveApiSerializerContext.Default.ExtendedAttributes);
+
+            return new DecryptionOutput<ExtendedAttributes?>(extendedAttributes, authorshipVerificationFailure);
+        }
+        catch (JsonException e)
+        {
+            return new ExtendedAttributesDeserializationError(e.EnrichJsonException(serializedExtendedAttributes));
+        }
+        catch (Exception e)
+        {
+            return new ProtonDriveError("Unknown error while deserializing extended attributes", e.ToProtonDriveError());
+        }
+    }
+
     private static async ValueTask<LinkDecryptionResult> DecryptLinkAsync(
         IAccountClient accountClient,
         LinkDto link,
@@ -248,54 +296,6 @@ internal static class NodeCrypto
         }
 
         return new DecryptionOutput<PgpSessionKey>(contentKey, verificationFailure);
-    }
-
-    private static Result<DecryptionOutput<ExtendedAttributes?>, ProtonDriveError> DecryptExtendedAttributes(
-        PgpArmoredMessage? encryptedExtendedAttributes,
-        Result<PgpPrivateKey, ProtonDriveError> nodeKeyResult,
-        AuthorshipClaim authorshipClaim)
-    {
-        if (encryptedExtendedAttributes is null)
-        {
-            return new DecryptionOutput<ExtendedAttributes?>(null);
-        }
-
-        if (!nodeKeyResult.TryGetValueElseError(out var nodeKey, out var error))
-        {
-            return new ProtonDriveError("Cannot get node key", error);
-        }
-
-        ArraySegment<byte> serializedExtendedAttributes;
-        AuthorshipVerificationFailure? authorshipVerificationFailure;
-        try
-        {
-            serializedExtendedAttributes = DecryptMessage(
-                encryptedExtendedAttributes.Value,
-                detachedSignature: null,
-                nodeKey,
-                authorshipClaim.GetKeyRing(nodeKey),
-                out _,
-                out authorshipVerificationFailure);
-        }
-        catch (Exception e)
-        {
-            return new DecryptionError("Failed to decrypt extended attributes", e.ToProtonDriveError());
-        }
-
-        try
-        {
-            var extendedAttributes = JsonSerializer.Deserialize(serializedExtendedAttributes, DriveApiSerializerContext.Default.ExtendedAttributes);
-
-            return new DecryptionOutput<ExtendedAttributes?>(extendedAttributes, authorshipVerificationFailure);
-        }
-        catch (JsonException e)
-        {
-            return new ExtendedAttributesDeserializationError(e.EnrichJsonException(serializedExtendedAttributes));
-        }
-        catch (Exception e)
-        {
-            return new ProtonDriveError("Unknown error while deserializing extended attributes", e.ToProtonDriveError());
-        }
     }
 
     private static ArraySegment<byte> DecryptMessage(
