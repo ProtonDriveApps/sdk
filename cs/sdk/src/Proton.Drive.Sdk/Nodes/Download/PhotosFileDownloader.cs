@@ -18,12 +18,12 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
         _logger = logger;
     }
 
-    public DownloadController DownloadToStream(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
+    public DownloadController DownloadToStream(Stream contentOutputStream, Action<long, long?> onProgress, CancellationToken cancellationToken)
     {
         return DownloadToStream(contentOutputStream, ownsOutputStream: false, onProgress, cancellationToken);
     }
 
-    public DownloadController DownloadToFile(string filePath, Action<long, long> onProgress, CancellationToken cancellationToken)
+    public DownloadController DownloadToFile(string filePath, Action<long, long?> onProgress, CancellationToken cancellationToken)
     {
         var stream = File.Open(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
 
@@ -69,7 +69,7 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
 
     private async Task DownloadToStreamAsync(
         Stream contentOutputStream,
-        Action<long, long> onProgress,
+        Action<long, long?> onProgress,
         TaskCompletionSource<DownloadState> downloadStateTaskCompletionSource,
         CancellationToken cancellationToken)
     {
@@ -101,7 +101,7 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
     private DownloadController DownloadToStream(
         Stream contentOutputStream,
         bool ownsOutputStream,
-        Action<long, long> onProgress,
+        Action<long, long?> onProgress,
         CancellationToken cancellationToken)
     {
         var taskControl = new TaskControl(cancellationToken);
@@ -123,7 +123,7 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
             OnFailedAsync,
             OnSucceededAsync);
 
-        async ValueTask OnFailedAsync(Exception ex, long claimedFileSize, long downloadedByteCount)
+        async ValueTask OnFailedAsync(Exception ex, long? claimedFileSize, long downloadedByteCount)
         {
             if (ex is ValidationException)
             {
@@ -142,7 +142,7 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
             RaiseTelemetryEvent(downloadEvent);
         }
 
-        async ValueTask OnSucceededAsync(long claimedFileSize, long downloadedByteCount)
+        async ValueTask OnSucceededAsync(long? claimedFileSize, long downloadedByteCount)
         {
             var downloadEvent = await TelemetryEventFactory.CreateDownloadEventAsync(_client.DriveClient, _photoUid, cancellationToken).ConfigureAwait(false);
 

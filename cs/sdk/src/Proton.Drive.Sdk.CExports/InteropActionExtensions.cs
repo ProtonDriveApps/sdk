@@ -5,13 +5,17 @@ namespace Proton.Drive.Sdk.CExports;
 
 internal static class InteropActionExtensions
 {
-    public static unsafe void InvokeProgressUpdate(this InteropAction<nint, InteropArray<byte>> interopAction, nint bindingsHandle, long progress, long total)
+    public static unsafe void InvokeProgressUpdate(this InteropAction<nint, InteropArray<byte>> interopAction, nint bindingsHandle, long progress, long? total)
     {
         var progressUpdate = new ProgressUpdate
         {
             BytesCompleted = progress,
-            BytesInTotal = total,
         };
+
+        if (total is not null)
+        {
+            progressUpdate.BytesInTotal = total.Value;
+        }
 
         var requestBytes = progressUpdate.ToByteArray();
 

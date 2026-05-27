@@ -179,7 +179,7 @@ message OwnedBy {
 
 message ProgressUpdate {
     int64 bytes_completed = 1;
-    int64 bytes_in_total = 2;
+    int64 bytes_in_total = 2; // optional
 }
 
 message Thumbnail {

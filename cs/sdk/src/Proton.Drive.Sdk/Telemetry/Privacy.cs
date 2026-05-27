@@ -25,4 +25,9 @@ internal static class Privacy
 
         return (size / precision) * precision;
     }
+
+    public static long? ReduceSizePrecision(long? size)
+    {
+        return size is null ? null : ReduceSizePrecision(size.Value);
+    }
 }

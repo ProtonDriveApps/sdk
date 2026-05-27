@@ -1,3 +1,6 @@
+using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Api.Files;
+using Proton.Drive.Sdk.Nodes.Cryptography;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;
 
@@ -43,11 +46,14 @@ internal static class RevisionOperations
         var key = fileSecrets.Key ?? throw new InvalidOperationException($"Node key not available for file {revisionUid.NodeUid}");
         var contentKey = fileSecrets.ContentKey ?? throw new InvalidOperationException($"Content key not available for file {revisionUid.NodeUid}");
 
+        var claimedSize = await GetClaimedSizeAsync(client, revisionResponse.Revision, key, cancellationToken).ConfigureAwait(false);
+
         return new DownloadState(
             revisionUid,
             key,
             contentKey,
             revisionResponse.Revision,
+            claimedSize,
             queueToken,
             client.Telemetry.GetLogger("Download state"));
     }
@@ -55,5 +61,20 @@ internal static class RevisionOperations
     internal static RevisionReader OpenForReading(ProtonDriveClient client, DownloadState downloadState)
     {
         return new RevisionReader(client, downloadState);
+    }
+
+    private static async ValueTask<long?> GetClaimedSizeAsync(
+        ProtonDriveClient client,
+        RevisionDto revision,
+        PgpPrivateKey key,
+        CancellationToken cancellationToken)
+    {
+        var contentAuthorshipClaim =
+            await AuthorshipClaim.CreateAsync(client.Account, revision.SignatureEmailAddress, cancellationToken).ConfigureAwait(false);
+
+        return NodeCrypto.DecryptExtendedAttributes(revision.ExtendedAttributes, key, contentAuthorshipClaim)
+            .TryGetValueElseError(out var extendedAttributesOutput, out _)
+            ? extendedAttributesOutput.Data?.Common?.Size
+            : null;
     }
 }

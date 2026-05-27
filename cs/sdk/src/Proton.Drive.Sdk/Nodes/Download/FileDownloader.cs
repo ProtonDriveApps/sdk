@@ -19,12 +19,12 @@ public sealed partial class FileDownloader : IFileDownloader
         _logger = logger;
     }
 
-    public DownloadController DownloadToStream(Stream contentOutputStream, Action<long, long> onProgress, CancellationToken cancellationToken)
+    public DownloadController DownloadToStream(Stream contentOutputStream, Action<long, long?> onProgress, CancellationToken cancellationToken)
     {
         return BuildDownloadController(contentOutputStream, ownsOutputStream: false, onProgress, cancellationToken);
     }
 
-    public DownloadController DownloadToFile(string filePath, Action<long, long> onProgress, CancellationToken cancellationToken)
+    public DownloadController DownloadToFile(string filePath, Action<long, long?> onProgress, CancellationToken cancellationToken)
     {
         var contentOutputStream = File.Open(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
 
@@ -70,7 +70,7 @@ public sealed partial class FileDownloader : IFileDownloader
 
     private async Task DownloadToStreamAsync(
         Stream contentOutputStream,
-        Action<long, long> onProgress,
+        Action<long, long?> onProgress,
         TaskCompletionSource<DownloadState> downloadStateTaskCompletionSource,
         long queueToken,
         CancellationToken cancellationToken)
@@ -95,7 +95,7 @@ public sealed partial class FileDownloader : IFileDownloader
     private DownloadController BuildDownloadController(
         Stream contentOutputStream,
         bool ownsOutputStream,
-        Action<long, long> onProgress,
+        Action<long, long?> onProgress,
         CancellationToken cancellationToken)
     {
         var taskControl = new TaskControl(cancellationToken);
@@ -118,7 +118,7 @@ public sealed partial class FileDownloader : IFileDownloader
             OnFailedAsync,
             OnSucceededAsync);
 
-        async ValueTask OnFailedAsync(Exception ex, long claimedFileSize, long downloadedByteCount)
+        async ValueTask OnFailedAsync(Exception ex, long? claimedFileSize, long downloadedByteCount)
         {
             if (ex is ValidationException)
             {
@@ -137,7 +137,7 @@ public sealed partial class FileDownloader : IFileDownloader
             RaiseTelemetryEvent(downloadEvent);
         }
 
-        async ValueTask OnSucceededAsync(long claimedFileSize, long downloadedByteCount)
+        async ValueTask OnSucceededAsync(long? claimedFileSize, long downloadedByteCount)
         {
             var downloadEvent = await TelemetryEventFactory.CreateDownloadEventAsync(_client, _revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
 
