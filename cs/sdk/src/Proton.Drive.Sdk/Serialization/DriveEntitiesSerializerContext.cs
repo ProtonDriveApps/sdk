@@ -11,6 +11,7 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     PropertyNameCaseInsensitive = true,
+    RespectRequiredConstructorParameters = true,
     Converters =
     [
         typeof(RefResultJsonConverter<string, InvalidNameError>),

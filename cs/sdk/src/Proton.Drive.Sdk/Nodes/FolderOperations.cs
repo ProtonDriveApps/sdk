@@ -37,9 +37,9 @@ internal static class FolderOperations
             {
                 var childUid = new NodeUid(folderUid.VolumeId, childLinkId);
 
-                var cachedChildNodeInfo = await client.Cache.Entities.TryGetNodeAsync(childUid, cancellationToken).ConfigureAwait(false);
+                var cachedChildNodeInfoOrNull = await client.Cache.Entities.TryGetNodeAsync(childUid, cancellationToken).ConfigureAwait(false);
 
-                if (cachedChildNodeInfo is null)
+                if (cachedChildNodeInfoOrNull is not { } cachedChildNodeInfo)
                 {
                     await foreach (var nodeResult in batchLoader.QueueAndTryLoadBatchAsync(childLinkId, cancellationToken).ConfigureAwait(false))
                     {
@@ -48,7 +48,7 @@ internal static class FolderOperations
                 }
                 else
                 {
-                    yield return cachedChildNodeInfo.Value.Node;
+                    yield return cachedChildNodeInfo.Node;
                 }
             }
         }
@@ -132,6 +132,7 @@ internal static class FolderOperations
             PassphraseSessionKey = passphraseSessionKey,
             NameSessionKey = nameSessionKey,
             HashKey = hashKey,
+            PassphraseForAnonymousMove = null,
         };
 
         await client.Cache.Secrets.SetFolderSecretsAsync(folderUid, folderSecrets, cancellationToken).ConfigureAwait(false);
