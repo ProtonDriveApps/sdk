@@ -25,7 +25,7 @@ internal sealed class InteropAccountClient(nint bindingsHandle, InteropAction<ni
     {
         var response = await _requestAction.SendRequestAsync<Proton.Sdk.CExports.Address>(
             _bindingsHandle,
-            new AccountRequest { GetAddress = new GetAddressRequest() }).ConfigureAwait(false);
+            new AccountRequest { GetDefaultAddress = new GetDefaultAddressRequest() }).ConfigureAwait(false);
 
         return ConvertToAddress(response);
     }
