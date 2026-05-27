@@ -22,9 +22,23 @@ describe('readline.question', () => {
     });
 
     function stubInterface(questionImpl: ReadlinePromisesInterface['question'], closeMock = jest.fn()) {
+        const listeners = new Map<string, Set<() => void>>();
         return {
             question: questionImpl,
             close: closeMock,
+            once: jest.fn((event: string, listener: () => void) => {
+                let set = listeners.get(event);
+                if (!set) {
+                    set = new Set();
+                    listeners.set(event, set);
+                }
+                set.add(listener);
+            }),
+            emit: (event: string) => {
+                for (const listener of listeners.get(event) ?? []) {
+                    listener();
+                }
+            },
         } as unknown as ReadlinePromisesInterface;
     }
 
@@ -99,5 +113,22 @@ describe('readline.question', () => {
 
         await expect(question('bad')).rejects.toThrow('boom');
         await expect(question('good')).resolves.toBe('ok');
+    });
+
+    it('returns null when stdin reaches EOF before an answer', async () => {
+        let emitClose!: () => void;
+        mockedCreateInterface.mockImplementationOnce(() => {
+            const stub = stubInterface(
+                jest.fn(() => new Promise<string>(() => {})),
+                jest.fn(),
+            );
+            emitClose = () => stub.emit('close');
+            return stub;
+        });
+
+        const pending = question('eof>');
+        await flushUntil(() => mockedCreateInterface.mock.calls.length > 0);
+        emitClose();
+        await expect(pending).resolves.toBeNull();
     });
 });

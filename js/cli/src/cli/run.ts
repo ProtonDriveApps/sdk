@@ -1,7 +1,7 @@
 import { InitConfig } from '../config';
 import { init } from '../init';
 import { captureException, flushSentry } from '../telemetry';
-import { AuthRequiredError, isRecoverableReplError } from './errors';
+import { AuthRequiredError, ExitError, isRecoverableReplError } from './errors';
 import { formatReadableJson } from './formatters';
 import { printCommandUsage } from './help';
 import { Command } from './interface';
@@ -13,6 +13,10 @@ export async function runSingleInvocation(commands: Command[], argv: string[], i
     try {
         await runCommand(commands, argv, initOptions);
     } catch (error: unknown) {
+        if (error instanceof ExitError) {
+            process.exit(2);
+            return;
+        }
         if (isRecoverableReplError(error)) {
             console.error(error instanceof Error ? error.message : String(error));
             process.exit(1);

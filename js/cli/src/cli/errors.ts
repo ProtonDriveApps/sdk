@@ -3,6 +3,8 @@ import { ProtonDriveError } from '@protontech/drive-sdk';
 import { AccountApiError } from '../api/accountApi';
 import { ReplUnclosedQuoteError } from './splitQuotedLine';
 
+export class ExitError extends Error {}
+
 export class CommandError extends Error {}
 
 export class CommandNotFoundError extends CommandError {}

@@ -3,6 +3,7 @@ import { Command } from './interface';
 import { startRepl } from './repl';
 import { runSingleInvocation } from './run';
 
+export { ExitError } from './errors';
 export {
     formatAuthor,
     formatDate,

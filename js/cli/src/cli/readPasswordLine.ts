@@ -9,7 +9,7 @@ export async function readPasswordLine(prompt: string): Promise<string> {
 
     if (!stdin.isTTY || typeof stdin.setRawMode !== 'function') {
         const answer = await question(prompt);
-        return answer.trim();
+        return (answer ?? '').trim();
     }
 
     return new Promise((resolve) => {
