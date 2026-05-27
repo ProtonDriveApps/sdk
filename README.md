@@ -4,7 +4,8 @@ The Proton Drive SDK provides a high-level interface for interacting with Proton
 
 - **TypeScript** — native SDK in [`js/sdk/`](./js/sdk/), available on npm as [`@protontech/drive-sdk`](https://www.npmjs.com/package/@protontech/drive-sdk). See [changelog](./js/CHANGELOG.md) for changes.
 - **C#** — native SDK in [`cs/sdk/`](./cs/sdk/). See [changelog](./cs/CHANGELOG.md) for changes.
-- **Kotlin** and **Swift** — bindings that wrap the C# SDK (see [`kt/`](./kt/) and [`swift/ProtonDriveSDK/`](./swift/ProtonDriveSDK/)). See [changelog](./cs/CHANGELOG.md) for changes to the C# SDK.
+- **Kotlin** — bindings that wrap the C# SDK in [`kt/`](./kt/). See [changelog](./cs/CHANGELOG.md) for changes to the C# SDK.
+- **Swift** - bindings that wrap the C# SDK in [`swift/ProtonDriveSDK/`](./swift/ProtonDriveSDK/), available on github as [`sdk-swift`](https://github.com/ProtonDriveApps/sdk-swift). See [changelog](./cs/CHANGELOG.md) for changes to the C# SDK.
 
 ### Who this is for
 
