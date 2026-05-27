@@ -78,7 +78,7 @@ describe('VolumeEventManager', () => {
             }
 
             expect(events).toEqual(mockEventsResponse.events);
-            expect(mockEventsAPIService.getVolumeEvents).toHaveBeenCalledWith(volumeId, 'startEventId');
+            expect(mockEventsAPIService.getVolumeEvents).toHaveBeenCalledWith(volumeId, 'startEventId', undefined);
         });
 
         it('should continue fetching when more events are available', async () => {
@@ -129,8 +129,13 @@ describe('VolumeEventManager', () => {
             expect(events[0]).toEqual(firstResponse.events[0]);
             expect(events[1]).toEqual(secondResponse.events[0]);
             expect(mockEventsAPIService.getVolumeEvents).toHaveBeenCalledTimes(2);
-            expect(mockEventsAPIService.getVolumeEvents).toHaveBeenNthCalledWith(1, volumeId, 'startEventId');
-            expect(mockEventsAPIService.getVolumeEvents).toHaveBeenNthCalledWith(2, volumeId, 'eventId2');
+            expect(mockEventsAPIService.getVolumeEvents).toHaveBeenNthCalledWith(
+                1,
+                volumeId,
+                'startEventId',
+                undefined,
+            );
+            expect(mockEventsAPIService.getVolumeEvents).toHaveBeenNthCalledWith(2, volumeId, 'eventId2', undefined);
         });
 
         it('should yield TreeRefresh event when refresh is true', async () => {

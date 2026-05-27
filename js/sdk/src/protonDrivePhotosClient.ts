@@ -27,7 +27,7 @@ import {
 } from './interface';
 import { DriveAPIService } from './internal/apiService';
 import { initDownloadModule } from './internal/download';
-import { CoreApiEvent, DriveEventsService, DriveListener, EventSubscription } from './internal/events';
+import { CoreApiEvent, DriveEventsService, DriveListener, EventScheduler, EventSubscription } from './internal/events';
 import {
     AlbumItem,
     initPhotoSharesModule,
@@ -211,9 +211,37 @@ export class ProtonDrivePhotosClient {
     }
 
     /**
+     * Provides the remote data updates for all files and folders in a given
+     * tree scope.
+     *
+     * See `ProtonDriveClient.iterateEvents` for more information.
+     */
+    async *iterateEvents(
+        treeEventScopeId: string,
+        lastEventId?: string,
+        signal?: AbortSignal,
+    ): AsyncGenerator<DriveEvent> {
+        this.logger.info(`Iterating events for tree scope ${treeEventScopeId}`);
+        yield* this.events.iterateEvents(treeEventScopeId, lastEventId, signal);
+    }
+
+    /**
+     * Provides a scheduler that invokes the callback on a timer for each
+     * registered tree event scope.
+     *
+     * See `ProtonDriveClient.getEventScheduler` for more information.
+     */
+    async getEventScheduler(callback: (eventTreeScopeId: string) => Promise<void>): Promise<EventScheduler> {
+        this.logger.info('Getting event scheduler');
+        return this.events.getEventScheduler(callback);
+    }
+
+    /**
      * Subscribes to the remote data updates for all files in a tree.
      *
      * See `ProtonDriveClient.subscribeToTreeEvents` for more information.
+     *
+     * @deprecated Use `iterateEvents` instead.
      */
     async subscribeToTreeEvents(treeEventScopeId: string, callback: DriveListener): Promise<EventSubscription> {
         this.logger.debug('Subscribing to node updates');
