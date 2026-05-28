@@ -412,7 +412,7 @@ export class NodesCryptoService {
             try {
                 const { verified, verificationErrors } = await this.driveCrypto.verifyInvitation(
                     node.encryptedCrypto.membership.base64MemberSharePassphraseKeyPacket,
-                    node.encryptedCrypto.membership.armoredInviterSharePassphraseKeyPacketSignature,
+                    { armored: node.encryptedCrypto.membership.armoredInviterSharePassphraseKeyPacketSignature },
                     inviterEmailKeys || [],
                 );
 
