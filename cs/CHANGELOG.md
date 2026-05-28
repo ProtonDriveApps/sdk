@@ -1,5 +1,12 @@
 # Changelog
 
+## cs/v0.15.1 (2026-05-28)
+
+* Fix node secrets not being read from cache
+* Use photos API when fetching album and photo node details
+* Merge result error message with first error message
+* Fix E2E kotlin tests
+
 ## cs/v0.15.0 (2026-05-27)
 
 * Report extended attributes size for download progress instead of revision size
