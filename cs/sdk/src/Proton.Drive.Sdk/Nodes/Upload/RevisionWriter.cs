@@ -59,7 +59,7 @@ internal sealed partial class RevisionWriter
             if (metadata is PhotosFileUploadMetadata photoMetadata)
             {
                 var hashKey = _draft.ParentHashKey
-                    ?? await NodeOperations.GetParentFolderHashKeyAsync(_client, _draft.Uid.NodeUid, cancellationToken).ConfigureAwait(false);
+                    ?? await NodeOperations.GetParentFolderHashKeyAsync(_client, _draft.Uid.NodeUid, forPhotos: true, cancellationToken).ConfigureAwait(false);
 
                 request = CreatePhotosRevisionUpdateRequest(
                     photoMetadata,

@@ -22,7 +22,7 @@ internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
         _lastKnownRevisionId = lastKnownRevisionId;
     }
 
-    public async ValueTask<RevisionDraft> GetDraftAsync(long intendedUploadSize, CancellationToken cancellationToken)
+    public async ValueTask<RevisionDraft> GetDraftAsync(long intendedUploadSize, bool forPhotos, CancellationToken cancellationToken)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(intendedUploadSize);
 
@@ -33,7 +33,7 @@ internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
             IntendedUploadSize = intendedUploadSize,
         };
 
-        var fileSecrets = await FileOperations.GetSecretsAsync(_client, _fileUid, cancellationToken).ConfigureAwait(false);
+        var fileSecrets = await FileOperations.GetSecretsAsync(_client, _fileUid, forPhotos, cancellationToken).ConfigureAwait(false);
 
         if (fileSecrets is not { Key: { } nodeKey, ContentKey: { } contentKey })
         {

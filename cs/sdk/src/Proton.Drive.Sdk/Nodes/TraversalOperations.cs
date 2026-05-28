@@ -9,7 +9,9 @@ internal static class TraversalOperations
         CancellationToken cancellationToken)
     {
         var currentMetadata = nodeMetadata;
-        var entryPointUid = currentMetadata.Node.ParentUid ?? GetAlbumEntryPointUid(currentMetadata);
+        var forPhotos = nodeMetadata.Node is PhotoNode;
+        var (entryPointUid, nextForPhotos) = GetNextEntryPoint(currentMetadata);
+        forPhotos |= nextForPhotos;
 
         HashSet<NodeUid> visitedNodes = [];
 
@@ -25,16 +27,27 @@ internal static class TraversalOperations
                 (NodeUid)entryPointUid,
                 knownShareAndKey: null,
                 useCacheOnly,
+                forPhotos,
                 cancellationToken).ConfigureAwait(false);
 
-            entryPointUid = currentMetadata.Node.ParentUid ?? GetAlbumEntryPointUid(currentMetadata);
+            (entryPointUid, nextForPhotos) = GetNextEntryPoint(currentMetadata);
+            forPhotos |= nextForPhotos;
         }
 
         return currentMetadata;
     }
 
-    private static NodeUid? GetAlbumEntryPointUid(NodeMetadata nodeMetadata)
+    private static (NodeUid? Uid, bool ForPhotos) GetNextEntryPoint(NodeMetadata nodeMetadata)
     {
-        return nodeMetadata.Node is PhotoNode { AlbumUids.Count: > 0 } photo ? photo.AlbumUids[0] : null;
+        if (nodeMetadata.Node.ParentUid is { } parentUid)
+        {
+            return (parentUid, nodeMetadata.Node is PhotoNode);
+        }
+
+        var albumUid = nodeMetadata.Node is PhotoNode { AlbumUids.Count: > 0 } photo
+            ? (NodeUid?)photo.AlbumUids[0]
+            : null;
+
+        return (albumUid, albumUid is not null);
     }
 }

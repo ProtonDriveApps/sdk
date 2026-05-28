@@ -20,6 +20,7 @@ internal static class RevisionOperations
         ProtonDriveClient client,
         RevisionUid revisionUid,
         long queueToken,
+        bool forPhotos,
         CancellationToken cancellationToken)
     {
         var (fileUid, revisionId) = revisionUid;
@@ -27,6 +28,7 @@ internal static class RevisionOperations
         var secretsTask = FileOperations.GetSecretsAsync(
             client,
             revisionUid.NodeUid,
+            forPhotos,
             cancellationToken).AsTask();
 
         var revisionTask = client.Api.Files.GetRevisionAsync(

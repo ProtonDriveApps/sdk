@@ -29,11 +29,11 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
         _overrideExistingDraftByOtherClient = overrideExistingDraftByOtherClient;
     }
 
-    public async ValueTask<RevisionDraft> GetDraftAsync(long intendedUploadSize, CancellationToken cancellationToken)
+    public async ValueTask<RevisionDraft> GetDraftAsync(long intendedUploadSize, bool forPhotos, CancellationToken cancellationToken)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(intendedUploadSize);
 
-        var (parentKey, parentHashKey) = await FolderOperations.GetKeyAndHashKeyAsync(_client, _parentUid, cancellationToken).ConfigureAwait(false);
+        var (parentKey, parentHashKey) = await FolderOperations.GetKeyAndHashKeyAsync(_client, _parentUid, forPhotos, cancellationToken).ConfigureAwait(false);
 
         var membershipAddress = await NodeOperations.GetMembershipAddressAsync(_client, _parentUid, cancellationToken).ConfigureAwait(false);
 

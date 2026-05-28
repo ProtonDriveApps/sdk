@@ -156,7 +156,7 @@ public sealed class ProtonPhotosClient
             yield break;
         }
 
-        await foreach (var item in VolumeOperations.EnumerateTrashAsync(DriveClient, volumeId.Value, cancellationToken).ConfigureAwait(false))
+        await foreach (var item in VolumeOperations.EnumerateTrashAsync(DriveClient, volumeId.Value, forPhotos: true, cancellationToken).ConfigureAwait(false))
         {
             yield return item;
         }
