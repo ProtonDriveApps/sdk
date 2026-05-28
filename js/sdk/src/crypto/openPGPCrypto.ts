@@ -221,11 +221,13 @@ export class OpenPGPCryptoWithCryptoProxy implements OpenPGPCrypto {
         data: Uint8Array<ArrayBuffer>,
         signature: Uint8Array<ArrayBuffer>,
         verificationKeys: PublicKey | PublicKey[],
+        signatureContext?: string,
     ) {
         const { verificationStatus, errors } = await this.cryptoProxy.verifyMessage({
             binaryData: data,
             binarySignature: signature,
             verificationKeys,
+            signatureContext: signatureContext ? { required: true, value: signatureContext } : undefined,
         });
         return {
             verified: verificationStatus,

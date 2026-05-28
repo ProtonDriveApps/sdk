@@ -78,13 +78,17 @@ export class SharingManagement {
         }
 
         const { volumeId } = splitNodeUid(nodeUid);
+        const [{ key: nodeKey }, encryptedShare] = await Promise.all([
+            this.nodesService.getNodeKeys(nodeUid),
+            this.sharesService.loadEncryptedShare(node.shareId),
+        ]);
+        const { passphraseSessionKey } = await this.cryptoService.decryptShare(encryptedShare, nodeKey);
 
-        const [protonInvitations, nonProtonInvitations, members, publicLink, share] = await Promise.all([
+        const [protonInvitations, nonProtonInvitations, members, publicLink] = await Promise.all([
             Array.fromAsync(this.iterateShareInvitations(node.shareId)),
-            Array.fromAsync(this.iterateShareExternalInvitations(node.shareId)),
+            Array.fromAsync(this.iterateShareExternalInvitations(node.shareId, passphraseSessionKey)),
             Array.fromAsync(this.iterateShareMembers(node.shareId)),
             this.getPublicLink(node.shareId, volumeId),
-            this.sharesService.loadEncryptedShare(node.shareId),
         ]);
 
         return {
@@ -92,7 +96,7 @@ export class SharingManagement {
             nonProtonInvitations,
             members,
             publicLink,
-            editorsCanShare: share.editorsCanShare,
+            editorsCanShare: encryptedShare.editorsCanShare,
         };
     }
 
@@ -103,10 +107,13 @@ export class SharingManagement {
         }
     }
 
-    private async *iterateShareExternalInvitations(shareId: string): AsyncGenerator<NonProtonInvitation> {
+    private async *iterateShareExternalInvitations(
+        shareId: string,
+        sharePassphraseSessionKey: SessionKey,
+    ): AsyncGenerator<NonProtonInvitation> {
         const invitations = await this.apiService.getShareExternalInvitations(shareId);
         for (const invitation of invitations) {
-            yield this.cryptoService.decryptExternalInvitation(invitation);
+            yield this.cryptoService.decryptExternalInvitation(invitation, sharePassphraseSessionKey);
         }
     }
 

@@ -78,7 +78,9 @@ describe('SharingManagement', () => {
             generateShareKeys: jest.fn().mockResolvedValue({
                 shareKey: { encrypted: 'encrypted-key', decrypted: { passphraseSessionKey: 'pass-session-key' } },
             }),
-            decryptShare: jest.fn().mockImplementation((share) => share),
+            decryptShare: jest.fn().mockImplementation((share) => ({
+                passphraseSessionKey: share.passphraseSessionKey,
+            })),
             decryptInvitation: jest.fn().mockImplementation((invitation) => invitation),
             decryptExternalInvitation: jest.fn().mockImplementation((invitation) => invitation),
             decryptMember: jest.fn().mockImplementation((member) => member),
@@ -170,7 +172,10 @@ describe('SharingManagement', () => {
                 members: [],
                 publicLink: undefined,
             });
-            expect(cryptoService.decryptExternalInvitation).toHaveBeenCalledWith(externalInvitation);
+            expect(cryptoService.decryptExternalInvitation).toHaveBeenCalledWith(
+                externalInvitation,
+                'sharePassphraseSessionKey',
+            );
         });
 
         it('should return members', async () => {

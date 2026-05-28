@@ -147,6 +147,7 @@ export interface OpenPGPCrypto {
         data: Uint8Array<ArrayBuffer>,
         signature: Uint8Array<ArrayBuffer>,
         verificationKeys: PublicKey | PublicKey[],
+        signatureContext?: string,
     ) => Promise<{
         verified: VERIFICATION_STATUS;
         verificationErrors?: Error[];
