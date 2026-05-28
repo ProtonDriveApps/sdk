@@ -8,7 +8,7 @@ fun ProtonDriveSdk.StringResult.toEntity(): Result<String> =
             Result.success(value)
 
         ProtonDriveSdk.StringResult.ResultCase.ERROR ->
-            Result.failure(error.toEntity().toException("Name unavailable"))
+            Result.failure(error.toEntity().toException("String result failure"))
 
         ProtonDriveSdk.StringResult.ResultCase.RESULT_NOT_SET, null ->
             error("Invalid StringResult: result not set")
