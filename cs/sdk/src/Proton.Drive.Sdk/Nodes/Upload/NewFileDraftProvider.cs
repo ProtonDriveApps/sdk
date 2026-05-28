@@ -157,7 +157,6 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
                     PassphraseSessionKey = passphraseSessionKey,
                     NameSessionKey = nameSessionKey,
                     ContentKey = contentKey,
-                    PassphraseForAnonymousMove = null,
                 };
 
                 var draftNodeUid = new NodeUid(_parentUid.VolumeId, response.Identifiers.LinkId);
