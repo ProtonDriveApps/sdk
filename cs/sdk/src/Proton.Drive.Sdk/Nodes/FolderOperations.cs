@@ -132,7 +132,6 @@ internal static class FolderOperations
             PassphraseSessionKey = passphraseSessionKey,
             NameSessionKey = nameSessionKey,
             HashKey = hashKey,
-            PassphraseForAnonymousMove = null,
         };
 
         await client.Cache.Secrets.SetFolderSecretsAsync(folderUid, folderSecrets, cancellationToken).ConfigureAwait(false);

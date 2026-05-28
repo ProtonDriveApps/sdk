@@ -11,5 +11,5 @@ internal class NodeSecrets
 
     [JsonPropertyName("passphrase")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public required ReadOnlyMemory<byte>? PassphraseForAnonymousMove { get; set; }
+    public ReadOnlyMemory<byte>? PassphraseForAnonymousMove { get; init; }
 }
