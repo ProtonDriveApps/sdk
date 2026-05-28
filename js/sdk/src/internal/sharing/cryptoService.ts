@@ -1,16 +1,11 @@
 import { c } from 'ttag';
 
-import {
-    DriveCrypto,
-    PrivateKey,
-    SessionKey,
-    SRPVerifier,
-    VERIFICATION_STATUS,
-} from '../../crypto';
+import { DriveCrypto, PrivateKey, PublicKey, SessionKey, SRPVerifier, VERIFICATION_STATUS } from '../../crypto';
 import { DecryptionError } from '../../errors';
 import {
     Author,
     InvalidNameError,
+    Logger,
     Member,
     MetricVolumeType,
     NonProtonInvitation,
@@ -56,6 +51,8 @@ enum PublicLinkFlags {
  * shares, invitations, etc.
  */
 export class SharingCryptoService {
+    private logger: Logger;
+
     constructor(
         private telemetry: ProtonDriveTelemetry,
         private driveCrypto: DriveCrypto,
@@ -63,6 +60,7 @@ export class SharingCryptoService {
         private sharesService: SharesService,
     ) {
         this.telemetry = telemetry;
+        this.logger = telemetry.getLogger('sharing-crypto');
         this.driveCrypto = driveCrypto;
         this.account = account;
         this.sharesService = sharesService;
@@ -193,7 +191,7 @@ export class SharingCryptoService {
         encryptedInvitation: EncryptedInvitationWithNode,
     ): Promise<ProtonInvitationWithNode> {
         const inviteeAddress = await this.account.getOwnAddress(encryptedInvitation.inviteeEmail);
-        const inviteeKeys = inviteeAddress.keys.map(k => k.key);
+        const inviteeKeys = inviteeAddress.keys.map((k) => k.key);
 
         const shareKey = await this.driveCrypto.decryptUnsignedKey(
             encryptedInvitation.share.armoredKey,
@@ -226,8 +224,13 @@ export class SharingCryptoService {
      * Verifies an invitation.
      */
     async decryptInvitation(encryptedInvitation: EncryptedInvitation): Promise<ProtonInvitation> {
-        // TODO: verify addedByEmail (current client doesnt do this)
-        const addedByEmail: Result<string, UnverifiedAuthorError> = resultOk(encryptedInvitation.addedByEmail);
+        const addedByEmail = await this.verifyAddedByEmail(encryptedInvitation, async (publicKeys) => {
+            return this.driveCrypto.verifyInvitation(
+                encryptedInvitation.base64KeyPacket,
+                { base64: encryptedInvitation.base64KeyPacketSignature },
+                publicKeys,
+            );
+        });
 
         return {
             uid: encryptedInvitation.uid,
@@ -246,8 +249,12 @@ export class SharingCryptoService {
     }> {
         const inviteeAddress = await this.account.getOwnAddress(encryptedInvitation.inviteeEmail);
         const inviteeKey = inviteeAddress.keys[inviteeAddress.primaryKeyIndex].key;
-        const inviteeKeys = inviteeAddress.keys.map(k => k.key);
-        const result = await this.driveCrypto.acceptInvitation(encryptedInvitation.base64KeyPacket, inviteeKeys, inviteeKey);
+        const inviteeKeys = inviteeAddress.keys.map((k) => k.key);
+        const result = await this.driveCrypto.acceptInvitation(
+            encryptedInvitation.base64KeyPacket,
+            inviteeKeys,
+            inviteeKey,
+        );
         return result;
     }
 
@@ -275,9 +282,18 @@ export class SharingCryptoService {
     /**
      * Verifies an external invitation.
      */
-    async decryptExternalInvitation(encryptedInvitation: EncryptedExternalInvitation): Promise<NonProtonInvitation> {
-        // TODO: verify addedByEmail (current client doesnt do this)
-        const addedByEmail: Result<string, UnverifiedAuthorError> = resultOk(encryptedInvitation.addedByEmail);
+    async decryptExternalInvitation(
+        encryptedInvitation: EncryptedExternalInvitation,
+        sharePassphraseSessionKey: SessionKey,
+    ): Promise<NonProtonInvitation> {
+        const addedByEmail = await this.verifyAddedByEmail(encryptedInvitation, async (publicKeys) => {
+            return this.driveCrypto.verifyExternalInvitation(
+                encryptedInvitation.inviteeEmail,
+                sharePassphraseSessionKey,
+                encryptedInvitation.base64Signature,
+                publicKeys,
+            );
+        });
 
         return {
             uid: encryptedInvitation.uid,
@@ -293,8 +309,13 @@ export class SharingCryptoService {
      * Verifies a member.
      */
     async decryptMember(encryptedMember: EncryptedMember): Promise<Member> {
-        // TODO: verify addedByEmail (current client doesnt do this)
-        const addedByEmail: Result<string, UnverifiedAuthorError> = resultOk(encryptedMember.addedByEmail);
+        const addedByEmail = await this.verifyAddedByEmail(encryptedMember, async (publicKeys) => {
+            return this.driveCrypto.verifyInvitation(
+                encryptedMember.base64KeyPacket,
+                { base64: encryptedMember.base64KeyPacketSignature },
+                publicKeys,
+            );
+        });
 
         return {
             uid: encryptedMember.uid,
@@ -303,6 +324,50 @@ export class SharingCryptoService {
             inviteeEmail: encryptedMember.inviteeEmail,
             role: encryptedMember.role,
         };
+    }
+
+    private async verifyAddedByEmail(
+        encryptedMetadata: {
+            uid: string;
+            addedByEmail: string;
+            invitationTime: Date;
+        },
+        verifier: (publicKeys: PublicKey[]) => Promise<{ verified: VERIFICATION_STATUS; verificationErrors?: Error[] }>,
+    ): Promise<Result<string, UnverifiedAuthorError>> {
+        let addressPublicKeys;
+        try {
+            addressPublicKeys = await this.account.getPublicKeys(encryptedMetadata.addedByEmail);
+        } catch (error: unknown) {
+            this.logger.warn(`Failed to get inviter keys: ${getErrorMessage(error)}`);
+        }
+
+        try {
+            const { verified, verificationErrors } = await verifier(addressPublicKeys || []);
+
+            if (verified === VERIFICATION_STATUS.SIGNED_AND_VALID) {
+                return resultOk(encryptedMetadata.addedByEmail);
+            }
+
+            this.telemetry.recordMetric({
+                eventName: 'verificationError',
+                volumeType: MetricVolumeType.Unknown,
+                field: 'membershipInviter',
+                fromBefore2024: encryptedMetadata.invitationTime < new Date('2024-01-01'),
+                error: verificationErrors,
+                uid: encryptedMetadata.uid,
+            });
+
+            return resultError({
+                claimedAuthor: encryptedMetadata.addedByEmail,
+                error: getVerificationMessage(verified, verificationErrors, undefined, !addressPublicKeys),
+            });
+        } catch (error: unknown) {
+            this.logger.error(`Failed to verify added by email`, error);
+            return resultError({
+                claimedAuthor: encryptedMetadata.addedByEmail,
+                error: c('Error').t`Failed to verify invitation`,
+            });
+        }
     }
 
     async encryptPublicLink(
@@ -321,11 +386,7 @@ export class SharingCryptoService {
         const addressKey = address.keys[address.primaryKeyIndex].key;
 
         const { base64SharePasswordSalt, base64SharePassphraseKeyPacket, armoredPassword, srp } =
-            await this.driveCrypto.encryptPublicLinkPasswordAndSessionKey(
-                password,
-                addressKey,
-                shareSessionKey,
-            );
+            await this.driveCrypto.encryptPublicLinkPasswordAndSessionKey(password, addressKey, shareSessionKey);
 
         return {
             crypto: {
@@ -395,7 +456,11 @@ export class SharingCryptoService {
         }
     }
 
-    async encryptBookmark(token: string, urlPassword: string, customPassword?: string): Promise<{
+    async encryptBookmark(
+        token: string,
+        urlPassword: string,
+        customPassword?: string,
+    ): Promise<{
         token: string;
         encryptedUrlPassword: string;
         addressId: string;

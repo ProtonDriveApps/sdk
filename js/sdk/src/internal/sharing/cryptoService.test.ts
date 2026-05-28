@@ -1,14 +1,16 @@
-import { DriveCrypto, PrivateKey } from '../../crypto';
+import { DriveCrypto, PrivateKey, SessionKey, VERIFICATION_STATUS } from '../../crypto';
 import {
+    MemberRole,
     MetricVolumeType,
     NodeType,
+    NonProtonInvitationState,
     ProtonDriveAccount,
     ProtonDriveTelemetry,
     resultError,
     resultOk,
 } from '../../interface';
 import { getMockTelemetry } from '../../tests/telemetry';
-import { PUBLIC_LINK_GENERATED_PASSWORD_LENGTH, SharingCryptoService } from './cryptoService';
+import { SharingCryptoService } from './cryptoService';
 import { SharesService } from './interface';
 
 describe('SharingCryptoService', () => {
@@ -35,6 +37,7 @@ describe('SharingCryptoService', () => {
             getOwnAddress: jest.fn(async () => ({
                 keys: [{ key: 'addressKey' as unknown as PrivateKey }],
             })),
+            getPublicKeys: jest.fn(),
         };
         // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
@@ -178,9 +181,138 @@ describe('SharingCryptoService', () => {
                 url: resultOk('https://drive.proton.me/urls/tokenId#urlPassword'),
                 nodeName: resultError({
                     name: '',
-                    error: "Name must not be empty",
+                    error: 'Name must not be empty',
                 }),
             });
+        });
+    });
+
+    describe('decryptInvitation', () => {
+        const encryptedInvitation = {
+            uid: 'invitation-uid',
+            invitationTime: new Date(),
+            addedByEmail: 'inviter@example.com',
+            inviteeEmail: 'invitee@example.com',
+            role: MemberRole.Viewer,
+            base64KeyPacket: 'keyPacket',
+            base64KeyPacketSignature: 'keyPacketSignature',
+        };
+
+        beforeEach(() => {
+            account.getPublicKeys = jest.fn().mockResolvedValue(['publicKey']);
+            driveCrypto.verifyInvitation = jest.fn().mockResolvedValue({
+                verified: VERIFICATION_STATUS.SIGNED_AND_VALID,
+            });
+        });
+
+        it('should verify addedByEmail when signature is valid', async () => {
+            const result = await cryptoService.decryptInvitation(encryptedInvitation);
+
+            expect(result.addedByEmail).toEqual(resultOk('inviter@example.com'));
+            expect(driveCrypto.verifyInvitation).toHaveBeenCalledWith('keyPacket', { base64: 'keyPacketSignature' }, [
+                'publicKey',
+            ]);
+        });
+
+        it('should return unverified addedByEmail when signature is invalid', async () => {
+            driveCrypto.verifyInvitation = jest.fn().mockResolvedValue({
+                verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                verificationErrors: [new Error('Invalid signature')],
+            });
+
+            const result = await cryptoService.decryptInvitation(encryptedInvitation);
+
+            expect(result.addedByEmail).toEqual(
+                resultError({
+                    claimedAuthor: 'inviter@example.com',
+                    error: 'Signature verification failed: Invalid signature',
+                }),
+            );
+        });
+
+        it('should return unverified addedByEmail when inviter keys cannot be loaded', async () => {
+            account.getPublicKeys = jest.fn().mockRejectedValue(new Error('Keys not found'));
+            driveCrypto.verifyInvitation = jest.fn().mockResolvedValue({
+                verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                verificationErrors: [new Error('Invalid signature')],
+            });
+
+            const result = await cryptoService.decryptInvitation(encryptedInvitation);
+
+            expect(result.addedByEmail).toEqual(
+                resultError({
+                    claimedAuthor: 'inviter@example.com',
+                    error: 'Verification keys are not available',
+                }),
+            );
+            expect(driveCrypto.verifyInvitation).toHaveBeenCalledWith(
+                'keyPacket',
+                { base64: 'keyPacketSignature' },
+                [],
+            );
+        });
+    });
+
+    describe('decryptMember', () => {
+        const encryptedMember = {
+            uid: 'member-uid',
+            invitationTime: new Date(),
+            addedByEmail: 'inviter@example.com',
+            inviteeEmail: 'member@example.com',
+            role: MemberRole.Viewer,
+            base64KeyPacket: 'keyPacket',
+            base64KeyPacketSignature: 'keyPacketSignature',
+        };
+
+        beforeEach(() => {
+            account.getPublicKeys = jest.fn().mockResolvedValue(['publicKey']);
+            driveCrypto.verifyInvitation = jest.fn().mockResolvedValue({
+                verified: VERIFICATION_STATUS.SIGNED_AND_VALID,
+            });
+        });
+
+        it('should verify addedByEmail when signature is valid', async () => {
+            const result = await cryptoService.decryptMember(encryptedMember);
+
+            expect(result.addedByEmail).toEqual(resultOk('inviter@example.com'));
+            expect(driveCrypto.verifyInvitation).toHaveBeenCalledWith('keyPacket', { base64: 'keyPacketSignature' }, [
+                'publicKey',
+            ]);
+        });
+    });
+
+    describe('decryptExternalInvitation', () => {
+        const encryptedInvitation = {
+            uid: 'external-invitation-uid',
+            invitationTime: new Date(),
+            addedByEmail: 'inviter@example.com',
+            inviteeEmail: 'invitee@example.com',
+            role: MemberRole.Viewer,
+            state: NonProtonInvitationState.Pending,
+            base64Signature: 'externalSignature',
+        };
+        const sharePassphraseSessionKey = { data: new Uint8Array([1, 2, 3]) };
+
+        beforeEach(() => {
+            account.getPublicKeys = jest.fn().mockResolvedValue(['publicKey']);
+            driveCrypto.verifyExternalInvitation = jest.fn().mockResolvedValue({
+                verified: VERIFICATION_STATUS.SIGNED_AND_VALID,
+            });
+        });
+
+        it('should verify addedByEmail when signature is valid', async () => {
+            const result = await cryptoService.decryptExternalInvitation(
+                encryptedInvitation,
+                sharePassphraseSessionKey as SessionKey,
+            );
+
+            expect(result.addedByEmail).toEqual(resultOk('inviter@example.com'));
+            expect(driveCrypto.verifyExternalInvitation).toHaveBeenCalledWith(
+                'invitee@example.com',
+                sharePassphraseSessionKey,
+                'externalSignature',
+                ['publicKey'],
+            );
         });
     });
 

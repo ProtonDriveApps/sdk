@@ -608,15 +608,26 @@ export class DriveCrypto {
 
     async verifyInvitation(
         base64KeyPacket: string,
-        armoredKeyPacketSignature: string,
+        // TODO: Make API consistent and use only one version.
+        keyPacketSignature: { armored: string } | { base64: string },
         verificationKeys: PublicKey[],
     ): Promise<{
         verified: VERIFICATION_STATUS;
         verificationErrors?: Error[];
     }> {
-        const { verified, verificationErrors } = await this.openPGPCrypto.verifyArmored(
+        if ('armored' in keyPacketSignature) {
+            const { verified, verificationErrors } = await this.openPGPCrypto.verifyArmored(
+                Uint8Array.fromBase64(base64KeyPacket),
+                keyPacketSignature.armored,
+                verificationKeys,
+                SIGNING_CONTEXTS.SHARING_INVITER,
+            );
+            return { verified, verificationErrors };
+        }
+
+        const { verified, verificationErrors } = await this.openPGPCrypto.verify(
             Uint8Array.fromBase64(base64KeyPacket),
-            armoredKeyPacketSignature,
+            Uint8Array.fromBase64(keyPacketSignature.base64),
             verificationKeys,
             SIGNING_CONTEXTS.SHARING_INVITER,
         );
@@ -653,16 +664,33 @@ export class DriveCrypto {
     ): Promise<{
         base64ExternalInvitationSignature: string;
     }> {
-        const data = inviteeEmail.concat('|').concat(shareSessionKey.data.toBase64());
-
         const { signature: externalInviationSignature } = await this.openPGPCrypto.sign(
-            new TextEncoder().encode(data),
+            new TextEncoder().encode(externalInvitationSignaturePayload(inviteeEmail, shareSessionKey)),
             signingKey,
             SIGNING_CONTEXTS.SHARING_INVITER_EXTERNAL_INVITATION,
         );
         return {
             base64ExternalInvitationSignature: externalInviationSignature.toBase64(),
         };
+    }
+
+    async verifyExternalInvitation(
+        inviteeEmail: string,
+        shareSessionKey: SessionKey,
+        base64Signature: string,
+        verificationKeys: PublicKey[],
+    ): Promise<{
+        verified: VERIFICATION_STATUS;
+        verificationErrors?: Error[];
+    }> {
+        const data = new TextEncoder().encode(externalInvitationSignaturePayload(inviteeEmail, shareSessionKey));
+        const { verified, verificationErrors } = await this.openPGPCrypto.verify(
+            data,
+            Uint8Array.fromBase64(base64Signature),
+            verificationKeys,
+            SIGNING_CONTEXTS.SHARING_INVITER_EXTERNAL_INVITATION,
+        );
+        return { verified, verificationErrors };
     }
 
     async encryptThumbnailBlock(
@@ -819,6 +847,10 @@ export class DriveCrypto {
             milliseconds: Math.round(duration),
         });
     }
+}
+
+function externalInvitationSignaturePayload(inviteeEmail: string, shareSessionKey: SessionKey): string {
+    return inviteeEmail.concat('|').concat(shareSessionKey.data.toBase64());
 }
 
 export function uint8ArrayToUtf8(input: Uint8Array<ArrayBuffer>): string {
