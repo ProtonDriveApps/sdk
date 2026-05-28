@@ -1,5 +1,4 @@
-﻿using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Proton.Sdk.Serialization;
@@ -8,29 +7,28 @@ internal sealed class ForgivingBytesToHexJsonConverter : JsonConverter<ReadOnlyM
 {
     public override ReadOnlyMemory<byte> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        if (reader.ValueSpan.Length == 0 || reader.TokenType == JsonTokenType.Null)
+        if (reader.TokenType == JsonTokenType.Null || reader.GetValueLength() is not (var valueLength and > 0))
         {
             return ReadOnlyMemory<byte>.Empty;
         }
 
-        var maxCharacterCount = Encoding.UTF8.GetMaxCharCount(reader.ValueSpan.Length);
-        var characterBuffer = MemoryProvider.GetHeapMemoryIfTooLargeForStack<char>(maxCharacterCount, out var charactersHeapMemoryOwner)
-            ? charactersHeapMemoryOwner.Memory.Span
-            : stackalloc char[maxCharacterCount];
-
-        using (charactersHeapMemoryOwner)
+        try
         {
-            var characterCount = reader.CopyString(characterBuffer);
+            if (reader.HasUnescapedValueSpan)
+            {
+                return Convert.FromHexString(reader.ValueSpan);
+            }
 
-            try
-            {
-                return Convert.FromHexString(characterBuffer[..characterCount]);
-            }
-            catch
-            {
-                // TODO: Use some explicit fallback mechanism on the DTO attribute instead, and make this converter non-forgiving
-                return ReadOnlyMemory<byte>.Empty;
-            }
+            var unescapedValueBuffer = MemoryPolicy.IsTooLargeForStack<byte>(valueLength) ? new byte[valueLength] : stackalloc byte[valueLength];
+
+            var unescapedValueLength = reader.CopyString(unescapedValueBuffer);
+
+            return Convert.FromHexString(unescapedValueBuffer[..unescapedValueLength]);
+        }
+        catch
+        {
+            // TODO: Use some explicit fallback mechanism on the DTO attribute instead, and make this converter non-forgiving
+            return ReadOnlyMemory<byte>.Empty;
         }
     }
 
@@ -42,16 +40,15 @@ internal sealed class ForgivingBytesToHexJsonConverter : JsonConverter<ReadOnlyM
             return;
         }
 
-        var maxCharacterCount = value.Length * 2;
-        var characterBuffer = MemoryProvider.GetHeapMemoryIfTooLargeForStack<char>(maxCharacterCount, out var charactersHeapMemoryOwner)
-            ? charactersHeapMemoryOwner.Memory.Span
-            : stackalloc char[maxCharacterCount];
+        var maxByteCount = value.Length * 2;
 
-        if (!Convert.TryToHexStringLower(value.Span, characterBuffer, out var byteCount))
+        var hexStringBuffer = MemoryPolicy.IsTooLargeForStack<byte>(maxByteCount) ? new byte[maxByteCount] : stackalloc byte[maxByteCount];
+
+        if (!Convert.TryToHexStringLower(value.Span, hexStringBuffer, out var hexStringLength))
         {
             throw new JsonException("Could not convert to hex string");
         }
 
-        writer.WriteStringValue(characterBuffer[..byteCount]);
+        writer.WriteStringValue(hexStringBuffer[..hexStringLength]);
     }
 }

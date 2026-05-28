@@ -3,7 +3,11 @@
 namespace Proton.Drive.Sdk.Nodes;
 
 [method: JsonConstructor]
-public sealed class ExtendedAttributesDeserializationError(ProtonDriveError? innerError = null)
-    : ProtonDriveError("Failed to deserialize extended attributes", innerError)
+public sealed class ExtendedAttributesDeserializationError(string? message, ProtonDriveError? innerError = null)
+    : ProtonDriveError(message, innerError)
 {
+    public ExtendedAttributesDeserializationError(ProtonDriveError? innerError = null)
+        : this("Failed to deserialize extended attributes", innerError)
+    {
+    }
 }
