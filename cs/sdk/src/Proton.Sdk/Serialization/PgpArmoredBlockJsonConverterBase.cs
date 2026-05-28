@@ -19,19 +19,22 @@ internal abstract class PgpArmoredBlockJsonConverterBase<T> : JsonConverter<T>
                 $"Unexpected token type '{reader.TokenType}' when converting to {typeof(T).Name}, expected '{nameof(JsonTokenType.String)}'");
         }
 
-        var buffer = ArrayPool<byte>.Shared.Rent(reader.ValueSpan.Length);
+        if (reader.HasUnescapedValueSpan)
+        {
+            return Decode(reader.ValueSpan);
+        }
+
+        var unescapedValueBuffer = ArrayPool<byte>.Shared.Rent(reader.GetValueLength());
 
         try
         {
-            var numberOfBytesCopied = reader.CopyString(buffer);
+            var unescapedValueLength = reader.CopyString(unescapedValueBuffer);
 
-            var decodedBlock = PgpArmorDecoder.Decode(buffer.AsSpan()[..numberOfBytesCopied]);
-
-            return CreateValue(decodedBlock);
+            return Decode(unescapedValueBuffer.AsSpan()[..unescapedValueLength]);
         }
         finally
         {
-            ArrayPool<byte>.Shared.Return(buffer);
+            ArrayPool<byte>.Shared.Return(unescapedValueBuffer);
         }
     }
 
@@ -52,4 +55,11 @@ internal abstract class PgpArmoredBlockJsonConverterBase<T> : JsonConverter<T>
     }
 
     protected abstract T CreateValue(ReadOnlyMemory<byte> bytes);
+
+    private T Decode(ReadOnlySpan<byte> bytes)
+    {
+        var decodedBlock = PgpArmorDecoder.Decode(bytes);
+
+        return CreateValue(decodedBlock);
+    }
 }

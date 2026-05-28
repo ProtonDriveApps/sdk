@@ -173,12 +173,15 @@ internal static class DtoToMetadataConverter
 
         var extendedAttributes = extendedAttributesOutput.Data;
         var additionalMetadata = extendedAttributes?.AdditionalMetadata?.Select(x => new AdditionalMetadataProperty(x.Key, x.Value)).ToList().AsReadOnly();
+        var modificationTimeResult = extendedAttributes?.Common?.ModificationTime;
+        var modificationTimeIsValid = modificationTimeResult?.IsSuccess ?? true;
 
         if (!NodeOperations.ValidateName(decryptionResult.Link.Name, out var nameOutput, out var nameResult, out var nameSessionKey)
             || !nodeKeyIsValid
             || !passphraseIsValid
             || !extendedAttributesIsValid
-            || !contentKeyIsValid)
+            || !contentKeyIsValid
+            || !modificationTimeIsValid)
         {
             var (partialFileMetadata, failedDecryptionFields) = CreatePartialFileMetadata(
                 linkDetailsDto,
@@ -187,6 +190,7 @@ internal static class DtoToMetadataConverter
                 uid,
                 activeRevisionDto,
                 extendedAttributes,
+                modificationTimeResult,
                 thumbnails,
                 additionalMetadata,
                 parentUid,
@@ -230,7 +234,7 @@ internal static class DtoToMetadataConverter
             CreationTime = activeRevisionDto.CreationTime,
             SizeOnCloudStorage = activeRevisionDto.StorageQuotaConsumption,
             ClaimedSize = extendedAttributes?.Common?.Size,
-            ClaimedModificationTime = extendedAttributes?.Common?.ModificationTime,
+            ClaimedModificationTime = modificationTimeResult?.GetValueOrDefault(),
             ClaimedDigests =
                 new FileContentDigests
                 {
@@ -291,6 +295,7 @@ internal static class DtoToMetadataConverter
         NodeUid uid,
         ActiveRevisionDto activeRevisionDto,
         ExtendedAttributes? extendedAttributes,
+        Result<DateTime, ProtonDriveError>? modificationTimeResult,
         ReadOnlyCollection<ThumbnailHeader> thumbnails,
         ReadOnlyCollection<AdditionalMetadataProperty>? additionalMetadata,
         NodeUid? parentUid,
@@ -330,6 +335,11 @@ internal static class DtoToMetadataConverter
             failedDecryptionFields.Add(EncryptedField.NodeName, nameError);
         }
 
+        if (modificationTimeResult?.TryGetError(out var modificationTimeError) == true)
+        {
+            nodeErrors.Add(new ExtendedAttributesDeserializationError("Failed to deserialize modification time", modificationTimeError));
+        }
+
         if (decryptionResult.ExtendedAttributes.TryGetError(out var extendedAttributesError))
         {
             nodeErrors.Add(extendedAttributesError);
@@ -358,7 +368,7 @@ internal static class DtoToMetadataConverter
             CreationTime = activeRevisionDto.CreationTime,
             SizeOnCloudStorage = activeRevisionDto.StorageQuotaConsumption,
             ClaimedSize = extendedAttributes?.Common?.Size,
-            ClaimedModificationTime = extendedAttributes?.Common?.ModificationTime,
+            ClaimedModificationTime = modificationTimeResult?.GetValueOrDefault(),
             ClaimedDigests = new FileContentDigests { Sha1 = extendedAttributes?.Common?.Digests?.Sha1 },
             Thumbnails = thumbnails.AsReadOnly(),
             AdditionalClaimedMetadata = additionalMetadata,
