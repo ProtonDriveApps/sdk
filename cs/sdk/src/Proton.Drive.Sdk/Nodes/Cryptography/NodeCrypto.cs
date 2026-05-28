@@ -65,8 +65,8 @@ internal static class NodeCrypto
 
     public static byte[] HashNodeName(string name, ReadOnlySpan<byte> parentFolderHashKey)
     {
-        var maxNameByteLength = Encoding.UTF8.GetByteCount(name);
-        var nameBytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack<byte>(maxNameByteLength, out var nameHeapMemoryOwner)
+        var maxNameByteLength = Encoding.UTF8.GetMaxByteCount(name.Length);
+        var nameBytes = MemoryPolicy.GetRentedHeapMemoryIfTooLargeForStack<byte>(maxNameByteLength, out var nameHeapMemoryOwner)
             ? nameHeapMemoryOwner.Memory.Span
             : stackalloc byte[maxNameByteLength];
 
@@ -119,7 +119,7 @@ internal static class NodeCrypto
         }
         catch (JsonException e)
         {
-            return new ExtendedAttributesDeserializationError(e.EnrichJsonException(serializedExtendedAttributes));
+            return new ExtendedAttributesDeserializationError(e.ToEnrichedProtonDriveError(serializedExtendedAttributes));
         }
         catch (Exception e)
         {

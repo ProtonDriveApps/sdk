@@ -4,7 +4,7 @@ namespace Proton.Drive.Sdk;
 
 internal static class JsonExceptionExtensions
 {
-    internal static ProtonDriveError EnrichJsonException(this JsonException e, ReadOnlyMemory<byte> json)
+    internal static ProtonDriveError ToEnrichedProtonDriveError(this JsonException e, ReadOnlyMemory<byte> json)
     {
         if (e.Path is not { Length: > 0 })
         {
@@ -15,17 +15,18 @@ internal static class JsonExceptionExtensions
         {
             using var doc = JsonDocument.Parse(json);
 
-            if (TryGetElementAtPath(doc.RootElement, e.Path, out var element))
+            if (!TryGetElementAtPath(doc.RootElement, e.Path, out var element))
             {
-                return new ProtonDriveError($"Actual token at path '{e.Path}' is {ValueKindToToken(element.ValueKind)}.", e.ToProtonDriveError());
+                return e.ToProtonDriveError();
             }
+
+            return new ProtonDriveError($"Actual token at path '{e.Path}' is {ValueKindToToken(element.ValueKind)}.", e.ToProtonDriveError());
         }
         catch (JsonException)
         {
             // Secondary parse failed.
+            return e.ToProtonDriveError();
         }
-
-        return e.ToProtonDriveError();
     }
 
     private static bool TryGetElementAtPath(JsonElement root, string path, out JsonElement element)
