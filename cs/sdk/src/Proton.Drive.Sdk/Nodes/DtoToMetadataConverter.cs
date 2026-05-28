@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Api;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
@@ -31,6 +32,7 @@ internal static class DtoToMetadataConverter
                 linkDetailsDto.Link.ParentId,
                 knownShareAndKey,
                 linkDetailsDto.Sharing?.ShareId,
+                forPhotos: false,
                 cancellationToken).ConfigureAwait(false)
             : await GetAlbumEntryPointKeyOrThrowAsync(client, volumeId, linkDetailsDto, knownShareAndKey, albumInclusions, cancellationToken)
                 .ConfigureAwait(false);
@@ -667,6 +669,7 @@ internal static class DtoToMetadataConverter
         LinkId? parentId,
         ShareAndKey? shareAndKeyToUse,
         ShareId? shareId,
+        bool forPhotos,
         CancellationToken cancellationToken)
     {
         return await GetEntryPointKeyOrThrowAsync(
@@ -681,7 +684,7 @@ internal static class DtoToMetadataConverter
 
         async Task<LinkDetailsDto> GetLinkDetailsAsync(LinkId linkId, CancellationToken ct)
         {
-            var response = await client.Api.Links.GetDetailsAsync(volumeId, [linkId], ct).ConfigureAwait(false);
+            var response = await client.Api.GetLinkDetailsAsync(volumeId, [linkId], forPhotos, ct).ConfigureAwait(false);
 
             return response.Links is { Count: > 0 } links
                 ? links[0]
@@ -711,6 +714,7 @@ internal static class DtoToMetadataConverter
                     albumInclusionId,
                     knownShareAndKey,
                     linkDetailsDto.Sharing?.ShareId,
+                    forPhotos: true,
                     cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)

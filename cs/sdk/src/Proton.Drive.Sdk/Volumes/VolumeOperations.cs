@@ -61,6 +61,7 @@ internal static class VolumeOperations
     public static async IAsyncEnumerable<Node> EnumerateTrashAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
+        bool forPhotos,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var page = 0;
@@ -76,7 +77,7 @@ internal static class VolumeOperations
             {
                 var (_, shareKey) = await ShareOperations.GetShareAsync(client, shareId, useCacheOnly: false, cancellationToken).ConfigureAwait(false);
 
-                var batchLoader = new VolumeTrashBatchLoader(client, volumeId, shareKey);
+                var batchLoader = new VolumeTrashBatchLoader(client, volumeId, shareKey, forPhotos);
 
                 foreach (var linkId in linkIds)
                 {

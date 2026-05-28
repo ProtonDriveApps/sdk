@@ -40,6 +40,7 @@ public sealed class FileUploader : IDisposable
         IEnumerable<Thumbnail> thumbnails,
         Action<long, long>? onProgress,
         Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
+        bool forPhotos,
         CancellationToken cancellationToken)
     {
         return UploadFromStream(
@@ -48,6 +49,7 @@ public sealed class FileUploader : IDisposable
             thumbnails,
             onProgress,
             expectedSha1Provider,
+            forPhotos,
             cancellationToken);
     }
 
@@ -56,6 +58,7 @@ public sealed class FileUploader : IDisposable
         IEnumerable<Thumbnail> thumbnails,
         Action<long, long>? onProgress,
         Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
+        bool forPhotos,
         CancellationToken cancellationToken)
     {
         var contentStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
@@ -66,6 +69,7 @@ public sealed class FileUploader : IDisposable
             thumbnails,
             onProgress,
             expectedSha1Provider,
+            forPhotos,
             cancellationToken);
     }
 
@@ -138,6 +142,7 @@ public sealed class FileUploader : IDisposable
         IEnumerable<Thumbnail> thumbnails,
         Action<long, long>? onProgress,
         Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
+        bool forPhotos,
         CancellationToken cancellationToken)
     {
         var taskControl = new TaskControl(cancellationToken);
@@ -152,6 +157,7 @@ public sealed class FileUploader : IDisposable
             progress => onProgress?.Invoke(progress, FileSize),
             expectedSha1,
             revisionDraftTaskCompletionSource,
+            forPhotos,
             ct);
 
         return new UploadController(
@@ -199,12 +205,13 @@ public sealed class FileUploader : IDisposable
         Action<long>? onProgress,
         Lazy<ReadOnlyMemory<byte>>? expectedSha1,
         TaskCompletionSource<RevisionDraft> revisionDraftTaskCompletionSource,
+        bool forPhotos,
         CancellationToken cancellationToken)
     {
         var revisionDraft = revisionDraftTaskCompletionSource.Task.GetResultIfCompletedSuccessfully();
         if (revisionDraft is null)
         {
-            revisionDraft = await _revisionDraftProvider.GetDraftAsync(FileSize, cancellationToken).ConfigureAwait(false);
+            revisionDraft = await _revisionDraftProvider.GetDraftAsync(FileSize, forPhotos, cancellationToken).ConfigureAwait(false);
             revisionDraftTaskCompletionSource.SetResult(revisionDraft);
         }
 

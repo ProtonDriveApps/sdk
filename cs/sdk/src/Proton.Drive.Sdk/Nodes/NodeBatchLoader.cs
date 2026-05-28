@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Proton.Drive.Sdk.Api;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Volumes;
 
@@ -12,9 +13,7 @@ internal sealed class NodeBatchLoader(ProtonDriveClient client, VolumeId volumeI
 
     protected override async IAsyncEnumerable<Node> LoadBatchAsync(ReadOnlyMemory<LinkId> ids, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var response = _forPhotos
-            ? await _client.Api.Photos.GetDetailsAsync(volumeId, MemoryMarshal.ToEnumerable(ids), cancellationToken).ConfigureAwait(false)
-            : await _client.Api.Links.GetDetailsAsync(volumeId, MemoryMarshal.ToEnumerable(ids), cancellationToken).ConfigureAwait(false);
+        var response = await _client.Api.GetLinkDetailsAsync(volumeId, MemoryMarshal.ToEnumerable(ids), _forPhotos, cancellationToken).ConfigureAwait(false);
 
         foreach (var linkDetails in response.Links)
         {

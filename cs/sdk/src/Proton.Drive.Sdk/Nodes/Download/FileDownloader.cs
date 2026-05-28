@@ -82,6 +82,7 @@ public sealed partial class FileDownloader : IFileDownloader
                 _client,
                 _revisionUid,
                 queueToken,
+                forPhotos: false,
                 cancellationToken).ConfigureAwait(false);
 
             downloadStateTaskCompletionSource.SetResult(downloadState);

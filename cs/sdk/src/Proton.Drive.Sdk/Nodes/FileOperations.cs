@@ -7,13 +7,13 @@ internal static class FileOperations
 {
     private const int MaxThumbnailIdsPerRequest = 30;
 
-    public static async ValueTask<FileSecrets> GetSecretsAsync(ProtonDriveClient client, NodeUid fileUid, CancellationToken cancellationToken)
+    public static async ValueTask<FileSecrets> GetSecretsAsync(ProtonDriveClient client, NodeUid fileUid, bool forPhotos, CancellationToken cancellationToken)
     {
         var fileSecrets = await client.Cache.Secrets.TryGetFileSecretsAsync(fileUid, cancellationToken).ConfigureAwait(false);
 
         if (fileSecrets is null)
         {
-            var metadata = await NodeOperations.GetFreshNodeMetadataAsync(client, fileUid, knownShareAndKey: null, cancellationToken)
+            var metadata = await NodeOperations.GetFreshNodeMetadataAsync(client, fileUid, knownShareAndKey: null, forPhotos, cancellationToken)
                 .ConfigureAwait(false);
 
             fileSecrets = metadata.GetFileSecretsOrThrow();
@@ -116,7 +116,7 @@ internal static class FileOperations
                         await client.ThumbnailDownloadQueue.EnqueueBlockAsync(cancellationToken).ConfigureAwait(false);
                     }
 
-                    tasks.Enqueue(DownloadThumbnailAsync(client, nodeInfo.ActiveRevisionUid, block, cancellationToken));
+                    tasks.Enqueue(DownloadThumbnailAsync(client, nodeInfo.ActiveRevisionUid, block, forPhotos, cancellationToken));
                 }
 
                 foreach (var error in response.Errors)
@@ -151,6 +151,7 @@ internal static class FileOperations
         ProtonDriveClient client,
         RevisionUid revisionUid,
         ThumbnailBlock block,
+        bool forPhotos,
         CancellationToken cancellationToken)
     {
         const int initialBufferLength = 64 * 1024;
@@ -160,7 +161,7 @@ internal static class FileOperations
             var outputStream = new MemoryStream(initialBufferLength);
             await using (outputStream.ConfigureAwait(false))
             {
-                var fileSecrets = await GetSecretsAsync(client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
+                var fileSecrets = await GetSecretsAsync(client, revisionUid.NodeUid, forPhotos, cancellationToken).ConfigureAwait(false);
 
                 var contentKey = fileSecrets.ContentKey
                     ?? throw new InvalidOperationException($"Content key not available for file {revisionUid.NodeUid}");

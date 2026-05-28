@@ -42,6 +42,7 @@ internal static class PhotosNodeOperations
             shareAndKey.Share.RootFolderId,
             shareAndKey,
             useCacheOnly: false,
+            forPhotos: true,
             cancellationToken).ConfigureAwait(false);
 
         return metadata.GetFolderNodeOrThrow();

@@ -19,7 +19,7 @@ internal static class FolderOperations
         var anchorLinkId = default(LinkId?);
         var mustTryMoreResults = true;
 
-        var folderSecretsResult = await GetSecretsAsync(client, folderUid, cancellationToken).ConfigureAwait(false);
+        var folderSecretsResult = await GetSecretsAsync(client, folderUid, forPhotos: false, cancellationToken).ConfigureAwait(false);
 
         var folderKey = folderSecretsResult.Key ?? throw new ProtonDriveException($"Node key not available for folder {folderUid}");
 
@@ -74,7 +74,7 @@ internal static class FolderOperations
 
         var parentOwnedBy = parentResult.OwnedBy;
 
-        var (parentKey, parentHashKey) = await GetKeyAndHashKeyAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
+        var (parentKey, parentHashKey) = await GetKeyAndHashKeyAsync(client, parentUid, forPhotos: false, cancellationToken).ConfigureAwait(false);
 
         var membershipAddress = await NodeOperations.GetMembershipAddressAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
 
@@ -159,13 +159,14 @@ internal static class FolderOperations
     public static async ValueTask<FolderSecrets> GetSecretsAsync(
         ProtonDriveClient client,
         NodeUid folderUid,
+        bool forPhotos,
         CancellationToken cancellationToken)
     {
         var result = await client.Cache.Secrets.TryGetFolderSecretsAsync(folderUid, cancellationToken).ConfigureAwait(false);
 
         if (result is null)
         {
-            var nodeMetadata = await NodeOperations.GetFreshNodeMetadataAsync(client, folderUid, knownShareAndKey: null, cancellationToken)
+            var nodeMetadata = await NodeOperations.GetFreshNodeMetadataAsync(client, folderUid, knownShareAndKey: null, forPhotos, cancellationToken)
                 .ConfigureAwait(false);
 
             result = nodeMetadata.GetFolderSecretsOrThrow();
@@ -177,9 +178,10 @@ internal static class FolderOperations
     public static async ValueTask<(PgpPrivateKey Key, ReadOnlyMemory<byte> HashKey)> GetKeyAndHashKeyAsync(
         ProtonDriveClient client,
         NodeUid folderUid,
+        bool forPhotos,
         CancellationToken cancellationToken)
     {
-        var secretsResult = await GetSecretsAsync(client, folderUid, cancellationToken).ConfigureAwait(false);
+        var secretsResult = await GetSecretsAsync(client, folderUid, forPhotos, cancellationToken).ConfigureAwait(false);
 
         var key = secretsResult.Key ?? throw new ProtonDriveException($"Parent folder key not available for {folderUid}");
         var hashKey = secretsResult.HashKey ?? throw new ProtonDriveException($"Parent folder hash key not available for {folderUid}");
