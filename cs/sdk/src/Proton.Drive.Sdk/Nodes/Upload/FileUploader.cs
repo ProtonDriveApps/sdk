@@ -171,11 +171,6 @@ public sealed class FileUploader : IDisposable
 
         async ValueTask OnFailedAsync(Exception ex, long uploadedByteCount)
         {
-            if (ex is ValidationException)
-            {
-                return;
-            }
-
             var uploadEvent = await TelemetryEventFactory.CreateUploadEventAsync(_client, _telemetryContextNodeUid, contentStream.Length, cancellationToken)
                 .ConfigureAwait(false);
 

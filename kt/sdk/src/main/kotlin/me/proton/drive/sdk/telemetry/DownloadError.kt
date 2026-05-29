@@ -7,6 +7,7 @@ enum class DownloadError {
     DECRYPTION_ERROR,
     INTEGRITY_ERROR,
     RATE_LIMITED,
+    VALIDATION_ERROR,
     HTTP_CLIENT_SIDE_ERROR,
     UNKNOWN,
 }

@@ -9,6 +9,7 @@ fun ProtonDriveSdk.DownloadError.toEnum() = when (this) {
     ProtonDriveSdk.DownloadError.DOWNLOAD_ERROR_DECRYPTION_ERROR -> DownloadError.DECRYPTION_ERROR
     ProtonDriveSdk.DownloadError.DOWNLOAD_ERROR_INTEGRITY_ERROR -> DownloadError.INTEGRITY_ERROR
     ProtonDriveSdk.DownloadError.DOWNLOAD_ERROR_RATE_LIMITED -> DownloadError.RATE_LIMITED
+    ProtonDriveSdk.DownloadError.DOWNLOAD_ERROR_VALIDATION_ERROR -> DownloadError.VALIDATION_ERROR
     ProtonDriveSdk.DownloadError.DOWNLOAD_ERROR_HTTP_CLIENT_SIDE_ERROR -> DownloadError.HTTP_CLIENT_SIDE_ERROR
     ProtonDriveSdk.DownloadError.DOWNLOAD_ERROR_UNKNOWN -> DownloadError.UNKNOWN
     ProtonDriveSdk.DownloadError.UNRECOGNIZED -> DownloadError.UNRECOGNIZED
