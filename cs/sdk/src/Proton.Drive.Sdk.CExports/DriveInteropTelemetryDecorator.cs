@@ -140,6 +140,7 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
             ErrorDomain.Network or ErrorDomain.Transport => Telemetry.UploadError.NetworkError,
             ErrorDomain.Serialization => Telemetry.UploadError.HttpClientSideError,
             ErrorDomain.Cryptography or ErrorDomain.DataIntegrity => Telemetry.UploadError.IntegrityError,
+            ErrorDomain.BusinessLogic => Telemetry.UploadError.ValidationError,
             _ => Telemetry.UploadError.Unknown,
         };
     }
@@ -168,6 +169,7 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
             ErrorDomain.Network or ErrorDomain.Transport => Telemetry.DownloadError.NetworkError,
             ErrorDomain.Serialization => Telemetry.DownloadError.HttpClientSideError,
             ErrorDomain.Cryptography or ErrorDomain.DataIntegrity => Telemetry.DownloadError.IntegrityError,
+            ErrorDomain.BusinessLogic => Telemetry.DownloadError.ValidationError,
             _ => Telemetry.DownloadError.Unknown,
         };
     }

@@ -126,11 +126,6 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
 
         async ValueTask OnFailedAsync(Exception ex, long? claimedFileSize, long downloadedByteCount)
         {
-            if (ex is ValidationException)
-            {
-                return;
-            }
-
             var downloadEvent = await TelemetryEventFactory.CreateDownloadEventAsync(_client.DriveClient, _photoUid, cancellationToken).ConfigureAwait(false);
 
             // TODO: deprecate DownloadedSize in favor of ApproximateDownloadedSize

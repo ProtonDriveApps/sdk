@@ -113,7 +113,7 @@ export class UploadTelemetry {
 
 function getErrorCategory(error: unknown): MetricsUploadErrorType | undefined {
     if (error instanceof ValidationError) {
-        return undefined;
+        return 'validation_error';
     }
     if (error instanceof RateLimitedError) {
         return 'rate_limited';

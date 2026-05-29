@@ -95,7 +95,7 @@ export class DownloadTelemetry {
 
 function getErrorCategory(error: unknown): MetricsDownloadErrorType | undefined {
     if (error instanceof ValidationError) {
-        return undefined;
+        return 'validation_error';
     }
     if (error instanceof RateLimitedError) {
         return 'rate_limited';
