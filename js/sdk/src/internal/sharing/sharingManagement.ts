@@ -651,6 +651,98 @@ export class SharingManagement {
         };
     }
 
+    /**
+     * Transparently converts convertible external invitations received from the event stream.
+     *
+     * For each link, loads external invitations and verifies that the inviter is still an
+     * active admin. Valid invitations are converted to Proton invitations; those whose
+     * signature cannot be verified are deleted per RFC-0080.
+     */
+    async autoConvertExternalInvitations(nodeUids: string[]): Promise<void> {
+        for (const nodeUid of nodeUids) {
+            await this.autoConvertExternalInvitationsForNode(nodeUid).catch((error: unknown) => {
+                this.logger.error(
+                    `Failed to auto-convert external invitations for node ${nodeUid}: ${error instanceof Error ? error.message : error}`,
+                );
+            });
+        }
+    }
+
+    private async autoConvertExternalInvitationsForNode(nodeUid: string): Promise<void> {
+        const node = await this.nodesService.getNode(nodeUid);
+        if (!node.shareId) {
+            this.logger.debug(`Skipping auto-convert for node ${nodeUid}: no shareId`);
+            return;
+        }
+
+        const [encryptedExternalInvitations, encryptedMembers, inviter, nodeKey] = await Promise.all([
+            this.apiService.getShareExternalInvitations(node.shareId),
+            this.apiService.getShareMembers(node.shareId),
+            this.nodesService.getRootNodeEmailKey(nodeUid),
+            this.nodesService.getNodeKeys(nodeUid),
+        ]);
+
+        if (encryptedExternalInvitations.length === 0) {
+            this.logger.debug(`Skipping auto-convert for node ${nodeUid}: no external invitations`);
+            return;
+        }
+
+        const encryptedShare = await this.sharesService.loadEncryptedShare(node.shareId);
+        const { passphraseSessionKey } = await this.cryptoService.decryptShare(encryptedShare, nodeKey.key);
+
+        const adminEmails = new Set(
+            encryptedMembers
+                .filter((member) => member.role === MemberRole.Admin)
+                .map((member) => member.inviteeEmail),
+        );
+        adminEmails.add(encryptedShare.creatorEmail);
+
+        await Promise.allSettled(
+            encryptedExternalInvitations.map(async (invitation) => {
+                const { invitationId: externalInvitationId } = splitInvitationUid(invitation.uid);
+                const inviterEmail = invitation.addedByEmail;
+
+                const isValidAdmin =
+                    adminEmails.has(inviterEmail) &&
+                    (await this.cryptoService.verifyExternalInvitationSignature(
+                        invitation.inviteeEmail,
+                        passphraseSessionKey,
+                        invitation.base64Signature,
+                        inviterEmail,
+                    ));
+
+                if (!isValidAdmin) {
+                    this.logger.warn(
+                        `Deleting external invitation for ${invitation.inviteeEmail} on node ${nodeUid}: inviter is not an active admin or signature invalid`,
+                    );
+                    await this.apiService.deleteExternalInvitation(invitation.uid);
+                    return;
+                }
+
+                this.logger.info(
+                    `Auto-converting external invitation for ${invitation.inviteeEmail} to internal for node ${nodeUid}`,
+                );
+                const invitationCrypto = await this.cryptoService.encryptInvitation(
+                    passphraseSessionKey,
+                    inviter.addressKey,
+                    invitation.inviteeEmail,
+                    true,
+                );
+                await this.apiService.inviteProtonUser(
+                    node.shareId!,
+                    {
+                        addedByEmail: inviter.email,
+                        inviteeEmail: invitation.inviteeEmail,
+                        role: invitation.role,
+                        ...invitationCrypto,
+                    },
+                    {},
+                    externalInvitationId,
+                );
+            }),
+        );
+    }
+
     private async removeMember(memberUid: string): Promise<void> {
         await this.apiService.removeMember(memberUid);
     }

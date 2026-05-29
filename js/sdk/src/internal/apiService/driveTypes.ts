@@ -3327,7 +3327,7 @@ export interface components {
             /** @constant */
             BlockMaxSizeInBytes?: 5300000;
             /** @constant */
-            ThumbnailMaxSizeInBytes?: 65536;
+            ThumbnailMaxSizeInBytes?: 69632;
             /** @constant */
             DraftRevisionLifetimeInSec?: 14400;
             /** @constant */
@@ -3669,7 +3669,7 @@ export interface components {
              * Format: email
              * @description Signature email address used to sign passphrase and name
              */
-            NameSignatureEmail?: string | null;
+            NameSignatureEmail?: components["schemas"]["AddressEmail"] | null;
             OriginalHash?: string | null;
             /** @description Extended attributes encrypted with link key */
             XAttr?: components["schemas"]["PGPMessage"] | null;
@@ -4342,8 +4342,12 @@ export interface components {
             EventType: components["schemas"]["EventType"];
             Link: components["schemas"]["EventLinkDataDto"];
         };
+        LinkIDDto: {
+            LinkID: components["schemas"]["Id"];
+        };
         ListEventsV2ResponseDto: {
             Events: components["schemas"]["EventV2ResponseDto"][];
+            ConvertibleExternalInvitations: components["schemas"]["LinkIDDto"][];
             /** @description Last event ID that can be used on the next call. Will be latest/newest-event-id if requested last-event-id does not exist. */
             EventID: components["schemas"]["ShortId"];
             /** @description true if there is more to pull, i.e. there are more events than returned in one call */
@@ -4583,10 +4587,10 @@ export interface components {
         OwnedByDto: {
             /**
              * Format: email
-             * @description OwnerUser email for regular and photo volumes, null otherwise
+             * @description OwnerUser email for regular and photo volumes, null otherwise. Always null in public-sharing context.
              */
             Email: string | null;
-            /** @description OwnerOrganization name for org. volumes, null otherwise */
+            /** @description OwnerOrganization name for org. volumes, null otherwise. Always null in public-sharing context. */
             Organization: string | null;
         };
         LinkDto: {
@@ -4616,7 +4620,7 @@ export interface components {
             RelatedPhotosLinkIDs: components["schemas"]["Id"][];
         };
         /**
-         * @description <details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Name</th><th>Description</th></tr><tr><td>1</td><td>Preview</td><td>512 px, max. 65536 bytes in encrypted size</td></tr><tr><td>2</td><td>HDPreview</td><td>1920 px, max. 1048576 bytes in encrypted size</td></tr><tr><td>3</td><td>MachineLearning</td><td>max. 65536 bytes in encrypted size</td></tr></table></details>
+         * @description <details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Name</th><th>Description</th></tr><tr><td>1</td><td>Preview</td><td>512 px, max. 69632 bytes in encrypted size</td></tr><tr><td>2</td><td>HDPreview</td><td>1920 px, max. 1052672 bytes in encrypted size</td></tr><tr><td>3</td><td>MachineLearning</td><td>max. 69632 bytes in encrypted size</td></tr></table></details>
          * @enum {integer}
          */
         ThumbnailType: 1 | 2 | 3;
@@ -4868,14 +4872,14 @@ export interface components {
              * @description Signature email address used for signing name; Required when not passing `SignatureAddress`
              * @default null
              */
-            NameSignatureEmail: string | null;
+            NameSignatureEmail: components["schemas"]["AddressEmail"] | null;
             /**
              * Format: email
              * @deprecated
              * @description [DEPRECATED] since only the name is signed, use `NameSignatureEmail`. Signature email address used for the name.
              * @default null
              */
-            SignatureAddress: string | null;
+            SignatureAddress: components["schemas"]["AddressEmail"] | null;
             /**
              * @description Current name hash before move operation. Used to prevent race conditions.
              * @default null
@@ -5200,7 +5204,7 @@ export interface components {
             Type: components["schemas"]["ThumbnailType"];
             /**
              * @deprecated
-             * @description Block size in bytes. WARNING: when type is NOT 2=HDPreview(1920) then the max size is 65536
+             * @description Block size in bytes. WARNING: when type is NOT 2=HDPreview(1920) then the max size is 69632
              * @default null
              */
             Size: number | null;
@@ -5835,7 +5839,7 @@ export interface components {
              * @description Signature email address used for signing name
              * @default null
              */
-            NameSignatureEmail: string | null;
+            NameSignatureEmail: components["schemas"]["AddressEmail"] | null;
             /**
              * @description MIME type, optional, only on files.
              * @default null
@@ -6544,7 +6548,7 @@ export interface components {
             Code: 1000;
         };
         ExternalInvitationRequestDto: {
-            InviterAddressID: components["schemas"]["LongId"];
+            InviterAddressID: components["schemas"]["AddressID"];
             /** Format: email */
             InviteeEmail: string;
             /**
@@ -7394,7 +7398,7 @@ export interface operations {
                         /** @description Potential codes and their meaning:
                          *      - 2500: A volume is already active
                          *      - 2001: Invalid PGP message
-                         *      - 200501: Operation failed: Please retry
+                         *      - 200501: Operation failed: Make sure you are using the latest version of Proton Drive and retry
                          *      */
                         Code: number;
                     };
@@ -7901,7 +7905,7 @@ export interface operations {
                          *      - 200001: You have reached the maximum number of items you can save.
                          *      - 2501: Item link not found
                          *      - 2500: This item is already saved in your drive
-                         *      - 200501: Operation failed: Please retry
+                         *      - 200501: Operation failed: Make sure you are using the latest version of Proton Drive and retry
                          *      */
                         Code: number;
                     };
@@ -8656,7 +8660,7 @@ export interface operations {
             header?: never;
             path: {
                 volumeID: string;
-                linkID: string;
+                linkID: components["schemas"]["Id"];
             };
             cookie?: never;
         };
