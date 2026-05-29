@@ -3,42 +3,42 @@ import Foundation
 public typealias RecordMetricEventCallback = @Sendable (MetricEvent) -> Void
 
 public enum MetricEvent: Sendable {
-    
+
     case apiRetrySucceeded(ApiRetrySucceededEventPayload)
     case blockVerificationError(BlockVerificationErrorEventPayload)
     case decryptionError(DecryptionErrorEventPayload)
     case download(DownloadEventPayload)
     case upload(UploadEventPayload)
     case verificationError(VerificationErrorEventPayload)
-    
+
     case other(name: String)
-    
+
     init(sdkMetricEvent: Proton_Sdk_MetricEvent) throws {
         switch sdkMetricEvent.payload {
         case let proto where proto.isA(Proton_Sdk_ApiRetrySucceededEventPayload.self):
             let sdkPayload = try Proton_Sdk_ApiRetrySucceededEventPayload(unpackingAny: proto)
             self = .apiRetrySucceeded(ApiRetrySucceededEventPayload(sdkEventPayload: sdkPayload))
-        
+
         case let proto where proto.isA(Proton_Drive_Sdk_BlockVerificationErrorEventPayload.self):
             let sdkPayload = try Proton_Drive_Sdk_BlockVerificationErrorEventPayload(unpackingAny: proto)
             self = .blockVerificationError(BlockVerificationErrorEventPayload(sdkEventPayload: sdkPayload))
-        
+
         case let proto where proto.isA(Proton_Drive_Sdk_DecryptionErrorEventPayload.self):
             let sdkPayload = try Proton_Drive_Sdk_DecryptionErrorEventPayload(unpackingAny: proto)
             self = .decryptionError(DecryptionErrorEventPayload(sdkEventPayload: sdkPayload))
-        
+
         case let proto where proto.isA(Proton_Drive_Sdk_DownloadEventPayload.self):
             let sdkPayload = try Proton_Drive_Sdk_DownloadEventPayload(unpackingAny: proto)
             self = .download(DownloadEventPayload(sdkDownloadEventPayload: sdkPayload))
-        
+
         case let proto where proto.isA(Proton_Drive_Sdk_UploadEventPayload.self):
             let sdkPayload = try Proton_Drive_Sdk_UploadEventPayload(unpackingAny: proto)
             self = .upload(UploadEventPayload(sdkUploadEventPayload: sdkPayload))
-        
+
         case let proto where proto.isA(Proton_Drive_Sdk_VerificationErrorEventPayload.self):
             let sdkPayload = try Proton_Drive_Sdk_VerificationErrorEventPayload(unpackingAny: proto)
             self = .verificationError(VerificationErrorEventPayload(sdkEventPayload: sdkPayload))
-        
+
         default:
             self = .other(name: sdkMetricEvent.name)
         }
@@ -49,7 +49,7 @@ public struct ApiRetrySucceededEventPayload: Sendable {
 
     public let url: String
     public let failedAttempts: Int
-    
+
     init(sdkEventPayload: Proton_Sdk_ApiRetrySucceededEventPayload) {
         self.url = sdkEventPayload.url
         self.failedAttempts = Int(sdkEventPayload.failedAttempts)
@@ -68,13 +68,13 @@ public struct BlockVerificationErrorEventPayload: Sendable {
 }
 
 public struct DecryptionErrorEventPayload: Sendable {
-    
+
     public let volumeType: VolumeType
     public let field: EncryptedField
     public let fromBefore2024: Bool
     public let error: String?
     public let uid: String
-    
+
     init(sdkEventPayload: Proton_Drive_Sdk_DecryptionErrorEventPayload) {
         self.volumeType = .init(sdkVolumeType: sdkEventPayload.volumeType)
         self.field = .init(sdkEncryptedField: sdkEventPayload.field)
@@ -85,13 +85,13 @@ public struct DecryptionErrorEventPayload: Sendable {
 }
 
 public struct DownloadEventPayload: Sendable {
-    
+
     public let volumeType: VolumeType
     public let approximateClaimedFileSize: Int64
     public let approximateDownloadedSize: Int64
     public let error: DownloadError?
     public let originalError: String?
-    
+
     init(sdkDownloadEventPayload: Proton_Drive_Sdk_DownloadEventPayload) {
         self.volumeType = .init(sdkVolumeType: sdkDownloadEventPayload.volumeType)
         self.approximateClaimedFileSize = sdkDownloadEventPayload.approximateClaimedFileSize
@@ -102,13 +102,13 @@ public struct DownloadEventPayload: Sendable {
 }
 
 public struct UploadEventPayload: Sendable {
-    
+
     public let volumeType: VolumeType
     public let approximateExpectedSize: Int64
     public let approximateUploadedSize: Int64
     public let error: UploadError?
     public let originalError: String?
-    
+
     init(sdkUploadEventPayload: Proton_Drive_Sdk_UploadEventPayload) {
         self.volumeType = .init(sdkVolumeType: sdkUploadEventPayload.volumeType)
         self.approximateExpectedSize = sdkUploadEventPayload.approximateExpectedSize
@@ -119,14 +119,14 @@ public struct UploadEventPayload: Sendable {
 }
 
 public struct VerificationErrorEventPayload: Sendable {
-    
+
     public let volumeType: VolumeType
     public let field: EncryptedField
     public let fromBefore2024: Bool
     public let addressMatchingDefaultShare: Bool
     public let error: String?
     public let uid: String
-    
+
     init(sdkEventPayload: Proton_Drive_Sdk_VerificationErrorEventPayload) {
         self.volumeType = .init(sdkVolumeType: sdkEventPayload.volumeType)
         self.field = .init(sdkEncryptedField: sdkEventPayload.field)
@@ -174,7 +174,7 @@ public enum EncryptedField: Int, Sendable {
     case nodeExtendedAttributes = 4
     case nodeContentKey = 5
     case content = 6
-    
+
     init(sdkEncryptedField: Proton_Drive_Sdk_EncryptedField) {
         switch sdkEncryptedField {
         case .shareKey:
@@ -206,7 +206,8 @@ public enum DownloadError: Int, Sendable {
     case rateLimited = 4
     case httpClientSideError = 5
     case unknown = 6
-    
+    case validationError = 7
+
     init(sdkDownloadError: Proton_Drive_Sdk_DownloadError) {
         switch sdkDownloadError {
         case .serverError:
@@ -219,6 +220,8 @@ public enum DownloadError: Int, Sendable {
             self = .integrityError
         case .rateLimited:
             self = .rateLimited
+        case .validationError:
+            self = .validationError
         case .httpClientSideError:
             self = .httpClientSideError
         case .unknown:
@@ -237,7 +240,8 @@ public enum UploadError: Int, Sendable {
     case rateLimited = 3
     case httpClientSideError = 4
     case unknown = 5
-    
+    case validationError = 6
+
     init(sdkUploadError: Proton_Drive_Sdk_UploadError) {
         switch sdkUploadError {
         case .serverError:
@@ -248,6 +252,8 @@ public enum UploadError: Int, Sendable {
             self = .integrityError
         case .rateLimited:
             self = .rateLimited
+        case .validationError:
+            self = .validationError
         case .httpClientSideError:
             self = .httpClientSideError
         case .unknown:

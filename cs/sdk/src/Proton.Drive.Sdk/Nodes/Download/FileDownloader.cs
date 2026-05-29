@@ -121,11 +121,6 @@ public sealed partial class FileDownloader : IFileDownloader
 
         async ValueTask OnFailedAsync(Exception ex, long? claimedFileSize, long downloadedByteCount)
         {
-            if (ex is ValidationException)
-            {
-                return;
-            }
-
             var downloadEvent = await TelemetryEventFactory.CreateDownloadEventAsync(_client, _revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
 
             downloadEvent.ClaimedFileSize = claimedFileSize;

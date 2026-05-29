@@ -14,6 +14,8 @@ internal static class TelemetryErrorResolver
     {
         return exception switch
         {
+            ValidationException => DownloadError.ValidationError,
+
             // Reported as download success
             CompletedDownloadManifestVerificationException => null,
             DataIntegrityException => exception.GetBaseException() is CompletedDownloadManifestVerificationException ? null : DownloadError.IntegrityError,
@@ -31,6 +33,7 @@ internal static class TelemetryErrorResolver
                 DownloadError.ServerError,
             HttpRequestException => DownloadError.NetworkError,
 
+            ProtonApiException { Code: var code } when ValidationResponseCode.IsValidationCode(code) => DownloadError.ValidationError,
             ProtonApiException { TransportCode: (int)HttpStatusCode.TooManyRequests } => DownloadError.RateLimited,
             ProtonApiException { TransportCode: >= StatusCodes.MinClientErrorCode and <= StatusCodes.MaxClientErrorCode } => DownloadError.HttpClientSideError,
             ProtonApiException { TransportCode: >= StatusCodes.MinServerErrorCode and <= StatusCodes.MaxServerErrorCode } => DownloadError.ServerError,
@@ -50,6 +53,8 @@ internal static class TelemetryErrorResolver
     {
         return exception switch
         {
+            ValidationException => UploadError.ValidationError,
+
             // Upload errors
             IntegrityException => UploadError.IntegrityError,
 
@@ -61,6 +66,7 @@ internal static class TelemetryErrorResolver
                 UploadError.ServerError,
             HttpRequestException => UploadError.NetworkError,
 
+            ProtonApiException { Code: var code } when ValidationResponseCode.IsValidationCode(code) => UploadError.ValidationError,
             ProtonApiException { TransportCode: (int)HttpStatusCode.TooManyRequests } => UploadError.RateLimited,
             ProtonApiException { TransportCode: >= StatusCodes.MinClientErrorCode and <= StatusCodes.MaxClientErrorCode } => UploadError.HttpClientSideError,
             ProtonApiException { TransportCode: >= StatusCodes.MinServerErrorCode and <= StatusCodes.MaxServerErrorCode } => UploadError.ServerError,

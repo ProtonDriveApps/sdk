@@ -84,10 +84,10 @@ describe('UploadTelemetry', () => {
             );
         };
 
-        it('should ignore ValidationError', async () => {
-            const error = new ValidationError('Validation error');
+        it('should detect "validation_error" for ValidationError', async () => {
+            const error = new ValidationError('out of quota');
             await uploadTelemetry.uploadFailed(revisionUid, error, 500, 1000);
-            expect(mockTelemetry.recordMetric).not.toHaveBeenCalled();
+            verifyErrorCategory('validation_error');
         });
 
         it('should ignore AbortError', async () => {

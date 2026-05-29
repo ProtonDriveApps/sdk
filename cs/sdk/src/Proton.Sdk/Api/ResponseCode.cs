@@ -14,6 +14,8 @@ public enum ResponseCode
     MultipleResponses = 1001,
     InvalidRequirements = 2000,
     InvalidValue = 2001,
+    NotEnoughPermissions = 2011,
+    NotEnoughPermissionsToGrantPermissions = 2026,
     InvalidEncryptedIdFormat = 2061,
     AlreadyExists = 2500,
     DoesNotExist = 2501,
@@ -27,27 +29,36 @@ public enum ResponseCode
     /// <summary>
     /// Account is disabled
     /// </summary>
-    AccountDeleted = 10002,
+    AccountDeleted = 10_002,
 
     /// <summary>
     /// Account is disabled due to abuse or fraud
     /// </summary>
-    AccountDisabled = 10003,
+    AccountDisabled = 10_003,
 
     InvalidRefreshToken = 10013,
 
     /// <summary>
     /// Free account
     /// </summary>
-    NoActiveSubscription = 22110,
+    NoActiveSubscription = 22_110,
 
-    UnknownAddress = 33102,
+    UnknownAddress = 33_102,
 
-    ProtonDriveUnknown = 200000,
-    InsufficientQuota = ProtonDriveUnknown + 1,
-    InsufficientSpace = ProtonDriveUnknown + 2,
-    MaxFileSizeForFreeUser = ProtonDriveUnknown + 3,
-    TooManyChildren = ProtonDriveUnknown + 300,
+    ProtonDriveUnknown = 200_000,
+    InsufficientQuota = 200_001,
+    InsufficientSpace = 200_002,
+    MaxFileSizeForFreeUser = 200_003,
+    MaxPublicEditModeForFreeUser = 200_004,
+    InsufficientVolumeQuota = 200_100,
+    InsufficientDeviceQuota = 200_101,
+    AlreadyMemberOfShareInVolumeWithAnotherAddress = 200_201,
+    TooManyChildren = 200_300,
+    NestingTooDeep = 200_301,
+    InsufficientInvitationQuota = 200_600,
+    InsufficientShareQuota = 200_601,
+    InsufficientShareJoinedQuota = 200_602,
+    InsufficientBookmarksQuota = 200_800,
 
     CustomCode = 10000000,
     SocketError = CustomCode + 1,

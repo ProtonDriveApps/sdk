@@ -47,6 +47,7 @@ export type MetricsUploadErrorType =
     | 'network_error'
     | 'integrity_error'
     | 'rate_limited'
+    | 'validation_error'
     | '4xx'
     | 'unknown';
 
@@ -66,6 +67,7 @@ export type MetricsDownloadErrorType =
     | 'decryption_error'
     | 'integrity_error'
     | 'rate_limited'
+    | 'validation_error'
     | '4xx'
     | 'unknown';
 

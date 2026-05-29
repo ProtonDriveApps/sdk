@@ -82,10 +82,10 @@ describe('DownloadTelemetry', () => {
             );
         };
 
-        it('should ignore ValidationError', async () => {
-            const error = new ValidationError('Validation error');
+        it('should detect "validation_error" for ValidationError', async () => {
+            const error = new ValidationError('file not found');
             await downloadTelemetry.downloadFailed(revisionUid, error, 100, 200);
-            expect(mockTelemetry.recordMetric).not.toHaveBeenCalled();
+            verifyErrorCategory('validation_error');
         });
 
         it('should ignore AbortError', async () => {
