@@ -1,5 +1,18 @@
 # Changelog
 
+## js/v0.16.0 (2026-05-29)
+
+* Process automatically events converting external invitations
+* Add validation_error category for upload & download telemetry events
+* Drop rounding for crypto performance telemetry
+* Verify added by email fields
+* Add method to iterate events
+* Add method to return node hierarchy
+* Prefer iterate over UIDs over nodes
+* Update docs
+* Retry block encryption and report metric
+* Export CoreEventInput type to prevent casting on client
+
 ## js/v0.15.2 (2026-05-19)
 
 * Support copy on save for not owned album
