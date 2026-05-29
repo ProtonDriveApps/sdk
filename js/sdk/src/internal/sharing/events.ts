@@ -1,7 +1,8 @@
 import { Logger } from '../../interface';
-import { DriveEvent, DriveEventType } from '../events';
+import { DriveEvent, DriveEventType, InternalDriveEvent, InternalEventType, isInternalDriveEvent } from '../events';
 import { SharingCache } from './cache';
 import { NodesService, SharesService } from './interface';
+import { SharingManagement } from './sharingManagement';
 
 export class SharingEventHandler {
     constructor(
@@ -9,6 +10,7 @@ export class SharingEventHandler {
         private cache: SharingCache,
         private shares: SharesService,
         private nodesService: NodesService,
+        private management: SharingManagement,
     ) {}
 
     /**
@@ -25,12 +27,22 @@ export class SharingEventHandler {
      *
      * @throws Only if the client's callback throws.
      */
-    async handleDriveEvent(event: DriveEvent) {
+    async handleDriveEvent(event: DriveEvent | InternalDriveEvent) {
+        if (isInternalDriveEvent(event)) {
+            await this.handleInternalDriveEvent(event);
+            return;
+        }
         try {
             await this.handleSharedWithMeNodeUidsLoaded(event);
             await this.handleSharedByMeNodeUidsLoaded(event);
         } catch (error: unknown) {
             this.logger.error(`Skipping sharing cache update`, error);
+        }
+    }
+
+    private async handleInternalDriveEvent(event: InternalDriveEvent) {
+        if (event.type === InternalEventType.ConvertibleExternalInvitations) {
+            await this.management.autoConvertExternalInvitations(event.nodeUids);
         }
     }
 

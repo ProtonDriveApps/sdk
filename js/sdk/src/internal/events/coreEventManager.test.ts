@@ -61,6 +61,7 @@ describe('CoreEventManager', () => {
                 latestEventId,
                 more: false,
                 refresh: false,
+                convertibleExternalInvitationLinkIds: [],
                 events: [mockEvent1, mockEvent2],
             };
             mockApiService.getCoreEvents.mockResolvedValue(mockEvents);
@@ -77,6 +78,7 @@ describe('CoreEventManager', () => {
                 latestEventId,
                 more: false,
                 refresh: false,
+                convertibleExternalInvitationLinkIds: [],
                 events: [],
             };
             mockApiService.getCoreEvents.mockResolvedValue(mockEvents);

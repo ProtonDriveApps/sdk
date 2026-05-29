@@ -1,12 +1,15 @@
 import { Logger } from '../../interface';
 import { LoggerWithPrefix } from '../../telemetry';
 import { NotFoundAPIError } from '../apiService';
+import { makeNodeUid } from '../uids';
 import { EventsAPIService } from './apiService';
 import {
     DriveEvent,
     DriveEventsListWithStatus,
     DriveEventType,
     EventManagerInterface,
+    InternalDriveEvent,
+    InternalEventType,
     UnsubscribeFromEventsSourceError,
 } from './interface';
 
@@ -15,7 +18,7 @@ import {
  * volume events. Volume events are all about nodes updates. Whenever
  * there is update to the node metadata or content, the event is emitted.
  */
-export class VolumeEventManager implements EventManagerInterface<DriveEvent> {
+export class VolumeEventManager implements EventManagerInterface<DriveEvent | InternalDriveEvent> {
     constructor(
         private logger: Logger,
         private apiService: EventsAPIService,
@@ -30,13 +33,24 @@ export class VolumeEventManager implements EventManagerInterface<DriveEvent> {
         return this.logger;
     }
 
-    async *getEvents(eventId: string, signal?: AbortSignal): AsyncIterable<DriveEvent> {
+    async *getEvents(eventId: string, signal?: AbortSignal): AsyncIterable<DriveEvent | InternalDriveEvent> {
         try {
             let events: DriveEventsListWithStatus;
             let more = true;
             while (more) {
                 events = await this.apiService.getVolumeEvents(this.volumeId, eventId, signal);
                 more = events.more;
+                if (events.convertibleExternalInvitationLinkIds.length > 0) {
+                    const nodeUids = events.convertibleExternalInvitationLinkIds.map((linkId) =>
+                        makeNodeUid(this.volumeId, linkId),
+                    );
+                    yield {
+                        type: InternalEventType.ConvertibleExternalInvitations,
+                        treeEventScopeId: this.volumeId,
+                        eventId: events.latestEventId,
+                        nodeUids,
+                    };
+                }
                 if (events.refresh) {
                     yield {
                         type: DriveEventType.TreeRefresh,

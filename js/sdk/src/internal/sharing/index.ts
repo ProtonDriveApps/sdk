@@ -49,6 +49,7 @@ export function initSharingModule(
         cache,
         sharesService,
         nodesService,
+        sharingManagement,
     );
 
     return {

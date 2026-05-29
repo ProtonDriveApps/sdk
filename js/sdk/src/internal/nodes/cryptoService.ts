@@ -1,12 +1,6 @@
 import { c } from 'ttag';
 
-import {
-    DriveCrypto,
-    PrivateKey,
-    PublicKey,
-    SessionKey,
-    VERIFICATION_STATUS,
-} from '../../crypto';
+import { DriveCrypto, PrivateKey, PublicKey, SessionKey, VERIFICATION_STATUS } from '../../crypto';
 import { ValidationError } from '../../errors';
 import {
     AnonymousUser,

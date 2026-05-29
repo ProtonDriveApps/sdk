@@ -279,6 +279,25 @@ export class SharingCryptoService {
         return result;
     }
 
+    async verifyExternalInvitationSignature(
+        inviteeEmail: string,
+        shareSessionKey: SessionKey,
+        base64Signature: string,
+        inviterEmail: string,
+    ): Promise<boolean> {
+        const verificationKeys = await this.account.getPublicKeys(inviterEmail);
+        if (verificationKeys.length === 0) {
+            return false;
+        }
+        const { verified } = await this.driveCrypto.verifyExternalInvitation(
+            inviteeEmail,
+            shareSessionKey,
+            base64Signature,
+            verificationKeys,
+        );
+        return verified === VERIFICATION_STATUS.SIGNED_AND_VALID;
+    }
+
     /**
      * Verifies an external invitation.
      */
@@ -640,6 +659,6 @@ function splitGeneratedAndCustomPassword(concatenatedPassword: string): {
 }
 
 function generateConcanatedPassword(urlPassword: string, customPassword?: string): string {
-    const concatenatedPassword = urlPassword.concat(customPassword || '')
-    return concatenatedPassword
+    const concatenatedPassword = urlPassword.concat(customPassword || '');
+    return concatenatedPassword;
 }

@@ -44,7 +44,9 @@ export type EventsListWithStatus<T> = {
 /**
  * Internal event interface representing a list of specific Drive events.
  */
-export type DriveEventsListWithStatus = EventsListWithStatus<DriveEvent>;
+export type DriveEventsListWithStatus = EventsListWithStatus<DriveEvent> & {
+    convertibleExternalInvitationLinkIds: string[];
+};
 
 type NodeCruEventType = DriveEventType.NodeCreated | DriveEventType.NodeUpdated;
 export type NodeEventType = NodeCruEventType | DriveEventType.NodeDeleted;
@@ -96,7 +98,6 @@ export type DriveEvent =
     | FastForwardEvent
     | TreeRefreshEvent
     | TreeRemovalEvent
-    | FastForwardEvent
     | SharedWithMeUpdated;
 
 export enum DriveEventType {
@@ -107,6 +108,32 @@ export enum DriveEventType {
     TreeRefresh = 'tree_refresh',
     TreeRemove = 'tree_remove',
     FastForward = 'fast_forward',
+}
+
+/**
+ * Internal SDK events. These travel through the same fetch pipeline as
+ * DriveEvent but are dispatched to a separate listener registry and are
+ * never exposed to clients of the SDK.
+ *
+ * To add a new internal event: add a member to InternalEventType, add a
+ * new shape to InternalDriveEvent, and handle it in
+ * SharingEventHandler.handleInternalDriveEvent (or wherever appropriate).
+ */
+export enum InternalEventType {
+    ConvertibleExternalInvitations = 'convertible_external_invitations',
+}
+
+export type InternalDriveEvent = {
+    type: InternalEventType.ConvertibleExternalInvitations;
+    treeEventScopeId: string;
+    eventId: string;
+    nodeUids: string[];
+};
+
+export function isInternalDriveEvent(
+    event: DriveEvent | InternalDriveEvent,
+): event is InternalDriveEvent {
+    return event.type === InternalEventType.ConvertibleExternalInvitations;
 }
 
 /**

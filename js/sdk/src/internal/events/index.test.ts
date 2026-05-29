@@ -2,11 +2,13 @@ import { getMockTelemetry } from '../../tests/telemetry';
 import { DriveAPIService } from '../apiService';
 import { CoreApiEvent } from './apiService';
 import { DriveEventsService } from './index';
-import { DriveEventType, DriveListener } from './interface';
+import { DriveEvent, DriveEventType, InternalDriveEvent } from './interface';
 
 describe('DriveEventsService', () => {
     describe('processCoreEvent', () => {
-        function createService(cacheEventListeners: DriveListener[] = []) {
+        function createService(
+            cacheEventListeners: ((event: DriveEvent | InternalDriveEvent) => Promise<void>)[] = [],
+        ) {
             const telemetry = getMockTelemetry();
             const apiService = {} as unknown as DriveAPIService;
             const sharesService = { isOwnVolume: jest.fn(), getRootIDs: jest.fn() };
@@ -14,7 +16,8 @@ describe('DriveEventsService', () => {
         }
 
         it('returns no drive events and does not notify listeners when the raw event is not a refresh', async () => {
-            const listener: jest.MockedFunction<DriveListener> = jest.fn().mockResolvedValue(undefined);
+            const listener: jest.MockedFunction<(event: DriveEvent | InternalDriveEvent) => Promise<void>> =
+                jest.fn().mockResolvedValue(undefined);
             const service = createService([listener]);
             const raw = {
                 EventID: 'event-no-refresh',
