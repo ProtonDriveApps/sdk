@@ -1,5 +1,10 @@
 # Changelog
 
+## cs/v0.16.0 (2026-05-29)
+
+* Add validation_error category for upload & download telemetry events
+* Support more modification time formats and report invalid ones as node errors
+
 ## cs/v0.15.1 (2026-05-28)
 
 * Fix node secrets not being read from cache
