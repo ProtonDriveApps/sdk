@@ -57,6 +57,7 @@ describe('VolumeEventManager', () => {
                 latestEventId: 'eventId456',
                 more: false,
                 refresh: false,
+                convertibleExternalInvitationLinkIds: [],
                 events: [
                     {
                         type: DriveEventType.NodeCreated,
@@ -86,6 +87,7 @@ describe('VolumeEventManager', () => {
                 latestEventId: 'eventId2',
                 more: true,
                 refresh: false,
+                convertibleExternalInvitationLinkIds: [],
                 events: [
                     {
                         type: DriveEventType.NodeCreated,
@@ -103,6 +105,7 @@ describe('VolumeEventManager', () => {
                 latestEventId: 'eventId3',
                 more: false,
                 refresh: false,
+                convertibleExternalInvitationLinkIds: [],
                 events: [
                     {
                         type: DriveEventType.NodeUpdated,
@@ -143,6 +146,7 @@ describe('VolumeEventManager', () => {
                 latestEventId: 'eventId789',
                 more: false,
                 refresh: true,
+                convertibleExternalInvitationLinkIds: [],
                 events: [],
             };
 
@@ -166,6 +170,7 @@ describe('VolumeEventManager', () => {
                 latestEventId: 'newEventId',
                 more: false,
                 refresh: false,
+                convertibleExternalInvitationLinkIds: [],
                 events: [],
             };
 
@@ -220,6 +225,7 @@ describe('VolumeEventManager', () => {
                 latestEventId: 'sameEventId',
                 more: false,
                 refresh: false,
+                convertibleExternalInvitationLinkIds: [],
                 events: [],
             };
 

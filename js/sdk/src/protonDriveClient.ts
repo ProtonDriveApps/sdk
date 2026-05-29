@@ -37,7 +37,14 @@ import {
 import { DriveAPIService } from './internal/apiService';
 import { initDevicesModule } from './internal/devices';
 import { initDownloadModule } from './internal/download';
-import { CoreApiEvent, DriveEventsService, DriveListener, EventScheduler, EventSubscription } from './internal/events';
+import {
+    CoreApiEvent,
+    DriveEventsService,
+    DriveListener,
+    EventScheduler,
+    EventSubscription,
+    InternalDriveEvent,
+} from './internal/events';
 import { initNodesModule } from './internal/nodes';
 import { SDKEvents } from './internal/sdkEvents';
 import { initSharesModule } from './internal/shares';
@@ -202,8 +209,10 @@ export class ProtonDriveClient {
             this.nodes.access,
             this.nodes.management,
         );
-        // These are used to keep the internal cache up to date
-        const cacheEventListeners: DriveListener[] = [
+        // These are used to keep the internal cache up to date.
+        // Listeners receive both public DriveEvents and SDK-only
+        // InternalDriveEvents and should filter on event.type.
+        const cacheEventListeners: ((event: DriveEvent | InternalDriveEvent) => Promise<void>)[] = [
             this.nodes.eventHandler.updateNodesCacheOnEvent.bind(this.nodes.eventHandler),
             this.sharing.eventHandler.handleDriveEvent.bind(this.sharing.eventHandler),
         ];

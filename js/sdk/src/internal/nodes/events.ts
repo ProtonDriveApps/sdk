@@ -1,5 +1,5 @@
 import { Logger } from '../../interface';
-import { DriveEvent, DriveEventType } from '../events';
+import { DriveEvent, DriveEventType, InternalDriveEvent } from '../events';
 import { NodesCacheBase } from './cache';
 
 /**
@@ -14,7 +14,7 @@ export class NodesEventsHandler {
         private cache: NodesCacheBase,
     ) {}
 
-    async updateNodesCacheOnEvent(event: DriveEvent): Promise<void> {
+    async updateNodesCacheOnEvent(event: DriveEvent | InternalDriveEvent): Promise<void> {
         try {
             if (event.type === DriveEventType.TreeRefresh) {
                 await this.cache.setNodesStaleFromVolume(event.treeEventScopeId);

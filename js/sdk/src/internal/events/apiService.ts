@@ -50,6 +50,7 @@ export class EventsAPIService {
             latestEventId: result.EventID,
             more: result.More === 1,
             refresh,
+            convertibleExternalInvitationLinkIds: [],
             events: driveEvents,
         };
     }
@@ -85,6 +86,9 @@ export class EventsAPIService {
             latestEventId: result.EventID,
             more: result.More,
             refresh: result.Refresh,
+            convertibleExternalInvitationLinkIds: (result.ConvertibleExternalInvitations ?? []).map(
+                (item) => item.LinkID,
+            ),
             events: result.Events.map((event): NodeEvent => {
                 const type = VOLUME_EVENT_TYPE_MAP[event.EventType];
                 const uids = {

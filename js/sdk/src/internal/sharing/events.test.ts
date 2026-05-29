@@ -32,7 +32,7 @@ describe('handleSharedByMeNodes', () => {
         nodesService = {
             notifyNodeChanged: jest.fn(),
         };
-        sharingEventHandler = new SharingEventHandler(getMockLogger(), cache, sharesManager, nodesService);
+        sharingEventHandler = new SharingEventHandler(getMockLogger(), cache, sharesManager, nodesService, {} as any);
     });
 
     it('should add if new own shared node is created', async () => {
@@ -175,7 +175,7 @@ describe('handleSharedWithMeNodes', () => {
             treeEventScopeId: 'core',
         };
 
-        const sharingEventHandler = new SharingEventHandler(getMockLogger(), cache, sharesManager, nodesService);
+        const sharingEventHandler = new SharingEventHandler(getMockLogger(), cache, sharesManager, nodesService, {} as any);
         await sharingEventHandler.handleDriveEvent(event);
 
         expect(cache.setSharedWithMeNodeUids).toHaveBeenCalledWith(undefined);
@@ -194,7 +194,7 @@ describe('handleSharedWithMeNodes', () => {
             treeEventScopeId: 'core',
         };
 
-        const sharingEventHandler = new SharingEventHandler(getMockLogger(), cache, sharesManager, nodesService);
+        const sharingEventHandler = new SharingEventHandler(getMockLogger(), cache, sharesManager, nodesService, {} as any);
         await sharingEventHandler.handleDriveEvent(event);
 
         expect(cache.setSharedWithMeNodeUids).toHaveBeenCalledWith(undefined);
