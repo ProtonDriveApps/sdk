@@ -844,7 +844,7 @@ export class DriveCrypto {
             type,
             cryptoModel,
             bytesProcessed,
-            milliseconds: Math.round(duration),
+            milliseconds: duration,
         });
     }
 }
