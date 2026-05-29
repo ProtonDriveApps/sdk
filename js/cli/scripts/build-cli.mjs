@@ -28,12 +28,6 @@ const args = [
     '--minify',
     // Include source maps for readable stack traces.
     '--sourcemap=inline',
-    // Sharp requires a native module which we keep out of the bundle.
-    // User must install sharp separately by installing the package
-    // at the same directory as the CLI. The proton-drive CLI then must
-    // load the user's package.json.
-    '--external=sharp',
-    '--compile-autoload-package-json',
     '--define',
     `APP_VERSION=${JSON.stringify(`${process.env.CLI_APP_VERSION_NAME || 'external-drive-sdkclijs'}@${getVersion('cli') || '0.0.0'}`)}`,
     '--define',

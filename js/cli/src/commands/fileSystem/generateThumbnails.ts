@@ -1,5 +1,3 @@
-import type sharp from 'sharp';
-
 import { Thumbnail, ThumbnailType } from '@protontech/drive-sdk';
 
 const MAX_THUMBNAIL_SIDE = 512;
@@ -18,43 +16,20 @@ const IMAGE_MEDIA_TYPES = new Set([
     'image/webp',
 ]);
 
-type SharpLib = typeof sharp;
-
-let sharpPromise: Promise<SharpLib> | undefined;
-
-// Lazy load to avoid requiring the sharp package when not needed.
-// It is external dependency that might be missing when running the CLI.
-async function loadSharp(): Promise<SharpLib> {
-    if (!sharpPromise) {
-        sharpPromise = import('sharp')
-            .then((m) => (m as { default: SharpLib }).default)
-            .catch((error: unknown) => {
-                if (error instanceof ResolveMessage) {
-                    throw new Error(
-                        'Sharp package required for thumbnails generation is not installed. Please install it by running `bun install sharp` in the CLI directory.',
-                    );
-                }
-                throw error;
-            });
-    }
-    return sharpPromise;
-}
-
 export async function generateThumbnails(mediaType: string, localPath: string): Promise<Thumbnail[]> {
     if (!IMAGE_MEDIA_TYPES.has(mediaType.trim().toLowerCase())) {
         return [];
     }
 
-    const sharp = await loadSharp();
+    const metadata = await imageFromPath(localPath).metadata();
+    const width = metadata.width;
+    const height = metadata.height;
 
-    const metadata = await sharp(localPath, { failOn: 'none' }).metadata();
-    const width = metadata.width ?? 0;
-    const height = metadata.height ?? 0;
     if (width === 0 || height === 0) {
         return [];
     }
 
-    const type1Buffer = await webpFitMaxBytes(sharp, localPath, MAX_THUMBNAIL_SIDE, MAX_THUMBNAIL_BYTES);
+    const type1Buffer = await webpFitMaxBytes(localPath, MAX_THUMBNAIL_SIDE, MAX_THUMBNAIL_BYTES);
     if (!type1Buffer) {
         return [];
     }
@@ -67,7 +42,7 @@ export async function generateThumbnails(mediaType: string, localPath: string): 
     ];
 
     if (shouldGenerateHdThumbnail(width, height, mediaType)) {
-        const type2Buffer = await webpFitMaxBytes(sharp, localPath, MAX_HD_THUMBNAIL_SIDE, MAX_HD_THUMBNAIL_BYTES);
+        const type2Buffer = await webpFitMaxBytes(localPath, MAX_HD_THUMBNAIL_SIDE, MAX_HD_THUMBNAIL_BYTES);
         if (type2Buffer) {
             thumbnails.push({
                 type: ThumbnailType.Type2,
@@ -77,6 +52,10 @@ export async function generateThumbnails(mediaType: string, localPath: string): 
     }
 
     return thumbnails;
+}
+
+function imageFromPath(localPath: string): Bun.Image {
+    return new Bun.Image(localPath, { autoOrient: true });
 }
 
 function shouldGenerateHdThumbnail(width: number, height: number, mediaType: string): boolean {
@@ -89,20 +68,18 @@ function shouldGenerateHdThumbnail(width: number, height: number, mediaType: str
     return !isJpeg && !isWebp;
 }
 
-async function webpFitMaxBytes(
-    sharp: SharpLib,
-    localPath: string,
-    maxSide: number,
-    maxBytes: number,
-): Promise<Buffer | undefined> {
+async function webpFitMaxBytes(localPath: string, maxSide: number, maxBytes: number): Promise<Buffer | undefined> {
     let quality = 90;
     let out: Buffer | undefined;
     while (quality > 0) {
-        out = await sharp(localPath, { failOn: 'none' })
-            .rotate()
-            .resize(maxSide, maxSide, { fit: 'inside', withoutEnlargement: true })
-            .webp({ quality, effort: 4 })
-            .toBuffer();
+        try {
+            out = await imageFromPath(localPath)
+                .resize(maxSide, maxSide, { fit: 'inside', withoutEnlargement: true })
+                .webp({ quality })
+                .buffer();
+        } catch {
+            return undefined;
+        }
         if (out.length <= maxBytes) {
             break;
         }

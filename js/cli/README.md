@@ -6,13 +6,12 @@ The CLI is built with [Bun](https://bun.sh) and uses the Drive SDK under the hoo
 
 ## Requirements
 
-- [Bun](https://bun.sh) (for development builds from this repository)
+- [Bun](https://bun.sh) 1.3.14 or newer (for development builds from this repository)
 - A Proton account and browser access for sign-in
 - A secret store provided by your OS:
     - Windows: Windows Credential Manager
     - macOS: Keychain Services
     - Linux: libsecret (e.g., GNOME Keyring, KWallet)
-- [sharp](https://www.npmjs.com/package/sharp/) if you want thumbnails generated on image upload (see [Thumbnails](#thumbnails))
 
 ## Install and build (from source)
 
@@ -23,9 +22,7 @@ bun install
 bun run build
 ```
 
-This produces a standalone executable at **`release/proton-drive`**. Add that directory to your `PATH`, or invoke it with a full path.
-
-The build embeds Bun and minifies the bundle; `sharp` library is not bundled, see [Thumbnails](#thumbnails) for how to supply it to the binary.
+This produces a standalone executable at **`release/proton-drive`** with embedded Bun. Add that directory to your `PATH`, or invoke it with a full path.
 
 ## Authentication
 
@@ -72,12 +69,7 @@ After a successful login, the CLI stores the session in the **OS secret store** 
 
 ## Thumbnails
 
-The CLI uses `sharp` library to generate thumbnails for images on upload for common image types (JPEG, PNG, GIF, BMP, TIFF, WebP). The library is not bundled with the CLI. To enable this feature, you need to install it with one of the following methods:
-
-1. Install `sharp` globally (`bun install -g sharp`) and provide `NODE_PATH=~/.bun/install/global/node_modules` environment variable to the CLI executable.
-2. Install `sharp` locally (`bun install sharp`) and run the CLI from the directory with the `package.json` file.
-
-If `sharp` is missing, thumbnail generation fails with a clear error; you can skip thumbnail generation with **`--skip-thumbnails`** (**`-t`**) on `filesystem upload` when you do not need previews.
+On upload, the CLI generates WebP thumbnails for common image types (JPEG, PNG, GIF, BMP, TIFF, WebP) using [Bun's built-in image API](https://bun.com/docs/runtime/image) (requires Bun 1.3.14+). Use **`--skip-thumbnails`** (**`-t`**) on `filesystem upload` when you do not need previews or your system doesn't support Bun's image API.
 
 ## Environment variables
 
