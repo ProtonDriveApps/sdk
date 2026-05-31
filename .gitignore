@@ -6,6 +6,7 @@ __pycache__
 docs/build
 /public
 js/public
+doc
 
 # JS
 node_modules

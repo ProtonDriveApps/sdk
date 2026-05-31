@@ -90,7 +90,7 @@ We are preparing the documentation for the SDK. It will be available in the futu
 Until then, you can generate the code reference for the TypeScript SDK using the following command:
 
 ```bash
-cd js/sdk && OUTPUT_PATH=./doc npm run generate-doc:interface
+cd js/sdk && OUTPUT_PATH=./doc npm run generate-docs
 ```
 
 ## License
