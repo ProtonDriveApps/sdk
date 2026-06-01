@@ -13,6 +13,10 @@ The CLI is built with [Bun](https://bun.sh) and uses the Drive SDK under the hoo
     - macOS: Keychain Services
     - Linux: libsecret (e.g., GNOME Keyring, KWallet)
 
+## Download the CLI
+
+Download the latest release from [proton.me/download/drive/cli](https://proton.me/download/drive/cli/index.html).
+
 ## Install and build (from source)
 
 From the `js/cli` directory:
