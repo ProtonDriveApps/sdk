@@ -11,7 +11,14 @@
 export interface HttpsProtonMeDriveSdkUploadErrorsTotalV1SchemaJson {
   Labels: {
     volumeType: "own_volume" | "own_photo_volume" | "shared" | "shared_public" | "unknown";
-    type: "server_error" | "network_error" | "integrity_error" | "rate_limited" | "4xx" | "unknown";
+    type:
+      | "server_error"
+      | "network_error"
+      | "integrity_error"
+      | "rate_limited"
+      | "validation_error"
+      | "4xx"
+      | "unknown";
   };
   Value: number;
 }

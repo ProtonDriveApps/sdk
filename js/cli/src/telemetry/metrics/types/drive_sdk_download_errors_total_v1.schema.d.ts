@@ -17,6 +17,7 @@ export interface HttpsProtonMeDriveSdkDownloadErrorsTotalV1SchemaJson {
       | "decryption_error"
       | "integrity_error"
       | "rate_limited"
+      | "validation_error"
       | "4xx"
       | "unknown";
   };
