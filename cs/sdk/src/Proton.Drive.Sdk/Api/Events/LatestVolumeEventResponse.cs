@@ -1,9 +1,10 @@
 ﻿using System.Text.Json.Serialization;
+using Proton.Sdk.Api;
 using Proton.Sdk.Events;
 
-namespace Proton.Sdk.Api.Events;
+namespace Proton.Drive.Sdk.Api.Events;
 
-internal sealed class LatestEventResponse : ApiResponse
+internal sealed class LatestVolumeEventResponse : ApiResponse
 {
     [JsonPropertyName("EventID")]
     public required DriveEventId EventId { get; init; }

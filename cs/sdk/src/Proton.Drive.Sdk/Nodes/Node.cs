@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Proton.Drive.Sdk.Events;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
@@ -15,7 +16,7 @@ public abstract record Node
     public required NodeUid? ParentUid { get; init; }
 
     [JsonIgnore]
-    public string TreeEventScopeId => Uid.VolumeId.ToString();
+    public DriveEventScopeId TreeEventScopeId => new(Uid.VolumeId);
 
     public required Result<string, ProtonDriveError> Name { get; init; }
 
