@@ -77,7 +77,7 @@ public sealed partial class PhotosFileDownloader : IFileDownloader
 
         if (result is not FileNode fileNode)
         {
-            throw new NodeNotFoundException(_photoUid);
+            throw new NodeNotFoundException(_photoUid, "Photo node not found for download");
         }
 
         if (!downloadStateTaskCompletionSource.Task.IsCompletedSuccessfully)

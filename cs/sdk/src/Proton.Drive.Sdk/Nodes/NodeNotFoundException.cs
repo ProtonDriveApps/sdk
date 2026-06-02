@@ -18,8 +18,8 @@ public sealed class NodeNotFoundException : ValidationException
     {
     }
 
-    public NodeNotFoundException(NodeUid nodeUid)
-        : base($"Node \"{nodeUid}\" not found")
+    public NodeNotFoundException(NodeUid nodeUid, string message = "Node not found")
+        : base(message)
     {
         Code = ResponseCode.DoesNotExist;
         NodeUid = nodeUid;
