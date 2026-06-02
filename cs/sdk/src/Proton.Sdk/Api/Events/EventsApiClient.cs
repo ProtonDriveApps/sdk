@@ -16,10 +16,10 @@ internal readonly struct EventsApiClient(HttpClient httpClient)
             .GetAsync("core/v6/events/latest", cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<EventListResponse> GetEventsAsync(EventId baselineEventId, CancellationToken cancellationToken)
+    public async Task<EventListResponse> GetEventsAsync(DriveEventId cursorEventId, CancellationToken cancellationToken)
     {
         return await _httpClient
             .Expecting(ProtonApiSerializerContext.Default.EventListResponse)
-            .GetAsync($"core/v6/events/{baselineEventId}", cancellationToken).ConfigureAwait(false);
+            .GetAsync($"core/v6/events/{cursorEventId}", cancellationToken).ConfigureAwait(false);
     }
 }

@@ -5,6 +5,7 @@ using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api;
 using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Cryptography;
+using Proton.Drive.Sdk.Events;
 using Proton.Drive.Sdk.Http;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Download;
@@ -13,6 +14,7 @@ using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk;
 using Proton.Sdk.Caching;
+using Proton.Sdk.Events;
 using Proton.Sdk.Http;
 using Proton.Sdk.Telemetry;
 
@@ -337,5 +339,13 @@ public sealed class ProtonDriveClient
         }
 
         await VolumeOperations.EmptyTrashAsync(this, volumeId.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    public IAsyncEnumerable<DriveEvent> EnumerateEventsAsync(
+        DriveEventScopeId eventScopeId,
+        DriveEventId? cursorEventId,
+        CancellationToken cancellationToken = default)
+    {
+        return VolumeOperations.EnumerateEventsAsync(this, eventScopeId.VolumeId, cursorEventId, cancellationToken);
     }
 }

@@ -10,6 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Api\Volumes\Events\**" />
+    <EmbeddedResource Remove="Api\Volumes\Events\**" />
+    <None Remove="Api\Volumes\Events\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" />
     <PackageReference Include="Polly" />
     <PackageReference Include="Proton.Cryptography" PrivateAssets="compile" />

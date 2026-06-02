@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Proton.Drive.Sdk.Api.Events;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
@@ -58,4 +59,6 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(MultipleLinksNullaryRequest))]
 [JsonSerializable(typeof(AggregateApiResponse<LinkIdResponsePair>))]
 [JsonSerializable(typeof(VolumeTrashResponse))]
+[JsonSerializable(typeof(LatestVolumeEventResponse))]
+[JsonSerializable(typeof(VolumeEventListResponse))]
 internal sealed partial class DriveApiSerializerContext : JsonSerializerContext;

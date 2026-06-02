@@ -7,7 +7,7 @@ namespace Proton.Sdk.Api.Events;
 internal sealed class EventListResponse : ApiResponse
 {
     [JsonPropertyName("EventID")]
-    public required EventId LastEventId { get; init; }
+    public required DriveEventId LastEventId { get; init; }
 
     [JsonPropertyName("More")]
     [JsonConverter(typeof(BooleanToIntegerJsonConverter))]
