@@ -14,7 +14,7 @@ internal sealed class AuthenticationResponse : ApiResponse
     public required UserId UserId { get; init; }
 
     [JsonPropertyName("EventID")]
-    public EventId? EventId { get; init; }
+    public DriveEventId? EventId { get; init; }
 
     public required ReadOnlyMemory<byte> ServerProof { get; init; }
 

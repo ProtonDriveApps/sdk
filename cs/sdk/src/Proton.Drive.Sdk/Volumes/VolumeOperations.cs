@@ -1,11 +1,14 @@
 using System.Runtime.CompilerServices;
 using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Api.Events;
 using Proton.Drive.Sdk.Api.Photos;
 using Proton.Drive.Sdk.Api.Volumes;
 using Proton.Drive.Sdk.Cryptography;
+using Proton.Drive.Sdk.Events;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Shares;
 using Proton.Sdk.Addresses;
+using Proton.Sdk.Events;
 
 namespace Proton.Drive.Sdk.Volumes;
 
@@ -183,6 +186,53 @@ internal static class VolumeOperations
         var myFilesFolder = await PhotosNodeOperations.TryGetExistingPhotosFolderAsync(client, cancellationToken).ConfigureAwait(false);
 
         return myFilesFolder?.Uid.VolumeId;
+    }
+
+    public static async IAsyncEnumerable<DriveEvent> EnumerateEventsAsync(
+        ProtonDriveClient client,
+        VolumeId volumeId,
+        DriveEventId? cursorEventIdOrNull,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        if (cursorEventIdOrNull is not { } cursorEventId)
+        {
+            var latestVolumeEventResponse = await client.Api.Volumes.GetLatestEventAsync(volumeId, cancellationToken).ConfigureAwait(false);
+            yield return new EventsCursorAdvancedEvent(latestVolumeEventResponse.EventId);
+            yield break;
+        }
+
+        while (true)
+        {
+            var volumeEventsResponse = await client.Api.Volumes.GetEventsAsync(volumeId, cursorEventId, cancellationToken).ConfigureAwait(false);
+
+            if (volumeEventsResponse.RefreshRequired)
+            {
+                yield return new EventsContinuityLostEvent(volumeEventsResponse.LastEventId);
+                yield break;
+            }
+
+            if (volumeEventsResponse.Events.Count == 0)
+            {
+                if (volumeEventsResponse.LastEventId != cursorEventId)
+                {
+                    yield return new EventsCursorAdvancedEvent(volumeEventsResponse.LastEventId);
+                }
+
+                yield break;
+            }
+
+            foreach (var volumeEvent in volumeEventsResponse.Events)
+            {
+                yield return volumeEvent.ToDriveEvent(volumeId);
+            }
+
+            if (!volumeEventsResponse.MoreEntriesExist)
+            {
+                yield break;
+            }
+
+            cursorEventId = volumeEventsResponse.LastEventId;
+        }
     }
 
     private static VolumeCreationRequest GetCreationRequest(

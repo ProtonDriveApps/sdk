@@ -32,7 +32,7 @@ internal static class InteropConversionExtensions
             var folderNodeProto = new FolderNode
             {
                 Uid = folderNode.Uid.ToString(),
-                TreeEventScopeId = folderNode.TreeEventScopeId,
+                TreeEventScopeId = folderNode.TreeEventScopeId.ToString(),
                 Name = folderNode.Name.ToInterop(),
                 CreationTime = folderNode.CreationTime.ToUniversalTime().ToTimestamp(),
                 TrashTime = folderNode.TrashTime?.ToUniversalTime().ToTimestamp(),
@@ -56,7 +56,7 @@ internal static class InteropConversionExtensions
             var fileNodeProto = new FileNode
             {
                 Uid = fileNode.Uid.ToString(),
-                TreeEventScopeId = fileNode.TreeEventScopeId,
+                TreeEventScopeId = fileNode.TreeEventScopeId.ToString(),
                 Name = fileNode.Name.ToInterop(),
                 MediaType = fileNode.MediaType,
                 CreationTime = fileNode.CreationTime.ToUniversalTime().ToTimestamp(),
