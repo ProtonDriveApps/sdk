@@ -8,13 +8,13 @@ const GIT_ROOT = path.resolve(import.meta.dir, '../../..');
 const mode = process.argv[2] === 'internal' ? 'internal' : 'main';
 
 const target = process.argv[3] || 'bun';
-let outfileSuffix = '';
+let outfileArchitecture = '';
 if (target.startsWith('bun-')) {
-    outfileSuffix = '-' + target.slice(4);
+    outfileArchitecture   = '/' + target.slice(4);
 }
 
 const entry = mode === 'internal' ? 'src/internal-cli/proton-drive-internal.ts' : 'src/proton-drive.ts';
-const outfile = mode === 'internal' ? 'release/proton-drive-internal' : 'release/proton-drive';
+const outfile = mode === 'internal' ? `release${outfileArchitecture}/proton-drive-internal` : `release${outfileArchitecture}/proton-drive`;
 
 const args = [
     'build',
@@ -35,7 +35,7 @@ const args = [
     '--define',
     `SENTRY_DSN=${JSON.stringify(process.env.SENTRY_DSN)}`,
     entry,
-    `--outfile=${outfile}${outfileSuffix}`,
+    `--outfile=${outfile}`,
 ];
 
 const proc = Bun.spawn(['bun', ...args], {
