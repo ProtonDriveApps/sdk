@@ -6,4 +6,5 @@ data class FileRevisionUploaderRequest(
     val currentActiveRevisionUid: RevisionUid,
     val lastModificationTime: Instant?,
     val size: Long,
+    val noWaiting: Boolean? = null,
 )

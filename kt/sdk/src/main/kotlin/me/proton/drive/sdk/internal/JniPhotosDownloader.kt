@@ -1,12 +1,12 @@
 package me.proton.drive.sdk.internal
 
-import me.proton.drive.sdk.entity.NodeUid
+import me.proton.drive.sdk.entity.PhotosDownloaderRequest
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.toLongResponse
+import me.proton.drive.sdk.extension.toProtobuf
 import proton.drive.sdk.ProtonDriveSdk
 import proton.drive.sdk.drivePhotosClientDownloadToStreamRequest
 import proton.drive.sdk.drivePhotosClientDownloaderFreeRequest
-import proton.drive.sdk.drivePhotosClientGetPhotoDownloaderRequest
 import proton.drive.sdk.request
 import java.nio.ByteBuffer
 
@@ -14,13 +14,9 @@ class JniPhotosDownloader internal constructor() : JniBaseProtonDriveSdk() {
     suspend fun getPhotoDownloader(
         clientHandle: Long,
         cancellationTokenSourceHandle: Long,
-        photoUid: NodeUid,
+        request: PhotosDownloaderRequest,
     ): Long = executeOnce("create", LongResponseCallback) {
-        drivePhotosClientGetPhotoDownloader = drivePhotosClientGetPhotoDownloaderRequest {
-            this.photoUid = photoUid.value
-            this.clientHandle = clientHandle
-            this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
-        }
+        drivePhotosClientGetPhotoDownloader = request.toProtobuf(clientHandle, cancellationTokenSourceHandle)
     }
 
     suspend fun downloadToStream(

@@ -1,7 +1,6 @@
 package me.proton.drive.sdk.extension
 
 import com.google.protobuf.kotlin.toByteString
-import com.google.protobuf.timestamp
 import me.proton.drive.sdk.entity.PhotosUploaderRequest
 import proton.drive.sdk.additionalMetadataProperty
 import proton.drive.sdk.drivePhotosClientGetPhotoUploaderRequest
@@ -36,5 +35,6 @@ internal fun PhotosUploaderRequest.toProtobuf(
             }
         }
         overrideExistingDraftByOtherClient = this@toProtobuf.overrideExistingDraftByOtherClient
+        this@toProtobuf.noWaiting?.let { noWaiting = it }
         this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
     }

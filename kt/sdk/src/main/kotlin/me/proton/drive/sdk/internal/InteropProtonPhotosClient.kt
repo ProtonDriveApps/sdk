@@ -2,7 +2,6 @@ package me.proton.drive.sdk.internal
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.withTimeout
 import me.proton.drive.sdk.Downloader
 import me.proton.drive.sdk.LoggerProvider
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
@@ -17,6 +16,7 @@ import me.proton.drive.sdk.entity.FileThumbnail
 import me.proton.drive.sdk.entity.Node
 import me.proton.drive.sdk.entity.NodeResultPair
 import me.proton.drive.sdk.entity.NodeUid
+import me.proton.drive.sdk.entity.PhotosDownloaderRequest
 import me.proton.drive.sdk.entity.PhotosTimelineItem
 import me.proton.drive.sdk.entity.PhotosUploaderRequest
 import me.proton.drive.sdk.entity.ThumbnailType
@@ -30,7 +30,6 @@ import proton.drive.sdk.drivePhotosClientEnumerateTrashRequest
 import proton.drive.sdk.drivePhotosClientGetNodeRequest
 import proton.drive.sdk.drivePhotosClientRestoreNodesRequest
 import proton.drive.sdk.drivePhotosClientTrashNodesRequest
-import kotlin.time.Duration
 
 internal class InteropProtonPhotosClient internal constructor(
     internal val handle: Long,
@@ -157,18 +156,17 @@ internal class InteropProtonPhotosClient internal constructor(
     }
 
     override suspend fun downloader(
-        photoUid: NodeUid,
-        timeout: Duration,
-    ): Downloader = withTimeout(timeout) {
+        request: PhotosDownloaderRequest,
+    ): Downloader {
         log(INFO, "downloader")
-        cancellationCoroutineScope { source ->
+        return cancellationCoroutineScope { source ->
             factory(JniPhotosDownloader()) {
                 PhotosDownloader(
                     client = this@InteropProtonPhotosClient,
                     handle = getPhotoDownloader(
                         clientHandle = handle,
                         cancellationTokenSourceHandle = source.handle,
-                        photoUid = photoUid,
+                        request = request,
                     ),
                     bridge = this,
                     cancellationTokenSource = source,
@@ -179,10 +177,9 @@ internal class InteropProtonPhotosClient internal constructor(
 
     override suspend fun uploader(
         request: PhotosUploaderRequest,
-        timeout: Duration,
-    ): Uploader = withTimeout(timeout) {
+    ): Uploader {
         log(INFO, "photosUploader")
-        cancellationCoroutineScope { source ->
+        return cancellationCoroutineScope { source ->
             JniPhotosUploader().run {
                 PhotosUploader(
                     client = this@InteropProtonPhotosClient,
