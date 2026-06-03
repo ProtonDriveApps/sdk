@@ -21,7 +21,12 @@ internal sealed class InteropLogger(nint bindingsHandle, InteropAction<nint, Int
         var message = formatter.Invoke(state, exception);
         if (exception != null)
         {
-            message = message + Environment.NewLine + exception;
+            if (exception is InteropErrorException { Error: { } interopError })
+            {
+                message += Environment.NewLine + interopError;
+            }
+
+            message += Environment.NewLine + exception;
         }
 
         var logEvent = new LogEvent { Level = (int)logLevel, Message = message, CategoryName = _categoryName };
