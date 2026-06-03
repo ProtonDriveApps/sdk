@@ -13,12 +13,23 @@ import { reduceSizePrecision } from '@protontech/drive-sdk/telemetry';
 import type { ApiClient } from '../api';
 import { Metrics, MetricsRequestService } from './metrics';
 import { captureMessage } from './sentry';
+import { getVerifierFileSizeBucket } from './verifierFileSizeBucket';
 
 export type UserPlan = 'free' | 'paid' | 'anonymous' | 'unknown';
 
 const REPORT_ERRORING_USERS_INTERVAL_MS = 5 * 60 * 1000;
 
-export class MetricHandler implements MetricHandlerType<MetricEvent> {
+export interface CliMetrics {
+    reportUploadVerifierAttempt(): void;
+    reportDownloadVerifierAttempt(params: {
+        result: 'success' | 'failure' | 'skipped';
+        fileSize: number;
+        checksumVerified: boolean;
+    }): void;
+}
+
+export class MetricHandler implements MetricHandlerType<MetricEvent>, CliMetrics {
+    private metrics?: Metrics;
     private handler?: ConfiguredMetricHandler;
     private requestService?: MetricsRequestService;
 
@@ -27,8 +38,8 @@ export class MetricHandler implements MetricHandlerType<MetricEvent> {
             apiClient.authenticatedRequest,
             `${apiClient.baseUrlWithProtocol}/api/data/v1/metrics`,
         );
-        const metrics = new Metrics(this.requestService);
-        this.handler = new ConfiguredMetricHandler(metrics, userPlan);
+        this.metrics = new Metrics(this.requestService);
+        this.handler = new ConfiguredMetricHandler(this.metrics, userPlan);
     }
 
     async flush() {
@@ -37,6 +48,24 @@ export class MetricHandler implements MetricHandlerType<MetricEvent> {
 
     onEvent(metric: MetricRecord<MetricEvent>): void {
         this.handler?.onEvent(metric);
+    }
+
+    reportUploadVerifierAttempt(): void {
+        this.metrics?.drive_upload_verifier_attempts_total.increment({
+            sha1Provided: 'true',
+        });
+    }
+
+    reportDownloadVerifierAttempt(params: {
+        result: 'success' | 'failure' | 'skipped';
+        fileSize: number;
+        checksumVerified: boolean;
+    }): void {
+        this.metrics?.drive_download_verifier_attempts_total.increment({
+            result: params.result,
+            fileSize: getVerifierFileSizeBucket(params.fileSize),
+            checksumVerified: params.checksumVerified ? 'true' : 'false',
+        });
     }
 }
 

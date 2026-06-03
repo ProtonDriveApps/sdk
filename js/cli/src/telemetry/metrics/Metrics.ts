@@ -5,6 +5,7 @@
 import { Counter } from './lib/counter';
 import { Histogram } from './lib/histogram';
 import type { MetricsReporter } from './lib/metric';
+import type { HttpsProtonMeDriveDownloadVerifierAttemptsTotalV2SchemaJson } from './types/drive_download_verifier_attempts_total_v2.schema';
 import type { HttpsProtonMeDriveSdkApiRetrySucceededTotalV1SchemaJson } from './types/drive_sdk_api_retry_succeeded_total_v1.schema';
 import type { HttpsProtonMeDriveSdkDebounceTotalV1SchemaJson } from './types/drive_sdk_debounce_total_v1.schema';
 import type { HttpsProtonMeDriveSdkDownloadErroringUsersTotalV1SchemaJson } from './types/drive_sdk_download_erroring_users_total_v1.schema';
@@ -22,8 +23,10 @@ import type { HttpsProtonMeDriveSdkUploadErrorsTotalV1SchemaJson } from './types
 import type { HttpsProtonMeDriveSdkUploadErrorsTransferSizeHistogramV1SchemaJson } from './types/drive_sdk_upload_errors_transfer_size_histogram_v1.schema';
 import type { HttpsProtonMeDriveSdkUploadSuccessRateTotalV1SchemaJson } from './types/drive_sdk_upload_success_rate_total_v1.schema';
 import type { HttpsProtonMeDriveSdkVolumeEventsSubscriptionsHistogramV1SchemaJson } from './types/drive_sdk_volume_events_subscriptions_histogram_v1.schema';
+import type { HttpsProtonMeDriveUploadVerifierAttemptsTotalV1SchemaJson } from './types/drive_upload_verifier_attempts_total_v1.schema';
 
 export class Metrics {
+    public drive_download_verifier_attempts_total: Counter<HttpsProtonMeDriveDownloadVerifierAttemptsTotalV2SchemaJson>;
     public drive_sdk_api_retry_succeeded_total: Counter<HttpsProtonMeDriveSdkApiRetrySucceededTotalV1SchemaJson>;
     public drive_sdk_debounce_total: Counter<HttpsProtonMeDriveSdkDebounceTotalV1SchemaJson>;
     public drive_sdk_download_erroring_users_total: Counter<HttpsProtonMeDriveSdkDownloadErroringUsersTotalV1SchemaJson>;
@@ -41,8 +44,10 @@ export class Metrics {
     public drive_sdk_upload_errors_transfer_size_histogram: Histogram<HttpsProtonMeDriveSdkUploadErrorsTransferSizeHistogramV1SchemaJson>;
     public drive_sdk_upload_success_rate_total: Counter<HttpsProtonMeDriveSdkUploadSuccessRateTotalV1SchemaJson>;
     public drive_sdk_volume_events_subscriptions_histogram: Histogram<HttpsProtonMeDriveSdkVolumeEventsSubscriptionsHistogramV1SchemaJson>;
+    public drive_upload_verifier_attempts_total: Counter<HttpsProtonMeDriveUploadVerifierAttemptsTotalV1SchemaJson>;
 
     constructor(requestService: MetricsReporter) {
+        this.drive_download_verifier_attempts_total = new Counter<HttpsProtonMeDriveDownloadVerifierAttemptsTotalV2SchemaJson>({ name: 'drive_download_verifier_attempts_total', version: 2 }, requestService);
         this.drive_sdk_api_retry_succeeded_total = new Counter<HttpsProtonMeDriveSdkApiRetrySucceededTotalV1SchemaJson>({ name: 'drive_sdk_api_retry_succeeded_total', version: 1 }, requestService);
         this.drive_sdk_debounce_total = new Counter<HttpsProtonMeDriveSdkDebounceTotalV1SchemaJson>({ name: 'drive_sdk_debounce_total', version: 1 }, requestService);
         this.drive_sdk_download_erroring_users_total = new Counter<HttpsProtonMeDriveSdkDownloadErroringUsersTotalV1SchemaJson>({ name: 'drive_sdk_download_erroring_users_total', version: 1 }, requestService);
@@ -60,5 +65,6 @@ export class Metrics {
         this.drive_sdk_upload_errors_transfer_size_histogram = new Histogram<HttpsProtonMeDriveSdkUploadErrorsTransferSizeHistogramV1SchemaJson>({ name: 'drive_sdk_upload_errors_transfer_size_histogram', version: 1 }, requestService);
         this.drive_sdk_upload_success_rate_total = new Counter<HttpsProtonMeDriveSdkUploadSuccessRateTotalV1SchemaJson>({ name: 'drive_sdk_upload_success_rate_total', version: 1 }, requestService);
         this.drive_sdk_volume_events_subscriptions_histogram = new Histogram<HttpsProtonMeDriveSdkVolumeEventsSubscriptionsHistogramV1SchemaJson>({ name: 'drive_sdk_volume_events_subscriptions_histogram', version: 1 }, requestService);
+        this.drive_upload_verifier_attempts_total = new Counter<HttpsProtonMeDriveUploadVerifierAttemptsTotalV1SchemaJson>({ name: 'drive_upload_verifier_attempts_total', version: 1 }, requestService);
     }
 }

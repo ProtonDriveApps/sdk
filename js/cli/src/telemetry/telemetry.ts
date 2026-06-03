@@ -12,7 +12,7 @@ import { Config } from '../config';
 import { ColoredConsoleMetricHandler } from './consoleHandler';
 import { FileLogHandler } from './fileHandler';
 import { ColoredLogFormatter } from './logFormatters';
-import { MetricHandler, UserPlan } from './metricHandler';
+import { CliMetrics, MetricHandler, UserPlan } from './metricHandler';
 import { flushSentry } from './sentry';
 import { SentryLogHandler } from './sentryHandler';
 
@@ -42,6 +42,7 @@ export function initTelemetry(config: Config) {
 
     return {
         telemetry,
+        metrics: metricsHandler as CliMetrics,
         initMetrics: (apiClient: ApiClient, userPlan: UserPlan) => {
             metricsHandler?.init(apiClient, userPlan);
         },
