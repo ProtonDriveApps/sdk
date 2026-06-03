@@ -2,7 +2,6 @@ package me.proton.drive.sdk.internal
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.withTimeout
 import me.proton.drive.sdk.Downloader
 import me.proton.drive.sdk.FileDownloader
 import me.proton.drive.sdk.FileUploader
@@ -13,6 +12,7 @@ import me.proton.drive.sdk.ProtonDriveClient
 import me.proton.drive.sdk.SdkNode
 import me.proton.drive.sdk.Session
 import me.proton.drive.sdk.Uploader
+import me.proton.drive.sdk.entity.FileDownloaderRequest
 import me.proton.drive.sdk.entity.FileRevisionUploaderRequest
 import me.proton.drive.sdk.entity.FileThumbnail
 import me.proton.drive.sdk.entity.FileUploaderRequest
@@ -20,7 +20,6 @@ import me.proton.drive.sdk.entity.FolderNode
 import me.proton.drive.sdk.entity.Node
 import me.proton.drive.sdk.entity.NodeResultPair
 import me.proton.drive.sdk.entity.NodeUid
-import me.proton.drive.sdk.entity.RevisionUid
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toProto
@@ -38,7 +37,6 @@ import proton.drive.sdk.driveClientRenameRequest
 import proton.drive.sdk.driveClientRestoreNodesRequest
 import proton.drive.sdk.driveClientTrashNodesRequest
 import java.time.Instant
-import kotlin.time.Duration
 
 internal class InteropProtonDriveClient internal constructor(
     internal val handle: Long,
@@ -229,18 +227,17 @@ internal class InteropProtonDriveClient internal constructor(
     }
 
     override suspend fun downloader(
-        revisionUid: RevisionUid,
-        timeout: Duration,
-    ): Downloader = withTimeout(timeout) {
+        request: FileDownloaderRequest,
+    ): Downloader {
         log(INFO, "downloader")
-        cancellationCoroutineScope { source ->
+        return cancellationCoroutineScope { source ->
             factory(JniFileDownloader()) {
                 FileDownloader(
                     client = this@InteropProtonDriveClient,
                     handle = getFileDownloader(
                         clientHandle = handle,
                         cancellationTokenSourceHandle = source.handle,
-                        revisionUid = revisionUid,
+                        request = request,
                     ),
                     bridge = this,
                     cancellationTokenSource = source,
@@ -251,10 +248,9 @@ internal class InteropProtonDriveClient internal constructor(
 
     override suspend fun uploader(
         request: FileUploaderRequest,
-        timeout: Duration,
-    ): Uploader = withTimeout(timeout) {
+    ): Uploader {
         log(INFO, "fileUploader")
-        cancellationCoroutineScope { source ->
+        return cancellationCoroutineScope { source ->
             JniFileUploader().run {
                 FileUploader(
                     client = this@InteropProtonDriveClient,
@@ -272,10 +268,9 @@ internal class InteropProtonDriveClient internal constructor(
 
     override suspend fun uploader(
         request: FileRevisionUploaderRequest,
-        timeout: Duration,
-    ): Uploader = withTimeout(timeout) {
+    ): Uploader {
         log(INFO, "fileRevisionUploader")
-        cancellationCoroutineScope { source ->
+        return cancellationCoroutineScope { source ->
             JniFileUploader().run {
                 FileUploader(
                     client = this@InteropProtonDriveClient,

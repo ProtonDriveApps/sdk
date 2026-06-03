@@ -1,11 +1,11 @@
 package me.proton.drive.sdk.internal
 
-import me.proton.drive.sdk.entity.RevisionUid
+import me.proton.drive.sdk.entity.FileDownloaderRequest
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.toLongResponse
+import me.proton.drive.sdk.extension.toProtobuf
 import proton.drive.sdk.ProtonDriveSdk
 import proton.drive.sdk.downloadToStreamRequest
-import proton.drive.sdk.driveClientGetFileDownloaderRequest
 import proton.drive.sdk.fileDownloaderFreeRequest
 import proton.drive.sdk.request
 import java.nio.ByteBuffer
@@ -15,13 +15,9 @@ class JniFileDownloader internal constructor() : JniBaseProtonDriveSdk() {
     suspend fun getFileDownloader(
         clientHandle: Long,
         cancellationTokenSourceHandle: Long,
-        revisionUid: RevisionUid,
+        request: FileDownloaderRequest,
     ): Long = executeOnce("create", LongResponseCallback) {
-        driveClientGetFileDownloader = driveClientGetFileDownloaderRequest {
-            this.revisionUid = revisionUid.value
-            this.clientHandle = clientHandle
-            this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
-        }
+        driveClientGetFileDownloader = request.toProtobuf(clientHandle, cancellationTokenSourceHandle)
     }
 
     suspend fun downloadToStream(

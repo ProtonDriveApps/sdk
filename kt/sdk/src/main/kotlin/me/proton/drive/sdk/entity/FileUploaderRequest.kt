@@ -10,4 +10,5 @@ data class FileUploaderRequest(
     val lastModificationTime: Instant?,
     val overrideExistingDraftByOtherClient: Boolean,
     val additionalMetadata: Map<String, ByteArray> = emptyMap(),
+    val noWaiting: Boolean? = null,
 )

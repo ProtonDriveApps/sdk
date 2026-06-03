@@ -21,6 +21,7 @@ internal fun FileUploaderRequest.toProtobuf(
             this.utf8JsonValue = data.toByteString()
         }
     }
+    this@toProtobuf.noWaiting?.let { noWaiting = it }
     this.clientHandle = clientHandle
     this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
 }
