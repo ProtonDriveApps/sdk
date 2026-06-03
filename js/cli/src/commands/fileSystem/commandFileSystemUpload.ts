@@ -6,6 +6,7 @@ import {
 } from '@protontech/drive-sdk';
 
 import { type ActionArgs, type Command, Options, PathType } from '../../cli';
+import type { CliMetrics } from '../../telemetry';
 import { getSha1 } from './digest';
 import { generateThumbnails } from './generateThumbnails';
 import { ConflictChoice, ConflictTargetKind, TransferConflictResolver } from './transferConflictResolver';
@@ -21,6 +22,7 @@ type UploadContext = {
     progress?: TransferProgressInterface;
     uploadQueue: UploadQueue;
     conflictResolver: TransferConflictResolver;
+    metrics?: CliMetrics;
 };
 
 export class CommandFileSystemUpload implements Command {
@@ -61,6 +63,7 @@ export class CommandFileSystemUpload implements Command {
         logger,
         sdk,
         paths,
+        metrics,
         args,
         options: {
             json,
@@ -116,6 +119,7 @@ export class CommandFileSystemUpload implements Command {
             progress,
             uploadQueue,
             conflictResolver,
+            metrics,
         };
 
         try {
@@ -200,6 +204,7 @@ export class CommandFileSystemUpload implements Command {
                 });
 
                 await controller.completion();
+                ctx.metrics?.reportUploadVerifierAttempt();
                 return;
             } catch (error: unknown) {
                 if (!(error instanceof NodeWithSameNameExistsValidationError)) {

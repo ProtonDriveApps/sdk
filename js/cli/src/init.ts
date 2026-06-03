@@ -26,7 +26,7 @@ export async function init(configOptions: InitConfig) {
         mkdir(config.logDir, { recursive: true }),
     ]);
 
-    const { telemetry, initMetrics, flush: flushTelemetry } = initTelemetry(config);
+    const { telemetry, metrics, initMetrics, flush: flushTelemetry } = initTelemetry(config);
     const logger = telemetry.getLogger('cli');
 
     const openPGPCryptoModule = initOpenPGPCryptoModule();
@@ -77,6 +77,7 @@ export async function init(configOptions: InitConfig) {
         paths,
         eventsManager,
         eventsProvider,
+        metrics,
         dispose: async () => {
             await Promise.all([flushTelemetry(), eventsManager.dispose()]);
         },

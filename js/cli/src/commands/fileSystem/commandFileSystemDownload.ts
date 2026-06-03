@@ -4,6 +4,7 @@ import path from 'node:path';
 import { FileDownloader, IntegrityError, type Logger, MaybeNode, type ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 
 import { type ActionArgs, type Command, getClaimedSize, Options, PathType } from '../../cli';
+import type { CliMetrics } from '../../telemetry';
 import { getSha1 } from './digest';
 import { assertDownloadDestination, assertValidDownloadRoot, assertValidPathSegment } from './downloadPathValidation';
 import { resolveLocalPaths } from './localPath';
@@ -31,6 +32,7 @@ type DownloadContext = {
     downloadQueue: DownloadQueue;
     conflictResolver: TransferConflictResolver;
     downloadRoot: string;
+    metrics?: CliMetrics;
 };
 
 export class CommandFileSystemDownload implements Command {
@@ -65,6 +67,7 @@ export class CommandFileSystemDownload implements Command {
         logger,
         sdk,
         paths,
+        metrics,
         args,
         options: {
             json,
@@ -118,6 +121,7 @@ export class CommandFileSystemDownload implements Command {
             downloadQueue,
             conflictResolver,
             downloadRoot,
+            metrics,
         };
 
         try {
@@ -202,13 +206,16 @@ export class CommandFileSystemDownload implements Command {
                 }
             }
 
-            const expectedSha1 =
-                item.remoteNode.ok && item.remoteNode.value.activeRevision?.claimedDigests?.sha1Verified
-                    ? item.remoteNode.value.activeRevision?.claimedDigests?.sha1
-                    : undefined;
-
+            const claimedDigests = item.remoteNode.ok
+                ? item.remoteNode.value.activeRevision?.claimedDigests
+                : undefined;
+            const verification = {
+                expectedSha1: claimedDigests?.sha1,
+                sha1Verified: !!claimedDigests?.sha1Verified,
+                fileSize: getClaimedSize(item.remoteNode) ?? 0,
+            };
             const downloader = await ctx.sdk.getFileDownloader(item.remoteNode);
-            await this.downloadToPath(ctx, item, downloader, targetPath, expectedSha1);
+            await this.downloadToPath(ctx, item, downloader, targetPath, verification);
             return;
         }
     }
@@ -218,7 +225,7 @@ export class CommandFileSystemDownload implements Command {
         item: QueueItemFile<{ remoteNode: MaybeNode }>,
         downloader: FileDownloader,
         localPath: string,
-        expectedSha1: string | undefined,
+        verification: { expectedSha1?: string; sha1Verified: boolean; fileSize: number },
     ): Promise<void> {
         assertDownloadDestination(ctx.downloadRoot, localPath);
 
@@ -237,8 +244,7 @@ export class CommandFileSystemDownload implements Command {
             locked: false,
         };
 
-        const claimedSize = getClaimedSize(item.remoteNode);
-        const progressTracker = ctx.progress?.trackItem(item.baseName, claimedSize);
+        const progressTracker = ctx.progress?.trackItem(item.baseName, verification.fileSize);
 
         const controller = downloader.downloadToStream(writableStream, (downloadedBytes) => {
             progressTracker?.onProgress?.(downloadedBytes);
@@ -247,25 +253,49 @@ export class CommandFileSystemDownload implements Command {
         try {
             await controller.completion();
             await writer.end();
-
-            if (expectedSha1) {
-                const computedSha1 = await getSha1(localPath);
-                if (computedSha1 !== expectedSha1) {
-                    ctx.logger.error(
-                        `Integrity verification failed: computedSha1=${computedSha1} expectedSha1=${expectedSha1}`,
-                    );
-                    throw new IntegrityError('Integrity verification failed', {
-                        computedSha1,
-                        expectedSha1,
-                    });
-                }
-            }
+            await this.verifyDownload(ctx, localPath, verification);
         } catch (error: unknown) {
             await unlink(localPath).catch(() => {});
             await writer.end(error instanceof Error ? error : new Error('Unknown error', { cause: error }));
             throw error;
         } finally {
             progressTracker?.onFinished();
+        }
+    }
+
+    private async verifyDownload(
+        ctx: DownloadContext,
+        localPath: string,
+        verification: { expectedSha1?: string; sha1Verified: boolean; fileSize: number },
+    ): Promise<void> {
+        const { expectedSha1, sha1Verified, fileSize } = verification;
+
+        if (!expectedSha1) {
+            ctx.metrics?.reportDownloadVerifierAttempt({
+                result: 'skipped',
+                fileSize,
+                checksumVerified: false,
+            });
+            return;
+        }
+
+        const computedSha1 = await getSha1(localPath);
+        const matches = computedSha1 === expectedSha1;
+
+        ctx.metrics?.reportDownloadVerifierAttempt({
+            result: matches ? 'success' : 'failure',
+            fileSize,
+            checksumVerified: sha1Verified,
+        });
+
+        if (!matches && sha1Verified) {
+            ctx.logger.error(
+                `Integrity verification failed: computedSha1=${computedSha1} expectedSha1=${expectedSha1}`,
+            );
+            throw new IntegrityError('Integrity verification failed', {
+                computedSha1,
+                expectedSha1,
+            });
         }
     }
 }

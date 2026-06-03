@@ -6,6 +6,7 @@ import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotos
 
 import { Auth } from '../api';
 import type { Manager } from '../events';
+import type { CliMetrics } from '../telemetry';
 import { Paths } from './paths';
 
 export interface Command {
@@ -36,6 +37,7 @@ export interface ActionArgs {
     sdkDiagnostic: Diagnostic;
     paths: Paths;
     eventsManager: Manager;
+    metrics?: CliMetrics;
     clearCaches: () => Promise<void>;
     args: string[];
     options: { [name: string]: any }; // eslint-disable-line @typescript-eslint/no-explicit-any
