@@ -125,15 +125,15 @@ internal static class NodeOperations
         PgpPrivateKey signingKey,
         PgpProfile pgpProfile,
         out PgpPrivateKey key,
+        out PgpSecretKey lockedKey,
         out PgpSessionKey nameSessionKey,
         out PgpSessionKey passphraseSessionKey,
         out ArraySegment<byte> encryptedName,
         out ArraySegment<byte> nameHashDigest,
         out ArraySegment<byte> encryptedKeyPassphrase,
-        out ArraySegment<byte> passphraseSignature,
-        out ArraySegment<byte> lockedKeyBytes)
+        out ArraySegment<byte> passphraseSignature)
     {
-        key = PgpPrivateKey.Generate("Drive key", "no-reply@proton.me", KeyGenerationAlgorithm.Default, profile: pgpProfile);
+        key = PgpPrivateKey.Generate("Drive key", "no-reply@proton.me", KeyGenerationAlgorithm.Default, pgpProfile);
         nameSessionKey = PgpSessionKey.Generate();
 
         Span<byte> passphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
@@ -144,8 +144,7 @@ internal static class NodeOperations
 
         encryptedKeyPassphrase = PgpEncrypter.EncryptAndSign(passphrase, passphraseEncryptionSecrets, signingKey, out passphraseSignature);
 
-        using var lockedKey = key.Lock(passphrase);
-        lockedKeyBytes = lockedKey.ToBytes();
+        lockedKey = key.Lock(passphrase);
 
         GetNameParameters(name, parentFolderKey, parentFolderHashKey, nameSessionKey, signingKey, out encryptedName, out nameHashDigest);
     }

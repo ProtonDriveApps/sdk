@@ -35,7 +35,7 @@ internal sealed class LinkDto
     public required ReadOnlyMemory<byte> NameHashDigest { get; init; }
 
     [JsonPropertyName("NodeKey")]
-    public required PgpArmoredPrivateKey Key { get; init; }
+    public required PgpArmoredSecretKey Key { get; init; }
 
     [JsonPropertyName("NodePassphrase")]
     public required PgpArmoredMessage Passphrase { get; init; }

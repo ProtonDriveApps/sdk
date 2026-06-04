@@ -41,7 +41,7 @@ internal sealed class ShareResponse : ApiResponse
     [JsonPropertyName("LinkType")]
     public required LinkType RootLinkType { get; init; }
 
-    public required PgpArmoredPrivateKey Key { get; init; }
+    public required PgpArmoredSecretKey Key { get; init; }
 
     [JsonPropertyName("Passphrase")]
     public required PgpArmoredMessage Passphrase { get; init; }

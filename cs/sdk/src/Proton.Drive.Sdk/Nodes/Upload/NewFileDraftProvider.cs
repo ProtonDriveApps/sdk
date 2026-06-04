@@ -87,13 +87,13 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
             signingKey,
             pgpProfile,
             out nodeKey,
+            out var lockedNodeKey,
             out nameSessionKey,
             out passphraseSessionKey,
             out var encryptedName,
             out var nameHashDigest,
             out var encryptedKeyPassphrase,
-            out var passphraseSignature,
-            out var lockedKeyBytes);
+            out var passphraseSignature);
 
         contentKey = useAeadFeatureFlag ? PgpSessionKey.GenerateForAead() : PgpSessionKey.Generate();
 
@@ -106,7 +106,7 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
             Passphrase = encryptedKeyPassphrase,
             PassphraseSignature = passphraseSignature,
             SignatureEmailAddress = membershipEmailAddress,
-            Key = lockedKeyBytes,
+            Key = lockedNodeKey,
             MediaType = mediaType,
             ContentKeyPacket = nodeKey.EncryptSessionKey(contentKey),
             ContentKeySignature = nodeKey.Sign(contentKey.Export()),

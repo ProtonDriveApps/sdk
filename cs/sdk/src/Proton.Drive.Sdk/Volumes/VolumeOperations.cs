@@ -284,11 +284,11 @@ internal static class VolumeOperations
         {
             AddressId = addressId,
             AddressKeyId = addressKeyId,
-            ShareKey = lockedShareKey.ToBytes(),
+            ShareKey = lockedShareKey,
             SharePassphrase = encryptedSharePassphrase,
             SharePassphraseSignature = sharePassphraseSignature,
             FolderName = encryptedName,
-            FolderKey = lockedFolderKey.ToBytes(),
+            FolderKey = lockedFolderKey,
             FolderPassphrase = encryptedFolderPassphrase,
             FolderPassphraseSignature = folderPassphraseSignature,
             FolderHashKey = encryptedHashKey,
@@ -346,14 +346,14 @@ internal static class VolumeOperations
             {
                 AddressId = addressId,
                 AddressKeyId = addressKeyId,
-                Key = lockedShareKey.ToBytes(),
+                Key = lockedShareKey,
                 Passphrase = encryptedSharePassphrase,
                 PassphraseSignature = sharePassphraseSignature,
             },
             Link = new PhotosVolumeLinkCreationParameters
             {
                 Name = encryptedName,
-                NodeKey = lockedFolderKey.ToBytes(),
+                NodeKey = lockedFolderKey,
                 NodePassphrase = encryptedFolderPassphrase,
                 NodePassphraseSignature = folderPassphraseSignature,
                 NodeHashKey = encryptedHashKey,

@@ -12,7 +12,7 @@ internal sealed class PhotosVolumeShareCreationParameters
     [JsonPropertyName("AddressKeyID")]
     public required AddressKeyId AddressKeyId { get; init; }
 
-    public required PgpArmoredPrivateKey Key { get; init; }
+    public required PgpArmoredSecretKey Key { get; init; }
 
     public required PgpArmoredMessage Passphrase { get; init; }
 

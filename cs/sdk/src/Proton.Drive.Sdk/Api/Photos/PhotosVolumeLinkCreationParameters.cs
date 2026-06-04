@@ -6,7 +6,7 @@ internal sealed class PhotosVolumeLinkCreationParameters
 {
     public required PgpArmoredMessage Name { get; init; }
 
-    public required PgpArmoredPrivateKey NodeKey { get; init; }
+    public required PgpArmoredSecretKey NodeKey { get; init; }
 
     public required PgpArmoredMessage NodePassphrase { get; init; }
 
