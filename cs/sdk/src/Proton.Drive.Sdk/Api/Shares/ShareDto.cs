@@ -12,7 +12,7 @@ internal sealed class ShareDto
     [JsonPropertyName("CreatorEmail")]
     public required string CreatorEmailAddress { get; init; }
 
-    public required PgpArmoredPrivateKey Key { get; init; }
+    public required PgpArmoredSecretKey Key { get; init; }
 
     public required PgpArmoredMessage Passphrase { get; init; }
 

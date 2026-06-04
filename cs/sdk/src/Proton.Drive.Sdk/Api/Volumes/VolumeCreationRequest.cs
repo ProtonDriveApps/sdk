@@ -12,7 +12,7 @@ internal sealed class VolumeCreationRequest
     [JsonPropertyName("AddressKeyID")]
     public required AddressKeyId AddressKeyId { get; init; }
 
-    public required PgpArmoredPrivateKey ShareKey { get; init; }
+    public required PgpArmoredSecretKey ShareKey { get; init; }
 
     public required PgpArmoredMessage SharePassphrase { get; init; }
 
@@ -20,7 +20,7 @@ internal sealed class VolumeCreationRequest
 
     public required PgpArmoredMessage FolderName { get; init; }
 
-    public required PgpArmoredPrivateKey FolderKey { get; init; }
+    public required PgpArmoredSecretKey FolderKey { get; init; }
 
     public required PgpArmoredMessage FolderPassphrase { get; init; }
 

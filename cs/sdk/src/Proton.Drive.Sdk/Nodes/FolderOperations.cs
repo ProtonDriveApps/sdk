@@ -89,13 +89,13 @@ internal static class FolderOperations
             signingKey,
             PgpProfile.Proton,
             out var key,
+            out var lockedKey,
             out var nameSessionKey,
             out var passphraseSessionKey,
             out var encryptedName,
             out var nameHashDigest,
             out var encryptedKeyPassphrase,
-            out var keyPassphraseSignature,
-            out var armoredKey);
+            out var keyPassphraseSignature);
 
         var extendedAttributes = new ExtendedAttributes
         {
@@ -117,7 +117,7 @@ internal static class FolderOperations
             Passphrase = encryptedKeyPassphrase,
             PassphraseSignature = keyPassphraseSignature,
             SignatureEmailAddress = membershipAddress.EmailAddress,
-            Key = armoredKey,
+            Key = lockedKey,
             HashKey = key.EncryptAndSign(hashKey, key),
             ExtendedAttributes = encryptedExtendedAttributes,
         };

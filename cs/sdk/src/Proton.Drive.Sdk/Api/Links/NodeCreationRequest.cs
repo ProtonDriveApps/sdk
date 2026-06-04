@@ -22,5 +22,5 @@ internal abstract class NodeCreationRequest
     public required PgpArmoredSignature PassphraseSignature { get; init; }
 
     [JsonPropertyName("NodeKey")]
-    public required PgpArmoredPrivateKey Key { get; init; }
+    public required PgpArmoredSecretKey Key { get; init; }
 }
