@@ -9,6 +9,8 @@ import {
 
 import type { EventsContext, EventsProvider } from './interface';
 
+const CORE_TREE_EVENT_SCOPE_ID = 'core';
+
 type TreeSdk = Pick<ProtonDriveClient, 'subscribeToDriveEvents' | 'subscribeToTreeEvents'>;
 
 export class Manager {
@@ -48,13 +50,6 @@ export class Manager {
         }
     }
 
-    private async subscribeCoreEvents(): Promise<void> {
-        if (this.coreSubscription) {
-            return;
-        }
-        this.coreSubscription = await this.driveSdk.subscribeToDriveEvents(this.createHandler('drive'));
-    }
-
     private async subscribeInitialScopesFromProvider(): Promise<void> {
         for (const { context, treeEventScopeIds } of this.provider.getInitialSubscriptionScopeIds()) {
             for (const scopeId of treeEventScopeIds) {
@@ -68,17 +63,39 @@ export class Manager {
     }
 
     async subscribeDriveScope(scopeId: string): Promise<void> {
-        await this.subscribeVolumeForSdk('drive', scopeId, this.driveSdk);
+        await this.subscribeForSdk('drive', scopeId, this.driveSdk);
     }
 
     async subscribePhotosScope(scopeId: string): Promise<void> {
-        await this.subscribeVolumeForSdk('photos', scopeId, this.photosSdk);
+        await this.subscribeForSdk('photos', scopeId, this.photosSdk);
     }
 
-    private async subscribeVolumeForSdk(sdkContext: EventsContext, scopeId: string, sdk: TreeSdk): Promise<void> {
+    private async subscribeForSdk(sdkContext: EventsContext, scopeId: string, sdk: TreeSdk): Promise<void> {
         if (!this.provider.canListenForEvents()) {
             return;
         }
+        if (scopeId === CORE_TREE_EVENT_SCOPE_ID) {
+            await this.subscribeCoreEvents();
+            return;
+        }
+        await this.subscribeVolumeForSdk(sdkContext, scopeId, sdk);
+    }
+
+    private async subscribeCoreEvents(): Promise<void> {
+        if (this.coreSubscription) {
+            return;
+        }
+        this.coreSubscription = await this.driveSdk.subscribeToDriveEvents(this.createHandler('drive'));
+        const latestEventId = this.coreSubscription.getLatestEventId();
+        if (latestEventId) {
+            this.logger.debug(
+                `Subscribed to scope drive:${CORE_TREE_EVENT_SCOPE_ID} with latest event ID ${latestEventId}`,
+            );
+            await this.provider.setLatestEventId('drive', CORE_TREE_EVENT_SCOPE_ID, latestEventId);
+        }
+    }
+
+    private async subscribeVolumeForSdk(sdkContext: EventsContext, scopeId: string, sdk: TreeSdk): Promise<void> {
         if (this.volumeSubscriptions[sdkContext].has(scopeId)) {
             return;
         }

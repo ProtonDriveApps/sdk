@@ -65,6 +65,18 @@ describe('Manager', () => {
         expect(await provider.getLatestEventId('core')).toBe('e2');
     });
 
+    it('create does not treat core scope as a volume scope', async () => {
+        const provider = new MemoryEventsProvider();
+        await provider.setLatestEventId('drive', 'vol', 'vol-seed');
+        await provider.setLatestEventId('drive', 'core', 'core-seed');
+
+        await Manager.create(logger, driveSdk, photosSdk, provider);
+
+        expect(subscribeToTreeEvents).toHaveBeenCalledWith('vol', expect.any(Function));
+        expect(subscribeToTreeEvents).not.toHaveBeenCalledWith('core', expect.any(Function));
+        expect(subscribeToDriveEvents).toHaveBeenCalledWith(expect.any(Function));
+    });
+
     it('TreeRemove removes scope and disposes subscription', async () => {
         const provider = new MemoryEventsProvider();
         await provider.setLatestEventId('drive', 'vol', 'seed');
@@ -89,9 +101,8 @@ describe('Manager', () => {
         await m.subscribeDriveScope('extra');
 
         expect(subscribeToTreeEvents).toHaveBeenCalledWith('extra', expect.any(Function));
-        expect(provider.getInitialSubscriptionScopeIds()).toEqual([
-            { context: 'drive', treeEventScopeIds: ['vol', 'extra'] },
-        ]);
+        const driveScopeIds = provider.getInitialSubscriptionScopeIds()[0].treeEventScopeIds.sort();
+        expect(driveScopeIds).toEqual(['core', 'extra', 'vol']);
     });
 
     it('subscribePhotosScope uses photos SDK', async () => {
