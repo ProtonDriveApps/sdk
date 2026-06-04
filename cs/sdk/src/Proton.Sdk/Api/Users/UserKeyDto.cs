@@ -12,7 +12,7 @@ internal sealed class UserKeyDto
 
     public required int Version { get; init; }
 
-    public required PgpArmoredPrivateKey PrivateKey { get; init; }
+    public required PgpArmoredSecretKey PrivateKey { get; init; }
 
     [JsonPropertyName("Primary")]
     [JsonConverter(typeof(BooleanToIntegerJsonConverter))]

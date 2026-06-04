@@ -11,7 +11,7 @@ internal static class ShareCrypto
     public static async ValueTask<(Share Share, PgpPrivateKey Key)> DecryptShareAsync(
         ProtonDriveClient client,
         ShareId shareId,
-        PgpArmoredPrivateKey lockedKey,
+        PgpArmoredSecretKey lockedKey,
         PgpArmoredMessage passphraseMessage,
         AddressId addressId,
         NodeUid rootFolderId,

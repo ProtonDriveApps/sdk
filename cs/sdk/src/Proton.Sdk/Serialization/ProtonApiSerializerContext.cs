@@ -18,7 +18,7 @@ namespace Proton.Sdk.Serialization;
     [
         typeof(PgpArmoredMessageJsonConverter),
         typeof(PgpArmoredSignatureJsonConverter),
-        typeof(PgpArmoredPrivateKeyJsonConverter),
+        typeof(PgpArmoredSecretKeyJsonConverter),
         typeof(PgpArmoredPublicKeyJsonConverter),
     ])]
 #pragma warning restore SA1114, SA1118

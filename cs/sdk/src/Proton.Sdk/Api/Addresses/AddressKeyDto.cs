@@ -12,7 +12,7 @@ internal sealed class AddressKeyDto
 
     public required int Version { get; init; }
 
-    public PgpArmoredPrivateKey PrivateKey { get; init; }
+    public required PgpArmoredSecretKey PrivateKey { get; init; }
 
     public PgpArmoredMessage? Token { get; init; }
 

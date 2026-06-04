@@ -179,7 +179,7 @@ internal static class NodeCrypto
     }
 
     private static Result<PgpPrivateKey, ProtonDriveError> UnlockNodeKey(
-        PgpArmoredPrivateKey lockedKey,
+        PgpArmoredSecretKey lockedKey,
         Result<PhasedDecryptionOutput<ReadOnlyMemory<byte>>, ProtonDriveError> passphraseResult)
     {
         if (!passphraseResult.TryGetValueElseError(out var passphrase, out var error))
@@ -249,11 +249,10 @@ internal static class NodeCrypto
         var keys = new List<PgpKey>([nodeKey]);
         if (authorshipClaim.Author != Author.Anonymous)
         {
-            keys.AddRange(authorshipClaim.Keys.AsEnumerable().Select(k => new PgpKey(k)));
+            keys.AddRange(authorshipClaim.Keys.Select(k => (PgpKey)k));
         }
 
-        var keyRing = new PgpKeyRing(keys);
-        return keyRing;
+        return new PgpKeyRing(keys);
     }
 
     private static Result<DecryptionOutput<PgpSessionKey>, ProtonDriveError> DecryptContentKey(

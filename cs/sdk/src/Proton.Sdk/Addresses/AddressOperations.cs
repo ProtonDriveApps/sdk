@@ -213,7 +213,7 @@ internal static class AddressOperations
 
             keys.Add(key);
 
-            if (keyDto.IsPrimary)
+            if (primaryKeyIndex is null && keyDto.IsPrimary)
             {
                 primaryKeyIndex = keyIndex;
             }
