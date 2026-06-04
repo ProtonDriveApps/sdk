@@ -10,7 +10,6 @@ namespace Proton.Sdk.Http;
 
 internal static class HttpResponseMessageExtensions
 {
-    // TODO: add unit test
     public static async Task EnsureApiSuccessAsync<TFailure>(
         this HttpResponseMessage responseMessage,
         JsonTypeInfo<TFailure> failureTypeInfo,
@@ -21,6 +20,7 @@ internal static class HttpResponseMessageExtensions
         {
             case HttpStatusCode.UnprocessableEntity or HttpStatusCode.Conflict:
                 {
+                    EnsureNonEmptyContent(responseMessage);
                     var response = await responseMessage.Content.ReadFromJsonAsync(failureTypeInfo, cancellationToken)
                         .ConfigureAwait(false) ?? throw new JsonException();
 
@@ -29,23 +29,34 @@ internal static class HttpResponseMessageExtensions
 
             case HttpStatusCode.BadRequest:
                 {
-                    var response = await responseMessage.Content.ReadFromJsonAsync(ProtonApiSerializerContext.Default.ApiResponse, cancellationToken)
-                        .ConfigureAwait(false) ?? throw new JsonException();
-
+                    var response = await ReadApiResponseAsync(responseMessage, cancellationToken).ConfigureAwait(false);
                     throw new ProtonApiException(responseMessage.StatusCode, response);
                 }
 
             case HttpStatusCode.TooManyRequests:
                 {
-                    var response = await responseMessage.Content.ReadFromJsonAsync(ProtonApiSerializerContext.Default.ApiResponse, cancellationToken)
-                        .ConfigureAwait(false) ?? throw new JsonException();
-
+                    var response = await ReadApiResponseAsync(responseMessage, cancellationToken).ConfigureAwait(false);
                     throw new TooManyRequestsException(responseMessage.StatusCode, response, GetRetryAfter(responseMessage));
                 }
 
             default:
                 responseMessage.EnsureSuccessStatusCode();
                 break;
+        }
+    }
+
+    private static async Task<ApiResponse> ReadApiResponseAsync(HttpResponseMessage responseMessage, CancellationToken cancellationToken)
+    {
+        EnsureNonEmptyContent(responseMessage);
+        return await responseMessage.Content.ReadFromJsonAsync(ProtonApiSerializerContext.Default.ApiResponse, cancellationToken)
+            .ConfigureAwait(false) ?? throw new JsonException();
+    }
+
+    private static void EnsureNonEmptyContent(HttpResponseMessage responseMessage)
+    {
+        if (responseMessage.Content.Headers.ContentLength is 0)
+        {
+            throw new ProtonApiException(responseMessage.ReasonPhrase, (int)responseMessage.StatusCode, ResponseCode.Unknown);
         }
     }
 
