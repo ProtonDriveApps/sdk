@@ -51,7 +51,7 @@ internal sealed class FifoFlexibleSemaphore
             _waitingQueue.Enqueue((count, tcs));
         }
 
-        var cancellationTokenRegistration = cancellationToken.Register(() => tcs.TrySetCanceled());
+        var cancellationTokenRegistration = cancellationToken.Register(state => ((TaskCompletionSource)state!).TrySetCanceled(), tcs);
 
         if (cancellationToken.IsCancellationRequested)
         {
@@ -59,16 +59,9 @@ internal sealed class FifoFlexibleSemaphore
             return;
         }
 
-        await WaitAsync().ConfigureAwait(false);
-
-        return;
-
-        async ValueTask WaitAsync()
+        await using (cancellationTokenRegistration.ConfigureAwait(false))
         {
-            await using (cancellationTokenRegistration.ConfigureAwait(false))
-            {
-                await tcs.Task.ConfigureAwait(false);
-            }
+            await tcs.Task.ConfigureAwait(false);
         }
     }
 
