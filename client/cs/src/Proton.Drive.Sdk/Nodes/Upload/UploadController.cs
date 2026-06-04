@@ -12,6 +12,7 @@ public sealed class UploadController : IAsyncDisposable
     private readonly Func<long, ValueTask>? _onSucceededAsync;
     private readonly long? _contentByteCount;
 
+    private readonly Lock _stateLock = new();
     private bool _isDisposed;
 
     internal UploadController(
@@ -46,23 +47,31 @@ public sealed class UploadController : IAsyncDisposable
 
     public void Resume()
     {
-        if (!_taskControl.TryResume())
+        lock (_stateLock)
         {
-            return;
-        }
+            ObjectDisposedException.ThrowIf(_isDisposed, this);
 
-        var previousCompletion = Completion;
-        Completion = ResumeAfterPreviousCompletionAsync(previousCompletion, _taskControl.Attempt);
+            if (!_taskControl.TryResume())
+            {
+                return;
+            }
+
+            var previousCompletion = Completion;
+            Completion = ResumeAfterPreviousCompletionAsync(previousCompletion, _taskControl.Attempt);
+        }
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (_isDisposed)
+        lock (_stateLock)
         {
-            return;
-        }
+            if (_isDisposed)
+            {
+                return;
+            }
 
-        _isDisposed = true;
+            _isDisposed = true;
+        }
 
         try
         {
