@@ -73,11 +73,12 @@ function printPathsHelp() {
     console.log(`${ROW_INDENT}Posix paths are always used, regardless of the host OS.`);
     console.log(`${ROW_INDENT}Node names are used for paths if available. When name cannot be decrypted`);
     console.log(`${ROW_INDENT}or conflicts with other node(s), node UIDs can be used instead.`);
+    console.log(`${ROW_INDENT}Escape / in node names with a backslash.`);
     console.log(``);
     console.log(`${ROW_INDENT}Examples:`);
     console.log(`${ROW_INDENT}- /my-files/folder/file.txt`);
-    console.log(`${ROW_INDENT}- /my-files/folder/[NODE-UID]/file.txt`);
-    console.log(`${ROW_INDENT}- /shared-with-me/[NODE-UID]/file.txt`);
+    console.log(`${ROW_INDENT}- /my-files/folder/foo\\/bar`);
+    console.log(`${ROW_INDENT}- /shared-with-me/NODE-UID/file.txt`);
 }
 
 function printCommandSynopsisLine(command: Command) {

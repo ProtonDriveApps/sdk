@@ -169,11 +169,11 @@ export class Path {
     }
 
     get parentPath() {
-        return new Path(this.driveSdk, this.photosSdk, PATH.dirname(this.fullPath), this.eventsManager);
+        return new Path(this.driveSdk, this.photosSdk, pathDirname(this.fullPath), this.eventsManager);
     }
 
     get name() {
-        return PATH.basename(this.fullPath);
+        return pathBasename(this.fullPath);
     }
 
     get sdk(): ProtonDriveClient | ProtonDrivePhotosClient {
@@ -217,7 +217,7 @@ export class Path {
             return this.getNodeByPath(rootNode, this.sectionPathWithoutRoot);
         }
         if (this.type === PathType.Trash || this.type === PathType.PhotosTrash) {
-            const parts = this.sectionPath.split(PATH.sep);
+            const parts = splitPathSegments(this.sectionPath);
             if (parts.length > 1) {
                 throw new ValidationError('Browsing trashed folders is not supported');
             }
@@ -243,17 +243,17 @@ export class Path {
 
     private get sectionPath() {
         // /my-files/foo/bar/baz -> foo/bar/baz
-        return this.fullPath.split(PATH.sep).slice(2).join(PATH.sep);
+        return joinPathSegments(splitPathSegments(this.fullPath).slice(2));
     }
 
     private get sectionRootNodeName() {
         // /shared-with-me/foo/bar/baz -> foo
-        return this.sectionPath.split(PATH.sep)[0];
+        return splitPathSegments(this.sectionPath)[0];
     }
 
     private get sectionPathWithoutRoot() {
         // /shared-with-me/foo/bar/baz -> bar/baz
-        return this.fullPath.split(PATH.sep).slice(3).join(PATH.sep);
+        return joinPathSegments(splitPathSegments(this.fullPath).slice(3));
     }
 
     private async getSharedWithMeRootFolder() {
@@ -291,7 +291,7 @@ export class Path {
 
     private async getNodeByPath(parentNode: MaybeNode, pathString: string) {
         let node = parentNode;
-        const pathParts = pathString.split(PATH.sep);
+        const pathParts = splitPathSegments(pathString);
         for (const part of pathParts) {
             if (part === '') {
                 continue;
@@ -378,7 +378,7 @@ export class PublicLinkPath {
 
     private async getNodeByPath(parentNode: MaybeNode, pathString: string) {
         let node = parentNode;
-        const pathParts = pathString.split(PATH.sep);
+        const pathParts = splitPathSegments(pathString);
         for (const part of pathParts) {
             if (part === '') {
                 continue;
@@ -396,6 +396,49 @@ export class PublicLinkPath {
         }
         throw new ValidationError(`Node not found: ${name}`);
     }
+}
+
+export function pathDirname(fullPath: string): string {
+    const segments = splitPathSegments(fullPath);
+    return joinPathSegments(segments.slice(0, -1));
+}
+
+export function pathBasename(fullPath: string): string {
+    const segments = splitPathSegments(fullPath);
+    return segments[segments.length - 1] ?? '';
+}
+
+/**
+ * Split a remote path into segments. Unescaped `/` separates segments; `\/` is literal `/`.
+ */
+export function splitPathSegments(path: string): string[] {
+    const segments: string[] = [];
+    let current = '';
+
+    for (let i = 0; i < path.length; i++) {
+        const char = path[i];
+        if (char === '\\' && i + 1 < path.length) {
+            const next = path[i + 1];
+            if (next === '/') {
+                current += next;
+                i++;
+                continue;
+            }
+        }
+        if (char === '/') {
+            segments.push(current);
+            current = '';
+            continue;
+        }
+        current += char;
+    }
+
+    segments.push(current);
+    return segments;
+}
+
+function joinPathSegments(segments: string[]): string {
+    return segments.map((s) => s.replaceAll('/', '\\/')).join(PATH.sep);
 }
 
 function isNodeUid(pathString: string): boolean {
