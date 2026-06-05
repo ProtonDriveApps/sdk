@@ -1,5 +1,9 @@
 # Changelog
 
+## cli/v0.0.3 (2026-06-05)
+
+* Implement SHA1 verifier metrics
+
 ## cli/v0.0.2 (2026-06-05)
 
 * Support escaping slash in node names
