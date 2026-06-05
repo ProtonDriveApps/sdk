@@ -115,6 +115,35 @@ describe('readline.question', () => {
         await expect(question('good')).resolves.toBe('ok');
     });
 
+    it('enableHistory passes prior lines to createInterface and persists non-empty answers', async () => {
+        mockedCreateInterface
+            .mockImplementationOnce(() => stubInterface(jest.fn(async () => 'first')))
+            .mockImplementationOnce(() => stubInterface(jest.fn(async () => 'second')));
+
+        await expect(question('repl>', { enableHistory: true })).resolves.toBe('first');
+        await expect(question('repl>', { enableHistory: true })).resolves.toBe('second');
+
+        const secondCallOptions = mockedCreateInterface.mock.calls[1]?.[0] as { history?: string[] };
+        expect(secondCallOptions.history).toEqual(['first']);
+    });
+
+    it('enableHistory backup path trims persisted history to historySize', async () => {
+        for (let i = 0; i < 1002; i++) {
+            mockedCreateInterface.mockImplementationOnce(() =>
+                stubInterface(jest.fn(async () => `line-${i}`)),
+            );
+        }
+
+        for (let i = 0; i < 1002; i++) {
+            await expect(question('repl>', { enableHistory: true })).resolves.toBe(`line-${i}`);
+        }
+
+        const nextPromptOptions = mockedCreateInterface.mock.calls[1001]?.[0] as { history?: string[] };
+        expect(nextPromptOptions.history).toHaveLength(1000);
+        expect(nextPromptOptions.history?.[0]).toBe('line-1000');
+        expect(nextPromptOptions.history?.at(-1)).toBe('line-1');
+    });
+
     it('returns null when stdin reaches EOF before an answer', async () => {
         let emitClose!: () => void;
         mockedCreateInterface.mockImplementationOnce(() => {

@@ -11,7 +11,7 @@ export async function startRepl(commands: Command[], initOptions: InitConfig): P
 
     try {
         while (true) {
-            const line = await question('proton-drive> ');
+            const line = await question('proton-drive> ', { enableHistory: true });
             if (line === null) {
                 throw new ExitError();
             }
