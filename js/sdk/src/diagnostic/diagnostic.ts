@@ -1,4 +1,4 @@
-import { MaybeNode } from '../interface';
+import { NodeEntity } from '../interface';
 import { ProtonDriveClient } from '../protonDriveClient';
 import { ProtonDrivePhotosClient } from '../protonDrivePhotosClient';
 import { DiagnosticHTTPClient } from './httpClient';
@@ -34,7 +34,7 @@ export class Diagnostic {
     }
 
     async *verifyNodeTree(
-        node: MaybeNode,
+        node: NodeEntity,
         options?: DiagnosticOptions,
         onProgress?: DiagnosticProgressCallback,
     ): AsyncGenerator<DiagnosticResult> {
@@ -58,7 +58,7 @@ export class Diagnostic {
         yield* zipGenerators(this.telemetry.iterateEvents(), this.httpClient.iterateEvents());
     }
 
-    async getNodeTreeStructure(node: MaybeNode): Promise<TreeNode> {
+    async getNodeTreeStructure(node: NodeEntity): Promise<TreeNode> {
         const diagnostic = new SDKDiagnosticMain(this.protonDriveClient);
         return diagnostic.getStructure(node);
     }

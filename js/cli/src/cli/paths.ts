@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { MaybeMissingNode, MaybeNode, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
+import { NodeEntity, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 import { ProtonDrivePublicLinkClient } from '@protontech/drive-sdk/protonDrivePublicLinkClient';
 
@@ -54,7 +54,7 @@ export class Paths {
         ].map((path) => `/${path}`);
     }
 
-    async getNodes(pathStrings: string[], supportedTypes?: PathType[]): Promise<MaybeNode[]> {
+    async getNodes(pathStrings: string[], supportedTypes?: PathType[]): Promise<NodeEntity[]> {
         const paths = this.getPaths(pathStrings, supportedTypes);
         const nodes = [];
         for (const path of paths) {
@@ -86,7 +86,7 @@ export class Paths {
         return paths;
     }
 
-    async getNode(pathString: string, supportedTypes?: PathType[]): Promise<MaybeNode> {
+    async getNode(pathString: string, supportedTypes?: PathType[]): Promise<NodeEntity> {
         const path = this.getPath(pathString, supportedTypes);
         return await path.getNode();
     }
@@ -194,20 +194,19 @@ export class Path {
         return photoPaths.includes(this.type);
     }
 
-    async getNode(): Promise<MaybeNode> {
+    async getNode(): Promise<NodeEntity> {
         const node = await this.getNodeInternal();
 
-        const scopeId = node.ok ? node.value.treeEventScopeId : node.error.treeEventScopeId;
         if (this.usePhotoSdk()) {
-            await this.eventsManager.subscribePhotosScope(scopeId);
+            await this.eventsManager.subscribePhotosScope(node.treeEventScopeId);
         } else {
-            await this.eventsManager.subscribeDriveScope(scopeId);
+            await this.eventsManager.subscribeDriveScope(node.treeEventScopeId);
         }
 
         return node;
     }
 
-    private async getNodeInternal(): Promise<MaybeNode> {
+    private async getNodeInternal(): Promise<NodeEntity> {
         if (this.type === PathType.MyFiles) {
             const rootNode = await this.driveSdk.getMyFilesRootFolder();
             return this.getNodeByPath(rootNode, this.sectionPath);
@@ -274,22 +273,21 @@ export class Path {
         throw new ValidationError('Trashed node not found');
     }
 
-    private async getDevicesRootFolder(): Promise<MaybeNode> {
+    private async getDevicesRootFolder(): Promise<NodeEntity> {
         for await (const device of this.driveSdk.iterateDevices()) {
             const name = device.name.ok ? device.name.value : device.name.error.name;
             if (name === this.sectionRootNodeName) {
                 const [maybeMissingNode] = await Array.fromAsync(this.sdk.iterateNodes([device.rootFolderUid]));
-                const maybeNode = getMaybeNodeAndIgnoreMissingNode(maybeMissingNode);
-                if (!maybeNode) {
+                if ('missingUid' in maybeMissingNode) {
                     throw new ValidationError(`Node not found`);
                 }
-                return maybeNode;
+                return maybeMissingNode;
             }
         }
         throw new ValidationError('Device not found');
     }
 
-    private async getNodeByPath(parentNode: MaybeNode, pathString: string) {
+    private async getNodeByPath(parentNode: NodeEntity, pathString: string) {
         let node = parentNode;
         const pathParts = splitPathSegments(pathString);
         for (const part of pathParts) {
@@ -305,7 +303,7 @@ export class Path {
         return node;
     }
 
-    private async getNodeByName(parentNode: MaybeNode, name: string) {
+    private async getNodeByName(parentNode: NodeEntity, name: string) {
         for await (const maybeChild of this.driveSdk.iterateFolderChildren(parentNode)) {
             if (getName(maybeChild) === name) {
                 return maybeChild;
@@ -314,35 +312,34 @@ export class Path {
         throw new ValidationError(`Node not found: ${name}`);
     }
 
-    private async getPhotoNodeByPath(pathString: string): Promise<MaybeNode> {
+    private async getPhotoNodeByPath(pathString: string): Promise<NodeEntity> {
         if (isNodeUid(pathString)) {
             return this.photosSdk.getNode(pathString);
         }
         return this.getPhotoByName(pathString);
     }
 
-    private async getPhotoByName(name: string): Promise<MaybeNode> {
+    private async getPhotoByName(name: string): Promise<NodeEntity> {
         const photoNodeUids = await Array.fromAsync(this.photosSdk.iterateTimeline(), (photo) => photo.nodeUid);
         for await (const maybeMissingNode of this.photosSdk.iterateNodes(photoNodeUids)) {
-            const maybeNode = getMaybeNodeAndIgnoreMissingNode(maybeMissingNode);
-            if (!maybeNode) {
+            if ('missingUid' in maybeMissingNode) {
                 continue;
             }
-            if (getName(maybeNode) === name) {
-                return maybeNode;
+            if (getName(maybeMissingNode) === name) {
+                return maybeMissingNode;
             }
         }
         throw new ValidationError(`Photo not found: ${name}`);
     }
 
-    private async getAlbumNodeByPath(pathString: string): Promise<MaybeNode> {
+    private async getAlbumNodeByPath(pathString: string): Promise<NodeEntity> {
         if (isNodeUid(pathString)) {
             return this.photosSdk.getNode(pathString);
         }
         return this.getAlbumByName(pathString);
     }
 
-    private async getAlbumByName(name: string): Promise<MaybeNode> {
+    private async getAlbumByName(name: string): Promise<NodeEntity> {
         for await (const maybeAlbum of this.photosSdk.iterateAlbums()) {
             if (getName(maybeAlbum) === name) {
                 return maybeAlbum;
@@ -361,7 +358,7 @@ export class PublicLinkPath {
         this.fullPath = fullPath;
     }
 
-    async getNode(): Promise<MaybeNode> {
+    async getNode(): Promise<NodeEntity> {
         if (isNodeUid(this.fullPath)) {
             const nodeUid = this.fullPath;
             return this.publicLinkSdk.getNode(nodeUid);
@@ -376,7 +373,7 @@ export class PublicLinkPath {
         return this.getNodeByName(node, name);
     }
 
-    private async getNodeByPath(parentNode: MaybeNode, pathString: string) {
+    private async getNodeByPath(parentNode: NodeEntity, pathString: string) {
         let node = parentNode;
         const pathParts = splitPathSegments(pathString);
         for (const part of pathParts) {
@@ -388,7 +385,7 @@ export class PublicLinkPath {
         return node;
     }
 
-    private async getNodeByName(parentNode: MaybeNode, name: string) {
+    private async getNodeByName(parentNode: NodeEntity, name: string) {
         for await (const maybeChild of this.publicLinkSdk.iterateFolderChildren(parentNode)) {
             if (getName(maybeChild) === name) {
                 return maybeChild;
@@ -443,15 +440,4 @@ function joinPathSegments(segments: string[]): string {
 
 function isNodeUid(pathString: string): boolean {
     return /^([a-zA-Z0-9=_-]{88,108}|[a-zA-Z0-9_-]{22})~([a-zA-Z0-9=_-]{88,108}|[a-zA-Z0-9_-]{22})$/.test(pathString);
-}
-
-function getMaybeNodeAndIgnoreMissingNode(maybeMissingNode: MaybeMissingNode): MaybeNode | undefined {
-    if (maybeMissingNode.ok) {
-        return maybeMissingNode;
-    }
-    const erroredNode = maybeMissingNode.error;
-    if ('missingUid' in erroredNode) {
-        return;
-    }
-    return { ok: false, error: erroredNode };
 }

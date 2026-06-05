@@ -7,10 +7,10 @@ import {
     FileUploader,
     Logger,
     MaybeMissingPhotoNode,
-    MaybePhotoNode,
     NodeOrUid,
     NodeResult,
     NonProtonInvitationOrUid,
+    PhotoNode,
     PhotoTag,
     ProtonDriveClientContructorParameters,
     ProtonInvitation,
@@ -290,7 +290,7 @@ export class ProtonDrivePhotosClient {
     /**
      * @returns The root folder to Photos section of the user.
      */
-    async getMyPhotosRootFolder(): Promise<MaybePhotoNode> {
+    async getMyPhotosRootFolder(): Promise<PhotoNode> {
         this.logger.info('Getting my photos root folder');
         return convertInternalPhotoNodePromise(this.nodes.access.getVolumeRootFolder());
     }
@@ -329,7 +329,7 @@ export class ProtonDrivePhotosClient {
      *
      * @deprecated Use `iterateTrashedNodeUids` instead.
      */
-    async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<MaybePhotoNode> {
+    async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<PhotoNode> {
         this.logger.info('Iterating trashed nodes');
         yield* convertInternalPhotoNodeIterator(this.nodes.access.iterateTrashedNodes(signal));
     }
@@ -350,7 +350,7 @@ export class ProtonDrivePhotosClient {
      *
      * See `ProtonDriveClient.getNode` for more information.
      */
-    async getNode(nodeUid: NodeOrUid): Promise<MaybePhotoNode> {
+    async getNode(nodeUid: NodeOrUid): Promise<PhotoNode> {
         this.logger.info(`Getting node ${getUid(nodeUid)}`);
         return convertInternalPhotoNodePromise(this.nodes.access.getNode(getUid(nodeUid)));
     }
@@ -360,7 +360,7 @@ export class ProtonDrivePhotosClient {
      *
      * See `ProtonDriveClient.renameNode` for more information.
      */
-    async renameNode(nodeUid: NodeOrUid, newName: string): Promise<MaybePhotoNode> {
+    async renameNode(nodeUid: NodeOrUid, newName: string): Promise<PhotoNode> {
         this.logger.info(`Renaming node ${getUid(nodeUid)}`);
         return convertInternalPhotoNodePromise(this.nodes.management.renameNode(getUid(nodeUid), newName));
     }
@@ -430,7 +430,7 @@ export class ProtonDrivePhotosClient {
      *
      * @deprecated Use `iterateSharedNodeUids` instead.
      */
-    async *iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<MaybePhotoNode> {
+    async *iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<PhotoNode> {
         this.logger.info('Iterating shared nodes by me');
         yield* convertInternalPhotoNodeIterator(this.sharing.access.iterateSharedNodes(signal));
     }
@@ -442,7 +442,7 @@ export class ProtonDrivePhotosClient {
      *
      * @deprecated Use `iterateSharedWithMeNodeUids` instead.
      */
-    async *iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<MaybePhotoNode> {
+    async *iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<PhotoNode> {
         this.logger.info('Iterating shared nodes with me');
 
         for await (const node of this.sharing.access.iterateSharedNodesWithMe(signal)) {
@@ -665,7 +665,7 @@ export class ProtonDrivePhotosClient {
      * @param name - The name for the new album.
      * @returns The created album node.
      */
-    async createAlbum(name: string): Promise<MaybePhotoNode> {
+    async createAlbum(name: string): Promise<PhotoNode> {
         this.logger.info('Creating album');
         return convertInternalPhotoNodePromise(this.photos.albums.createAlbum(name));
     }
@@ -685,7 +685,7 @@ export class ProtonDrivePhotosClient {
             name?: string;
             coverPhotoNodeUid?: NodeOrUid;
         },
-    ): Promise<MaybePhotoNode> {
+    ): Promise<PhotoNode> {
         this.logger.info(`Updating album ${getUid(nodeUid)}`);
         const coverPhotoNodeUid = updates.coverPhotoNodeUid ? getUid(updates.coverPhotoNodeUid) : undefined;
         return convertInternalPhotoNodePromise(
@@ -721,7 +721,7 @@ export class ProtonDrivePhotosClient {
      *
      * The output is not sorted and the order of the nodes is not guaranteed.
      */
-    async *iterateAlbums(signal?: AbortSignal): AsyncGenerator<MaybePhotoNode> {
+    async *iterateAlbums(signal?: AbortSignal): AsyncGenerator<PhotoNode> {
         this.logger.info('Iterating albums');
         // TODO: expose album type
         yield* convertInternalPhotoNodeIterator(this.photos.albums.iterateAlbums(signal));

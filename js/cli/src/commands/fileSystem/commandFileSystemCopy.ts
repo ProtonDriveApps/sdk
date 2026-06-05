@@ -1,11 +1,10 @@
-import { MaybeNode, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
+import { NodeEntity, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 
 import {
     type ActionArgs,
     type Command,
     findName,
     getName,
-    getNodeUid,
     Options,
     PathType,
     printIterable,
@@ -47,17 +46,17 @@ export class CommandFileSystemCopy implements Command {
 
     private async copyNode(
         sdk: ProtonDriveClient,
-        sourceNode: MaybeNode,
-        targetNode: MaybeNode,
+        sourceNode: NodeEntity,
+        targetNode: NodeEntity,
         json: boolean,
         name: string,
     ) {
-        await printIterable(sdk.copyNodes([{ uid: getNodeUid(sourceNode), name }], targetNode), json, (result) => {
+        await printIterable(sdk.copyNodes([{ uid: sourceNode.uid, name }], targetNode), json, (result) => {
             console.log(sanitizeTerminalText(result.ok ? `✅ ${name}` : `❌ ${name}: ${result.error.message}`));
         });
     }
 
-    private async copyNodes(sdk: ProtonDriveClient, sourceNodes: MaybeNode[], targetNode: MaybeNode, json: boolean) {
+    private async copyNodes(sdk: ProtonDriveClient, sourceNodes: NodeEntity[], targetNode: NodeEntity, json: boolean) {
         await printIterable(sdk.copyNodes(sourceNodes, targetNode), json, (result) => {
             const nodeName = findName(sourceNodes, result.uid);
             console.log(sanitizeTerminalText(result.ok ? `✅ ${nodeName}` : `❌ ${nodeName}: ${result.error.message}`));

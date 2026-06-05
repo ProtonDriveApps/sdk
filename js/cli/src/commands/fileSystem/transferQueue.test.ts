@@ -1,7 +1,7 @@
 import { Dirent } from 'node:fs';
 import path from 'node:path';
 
-import { MaybeNode, MemberRole, NodeType, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
+import { MemberRole, NodeEntity, NodeType, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 import { getMockLogger } from '@protontech/drive-sdk/tests/logger';
 
 jest.mock('../../cli', () => jest.requireActual('../../cli/node'));
@@ -48,48 +48,42 @@ function mockDirLstatResult(dev = 100): Awaited<ReturnType<typeof lstat>> {
 
 const mockAuthor = { ok: true as const, value: 'a@b.c' };
 
-function mockFolderMaybe(name: string, uid: string): MaybeNode {
+function mockFolderMaybe(name: string, uid: string): NodeEntity {
     return {
-        ok: true,
-        value: {
-            uid,
-            name,
-            type: NodeType.Folder,
-            keyAuthor: mockAuthor,
-            nameAuthor: mockAuthor,
-            directRole: MemberRole.Admin,
-            ownedBy: {},
-            isShared: false,
-            isSharedPublicly: false,
-            creationTime: new Date(),
-            modificationTime: new Date(),
-            treeEventScopeId: 'scope',
-        },
+        uid,
+        name: { ok: true, value: name },
+        type: NodeType.Folder,
+        keyAuthor: mockAuthor,
+        nameAuthor: mockAuthor,
+        directRole: MemberRole.Admin,
+        ownedBy: {},
+        isShared: false,
+        isSharedPublicly: false,
+        creationTime: new Date(),
+        modificationTime: new Date(),
+        treeEventScopeId: 'scope',
     };
 }
 
-function mockFileMaybe(name: string, uid: string): MaybeNode {
+function mockFileMaybe(name: string, uid: string): NodeEntity {
     return {
-        ok: true,
-        value: {
-            uid,
-            name,
-            type: NodeType.File,
-            keyAuthor: mockAuthor,
-            nameAuthor: mockAuthor,
-            directRole: MemberRole.Admin,
-            ownedBy: {},
-            isShared: false,
-            isSharedPublicly: false,
-            creationTime: new Date(),
-            modificationTime: new Date(),
-            treeEventScopeId: 'scope',
-        },
+        uid,
+        name: { ok: true, value: name },
+        type: NodeType.File,
+        keyAuthor: mockAuthor,
+        nameAuthor: mockAuthor,
+        directRole: MemberRole.Admin,
+        ownedBy: {},
+        isShared: false,
+        isSharedPublicly: false,
+        creationTime: new Date(),
+        modificationTime: new Date(),
+        treeEventScopeId: 'scope',
     };
 }
 
 class SeededUploadQueue extends UploadQueue {
-    seed(items: QueueItem<{ parentNode: MaybeNode }>[]) {
+    seed(items: QueueItem<{ parentNode: NodeEntity }>[]) {
         this.queue.push(...items);
     }
 }
@@ -138,7 +132,7 @@ describe('TransferQueue (via UploadQueue.processQueue)', () => {
             inFlight--;
         });
         const q = new SeededUploadQueue(getMockLogger(), { onDirectory, startFile });
-        const items: QueueItem<{ parentNode: MaybeNode }>[] = [];
+        const items: QueueItem<{ parentNode: NodeEntity }>[] = [];
         for (let i = 0; i < 12; i++) {
             items.push({
                 kind: 'file',
@@ -347,23 +341,20 @@ describe('DownloadQueue', () => {
     });
 
     it('enqueueRemoteNode rejects unsupported node types', async () => {
-        const albumNode = {
-            ok: true,
-            value: {
-                uid: 'al',
-                name: 'album',
-                type: NodeType.Album,
-                keyAuthor: mockAuthor,
-                nameAuthor: mockAuthor,
-                directRole: MemberRole.Admin,
-                ownedBy: {},
-                isShared: false,
-                isSharedPublicly: false,
-                creationTime: new Date(),
-                modificationTime: new Date(),
-                treeEventScopeId: 'scope',
-            },
-        } as MaybeNode;
+        const albumNode: NodeEntity = {
+            uid: 'al',
+            name: { ok: true, value: 'album' },
+            type: NodeType.Album,
+            keyAuthor: mockAuthor,
+            nameAuthor: mockAuthor,
+            directRole: MemberRole.Admin,
+            ownedBy: {},
+            isShared: false,
+            isSharedPublicly: false,
+            creationTime: new Date(),
+            modificationTime: new Date(),
+            treeEventScopeId: 'scope',
+        };
         const sdk = { iterateFolderChildren: jest.fn() };
         const q = createQueue(sdk);
         await expect(

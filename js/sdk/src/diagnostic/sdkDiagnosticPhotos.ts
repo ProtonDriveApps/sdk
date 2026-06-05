@@ -1,4 +1,4 @@
-import { MaybeNode } from '../interface';
+import { NodeEntity } from '../interface';
 import { ProtonDrivePhotosClient } from '../protonDrivePhotosClient';
 import {
     DiagnosticOptions,
@@ -7,7 +7,7 @@ import {
     ExpectedTreeNode,
     TreeNode,
 } from './interface';
-import { getActiveRevision, getNodeName, getNodeType, getTreeNodeChildByNodeName } from './nodeUtils';
+import { getTreeNodeChildByNodeName } from './nodeUtils';
 import { SDKDiagnosticBase } from './sdkDiagnosticBase';
 import { zipGenerators } from './zipGenerators';
 
@@ -45,18 +45,18 @@ export class SDKDiagnosticPhotos extends SDKDiagnosticBase {
             };
         }
 
-        const photos: MaybeNode[] = [];
+        const photos: NodeEntity[] = [];
         try {
             for await (const maybeMissingNode of this.protonDrivePhotosClient.iterateNodes(nodeUids)) {
-                if (!maybeMissingNode.ok && 'missingUid' in maybeMissingNode.error) {
+                if ('missingUid' in maybeMissingNode) {
                     continue;
                 }
-                const maybeNode = maybeMissingNode as MaybeNode;
+                const maybeNode = maybeMissingNode as NodeEntity;
 
                 photos.push(maybeNode);
                 this.nodesQueue.push({
                     node: maybeNode,
-                    expected: getTreeNodeChildByNodeName(expectedStructure, getNodeName(maybeNode)),
+                    expected: getTreeNodeChildByNodeName(expectedStructure, maybeNode.name),
                 });
             }
         } catch (error: unknown) {
@@ -78,9 +78,9 @@ export class SDKDiagnosticPhotos extends SDKDiagnosticBase {
         const myPhotosRootFolder = await this.protonDrivePhotosClient.getMyPhotosRootFolder();
 
         const treeNode: TreeNode = {
-            uid: myPhotosRootFolder.ok ? myPhotosRootFolder.value.uid : myPhotosRootFolder.error.uid,
-            type: getNodeType(myPhotosRootFolder),
-            name: getNodeName(myPhotosRootFolder),
+            uid: myPhotosRootFolder.uid,
+            type: myPhotosRootFolder.type,
+            name: myPhotosRootFolder.name.ok ? myPhotosRootFolder.name.value : 'N/A',
         };
         const children = [];
 
@@ -88,22 +88,22 @@ export class SDKDiagnosticPhotos extends SDKDiagnosticBase {
         const nodeUids = results.map((result) => result.nodeUid);
 
         for await (const maybeMissingNode of this.protonDrivePhotosClient.iterateNodes(nodeUids)) {
-            if (!maybeMissingNode.ok && 'missingUid' in maybeMissingNode.error) {
+            if ('missingUid' in maybeMissingNode) {
                 continue;
             }
-            const node = maybeMissingNode as MaybeNode;
+            const node = maybeMissingNode;
 
-            const activeRevision = getActiveRevision(node);
+            const activeRevision = node.activeRevision?.ok ? node.activeRevision.value : undefined;
             const childNode: TreeNode = {
-                uid: node.ok ? node.value.uid : node.error.uid,
-                name: getNodeName(node),
-                type: getNodeType(node),
+                uid: node.uid,
+                name: node.name.ok ? node.name.value : 'N/A',
+                type: node.type,
                 claimedSha1: activeRevision?.claimedDigests?.sha1,
                 claimedSizeInBytes: activeRevision?.claimedSize,
             };
 
-            if (!node.ok) {
-                childNode.error = node.error || 'degraded node';
+            if (node.errors?.length) {
+                childNode.error = node.errors;
             }
 
             children.push(childNode);

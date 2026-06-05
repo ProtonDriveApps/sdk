@@ -1,4 +1,4 @@
-import { MaybeNode, ProtonDriveClient } from '@protontech/drive-sdk';
+import { NodeEntity, ProtonDriveClient } from '@protontech/drive-sdk';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 
 import { type ActionArgs, type Command, Options, printObject } from '../../cli';
@@ -35,7 +35,7 @@ export class CommandSharingRemove implements Command {
         printObject(sharingInfo, json);
     }
 
-    private async getAllMembers(sdk: ProtonDriveClient | ProtonDrivePhotosClient, node: MaybeNode): Promise<string[]> {
+    private async getAllMembers(sdk: ProtonDriveClient | ProtonDrivePhotosClient, node: NodeEntity): Promise<string[]> {
         const sharingInfo = await sdk.getSharingInfo(node);
 
         return [

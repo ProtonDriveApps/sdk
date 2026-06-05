@@ -32,10 +32,8 @@ export type {
     ProtonDriveHTTPClientJsonRequest,
 } from './httpClient';
 export type {
-    DegradedNode,
     InvalidNameError,
     MaybeMissingNode,
-    MaybeNode,
     Membership,
     MissingNode,
     NodeEntity,
@@ -46,14 +44,7 @@ export type {
     RevisionOrUid,
 } from './nodes';
 export { MemberRole, NodeType, RevisionState } from './nodes';
-export type {
-    AlbumAttributes,
-    DegradedPhotoNode,
-    MaybeMissingPhotoNode,
-    MaybePhotoNode,
-    PhotoAttributes,
-    PhotoNode,
-} from './photos';
+export type { AlbumAttributes, MaybeMissingPhotoNode, PhotoAttributes, PhotoNode } from './photos';
 export { PhotoTag } from './photos';
 export type { Result } from './result';
 export { resultError, resultOk } from './result';

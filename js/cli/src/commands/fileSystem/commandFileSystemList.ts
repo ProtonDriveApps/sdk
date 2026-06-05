@@ -1,4 +1,4 @@
-import { Device, MaybeNode, NodeType, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
+import { Device, NodeEntity, NodeType, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 
 import {
@@ -10,7 +10,6 @@ import {
     formatSize,
     getClaimedSize,
     getName,
-    getNode,
     Options,
     Paths,
     PathType,
@@ -130,17 +129,15 @@ export class CommandFileSystemList implements Command {
         await printIterable(sdk.iterateTrashedNodes(), options.json, (node) => this.printNodeHuman(node));
     }
 
-    private printNodeHuman(maybeNode: MaybeNode): void {
-        const node = getNode(maybeNode);
-
+    private printNodeHuman(node: NodeEntity): void {
         const type = node.type === 'file' ? '📄' : '🗂️';
         const sharedFlag = node.isShared ? '🔗' : '  '; // Two spaces to align with the shared icon.
         const permissionFlag = formatMemberRole(node.directRole);
         const author = formatAuthor(node.keyAuthor);
         const created = formatDate(node.creationTime, true);
-        const claimedSize = getClaimedSize(maybeNode);
+        const claimedSize = getClaimedSize(node);
         const size = claimedSize ? formatSize(claimedSize) : '-';
-        const name = getName(maybeNode);
+        const name = getName(node);
         console.log(sanitizeTerminalText(`${type}${sharedFlag}${permissionFlag} ${author} ${created} ${size} ${name}`));
     }
 
