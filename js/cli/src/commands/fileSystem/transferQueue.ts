@@ -2,9 +2,9 @@ import type { Stats } from 'node:fs';
 import { lstat, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
-import { Logger, MaybeNode, NodeType, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
+import { Logger, NodeEntity, NodeType, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 
-import { getName, getNode } from '../../cli';
+import { getName } from '../../cli';
 import { sanitizePathSegmentForLocalFilesystem } from './downloadPathValidation';
 import { resolveLocalPaths } from './localPath';
 
@@ -61,8 +61,8 @@ class TransferQueue<RemoteDataType> {
     }
 }
 
-export class UploadQueue extends TransferQueue<{ parentNode: MaybeNode }> {
-    async enqueueLocalPaths(localPaths: string[], parentNode: MaybeNode): Promise<void> {
+export class UploadQueue extends TransferQueue<{ parentNode: NodeEntity }> {
+    async enqueueLocalPaths(localPaths: string[], parentNode: NodeEntity): Promise<void> {
         for (const localPath of localPaths) {
             const expanded = await resolveLocalPaths(localPath);
             for (const absolutePath of expanded) {
@@ -71,7 +71,7 @@ export class UploadQueue extends TransferQueue<{ parentNode: MaybeNode }> {
         }
     }
 
-    async enqueueLocalDirectoryChildren(absolutePath: string, parentNode: MaybeNode): Promise<void> {
+    async enqueueLocalDirectoryChildren(absolutePath: string, parentNode: NodeEntity): Promise<void> {
         const parentStats = await lstat(absolutePath);
         assertLocalPathIsUploadable(absolutePath, parentStats);
         if (!parentStats.isDirectory()) {
@@ -87,7 +87,7 @@ export class UploadQueue extends TransferQueue<{ parentNode: MaybeNode }> {
         }
     }
 
-    private async enqueueLocalPath(absolutePath: string, parentNode: MaybeNode, parentDevice?: number): Promise<void> {
+    private async enqueueLocalPath(absolutePath: string, parentNode: NodeEntity, parentDevice?: number): Promise<void> {
         const stats = await lstat(absolutePath);
         assertLocalPathIsUploadable(absolutePath, stats);
         if (parentDevice !== undefined && stats.dev !== parentDevice) {
@@ -110,11 +110,11 @@ function assertLocalPathIsUploadable(absolutePath: string, stats: Stats): void {
     }
 }
 
-export class DownloadQueue extends TransferQueue<{ remoteNode: MaybeNode }> {
+export class DownloadQueue extends TransferQueue<{ remoteNode: NodeEntity }> {
     constructor(
         logger: Logger,
         private readonly sdk: ProtonDriveClient,
-        handlers: TransferQueueHandlers<{ remoteNode: MaybeNode }>,
+        handlers: TransferQueueHandlers<{ remoteNode: NodeEntity }>,
     ) {
         super(logger, handlers);
     }
@@ -122,7 +122,7 @@ export class DownloadQueue extends TransferQueue<{ remoteNode: MaybeNode }> {
     async enqueueRemotePaths(
         remotePathStrings: string[],
         localDir: string,
-        resolveRemoteNode: (pathString: string) => Promise<MaybeNode>,
+        resolveRemoteNode: (pathString: string) => Promise<NodeEntity>,
     ): Promise<void> {
         const absoluteLocalDir = path.resolve(localDir);
         for (const pathString of remotePathStrings) {
@@ -133,7 +133,7 @@ export class DownloadQueue extends TransferQueue<{ remoteNode: MaybeNode }> {
         }
     }
 
-    async enqueueRemoteFolderChildren(folderRemoteNode: MaybeNode, localParentPath: string): Promise<void> {
+    async enqueueRemoteFolderChildren(folderRemoteNode: NodeEntity, localParentPath: string): Promise<void> {
         for await (const child of this.sdk.iterateFolderChildren(folderRemoteNode)) {
             const baseName = sanitizePathSegmentForLocalFilesystem(getName(child));
             const childPath = path.join(localParentPath, baseName);
@@ -141,16 +141,15 @@ export class DownloadQueue extends TransferQueue<{ remoteNode: MaybeNode }> {
         }
     }
 
-    private async enqueueRemoteNode(node: MaybeNode, localPath: string): Promise<void> {
+    private async enqueueRemoteNode(node: NodeEntity, localPath: string): Promise<void> {
         const absolutePath = path.resolve(localPath);
         const baseName = path.basename(absolutePath);
-        const type = getNode(node).type;
-        if (type === NodeType.Folder) {
+        if (node.type === NodeType.Folder) {
             this.queue.push({ kind: 'directory', remoteNode: node, localPath: absolutePath, baseName });
-        } else if (type === NodeType.File) {
+        } else if (node.type === NodeType.File) {
             this.queue.push({ kind: 'file', remoteNode: node, localPath: absolutePath, baseName });
         } else {
-            throw new ValidationError(`Unsupported node type for download: ${type}`);
+            throw new ValidationError(`Unsupported node type for download: ${node.type}`);
         }
     }
 }

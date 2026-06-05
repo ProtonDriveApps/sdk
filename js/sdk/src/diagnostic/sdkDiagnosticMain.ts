@@ -1,4 +1,4 @@
-import { MaybeNode, NodeType } from '../interface';
+import { NodeEntity, NodeType } from '../interface';
 import { ProtonDriveClient } from '../protonDriveClient';
 import {
     DiagnosticOptions,
@@ -7,7 +7,7 @@ import {
     ExpectedTreeNode,
     TreeNode,
 } from './interface';
-import { getActiveRevision, getNodeName, getNodeType, getTreeNodeChildByNodeName } from './nodeUtils';
+import { getTreeNodeChildByNodeName } from './nodeUtils';
 import { SDKDiagnosticBase } from './sdkDiagnosticBase';
 import { zipGenerators } from './zipGenerators';
 
@@ -26,7 +26,7 @@ export class SDKDiagnosticMain extends SDKDiagnosticBase {
     }
 
     async *verifyMyFiles(expectedStructure?: ExpectedTreeNode): AsyncGenerator<DiagnosticResult> {
-        let myFilesRootFolder: MaybeNode;
+        let myFilesRootFolder: NodeEntity;
 
         try {
             myFilesRootFolder = await this.protonDriveClient.getMyFilesRootFolder();
@@ -42,7 +42,7 @@ export class SDKDiagnosticMain extends SDKDiagnosticBase {
         yield* this.verifyNodeTree(myFilesRootFolder, expectedStructure);
     }
 
-    async *verifyNodeTree(node: MaybeNode, expectedStructure?: ExpectedTreeNode): AsyncGenerator<DiagnosticResult> {
+    async *verifyNodeTree(node: NodeEntity, expectedStructure?: ExpectedTreeNode): AsyncGenerator<DiagnosticResult> {
         this.startProgress();
         this.nodesQueue.push({ node, expected: expectedStructure });
         this.loadedNodes++;
@@ -51,10 +51,10 @@ export class SDKDiagnosticMain extends SDKDiagnosticBase {
     }
 
     private async *loadNodeTree(
-        parentNode: MaybeNode,
+        parentNode: NodeEntity,
         expectedStructure?: ExpectedTreeNode,
     ): AsyncGenerator<DiagnosticResult> {
-        const isFolder = getNodeType(parentNode) === NodeType.Folder;
+        const isFolder = parentNode.type === NodeType.Folder;
         if (isFolder) {
             yield* this.loadNodeTreeRecursively(parentNode, expectedStructure);
         }
@@ -62,56 +62,51 @@ export class SDKDiagnosticMain extends SDKDiagnosticBase {
     }
 
     private async *loadNodeTreeRecursively(
-        parentNode: MaybeNode,
+        parentNode: NodeEntity,
         expectedStructure?: ExpectedTreeNode,
     ): AsyncGenerator<DiagnosticResult> {
-        const parentNodeUid = parentNode.ok ? parentNode.value.uid : parentNode.error.uid;
-        const children: MaybeNode[] = [];
+        const children: NodeEntity[] = [];
 
         try {
             for await (const child of this.protonDriveClient.iterateFolderChildren(parentNode)) {
                 children.push(child);
                 this.nodesQueue.push({
                     node: child,
-                    expected: getTreeNodeChildByNodeName(expectedStructure, getNodeName(child)),
+                    expected: getTreeNodeChildByNodeName(expectedStructure, child.name),
                 });
                 this.loadedNodes++;
             }
         } catch (error: unknown) {
             yield {
                 type: 'sdk_error',
-                call: `iterateFolderChildren(${parentNodeUid})`,
+                call: `iterateFolderChildren(${parentNode.uid})`,
                 error,
             };
         }
 
         if (expectedStructure) {
-            yield* this.verifyExpectedNodeChildren(parentNodeUid, children, expectedStructure);
+            yield * this.verifyExpectedNodeChildren(parentNode.uid, children, expectedStructure);
         }
 
         for (const child of children) {
-            if (getNodeType(child) === NodeType.Folder) {
-                yield* this.loadNodeTreeRecursively(
-                    child,
-                    getTreeNodeChildByNodeName(expectedStructure, getNodeName(child)),
-                );
+            if (child.type === NodeType.Folder) {
+                yield* this.loadNodeTreeRecursively(child, getTreeNodeChildByNodeName(expectedStructure, child.name));
             }
         }
     }
 
-    async getStructure(node: MaybeNode): Promise<TreeNode> {
-        const nodeType = getNodeType(node);
+    async getStructure(node: NodeEntity): Promise<TreeNode> {
         const treeNode: TreeNode = {
-            uid: node.ok ? node.value.uid : node.error.uid,
-            type: nodeType,
-            name: getNodeName(node),
+            uid: node.uid,
+            type: node.type,
+            name: node.name.ok ? node.name.value : 'N/A',
         };
 
-        if (!node.ok) {
-            treeNode.error = node.error || 'degraded node';
+        if (node.errors?.length) {
+            treeNode.error = node.errors;
         }
 
-        if (nodeType === NodeType.Folder) {
+        if (node.type === NodeType.Folder) {
             const children = [];
 
             for await (const child of this.protonDriveClient.iterateFolderChildren(node)) {
@@ -123,8 +118,8 @@ export class SDKDiagnosticMain extends SDKDiagnosticBase {
                 const childStructure = await this.getStructure(child);
                 treeNode.children.push(childStructure);
             }
-        } else if (nodeType === NodeType.File) {
-            const activeRevision = getActiveRevision(node);
+        } else if (node.type === NodeType.File) {
+            const activeRevision = node.activeRevision?.ok ? node.activeRevision.value : undefined;
             treeNode.claimedSha1 = activeRevision?.claimedDigests?.sha1;
             treeNode.claimedSizeInBytes = activeRevision?.claimedSize;
         }

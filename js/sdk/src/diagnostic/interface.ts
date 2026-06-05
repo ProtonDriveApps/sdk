@@ -1,4 +1,4 @@
-import { AnonymousUser, Author, MaybeNode, MetricEvent, NodeType } from '../interface';
+import { AnonymousUser, Author, MetricEvent, NodeEntity, NodeType } from '../interface';
 import { LogRecord } from '../telemetry';
 
 export interface Diagnostic {
@@ -7,7 +7,7 @@ export interface Diagnostic {
         onProgress?: DiagnosticProgressCallback,
     ): AsyncGenerator<DiagnosticResult>;
     verifyNodeTree(
-        node: MaybeNode,
+        node: NodeEntity,
         options?: DiagnosticOptions,
         onProgress?: DiagnosticProgressCallback,
     ): AsyncGenerator<DiagnosticResult>;
@@ -15,7 +15,7 @@ export interface Diagnostic {
         options?: DiagnosticOptions,
         onProgress?: DiagnosticProgressCallback,
     ): AsyncGenerator<DiagnosticResult>;
-    getNodeTreeStructure(node: MaybeNode): Promise<TreeNode>;
+    getNodeTreeStructure(node: NodeEntity): Promise<TreeNode>;
     getPhotosTimelineStructure(): Promise<TreeNode>;
 }
 
@@ -230,5 +230,5 @@ export type NodeDetails = {
             error: unknown;
         }[];
     };
-    sensitiveNodeDetails: MaybeNode;
+    sensitiveNodeDetails: NodeEntity;
 };

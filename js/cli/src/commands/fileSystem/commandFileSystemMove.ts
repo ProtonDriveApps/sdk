@@ -1,4 +1,4 @@
-import { MaybeNode, ProtonDriveClient } from '@protontech/drive-sdk';
+import { NodeEntity, ProtonDriveClient } from '@protontech/drive-sdk';
 
 import { type ActionArgs, type Command, findName, PathType, printIterable, sanitizeTerminalText } from '../../cli';
 
@@ -19,7 +19,7 @@ export class CommandFileSystemMove implements Command {
         await this.moveNodes(sdk, sourceNodes, targetNode, json);
     }
 
-    private async moveNodes(sdk: ProtonDriveClient, sourceNodes: MaybeNode[], targetNode: MaybeNode, json: boolean) {
+    private async moveNodes(sdk: ProtonDriveClient, sourceNodes: NodeEntity[], targetNode: NodeEntity, json: boolean) {
         await printIterable(sdk.moveNodes(sourceNodes, targetNode), json, (result) => {
             const nodeName = findName(sourceNodes, result.uid);
             console.log(sanitizeTerminalText(result.ok ? `✅ ${nodeName}` : `❌ ${nodeName}: ${result.error.message}`));

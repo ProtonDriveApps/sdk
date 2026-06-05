@@ -1,5 +1,5 @@
 import {
-    MaybeNode,
+    NodeEntity,
     NodeWithSameNameExistsValidationError,
     type ProtonDriveClient,
     ValidationError,
@@ -132,8 +132,8 @@ export class CommandFileSystemUpload implements Command {
 
     private async createFolder(
         ctx: UploadContext,
-        item: QueueItemDirectory<{ parentNode: MaybeNode }>,
-    ): Promise<{ node: MaybeNode } | undefined> {
+        item: QueueItemDirectory<{ parentNode: NodeEntity }>,
+    ): Promise<{ node: NodeEntity } | undefined> {
         let name = item.baseName;
 
         while (true) {
@@ -170,7 +170,7 @@ export class CommandFileSystemUpload implements Command {
         }
     }
 
-    private async uploadFile(ctx: UploadContext, item: QueueItemFile<{ parentNode: MaybeNode }>): Promise<void> {
+    private async uploadFile(ctx: UploadContext, item: QueueItemFile<{ parentNode: NodeEntity }>): Promise<void> {
         const expectedSha1 = await getSha1(item.localPath);
         const file = Bun.file(item.localPath);
         const metadata = {
@@ -238,7 +238,7 @@ export class CommandFileSystemUpload implements Command {
         }
     }
 
-    private async trashConflictingNode(ctx: UploadContext, node: MaybeNode): Promise<void> {
+    private async trashConflictingNode(ctx: UploadContext, node: NodeEntity): Promise<void> {
         for await (const result of ctx.sdk.trashNodes([node])) {
             if (!result.ok) {
                 throw result.error;

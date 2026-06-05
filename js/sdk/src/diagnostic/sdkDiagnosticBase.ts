@@ -1,20 +1,8 @@
-import { Author, FileDownloader, MaybeNode, NodeOrUid, NodeType, ThumbnailResult, ThumbnailType } from '../interface';
+import { Author, FileDownloader, NodeEntity, NodeOrUid, NodeType, ThumbnailResult, ThumbnailType } from '../interface';
 import { isProtonDocument, isProtonSheet } from '../internal/nodes/mediaTypes';
 import { IntegrityVerificationStream } from './integrityVerificationStream';
-import {
-    DiagnosticOptions,
-    DiagnosticProgressCallback,
-    DiagnosticResult,
-    ExpectedTreeNode,
-} from './interface';
-import {
-    getActiveRevision,
-    getExpectedTreeNodeDetails,
-    getMediaType,
-    getNodeDetails,
-    getNodeName,
-    getNodeType,
-} from './nodeUtils';
+import { DiagnosticOptions, DiagnosticProgressCallback, DiagnosticResult, ExpectedTreeNode } from './interface';
+import { getExpectedTreeNodeDetails, getNodeDetails } from './nodeUtils';
 
 const PROGRESS_REPORT_INTERVAL = 500;
 
@@ -33,7 +21,7 @@ export class SDKDiagnosticBase {
     private onProgress?: DiagnosticProgressCallback;
     private progressReportInterval: NodeJS.Timeout | undefined;
 
-    protected nodesQueue: { node: MaybeNode; expected?: ExpectedTreeNode }[] = [];
+    protected nodesQueue: { node: NodeEntity; expected?: ExpectedTreeNode }[] = [];
     protected allNodesLoaded: boolean = false;
     protected loadedNodes: number = 0;
     protected checkedNodes: number = 0;
@@ -78,7 +66,7 @@ export class SDKDiagnosticBase {
 
     protected async *verifyExpectedNodeChildren(
         parentNodeUid: string,
-        children: MaybeNode[],
+        children: NodeEntity[],
         expectedStructure?: ExpectedTreeNode,
     ): AsyncGenerator<DiagnosticResult> {
         if (!expectedStructure) {
@@ -86,7 +74,7 @@ export class SDKDiagnosticBase {
         }
 
         const expectedNodes = expectedStructure.children ?? [];
-        const actualNodeNames = children.map((child) => getNodeName(child));
+        const actualNodeNames = children.map((child) => (child.name.ok ? child.name.value : 'N/A'));
 
         for (const expectedNode of expectedNodes) {
             if (!actualNodeNames.includes(expectedNode.name)) {
@@ -99,7 +87,7 @@ export class SDKDiagnosticBase {
         }
 
         for (const child of children) {
-            const childName = getNodeName(child);
+            const childName = child.name.ok ? child.name.value : 'N/A';
             const isExpected = expectedNodes.some((expectedNode) => expectedNode.name === childName);
 
             if (!isExpected) {
@@ -124,23 +112,21 @@ export class SDKDiagnosticBase {
         }
     }
 
-    private async *verifyNode(node: MaybeNode, expectedStructure?: ExpectedTreeNode): AsyncGenerator<DiagnosticResult> {
-        if (!node.ok) {
+    private async *verifyNode(
+        node: NodeEntity,
+        expectedStructure?: ExpectedTreeNode,
+    ): AsyncGenerator<DiagnosticResult> {
+        if (node.errors?.length) {
             yield {
                 type: 'degraded_node',
                 ...getNodeDetails(node),
             };
         }
 
-        yield* this.verifyAuthor(node.ok ? node.value.keyAuthor : node.error.keyAuthor, 'key', node, expectedStructure);
-        yield* this.verifyAuthor(
-            node.ok ? node.value.nameAuthor : node.error.nameAuthor,
-            'name',
-            node,
-            expectedStructure,
-        );
+        yield* this.verifyAuthor(node.keyAuthor, 'key', node, expectedStructure);
+        yield* this.verifyAuthor(node.nameAuthor, 'name', node, expectedStructure);
 
-        const activeRevision = getActiveRevision(node);
+        const activeRevision = node.activeRevision?.ok ? node.activeRevision.value : undefined;
         if (activeRevision) {
             yield* this.verifyAuthor(activeRevision.contentAuthor, 'content', node, expectedStructure);
         }
@@ -157,8 +143,7 @@ export class SDKDiagnosticBase {
         }
 
         if (expectedStructure?.expectedMediaType) {
-            const mediaType = getMediaType(node);
-            if (mediaType !== expectedStructure.expectedMediaType) {
+            if (node.mediaType !== expectedStructure.expectedMediaType) {
                 yield {
                     type: 'expected_structure_integrity_error',
                     expectedNode: getExpectedTreeNodeDetails(expectedStructure),
@@ -171,7 +156,7 @@ export class SDKDiagnosticBase {
     private async *verifyAuthor(
         author: Author,
         authorType: 'key' | 'name' | 'content',
-        node: MaybeNode,
+        node: NodeEntity,
         expectedStructure?: ExpectedTreeNode,
     ): AsyncGenerator<DiagnosticResult> {
         if (!author.ok) {
@@ -206,10 +191,10 @@ export class SDKDiagnosticBase {
     }
 
     private async *verifyFileExtendedAttributes(
-        node: MaybeNode,
+        node: NodeEntity,
         expectedStructure?: ExpectedTreeNode,
     ): AsyncGenerator<DiagnosticResult> {
-        const activeRevision = getActiveRevision(node);
+        const activeRevision = node.activeRevision?.ok ? node.activeRevision.value : undefined;
 
         const isNodeWithContent = this.isNodeWithContent(node);
 
@@ -252,7 +237,7 @@ export class SDKDiagnosticBase {
         }
     }
 
-    private async *verifyContentPeak(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
+    private async *verifyContentPeak(node: NodeEntity): AsyncGenerator<DiagnosticResult> {
         if (!this.isNodeWithContent(node)) {
             return;
         }
@@ -263,7 +248,7 @@ export class SDKDiagnosticBase {
         } catch (error: unknown) {
             yield {
                 type: 'sdk_error',
-                call: `getFileDownloader(${node.ok ? node.value.uid : node.error.uid})`,
+                call: `getFileDownloader(${node.uid})`,
                 error,
             };
             return;
@@ -288,11 +273,11 @@ export class SDKDiagnosticBase {
         }
     }
 
-    private async *verifyContent(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
+    private async *verifyContent(node: NodeEntity): AsyncGenerator<DiagnosticResult> {
         if (!this.isNodeWithContent(node)) {
             return;
         }
-        const activeRevision = getActiveRevision(node);
+        const activeRevision = node.activeRevision?.ok ? node.activeRevision.value : undefined;
         if (!activeRevision) {
             yield {
                 type: 'content_file_missing_revision',
@@ -307,7 +292,7 @@ export class SDKDiagnosticBase {
         } catch (error: unknown) {
             yield {
                 type: 'sdk_error',
-                call: `getFileDownloader(${node.ok ? node.value.uid : node.error.uid})`,
+                call: `getFileDownloader(${node.uid})`,
                 error,
             };
             return;
@@ -344,20 +329,18 @@ export class SDKDiagnosticBase {
         }
     }
 
-    private async *verifyThumbnails(node: MaybeNode): AsyncGenerator<DiagnosticResult> {
+    private async *verifyThumbnails(node: NodeEntity): AsyncGenerator<DiagnosticResult> {
         if (!this.isNodeWithContent(node)) {
             return;
         }
 
-        const nodeUid = node.ok ? node.value.uid : node.error.uid;
-
         try {
-            const result = await Array.fromAsync(this.sdkClient.iterateThumbnails([nodeUid], ThumbnailType.Type1));
+            const result = await Array.fromAsync(this.sdkClient.iterateThumbnails([node.uid], ThumbnailType.Type1));
 
             if (result.length === 0) {
                 yield {
                     type: 'sdk_error',
-                    call: `iterateThumbnails(${nodeUid})`,
+                    call: `iterateThumbnails(${node.uid})`,
                     error: new Error('No thumbnails found'),
                 };
             }
@@ -372,17 +355,16 @@ export class SDKDiagnosticBase {
         } catch (error: unknown) {
             yield {
                 type: 'sdk_error',
-                call: `iterateThumbnails(${nodeUid})`,
+                call: `iterateThumbnails(${node.uid})`,
                 error,
             };
         }
     }
 
-    private isNodeWithContent(node: MaybeNode): boolean {
-        const nodeType = getNodeType(node);
-        const isFile = nodeType === NodeType.File || nodeType === NodeType.Photo;
+    private isNodeWithContent(node: NodeEntity): boolean {
+        const isFile = node.type === NodeType.File || node.type === NodeType.Photo;
 
-        const mediaType = getMediaType(node);
+        const mediaType = node.mediaType;
         const isDocs = isProtonDocument(mediaType) || isProtonSheet(mediaType);
 
         return isFile && !isDocs;

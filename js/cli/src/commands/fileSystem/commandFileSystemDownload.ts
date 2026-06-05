@@ -1,7 +1,14 @@
 import { mkdir, readdir, rm, stat, unlink } from 'node:fs/promises';
 import path from 'node:path';
 
-import { FileDownloader, IntegrityError, type Logger, MaybeNode, type ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
+import {
+    FileDownloader,
+    IntegrityError,
+    type Logger,
+    NodeEntity,
+    type ProtonDriveClient,
+    ValidationError,
+} from '@protontech/drive-sdk';
 
 import { type ActionArgs, type Command, getClaimedSize, Options, PathType } from '../../cli';
 import type { CliMetrics } from '../../telemetry';
@@ -137,7 +144,7 @@ export class CommandFileSystemDownload implements Command {
 
     private async createLocalFolder(
         ctx: DownloadContext,
-        item: QueueItemDirectory<{ remoteNode: MaybeNode }>,
+        item: QueueItemDirectory<{ remoteNode: NodeEntity }>,
     ): Promise<string | undefined> {
         const parentPath = path.dirname(item.localPath);
         let targetPath = item.localPath;
@@ -175,7 +182,7 @@ export class CommandFileSystemDownload implements Command {
         }
     }
 
-    private async downloadFile(ctx: DownloadContext, item: QueueItemFile<{ remoteNode: MaybeNode }>): Promise<void> {
+    private async downloadFile(ctx: DownloadContext, item: QueueItemFile<{ remoteNode: NodeEntity }>): Promise<void> {
         const parentPath = path.dirname(item.localPath);
         let targetPath = item.localPath;
         let name = item.baseName;
@@ -206,14 +213,15 @@ export class CommandFileSystemDownload implements Command {
                 }
             }
 
-            const claimedDigests = item.remoteNode.ok
-                ? item.remoteNode.value.activeRevision?.claimedDigests
+            const claimedDigests = item.remoteNode.activeRevision?.ok
+                ? item.remoteNode.activeRevision.value.claimedDigests
                 : undefined;
             const verification = {
                 expectedSha1: claimedDigests?.sha1,
                 sha1Verified: !!claimedDigests?.sha1Verified,
                 fileSize: getClaimedSize(item.remoteNode) ?? 0,
             };
+
             const downloader = await ctx.sdk.getFileDownloader(item.remoteNode);
             await this.downloadToPath(ctx, item, downloader, targetPath, verification);
             return;
@@ -222,7 +230,7 @@ export class CommandFileSystemDownload implements Command {
 
     private async downloadToPath(
         ctx: DownloadContext,
-        item: QueueItemFile<{ remoteNode: MaybeNode }>,
+        item: QueueItemFile<{ remoteNode: NodeEntity }>,
         downloader: FileDownloader,
         localPath: string,
         verification: { expectedSha1?: string; sha1Verified: boolean; fileSize: number },
