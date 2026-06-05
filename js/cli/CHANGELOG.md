@@ -1,5 +1,13 @@
 # Changelog
 
+## cli/v0.0.2 (2026-06-05)
+
+* Support escaping slash in node names
+* Support command history in interactive shell
+* Fix core events subscriptions
+
 ## cli/v0.0.1 (2026-06-02)
 
-* No changes
+* Support escaping slash in node names
+* Support command history in interactive shell
+* Fix core events subscriptions
