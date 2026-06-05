@@ -2,15 +2,6 @@ import { Author } from './author';
 import { Result } from './result';
 
 /**
- * Node representing a file or folder in the system.
- *
- * This covers both happy path and degraded path. It is used in the SDK to
- * represent the node in a way that is easy to work with. Whenever any field
- * cannot be decrypted, it is returned as `DegradedNode` type.
- */
-export type MaybeNode = Result<NodeEntity, DegradedNode>;
-
-/**
  * Node representing a file or folder in the system, or missing node.
  *
  * In most cases, SDK returns `MaybeNode`, but in some specific cases, when
@@ -19,7 +10,7 @@ export type MaybeNode = Result<NodeEntity, DegradedNode>;
  * the node does not exist, or when the node is not available for the user
  * (e.g. unshared with the user).
  */
-export type MaybeMissingNode = Result<NodeEntity, DegradedNode | MissingNode>;
+export type MaybeMissingNode = NodeEntity | MissingNode;
 
 export type MissingNode = {
     missingUid: string;
@@ -40,7 +31,7 @@ export type MissingNode = {
 export type NodeEntity = {
     uid: string;
     parentUid?: string;
-    name: string;
+    name: Result<string, Error | InvalidNameError>;
     /**
      * Author of the node key.
      *
@@ -108,7 +99,7 @@ export type NodeEntity = {
      * Total size of all revisions, encrypted size on the server.
      */
     totalStorageSize?: number;
-    activeRevision?: Revision;
+    activeRevision?: Result<Revision, Error>;
     folder?: {
         claimedModificationTime?: Date;
     };
@@ -121,27 +112,6 @@ export type NodeEntity = {
      * nodes in the tree. Nodes cannot change scopes.
      */
     treeEventScopeId: string;
-};
-
-/**
- * Degraded node representing a file or folder in the system.
- *
- * This is a degraded path representation of the node. It is used in the SDK to
- * represent the node in a way that is easy to work with. Whenever any field
- * cannot be decrypted, it is returned as `DegradedNode` type.
- *
- * SDK never returns this entity directly but wrapped in `MaybeNode`.
- *
- * The node can be still used around, but it is not guaranteed that all
- * properties are decrypted, or that all actions can be performed on it.
- *
- * For example, if the node has issue decrypting the name, the name will be
- * set as `Error` and potentially rename or move actions will not be
- * possible, but download and upload new revision will still work.
- */
-export type DegradedNode = Omit<NodeEntity, 'name' | 'activeRevision'> & {
-    name: Result<string, Error | InvalidNameError>;
-    activeRevision?: Result<Revision, Error>;
     /**
      * If the error is not related to any specific field, it is set here.
      *
@@ -232,7 +202,7 @@ export enum RevisionState {
     Superseded = 'superseded',
 }
 
-export type NodeOrUid = MaybeNode | NodeEntity | DegradedNode | string;
+export type NodeOrUid = NodeEntity | string;
 export type RevisionOrUid = Revision | string;
 
 export type NodeResult = { uid: string; ok: true } | { uid: string; ok: false; error: Error };

@@ -9,8 +9,8 @@ import {
     FileUploader,
     Logger,
     MaybeMissingNode,
-    MaybeNode,
     MemberRole,
+    NodeEntity,
     NodeOrUid,
     NodeResult,
     NodeType,
@@ -87,7 +87,7 @@ export class ProtonDrivePublicLinkClient {
         /**
          * Experimental feature to create a document (Proton Docs or Proton Sheets) in the public link.
          */
-        createDocument: (parentNodeUid: NodeOrUid, documentName: string, documentType: 1 | 2) => Promise<MaybeNode>;
+        createDocument: (parentNodeUid: NodeOrUid, documentName: string, documentType: 1 | 2) => Promise<NodeEntity>;
         /**
          * Experimental feature to get the session info for the public link.
          *
@@ -220,7 +220,7 @@ export class ProtonDrivePublicLinkClient {
                 parentNodeUid: NodeOrUid,
                 documentName: string,
                 documentType: 1 | 2,
-            ): Promise<MaybeNode> => {
+            ): Promise<NodeEntity> => {
                 this.logger.debug(`Creating document in ${getUid(parentNodeUid)}`);
                 return convertInternalNodePromise(
                     this.sharingPublic.nodes.management.createDocument(
@@ -250,7 +250,7 @@ export class ProtonDrivePublicLinkClient {
     /**
      * @returns The root folder to the public link.
      */
-    async getRootNode(): Promise<MaybeNode> {
+    async getRootNode(): Promise<NodeEntity> {
         this.logger.info(`Getting root node`);
         const { rootNodeUid } = await this.sharingPublic.shares.getRootIDs();
         return convertInternalNodePromise(this.sharingPublic.nodes.access.getNode(rootNodeUid));
@@ -281,7 +281,7 @@ export class ProtonDrivePublicLinkClient {
         parentUid: NodeOrUid,
         filterOptions?: { type?: NodeType },
         signal?: AbortSignal,
-    ): AsyncGenerator<MaybeNode> {
+    ): AsyncGenerator<NodeEntity> {
         this.logger.info(`Iterating children of ${getUid(parentUid)}`);
         yield* convertInternalNodeIterator(
             this.sharingPublic.nodes.access.iterateFolderChildren(getUid(parentUid), filterOptions, signal),
@@ -305,7 +305,7 @@ export class ProtonDrivePublicLinkClient {
      *
      * See `ProtonDriveClient.getNode` for more information.
      */
-    async getNode(nodeUid: NodeOrUid): Promise<MaybeNode> {
+    async getNode(nodeUid: NodeOrUid): Promise<NodeEntity> {
         this.logger.info(`Getting node ${getUid(nodeUid)}`);
         return convertInternalNodePromise(this.sharingPublic.nodes.access.getNode(getUid(nodeUid)));
     }
@@ -315,7 +315,7 @@ export class ProtonDrivePublicLinkClient {
      *
      * See `ProtonDriveClient.renameNode` for more information.
      */
-    async renameNode(nodeUid: NodeOrUid, newName: string): Promise<MaybeNode> {
+    async renameNode(nodeUid: NodeOrUid, newName: string): Promise<NodeEntity> {
         this.logger.info(`Renaming node ${getUid(nodeUid)}`);
         return convertInternalNodePromise(this.sharingPublic.nodes.management.renameNode(getUid(nodeUid), newName));
     }
@@ -337,7 +337,7 @@ export class ProtonDrivePublicLinkClient {
      *
      * See `ProtonDriveClient.createFolder` for more information.
      */
-    async createFolder(parentNodeUid: NodeOrUid, name: string, modificationTime?: Date): Promise<MaybeNode> {
+    async createFolder(parentNodeUid: NodeOrUid, name: string, modificationTime?: Date): Promise<NodeEntity> {
         this.logger.info(`Creating folder in ${getUid(parentNodeUid)}`);
         return convertInternalNodePromise(
             this.sharingPublic.nodes.management.createFolder(getUid(parentNodeUid), name, modificationTime),

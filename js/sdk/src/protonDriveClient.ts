@@ -12,8 +12,8 @@ import {
     Logger,
     MaybeBookmark,
     MaybeMissingNode,
-    MaybeNode,
     MemberRole,
+    NodeEntity,
     NodeOrUid,
     NodeResult,
     NodeResultWithNewUid,
@@ -391,7 +391,7 @@ export class ProtonDriveClient {
     /**
      * @returns The root folder to My files section of the user.
      */
-    async getMyFilesRootFolder(): Promise<MaybeNode> {
+    async getMyFilesRootFolder(): Promise<NodeEntity> {
         this.logger.info('Getting my files root folder');
         return convertInternalNodePromise(this.nodes.access.getVolumeRootFolder());
     }
@@ -442,7 +442,7 @@ export class ProtonDriveClient {
         parentNodeUid: NodeOrUid,
         filterOptions?: { type?: NodeType },
         signal?: AbortSignal,
-    ): AsyncGenerator<MaybeNode> {
+    ): AsyncGenerator<NodeEntity> {
         this.logger.info(`Iterating children of ${getUid(parentNodeUid)}`);
         const iterator = this.nodes.access.iterateFolderChildren(getUid(parentNodeUid), filterOptions, signal);
         yield* convertInternalNodeIterator(iterator);
@@ -460,7 +460,7 @@ export class ProtonDriveClient {
      * @returns An async generator of the trashed nodes.
      * @deprecated Use `iterateTrashedNodeUids` instead.
      */
-    async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+    async *iterateTrashedNodes(signal?: AbortSignal): AsyncGenerator<NodeEntity> {
         this.logger.info('Iterating trashed nodes');
         yield* convertInternalNodeIterator(this.nodes.access.iterateTrashedNodes(signal));
     }
@@ -485,7 +485,7 @@ export class ProtonDriveClient {
      * @param nodeUid - Node entity or its UID string.
      * @returns The node entity.
      */
-    async getNode(nodeUid: NodeOrUid): Promise<MaybeNode> {
+    async getNode(nodeUid: NodeOrUid): Promise<NodeEntity> {
         this.logger.info(`Getting node ${getUid(nodeUid)}`);
         return convertInternalNodePromise(this.nodes.access.getNode(getUid(nodeUid)));
     }
@@ -499,7 +499,7 @@ export class ProtonDriveClient {
      * @param nodeUid - Node entity or its UID string.
      * @returns The list of nodes from root to the given node.
      */
-    async getNodeHierarchy(nodeUid: NodeOrUid): Promise<MaybeNode[]> {
+    async getNodeHierarchy(nodeUid: NodeOrUid): Promise<NodeEntity[]> {
         this.logger.info(`Getting node hierarchy for ${getUid(nodeUid)}`);
         const hierarchy = await this.nodes.access.getNodeHierarchy(getUid(nodeUid));
         return hierarchy.map(convertInternalNode);
@@ -513,7 +513,7 @@ export class ProtonDriveClient {
      * @throws {@link ValidationError} If the name is empty, too long, or contains a slash.
      * @throws {@link ValidationError} If another node with the same name already exists.
      */
-    async renameNode(nodeUid: NodeOrUid, newName: string): Promise<MaybeNode> {
+    async renameNode(nodeUid: NodeOrUid, newName: string): Promise<NodeEntity> {
         this.logger.info(`Renaming node ${getUid(nodeUid)}`);
         return convertInternalNodePromise(this.nodes.management.renameNode(getUid(nodeUid), newName));
     }
@@ -658,7 +658,7 @@ export class ProtonDriveClient {
      * @throws {@link ValidationError} If the name is empty, too long, or contains a slash.
      * @throws {@link Error} If another node with the same name already exists.
      */
-    async createFolder(parentNodeUid: NodeOrUid, name: string, modificationTime?: Date): Promise<MaybeNode> {
+    async createFolder(parentNodeUid: NodeOrUid, name: string, modificationTime?: Date): Promise<NodeEntity> {
         this.logger.info(`Creating folder in ${getUid(parentNodeUid)}`);
         return convertInternalNodePromise(
             this.nodes.management.createFolder(getUid(parentNodeUid), name, modificationTime),
@@ -743,7 +743,7 @@ export class ProtonDriveClient {
      * @returns An async generator of the shared nodes.
      * @deprecated Use `iterateSharedNodeUids` instead.
      */
-    async *iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+    async *iterateSharedNodes(signal?: AbortSignal): AsyncGenerator<NodeEntity> {
         this.logger.info('Iterating shared nodes by me');
         yield* convertInternalNodeIterator(this.sharing.access.iterateSharedNodes(signal));
     }
@@ -761,7 +761,7 @@ export class ProtonDriveClient {
      * @returns An async generator of the shared nodes.
      * @deprecated Use `iterateSharedWithMeNodeUids` instead.
      */
-    async *iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<MaybeNode> {
+    async *iterateSharedNodesWithMe(signal?: AbortSignal): AsyncGenerator<NodeEntity> {
         this.logger.info('Iterating shared nodes with me');
 
         for await (const node of this.sharing.access.iterateSharedNodesWithMe(signal)) {

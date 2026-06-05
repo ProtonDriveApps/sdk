@@ -1,19 +1,11 @@
-import { DegradedNode, MissingNode, NodeEntity, NodeType } from './nodes';
-import { Result } from './result';
-
-/**
- * Node representing a photo or album for Photos SDK.
- *
- * See `MaybeNode` for more information.
- */
-export type MaybePhotoNode = Result<PhotoNode, DegradedPhotoNode>;
+import { MissingNode, NodeEntity, NodeType } from './nodes';
 
 /**
  * Node representing a photo or album, or missing node for Photos SDK.
  *
  * See `MaybeMissingNode` for more information.
  */
-export type MaybeMissingPhotoNode = Result<PhotoNode, DegradedPhotoNode | MissingNode>;
+export type MaybeMissingPhotoNode = PhotoNode | MissingNode;
 
 /**
  * Node representing a photo or album for Photos SDK.
@@ -22,16 +14,6 @@ export type MaybeMissingPhotoNode = Result<PhotoNode, DegradedPhotoNode | Missin
  */
 export type PhotoNode = NodeEntity & {
     type: NodeType.Photo | NodeType.Album;
-    photo?: PhotoAttributes;
-    album?: AlbumAttributes;
-};
-
-/**
- * Degraded node representing a photo or album for Photos SDK.
- *
- * See `DegradedNode` for more information.
- */
-export type DegradedPhotoNode = DegradedNode & {
     photo?: PhotoAttributes;
     album?: AlbumAttributes;
 };
