@@ -1,16 +1,13 @@
 ﻿using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Proton.Cryptography.Pgp;
 using Proton.Sdk.Cryptography;
 
 namespace Proton.Sdk.Serialization;
 
-internal abstract class PgpArmoredBlockJsonConverterBase<T> : JsonConverter<T>
+internal sealed class PgpArmoredBlockJsonConverter<T> : JsonConverter<T>
     where T : IPgpArmoredBlock<T>
 {
-    protected abstract PgpBlockType BlockType { get; }
-
     public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.String)
@@ -21,7 +18,7 @@ internal abstract class PgpArmoredBlockJsonConverterBase<T> : JsonConverter<T>
 
         if (reader.HasUnescapedValueSpan)
         {
-            return Decode(reader.ValueSpan);
+            return T.Create(reader.ValueSpan);
         }
 
         var unescapedValueBuffer = ArrayPool<byte>.Shared.Rent(reader.GetValueLength());
@@ -30,7 +27,7 @@ internal abstract class PgpArmoredBlockJsonConverterBase<T> : JsonConverter<T>
         {
             var unescapedValueLength = reader.CopyString(unescapedValueBuffer);
 
-            return Decode(unescapedValueBuffer.AsSpan()[..unescapedValueLength]);
+            return T.Create(unescapedValueBuffer.AsSpan()[..unescapedValueLength]);
         }
         finally
         {
@@ -40,11 +37,11 @@ internal abstract class PgpArmoredBlockJsonConverterBase<T> : JsonConverter<T>
 
     public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
     {
-        var buffer = ArrayPool<byte>.Shared.Rent(PgpArmorEncoder.GetMaxLengthAfterEncoding(value.Bytes.Length));
+        var buffer = ArrayPool<byte>.Shared.Rent(value.GetExportRequiredBufferLength());
 
         try
         {
-            var numberOfBytesWritten = PgpArmorEncoder.Encode(value, BlockType, buffer);
+            var numberOfBytesWritten = value.Export(buffer);
 
             writer.WriteStringValue(buffer.AsSpan()[..numberOfBytesWritten]);
         }
@@ -52,14 +49,5 @@ internal abstract class PgpArmoredBlockJsonConverterBase<T> : JsonConverter<T>
         {
             ArrayPool<byte>.Shared.Return(buffer);
         }
-    }
-
-    protected abstract T CreateValue(ReadOnlyMemory<byte> bytes);
-
-    private T Decode(ReadOnlySpan<byte> bytes)
-    {
-        var decodedBlock = PgpArmorDecoder.Decode(bytes);
-
-        return CreateValue(decodedBlock);
     }
 }

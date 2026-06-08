@@ -1,15 +1,23 @@
-﻿using CommunityToolkit.HighPerformance;
-using Proton.Cryptography.Pgp;
+﻿using Proton.Cryptography.Pgp;
 
 namespace Proton.Sdk.Cryptography;
 
-internal readonly struct PgpArmoredSecretKey(PgpSecretKey secretKey) : IPgpArmoredBlock<PgpArmoredSecretKey>
+internal readonly struct PgpArmoredSecretKey(PgpSecretKey unarmored) : IPgpArmoredBlock<PgpArmoredSecretKey>
 {
-    public ReadOnlyMemory<byte> Bytes { get; } = secretKey.ToBytes();
+    public PgpSecretKey Unarmored { get; } = unarmored;
 
     public static implicit operator PgpArmoredSecretKey(PgpSecretKey secretKey) => new(secretKey);
+    public static implicit operator PgpSecretKey(PgpArmoredSecretKey block) => block.Unarmored;
 
-    public static implicit operator Stream(PgpArmoredSecretKey block) => block.Bytes.AsStream();
-    public static implicit operator ReadOnlyMemory<byte>(PgpArmoredSecretKey block) => block.Bytes;
-    public static implicit operator ReadOnlySpan<byte>(PgpArmoredSecretKey block) => block.Bytes.Span;
+    static PgpArmoredSecretKey IPgpArmoredBlock<PgpArmoredSecretKey>.Create(ReadOnlySpan<byte> armoredBytes)
+    {
+        return new PgpArmoredSecretKey(PgpSecretKey.Import(armoredBytes, PgpEncoding.AsciiArmor));
+    }
+
+    int IPgpArmoredBlock<PgpArmoredSecretKey>.GetExportRequiredBufferLength() => 4096;
+
+    int IPgpArmoredBlock<PgpArmoredSecretKey>.Export(Span<byte> outputBuffer)
+    {
+        return Unarmored.Export(outputBuffer, PgpEncoding.AsciiArmor);
+    }
 }

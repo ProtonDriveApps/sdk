@@ -94,7 +94,7 @@ public sealed class ProtonAccountClient
                     continue;
                 }
 
-                var unlockedUserKey = PgpPrivateKey.ImportAndUnlock(userKey.PrivateKey.Bytes.Span, passphrase.Value.Span);
+                var unlockedUserKey = userKey.PrivateKey.Unarmored.Unlock(passphrase.Value.Span);
 
                 unlockedKeys.Add(unlockedUserKey);
             }

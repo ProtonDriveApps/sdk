@@ -1,16 +1,23 @@
-﻿using CommunityToolkit.HighPerformance;
+﻿using Proton.Cryptography.Pgp;
 
 namespace Proton.Sdk.Cryptography;
 
-internal readonly struct PgpArmoredPublicKey(ReadOnlyMemory<byte> bytes) : IPgpArmoredBlock<PgpArmoredPublicKey>
+internal readonly struct PgpArmoredPublicKey(PgpPublicKey unarmored) : IPgpArmoredBlock<PgpArmoredPublicKey>
 {
-    public ReadOnlyMemory<byte> Bytes { get; } = bytes;
+    public PgpPublicKey Unarmored { get; } = unarmored;
 
-    public static implicit operator PgpArmoredPublicKey(Memory<byte> bytes) => new(bytes);
-    public static implicit operator PgpArmoredPublicKey(ReadOnlyMemory<byte> bytes) => new(bytes);
-    public static implicit operator PgpArmoredPublicKey(ArraySegment<byte> bytes) => new(bytes);
+    public static implicit operator PgpArmoredPublicKey(PgpPublicKey publicKey) => new(publicKey);
+    public static implicit operator PgpPublicKey(PgpArmoredPublicKey block) => block.Unarmored;
 
-    public static implicit operator Stream(PgpArmoredPublicKey block) => block.Bytes.AsStream();
-    public static implicit operator ReadOnlyMemory<byte>(PgpArmoredPublicKey block) => block.Bytes;
-    public static implicit operator ReadOnlySpan<byte>(PgpArmoredPublicKey block) => block.Bytes.Span;
+    static PgpArmoredPublicKey IPgpArmoredBlock<PgpArmoredPublicKey>.Create(ReadOnlySpan<byte> armoredBytes)
+    {
+        return new PgpArmoredPublicKey(PgpPublicKey.Import(armoredBytes, PgpEncoding.AsciiArmor));
+    }
+
+    int IPgpArmoredBlock<PgpArmoredPublicKey>.GetExportRequiredBufferLength() => 4096;
+
+    int IPgpArmoredBlock<PgpArmoredPublicKey>.Export(Span<byte> outputBuffer)
+    {
+        return Unarmored.Export(outputBuffer, PgpEncoding.AsciiArmor);
+    }
 }

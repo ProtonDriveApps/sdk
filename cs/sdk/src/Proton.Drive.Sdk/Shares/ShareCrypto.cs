@@ -21,9 +21,9 @@ internal static class ShareCrypto
         var addressKeys = await client.Account.GetAddressPrivateKeysAsync(addressId, cancellationToken).ConfigureAwait(false);
 
         // FIXME use node if available instead of address key
-        var passphrase = new PgpPrivateKeyRing(addressKeys).Decrypt(passphraseMessage);
+        var passphrase = new PgpPrivateKeyRing(addressKeys).Decrypt(passphraseMessage.Unarmored.Span);
 
-        var key = PgpPrivateKey.ImportAndUnlock(lockedKey, passphrase);
+        var key = lockedKey.Unarmored.Unlock(passphrase);
 
         var share = new Share(shareId, rootFolderId, addressId, shareType);
 

@@ -1,13 +1,10 @@
-﻿using CommunityToolkit.HighPerformance;
+﻿namespace Proton.Sdk.Cryptography;
 
-namespace Proton.Sdk.Cryptography;
-
-internal interface IPgpArmoredBlock<in T>
+internal interface IPgpArmoredBlock<out T>
     where T : IPgpArmoredBlock<T>
 {
-    ReadOnlyMemory<byte> Bytes { get; }
+    static abstract T Create(ReadOnlySpan<byte> armoredBytes);
 
-    static virtual implicit operator Stream(T block) => block.Bytes.AsStream();
-    static virtual implicit operator ReadOnlyMemory<byte>(T block) => block.Bytes;
-    static virtual implicit operator ReadOnlySpan<byte>(T block) => block.Bytes.Span;
+    int GetExportRequiredBufferLength();
+    int Export(Span<byte> outputBuffer);
 }

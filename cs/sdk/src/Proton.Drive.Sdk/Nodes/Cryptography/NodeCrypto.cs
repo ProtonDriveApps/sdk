@@ -100,7 +100,7 @@ internal static class NodeCrypto
         {
             serializedExtendedAttributes = DecryptMessage(
                 encryptedExtendedAttributes.Value,
-                detachedSignature: null,
+                detachedSignatureOrNull: null,
                 nodeKey,
                 authorshipClaim.GetKeyRing(nodeKey),
                 out _,
@@ -179,7 +179,7 @@ internal static class NodeCrypto
     }
 
     private static Result<PgpPrivateKey, ProtonDriveError> UnlockNodeKey(
-        PgpArmoredSecretKey lockedKey,
+        PgpSecretKey lockedKey,
         Result<PhasedDecryptionOutput<ReadOnlyMemory<byte>>, ProtonDriveError> passphraseResult)
     {
         if (!passphraseResult.TryGetValueElseError(out var passphrase, out var error))
@@ -189,7 +189,7 @@ internal static class NodeCrypto
 
         try
         {
-            return PgpPrivateKey.ImportAndUnlock(lockedKey, passphrase.Data.Span);
+            return lockedKey.Unlock(passphrase.Data.Span);
         }
         catch (Exception e)
         {
@@ -206,7 +206,7 @@ internal static class NodeCrypto
         {
             var nameUtf8Bytes = DecryptMessage(
                 encryptedName,
-                detachedSignature: null,
+                detachedSignatureOrNull: null,
                 parentNodeKey,
                 authorshipClaim.GetKeyRing(parentNodeKey),
                 out var sessionKey,
@@ -235,7 +235,7 @@ internal static class NodeCrypto
         try
         {
             var verificationKeyRing = GetContentKeyAndHashKeyVerificationKeyRing(nodeKey, authorshipClaim);
-            var hashKey = DecryptMessage(encryptedHashKey, detachedSignature: null, nodeKey, verificationKeyRing, out _, out var author);
+            var hashKey = DecryptMessage(encryptedHashKey, detachedSignatureOrNull: null, nodeKey, verificationKeyRing, out _, out var author);
             return new DecryptionOutput<ReadOnlyMemory<byte>>(hashKey, author);
         }
         catch (Exception e)
@@ -258,7 +258,7 @@ internal static class NodeCrypto
     private static Result<DecryptionOutput<PgpSessionKey>, ProtonDriveError> DecryptContentKey(
         Result<PgpPrivateKey, ProtonDriveError> nodeKeyResult,
         ReadOnlyMemory<byte> contentKeyPacket,
-        PgpArmoredSignature? contentKeySignature,
+        PgpArmoredSignature? contentKeySignatureOrNull,
         AuthorshipClaim nodeAuthorshipClaim)
     {
         if (!nodeKeyResult.TryGetValueElseError(out var nodeKey, out var error))
@@ -281,8 +281,8 @@ internal static class NodeCrypto
         AuthorshipVerificationFailure? verificationFailure;
         try
         {
-            var verificationStatus = contentKeySignature is not null
-                ? verificationKeyRing.Verify(contentKey.Export(), contentKeySignature.Value).Status
+            var verificationStatus = contentKeySignatureOrNull is { } contentKeySignature
+                ? verificationKeyRing.Verify(contentKey.Export(), contentKeySignature.Unarmored.Span).Status
                 : PgpVerificationStatus.NotSigned;
 
             verificationFailure = verificationStatus is not PgpVerificationStatus.Ok
@@ -299,17 +299,17 @@ internal static class NodeCrypto
 
     private static ArraySegment<byte> DecryptMessage(
         PgpArmoredMessage encryptedMessage,
-        PgpArmoredSignature? detachedSignature,
+        PgpArmoredSignature? detachedSignatureOrNull,
         PgpPrivateKey decryptionKey,
         PgpKeyRing verificationKeyRing,
         out PgpSessionKey sessionKey,
         out AuthorshipVerificationFailure? authorshipVerificationFailure)
     {
-        sessionKey = decryptionKey.DecryptSessionKey(encryptedMessage);
+        sessionKey = decryptionKey.DecryptSessionKey(encryptedMessage.Unarmored.Span);
 
-        var plaintext = detachedSignature is not null
-            ? sessionKey.DecryptAndVerify(encryptedMessage.Bytes.Span, detachedSignature.Value.Bytes.Span, verificationKeyRing, out var verificationResult)
-            : sessionKey.DecryptAndVerify(encryptedMessage, verificationKeyRing, out verificationResult);
+        var plaintext = detachedSignatureOrNull is { } detachedSignature
+            ? sessionKey.DecryptAndVerify(encryptedMessage.Unarmored.Span, detachedSignature.Unarmored.Span, verificationKeyRing, out var verificationResult)
+            : sessionKey.DecryptAndVerify(encryptedMessage.Unarmored.Span, verificationKeyRing, out verificationResult);
 
         authorshipVerificationFailure = verificationResult.Status is not PgpVerificationStatus.Ok
             ? new AuthorshipVerificationFailure(verificationResult.Status)

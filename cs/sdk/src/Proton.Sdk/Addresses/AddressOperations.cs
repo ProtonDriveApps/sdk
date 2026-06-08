@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CommunityToolkit.HighPerformance;
+using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
 using Proton.Sdk.Api;
 using Proton.Sdk.Api.Addresses;
@@ -133,7 +134,7 @@ internal static class AddressOperations
 
                 var publicKeyQuery = publicKeysResponse.Address.Keys
                     .Where(x => x.Status.HasFlag(PublicKeyStatus.IsNotCompromised))
-                    .Select(x => PgpPublicKey.Import(x.PublicKey));
+                    .Select(x => x.PublicKey.Unarmored);
 
                 publicKeys.AddRange(publicKeyQuery);
 
@@ -178,7 +179,7 @@ internal static class AddressOperations
                 if (keyDto is { Token: not null, Signature: not null })
                 {
                     var passphrase = GetAddressKeyTokenPassphrase(keyDto.Token.Value, keyDto.Signature.Value, userKeys);
-                    unlockedKey = PgpPrivateKey.ImportAndUnlock(keyDto.PrivateKey, passphrase.Span);
+                    unlockedKey = keyDto.PrivateKey.Unarmored.Unlock(passphrase.Span);
                 }
                 else
                 {
@@ -192,7 +193,7 @@ internal static class AddressOperations
                         continue;
                     }
 
-                    unlockedKey = PgpPrivateKey.ImportAndUnlock(keyDto.PrivateKey, passphrase.Value.Span);
+                    unlockedKey = keyDto.PrivateKey.Unarmored.Unlock(passphrase.Value.Span);
                 }
 
                 unlockedKeys.Add(unlockedKey);
@@ -237,7 +238,7 @@ internal static class AddressOperations
         IReadOnlyList<PgpPrivateKey> userKeys)
     {
         var userKeyRing = new PgpPrivateKeyRing(userKeys);
-        using var decryptingStream = PgpDecryptingStream.Open(token, userKeyRing, signature, userKeyRing);
+        using var decryptingStream = PgpDecryptingStream.Open(token.Unarmored.AsStream(), userKeyRing, signature.Unarmored, userKeyRing);
 
         using var passphraseStream = new MemoryStream();
         decryptingStream.CopyTo(passphraseStream);

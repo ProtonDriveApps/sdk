@@ -1,16 +1,26 @@
-﻿using CommunityToolkit.HighPerformance;
+﻿using Proton.Cryptography.Pgp;
 
 namespace Proton.Sdk.Cryptography;
 
-internal readonly struct PgpArmoredMessage(ReadOnlyMemory<byte> bytes) : IPgpArmoredBlock<PgpArmoredMessage>
+internal readonly struct PgpArmoredMessage(ReadOnlyMemory<byte> unarmored) : IPgpArmoredBlock<PgpArmoredMessage>
 {
-    public ReadOnlyMemory<byte> Bytes { get; } = bytes;
+    public ReadOnlyMemory<byte> Unarmored { get; } = unarmored;
 
-    public static implicit operator PgpArmoredMessage(Memory<byte> bytes) => new(bytes);
     public static implicit operator PgpArmoredMessage(ReadOnlyMemory<byte> bytes) => new(bytes);
     public static implicit operator PgpArmoredMessage(ArraySegment<byte> bytes) => new(bytes);
 
-    public static implicit operator Stream(PgpArmoredMessage block) => block.Bytes.AsStream();
-    public static implicit operator ReadOnlyMemory<byte>(PgpArmoredMessage block) => block.Bytes;
-    public static implicit operator ReadOnlySpan<byte>(PgpArmoredMessage block) => block.Bytes.Span;
+    static PgpArmoredMessage IPgpArmoredBlock<PgpArmoredMessage>.Create(ReadOnlySpan<byte> armoredBytes)
+    {
+        return new PgpArmoredMessage(PgpArmorDecoder.Decode(armoredBytes));
+    }
+
+    int IPgpArmoredBlock<PgpArmoredMessage>.GetExportRequiredBufferLength()
+    {
+        return PgpArmorEncoder.GetMaxLengthAfterEncoding(Unarmored.Length);
+    }
+
+    int IPgpArmoredBlock<PgpArmoredMessage>.Export(Span<byte> outputBuffer)
+    {
+        return PgpArmorEncoder.Encode(Unarmored.Span, PgpBlockType.Message, outputBuffer);
+    }
 }

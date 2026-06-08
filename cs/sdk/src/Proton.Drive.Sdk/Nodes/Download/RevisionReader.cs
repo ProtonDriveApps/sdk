@@ -340,7 +340,7 @@ internal sealed partial class RevisionReader
 
     private async Task<PgpVerificationStatus> VerifyManifestAsync(Stream manifestStream, CancellationToken cancellationToken)
     {
-        if (_state.RevisionDto.ManifestSignature is null)
+        if (_state.RevisionDto.ManifestSignature is not { } manifestSignature)
         {
             return PgpVerificationStatus.NotSigned;
         }
@@ -354,7 +354,7 @@ internal sealed partial class RevisionReader
             return PgpVerificationStatus.NoVerifier;
         }
 
-        var verificationResult = new PgpKeyRing(verificationKeys).Verify(manifestStream, _state.RevisionDto.ManifestSignature.Value);
+        var verificationResult = new PgpKeyRing(verificationKeys).Verify(manifestStream, manifestSignature.Unarmored.Span);
 
         return verificationResult.Status;
     }
