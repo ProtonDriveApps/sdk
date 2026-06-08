@@ -236,9 +236,6 @@
       "Unknown error ${ code }": [
         "Neznáma chyba ${ code }"
       ],
-      "Unknown error ${ response.Response.Code }": [
-        "Neznáma chyba ${ response.Response.Code }"
-      ],
       "Verification keys are not available": [
         "Overovacie kľúče nie sú k dispozícii"
       ],

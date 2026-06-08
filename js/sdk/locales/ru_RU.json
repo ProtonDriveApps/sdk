@@ -176,9 +176,6 @@
       "Unknown error ${ code }": [
         "Неизвестная ошибка ${ code }"
       ],
-      "Unknown error ${ response.Response.Code }": [
-        "Неизвестная ошибка ${ response.Response.Code }"
-      ],
       "Verification keys are not available": [
         "Ключи проверки недоступны"
       ],

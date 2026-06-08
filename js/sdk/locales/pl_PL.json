@@ -197,9 +197,6 @@
       "Unknown error ${ code }": [
         "Wystąpił nieznany błąd ${ code }"
       ],
-      "Unknown error ${ response.Response.Code }": [
-        "Wystąpił nieznany błąd ${ response.Response.Code }"
-      ],
       "Verification keys are not available": [
         "Klucze weryfikacyjne nie są dostępne"
       ],
