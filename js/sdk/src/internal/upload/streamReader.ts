@@ -4,7 +4,7 @@ import { AbortError } from "../../errors";
  * Reads a ReadableStream into a Uint8Array.
  */
 export async function readStreamToUint8Array(
-    stream: ReadableStream<Uint8Array<ArrayBuffer>>,
+    stream: ReadableStream<Uint8Array<ArrayBufferLike>>,
     signal?: AbortSignal,
 ): Promise<Uint8Array<ArrayBuffer>> {
     const reader = stream.getReader();
