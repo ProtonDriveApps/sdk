@@ -130,6 +130,32 @@ export class ProtonDriveClient {
          * `core/v5/events/{id}` endpoint.
          */
         processCoreEvent: (rawEvent: CoreApiEvent) => Promise<DriveEvent[]>;
+        /**
+         * Experimental feature to prepare the cryptographic material for an
+         * orphaned import folder used by the Easy Switch importer.
+         *
+         * The returned object contains all the encrypted fields needed to pass
+         * as the `drive.importFolder` payload when calling the importer start
+         * endpoint. No folder is created on the server — the caller is
+         * responsible for passing this data to the importer API.
+         *
+         * `passphrase` is the cleartext node passphrase (base64-encoded).
+         * The external importer service needs it because it has no access to
+         * the user's keys and cannot decrypt the encrypted passphrase itself.
+         *
+         * @param folderName - Name of the import folder (defaults to `'drive-import-<ISO timestamp>'`).
+         */
+        prepareImportFolder: (folderName?: string) => Promise<{
+            encryptedName: string;
+            hash: string;
+            armoredKey: string;
+            armoredNodePassphrase: string;
+            armoredNodePassphraseSignature: string;
+            armoredHashKey: string;
+            signatureEmail: string;
+            passphrase: string;
+            armoredExtendedAttributes?: string;
+        }>;
     };
 
     constructor({
@@ -277,6 +303,12 @@ export class ProtonDriveClient {
             processCoreEvent: async (rawEvent: CoreApiEvent) => {
                 this.logger.debug(`Processing core event ${rawEvent.EventID}`);
                 return this.events.processCoreEvent(rawEvent);
+            },
+            prepareImportFolder: async (folderName?: string) => {
+                const name = folderName ?? `drive-import-${new Date().toISOString()}`;
+                this.logger.info('Preparing import folder crypto material');
+                const rootFolder = await this.nodes.access.getVolumeRootFolder();
+                return this.nodes.management.prepareImportFolderCryptoMaterial(rootFolder.uid, name);
             },
         };
     }
