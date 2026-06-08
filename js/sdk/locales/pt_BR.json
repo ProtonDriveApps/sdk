@@ -219,9 +219,6 @@
       "Unknown error ${ code }": [
         "Erro desconhecido ${ code }"
       ],
-      "Unknown error ${ response.Response.Code }": [
-        "Erro desconhecido ${ response.Response.Code }"
-      ],
       "Verification keys are not available": [
         "As chaves de verificação não estão disponíveis"
       ],

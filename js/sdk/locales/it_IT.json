@@ -234,9 +234,6 @@
       "Unknown error ${ code }": [
         "Errore sconosciuto ${ code }"
       ],
-      "Unknown error ${ response.Response.Code }": [
-        "Errore sconosciuto ${ response.Response.Code }"
-      ],
       "Verification keys are not available": [
         "Le chiavi di verifica non sono disponibili"
       ],

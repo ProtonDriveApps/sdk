@@ -235,9 +235,6 @@
       "Unknown error ${ code }": [
         "Eroare necunoscută ${ code }"
       ],
-      "Unknown error ${ response.Response.Code }": [
-        "Eroare necunoscută ${ response.Response.Code }"
-      ],
       "Verification keys are not available": [
         "Cheile de verificare nu sunt disponibile"
       ],

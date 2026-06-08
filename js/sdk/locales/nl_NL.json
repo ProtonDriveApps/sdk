@@ -234,9 +234,6 @@
       "Unknown error ${ code }": [
         "Onbekende fout ${ code }"
       ],
-      "Unknown error ${ response.Response.Code }": [
-        "Onbekende fout ${ response.Response.Code }"
-      ],
       "Verification keys are not available": [
         "Verificatiesleutels zijn niet beschikbaar"
       ],
