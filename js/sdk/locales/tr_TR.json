@@ -234,9 +234,6 @@
       "Unknown error ${ code }": [
         "Bilinmeyen hata ${ code }"
       ],
-      "Unknown error ${ response.Response.Code }": [
-        "Bilinmeyen hata ${ response.Response.Code }"
-      ],
       "Verification keys are not available": [
         "Doğrulama anahtarları kullanılamıyor"
       ],

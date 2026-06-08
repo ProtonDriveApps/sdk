@@ -234,9 +234,6 @@
       "Unknown error ${ code }": [
         "Άγνωστο σφάλμα ${ code }"
       ],
-      "Unknown error ${ response.Response.Code }": [
-        "Άγνωστο σφάλμα ${ response.Response.Code }"
-      ],
       "Verification keys are not available": [
         "Τα κλειδιά επαλήθευσης δεν είναι διαθέσιμα"
       ],

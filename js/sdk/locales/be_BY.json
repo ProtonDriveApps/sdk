@@ -236,9 +236,6 @@
       "Unknown error ${ code }": [
         "Невядомая памылка ${ code }"
       ],
-      "Unknown error ${ response.Response.Code }": [
-        "Невядомая памылка ${ response.Response.Code }"
-      ],
       "Verification keys are not available": [
         "Ключы спраўджання недаступны"
       ],

@@ -234,9 +234,6 @@
       "Unknown error ${ code }": [
         "Error desconegut ${ code }"
       ],
-      "Unknown error ${ response.Response.Code }": [
-        "Error desconegut ${ response.Response.Code }"
-      ],
       "Verification keys are not available": [
         "Les claus de verificació no estan disponibles"
       ],

@@ -218,9 +218,6 @@
       "Unknown error ${ code }": [
         "알 수 없는 오류 ${ code }"
       ],
-      "Unknown error ${ response.Response.Code }": [
-        "알 수 없는 오류 ${ response.Response.Code }"
-      ],
       "Verification keys are not available": [
         "인증 키를 사용할 수 없습니다"
       ],
