@@ -308,6 +308,51 @@ export abstract class NodesManagementBase<
         }
     }
 
+    async prepareImportFolderCryptoMaterial(
+        parentNodeUid: string,
+        folderName: string,
+    ): Promise<{
+        encryptedName: string;
+        hash: string;
+        armoredKey: string;
+        armoredNodePassphrase: string;
+        armoredNodePassphraseSignature: string;
+        armoredHashKey: string;
+        signatureEmail: string;
+        passphrase: string;
+        armoredExtendedAttributes?: string;
+    }> {
+        validateNodeName(folderName);
+
+        const parentKeys = await this.nodesAccess.getNodeKeys(parentNodeUid);
+        if (!parentKeys.hashKey) {
+            throw new ValidationError(c('Error').t`Creating folders in non-folders is not allowed`);
+        }
+
+        const signingKeys = await this.nodesAccess.getNodeSigningKeys({ parentNodeUid });
+        if (signingKeys.type !== 'userAddress') {
+            throw new Error('Import folder can only be created under a node owned by the user');
+        }
+
+        const { encryptedCrypto, keys } = await this.cryptoService.createFolder(
+            { key: parentKeys.key, hashKey: parentKeys.hashKey },
+            signingKeys,
+            folderName,
+        );
+
+        return {
+            encryptedName: encryptedCrypto.encryptedName,
+            hash: encryptedCrypto.hash,
+            armoredKey: encryptedCrypto.armoredKey,
+            armoredNodePassphrase: encryptedCrypto.armoredNodePassphrase,
+            armoredNodePassphraseSignature: encryptedCrypto.armoredNodePassphraseSignature,
+            armoredHashKey: encryptedCrypto.folder.armoredHashKey,
+            signatureEmail: signingKeys.email,
+            passphrase: keys.passphrase,
+            armoredExtendedAttributes: encryptedCrypto.folder.armoredExtendedAttributes,
+        };
+    }
+
     // FIXME create test for create folder
     async createFolder(parentNodeUid: string, folderName: string, modificationTime?: Date): Promise<TDecryptedNode> {
         validateNodeName(folderName);
