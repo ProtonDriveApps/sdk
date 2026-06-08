@@ -5,6 +5,7 @@ using Proton.Sdk.Api.Authentication;
 using Proton.Sdk.Api.Events;
 using Proton.Sdk.Api.Keys;
 using Proton.Sdk.Api.Users;
+using Proton.Sdk.Cryptography;
 
 namespace Proton.Sdk.Serialization;
 
@@ -16,10 +17,10 @@ namespace Proton.Sdk.Serialization;
 #endif
     Converters =
     [
-        typeof(PgpArmoredMessageJsonConverter),
-        typeof(PgpArmoredSignatureJsonConverter),
-        typeof(PgpArmoredSecretKeyJsonConverter),
-        typeof(PgpArmoredPublicKeyJsonConverter),
+        typeof(PgpArmoredBlockJsonConverter<PgpArmoredMessage>),
+        typeof(PgpArmoredBlockJsonConverter<PgpArmoredSignature>),
+        typeof(PgpArmoredBlockJsonConverter<PgpArmoredSecretKey>),
+        typeof(PgpArmoredBlockJsonConverter<PgpArmoredPublicKey>),
     ])]
 #pragma warning restore SA1114, SA1118
 [JsonSerializable(typeof(ApiResponse))]

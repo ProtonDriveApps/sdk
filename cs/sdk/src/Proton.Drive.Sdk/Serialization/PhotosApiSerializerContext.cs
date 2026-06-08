@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using Proton.Drive.Sdk.Api.Photos;
+using Proton.Sdk.Cryptography;
 using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Serialization;
@@ -12,10 +13,10 @@ namespace Proton.Drive.Sdk.Serialization;
 #endif
     Converters =
     [
-        typeof(PgpArmoredMessageJsonConverter),
-        typeof(PgpArmoredSignatureJsonConverter),
-        typeof(PgpArmoredSecretKeyJsonConverter),
-        typeof(PgpArmoredPublicKeyJsonConverter),
+        typeof(PgpArmoredBlockJsonConverter<PgpArmoredMessage>),
+        typeof(PgpArmoredBlockJsonConverter<PgpArmoredSignature>),
+        typeof(PgpArmoredBlockJsonConverter<PgpArmoredSecretKey>),
+        typeof(PgpArmoredBlockJsonConverter<PgpArmoredPublicKey>),
     ])]
 #pragma warning restore SA1114, SA1118
 [JsonSerializable(typeof(PhotosVolumeCreationRequest))]

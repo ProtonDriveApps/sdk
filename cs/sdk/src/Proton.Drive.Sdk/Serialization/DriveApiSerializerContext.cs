@@ -6,6 +6,7 @@ using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Api.Volumes;
 using Proton.Sdk.Api;
+using Proton.Sdk.Cryptography;
 using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Serialization;
@@ -18,10 +19,10 @@ namespace Proton.Drive.Sdk.Serialization;
 #endif
     Converters =
     [
-        typeof(PgpArmoredMessageJsonConverter),
-        typeof(PgpArmoredSignatureJsonConverter),
-        typeof(PgpArmoredSecretKeyJsonConverter),
-        typeof(PgpArmoredPublicKeyJsonConverter),
+        typeof(PgpArmoredBlockJsonConverter<PgpArmoredMessage>),
+        typeof(PgpArmoredBlockJsonConverter<PgpArmoredSignature>),
+        typeof(PgpArmoredBlockJsonConverter<PgpArmoredSecretKey>),
+        typeof(PgpArmoredBlockJsonConverter<PgpArmoredPublicKey>),
     ])]
 #pragma warning restore SA1114, SA1118
 [JsonSerializable(typeof(VolumeCreationRequest))]

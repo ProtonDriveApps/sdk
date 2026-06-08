@@ -13,6 +13,7 @@ using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Drive.Sdk.Resilience;
 using Proton.Drive.Sdk.Telemetry;
 using Proton.Sdk;
+using Proton.Sdk.Cryptography;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 
@@ -117,7 +118,7 @@ internal sealed partial class BlockUploader
                                                 Index = blockNumber,
                                                 Size = (int)dataPacketStream.Length,
                                                 HashDigest = result.Sha256Digest,
-                                                EncryptedSignature = encryptedSignature,
+                                                EncryptedSignature = new PgpArmoredMessage(encryptedSignature),
                                                 VerificationOutput = new BlockVerificationOutput { Token = verificationToken.AsReadOnlyMemory() },
                                             },
                                         ],
