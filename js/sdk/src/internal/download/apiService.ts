@@ -1,6 +1,7 @@
 import { DriveAPIService, drivePaths, ObserverStream } from '../apiService';
 import { batch } from '../batch';
 import { makeNodeThumbnailUid, splitNodeRevisionUid, splitNodeThumbnailUid } from '../uids';
+import { readStreamToUint8Array } from '../upload/streamReader';
 import { BlockMetadata } from './interface';
 
 const BLOCKS_PAGE_SIZE = 20;
@@ -99,7 +100,7 @@ export class DownloadAPIService {
             onProgress?.(value.length);
         });
         const blockStream = rawBlockStream.pipeThrough(progressStream);
-        const encryptedBlock = new Uint8Array(await new Response(blockStream).arrayBuffer());
+        const encryptedBlock = readStreamToUint8Array(blockStream);
         return encryptedBlock;
     }
 
