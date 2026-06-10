@@ -11,5 +11,6 @@ data class FolderNode(
     override val trashTime: Instant?,
     override val nameAuthor: Result<Author>,
     override val author: Result<Author>,
+    override val ownedBy: OwnedBy,
     override val errors: List<DriveError>,
 ) : Node
