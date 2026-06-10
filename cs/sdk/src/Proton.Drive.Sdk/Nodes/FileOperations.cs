@@ -136,12 +136,9 @@ internal static class FileOperations
                     yield return await task.ConfigureAwait(false);
                 }
 
-                foreach (var (thumbnailId, nodeInfo) in thumbnailIds)
+                foreach (var thumbnailId in thumbnailIdBatch.Where(id => !processedThumbnailIds.Contains(id)))
                 {
-                    if (!processedThumbnailIds.Contains(thumbnailId))
-                    {
-                        yield return new FileThumbnail(nodeInfo.Uid, new ProtonDriveError("Thumbnail not found"));
-                    }
+                    yield return new FileThumbnail(thumbnailIds[thumbnailId].Uid, new ProtonDriveError("Thumbnail not found"));
                 }
             }
         }
