@@ -167,7 +167,7 @@ export class ApiClient {
         const uid = data.UID ?? this.credentials.uid;
         const accessToken = data.AccessToken;
         if (!uid || !accessToken) {
-            this.logger.error('Failed to refresh session: missing UID or AccessToken', data);
+            this.logger.error('Failed to refresh session: missing UID or AccessToken');
             return false;
         }
 
