@@ -95,7 +95,7 @@ export class CommandFileSystemDownload implements Command {
             throw new ValidationError('Expected exactly one local path');
         }
         const downloadRoot = assertValidDownloadRoot(resolvedLocalPaths[0]);
-        await mkdir(downloadRoot, { recursive: true });
+        await ensureDirectory(downloadRoot);
 
         const progress = json ? undefined : createTransferProgress();
 
@@ -189,7 +189,7 @@ export class CommandFileSystemDownload implements Command {
 
         assertDownloadDestination(ctx.downloadRoot, parentPath);
 
-        await mkdir(parentPath, { recursive: true });
+        await ensureDirectory(parentPath);
 
         while (true) {
             assertValidPathSegment(name);
@@ -304,6 +304,21 @@ export class CommandFileSystemDownload implements Command {
                 computedSha1,
                 expectedSha1,
             });
+        }
+    }
+}
+
+async function ensureDirectory(dirPath: string): Promise<void> {
+    try {
+        // mkdir should not throw when the path already exists, but there is a bug in Bun on Windows
+        await mkdir(dirPath, { recursive: true });
+    } catch (error: unknown) {
+        if (!isEexistError(error)) {
+            throw error;
+        }
+        const st = await stat(dirPath);
+        if (!st.isDirectory()) {
+            throw error;
         }
     }
 }
