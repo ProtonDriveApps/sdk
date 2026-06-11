@@ -7,6 +7,7 @@ import { Logger, NodeEntity, NodeType, ProtonDriveClient, ValidationError } from
 import { getName } from '../../cli';
 import { sanitizePathSegmentForLocalFilesystem } from './downloadPathValidation';
 import { resolveLocalPaths } from './localPath';
+import { TransferSummary } from './transferSummary';
 
 export const MAX_CONCURRENT_ITEMS = 5;
 
@@ -26,24 +27,36 @@ export type QueueItemFile<RemoteDataType> = QueueItemBase<RemoteDataType> & {
 export type QueueItem<RemoteDataType> = QueueItemDirectory<RemoteDataType> | QueueItemFile<RemoteDataType>;
 
 type TransferQueueHandlers<RemoteDataType> = {
-    onDirectory: (item: QueueItemDirectory<RemoteDataType>) => Promise<void>;
-    startFile: (item: QueueItemFile<RemoteDataType>) => Promise<void>;
+    onDirectory: (item: QueueItemDirectory<RemoteDataType>) => Promise<boolean>;
+    startFile: (item: QueueItemFile<RemoteDataType>) => Promise<number | false>;
 };
 
 class TransferQueue<RemoteDataType> {
-    protected queue: QueueItem<RemoteDataType>[] = [];
+    private queue: QueueItem<RemoteDataType>[] = [];
     private ongoingItems = new Set<Promise<void>>();
 
     constructor(
         private readonly logger: Logger,
+        private readonly summary: TransferSummary,
         private readonly handlers: TransferQueueHandlers<RemoteDataType>,
     ) {}
 
     async processQueue(): Promise<void> {
         while (this.queue.length > 0) {
             const item = this.queue.shift()!;
+            this.updateQueuedCount();
+
             if (item.kind === 'directory') {
-                await this.handlers.onDirectory(item);
+                try {
+                    const completed = await this.handlers.onDirectory(item);
+                    if (completed) {
+                        this.recordSuccess(0);
+                    } else {
+                        this.recordSkip();
+                    }
+                } catch (error: unknown) {
+                    this.recordFailure(item, error);
+                }
                 continue;
             }
 
@@ -51,14 +64,56 @@ class TransferQueue<RemoteDataType> {
                 this.logger.debug(`Waiting for ongoing items to finish`);
                 await Promise.race(this.ongoingItems);
             }
-            const promise = this.handlers.startFile(item);
+            const promise = this.handlers
+                .startFile(item)
+                .then((result) => {
+                    if (result === false) {
+                        this.recordSkip();
+                    } else {
+                        this.recordSuccess(result);
+                    }
+                })
+                .catch((error: unknown) => {
+                    this.recordFailure(item, error);
+                });
             this.ongoingItems.add(promise);
+            this.updateQueuedCount();
             void promise.finally(() => {
                 this.ongoingItems.delete(promise);
+                this.updateQueuedCount();
             });
         }
         await Promise.all(this.ongoingItems);
     }
+
+    protected enqueueItem(item: QueueItem<RemoteDataType>): void {
+        this.queue.push(item);
+        this.updateQueuedCount();
+    }
+
+    private updateQueuedCount(): void {
+        const queued = this.queue.length + this.ongoingItems.size;
+        this.summary.setQueuedCount(queued);
+    }
+
+    private recordSuccess(bytes: number): void {
+        this.summary.recordSuccess(bytes);
+    }
+
+    private recordSkip(): void {
+        this.summary.recordSkip();
+    }
+
+    private recordFailure(item: QueueItem<RemoteDataType>, error: unknown): void {
+        this.summary.recordFailure(item.baseName, error, getItemUid(item));
+    }
+}
+
+function getItemUid(item: QueueItem<unknown>): string | undefined {
+    if ('remoteNode' in item) {
+        return (item as QueueItem<{ remoteNode: NodeEntity }>).remoteNode.uid;
+    }
+    return undefined;
 }
 
 export class UploadQueue extends TransferQueue<{ parentNode: NodeEntity }> {
@@ -95,9 +150,9 @@ export class UploadQueue extends TransferQueue<{ parentNode: NodeEntity }> {
         }
         const baseName = path.basename(absolutePath);
         if (stats.isDirectory()) {
-            this.queue.push({ kind: 'directory', localPath: absolutePath, parentNode, baseName });
+            this.enqueueItem({ kind: 'directory', localPath: absolutePath, parentNode, baseName });
         } else if (stats.isFile()) {
-            this.queue.push({ kind: 'file', localPath: absolutePath, parentNode, baseName });
+            this.enqueueItem({ kind: 'file', localPath: absolutePath, parentNode, baseName });
         } else {
             throw new ValidationError(`Not a regular file or directory: ${absolutePath}`);
         }
@@ -113,10 +168,11 @@ function assertLocalPathIsUploadable(absolutePath: string, stats: Stats): void {
 export class DownloadQueue extends TransferQueue<{ remoteNode: NodeEntity }> {
     constructor(
         logger: Logger,
+        summary: TransferSummary,
         private readonly sdk: ProtonDriveClient,
         handlers: TransferQueueHandlers<{ remoteNode: NodeEntity }>,
     ) {
-        super(logger, handlers);
+        super(logger, summary, handlers);
     }
 
     async enqueueRemotePaths(
@@ -145,9 +201,9 @@ export class DownloadQueue extends TransferQueue<{ remoteNode: NodeEntity }> {
         const absolutePath = path.resolve(localPath);
         const baseName = path.basename(absolutePath);
         if (node.type === NodeType.Folder) {
-            this.queue.push({ kind: 'directory', remoteNode: node, localPath: absolutePath, baseName });
+            this.enqueueItem({ kind: 'directory', remoteNode: node, localPath: absolutePath, baseName });
         } else if (node.type === NodeType.File) {
-            this.queue.push({ kind: 'file', remoteNode: node, localPath: absolutePath, baseName });
+            this.enqueueItem({ kind: 'file', remoteNode: node, localPath: absolutePath, baseName });
         } else {
             throw new ValidationError(`Unsupported node type for download: ${node.type}`);
         }

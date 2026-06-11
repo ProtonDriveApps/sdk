@@ -1,8 +1,12 @@
 import { Dirent } from 'node:fs';
+import { lstat, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { MemberRole, NodeEntity, NodeType, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 import { getMockLogger } from '@protontech/drive-sdk/tests/logger';
+
+import { DownloadQueue, MAX_CONCURRENT_ITEMS, QueueItem, UploadQueue } from './transferQueue';
+import { TransferSummary } from './transferSummary';
 
 jest.mock('../../cli', () => jest.requireActual('../../cli/node'));
 
@@ -11,12 +15,20 @@ jest.mock('node:fs/promises', () => ({
     lstat: jest.fn(),
 }));
 
-import { lstat, readdir } from 'node:fs/promises';
-
-import { DownloadQueue, MAX_CONCURRENT_ITEMS, QueueItem, UploadQueue } from './transferQueue';
-
 const readdirMock = readdir as jest.MockedFunction<typeof readdir>;
 const lstatMock = lstat as jest.MockedFunction<typeof lstat>;
+
+function testSummary(): TransferSummary {
+    return new TransferSummary('upload');
+}
+
+function summaryAsJson(summary: TransferSummary) {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation();
+    summary.print({ json: true });
+    const result = JSON.parse(logSpy.mock.calls[0]![0] as string);
+    logSpy.mockRestore();
+    return result;
+}
 
 type ReaddirDirents = Awaited<ReturnType<typeof readdir>>;
 
@@ -84,7 +96,9 @@ function mockFileMaybe(name: string, uid: string): NodeEntity {
 
 class SeededUploadQueue extends UploadQueue {
     seed(items: QueueItem<{ parentNode: NodeEntity }>[]) {
-        this.queue.push(...items);
+        for (const item of items) {
+            this.enqueueItem(item);
+        }
     }
 }
 
@@ -92,9 +106,9 @@ describe('TransferQueue (via UploadQueue.processQueue)', () => {
     const parent = mockFolderMaybe('parent', 'p1');
 
     it('resolves immediately for an empty queue', async () => {
-        const onDirectory = jest.fn();
-        const startFile = jest.fn();
-        const q = new UploadQueue(getMockLogger(), { onDirectory, startFile });
+        const onDirectory = jest.fn(async () => true);
+        const startFile = jest.fn(async () => 0);
+        const q = new UploadQueue(getMockLogger(), testSummary(), { onDirectory, startFile });
         await q.processQueue();
         expect(onDirectory).not.toHaveBeenCalled();
         expect(startFile).not.toHaveBeenCalled();
@@ -106,11 +120,13 @@ describe('TransferQueue (via UploadQueue.processQueue)', () => {
             order.push('dir-start');
             await new Promise((r) => setImmediate(r));
             order.push('dir-end');
+            return true;
         });
         const startFile = jest.fn(async () => {
             order.push('file');
+            return 0;
         });
-        const q = new SeededUploadQueue(getMockLogger(), { onDirectory, startFile });
+        const q = new SeededUploadQueue(getMockLogger(), testSummary(), { onDirectory, startFile });
         q.seed([
             { kind: 'directory', localPath: '/a', baseName: 'a', parentNode: parent },
             { kind: 'file', localPath: '/f', baseName: 'f', parentNode: parent },
@@ -124,14 +140,15 @@ describe('TransferQueue (via UploadQueue.processQueue)', () => {
     it('limits the number of concurrent file transfers', async () => {
         let inFlight = 0;
         let maxInFlight = 0;
-        const onDirectory = jest.fn();
+        const onDirectory = jest.fn(async () => true);
         const startFile = jest.fn(async () => {
             inFlight++;
             maxInFlight = Math.max(maxInFlight, inFlight);
             await new Promise((r) => setImmediate(r));
             inFlight--;
+            return 0;
         });
-        const q = new SeededUploadQueue(getMockLogger(), { onDirectory, startFile });
+        const q = new SeededUploadQueue(getMockLogger(), testSummary(), { onDirectory, startFile });
         const items: QueueItem<{ parentNode: NodeEntity }>[] = [];
         for (let i = 0; i < 12; i++) {
             items.push({
@@ -147,16 +164,83 @@ describe('TransferQueue (via UploadQueue.processQueue)', () => {
         expect(startFile).toHaveBeenCalledTimes(12);
     });
 
+    it('continues processing after a file transfer fails when summary is set', async () => {
+        const summary = new TransferSummary('upload');
+        const onDirectory = jest.fn(async () => true);
+        const startFile = jest.fn(async (item: QueueItem<{ parentNode: NodeEntity }>) => {
+            if (item.baseName === 'bad') {
+                throw new Error('upload failed');
+            }
+            return 100;
+        });
+        const q = new SeededUploadQueue(getMockLogger(), summary, { onDirectory, startFile });
+        q.seed([
+            { kind: 'file', localPath: '/bad', baseName: 'bad', parentNode: parent },
+            { kind: 'file', localPath: '/good', baseName: 'good', parentNode: parent },
+        ]);
+        await q.processQueue();
+        expect(startFile).toHaveBeenCalledTimes(2);
+        expect(summary.failureCount).toBe(1);
+        expect(summary.formatProgressLine()).toBe('Uploaded 1 | Failed 1 | Queued 0');
+        expect(summaryAsJson(summary)).toMatchObject({
+            transferredItems: 1,
+            transferredBytes: 100,
+            failedItems: 1,
+            failures: [{ name: 'bad', error: 'Error: upload failed' }],
+        });
+    });
+
+    it('continues processing after a directory handler fails when summary is set', async () => {
+        const summary = new TransferSummary('upload');
+        const onDirectory = jest.fn(async () => {
+            throw new Error('folder failed');
+        });
+        const startFile = jest.fn(async () => 0);
+        const q = new SeededUploadQueue(getMockLogger(), summary, { onDirectory, startFile });
+        q.seed([
+            { kind: 'directory', localPath: '/dir', baseName: 'dir', parentNode: parent },
+            { kind: 'file', localPath: '/f', baseName: 'f', parentNode: parent },
+        ]);
+        await q.processQueue();
+        expect(onDirectory).toHaveBeenCalledTimes(1);
+        expect(startFile).toHaveBeenCalledTimes(1);
+        expect(summary.failureCount).toBe(1);
+        expect(summaryAsJson(summary).failures[0]).toMatchObject({
+            name: 'dir',
+            error: 'Error: folder failed',
+        });
+    });
+
+    it('records skipped items without counting them as successes', async () => {
+        const summary = new TransferSummary('upload');
+        const onDirectory = jest.fn(async (): Promise<boolean> => false);
+        const startFile = jest.fn(async (): Promise<number | false> => false);
+        const q = new SeededUploadQueue(getMockLogger(), summary, { onDirectory, startFile });
+        q.seed([
+            { kind: 'directory', localPath: '/dir', baseName: 'dir', parentNode: parent },
+            { kind: 'file', localPath: '/f', baseName: 'f', parentNode: parent },
+        ]);
+        await q.processQueue();
+        expect(summary.failureCount).toBe(0);
+        expect(summary.formatProgressLine()).toBe('Uploaded 0 | Skipped 2 | Queued 0');
+        expect(summaryAsJson(summary)).toMatchObject({
+            transferredItems: 0,
+            transferredBytes: 0,
+            failedItems: 0,
+            skippedItems: 2,
+        });
+    });
+
     it('waits for all in-flight file transfers before finishing', async () => {
         const pending: Array<() => void> = [];
-        const onDirectory = jest.fn();
+        const onDirectory = jest.fn(async () => true);
         const startFile = jest.fn(
             () =>
-                new Promise<void>((resolve) => {
-                    pending.push(resolve);
+                new Promise<number>((resolve) => {
+                    pending.push(() => resolve(0));
                 }),
         );
-        const q = new SeededUploadQueue(getMockLogger(), { onDirectory, startFile });
+        const q = new SeededUploadQueue(getMockLogger(), testSummary(), { onDirectory, startFile });
         q.seed([{ kind: 'file', localPath: '/one', baseName: 'one', parentNode: parent }]);
         const done = q.processQueue();
         await new Promise((r) => setImmediate(r));
@@ -177,9 +261,9 @@ describe('UploadQueue', () => {
 
     it('enqueueLocalPaths enqueues a file', async () => {
         lstatMock.mockResolvedValueOnce(mockFileLstatResult());
-        const q = new SeededUploadQueue(getMockLogger(), {
-            onDirectory: jest.fn(),
-            startFile: jest.fn(),
+        const q = new SeededUploadQueue(getMockLogger(), testSummary(), {
+            onDirectory: jest.fn(async () => true),
+            startFile: jest.fn(async () => 0),
         });
         await q.enqueueLocalPaths(['/tmp/x.txt'], parent);
         expect(q['queue']).toHaveLength(1);
@@ -193,9 +277,9 @@ describe('UploadQueue', () => {
 
     it('enqueueLocalPaths enqueues a directory', async () => {
         lstatMock.mockResolvedValueOnce(mockDirLstatResult());
-        const q = new SeededUploadQueue(getMockLogger(), {
-            onDirectory: jest.fn(),
-            startFile: jest.fn(),
+        const q = new SeededUploadQueue(getMockLogger(), testSummary(), {
+            onDirectory: jest.fn(async () => true),
+            startFile: jest.fn(async () => 0),
         });
         await q.enqueueLocalPaths(['/tmp/mydir'], parent);
         expect(q['queue'][0]).toMatchObject({
@@ -217,7 +301,10 @@ describe('UploadQueue', () => {
             isBlockDevice: () => false,
         } as Awaited<ReturnType<typeof lstat>>;
         lstatMock.mockResolvedValue(charDev);
-        const q = new UploadQueue(getMockLogger(), { onDirectory: jest.fn(), startFile: jest.fn() });
+        const q = new UploadQueue(getMockLogger(), testSummary(), {
+            onDirectory: jest.fn(async () => true),
+            startFile: jest.fn(async () => 0),
+        });
         await expect(q.enqueueLocalPaths(['/dev/null'], parent)).rejects.toThrow(ValidationError);
         await expect(q.enqueueLocalPaths(['/dev/null'], parent)).rejects.toThrow(
             'Not a regular file or directory: /dev/null',
@@ -235,7 +322,10 @@ describe('UploadQueue', () => {
             isCharacterDevice: () => false,
             isBlockDevice: () => false,
         } as Awaited<ReturnType<typeof lstat>>);
-        const q = new UploadQueue(getMockLogger(), { onDirectory: jest.fn(), startFile: jest.fn() });
+        const q = new UploadQueue(getMockLogger(), testSummary(), {
+            onDirectory: jest.fn(async () => true),
+            startFile: jest.fn(async () => 0),
+        });
         await expect(q.enqueueLocalPaths(['/tmp/alink'], parent)).rejects.toThrow(
             'Not a regular file or directory: /tmp/alink',
         );
@@ -252,7 +342,10 @@ describe('UploadQueue', () => {
             isCharacterDevice: () => false,
             isBlockDevice: () => false,
         } as Awaited<ReturnType<typeof lstat>>);
-        const q = new UploadQueue(getMockLogger(), { onDirectory: jest.fn(), startFile: jest.fn() });
+        const q = new UploadQueue(getMockLogger(), testSummary(), {
+            onDirectory: jest.fn(async () => true),
+            startFile: jest.fn(async () => 0),
+        });
         await expect(q.enqueueLocalPaths(['/weird'], parent)).rejects.toThrow('Not a regular file or directory');
     });
 
@@ -264,9 +357,9 @@ describe('UploadQueue', () => {
         lstatMock.mockResolvedValueOnce(mockDirLstatResult(42));
         readdirMock.mockResolvedValueOnce([dot, dotdot, child] as unknown as ReaddirDirents);
         lstatMock.mockResolvedValueOnce(mockFileLstatResult(42));
-        const q = new SeededUploadQueue(getMockLogger(), {
-            onDirectory: jest.fn(),
-            startFile: jest.fn(),
+        const q = new SeededUploadQueue(getMockLogger(), testSummary(), {
+            onDirectory: jest.fn(async () => true),
+            startFile: jest.fn(async () => 0),
         });
         await q.enqueueLocalDirectoryChildren('/parent', parent);
         expect(readdirMock).toHaveBeenCalledWith(resolvedParent, { withFileTypes: true });
@@ -279,7 +372,10 @@ describe('UploadQueue', () => {
         lstatMock.mockResolvedValueOnce(mockDirLstatResult(1));
         readdirMock.mockResolvedValueOnce([kid] as unknown as ReaddirDirents);
         lstatMock.mockResolvedValueOnce(mockDirLstatResult(2));
-        const q = new UploadQueue(getMockLogger(), { onDirectory: jest.fn(), startFile: jest.fn() });
+        const q = new UploadQueue(getMockLogger(), testSummary(), {
+            onDirectory: jest.fn(async () => true),
+            startFile: jest.fn(async () => 0),
+        });
         await expect(q.enqueueLocalDirectoryChildren('/parent', parent)).rejects.toThrow(
             'Cannot traverse into a different file system (mount point)',
         );
@@ -291,9 +387,9 @@ describe('DownloadQueue', () => {
     const file = mockFileMaybe('remote.txt', 'rfile');
 
     function createQueue(sdk: Pick<ProtonDriveClient, 'iterateFolderChildren'>) {
-        return new DownloadQueue(getMockLogger(), sdk as ProtonDriveClient, {
-            onDirectory: jest.fn(),
-            startFile: jest.fn(),
+        return new DownloadQueue(getMockLogger(), testSummary(), sdk as ProtonDriveClient, {
+            onDirectory: jest.fn(async () => true),
+            startFile: jest.fn(async () => 0),
         });
     }
 
