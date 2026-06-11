@@ -1,5 +1,12 @@
 # Changelog
 
+## js/v0.17.0 (2026-06-11)
+
+* Avoid using arrayBuffer method
+* SDK method to prepare crypto material for Easy Switch import
+* Merge node entities
+* Use error object instead of string in all NodeResults
+
 ## js/v0.16.0 (2026-05-29)
 
 * Process automatically events converting external invitations
