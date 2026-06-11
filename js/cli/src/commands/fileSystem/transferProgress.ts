@@ -17,11 +17,11 @@ interface TransferProgressItem {
     onFinished: () => void;
 }
 
-export function createTransferProgress(): TransferProgressInterface {
+export function createTransferProgress(getSummaryLine: () => string): TransferProgressInterface {
     if (!process.stdout.isTTY) {
         return noopSink;
     }
-    return new TransferProgress();
+    return new TransferProgress(getSummaryLine);
 }
 
 const noopSink: TransferProgressInterface = {
@@ -48,6 +48,8 @@ class TransferProgress implements TransferProgressInterface {
     private interval: ReturnType<typeof setInterval> | null = null;
     private paused = false;
     private previousLineCount = 0;
+
+    constructor(private readonly getSummaryLine: () => string) {}
 
     trackItem(name: string, size?: number): TransferProgressItem {
         const id = String(this.nextId++);
@@ -160,7 +162,8 @@ class TransferProgress implements TransferProgressInterface {
         }
 
         const frame = SPINNER_FRAMES[this.spinnerIndex % SPINNER_FRAMES.length]!;
-        const lines =
+        const summaryLine = `ℹ ${this.getSummaryLine()}`;
+        const itemLines =
             this.active.size === 0
                 ? []
                 : Array.from(
@@ -168,8 +171,9 @@ class TransferProgress implements TransferProgressInterface {
                       (item) =>
                           `${frame} ${getProgressPercentage(item)} ${sanitizeTerminalText(item.name)} (${formatSize(item.size, true)})`,
                   );
+        const lines = [summaryLine, ...itemLines];
 
-        if (lines.length === 0 && this.previousLineCount === 0) {
+        if (itemLines.length === 0 && this.previousLineCount <= 1) {
             return;
         }
 

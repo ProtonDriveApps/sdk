@@ -121,7 +121,7 @@ class ConfiguredMetricHandler {
     }
 
     private onUpload(metric: MetricUploadEvent) {
-        if (metric.error !== 'network_error') {
+        if (metric.error !== 'network_error' && metric.error !== 'validation_error') {
             this.metrics.drive_sdk_upload_success_rate_total.increment({
                 volumeType: metric.volumeType,
                 status: !metric.error ? 'success' : 'failure',
@@ -147,6 +147,7 @@ class ConfiguredMetricHandler {
 
         if (
             metric.error !== 'network_error' &&
+            metric.error !== 'validation_error' &&
             (!this.lastUploadError || this.lastUploadError.getTime() < Date.now() - REPORT_ERRORING_USERS_INTERVAL_MS)
         ) {
             this.metrics.drive_sdk_upload_erroring_users_total.increment({
@@ -171,7 +172,7 @@ class ConfiguredMetricHandler {
     }
 
     private onDownload(metric: MetricDownloadEvent) {
-        if (metric.error !== 'network_error') {
+        if (metric.error !== 'network_error' && metric.error !== 'validation_error') {
             this.metrics.drive_sdk_download_success_rate_total.increment({
                 volumeType: metric.volumeType,
                 status: !metric.error ? 'success' : 'failure',
@@ -197,6 +198,7 @@ class ConfiguredMetricHandler {
 
         if (
             metric.error !== 'network_error' &&
+            metric.error !== 'validation_error' &&
             (!this.lastDownloadError ||
                 this.lastDownloadError.getTime() < Date.now() - REPORT_ERRORING_USERS_INTERVAL_MS)
         ) {

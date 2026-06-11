@@ -12,6 +12,7 @@ import { generateThumbnails } from './generateThumbnails';
 import { ConflictChoice, ConflictTargetKind, TransferConflictResolver } from './transferConflictResolver';
 import { createTransferProgress, TransferProgressInterface } from './transferProgress';
 import { type QueueItemDirectory, type QueueItemFile, UploadQueue } from './transferQueue';
+import { TransferSummary } from './transferSummary';
 
 const SUPPORTED_REMOTE_PATH_TYPES = [PathType.MyFiles, PathType.Devices, PathType.SharedWithMe];
 
@@ -90,7 +91,8 @@ export class CommandFileSystemUpload implements Command {
 
         const parentNode = await paths.getNode(parentPathString, SUPPORTED_REMOTE_PATH_TYPES);
 
-        const progress = json ? undefined : createTransferProgress();
+        const summary = new TransferSummary('upload');
+        const progress = json ? undefined : createTransferProgress(() => summary.formatProgressLine());
 
         const conflictResolver = new TransferConflictResolver(logger, {
             forcedFileStrategy: fileConflictStrategy || conflictStrategy,
@@ -100,15 +102,17 @@ export class CommandFileSystemUpload implements Command {
             onInteractivePromptEnd: () => progress?.resume(),
         });
 
-        const uploadQueue = new UploadQueue(logger, {
+        const uploadQueue = new UploadQueue(logger, summary, {
             onDirectory: async (item) => {
                 const pending = await this.createFolder(ctx, item);
                 if (pending) {
                     await ctx.uploadQueue.enqueueLocalDirectoryChildren(item.localPath, pending.node);
+                    return true;
                 }
+                return false;
             },
             startFile: async (item) => {
-                await this.uploadFile(ctx, item);
+                return await this.uploadFile(ctx, item);
             },
         });
 
@@ -127,6 +131,11 @@ export class CommandFileSystemUpload implements Command {
             await ctx.uploadQueue.processQueue();
         } finally {
             progress?.dispose();
+            summary.print({ json });
+        }
+
+        if (summary.failureCount > 0) {
+            throw new ValidationError(`${summary.failureCount} item(s) failed to upload`);
         }
     }
 
@@ -170,7 +179,10 @@ export class CommandFileSystemUpload implements Command {
         }
     }
 
-    private async uploadFile(ctx: UploadContext, item: QueueItemFile<{ parentNode: NodeEntity }>): Promise<void> {
+    private async uploadFile(
+        ctx: UploadContext,
+        item: QueueItemFile<{ parentNode: NodeEntity }>,
+    ): Promise<number | false> {
         const expectedSha1 = await getSha1(item.localPath);
         const file = Bun.file(item.localPath);
         const metadata = {
@@ -205,7 +217,7 @@ export class CommandFileSystemUpload implements Command {
 
                 await controller.completion();
                 ctx.metrics?.reportUploadVerifierAttempt();
-                return;
+                return file.size;
             } catch (error: unknown) {
                 if (!(error instanceof NodeWithSameNameExistsValidationError)) {
                     throw error;
@@ -219,7 +231,7 @@ export class CommandFileSystemUpload implements Command {
                 const choice = await ctx.conflictResolver.resolve(item.baseName, ConflictTargetKind.File);
                 switch (choice) {
                     case ConflictChoice.Skip:
-                        return;
+                        return false;
                     case ConflictChoice.Merge:
                         newRevisionForNodeUid = existingNodeUid;
                         break;
