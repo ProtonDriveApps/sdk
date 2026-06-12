@@ -5,6 +5,7 @@ import { type ActionArgs, type Command, Options, printObject } from '../../cli';
 export class CommandSharingInvite implements Command {
     group = 'sharing';
     name = 'invite';
+    help = 'Invites users by email. Updates sharing settings if the node is already shared with given users.';
     args = ['path'];
     options: Options = {
         user: {

@@ -29,6 +29,7 @@ type UploadContext = {
 export class CommandFileSystemUpload implements Command {
     group = 'filesystem';
     name = 'upload';
+    help = 'Uploads files and folders. It prompts for conflict resolution unless a strategy option is set.';
     args = ['localPath...', 'parentPath'];
     options: Options = {
         'conflict-strategy': {

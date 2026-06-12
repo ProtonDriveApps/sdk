@@ -4,6 +4,7 @@ import { type ActionArgs, type Command, openBrowserUrl, sanitizeTerminalText } f
 export class CommandAuthLogin implements Command {
     group = 'auth';
     name = 'login';
+    help = 'Opens a browser to sign in. Keep the terminal open until authentication completes.';
     isAuthAction = true;
 
     async action({ auth, eventsManager, options: { json } }: ActionArgs) {

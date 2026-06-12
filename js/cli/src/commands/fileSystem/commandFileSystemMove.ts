@@ -7,6 +7,7 @@ const SUPPORTED_PATH_TYPES = [PathType.MyFiles, PathType.Devices];
 export class CommandFileSystemMove implements Command {
     group = 'filesystem';
     name = 'move';
+    help = 'Moves files and folders. You can move across My files and devices.';
     args = ['sourcePath...', 'targetParentPath'];
 
     async action({ sdk, paths, args, options: { json } }: ActionArgs) {

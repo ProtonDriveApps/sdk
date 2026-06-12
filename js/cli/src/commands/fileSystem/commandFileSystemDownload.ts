@@ -46,6 +46,7 @@ type DownloadContext = {
 export class CommandFileSystemDownload implements Command {
     group = 'filesystem';
     name = 'download';
+    help = 'Downloads files and folders. It prompts for conflict resolution unless a strategy option is set.';
     args = ['path...', 'localFolder'];
     options: Options = {
         'conflict-strategy': {
