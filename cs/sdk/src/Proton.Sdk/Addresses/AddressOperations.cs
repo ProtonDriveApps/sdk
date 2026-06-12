@@ -142,7 +142,7 @@ internal static class AddressOperations
 
                 cachedPublicKeys = publicKeys;
             }
-            catch (ProtonApiException e) when (e.Code is ResponseCode.UnknownAddress)
+            catch (ProtonApiException e) when (e.Code is ResponseCode.AddressMissing or ResponseCode.DomainExternal)
             {
                 client.Logger.LogError(e, "Unknown address {EmailAddress}", emailAddress);
 

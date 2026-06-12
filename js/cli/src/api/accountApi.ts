@@ -4,6 +4,9 @@ import type { paths as AuthPaths } from './api-auth-types';
 import type { paths as CorePaths } from './api-core-types';
 import { ApiClient } from './apiClient';
 
+const ADDRESS_MISSING_CODE = 33_102;
+const DOMAIN_EXTERNAL_CODE = 33_103;
+
 type AuthResponse = Extract<
     CorePaths['/core/{_version}/auth/info']['post']['responses']['200']['content']['application/json'],
     { Modulus?: string }
@@ -34,7 +37,7 @@ async function makeAccountApiError(error: unknown): Promise<AccountApiError> {
     if (error instanceof HTTPError) {
         const details = await parseErrorDetails(error.response);
         const code = typeof details?.Code === 'number' ? details.Code : 0;
-        if (code === 33103) {
+        if (code === ADDRESS_MISSING_CODE || code === DOMAIN_EXTERNAL_CODE) {
             return new AddressNotFoundError(error.message, {
                 httpCode: error.response.status,
                 code,
