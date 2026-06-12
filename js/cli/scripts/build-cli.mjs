@@ -8,20 +8,24 @@ const GIT_ROOT = path.resolve(import.meta.dir, '../../..');
 const mode = process.argv[2] === 'internal' ? 'internal' : 'main';
 
 const target = process.argv[3] || 'bun';
+const noCompile = process.argv.includes('--no-compile');
 let outfileArchitecture = '';
 if (target.startsWith('bun-')) {
     outfileArchitecture   = '/' + target.slice(4);
 }
 
 const entry = mode === 'internal' ? 'src/internal-cli/proton-drive-internal.ts' : 'src/proton-drive.ts';
-const outfile = mode === 'internal' ? `release${outfileArchitecture}/proton-drive-internal` : `release${outfileArchitecture}/proton-drive`;
+const outfileName = mode === 'internal' ? 'proton-drive-internal' : 'proton-drive';
+const outfile = `release${outfileArchitecture}/${outfileName}${noCompile ? '.js' : ''}`;
 
 const args = [
     'build',
-    '--compile',
+    ...(!noCompile ? [
+        '--compile',
+        // Slower compile, bigger bundle size, faster execution.
+        '--bytecode',
+    ] : []),
     `--target=${target}`,
-    // Slower compile, bigger bundle size, faster execution.
-    '--bytecode',
     // Use modern ESM format to allow await syntax in the entry file.
     '--format=esm',
     // Reduce bundle size (not much, the biggest part is the embedded Bun itself).
