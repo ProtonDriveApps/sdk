@@ -43,7 +43,8 @@ public enum ResponseCode
     /// </summary>
     NoActiveSubscription = 22_110,
 
-    UnknownAddress = 33_102,
+    AddressMissing = 33_102,
+    DomainExternal = 33_103,
 
     ProtonDriveUnknown = 200_000,
     InsufficientQuota = 200_001,
