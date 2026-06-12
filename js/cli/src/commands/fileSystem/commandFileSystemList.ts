@@ -20,6 +20,7 @@ import {
 export class CommandFileSystemList implements Command {
     group = 'filesystem';
     name = 'list';
+    help = 'Use / to list top-level sections. Your root folder is /my-files.';
     args = ['path'];
     options: Options = {
         type: {

@@ -14,6 +14,7 @@ import { getInvitationUid } from './invitations';
 export class CommandInvitationList implements Command {
     group = 'invitation';
     name = 'list';
+    help = 'Lists pending invitations from Drive and Photos.';
 
     async action({ sdk, photosSdk, options: { json } }: ActionArgs) {
         await printIterable(

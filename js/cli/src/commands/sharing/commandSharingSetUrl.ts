@@ -5,12 +5,13 @@ import { type ActionArgs, type Command, Options, printObject } from '../../cli';
 export class CommandSharingSetUrl implements Command {
     group = 'sharing';
     name = 'set-url';
+    help = 'Creates or updates a public link for the node.';
     args = ['path'];
     options: Options = {
         role: {
             type: 'string',
             default: 'viewer',
-            allowedValues: Object.values(MemberRole),
+            allowedValues: [MemberRole.Viewer, MemberRole.Editor],
             help: 'Role of the users to invite.',
         },
         password: {

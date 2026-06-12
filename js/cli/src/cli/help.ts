@@ -52,6 +52,11 @@ export function printCommandUsage(command: Command) {
     console.log('Usage:');
     printCommandSynopsisLine(command);
 
+    if (command.help) {
+        console.log('');
+        wrapText(command.help, 80).forEach((line) => console.log(line));
+    }
+
     const opts = visibleOptions(command);
     if (opts.length) {
         console.log('');

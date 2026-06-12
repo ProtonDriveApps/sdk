@@ -4,6 +4,7 @@ import { parseInvitationUid } from './invitations';
 export class CommandInvitationAccept implements Command {
     group = 'invitation';
     name = 'accept';
+    help = 'Accepts a pending invitation. Get the UID from the invitation list command.';
     args = ['invitationUid'];
 
     async action({ sdk, photosSdk, args: [invitationUid], options: { json } }: ActionArgs) {

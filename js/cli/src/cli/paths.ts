@@ -63,7 +63,7 @@ export class Paths {
         return nodes;
     }
 
-    getPaths(pathStrings: string[], supportedTypes?: PathType[]): Path[] {
+    getPaths(pathStrings: string[], supportedTypes?: PathType[], unsupportedTypeMessage?: string): Path[] {
         let pathType: PathType | undefined;
 
         if (pathStrings.length === 0) {
@@ -72,7 +72,7 @@ export class Paths {
 
         const paths = [];
         for (const pathString of pathStrings) {
-            const path = this.getPath(pathString, supportedTypes);
+            const path = this.getPath(pathString, supportedTypes, unsupportedTypeMessage);
 
             if (pathType === undefined) {
                 pathType = path.type;
@@ -91,10 +91,10 @@ export class Paths {
         return await path.getNode();
     }
 
-    getPath(path: string, supportedTypes?: PathType[]): Path {
+    getPath(path: string, supportedTypes?: PathType[], unsupportedTypeMessage?: string): Path {
         const p = new Path(this.sdk, this.photosSdk, path, this.eventsManager);
         if (supportedTypes && !supportedTypes.includes(p.type)) {
-            throw new ValidationError(`Path "${path}" is not supported`);
+            throw new ValidationError(unsupportedTypeMessage || `Path "${path}" is not supported`);
         }
         return p;
     }

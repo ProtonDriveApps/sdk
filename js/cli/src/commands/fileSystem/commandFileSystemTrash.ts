@@ -5,6 +5,7 @@ const SUPPORTED_PATH_TYPES = [PathType.MyFiles, PathType.Devices, PathType.Photo
 export class CommandFileSystemTrash implements Command {
     group = 'filesystem';
     name = 'trash';
+    help = 'Moves items to trash. Does not permanently delete; use delete or empty-trash for that.';
     args = ['path...'];
 
     async action({ paths, args: pathStrings, options: { json } }: ActionArgs) {

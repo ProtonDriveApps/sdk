@@ -12,6 +12,7 @@ import { Paths } from './paths';
 export interface Command {
     group: string;
     name: string;
+    help?: string;
     isAuthAction?: boolean;
     isPublicAction?: boolean;
     args?: string[];

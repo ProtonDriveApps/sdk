@@ -16,6 +16,7 @@ const SUPPORTED_PATH_TYPES = [PathType.MyFiles, PathType.Devices, PathType.Share
 export class CommandFileSystemCopy implements Command {
     group = 'filesystem';
     name = 'copy';
+    help = 'Copies files and folders. You can copy across My files, devices and shared folders.';
     args = ['sourcePath...', 'targetParentPath'];
     options: Options = {
         name: {

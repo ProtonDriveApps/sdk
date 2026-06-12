@@ -5,6 +5,7 @@ const SUPPORTED_PATH_TYPES = [PathType.Trash, PathType.PhotosTrash];
 export class CommandFileSystemRestore implements Command {
     group = 'filesystem';
     name = 'restore';
+    help = 'Restores trashed items.';
     args = ['path...'];
 
     async action({ paths, args: pathStrings, options: { json } }: ActionArgs) {

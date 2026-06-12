@@ -6,6 +6,7 @@ import { type ActionArgs, type Command, Options, printObject } from '../../cli';
 export class CommandSharingRemove implements Command {
     group = 'sharing';
     name = 'remove';
+    help = 'Removes user access or pending invitations by email.';
     args = ['path'];
     options: Options = {
         email: {
