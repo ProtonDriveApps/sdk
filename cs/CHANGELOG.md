@@ -1,5 +1,19 @@
 # Changelog
 
+## cs/v0.17.0 (2026-06-12)
+
+* Implement no waiting in Kotlin bindings
+* Fix false "Thumbnail not found" errors for large thumbnail batches
+* Add owned by in Kotlin bindings
+* Upgrade crypto package to fix linking issues (again) and optimize deserialization of PGP blocks
+* Remove unneeded hash digest field on block listing
+* Fix flaky tests of FIFO semaphore
+* Gracefully handle HTTP error responses with no body
+* Upgrade to latest cryptographic package interface
+* Log the interop error with exception
+* Remove node ID from exception messages to fix Sentry grouping
+* Add method to enumerate events
+
 ## cs/v0.16.0 (2026-05-29)
 
 * Add validation_error category for upload & download telemetry events
