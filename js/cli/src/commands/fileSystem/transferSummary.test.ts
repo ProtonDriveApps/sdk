@@ -48,8 +48,8 @@ describe('TransferSummary', () => {
         expect(summary.formatProgressLine()).toBe('Uploaded 0 | Queued 0');
         expect(summaryAsJson(summary)).toMatchObject({ skippedItems: 0 });
 
-        summary.recordSkip();
-        summary.recordSkip();
+        summary.recordSkip('skipped.txt', 'uid-1');
+        summary.recordSkip('skipped.txt', 'uid-2');
         summary.setQueuedCount(1);
 
         expect(summary.formatProgressLine()).toBe('Uploaded 0 | Skipped 2 | Queued 1');
