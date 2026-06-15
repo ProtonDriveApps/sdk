@@ -16,6 +16,8 @@ import {
     NodeType,
     ProtonDriveAccount,
     ProtonDriveConfig,
+    ProtonDriveCryptoCache,
+    ProtonDriveEntitiesCache,
     ProtonDriveHTTPClient,
     ProtonDriveTelemetry,
     SDKEvent,
@@ -113,6 +115,8 @@ export class ProtonDrivePublicLinkClient {
         isAnonymousContext,
         publicRole,
         session,
+        entitiesCache,
+        cryptoCache,
     }: {
         httpClient: ProtonDriveHTTPClient;
         account: ProtonDriveAccount;
@@ -128,6 +132,13 @@ export class ProtonDrivePublicLinkClient {
         isAnonymousContext: boolean;
         publicRole: MemberRole;
         session: SharingPublicLinkSession;
+        /**
+         * Optional caches to use instead of the default in-memory ones. Allows
+         * a caller to pre-seed crypto material (e.g. an import folder's root
+         * keys) before the client is used. Defaults to in-memory caches.
+         */
+        entitiesCache?: ProtonDriveEntitiesCache;
+        cryptoCache?: ProtonDriveCryptoCache;
     }) {
         if (!telemetry) {
             telemetry = new Telemetry();
@@ -138,9 +149,11 @@ export class ProtonDrivePublicLinkClient {
         this.logger = telemetry.getLogger('publicLink-interface');
         this.session = session;
 
-        // Use only in memory cache for public link as there are no events to keep it up to date if persisted.
-        const entitiesCache = new MemoryCache<string>();
-        const cryptoCache = new MemoryCache<CachedCryptoMaterial>();
+        // Default to in-memory caches for public links as there are no events
+        // to keep them up to date if persisted. A caller may pass its own cache
+        // instances to pre-seed crypto material before using the client.
+        const entitiesCacheInstance = entitiesCache ?? new MemoryCache<string>();
+        const cryptoCacheInstance = cryptoCache ?? new MemoryCache<CachedCryptoMaterial>();
 
         const fullConfig = getConfig(config);
         this.sdkEvents = new SDKEvents(telemetry);
@@ -156,8 +169,8 @@ export class ProtonDrivePublicLinkClient {
         this.sharingPublic = initSharingPublicModule(
             telemetry,
             apiService,
-            entitiesCache,
-            cryptoCache,
+            entitiesCacheInstance,
+            cryptoCacheInstance,
             cryptoModule,
             account,
             url,
