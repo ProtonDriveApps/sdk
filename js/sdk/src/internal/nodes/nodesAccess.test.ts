@@ -690,6 +690,17 @@ describe('nodesAccess', () => {
     });
 
     describe('getNodeKeys', () => {
+        it('should return seeded keys from the crypto cache without loading the node', async () => {
+            const seededKeys = { key: 'seededKey', hashKey: new Uint8Array([1]) } as any as DecryptedNodeKeys;
+            cryptoCache.getNodeKeys = jest.fn(() => Promise.resolve(seededKeys));
+
+            const result = await access.getNodeKeys('volumeId~nodeId');
+
+            expect(result).toBe(seededKeys);
+            expect(apiService.getNode).not.toHaveBeenCalled();
+            expect(cryptoService.decryptNode).not.toHaveBeenCalled();
+        });
+
         it('should load node if not cached', async () => {
             cryptoCache.getNodeKeys = jest.fn(() => Promise.reject(new Error('Entity not found')));
             apiService.getNode = jest.fn(() => Promise.reject(new Error('API called')));
