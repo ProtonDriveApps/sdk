@@ -1,5 +1,9 @@
 # Changelog
 
+## cs/v0.17.1 (2026-06-15)
+
+* Fix handling missing public address
+
 ## cs/v0.17.0 (2026-06-12)
 
 * Implement no waiting in Kotlin bindings
