@@ -1,4 +1,4 @@
-import { Logger } from '@protontech/drive-sdk';
+import { Logger, ValidationError } from '@protontech/drive-sdk';
 
 import type { Credentials, CredentialsStore } from './interface';
 import { parseStoredSnapshot } from './parseCredentials';
@@ -11,8 +11,17 @@ export class SecretsSessionStore implements CredentialsStore {
 
     async load(): Promise<Credentials | null> {
         this.logger.debug(`Loading session ${SECRET_NAME} from secrets`);
-        const raw =
-            (await Bun.secrets.get({ service: SECRET_SERVICE, name: SECRET_NAME })) as string | null;
+        let raw;
+        try {
+            raw = await Bun.secrets.get({ service: SECRET_SERVICE, name: SECRET_NAME });
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
+            throw new ValidationError(
+                `Failed to load session from secrets (ensure you have secrets available, read the README for more information): ${message}`,
+                undefined,
+                { cause: error },
+            );
+        }
         return parseStoredSnapshot(raw);
     }
 

@@ -4,7 +4,8 @@ import { type ActionArgs, type Command, openBrowserUrl, sanitizeTerminalText } f
 export class CommandAuthLogin implements Command {
     group = 'auth';
     name = 'login';
-    help = 'Opens a browser to sign in. Keep the terminal open until authentication completes.';
+    help =
+        'Opens a browser to sign in (you can use different device to sign in). Keep the terminal open until authentication completes.';
     isAuthAction = true;
 
     async action({ auth, eventsManager, options: { json } }: ActionArgs) {
@@ -24,7 +25,9 @@ export class CommandAuthLogin implements Command {
                 console.log(
                     'Sign in in your browser. Keep the terminal open. Waiting for authentication to complete...',
                 );
-                console.log('Open following URL manually if browser did not open automatically:');
+                console.log(
+                    'Open following URL manually (can be on another device) if browser did not open automatically:',
+                );
                 console.log(sanitizeTerminalText(signInUrl));
             }
         });
