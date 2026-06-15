@@ -7,6 +7,7 @@ import {
     FileUploader,
     Logger,
     MaybeMissingPhotoNode,
+    NodeEntity,
     NodeOrUid,
     NodeResult,
     NonProtonInvitationOrUid,
@@ -50,6 +51,7 @@ import { makeNodeUid } from './internal/uids';
 import { Telemetry } from './telemetry';
 import {
     convertInternalMissingPhotoNodeIterator,
+    convertInternalNodePromise,
     convertInternalPhotoNode,
     convertInternalPhotoNodeIterator,
     convertInternalPhotoNodePromise,
@@ -290,9 +292,9 @@ export class ProtonDrivePhotosClient {
     /**
      * @returns The root folder to Photos section of the user.
      */
-    async getMyPhotosRootFolder(): Promise<PhotoNode> {
+    async getMyPhotosRootFolder(): Promise<NodeEntity> {
         this.logger.info('Getting my photos root folder');
-        return convertInternalPhotoNodePromise(this.nodes.access.getVolumeRootFolder());
+        return convertInternalNodePromise(this.nodes.access.getVolumeRootFolder());
     }
 
     /**
