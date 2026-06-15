@@ -1,5 +1,9 @@
 # Changelog
 
+## js/v0.17.2 (2026-06-15)
+
+* Fix client crash on getMyPhotosRootFolder call
+
 ## js/v0.17.1 (2026-06-15)
 
 * Support passing own cache instance to the public link client
