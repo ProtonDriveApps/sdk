@@ -259,14 +259,14 @@ internal static class VolumeOperations
 
         Span<byte> sharePassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
         var sharePassphrase = CryptoGenerator.GeneratePassphrase(sharePassphraseBuffer);
-        using var lockedShareKey = rootShareKey.Lock(sharePassphrase);
+        var lockedShareKey = rootShareKey.Lock(sharePassphrase);
 
         var encryptedSharePassphrase = addressKey.EncryptAndSign(sharePassphrase, addressKey, out var sharePassphraseSignature);
 
         Span<byte> folderPassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
         var folderPassphrase = CryptoGenerator.GeneratePassphrase(folderPassphraseBuffer);
 
-        using var lockedFolderKey = rootFolderKey.Lock(folderPassphrase);
+        var lockedFolderKey = rootFolderKey.Lock(folderPassphrase);
 
         var folderPassphraseEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderPassphraseSessionKey);
         var encryptedFolderPassphrase = PgpEncrypter.EncryptAndSign(
@@ -319,14 +319,14 @@ internal static class VolumeOperations
 
         Span<byte> sharePassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
         var sharePassphrase = CryptoGenerator.GeneratePassphrase(sharePassphraseBuffer);
-        using var lockedShareKey = rootShareKey.Lock(sharePassphrase);
+        var lockedShareKey = rootShareKey.Lock(sharePassphrase);
 
         var encryptedSharePassphrase = addressKey.EncryptAndSign(sharePassphrase, addressKey, out var sharePassphraseSignature);
 
         Span<byte> folderPassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
         var folderPassphrase = CryptoGenerator.GeneratePassphrase(folderPassphraseBuffer);
 
-        using var lockedFolderKey = rootFolderKey.Lock(folderPassphrase);
+        var lockedFolderKey = rootFolderKey.Lock(folderPassphrase);
 
         var folderPassphraseEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderPassphraseSessionKey);
         var encryptedFolderPassphrase = PgpEncrypter.EncryptAndSign(
