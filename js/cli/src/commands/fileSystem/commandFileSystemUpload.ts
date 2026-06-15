@@ -2,6 +2,7 @@ import {
     NodeEntity,
     NodeWithSameNameExistsValidationError,
     type ProtonDriveClient,
+    Thumbnail,
     ValidationError,
 } from '@protontech/drive-sdk';
 
@@ -197,7 +198,19 @@ export class CommandFileSystemUpload implements Command {
         let name = item.baseName;
         let newRevisionForNodeUid: string | undefined;
 
-        const thumbnails = ctx.skipThumbnails ? [] : await generateThumbnails(metadata.mediaType || '', item.localPath);
+        let thumbnails: Thumbnail[] = [];
+        if (!ctx.skipThumbnails) {
+            try {
+                thumbnails = await generateThumbnails(metadata.mediaType || '', item.localPath);
+            } catch (error: unknown) {
+                const message = error instanceof Error ? error.message : String(error);
+                throw new ValidationError(
+                    `Failed to generate thumbnails (use --skip-thumbnails to upload without thumbnails): ${message}`,
+                    undefined,
+                    { cause: error },
+                );
+            }
+        }
 
         while (true) {
             const progressTracker = ctx.progress?.trackItem(item.baseName, file.size);
