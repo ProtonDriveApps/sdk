@@ -9,6 +9,7 @@ import {
     type ProtonDriveClient,
     ValidationError,
 } from '@protontech/drive-sdk';
+import { isProtonDocument, isProtonSheet } from '@protontech/drive-sdk/internal/nodes/mediaTypes';
 
 import { type ActionArgs, type Command, getClaimedSize, Options, PathType } from '../../cli';
 import type { CliMetrics } from '../../telemetry';
@@ -46,7 +47,8 @@ type DownloadContext = {
 export class CommandFileSystemDownload implements Command {
     group = 'filesystem';
     name = 'download';
-    help = 'Downloads files and folders. It prompts for conflict resolution unless a strategy option is set.';
+    help =
+        'Downloads files and folders. It prompts for conflict resolution unless a strategy option is set. Proton Docs or Sheets will be skipped.';
     args = ['path...', 'localFolder'];
     options: Options = {
         'conflict-strategy': {
@@ -196,6 +198,11 @@ export class CommandFileSystemDownload implements Command {
         ctx: DownloadContext,
         item: QueueItemFile<{ remoteNode: NodeEntity }>,
     ): Promise<number | false> {
+        // Proton Docs or Sheets doesn't support export to local file yet.
+        if (isProtonDocument(item.remoteNode.mediaType) || isProtonSheet(item.remoteNode.mediaType)) {
+            return false;
+        }
+
         const parentPath = path.dirname(item.localPath);
         let targetPath = item.localPath;
         let name = item.baseName;

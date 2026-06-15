@@ -52,7 +52,7 @@ class TransferQueue<RemoteDataType> {
                     if (completed) {
                         this.recordSuccess(0);
                     } else {
-                        this.recordSkip();
+                        this.recordSkip(item);
                     }
                 } catch (error: unknown) {
                     this.recordFailure(item, error);
@@ -68,7 +68,7 @@ class TransferQueue<RemoteDataType> {
                 .startFile(item)
                 .then((result) => {
                     if (result === false) {
-                        this.recordSkip();
+                        this.recordSkip(item);
                     } else {
                         this.recordSuccess(result);
                     }
@@ -100,8 +100,8 @@ class TransferQueue<RemoteDataType> {
         this.summary.recordSuccess(bytes);
     }
 
-    private recordSkip(): void {
-        this.summary.recordSkip();
+    private recordSkip(item: QueueItem<RemoteDataType>): void {
+        this.summary.recordSkip(item.baseName, getItemUid(item));
     }
 
     private recordFailure(item: QueueItem<RemoteDataType>, error: unknown): void {

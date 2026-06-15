@@ -1,5 +1,10 @@
 import { formatSize, sanitizeTerminalText } from '../../cli/formatters';
 
+type TransferSkip = {
+    name: string;
+    nodeUid?: string;
+};
+
 type TransferFailure = {
     name: string;
     nodeUid?: string;
@@ -9,7 +14,7 @@ type TransferFailure = {
 export class TransferSummary {
     private successCount = 0;
     private transferredBytes = 0;
-    private skippedCount = 0;
+    private skipped: TransferSkip[] = [];
     private queuedCount = 0;
     private readonly failures: TransferFailure[] = [];
 
@@ -28,8 +33,8 @@ export class TransferSummary {
         this.transferredBytes += bytes;
     }
 
-    recordSkip(): void {
-        this.skippedCount++;
+    recordSkip(name: string, nodeUid?: string): void {
+        this.skipped.push({ name, nodeUid });
     }
 
     recordFailure(name: string, error: unknown, nodeUid?: string): void {
@@ -43,8 +48,8 @@ export class TransferSummary {
         if (this.failures.length > 0) {
             parts.push(`Failed ${this.failures.length}`);
         }
-        if (this.skippedCount > 0) {
-            parts.push(`Skipped ${this.skippedCount}`);
+        if (this.skipped.length > 0) {
+            parts.push(`Skipped ${this.skipped.length}`);
         }
         parts.push(`Queued ${this.queuedCount}`);
         return parts.join(' | ');
@@ -56,7 +61,7 @@ export class TransferSummary {
                 JSON.stringify({
                     transferredItems: this.successCount,
                     transferredBytes: this.transferredBytes,
-                    skippedItems: this.skippedCount,
+                    skippedItems: this.skipped.length,
                     failedItems: this.failures.length,
                     failures: this.failures,
                 }),
@@ -69,8 +74,12 @@ export class TransferSummary {
         const verb = this.operation === 'upload' ? 'Uploaded' : 'Downloaded';
         console.log(`  ${verb}: ${this.successCount} items (${formatSize(this.transferredBytes, true)})`);
 
-        if (this.skippedCount > 0) {
-            console.log(`  Skipped: ${this.skippedCount} items`);
+        if (this.skipped.length > 0) {
+            console.log(`  Skipped: ${this.skipped.length} items`);
+            for (const skip of this.skipped) {
+                const uidPart = skip.nodeUid ? ` (${skip.nodeUid})` : '';
+                console.log(`  - ${sanitizeTerminalText(skip.name)}${uidPart}`);
+            }
         }
 
         if (this.failures.length > 0) {
