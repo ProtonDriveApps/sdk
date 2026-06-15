@@ -1,5 +1,9 @@
 # Changelog
 
+## js/v0.17.1 (2026-06-15)
+
+* Support passing own cache instance to the public link client
+
 ## js/v0.17.0 (2026-06-11)
 
 * Avoid using arrayBuffer method
