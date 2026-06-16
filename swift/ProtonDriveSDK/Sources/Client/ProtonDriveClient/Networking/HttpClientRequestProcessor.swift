@@ -243,9 +243,15 @@ enum HttpClientRequestProcessor {
             headers: headers,
             downloadStreamCreator: client.configuration.downloadStreamCreator
         ).get()
-        
-        let bytesOrStream = BoxedStreamingData(downloadStream: response.stream, logger: client.logger)
-        let bindingsHandle = CallbackHandleRegistry.shared.register(bytesOrStream, scope: .ownerManaged, owner: provider)
+
+        let boxedStreamingData: BoxedStreamingData
+        switch response.source {
+        case let .stream(stream):
+            boxedStreamingData = BoxedStreamingData(downloadStream: stream, logger: client.logger)
+        case let .file(fileHandle):
+            boxedStreamingData = BoxedStreamingData(downloadFileHandle: fileHandle, logger: client.logger)
+        }
+        let bindingsHandle = CallbackHandleRegistry.shared.register(boxedStreamingData, scope: .ownerManaged, owner: provider)
         let httpResponse = Proton_Sdk_HttpResponse.with {
             $0.headers = response.headers.map { header in
                 Proton_Sdk_HttpHeader.with {

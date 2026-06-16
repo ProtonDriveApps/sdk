@@ -15,7 +15,7 @@ public final class ProtonDriveSDKDriveError: Error, LocalizedError {
     }
 
     public var errorDescription: String? {
-        var desc: [String] = [message, innerError?.localizedDescription].compactMap { $0 }
+        let desc: [String] = [message, innerError?.localizedDescription].compactMap { $0 }
         return desc.joined(separator: ", ")
     }
 }

@@ -41,16 +41,21 @@ public struct HttpClientResponse {
 }
 
 public struct HttpClientStream {
-    public let stream: AnyAsyncSequence<UInt8>
+    public let source: StreamingSource
     public let headers: [(String, [String])]
     public let statusCode: Int
 
+    public enum StreamingSource {
+      case stream(AnyAsyncSequence<UInt8>)
+      case file(FileHandle)
+    }
+
     public init(
-        stream: AnyAsyncSequence<UInt8>,
+        source: StreamingSource,
         headers: [(String, [String])],
         statusCode: Int
     ) {
-        self.stream = stream
+        self.source = source
         self.headers = headers
         self.statusCode = statusCode
     }
