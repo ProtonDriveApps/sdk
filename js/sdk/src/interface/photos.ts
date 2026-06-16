@@ -13,7 +13,7 @@ export type MaybeMissingPhotoNode = PhotoNode | MissingNode;
  * See `NodeEntity` for more information.
  */
 export type PhotoNode = NodeEntity & {
-    type: NodeType.Photo | NodeType.Album;
+    type: NodeType.Photo | NodeType.Album | NodeType.Folder;
     photo?: PhotoAttributes;
     album?: AlbumAttributes;
 };

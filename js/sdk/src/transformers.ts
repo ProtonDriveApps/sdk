@@ -139,7 +139,7 @@ export async function convertInternalPhotoNodePromise(
 
 export function convertInternalPhotoNode(photoNode: InternalPartialPhotoNode): PublicPhotoNode {
     const node = convertInternalNode(photoNode);
-    if (photoNode.type !== NodeType.Photo && photoNode.type !== NodeType.Album) {
+    if (photoNode.type !== NodeType.Photo && photoNode.type !== NodeType.Album && photoNode.type !== NodeType.Folder) {
         throw new TypeError(`Invalid photo node type: ${photoNode.type}`);
     }
     return {
