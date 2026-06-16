@@ -28,8 +28,9 @@ enum HttpClientResponseProcessor {
                 )
                 return
             }
-            
-            if let boxedRawBuffer = boxedStreamingData.uploadBuffer {
+
+            switch boxedStreamingData.data {
+            case let .upload(boxedRawBuffer):
                 await HttpClientResponseProcessor.passResponseBytes(
                     boxedRawBuffer: boxedRawBuffer,
                     buffer: buffer,
@@ -39,7 +40,7 @@ enum HttpClientResponseProcessor {
                         CallbackHandleRegistry.shared.remove(statePointer)
                     }
                 )
-            } else if let boxedDownloadStream = boxedStreamingData.downloadStream {
+            case let .download(boxedDownloadStream):
                 await HttpClientResponseProcessor.passStream(
                     boxedDownloadStream: boxedDownloadStream,
                     buffer: buffer,
@@ -49,10 +50,6 @@ enum HttpClientResponseProcessor {
                         CallbackHandleRegistry.shared.remove(statePointer)
                     }
                 )
-            } else {
-                CallbackHandleRegistry.shared.remove(statePointer)
-                SDKResponseHandler.sendInteropErrorToSDK(message: "Failed to pass valid BytesOrStream",
-                                                         callbackPointer: callbackPointer)
             }
         }
     }
