@@ -1,5 +1,9 @@
 # Changelog
 
+## js/v0.17.3 (2026-06-16)
+
+* Fix photo node type
+
 ## js/v0.17.2 (2026-06-15)
 
 * Fix client crash on getMyPhotosRootFolder call
