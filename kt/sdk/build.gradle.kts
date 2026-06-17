@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.protobuf)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
-    kotlin("kapt")
+    alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.maven.publish)
     id("signing")
@@ -97,10 +97,14 @@ dependencies {
         exclude("me.proton.core", "presentation")
     }
     androidTestImplementation(libs.core.observability.dagger)
+    androidTestImplementation(libs.core.configuration.dagger.content.resolver)
+    androidTestImplementation(libs.core.configuration.data)
+    androidTestImplementation(libs.androidx.hilt.work)
+    androidTestImplementation(libs.androidx.work.runtime.ktx)
     androidTestImplementation(libs.dagger.hilt.android.testing)
     androidTestImplementation(libs.dagger.hilt.android)
-    kaptAndroidTest(libs.dagger.hilt.android.compiler)
-    kaptAndroidTest(libs.androidx.room.compiler)
+    kspAndroidTest(libs.dagger.hilt.android.compiler)
+    kspAndroidTest(libs.androidx.room.compiler)
     androidTestImplementation(libs.core.dataRoom)
     androidTestImplementation(libs.core.test.kotlin)
     androidTestImplementation(libs.core.test.quark)
@@ -165,7 +169,7 @@ tasks.register<Copy>("copyProto") {
 }
 
 tasks.named { name ->
-    name.matches("generate.*Proto".toRegex())
+    name.matches("(generate|process).*Proto.*".toRegex())
 }.configureEach { dependsOn("copyProto") }
 
 tasks.named { name -> name == "javaDocReleaseGeneration" }.configureEach {
