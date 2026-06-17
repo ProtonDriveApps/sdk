@@ -35,10 +35,11 @@ describe('DriveCryptoCacheAdapter', () => {
         expect(out).toEqual({});
     });
 
-    it('round-trips nodeKeys with optional contentKeyPacketSessionKey and hashKey', async () => {
+    it('round-trips nodeKeys with optional contentKeyPacket, contentKeyPacketSessionKey and hashKey', async () => {
         const key = await generatePrivateKey();
         const passphraseSessionKey = await generateSessionKey(key);
         const contentKeyPacketSessionKey = await generateSessionKey(key);
+        const contentKeyPacket = new Uint8Array(Array.from({ length: 64 }, (_, i) => i + 1));
         const hashKey = new Uint8Array(Array.from({ length: 32 }, (_, i) => i));
 
         const value: CachedCryptoMaterial = {
@@ -46,6 +47,7 @@ describe('DriveCryptoCacheAdapter', () => {
                 passphrase: 'node-pass',
                 key,
                 passphraseSessionKey,
+                contentKeyPacket,
                 contentKeyPacketSessionKey,
                 hashKey,
             },
@@ -57,6 +59,7 @@ describe('DriveCryptoCacheAdapter', () => {
         expect(out.nodeKeys?.passphrase).toBe('node-pass');
         await expectSamePrivateKeys(value.nodeKeys!.key, out.nodeKeys!.key);
         expectSameSessionKeys(passphraseSessionKey, out.nodeKeys!.passphraseSessionKey);
+        expect(Buffer.from(out.nodeKeys!.contentKeyPacket!).equals(Buffer.from(contentKeyPacket))).toBe(true);
         expectSameSessionKeys(contentKeyPacketSessionKey, out.nodeKeys!.contentKeyPacketSessionKey!);
         expect(Buffer.from(out.nodeKeys!.hashKey!).equals(Buffer.from(hashKey))).toBe(true);
     });

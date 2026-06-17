@@ -175,6 +175,28 @@ export class UploadAPIService {
         };
     }
 
+    async getVerificationDataForExistingSmallFile(nodeUid: string): Promise<{
+        base64ContentKeyPacket: string;
+    }> {
+        const { volumeId, nodeId } = splitNodeUid(nodeUid);
+        const result = await this.apiService.post<PostLoadLinksMetadataRequest, PostLoadLinksMetadataResponse>(
+            `drive/v2/volumes/${volumeId}/links`,
+            {
+                LinkIDs: [nodeId],
+            },
+        );
+        if (result.Links.length === 0) {
+            throw new Error('Content key packet for node not found');
+        }
+        const base64ContentKeyPacket = result.Links[0].File?.ContentKeyPacket;
+        if (!base64ContentKeyPacket) {
+            throw new Error('Content key packet not set');
+        }
+        return {
+            base64ContentKeyPacket,
+        };
+    }
+
     async requestBlockUpload(
         draftNodeRevisionUid: string,
         addressId: string | AnonymousUser,
@@ -363,9 +385,7 @@ export class UploadAPIService {
             ContentKeyPacketSignature: metadata.armoredContentKeyPacketSignature,
             ManifestSignature: content.armoredManifestSignature,
             ContentBlockEncSignature: content.block ? content.block.armoredSignature : null,
-            ContentBlockVerificationToken: content.block
-                ? content.block.verificationToken.toBase64()
-                : null,
+            ContentBlockVerificationToken: content.block ? content.block.verificationToken.toBase64() : null,
             XAttr: metadata.armoredExtendedAttributes,
             ChecksumVerified: content.checksumVerified || false,
             Photo: null, // TODO
@@ -431,9 +451,7 @@ export class UploadAPIService {
             SignatureEmail: metadata.signatureEmail,
             ManifestSignature: content.armoredManifestSignature,
             ContentBlockEncSignature: content.block ? content.block.armoredSignature : null,
-            ContentBlockVerificationToken: content.block
-                ? content.block.verificationToken.toBase64()
-                : null,
+            ContentBlockVerificationToken: content.block ? content.block.verificationToken.toBase64() : null,
             XAttr: metadata.armoredExtendedAttributes,
             ChecksumVerified: content.checksumVerified || false,
         };

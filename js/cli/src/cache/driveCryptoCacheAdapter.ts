@@ -1,7 +1,7 @@
 import { CryptoProxy, type SessionKey } from '@protontech/crypto';
 import type { CachedCryptoMaterial, EntityResult, ProtonDriveCache } from '@protontech/drive-sdk';
 
-const VERSION = 1;
+const VERSION = 2;
 
 type SerializedCachedCryptoMaterial = {
     v: typeof VERSION;
@@ -9,6 +9,7 @@ type SerializedCachedCryptoMaterial = {
         passphrase: string;
         armoredPrivateKey: string;
         passphraseSessionKey: SerializedSessionKey;
+        contentKeyPacket?: string;
         contentKeyPacketSessionKey?: SerializedSessionKey;
         hashKeyBase64?: string;
     };
@@ -96,6 +97,7 @@ async function serializeCachedCryptoMaterial(value: CachedCryptoMaterial): Promi
                 passphrase: null,
             }),
             passphraseSessionKey: serializeSessionKey(nk.passphraseSessionKey),
+            ...(nk.contentKeyPacket ? { contentKeyPacket: Buffer.from(nk.contentKeyPacket).toString('base64') } : {}),
             ...(nk.contentKeyPacketSessionKey
                 ? { contentKeyPacketSessionKey: serializeSessionKey(nk.contentKeyPacketSessionKey) }
                 : {}),
@@ -144,6 +146,9 @@ async function deserializeCachedCryptoMaterial(json: string): Promise<CachedCryp
                 passphrase: null,
             }),
             passphraseSessionKey: deserializeSessionKey(nk.passphraseSessionKey),
+            ...(nk.contentKeyPacket
+                ? { contentKeyPacket: new Uint8Array(Buffer.from(nk.contentKeyPacket, 'base64')) }
+                : {}),
             ...(nk.contentKeyPacketSessionKey
                 ? { contentKeyPacketSessionKey: deserializeSessionKey(nk.contentKeyPacketSessionKey) }
                 : {}),

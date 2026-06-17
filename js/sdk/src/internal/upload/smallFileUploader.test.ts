@@ -2,6 +2,7 @@ import { IntegrityError } from '../../errors';
 import { Thumbnail, ThumbnailType, UploadMetadata } from '../../interface';
 import { mergeUint8Arrays } from '../utils';
 import { UploadAPIService } from './apiService';
+import { SmallFileBlockVerifier } from './blockVerifier';
 import { UploadCryptoService } from './cryptoService';
 import { NodeCrypto } from './interface';
 import { UploadManager } from './manager';
@@ -47,6 +48,7 @@ describe('SmallFileUploader', () => {
     let apiService: jest.Mocked<UploadAPIService>;
     let cryptoService: jest.Mocked<UploadCryptoService>;
     let uploadManager: jest.Mocked<UploadManager>;
+    let blockVerifier: jest.Mocked<SmallFileBlockVerifier>;
     let metadata: UploadMetadata;
     let onFinish: jest.Mock;
     let abortController: AbortController;
@@ -112,7 +114,6 @@ describe('SmallFileUploader', () => {
                 hashPromise: Promise.resolve(new Uint8Array(32).fill(thumbnail.type)),
             })),
             encryptBlock: jest.fn().mockImplementation(mockEncryptBlock),
-            verifyBlock: jest.fn().mockResolvedValue({ verificationToken: MOCK_VERIFICATION_TOKEN }),
             commitFile: jest.fn().mockResolvedValue({
                 armoredManifestSignature: 'mockManifestSignature',
                 armoredExtendedAttributes: 'mockExtendedAttributes',
@@ -126,6 +127,12 @@ describe('SmallFileUploader', () => {
                 nodeRevisionUid: 'nodeRevisionUid',
             }),
         } as unknown as jest.Mocked<UploadManager>;
+
+        // @ts-expect-error No need to implement all methods for mocking
+        blockVerifier = {
+            loadVerificationDataForNewSmallFile: jest.fn().mockResolvedValue(undefined),
+            verifyBlock: jest.fn().mockResolvedValue({ verificationToken: MOCK_VERIFICATION_TOKEN }),
+        };
 
         metadata = {
             expectedSize: 3,
@@ -141,6 +148,7 @@ describe('SmallFileUploader', () => {
             telemetry,
             cryptoService,
             uploadManager,
+            blockVerifier,
             metadata,
             onFinish,
             abortController.signal,
@@ -204,7 +212,13 @@ describe('SmallFileUploader', () => {
                 ],
             );
 
+            expect(blockVerifier.loadVerificationDataForNewSmallFile).toHaveBeenCalledWith(
+                mockNodeCrypto.nodeKeys.decrypted.key,
+                mockNodeCrypto.contentKey.encrypted.contentKeyPacket,
+            );
             expect(cryptoService.encryptBlock).toHaveBeenCalledTimes(1);
+            expect(blockVerifier.verifyBlock).toHaveBeenCalledTimes(1);
+            expect(blockVerifier.verifyBlock).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]));
             expect(cryptoService.encryptThumbnail).toHaveBeenCalledTimes(2);
             expect(cryptoService.commitFile).toHaveBeenCalledWith(
                 expect.anything(),
@@ -231,6 +245,8 @@ describe('SmallFileUploader', () => {
                 new Uint8Array(content),
                 0,
             );
+            expect(blockVerifier.verifyBlock).toHaveBeenCalledTimes(1);
+            expect(blockVerifier.verifyBlock).toHaveBeenCalledWith(new Uint8Array(content));
         });
 
         it('should pass each thumbnail to crypto.encryptThumbnail with nodeKeys', async () => {
@@ -317,6 +333,7 @@ describe('SmallFileUploader', () => {
 
             expect(result).toEqual({ nodeUid: 'nodeUid', nodeRevisionUid: 'nodeRevisionUid' });
             expect(cryptoService.encryptBlock).not.toHaveBeenCalled();
+            expect(blockVerifier.verifyBlock).not.toHaveBeenCalled();
             expect(uploadManager.uploadFile).toHaveBeenCalledWith(
                 parentFolderUid,
                 mockNodeCrypto,
@@ -344,6 +361,7 @@ describe('SmallFileRevisionUploader', () => {
     let apiService: jest.Mocked<UploadAPIService>;
     let cryptoService: jest.Mocked<UploadCryptoService>;
     let uploadManager: jest.Mocked<UploadManager>;
+    let blockVerifier: jest.Mocked<SmallFileBlockVerifier>;
     let metadata: UploadMetadata;
     let onFinish: jest.Mock;
     let abortController: AbortController;
@@ -390,30 +408,37 @@ describe('SmallFileRevisionUploader', () => {
                 encryptedSize: thumbnail.thumbnail.length + 100,
                 hash: 'thumbnailHash',
             })),
-            encryptBlock: jest.fn().mockImplementation(
-                async (
-                    verifyBlock: (b: Uint8Array) => Promise<{ verificationToken: Uint8Array }>,
-                    _: unknown,
-                    block: Uint8Array,
-                ) => {
-                    await verifyBlock(block);
-                    return {
-                        index: 0,
-                        encryptedData: block,
-                        armoredSignature: 'mockBlockSignature',
-                        verificationToken: MOCK_VERIFICATION_TOKEN,
-                        originalSize: block.length,
-                        encryptedSize: block.length + 100,
-                        hash: 'blockHash',
-                        hashPromise: Promise.resolve(MOCK_BLOCK_HASH),
-                    };
-                },
-            ),
-            verifyBlock: jest.fn().mockResolvedValue({ verificationToken: MOCK_VERIFICATION_TOKEN }),
+            encryptBlock: jest
+                .fn()
+                .mockImplementation(
+                    async (
+                        verifyBlock: (b: Uint8Array) => Promise<{ verificationToken: Uint8Array }>,
+                        _: unknown,
+                        block: Uint8Array,
+                    ) => {
+                        await verifyBlock(block);
+                        return {
+                            index: 0,
+                            encryptedData: block,
+                            armoredSignature: 'mockBlockSignature',
+                            verificationToken: MOCK_VERIFICATION_TOKEN,
+                            originalSize: block.length,
+                            encryptedSize: block.length + 100,
+                            hash: 'blockHash',
+                            hashPromise: Promise.resolve(MOCK_BLOCK_HASH),
+                        };
+                    },
+                ),
             commitFile: jest.fn().mockResolvedValue({
                 armoredManifestSignature: 'mockManifestSignature',
                 armoredExtendedAttributes: 'mockExtendedAttributes',
             }),
+        };
+
+        // @ts-expect-error No need to implement all methods for mocking
+        blockVerifier = {
+            loadVerificationDataForExistingSmallFile: jest.fn().mockResolvedValue(undefined),
+            verifyBlock: jest.fn().mockResolvedValue({ verificationToken: MOCK_VERIFICATION_TOKEN }),
         };
 
         uploadManager = {
@@ -438,6 +463,7 @@ describe('SmallFileRevisionUploader', () => {
             telemetry,
             cryptoService,
             uploadManager,
+            blockVerifier,
             metadata,
             onFinish,
             abortController.signal,
@@ -452,7 +478,10 @@ describe('SmallFileRevisionUploader', () => {
         const result = await uploader.upload(stream, [], undefined);
 
         expect(result).toEqual({ nodeUid: 'nodeUid', nodeRevisionUid: 'nodeRevisionUid' });
+        expect(blockVerifier.loadVerificationDataForExistingSmallFile).toHaveBeenCalledWith(nodeUid, mockNodeKeys.key);
         expect(cryptoService.encryptBlock).toHaveBeenCalledWith(expect.any(Function), expect.anything(), Uint8Array.from([1, 2, 3]), 0);
+        expect(blockVerifier.verifyBlock).toHaveBeenCalledTimes(1);
+        expect(blockVerifier.verifyBlock).toHaveBeenCalledWith(Uint8Array.from([1, 2, 3]));
         expect(uploadManager.getExistingFileNodeCrypto).toHaveBeenCalledWith(nodeUid);
         expect(uploadManager.uploadSmallRevision).toHaveBeenCalledWith(
             nodeUid,
@@ -479,6 +508,7 @@ describe('SmallFileRevisionUploader', () => {
 
         expect(result).toEqual({ nodeUid: 'nodeUid', nodeRevisionUid: 'nodeRevisionUid' });
         expect(cryptoService.encryptBlock).not.toHaveBeenCalled();
+        expect(blockVerifier.verifyBlock).not.toHaveBeenCalled();
         expect(uploadManager.uploadSmallRevision).toHaveBeenCalledWith(
             nodeUid,
             mockNodeKeys,
