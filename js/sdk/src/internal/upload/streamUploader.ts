@@ -278,6 +278,10 @@ export class StreamUploader {
         }
 
         for (const thumbnail of thumbnails) {
+            if (thumbnail.thumbnail.length === 0) {
+                throw new Error(`Thumbnail content must not be empty`);
+            }
+
             if (this.isUploadAborted) {
                 break;
             }
