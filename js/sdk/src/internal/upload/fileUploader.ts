@@ -1,6 +1,6 @@
 import { Thumbnail, UploadMetadata } from '../../interface';
 import { UploadAPIService } from './apiService';
-import { BlockVerifier } from './blockVerifier';
+import { BlockVerifier, SmallFileBlockVerifier } from './blockVerifier';
 import { UploadController } from './controller';
 import { UploadCryptoService } from './cryptoService';
 import { NodeRevisionDraft } from './interface';
@@ -220,10 +220,12 @@ export class FileUploader extends Uploader {
         thumbnails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,
     ): Promise<{ nodeRevisionUid: string; nodeUid: string }> {
+        const blockVerifier = new SmallFileBlockVerifier(this.apiService, this.cryptoService);
         const uploader = new SmallFileUploader(
             this.telemetry,
             this.cryptoService,
             this.manager,
+            blockVerifier,
             this.metadata,
             this.onFinish,
             this.signal,
@@ -290,10 +292,12 @@ export class FileRevisionUploader extends Uploader {
         thumbnails: Thumbnail[],
         onProgress?: (uploadedBytes: number) => void,
     ): Promise<{ nodeRevisionUid: string; nodeUid: string }> {
+        const blockVerifier = new SmallFileBlockVerifier(this.apiService, this.cryptoService);
         const uploader = new SmallFileRevisionUploader(
             this.telemetry,
             this.cryptoService,
             this.manager,
+            blockVerifier,
             this.metadata,
             this.onFinish,
             this.signal,

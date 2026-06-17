@@ -4,7 +4,7 @@ import { Logger, Thumbnail, ThumbnailType, UploadMetadata } from '../../interfac
 import { getErrorMessage } from '../errors';
 import { generateFileExtendedAttributes } from '../nodes';
 import { mergeUint8Arrays } from '../utils';
-import { verifyBlockWithContentKey } from './blockVerifier';
+import { SmallFileBlockVerifier } from './blockVerifier';
 import { UploadCryptoService } from './cryptoService';
 import { UploadDigests } from './digests';
 import { NodeCrypto } from './interface';
@@ -32,6 +32,7 @@ abstract class SmallUploader {
         protected telemetry: UploadTelemetry,
         protected cryptoService: UploadCryptoService,
         protected manager: UploadManager,
+        protected blockVerifier: SmallFileBlockVerifier,
         protected metadata: UploadMetadata,
         protected onFinish: () => void,
         protected signal: AbortSignal | undefined,
@@ -185,13 +186,7 @@ abstract class SmallUploader {
             attempt++;
             try {
                 encrypted = await this.cryptoService.encryptBlock(
-                    (encryptedBlock) =>
-                        verifyBlockWithContentKey(
-                            this.cryptoService,
-                            nodeKeys.contentKeyPacket,
-                            nodeKeys.contentKeyPacketSessionKey,
-                            encryptedBlock,
-                        ),
+                    (encryptedBlock) => this.blockVerifier.verifyBlock(encryptedBlock),
                     nodeKeys,
                     content,
                     0,
@@ -287,13 +282,14 @@ export class SmallFileUploader extends SmallUploader {
         telemetry: UploadTelemetry,
         cryptoService: UploadCryptoService,
         manager: UploadManager,
+        blockVerifier: SmallFileBlockVerifier,
         metadata: UploadMetadata,
         onFinish: () => void,
         signal: AbortSignal | undefined,
         private parentFolderUid: string,
         private name: string,
     ) {
-        super(telemetry, cryptoService, manager, metadata, onFinish, signal);
+        super(telemetry, cryptoService, manager, blockVerifier, metadata, onFinish, signal);
         this.parentFolderUid = parentFolderUid;
         this.name = name;
     }
@@ -316,6 +312,7 @@ export class SmallFileUploader extends SmallUploader {
             contentKeyPacketSessionKey: nodeCrypto.contentKey.decrypted.contentKeyPacketSessionKey,
             signingKeys: nodeCrypto.signingKeys,
         };
+        await this.blockVerifier.loadVerificationDataForNewSmallFile(nodeKeys.key, nodeKeys.contentKeyPacket);
         const payloads = await this.buildPayloads(nodeKeys, stream, thumbnails);
         return this.manager.uploadFile(
             this.parentFolderUid,
@@ -337,12 +334,13 @@ export class SmallFileRevisionUploader extends SmallUploader {
         telemetry: UploadTelemetry,
         cryptoService: UploadCryptoService,
         manager: UploadManager,
+        blockVerifier: SmallFileBlockVerifier,
         metadata: UploadMetadata,
         onFinish: () => void,
         signal: AbortSignal | undefined,
         private nodeUid: string,
     ) {
-        super(telemetry, cryptoService, manager, metadata, onFinish, signal);
+        super(telemetry, cryptoService, manager, blockVerifier, metadata, onFinish, signal);
         this.nodeUid = nodeUid;
     }
 
@@ -358,6 +356,7 @@ export class SmallFileRevisionUploader extends SmallUploader {
         nodeRevisionUid: string;
     }> {
         const nodeKeys = await this.manager.getExistingFileNodeCrypto(this.nodeUid);
+        await this.blockVerifier.loadVerificationDataForExistingSmallFile(this.nodeUid, nodeKeys.key);
         const payloads = await this.buildPayloads(nodeKeys, stream, thumbnails);
         return this.manager.uploadSmallRevision(
             this.nodeUid,
