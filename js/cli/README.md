@@ -28,6 +28,15 @@ bun run build
 
 This produces a standalone executable at **`release/proton-drive`** with embedded Bun. Add that directory to your `PATH`, or invoke it with a full path.
 
+To build a plain JS bundle using a system-installed Bun instead:
+
+```bash
+cd ../sdk && bun install
+cd ../cli && bun run build:bundle
+```
+
+This produces `release/proton-drive.js`. You are responsible for providing a wrapper to invoke it, e.g. `exec bun /path/to/proton-drive.js "$@"`.
+
 ## Authentication
 
 Sign-in uses the browser (no password on the command line):
