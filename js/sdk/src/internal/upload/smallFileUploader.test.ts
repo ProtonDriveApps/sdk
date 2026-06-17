@@ -253,6 +253,16 @@ describe('SmallFileUploader', () => {
             );
         });
 
+        it('should throw when thumbnail content is empty', async () => {
+            const uploader = createUploader();
+            const stream = createStream([1, 2, 3]);
+            const thumbnails: Thumbnail[] = [{ type: ThumbnailType.Type1, thumbnail: new Uint8Array(0) }];
+
+            await expect(uploader.upload(stream, thumbnails, undefined)).rejects.toThrow(
+                'Thumbnail content must not be empty',
+            );
+        });
+
         it('should call commitFile with manifest and extended attributes', async () => {
             const uploader = createUploader();
             const stream = createStream([1, 2, 3]);

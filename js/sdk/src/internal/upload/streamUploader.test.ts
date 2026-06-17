@@ -302,6 +302,13 @@ describe('StreamUploader', () => {
             await verifyOnProgress([thumbnailSize]);
         });
 
+        it('should throw when thumbnail content is empty', async () => {
+            thumbnails = [{ type: ThumbnailType.Type1, thumbnail: new Uint8Array(0) }];
+
+            await verifyFailure('Thumbnail content must not be empty', 0);
+            expect(cryptoService.encryptThumbnail).not.toHaveBeenCalled();
+        });
+
         it('should handle failure when encrypting thumbnails', async () => {
             cryptoService.encryptThumbnail = jest.fn().mockImplementation(async function () {
                 throw new Error('Failed to encrypt thumbnail');

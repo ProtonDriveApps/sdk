@@ -146,6 +146,9 @@ abstract class SmallUploader {
     > {
         const result = [];
         for (const thumbnail of thumbnails) {
+            if (thumbnail.thumbnail.length === 0) {
+                throw new Error(`Thumbnail content must not be empty`);
+            }
             this.logger.debug(`Encrypting thumbnail ${thumbnail.type}`);
             const enc = await this.cryptoService.encryptThumbnail(nodeKeys, thumbnail);
             result.push({
