@@ -12,7 +12,7 @@ import java.time.Instant
 interface ProtonDriveClient : ProtonSdkClient {
     suspend fun getAvailableName(parentFolderUid: NodeUid, name: String): String
     suspend fun rename(nodeUid: NodeUid, name: String, mediaType: String? = null)
-    suspend fun createFolder(parentFolderUid: NodeUid, name: String, lastModification: Instant? = null): FolderNode
+    suspend fun createFolder(parentFolderUid: NodeUid, name: String, lastModificationTime: Instant? = null): FolderNode
     suspend fun getMyFilesFolder(): FolderNode
     fun enumerateFolderChildren(folderUid: NodeUid): Flow<Node>
     suspend fun downloader(request: FileDownloaderRequest): Downloader
