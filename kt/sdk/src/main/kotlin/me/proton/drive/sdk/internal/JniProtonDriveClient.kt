@@ -1,6 +1,7 @@
 package me.proton.drive.sdk.internal
 
 import com.google.protobuf.Any
+import com.google.protobuf.kotlin.toByteString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
 import me.proton.drive.sdk.converter.NodeConverter
@@ -24,7 +25,6 @@ import proton.drive.sdk.request
 import proton.sdk.ProtonSdk
 import proton.sdk.ProtonSdk.HttpResponse
 import proton.sdk.telemetry
-
 
 class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
 
@@ -54,7 +54,7 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
             featureEnabled = onFeatureEnabled,
             coroutineScopeProvider = { coroutineScope },
         )
-    }, requestBuilder = { client ->
+    }, requestBuilder = { _ ->
         request {
             driveClientCreate = driveClientCreateRequest {
                 baseUrl = request.baseUrl
@@ -71,11 +71,13 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
                     recordMetricAction = ProtonDriveSdkNativeClient.getRecordMetricPointer()
                 }
                 featureEnabledFunction = ProtonDriveSdkNativeClient.getFeatureEnabledPointer()
+                request.secretCacheEncryptionKey?.let { secretCacheEncryptionKey = it.toByteString() }
                 clientOptions = protonDriveClientOptions {
                     request.bindingsLanguage?.let { bindingsLanguage = it }
                     request.uid?.let { uid = it }
                     request.apiCallTimeout?.let { apiCallTimeout = it }
                     request.storageCallTimeout?.let { storageCallTimeout = it }
+                    request.blockTransferParallelism?.let { blockTransferParallelism = it }
                 }
             }
         }

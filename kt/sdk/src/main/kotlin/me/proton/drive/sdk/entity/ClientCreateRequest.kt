@@ -11,4 +11,6 @@ data class ClientCreateRequest(
     val uid: String? = null,
     val apiCallTimeout: Int? = null,
     val storageCallTimeout: Int? = null,
+    val blockTransferParallelism: Int? = null,
+    val secretCacheEncryptionKey: ByteArray? = null,
 )

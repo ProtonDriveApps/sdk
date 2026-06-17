@@ -73,6 +73,7 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
                     request.uid?.let { uid = it }
                     request.apiCallTimeout?.let { apiCallTimeout = it }
                     request.storageCallTimeout?.let { storageCallTimeout = it }
+                    request.blockTransferParallelism?.let { blockTransferParallelism = it }
                 }
             }
         }
@@ -150,7 +151,7 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
 
     suspend fun emptyTrash(
         request: ProtonDriveSdk.DrivePhotosClientEmptyTrashRequest,
-    ) = executeOnce("emptyTrash", UnitResponseCallback) {
+    ): Unit = executeOnce("emptyTrash", UnitResponseCallback) {
         drivePhotosClientEmptyTrash = request
     }
 
