@@ -15,6 +15,7 @@ dist
 
 # JS CLI
 cli/release
+internal/cli/js/release
 auth.txt
 auth-session.json
 cache*.sqlite

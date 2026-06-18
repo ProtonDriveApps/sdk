@@ -5,16 +5,28 @@ import { execFileSync } from 'node:child_process';
 
 const GIT_ROOT = path.resolve(import.meta.dir, '../..');
 
-const mode = process.argv[2] === 'internal' ? 'internal' : 'main';
+let target = 'bun';
+let entry = 'src/proton-drive.ts';
 
-const target = process.argv[3] || 'bun';
-let outfileArchitecture = '';
-if (target.startsWith('bun-')) {
-    outfileArchitecture   = '/' + target.slice(4);
+const arg2 = process.argv[2];
+const arg3 = process.argv[3];
+
+if (arg2?.endsWith('.ts') && arg3) {
+    entry = arg2;
+    target = arg3;
+} else if (arg2?.endsWith('.ts')) {
+    entry = arg2;
+} else if (arg2) {
+    target = arg2;
 }
 
-const entry = mode === 'internal' ? 'src/internal-cli/proton-drive-internal.ts' : 'src/proton-drive.ts';
-const outfile = mode === 'internal' ? `release${outfileArchitecture}/proton-drive-internal` : `release${outfileArchitecture}/proton-drive`;
+let outfileArchitecture = '';
+if (target.startsWith('bun-')) {
+    outfileArchitecture = '/' + target.slice(4);
+}
+
+const entryName = path.basename(entry).replace('.ts', '');
+const outfile = `release${outfileArchitecture}/${entryName}`;
 
 const args = [
     'build',

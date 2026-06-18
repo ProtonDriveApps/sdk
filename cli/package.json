@@ -4,16 +4,14 @@
     "version": "0.0.1",
     "main": "dist/main.js",
     "scripts": {
-        "build": "bun ./scripts/build-cli.mjs main",
-        "build:internal": "bun ./scripts/build-cli.mjs internal",
+        "build": "bun ./scripts/build-cli.mjs",
         "check-types": "tsc --noEmit",
         "generate-types": "bunx openapi-typescript ../../api/openapi-core.json -o ./src/api/api-core-types.ts && bunx openapi-typescript ../../api/openapi-auth.json -o ./src/api/api-auth-types.ts",
         "generate-metric-schemas": "bun ./scripts/generate-metric-schemas.ts",
-        "lint": "eslint src integration-tests --ext .ts --cache --ignore-pattern '**/api/*-types.ts'",
-        "pretty": "prettier --write $(find src integration-tests -type f -name '*.ts')",
+        "lint": "eslint src --ext .ts --cache --ignore-pattern '**/api/*-types.ts'",
+        "pretty": "prettier --write $(find src -type f -name '*.ts')",
         "test": "jest src",
-        "test:watch": "jest src --watch --coverage=false",
-        "test:integration": "jest integration-tests"
+        "test:watch": "jest src --watch --coverage=false"
     },
     "devDependencies": {
         "@swc/core": "^1.12.3",
