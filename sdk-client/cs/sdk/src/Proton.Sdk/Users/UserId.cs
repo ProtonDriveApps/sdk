@@ -8,18 +8,20 @@ public readonly record struct UserId : IStrongId<UserId>
 {
     private readonly string? _value;
 
-    internal UserId(string? value)
+    internal UserId(string value)
     {
+        ArgumentException.ThrowIfNullOrEmpty(value);
+
         _value = value;
     }
 
-    public static explicit operator UserId(string? value)
+    public static explicit operator UserId(string value)
     {
         return new UserId(value);
     }
 
     public override string ToString()
     {
-        return _value ?? string.Empty;
+        return !string.IsNullOrEmpty(_value) ? _value : throw new InvalidOperationException("ID is not initialized");
     }
 }

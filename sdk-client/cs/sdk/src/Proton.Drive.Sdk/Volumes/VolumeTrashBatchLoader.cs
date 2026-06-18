@@ -33,7 +33,7 @@ internal sealed class VolumeTrashBatchLoader(ProtonDriveClient client, VolumeId 
                         .ConfigureAwait(false);
 
                     // FIXME: This should not throw, but rather return a Result with an appropriate error.
-                    parentKey = folderSecretsResult.Key ?? throw new ProtonDriveException($"Folder key not available for {parentId}");
+                    parentKey = folderSecretsResult.Key ?? throw new InvalidOperationException($"Folder key not available for {parentId}");
 
                     _parentKeys[parentId] = parentKey;
                 }

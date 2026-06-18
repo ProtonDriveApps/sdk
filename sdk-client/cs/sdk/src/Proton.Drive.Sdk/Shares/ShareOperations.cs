@@ -14,10 +14,15 @@ internal static class ShareOperations
         {
             if (useCacheOnly)
             {
-                throw new ProtonDriveException("Share \"{shareId}\" not found in cache");
+                throw new InvalidOperationException($"Share \"{shareId}\" not found in cache");
             }
 
             var response = await client.Api.Shares.GetShareAsync(shareId, cancellationToken).ConfigureAwait(false);
+
+            if (response.MembershipAddressId is not { } membershipAddressId)
+            {
+                throw new InvalidOperationException($"Membership address ID is missing for share \"{shareId}\"");
+            }
 
             var rootFolderId = new NodeUid(response.VolumeId, response.RootLinkId);
 
@@ -26,7 +31,7 @@ internal static class ShareOperations
                 shareId,
                 response.Key,
                 response.Passphrase,
-                response.AddressId,
+                membershipAddressId,
                 rootFolderId,
                 response.Type,
                 cancellationToken).ConfigureAwait(false);
@@ -56,7 +61,7 @@ internal static class ShareOperations
 
         if (!contextShareId.HasValue)
         {
-            throw new ProtonDriveException("Node does not have a valid context share");
+            throw new InvalidOperationException("Node does not have a valid context share");
         }
 
         return await GetShareAsync(client, (ShareId)contextShareId, useCacheOnly, cancellationToken).ConfigureAwait(false);

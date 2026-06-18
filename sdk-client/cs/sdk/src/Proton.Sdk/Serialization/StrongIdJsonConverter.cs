@@ -8,8 +8,9 @@ internal sealed class StrongIdJsonConverter<T> : JsonConverter<T>
 {
     public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        var value = reader.GetString();
-        return value is not null ? (T)value : default;
+        return reader.TokenType is JsonTokenType.String && reader.GetString() is { Length: > 0 } value
+            ? (T)value
+            : throw new JsonException($"Failed to convert JSON token of type {reader.TokenType} and of length {reader.GetValueLength()} to {typeof(T).Name}");
     }
 
     public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)

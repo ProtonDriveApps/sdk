@@ -8,18 +8,20 @@ internal readonly record struct RevisionId : IStrongId<RevisionId>
 {
     private readonly string? _value;
 
-    internal RevisionId(string? value)
+    internal RevisionId(string value)
     {
+        ArgumentException.ThrowIfNullOrEmpty(value);
+
         _value = value;
     }
 
-    public static explicit operator RevisionId(string? value)
+    public static explicit operator RevisionId(string value)
     {
         return new RevisionId(value);
     }
 
     public override string ToString()
     {
-        return _value ?? string.Empty;
+        return !string.IsNullOrEmpty(_value) ? _value : throw new InvalidOperationException("ID is not initialized");
     }
 }

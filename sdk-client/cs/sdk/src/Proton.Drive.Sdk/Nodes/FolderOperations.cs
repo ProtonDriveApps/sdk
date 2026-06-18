@@ -21,7 +21,7 @@ internal static class FolderOperations
 
         var folderSecretsResult = await GetSecretsAsync(client, folderUid, forPhotos: false, cancellationToken).ConfigureAwait(false);
 
-        var folderKey = folderSecretsResult.Key ?? throw new ProtonDriveException($"Node key not available for folder {folderUid}");
+        var folderKey = folderSecretsResult.Key ?? throw new InvalidOperationException($"Node key not available for folder {folderUid}");
 
         var batchLoader = new FolderChildrenBatchLoader(client, folderUid.VolumeId, folderKey);
 
@@ -182,8 +182,8 @@ internal static class FolderOperations
     {
         var secretsResult = await GetSecretsAsync(client, folderUid, forPhotos, cancellationToken).ConfigureAwait(false);
 
-        var key = secretsResult.Key ?? throw new ProtonDriveException($"Parent folder key not available for {folderUid}");
-        var hashKey = secretsResult.HashKey ?? throw new ProtonDriveException($"Parent folder hash key not available for {folderUid}");
+        var key = secretsResult.Key ?? throw new InvalidOperationException($"Parent folder key not available for {folderUid}");
+        var hashKey = secretsResult.HashKey ?? throw new InvalidOperationException($"Parent folder hash key not available for {folderUid}");
 
         return (key, hashKey);
     }

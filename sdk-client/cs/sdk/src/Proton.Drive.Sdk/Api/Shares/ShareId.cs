@@ -8,15 +8,17 @@ internal readonly record struct ShareId : IStrongId<ShareId>
 {
     private readonly string? _value;
 
-    internal ShareId(string? value)
+    internal ShareId(string value)
     {
+        ArgumentException.ThrowIfNullOrEmpty(value);
+
         _value = value;
     }
 
-    public static explicit operator ShareId(string? value) => new(value);
+    public static explicit operator ShareId(string value) => new(value);
 
     public override string ToString()
     {
-        return _value ?? string.Empty;
+        return !string.IsNullOrEmpty(_value) ? _value : throw new InvalidOperationException("ID is not initialized");
     }
 }

@@ -306,7 +306,7 @@ internal sealed partial class RevisionReader
                 {
                     LogMissingBlock(block.Index, _state.Uid);
 
-                    throw new ProtonDriveException("File contents are incomplete");
+                    throw new InvalidOperationException("File contents are incomplete");
                 }
 
                 ++nextExpectedIndex;

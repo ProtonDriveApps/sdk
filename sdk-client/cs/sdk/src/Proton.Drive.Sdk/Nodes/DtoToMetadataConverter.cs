@@ -648,7 +648,7 @@ internal static class DtoToMetadataConverter
             {
                 if (currentShareId is null)
                 {
-                    throw new ProtonDriveException("No share available to access node");
+                    throw new InvalidOperationException("No share available to access node");
                 }
 
                 (_, currentParentKey) = await ShareOperations.GetShareAsync(client, currentShareId.Value, useCacheOnly: false, cancellationToken)
@@ -731,7 +731,7 @@ internal static class DtoToMetadataConverter
             }
         }
 
-        throw new ProtonDriveException("No album entry point key found");
+        throw new InvalidOperationException("No album entry point key found");
     }
 
     private static OwnedBy MapOwnedBy(OwnedByDto? dto) => new(dto?.Email, dto?.Organization);

@@ -8,18 +8,20 @@ public readonly record struct SessionId : IStrongId<SessionId>
 {
     private readonly string? _value;
 
-    internal SessionId(string? value)
+    internal SessionId(string value)
     {
+        ArgumentException.ThrowIfNullOrEmpty(value);
+
         _value = value;
     }
 
-    public static explicit operator SessionId(string? value)
+    public static explicit operator SessionId(string value)
     {
         return new SessionId(value);
     }
 
     public override string ToString()
     {
-        return _value ?? string.Empty;
+        return !string.IsNullOrEmpty(_value) ? _value : throw new InvalidOperationException("ID is not initialized");
     }
 }

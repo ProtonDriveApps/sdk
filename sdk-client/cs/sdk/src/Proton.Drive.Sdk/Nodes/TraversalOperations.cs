@@ -19,7 +19,7 @@ internal static class TraversalOperations
         {
             if (!visitedNodes.Add((NodeUid)entryPointUid))
             {
-                throw new ProtonDriveException("Folder structure loop detected");
+                throw new InvalidOperationException("Folder structure loop detected");
             }
 
             currentMetadata = await NodeOperations.GetNodeMetadataAsync(

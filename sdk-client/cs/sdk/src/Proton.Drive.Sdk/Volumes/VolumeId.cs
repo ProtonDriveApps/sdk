@@ -8,18 +8,20 @@ internal readonly record struct VolumeId : IStrongId<VolumeId>
 {
     private readonly string? _value;
 
-    internal VolumeId(string? value)
+    internal VolumeId(string value)
     {
+        ArgumentException.ThrowIfNullOrEmpty(value);
+
         _value = value;
     }
 
-    public static explicit operator VolumeId(string? value)
+    public static explicit operator VolumeId(string value)
     {
         return new VolumeId(value);
     }
 
     public override string ToString()
     {
-        return _value ?? string.Empty;
+        return !string.IsNullOrEmpty(_value) ? _value : throw new InvalidOperationException("ID is not initialized");
     }
 }

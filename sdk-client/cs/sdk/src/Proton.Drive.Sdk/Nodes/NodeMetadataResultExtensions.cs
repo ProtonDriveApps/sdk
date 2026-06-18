@@ -40,7 +40,7 @@ internal static class NodeMetadataResultExtensions
                 throw new InvalidNodeTypeException(fileNode.Uid, LinkType.File);
             }
 
-            return folderSecrets.Key ?? throw new ProtonDriveException($"Folder node does not have a key: {metadata.Node.Errors[0]}");
+            return folderSecrets.Key ?? throw new InvalidOperationException($"Folder node does not have a key: {metadata.Node.Errors[0]}");
         }
     }
 }

@@ -182,10 +182,10 @@ internal static class NodeOperations
         var destinationFolderSecrets = await FolderOperations.GetSecretsAsync(client, newParentUid, forPhotos: false, cancellationToken).ConfigureAwait(false);
 
         var destinationKey = destinationFolderSecrets.Key
-            ?? throw new ProtonDriveException($"Destination folder key not available for {newParentUid}");
+            ?? throw new InvalidOperationException($"Destination folder key not available for {newParentUid}");
 
         var destinationHashKey = destinationFolderSecrets.HashKey
-            ?? throw new ProtonDriveException($"Destination folder hash key not available for {newParentUid}");
+            ?? throw new InvalidOperationException($"Destination folder hash key not available for {newParentUid}");
 
         if (uid == newParentUid)
         {
@@ -197,16 +197,18 @@ internal static class NodeOperations
             throw new InvalidOperationException($"Node {uid} cannot have destination node {newParentUid} as parent as they are not on the same volume");
         }
 
-        var originMetadata = await GetNodeMetadataAsync(client, uid, null, useCacheOnly: false, forPhotos: false, cancellationToken).ConfigureAwait(false);
+        var originMetadata = await GetNodeMetadataAsync(client, uid, knownShareAndKey: null, useCacheOnly: false, forPhotos: false, cancellationToken)
+            .ConfigureAwait(false);
+
         var (originNode, originSecrets, membershipShareId, originNameHashDigest) = originMetadata;
 
         var originName = originNode.Name.GetValueOrThrow();
 
         var originNameSessionKey = originSecrets.NameSessionKey
-            ?? throw new ProtonDriveException($"Name session key not available for {uid}");
+            ?? throw new InvalidOperationException($"Name session key not available for {uid}");
 
         var originPassphraseSessionKey = originSecrets.PassphraseSessionKey
-            ?? throw new ProtonDriveException($"Passphrase session key not available for {uid}");
+            ?? throw new InvalidOperationException($"Passphrase session key not available for {uid}");
 
         GetNameParameters(
             newName ?? originName, // FIXME: validate name
@@ -263,10 +265,10 @@ internal static class NodeOperations
         var destinationFolderSecrets = await FolderOperations.GetSecretsAsync(client, newParentUid, forPhotos: false, cancellationToken).ConfigureAwait(false);
 
         var destinationKey = destinationFolderSecrets.Key
-            ?? throw new ProtonDriveException($"Destination folder key not available for {newParentUid}");
+            ?? throw new InvalidOperationException($"Destination folder key not available for {newParentUid}");
 
         var destinationHashKey = destinationFolderSecrets.HashKey
-            ?? throw new ProtonDriveException($"Destination folder hash key not available for {newParentUid}");
+            ?? throw new InvalidOperationException($"Destination folder hash key not available for {newParentUid}");
 
         var batch = new List<MoveMultipleLinksItem>();
 
@@ -279,15 +281,15 @@ internal static class NodeOperations
 
             // FIXME: Try to use the degraded node if it has enough for the move to be successful
             var (originNode, originSecrets, _, originNameHashDigest) =
-                await GetNodeMetadataAsync(client, uid, null, useCacheOnly: false, forPhotos: false, cancellationToken).ConfigureAwait(false);
+                await GetNodeMetadataAsync(client, uid, knownShareAndKey: null, useCacheOnly: false, forPhotos: false, cancellationToken).ConfigureAwait(false);
 
             var originName = originNode.Name.GetValueOrThrow();
 
             var originNameSessionKey = originSecrets.NameSessionKey
-                ?? throw new ProtonDriveException($"Name session key not available for {uid}");
+                ?? throw new InvalidOperationException($"Name session key not available for {uid}");
 
             var originPassphraseSessionKey = originSecrets.PassphraseSessionKey
-                ?? throw new ProtonDriveException($"Passphrase session key not available for {uid}");
+                ?? throw new InvalidOperationException($"Passphrase session key not available for {uid}");
 
             GetNameParameters(
                 newName ?? originName, // FIXME: validate name
@@ -351,7 +353,7 @@ internal static class NodeOperations
             .ConfigureAwait(false);
 
         var nameSessionKey = secrets.NameSessionKey
-            ?? throw new ProtonDriveException($"Name session key not available for {uid}");
+            ?? throw new InvalidOperationException($"Name session key not available for {uid}");
 
         GetNameParameters(
             newName, // FIXME: validate name
@@ -528,7 +530,7 @@ internal static class NodeOperations
 
         var folderSecrets = await FolderOperations.GetSecretsAsync(client, parentUid, forPhotos: false, cancellationToken).ConfigureAwait(false);
 
-        var folderHashKey = folderSecrets.HashKey ?? throw new ProtonDriveException($"Folder hash key not available for {parentUid}");
+        var folderHashKey = folderSecrets.HashKey ?? throw new InvalidOperationException($"Folder hash key not available for {parentUid}");
 
         var digestsToNamesMap = new Dictionary<string, string>(batchSize);
 
@@ -642,7 +644,7 @@ internal static class NodeOperations
             shareDto.Id,
             shareDto.Key,
             shareDto.Passphrase,
-            shareDto.AddressId,
+            shareDto.MembershipAddressId,
             nodeUid,
             ShareType.Main,
             cancellationToken).ConfigureAwait(false);

@@ -19,5 +19,5 @@ internal sealed class ShareDto
     public required PgpArmoredSignature PassphraseSignature { get; init; }
 
     [JsonPropertyName("AddressID")]
-    public required AddressId AddressId { get; init; }
+    public required AddressId MembershipAddressId { get; init; }
 }

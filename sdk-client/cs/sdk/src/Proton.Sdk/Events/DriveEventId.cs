@@ -8,8 +8,10 @@ public readonly record struct DriveEventId : IStrongId<DriveEventId>
 {
     private readonly string? _value;
 
-    internal DriveEventId(string? value)
+    internal DriveEventId(string value)
     {
+        ArgumentException.ThrowIfNullOrEmpty(value);
+
         _value = value;
     }
 
@@ -20,6 +22,6 @@ public readonly record struct DriveEventId : IStrongId<DriveEventId>
 
     public override string ToString()
     {
-        return _value ?? string.Empty;
+        return !string.IsNullOrEmpty(_value) ? _value : throw new InvalidOperationException("ID is not initialized");
     }
 }

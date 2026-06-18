@@ -88,7 +88,7 @@ internal static class PhotosNodeOperations
             shareDto.Id,
             shareDto.Key,
             shareDto.Passphrase,
-            shareDto.AddressId,
+            shareDto.MembershipAddressId,
             nodeUid,
             ShareType.Photos,
             cancellationToken).ConfigureAwait(false);

@@ -8,18 +8,20 @@ internal readonly record struct LinkId : IStrongId<LinkId>
 {
     private readonly string? _value;
 
-    internal LinkId(string? value)
+    internal LinkId(string value)
     {
+        ArgumentException.ThrowIfNullOrEmpty(value);
+
         _value = value;
     }
 
-    public static explicit operator LinkId(string? value)
+    public static explicit operator LinkId(string value)
     {
         return new LinkId(value);
     }
 
     public override string ToString()
     {
-        return _value ?? string.Empty;
+        return !string.IsNullOrEmpty(_value) ? _value : throw new InvalidOperationException("ID is not initialized");
     }
 }
