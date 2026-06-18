@@ -5,7 +5,7 @@
 __pycache__
 docs/build
 /public
-js/public
+/sdk-client/js/public
 
 # JS
 node_modules
@@ -14,7 +14,7 @@ tsconfig.tsbuildinfo
 dist
 
 # JS CLI
-js/cli/release
+cli/release
 auth.txt
 auth-session.json
 cache*.sqlite
@@ -33,5 +33,5 @@ config.json
 *.swp
 
 # Tests
-tests/storage
-tests/test-results
+internal/tests/storage
+internal/tests/test-results

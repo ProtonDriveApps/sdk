@@ -8,7 +8,7 @@ Each module has its own README with usage details, limitations, and current stat
 
 The Drive SDK provides a **Client** module for core Drive integration: folder listing, files upload and download, move, rename, trash and other file operations, event based update polling, sharing, and other general Drive capabilities. That interface is the foundation every integrator needs.
 
-Higher-level functionality that builds on the Client—but is not required for basic Drive integration—lives in separate modules starting in this directory. Examples include a sync engine, search, or other features that Proton clients use to deliver a full Drive experience. Only general Drive capabilities belong in the core SDK itself; optional, composable functionality belongs here until it matures.
+Higher-level functionality that builds on the Client—but is not required for basic Drive integration—lives in separate modules starting in this directory. Examples include a sync, search, or other features that Proton clients use to deliver a full Drive experience. Only general Drive capabilities belong in the core SDK itself; optional, composable functionality belongs here until it matures.
 
 Once the module is mature, it is promoted to the root directory and becomes part of the supported SDK.
 

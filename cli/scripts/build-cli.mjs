@@ -3,7 +3,7 @@
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
-const GIT_ROOT = path.resolve(import.meta.dir, '../../..');
+const GIT_ROOT = path.resolve(import.meta.dir, '../..');
 
 const mode = process.argv[2] === 'internal' ? 'internal' : 'main';
 

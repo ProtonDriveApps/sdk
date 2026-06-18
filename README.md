@@ -2,10 +2,10 @@
 
 The Proton Drive SDK provides a high-level interface for interacting with Proton Drive. It is available in the following languages:
 
-- **TypeScript** — native SDK in [`js/sdk/`](./js/sdk/), available on npm as [`@protontech/drive-sdk`](https://www.npmjs.com/package/@protontech/drive-sdk). See [changelog](./js/CHANGELOG.md) for changes.
-- **C#** — native SDK in [`cs/sdk/`](./cs/sdk/). See [changelog](./cs/CHANGELOG.md) for changes.
-- **Kotlin** — bindings that wrap the C# SDK in [`kt/`](./kt/). See [changelog](./cs/CHANGELOG.md) for changes to the C# SDK.
-- **Swift** - bindings that wrap the C# SDK in [`swift/ProtonDriveSDK/`](./swift/ProtonDriveSDK/), available on github as [`sdk-swift`](https://github.com/ProtonDriveApps/sdk-swift). See [changelog](./cs/CHANGELOG.md) for changes to the C# SDK.
+- **TypeScript** — native SDK in [`sdk-client/js/`](./sdk-client/js/), available on npm as [`@protontech/drive-sdk`](https://www.npmjs.com/package/@protontech/drive-sdk). See [changelog](./sdk-client/js/CHANGELOG.md) for changes.
+- **C#** — native SDK in [`sdk-client/cs/sdk/`](./sdk-client/cs/sdk/). See [changelog](./sdk-client/cs/CHANGELOG.md) for changes.
+- **Kotlin** — bindings that wrap the C# SDK in [`incubating/sdk-client/kt/`](./incubating/sdk-client/kt/). See [changelog](./sdk-client/cs/CHANGELOG.md) for changes to the C# SDK.
+- **Swift** - bindings that wrap the C# SDK in [`incubating/sdk-client/swift/ProtonDriveSDK/`](./incubating/sdk-client/swift/ProtonDriveSDK/), available on github as [`sdk-swift`](https://github.com/ProtonDriveApps/sdk-swift). See [changelog](./sdk-client/cs/CHANGELOG.md) for changes to the C# SDK.
 
 ### Who this is for
 
@@ -90,7 +90,7 @@ We are preparing the documentation for the SDK. It will be available in the futu
 Until then, you can generate the code reference for the TypeScript SDK using the following command:
 
 ```bash
-cd js/sdk && OUTPUT_PATH=./doc npm run generate-doc:interface
+cd sdk-client/js && npm run generate-docs
 ```
 
 ## License

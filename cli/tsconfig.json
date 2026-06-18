@@ -1,0 +1,46 @@
+{
+    "compilerOptions": {
+        "allowJs": false,
+        "baseUrl": ".",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "incremental": true,
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "paths": {
+            "@protontech/drive-sdk": ["../sdk-client/js/src/index.ts"],
+            "@protontech/drive-sdk/*": ["../sdk-client/js/src/*"],
+            // Use the patched version of crypto.
+            "@protontech/crypto": [
+                "./node_modules/@protontech/crypto/src/index.ts"
+            ],
+            "@protontech/crypto/*": [
+                "./node_modules/@protontech/crypto/src/*"
+            ]
+        },
+        "noEmit": false,
+        "noImplicitAny": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "target": "esnext",
+        "declaration": true,
+        "sourceMap": true,
+        "outDir": "dist",
+        "resolveJsonModule": true,
+        "allowImportingTsExtensions": true,
+        "rewriteRelativeImportExtensions": true,
+        "types": [
+            "bun",
+            "jest"
+        ]
+    },
+    "include": [
+        "src/**/*.ts",
+        "integration-tests/**/*.ts"
+    ],
+    "exclude": [
+        "**/node_modules/*",
+        "**/api-core-types.ts",
+        "dist/**/*"
+    ]
+}

@@ -135,14 +135,14 @@ protobuf {
 }
 
 tasks.register<Copy>("copyHeader") {
-    from(layout.projectDirectory.dir("../../../../cs/headers")) {
+    from(layout.projectDirectory.dir("../../../../sdk-client/cs/headers")) {
         include { file -> file.name.endsWith(".h") }
     }
     into(layout.buildDirectory.dir("cs/includes"))
 }
 
 tasks.register<Copy>("copySharedLibrary") {
-    from(layout.projectDirectory.dir("../../../../cs/sdk/bin")) {
+    from(layout.projectDirectory.dir("../../../../sdk-client/cs/sdk/bin")) {
         include("**/libproton_drive_sdk.so")
     }
     into(layout.buildDirectory.dir("cs/jni"))
@@ -162,7 +162,7 @@ tasks.named { name ->
 }
 
 tasks.register<Copy>("copyProto") {
-    from(layout.projectDirectory.dir("../../../../cs/sdk/src/protos")) {
+    from(layout.projectDirectory.dir("../../../../sdk-client/cs/sdk/src/protos")) {
         include { file -> file.name.endsWith(".proto") }
     }
     into(layout.buildDirectory.dir("cs/proto"))
