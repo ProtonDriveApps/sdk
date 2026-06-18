@@ -8,8 +8,8 @@
         "module": "esnext",
         "moduleResolution": "bundler",
         "paths": {
-            "@protontech/drive-sdk": ["../sdk-client/js/src/index.ts"],
-            "@protontech/drive-sdk/*": ["../sdk-client/js/src/*"],
+            "@protontech/drive-sdk": ["../client/js/src/index.ts"],
+            "@protontech/drive-sdk/*": ["../client/js/src/*"],
             // Use the patched version of crypto.
             "@protontech/crypto": [
                 "./node_modules/@protontech/crypto/src/index.ts"

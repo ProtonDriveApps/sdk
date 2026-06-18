@@ -35,7 +35,7 @@
     "dependencies": {
         "@noble/hashes": "^1.8.0",
         "@protontech/crypto": "2.0.0",
-        "@protontech/drive-sdk": "file:../sdk-client/js",
+        "@protontech/drive-sdk": "file:../client/js",
         "@sentry/bun": "^10.53.1",
         "ky": "^1.14.3",
         "ttag": "^1.8.7"
