@@ -1,5 +1,3 @@
-import '@protontech/drive-sdk/polyfill';
-
 import { CryptoProxy, type SessionKey } from '@protontech/crypto';
 import { Api as CryptoApi } from '@protontech/crypto/proxy/endpoint/api.ts';
 import { type CachedCryptoMaterial, MemoryCache } from '@protontech/drive-sdk';
@@ -144,13 +142,17 @@ describe('DriveCryptoCacheAdapter', () => {
 
     it('iterateEntitiesByTag yields deserialized entries', async () => {
         const key = await generatePrivateKey();
-        await adapter.setEntity('tagged-node', {
-            nodeKeys: {
-                passphrase: '',
-                key,
-                passphraseSessionKey: await generateSessionKey(key),
+        await adapter.setEntity(
+            'tagged-node',
+            {
+                nodeKeys: {
+                    passphrase: '',
+                    key,
+                    passphraseSessionKey: await generateSessionKey(key),
+                },
             },
-        }, ['t:1']);
+            ['t:1'],
+        );
 
         const results = await Array.fromAsync(adapter.iterateEntitiesByTag('t:1'));
         expect(results).toHaveLength(1);

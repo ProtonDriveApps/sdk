@@ -2,9 +2,7 @@ module.exports = {
     moduleDirectories: ['<rootDir>/node_modules', 'node_modules'],
     testPathIgnorePatterns: ['<rootDir>/dist'],
     collectCoverage: false,
-    transformIgnorePatterns: [
-        'node_modules/(?!(@openpgp|@protontech|openpgp|jsmimeparser)/)',
-    ],
+    transformIgnorePatterns: ['node_modules/(?!(@openpgp|@protontech|openpgp|jsmimeparser)/)'],
     transform: {
         '^.+\\.(t|j)sx?$': '@swc/jest',
         '^.+\\.mjs$': '@swc/jest',
@@ -15,5 +13,5 @@ module.exports = {
         '^openpgp/lightweight$': 'openpgp',
     },
     reporters: ['default'],
-    setupFiles: ['<rootDir>/src/polyfill.ts'],
+    setupFiles: ['./jest.setup.ts'],
 };

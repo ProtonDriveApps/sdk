@@ -1,1 +1,0 @@
-import '@protontech/crypto/polyfill';

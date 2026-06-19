@@ -1,5 +1,3 @@
-import '@protontech/drive-sdk/polyfill';
-
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -90,8 +88,8 @@ export async function init(configOptions: InitConfig) {
 
 function initOpenPGPCryptoModule() {
     CryptoApi.init({});
-    CryptoProxy.setEndpoint(new CryptoApi(), endpoint => endpoint.clearKeyStore());
-    return new OpenPGPCryptoWithCryptoProxy(CryptoProxy)
+    CryptoProxy.setEndpoint(new CryptoApi(), (endpoint) => endpoint.clearKeyStore());
+    return new OpenPGPCryptoWithCryptoProxy(CryptoProxy);
 }
 
 class FeatureFlagProvider {
