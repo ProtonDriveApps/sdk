@@ -12,7 +12,11 @@
         //"noUnusedLocals": true,
         "strict": true,
         "skipLibCheck": true,
-        "target": "esnext",
+        // Emit ES2021 syntax so the published JS runs on the documented browser floor;
+        // keep modern API *types* via lib params (the polyfill
+        // entry supplies the runtime implementations).
+        "target": "es2021",
+        "lib": ["esnext", "dom", "DOM.AsyncIterable", "DOM.Iterable"],
         "declaration": true,
         "sourceMap": true,
         "outDir": "dist",
