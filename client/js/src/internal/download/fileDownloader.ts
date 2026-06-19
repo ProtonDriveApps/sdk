@@ -82,6 +82,16 @@ export class FileDownloader {
             throw new Error('Revision does not have defined claimed block sizes');
         }
 
+        let finished = false;
+        const finishOnce = () => {
+            // Abort and error can fire simultaneously, guard against double-release.
+            if (!finished) {
+                finished = true;
+                this.onFinish?.();
+            }
+        };
+        this.signal?.addEventListener('abort', finishOnce, { once: true });
+
         const stream = new BufferedSeekableStream({
             start: async () => {
                 logger.debug(`Starting`);
@@ -93,11 +103,13 @@ export class FileDownloader {
                 const result = await this.downloadDataFromPosition(claimedBlockSizes, position, cryptoKeys);
                 if (result instanceof Error) {
                     logger.error('Download failed', result);
+                    finishOnce();
                     controller.error(result);
                     return;
                 }
                 if (!result) {
                     logger.debug(`Download finished at position ${position}`);
+                    finishOnce();
                     controller.close();
                     return;
                 }
@@ -106,7 +118,7 @@ export class FileDownloader {
             },
             cancel: (reason?: unknown) => {
                 logger.info(`Cancelled: ${reason}`);
-                this.onFinish?.();
+                finishOnce();
             },
             seek: async (newPosition) => {
                 logger.info(`Seeking to position ${newPosition}`);

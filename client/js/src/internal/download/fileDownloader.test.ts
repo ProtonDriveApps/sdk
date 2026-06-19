@@ -464,6 +464,71 @@ describe('FileDownloader', () => {
             });
         });
 
+        it('should call onFinish when stream reaches natural end', async () => {
+            const stream = downloader.getSeekableStream();
+
+            // Read all 4 blocks (4 * 16 = 64 bytes) to reach natural end.
+            await stream.read(64);
+            await stream.read(1); // triggers controller.close()
+
+            expect(onFinish).toHaveBeenCalledTimes(1);
+        });
+
+        it('should call onFinish when abort signal fires', () => {
+            const controller = new AbortController();
+            onFinish = jest.fn();
+
+            downloader = new FileDownloader(
+                telemetry,
+                apiService,
+                cryptoService,
+                nodeKey as any,
+                revision,
+                controller.signal,
+                onFinish,
+            );
+
+            downloader.getSeekableStream();
+
+            // The abort event listener is registered during getSeekableStream().
+            // AbortController.abort() fires the event synchronously.
+            controller.abort();
+
+            expect(onFinish).toHaveBeenCalledTimes(1);
+        });
+
+        it('should call onFinish when a download error occurs in pull', async () => {
+            apiService.downloadBlock = jest.fn().mockRejectedValue(new Error('network error'));
+
+            const stream = downloader.getSeekableStream();
+            await expect(stream.read(16)).rejects.toThrow();
+
+            expect(onFinish).toHaveBeenCalledTimes(1);
+        });
+
+        it('should call onFinish only once even if abort and error both fire', async () => {
+            const controller = new AbortController();
+            onFinish = jest.fn();
+
+            downloader = new FileDownloader(
+                telemetry,
+                apiService,
+                cryptoService,
+                nodeKey as any,
+                revision,
+                controller.signal,
+                onFinish,
+            );
+
+            apiService.downloadBlock = jest.fn().mockRejectedValue(new Error('network error'));
+
+            const stream = downloader.getSeekableStream();
+            controller.abort();
+            await expect(stream.read(16)).rejects.toThrow();
+
+            expect(onFinish).toHaveBeenCalledTimes(1);
+        });
+
         it('should read the stream with seeking', async () => {
             const stream = downloader.getSeekableStream();
 
