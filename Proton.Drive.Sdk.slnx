@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="client/cs/sdk/src/Proton.Drive.Sdk.CExports/Proton.Drive.Sdk.CExports.csproj" />
+  <Project Path="client/cs/sdk/src/Proton.Drive.Sdk/Proton.Drive.Sdk.csproj" />
+  <Project Path="client/cs/sdk/src/Proton.Sdk.CExports/Proton.Sdk.CExports.csproj" />
+  <Project Path="client/cs/sdk/src/Proton.Sdk/Proton.Sdk.csproj" />
+</Solution>
