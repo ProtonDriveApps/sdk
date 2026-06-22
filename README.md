@@ -1,11 +1,10 @@
 # Proton Drive SDK
 
-The Proton Drive SDK provides a high-level interface for interacting with Proton Drive. It is available in the following languages:
+The Proton Drive SDK provides a high-level interface for interacting with Proton Drive. The SDK has following modules:
 
-- **TypeScript** — native SDK in [`client/js/`](./client/js/), available on npm as [`@protontech/drive-sdk`](https://www.npmjs.com/package/@protontech/drive-sdk). See [changelog](./client/js/CHANGELOG.md) for changes.
-- **C#** — native SDK in [`client/cs/sdk/`](./client/cs/sdk/). See [changelog](./client/cs/CHANGELOG.md) for changes.
-- **Kotlin** — bindings that wrap the C# SDK in [`incubating/client/kt/`](./incubating/client/kt/). See [changelog](./client/cs/CHANGELOG.md) for changes to the C# SDK.
-- **Swift** - bindings that wrap the C# SDK in [`incubating/client/swift/ProtonDriveSDK/`](./incubating/client/swift/ProtonDriveSDK/), available on github as [`sdk-swift`](https://github.com/ProtonDriveApps/sdk-swift). See [changelog](./client/cs/CHANGELOG.md) for changes to the C# SDK.
+- **Client** - core Drive integration: folder listing, files upload and download, move, rename, trash and other file operations, event based update polling, sharing, and other general Drive capabilities. See [client/README.md](./client/README.md) for more details.
+- **Sync** - Coming soon: high-level sync functionality using the Client module.
+- **Search** - Coming soon: high-level search functionality using the Client module.
 
 ### Who this is for
 
@@ -87,9 +86,10 @@ The SDK provides functionality for Proton Drive business logic only. It does **n
 
 We are preparing the documentation for the SDK. It will be available in the future.
 
-Until then, you can generate the code reference for the TypeScript SDK using the following command:
+Until then, you can generate the code reference for the C# or TypeScript SDKs using the following command:
 
 ```bash
+cd client/cs && dotnet docfx metadata docfx/docfx.json && dotnet docfx build docfx/docfx.json
 cd client/js && npm run generate-docs
 ```
 
