@@ -1,126 +1,97 @@
 # Changelog
 
+## js/v0.18.0 (2026-06-19)
+
+### Bug Fixes
+- Release file/video download slots after streaming videos
+
+### Other
+- Rename sdk-client to client
+
+
 ## js/v0.17.3 (2026-06-16)
 
-* Fix photo node type
+* No changes
 
 ## js/v0.17.2 (2026-06-15)
 
-* Fix client crash on getMyPhotosRootFolder call
+* No changes
 
 ## js/v0.17.1 (2026-06-15)
 
-* Support passing own cache instance to the public link client
+* No changes
 
 ## js/v0.17.0 (2026-06-11)
 
-* Avoid using arrayBuffer method
-* SDK method to prepare crypto material for Easy Switch import
-* Merge node entities
-* Use error object instead of string in all NodeResults
+* No changes
 
 ## js/v0.16.0 (2026-05-29)
 
-* Process automatically events converting external invitations
-* Add validation_error category for upload & download telemetry events
-* Drop rounding for crypto performance telemetry
-* Verify added by email fields
-* Add method to iterate events
-* Add method to return node hierarchy
-* Prefer iterate over UIDs over nodes
-* Update docs
-* Retry block encryption and report metric
-* Export CoreEventInput type to prevent casting on client
+* No changes
 
 ## js/v0.15.2 (2026-05-19)
 
-* Support copy on save for not owned album
-* Avoid content key packet verification fallback on publicly shared nodes
-* Update cached node after revision restore
-* Allow client to pass core events from external subscription
-* Retry network errors more times and with bigger delay
+* No changes
 
 ## js/v0.15.1 (2026-05-12)
 
-* Allow all address keys to be used for decryption when listing invitations
-* Remove slash validation name after decryption
+* No changes
 
 ## js/v0.15.0 (2026-05-06)
 
-* Fix detecting photo drafts
-* Handle loading drafts
-* BatchSize for remove_multiple on photos should be 10
-* Add events subscriptions for CLI
-* Fix TypeError not being recognized as NetworkError
-* Integrate @protontech/crypto
-* Add upload and download commands
+* No changes
 
 ## js/v0.14.10 (2026-04-27)
 
-* Update cached album photo count after adding or removing photo
+* No changes
 
 ## js/v0.14.9 (2026-04-27)
 
-* Expose savePhotosToTimeline
+* No changes
 
 ## js/v0.14.8 (2026-04-23)
 
-* Update album metadata cache after albums api request
-* Report checksum verification
-* Prevent encrypted block buffers from leaking via onProgress closure
+* No changes
 
 ## js/v0.14.7 (2026-04-17)
 
-* Add experimental iterate by uids for albums and shared with me albums
-* Fix verifying signature contexts
+* No changes
 
 ## js/v0.14.6 (2026-04-09)
 
-* Correctly catch AbortError in batchLoading
-* Fix issue when listing photos of shared album
+* No changes
 
 ## js/v0.14.5 (2026-04-08)
 
-* Support NonProtonInvitation conversion
-* Avoid crypto key fallback for non-owners
-* Change move function to support returning validation error
+* No changes
 
 ## js/v0.14.4 (2026-04-02)
 
-* Get public link of share only for my own nodes
+* No changes
 
 ## js/v0.14.3 (2026-03-31)
 
-* Remove casting for parentNodeUid
-* Fix thumbnail enumeration to stay within API limits
+* No changes
 
 ## js/v0.14.2 (2026-03-30)
 
-* Return all possible items from batch loading
-* Update nodes after shared with me updated event
-* Handle thumbnails in small file upload
+* No changes
 
 ## js/v0.14.1 (2026-03-25)
 
-* Add experimental getSessionInfo helper
+* No changes
 
 ## js/v0.14.0 (2026-03-23)
 
-* Allow saving photos when deleting albums
-* Make unknown telemetry volume type explicit
+* No changes
 
 ## js/v0.13.1 (2026-03-19)
 
-* Make LatestEventIdProvider.getLatestEventId async to support IndexedDB
-* Change API endpoint that updates 'editors can share' value
-* Add approximate sizes to telemetry events
+* No changes
 
 ## js/v0.13.0 (2026-03-11)
 
-* Add owned by property
-* Handle empty file using single-request-file-upload endpoint
-* Change main photo reference to UID instead of link ID
-* Implement small file upload endpoint
+* No changes
 
 ## js/v0.12.1 (2026-03-04)
 
@@ -128,253 +99,139 @@
 
 ## js/v0.12.0 (2026-03-02)
 
-* Add AEAD crypto test and FF management
-* Override parentUid for root node of public link
-* Support AEAD block encryption
+* No changes
 
 ## js/v0.11.0 (2026-02-26)
 
-* Add method to update photo tags
-* Ignore performance metrics in diagnostics tool
-* Stop reporting progress after failed upload
-* Add crypto performance metrics
-* Add node context to error about missing parent key
-* Do not block upload block reuqest by computing digest
+* No changes
 
 ## js/v0.10.0 (2026-02-19)
 
-* Add option for editors to manage share settings
-* Expose Album properties
-* Ignore apiRetrySucceeded metric on offline or timeout errors
-* Add cause to re-thrown errors
-* Add capability to add photos to albums
-* Add method to get device
-* Fix after rebase
-* TS: declare Uint8Array<ArrayBuffer> over generic Uint8Array
-* Cleanup crypto utils and fix type errors
+* No changes
 
 ## js/v0.9.9 (2026-02-12)
 
-* Support getAvailableName for public client
-* Add iterator of album photos
-* Add method to remove photos from an album
+* No changes
 
 ## js/v0.9.8 (2026-02-10)
 
-* Add experimental getNodePassphrase
-* Add SHA1 upload verification
-* Add album management
+* No changes
 
 ## js/v0.9.7 (2026-02-05)
 
-* [DRVWEB-5135] Add empty trash for photo volume
+* No changes
 
 ## js/v0.9.6 (2026-02-02)
 
-* Add experimental createDocument to create Docs/Sheets
-* Add function to create bookmark
+* No changes
 
 ## js/v0.9.5 (2026-01-29)
 
-* Remove check of NodeType inside iterateThumbnails
-* Fix file with content check for diagnostics
+* No changes
 
 ## js/v0.9.4 (2026-01-22)
 
-* Add function to scan for malware
-* Release lock after download and close the stream in diagnostics
-* Report metrics from photos as own_photo_volume
-* Fix default timeout on rate limit
+* No changes
 
 ## js/v0.9.3 (2026-01-16)
 
-* Fix invitation node type
-* Upgrade CryptoProxy and SRP
+* No changes
 
 ## js/v0.9.2 (2026-01-13)
 
-* Fix typing of CryptoProxy and CLI
-* Add tree structure to diagnostics
-* Multiple public fixes
+* No changes
 
 ## js/v0.9.1 (2026-01-07)
 
-* Handle timeouts during uploads
-* Fix buffered seekable stream
-* Catch TypeError when calling releaseLock
+* No changes
 
 ## js/v0.9.0 (2025-12-17)
 
-* Allow download with signature issues
-* Add empty-trash Implementation
-* Handle failed upload due to double-commit attempt
+* No changes
 
 ## js/v0.8.0 (2025-12-15)
 
-* Use remove-mine for deleting nodes on public page
-* Fix old content key packet verification
-* Compress extended attributes
+* No changes
 
 ## js/v0.7.3 (2025-12-12)
 
-* Create findPhotoDuplicates to get uids of duplicates
+* No changes
 
 ## js/v0.7.2 (2025-12-11)
 
-* Fix photo node type
-* Add getMyPhotosRootFolder
+* No changes
 
 ## js/v0.7.1 (2025-12-08)
 
-* Photos entity to support full decryption and access to photo attributes
-* Add onMessage to ProtonDrivePublicLinkClient
-* Add modification time to the node entity
-* Add new name param to copy
+* No changes
 
 ## js/v0.7.0 (2025-11-28)
 
-* Add unauth prefix for all API calls from public link context
-* Ignore missing signatures on legacy nodes
-* Abort uploads properly
+* No changes
 
 ## js/v0.6.2 (2025-11-21)
 
-* Fix deleting draft
-* CaptureTime unix time was in milliseconds instead of seconds
-* Make feature flag provision asynchronous
-* Add feature flag support
+* No changes
 
 ## js/v0.6.1 (2025-11-20)
 
-* Add isDuplicatePhoto method
-* Refresh node when share already exists
-* Add diagnostics for Photos timeline
-* Rename getOwnVolumeIDs to getRootIDs
-* Add rename and delete for public link SDK
-* Fix typo in class name
-* Add create folder & upload for public link SDK
-* Add diagnostic progress
-* Ignore TimeoutError and similar from decryption issues
+* No changes
 
 ## js/v0.6.0 (2025-10-24)
 
-* Parametrize shared with me and invitations for Photos SDK
-* Expose sharing for Photos SDK
-* Add getAvailableName method
+* No changes
 
 ## js/v0.5.1 (2025-10-22)
 
-* Add expectedStrcuture options for diagnostics
-* Convert revisions to public interface
-* Update public access to new APIs
-* Return new UID of copied node
-* Throw NodeWithSameNameExists from createFolder
-* Use shares/photos endpoint to bootstrap photos
-* Add telemetry for debouncer
-* Fix aborting uploads & downloads
-* Make deleting share with force explicit
+* No changes
 
 ## js/v0.5.0 (2025-10-03)
 
-* Do not send cleartext file size
-* Add propagating offline error to SDK events
-* fileUpload completion should return nodeUid and nodeRevisionUid
-* Batch and split per volume trash/restore/delete nodes
-* Abort decrypting nodes
-* Handle abort errors
-* [JS] Use the same instance of uploadController in stream upload
-* Add CLI commands for public access
-* Reuse endpoints for public link
-* Add debouncer to avoid parallel loading of the same node
-* Add functions to upload from and download to a file path
+* No changes
 
 ## js/v0.4.1 (2025-09-24)
 
-* Add isSharedPublicly to node based on ShareURLID
-* Implement CLI photo download
-* Implement photo upload
+* No changes
 
 ## js/v0.4.0 (2025-09-22)
 
-* Implement ProtonDrivePhotosClient basics
-* Add filter options for listing children
-* Add copyNodes
-* Handle node out of sync during rename
-* Return FastForward event if there is no relevant core event
+* No changes
 
 ## js/v0.3.2 (2025-09-17)
 
-* Fix SharedWithMe cache
-* Reuse Node entity for public link access
-* Add cause to wrapped errors
-* Provide file progress in onProgress callback
+* No changes
 
 ## js/v0.3.1 (2025-09-11)
 
-* NotFoundAPIError is inherited from ValidationError
-* Fix decrpyting bookmark with custom password
-* Fix cache shared by me
-* Revamp docs guides
-* Add public access
+* No changes
 
 ## js/v0.3.0 (2025-09-04)
 
-* Fix cache in CLI
-* Improve performance of loading shared with me
-* Fix what address is used to invite users into the share
-* Rename NodeAlreadyExistsValidationError
-* Fix accepting entities and UIDs in the interface
-* Revamp documentation
-* Add node details to diagnostic results
+* No changes
 
 ## js/v0.2.1 (2025-08-20)
 
-* Separate custom password from bookmark url
-* Fix parsing claimedModificationTime in NodesCache
-* Invalid value code is ValidationError
+* No changes
 
 ## js/v0.2.0 (2025-08-14)
 
-* Add node membership
-* Update telemetry object
-* Fix download
-* Add download unit tests
-* Add seeking support for download
+* No changes
 
 ## js/v0.1.2 (2025-08-04)
 
-* Fix event subscriptions
-* Fix invalidating cache after upload
+* No changes
 
 ## js/v0.1.1 (2025-08-01)
 
-* Improve loading nodes performance
-* Remove obsolete signature check on block download
-* Return nodes integration test
-* Add node.uid to proton invitation + fix invitation accept
-* Export event types
-* Run pretty on all sdk and cli source code
+* No changes
 
 ## js/v0.1.0 (2025-07-29)
 
-* Refactor event manager:
-* Add diagnostic tool
-* Add support of client UID
-* Add integration test for moving node
-* Fix move twice
-* Add NumAccess to publicLink
-* Support multiple volumes thumbnails
+* No changes
 
 ## js/v0.0.13 (2025-07-18)
 
-* Add album node type
-* Fix test of asyncIteratorMap
-* Create draft when starting upload
-* Parse claimedModificationTime on cache
-* Decrypt nodes in parallel
-* Filter out photos and albums from shared with me listing
-* Set admin role for all nodes in own volume
-* add existingNodeUid on NodeAlreadyExistsValidationError
+* No changes
 
 ## js/v0.0.12 (2025-07-10)
 
@@ -382,62 +239,32 @@
 
 ## js/v0.0.11 (2025-07-10)
 
-* Remove sensitive info from logs
-* Implement bookmarks management
-* Add deprecated share ID
-* Add fallback unknown error message
-* Fix returning public revision
-* Fix parsing node from cache
-* Add integration tests for web SDK using real crypto module
-* Use ExpirationTime instead of ExpirationDuration for public link management
-* Align error categories for upload/download telemetry with definitions
-* Add missing re-export of the interface
+* No changes
 
 ## js/v0.0.10 (2025-06-26)
 
-* adding a deprecated shareId prop to the Device object
-* add management of public links
-* fix stuck loop in download
-* fix download copy
+* No changes
 
 ## js/v0.0.9 (2025-06-24)
 
-* Add resend invite implementation
-* implement getNodeUid
-* Update decryption telemetry according to documentation
-* L10N-4186 Add test/extract job ttag
-* Create type structure for keys
+* No changes
 
 ## js/v0.0.8 (2025-06-19)
 
-* use nodeUid for external invite instead of volumeId
-* Update type of CryptoProxy
-* signMessage accept signatureContext and not context
+* No changes
 
 ## js/v0.0.7 (2025-06-18)
 
-* Pass nameSessionKey to moveNode
+* No changes
 
 ## js/v0.0.6 (2025-06-17)
 
-* Allow to pass either single or multiple key to match CryptoProxy Api
+* No changes
 
 ## js/v0.0.5 (2025-06-11)
 
-* add getNode method
-* add block verification telemetry
-* configuration for npm package publishing
-* add experimental getDocsKey
-* reuse array buffer
-* fix getting address key
-* handle missing public address
+* No changes
 
 ## js/v0.0.4 (2025-06-02)
 
-* add getNode method
-* add block verification telemetry
-* configuration for npm package publishing
-* add experimental getDocsKey
-* reuse array buffer
-* fix getting address key
-* handle missing public address
+* Initial commit
