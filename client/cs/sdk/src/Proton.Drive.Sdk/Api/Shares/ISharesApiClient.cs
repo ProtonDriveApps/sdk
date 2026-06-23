@@ -1,4 +1,4 @@
-﻿using Proton.Drive.Sdk.Shares;
+using Proton.Drive.Sdk.Shares;
 
 namespace Proton.Drive.Sdk.Api.Shares;
 

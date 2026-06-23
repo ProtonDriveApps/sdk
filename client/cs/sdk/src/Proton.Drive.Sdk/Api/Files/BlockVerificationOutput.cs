@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk.Api.Files;
+namespace Proton.Drive.Sdk.Api.Files;
 
 public readonly struct BlockVerificationOutput
 {

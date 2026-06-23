@@ -1,4 +1,4 @@
-﻿using Proton.Sdk.Events;
+using Proton.Sdk.Events;
 
 namespace Proton.Drive.Sdk.Events;
 

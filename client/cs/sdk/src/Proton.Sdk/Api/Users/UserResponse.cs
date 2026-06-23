@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk.Api.Users;
+namespace Proton.Sdk.Api.Users;
 
 internal sealed class UserResponse : ApiResponse
 {

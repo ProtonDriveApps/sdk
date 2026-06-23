@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk.Api.Events;
+namespace Proton.Drive.Sdk.Api.Events;
 
 public enum VolumeEventType
 {

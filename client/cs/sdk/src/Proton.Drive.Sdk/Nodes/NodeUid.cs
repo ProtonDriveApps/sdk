@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Serialization;

@@ -1,4 +1,4 @@
-﻿using Proton.Drive.Sdk.Nodes.Cryptography;
+using Proton.Drive.Sdk.Nodes.Cryptography;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;

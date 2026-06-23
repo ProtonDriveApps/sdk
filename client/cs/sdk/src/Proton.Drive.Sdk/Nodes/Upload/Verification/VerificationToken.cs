@@ -1,4 +1,4 @@
-﻿using System.Numerics.Tensors;
+using System.Numerics.Tensors;
 
 namespace Proton.Drive.Sdk.Nodes.Upload.Verification;
 

@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk.Addresses;
+namespace Proton.Sdk.Addresses;
 
 public sealed class Address(AddressId id, int order, string emailAddress, AddressStatus status, IReadOnlyList<AddressKey> keys, int primaryKeyIndex)
 {

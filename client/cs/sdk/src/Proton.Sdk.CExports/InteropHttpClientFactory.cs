@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using Proton.Sdk.CExports.Tasks;
 using Proton.Sdk.Http;
 

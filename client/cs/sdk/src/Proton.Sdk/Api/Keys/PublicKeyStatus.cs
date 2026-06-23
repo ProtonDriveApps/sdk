@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk.Api.Keys;
+namespace Proton.Sdk.Api.Keys;
 
 [Flags]
 internal enum PublicKeyStatus

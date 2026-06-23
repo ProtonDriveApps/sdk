@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Proton.Cryptography.Pgp;

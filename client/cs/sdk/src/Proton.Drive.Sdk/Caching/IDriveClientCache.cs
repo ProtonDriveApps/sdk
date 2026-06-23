@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk.Caching;
+namespace Proton.Drive.Sdk.Caching;
 
 internal interface IDriveClientCache
 {

@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk;
+namespace Proton.Drive.Sdk;
 
 /// <summary>
 /// Acts as a semaphore that operates in a first in / first out manner, can increment and decrement its count by more than 1, and can be entered as long as the count before the increment is less than the maximum.

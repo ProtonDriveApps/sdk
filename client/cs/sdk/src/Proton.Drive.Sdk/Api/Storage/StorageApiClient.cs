@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Headers;
+using System.Net.Http.Headers;
 using System.Net.Mime;
 using Proton.Sdk.Api;
 using Proton.Sdk.Http;

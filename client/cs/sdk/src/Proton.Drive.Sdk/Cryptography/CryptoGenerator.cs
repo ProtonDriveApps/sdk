@@ -1,4 +1,4 @@
-﻿using System.Buffers.Text;
+using System.Buffers.Text;
 using System.Security.Cryptography;
 using Proton.Cryptography.Pgp;
 

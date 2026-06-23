@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk.Http;
+namespace Proton.Drive.Sdk.Http;
 
 /// <summary>
 /// Wrapper that cancels disposal of a <see cref="Stream"/> object>.

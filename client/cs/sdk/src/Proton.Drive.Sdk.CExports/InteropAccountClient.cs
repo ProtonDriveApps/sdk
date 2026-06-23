@@ -1,4 +1,4 @@
-﻿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes;
 using Proton.Cryptography.Pgp;
 using Proton.Sdk.Addresses;
 using Proton.Sdk.CExports;

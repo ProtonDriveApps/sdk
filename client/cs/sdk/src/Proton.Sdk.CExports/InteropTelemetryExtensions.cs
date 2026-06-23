@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Proton.Sdk.CExports.Logging;
 
 namespace Proton.Sdk.CExports;

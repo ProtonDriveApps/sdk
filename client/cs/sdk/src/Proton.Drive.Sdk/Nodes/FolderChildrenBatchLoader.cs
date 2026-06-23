@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Links;

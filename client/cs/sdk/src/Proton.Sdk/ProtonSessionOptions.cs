@@ -1,4 +1,4 @@
-﻿using Proton.Sdk.Caching;
+using Proton.Sdk.Caching;
 
 namespace Proton.Sdk;
 

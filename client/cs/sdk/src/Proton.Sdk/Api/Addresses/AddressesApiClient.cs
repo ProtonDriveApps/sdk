@@ -1,4 +1,4 @@
-﻿using Proton.Sdk.Addresses;
+using Proton.Sdk.Addresses;
 using Proton.Sdk.Http;
 using Proton.Sdk.Serialization;
 

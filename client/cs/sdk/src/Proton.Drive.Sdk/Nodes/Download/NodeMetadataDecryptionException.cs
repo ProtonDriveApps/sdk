@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk.Nodes.Download;
+namespace Proton.Drive.Sdk.Nodes.Download;
 
 public sealed class NodeMetadataDecryptionException : Exception
 {

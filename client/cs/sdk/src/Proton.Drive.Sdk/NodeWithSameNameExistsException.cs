@@ -1,4 +1,4 @@
-﻿using Proton.Drive.Sdk.Api.Files;
+using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk;

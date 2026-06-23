@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk.Api.Photos;
+namespace Proton.Drive.Sdk.Api.Photos;
 
 internal sealed class TimelinePhotoListResponse
 {

@@ -1,4 +1,4 @@
-﻿using Proton.Drive.Sdk.Api.Links;
+using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Api.Volumes;
 using Proton.Drive.Sdk.Serialization;

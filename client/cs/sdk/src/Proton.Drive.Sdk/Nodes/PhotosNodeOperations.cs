@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Photos;
 using Proton.Drive.Sdk.Shares;

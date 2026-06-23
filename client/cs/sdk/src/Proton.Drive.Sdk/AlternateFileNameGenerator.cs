@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk;
+namespace Proton.Drive.Sdk;
 
 internal static class AlternateFileNameGenerator
 {

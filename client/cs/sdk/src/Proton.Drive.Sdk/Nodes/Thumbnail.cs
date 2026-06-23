@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk.Nodes;
+namespace Proton.Drive.Sdk.Nodes;
 
 public sealed class Thumbnail
 {

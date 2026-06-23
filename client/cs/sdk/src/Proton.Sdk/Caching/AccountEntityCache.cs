@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Proton.Sdk.Addresses;
 using Proton.Sdk.Serialization;
 

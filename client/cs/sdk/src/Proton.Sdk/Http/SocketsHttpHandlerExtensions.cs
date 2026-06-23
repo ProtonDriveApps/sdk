@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Security;
 
 namespace Proton.Sdk.Http;

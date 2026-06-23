@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using Proton.Sdk.Serialization;
 
 namespace Proton.Sdk.Api.Keys;

@@ -1,4 +1,4 @@
-﻿using Proton.Cryptography.Pgp;
+using Proton.Cryptography.Pgp;
 using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes.Cryptography;

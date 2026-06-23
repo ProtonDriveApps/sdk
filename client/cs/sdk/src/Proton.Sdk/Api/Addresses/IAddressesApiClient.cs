@@ -1,4 +1,4 @@
-﻿using Proton.Sdk.Addresses;
+using Proton.Sdk.Addresses;
 
 namespace Proton.Sdk.Api.Addresses;
 

@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Google.Protobuf.Reflection;
 using Google.Protobuf.WellKnownTypes;

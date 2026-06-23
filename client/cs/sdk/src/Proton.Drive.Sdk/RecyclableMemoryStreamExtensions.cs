@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using Microsoft.IO;
 
 namespace Proton.Drive.Sdk;

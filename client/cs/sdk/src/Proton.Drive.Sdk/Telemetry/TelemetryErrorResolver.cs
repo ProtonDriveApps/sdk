@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Security.Cryptography;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;

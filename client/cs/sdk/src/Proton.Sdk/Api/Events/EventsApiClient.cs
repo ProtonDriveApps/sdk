@@ -1,4 +1,4 @@
-﻿using Proton.Sdk.Events;
+using Proton.Sdk.Events;
 using Proton.Sdk.Http;
 using Proton.Sdk.Serialization;
 

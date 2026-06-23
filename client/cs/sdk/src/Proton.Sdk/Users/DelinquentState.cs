@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk.Users;
+namespace Proton.Sdk.Users;
 
 public enum DelinquentState
 {

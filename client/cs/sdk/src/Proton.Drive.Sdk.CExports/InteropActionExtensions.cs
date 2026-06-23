@@ -1,4 +1,4 @@
-﻿using Google.Protobuf;
+using Google.Protobuf;
 using Proton.Sdk.CExports;
 
 namespace Proton.Drive.Sdk.CExports;

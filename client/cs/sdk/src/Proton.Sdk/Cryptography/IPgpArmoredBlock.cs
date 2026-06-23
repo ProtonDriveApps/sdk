@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk.Cryptography;
+namespace Proton.Sdk.Cryptography;
 
 internal interface IPgpArmoredBlock<out T>
     where T : IPgpArmoredBlock<T>

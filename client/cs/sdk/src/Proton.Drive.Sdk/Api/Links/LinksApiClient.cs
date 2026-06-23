@@ -1,4 +1,4 @@
-﻿using Proton.Drive.Sdk.Serialization;
+using Proton.Drive.Sdk.Serialization;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk.Api;
 using Proton.Sdk.Http;

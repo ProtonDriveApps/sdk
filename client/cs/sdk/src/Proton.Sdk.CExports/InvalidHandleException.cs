@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk.CExports;
+namespace Proton.Sdk.CExports;
 
 public class InvalidHandleException : Exception
 {

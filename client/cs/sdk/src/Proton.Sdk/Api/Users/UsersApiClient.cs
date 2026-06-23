@@ -1,4 +1,4 @@
-﻿using Proton.Sdk.Http;
+using Proton.Sdk.Http;
 using Proton.Sdk.Serialization;
 
 namespace Proton.Sdk.Api.Users;

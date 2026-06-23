@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.HighPerformance;
+using CommunityToolkit.HighPerformance;
 using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
 using Proton.Sdk.Api;

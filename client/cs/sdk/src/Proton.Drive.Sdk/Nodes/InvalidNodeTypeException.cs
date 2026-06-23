@@ -1,4 +1,4 @@
-﻿using Proton.Drive.Sdk.Api.Links;
+using Proton.Drive.Sdk.Api.Links;
 
 namespace Proton.Drive.Sdk.Nodes;
 

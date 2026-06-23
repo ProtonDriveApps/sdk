@@ -1,4 +1,4 @@
-﻿using Proton.Drive.Sdk.Api.Events;
+using Proton.Drive.Sdk.Api.Events;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk.Events;
 

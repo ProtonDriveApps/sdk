@@ -1,4 +1,4 @@
-﻿using Proton.Cryptography.Srp;
+using Proton.Cryptography.Srp;
 using Proton.Sdk.Authentication;
 using Proton.Sdk.Http;
 using Proton.Sdk.Serialization;

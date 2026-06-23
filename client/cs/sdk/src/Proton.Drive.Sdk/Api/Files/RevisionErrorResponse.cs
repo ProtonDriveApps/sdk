@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Proton.Sdk.Api;
 
 namespace Proton.Drive.Sdk.Api.Files;

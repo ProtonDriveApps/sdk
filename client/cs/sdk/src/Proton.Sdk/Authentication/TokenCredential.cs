@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Proton.Sdk.Api;
 using Proton.Sdk.Api.Authentication;
 

@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Sdk.Api;
 

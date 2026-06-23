@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk.Api.Links;
+namespace Proton.Drive.Sdk.Api.Links;
 
 internal enum LinkType
 {

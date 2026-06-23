@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk.CExports.Tasks;
+namespace Proton.Sdk.CExports.Tasks;
 
 internal interface IValueTaskCompletionSource<T> : IValueTaskFaultingSource
 {

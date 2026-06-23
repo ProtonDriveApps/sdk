@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk.Caching;
+namespace Proton.Sdk.Caching;
 
 internal interface IAccountClientCache
 {

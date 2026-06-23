@@ -1,4 +1,4 @@
-﻿using Google.Protobuf;
+using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Sdk.CExports;

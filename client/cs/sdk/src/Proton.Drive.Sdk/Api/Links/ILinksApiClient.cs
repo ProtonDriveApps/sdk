@@ -1,4 +1,4 @@
-﻿using Proton.Drive.Sdk.Volumes;
+using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk.Api;
 
 namespace Proton.Drive.Sdk.Api.Links;

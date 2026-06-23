@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk.Api.Events;
+namespace Proton.Sdk.Api.Events;
 
 internal enum EventAction
 {

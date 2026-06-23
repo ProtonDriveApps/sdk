@@ -1,4 +1,4 @@
-﻿using Proton.Sdk.Cryptography;
+using Proton.Sdk.Cryptography;
 
 namespace Proton.Drive.Sdk.Api.Photos;
 

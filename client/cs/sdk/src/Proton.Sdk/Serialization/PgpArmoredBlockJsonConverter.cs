@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Proton.Sdk.Cryptography;

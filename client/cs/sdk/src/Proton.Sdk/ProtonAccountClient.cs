@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
 using Proton.Sdk.Addresses;
 using Proton.Sdk.Api;

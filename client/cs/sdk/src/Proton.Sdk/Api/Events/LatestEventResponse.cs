@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using Proton.Sdk.Events;
 
 namespace Proton.Sdk.Api.Events;

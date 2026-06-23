@@ -1,4 +1,4 @@
-﻿using Google.Protobuf;
+using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Proton.Sdk.CExports;

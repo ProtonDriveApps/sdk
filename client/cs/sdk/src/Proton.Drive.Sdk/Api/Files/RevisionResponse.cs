@@ -1,4 +1,4 @@
-﻿using Proton.Sdk.Api;
+using Proton.Sdk.Api;
 
 namespace Proton.Drive.Sdk.Api.Files;
 

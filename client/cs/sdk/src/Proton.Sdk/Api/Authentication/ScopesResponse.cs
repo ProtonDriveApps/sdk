@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk.Api.Authentication;
+namespace Proton.Sdk.Api.Authentication;
 
 internal sealed class ScopesResponse : ApiResponse
 {

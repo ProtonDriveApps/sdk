@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using Microsoft.Data.Sqlite;
 
 namespace Proton.Sdk.Caching;

@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk;
+namespace Proton.Sdk;
 
 internal static class ProtonApiDefaults
 {

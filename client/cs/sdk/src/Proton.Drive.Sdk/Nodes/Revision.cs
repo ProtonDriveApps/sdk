@@ -1,4 +1,4 @@
-﻿using Proton.Sdk;
+using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
 

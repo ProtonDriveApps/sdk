@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk.Http;
+namespace Proton.Sdk.Http;
 
 public enum HttpRequestType
 {

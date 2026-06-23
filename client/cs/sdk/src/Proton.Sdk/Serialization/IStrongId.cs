@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk.Serialization;
+namespace Proton.Sdk.Serialization;
 
 internal interface IStrongId<T>
     where T : IStrongId<T>

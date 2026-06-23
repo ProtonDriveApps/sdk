@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using Proton.Sdk.Api;
 
 namespace Proton.Sdk;

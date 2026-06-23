@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk.Telemetry;
+namespace Proton.Drive.Sdk.Telemetry;
 
 internal static class Privacy
 {

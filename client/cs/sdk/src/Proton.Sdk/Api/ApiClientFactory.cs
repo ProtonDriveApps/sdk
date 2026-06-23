@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk.Api;
+namespace Proton.Sdk.Api;
 
 internal sealed class ApiClientFactory : IApiClientFactory
 {

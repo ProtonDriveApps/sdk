@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using CommunityToolkit.HighPerformance;
 
 namespace Proton.Drive.Sdk.Cryptography;

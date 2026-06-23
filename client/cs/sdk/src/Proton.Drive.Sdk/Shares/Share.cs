@@ -1,4 +1,4 @@
-﻿using Proton.Drive.Sdk.Api.Shares;
+using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Sdk.Addresses;
 

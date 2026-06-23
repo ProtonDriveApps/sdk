@@ -1,4 +1,4 @@
-﻿using Proton.Sdk.Api.Addresses;
+using Proton.Sdk.Api.Addresses;
 using Proton.Sdk.Api.Authentication;
 using Proton.Sdk.Api.Keys;
 using Proton.Sdk.Api.Users;

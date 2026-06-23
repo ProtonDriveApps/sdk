@@ -1,4 +1,4 @@
-﻿using Proton.Drive.Sdk.Serialization;
+using Proton.Drive.Sdk.Serialization;
 using Proton.Drive.Sdk.Shares;
 using Proton.Sdk.Http;
 

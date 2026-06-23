@@ -1,4 +1,4 @@
-﻿namespace Proton.Sdk.Authentication;
+namespace Proton.Sdk.Authentication;
 
 public enum PasswordMode
 {

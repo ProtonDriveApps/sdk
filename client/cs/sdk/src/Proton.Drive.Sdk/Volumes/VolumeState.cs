@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk.Volumes;
+namespace Proton.Drive.Sdk.Volumes;
 
 public enum VolumeState
 {

@@ -1,4 +1,4 @@
-﻿namespace Proton.Drive.Sdk.Http;
+namespace Proton.Drive.Sdk.Http;
 
 internal static class HttpClientFactoryExtensions
 {
