@@ -7,7 +7,7 @@ export type Device = {
     name: Result<string, Error | InvalidNameError>;
     rootFolderUid: string;
     creationTime: Date;
-    lastSyncDate?: Date;
+    lastSyncTime?: Date;
     /** @deprecated to be removed once Volume-based navigation is implemented in web */
     shareId: string;
 };
