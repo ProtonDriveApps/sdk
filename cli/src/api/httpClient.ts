@@ -1,6 +1,6 @@
 import { ProtonDriveHTTPClientBlobRequest, ProtonDriveHTTPClientJsonRequest } from '@protontech/drive-sdk';
 
-import { ApiClient } from './apiClient';
+import { ApiClient } from 'proton-drive-sdk-account';
 
 export class HTTPClient {
     constructor(private readonly apiClient: ApiClient) {}

@@ -1,0 +1,29 @@
+{
+    "compilerOptions": {
+        "allowJs": false,
+        "baseUrl": ".",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "incremental": true,
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "paths": {
+            "@protontech/crypto": ["./node_modules/@protontech/crypto/src/index.ts"],
+            "@protontech/crypto/*": ["./node_modules/@protontech/crypto/src/*"]
+        },
+        "noEmit": false,
+        "noImplicitAny": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "target": "esnext",
+        "declaration": true,
+        "sourceMap": true,
+        "outDir": "dist",
+        "resolveJsonModule": true,
+        "allowImportingTsExtensions": true,
+        "rewriteRelativeImportExtensions": true,
+        "types": ["bun", "jest", "node"]
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": ["**/node_modules/*", "**/api-core-types.ts", "**/api-auth-types.ts", "dist/**/*"]
+}

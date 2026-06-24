@@ -6,7 +6,6 @@
     "scripts": {
         "build": "bun ./scripts/build-cli.mjs",
         "check-types": "tsc --noEmit",
-        "generate-types": "bunx openapi-typescript ../../api/openapi-core.json -o ./src/api/api-core-types.ts && bunx openapi-typescript ../../api/openapi-auth.json -o ./src/api/api-auth-types.ts",
         "generate-metric-schemas": "bun ./scripts/generate-metric-schemas.ts",
         "lint": "eslint src --ext .ts --cache --ignore-pattern '**/api/*-types.ts'",
         "pretty": "prettier --write $(find src -type f -name '*.ts')",
@@ -36,11 +35,12 @@
         "@noble/hashes": "^1.8.0",
         "@protontech/crypto": "2.0.0",
         "@protontech/drive-sdk": "file:../client/js",
+        "proton-drive-sdk-account": "file:../incubating/account/js",
         "@sentry/bun": "^10.53.1",
         "ky": "^1.14.3",
         "ttag": "^1.8.7"
     },
     "patchedDependencies": {
-        "@protontech/crypto@2.0.0": "patches/@protontech%2Fcrypto@2.0.0.patch"
+        "@protontech/crypto@2.0.0": "../config/js/patches/@protontech%2Fcrypto@2.0.0.patch"
     }
 }

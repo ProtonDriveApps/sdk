@@ -10,6 +10,7 @@
         "@protontech/drive-sdk": "file:../client/js",
         "@sentry/bun": "^10.53.1",
         "ky": "^1.14.3",
+        "proton-drive-sdk-account": "file:../incubating/account/js",
         "ttag": "^1.8.7",
       },
       "devDependencies": {
@@ -34,7 +35,7 @@
     },
   },
   "patchedDependencies": {
-    "@protontech/crypto@2.0.0": "patches/@protontech%2Fcrypto@2.0.0.patch",
+    "@protontech/crypto@2.0.0": "../config/js/patches/@protontech%2Fcrypto@2.0.0.patch",
   },
   "packages": {
     "@babel/code-frame": ["@babel/code-frame@7.29.0", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.28.5", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw=="],
@@ -1488,6 +1489,8 @@
     "process": ["process@0.11.10", "", {}, "sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A=="],
 
     "prompts": ["prompts@2.4.2", "", { "dependencies": { "kleur": "^3.0.3", "sisteransi": "^1.0.5" } }, "sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q=="],
+
+    "proton-drive-sdk-account": ["proton-drive-sdk-account@file:../incubating/account/js", { "dependencies": { "@protontech/crypto": "2.0.0", "ky": "^1.14.3" }, "devDependencies": { "@swc/core": "^1.12.3", "@swc/jest": "^0.2.38", "@types/jest": "^29.5.14", "@typescript-eslint/eslint-plugin": "^8.55.0", "eslint": "^8.57.1", "eslint-plugin-simple-import-sort": "^13.0.0", "eslint-plugin-tsdoc": "^0.3.0", "jest": "^29.7.0", "openapi-typescript": "^7.4.1", "prettier": "^3.6.2", "typescript": "^5.9.3" } }],
 
     "pseudomap": ["pseudomap@1.0.2", "", {}, "sha512-b/YwNhb8lk1Zz2+bXXpS/LK9OisiZZ1SNsSLxN1x2OXVEhW2Ckr/7mWE5vrC1ZTiJlD9g19jWszTmJsB+oEpFQ=="],
 

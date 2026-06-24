@@ -1,6 +1,7 @@
 import { ProtonDriveError } from '@protontech/drive-sdk';
 
-import { AccountApiError } from '../api/accountApi';
+import { AccountApiError } from 'proton-drive-sdk-account';
+
 import { ReplUnclosedQuoteError } from './splitQuotedLine';
 
 export class ExitError extends Error {}

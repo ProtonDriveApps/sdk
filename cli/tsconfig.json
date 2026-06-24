@@ -8,6 +8,8 @@
         "module": "esnext",
         "moduleResolution": "bundler",
         "paths": {
+            "proton-drive-sdk-account": ["../incubating/account/js/src/index.ts"],
+            "proton-drive-sdk-account/*": ["../incubating/account/js/src/*"],
             "@protontech/drive-sdk": ["../client/js/src/index.ts"],
             "@protontech/drive-sdk/*": ["../client/js/src/*"],
             // Use the patched version of crypto.

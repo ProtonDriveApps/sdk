@@ -1,13 +1,11 @@
+import type { SessionInfo } from 'proton-drive-sdk-account';
+
+export type { SessionInfo };
+
 export type Credentials = {
     cachePassword?: string;
     userKeyPassword: string;
     session: SessionInfo;
-};
-
-export type SessionInfo = {
-    uid: string;
-    accessToken: string;
-    refreshToken?: string;
 };
 
 export interface CredentialsStore {

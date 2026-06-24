@@ -1,9 +1,10 @@
 import { CryptoProxy, PrivateKeyReference, PublicKeyReference, VERIFICATION_STATUS } from '@protontech/crypto';
-import { Logger, ProtonDriveAccountAddress } from '@protontech/drive-sdk';
 
-import { Credentials } from '../credentials';
+import type { AccountAddress } from './accountAddress';
 import { AccountApi, AddressNotFoundError } from './accountApi';
 import type { components as coreComponents } from './api-core-types';
+import type { Logger } from './logger';
+import type { SessionCredentials } from './sessionCredentials';
 
 interface UserData {
     userPrimaryPrivateKeys: PrivateKeyReference[];
@@ -27,7 +28,7 @@ export class Addresses {
 
     constructor(
         private readonly accountApi: AccountApi,
-        private readonly credentials: Credentials,
+        private readonly credentials: SessionCredentials,
         private readonly logger: Logger,
     ) {
         credentials.on('sessionInfoChanged', () => {
@@ -38,15 +39,15 @@ export class Addresses {
         });
     }
 
-    async getOwnPrimaryAddress(): Promise<ProtonDriveAccountAddress> {
+    async getOwnPrimaryAddress(): Promise<AccountAddress> {
         const { primaryAddress } = await this.getUserData();
         return this.getOwnAddress(primaryAddress.addressId);
     }
 
-    async getOwnAddresses(): Promise<ProtonDriveAccountAddress[]> {
+    async getOwnAddresses(): Promise<AccountAddress[]> {
         const userData = await this.getUserData();
 
-        const addresses: ProtonDriveAccountAddress[] = [];
+        const addresses: AccountAddress[] = [];
         for (const address of userData.addresses) {
             if (!address.ID) {
                 continue;
@@ -58,7 +59,7 @@ export class Addresses {
         return addresses;
     }
 
-    async getOwnAddress(emailOrAddressId: string): Promise<ProtonDriveAccountAddress> {
+    async getOwnAddress(emailOrAddressId: string): Promise<AccountAddress> {
         const userData = await this.getUserData();
 
         const address = userData.addresses.find((a) => a.ID === emailOrAddressId || a.Email === emailOrAddressId);
@@ -99,7 +100,7 @@ export class Addresses {
         return keys.length > 0;
     }
 
-    async getPublicKeys(email: string): Promise<PublicKeyReference[]> {
+    async getPublicKeys(email: string, forceRefresh?: boolean): Promise<PublicKeyReference[]> {
         if (!this.credentials.isLoggedIn()) {
             return [];
         }
@@ -109,7 +110,7 @@ export class Addresses {
         if (address) {
             return this.getOwnPublicKeys(address);
         }
-        return this.getOtherPublicKeys(email);
+        return this.getOtherPublicKeys(email, forceRefresh);
     }
 
     private async getOwnPublicKeys(address: coreComponents['schemas']['AddressUser']): Promise<PublicKeyReference[]> {
@@ -141,8 +142,8 @@ export class Addresses {
         return keys;
     }
 
-    private async getOtherPublicKeys(email: string): Promise<PublicKeyReference[]> {
-        if (this.otherUsersPublicKeysByEmailPromises.has(email)) {
+    private async getOtherPublicKeys(email: string, forceRefresh?: boolean): Promise<PublicKeyReference[]> {
+        if (!forceRefresh && this.otherUsersPublicKeysByEmailPromises.has(email)) {
             return this.otherUsersPublicKeysByEmailPromises.get(email)!;
         }
         const { promise, resolve, reject } = Promise.withResolvers<PublicKeyReference[]>();

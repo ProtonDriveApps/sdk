@@ -2,9 +2,11 @@ import { randomBytes } from 'node:crypto';
 
 import { Logger } from '@protontech/drive-sdk';
 
-import type { CredentialsStore, SessionInfo } from './interface';
+import type { SessionCredentials, SessionInfo } from 'proton-drive-sdk-account';
 
-export class Credentials {
+import type { CredentialsStore } from './interface';
+
+export class Credentials implements SessionCredentials {
     private cachePassword?: string;
     private userKeyPassword?: string;
     private sessionInfo?: SessionInfo;

@@ -1,6 +1,3 @@
-import { Logger } from '@protontech/drive-sdk';
-
-import { Credentials } from '../credentials';
 import { AccountApi, AccountApiError } from './accountApi';
 import {
     FORK_INITIAL_DELAY_MS,
@@ -9,6 +6,8 @@ import {
     generateSignInUrl,
     parseUserKeyPassword,
 } from './authWeb';
+import type { Logger } from './logger';
+import type { SessionCredentials } from './sessionCredentials';
 import { sleepMs } from './sleep';
 import { Srp } from './srp';
 
@@ -17,7 +16,7 @@ export class Auth {
     constructor(
         private readonly authClientId: string,
         private readonly accountApi: AccountApi,
-        private readonly credentials: Credentials,
+        private readonly credentials: SessionCredentials,
         private readonly logger: Logger,
     ) {
         this.srpModule = new Srp(accountApi);

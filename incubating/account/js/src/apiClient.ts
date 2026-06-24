@@ -1,17 +1,22 @@
 import ky, { type AfterResponseHook, type KyInstance } from 'ky';
 
-import { Logger } from '@protontech/drive-sdk';
-
-import type { Config } from '../config';
-import { Credentials } from '../credentials';
 import type { paths as AuthPaths } from './api-auth-types';
-import { processDriveRequirementHeaders, SUPPORTED_REQUIREMENT_MASK_BY_SCOPE } from './apiRequirements';
-import { MessageEmitter } from './messageEmitter';
+import type { Logger } from './logger';
+import type { SessionCredentials } from './sessionCredentials';
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 
 type RefreshResponseBody =
     AuthPaths['/auth/{_version}/refresh']['post']['responses']['200']['content']['application/json'];
+
+export type ApiClientOptions = {
+    baseUrl: string;
+    appVersion: string;
+    credentials: SessionCredentials;
+    logger: Logger;
+    headers?: Record<string, string | undefined>;
+    afterResponseHooks?: AfterResponseHook[];
+};
 
 export class ApiClient {
     private authenticatedClientBase: KyInstance;
@@ -19,49 +24,49 @@ export class ApiClient {
     private unauthenticatedClient: KyInstance;
 
     private activeRefreshPromise: Promise<boolean> | null = null;
-    private readonly driveRequirementNoticeOnce = new MessageEmitter();
 
     readonly baseUrlWithProtocol: string;
 
-    constructor(
-        private readonly config: Config,
-        private readonly credentials: Credentials,
-        private readonly logger: Logger,
-    ) {
-        const baseUrl = this.config.baseUrl;
+    constructor(private readonly options: ApiClientOptions) {
+        const baseUrl = options.baseUrl;
         this.baseUrlWithProtocol = baseUrl.match(/^https?:\/\//) ? baseUrl : `https://${baseUrl}`;
 
+        const requestHeaders = {
+            'x-pm-appversion': options.appVersion,
+            ...options.headers,
+        };
         const baseClientOptions = {
-            headers: {
-                'x-pm-appversion': this.config.appVersion,
-                'x-pm-drive-sdk-version': this.config.sdkVersion,
-            },
+            headers: Object.fromEntries(
+                Object.entries(requestHeaders).filter((entry): entry is [string, string] => entry[1] !== undefined),
+            ),
             timeout: DEFAULT_TIMEOUT_MS,
         };
-        const driveApiRequirementsHook = this.createDriveApiRequirementsAfterResponseHook();
+        const afterResponseHooks = options.afterResponseHooks ?? [];
         this.authenticatedClientBase = ky.create({
             ...baseClientOptions,
             hooks: {
-                afterResponse: [this.createRefreshSessionAfterResponseHook(), driveApiRequirementsHook],
+                afterResponse: [this.createRefreshSessionAfterResponseHook(), ...afterResponseHooks],
             },
         });
         this.authenticatedClient = this.authenticatedClientBase;
         this.unauthenticatedClient = ky.create({
             ...baseClientOptions,
             hooks: {
-                afterResponse: [driveApiRequirementsHook],
+                afterResponse: afterResponseHooks,
             },
         });
         this.updateAuthenticatedClientHeaders();
 
-        credentials.on('sessionInfoChanged', () => this.updateAuthenticatedClientHeaders());
+        options.credentials.on('sessionInfoChanged', () => this.updateAuthenticatedClientHeaders());
     }
 
     private updateAuthenticatedClientHeaders() {
         this.authenticatedClient = this.authenticatedClientBase.extend({
             headers: {
-                ...(this.credentials.uid && { 'x-pm-uid': this.credentials.uid }),
-                ...(this.credentials.accessToken && { Authorization: `Bearer ${this.credentials.accessToken}` }),
+                ...(this.options.credentials.uid && { 'x-pm-uid': this.options.credentials.uid }),
+                ...(this.options.credentials.accessToken && {
+                    Authorization: `Bearer ${this.options.credentials.accessToken}`,
+                }),
             },
         });
     }
@@ -74,57 +79,27 @@ export class ApiClient {
         return this.unauthenticatedClient;
     }
 
-    private createDriveApiRequirementsAfterResponseHook(): AfterResponseHook {
-        return (_request, _options, response) => {
-            processDriveRequirementHeaders(response.headers, {
-                clientSdkVersion: this.config.sdkVersion ?? '',
-                supportedRequirementMasksByScope: SUPPORTED_REQUIREMENT_MASK_BY_SCOPE,
-                onUnsupportedFeature: (scope, requiredMask) => {
-                    const message = `Update needed: unsupported feature for ${scope}`;
-                    this.driveRequirementNoticeOnce.emitOnce(message, (msg) => {
-                        this.logger.warn(`${msg} (required feature bit mask: ${requiredMask})`);
-                        process.stderr.write(msg + '\n');
-                    });
-                },
-                onRequiredUpdate: (requiredVersion) => {
-                    const message = `Update required: required SDK version ${requiredVersion} or newer (currently using ${this.config.sdkVersion ?? '0.0.1'})`;
-                    this.driveRequirementNoticeOnce.emitOnce(message, (msg) => {
-                        this.logger.warn(msg);
-                        process.stderr.write(msg + '\n');
-                    });
-                },
-                onSuggestedUpdate: (suggestedVersion) => {
-                    const message = `Update recommended: suggested SDK version ${suggestedVersion} or newer (currently using ${this.config.sdkVersion ?? '0.0.1'})`;
-                    this.driveRequirementNoticeOnce.emitOnce(message, (msg) => {
-                        this.logger.warn(msg);
-                        process.stderr.write(msg + '\n');
-                    });
-                },
-            });
-        };
-    }
-
     private createRefreshSessionAfterResponseHook(): AfterResponseHook {
         return async (request, options, response) => {
             if (response.status !== 401 || shouldSkipAuthRefreshForUrl(request.url)) {
                 return;
             }
 
-            this.logger.info('Refreshing session');
+            this.options.logger.info('Refreshing session');
 
             const refreshed = await this.refreshSessionIfPossible();
             if (!refreshed) {
                 return;
             }
 
-            const uid = this.credentials.uid;
-            const accessToken = this.credentials.accessToken;
+            const uid = this.options.credentials.uid;
+            const accessToken = this.options.credentials.accessToken;
             if (!uid || !accessToken) {
                 return;
             }
 
             const headers = new Headers(options.headers);
-            headers.set('x-pm-appversion', this.config.appVersion);
+            headers.set('x-pm-appversion', this.options.appVersion);
             headers.set('x-pm-uid', uid);
             headers.set('Authorization', `Bearer ${accessToken}`);
 
@@ -140,9 +115,9 @@ export class ApiClient {
     }
 
     private async performTokenRefresh(): Promise<boolean> {
-        const refreshToken = this.credentials.refreshToken;
+        const refreshToken = this.options.credentials.refreshToken;
         if (!refreshToken) {
-            this.logger.warn('Failed to refresh session: missing RefreshToken');
+            this.options.logger.warn('Failed to refresh session: missing RefreshToken');
             return false;
         }
 
@@ -156,22 +131,22 @@ export class ApiClient {
         });
 
         if (!response.ok) {
-            this.logger.error('Failed to refresh session', response);
+            this.options.logger.error('Failed to refresh session', response);
             if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-                await this.credentials.signOut();
+                await this.options.credentials.signOut();
             }
             return false;
         }
 
         const data = (await response.json()) as RefreshResponseBody;
-        const uid = data.UID ?? this.credentials.uid;
+        const uid = data.UID ?? this.options.credentials.uid;
         const accessToken = data.AccessToken;
         if (!uid || !accessToken) {
-            this.logger.error('Failed to refresh session: missing UID or AccessToken');
+            this.options.logger.error('Failed to refresh session: missing UID or AccessToken');
             return false;
         }
 
-        await this.credentials.setSessionInfo({
+        await this.options.credentials.setSessionInfo({
             uid,
             accessToken,
             refreshToken: data.RefreshToken ?? refreshToken,
