@@ -5,6 +5,7 @@
     "main": "dist/main.js",
     "scripts": {
         "build": "bun ./scripts/build-cli.mjs",
+        "build:bundle": "bun ./scripts/build-cli.mjs --bundle-only",
         "check-types": "tsc --noEmit",
         "generate-metric-schemas": "bun ./scripts/generate-metric-schemas.ts",
         "lint": "eslint src --ext .ts --cache --ignore-pattern '**/api/*-types.ts'",

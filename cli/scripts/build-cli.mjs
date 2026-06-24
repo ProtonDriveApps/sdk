@@ -8,8 +8,12 @@ const GIT_ROOT = path.resolve(import.meta.dir, '../..');
 let target = 'bun';
 let entry = 'src/proton-drive.ts';
 
-const arg2 = process.argv[2];
-const arg3 = process.argv[3];
+// Bundle only mode: build without the embedded Bun.
+const bundleOnly = process.argv.includes('--bundle-only');
+const argv = process.argv.filter(arg => arg !== '--bundle-only');
+
+const arg2 = argv[2];
+const arg3 = argv[3];
 
 if (arg2?.endsWith('.ts') && arg3) {
     entry = arg2;
@@ -26,14 +30,16 @@ if (target.startsWith('bun-')) {
 }
 
 const entryName = path.basename(entry).replace('.ts', '');
-const outfile = `release${outfileArchitecture}/${entryName}`;
+const outfile = `release${outfileArchitecture}/${entryName}${bundleOnly ? '.js' : ''}`;
 
 const args = [
     'build',
-    '--compile',
+    ...(bundleOnly ? [] : [
+        '--compile',
+        // Slower compile, bigger bundle size, faster execution.
+        '--bytecode',
+    ]),
     `--target=${target}`,
-    // Slower compile, bigger bundle size, faster execution.
-    '--bytecode',
     // Use modern ESM format to allow await syntax in the entry file.
     '--format=esm',
     // Reduce bundle size (not much, the biggest part is the embedded Bun itself).
