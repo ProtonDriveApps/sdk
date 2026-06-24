@@ -28,6 +28,14 @@ bun run build
 
 This produces a standalone executable at **`release/proton-drive`** with embedded Bun. Add that directory to your `PATH`, or invoke it with a full path.
 
+### Application identification (`x-pm-appversion`)
+
+Every application using the Proton Drive service must set the `x-pm-appversion` header. See [top-level README](../README.md#operational-requirements) for more details.
+
+Running `bun run build` embeds a value `external-drive-sdkclijs` by default. If you fork the CLI, customize this value by setting the `CLI_APP_VERSION_NAME` environment variable when you build.
+
+Official release builds use `cli-drive`. Unmodified CLI repackaged for a distribution may use `cli-drive-<distro>`. Do not use this identifier for any other purpose.
+
 ## Authentication
 
 Sign-in uses the browser (no password on the command line):
