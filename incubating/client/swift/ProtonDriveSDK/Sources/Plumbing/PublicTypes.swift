@@ -125,6 +125,11 @@ public struct AdditionalMetadata: Sendable {
         self.name = name
         self.utf8JsonValue = utf8JsonValue
     }
+
+    init(result: Proton_Drive_Sdk_AdditionalMetadataProperty) {
+        self.name = result.name
+        self.utf8JsonValue = result.utf8JsonValue
+    }
 }
 
 private struct StringResultParser {
@@ -145,19 +150,25 @@ public struct FolderNode: Sendable {
     public let uid: SDKNodeUid
     public let parentUid: SDKNodeUid?
     public let name: Result<String, ProtonDriveSDKDriveError>
-    public let creationTime: Double
-    public let trashTime: Double?
+    /// Created on server
+    public let creationTime: TimeInterval
+    /// When the node was moved to trash
+    public let trashTime: TimeInterval?
+    /// Person who named the file
     public let nameAuthor: Author
     public let author: Author
+    /// Owner of the node, either email or organization
+    public let ownedBy: OwnedBy
     public let errors: [ProtonDriveSDKDriveError]
 
     public init(uid: SDKNodeUid,
                 parentUid: SDKNodeUid?,
                 name: Result<String, ProtonDriveSDKDriveError>,
-                creationTime: Double,
-                trashTime: Double?,
+                creationTime: TimeInterval,
+                trashTime: TimeInterval?,
                 nameAuthor: Author,
                 author: Author,
+                ownedBy: OwnedBy,
                 errors: [ProtonDriveSDKDriveError])
     {
         self.uid = uid
@@ -167,6 +178,7 @@ public struct FolderNode: Sendable {
         self.trashTime = trashTime
         self.nameAuthor = nameAuthor
         self.author = author
+        self.ownedBy = ownedBy
         self.errors = errors
     }
 
@@ -181,6 +193,7 @@ public struct FolderNode: Sendable {
         self.trashTime = sdkFolderNode.hasTrashTime ? sdkFolderNode.trashTime.timeIntervalSince1970 : nil
         self.nameAuthor = Author(result: sdkFolderNode.nameAuthor)
         self.author = Author(result: sdkFolderNode.author)
+        self.ownedBy = OwnedBy(result: sdkFolderNode.ownedBy)
         self.errors = sdkFolderNode.errors.map { ProtonDriveSDKDriveError(error: $0) }
     }
 }
@@ -210,18 +223,50 @@ public struct Author: Sendable {
     }
 }
 
+/// Owner of the node (who owns the volume where the node is located).
+public struct OwnedBy: Sendable {
+    /// Email of the owner for regular and photo volumes, nil otherwise
+    public let email: String?
+    /// Organization name for org. volumes, nil otherwise
+    public let organization: String?
+
+    init(result: Proton_Drive_Sdk_OwnedBy) {
+        self.email = result.hasEmail ? result.email : nil
+        self.organization = result.hasOrganization ? result.organization : nil
+    }
+
+    public init(email: String?, organization: String?) {
+        self.email = email
+        self.organization = organization
+    }
+}
+
 public struct FileNode: Sendable {
-    public let uid: String
-    public let parentUid: String
+    public let uid: SDKNodeUid
+    public let parentUid: SDKNodeUid?
     public let name: Result<String, ProtonDriveSDKDriveError>
+    public let creationTime: TimeInterval
+    public let trashTime: TimeInterval?
+    /// Person who named the file
+    public let nameAuthor: Author
+    public let author: Author
+    /// Owner of the node, either email or organization
+    public let ownedBy: OwnedBy
+    /// MIME type of the file
     public let mediaType: String
+    /// Total size of all revisions, encrypted size on the server
     public let totalSizeOnCloudStorage: Int64
     public let activeRevision: FileRevision
     public let errors: [ProtonDriveSDKDriveError]
 
-    public init(uid: String,
-                parentUid: String,
+    public init(uid: SDKNodeUid,
+                parentUid: SDKNodeUid,
                 name: Result<String, ProtonDriveSDKDriveError>,
+                creationTime: TimeInterval,
+                trashTime: TimeInterval?,
+                nameAuthor: Author,
+                author: Author,
+                ownedBy: OwnedBy,
                 mediaType: String,
                 totalSizeOnCloudStorage: Int64,
                 activeRevision: FileRevision,
@@ -229,50 +274,126 @@ public struct FileNode: Sendable {
         self.uid = uid
         self.parentUid = parentUid
         self.name = name
+        self.creationTime = creationTime
+        self.trashTime = trashTime
+        self.nameAuthor = nameAuthor
+        self.author = author
+        self.ownedBy = ownedBy
         self.mediaType = mediaType
         self.totalSizeOnCloudStorage = totalSizeOnCloudStorage
         self.activeRevision = activeRevision
         self.errors = errors
     }
 
-    init(sdkFileNode: Proton_Drive_Sdk_FileNode) {
-        self.uid = sdkFileNode.uid
-        self.parentUid = sdkFileNode.parentUid
+    init(sdkFileNode: Proton_Drive_Sdk_FileNode) throws {
+        guard let uid = SDKNodeUid(sdkCompatibleIdentifier: sdkFileNode.uid) else {
+            throw ProtonDriveSDKError(interopError: .incorrectIDFormat(id: sdkFileNode.uid))
+        }
+        self.uid = uid
+        self.parentUid = sdkFileNode.hasParentUid ? .init(sdkCompatibleIdentifier: sdkFileNode.parentUid) : nil
         self.name = StringResultParser().parse(sdkFileNode.name)
+        self.creationTime = sdkFileNode.creationTime.timeIntervalSince1970
+        self.trashTime = sdkFileNode.trashTime.timeIntervalSince1970
+        self.nameAuthor = Author(result: sdkFileNode.nameAuthor)
+        self.author = Author(result: sdkFileNode.author)
+        self.ownedBy = OwnedBy(result: sdkFileNode.ownedBy)
         self.mediaType = sdkFileNode.mediaType
         self.totalSizeOnCloudStorage = sdkFileNode.totalSizeOnCloudStorage
-        self.activeRevision = FileRevision(sdkFileRevision: sdkFileNode.activeRevision)
+        self.activeRevision = try FileRevision(sdkFileRevision: sdkFileNode.activeRevision)
         self.errors = sdkFileNode.errors.map { ProtonDriveSDKDriveError(error: $0) }
     }
 }
 
-public struct FileRevision: Sendable {
-    public let uid: String
-    public let creationTime: Double
-    public let sizeOnCloudStorage: Int64
-    public let claimedSize: Int64?
-    public let claimedModificationTime: Double?
+public struct FileContentDigests: Sendable {
+    /// SHA1 digest of the file content
+    public let sha1: Data?
+    /// Whether the SHA1 digest was verified against the expected one passed by the client during upload
+    public let sha1Verified: Bool
 
-    public init(uid: String,
+    init(result: Proton_Drive_Sdk_FileContentDigests) {
+        self.sha1 = result.hasSha1 ? result.sha1 : nil
+        self.sha1Verified = result.sha1Verified
+    }
+
+    public init(sha1: Data?, sha1Verified: Bool) {
+        self.sha1 = sha1
+        self.sha1Verified = sha1Verified
+    }
+}
+
+public struct ThumbnailHeader: Sendable {
+    public enum `Type`: Int, Sendable {
+        case thumbnail = 1
+        case preview = 2
+        case unknown = -1
+    }
+
+    public let id: String
+    public let type: Type
+
+    public init(id: String, type: Int) {
+        self.id = id
+        self.type = Type(rawValue: type) ?? .unknown
+    }
+
+    init(result: Proton_Drive_Sdk_ThumbnailHeader) {
+        self.id = result.id
+        self.type = Type(rawValue: result.type.rawValue) ?? .unknown
+    }
+}
+
+public struct FileRevision: Sendable {
+    public let uid: SDKRevisionUid
+    /// When the revision was created on the server
+    public let creationTime: Double
+    /// Encrypted size
+    public let sizeOnCloudStorage: Int64
+    /// Raw size of the revision as stored in extended attributes
+    public let claimedSize: Int64?
+    /// Claimed file digests for integrity verification
+    public let claimedDigests: FileContentDigests
+    /// Claimed modification time from the file system
+    public let claimedModificationTime: Double?
+    public let thumbnails: [ThumbnailHeader]
+    public let additionalClaimedMetadata: [AdditionalMetadata]?
+    public let contentAuthor: Author?
+
+    public init(uid: SDKRevisionUid,
                 creationTime: Double,
                 sizeOnCloudStorage: Int64,
                 claimedSize: Int64?,
-                claimedModificationTime: Double?) {
+                claimedDigests: FileContentDigests,
+                claimedModificationTime: Double?,
+                thumbnails: [ThumbnailHeader],
+                additionalClaimedMetadata: [AdditionalMetadata]?,
+                contentAuthor: Author?) {
         self.uid = uid
         self.creationTime = creationTime
         self.sizeOnCloudStorage = sizeOnCloudStorage
         self.claimedSize = claimedSize
+        self.claimedDigests = claimedDigests
         self.claimedModificationTime = claimedModificationTime
+        self.thumbnails = thumbnails
+        self.additionalClaimedMetadata = additionalClaimedMetadata
+        self.contentAuthor = contentAuthor
     }
 
-    init(sdkFileRevision: Proton_Drive_Sdk_FileRevision) {
-        self.uid = sdkFileRevision.uid
+    init(sdkFileRevision: Proton_Drive_Sdk_FileRevision) throws {
+
+        guard let id = SDKRevisionUid(sdkCompatibleIdentifier: sdkFileRevision.uid) else {
+            throw ProtonDriveSDKError(interopError: .incorrectIDFormat(id: sdkFileRevision.uid))
+        }
+        self.uid = id
         self.creationTime = sdkFileRevision.creationTime.timeIntervalSince1970
         self.sizeOnCloudStorage = sdkFileRevision.sizeOnCloudStorage
         self.claimedSize = sdkFileRevision.hasClaimedSize ? sdkFileRevision.claimedSize : nil
+        self.claimedDigests = FileContentDigests(result: sdkFileRevision.claimedDigests)
         self.claimedModificationTime = sdkFileRevision.hasClaimedModificationTime
-            ? sdkFileRevision.claimedModificationTime.timeIntervalSince1970
-            : nil
+        ? sdkFileRevision.claimedModificationTime.timeIntervalSince1970
+        : nil
+        self.thumbnails = sdkFileRevision.thumbnails.map { ThumbnailHeader(result: $0) }
+        self.additionalClaimedMetadata = sdkFileRevision.additionalClaimedMetadata.map { AdditionalMetadata(result: $0) }
+        self.contentAuthor = sdkFileRevision.hasContentAuthor ? Author(result: sdkFileRevision.contentAuthor) : nil
     }
 }
 
@@ -289,6 +410,14 @@ public enum DriveNode: Sendable {
         case .none:
             throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Invalid Node: no folder or file set"))
         }
+    }
+
+    public init(fileNode: FileNode) {
+        self = .file(fileNode)
+    }
+
+    public init(folderNode: FolderNode) {
+        self = .folder(folderNode)
     }
 }
 
