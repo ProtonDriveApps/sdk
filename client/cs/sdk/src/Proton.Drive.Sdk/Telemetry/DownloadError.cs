@@ -7,7 +7,7 @@ public enum DownloadError
     DecryptionError,
     IntegrityError,
     RateLimited,
-    ValidationError,
     HttpClientSideError,
     Unknown,
+    ValidationError,
 }

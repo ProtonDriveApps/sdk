@@ -6,7 +6,7 @@ public enum UploadError
     NetworkError,
     IntegrityError,
     RateLimited,
-    ValidationError,
     HttpClientSideError,
     Unknown,
+    ValidationError,
 }
