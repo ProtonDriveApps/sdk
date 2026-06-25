@@ -1488,7 +1488,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Report Share URL */
+        /**
+         * Report Share URL
+         * @deprecated
+         * @description DEPRECATED: Use POST /drive/report/share
+         */
         post: operations["post_drive-report-url"];
         delete?: never;
         options?: never;
@@ -2422,6 +2426,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drive/unauth/report/share": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Report a Share for abuse
+         * @description See /drive/report/share for full documentation
+         */
+        post: operations["post_drive-unauth-report-share"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drive/unauth/v2/volumes/{volumeID}/remove-mine": {
         parameters: {
             query?: never;
@@ -2536,6 +2560,23 @@ export interface paths {
         get: operations["get_drive-unauth-v2-volumes-{volumeID}-links-{linkID}-revisions-{revisionID}-verification"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/report/share": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report Share for abuse */
+        post: operations["post_drive-report-share"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4226,6 +4267,8 @@ export interface components {
                     };
                     Thumbnails?: components["schemas"]["ThumbnailTransformer"][];
                     Photo?: components["schemas"]["PhotoTransformer"] | null;
+                    /** @description Whether the revision was imported by Easy Switch on behalf of the user */
+                    Imported?: boolean;
                 };
             } | null;
             FolderProperties: {
@@ -5301,10 +5344,16 @@ export interface components {
             State: components["schemas"]["HealthCheckState"];
         };
         /** @enum {string} */
-        AbuseDtoCategory: "spam" | "copyright" | "child-abuse" | "stolen-data" | "malware" | "other";
-        AbuseReportDto: {
+        AbuseDtoCategory: "spam" | "copyright" | "child-abuse" | "stolen-data" | "malware" | "other" | "non-consensual-intimate";
+        ShareURLAbuseReportDto: {
             /** @description Passphrase for reported Link's Node key, unencrypted, as a string, escaped for JSON. */
             ResourcePassphrase: string;
+            /**
+             * @description The user declares the port is submitted in good-faith (bona fide); Must always be true, but requires specific user-action (opt-in)
+             * @default null
+             * @enum {boolean|null}
+             */
+            BonaFide: true | null;
             /**
              * @description Reported ShareURL, complete including fragment
              * @example https://drive.proton.me/urls/1F9BKXYDMA#yF7d7bn01GMM
@@ -6171,6 +6220,34 @@ export interface components {
              */
             Code: 1000;
         };
+        ShareAbuseReportDto: {
+            /** @description Passphrase for reported Share's Share key, unencrypted, as a base64 encoded string */
+            SharePassphrase: components["schemas"]["BinaryString"];
+            /** @description Session-key of the membership, or invitation. Required for reporting direct Shares */
+            MemberSessionKey?: components["schemas"]["BinaryString"] | null;
+            AbuseCategory: components["schemas"]["AbuseDtoCategory"];
+            /** @description User message about the report. Required for copyright or leak reports. */
+            ReporterMessage: string | null;
+            /**
+             * Format: email
+             * @description Reporter's email if provided; Required in anonymous contexts when reporting copyright violations or stolen data
+             */
+            ReporterEmail: string | null;
+            /** @description For reporting ShareURLs, complete including fragment */
+            ShareURL: string | null;
+            /** @description Full ShareURL password, including custom part, as string, escaped for JSON; Required when reporting ShareURLs */
+            ShareURLPassword: string | null;
+            ShareID: components["schemas"]["Id"];
+            /** @description Nullable; A Link in the reported Share, can be used to report only a single Link in the Share */
+            LinkID: components["schemas"]["Id"] | null;
+            /** @description Nullable; To report only a particular Revision of a Link in the reported Share */
+            RevisionID: components["schemas"]["Id"] | null;
+            /**
+             * @description The user declares the port is submitted in good-faith (bona fide); Must always be true, but requires specific user-action (opt-in)
+             * @enum {boolean}
+             */
+            BonaFide: true;
+        };
         LinkMapQueryParameters: {
             /** @default null */
             SessionName: string | null;
@@ -6965,6 +7042,8 @@ export interface components {
             OrganizationID: components["schemas"]["LongId"];
             /** @description Name of the org. volume. It's plain text so that name can be displayed in UI menu */
             VolumeName: string;
+            /** @description Maximum space (in bytes) to allocate for this volume */
+            MaxSpace: number;
         };
         VolumeResponseDto: {
             /** @description Deprecated, use `VolumeID` instead */
@@ -7605,6 +7684,7 @@ export interface operations {
                 AnchorID?: components["schemas"]["ListPhotosAlbumQueryParameters"]["AnchorID"];
                 Sort?: components["schemas"]["ListPhotosAlbumQueryParameters"]["Sort"];
                 Desc?: components["schemas"]["ListPhotosAlbumQueryParameters"]["Desc"];
+                Tag?: components["schemas"]["ListPhotosAlbumQueryParameters"]["Tag"];
                 OnlyChildren?: components["schemas"]["ListPhotosAlbumQueryParameters"]["OnlyChildren"];
                 IncludeTrashed?: components["schemas"]["ListPhotosAlbumQueryParameters"]["IncludeTrashed"];
             };
@@ -10352,7 +10432,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AbuseReportDto"];
+                "application/json": components["schemas"]["ShareURLAbuseReportDto"];
             };
         };
         responses: {
@@ -10775,6 +10855,7 @@ export interface operations {
                 PreviousPageLastLinkID?: components["schemas"]["ListPhotosParameters"]["PreviousPageLastLinkID"];
                 /** @description The minimum capture time of photos as UNIX timestamp (to filter out older photos) */
                 MinimumCaptureTime?: components["schemas"]["ListPhotosParameters"]["MinimumCaptureTime"];
+                Tag?: components["schemas"]["ListPhotosParameters"]["Tag"];
             };
             header?: never;
             path: {
@@ -12080,6 +12161,31 @@ export interface operations {
             };
         };
     };
+    "post_drive-unauth-report-share": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ShareAbuseReportDto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessfulResponse"];
+                };
+            };
+        };
+    };
     "post_drive-unauth-v2-volumes-{volumeID}-remove-mine": {
         parameters: {
             query?: never;
@@ -12220,6 +12326,60 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VerificationData"];
+                };
+            };
+        };
+    };
+    "post_drive-report-share": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ShareAbuseReportDto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessfulResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 12087: Invalid, expired, or already used human verification token
+                         *      */
+                        Code: number;
+                    };
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 9001: User is required to complete HV; always in anonymous context or in authenticated context when 'ReporterEmail' is passed and does not belong to user .
+                         *      - 12087: Human verification address mismatch
+                         *      */
+                        Code: number;
+                    };
                 };
             };
         };

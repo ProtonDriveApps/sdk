@@ -167,6 +167,7 @@ function convertSharePayload(response: GetShareResponse): EncryptedShare {
         membership: response.Memberships?.[0]
             ? {
                   memberUid: makeMemberUid(response.ShareID, response.Memberships[0].MemberID),
+                  base64KeyPacket: response.Memberships[0].KeyPacket,
               }
             : undefined,
         type: convertShareTypeNumberToEnum(response.Type),

@@ -1,5 +1,6 @@
 import { ValidationError } from '../../errors';
 import {
+    AbuseCategory,
     Logger,
     Member,
     MemberRole,
@@ -1214,6 +1215,75 @@ describe('SharingManagement', () => {
                 {},
                 externalInvitationId,
             );
+        });
+    });
+
+    describe('reportAbuse', () => {
+        const nodeUid = 'volumeId~nodeId';
+
+        beforeEach(() => {
+            sharesService.loadEncryptedShare = jest.fn().mockResolvedValue({
+                id: DEFAULT_SHARE_ID,
+                addressId: 'addressId',
+                creatorEmail: 'address@example.com',
+                membership: { memberUid: 'memberUid', base64KeyPacket: 'keyPacket' },
+            });
+            cryptoService.decryptShare = jest.fn().mockResolvedValue({ passphrase: 'sharePassphrase' });
+            cryptoService.getMemberSessionKey = jest.fn().mockResolvedValue('base64MemberSessionKey');
+            apiService.reportAbuse = jest.fn().mockResolvedValue(undefined);
+        });
+
+        it('should report abuse with the member session key for a direct member', async () => {
+            await sharingManagement.reportAbuse({ nodeUid, abuseCategory: AbuseCategory.Spam, bonaFide: true });
+
+            expect(cryptoService.getMemberSessionKey).toHaveBeenCalledWith('keyPacket');
+            expect(apiService.reportAbuse).toHaveBeenCalledWith({
+                sharePassphrase: 'sharePassphrase',
+                memberSessionKey: 'base64MemberSessionKey',
+                shareId: DEFAULT_SHARE_ID,
+                abuseCategory: AbuseCategory.Spam,
+                bonaFide: true,
+                reporterMessage: undefined,
+                reporterEmail: undefined,
+                linkId: 'nodeId',
+                revisionId: undefined,
+            });
+        });
+
+        it('should report abuse without a member session key when there is no membership (owner)', async () => {
+            sharesService.loadEncryptedShare = jest.fn().mockResolvedValue({
+                id: DEFAULT_SHARE_ID,
+                addressId: 'addressId',
+                creatorEmail: 'address@example.com',
+                membership: undefined,
+            });
+
+            await sharingManagement.reportAbuse({ nodeUid, abuseCategory: AbuseCategory.Spam, bonaFide: true });
+
+            expect(cryptoService.getMemberSessionKey).not.toHaveBeenCalled();
+            expect(apiService.reportAbuse).toHaveBeenCalledWith(
+                expect.objectContaining({ memberSessionKey: undefined }),
+            );
+        });
+
+        it('should include the revision id when reporting a specific revision', async () => {
+            await sharingManagement.reportAbuse({
+                nodeUid,
+                abuseCategory: AbuseCategory.Spam,
+                bonaFide: true,
+                revisionUid: 'volumeId~nodeId~revisionId',
+            });
+
+            expect(apiService.reportAbuse).toHaveBeenCalledWith(
+                expect.objectContaining({ linkId: 'nodeId', revisionId: 'revisionId' }),
+            );
+        });
+
+        it('should throw and not call the API when a required message is missing', async () => {
+            await expect(
+                sharingManagement.reportAbuse({ nodeUid, abuseCategory: AbuseCategory.Copyright, bonaFide: true }),
+            ).rejects.toThrow(ValidationError);
+            expect(apiService.reportAbuse).not.toHaveBeenCalled();
         });
     });
 });

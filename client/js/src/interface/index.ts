@@ -60,6 +60,8 @@ export type {
     ProtonInvitationOrUid,
     ProtonInvitationWithNode,
     PublicLink,
+    ReportDirectShareAbuseSettings,
+    ReportPublicLinkShareAbuseSettings,
     ShareMembersSettings,
     ShareNodeSettings,
     SharePublicLinkSettings,
@@ -67,7 +69,7 @@ export type {
     ShareResult,
     UnshareNodeSettings,
 } from './sharing';
-export { NonProtonInvitationState } from './sharing';
+export { AbuseCategory, NonProtonInvitationState } from './sharing';
 export type {
     Logger,
     MetricAPIRetrySucceededEvent,

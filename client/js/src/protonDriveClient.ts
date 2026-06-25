@@ -23,6 +23,7 @@ import {
     ProtonInvitation,
     ProtonInvitationOrUid,
     ProtonInvitationWithNode,
+    ReportDirectShareAbuseSettings,
     Revision,
     RevisionOrUid,
     SDKEvent,
@@ -283,11 +284,8 @@ export class ProtonDriveClient {
                 const { token, password: urlPassword } = getTokenAndPasswordFromUrl(url);
                 this.logger.info(`Authenticating public link token ${token}`);
 
-                const { httpClient, shareKey, rootUid, publicRole, session } = await this.publicSessionManager.auth(
-                    token,
-                    urlPassword,
-                    customPassword,
-                );
+                const { httpClient, shareKey, sharePassphrase, shareUrlPassword, rootUid, publicRole, session } =
+                    await this.publicSessionManager.auth(token, urlPassword, customPassword);
                 return new ProtonDrivePublicLinkClient({
                     httpClient,
                     account,
@@ -298,6 +296,8 @@ export class ProtonDriveClient {
                     url,
                     token,
                     publicShareKey: shareKey,
+                    publicSharePassphrase: sharePassphrase,
+                    shareUrlPassword,
                     publicRootNodeUid: rootUid,
                     isAnonymousContext,
                     publicRole,
@@ -1160,5 +1160,21 @@ export class ProtonDriveClient {
     async deleteDevice(deviceOrUid: DeviceOrUid): Promise<void> {
         this.logger.info(`Deleting device ${getUid(deviceOrUid)}`);
         await this.devices.deleteDevice(getUid(deviceOrUid));
+    }
+
+    /**
+     * Report a directly shared node for abuse.
+     *
+     * This reports a node (or a specific sub-node and revision) that the
+     * authenticated user has access to via a direct share invitation or
+     * membership. The `bonaFide` flag must be explicitly set to `true`
+     * as a legal acknowledgment per DSA requirements.
+     *
+     * @param settings - Report details. `nodeUid` is required and must be a
+     *   node the caller has access to via a direct share.
+     */
+    async reportAbuse(settings: ReportDirectShareAbuseSettings): Promise<void> {
+        this.logger.info(`Reporting abuse for node ${settings.nodeUid}`);
+        await this.sharing.management.reportAbuse(settings);
     }
 }

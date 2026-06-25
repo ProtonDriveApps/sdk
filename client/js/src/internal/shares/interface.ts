@@ -83,6 +83,7 @@ export interface EncryptedShare extends BaseShare {
 
 interface ShareMembership {
     memberUid: string;
+    base64KeyPacket: string;
 }
 
 /**

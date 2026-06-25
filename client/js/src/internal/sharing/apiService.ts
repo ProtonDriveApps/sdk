@@ -7,6 +7,7 @@ import {
     nodeTypeNumberToNodeType,
     permissionsToMemberRole,
 } from '../apiService';
+import { ReportAbuseAPIService } from '../reportAbuse';
 import { ShareTargetType } from '../shares';
 import {
     makeInvitationUid,
@@ -145,6 +146,8 @@ type PutShareUrlResponse =
  * and vice versa. It should not contain any business logic.
  */
 export class SharingAPIService {
+    private reportAbuseApi: ReportAbuseAPIService;
+
     constructor(
         private logger: Logger,
         private apiService: DriveAPIService,
@@ -153,6 +156,7 @@ export class SharingAPIService {
         this.logger = logger;
         this.apiService = apiService;
         this.shareTargetTypes = shareTargetTypes;
+        this.reportAbuseApi = new ReportAbuseAPIService(apiService);
     }
 
     async *iterateSharedNodeUids(volumeId: string, signal?: AbortSignal): AsyncGenerator<string> {
@@ -656,6 +660,12 @@ export class SharingAPIService {
     async removePublicLink(publicLinkUid: string): Promise<void> {
         const { shareId, publicLinkId } = splitPublicLinkUid(publicLinkUid);
         await this.apiService.delete(`drive/shares/${shareId}/urls/${publicLinkId}`);
+    }
+
+    async reportAbuse(
+        report: Parameters<ReportAbuseAPIService['reportAbuse']>[0],
+    ): Promise<void> {
+        return this.reportAbuseApi.reportAbuse(report);
     }
 
     private convertInternalInvitation(

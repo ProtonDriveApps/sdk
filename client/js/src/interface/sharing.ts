@@ -115,3 +115,42 @@ export type UnshareNodeSettings = {
     users?: string[];
     publicLink?: 'remove';
 };
+
+export enum AbuseCategory {
+    Spam = 'spam',
+    Copyright = 'copyright',
+    ChildAbuse = 'child-abuse',
+    StolenData = 'stolen-data',
+    Malware = 'malware',
+    NonConsensualIntimate = 'non-consensual-intimate',
+    Other = 'other',
+}
+
+export type ReportPublicLinkShareAbuseSettings = {
+    abuseCategory: AbuseCategory;
+    /**
+     * Required for copyright and stolen-data categories.
+     */
+    reporterMessage?: string;
+    reporterEmail?: string;
+    /**
+     * A specific node within the share to report. Defaults to the root node of the public link.
+     */
+    nodeUid?: string;
+    /**
+     * Specific revision to report. Requires nodeUid.
+     */
+    revisionUid?: string;
+    /**
+     * Must be explicitly set to true as a legal acknowledgment (DSA compliance).
+     */
+    bonaFide: true;
+};
+
+/**
+ * Same as {@link ReportPublicLinkShareAbuseSettings} but with `nodeUid` required,
+ * for use with direct share clients where there is no implicit share context.
+ */
+export type ReportDirectShareAbuseSettings = Omit<ReportPublicLinkShareAbuseSettings, 'nodeUid'> & {
+    nodeUid: string;
+};

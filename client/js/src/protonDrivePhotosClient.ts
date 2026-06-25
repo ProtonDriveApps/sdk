@@ -17,6 +17,7 @@ import {
     ProtonInvitation,
     ProtonInvitationOrUid,
     ProtonInvitationWithNode,
+    ReportDirectShareAbuseSettings,
     SDKEvent,
     ShareNodeSettings,
     ShareResult,
@@ -828,5 +829,15 @@ export class ProtonDrivePhotosClient {
             })),
             signal,
         );
+    }
+
+    /**
+     * Report a directly shared node for abuse.
+     *
+     * See `ProtonDriveClient.reportAbuse` for full documentation.
+     */
+    async reportAbuse(settings: ReportDirectShareAbuseSettings): Promise<void> {
+        this.logger.info(`Reporting abuse for node ${settings.nodeUid}`);
+        await this.sharing.management.reportAbuse(settings);
     }
 }

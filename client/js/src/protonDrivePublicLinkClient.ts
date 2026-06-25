@@ -20,6 +20,7 @@ import {
     ProtonDriveEntitiesCache,
     ProtonDriveHTTPClient,
     ProtonDriveTelemetry,
+    ReportPublicLinkShareAbuseSettings,
     SDKEvent,
     ThumbnailResult,
     ThumbnailType,
@@ -111,6 +112,8 @@ export class ProtonDrivePublicLinkClient {
         url,
         token,
         publicShareKey,
+        publicSharePassphrase,
+        shareUrlPassword,
         publicRootNodeUid,
         isAnonymousContext,
         publicRole,
@@ -128,6 +131,8 @@ export class ProtonDrivePublicLinkClient {
         url: string;
         token: string;
         publicShareKey: PrivateKey;
+        publicSharePassphrase: string;
+        shareUrlPassword: string;
         publicRootNodeUid: string;
         isAnonymousContext: boolean;
         publicRole: MemberRole;
@@ -176,6 +181,8 @@ export class ProtonDrivePublicLinkClient {
             url,
             token,
             publicShareKey,
+            publicSharePassphrase,
+            shareUrlPassword,
             publicRootNodeUid,
             publicRole,
             isAnonymousContext,
@@ -422,5 +429,19 @@ export class ProtonDrivePublicLinkClient {
     async getAvailableName(parentFolderUid: NodeOrUid, name: string): Promise<string> {
         this.logger.info(`Getting available name in folder ${getUid(parentFolderUid)}`);
         return this.sharingPublic.nodes.management.findAvailableName(getUid(parentFolderUid), name);
+    }
+
+    /**
+     * Report the public link share for abuse.
+     *
+     * This reports a share (or a specific node and revision within it) that
+     * the caller is accessing via a public link. The `bonaFide` flag must be
+     * explicitly set to `true` as a legal acknowledgment per DSA requirements.
+     *
+     * @param settings - Report details including category and optional message.
+     */
+    async reportAbuse(settings: ReportPublicLinkShareAbuseSettings): Promise<void> {
+        this.logger.info('Reporting abuse for public link share');
+        await this.sharingPublic.reporting.reportAbuse(settings);
     }
 }

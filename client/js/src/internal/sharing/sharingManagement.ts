@@ -9,6 +9,7 @@ import {
     NonProtonInvitation,
     ProtonDriveAccount,
     ProtonInvitation,
+    ReportDirectShareAbuseSettings,
     resultOk,
     ShareNodeSettings,
     SharePublicLinkSettingsObject,
@@ -17,7 +18,8 @@ import {
 } from '../../interface';
 import { ErrorCode } from '../apiService';
 import { getErrorMessage } from '../errors';
-import { splitInvitationUid, splitNodeUid } from '../uids';
+import { validateReportShareAbuseSettings } from '../reportAbuse';
+import { splitInvitationUid, splitNodeRevisionUid, splitNodeUid } from '../uids';
 import { SharingAPIService } from './apiService';
 import { SharingCache } from './cache';
 import { PUBLIC_LINK_GENERATED_PASSWORD_LENGTH, SharingCryptoService } from './cryptoService';
@@ -832,5 +834,42 @@ export class SharingManagement {
 
     private async removeSharedLink(publicLinkUid: string): Promise<void> {
         await this.apiService.removePublicLink(publicLinkUid);
+    }
+
+    async reportAbuse(settings: ReportDirectShareAbuseSettings): Promise<void> {
+        validateReportShareAbuseSettings(settings);
+
+        const node = await this.nodesService.getNode(settings.nodeUid);
+        if (!node.shareId) {
+            throw new ValidationError(c('Error').t`Node is not accessible via a share`);
+        }
+
+        const { nodeId: linkId } = splitNodeUid(settings.nodeUid);
+        const revisionId = settings.revisionUid ? splitNodeRevisionUid(settings.revisionUid).revisionId : undefined;
+
+        // Fetch and decrypt the share on the spot rather than exposing its
+        // passphrase through the shares module.
+        const [{ key: nodeKey }, encryptedShare] = await Promise.all([
+            this.nodesService.getNodeKeys(settings.nodeUid),
+            this.sharesService.loadEncryptedShare(node.shareId),
+        ]);
+        const { passphrase: sharePassphrase } = await this.cryptoService.decryptShare(encryptedShare, nodeKey);
+
+        // The membership key packet is available to any member; absent for owners.
+        const memberSessionKey = encryptedShare.membership
+            ? await this.cryptoService.getMemberSessionKey(encryptedShare.membership.base64KeyPacket)
+            : undefined;
+
+        await this.apiService.reportAbuse({
+            sharePassphrase,
+            memberSessionKey,
+            shareId: node.shareId,
+            abuseCategory: settings.abuseCategory,
+            bonaFide: settings.bonaFide,
+            reporterMessage: settings.reporterMessage,
+            reporterEmail: settings.reporterEmail,
+            linkId,
+            revisionId,
+        });
     }
 }

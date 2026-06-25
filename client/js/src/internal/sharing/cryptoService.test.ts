@@ -380,4 +380,26 @@ describe('SharingCryptoService', () => {
             );
         });
     });
+
+    describe('getMemberSessionKey', () => {
+        it('should decrypt the key packet with own address keys and return base64 session key', async () => {
+            account.getOwnAddresses = jest.fn().mockResolvedValue([
+                { keys: [{ key: 'addressKey1' as unknown as PrivateKey }] },
+                { keys: [{ key: 'addressKey2' as unknown as PrivateKey }] },
+            ]);
+            driveCrypto.decryptAndVerifySessionKey = jest.fn().mockResolvedValue({
+                sessionKey: { data: { toBase64: () => 'base64MemberSessionKey' } } as unknown as SessionKey,
+            });
+
+            const result = await cryptoService.getMemberSessionKey('base64KeyPacket');
+
+            expect(result).toBe('base64MemberSessionKey');
+            expect(driveCrypto.decryptAndVerifySessionKey).toHaveBeenCalledWith(
+                'base64KeyPacket',
+                undefined,
+                ['addressKey1', 'addressKey2'],
+                [],
+            );
+        });
+    });
 });

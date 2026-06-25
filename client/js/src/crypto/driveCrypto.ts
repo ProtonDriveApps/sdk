@@ -313,15 +313,18 @@ export class DriveCrypto {
         armoredPassphrase: string,
     ): Promise<{
         key: PrivateKey;
+        passphrase: string;
     }> {
         const keyPassword = await this.srpModule.computeKeyPassword(password, salt);
 
-        const passphrase = await this.openPGPCrypto.decryptArmoredWithPassword(armoredPassphrase, keyPassword);
+        const passphraseBytes = await this.openPGPCrypto.decryptArmoredWithPassword(armoredPassphrase, keyPassword);
+        const passphrase = uint8ArrayToUtf8(passphraseBytes);
 
-        const key = await this.openPGPCrypto.decryptKey(armoredKey, new TextDecoder().decode(passphrase));
+        const key = await this.openPGPCrypto.decryptKey(armoredKey, passphrase);
 
         return {
             key,
+            passphrase,
         };
     }
 

@@ -85,6 +85,8 @@ export class SharingPublicSessionManager {
     ): Promise<{
         httpClient: SharingPublicSessionHttpClient;
         shareKey: PrivateKey;
+        sharePassphrase: string;
+        shareUrlPassword: string;
         rootUid: string;
         publicRole: MemberRole;
         session: SharingPublicLinkSession;
@@ -99,24 +101,30 @@ export class SharingPublicSessionManager {
         const session = new SharingPublicLinkSession(this.api, this.srpModule, token, password);
         const { encryptedShare, rootUid } = await session.auth(info.srp);
 
-        const shareKey = await this.decryptShareKey(encryptedShare, password);
+        const { shareKey, sharePassphrase } = await this.decryptShareKey(encryptedShare, password);
 
         return {
             httpClient: new SharingPublicSessionHttpClient(this.httpClient, session),
             shareKey,
+            sharePassphrase,
+            // Full password (URL + custom), needed for abuse reports.
+            shareUrlPassword: password,
             rootUid,
             publicRole: permissionsToMemberRole(this.logger, encryptedShare.publicPermissions),
             session,
         };
     }
 
-    private async decryptShareKey(encryptedShare: EncryptedShareCrypto, password: string): Promise<PrivateKey> {
-        const { key: shareKey } = await this.driveCrypto.decryptKeyWithSrpPassword(
+    private async decryptShareKey(
+        encryptedShare: EncryptedShareCrypto,
+        password: string,
+    ): Promise<{ shareKey: PrivateKey; sharePassphrase: string }> {
+        const { key, passphrase } = await this.driveCrypto.decryptKeyWithSrpPassword(
             password,
             encryptedShare.base64UrlPasswordSalt,
             encryptedShare.armoredKey,
             encryptedShare.armoredPassphrase,
         );
-        return shareKey;
+        return { shareKey: key, sharePassphrase: passphrase };
     }
 }

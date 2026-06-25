@@ -13,6 +13,7 @@ type PostMalwareScanRequest = Extract<
 >['content']['application/json'];
 type PostMalwareScanResponse =
     drivePaths['/drive/urls/{token}/security']['post']['responses']['200']['content']['application/json'];
+
 /**
  * Provides API communication for actions on the public link.
  *
@@ -47,4 +48,5 @@ export class SharingPublicAPIService {
             Hashes: hashes,
         });
     }
+
 }

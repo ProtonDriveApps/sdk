@@ -10,11 +10,13 @@ import { DriveAPIService } from '../apiService';
 import { NodesCache } from '../nodes/cache';
 import { NodesCryptoCache } from '../nodes/cryptoCache';
 import { NodesRevisons } from '../nodes/nodesRevisions';
+import { ReportAbuseAPIService } from '../reportAbuse';
 import { SharingPublicAPIService } from './apiService';
 import { SharingPublicCryptoReporter } from './cryptoReporter';
 import { SharingPublicNodesAPIService, SharingPublicNodesCryptoService } from './nodes';
 import { SharingPublicNodesAccess, SharingPublicNodesManagement } from './nodes';
 import { NodesSecurity } from './nodesSecurity';
+import { SharingPublicReporting } from './reporting';
 import { SharingPublicSharesManager } from './shares';
 
 export { SharingPublicSessionManager } from './session/manager';
@@ -40,6 +42,8 @@ export function initSharingPublicModule(
     url: string,
     token: string,
     publicShareKey: PrivateKey,
+    publicSharePassphrase: string,
+    shareUrlPassword: string,
     publicRootNodeUid: string,
     publicRole: MemberRole,
     isAnonymousContext: boolean,
@@ -60,10 +64,19 @@ export function initSharingPublicModule(
         publicRole,
         isAnonymousContext,
     );
+    const reporting = new SharingPublicReporting(
+        new ReportAbuseAPIService(apiService),
+        shares,
+        nodes.access,
+        url,
+        publicSharePassphrase,
+        shareUrlPassword,
+    );
 
     return {
         shares,
         nodes,
+        reporting,
     };
 }
 

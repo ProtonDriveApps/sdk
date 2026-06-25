@@ -127,6 +127,7 @@ export class SharingCryptoService {
     ): Promise<{
         author: Author;
         key: PrivateKey;
+        passphrase: string;
         passphraseSessionKey: SessionKey;
     }> {
         // All standard shares should be encrypted with node key.
@@ -141,7 +142,7 @@ export class SharingCryptoService {
         }
         const addressPublicKeys = await this.account.getPublicKeys(share.creatorEmail);
 
-        const { key, passphraseSessionKey, verified, verificationErrors } = await this.driveCrypto.decryptKey(
+        const { key, passphrase, passphraseSessionKey, verified, verificationErrors } = await this.driveCrypto.decryptKey(
             share.encryptedCrypto.armoredKey,
             share.encryptedCrypto.armoredPassphrase,
             share.encryptedCrypto.armoredPassphraseSignature,
@@ -160,6 +161,7 @@ export class SharingCryptoService {
         return {
             author,
             key,
+            passphrase,
             passphraseSessionKey,
         };
     }
@@ -343,6 +345,26 @@ export class SharingCryptoService {
             inviteeEmail: encryptedMember.inviteeEmail,
             role: encryptedMember.role,
         };
+    }
+
+    /**
+     * Decrypts the key packet of a share membership to obtain the member session key.
+     *
+     * The member session key is the session key used to encrypt the share passphrase
+     * for a specific member. It is required when reporting abuse on a direct share.
+     *
+     * Returns the session key as a base64-encoded string, ready to be sent to the API.
+     */
+    async getMemberSessionKey(base64KeyPacket: string): Promise<string> {
+        const ownAddresses = await this.account.getOwnAddresses();
+        const ownAddressKeys = ownAddresses.flatMap((a) => a.keys.map((k) => k.key));
+        const { sessionKey } = await this.driveCrypto.decryptAndVerifySessionKey(
+            base64KeyPacket,
+            undefined,
+            ownAddressKeys,
+            [],
+        );
+        return sessionKey.data.toBase64();
     }
 
     private async verifyAddedByEmail(
