@@ -4,7 +4,7 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace Proton.Sdk.Serialization;
 
-internal sealed class RefResultJsonConverter<T, TError> : JsonConverter<Result<T, TError>>
+public sealed class RefResultJsonConverter<T, TError> : JsonConverter<Result<T, TError>>
     where T : class?
     where TError : class?
 {

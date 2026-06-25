@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Microsoft.IO;
 using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Account;
 using Proton.Drive.Sdk.Api;
 using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Cryptography;

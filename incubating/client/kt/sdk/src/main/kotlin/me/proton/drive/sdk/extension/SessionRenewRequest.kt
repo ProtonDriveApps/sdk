@@ -1,7 +1,7 @@
 package me.proton.drive.sdk.extension
 
 import me.proton.drive.sdk.entity.SessionRenewRequest
-import proton.sdk.sessionRenewRequest
+import proton.drive.sdk.account.sessionRenewRequest
 
 internal fun SessionRenewRequest.toProtobuf(handle: Long) = sessionRenewRequest {
     oldSessionHandle = handle

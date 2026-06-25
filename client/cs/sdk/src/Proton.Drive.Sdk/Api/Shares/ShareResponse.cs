@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
+using Proton.Drive.Sdk.Account.Addresses;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Shares;
 using Proton.Drive.Sdk.Volumes;
-using Proton.Sdk.Addresses;
 using Proton.Sdk.Api;
 using Proton.Sdk.Cryptography;
 using Proton.Sdk.Serialization;

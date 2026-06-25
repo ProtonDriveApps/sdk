@@ -6,8 +6,8 @@ import me.proton.drive.sdk.entity.SessionResumeRequest
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.UnitResponseCallback
 import me.proton.drive.sdk.extension.toProtobuf
-import proton.sdk.sessionEndRequest
-import proton.sdk.sessionFreeRequest
+import proton.drive.sdk.account.sessionEndRequest
+import proton.drive.sdk.account.sessionFreeRequest
 
 class JniSession internal constructor() : JniBaseProtonSdk() {
 

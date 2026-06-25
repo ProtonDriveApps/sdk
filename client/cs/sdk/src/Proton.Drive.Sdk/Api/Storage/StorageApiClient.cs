@@ -32,7 +32,7 @@ internal sealed class StorageApiClient(HttpClient defaultHttpClient, HttpClient 
 
         // TODO: investigate what happens with the stream in case of a retry after a failure, is there a seek back to its beginning?
         return await _storageHttpClient
-            .Expecting(ProtonApiSerializerContext.Default.ApiResponse)
+            .Expecting(SdkApiSerializerContext.Default.ApiResponse)
             .SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
     }
 
@@ -48,7 +48,7 @@ internal sealed class StorageApiClient(HttpClient defaultHttpClient, HttpClient 
             var blobResponse = await _defaultHttpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
                 .ConfigureAwait(false);
 
-            await blobResponse.EnsureApiSuccessAsync(ProtonApiSerializerContext.Default.ApiResponse, cancellationToken).ConfigureAwait(false);
+            await blobResponse.EnsureApiSuccessAsync(SdkApiSerializerContext.Default.ApiResponse, cancellationToken).ConfigureAwait(false);
 
             return await blobResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         }

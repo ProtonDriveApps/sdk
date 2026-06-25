@@ -2,7 +2,7 @@ using Proton.Cryptography.Pgp;
 
 namespace Proton.Sdk.Http;
 
-internal sealed class CryptographyTimeProvisionHandler : DelegatingHandler
+public sealed class CryptographyTimeProvisionHandler : DelegatingHandler
 {
     private static readonly CryptographyTimeProvider CryptographyTimeProvider = new();
 

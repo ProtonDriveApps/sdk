@@ -24,15 +24,16 @@
   <ItemGroup>
     <ProjectReference Include="..\Proton.Drive.Sdk\Proton.Drive.Sdk.csproj" />
     <ProjectReference Include="..\Proton.Sdk.CExports\Proton.Sdk.CExports.csproj" />
+    <ProjectReference Include="../../../../../incubating/account/cs/src/Proton.Drive.Sdk.Account.CExports/Proton.Drive.Sdk.Account.CExports.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="../protos/proton.drive.sdk.proto" Link="proton.drive.sdk.proto" Access="internal" />
+    <Protobuf Include="../protos/proton.drive.sdk.proto" Link="proton.drive.sdk.proto" Access="internal" AdditionalImportDirs="../../../../../incubating/account/cs/protos" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- This includes the C exports for the account functions -->
     <IlcCompileInput Include="$(OutputPath)\$(NativeLibPrefix)proton_sdk.dll" />
+    <IlcCompileInput Include="$(OutputPath)\Proton.Drive.Sdk.Account.CExports.dll" />
   </ItemGroup>
 
   <!-- If targeting Android, add the required SONAME to the output library -->

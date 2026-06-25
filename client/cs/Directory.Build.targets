@@ -1,7 +1,9 @@
 <Project>
 
+  <!-- Only infer host RID for executables during publish (e.g. CLI). Class libraries
+       built as publish dependencies must not get the host RID when cross-compiling. -->
   <PropertyGroup Condition="'$(_IsPublishing)' == 'yes'">
-    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and ('$(OutputType)' == 'Exe' or '$(OutputType)' == 'WinExe')">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
     <DefineConstants Condition="$(RuntimeIdentifier.StartsWith('win'))">$(DefineConstants);WINDOWS</DefineConstants>
     <NativeLibPrefix Condition="!$(RuntimeIdentifier.StartsWith('win'))">lib</NativeLibPrefix>
   </PropertyGroup>

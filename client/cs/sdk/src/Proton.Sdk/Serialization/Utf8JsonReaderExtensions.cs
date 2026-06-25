@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Proton.Sdk.Serialization;
 
-internal static class Utf8JsonReaderExtensions
+public static class Utf8JsonReaderExtensions
 {
     extension(ref Utf8JsonReader reader)
     {

@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Proton.Sdk.Serialization;
 
-internal sealed class EpochSecondsJsonConverter : JsonConverter<DateTime>
+public sealed class EpochSecondsJsonConverter : JsonConverter<DateTime>
 {
     public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

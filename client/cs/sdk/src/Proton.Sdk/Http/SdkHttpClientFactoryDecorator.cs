@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace Proton.Sdk.Http;
 
-internal sealed class SdkHttpClientFactoryDecorator : IHttpClientFactory
+public sealed class SdkHttpClientFactoryDecorator : IHttpClientFactory
 {
     private static readonly string SdkVersion = GetSdkVersion();
 

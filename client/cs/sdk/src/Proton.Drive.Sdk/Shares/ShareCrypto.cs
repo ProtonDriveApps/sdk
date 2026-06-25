@@ -1,7 +1,7 @@
 using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Account.Addresses;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Nodes;
-using Proton.Sdk.Addresses;
 using Proton.Sdk.Cryptography;
 
 namespace Proton.Drive.Sdk.Shares;

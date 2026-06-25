@@ -51,7 +51,7 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
         CancellationToken cancellationToken)
     {
         return await _httpClient
-            .Expecting(ProtonApiSerializerContext.Default.ApiResponse)
+            .Expecting(SdkApiSerializerContext.Default.ApiResponse)
             .PutAsync(
                 $"v2/volumes/{volumeId}/files/{linkId}/revisions/{revisionId}",
                 request,

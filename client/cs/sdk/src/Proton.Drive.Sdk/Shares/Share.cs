@@ -1,6 +1,6 @@
+using Proton.Drive.Sdk.Account.Addresses;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Nodes;
-using Proton.Sdk.Addresses;
 
 namespace Proton.Drive.Sdk.Shares;
 

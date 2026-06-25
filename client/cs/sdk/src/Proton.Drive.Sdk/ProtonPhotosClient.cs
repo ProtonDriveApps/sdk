@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Proton.Drive.Sdk.Account;
 using Proton.Drive.Sdk.Api;
 using Proton.Drive.Sdk.Api.Photos;
 using Proton.Drive.Sdk.Http;

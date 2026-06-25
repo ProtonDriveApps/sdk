@@ -19,7 +19,7 @@ public class TooManyRequestsException : ProtonApiException
     {
     }
 
-    internal TooManyRequestsException(HttpStatusCode statusCode, ApiResponse response, DateTime? retryAfter = null)
+    public TooManyRequestsException(HttpStatusCode statusCode, ApiResponse response, DateTime? retryAfter = null)
         : base(statusCode, response)
     {
         RetryAfter = retryAfter;

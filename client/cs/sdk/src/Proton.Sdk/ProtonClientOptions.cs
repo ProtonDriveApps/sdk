@@ -14,7 +14,5 @@ public record ProtonClientOptions
     public ICacheRepository? EntityCacheRepository { get; set; }
     public ITelemetry? Telemetry { get; set; }
     public IFeatureFlagProvider? FeatureFlagProvider { get; set; }
-    internal ICacheRepository? SecretCacheRepository { get; set; }
-    internal Uri? RefreshRedirectUri { get; set; }
-    internal string? BindingsLanguage { get; set; }
+    public string? BindingsLanguage { get; set; }
 }

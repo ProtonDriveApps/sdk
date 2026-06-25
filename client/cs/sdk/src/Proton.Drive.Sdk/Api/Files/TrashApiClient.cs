@@ -63,7 +63,7 @@ internal sealed class TrashApiClient(HttpClient httpClient) : ITrashApiClient
     public async ValueTask<ApiResponse> EmptyAsync(VolumeId volumeId, CancellationToken cancellationToken)
     {
         return await _httpClient
-            .Expecting(ProtonApiSerializerContext.Default.ApiResponse)
+            .Expecting(SdkApiSerializerContext.Default.ApiResponse)
             .DeleteAsync($"volumes/{volumeId}/trash", cancellationToken).ConfigureAwait(false);
     }
 }

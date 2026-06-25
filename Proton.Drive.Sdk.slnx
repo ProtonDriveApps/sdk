@@ -3,4 +3,8 @@
   <Project Path="client/cs/sdk/src/Proton.Drive.Sdk/Proton.Drive.Sdk.csproj" />
   <Project Path="client/cs/sdk/src/Proton.Sdk.CExports/Proton.Sdk.CExports.csproj" />
   <Project Path="client/cs/sdk/src/Proton.Sdk/Proton.Sdk.csproj" />
+  <Folder Name="/Incubating/Account/">
+    <Project Path="incubating/account/cs/src/Proton.Drive.Sdk.Account/Proton.Drive.Sdk.Account.csproj" />
+    <Project Path="incubating/account/cs/src/Proton.Drive.Sdk.Account.CExports/Proton.Drive.Sdk.Account.CExports.csproj" />
+  </Folder>
 </Solution>

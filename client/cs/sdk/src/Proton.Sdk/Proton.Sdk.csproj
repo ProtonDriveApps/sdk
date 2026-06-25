@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <PackageTags>Authentication Session Account</PackageTags>
-    <Description>Provides the means to authenticate with the Proton API and get user account information.</Description>
+    <PackageTags>Http Cache Serialization Telemetry</PackageTags>
+    <Description>Shared client infrastructure for Proton SDKs: HTTP, caching, serialization, and telemetry.</Description>
     <EmbedAllSources>true</EmbedAllSources>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -23,23 +23,9 @@
     <PackageReference Include="SourceGear.sqlite3" />
   </ItemGroup>
 
-  <!--
-  The bundle_green package, which is supposed to work for all platforms, seems to fail when building for iOS and macOS.
-  So instead, as a workaround, we conditionally add bundle_sqlite3 when building for iOS or macOS.
-  -->
   <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('ios')) Or $(RuntimeIdentifier.StartsWith('osx'))">
     <PackageReference Include="SQLitePCLRaw.bundle_sqlite3" />
     <PackageReference Include="SQLitePCLRaw.provider.sqlite3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <InternalsVisibleTo Include="Proton.Drive.Sdk" />
-    <InternalsVisibleTo Include="Proton.Photos.Sdk" />
-    <InternalsVisibleTo Include="Proton.Drive.Sdk.Tests" />
-    <InternalsVisibleTo Include="Proton.Drive.Sdk.CExports.Tests" />
-    <InternalsVisibleTo Include="Proton.Sdk.CExports.Tests" />
-    <InternalsVisibleTo Include="$(NativeLibPrefix)proton_sdk" />
-    <InternalsVisibleTo Include="$(NativeLibPrefix)proton_drive_sdk" />
   </ItemGroup>
 
 </Project>

@@ -4,7 +4,7 @@ using Proton.Cryptography.Pgp;
 
 namespace Proton.Sdk.Serialization;
 
-internal sealed class PgpPrivateKeyJsonConverter : JsonConverter<PgpPrivateKey>
+public sealed class PgpPrivateKeyJsonConverter : JsonConverter<PgpPrivateKey>
 {
     public override PgpPrivateKey Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

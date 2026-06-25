@@ -5,7 +5,7 @@ using Proton.Sdk.Cryptography;
 
 namespace Proton.Sdk.Serialization;
 
-internal sealed class PgpArmoredBlockJsonConverter<T> : JsonConverter<T>
+public sealed class PgpArmoredBlockJsonConverter<T> : JsonConverter<T>
     where T : IPgpArmoredBlock<T>
 {
     public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

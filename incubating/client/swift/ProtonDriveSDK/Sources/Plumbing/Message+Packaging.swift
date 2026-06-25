@@ -284,7 +284,7 @@ extension Message {
             return Proton_Sdk_Response.with {
                 $0.value = value
             }
-        case let address as Proton_Sdk_Address:
+        case let address as Proton_Drive_Sdk_Account_Address:
             let value = try Google_Protobuf_Any.init(message: address)
             return Proton_Sdk_Response.with {
                 $0.value = value

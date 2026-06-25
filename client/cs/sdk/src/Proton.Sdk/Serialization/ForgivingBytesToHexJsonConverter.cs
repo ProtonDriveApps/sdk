@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Proton.Sdk.Serialization;
 
-internal sealed class ForgivingBytesToHexJsonConverter : JsonConverter<ReadOnlyMemory<byte>>
+public sealed class ForgivingBytesToHexJsonConverter : JsonConverter<ReadOnlyMemory<byte>>
 {
     public override ReadOnlyMemory<byte> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

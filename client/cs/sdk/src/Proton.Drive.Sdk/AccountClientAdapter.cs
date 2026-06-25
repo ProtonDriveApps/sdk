@@ -1,6 +1,6 @@
 using Proton.Cryptography.Pgp;
-using Proton.Sdk;
-using Proton.Sdk.Addresses;
+using Proton.Drive.Sdk.Account;
+using Proton.Drive.Sdk.Account.Addresses;
 
 namespace Proton.Drive.Sdk;
 

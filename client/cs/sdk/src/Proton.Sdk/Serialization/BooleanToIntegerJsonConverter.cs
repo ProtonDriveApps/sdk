@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Proton.Sdk.Serialization;
 
-internal sealed class BooleanToIntegerJsonConverter : JsonConverter<bool>
+public sealed class BooleanToIntegerJsonConverter : JsonConverter<bool>
 {
     public override bool Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

@@ -1,6 +1,6 @@
 namespace Proton.Sdk.Cryptography;
 
-internal interface IPgpArmoredBlock<out T>
+public interface IPgpArmoredBlock<out T>
     where T : IPgpArmoredBlock<T>
 {
     static abstract T Create(ReadOnlySpan<byte> armoredBytes);

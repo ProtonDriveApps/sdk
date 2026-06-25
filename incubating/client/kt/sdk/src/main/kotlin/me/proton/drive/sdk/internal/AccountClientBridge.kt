@@ -20,12 +20,12 @@ internal class AccountClientBridge(
         ProtonDriveSdk.AccountRequest.PayloadCase.GET_ADDRESS -> userAddressResolver
             .getAddress(request.getAddress.addressId)
             .toProtobuf()
-            .asAny("proton.sdk.Address")
+            .asAny("proton.drive.sdk.account.Address")
 
         ProtonDriveSdk.AccountRequest.PayloadCase.GET_DEFAULT_ADDRESS -> userAddressResolver
             .getDefaultAddress()
             .toProtobuf()
-            .asAny("proton.sdk.Address")
+            .asAny("proton.drive.sdk.account.Address")
 
         ProtonDriveSdk.AccountRequest.PayloadCase.GET_ADDRESS_PRIMARY_PRIVATE_KEY -> userAddressResolver
             .getAddressPrimaryPrivateKey(request.getAddressPrimaryPrivateKey.addressId) { key ->

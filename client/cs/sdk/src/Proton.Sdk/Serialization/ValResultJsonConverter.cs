@@ -4,7 +4,7 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace Proton.Sdk.Serialization;
 
-internal sealed class ValResultJsonConverter<T, TError> : JsonConverter<Result<T, TError>>
+public sealed class ValResultJsonConverter<T, TError> : JsonConverter<Result<T, TError>>
     where T : struct
     where TError : class?
 {

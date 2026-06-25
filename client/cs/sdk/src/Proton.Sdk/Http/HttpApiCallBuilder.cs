@@ -2,19 +2,18 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Proton.Sdk.Api;
-using Proton.Sdk.Authentication;
 
 namespace Proton.Sdk.Http;
 
 // FIXME: add unit tests
-internal readonly struct HttpApiCallBuilder<TSuccess, TFailure>
+public readonly struct HttpApiCallBuilder<TSuccess, TFailure>
     where TFailure : ApiResponse
 {
     private readonly HttpClient _httpClient;
     private readonly JsonTypeInfo<TSuccess> _successTypeInfo;
     private readonly JsonTypeInfo<TFailure> _failureTypeInfo;
 
-    internal HttpApiCallBuilder(HttpClient httpClient, JsonTypeInfo<TSuccess> successTypeInfo, JsonTypeInfo<TFailure> failureTypeInfo)
+    public HttpApiCallBuilder(HttpClient httpClient, JsonTypeInfo<TSuccess> successTypeInfo, JsonTypeInfo<TFailure> failureTypeInfo)
     {
         _httpClient = httpClient;
         _successTypeInfo = successTypeInfo;
@@ -47,7 +46,7 @@ internal readonly struct HttpApiCallBuilder<TSuccess, TFailure>
 
     public async ValueTask<TSuccess> PostAsync<TRequestBody>(
         string requestUri,
-        SessionId sessionId,
+        string sessionId,
         string accessToken,
         TRequestBody body,
         JsonTypeInfo<TRequestBody> bodyTypeInfo,

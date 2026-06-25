@@ -82,12 +82,12 @@ let cCompatibleAccountClientRequest: CCallbackWithCallbackPointer = { statePoint
 }
 
 extension ProtonCoreDataModel.Address {
-    func makeProtoAddress() -> Proton_Sdk_Address {
-        return Proton_Sdk_Address.with {
+    func makeProtoAddress() -> Proton_Drive_Sdk_Account_Address {
+        return Proton_Drive_Sdk_Account_Address.with {
             $0.addressID = addressID
             $0.order = Int32(order)
             $0.emailAddress = email
-            let addressStatus: Proton_Sdk_AddressStatus = {
+            let addressStatus: Proton_Drive_Sdk_Account_AddressStatus = {
                 switch status {
                 case .disabled:
                     return .disabled
@@ -98,7 +98,7 @@ extension ProtonCoreDataModel.Address {
             $0.status = addressStatus
             $0.primaryKeyIndex = Int32(keys.firstIndex(where: { $0.primary == 1 }) ?? 0)
             $0.keys = keys.map { key in
-                Proton_Sdk_AddressKey.with {
+                Proton_Drive_Sdk_Account_AddressKey.with {
                     $0.addressID = addressID
                     $0.addressKeyID = key.keyID
                     $0.isActive = key.active == 1

@@ -4,6 +4,7 @@ package proton.drive.sdk;
 option features.utf8_validation = NONE;
 option csharp_namespace = "Proton.Drive.Sdk.CExports";
 
+import "proton.sdk.common.proto";
 import "proton.sdk.proto";
 import "google/protobuf/timestamp.proto";
 

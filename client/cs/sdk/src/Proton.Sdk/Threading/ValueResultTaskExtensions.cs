@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Proton.Sdk.Threading;
 
-internal static class ValueResultTaskExtensions
+public static class ValueResultTaskExtensions
 {
     public static bool TryGetResult<T>(this Task<T> task, [NotNullWhen(true)] out T? result)
         where T : struct

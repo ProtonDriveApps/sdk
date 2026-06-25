@@ -2,7 +2,7 @@ using System.Net.Http.Headers;
 
 namespace Proton.Sdk.Http;
 
-internal static class HttpRequestHeadersExtensions
+public static class HttpRequestHeadersExtensions
 {
     private const string ContentType = "application/vnd.protonmail.api+json";
 

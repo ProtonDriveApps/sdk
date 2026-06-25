@@ -2,6 +2,7 @@ edition = "2023";
 package proton.sdk;
 
 import "google/protobuf/any.proto";
+import "proton.drive.sdk.account.proto";
 
 option features.utf8_validation = NONE;
 option csharp_namespace = "Proton.Sdk.CExports";
@@ -14,13 +15,13 @@ message Request {
 
         StreamReadRequest stream_read = 200;
 
-        SessionBeginRequest session_begin = 300;
-        SessionResumeRequest session_resume = 301;
-        SessionRenewRequest session_renew = 302;
-        SessionEndRequest session_end = 303;
-        SessionTokensRefreshedSubscribeRequest session_tokens_refreshed_subscribe = 304;
-        SessionTokensRefreshedUnsubscribeRequest session_tokens_refreshed_unsubscribe = 305;
-        SessionFreeRequest session_free = 306;
+        proton.drive.sdk.account.SessionBeginRequest session_begin = 300;
+        proton.drive.sdk.account.SessionResumeRequest session_resume = 301;
+        proton.drive.sdk.account.SessionRenewRequest session_renew = 302;
+        proton.drive.sdk.account.SessionEndRequest session_end = 303;
+        proton.drive.sdk.account.SessionTokensRefreshedSubscribeRequest session_tokens_refreshed_subscribe = 304;
+        proton.drive.sdk.account.SessionTokensRefreshedUnsubscribeRequest session_tokens_refreshed_unsubscribe = 305;
+        proton.drive.sdk.account.SessionFreeRequest session_free = 306;
 
         LoggerProviderCreate logger_provider_create = 400;
     };
@@ -52,65 +53,6 @@ message CancellationTokenSourceFreeRequest {
     int64 cancellation_token_source_handle = 1;
 }
 
-// Sessions
-
-// The response value type must be Int64Value.
-message SessionBeginRequest {
-    string username = 1;
-    string password = 2;
-    string app_version = 3;
-    string secret_cache_path = 4; // Optional
-    ProtonClientOptions options = 5; // Optional
-    int64 cancellation_token_source_handle = 6;
-}
-
-// The response value type must be Int64Value.
-message SessionResumeRequest {
-    string username = 1;
-    string app_version = 2;
-    string session_id = 3;
-    string user_id = 4;
-    string access_token = 5;
-    string refresh_token = 6;
-    repeated string scopes = 7;
-    bool is_waiting_for_second_factor_code = 8;
-    bool is_waiting_for_data_password = 9;
-    string secret_cache_path = 10;
-    ProtonClientOptions options = 11;
-}
-
-// The response value type must be Int64Value.
-message SessionRenewRequest {
-    int64 old_session_handle = 1;
-    string session_id = 2;
-    string access_token = 3;
-    string refresh_token = 4;
-    repeated string scopes = 5;
-    bool is_waiting_for_second_factor_code = 6;
-    bool is_waiting_for_data_password = 7;
-}
-
-// The reponse must not have a value.
-message SessionEndRequest {
-    int64 session_handle = 1;
-}
-
-// The response value must be an Int64Value carrying a handle to an instance of TokensRefreshedSubscription.
-message SessionTokensRefreshedSubscribeRequest {
-    int64 session_handle = 1;
-    int64 tokens_refreshed_action = 2;
-}
-
-// The reponse must not have a value.
-message SessionTokensRefreshedUnsubscribeRequest {
-    int64 subscription_handle = 1;
-}
-
-// The reponse must not have a value.
-message SessionFreeRequest {
-    int64 session_handle = 1;
-}
-
 // The response value must be an Int64Value carrying a handle to an instance of ILoggerProvider.
 message LoggerProviderCreate {
     int64 log_action = 1;
@@ -127,54 +69,7 @@ message MetricEvent {
     google.protobuf.Any payload = 2;
 }
 
-enum ProtonClientTlsPolicy {
-    PROTON_CLIENT_TLS_POLICY_STRICT = 0;
-    PROTON_CLIENT_TLS_POLICY_NO_CERTIFICATE_PINNING = 1;
-    PROTON_CLIENT_TLS_POLICY_NO_CERTIFICATE_VALIDATION = 2;
-}
-
-enum AddressStatus {
-    ADDRESS_STATUS_DISABLED = 0;
-    ADDRESS_STATUS_ENABLED = 1;
-    ADDRESS_STATUS_DELETING = 2;
-}
-
-enum DelinquentState {
-    DELINQUENT_STATE_PAID = 0;
-    DELINQUENT_STATE_AVAILABLE = 1;
-    DELINQUENT_STATE_OVERDUE = 2;
-    DELINQUENT_STATE_DELINQUENT = 3;
-    DELINQUENT_STATE_NOT_RECEIVED = 4;
-}
-
-enum UserType {
-    USER_TYPE_UNKNOWN = 0;
-    USER_TYPE_PROTON = 1;
-    USER_TYPE_MANAGED = 2;
-    USER_TYPE_EXTERNAL = 3;
-}
-
-message Telemetry {
-    oneof logger { // Optional
-        int64 log_action = 1; // See array_action in C header file for signature
-        int64 logger_provider_handle = 2;
-    }
-    int64 record_metric_action = 3; // Optional, see array_action in C header file for signature
-}
-
-message ProtonClientOptions {
-    string base_url = 1; // Optional
-    string user_agent = 2; // Optional
-    string bindings_language = 3; // Optional
-    ProtonClientTlsPolicy tls_policy = 4; // Optional
-    Telemetry telemetry = 5; // Optional
-    string entity_cache_path = 6; // Optional
-}
-
-message SessionTokens {
-    string access_token = 1;
-    string refresh_token = 2;
-}
+// Logger provider
 
 enum ErrorDomain {
     Undefined = 0;
@@ -197,23 +92,6 @@ message Error {
     string context = 6; // Optional
     Error inner_error = 7; // Optional
     google.protobuf.Any additional_data = 8; // Optional
-}
-
-message Address {
-    string address_id = 1;
-    int32 order = 2;
-    string email_address = 3;
-    AddressStatus status = 4;
-    repeated proton.sdk.AddressKey keys = 5;
-    int32 primary_key_index = 6;
-}
-
-message AddressKey {
-    string address_id = 1;
-    string address_key_id = 2;
-    bool is_active = 3;
-    bool is_allowed_for_encryption = 4;
-    bool is_allowed_for_verification = 5;
 }
 
 // The response value must be an Int32Value carrying the number of bytes read into the buffer. That number must not be negative.

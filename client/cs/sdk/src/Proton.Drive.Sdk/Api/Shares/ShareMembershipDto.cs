@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using Proton.Sdk.Addresses;
+using Proton.Drive.Sdk.Account.Addresses;
 using Proton.Sdk.Cryptography;
 using Proton.Sdk.Serialization;
 

@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
+using Proton.Drive.Sdk.Account.Addresses;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Volumes;
-using Proton.Sdk.Addresses;
 
 namespace Proton.Drive.Sdk.Api.Files;
 

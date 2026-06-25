@@ -3,9 +3,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Account.Addresses;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Sdk;
-using Proton.Sdk.Addresses;
 
 namespace Proton.Drive.Sdk.Nodes.Upload;
 

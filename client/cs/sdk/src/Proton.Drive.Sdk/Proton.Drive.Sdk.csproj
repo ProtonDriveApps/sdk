@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Proton.Sdk\Proton.Sdk.csproj" />
+    <ProjectReference Include="..\..\..\..\..\incubating\account\cs\src\Proton.Drive.Sdk.Account\Proton.Drive.Sdk.Account.csproj" />
   </ItemGroup>
 
 </Project>

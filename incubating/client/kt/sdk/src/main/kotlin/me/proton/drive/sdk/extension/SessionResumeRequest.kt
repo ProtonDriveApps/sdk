@@ -1,7 +1,7 @@
 package me.proton.drive.sdk.extension
 
 import me.proton.drive.sdk.entity.SessionResumeRequest
-import proton.sdk.sessionResumeRequest
+import proton.drive.sdk.account.sessionResumeRequest
 
 internal fun SessionResumeRequest.toProtobuf() = sessionResumeRequest {
     sessionId = this@toProtobuf.sessionId
@@ -14,5 +14,5 @@ internal fun SessionResumeRequest.toProtobuf() = sessionResumeRequest {
     isWaitingForSecondFactorCode = this@toProtobuf.isWaitingForSecondFactorCode
     isWaitingForDataPassword = this@toProtobuf.isWaitingForDataPassword
     secretCachePath = this@toProtobuf.secretCachePath
-    options = this@toProtobuf.options.toProtobuf()
+    options = this@toProtobuf.options.toSessionOptionsProtobuf()
 }

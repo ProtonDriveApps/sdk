@@ -1,7 +1,10 @@
 using System.Text;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
-using Proton.Sdk.Authentication;
+using Proton.Drive.Sdk.Account;
+using Proton.Drive.Sdk.Account.Authentication;
+using Proton.Drive.Sdk.Account.CExports;
+using Proton.Drive.Sdk.Account.Users;
 using Proton.Sdk.Caching;
 
 namespace Proton.Sdk.CExports;
@@ -28,7 +31,7 @@ internal static class ProtonApiSessionRequestHandler
             UserAgent = request.Options.UserAgent,
             BindingsLanguage = request.Options.BindingsLanguage,
             Telemetry = telemetry,
-            TlsPolicy = (Http.ProtonClientTlsPolicy?)request.Options.TlsPolicy,
+            TlsPolicy = (Proton.Sdk.Http.ProtonClientTlsPolicy?)(int?)request.Options.TlsPolicy,
             EntityCacheRepository = entityCacheRepository,
             SecretCacheRepository = secretCacheRepository,
         };
@@ -53,13 +56,13 @@ internal static class ProtonApiSessionRequestHandler
             ? SqliteCacheRepository.OpenFile(request.Options.EntityCachePath)
             : new InMemoryCacheRepository();
 
-        var options = new Sdk.ProtonClientOptions
+        var options = new ProtonSessionOptions
         {
             BaseUrl = new Uri(request.Options.BaseUrl),
             UserAgent = request.Options.UserAgent,
             BindingsLanguage = request.Options.BindingsLanguage,
             Telemetry = telemetry,
-            TlsPolicy = (Http.ProtonClientTlsPolicy?)request.Options.TlsPolicy,
+            TlsPolicy = (Proton.Sdk.Http.ProtonClientTlsPolicy?)(int?)request.Options.TlsPolicy,
             EntityCacheRepository = entityCacheRepository,
             SecretCacheRepository = secretCacheRepository,
         };
@@ -67,9 +70,9 @@ internal static class ProtonApiSessionRequestHandler
         var passwordMode = request.IsWaitingForDataPassword ? PasswordMode.Dual : PasswordMode.Single;
 
         var session = ProtonApiSession.Resume(
-            new SessionId(request.SessionId),
+            (SessionId)request.SessionId,
             request.Username,
-            new Users.UserId(request.UserId),
+            (UserId)request.UserId,
             request.AccessToken,
             request.RefreshToken,
             request.Scopes,
@@ -90,7 +93,7 @@ internal static class ProtonApiSessionRequestHandler
 
         var session = ProtonApiSession.Renew(
             expiredSession,
-            new SessionId(request.SessionId),
+            (SessionId)request.SessionId,
             request.AccessToken,
             request.RefreshToken,
             request.Scopes,

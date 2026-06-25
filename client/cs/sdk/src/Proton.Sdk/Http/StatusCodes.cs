@@ -2,7 +2,7 @@ using System.Net;
 
 namespace Proton.Sdk.Http;
 
-internal static class StatusCodes
+public static class StatusCodes
 {
     /// <summary>
     /// Minimum HTTP status code that indicates a client error (400)

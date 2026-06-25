@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Account.Addresses;
 using Proton.Drive.Sdk.Api.Events;
 using Proton.Drive.Sdk.Api.Photos;
 using Proton.Drive.Sdk.Api.Volumes;
@@ -7,7 +8,6 @@ using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Events;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Shares;
-using Proton.Sdk.Addresses;
 using Proton.Sdk.Events;
 
 namespace Proton.Drive.Sdk.Volumes;

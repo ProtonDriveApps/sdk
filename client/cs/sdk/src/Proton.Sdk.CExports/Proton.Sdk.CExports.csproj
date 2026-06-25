@@ -14,10 +14,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Proton.Sdk\Proton.Sdk.csproj" />
+    <ProjectReference Include="..\..\..\..\..\incubating\account\cs\src\Proton.Drive.Sdk.Account\Proton.Drive.Sdk.Account.csproj" />
+    <ProjectReference Include="..\..\..\..\..\incubating\account\cs\src\Proton.Drive.Sdk.Account.CExports\Proton.Drive.Sdk.Account.CExports.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="../protos/proton.sdk.proto" Link="proton.sdk.proto" Access="internal" />
+    <Protobuf Include="../protos/proton.sdk.common.proto" Link="proton.sdk.common.proto" Access="internal" />
+    <Protobuf Include="../protos/proton.sdk.proto" Link="proton.sdk.proto" Access="internal" AdditionalImportDirs="../../../../../incubating/account/cs/protos" />
   </ItemGroup>
 
   <ItemGroup>

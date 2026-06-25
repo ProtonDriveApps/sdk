@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Proton.Sdk.Api;
 
-internal class ApiResponse
+public class ApiResponse
 {
     public required ResponseCode Code { get; init; }
 

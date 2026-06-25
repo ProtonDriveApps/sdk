@@ -1,10 +1,11 @@
 using Google.Protobuf.WellKnownTypes;
 using Proton.Cryptography.Pgp;
-using Proton.Sdk.Addresses;
+using Proton.Drive.Sdk.Account.Addresses;
 using Proton.Sdk.CExports;
-using Address = Proton.Sdk.Addresses.Address;
-using AddressKey = Proton.Sdk.Addresses.AddressKey;
-using AddressStatus = Proton.Sdk.Addresses.AddressStatus;
+using Address = Proton.Drive.Sdk.Account.Addresses.Address;
+using AddressKey = Proton.Drive.Sdk.Account.Addresses.AddressKey;
+using AddressStatus = Proton.Drive.Sdk.Account.Addresses.AddressStatus;
+using ProtoAddress = Proton.Drive.Sdk.Account.CExports.Address;
 
 namespace Proton.Drive.Sdk.CExports;
 
@@ -16,14 +17,14 @@ internal sealed class InteropAccountClient(nint bindingsHandle, InteropAction<ni
     public async ValueTask<Address> GetAddressAsync(AddressId addressId, CancellationToken cancellationToken)
     {
         var request = new AccountRequest { GetAddress = new GetAddressRequest { AddressId = addressId.ToString() } };
-        var response = await _requestAction.SendRequestAsync<Proton.Sdk.CExports.Address>(_bindingsHandle, request).ConfigureAwait(false);
+        var response = await _requestAction.SendRequestAsync<ProtoAddress>(_bindingsHandle, request).ConfigureAwait(false);
 
         return ConvertToAddress(response);
     }
 
     public async ValueTask<Address> GetDefaultAddressAsync(CancellationToken cancellationToken)
     {
-        var response = await _requestAction.SendRequestAsync<Proton.Sdk.CExports.Address>(
+        var response = await _requestAction.SendRequestAsync<ProtoAddress>(
             _bindingsHandle,
             new AccountRequest { GetDefaultAddress = new GetDefaultAddressRequest() }).ConfigureAwait(false);
 
@@ -54,13 +55,13 @@ internal sealed class InteropAccountClient(nint bindingsHandle, InteropAction<ni
         return [.. response.Value.Select(keyData => PgpPublicKey.Import(keyData.Span))];
     }
 
-    private static Address ConvertToAddress(Proton.Sdk.CExports.Address addressMessage)
+    private static Address ConvertToAddress(ProtoAddress addressMessage)
     {
-        var addressId = new AddressId(addressMessage.AddressId);
+        var addressId = (AddressId)addressMessage.AddressId;
 
         var keys = addressMessage.Keys.Select((key, index) => new AddressKey(
             addressId,
-            new AddressKeyId(key.AddressKeyId),
+            (AddressKeyId)key.AddressKeyId,
             index == addressMessage.PrimaryKeyIndex,
             key.IsActive,
             key.IsAllowedForEncryption,

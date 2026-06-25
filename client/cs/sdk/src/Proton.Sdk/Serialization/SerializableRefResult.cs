@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Proton.Sdk.Serialization;
 
-internal struct SerializableRefResult<T, TError>
+public struct SerializableRefResult<T, TError>
     where T : class?
     where TError : class?
 {

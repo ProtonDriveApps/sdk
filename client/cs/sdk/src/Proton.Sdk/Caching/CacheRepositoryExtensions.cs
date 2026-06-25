@@ -3,7 +3,7 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace Proton.Sdk.Caching;
 
-internal static class CacheRepositoryExtensions
+public static class CacheRepositoryExtensions
 {
     private const string CompleteTagCacheKeyFormat = "cache:tag:{0}:complete";
 

@@ -163,7 +163,10 @@ tasks.named { name ->
 
 tasks.register<Copy>("copyProto") {
     from(layout.projectDirectory.dir("../../../../client/cs/sdk/src/protos")) {
-        include { file -> file.name.endsWith(".proto") }
+        include("*.proto")
+    }
+    from(layout.projectDirectory.dir("../../../account/cs/protos")) {
+        include("*.proto")
     }
     into(layout.buildDirectory.dir("cs/proto"))
 }

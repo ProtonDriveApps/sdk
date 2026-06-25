@@ -5,7 +5,7 @@ using CommunityToolkit.HighPerformance.Buffers;
 
 namespace Proton.Sdk;
 
-internal static class MemoryPolicy
+public static class MemoryPolicy
 {
     private const int MaxStackBufferSize = 256;
 

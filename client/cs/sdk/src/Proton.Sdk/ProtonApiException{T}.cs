@@ -3,7 +3,7 @@ using Proton.Sdk.Api;
 
 namespace Proton.Sdk;
 
-internal sealed class ProtonApiException<T> : ProtonApiException
+public sealed class ProtonApiException<T> : ProtonApiException
     where T : ApiResponse
 {
     public ProtonApiException()

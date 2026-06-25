@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PublishAot>true</PublishAot>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Proton.Drive.Sdk.Account/Proton.Drive.Sdk.Account.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="../../protos/proton.drive.sdk.account.proto" Link="proton.drive.sdk.account.proto" Access="internal" ProtoRoot="../../protos" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="$(NativeLibPrefix)proton_drive_sdk" />
+    <InternalsVisibleTo Include="$(NativeLibPrefix)proton_sdk" />
+  </ItemGroup>
+
+</Project>

@@ -4,6 +4,7 @@ using Google.Protobuf.Reflection;
 using Google.Protobuf.WellKnownTypes;
 using Proton.Sdk.CExports.Logging;
 using Proton.Sdk.CExports.Tasks;
+using Address = Proton.Drive.Sdk.Account.CExports.Address;
 
 namespace Proton.Sdk.CExports;
 

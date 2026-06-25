@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Proton.Sdk.Threading;
 
-internal static class ReferenceResultTaskExtensions
+public static class ReferenceResultTaskExtensions
 {
     public static bool TryGetResult<T>(this Task<T> task, [MaybeNullWhen(false)] out T result)
         where T : class

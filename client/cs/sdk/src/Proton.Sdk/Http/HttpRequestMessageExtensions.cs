@@ -1,6 +1,6 @@
 namespace Proton.Sdk.Http;
 
-internal static class HttpRequestMessageExtensions
+public static class HttpRequestMessageExtensions
 {
     public static void SetRequestType(this HttpRequestMessage requestMessage, HttpRequestType requestType)
     {

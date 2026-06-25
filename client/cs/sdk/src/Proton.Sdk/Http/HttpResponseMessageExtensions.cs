@@ -8,7 +8,7 @@ using Proton.Sdk.Serialization;
 
 namespace Proton.Sdk.Http;
 
-internal static class HttpResponseMessageExtensions
+public static class HttpResponseMessageExtensions
 {
     public static async Task EnsureApiSuccessAsync<TFailure>(
         this HttpResponseMessage responseMessage,
@@ -48,7 +48,7 @@ internal static class HttpResponseMessageExtensions
     private static async Task<ApiResponse> ReadApiResponseAsync(HttpResponseMessage responseMessage, CancellationToken cancellationToken)
     {
         EnsureNonEmptyContent(responseMessage);
-        return await responseMessage.Content.ReadFromJsonAsync(ProtonApiSerializerContext.Default.ApiResponse, cancellationToken)
+        return await responseMessage.Content.ReadFromJsonAsync(SdkApiSerializerContext.Default.ApiResponse, cancellationToken)
             .ConfigureAwait(false) ?? throw new JsonException();
     }
 

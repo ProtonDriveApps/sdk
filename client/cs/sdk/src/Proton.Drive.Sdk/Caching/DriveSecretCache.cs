@@ -4,7 +4,6 @@ using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Serialization;
 using Proton.Sdk.Caching;
-using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Caching;
 
@@ -14,7 +13,7 @@ internal sealed class DriveSecretCache(ICacheRepository repository) : IDriveSecr
 
     public ValueTask SetShareKeyAsync(ShareId shareId, PgpPrivateKey shareKey, CancellationToken cancellationToken)
     {
-        var serializedValue = JsonSerializer.Serialize(shareKey, SecretsSerializerContext.Default.PgpPrivateKey);
+        var serializedValue = JsonSerializer.Serialize(shareKey, DriveSecretsSerializerContext.Default.PgpPrivateKey);
 
         return _repository.SetAsync(GetShareKeyCacheKey(shareId), serializedValue, cancellationToken);
     }
@@ -23,7 +22,7 @@ internal sealed class DriveSecretCache(ICacheRepository repository) : IDriveSecr
     {
         var (exists, shareKey) = await _repository.TryGetDeserializedValueAsync(
             GetShareKeyCacheKey(shareId),
-            SecretsSerializerContext.Default.PgpPrivateKey,
+            DriveSecretsSerializerContext.Default.PgpPrivateKey,
             cancellationToken).ConfigureAwait(false);
 
         return exists ? shareKey : null;

@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Proton.Sdk;
 
-internal readonly struct Either<T1, T2>
+public readonly struct Either<T1, T2>
 {
     private readonly T1? _first;
     private readonly T2? _second;

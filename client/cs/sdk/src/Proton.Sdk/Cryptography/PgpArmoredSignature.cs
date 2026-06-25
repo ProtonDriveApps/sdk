@@ -2,7 +2,7 @@ using Proton.Cryptography.Pgp;
 
 namespace Proton.Sdk.Cryptography;
 
-internal readonly struct PgpArmoredSignature(ReadOnlyMemory<byte> unarmored) : IPgpArmoredBlock<PgpArmoredSignature>
+public readonly struct PgpArmoredSignature(ReadOnlyMemory<byte> unarmored) : IPgpArmoredBlock<PgpArmoredSignature>
 {
     public ReadOnlyMemory<byte> Unarmored { get; } = unarmored;
 

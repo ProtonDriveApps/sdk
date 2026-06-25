@@ -1,6 +1,6 @@
 namespace Proton.Sdk.Serialization;
 
-internal interface IStrongId<T>
+public interface IStrongId<T>
     where T : IStrongId<T>
 {
     public static virtual implicit operator string(T id) => id.ToString();
