@@ -1,3 +1,5 @@
+import type { CryptoApiInterface } from '@protontech/crypto';
+
 import { AccountApi } from './accountApi';
 import { Addresses } from './addresses';
 import { ApiClient } from './apiClient';
@@ -20,12 +22,13 @@ export type InitAccountOptions = {
     authClientId: string;
     apiClient: ApiClient;
     credentials: SessionCredentials;
+    cryptoProxy: CryptoApiInterface;
     logger: Logger;
 };
 
 export async function initAccount(options: InitAccountOptions) {
     const accountApi = new AccountApi(options.apiClient);
-    const addresses = new Addresses(accountApi, options.credentials, options.logger);
+    const addresses = new Addresses(accountApi, options.credentials, options.cryptoProxy, options.logger);
     const auth = new Auth(options.authClientId, accountApi, options.credentials, options.logger);
     const srp = new Srp(accountApi);
 

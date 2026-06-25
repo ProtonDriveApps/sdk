@@ -29,7 +29,12 @@ export async function init(configOptions: InitConfig) {
 
     const openPGPCryptoModule = initOpenPGPCryptoModule();
     const credentials = initCredentials(config, logger);
-    const { auth, addresses, srp, httpClient, apiClient } = await initApi(config, credentials, logger);
+    const { auth, addresses, srp, httpClient, apiClient } = await initApi(
+        config,
+        credentials,
+        logger,
+        CryptoProxy,
+    );
 
     // TODO: Once we have Account SDK, get the user plan from the auth object.
     initMetrics(apiClient, 'unknown');

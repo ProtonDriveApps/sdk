@@ -1,3 +1,4 @@
+import type { CryptoApiInterface } from '@protontech/crypto';
 import { Logger } from '@protontech/drive-sdk';
 
 import { ApiClient, initAccount } from 'proton-drive-sdk-account';
@@ -12,7 +13,12 @@ export type { ApiClient } from 'proton-drive-sdk-account';
 export { Auth, Srp } from 'proton-drive-sdk-account';
 
 /** Wires proton-drive-sdk-account with Drive SDK-specific HTTP and requirement header handling. */
-export async function initApi(config: Config, credentials: Credentials, logger: Logger) {
+export async function initApi(
+    config: Config,
+    credentials: Credentials,
+    logger: Logger,
+    cryptoProxy: CryptoApiInterface,
+) {
     const apiClient = new ApiClient({
         baseUrl: config.baseUrl,
         appVersion: config.appVersion,
@@ -31,6 +37,7 @@ export async function initApi(config: Config, credentials: Credentials, logger: 
         authClientId: config.authClientId,
         apiClient,
         credentials,
+        cryptoProxy,
         logger,
     });
     const addresses = new DriveAccountAdapter(accountAddresses);
