@@ -319,7 +319,7 @@ export abstract class NodesManagementBase<
         armoredNodePassphraseSignature: string;
         armoredHashKey: string;
         signatureEmail: string;
-        passphrase: string;
+        base64Passphrase: string;
         armoredExtendedAttributes?: string;
     }> {
         validateNodeName(folderName);
@@ -348,7 +348,7 @@ export abstract class NodesManagementBase<
             armoredNodePassphraseSignature: encryptedCrypto.armoredNodePassphraseSignature,
             armoredHashKey: encryptedCrypto.folder.armoredHashKey,
             signatureEmail: signingKeys.email,
-            passphrase: keys.passphrase,
+            base64Passphrase: new TextEncoder().encode(keys.passphrase).toBase64(),
             armoredExtendedAttributes: encryptedCrypto.folder.armoredExtendedAttributes,
         };
     }

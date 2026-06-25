@@ -139,9 +139,13 @@ export class ProtonDriveClient {
          * endpoint. No folder is created on the server — the caller is
          * responsible for passing this data to the importer API.
          *
-         * `passphrase` is the cleartext node passphrase (base64-encoded).
-         * The external importer service needs it because it has no access to
-         * the user's keys and cannot decrypt the encrypted passphrase itself.
+         * `base64Passphrase` is the cleartext node passphrase, base64-encoded.
+         * Base64-decode it to recover the passphrase string that locks the node
+         * key (that string is itself base64-of-random-bytes, but it is used
+         * verbatim as the password — do not decode it a second time). It is
+         * encoded so the API can carry it as binary; the external importer
+         * service needs it because it has no access to the user's keys and cannot
+         * decrypt the encrypted passphrase itself.
          *
          * @param folderName - Name of the import folder (defaults to `'drive-import-<ISO timestamp>'`).
          */
@@ -153,7 +157,7 @@ export class ProtonDriveClient {
             armoredNodePassphraseSignature: string;
             armoredHashKey: string;
             signatureEmail: string;
-            passphrase: string;
+            base64Passphrase: string;
             armoredExtendedAttributes?: string;
         }>;
     };
