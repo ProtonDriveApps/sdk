@@ -77,12 +77,12 @@ internal static class NodeOperations
 
     public static IAsyncEnumerable<Node> EnumerateNodesAsync(
         ProtonDriveClient client,
-        IEnumerable<NodeUid> nodeUids,
+        IAsyncEnumerable<NodeUid> nodeUids,
         bool forPhotos,
         CancellationToken cancellationToken = default)
     {
+        // TODO: replace grouping with something that does not require enumerating everything first
         return nodeUids.GroupBy(uid => uid.VolumeId, uid => uid.LinkId)
-            .ToAsyncEnumerable()
             .SelectMany(linkGroup => EnumerateNodesAsync(client, linkGroup.Key, linkGroup, forPhotos, cancellationToken));
     }
 

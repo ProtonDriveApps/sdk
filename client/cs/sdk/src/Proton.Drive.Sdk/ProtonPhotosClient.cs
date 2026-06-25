@@ -102,7 +102,7 @@ public sealed class ProtonPhotosClient
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public IAsyncEnumerable<Node> EnumerateNodesAsync(IEnumerable<NodeUid> nodeUids, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Node> EnumerateNodesAsync(IAsyncEnumerable<NodeUid> nodeUids, CancellationToken cancellationToken = default)
     {
         return NodeOperations.EnumerateNodesAsync(DriveClient, nodeUids, forPhotos: true, cancellationToken);
     }
@@ -147,7 +147,7 @@ public sealed class ProtonPhotosClient
         return NodeOperations.RestoreFromTrashAsync(DriveClient, uids, cancellationToken);
     }
 
-    public async IAsyncEnumerable<Node> EnumerateTrashAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<NodeUid> EnumerateTrashNodeUidsAsync([EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var volumeId = await VolumeOperations.TryGetPhotosVolumeIdAsync(DriveClient, cancellationToken).ConfigureAwait(false);
 
@@ -157,7 +157,7 @@ public sealed class ProtonPhotosClient
             yield break;
         }
 
-        await foreach (var item in VolumeOperations.EnumerateTrashAsync(DriveClient, volumeId.Value, forPhotos: true, cancellationToken).ConfigureAwait(false))
+        await foreach (var item in VolumeOperations.EnumerateTrashAsync(DriveClient, volumeId.Value, cancellationToken).ConfigureAwait(false))
         {
             yield return item;
         }

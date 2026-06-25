@@ -124,9 +124,9 @@ internal static class InteropProtonPhotosClient
 
         var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
 
-        await foreach (var x in client.EnumerateTrashAsync(cancellationToken).ConfigureAwait(false))
+        await foreach (var nodeUid in client.EnumerateTrashNodeUidsAsync(cancellationToken).ConfigureAwait(false))
         {
-            yieldFunction.InvokeWithMessage(bindingsHandle, x.ToInterop());
+            yieldFunction.InvokeWithMessage(bindingsHandle, new StringValue { Value = nodeUid.ToString() });
         }
 
         return null;

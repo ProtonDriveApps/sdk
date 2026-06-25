@@ -11,19 +11,13 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal static class FolderOperations
 {
-    public static async IAsyncEnumerable<Node> EnumerateChildrenAsync(
+    public static async IAsyncEnumerable<NodeUid> EnumerateChildrenAsync(
         ProtonDriveClient client,
         NodeUid folderUid,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var anchorLinkId = default(LinkId?);
         var mustTryMoreResults = true;
-
-        var folderSecretsResult = await GetSecretsAsync(client, folderUid, forPhotos: false, cancellationToken).ConfigureAwait(false);
-
-        var folderKey = folderSecretsResult.Key ?? throw new InvalidOperationException($"Node key not available for folder {folderUid}");
-
-        var batchLoader = new FolderChildrenBatchLoader(client, folderUid.VolumeId, folderKey);
 
         while (mustTryMoreResults)
         {
@@ -35,27 +29,8 @@ internal static class FolderOperations
 
             foreach (var childLinkId in response.LinkIds)
             {
-                var childUid = new NodeUid(folderUid.VolumeId, childLinkId);
-
-                var cachedChildNodeInfoOrNull = await client.Cache.Entities.TryGetNodeAsync(childUid, cancellationToken).ConfigureAwait(false);
-
-                if (cachedChildNodeInfoOrNull is not { } cachedChildNodeInfo)
-                {
-                    await foreach (var nodeResult in batchLoader.QueueAndTryLoadBatchAsync(childLinkId, cancellationToken).ConfigureAwait(false))
-                    {
-                        yield return nodeResult;
-                    }
-                }
-                else
-                {
-                    yield return cachedChildNodeInfo.Node;
-                }
+                yield return new NodeUid(folderUid.VolumeId, childLinkId);
             }
-        }
-
-        await foreach (var node in batchLoader.LoadRemainingAsync(cancellationToken).ConfigureAwait(false))
-        {
-            yield return node;
         }
     }
 

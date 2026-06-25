@@ -61,52 +61,30 @@ internal static class VolumeOperations
         return (volume, share, rootFolder);
     }
 
-    public static async IAsyncEnumerable<Node> EnumerateTrashAsync(
+    public static async IAsyncEnumerable<NodeUid> EnumerateTrashAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
-        bool forPhotos,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var page = 0;
+        var pageIndex = 0;
         var mustTryMoreResults = true;
 
         while (mustTryMoreResults)
         {
-            var response = await client.Api.Trash.GetTrashAsync(volumeId, TrashPageSize, page, cancellationToken).ConfigureAwait(false);
+            var response = await client.Api.Trash.GetTrashAsync(volumeId, TrashPageSize, pageIndex, cancellationToken).ConfigureAwait(false);
 
-            mustTryMoreResults = response.TrashByShare.Sum(x => x.LinkIds.Count) == TrashPageSize;
+            var numberOfItems = 0;
 
-            foreach (var (shareId, linkIds, _) in response.TrashByShare)
+            foreach (var linkId in response.TrashByShare.SelectMany(shareTrash => shareTrash.LinkIds))
             {
-                var (_, shareKey) = await ShareOperations.GetShareAsync(client, shareId, useCacheOnly: false, cancellationToken).ConfigureAwait(false);
+                ++numberOfItems;
 
-                var batchLoader = new VolumeTrashBatchLoader(client, volumeId, shareKey, forPhotos);
-
-                foreach (var linkId in linkIds)
-                {
-                    var uid = new NodeUid(volumeId, linkId);
-                    var cachedNodeInfoOrNull = await client.Cache.Entities.TryGetNodeAsync(uid, cancellationToken).ConfigureAwait(false);
-
-                    if (cachedNodeInfoOrNull is not var (node, _, _))
-                    {
-                        await foreach (var nodeResult in batchLoader.QueueAndTryLoadBatchAsync(linkId, cancellationToken).ConfigureAwait(false))
-                        {
-                            yield return nodeResult;
-                        }
-                    }
-                    else
-                    {
-                        yield return node;
-                    }
-                }
-
-                await foreach (var node in batchLoader.LoadRemainingAsync(cancellationToken).ConfigureAwait(false))
-                {
-                    yield return node;
-                }
+                yield return new NodeUid(volumeId, linkId);
             }
 
-            ++page;
+            mustTryMoreResults = numberOfItems >= TrashPageSize;
+
+            ++pageIndex;
         }
     }
 
@@ -145,8 +123,7 @@ internal static class VolumeOperations
 
         await client.Cache.Entities.SetPhotosVolumeIdAsync(volume.Id, cancellationToken).ConfigureAwait(false);
 
-        await client.Cache.Entities.SetNodeAsync(volume.RootFolderId, rootFolder, share.Id, nameHashDigest, cancellationToken)
-            .ConfigureAwait(false);
+        await client.Cache.Entities.SetNodeAsync(volume.RootFolderId, rootFolder, share.Id, nameHashDigest, cancellationToken).ConfigureAwait(false);
 
         await client.Cache.Entities.SetPhotosShareIdAsync(share.Id, cancellationToken).ConfigureAwait(false);
         await client.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);

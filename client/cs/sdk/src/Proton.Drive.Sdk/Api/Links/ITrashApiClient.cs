@@ -6,7 +6,7 @@ namespace Proton.Drive.Sdk.Api.Links;
 
 internal interface ITrashApiClient
 {
-    ValueTask<VolumeTrashResponse> GetTrashAsync(VolumeId volumeId, int pageSize, int page, CancellationToken cancellationToken);
+    ValueTask<VolumeTrashResponse> GetTrashAsync(VolumeId volumeId, int pageSize, int pageIndex, CancellationToken cancellationToken);
 
     ValueTask<AggregateApiResponse<LinkIdResponsePair>> TrashMultipleAsync(
         VolumeId volumeId,

@@ -196,7 +196,7 @@ public sealed class ProtonDriveClient
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public IAsyncEnumerable<Node> EnumerateNodesAsync(IEnumerable<NodeUid> nodeUids, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Node> EnumerateNodesAsync(IAsyncEnumerable<NodeUid> nodeUids, CancellationToken cancellationToken = default)
     {
         return NodeOperations.EnumerateNodesAsync(this, nodeUids, forPhotos: false, cancellationToken);
     }
@@ -206,7 +206,7 @@ public sealed class ProtonDriveClient
         return FolderOperations.CreateAsync(this, parentId, name, lastModificationTime, cancellationToken);
     }
 
-    public IAsyncEnumerable<Node> EnumerateFolderChildrenAsync(NodeUid folderId, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<NodeUid> EnumerateFolderChildrenNodeUidsAsync(NodeUid folderId, CancellationToken cancellationToken = default)
     {
         return FolderOperations.EnumerateChildrenAsync(this, folderId, cancellationToken);
     }
@@ -315,7 +315,7 @@ public sealed class ProtonDriveClient
         return NodeOperations.RestoreFromTrashAsync(this, uids, cancellationToken);
     }
 
-    public async IAsyncEnumerable<Node> EnumerateTrashAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<NodeUid> EnumerateTrashNodeUidsAsync([EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var volumeId = await VolumeOperations.TryGetMainVolumeIdAsync(this, cancellationToken).ConfigureAwait(false);
         if (volumeId is null)
@@ -324,7 +324,7 @@ public sealed class ProtonDriveClient
             yield break;
         }
 
-        await foreach (var entry in VolumeOperations.EnumerateTrashAsync(this, volumeId.Value, forPhotos: false, cancellationToken).ConfigureAwait(false))
+        await foreach (var entry in VolumeOperations.EnumerateTrashAsync(this, volumeId.Value, cancellationToken).ConfigureAwait(false))
         {
             yield return entry;
         }
