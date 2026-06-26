@@ -5,6 +5,7 @@ import com.google.protobuf.StringValue
 import com.google.protobuf.kotlin.toByteString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
+import me.proton.drive.sdk.converter.DeviceConverter
 import me.proton.drive.sdk.converter.NodeConverter
 import me.proton.drive.sdk.converter.NodeResultListResponseConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
@@ -182,6 +183,38 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
         request: ProtonDriveSdk.DriveClientEmptyTrashRequest,
     ): Unit = executeOnce("emptyTrash", UnitResponseCallback) {
         driveClientEmptyTrash = request
+    }
+
+    suspend fun enumerateDevices(
+        coroutineScope: CoroutineScope,
+        request: ProtonDriveSdk.DriveClientEnumerateDevicesRequest,
+        yield: suspend (ProtonDriveSdk.Device) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "enumerateDevices",
+        callback = UnitResponseCallback,
+        yield = yield,
+        parser = ProtonDriveSdk.Device::parseFrom,
+        coroutineScopeProvider = { coroutineScope },
+    ) {
+        driveClientEnumerateDevices = request
+    }
+
+    suspend fun createDevice(
+        request: ProtonDriveSdk.DriveClientCreateDeviceRequest,
+    ): ProtonDriveSdk.Device = executeOnce("createDevice", DeviceConverter().asCallback) {
+        driveClientCreateDevice = request
+    }
+
+    suspend fun renameDevice(
+        request: ProtonDriveSdk.DriveClientRenameDeviceRequest,
+    ): ProtonDriveSdk.Device = executeOnce("renameDevice", DeviceConverter().asCallback) {
+        driveClientRenameDevice = request
+    }
+
+    suspend fun deleteDevice(
+        request: ProtonDriveSdk.DriveClientDeleteDeviceRequest,
+    ): Unit = executeOnce("deleteDevice", UnitResponseCallback) {
+        driveClientDeleteDevice = request
     }
 
     fun free(handle: Long) {

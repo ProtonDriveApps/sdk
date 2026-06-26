@@ -12,6 +12,9 @@ import me.proton.drive.sdk.ProtonDriveClient
 import me.proton.drive.sdk.SdkNode
 import me.proton.drive.sdk.Session
 import me.proton.drive.sdk.Uploader
+import me.proton.drive.sdk.entity.Device
+import me.proton.drive.sdk.entity.DeviceType
+import me.proton.drive.sdk.entity.DeviceUid
 import me.proton.drive.sdk.entity.FileDownloaderRequest
 import me.proton.drive.sdk.entity.FileRevisionUploaderRequest
 import me.proton.drive.sdk.entity.FileThumbnail
@@ -24,15 +27,19 @@ import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toProto
 import me.proton.drive.sdk.extension.toTimestamp
+import proton.drive.sdk.driveClientCreateDeviceRequest
 import proton.drive.sdk.driveClientCreateFolderRequest
+import proton.drive.sdk.driveClientDeleteDeviceRequest
 import proton.drive.sdk.driveClientDeleteNodesRequest
 import proton.drive.sdk.driveClientEmptyTrashRequest
+import proton.drive.sdk.driveClientEnumerateDevicesRequest
 import proton.drive.sdk.driveClientEnumerateFolderChildrenRequest
 import proton.drive.sdk.driveClientEnumerateThumbnailsRequest
 import proton.drive.sdk.driveClientEnumerateTrashRequest
 import proton.drive.sdk.driveClientGetAvailableNameRequest
 import proton.drive.sdk.driveClientGetMyFilesFolderRequest
 import proton.drive.sdk.driveClientGetNodeRequest
+import proton.drive.sdk.driveClientRenameDeviceRequest
 import proton.drive.sdk.driveClientRenameRequest
 import proton.drive.sdk.driveClientRestoreNodesRequest
 import proton.drive.sdk.driveClientTrashNodesRequest
@@ -220,6 +227,66 @@ internal class InteropProtonDriveClient internal constructor(
         log(INFO, "emptyTrash")
         bridge.emptyTrash(
             driveClientEmptyTrashRequest {
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        )
+    }
+
+    override fun enumerateDevices(): Flow<Device> = channelFlow {
+        log(DEBUG, "enumerateDevices")
+        cancellationCoroutineScope { source ->
+            bridge.enumerateDevices(
+                coroutineScope = this@channelFlow,
+                request = driveClientEnumerateDevicesRequest {
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { device ->
+                    send(device.toEntity())
+                }
+            )
+        }
+    }
+
+    override suspend fun createDevice(
+        name: String,
+        type: DeviceType,
+    ): Device = cancellationCoroutineScope { source ->
+        log(INFO, "createDevice")
+        bridge.createDevice(
+            driveClientCreateDeviceRequest {
+                this.name = name
+                deviceType = type.toProto()
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        ).toEntity()
+    }
+
+    override suspend fun renameDevice(
+        deviceUid: DeviceUid,
+        name: String,
+    ): Device = cancellationCoroutineScope { source ->
+        log(INFO, "renameDevice")
+        bridge.renameDevice(
+            driveClientRenameDeviceRequest {
+                this.deviceUid = deviceUid.value
+                this.name = name
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        ).toEntity()
+    }
+
+    override suspend fun deleteDevice(
+        deviceUid: DeviceUid,
+    ): Unit = cancellationCoroutineScope { source ->
+        log(INFO, "deleteDevice")
+        bridge.deleteDevice(
+            driveClientDeleteDeviceRequest {
+                this.deviceUid = deviceUid.value
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }
