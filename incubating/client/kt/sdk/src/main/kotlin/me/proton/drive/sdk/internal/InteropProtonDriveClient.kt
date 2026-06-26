@@ -129,7 +129,7 @@ internal class InteropProtonDriveClient internal constructor(
 
     override fun enumerateFolderChildren(
         folderUid: NodeUid,
-    ): Flow<Node> = channelFlow {
+    ): Flow<NodeUid> = channelFlow {
         log(DEBUG, "enumerateFolderChildren")
         cancellationCoroutineScope { source ->
             bridge.enumerateFolderChildren(
@@ -140,8 +140,8 @@ internal class InteropProtonDriveClient internal constructor(
                     cancellationTokenSourceHandle = source.handle
                     yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
                 },
-                yield = { node ->
-                    send(node.toEntity())
+                yield = { nodeUid ->
+                    send(NodeUid(nodeUid.value))
                 }
             )
         }
@@ -199,7 +199,7 @@ internal class InteropProtonDriveClient internal constructor(
         ).toEntity()
     }
 
-    override fun enumerateTrash(): Flow<Node> = channelFlow {
+    override fun enumerateTrash(): Flow<NodeUid> = channelFlow {
         log(DEBUG, "enumerateTrash")
         cancellationCoroutineScope { source ->
             bridge.enumerateTrash(
@@ -209,8 +209,8 @@ internal class InteropProtonDriveClient internal constructor(
                     cancellationTokenSourceHandle = source.handle
                     yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
                 },
-                yield = { nodeResult ->
-                    send(nodeResult.toEntity())
+                yield = { nodeUid ->
+                    send(NodeUid(nodeUid.value))
                 }
             )
         }

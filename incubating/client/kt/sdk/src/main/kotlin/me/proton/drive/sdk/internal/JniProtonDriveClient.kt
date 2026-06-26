@@ -1,13 +1,14 @@
 package me.proton.drive.sdk.internal
 
 import com.google.protobuf.Any
+import com.google.protobuf.StringValue
 import com.google.protobuf.kotlin.toByteString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
 import me.proton.drive.sdk.converter.NodeConverter
 import me.proton.drive.sdk.converter.NodeResultListResponseConverter
 import me.proton.drive.sdk.entity.ClientCreateRequest
-import me.proton.drive.sdk.entity.Node
+import me.proton.drive.sdk.entity.NodeUid
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.StringResponseCallback
 import me.proton.drive.sdk.extension.UnitResponseCallback
@@ -131,12 +132,12 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
     suspend fun enumerateFolderChildren(
         coroutineScope: CoroutineScope,
         request: ProtonDriveSdk.DriveClientEnumerateFolderChildrenRequest,
-        yield: suspend (ProtonDriveSdk.Node) -> Unit,
+        yield: suspend (StringValue) -> Unit,
     ): Unit = executeEnumerate(
         name = "enumerateFolderChildren",
         callback = UnitResponseCallback,
         yield = yield,
-        parser = ProtonDriveSdk.Node::parseFrom,
+        parser = StringValue::parseFrom,
         coroutineScopeProvider = { coroutineScope },
     ) {
         driveClientEnumerateFolderChildren = request
@@ -164,14 +165,14 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
         }
 
     suspend fun enumerateTrash(
-        coroutineScope: ProducerScope<Node>,
+        coroutineScope: ProducerScope<NodeUid>,
         request: ProtonDriveSdk.DriveClientEnumerateTrashRequest,
-        yield: suspend (ProtonDriveSdk.Node) -> Unit,
+        yield: suspend (StringValue) -> Unit,
     ): Unit = executeEnumerate(
         name = "enumerateTrash",
         callback = UnitResponseCallback,
         yield = yield,
-        parser = ProtonDriveSdk.Node::parseFrom,
+        parser = StringValue::parseFrom,
         coroutineScopeProvider = { coroutineScope }
     ) {
         driveClientEnumerateTrash = request

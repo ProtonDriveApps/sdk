@@ -13,6 +13,6 @@ interface ProtonSdkClient : AutoCloseable {
     suspend fun trashNodes(nodeUids: List<NodeUid>): List<NodeResultPair>
     suspend fun deleteNodes(nodeUids: List<NodeUid>): List<NodeResultPair>
     suspend fun restoreNodes(nodeUids: List<NodeUid>): List<NodeResultPair>
-    fun enumerateTrash(): Flow<Node>
+    fun enumerateTrash(): Flow<NodeUid>
     suspend fun emptyTrash()
 }
