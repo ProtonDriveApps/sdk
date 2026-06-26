@@ -13,7 +13,6 @@
         "test:watch": "jest src --watch --coverage=false --passWithNoTests"
     },
     "dependencies": {
-        "@protontech/crypto": "2.0.0",
         "ky": "^1.14.3"
     },
     "devDependencies": {
@@ -31,7 +30,7 @@
         "prettier": "^3.6.2",
         "typescript": "^5.9.3"
     },
-    "patchedDependencies": {
-        "@protontech/crypto@2.0.0": "../../../config/js/patches/@protontech%2Fcrypto@2.0.0.patch"
+    "peerDependencies": {
+        "@protontech/crypto": "^2.0.0"
     }
 }

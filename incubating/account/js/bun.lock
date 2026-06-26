@@ -5,7 +5,6 @@
     "": {
       "name": "proton-drive-sdk-account",
       "dependencies": {
-        "@protontech/crypto": "2.0.0",
         "ky": "^1.14.3",
       },
       "devDependencies": {
@@ -23,10 +22,10 @@
         "prettier": "^3.6.2",
         "typescript": "^5.9.3",
       },
+      "peerDependencies": {
+        "@protontech/crypto": "^2.0.0",
+      },
     },
-  },
-  "patchedDependencies": {
-    "@protontech/crypto@2.0.0": "../../../config/js/patches/@protontech%2Fcrypto@2.0.0.patch",
   },
   "packages": {
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.29.7", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
@@ -171,9 +170,9 @@
 
     "@nodelib/fs.walk": ["@nodelib/fs.walk@1.2.8", "", { "dependencies": { "@nodelib/fs.scandir": "2.1.5", "fastq": "^1.6.0" } }, "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg=="],
 
-    "@openpgp/web-stream-tools": ["@openpgp/web-stream-tools@0.1.3", "", { "peerDependencies": { "typescript": ">=4.2" }, "optionalPeers": ["typescript"] }, "sha512-mT/ds43cH6c+AO5RFpxs+LkACr7KjC3/dZWHrP6KPrWJu4uJ/XJ+p7telaoYiqUfdjiiIvdNSOfhezW9fkmboQ=="],
+    "@openpgp/web-stream-tools": ["@openpgp/web-stream-tools@0.3.1", "", { "peerDependencies": { "@types/node": ">=18.0.0", "typescript": ">=4.7" }, "optionalPeers": ["@types/node", "typescript"] }, "sha512-EV+VQ4Dr8b+JmlGnc74FLgx7EhLyydOr4j6s6Hp+2scQh6sLQMs2h+1oEYUIslXcQPicWKG5ZQx+/dua0dgPWA=="],
 
-    "@protontech/crypto": ["@protontech/crypto@2.0.0", "", { "dependencies": { "@noble/hashes": "^2.0.1", "@openpgp/web-stream-tools": "~0.1.3", "bcryptjs": "^3.0.3", "comlink": "^4.4.2", "core-js": "^3.49.0", "jsmimeparser": "npm:@protontech/jsmimeparser@^3.0.2", "openpgp": "npm:@protontech/openpgp@~6.3.1-0" } }, "sha512-D3M023jLq/aMNCSr5p1KVlLV0grAeVXpUh8WyN2HITCIX83KLJo5BReNbVT1mXMvodPf/qYIxUoYXyaEW3pfOQ=="],
+    "@protontech/crypto": ["@protontech/crypto@2.0.1", "", { "dependencies": { "@noble/hashes": "^2.2.0", "@openpgp/web-stream-tools": "~0.3.1", "bcryptjs": "^3.0.3", "comlink": "^4.4.2", "core-js": "^3.49.0", "jsmimeparser": "npm:@protontech/jsmimeparser@^3.0.2", "openpgp": "npm:@protontech/openpgp@~6.3.1-0" } }, "sha512-PMvQi1L98eU9tCVNvoLIEq21Jwfs2a4LxJwoEVbEIhvZVVprCf4lRrwqce2HhPmyjQuQJDcSlqbma+o++G2LEw=="],
 
     "@redocly/ajv": ["@redocly/ajv@8.11.2", "", { "dependencies": { "fast-deep-equal": "^3.1.1", "json-schema-traverse": "^1.0.0", "require-from-string": "^2.0.2", "uri-js-replace": "^1.0.1" } }, "sha512-io1JpnwtIcvojV7QKDUSIuMN/ikdOUd1ReEnUnMKGfDVridQZ31J0MmIuqwuRjWDZfmvr+Q0MqCcfHM2gTivOg=="],
 

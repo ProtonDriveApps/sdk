@@ -8,8 +8,13 @@
         "module": "esnext",
         "moduleResolution": "bundler",
         "paths": {
-            "@protontech/crypto": ["./node_modules/@protontech/crypto/src/index.ts"],
-            "@protontech/crypto/*": ["./node_modules/@protontech/crypto/src/*"]
+            // TODO: We do not want to depend on the CLI's node_modules, but
+            // for now it's the only way to get the single version of crypto
+            // proxy used by both the account module and CLI.
+            // SRP module requires Account API and also crypto proxy dierctly,
+            // which must be however initialized in the CLI.
+            "@protontech/crypto": ["../../../cli/node_modules/@protontech/crypto/src/index.ts"],
+            "@protontech/crypto/*": ["../../../cli/node_modules/@protontech/crypto/src/*"]
         },
         "noEmit": false,
         "noImplicitAny": true,
