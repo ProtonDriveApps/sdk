@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Proton.Drive.Sdk.Api.Devices;
 using Proton.Drive.Sdk.Api.Events;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Folders;
@@ -59,6 +60,10 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(RenameLinkRequest))]
 [JsonSerializable(typeof(MultipleLinksNullaryRequest))]
 [JsonSerializable(typeof(AggregateApiResponse<LinkIdResponsePair>))]
+[JsonSerializable(typeof(DeviceListResponse))]
+[JsonSerializable(typeof(DeviceCreationRequest))]
+[JsonSerializable(typeof(DeviceCreationResponse))]
+[JsonSerializable(typeof(DeviceUpdateRequest))]
 [JsonSerializable(typeof(VolumeTrashResponse))]
 [JsonSerializable(typeof(LatestVolumeEventResponse))]
 [JsonSerializable(typeof(VolumeEventListResponse))]

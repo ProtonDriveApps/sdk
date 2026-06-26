@@ -80,6 +80,31 @@ internal static class InteropConversionExtensions
         }
     }
 
+    extension(Devices.Device device)
+    {
+        public Device ToInterop()
+        {
+#pragma warning disable CS0612, CS0618 // Device.ShareId is deprecated but must still be propagated
+            var result = new Device
+            {
+                Uid = device.Uid.ToString(),
+                Type = (DeviceType)(int)device.Type,
+                Name = device.Name.ToInterop(),
+                RootFolderUid = device.RootFolderUid.ToString(),
+                CreationTime = device.CreationTime.ToUniversalTime().ToTimestamp(),
+                ShareId = device.ShareId,
+            };
+#pragma warning restore CS0612, CS0618
+
+            if (device.LastSyncTime is { } lastSyncTime)
+            {
+                result.LastSyncTime = lastSyncTime.ToUniversalTime().ToTimestamp();
+            }
+
+            return result;
+        }
+    }
+
     extension(ProtonDriveError error)
     {
         public DriveError ToInterop()

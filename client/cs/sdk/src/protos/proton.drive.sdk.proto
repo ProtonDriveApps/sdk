@@ -28,6 +28,10 @@ message Request {
         DriveClientEmptyTrashRequest drive_client_empty_trash = 1015;
         DriveClientEnumerateThumbnailsRequest drive_client_enumerate_thumbnails = 1016;
         DriveClientGetNodeRequest drive_client_get_node = 1017;
+        DriveClientEnumerateDevicesRequest drive_client_enumerate_devices = 1018;
+        DriveClientCreateDeviceRequest drive_client_create_device = 1020;
+        DriveClientRenameDeviceRequest drive_client_rename_device = 1021;
+        DriveClientDeleteDeviceRequest drive_client_delete_device = 1022;
 
         UploadFromStreamRequest upload_from_stream = 1100;
         UploadFromFileRequest upload_from_file = 1101;
@@ -464,6 +468,53 @@ message DriveClientGetMyFilesFolderRequest {
 message DriveClientGetNodeRequest {
     int64 client_handle = 1;
     string node_uid = 2;
+    int64 cancellation_token_source_handle = 3;
+}
+
+enum DeviceType {
+    DEVICE_TYPE_UNSPECIFIED = 0; // Invalid value
+    DEVICE_TYPE_WINDOWS = 1;
+    DEVICE_TYPE_MACOS = 2;
+    DEVICE_TYPE_LINUX = 3;
+}
+
+message Device {
+    string uid = 1;
+    DeviceType type = 2;
+    StringResult name = 3;
+    string root_folder_uid = 4;
+    google.protobuf.Timestamp creation_time = 5;
+    google.protobuf.Timestamp last_sync_time = 6; // optional
+    string share_id = 7 [deprecated = true]; // to be removed once Volume-based navigation is implemented
+}
+
+// The response must not have a value, yield_action will be called for each item.
+message DriveClientEnumerateDevicesRequest {
+    int64 client_handle = 1;
+    int64 yield_action = 2;
+    int64 cancellation_token_source_handle = 3;
+}
+
+// The response message must be of type Device.
+message DriveClientCreateDeviceRequest {
+    int64 client_handle = 1;
+    string name = 2;
+    DeviceType device_type = 3;
+    int64 cancellation_token_source_handle = 4;
+}
+
+// The response message must be of type Device.
+message DriveClientRenameDeviceRequest {
+    int64 client_handle = 1;
+    string device_uid = 2;
+    string name = 3;
+    int64 cancellation_token_source_handle = 4;
+}
+
+// The response must not have a value.
+message DriveClientDeleteDeviceRequest {
+    int64 client_handle = 1;
+    string device_uid = 2;
     int64 cancellation_token_source_handle = 3;
 }
 

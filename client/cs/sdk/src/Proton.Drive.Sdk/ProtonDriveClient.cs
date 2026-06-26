@@ -6,6 +6,7 @@ using Proton.Drive.Sdk.Account;
 using Proton.Drive.Sdk.Api;
 using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Cryptography;
+using Proton.Drive.Sdk.Devices;
 using Proton.Drive.Sdk.Events;
 using Proton.Drive.Sdk.Http;
 using Proton.Drive.Sdk.Nodes;
@@ -348,5 +349,40 @@ public sealed class ProtonDriveClient
         CancellationToken cancellationToken = default)
     {
         return VolumeOperations.EnumerateEventsAsync(this, eventScopeId.VolumeId, cursorEventId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Iterates through all devices for the user. The results are not sorted and the order is not guaranteed.
+    /// </summary>
+    /// <remarks>
+    /// If a device's name cannot be decrypted, no error is thrown, but the device's name is set to an erroring result.
+    /// </remarks>
+    public IAsyncEnumerable<Device> EnumerateDevicesAsync(CancellationToken cancellationToken = default)
+    {
+        return DeviceOperations.EnumerateDevicesAsync(this, cancellationToken);
+    }
+
+    /// <summary>
+    /// Registers a new device for the current user.
+    /// </summary>
+    public ValueTask<Device> CreateDeviceAsync(string name, DeviceType deviceType, CancellationToken cancellationToken)
+    {
+        return DeviceOperations.CreateDeviceAsync(this, name, deviceType, cancellationToken);
+    }
+
+    /// <summary>
+    /// Renames an existing device.
+    /// </summary>
+    public ValueTask<Device> RenameDeviceAsync(DeviceUid deviceUid, string name, CancellationToken cancellationToken)
+    {
+        return DeviceOperations.RenameDeviceAsync(this, deviceUid, name, cancellationToken);
+    }
+
+    /// <summary>
+    /// Permanently deletes a device from the user's account.
+    /// </summary>
+    public ValueTask DeleteDeviceAsync(DeviceUid deviceUid, CancellationToken cancellationToken)
+    {
+        return DeviceOperations.DeleteDeviceAsync(this, deviceUid, cancellationToken);
     }
 }

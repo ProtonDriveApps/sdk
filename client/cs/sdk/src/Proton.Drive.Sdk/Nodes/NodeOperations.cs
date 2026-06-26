@@ -336,9 +336,13 @@ internal static class NodeOperations
         CancellationToken cancellationToken)
     {
         // FIXME: Try to use the degraded node if it has enough for the move to be successful
-        var (node, secrets, membershipShareId, originalNameHashDigest) =
+        var nodeMetadata =
             await GetNodeMetadataAsync(client, uid, knownShareAndKey: null, useCacheOnly: false, forPhotos: false, cancellationToken).ConfigureAwait(false);
 
+        var (node, secrets, membershipShareId, originalNameHashDigest) = nodeMetadata;
+
+        // Root nodes are renamed differently (their name is encrypted with the context share key and is not hashed).
+        // Such renames belong to the owning feature (e.g. devices), not to the generic node rename path.
         if (node.ParentUid is not { } parentUid)
         {
             throw new InvalidOperationException("Cannot rename root node");
@@ -348,12 +352,12 @@ internal static class NodeOperations
 
         var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
 
+        var nameSessionKey = secrets.NameSessionKey
+            ?? throw new InvalidOperationException($"Name session key not available for {uid}");
+
         var (parentKey, parentHashKey) = await FolderOperations
             .GetKeyAndHashKeyAsync(client, parentUid, forPhotos: false, cancellationToken)
             .ConfigureAwait(false);
-
-        var nameSessionKey = secrets.NameSessionKey
-            ?? throw new InvalidOperationException($"Name session key not available for {uid}");
 
         GetNameParameters(
             newName, // FIXME: validate name

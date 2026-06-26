@@ -1,3 +1,4 @@
+using Proton.Drive.Sdk.Api.Devices;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
@@ -12,6 +13,7 @@ internal sealed class DriveApiClients(HttpClient defaultHttpClient, HttpClient s
 {
     public IVolumesApiClient Volumes { get; } = new VolumesApiClient(defaultHttpClient);
     public ISharesApiClient Shares { get; } = new SharesApiClient(defaultHttpClient);
+    public IDevicesApiClient Devices { get; } = new DevicesApiClient(defaultHttpClient);
     public ILinksApiClient Links { get; } = new LinksApiClient(defaultHttpClient);
     public IFoldersApiClient Folders { get; } = new FoldersApiClient(defaultHttpClient);
     public IFilesApiClient Files { get; } = new FilesApiClient(defaultHttpClient);

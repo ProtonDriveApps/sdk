@@ -74,6 +74,18 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DriveClientGetNode
                     => await InteropProtonDriveClient.HandleGetNodeAsync(request.DriveClientGetNode).ConfigureAwait(false),
 
+                Request.PayloadOneofCase.DriveClientEnumerateDevices
+                    => await InteropProtonDriveClient.HandleEnumerateDevicesAsync(request.DriveClientEnumerateDevices, bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientCreateDevice
+                    => await InteropProtonDriveClient.HandleCreateDeviceAsync(request.DriveClientCreateDevice).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientRenameDevice
+                    => await InteropProtonDriveClient.HandleRenameDeviceAsync(request.DriveClientRenameDevice).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientDeleteDevice
+                    => await InteropProtonDriveClient.HandleDeleteDeviceAsync(request.DriveClientDeleteDevice).ConfigureAwait(false),
+
                 Request.PayloadOneofCase.UploadFromStream
                     => InteropFileUploader.HandleUploadFromStream(request.UploadFromStream, bindingsHandle),
 

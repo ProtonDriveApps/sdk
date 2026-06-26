@@ -365,6 +365,57 @@ internal static class InteropProtonDriveClient
         return null;
     }
 
+    public static async ValueTask<IMessage?> HandleEnumerateDevicesAsync(DriveClientEnumerateDevicesRequest request, nint bindingsHandle)
+    {
+        var yieldFunction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        await foreach (var device in client.EnumerateDevicesAsync(cancellationToken).ConfigureAwait(false))
+        {
+            yieldFunction.InvokeWithMessage(bindingsHandle, device.ToInterop());
+        }
+
+        return null;
+    }
+
+    public static async ValueTask<IMessage> HandleCreateDeviceAsync(DriveClientCreateDeviceRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        var device = await client.CreateDeviceAsync(
+            request.Name,
+            (Devices.DeviceType)(int)request.DeviceType,
+            cancellationToken).ConfigureAwait(false);
+
+        return device.ToInterop();
+    }
+
+    public static async ValueTask<IMessage> HandleRenameDeviceAsync(DriveClientRenameDeviceRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        var device = await client.RenameDeviceAsync(
+            Devices.DeviceUid.Parse(request.DeviceUid),
+            request.Name,
+            cancellationToken).ConfigureAwait(false);
+
+        return device.ToInterop();
+    }
+
+    public static async ValueTask<IMessage?> HandleDeleteDeviceAsync(DriveClientDeleteDeviceRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        await client.DeleteDeviceAsync(Devices.DeviceUid.Parse(request.DeviceUid), cancellationToken).ConfigureAwait(false);
+
+        return null;
+    }
+
     public static IMessage? HandleFree(DriveClientFreeRequest request)
     {
         Interop.FreeHandle<ProtonDriveClient>(request.ClientHandle);
