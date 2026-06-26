@@ -1,5 +1,11 @@
 # Changelog
 
+## js/v0.19.0 (2026-06-25)
+
+### Features
+- Support report abuse for direct and public shares
+
+
 ## js/v0.18.1 (2026-06-25)
 
 ### Bug Fixes
