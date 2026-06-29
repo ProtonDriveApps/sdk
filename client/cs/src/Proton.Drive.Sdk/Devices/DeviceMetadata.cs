@@ -8,7 +8,7 @@ namespace Proton.Drive.Sdk.Devices;
 /// </summary>
 internal sealed class DeviceMetadata
 {
-    public required DeviceId Id { get; init; }
+    public required DeviceUid Id { get; init; }
     public required DeviceType Type { get; init; }
     public required NodeUid RootFolderUid { get; init; }
     public required DateTime CreationTime { get; init; }

@@ -49,7 +49,7 @@ internal static partial class DeviceOperations
 #pragma warning disable CS0618 // Device.ShareId is deprecated but must still be populated
         return new Device
         {
-            Uid = new DeviceUid(volumeId, response.Device.Id),
+            Uid = response.Device.Id,
             Type = deviceType,
             Name = name,
             RootFolderUid = new NodeUid(volumeId, response.Device.RootLinkId),
@@ -66,7 +66,7 @@ internal static partial class DeviceOperations
         string name,
         CancellationToken cancellationToken)
     {
-        var device = await GetDeviceMetadataAsync(client, deviceUid.DeviceId, cancellationToken).ConfigureAwait(false);
+        var device = await GetDeviceMetadataAsync(client, deviceUid, cancellationToken).ConfigureAwait(false);
 
         if (device.HasDeprecatedName)
         {
@@ -90,7 +90,7 @@ internal static partial class DeviceOperations
 
     public static async ValueTask DeleteDeviceAsync(ProtonDriveClient client, DeviceUid deviceUid, CancellationToken cancellationToken)
     {
-        await client.Api.Devices.DeleteDeviceAsync(deviceUid.DeviceId, cancellationToken).ConfigureAwait(false);
+        await client.Api.Devices.DeleteDeviceAsync(deviceUid, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -130,11 +130,11 @@ internal static partial class DeviceOperations
             .ConfigureAwait(false);
     }
 
-    private static async ValueTask<DeviceMetadata> GetDeviceMetadataAsync(ProtonDriveClient client, DeviceId deviceId, CancellationToken cancellationToken)
+    private static async ValueTask<DeviceMetadata> GetDeviceMetadataAsync(ProtonDriveClient client, DeviceUid deviceUid, CancellationToken cancellationToken)
     {
         var devices = await GetDeviceMetadataAsync(client, cancellationToken).ConfigureAwait(false);
 
-        return devices.FirstOrDefault(device => device.Id == deviceId)
+        return devices.FirstOrDefault(device => device.Id == deviceUid)
             ?? throw new ValidationException("Device not found");
     }
 
@@ -159,7 +159,7 @@ internal static partial class DeviceOperations
 #pragma warning disable CS0618 // Device.ShareId is deprecated but must still be populated
         return new Device
         {
-            Uid = new DeviceUid(device.RootFolderUid.VolumeId, device.Id),
+            Uid = device.Id,
             Type = device.Type,
             Name = name,
             RootFolderUid = device.RootFolderUid,

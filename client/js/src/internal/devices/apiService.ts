@@ -32,7 +32,7 @@ export class DevicesAPIService {
     async getDevices(signal?: AbortSignal): Promise<DeviceMetadata[]> {
         const response = await this.apiService.get<GetDevicesResponse>('drive/devices', signal);
         return response.Devices.map((device) => ({
-            uid: makeDeviceUid(device.Device.VolumeID, device.Device.DeviceID),
+            uid: makeDeviceUid(device.Device.DeviceID),
             type: deviceTypeNumberToEnum(device.Device.Type),
             rootFolderUid: makeNodeUid(device.Device.VolumeID, device.Share.LinkID),
             creationTime: new Date(device.Device.CreateTime * 1000),
@@ -107,7 +107,7 @@ export class DevicesAPIService {
         );
 
         return {
-            uid: makeDeviceUid(device.volumeId, response.Device.DeviceID),
+            uid: makeDeviceUid(response.Device.DeviceID),
             type: device.type,
             rootFolderUid: makeNodeUid(device.volumeId, response.Device.LinkID),
             creationTime: new Date(),

@@ -23,19 +23,19 @@ internal sealed class DevicesApiClient(HttpClient httpClient) : IDevicesApiClien
             .PostAsync("devices", request, DriveApiSerializerContext.Default.DeviceCreationRequest, cancellationToken).ConfigureAwait(false);
     }
 
-    public async ValueTask RemoveNameFromDeviceAsync(DeviceId deviceId, CancellationToken cancellationToken)
+    public async ValueTask RemoveNameFromDeviceAsync(DeviceUid deviceUid, CancellationToken cancellationToken)
     {
         var request = new DeviceUpdateRequest { Share = new DeviceUpdateShareDto { Name = string.Empty } };
 
         await _httpClient
             .Expecting<ApiResponse>(DriveApiSerializerContext.Default.ApiResponse)
-            .PutAsync($"devices/{deviceId}", request, DriveApiSerializerContext.Default.DeviceUpdateRequest, cancellationToken).ConfigureAwait(false);
+            .PutAsync($"devices/{deviceUid}", request, DriveApiSerializerContext.Default.DeviceUpdateRequest, cancellationToken).ConfigureAwait(false);
     }
 
-    public async ValueTask DeleteDeviceAsync(DeviceId deviceId, CancellationToken cancellationToken)
+    public async ValueTask DeleteDeviceAsync(DeviceUid deviceUid, CancellationToken cancellationToken)
     {
         await _httpClient
             .Expecting<ApiResponse>(DriveApiSerializerContext.Default.ApiResponse)
-            .DeleteAsync($"devices/{deviceId}", cancellationToken).ConfigureAwait(false);
+            .DeleteAsync($"devices/{deviceUid}", cancellationToken).ConfigureAwait(false);
     }
 }

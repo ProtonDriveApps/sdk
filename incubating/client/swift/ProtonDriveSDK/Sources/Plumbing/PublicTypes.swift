@@ -456,20 +456,17 @@ public struct PhotoTimelineItem: Sendable {
 }
 
 public struct SDKDeviceUid: Sendable {
-    public let volumeID: String
     public let deviceID: String
     public let sdkCompatibleIdentifier: String
 
-    public init(volumeID: String, deviceID: String) {
-        self.volumeID = volumeID
+    public init(deviceID: String) {
         self.deviceID = deviceID
-        self.sdkCompatibleIdentifier = "\(volumeID)~\(deviceID)"
+        self.sdkCompatibleIdentifier = deviceID
     }
 
     public init?(sdkCompatibleIdentifier: String) {
-        guard let match = sdkCompatibleIdentifier.firstMatch(of: #/(.+)~(.+)/#) else { return nil }
-        self.volumeID = String(match.output.1)
-        self.deviceID = String(match.output.2)
+        guard !sdkCompatibleIdentifier.isEmpty else { return nil }
+        self.deviceID = sdkCompatibleIdentifier
         self.sdkCompatibleIdentifier = sdkCompatibleIdentifier
     }
 }

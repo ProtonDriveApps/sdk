@@ -1,48 +1,26 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using Proton.Drive.Sdk.Serialization;
-using Proton.Drive.Sdk.Volumes;
+using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Devices;
 
-[JsonConverter(typeof(UidJsonConverter<DeviceUid>))]
-public readonly record struct DeviceUid : ICompositeUid<DeviceUid>
+[JsonConverter(typeof(StrongIdJsonConverter<DeviceUid>))]
+public readonly record struct DeviceUid : IStrongId<DeviceUid>
 {
-    internal DeviceUid(VolumeId volumeId, DeviceId deviceId)
+    private readonly string? _value;
+
+    internal DeviceUid(string value)
     {
-        VolumeId = volumeId;
-        DeviceId = deviceId;
+        ArgumentException.ThrowIfNullOrEmpty(value);
+
+        _value = value;
     }
 
-    internal VolumeId VolumeId { get; }
-    internal DeviceId DeviceId { get; }
+    public static explicit operator DeviceUid(string value) => new(value);
+
+    public static DeviceUid Parse(string value) => new(value);
 
     public override string ToString()
     {
-        return $"{VolumeId}~{DeviceId}";
-    }
-
-    public static bool TryParse(string s, [NotNullWhen(true)] out DeviceUid? result)
-    {
-        return ICompositeUid<DeviceUid>.TryParse(s, out result);
-    }
-
-    public static DeviceUid Parse(string s)
-    {
-        return ICompositeUid<DeviceUid>.TryParse(s, out var result)
-            ? result.Value
-            : throw new FormatException($"Invalid device UID format: \"{s}\"");
-    }
-
-    static bool ICompositeUid<DeviceUid>.TryCreate(string baseUidString, string relativeIdString, [NotNullWhen(true)] out DeviceUid? uid)
-    {
-        uid = new DeviceUid(new VolumeId(baseUidString), new DeviceId(relativeIdString));
-        return true;
-    }
-
-    internal void Deconstruct(out VolumeId volumeId, out DeviceId deviceId)
-    {
-        volumeId = VolumeId;
-        deviceId = DeviceId;
+        return !string.IsNullOrEmpty(_value) ? _value : throw new InvalidOperationException("UID is not initialized");
     }
 }

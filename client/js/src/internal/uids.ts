@@ -1,14 +1,9 @@
-export function makeDeviceUid(volumeId: string, deviceId: string) {
-    return `${volumeId}~${deviceId}`;
+export function makeDeviceUid(deviceId: string) {
+    return deviceId;
 }
 
 export function splitDeviceUid(deviceUid: string) {
-    const parts = deviceUid.split('~');
-    if (parts.length !== 2) {
-        throw new Error(`"${deviceUid}" is not valid device UID`);
-    }
-    const [volumeId, deviceId] = parts;
-    return { volumeId, deviceId };
+    return { deviceId: deviceUid };
 }
 
 export function makeNodeUid(volumeId: string, nodeId: string) {

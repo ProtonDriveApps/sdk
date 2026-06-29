@@ -8,7 +8,7 @@ namespace Proton.Drive.Sdk.Api.Devices;
 internal sealed class DeviceDataDto
 {
     [JsonPropertyName("DeviceID")]
-    public required DeviceId Id { get; init; }
+    public required DeviceUid Id { get; init; }
 
     [JsonPropertyName("VolumeID")]
     public required VolumeId VolumeId { get; init; }
