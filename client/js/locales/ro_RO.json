@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "A message is required when reporting copyright infringement or stolen data": [
+        "Este necesar un mesaj atunci când se raportează încălcarea drepturilor de autor sau furtul de date."
+      ],
       "Bookmark password is not available": [
         "Parola semnului de carte nu este disponibilă."
       ],
@@ -165,6 +168,9 @@
       ],
       "Node is not accessible": [
         "Nodul nu este accesibil."
+      ],
+      "Node is not accessible via a share": [
+        "Nodul nu este accesibil printr-o partajare."
       ],
       "Node is not shared": [
         "Nodul nu este partajat."

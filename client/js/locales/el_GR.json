@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "A message is required when reporting copyright infringement or stolen data": [
+        "Απαιτείται μήνυμα κατά την αναφορά παραβίασης πνευματικών δικαιωμάτων ή κλοπής δεδομένων"
+      ],
       "Bookmark password is not available": [
         "Η σελιδοδείκτηση κωδικού δεν είναι διαθέσιμη"
       ],
@@ -164,6 +167,9 @@
       ],
       "Node is not accessible": [
         "Ο κόμβος δεν είναι προσβάσιμος"
+      ],
+      "Node is not accessible via a share": [
+        "Ο κόμβος δεν είναι προσβάσιμος μέσω κοινοποίησης"
       ],
       "Node is not shared": [
         "Ο κόμβος δεν έχει κοινοποιηθεί"

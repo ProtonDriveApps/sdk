@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "A message is required when reporting copyright infringement or stolen data": [
+        "Паведамленне патрабуецца пры парушэнні аўтарскіх правоў або крадзяжы даных"
+      ],
       "Bookmark password is not available": [
         "Пароль закладкі недаступны"
       ],
@@ -166,6 +169,9 @@
       ],
       "Node is not accessible": [
         "Вузел недаступны"
+      ],
+      "Node is not accessible via a share": [
+        "Вузел недаступны праз абагулены рэсурс"
       ],
       "Node is not shared": [
         "Вузел не абагулены"

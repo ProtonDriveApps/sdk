@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "A message is required when reporting copyright infringement or stolen data": [
+        "Bei der Meldung von Urheberrechtsverletzungen oder gestohlenen Daten ist eine Nachricht erforderlich"
+      ],
       "Bookmark password is not available": [
         "Lesezeichen-Passwort ist nicht verfügbar"
       ],
@@ -164,6 +167,9 @@
       ],
       "Node is not accessible": [
         "Node ist nicht erreichbar"
+      ],
+      "Node is not accessible via a share": [
+        "Über eine Freigabe kann nicht auf den Knoten zugegriffen werden"
       ],
       "Node is not shared": [
         "Node ist nicht geteilt"

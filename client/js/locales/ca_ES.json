@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "A message is required when reporting copyright infringement or stolen data": [
+        "Es requereix un missatge quan s'informi d'una infracció dels drets d'autor o de dades robades"
+      ],
       "Bookmark password is not available": [
         "La contrasenya d'adreces d'interès no està disponible."
       ],
@@ -164,6 +167,9 @@
       ],
       "Node is not accessible": [
         "Aquest node no és accessible"
+      ],
+      "Node is not accessible via a share": [
+        "No es pot accedir al node mitjançant un recurs compartit"
       ],
       "Node is not shared": [
         "Node no compartit"

@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "A message is required when reporting copyright infringement or stolen data": [
+        "Un message est requis lors du signalement d'une violation du droit d'auteur ou de données volées"
+      ],
       "Bookmark password is not available": [
         "Le mot de passe du favori n'est pas disponible."
       ],
@@ -164,6 +167,9 @@
       ],
       "Node is not accessible": [
         "Le nœud n'est pas accessible."
+      ],
+      "Node is not accessible via a share": [
+        "Le nœud n'est pas accessible via un partage"
       ],
       "Node is not shared": [
         "Le nœud n'est pas partagé."

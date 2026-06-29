@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "A message is required when reporting copyright infringement or stolen data": [
+        "Telif hakkı ihlali veya veri hırsızlığı bildirilirken mesaj girilmesi zorunludur"
+      ],
       "Bookmark password is not available": [
         "Yer imi parolası kullanılamıyor"
       ],
@@ -164,6 +167,9 @@
       ],
       "Node is not accessible": [
         "Düğüme erişilemiyor"
+      ],
+      "Node is not accessible via a share": [
+        "Düğüm paylaşım yoluyla erişilemez"
       ],
       "Node is not shared": [
         "Düğüm paylaşılmamış"

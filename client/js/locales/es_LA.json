@@ -5,6 +5,9 @@
   },
   "contexts": {
     "Error": {
+      "A message is required when reporting copyright infringement or stolen data": [
+        "Se requiere un mensaje al denunciar una infracción de derechos de autor o robo de datos"
+      ],
       "Bookmark password is not available": [
         "La contraseña del marcador no está disponible."
       ],
@@ -164,6 +167,9 @@
       ],
       "Node is not accessible": [
         "El nodo no es accesible"
+      ],
+      "Node is not accessible via a share": [
+        "No se puede acceder al nodo a través de un elemento compartido"
       ],
       "Node is not shared": [
         "El nodo no está compartido"
