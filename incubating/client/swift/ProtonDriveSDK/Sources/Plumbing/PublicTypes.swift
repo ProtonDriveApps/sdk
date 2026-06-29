@@ -455,6 +455,98 @@ public struct PhotoTimelineItem: Sendable {
     }
 }
 
+public struct SDKDeviceUid: Sendable {
+    public let volumeID: String
+    public let deviceID: String
+    public let sdkCompatibleIdentifier: String
+
+    public init(volumeID: String, deviceID: String) {
+        self.volumeID = volumeID
+        self.deviceID = deviceID
+        self.sdkCompatibleIdentifier = "\(volumeID)~\(deviceID)"
+    }
+
+    public init?(sdkCompatibleIdentifier: String) {
+        guard let match = sdkCompatibleIdentifier.firstMatch(of: #/(.+)~(.+)/#) else { return nil }
+        self.volumeID = String(match.output.1)
+        self.deviceID = String(match.output.2)
+        self.sdkCompatibleIdentifier = sdkCompatibleIdentifier
+    }
+}
+
+/// Platform of a device registered in Proton Drive.
+public enum DeviceType: Sendable {
+    case windows
+    case macOS
+    case linux
+
+    var sdkType: Proton_Drive_Sdk_DeviceType {
+        switch self {
+        case .windows: return .windows
+        case .macOS: return .macos
+        case .linux: return .linux
+        }
+    }
+
+    init(sdkType: Proton_Drive_Sdk_DeviceType) throws {
+        switch sdkType {
+        case .windows: self = .windows
+        case .macos: self = .macOS
+        case .linux: self = .linux
+        case .unspecified, .UNRECOGNIZED:
+            throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unknown device type: \(sdkType)"))
+        }
+    }
+}
+
+public struct Device: Sendable {
+    public let uid: SDKDeviceUid
+    public let type: DeviceType
+    /// Device name, which may fail to decrypt or have invalid characters.
+    public let name: Result<String, ProtonDriveSDKDriveError>
+    /// Identifier of the device's root folder.
+    public let rootFolderUid: SDKNodeUid
+    /// When the device was created on the server.
+    public let creationTime: TimeInterval
+    /// Last time the device synchronised data, if ever.
+    public let lastSyncTime: TimeInterval?
+    /// Identifier of the device's share.
+    /// To be removed once Volume-based navigation is implemented.
+    public let shareID: String
+
+    public init(uid: SDKDeviceUid,
+                type: DeviceType,
+                name: Result<String, ProtonDriveSDKDriveError>,
+                rootFolderUid: SDKNodeUid,
+                creationTime: TimeInterval,
+                lastSyncTime: TimeInterval?,
+                shareID: String) {
+        self.uid = uid
+        self.type = type
+        self.name = name
+        self.rootFolderUid = rootFolderUid
+        self.creationTime = creationTime
+        self.lastSyncTime = lastSyncTime
+        self.shareID = shareID
+    }
+
+    init(sdkDevice: Proton_Drive_Sdk_Device) throws {
+        guard let uid = SDKDeviceUid(sdkCompatibleIdentifier: sdkDevice.uid) else {
+            throw ProtonDriveSDKError(interopError: .incorrectIDFormat(id: sdkDevice.uid))
+        }
+        guard let rootFolderUid = SDKNodeUid(sdkCompatibleIdentifier: sdkDevice.rootFolderUid) else {
+            throw ProtonDriveSDKError(interopError: .incorrectIDFormat(id: sdkDevice.rootFolderUid))
+        }
+        self.uid = uid
+        self.type = try DeviceType(sdkType: sdkDevice.type)
+        self.name = StringResultParser().parse(sdkDevice.name)
+        self.rootFolderUid = rootFolderUid
+        self.creationTime = sdkDevice.creationTime.timeIntervalSince1970
+        self.lastSyncTime = sdkDevice.hasLastSyncTime ? sdkDevice.lastSyncTime.timeIntervalSince1970 : nil
+        self.shareID = sdkDevice.shareID
+    }
+}
+
 public struct TrashNodeResult: Sendable {
     public let nodeUid: SDKNodeUid
     public let error: ProtonDriveSDKError?

@@ -50,7 +50,7 @@ extension Message {
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .driveClientFree(request)
             }
-            
+
         case let request as Proton_Drive_Sdk_DriveClientCreateFolderRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .driveClientCreateFolder(request)
@@ -75,7 +75,7 @@ extension Message {
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .driveClientGetAvailableName(request)
             }
-        
+
         case let request as Proton_Drive_Sdk_DriveClientRenameRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .driveClientRename(request)
@@ -179,7 +179,7 @@ extension Message {
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .downloadControllerFree(request)
             }
-        
+
             // MARK: - Photo Client
 
         case let request as Proton_Drive_Sdk_DrivePhotosClientCreateRequest:
@@ -244,6 +244,21 @@ extension Message {
         case let request as Proton_Drive_Sdk_DrivePhotosClientUploaderFreeRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .drivePhotosClientUploaderFree(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DriveClientCreateDeviceRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .driveClientCreateDevice(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DriveClientRenameDeviceRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .driveClientRenameDevice(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DriveClientDeleteDeviceRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .driveClientDeleteDevice(request)
             }
 
         default:

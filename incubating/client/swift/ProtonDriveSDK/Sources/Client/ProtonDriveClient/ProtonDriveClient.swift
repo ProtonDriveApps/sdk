@@ -26,6 +26,9 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         case rename(UUID)
         case getAvailableName(UUID)
         case trash(UUID)
+        case createDevice(UUID)
+        case renameDevice(UUID)
+        case deleteDevice(UUID)
 
         var operationName: String {
             switch self {
@@ -33,6 +36,9 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             case .rename: return "rename"
             case .getAvailableName: return "getAvailableName"
             case .trash: return "trash"
+            case .createDevice: return "createDevice"
+            case .renameDevice: return "renameDevice"
+            case .deleteDevice: return "deleteDevice"
             }
         }
     }
@@ -490,5 +496,99 @@ extension ProtonDriveClient {
 
     public func cancelTrash(cancellationToken: UUID) async throws {
         try await cancelOperation(identifier: .trash(cancellationToken))
+    }
+}
+
+// MARK: - Device action
+extension ProtonDriveClient {
+
+    public func enumerateDevices() async throws -> [Device] {
+        let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
+        defer {
+            cancellationTokenSource.free()
+        }
+
+        let cancellationHandle = cancellationTokenSource.handle
+        let accumulator = DeviceAccumulator()
+
+        let request = Proton_Drive_Sdk_DriveClientEnumerateDevicesRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
+            $0.yieldAction = Int64(ObjectHandle(callback: cDeviceEnumerationCallback))
+        }
+
+        let _: Void = try await SDKRequestHandler.send(
+            request,
+            state: WeakReference(value: accumulator),
+            scope: .ownerManaged,
+            owner: accumulator,
+            logger: logger
+        )
+
+        return accumulator.devices
+    }
+
+    public func createDevice(name: String, type: DeviceType, cancellationToken: UUID) async throws -> Device {
+        let cancellationTokenSource = try await createCancellationTokenSource(.createDevice(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .createDevice(cancellationToken))
+        }
+
+        let cancellationHandle = cancellationTokenSource.handle
+        let request = Proton_Drive_Sdk_DriveClientCreateDeviceRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.name = name
+            $0.deviceType = type.sdkType
+            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
+        }
+
+        let sdkDevice: Proton_Drive_Sdk_Device = try await SDKRequestHandler.send(request, logger: logger)
+        return try Device(sdkDevice: sdkDevice)
+    }
+
+    public func cancelCreateDevice(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .createDevice(cancellationToken))
+    }
+
+    public func renameDevice(deviceUid: SDKDeviceUid, newName: String, cancellationToken: UUID) async throws -> Device {
+        let cancellationTokenSource = try await createCancellationTokenSource(.renameDevice(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .renameDevice(cancellationToken))
+        }
+
+        let cancellationHandle = cancellationTokenSource.handle
+        let request = Proton_Drive_Sdk_DriveClientRenameDeviceRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.deviceUid = deviceUid.sdkCompatibleIdentifier
+            $0.name = newName
+            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
+        }
+
+        let sdkDevice: Proton_Drive_Sdk_Device = try await SDKRequestHandler.send(request, logger: logger)
+        return try Device(sdkDevice: sdkDevice)
+    }
+
+    public func cancelRenameDevice(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .renameDevice(cancellationToken))
+    }
+
+    public func deleteDevice(deviceUid: SDKDeviceUid, cancellationToken: UUID) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.deleteDevice(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .deleteDevice(cancellationToken))
+        }
+
+        let cancellationHandle = cancellationTokenSource.handle
+        let request = Proton_Drive_Sdk_DriveClientDeleteDeviceRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.deviceUid = deviceUid.sdkCompatibleIdentifier
+            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
+        }
+
+        let _: Void = try await SDKRequestHandler.send(request, logger: logger)
+    }
+
+    public func cancelDeleteDevice(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .deleteDevice(cancellationToken))
     }
 }
