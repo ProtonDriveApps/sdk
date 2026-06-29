@@ -2,13 +2,13 @@ package me.proton.drive.sdk.internal
 
 import kotlinx.coroutines.CoroutineScope
 import me.proton.drive.sdk.extension.toIntResponse
-import proton.sdk.request
-import proton.sdk.streamReadRequest
+import proton.drive.sdk.request
+import proton.drive.sdk.streamReadRequest
 import java.nio.ByteBuffer
 import java.nio.channels.ReadableByteChannel
 
 class JniHttpStream internal constructor(
-) : JniBaseProtonSdk() {
+) : JniBaseProtonDriveSdk() {
 
     private var client: ProtonDriveSdkNativeClient<*>? = null
 
@@ -40,13 +40,13 @@ class JniHttpStream internal constructor(
         buffer: ByteBuffer,
     ): Int = executeOnce(
         clientBuilder = { continuation, asClientResponseCallback ->
-            ProtonSdkNativeClient(
+            ProtonDriveSdkNativeClient(
                 name = method("read"),
                 response = continuation.toIntResponse().asClientResponseCallback(),
                 logger = internalLogger,
             )
         },
-        requestBuilder = { client ->
+        requestBuilder = { _ ->
             request {
                 streamRead = streamReadRequest {
                     streamHandle = handle

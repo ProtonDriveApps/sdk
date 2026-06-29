@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Proton.Drive.Sdk.Account.Addresses;
 using Proton.Drive.Sdk.Account.Serialization;
-using Proton.Sdk.Api;
 
 namespace Proton.Drive.Sdk.Account.Authentication;
 
@@ -20,7 +20,7 @@ internal sealed class AuthorizationHandler(ProtonApiSession session) : Delegatin
 
         var response = await SendWithTokenAsync(request, accessToken, cancellationToken).ConfigureAwait(false);
 
-        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        if (response.StatusCode is HttpStatusCode.Unauthorized)
         {
             response = await HandleUnauthorizedAsync(request, response, accessToken, cancellationToken).ConfigureAwait(false);
         }
@@ -36,7 +36,7 @@ internal sealed class AuthorizationHandler(ProtonApiSession session) : Delegatin
     {
         var apiResponse = await response.Content.ReadFromJsonAsync(ProtonApiSerializerContext.Default.ApiResponse, cancellationToken).ConfigureAwait(false);
 
-        if (apiResponse?.Code is ResponseCode.AccountDeleted or ResponseCode.AccountDisabled)
+        if (apiResponse?.Code is ApiResponseCodes.AccountDeleted or ApiResponseCodes.AccountDisabled)
         {
             return response;
         }

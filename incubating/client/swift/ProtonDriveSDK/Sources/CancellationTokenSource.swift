@@ -5,7 +5,7 @@ actor CancellationTokenSource {
     init(logger: ProtonDriveSDK.Logger?) async throws {
         self.logger = logger
 
-        let request = Proton_Sdk_CancellationTokenSourceCreateRequest()
+        let request = Proton_Drive_Sdk_CancellationTokenSourceCreateRequest()
         self.handle = try await SDKRequestHandler.sendInteropRequest(request, logger: logger)
 
         logger?.trace("CancellationTokenSource.init, handle: \(String(describing: handle))", category: "Cancellation")
@@ -15,7 +15,7 @@ actor CancellationTokenSource {
         logger?.trace("CancellationTokenSource.cancel, handle: \(String(describing: handle))", category: "Cancellation")
 
         try await SDKRequestHandler.sendInteropRequest(
-            Proton_Sdk_CancellationTokenSourceCancelRequest.with {
+            Proton_Drive_Sdk_CancellationTokenSourceCancelRequest.with {
                 $0.cancellationTokenSourceHandle = Int64(handle)
             },
             logger: logger
@@ -30,7 +30,7 @@ actor CancellationTokenSource {
         // this instance might get released before the async response from the SDK is received.
         var strongSelf: CancellationTokenSource? = self
         Task {
-            let request = Proton_Sdk_CancellationTokenSourceFreeRequest.with {
+            let request = Proton_Drive_Sdk_CancellationTokenSourceFreeRequest.with {
                 $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
             }
             do {

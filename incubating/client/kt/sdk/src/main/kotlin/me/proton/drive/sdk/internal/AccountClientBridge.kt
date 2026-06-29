@@ -8,7 +8,7 @@ import me.proton.drive.sdk.UserAddressResolver
 import me.proton.drive.sdk.extension.asAny
 import me.proton.drive.sdk.extension.toProtobuf
 import proton.drive.sdk.ProtonDriveSdk
-import proton.sdk.repeatedBytesValue
+import proton.drive.sdk.repeatedBytesValue
 
 internal class AccountClientBridge(
     private val userAddressResolver: UserAddressResolver,
@@ -20,12 +20,12 @@ internal class AccountClientBridge(
         ProtonDriveSdk.AccountRequest.PayloadCase.GET_ADDRESS -> userAddressResolver
             .getAddress(request.getAddress.addressId)
             .toProtobuf()
-            .asAny("proton.drive.sdk.account.Address")
+            .asAny("proton.drive.sdk.Address")
 
         ProtonDriveSdk.AccountRequest.PayloadCase.GET_DEFAULT_ADDRESS -> userAddressResolver
             .getDefaultAddress()
             .toProtobuf()
-            .asAny("proton.drive.sdk.account.Address")
+            .asAny("proton.drive.sdk.Address")
 
         ProtonDriveSdk.AccountRequest.PayloadCase.GET_ADDRESS_PRIMARY_PRIVATE_KEY -> userAddressResolver
             .getAddressPrimaryPrivateKey(request.getAddressPrimaryPrivateKey.addressId) { key ->
@@ -37,7 +37,7 @@ internal class AccountClientBridge(
             .getAddressPrivateKeys(request.getAddressPrivateKeys.addressId) { keys ->
                 repeatedBytesValue {
                     value.addAll(keys.map { key -> key.toByteString() })
-                }.asAny("proton.sdk.RepeatedBytesValue")
+                }.asAny("proton.drive.sdk.RepeatedBytesValue")
             }
 
         ProtonDriveSdk.AccountRequest.PayloadCase.GET_ADDRESS_PUBLIC_KEYS -> repeatedBytesValue {
@@ -46,7 +46,7 @@ internal class AccountClientBridge(
                     .getAddressPublicKeys(request.getAddressPublicKeys.emailAddress)
                     .map { key -> key.toByteString() }
             )
-        }.asAny("proton.sdk.RepeatedBytesValue")
+        }.asAny("proton.drive.sdk.RepeatedBytesValue")
 
         ProtonDriveSdk.AccountRequest.PayloadCase.PAYLOAD_NOT_SET ->
             error("request not set (payload)")

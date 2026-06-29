@@ -110,7 +110,7 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
             }
 
             let baseAddress = buffer.baseAddress!
-            let streamReadRequest = Proton_Sdk_StreamReadRequest.with {
+            let streamReadRequest = Proton_Drive_Sdk_StreamReadRequest.with {
                 $0.bufferLength = Int32(buffer.count)
                 $0.bufferPointer = Int64(ObjectHandle(rawPointer: UnsafeRawPointer(baseAddress)))
                 $0.streamHandle = sdkContentHandle

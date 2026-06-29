@@ -1,0 +1,61 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <NativeLibBaseName>proton_drive_sdk</NativeLibBaseName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PublishAot>true</PublishAot>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <NativeCryptoLibName>proton_crypto</NativeCryptoLibName>
+
+    <NoWarn>$(NoWarn);Photos</NoWarn>
+
+    <!-- IL2113 warning due to usage of SqliteConnectionStringBuilder, but its usage is limited and tested under AOT -->
+    <NoWarn>$(NoWarn);IL2113</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Proton.Drive.Sdk\Proton.Drive.Sdk.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="../protos/proton.drive.sdk.proto" Link="proton.drive.sdk.proto" Access="internal" />
+  </ItemGroup>
+
+  <!-- If targeting Android, add the required SONAME to the output library -->
+  <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('linux-bionic'))">
+    <LinkerArg Include="-Wl,-soname,$(NativeLibPrefix)$(NativeLibBaseName)$(NativeBinaryExt)" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="$(RuntimeIdentifier.StartsWith('linux-bionic'))">
+    <DisableUnsupportedError>true</DisableUnsupportedError>
+    <PublishAotUsingRuntimePack>true</PublishAotUsingRuntimePack>
+  </PropertyGroup>
+
+  <!-- Produce a static link library by default only for Apple platforms -->
+  <PropertyGroup Condition="$(RuntimeIdentifier.StartsWith('ios')) or $(RuntimeIdentifier.StartsWith('osx'))">
+    <NativeLib>Static</NativeLib>
+  </PropertyGroup>
+
+  <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('ios'))">
+    <LinkerArg Include="-isysroot $(iPhoneOSSdkPath)" /> <!-- passed from command line -->
+    <LinkerArg Include="-lc++" />
+  </ItemGroup>
+
+  <!-- If a static link library is requested, static-link the crypto library too -->
+  <ItemGroup Condition="'$(NativeLib)' == 'Static'">
+    <DirectPInvoke Include="$(NativeCryptoLibName)" />
+  </ItemGroup>
+
+  <!-- TargetName also drives the managed assembly identity; override only the native linker output. -->
+  <Target Name="SetNativeOutputName" BeforeTargets="LinkNative">
+    <PropertyGroup>
+      <NativeBinary>$(NativeOutputPath)$(NativeLibPrefix)$(NativeLibBaseName)$(NativeBinaryExt)</NativeBinary>
+    </PropertyGroup>
+  </Target>
+
+</Project>

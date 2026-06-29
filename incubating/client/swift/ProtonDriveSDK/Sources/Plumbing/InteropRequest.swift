@@ -17,17 +17,17 @@ extension Proton_Drive_Sdk_DrivePhotosClientCreateRequest: InteropRequest {
     typealias StateType = SDKClientProvider
 }
 
-extension Proton_Sdk_CancellationTokenSourceCreateRequest: InteropRequest {
+extension Proton_Drive_Sdk_CancellationTokenSourceCreateRequest: InteropRequest {
     typealias CallResultType = ObjectHandle
     typealias StateType = Void
 }
 
-extension Proton_Sdk_CancellationTokenSourceCancelRequest: InteropRequest {
+extension Proton_Drive_Sdk_CancellationTokenSourceCancelRequest: InteropRequest {
     typealias CallResultType = Void
     typealias StateType = Void
 }
 
-extension Proton_Sdk_CancellationTokenSourceFreeRequest: InteropRequest {
+extension Proton_Drive_Sdk_CancellationTokenSourceFreeRequest: InteropRequest {
     typealias CallResultType = Void
     typealias StateType = Void
 }

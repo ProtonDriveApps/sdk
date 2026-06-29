@@ -10,10 +10,10 @@ import me.proton.core.network.domain.ApiResult
 import me.proton.drive.sdk.HttpSdkApi
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import okhttp3.ResponseBody
-import proton.sdk.ProtonSdk.HttpRequest
-import proton.sdk.ProtonSdk.HttpResponse
-import proton.sdk.httpHeader
-import proton.sdk.httpResponse
+import proton.drive.sdk.ProtonDriveSdk.HttpRequest
+import proton.drive.sdk.ProtonDriveSdk.HttpResponse
+import proton.drive.sdk.httpHeader
+import proton.drive.sdk.httpResponse
 import retrofit2.Response
 import java.nio.channels.Channels
 

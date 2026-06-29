@@ -1,0 +1,64 @@
+using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Text.Json;
+using Polly.Timeout;
+using Proton.Sdk.Api;
+
+namespace Proton.Drive.Sdk.CExports;
+
+internal static class InteropErrorConverter
+{
+    public static void SetDomainAndCodes(Error error, Exception exception)
+    {
+        switch (exception)
+        {
+            case OperationCanceledException:
+                error.Domain = ErrorDomain.SuccessfulCancellation;
+                break;
+
+            case ProtonApiException ex:
+                error.Domain = ErrorDomain.Api;
+                error.PrimaryCode = ex.Code;
+                if (ex.TransportCode is not null)
+                {
+                    error.SecondaryCode = ex.TransportCode.Value;
+                }
+
+                break;
+
+            case SocketException ex:
+                error.Domain = ErrorDomain.Network;
+                error.PrimaryCode = ex.ErrorCode;
+                error.SecondaryCode = (long)ex.SocketErrorCode;
+                break;
+
+            case HttpRequestException ex:
+                error.Domain = ErrorDomain.Transport;
+                error.PrimaryCode = (long)ex.HttpRequestError;
+                error.SecondaryCode = ex.StatusCode is not null ? (long)ex.StatusCode : 0;
+                break;
+
+            case TimeoutException or TimeoutRejectedException:
+                error.Domain = ErrorDomain.Transport;
+                error.PrimaryCode = (long)HttpRequestError.ConnectionError;
+                break;
+
+            case HttpIOException ex:
+                error.Domain = ErrorDomain.Transport;
+                error.PrimaryCode = (long)ex.HttpRequestError;
+                break;
+
+            case JsonException:
+                error.Domain = ErrorDomain.Serialization;
+                break;
+
+            case CryptographicException:
+                error.Domain = ErrorDomain.Cryptography;
+                break;
+
+            default:
+                error.Domain = ErrorDomain.Undefined;
+                break;
+        }
+    }
+}

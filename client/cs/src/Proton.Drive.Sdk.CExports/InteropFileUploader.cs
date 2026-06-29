@@ -1,0 +1,102 @@
+using System.Security.Cryptography;
+using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
+using Proton.Drive.Sdk.Nodes.Upload;
+
+namespace Proton.Drive.Sdk.CExports;
+
+internal static class InteropFileUploader
+{
+    public static IMessage HandleUploadFromStream(UploadFromStreamRequest request, nint bindingsHandle)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var uploader = Interop.GetFromHandle<FileUploader>(request.UploaderHandle);
+
+        var readFunction = new InteropFunction<nint, InteropArray<byte>, nint, nint>(request.ReadAction);
+        var cancelAction = request.CancelAction != 0 ? new InteropAction<nint>(request.CancelAction) : (InteropAction<nint>?)null;
+        var stream = new InteropStream(uploader.FileSize, bindingsHandle, readFunction, cancelAction);
+
+        var thumbnails = request.Thumbnails.Select(t =>
+        {
+            unsafe
+            {
+                var thumbnailType = (Nodes.ThumbnailType)t.Type;
+                return new Nodes.Thumbnail(thumbnailType, new InteropArray<byte>((byte*)t.DataPointer, (nint)t.DataLength).ToArray());
+            }
+        });
+
+        var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
+
+        var expectedSha1Provider = request.HasSha1Function ? CreateSha1Provider(bindingsHandle, request.Sha1Function) : null;
+
+        var uploadController = uploader.UploadFromStream(
+            stream,
+            thumbnails,
+            (progress, total) => progressAction.InvokeProgressUpdate(bindingsHandle, progress, total),
+            expectedSha1Provider,
+            forPhotos: false,
+            cancellationToken);
+
+        return new Int64Value { Value = Interop.AllocHandle(uploadController) };
+    }
+
+    public static IMessage HandleUploadFromFile(UploadFromFileRequest request, nint bindingsHandle)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var uploader = Interop.GetFromHandle<FileUploader>(request.UploaderHandle);
+
+        var thumbnails = request.Thumbnails.Select(t =>
+        {
+            unsafe
+            {
+                var thumbnailType = (Nodes.ThumbnailType)t.Type;
+                return new Nodes.Thumbnail(thumbnailType, new InteropArray<byte>((byte*)t.DataPointer, (nint)t.DataLength).ToArray());
+            }
+        });
+
+        var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
+
+        var expectedSha1Provider = request.HasSha1Function ? CreateSha1Provider(bindingsHandle, request.Sha1Function) : null;
+
+        var uploadController = uploader.UploadFromFile(
+            request.FilePath,
+            thumbnails,
+            (progress, total) => progressAction.InvokeProgressUpdate(bindingsHandle, progress, total),
+            expectedSha1Provider,
+            forPhotos: false,
+            cancellationToken);
+
+        return new Int64Value { Value = Interop.AllocHandle(uploadController) };
+    }
+
+    public static IMessage? HandleFree(FileUploaderFreeRequest request)
+    {
+        var fileUploader = Interop.FreeHandle<FileUploader>(request.FileUploaderHandle);
+
+        fileUploader.Dispose();
+
+        return null;
+    }
+
+    internal static Func<ReadOnlyMemory<byte>> CreateSha1Provider(nint bindingsHandle, long functionPointer)
+    {
+        return () =>
+        {
+            var sha1Buffer = new byte[SHA1.HashSizeInBytes];
+
+            unsafe
+            {
+                fixed (byte* sha1BufferPointer = sha1Buffer)
+                {
+                    var function = new InteropAction<nint, InteropArray<byte>>(functionPointer);
+
+                    function.Invoke(bindingsHandle, new InteropArray<byte>(sha1BufferPointer, sha1Buffer.Length));
+                }
+            }
+
+            return sha1Buffer;
+        };
+    }
+}

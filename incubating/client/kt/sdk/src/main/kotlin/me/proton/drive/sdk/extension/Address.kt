@@ -2,11 +2,11 @@ package me.proton.drive.sdk.extension
 
 import me.proton.drive.sdk.entity.Address
 import me.proton.drive.sdk.entity.Address.Status
-import proton.drive.sdk.account.ProtonDriveSdkAccount.AddressStatus.ADDRESS_STATUS_DELETING
-import proton.drive.sdk.account.ProtonDriveSdkAccount.AddressStatus.ADDRESS_STATUS_DISABLED
-import proton.drive.sdk.account.ProtonDriveSdkAccount.AddressStatus.ADDRESS_STATUS_ENABLED
-import proton.drive.sdk.account.address
-import proton.drive.sdk.account.addressKey
+import proton.drive.sdk.ProtonDriveSdk.AddressStatus.ADDRESS_STATUS_DELETING
+import proton.drive.sdk.ProtonDriveSdk.AddressStatus.ADDRESS_STATUS_DISABLED
+import proton.drive.sdk.ProtonDriveSdk.AddressStatus.ADDRESS_STATUS_ENABLED
+import proton.drive.sdk.address
+import proton.drive.sdk.addressKey
 
 fun Address.toProtobuf() = address {
     addressId = this@toProtobuf.addressId

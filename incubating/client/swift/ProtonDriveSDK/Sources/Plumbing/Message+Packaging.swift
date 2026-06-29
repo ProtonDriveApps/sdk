@@ -10,32 +10,32 @@ extension Message {
         try packIntoResponse().serialisedByteArray()
     }
 
-    /// Packs any request into a Proton_Sdk_Request or Proton_Drive_Sdk_Request.
+    /// Packs any request into a Proton_Drive_Sdk_Request.
     func packIntoRequest() throws -> Message {
         switch self {
 
-        case let request as Proton_Sdk_CancellationTokenSourceCreateRequest:
-            Proton_Sdk_Request.with {
+        case let request as Proton_Drive_Sdk_CancellationTokenSourceCreateRequest:
+            Proton_Drive_Sdk_Request.with {
                 $0.payload = .cancellationTokenSourceCreate(request)
             }
 
-        case let request as Proton_Sdk_CancellationTokenSourceCancelRequest:
-            Proton_Sdk_Request.with {
+        case let request as Proton_Drive_Sdk_CancellationTokenSourceCancelRequest:
+            Proton_Drive_Sdk_Request.with {
                 $0.payload = .cancellationTokenSourceCancel(request)
             }
 
-        case let request as Proton_Sdk_CancellationTokenSourceFreeRequest:
-            Proton_Sdk_Request.with {
+        case let request as Proton_Drive_Sdk_CancellationTokenSourceFreeRequest:
+            Proton_Drive_Sdk_Request.with {
                 $0.payload = .cancellationTokenSourceFree(request)
             }
 
-        case let request as Proton_Sdk_StreamReadRequest:
-            Proton_Sdk_Request.with {
+        case let request as Proton_Drive_Sdk_StreamReadRequest:
+            Proton_Drive_Sdk_Request.with {
                 $0.payload = .streamRead(request)
             }
 
-        case let request as Proton_Sdk_LoggerProviderCreate:
-            Proton_Sdk_Request.with {
+        case let request as Proton_Drive_Sdk_LoggerProviderCreate:
+            Proton_Drive_Sdk_Request.with {
                 $0.payload = .loggerProviderCreate(request)
             }
 
@@ -44,11 +44,6 @@ extension Message {
         case let request as Proton_Drive_Sdk_DriveClientCreateRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .driveClientCreate(request)
-            }
-
-        case let request as Proton_Drive_Sdk_DriveClientCreateFromSessionRequest:
-            Proton_Drive_Sdk_Request.with {
-                $0.payload = .driveClientCreateFromSession(request)
             }
 
         case let request as Proton_Drive_Sdk_DriveClientFreeRequest:
@@ -192,11 +187,6 @@ extension Message {
                 $0.payload = .drivePhotosClientCreate(request)
             }
 
-        case let request as Proton_Drive_Sdk_DrivePhotosClientCreateFromSessionRequest:
-            Proton_Drive_Sdk_Request.with {
-                $0.payload = .drivePhotosClientCreateFromSession(request)
-            }
-
         case let request as Proton_Drive_Sdk_DrivePhotosClientFreeRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .drivePhotosClientFree(request)
@@ -263,44 +253,44 @@ extension Message {
     }
 
     private func packIntoResponse() throws -> Message {
-        if let error = self as? Proton_Sdk_Error {
-            return Proton_Sdk_Response.with {
+        if let error = self as? Proton_Drive_Sdk_Error {
+            return Proton_Drive_Sdk_Response.with {
                 $0.error = error
             }
         }
         switch self {
-        case let httpResponse as Proton_Sdk_HttpResponse:
+        case let httpResponse as Proton_Drive_Sdk_HttpResponse:
             let value = try Google_Protobuf_Any.init(message: httpResponse)
-            return Proton_Sdk_Response.with {
+            return Proton_Drive_Sdk_Response.with {
                 $0.value = value
             }
-        case let repeatedBytes as Proton_Sdk_RepeatedBytesValue:
+        case let repeatedBytes as Proton_Drive_Sdk_RepeatedBytesValue:
             let value = try Google_Protobuf_Any.init(message: repeatedBytes)
-            return Proton_Sdk_Response.with {
+            return Proton_Drive_Sdk_Response.with {
                 $0.value = value
             }
         case let bytesValue as Google_Protobuf_BytesValue:
             let value = try Google_Protobuf_Any.init(message: bytesValue)
-            return Proton_Sdk_Response.with {
+            return Proton_Drive_Sdk_Response.with {
                 $0.value = value
             }
-        case let address as Proton_Drive_Sdk_Account_Address:
+        case let address as Proton_Drive_Sdk_Address:
             let value = try Google_Protobuf_Any.init(message: address)
-            return Proton_Sdk_Response.with {
+            return Proton_Drive_Sdk_Response.with {
                 $0.value = value
             }
-        case let error as Proton_Sdk_Error:
-            return Proton_Sdk_Response.with {
+        case let error as Proton_Drive_Sdk_Error:
+            return Proton_Drive_Sdk_Response.with {
                 $0.error = error
             }
         case let intValue as Google_Protobuf_Int64Value:
             let value = try Google_Protobuf_Any.init(message: intValue)
-            return Proton_Sdk_Response.with {
+            return Proton_Drive_Sdk_Response.with {
                 $0.value = value
             }
         case let intValue as Google_Protobuf_Int32Value:
             let value = try Google_Protobuf_Any.init(message: intValue)
-            return Proton_Sdk_Response.with {
+            return Proton_Drive_Sdk_Response.with {
                 $0.value = value
             }
         default:

@@ -2,11 +2,11 @@ package me.proton.drive.sdk.internal
 
 import me.proton.drive.sdk.extension.LongResponseCallback
 import me.proton.drive.sdk.extension.UnitResponseCallback
-import proton.sdk.cancellationTokenSourceCancelRequest
-import proton.sdk.cancellationTokenSourceCreateRequest
-import proton.sdk.cancellationTokenSourceFreeRequest
+import proton.drive.sdk.cancellationTokenSourceCancelRequest
+import proton.drive.sdk.cancellationTokenSourceCreateRequest
+import proton.drive.sdk.cancellationTokenSourceFreeRequest
 
-class JniCancellationTokenSource internal constructor() : JniBaseProtonSdk() {
+class JniCancellationTokenSource internal constructor() : JniBaseProtonDriveSdk() {
 
     suspend fun create(): Long = executeOnce("create", LongResponseCallback) {
         cancellationTokenSourceCreate = cancellationTokenSourceCreateRequest { }

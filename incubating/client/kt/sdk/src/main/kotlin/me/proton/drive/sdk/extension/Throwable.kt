@@ -4,9 +4,9 @@ import kotlinx.coroutines.CancellationException
 import me.proton.core.network.domain.ApiException
 import me.proton.core.network.domain.ApiResult
 import me.proton.drive.sdk.internal.NoCoroutineScopeException
-import proton.sdk.ProtonSdk
+import proton.drive.sdk.ProtonDriveSdk
 
-fun Throwable.toProtonSdkError(message: String) = proton.sdk.error {
+fun Throwable.toProtonSdkError(message: String) = proton.drive.sdk.error {
     val exception = this@toProtonSdkError
     type = exception.javaClass.name
     this.message = exception.message?.let {
@@ -18,18 +18,18 @@ fun Throwable.toProtonSdkError(message: String) = proton.sdk.error {
     context = stackTraceToString()
 }
 
-private fun Throwable.domain(): ProtonSdk.ErrorDomain = when (this) {
-    is NoCoroutineScopeException -> ProtonSdk.ErrorDomain.SuccessfulCancellation
-    is CancellationException -> ProtonSdk.ErrorDomain.SuccessfulCancellation
+private fun Throwable.domain(): ProtonDriveSdk.ErrorDomain = when (this) {
+    is NoCoroutineScopeException -> ProtonDriveSdk.ErrorDomain.SuccessfulCancellation
+    is CancellationException -> ProtonDriveSdk.ErrorDomain.SuccessfulCancellation
 
     is ApiException -> when (error) {
-        is ApiResult.Error.Http -> ProtonSdk.ErrorDomain.Api
-        is ApiResult.Error.Timeout -> ProtonSdk.ErrorDomain.Transport
-        is ApiResult.Error.Connection -> ProtonSdk.ErrorDomain.Network
-        is ApiResult.Error.Parse -> ProtonSdk.ErrorDomain.Serialization
+        is ApiResult.Error.Http -> ProtonDriveSdk.ErrorDomain.Api
+        is ApiResult.Error.Timeout -> ProtonDriveSdk.ErrorDomain.Transport
+        is ApiResult.Error.Connection -> ProtonDriveSdk.ErrorDomain.Network
+        is ApiResult.Error.Parse -> ProtonDriveSdk.ErrorDomain.Serialization
     }
 
-    else -> ProtonSdk.ErrorDomain.Undefined
+    else -> ProtonDriveSdk.ErrorDomain.Undefined
 }
 
 private fun Throwable.primaryCode(): Long? =

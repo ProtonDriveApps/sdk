@@ -42,7 +42,7 @@ let cCompatibleLogCallback: CCallback = { statePointer, byteArray in
         return
     }
 
-    let logEvent = LogEvent(sdkLogEvent: Proton_Sdk_LogEvent(byteArray: byteArray))
+    let logEvent = LogEvent(sdkLogEvent: Proton_Drive_Sdk_LogEvent(byteArray: byteArray))
     driveClient.log(logEvent)
 }
 

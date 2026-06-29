@@ -5,8 +5,6 @@ import me.proton.core.domain.entity.UserId
 import me.proton.core.network.data.ApiProvider
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.entity.ClientCreateRequest
-import me.proton.drive.sdk.entity.SessionBeginRequest
-import me.proton.drive.sdk.entity.SessionResumeRequest
 import me.proton.drive.sdk.internal.AccountClientBridge
 import me.proton.drive.sdk.internal.ApiProviderBridge
 import me.proton.drive.sdk.internal.InteropProtonDriveClient
@@ -16,7 +14,6 @@ import me.proton.drive.sdk.internal.JniLoggerProvider
 import me.proton.drive.sdk.internal.JniNativeLibrary
 import me.proton.drive.sdk.internal.JniProtonDriveClient
 import me.proton.drive.sdk.internal.JniProtonPhotosClient
-import me.proton.drive.sdk.internal.JniSession
 import me.proton.drive.sdk.internal.ProtonDriveSdkNativeClient
 import me.proton.drive.sdk.internal.cancellationCoroutineScope
 
@@ -28,28 +25,6 @@ object ProtonDriveSdk {
 
     suspend fun loggerProvider(logger: SdkLogger): LoggerProvider = JniLoggerProvider(logger).run {
         LoggerProvider(create(), this)
-    }
-
-    suspend fun sessionBegin(
-        request: SessionBeginRequest,
-    ): Session = cancellationCoroutineScope { source ->
-        JniSession().run {
-            clientLogger(DEBUG, "ProtonDriveSdk sessionBegin")
-            Session(begin(source.handle, request), this, source)
-        }
-    }
-
-    suspend fun sessionResume(
-        request: SessionResumeRequest,
-    ): Session = cancellationCoroutineScope { source ->
-        JniSession().run {
-            clientLogger(DEBUG, "ProtonDriveSdk sessionResume")
-            Session(
-                handle = resume(request),
-                bridge = this,
-                cancellationTokenSource = source
-            )
-        }
     }
 
     suspend fun protonDriveClientCreate(

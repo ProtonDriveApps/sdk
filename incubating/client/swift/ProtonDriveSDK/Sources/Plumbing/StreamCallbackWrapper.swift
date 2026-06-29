@@ -116,7 +116,7 @@ let cStreamSeekCallback: CCallbackWithCallbackPointerAndObjectPointerReturn = { 
     }
 
     // Parse the seek request before entering the task
-    let seekRequest = Proton_Sdk_StreamSeekRequest(byteArray: byteArray)
+    let seekRequest = Proton_Drive_Sdk_StreamSeekRequest(byteArray: byteArray)
     let origin = SeekOrigin(rawValue: seekRequest.origin) ?? .begin
 
     return BoxedCancellableTask.registered {

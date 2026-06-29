@@ -3,14 +3,14 @@ package me.proton.drive.sdk.extension
 import com.google.protobuf.Any
 import kotlinx.coroutines.CancellableContinuation
 import me.proton.drive.sdk.ProtonDriveSdkException
-import proton.sdk.ProtonSdk
-import proton.sdk.ProtonSdk.Response.ResultCase.ERROR
-import proton.sdk.ProtonSdk.Response.ResultCase.RESULT_NOT_SET
-import proton.sdk.ProtonSdk.Response.ResultCase.VALUE
+import proton.drive.sdk.ProtonDriveSdk
+import proton.drive.sdk.ProtonDriveSdk.Response.ResultCase.ERROR
+import proton.drive.sdk.ProtonDriveSdk.Response.ResultCase.RESULT_NOT_SET
+import proton.drive.sdk.ProtonDriveSdk.Response.ResultCase.VALUE
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-fun <T> ProtonSdk.Response.completeOrFail(deferred: CancellableContinuation<T>, block: (Any) -> T) {
+fun <T> ProtonDriveSdk.Response.completeOrFail(deferred: CancellableContinuation<T>, block: (Any) -> T) {
     when (resultCase) {
         VALUE -> deferred.resume(block(value))
         RESULT_NOT_SET -> deferred.resumeWithException(ProtonDriveSdkException("No response (not set)"))

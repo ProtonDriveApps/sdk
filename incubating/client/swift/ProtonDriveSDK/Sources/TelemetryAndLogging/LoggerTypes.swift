@@ -30,7 +30,7 @@ public struct LogEvent: Sendable {
         self.line = line
     }
 
-    init(sdkLogEvent: Proton_Sdk_LogEvent) {
+    init(sdkLogEvent: Proton_Drive_Sdk_LogEvent) {
         self.init(
             level: LogLevel(sdkLogEvent.level),
             message: sdkLogEvent.message,

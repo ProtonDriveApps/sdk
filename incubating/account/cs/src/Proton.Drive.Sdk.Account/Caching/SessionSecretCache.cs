@@ -1,4 +1,5 @@
 using Proton.Sdk.Caching;
+
 namespace Proton.Drive.Sdk.Account.Caching;
 
 internal sealed class SessionSecretCache(ICacheRepository repository) : ISessionSecretCache

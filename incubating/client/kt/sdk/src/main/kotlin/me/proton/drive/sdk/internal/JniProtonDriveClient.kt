@@ -18,32 +18,25 @@ import me.proton.drive.sdk.extension.asNullableCallback
 import me.proton.drive.sdk.extension.toFolder
 import me.proton.drive.sdk.extension.toLongResponse
 import proton.drive.sdk.ProtonDriveSdk
-import proton.drive.sdk.driveClientCreateFromSessionRequest
+import proton.drive.sdk.ProtonDriveSdk.HttpRequest
+import proton.drive.sdk.ProtonDriveSdk.HttpResponse
+import proton.drive.sdk.ProtonDriveSdk.MetricEvent
 import proton.drive.sdk.driveClientCreateRequest
 import proton.drive.sdk.driveClientFreeRequest
 import proton.drive.sdk.httpClient
 import proton.drive.sdk.protonDriveClientOptions
 import proton.drive.sdk.request
-import proton.sdk.ProtonSdk
-import proton.sdk.ProtonSdk.HttpResponse
-import proton.sdk.telemetry
+import proton.drive.sdk.telemetry
 
 class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
-
-    suspend fun createFromSession(sessionHandle: Long) =
-        executeOnce("createFromSession", LongResponseCallback) {
-            driveClientCreateFromSession = driveClientCreateFromSessionRequest {
-                this.sessionHandle = sessionHandle
-            }
-        }
 
     suspend fun create(
         coroutineScope: CoroutineScope,
         request: ClientCreateRequest,
         httpResponseReadPointer: Long,
-        onHttpClientRequest: suspend (ProtonSdk.HttpRequest) -> HttpResponse,
+        onHttpClientRequest: suspend (HttpRequest) -> HttpResponse,
         onAccountRequest: suspend (ProtonDriveSdk.AccountRequest) -> Any,
-        onRecordMetric: suspend (ProtonSdk.MetricEvent) -> Unit,
+        onRecordMetric: suspend (MetricEvent) -> Unit,
         onFeatureEnabled: suspend (String) -> Boolean,
     ) = executePersistent(clientBuilder = { continuation ->
         ProtonDriveSdkNativeClient(

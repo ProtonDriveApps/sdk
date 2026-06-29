@@ -4,8 +4,7 @@ using Proton.Cryptography.Pgp;
 
 namespace Proton.Drive.Sdk.Account.Caching;
 
-internal sealed class PublicKeyCache
-    : IPublicKeyCache
+internal sealed class PublicKeyCache : IPublicKeyCache
 {
     public const int NumberOfMinutesBeforeExpiration = 30;
 

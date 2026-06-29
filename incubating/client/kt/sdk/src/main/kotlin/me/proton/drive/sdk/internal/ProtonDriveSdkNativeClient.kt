@@ -21,25 +21,28 @@ import me.proton.drive.sdk.extension.asAny
 import me.proton.drive.sdk.extension.decodeToString
 import me.proton.drive.sdk.extension.toProtonSdkError
 import proton.drive.sdk.ProtonDriveSdk
-import proton.sdk.ProtonSdk
-import proton.sdk.ProtonSdk.HttpResponse
-import proton.sdk.ProtonSdk.Response
-import proton.sdk.response
+import proton.drive.sdk.ProtonDriveSdk.HttpRequest
+import proton.drive.sdk.ProtonDriveSdk.HttpResponse
+import proton.drive.sdk.ProtonDriveSdk.MetricEvent
+import proton.drive.sdk.ProtonDriveSdk.Response
+import proton.drive.sdk.ProtonDriveSdk.StreamSeekRequest
+import proton.drive.sdk.response
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 
 class ProtonDriveSdkNativeClient<E> internal constructor(
     val name: String,
     val response: ClientResponseCallback<ProtonDriveSdkNativeClient<E>> = { _, _ -> error("response not configured for $name") },
+    val callback: (ByteBuffer) -> Unit = { error("callback not configured for $name") },
     val yieldHandler: YieldHandler<E> = YieldHandler.notConfigured(name),
     val read: suspend (ByteBuffer) -> Int = { error("read not configured for $name") },
     val write: suspend (ByteBuffer) -> Unit = { error("write not configured for $name") },
     val seek: (suspend (Long, Int) -> Long)? = null,
-    val httpClientRequest: suspend (ProtonSdk.HttpRequest) -> HttpResponse = { error("httpClientRequest not configured for $name") },
+    val httpClientRequest: suspend (HttpRequest) -> HttpResponse = { error("httpClientRequest not configured for $name") },
     val readHttpBody: suspend (ByteBuffer) -> Int = { error("readHttpBody not configured for $name") },
     val accountRequest: suspend (ProtonDriveSdk.AccountRequest) -> Any = { error("accountRequest not configured for $name") },
     val progress: suspend (ProtonDriveSdk.ProgressUpdate) -> Unit = { error("progress not configured for $name") },
-    val recordMetric: suspend (ProtonSdk.MetricEvent) -> Unit = { error("recordMetric not configured for $name") },
+    val recordMetric: suspend (MetricEvent) -> Unit = { error("recordMetric not configured for $name") },
     val featureEnabled: suspend (String) -> Boolean = { error("featureEnabled not configured for $name") },
     val sha1Provider: suspend () -> ByteArray = { error("sha1Provider not configured for $name") },
     val logger: (Level, String) -> Unit = { _, _ -> },
@@ -101,7 +104,13 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
     }
 
     @Suppress("unused") // Called by JNI
-    fun onYield(data: ByteBuffer) = onCallback(
+    fun onCallback(data: ByteBuffer) {
+        logger(VERBOSE, "callback for $name of size: ${data.capacity()}")
+        callback(data)
+    }
+
+    @Suppress("unused") // Called by JNI
+    fun onYield(data: ByteBuffer) = dispatchParsedCallback(
         callback = "yield",
         data = data,
         parser = yieldHandler.parser,
@@ -109,7 +118,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
     )
 
     @Suppress("unused") // Called by JNI
-    fun onProgress(data: ByteBuffer) = onCallback(
+    fun onProgress(data: ByteBuffer) = dispatchParsedCallback(
         callback = "progress",
         data = data,
         parser = ProtonDriveSdk.ProgressUpdate::parseFrom,
@@ -137,7 +146,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
             operation = "seek",
             data = data,
             sdkHandle = sdkHandle,
-            parser = ProtonSdk.StreamSeekRequest::parseFrom,
+            parser = StreamSeekRequest::parseFrom,
         ) { request ->
             checkNotNull(seek) { "seek not configured for $name" }
             logger(VERBOSE, "seek for $name: offset=${request.offset}, origin=${request.origin}")
@@ -155,7 +164,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
         operation = "http-request",
         data = data,
         sdkHandle = sdkHandle,
-        parser = ProtonSdk.HttpRequest::parseFrom,
+        parser = HttpRequest::parseFrom,
     ) { httpRequest ->
         logger(
             VERBOSE,
@@ -166,7 +175,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
             VERBOSE,
             "receive http response ${httpResponse.statusCode} for ${httpRequest.method} ${httpRequest.url}"
         )
-        response { value = httpResponse.asAny("proton.sdk.HttpResponse") }
+        response { value = httpResponse.asAny("proton.drive.sdk.HttpResponse") }
     }?.trackWeakReference() ?: 0
 
     @Suppress("unused") // Called by JNI
@@ -197,10 +206,10 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
     }
 
     @Suppress("TooGenericExceptionCaught", "unused") // Called by JNI
-    fun onRecordMetric(data: ByteBuffer) = onCallback(
+    fun onRecordMetric(data: ByteBuffer) = dispatchParsedCallback(
         callback = "recordMetric",
         data = data,
-        parser = ProtonSdk.MetricEvent::parseFrom,
+        parser = MetricEvent::parseFrom,
         block = recordMetric,
     )
 
@@ -328,7 +337,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
     }
 
     @Suppress("TooGenericExceptionCaught")
-    private fun <T> onCallback(
+    private fun <T> dispatchParsedCallback(
         callback: String,
         data: ByteBuffer,
         parser: (ByteBuffer) -> T,
@@ -431,5 +440,8 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
 
         @JvmStatic
         external fun getSha1Pointer(): Long
+
+        @JvmStatic
+        external fun getCallbackPointer(): Long
     }
 }

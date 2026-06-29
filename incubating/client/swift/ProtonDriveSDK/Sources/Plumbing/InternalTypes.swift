@@ -22,7 +22,7 @@ extension ObjectHandle {
 /// C-compatible callback used by SDK to pass data to the app and back
 /// `statePointer` is pointer to the state we create on the app side and pass to the SDK in the request that is causing the callback to be called. SDK does not interact with the state at all, it just passes it back to the app. It's app's responsibility to maintain the lifecycle of the state (deallocate when appropriate). It's always passed, in every callback variant.
 /// `byteArray` is a pointer and the count struct describing the memory allocated by the SDK, and passed to the callback to enable it to perform its operation. It is either the protobuf message created by the SDK that contains all the necessary information, or it's a memory buffer from which/into which the callback is supposed to read/write. The app does not maintain the lifecycle of the byteArray, it's SDK's responsibility. It's passed on the callback variants that require it for their work.
-/// `callbackPointer` is a pointer to the callback created on the SDK side that keeps the SDK's async operation waiting. It's app's responsibility to make a response call (using `proton_sdk_handle_response`) and pass the operation result (be it success or error). If the app fails to do it, the operation might hang indefinitely. The lifecycle of the object under `callbackPointer` is SDK's responsibility. It's passed in the callbacks that are represented as async operations on the SDK side.
+/// `callbackPointer` is a pointer to the callback created on the SDK side that keeps the SDK's async operation waiting. It's app's responsibility to make a response call (using `proton_drive_sdk_handle_response`) and pass the operation result (be it success or error). If the app fails to do it, the operation might hang indefinitely. The lifecycle of the object under `callbackPointer` is SDK's responsibility. It's passed in the callbacks that are represented as async operations on the SDK side.
 
 typealias CCallback = @convention(c) (_ statePointer: Int, _ byteArray: ByteArray) -> Void
 typealias CCallbackWithoutByteArray = @convention(c) (_ statePointer: Int) -> Void
@@ -73,12 +73,6 @@ extension Data {
 // MARK: - Protobuf extensions
 
 extension SwiftProtobuf.Message {
-    var isDriveRequest: Bool {
-        String(describing: self).starts(with: "ProtonDriveSDK.Proton_Drive_Sdk_")
-    }
-}
-
-extension SwiftProtobuf.Message {
     init(byteArray: ByteArray) {
         guard let pointer = byteArray.pointer else { self.init(); return }
 
@@ -88,21 +82,6 @@ extension SwiftProtobuf.Message {
         } catch {
             assertionFailure("The protobuf message could not be created")
             self.init()
-        }
-    }
-}
-
-extension Proton_Sdk_ProtonClientTlsPolicy {
-    init(tlsPolicy: TlsPolicy) {
-        switch tlsPolicy {
-        case .strict:
-            self = .strict
-
-        case .noCertificatePinning:
-            self = .noCertificatePinning
-
-        case .noCertificateValidation:
-            self = .noCertificateValidation
         }
     }
 }

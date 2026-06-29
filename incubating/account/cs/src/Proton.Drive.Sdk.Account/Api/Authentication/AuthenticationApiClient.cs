@@ -2,7 +2,7 @@ using Proton.Cryptography.Srp;
 using Proton.Drive.Sdk.Account.Authentication;
 using Proton.Drive.Sdk.Account.Serialization;
 using Proton.Sdk.Api;
-using Proton.Sdk.Http;
+using Proton.Sdk.Api.Http;
 
 namespace Proton.Drive.Sdk.Account.Api.Authentication;
 

@@ -1,0 +1,369 @@
+using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Logging;
+using Microsoft.IO;
+using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Api.Files;
+using Proton.Drive.Sdk.Http;
+using Proton.Sdk.Api;
+
+namespace Proton.Drive.Sdk.Nodes.Download;
+
+internal sealed partial class RevisionReader
+{
+    public const int MinBlockIndex = 1;
+    public const int DefaultBlockPageSize = 10;
+    private static readonly TimeSpan ContentOutputWritingCancellationDelay = TimeSpan.FromMilliseconds(500);
+
+    private readonly ProtonDriveClient _client;
+    private readonly DownloadState _state;
+    private readonly int _blockPageSize;
+    private readonly ILogger _logger;
+
+    internal RevisionReader(
+        ProtonDriveClient client,
+        DownloadState state,
+        int blockPageSize = DefaultBlockPageSize)
+    {
+        _client = client;
+        _state = state;
+        _blockPageSize = blockPageSize;
+        _logger = client.Telemetry.GetLogger("Revision reader");
+    }
+
+    public async ValueTask ReadAsync(Stream contentOutputStream, Action<long, long?> onProgress, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var revisionDto = _state.RevisionDto;
+            var downloadedBlockDigests = _state.GetDownloadedBlockDigests();
+
+            var manifestStream = ProtonDriveClient.MemoryStreamManager.GetStream();
+
+            await using (manifestStream)
+            {
+                if (revisionDto.Thumbnails is { } thumbnails)
+                {
+                    foreach (var sha256Digest in thumbnails.OrderBy(t => t.Type).Select(x => x.HashDigest))
+                    {
+                        manifestStream.Write(sha256Digest.Span);
+                    }
+                }
+
+                foreach (var digest in downloadedBlockDigests)
+                {
+                    manifestStream.Write(digest.Span);
+                }
+
+                await DownloadBlocks(
+                    contentOutputStream,
+                    downloaded => onProgress(downloaded, _state.ClaimedSize),
+                    manifestStream,
+                    cancellationToken).ConfigureAwait(false);
+
+                manifestStream.Seek(0, SeekOrigin.Begin);
+
+                var manifestVerificationStatus = await VerifyManifestAsync(manifestStream, cancellationToken).ConfigureAwait(false);
+
+                if (manifestVerificationStatus is not PgpVerificationStatus.Ok)
+                {
+                    LogFailedManifestVerification(_state.Uid, manifestVerificationStatus);
+
+                    throw new CompletedDownloadManifestVerificationException("File authenticity check failed");
+                }
+
+                _state.SetIsCompleted();
+            }
+        }
+        catch (Exception ex) when (!IsResumableError(ex))
+        {
+            _state.IsResumable = false;
+            throw;
+        }
+    }
+
+    private static bool IsResumableError(Exception ex)
+    {
+        return ex is not DataIntegrityException
+            and not ProtonApiException { TransportCode: >= StatusCodes.MinClientErrorCode and <= StatusCodes.MaxClientErrorCode }
+            and not CompletedDownloadManifestVerificationException
+            and not InvalidOperationException;
+    }
+
+    private async ValueTask DownloadBlocks(
+        Stream contentOutputStream,
+        Action<long> onProgress,
+        RecyclableMemoryStream manifestStream,
+        CancellationToken cancellationToken)
+    {
+        var startBlockIndex = _state.GetNextBlockIndexToDownload();
+
+        var downloadTasks = new Queue<Task<BlockDownloadResult>>(_client.DownloadQueue.Depth);
+
+        try
+        {
+            await _client.DownloadQueue.StartBlockQueueingAsync(cancellationToken).ConfigureAwait(false);
+
+            try
+            {
+                await foreach (var (block, _) in GetBlocksAsync(startBlockIndex, cancellationToken).ConfigureAwait(false))
+                {
+                    if (!_client.DownloadQueue.TryEnqueueBlock())
+                    {
+                        if (downloadTasks.Count > 0)
+                        {
+                            await WriteNextBlockToOutputAsync(downloadTasks, contentOutputStream, manifestStream, onProgress, cancellationToken)
+                                .ConfigureAwait(false);
+                        }
+
+                        await _client.DownloadQueue.EnqueueBlockAsync(cancellationToken).ConfigureAwait(false);
+                    }
+
+                    var downloadTask = DownloadBlockAsync(block, cancellationToken);
+
+                    downloadTasks.Enqueue(downloadTask);
+                }
+            }
+            finally
+            {
+                _client.DownloadQueue.FinishBlockQueueing();
+            }
+
+            while (downloadTasks.Count > 0)
+            {
+                await WriteNextBlockToOutputAsync(downloadTasks, contentOutputStream, manifestStream, onProgress, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+        }
+        catch when (downloadTasks.Count > 0)
+        {
+            try
+            {
+                await Task.WhenAll(downloadTasks).ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore exceptions because most if not all will just be cancellation-related, and we already have one to re-throw
+            }
+            finally
+            {
+                _client.DownloadQueue.DequeueBlocks(downloadTasks.Count);
+            }
+
+            throw;
+        }
+    }
+
+    private async Task WriteNextBlockToOutputAsync(
+        Queue<Task<BlockDownloadResult>> downloadTasks,
+        Stream outputStream,
+        Stream manifestStream,
+        Action<long> onProgress,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var downloadTask = downloadTasks.Dequeue();
+
+        using var delayedCancellationTokenSource = new CancellationTokenSource();
+
+        // We use a delayed cancellation token to give the write operation a fair chance to complete when cancellation is triggered,
+        // to not leave the stream in an indeterminate state that would prevent resuming using the same stream later.
+        // ReSharper disable once AccessToDisposedClosure
+        await using (cancellationToken.Register(() => delayedCancellationTokenSource.CancelAfter(ContentOutputWritingCancellationDelay)))
+        {
+            try
+            {
+                var (plaintextStream, blockDigest) = await downloadTask.ConfigureAwait(false);
+
+                try
+                {
+                    plaintextStream.Seek(0, SeekOrigin.Begin);
+                    var initialOutputPosition = outputStream.CanSeek ? outputStream.Position : 0;
+
+                    try
+                    {
+                        await plaintextStream.CopyToAsync(outputStream, delayedCancellationTokenSource.Token).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        if (!TrySeekOutputStream(outputStream, initialOutputPosition))
+                        {
+                            _state.IsResumable = false;
+                        }
+
+                        throw;
+                    }
+
+                    _state.AddNumberOfBytesWritten(plaintextStream.Length);
+                    _state.AddDownloadedBlockDigest(blockDigest);
+                    manifestStream.Write(blockDigest.Span);
+
+                    _client.DownloadQueue.DecreaseFileRemainingBlockCount(_state.QueueToken, 1);
+
+                    onProgress(_state.GetNumberOfBytesWritten());
+                }
+                finally
+                {
+                    await plaintextStream.DisposeAsync().ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                _client.DownloadQueue.DequeueBlocks(1);
+            }
+        }
+    }
+
+    private bool TrySeekOutputStream(Stream stream, long position)
+    {
+        if (!stream.CanSeek)
+        {
+            return false;
+        }
+
+        try
+        {
+            stream.Seek(position, SeekOrigin.Begin);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Seeking output stream failed");
+            return false;
+        }
+    }
+
+    private async Task<BlockDownloadResult> DownloadBlockAsync(BlockDto block, CancellationToken cancellationToken)
+    {
+        var blockOutputStream = ProtonDriveClient.MemoryStreamManager.GetStream();
+
+        var hashDigest = await _client.BlockDownloader.DownloadAsync(
+            _state.Uid,
+            block.Index,
+            block.BareUrl,
+            block.Token,
+            _state.ContentKey,
+            blockOutputStream,
+            cancellationToken).ConfigureAwait(false);
+
+        return new BlockDownloadResult(blockOutputStream, hashDigest);
+    }
+
+    private async IAsyncEnumerable<(BlockDto Value, bool IsLast)> GetBlocksAsync(
+        int startBlockIndex,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var mustTryNextPageOfBlocks = true;
+        var nextExpectedIndex = startBlockIndex;
+        var outstandingBlock = default(BlockDto);
+        var currentPageBlocks = new List<BlockDto>(_blockPageSize);
+
+        // Fetch the first page of blocks starting from the desired index
+        var revisionResponse = await _client.Api.Files.GetRevisionAsync(
+            _state.Uid.NodeUid.VolumeId,
+            _state.Uid.NodeUid.LinkId,
+            _state.Uid.RevisionId,
+            startBlockIndex,
+            _blockPageSize,
+            withoutBlockUrls: false,
+            cancellationToken).ConfigureAwait(false);
+
+        var revisionDto = revisionResponse.Revision;
+
+        // The first block is already in the queue, so we subtract it from the first page of block results
+        var initialQueueCountToSubtract = 1;
+
+        while (mustTryNextPageOfBlocks)
+        {
+            currentPageBlocks.Clear();
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (revisionDto.Blocks.Count == 0)
+            {
+                break;
+            }
+
+            mustTryNextPageOfBlocks = revisionDto.Blocks.Count >= _blockPageSize;
+
+            currentPageBlocks.AddRange(revisionDto.Blocks);
+            currentPageBlocks.Sort((a, b) => a.Index.CompareTo(b.Index));
+
+            _client.DownloadQueue.IncreaseFileBlockCount(_state.QueueToken, currentPageBlocks.Count - initialQueueCountToSubtract);
+            initialQueueCountToSubtract = 0;
+
+            var blocksExceptLast = currentPageBlocks.Take(currentPageBlocks.Count - 1);
+            var blocksToReturn = outstandingBlock is not null ? blocksExceptLast.Prepend(outstandingBlock) : blocksExceptLast;
+
+            outstandingBlock = currentPageBlocks[^1];
+            var lastKnownIndex = outstandingBlock.Index;
+
+            foreach (var block in blocksToReturn)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (block.Index != nextExpectedIndex)
+                {
+                    LogMissingBlock(block.Index, _state.Uid);
+
+                    throw new InvalidOperationException("File contents are incomplete");
+                }
+
+                ++nextExpectedIndex;
+
+                yield return (block, false);
+            }
+
+            if (mustTryNextPageOfBlocks)
+            {
+                revisionResponse =
+                    await _client.Api.Files.GetRevisionAsync(
+                        _state.Uid.NodeUid.VolumeId,
+                        _state.Uid.NodeUid.LinkId,
+                        _state.Uid.RevisionId,
+                        lastKnownIndex + 1,
+                        _blockPageSize,
+                        false,
+                        cancellationToken).ConfigureAwait(false);
+
+                revisionDto = revisionResponse.Revision;
+            }
+        }
+
+        if (outstandingBlock is not null)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            yield return (outstandingBlock, true);
+        }
+    }
+
+    private async Task<PgpVerificationStatus> VerifyManifestAsync(Stream manifestStream, CancellationToken cancellationToken)
+    {
+        if (_state.RevisionDto.ManifestSignature is not { } manifestSignature)
+        {
+            return PgpVerificationStatus.NotSigned;
+        }
+
+        var verificationKeys = string.IsNullOrEmpty(_state.RevisionDto.SignatureEmailAddress)
+            ? [_state.NodeKey.ToPublic()]
+            : await _client.Account.GetAddressPublicKeysAsync(_state.RevisionDto.SignatureEmailAddress, cancellationToken).ConfigureAwait(false);
+
+        if (verificationKeys.Count == 0)
+        {
+            return PgpVerificationStatus.NoVerifier;
+        }
+
+        var verificationResult = new PgpKeyRing(verificationKeys).Verify(manifestStream, manifestSignature.Unarmored.Span);
+
+        return verificationResult.Status;
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Missing block #{BlockIndex} on revision \"{RevisionUid}\"")]
+    private partial void LogMissingBlock(int blockIndex, RevisionUid revisionUid);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Manifest verification failed for revision \"{RevisionUid}\": {VerificationStatus}")]
+    private partial void LogFailedManifestVerification(RevisionUid revisionUid, PgpVerificationStatus verificationStatus);
+
+    private readonly record struct BlockDownloadResult(Stream Stream, ReadOnlyMemory<byte> Sha256Digest);
+}

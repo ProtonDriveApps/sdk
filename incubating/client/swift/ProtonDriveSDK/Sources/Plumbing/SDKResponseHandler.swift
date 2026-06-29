@@ -6,7 +6,7 @@ enum SDKResponseHandler {
     static func send(callbackPointer: Int, message: Message) {
         do {
             let byteArray = try message.serializedIntoResponse()
-            proton_sdk_handle_response(callbackPointer, byteArray)
+            proton_drive_sdk_handle_response(callbackPointer, byteArray)
             byteArray.deallocate()
         } catch {
             // TODO: this breaks SDK. We should definitely log this to Sentry. We might choose not to crash though.
@@ -18,9 +18,9 @@ enum SDKResponseHandler {
     /// Use this instead of sending Google_Protobuf_Empty.
     static func sendVoidResponse(callbackPointer: Int) {
         do {
-            let emptyResponse = Proton_Sdk_Response()
+            let emptyResponse = Proton_Drive_Sdk_Response()
             let byteArray = ByteArray(data: try emptyResponse.serializedData())
-            proton_sdk_handle_response(callbackPointer, byteArray)
+            proton_drive_sdk_handle_response(callbackPointer, byteArray)
             byteArray.deallocate()
         } catch {
             fatalError("SDKResponseHandler.sendVoidResponse failed with \(error)")
@@ -28,7 +28,7 @@ enum SDKResponseHandler {
     }
 
     static func sendErrorToSDK(_ error: Error, callbackPointer: Int) {
-        let sdkError = Proton_Sdk_Error.from(nsError: error as NSError)
+        let sdkError = Proton_Drive_Sdk_Error.from(nsError: error as NSError)
         SDKResponseHandler.send(callbackPointer: callbackPointer, message: sdkError)
     }
     
@@ -38,9 +38,9 @@ enum SDKResponseHandler {
         if assert {
             assertionFailure(message)
         }
-        let sdkError = Proton_Sdk_Error.with {
+        let sdkError = Proton_Drive_Sdk_Error.with {
             $0.type = "Swift bindings"
-            $0.domain = Proton_Sdk_ErrorDomain.businessLogic
+            $0.domain = Proton_Drive_Sdk_ErrorDomain.businessLogic
             $0.message = message
         }
         SDKResponseHandler.send(callbackPointer: callbackPointer, message: sdkError)
@@ -49,33 +49,33 @@ enum SDKResponseHandler {
     /// A helper method to send a cancellation error from Swift bindings.
     /// This is used when a stream operation is cancelled.
     static func sendCancellationErrorToSDK(message: String, callbackPointer: Int) {
-        let sdkError = Proton_Sdk_Error.with {
+        let sdkError = Proton_Drive_Sdk_Error.with {
             $0.type = "Swift bindings"
-            $0.domain = Proton_Sdk_ErrorDomain.successfulCancellation
+            $0.domain = Proton_Drive_Sdk_ErrorDomain.successfulCancellation
             $0.message = message
         }
         SDKResponseHandler.send(callbackPointer: callbackPointer, message: sdkError)
     }
 }
 
-extension Proton_Sdk_Error {
+extension Proton_Drive_Sdk_Error {
     
     private static let encoder = JSONEncoder()
     
-    static func from(nsError: NSError) -> Proton_Sdk_Error {
+    static func from(nsError: NSError) -> Proton_Drive_Sdk_Error {
         let type: String
-        let domain: Proton_Sdk_ErrorDomain
+        let domain: Proton_Drive_Sdk_ErrorDomain
         let message: String
         var primaryCode: Int? = nil
         let secondaryCode: Int? = nil
         let context: String? = nil
-        let innerError: Proton_Sdk_Error? = nil
+        let innerError: Proton_Drive_Sdk_Error? = nil
         let additionalData: Codable? = nil
 
         switch nsError {
 
         case let protonDriveSDKError as ProtonDriveSDKError:
-            return protonDriveSDKError.asProton_Sdk_Error
+            return protonDriveSDKError.asProton_Drive_Sdk_Error
             
         case let cocoaError as CocoaError where cocoaError.code == .userCancelled:
             type = NSURLErrorDomain
@@ -100,7 +100,7 @@ extension Proton_Sdk_Error {
             primaryCode = nsError.code
         }
         
-        return Proton_Sdk_Error.with {
+        return Proton_Drive_Sdk_Error.with {
             $0.type = type
             $0.domain = domain
             $0.message = message

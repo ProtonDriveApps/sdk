@@ -5,14 +5,14 @@ import me.proton.drive.sdk.LoggerProvider
 import me.proton.drive.sdk.SdkLogger
 import me.proton.drive.sdk.extension.decodeToString
 import me.proton.drive.sdk.extension.toLongResponse
-import proton.sdk.ProtonSdk
-import proton.sdk.loggerProviderCreate
-import proton.sdk.request
+import proton.drive.sdk.ProtonDriveSdk
+import proton.drive.sdk.loggerProviderCreate
+import proton.drive.sdk.request
 import java.nio.ByteBuffer
 
 class JniLoggerProvider internal constructor(
     private val sdkLogger: SdkLogger,
-) : JniBaseProtonSdk() {
+) : JniBaseProtonDriveSdk() {
 
     init {
         globalSdkLogger = sdkLogger
@@ -20,16 +20,16 @@ class JniLoggerProvider internal constructor(
 
     suspend fun create(): Long = executePersistent(
         clientBuilder = { continuation ->
-            ProtonSdkNativeClient(
+            ProtonDriveSdkNativeClient(
                 name = method("create"),
                 response = continuation.toLongResponse().asClientResponseCallback(),
                 callback = ::onLog,
             )
         },
-        requestBuilder = { client ->
+        requestBuilder = { _ ->
             request {
                 loggerProviderCreate = loggerProviderCreate {
-                    logAction = ProtonSdkNativeClient.getCallbackPointer()
+                    logAction = ProtonDriveSdkNativeClient.getCallbackPointer()
                 }
             }
         }
@@ -37,7 +37,7 @@ class JniLoggerProvider internal constructor(
 
     fun onLog(logEventMessage: ByteBuffer) {
         try {
-            val logEvent = ProtonSdk.LogEvent.parseFrom(logEventMessage)
+            val logEvent = ProtonDriveSdk.LogEvent.parseFrom(logEventMessage)
 
             val priority = when (logEvent.level) {
                 0 -> LoggerProvider.Level.VERBOSE

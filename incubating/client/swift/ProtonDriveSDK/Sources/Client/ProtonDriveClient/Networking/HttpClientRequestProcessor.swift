@@ -17,7 +17,7 @@ enum HttpClientRequestProcessor {
             })
         else { return -1 }
 
-        let httpRequestData = Proton_Sdk_HttpRequest(byteArray: byteArray)
+        let httpRequestData = Proton_Drive_Sdk_HttpRequest(byteArray: byteArray)
         
         return BoxedCancellableTask.registered {
             do {
@@ -39,7 +39,7 @@ enum HttpClientRequestProcessor {
 
     fileprivate static func perform(
         client: ProtonSDKClient,
-        httpRequestData: Proton_Sdk_HttpRequest,
+        httpRequestData: Proton_Drive_Sdk_HttpRequest,
         callbackPointer: Int,
         provider: SDKClientProvider
     ) async throws {
@@ -79,7 +79,7 @@ enum HttpClientRequestProcessor {
     fileprivate static func callDriveApi(
         driveRelativePath: String,
         client: ProtonSDKClient,
-        httpRequestData: Proton_Sdk_HttpRequest,
+        httpRequestData: Proton_Drive_Sdk_HttpRequest,
         callbackPointer: Int,
         provider: SDKClientProvider
     ) async throws {
@@ -95,7 +95,7 @@ enum HttpClientRequestProcessor {
             let baseAddress = buffer.baseAddress!
 
             while true {
-                let streamReadRequest = Proton_Sdk_StreamReadRequest.with {
+                let streamReadRequest = Proton_Drive_Sdk_StreamReadRequest.with {
                     $0.bufferLength = Int32(buffer.count)
                     $0.bufferPointer = Int64(ObjectHandle(rawPointer: UnsafeRawPointer(baseAddress)))
                     $0.streamHandle = httpRequestData.sdkContentHandle
@@ -128,9 +128,9 @@ enum HttpClientRequestProcessor {
         } else {
             bindingsHandle = nil
         }
-        let httpResponse = Proton_Sdk_HttpResponse.with {
+        let httpResponse = Proton_Drive_Sdk_HttpResponse.with {
             $0.headers = response.headers.map { header in
-                Proton_Sdk_HttpHeader.with {
+                Proton_Drive_Sdk_HttpHeader.with {
                     $0.name = header.0
                     $0.values = header.1
                 }
@@ -146,7 +146,7 @@ enum HttpClientRequestProcessor {
     /// the storage upload calls are using stream to upload request body, but cache the whole response in memory
     fileprivate static func uploadToStorage(
         client: ProtonSDKClient,
-        httpRequestData: Proton_Sdk_HttpRequest,
+        httpRequestData: Proton_Drive_Sdk_HttpRequest,
         callbackPointer: Int,
         provider: SDKClientProvider
     ) async throws {
@@ -156,7 +156,7 @@ enum HttpClientRequestProcessor {
 
         guard httpRequestData.hasSdkContentHandle else {
             SDKResponseHandler.sendInteropErrorToSDK(
-                message: "Proton_Sdk_HttpRequest.sdk_content_handle is missing",
+                message: "Proton_Drive_Sdk_HttpRequest.sdk_content_handle is missing",
                 callbackPointer: callbackPointer
             )
             return
@@ -187,9 +187,9 @@ enum HttpClientRequestProcessor {
         } else {
             bindingsHandle = nil
         }
-        let httpResponse = Proton_Sdk_HttpResponse.with {
+        let httpResponse = Proton_Drive_Sdk_HttpResponse.with {
             $0.headers = response.headers.map { header in
-                Proton_Sdk_HttpHeader.with {
+                Proton_Drive_Sdk_HttpHeader.with {
                     $0.name = header.0
                     $0.values = header.1
                 }
@@ -205,7 +205,7 @@ enum HttpClientRequestProcessor {
     /// the download upload calls are caching the whole request body in-memory, but stream the response data
     fileprivate static func downloadFromStorage(
         client: ProtonSDKClient,
-        httpRequestData: Proton_Sdk_HttpRequest,
+        httpRequestData: Proton_Drive_Sdk_HttpRequest,
         callbackPointer: Int,
         provider: SDKClientProvider
     ) async throws {
@@ -221,7 +221,7 @@ enum HttpClientRequestProcessor {
             let baseAddress = buffer.baseAddress!
             
             while true {
-                let streamReadRequest = Proton_Sdk_StreamReadRequest.with {
+                let streamReadRequest = Proton_Drive_Sdk_StreamReadRequest.with {
                     $0.bufferLength = Int32(buffer.count)
                     $0.bufferPointer = Int64(ObjectHandle(rawPointer: UnsafeRawPointer(baseAddress)))
                     $0.streamHandle = httpRequestData.sdkContentHandle
@@ -252,9 +252,9 @@ enum HttpClientRequestProcessor {
             boxedStreamingData = BoxedStreamingData(downloadFileHandle: fileHandle, logger: client.logger)
         }
         let bindingsHandle = CallbackHandleRegistry.shared.register(boxedStreamingData, scope: .ownerManaged, owner: provider)
-        let httpResponse = Proton_Sdk_HttpResponse.with {
+        let httpResponse = Proton_Drive_Sdk_HttpResponse.with {
             $0.headers = response.headers.map { header in
-                Proton_Sdk_HttpHeader.with {
+                Proton_Drive_Sdk_HttpHeader.with {
                     $0.name = header.0
                     $0.values = header.1
                 }

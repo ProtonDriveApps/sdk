@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
+using Proton.Drive.Sdk.Account.Api;
 using Proton.Drive.Sdk.Account.Api.Authentication;
-using Proton.Sdk;
 using Proton.Sdk.Api;
 
 namespace Proton.Drive.Sdk.Account.Authentication;
@@ -58,7 +58,7 @@ public sealed class TokenCredential
 
                     return (response.AccessToken, response.RefreshToken);
                 }
-                catch (ProtonApiException ex) when (ex.Code == ResponseCode.InvalidRefreshToken)
+                catch (ProtonApiException ex) when (ex.Code is AccountApiResponseCodes.InvalidRefreshToken)
                 {
                     throw;
                 }
@@ -83,7 +83,7 @@ public sealed class TokenCredential
 
             return accessToken;
         }
-        catch (ProtonApiException ex) when (ex.Code == ResponseCode.InvalidRefreshToken)
+        catch (ProtonApiException ex) when (ex.Code is AccountApiResponseCodes.InvalidRefreshToken)
         {
             if (tokensTaskReplaced)
             {

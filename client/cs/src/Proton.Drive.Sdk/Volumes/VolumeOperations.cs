@@ -1,0 +1,339 @@
+using System.Runtime.CompilerServices;
+using Proton.Cryptography.Pgp;
+using Proton.Drive.Sdk.Account.Addresses;
+using Proton.Drive.Sdk.Api.Photos;
+using Proton.Drive.Sdk.Api.Volumes;
+using Proton.Drive.Sdk.Api.Volumes.Events;
+using Proton.Drive.Sdk.Cryptography;
+using Proton.Drive.Sdk.Events;
+using Proton.Drive.Sdk.Nodes;
+using Proton.Drive.Sdk.Shares;
+
+namespace Proton.Drive.Sdk.Volumes;
+
+internal static class VolumeOperations
+{
+    private const string RootFolderName = "root";
+    private const int TrashPageSize = 500;
+
+    public static async ValueTask<(Volume Volume, Share Share, FolderNode RootFolder)> CreateVolumeAsync(
+        ProtonDriveClient client,
+        CancellationToken cancellationToken)
+    {
+        var defaultAddress = await client.Account.GetCurrentUserDefaultAddressAsync(cancellationToken).ConfigureAwait(false);
+
+        var addressKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(defaultAddress.Id, cancellationToken).ConfigureAwait(false);
+
+        var addressKeyId = defaultAddress.GetPrimaryKey().AddressKeyId;
+
+        var request = GetCreationRequest(defaultAddress.Id, addressKeyId, addressKey, out var rootShareKey, out var rootFolderSecrets);
+
+        var response = await client.Api.Volumes.CreateVolumeAsync(request, cancellationToken).ConfigureAwait(false);
+
+        var volume = new Volume(response.Volume);
+
+        var share = new Share(volume.RootShareId, volume.RootFolderId, defaultAddress.Id, ShareType.Main);
+
+        var rootFolder = new FolderNode
+        {
+            Uid = volume.RootFolderId,
+            ParentUid = null,
+            Name = RootFolderName,
+            NameAuthor = new Author { EmailAddress = defaultAddress.EmailAddress },
+            Author = new Author { EmailAddress = defaultAddress.EmailAddress },
+            CreationTime = DateTime.UtcNow,
+            OwnedBy = new OwnedBy(Email: defaultAddress.EmailAddress),
+            Errors = [],
+        };
+
+        // The volume root folder never has siblings and does not need a name hash digest
+        var nameHashDigest = ReadOnlyMemory<byte>.Empty;
+
+        await client.Cache.Entities.SetMainVolumeIdAsync(volume.Id, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Entities.SetNodeAsync(volume.RootFolderId, rootFolder, share.Id, nameHashDigest, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Entities.SetMyFilesShareIdAsync(share.Id, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
+
+        await client.Cache.Secrets.SetShareKeyAsync(volume.RootShareId, rootShareKey, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Secrets.SetFolderSecretsAsync(volume.RootFolderId, rootFolderSecrets, cancellationToken).ConfigureAwait(false);
+
+        return (volume, share, rootFolder);
+    }
+
+    public static async IAsyncEnumerable<NodeUid> EnumerateTrashAsync(
+        ProtonDriveClient client,
+        VolumeId volumeId,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var pageIndex = 0;
+        var mustTryMoreResults = true;
+
+        while (mustTryMoreResults)
+        {
+            var response = await client.Api.Trash.GetTrashAsync(volumeId, TrashPageSize, pageIndex, cancellationToken).ConfigureAwait(false);
+
+            var numberOfItems = 0;
+
+            foreach (var linkId in response.TrashByShare.SelectMany(shareTrash => shareTrash.LinkIds))
+            {
+                ++numberOfItems;
+
+                yield return new NodeUid(volumeId, linkId);
+            }
+
+            mustTryMoreResults = numberOfItems >= TrashPageSize;
+
+            ++pageIndex;
+        }
+    }
+
+    public static async ValueTask<(Volume Volume, Share Share, FolderNode RootFolder)> CreatePhotosVolumeAsync(
+        ProtonDriveClient client,
+        CancellationToken cancellationToken)
+    {
+        var defaultAddress = await client.Account.GetCurrentUserDefaultAddressAsync(cancellationToken).ConfigureAwait(false);
+
+        var addressKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(defaultAddress.Id, cancellationToken).ConfigureAwait(false);
+
+        var addressKeyId = defaultAddress.GetPrimaryKey().AddressKeyId;
+
+        var request = GetPhotosCreationRequest(defaultAddress.Id, addressKeyId, addressKey, out var rootShareKey, out var rootFolderSecrets);
+
+        var response = await client.Api.Photos.CreateVolumeAsync(request, cancellationToken).ConfigureAwait(false);
+
+        var volume = new Volume(response.Volume);
+
+        var share = new Share(volume.RootShareId, volume.RootFolderId, defaultAddress.Id, ShareType.Photos);
+
+        var rootFolder = new FolderNode
+        {
+            Uid = volume.RootFolderId,
+            ParentUid = null,
+            Name = RootFolderName,
+            NameAuthor = new Author { EmailAddress = defaultAddress.EmailAddress },
+            Author = new Author { EmailAddress = defaultAddress.EmailAddress },
+            CreationTime = DateTime.UtcNow,
+            OwnedBy = new OwnedBy(Email: defaultAddress.EmailAddress),
+            Errors = [],
+        };
+
+        // The volume root folder never has siblings and does not need a name hash digest
+        var nameHashDigest = ReadOnlyMemory<byte>.Empty;
+
+        await client.Cache.Entities.SetPhotosVolumeIdAsync(volume.Id, cancellationToken).ConfigureAwait(false);
+
+        await client.Cache.Entities.SetNodeAsync(volume.RootFolderId, rootFolder, share.Id, nameHashDigest, cancellationToken).ConfigureAwait(false);
+
+        await client.Cache.Entities.SetPhotosShareIdAsync(share.Id, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Entities.SetShareAsync(share, cancellationToken).ConfigureAwait(false);
+
+        await client.Cache.Secrets.SetShareKeyAsync(volume.RootShareId, rootShareKey, cancellationToken).ConfigureAwait(false);
+        await client.Cache.Secrets.SetFolderSecretsAsync(volume.RootFolderId, rootFolderSecrets, cancellationToken).ConfigureAwait(false);
+
+        return (volume, share, rootFolder);
+    }
+
+    public static async ValueTask EmptyTrashAsync(ProtonDriveClient client, VolumeId volumeId, CancellationToken cancellationToken)
+    {
+        await client.Api.Trash.EmptyAsync(volumeId, cancellationToken).ConfigureAwait(false);
+    }
+
+    public static async ValueTask<VolumeId?> TryGetMainVolumeIdAsync(ProtonDriveClient client, CancellationToken cancellationToken)
+    {
+        var (cacheEntryExists, volumeId) = await client.Cache.Entities.TryGetMainVolumeIdAsync(cancellationToken).ConfigureAwait(false);
+        if (cacheEntryExists)
+        {
+            return volumeId;
+        }
+
+        var myFilesFolder = await NodeOperations.TryGetExistingMyFilesFolderAsync(client, cancellationToken).ConfigureAwait(false);
+
+        return myFilesFolder?.Uid.VolumeId;
+    }
+
+    public static async ValueTask<VolumeId?> TryGetPhotosVolumeIdAsync(ProtonDriveClient client, CancellationToken cancellationToken)
+    {
+        var (cacheEntryExists, volumeId) = await client.Cache.Entities.TryGetPhotosVolumeIdAsync(cancellationToken).ConfigureAwait(false);
+        if (cacheEntryExists)
+        {
+            return volumeId;
+        }
+
+        var myFilesFolder = await PhotosNodeOperations.TryGetExistingPhotosFolderAsync(client, cancellationToken).ConfigureAwait(false);
+
+        return myFilesFolder?.Uid.VolumeId;
+    }
+
+    public static async IAsyncEnumerable<DriveEvent> EnumerateEventsAsync(
+        ProtonDriveClient client,
+        VolumeId volumeId,
+        DriveEventId? cursorEventIdOrNull,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        if (cursorEventIdOrNull is not { } cursorEventId)
+        {
+            var latestVolumeEventResponse = await client.Api.Volumes.GetLatestEventAsync(volumeId, cancellationToken).ConfigureAwait(false);
+            yield return new EventsCursorAdvancedEvent(latestVolumeEventResponse.EventId);
+            yield break;
+        }
+
+        while (true)
+        {
+            var volumeEventsResponse = await client.Api.Volumes.GetEventsAsync(volumeId, cursorEventId, cancellationToken).ConfigureAwait(false);
+
+            if (volumeEventsResponse.RefreshRequired)
+            {
+                yield return new EventsContinuityLostEvent(volumeEventsResponse.LastEventId);
+                yield break;
+            }
+
+            if (volumeEventsResponse.Events.Count == 0)
+            {
+                if (volumeEventsResponse.LastEventId != cursorEventId)
+                {
+                    yield return new EventsCursorAdvancedEvent(volumeEventsResponse.LastEventId);
+                }
+
+                yield break;
+            }
+
+            foreach (var volumeEvent in volumeEventsResponse.Events)
+            {
+                yield return volumeEvent.ToDriveEvent(volumeId);
+            }
+
+            if (!volumeEventsResponse.MoreEntriesExist)
+            {
+                yield break;
+            }
+
+            cursorEventId = volumeEventsResponse.LastEventId;
+        }
+    }
+
+    private static VolumeCreationRequest GetCreationRequest(
+        AddressId addressId,
+        AddressKeyId addressKeyId,
+        PgpPrivateKey addressKey,
+        out PgpPrivateKey rootShareKey,
+        out FolderSecrets rootFolderSecrets)
+    {
+        rootShareKey = CryptoGenerator.GeneratePrivateKey();
+
+        var rootFolderKey = CryptoGenerator.GeneratePrivateKey();
+        var rootFolderPassphraseSessionKey = CryptoGenerator.GenerateSessionKey();
+        var rootFolderNameSessionKey = CryptoGenerator.GenerateSessionKey();
+        var rootFolderHashKey = CryptoGenerator.GenerateFolderHashKey();
+
+        rootFolderSecrets = new FolderSecrets
+        {
+            Key = rootFolderKey,
+            PassphraseSessionKey = rootFolderPassphraseSessionKey,
+            NameSessionKey = rootFolderNameSessionKey,
+            HashKey = rootFolderHashKey,
+        };
+
+        Span<byte> sharePassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
+        var sharePassphrase = CryptoGenerator.GeneratePassphrase(sharePassphraseBuffer);
+        var lockedShareKey = rootShareKey.Lock(sharePassphrase);
+
+        var encryptedSharePassphrase = addressKey.EncryptAndSign(sharePassphrase, addressKey, out var sharePassphraseSignature);
+
+        Span<byte> folderPassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
+        var folderPassphrase = CryptoGenerator.GeneratePassphrase(folderPassphraseBuffer);
+
+        var lockedFolderKey = rootFolderKey.Lock(folderPassphrase);
+
+        var folderPassphraseEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderPassphraseSessionKey);
+        var encryptedFolderPassphrase = PgpEncrypter.EncryptAndSign(
+            folderPassphrase,
+            folderPassphraseEncryptionSecrets,
+            addressKey,
+            out var folderPassphraseSignature);
+
+        var nameEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderNameSessionKey);
+        var encryptedName = PgpEncrypter.EncryptAndSignText(RootFolderName, nameEncryptionSecrets, addressKey);
+
+        var encryptedHashKey = rootFolderKey.EncryptAndSign(rootFolderHashKey, addressKey);
+
+        return new VolumeCreationRequest
+        {
+            AddressId = addressId,
+            AddressKeyId = addressKeyId,
+            ShareKey = lockedShareKey,
+            SharePassphrase = encryptedSharePassphrase,
+            SharePassphraseSignature = sharePassphraseSignature,
+            FolderName = encryptedName,
+            FolderKey = lockedFolderKey,
+            FolderPassphrase = encryptedFolderPassphrase,
+            FolderPassphraseSignature = folderPassphraseSignature,
+            FolderHashKey = encryptedHashKey,
+        };
+    }
+
+    private static PhotosVolumeCreationRequest GetPhotosCreationRequest(
+        AddressId addressId,
+        AddressKeyId addressKeyId,
+        PgpPrivateKey addressKey,
+        out PgpPrivateKey rootShareKey,
+        out FolderSecrets rootFolderSecrets)
+    {
+        rootShareKey = CryptoGenerator.GeneratePrivateKey();
+
+        var rootFolderKey = CryptoGenerator.GeneratePrivateKey();
+        var rootFolderPassphraseSessionKey = CryptoGenerator.GenerateSessionKey();
+        var rootFolderNameSessionKey = CryptoGenerator.GenerateSessionKey();
+        var rootFolderHashKey = CryptoGenerator.GenerateFolderHashKey();
+
+        rootFolderSecrets = new FolderSecrets
+        {
+            Key = rootFolderKey,
+            PassphraseSessionKey = rootFolderPassphraseSessionKey,
+            NameSessionKey = rootFolderNameSessionKey,
+            HashKey = rootFolderHashKey,
+        };
+
+        Span<byte> sharePassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
+        var sharePassphrase = CryptoGenerator.GeneratePassphrase(sharePassphraseBuffer);
+        var lockedShareKey = rootShareKey.Lock(sharePassphrase);
+
+        var encryptedSharePassphrase = addressKey.EncryptAndSign(sharePassphrase, addressKey, out var sharePassphraseSignature);
+
+        Span<byte> folderPassphraseBuffer = stackalloc byte[CryptoGenerator.PassphraseBufferRequiredLength];
+        var folderPassphrase = CryptoGenerator.GeneratePassphrase(folderPassphraseBuffer);
+
+        var lockedFolderKey = rootFolderKey.Lock(folderPassphrase);
+
+        var folderPassphraseEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderPassphraseSessionKey);
+        var encryptedFolderPassphrase = PgpEncrypter.EncryptAndSign(
+            folderPassphrase,
+            folderPassphraseEncryptionSecrets,
+            addressKey,
+            out var folderPassphraseSignature);
+
+        var nameEncryptionSecrets = new EncryptionSecrets(rootShareKey, rootFolderNameSessionKey);
+        var encryptedName = PgpEncrypter.EncryptAndSignText(RootFolderName, nameEncryptionSecrets, addressKey);
+
+        var encryptedHashKey = rootFolderKey.EncryptAndSign(rootFolderHashKey, addressKey);
+
+        return new PhotosVolumeCreationRequest
+        {
+            Share = new PhotosVolumeShareCreationParameters
+            {
+                AddressId = addressId,
+                AddressKeyId = addressKeyId,
+                Key = lockedShareKey,
+                Passphrase = encryptedSharePassphrase,
+                PassphraseSignature = sharePassphraseSignature,
+            },
+            Link = new PhotosVolumeLinkCreationParameters
+            {
+                Name = encryptedName,
+                NodeKey = lockedFolderKey,
+                NodePassphrase = encryptedFolderPassphrase,
+                NodePassphraseSignature = folderPassphraseSignature,
+                NodeHashKey = encryptedHashKey,
+            },
+        };
+    }
+}

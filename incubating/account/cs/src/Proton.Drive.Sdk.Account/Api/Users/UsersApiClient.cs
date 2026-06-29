@@ -1,5 +1,5 @@
 using Proton.Drive.Sdk.Account.Serialization;
-using Proton.Sdk.Http;
+using Proton.Sdk.Api.Http;
 
 namespace Proton.Drive.Sdk.Account.Api.Users;
 

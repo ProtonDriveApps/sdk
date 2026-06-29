@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 using Proton.Sdk.Api;
-using Proton.Sdk.Events;
 using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Account.Api.Events;
@@ -8,7 +7,7 @@ namespace Proton.Drive.Sdk.Account.Api.Events;
 internal sealed class EventListResponse : ApiResponse
 {
     [JsonPropertyName("EventID")]
-    public required DriveEventId LastEventId { get; init; }
+    public required AccountEventId LastEventId { get; init; }
 
     [JsonPropertyName("More")]
     [JsonConverter(typeof(BooleanToIntegerJsonConverter))]

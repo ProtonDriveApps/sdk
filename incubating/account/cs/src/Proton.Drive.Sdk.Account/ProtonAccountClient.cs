@@ -3,18 +3,24 @@ using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Account.Addresses;
 using Proton.Drive.Sdk.Account.Api;
 using Proton.Drive.Sdk.Account.Caching;
-using Proton.Sdk;
+using Proton.Sdk.Api;
+using Proton.Sdk.Caching;
 using Proton.Sdk.Telemetry;
 
 namespace Proton.Drive.Sdk.Account;
 
-public sealed class ProtonAccountClient
+public sealed class ProtonAccountClient : IProtonAccountClient
 {
-    public ProtonAccountClient(ProtonApiSession session)
+    public ProtonAccountClient(
+        IHttpClientFactory httpClientFactory,
+        ICacheRepository entityCacheRepository,
+        ICacheRepository secretCacheRepository,
+        ISessionSecretCache sessionSecretCache,
+        ITelemetry telemetry)
         : this(
-            new AccountApiClients(session.GetHttpClient()),
-            new AccountClientCache(session.ClientConfiguration.EntityCacheRepository, session.ClientConfiguration.SecretCacheRepository, session.SecretCache),
-            session.ClientConfiguration.Telemetry.GetLogger<ProtonAccountClient>())
+            new AccountApiClients(EnsureBaseAddress(httpClientFactory.CreateClient())),
+            new AccountClientCache(entityCacheRepository, secretCacheRepository, sessionSecretCache),
+            telemetry.GetLogger<ProtonAccountClient>())
     {
     }
 
@@ -111,5 +117,11 @@ public sealed class ProtonAccountClient
         }
 
         return userKeys;
+    }
+
+    private static HttpClient EnsureBaseAddress(HttpClient httpClient)
+    {
+        httpClient.BaseAddress ??= ProtonAccountDefaults.BaseUrl;
+        return httpClient;
     }
 }

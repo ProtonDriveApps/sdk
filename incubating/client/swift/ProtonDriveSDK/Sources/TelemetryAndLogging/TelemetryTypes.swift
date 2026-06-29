@@ -13,10 +13,10 @@ public enum MetricEvent: Sendable {
 
     case other(name: String)
 
-    init(sdkMetricEvent: Proton_Sdk_MetricEvent) throws {
+    init(sdkMetricEvent: Proton_Drive_Sdk_MetricEvent) throws {
         switch sdkMetricEvent.payload {
-        case let proto where proto.isA(Proton_Sdk_ApiRetrySucceededEventPayload.self):
-            let sdkPayload = try Proton_Sdk_ApiRetrySucceededEventPayload(unpackingAny: proto)
+        case let proto where proto.isA(Proton_Drive_Sdk_ApiRetrySucceededEventPayload.self):
+            let sdkPayload = try Proton_Drive_Sdk_ApiRetrySucceededEventPayload(unpackingAny: proto)
             self = .apiRetrySucceeded(ApiRetrySucceededEventPayload(sdkEventPayload: sdkPayload))
 
         case let proto where proto.isA(Proton_Drive_Sdk_BlockVerificationErrorEventPayload.self):
@@ -50,7 +50,7 @@ public struct ApiRetrySucceededEventPayload: Sendable {
     public let url: String
     public let failedAttempts: Int
 
-    init(sdkEventPayload: Proton_Sdk_ApiRetrySucceededEventPayload) {
+    init(sdkEventPayload: Proton_Drive_Sdk_ApiRetrySucceededEventPayload) {
         self.url = sdkEventPayload.url
         self.failedAttempts = Int(sdkEventPayload.failedAttempts)
     }

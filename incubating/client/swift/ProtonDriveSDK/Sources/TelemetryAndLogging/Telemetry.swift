@@ -17,7 +17,7 @@ let cCompatibleTelemetryRecordMetricCallback: CCallback = { statePointer, byteAr
         return
     }
     
-    let sdkMetricEvent = Proton_Sdk_MetricEvent(byteArray: byteArray)
+    let sdkMetricEvent = Proton_Drive_Sdk_MetricEvent(byteArray: byteArray)
     do {
         let metricEvent = try MetricEvent(sdkMetricEvent: sdkMetricEvent)
         driveClient.record(metricEvent)

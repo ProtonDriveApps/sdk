@@ -10,7 +10,6 @@ import me.proton.drive.sdk.PhotosDownloader
 import me.proton.drive.sdk.PhotosUploader
 import me.proton.drive.sdk.ProtonPhotosClient
 import me.proton.drive.sdk.SdkNode
-import me.proton.drive.sdk.Session
 import me.proton.drive.sdk.Uploader
 import me.proton.drive.sdk.entity.FileThumbnail
 import me.proton.drive.sdk.entity.Node
@@ -34,8 +33,7 @@ import proton.drive.sdk.drivePhotosClientTrashNodesRequest
 internal class InteropProtonPhotosClient internal constructor(
     internal val handle: Long,
     private val bridge: JniProtonPhotosClient,
-    session: Session? = null,
-) : SdkNode(session), ProtonPhotosClient {
+) : SdkNode(null), ProtonPhotosClient {
 
     override fun enumerateThumbnails(
         nodeUids: List<NodeUid>,

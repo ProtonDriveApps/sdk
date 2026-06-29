@@ -81,7 +81,6 @@ enum SDKRequestHandler {
         do {
             // Put the request in an envelope
             let envelopedRequestData = try request.packIntoRequest().serializedData()
-            let isDriveRequest = request.isDriveRequest
             logger?.trace("Sending SDK message with state: \(T.protoMessageName) - \(request)", category: "SDKRequestHandler")
 
             let requestArray = ByteArray(data: envelopedRequestData)
@@ -90,20 +89,14 @@ enum SDKRequestHandler {
                 requestArray.deallocate()
             }
 
-            logger?.trace("Sending (\(isDriveRequest ? "Drive" : "non-Drive")) SDK request ", category: "SDKRequestHandler")
+            logger?.trace("Sending Drive SDK request ", category: "SDKRequestHandler")
 
             // Switch to InteropTypes.BoxedStateType once we use it for all requests
             let boxedState = BoxedCompletionBlock(completionBlock, state: state)
             let pointer = Unmanaged.passRetained(boxedState)
             boxedState.registryHandleId = CallbackHandleRegistry.shared.register(boxedState, scope: scope, owner: owner)
             let bindingsHandle = Int(rawPointer: pointer.toOpaque())
-            if isDriveRequest {
-                logger?.trace(" -> proton_drive_sdk_handle_request", category: "SDKRequestHandler")
-                proton_drive_sdk_handle_request(requestArray, bindingsHandle, sdkResponseCallbackWithState)
-            } else {
-                logger?.trace(" -> proton_sdk_handle_request", category: "SDKRequestHandler")
-                proton_sdk_handle_request(requestArray, bindingsHandle, sdkResponseCallbackWithState)
-            }
+            proton_drive_sdk_handle_request(requestArray, bindingsHandle, sdkResponseCallbackWithState)
         } catch {
             completionBlock(.failure(error))
         }
@@ -133,7 +126,7 @@ let sdkResponseCallbackWithState: CCallback = { statePointer, responseArray in
         return
     }
 
-    let response = Proton_Sdk_Response(byteArray: responseArray)
+    let response = Proton_Drive_Sdk_Response(byteArray: responseArray)
 
     do {
         switch response.result {

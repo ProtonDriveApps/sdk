@@ -6,7 +6,6 @@ using Proton.Drive.Sdk.Account.Api.Keys;
 using Proton.Drive.Sdk.Account.Authentication;
 using Proton.Drive.Sdk.Account.Caching;
 using Proton.Drive.Sdk.Account.Users;
-using Proton.Sdk;
 using Proton.Sdk.Caching;
 using Proton.Sdk.Telemetry;
 
@@ -18,8 +17,6 @@ public sealed class ProtonApiSession
 
     private bool _isEnded;
     private Action? _ended;
-    private IAuthenticationApiClient? _authenticationApi;
-    private IKeysApiClient? _keysApi;
 
     internal ProtonApiSession(
         SessionId sessionId,
@@ -29,9 +26,10 @@ public sealed class ProtonApiSession
         IEnumerable<string> scopes,
         bool isWaitingForSecondFactorCode,
         PasswordMode passwordMode,
-        AccountClientConfiguration clientConfiguration)
+        Uri accountBaseUrl,
+        ProtonClientConfiguration clientConfiguration)
     {
-        _httpClient = clientConfiguration.GetHttpClient(this);
+        _httpClient = clientConfiguration.CreateHttpClient(this, accountBaseUrl);
 
         Username = username;
         UserId = userId;
@@ -40,8 +38,9 @@ public sealed class ProtonApiSession
         Scopes = scopes.ToArray().AsReadOnly();
         IsWaitingForSecondFactorCode = isWaitingForSecondFactorCode;
         PasswordMode = passwordMode;
+        AccountBaseUrl = accountBaseUrl;
         ClientConfiguration = clientConfiguration;
-        SecretCache = new SessionSecretCache(clientConfiguration.SecretCacheRepository);
+        SessionSecretCache = new SessionSecretCache(clientConfiguration.SecretCacheRepository);
     }
 
     public event Action? Ended
@@ -73,16 +72,22 @@ public sealed class ProtonApiSession
 
     public PasswordMode PasswordMode { get; }
 
-    public AccountClientConfiguration ClientConfiguration { get; }
+    public Uri AccountBaseUrl { get; }
 
-    internal SessionSecretCache SecretCache { get; }
+    public ISessionSecretCache SessionSecretCache { get; }
+
+    public ProtonClientConfiguration ClientConfiguration { get; }
 
     private IAuthenticationApiClient AuthenticationApi
-        => _authenticationApi ??= ApiClientFactory.Instance.CreateAuthenticationApiClient(_httpClient, ClientConfiguration.RefreshRedirectUri);
+        => field ??= ApiClientFactory.Instance.CreateAuthenticationApiClient(_httpClient, ClientConfiguration.RefreshRedirectUri);
 
-    private IKeysApiClient KeysApi => _keysApi ??= ApiClientFactory.Instance.CreateKeysApiClient(_httpClient);
+    private IKeysApiClient KeysApi => field ??= ApiClientFactory.Instance.CreateKeysApiClient(_httpClient);
 
-    public static ValueTask<ProtonApiSession> BeginAsync(string username, ReadOnlyMemory<byte> password, string appVersion, CancellationToken cancellationToken)
+    public static ValueTask<ProtonApiSession> BeginAsync(
+        string username,
+        ReadOnlyMemory<byte> password,
+        string appVersion,
+        CancellationToken cancellationToken)
     {
         return BeginAsync(username, password, appVersion, new ProtonSessionOptions(), cancellationToken);
     }
@@ -94,12 +99,13 @@ public sealed class ProtonApiSession
         ProtonSessionOptions options,
         CancellationToken cancellationToken)
     {
-        var configuration = new AccountClientConfiguration(appVersion, options);
+        var configuration = new ProtonClientConfiguration(appVersion, options);
         var logger = configuration.Telemetry.GetLogger<ProtonApiSession>();
 
-        var authApiClient = ApiClientFactory.Instance.CreateAuthenticationApiClient(
-            configuration.Sdk.GetHttpClient(),
-            configuration.RefreshRedirectUri);
+        var accountBaseUrl = options.AccountBaseUrl ?? ProtonAccountDefaults.BaseUrl;
+        var accountHttpClient = configuration.CreateHttpClient(baseAddress: accountBaseUrl);
+
+        var authApiClient = ApiClientFactory.Instance.CreateAuthenticationApiClient(accountHttpClient, configuration.RefreshRedirectUri);
 
         var sessionInitResponse = await authApiClient.InitiateSessionAsync(username, cancellationToken).ConfigureAwait(false);
 
@@ -134,6 +140,7 @@ public sealed class ProtonApiSession
             authResponse.Scopes,
             authResponse.SecondFactorParameters?.IsEnabled == true,
             authResponse.PasswordMode,
+            accountBaseUrl,
             configuration);
 
         if (session is { IsWaitingForSecondFactorCode: false, PasswordMode: PasswordMode.Single })
@@ -160,6 +167,7 @@ public sealed class ProtonApiSession
         IEnumerable<string> scopes,
         bool isWaitingForSecondFactorCode,
         PasswordMode passwordMode,
+        Uri accountBaseUrl,
         string appVersion,
         ICacheRepository secretCacheRepository)
     {
@@ -172,9 +180,10 @@ public sealed class ProtonApiSession
             scopes,
             isWaitingForSecondFactorCode,
             passwordMode,
+            accountBaseUrl,
             appVersion,
             secretCacheRepository,
-            new ProtonSessionOptions());
+            new ProtonClientOptions());
     }
 
     public static ProtonApiSession Resume(
@@ -186,20 +195,21 @@ public sealed class ProtonApiSession
         IEnumerable<string> scopes,
         bool isWaitingForSecondFactorCode,
         PasswordMode passwordMode,
+        Uri? accountBaseUrl,
         string appVersion,
         ICacheRepository secretCacheRepository,
-        ProtonSessionOptions options)
+        ProtonClientOptions options)
     {
         options = options with { SecretCacheRepository = secretCacheRepository };
 
-        var configuration = new AccountClientConfiguration(appVersion, options);
+        var configuration = new ProtonClientConfiguration(appVersion, options);
 
         var logger = configuration.Telemetry.GetLogger<ProtonApiSession>();
 
+        var accountHttpClient = configuration.CreateHttpClient(baseAddress: accountBaseUrl ??= ProtonAccountDefaults.BaseUrl);
+
         var tokenCredential = new TokenCredential(
-            ApiClientFactory.Instance.CreateAuthenticationApiClient(
-                configuration.Sdk.GetHttpClient(),
-                configuration.RefreshRedirectUri),
+            ApiClientFactory.Instance.CreateAuthenticationApiClient(accountHttpClient, configuration.RefreshRedirectUri),
             sessionId,
             accessToken,
             refreshToken,
@@ -213,6 +223,7 @@ public sealed class ProtonApiSession
             scopes,
             isWaitingForSecondFactorCode,
             passwordMode,
+            accountBaseUrl,
             configuration);
 
         logger.LogDebug("Session {SessionId} was resumed", session.SessionId);
@@ -229,10 +240,10 @@ public sealed class ProtonApiSession
         bool isWaitingForSecondFactorCode,
         PasswordMode passwordMode)
     {
+        var accountHttpClient = expiredSession.ClientConfiguration.CreateHttpClient(baseAddress: expiredSession.AccountBaseUrl);
+
         var tokenCredential = new TokenCredential(
-            new AuthenticationApiClient(
-                expiredSession.ClientConfiguration.Sdk.GetHttpClient(),
-                expiredSession.ClientConfiguration.RefreshRedirectUri),
+            new AuthenticationApiClient(accountHttpClient, expiredSession.ClientConfiguration.RefreshRedirectUri),
             sessionId,
             accessToken,
             refreshToken,
@@ -246,27 +257,17 @@ public sealed class ProtonApiSession
             scopes,
             isWaitingForSecondFactorCode,
             passwordMode,
+            expiredSession.AccountBaseUrl,
             expiredSession.ClientConfiguration);
     }
 
-    public static async Task EndAsync(string id, string accessToken, string appVersion, ProtonClientOptions? options = null)
+    public static async Task EndAsync(string id, string accessToken, string appVersion, Uri? accountBaseUrl = null, ProtonClientOptions? options = null)
     {
-        var sessionOptions = options is null ? null : new ProtonSessionOptions
-        {
-            BaseUrl = options.BaseUrl,
-            UserAgent = options.UserAgent,
-            TlsPolicy = options.TlsPolicy,
-            CustomHttpMessageHandlerFactory = options.CustomHttpMessageHandlerFactory,
-            EntityCacheRepository = options.EntityCacheRepository,
-            Telemetry = options.Telemetry,
-            FeatureFlagProvider = options.FeatureFlagProvider,
-            BindingsLanguage = options.BindingsLanguage,
-        };
-        var configuration = new AccountClientConfiguration(appVersion, sessionOptions);
+        var configuration = new ProtonClientConfiguration(appVersion, options);
 
-        var authApiClient = ApiClientFactory.Instance.CreateAuthenticationApiClient(
-            configuration.Sdk.GetHttpClient(),
-            configuration.RefreshRedirectUri);
+        var accountHttpClient = configuration.CreateHttpClient(baseAddress: accountBaseUrl ?? ProtonAccountDefaults.BaseUrl);
+
+        var authApiClient = ApiClientFactory.Instance.CreateAuthenticationApiClient(accountHttpClient, configuration.RefreshRedirectUri);
 
         await authApiClient.EndSessionAsync(id, accessToken).ConfigureAwait(false);
     }
@@ -292,7 +293,7 @@ public sealed class ProtonApiSession
 
             var passphrase = DeriveSecretFromPassword(password.Span, keySalt.Value.Span);
 
-            await SecretCache.SetAccountKeyPassphraseAsync(keySalt.KeyId, passphrase, cancellationToken).ConfigureAwait(false);
+            await SessionSecretCache.SetAccountKeyPassphraseAsync(keySalt.KeyId, passphrase, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -322,11 +323,9 @@ public sealed class ProtonApiSession
         return _isEnded;
     }
 
-    public HttpClient GetHttpClient(string? baseRoutePath = null, TimeSpan? attemptTimeout = null, TimeSpan? totalTimeout = null)
+    public IHttpClientFactory CreateHttpClientFactory(Uri? baseAddress = null, TimeSpan? attemptTimeout = null, TimeSpan? totalTimeout = null)
     {
-        return baseRoutePath is null && attemptTimeout is null && totalTimeout is null
-            ? _httpClient
-            : ClientConfiguration.GetHttpClient(this, baseRoutePath, attemptTimeout, totalTimeout);
+        return ClientConfiguration.CreateHttpClientFactory(this, baseAddress, attemptTimeout, totalTimeout);
     }
 
     private static ReadOnlyMemory<byte> DeriveSecretFromPassword(ReadOnlySpan<byte> password, ReadOnlySpan<byte> salt)

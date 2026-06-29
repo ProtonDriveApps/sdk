@@ -51,6 +51,22 @@ abstract class JniBaseProtonDriveSdk : JniBase() {
         nativeClient.handleRequest(request(block))
     }
 
+    suspend fun <T> executeOnce(
+        clientBuilder: (CancellableContinuation<T>, ResponseCallback.() -> ClientResponseCallback<ProtonDriveSdkNativeClient<Nothing>>) -> ProtonDriveSdkNativeClient<Nothing>,
+        requestBuilder: (ProtonDriveSdkNativeClient<Nothing>) -> Request,
+    ): T = suspendCancellableCoroutine { continuation ->
+        check(released.not()) { "Cannot executeOnce after release" }
+        val nativeClient = clientBuilder(continuation) {
+            { client, buffer ->
+                this(buffer)
+                client.release()
+                clients -= client
+            }
+        }
+        clients += nativeClient
+        nativeClient.handleRequest(requestBuilder(nativeClient))
+    }
+
     suspend fun <T, E> executeEnumerate(
         name: String,
         callback: (CancellableContinuation<T>) -> ResponseCallback,

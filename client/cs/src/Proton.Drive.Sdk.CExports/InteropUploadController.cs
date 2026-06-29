@@ -1,0 +1,58 @@
+using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
+using Proton.Drive.Sdk.Nodes.Upload;
+
+namespace Proton.Drive.Sdk.CExports;
+
+internal static class InteropUploadController
+{
+    public static IMessage HandleIsPaused(UploadControllerIsPausedRequest request)
+    {
+        var uploadController = Interop.GetFromHandle<UploadController>(request.UploadControllerHandle);
+
+        return new BoolValue { Value = uploadController.IsPaused };
+    }
+
+    public static async ValueTask<IMessage?> HandleAwaitCompletion(UploadControllerAwaitCompletionRequest request)
+    {
+        var uploadController = Interop.GetFromHandle<UploadController>(request.UploadControllerHandle);
+
+        var uploadResult = await uploadController.Completion.ConfigureAwait(false);
+
+        return new UploadResult { NodeUid = uploadResult.NodeUid.ToString(), RevisionUid = uploadResult.RevisionUid.ToString() };
+    }
+
+    public static IMessage? HandlePause(UploadControllerPauseRequest request)
+    {
+        var uploadController = Interop.GetFromHandle<UploadController>(request.UploadControllerHandle);
+
+        uploadController.Pause();
+
+        return null;
+    }
+
+    public static IMessage? HandleResume(UploadControllerResumeRequest request)
+    {
+        var uploadController = Interop.GetFromHandle<UploadController>(request.UploadControllerHandle);
+
+        uploadController.Resume();
+
+        return null;
+    }
+
+    public static async ValueTask<IMessage?> HandleDisposeAsync(UploadControllerDisposeRequest request)
+    {
+        var uploadController = Interop.GetFromHandle<UploadController>(request.UploadControllerHandle);
+
+        await uploadController.DisposeAsync().ConfigureAwait(false);
+
+        return null;
+    }
+
+    public static IMessage? HandleFree(UploadControllerFreeRequest request)
+    {
+        Interop.FreeHandle<UploadController>(request.UploadControllerHandle);
+
+        return null;
+    }
+}

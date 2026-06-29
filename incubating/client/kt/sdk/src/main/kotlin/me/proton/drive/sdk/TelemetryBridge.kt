@@ -2,16 +2,15 @@ package me.proton.drive.sdk
 
 import me.proton.drive.sdk.extension.toEvent
 import proton.drive.sdk.ProtonDriveSdk
-import proton.sdk.ProtonSdk
 
 class TelemetryBridge(
     private val callback: MetricCallback,
-) : suspend (ProtonSdk.MetricEvent) -> Unit {
-    override suspend fun invoke(event: ProtonSdk.MetricEvent) {
+) : suspend (ProtonDriveSdk.MetricEvent) -> Unit {
+    override suspend fun invoke(event: ProtonDriveSdk.MetricEvent) {
         val data = event.payload.value
         when (event.payload.typeUrl) {
-            "type.googleapis.com/proton.sdk.ApiRetrySucceededEventPayload" -> callback.onApiRetrySucceededEvent(
-                ProtonSdk.ApiRetrySucceededEventPayload.parseFrom(data).toEvent()
+            "type.googleapis.com/proton.drive.sdk.ApiRetrySucceededEventPayload" -> callback.onApiRetrySucceededEvent(
+                ProtonDriveSdk.ApiRetrySucceededEventPayload.parseFrom(data).toEvent()
             )
 
             "type.googleapis.com/proton.drive.sdk.BlockVerificationErrorEventPayload" ->

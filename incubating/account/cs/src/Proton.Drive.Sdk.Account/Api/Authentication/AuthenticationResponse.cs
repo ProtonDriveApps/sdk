@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
 using Proton.Drive.Sdk.Account.Authentication;
 using Proton.Drive.Sdk.Account.Users;
+using Proton.Drive.Sdk.Events;
 using Proton.Sdk.Api;
-using Proton.Sdk.Events;
 
 namespace Proton.Drive.Sdk.Account.Api.Authentication;
 

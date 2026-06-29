@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Account.Api.Addresses;
 using Proton.Drive.Sdk.Account.Api.Keys;
-using Proton.Sdk;
 using Proton.Sdk.Api;
 using Proton.Sdk.Cryptography;
 
@@ -143,7 +142,7 @@ internal static class AddressOperations
 
                 cachedPublicKeys = publicKeys;
             }
-            catch (ProtonApiException e) when (e.Code is ResponseCode.AddressMissing or ResponseCode.DomainExternal)
+            catch (ProtonApiException e) when (e.Code is ApiResponseCodes.AddressMissing or ApiResponseCodes.DomainExternal)
             {
                 client.Logger.LogError(e, "Unknown address {EmailAddress}", emailAddress);
 

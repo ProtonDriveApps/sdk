@@ -3,8 +3,8 @@ package me.proton.drive.sdk.internal
 import me.proton.drive.sdk.extension.read
 import me.proton.drive.sdk.extension.readAsStream
 import okhttp3.RequestBody
-import proton.sdk.ProtonSdk
-import proton.sdk.ProtonSdk.HttpRequest
+import proton.drive.sdk.ProtonDriveSdk
+import proton.drive.sdk.ProtonDriveSdk.HttpRequest
 
 internal data class PreparedRequest(
     val request: HttpRequest,
@@ -45,12 +45,12 @@ internal suspend fun HttpRequest.prepare(httpStream: HttpStream): PreparedReques
 
 private val HttpRequest.isUploadBlock: Boolean
     get() =
-        type == ProtonSdk.HttpRequestType.HTTP_REQUEST_TYPE_STORAGE_UPLOAD
+        type == ProtonDriveSdk.HttpRequestType.HTTP_REQUEST_TYPE_STORAGE_UPLOAD
 
 private val HttpRequest.isDownloadBlock: Boolean
     get() =
-        type == ProtonSdk.HttpRequestType.HTTP_REQUEST_TYPE_STORAGE_DOWNLOAD
+        type == ProtonDriveSdk.HttpRequestType.HTTP_REQUEST_TYPE_STORAGE_DOWNLOAD
 
 private val HttpRequest.isRetryEnabled
     get() =
-        type == ProtonSdk.HttpRequestType.HTTP_REQUEST_TYPE_REGULAR_API
+        type == ProtonDriveSdk.HttpRequestType.HTTP_REQUEST_TYPE_REGULAR_API

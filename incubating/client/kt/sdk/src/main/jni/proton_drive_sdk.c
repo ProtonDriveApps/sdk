@@ -4,7 +4,7 @@
 #include "proton_drive_sdk.h"
 #include "global.h"
 
-void onDriveSdkResponse(intptr_t bindings_handle, ByteArray value) {
+void onResponse(intptr_t bindings_handle, ByteArray value) {
     pushDataToVoidMethod(bindings_handle, value, "onResponse");
 }
 
@@ -22,7 +22,7 @@ void Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_handleRequest(
     proton_drive_sdk_handle_request(
             byteArray,
             (intptr_t) ref,
-            onDriveSdkResponse
+            onResponse
     );
 
     (*env)->ReleaseByteArrayElements(env, request, bufferElems, 0);
@@ -39,12 +39,16 @@ void Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_handleResponse
     byteArray.pointer = (const uint8_t *) bufferElems;
     byteArray.length = (*env)->GetArrayLength(env, response);
 
-    proton_sdk_handle_response(
+    proton_drive_sdk_handle_response(
             (intptr_t) sdk_handle,
             byteArray
     );
 
     (*env)->ReleaseByteArrayElements(env, response, bufferElems, 0);
+}
+
+void onLogCallback(intptr_t bindings_handle, ByteArray value) {
+    pushDataToVoidMethod(bindings_handle, value, "onCallback");
 }
 
 long onRead(
@@ -122,6 +126,13 @@ void onSha1(
         ByteArray output
 ) {
     pushDataToVoidMethod(bindings_handle, output, "onSha1");
+}
+
+jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getCallbackPointer(
+        JNIEnv *env,
+        jclass clazz
+) {
+    return (jlong) (intptr_t) &onLogCallback;
 }
 
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getReadPointer(

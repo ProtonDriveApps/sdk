@@ -519,3 +519,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Visual Studio project launch settings
+**/Properties/launchSettings.json

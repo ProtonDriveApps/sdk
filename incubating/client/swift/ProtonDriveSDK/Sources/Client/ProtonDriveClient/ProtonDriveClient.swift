@@ -66,7 +66,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
                 httpClient.cancellationAction = Int64(ObjectHandle(callback: HttpClientRequestProcessor.cCompatibleHttpCancellationAction))
             }
 
-            $0.telemetry = Proton_Sdk_Telemetry.with {
+            $0.telemetry = Proton_Drive_Sdk_Telemetry.with {
                 $0.logAction = Int64(ObjectHandle(callback: cCompatibleLogCallback))
                 $0.recordMetricAction = Int64(ObjectHandle(callback: cCompatibleTelemetryRecordMetricCallback))
             }

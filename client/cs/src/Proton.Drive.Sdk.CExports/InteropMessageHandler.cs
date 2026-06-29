@@ -1,0 +1,323 @@
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using Google.Protobuf.Reflection;
+using Google.Protobuf.WellKnownTypes;
+using Proton.Drive.Sdk.CExports.Logging;
+using Proton.Drive.Sdk.CExports.Tasks;
+
+namespace Proton.Drive.Sdk.CExports;
+
+internal static class InteropMessageHandler
+{
+    private static readonly TypeRegistry ResponseTypeRegistry = TypeRegistry.FromMessages(
+        Int32Value.Descriptor,
+        Int64Value.Descriptor,
+        StringValue.Descriptor,
+        BytesValue.Descriptor,
+        RepeatedBytesValue.Descriptor,
+        Address.Descriptor,
+        HttpResponse.Descriptor);
+
+    [UnmanagedCallersOnly(EntryPoint = "proton_drive_sdk_handle_request", CallConvs = [typeof(CallConvCdecl)])]
+    public static async void OnRequestReceived(InteropArray<byte> requestBytes, nint bindingsHandle, InteropAction<nint, InteropArray<byte>> responseAction)
+    {
+        try
+        {
+            var request = Request.Parser.ParseFrom(requestBytes.AsReadOnlySpan());
+
+            var response = request.PayloadCase switch
+            {
+                Request.PayloadOneofCase.CancellationTokenSourceCreate
+                    => InteropCancellationTokenSource.HandleCreate(request.CancellationTokenSourceCreate),
+
+                Request.PayloadOneofCase.CancellationTokenSourceCancel
+                    => InteropCancellationTokenSource.HandleCancel(request.CancellationTokenSourceCancel),
+
+                Request.PayloadOneofCase.CancellationTokenSourceFree
+                    => InteropCancellationTokenSource.HandleFree(request.CancellationTokenSourceFree),
+
+                Request.PayloadOneofCase.StreamRead
+                    => await InteropStream.HandleReadAsync(request.StreamRead).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.LoggerProviderCreate
+                    => InteropLoggerProvider.HandleCreate(request.LoggerProviderCreate, bindingsHandle),
+
+                Request.PayloadOneofCase.DriveClientCreate
+                    => InteropProtonDriveClient.HandleCreate(request.DriveClientCreate, bindingsHandle),
+
+                Request.PayloadOneofCase.DriveClientFree
+                    => InteropProtonDriveClient.HandleFree(request.DriveClientFree),
+
+                Request.PayloadOneofCase.DriveClientGetFileUploader
+                    => await InteropProtonDriveClient.HandleGetFileUploaderAsync(request.DriveClientGetFileUploader).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientGetFileRevisionUploader
+                    => await InteropProtonDriveClient.HandleGetFileRevisionUploaderAsync(request.DriveClientGetFileRevisionUploader).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientGetFileDownloader
+                    => await InteropProtonDriveClient.HandleGetFileDownloaderAsync(request.DriveClientGetFileDownloader).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientGetAvailableName
+                    => await InteropProtonDriveClient.HandleGetAvailableNameAsync(request.DriveClientGetAvailableName).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientTrashNodes
+                    => await InteropProtonDriveClient.HandleTrashNodesAsync(request.DriveClientTrashNodes).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientDeleteNodes
+                    => await InteropProtonDriveClient.HandleDeleteNodesAsync(request.DriveClientDeleteNodes).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientRestoreNodes
+                    => await InteropProtonDriveClient.HandleRestoreNodesAsync(request.DriveClientRestoreNodes).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientEnumerateTrash
+                    => await InteropProtonDriveClient.HandleEnumerateTrashAsync(request.DriveClientEnumerateTrash, bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientEmptyTrash
+                    => await InteropProtonDriveClient.HandleEmptyTrashAsync(request.DriveClientEmptyTrash).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientRename
+                    => await InteropProtonDriveClient.HandleRenameAsync(request.DriveClientRename).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientCreateFolder
+                    => await InteropProtonDriveClient.HandleCreateFolderAsync(request.DriveClientCreateFolder).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientEnumerateThumbnails
+                    => await InteropProtonDriveClient.HandleEnumerateThumbnailsAsync(
+                        request.DriveClientEnumerateThumbnails,
+                        bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientEnumerateFolderChildren
+                    => await InteropProtonDriveClient.HandleEnumerateFolderChildrenAsync(
+                        request.DriveClientEnumerateFolderChildren,
+                        bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientGetMyFilesFolder
+                    => await InteropProtonDriveClient.HandleGetMyFilesFolderAsync(request.DriveClientGetMyFilesFolder).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientGetNode
+                    => await InteropProtonDriveClient.HandleGetNodeAsync(request.DriveClientGetNode).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientEnumerateDevices
+                    => await InteropProtonDriveClient.HandleEnumerateDevicesAsync(request.DriveClientEnumerateDevices, bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientCreateDevice
+                    => await InteropProtonDriveClient.HandleCreateDeviceAsync(request.DriveClientCreateDevice).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientRenameDevice
+                    => await InteropProtonDriveClient.HandleRenameDeviceAsync(request.DriveClientRenameDevice).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientDeleteDevice
+                    => await InteropProtonDriveClient.HandleDeleteDeviceAsync(request.DriveClientDeleteDevice).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.UploadFromStream
+                    => InteropFileUploader.HandleUploadFromStream(request.UploadFromStream, bindingsHandle),
+
+                Request.PayloadOneofCase.UploadFromFile
+                    => InteropFileUploader.HandleUploadFromFile(request.UploadFromFile, bindingsHandle),
+
+                Request.PayloadOneofCase.FileUploaderFree
+                    => InteropFileUploader.HandleFree(request.FileUploaderFree),
+
+                Request.PayloadOneofCase.UploadControllerIsPaused
+                    => InteropUploadController.HandleIsPaused(request.UploadControllerIsPaused),
+
+                Request.PayloadOneofCase.UploadControllerAwaitCompletion
+                    => await InteropUploadController.HandleAwaitCompletion(request.UploadControllerAwaitCompletion).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.UploadControllerPause
+                    => InteropUploadController.HandlePause(request.UploadControllerPause),
+
+                Request.PayloadOneofCase.UploadControllerResume
+                    => InteropUploadController.HandleResume(request.UploadControllerResume),
+
+                Request.PayloadOneofCase.UploadControllerDispose
+                    => await InteropUploadController.HandleDisposeAsync(request.UploadControllerDispose).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.UploadControllerFree
+                    => InteropUploadController.HandleFree(request.UploadControllerFree),
+
+                Request.PayloadOneofCase.DownloadToStream
+                    => InteropFileDownloader.HandleDownloadToStream(request.DownloadToStream, bindingsHandle),
+
+                Request.PayloadOneofCase.DownloadToFile
+                    => InteropFileDownloader.HandleDownloadToFile(request.DownloadToFile, bindingsHandle),
+
+                Request.PayloadOneofCase.FileDownloaderFree
+                    => InteropFileDownloader.HandleFree(request.FileDownloaderFree),
+
+                Request.PayloadOneofCase.DownloadControllerIsPaused
+                    => InteropDownloadController.HandleIsPaused(request.DownloadControllerIsPaused),
+
+                Request.PayloadOneofCase.DownloadControllerIsDownloadCompleteWithVerificationIssue
+                    => InteropDownloadController.HandleIsDownloadCompleteWithVerificationIssue(
+                        request.DownloadControllerIsDownloadCompleteWithVerificationIssue),
+
+                Request.PayloadOneofCase.DownloadControllerAwaitCompletion
+                    => await InteropDownloadController.HandleAwaitCompletion(request.DownloadControllerAwaitCompletion).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DownloadControllerPause
+                    => InteropDownloadController.HandlePause(request.DownloadControllerPause),
+
+                Request.PayloadOneofCase.DownloadControllerResume
+                    => InteropDownloadController.HandleResume(request.DownloadControllerResume),
+
+                Request.PayloadOneofCase.DownloadControllerFree
+                    => await InteropDownloadController.HandleFree(request.DownloadControllerFree).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientCreate
+                    => InteropProtonPhotosClient.HandleCreate(request.DrivePhotosClientCreate, bindingsHandle),
+
+                Request.PayloadOneofCase.DrivePhotosClientFree
+                    => InteropProtonPhotosClient.HandleFree(request.DrivePhotosClientFree),
+
+                Request.PayloadOneofCase.DrivePhotosClientEnumerateThumbnails
+                    => await InteropProtonPhotosClient.HandleEnumerateThumbnailsAsync(
+                        request.DrivePhotosClientEnumerateThumbnails, bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientEnumerateTimeline
+                    => await InteropProtonPhotosClient.HandleEnumeratePhotosTimelineAsync(
+                        request.DrivePhotosClientEnumerateTimeline, bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientGetNode
+                    => await InteropProtonPhotosClient.HandleGetNodeAsync(request.DrivePhotosClientGetNode).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientGetPhotoDownloader
+                    => await InteropProtonPhotosClient.HandleGetPhotosDownloaderAsync(request.DrivePhotosClientGetPhotoDownloader).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientDownloadToStream
+                    => InteropPhotosDownloader.HandleDownloadToStream(request.DrivePhotosClientDownloadToStream, bindingsHandle),
+
+                Request.PayloadOneofCase.DrivePhotosClientDownloadToFile
+                    => InteropPhotosDownloader.HandleDownloadToFile(request.DrivePhotosClientDownloadToFile, bindingsHandle),
+
+                Request.PayloadOneofCase.DrivePhotosClientDownloaderFree
+                    => InteropPhotosDownloader.HandleFree(request.DrivePhotosClientDownloaderFree),
+
+                Request.PayloadOneofCase.DrivePhotosClientGetPhotoUploader
+                    => await InteropProtonPhotosClient.HandleGetFileUploaderAsync(request.DrivePhotosClientGetPhotoUploader).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientFindDuplicates
+                    => await InteropProtonPhotosClient.HandleFindDuplicatesAsync(request.DrivePhotosClientFindDuplicates, bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientUploadFromStream
+                    => InteropPhotosUploader.HandleUploadFromStream(request.DrivePhotosClientUploadFromStream, bindingsHandle),
+
+                Request.PayloadOneofCase.DrivePhotosClientUploadFromFile
+                    => InteropPhotosUploader.HandleUploadFromFile(request.DrivePhotosClientUploadFromFile, bindingsHandle),
+
+                Request.PayloadOneofCase.DrivePhotosClientUploaderFree
+                    => InteropPhotosUploader.HandleFree(request.DrivePhotosClientUploaderFree),
+
+                Request.PayloadOneofCase.DrivePhotosClientTrashNodes
+                    => await InteropProtonPhotosClient.HandleTrashNodesAsync(request.DrivePhotosClientTrashNodes).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientDeleteNodes
+                    => await InteropProtonPhotosClient.HandleDeleteNodesAsync(request.DrivePhotosClientDeleteNodes).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientRestoreNodes
+                    => await InteropProtonPhotosClient.HandleRestoreNodesAsync(request.DrivePhotosClientRestoreNodes).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientEnumerateTrash
+                    => await InteropProtonPhotosClient.HandleEnumerateTrashAsync(request.DrivePhotosClientEnumerateTrash, bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientEmptyTrash
+                    => await InteropProtonPhotosClient.HandleEmptyTrashAsync(request.DrivePhotosClientEmptyTrash).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.None or _
+                    => throw new ArgumentException($"Unknown request type: {request.PayloadCase}", nameof(requestBytes)),
+            };
+
+            responseAction.InvokeWithMessage(bindingsHandle, response is not null ? new Response { Value = Any.Pack(response) } : new Response());
+        }
+        catch (Exception e)
+        {
+            var error = e.ToProtoError(InteropDriveErrorConverter.SetDomainAndCodes);
+
+            responseAction.InvokeWithMessage(bindingsHandle, new Response { Error = error });
+        }
+    }
+
+    [UnmanagedCallersOnly(EntryPoint = "proton_drive_sdk_handle_response", CallConvs = [typeof(CallConvCdecl)])]
+    public static void OnResponseReceived(nint sdkHandle, InteropArray<byte> responseBytes)
+    {
+        var response = Response.Parser.ParseFrom(responseBytes.AsReadOnlySpan());
+
+        if (response.Error is not null)
+        {
+            SetException(sdkHandle, response.Error);
+            return;
+        }
+
+        if (response.Value is null)
+        {
+            SetResult(sdkHandle);
+            return;
+        }
+
+        var responseValue = response.Value.Unpack(ResponseTypeRegistry);
+
+        switch (responseValue)
+        {
+            case Int32Value value:
+                SetResult(sdkHandle, value);
+                break;
+
+            case Int64Value value:
+                SetResult(sdkHandle, value);
+                break;
+
+            case StringValue value:
+                SetResult(sdkHandle, value);
+                break;
+
+            case BytesValue value:
+                SetResult(sdkHandle, value);
+                break;
+
+            case RepeatedBytesValue value:
+                SetResult(sdkHandle, value);
+                break;
+
+            case Address value:
+                SetResult(sdkHandle, value);
+                break;
+
+            case HttpResponse value:
+                SetResult(sdkHandle, value);
+                break;
+
+            default:
+                throw new ArgumentException($"Unknown response value type: {responseValue.Descriptor.Name}", nameof(responseBytes));
+        }
+    }
+
+    private static void SetResult<T>(nint tcsHandle, T value)
+    {
+        var tcs = Interop.GetFromHandleAndFree<ValueTaskCompletionSource<T>>(tcsHandle);
+
+        tcs.SetResult(value);
+    }
+
+    private static void SetResult(nint tcsHandle)
+    {
+        var tcs = Interop.GetFromHandleAndFree<ValueTaskCompletionSource>(tcsHandle);
+
+        tcs.SetResult();
+    }
+
+    private static void SetException(nint tcsHandle, Error error)
+    {
+        var tfs = Interop.GetFromHandleAndFree<IValueTaskFaultingSource>(tcsHandle);
+
+        if (error.Domain == ErrorDomain.SuccessfulCancellation)
+        {
+            tfs.SetException(new OperationCanceledException(
+                "The operation was canceled by the client",
+                new InteropErrorException(error)));
+        }
+        else
+        {
+            tfs.SetException(new InteropErrorException(error));
+        }
+    }
+}

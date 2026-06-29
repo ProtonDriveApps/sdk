@@ -1,9 +1,9 @@
 package me.proton.drive.sdk.internal
 
 import kotlinx.coroutines.CancellableContinuation
-import proton.sdk.ProtonSdk.Response.ResultCase.ERROR
-import proton.sdk.ProtonSdk.Response.ResultCase.RESULT_NOT_SET
-import proton.sdk.ProtonSdk.Response.ResultCase.VALUE
+import proton.drive.sdk.ProtonDriveSdk.Response.ResultCase.ERROR
+import proton.drive.sdk.ProtonDriveSdk.Response.ResultCase.RESULT_NOT_SET
+import proton.drive.sdk.ProtonDriveSdk.Response.ResultCase.VALUE
 import java.nio.ByteBuffer
 import kotlin.coroutines.Continuation
 

@@ -1,7 +1,7 @@
 #include <jni.h>
 #include <stdlib.h>
 #include <android/log.h>
-#include "proton_sdk.h"
+#include "proton_drive_sdk.h"
 
 JavaVM *g_vm;
 

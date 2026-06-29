@@ -6,7 +6,7 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import okio.BufferedSink
-import proton.sdk.ProtonSdk.HttpRequest
+import proton.drive.sdk.ProtonDriveSdk.HttpRequest
 import java.nio.ByteBuffer
 
 

@@ -10,7 +10,6 @@ import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveClient
 import me.proton.drive.sdk.SdkNode
-import me.proton.drive.sdk.Session
 import me.proton.drive.sdk.Uploader
 import me.proton.drive.sdk.entity.Device
 import me.proton.drive.sdk.entity.DeviceType
@@ -48,8 +47,7 @@ import java.time.Instant
 internal class InteropProtonDriveClient internal constructor(
     internal val handle: Long,
     private val bridge: JniProtonDriveClient,
-    session: Session? = null,
-) : SdkNode(session), ProtonDriveClient {
+) : SdkNode(null), ProtonDriveClient {
 
     override suspend fun getAvailableName(
         parentFolderUid: NodeUid,

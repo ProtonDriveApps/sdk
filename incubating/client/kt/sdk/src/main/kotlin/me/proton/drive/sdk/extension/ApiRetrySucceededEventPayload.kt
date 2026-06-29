@@ -1,9 +1,9 @@
 package me.proton.drive.sdk.extension
 
 import me.proton.drive.sdk.telemetry.ApiRetrySucceededEvent
-import proton.sdk.ProtonSdk
+import proton.drive.sdk.ProtonDriveSdk
 
-fun ProtonSdk.ApiRetrySucceededEventPayload.toEvent() = ApiRetrySucceededEvent(
+fun ProtonDriveSdk.ApiRetrySucceededEventPayload.toEvent() = ApiRetrySucceededEvent(
     url = url,
     failedAttempts = failedAttempts,
 )

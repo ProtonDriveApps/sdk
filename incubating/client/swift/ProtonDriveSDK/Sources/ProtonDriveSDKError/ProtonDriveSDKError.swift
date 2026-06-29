@@ -20,7 +20,7 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
         // Interop domains
         case interop
         
-        var toProton_Sdk_ErrorDomain: Proton_Sdk_ErrorDomain {
+        var toProton_Drive_Sdk_ErrorDomain: Proton_Drive_Sdk_ErrorDomain {
             switch self {
             case .undefined: return .undefined
             case .successfulCancellation: return .successfulCancellation
@@ -35,7 +35,7 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
             }
         }
         
-        init(interopErrorDomain: Proton_Sdk_ErrorDomain) {
+        init(interopErrorDomain: Proton_Drive_Sdk_ErrorDomain) {
             switch interopErrorDomain {
             case .undefined: self = .undefined
             case .successfulCancellation: self = .successfulCancellation
@@ -88,7 +88,7 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
     // Helper to break type recursion
     private final class InnerErrorBox: Sendable {
         let innerError: ProtonDriveSDKError
-        init(protoError: Proton_Sdk_Error) {
+        init(protoError: Proton_Drive_Sdk_Error) {
             self.innerError = ProtonDriveSDKError(protoError: protoError)
         }
     }
@@ -106,10 +106,10 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
 
     private let innerErrorBox: InnerErrorBox?
     
-    var asProton_Sdk_Error: Proton_Sdk_Error {
-        Proton_Sdk_Error.with {
+    var asProton_Drive_Sdk_Error: Proton_Drive_Sdk_Error {
+        Proton_Drive_Sdk_Error.with {
             $0.type = type
-            $0.domain = domain.toProton_Sdk_ErrorDomain
+            $0.domain = domain.toProton_Drive_Sdk_ErrorDomain
             $0.message = message
             if let primaryCode {
                 $0.primaryCode = Int64(primaryCode)
@@ -120,7 +120,7 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
             if let context {
                 $0.context = context
             }
-            if let innerError = innerErrorBox?.innerError.asProton_Sdk_Error {
+            if let innerError = innerErrorBox?.innerError.asProton_Drive_Sdk_Error {
                 $0.innerError = innerError
             }
             if let data = additionalErrorData?.toProtobufAny() {
@@ -129,9 +129,9 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
         }
     }
     
-    init(protoError: Proton_Sdk_Error) {
+    init(protoError: Proton_Drive_Sdk_Error) {
         if !(protoError.hasMessage && protoError.hasType && protoError.hasDomain) {
-            assertionFailure("Type, message, and domain are non-optional in Proton_Sdk_Error proto")
+            assertionFailure("Type, message, and domain are non-optional in Proton_Drive_Sdk_Error proto")
         }
         self.type = protoError.hasType ? protoError.type : ""
         self.message = protoError.hasMessage ? protoError.message : ""

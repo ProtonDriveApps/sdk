@@ -1,0 +1,94 @@
+using Proton.Drive.Sdk.Api;
+using Proton.Drive.Sdk.Api.Files;
+using Proton.Sdk.Api;
+
+namespace Proton.Drive.Sdk.Nodes.Upload;
+
+internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
+{
+    private const int MaxNumberOfDraftCreationAttempts = 3;
+
+    private readonly ProtonDriveClient _client;
+    private readonly NodeUid _fileUid;
+    private readonly RevisionId _lastKnownRevisionId;
+
+    internal NewRevisionDraftProvider(
+        ProtonDriveClient client,
+        NodeUid fileUid,
+        RevisionId lastKnownRevisionId)
+    {
+        _client = client;
+        _fileUid = fileUid;
+        _lastKnownRevisionId = lastKnownRevisionId;
+    }
+
+    public async ValueTask<RevisionDraft> GetDraftAsync(long intendedUploadSize, bool forPhotos, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(intendedUploadSize);
+
+        var parameters = new RevisionCreationRequest
+        {
+            CurrentRevisionId = _lastKnownRevisionId,
+            ClientId = _client.Uid,
+            IntendedUploadSize = intendedUploadSize,
+        };
+
+        var fileSecrets = await FileOperations.GetSecretsAsync(_client, _fileUid, forPhotos, cancellationToken).ConfigureAwait(false);
+
+        if (fileSecrets is not { Key: { } nodeKey, ContentKey: { } contentKey })
+        {
+            throw new InvalidOperationException($"Cannot create draft for file {_fileUid} with missing secrets");
+        }
+
+        var remainingNumberOfAttempts = MaxNumberOfDraftCreationAttempts;
+        RevisionId? revisionId = null;
+
+        while (revisionId is null)
+        {
+            try
+            {
+                var revisionResponse = await _client.Api.Files.CreateRevisionAsync(_fileUid.VolumeId, _fileUid.LinkId, parameters, cancellationToken)
+                    .ConfigureAwait(false);
+
+                revisionId = revisionResponse.Identity.RevisionId;
+            }
+            catch (ProtonApiException<RevisionErrorResponse> e)
+                when (RevisionConflict.FromErrorResponse(e.Response) is { DraftRevisionId: { } draftRevisionId } conflict
+                    && (conflict.DraftClientUid == _client.Uid)
+                    && remainingNumberOfAttempts-- > 0)
+            {
+                await _client.Api.Files.DeleteRevisionAsync(_fileUid.VolumeId, _fileUid.LinkId, draftRevisionId, cancellationToken).ConfigureAwait(false);
+            }
+            catch (ProtonApiException<RevisionErrorResponse> e) when (e.Code is DriveApiResponseCodes.AlreadyExists)
+            {
+                throw new RevisionDraftConflictException("Cannot create revision", e);
+            }
+        }
+
+        var draftRevisionUid = new RevisionUid(_fileUid, revisionId.Value);
+
+        var membershipAddress = await NodeOperations.GetMembershipAddressAsync(_client, _fileUid, cancellationToken).ConfigureAwait(false);
+
+        var signingKey = await _client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
+
+        var blockVerifier = await _client.BlockVerifierFactory.CreateAsync(draftRevisionUid, nodeKey, cancellationToken).ConfigureAwait(false);
+
+        return new RevisionDraft(
+            draftRevisionUid,
+            nodeKey,
+            contentKey,
+            signingKey,
+            parentHashKey: null,
+            membershipAddress,
+            blockVerifier,
+            intendedUploadSize,
+            ct => DeleteDraftAsync(draftRevisionUid, ct),
+            _client.Telemetry.GetLogger("New file draft"));
+    }
+
+    private async ValueTask DeleteDraftAsync(RevisionUid revisionUid, CancellationToken cancellationToken)
+    {
+        await _client.Api.Files.DeleteRevisionAsync(revisionUid.NodeUid.VolumeId, revisionUid.NodeUid.LinkId, revisionUid.RevisionId, cancellationToken)
+            .ConfigureAwait(false);
+    }
+}
