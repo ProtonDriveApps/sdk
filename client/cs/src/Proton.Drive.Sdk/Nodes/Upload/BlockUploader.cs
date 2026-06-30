@@ -58,7 +58,7 @@ internal sealed partial class BlockUploader
                         signatureOutputStream,
                         draft.SigningKey,
                         profile: pgpProfile,
-                        aeadStreamingChunkLength: PgpAeadStreamingChunkLength.ChunkLength);
+                        aeadStreamingChunkLength: PgpDefaults.AeadStreamingChunkLength);
 
                     await using (encryptingStream)
                     {
@@ -82,22 +82,12 @@ internal sealed partial class BlockUploader
                                     draft.FileKey);
 
                                 // FIXME: retry upon verification failure
-                                const long AeadChunkSize =
-                                    1 + // packet header: packet type
-                                    1 + // packet header: partial length
-                                    4 + // SEIPDv2 header: packet version, cipher ID, algo Id, chunk size
-                                    32 + // SEIPDv2 header: salt
-                                    PgpAeadStreamingChunkLength.ChunkLength +
-                                    1 + // chunk size header
-                                    36 + // end of chunk
-                                    16; // Aead Tag
-
                                 var plainDataPrefixLength = (int)Math.Min(draft.BlockVerifier.DataPacketPrefixMaxLength, plainData.Stream.Length);
 
                                 try
                                 {
                                     var verificationToken = draft.BlockVerifier.VerifyBlock(
-                                        dataPacketStream.GetFirstBytes(AeadChunkSize),
+                                        dataPacketStream.GetFirstBytes(PgpDefaults.AeadDecryptionMinimumInputLength),
                                         plainData.PrefixForVerification.AsSpan()[..plainDataPrefixLength]);
 
                                     if (integrityErrorEncountered)
@@ -161,7 +151,7 @@ internal sealed partial class BlockUploader
                 thumbnail.Content.AsStream(),
                 draft.SigningKey,
                 profile: pgpProfile,
-                aeadStreamingChunkLength: PgpAeadStreamingChunkLength.ChunkLength);
+                aeadStreamingChunkLength: PgpDefaults.AeadStreamingChunkLength);
 
             await using (encryptingStream.ConfigureAwait(false))
             {

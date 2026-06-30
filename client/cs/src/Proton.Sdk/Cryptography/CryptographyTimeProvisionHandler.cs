@@ -13,7 +13,7 @@ public sealed class CryptographyTimeProvisionHandler : DelegatingHandler
         if (responseMessage.Headers.Date is { } time)
         {
             CryptographyTimeProvider.UpdateTime(time);
-            PgpEnvironment.DefaultTimeProviderOverride = CryptographyTimeProvider;
+            PgpConfiguration.DefaultTimeProviderOverride = CryptographyTimeProvider;
         }
 
         return responseMessage;

@@ -101,7 +101,7 @@ public sealed class ProtonDriveClient
         BlockUploader = new BlockUploader(this);
         BlockDownloader = new BlockDownloader(this);
         ThumbnailBlockDownloader = new BlockDownloader(this);
-        PgpEnvironment.DefaultAeadStreamingChunkLength = PgpAeadStreamingChunkLength.ChunkLength;
+        PgpConfiguration.DefaultAeadStreamingChunkLength = PgpDefaults.AeadStreamingChunkLength;
     }
 
     private ProtonDriveClient(
@@ -126,8 +126,8 @@ public sealed class ProtonDriveClient
     {
     }
 
-    // use 132KiB to align and provide some padding for AEAD chunk size (128KiB + PGP headers)
-    internal static RecyclableMemoryStreamManager MemoryStreamManager { get; } = new(new RecyclableMemoryStreamManager.Options { BlockSize = 135168 });
+    internal static RecyclableMemoryStreamManager MemoryStreamManager { get; } =
+        new(new RecyclableMemoryStreamManager.Options { BlockSize = PgpDefaults.AeadDecryptionMinimumInputLength });
 
     internal string Uid { get; }
 
