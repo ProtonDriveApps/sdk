@@ -1,5 +1,17 @@
 # Changelog
 
+## cs/v0.19.0 (2026-06-30)
+
+### Features
+- Support devices
+- Support devices
+- Support devices
+- Change node enumeration methods to return UIDs instead of complete metadata
+
+### Bug Fixes
+- Align node enumeration with UID-based engine contract
+
+
 ## cs/v0.18.1 (2026-06-25)
 
 ### Bug Fixes
