@@ -120,6 +120,7 @@ describe('SharingManagement', () => {
             })),
             getNodeKeys: jest.fn().mockImplementation((nodeUid) => ({ key: 'node-key' })),
             getNodePrivateAndSessionKeys: jest.fn().mockImplementation((nodeUid) => ({})),
+            getRootNode: jest.fn().mockImplementation((nodeUid) => Promise.resolve({ uid: nodeUid, shareId: DEFAULT_SHARE_ID })),
             getRootNodeEmailKey: jest.fn().mockResolvedValue({ email: 'volume-email', addressKey: 'volume-key' }),
             notifyNodeChanged: jest.fn(),
         };
@@ -1284,6 +1285,21 @@ describe('SharingManagement', () => {
                 sharingManagement.reportAbuse({ nodeUid, abuseCategory: AbuseCategory.Copyright, bonaFide: true }),
             ).rejects.toThrow(ValidationError);
             expect(apiService.reportAbuse).not.toHaveBeenCalled();
+        });
+
+        it('should report abuse for a child node inside a directly shared folder', async () => {
+            const parentNodeUid = 'volumeId~parentNodeId';
+            const childNodeUid = 'volumeId~childNodeId';
+
+            nodesService.getRootNode = jest.fn().mockResolvedValue({ uid: parentNodeUid, shareId: DEFAULT_SHARE_ID });
+
+            await sharingManagement.reportAbuse({ nodeUid: childNodeUid, abuseCategory: AbuseCategory.Spam, bonaFide: true });
+
+            expect(nodesService.getNodeKeys).toHaveBeenCalledWith(parentNodeUid);
+            expect(sharesService.loadEncryptedShare).toHaveBeenCalledWith(DEFAULT_SHARE_ID);
+            expect(apiService.reportAbuse).toHaveBeenCalledWith(
+                expect.objectContaining({ shareId: DEFAULT_SHARE_ID, linkId: 'childNodeId' }),
+            );
         });
     });
 });

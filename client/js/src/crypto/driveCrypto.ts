@@ -1,6 +1,6 @@
 import { importKey as importHmacKey, signData as computeHmacSignature } from '@protontech/crypto/subtle/hmac.ts';
 
-import { ProtonDriveTelemetry } from '../interface';
+import type { ProtonDriveTelemetry } from '../interface';
 import {
     OpenPGPCrypto,
     PrivateKey,

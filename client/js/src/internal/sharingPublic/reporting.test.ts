@@ -1,6 +1,6 @@
 import { ValidationError } from '../../errors';
 import { AbuseCategory } from '../../interface';
-import { ReportAbuseAPIService } from '../reportAbuse';
+import { ReportAbuseAPIService } from '../reportAbuse/apiService';
 import { SharingPublicNodesAccess } from './nodes';
 import { SharingPublicReporting } from './reporting';
 import { SharingPublicSharesManager } from './shares';

@@ -164,6 +164,7 @@ export interface NodesService {
         passphraseSessionKey: SessionKey;
         nameSessionKey: SessionKey;
     }>;
+    getRootNode(nodeUid: string): Promise<DecryptedNode>;
     getRootNodeEmailKey(nodeUid: string): Promise<{
         email: string;
         addressId: string;

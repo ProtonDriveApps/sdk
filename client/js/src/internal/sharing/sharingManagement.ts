@@ -693,9 +693,7 @@ export class SharingManagement {
         const { passphraseSessionKey } = await this.cryptoService.decryptShare(encryptedShare, nodeKey.key);
 
         const adminEmails = new Set(
-            encryptedMembers
-                .filter((member) => member.role === MemberRole.Admin)
-                .map((member) => member.inviteeEmail),
+            encryptedMembers.filter((member) => member.role === MemberRole.Admin).map((member) => member.inviteeEmail),
         );
         adminEmails.add(encryptedShare.creatorEmail);
 
@@ -839,19 +837,21 @@ export class SharingManagement {
     async reportAbuse(settings: ReportDirectShareAbuseSettings): Promise<void> {
         validateReportShareAbuseSettings(settings);
 
-        const node = await this.nodesService.getNode(settings.nodeUid);
-        if (!node.shareId) {
-            throw new ValidationError(c('Error').t`Node is not accessible via a share`);
-        }
-
         const { nodeId: linkId } = splitNodeUid(settings.nodeUid);
         const revisionId = settings.revisionUid ? splitNodeRevisionUid(settings.revisionUid).revisionId : undefined;
+
+        // The reported node may be a child inside a shared folder; only the
+        // share root carries shareId, so walk up until we find it.
+        const rootNode = await this.nodesService.getRootNode(settings.nodeUid);
+        if (!rootNode.shareId) {
+            throw new ValidationError(c('Error').t`Node is not accessible via a share`);
+        }
 
         // Fetch and decrypt the share on the spot rather than exposing its
         // passphrase through the shares module.
         const [{ key: nodeKey }, encryptedShare] = await Promise.all([
-            this.nodesService.getNodeKeys(settings.nodeUid),
-            this.sharesService.loadEncryptedShare(node.shareId),
+            this.nodesService.getNodeKeys(rootNode.uid),
+            this.sharesService.loadEncryptedShare(rootNode.shareId),
         ]);
         const { passphrase: sharePassphrase } = await this.cryptoService.decryptShare(encryptedShare, nodeKey);
 
@@ -863,7 +863,7 @@ export class SharingManagement {
         await this.apiService.reportAbuse({
             sharePassphrase,
             memberSessionKey,
-            shareId: node.shareId,
+            shareId: rootNode.shareId,
             abuseCategory: settings.abuseCategory,
             bonaFide: settings.bonaFide,
             reporterMessage: settings.reporterMessage,
@@ -871,5 +871,16 @@ export class SharingManagement {
             linkId,
             revisionId,
         });
+    }
+
+    private async findShareRootNodeUid(nodeUid: string, visited: string[] = []): Promise<string> {
+        if (visited.includes(nodeUid)) {
+            return nodeUid;
+        }
+        const node = await this.nodesService.getNode(nodeUid);
+        if (node.shareId || !node.parentUid) {
+            return nodeUid;
+        }
+        return this.findShareRootNodeUid(node.parentUid, [...visited, nodeUid]);
     }
 }

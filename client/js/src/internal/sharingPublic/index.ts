@@ -10,7 +10,7 @@ import { DriveAPIService } from '../apiService';
 import { NodesCache } from '../nodes/cache';
 import { NodesCryptoCache } from '../nodes/cryptoCache';
 import { NodesRevisons } from '../nodes/nodesRevisions';
-import { ReportAbuseAPIService } from '../reportAbuse';
+import { ReportAbuseAPIService } from '../reportAbuse/apiService';
 import { SharingPublicAPIService } from './apiService';
 import { SharingPublicCryptoReporter } from './cryptoReporter';
 import { SharingPublicNodesAPIService, SharingPublicNodesCryptoService } from './nodes';

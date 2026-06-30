@@ -7,7 +7,7 @@ import {
     nodeTypeNumberToNodeType,
     permissionsToMemberRole,
 } from '../apiService';
-import { ReportAbuseAPIService } from '../reportAbuse';
+import { ReportAbuseAPIService } from '../reportAbuse/apiService';
 import { ShareTargetType } from '../shares';
 import {
     makeInvitationUid,

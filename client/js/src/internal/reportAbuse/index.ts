@@ -3,8 +3,6 @@ import { c } from 'ttag';
 import { ValidationError } from '../../errors';
 import { AbuseCategory, ReportPublicLinkShareAbuseSettings } from '../../interface';
 
-export { ReportAbuseAPIService } from './apiService';
-
 export function validateReportShareAbuseSettings(settings: ReportPublicLinkShareAbuseSettings): void {
     const requiresMessage =
         settings.abuseCategory === AbuseCategory.Copyright || settings.abuseCategory === AbuseCategory.StolenData;

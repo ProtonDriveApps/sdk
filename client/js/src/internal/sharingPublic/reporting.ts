@@ -2,7 +2,8 @@ import { c } from 'ttag';
 
 import { ValidationError } from '../../errors';
 import { ReportPublicLinkShareAbuseSettings } from '../../interface';
-import { ReportAbuseAPIService, validateReportShareAbuseSettings } from '../reportAbuse';
+import { validateReportShareAbuseSettings } from '../reportAbuse';
+import { ReportAbuseAPIService } from '../reportAbuse/apiService';
 import { splitNodeRevisionUid, splitNodeUid } from '../uids';
 import { SharingPublicNodesAccess } from './nodes';
 import { SharingPublicSharesManager } from './shares';

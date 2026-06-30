@@ -1,4 +1,4 @@
-import { Logger } from '../../interface';
+import type { Logger } from '../../interface';
 
 /**
  * Callback that accepts list of Drive events and flag whether no

@@ -534,7 +534,7 @@ export abstract class NodesAccessBase<
         return `https://drive.proton.me/${rootNode.shareId}/${type}/${nodeId}`;
     }
 
-    private async getRootNode(nodeUid: string): Promise<TDecryptedNode> {
+    async getRootNode(nodeUid: string): Promise<TDecryptedNode> {
         const hierarchy = await this.getNodeHierarchy(nodeUid);
         return hierarchy[0];
     }
