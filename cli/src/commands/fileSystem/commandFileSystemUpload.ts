@@ -17,6 +17,31 @@ import { TransferSummary } from './transferSummary';
 
 const SUPPORTED_REMOTE_PATH_TYPES = [PathType.MyFiles, PathType.Devices, PathType.SharedWithMe];
 
+const EXTENSION_MEDIA_TYPES: Record<string, string> = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.bmp': 'image/bmp',
+    '.tiff': 'image/tiff',
+    '.tif': 'image/tiff',
+    '.webp': 'image/webp',
+};
+
+function getMediaType(localPath: string, detectedType: string): string {
+    const dotIndex = localPath.lastIndexOf('.');
+    if (dotIndex === -1) {
+        return detectedType;
+    }
+    const ext = localPath.slice(dotIndex).toLowerCase();
+    const mapped = EXTENSION_MEDIA_TYPES[ext];
+    // Override when Bun returns generic type but we know it's an image
+    if (mapped && (detectedType === '' || detectedType === 'application/octet-stream')) {
+        return mapped;
+    }
+    return detectedType;
+}
+
 type UploadContext = {
     sdk: ProtonDriveClient;
     json: boolean;
@@ -188,7 +213,7 @@ export class CommandFileSystemUpload implements Command {
         const expectedSha1 = await getSha1(item.localPath);
         const file = Bun.file(item.localPath);
         const metadata = {
-            mediaType: file.type,
+            mediaType: getMediaType(item.localPath, file.type),
             expectedSize: file.size,
             expectedSha1,
             modificationTime: file.lastModified && file.lastModified !== 0 ? new Date(file.lastModified) : undefined,
