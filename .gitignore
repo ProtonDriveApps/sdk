@@ -26,6 +26,7 @@ clientUid.json
 *.bun-build
 config.json
 *.map
+bun.lock
 
 # IDEs
 .vs
