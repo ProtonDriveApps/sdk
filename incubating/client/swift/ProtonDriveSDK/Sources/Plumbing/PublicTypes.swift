@@ -630,6 +630,9 @@ public struct FileOperationProgress {
 /// Callback for node UID enumeration updates
 public typealias NodeUidCallback = @Sendable (Result<SDKNodeUid, Error>) -> Void
 
+/// Callback for device enumeration updates
+public typealias DeviceCallback = @Sendable (Result<Device, Error>) -> Void
+
 /// Callback for thumbnail updates
 public typealias ThumbnailCallback = @Sendable (Result<ThumbnailDataWithId?, Error>) -> Void
 

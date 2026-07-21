@@ -797,30 +797,29 @@ extension ProtonDriveClient {
 // MARK: - Device action
 extension ProtonDriveClient {
 
-    public func enumerateDevices() async throws -> [Device] {
-        let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
+    public func enumerateDevices(
+        cancellationToken: UUID,
+        onDeviceEnumerated: @escaping DeviceCallback
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.enumerateDevices(cancellationToken), logger)
         defer {
-            cancellationTokenSource.free()
+            freeCancellationTokenSourceIfNeeded(identifier: .enumerateDevices(cancellationToken))
         }
 
-        let cancellationHandle = cancellationTokenSource.handle
-        let accumulator = DeviceAccumulator()
-
+        let callbackState = DeviceEnumerationCallbackWrapper(callback: onDeviceEnumerated)
         let request = Proton_Drive_Sdk_DriveClientEnumerateDevicesRequest.with {
             $0.clientHandle = Int64(clientHandle)
-            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
             $0.yieldAction = Int64(ObjectHandle(callback: cDeviceEnumerationCallback))
         }
 
         let _: Void = try await SDKRequestHandler.send(
             request,
-            state: WeakReference(value: accumulator),
+            state: WeakReference(value: callbackState),
             scope: .ownerManaged,
-            owner: accumulator,
+            owner: callbackState,
             logger: logger
         )
-
-        return accumulator.devices
     }
 
     public func cancelEnumerateDevices(cancellationToken: UUID) async throws {

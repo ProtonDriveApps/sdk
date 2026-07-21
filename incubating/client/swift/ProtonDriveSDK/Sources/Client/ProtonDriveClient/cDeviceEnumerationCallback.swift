@@ -1,7 +1,11 @@
 import Foundation
 
-final class DeviceAccumulator: Sendable {
-    nonisolated(unsafe) var devices: [Device] = []
+final class DeviceEnumerationCallbackWrapper: Sendable {
+    let callback: DeviceCallback
+
+    init(callback: @escaping DeviceCallback) {
+        self.callback = callback
+    }
 
     deinit {
         CallbackHandleRegistry.shared.removeAll(ownedBy: self)
@@ -9,15 +13,20 @@ final class DeviceAccumulator: Sendable {
 }
 
 let cDeviceEnumerationCallback: CCallback = { statePointer, byteArray in
-    typealias BoxType = BoxedCompletionBlock<Int, WeakReference<DeviceAccumulator>>
-    let protoDevice = Proton_Drive_Sdk_Device(byteArray: byteArray)
-    guard let device = try? Device(sdkDevice: protoDevice) else { return }
+    typealias BoxType = BoxedCompletionBlock<Int, WeakReference<DeviceEnumerationCallbackWrapper>>
 
     guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
         assertionFailure("cDeviceEnumerationCallback.statePointer is nil")
         return
     }
     let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
-    let weakAccumulator = stateTypedPointer.takeUnretainedValue().state
-    weakAccumulator.value?.devices.append(device)
+    let weakWrapper = stateTypedPointer.takeUnretainedValue().state
+
+    let protoDevice = Proton_Drive_Sdk_Device(byteArray: byteArray)
+    do {
+        let device = try Device(sdkDevice: protoDevice)
+        weakWrapper.value?.callback(.success(device))
+    } catch {
+        weakWrapper.value?.callback(.failure(error))
+    }
 }
