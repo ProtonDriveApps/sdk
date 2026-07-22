@@ -1,6 +1,7 @@
 import { AbortError } from '../../errors';
 import { MetricEvent, ProtonDriveHTTPClient, SDKEvent, Telemetry } from '../../interface';
 import { getMockTelemetry } from '../../tests/telemetry';
+import { VERSION } from '../../version';
 import { SDKEvents } from '../sdkEvents';
 import { DriveAPIService } from './apiService';
 import { ErrorCode, HTTPErrorCode } from './errorCodes';
@@ -85,7 +86,7 @@ describe('DriveAPIService', () => {
                         Accept: 'application/vnd.protonmail.v1+json',
                         'Content-Type': 'application/json',
                         Language: 'en',
-                        'x-pm-drive-sdk-version': `js@${process.env.npm_package_version}`,
+                        'x-pm-drive-sdk-version': `js@${VERSION}`,
                     }).entries(),
                 ),
             );
@@ -116,7 +117,7 @@ describe('DriveAPIService', () => {
                     new Headers({
                         Accept: 'application/vnd.protonmail.v1+json',
                         Language: 'en',
-                        'x-pm-drive-sdk-version': `js@${process.env.npm_package_version}`,
+                        'x-pm-drive-sdk-version': `js@${VERSION}`,
                     }).entries(),
                 ),
             );
@@ -147,7 +148,7 @@ describe('DriveAPIService', () => {
                     new Headers({
                         'pm-storage-token': 'token',
                         Language: 'en',
-                        'x-pm-drive-sdk-version': `js@${process.env.npm_package_version}`,
+                        'x-pm-drive-sdk-version': `js@${VERSION}`,
                     }).entries(),
                 ),
             );

@@ -10,16 +10,16 @@
         "src"
     ],
     "scripts": {
-        "build": "tsc",
-        "build:ci": "rm -rf dist tsconfig.tsbuildinfo && tsc",
+        "build": "tsc --emitDeclarationOnly && swc src -d dist --strip-leading-paths",
+        "build:ci": "rm -rf dist tsconfig.tsbuildinfo && tsc --emitDeclarationOnly && swc src -d dist --strip-leading-paths",
         "check-types": "tsc --noEmit",
         "generate-docs": "typedoc src/protonDriveClient.ts src/protonDrivePhotosClient.ts src/protonDrivePublicLinkClient.ts src/index.ts --out ${OUTPUT_PATH}",
         "generate-types": "openapi-typescript ../../api/openapi-drive.json -o ./src/internal/apiService/driveTypes.ts && openapi-typescript ../../api/openapi-core.json -o ./src/internal/apiService/coreTypes.ts",
         "lint": "eslint src --ext .ts --cache --ignore-pattern '**/apiService/*Types.ts'",
         "pretty": "prettier --write  $(find src -type f -name '*.ts')",
-        "test": "jest",
-        "test:ci": "jest --runInBand --no-cache",
-        "test:watch": "jest --watch --coverage=false",
+        "test": "node node_modules/jest/bin/jest.js",
+        "test:ci": "node node_modules/jest/bin/jest.js --runInBand --no-cache",
+        "test:watch": "node node_modules/jest/bin/jest.js --watch --coverage=false",
         "lint:ttag": "node tasks/linter.mjs src --verbose",
         "extract:ttag": "ttag extract src --output po/template.pot"
     },
@@ -30,10 +30,10 @@
     "devDependencies": {
         "@protontech/crypto": "^2.0.0",
         "@protontech/global-types": "^1.0.0",
+        "@swc/cli": "^0.8.1",
         "@swc/core": "^1.12.3",
         "@swc/jest": "^0.2.38",
         "@types/jest": "^29.5.14",
-        "@types/mocha": "^10.0.10",
         "@typescript-eslint/eslint-plugin": "^8.58.1",
         "@web/dev-server-esbuild": "^1.0.3",
         "eslint": "^8.57.1",

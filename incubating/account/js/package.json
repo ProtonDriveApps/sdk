@@ -9,8 +9,9 @@
         "generate-types": "bunx openapi-typescript ../../api/openapi-core.json -o ./src/api-core-types.ts && bunx openapi-typescript ../../api/openapi-auth.json -o ./src/api-auth-types.ts",
         "lint": "eslint src --ext .ts --cache --ignore-pattern '**/*-types.ts'",
         "pretty": "prettier --write $(find src -type f -name '*.ts')",
-        "test": "jest src --passWithNoTests",
-        "test:watch": "jest src --watch --coverage=false --passWithNoTests"
+        "test": "node node_modules/jest/bin/jest.js src --passWithNoTests",
+        "test:ci": "node node_modules/jest/bin/jest.js src --runInBand --no-cache --passWithNoTests",
+        "test:watch": "node node_modules/jest/bin/jest.js src --watch --coverage=false --passWithNoTests"
     },
     "dependencies": {
         "ky": "^1.14.3"

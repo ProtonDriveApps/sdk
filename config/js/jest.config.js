@@ -1,11 +1,23 @@
 const path = require('path');
 
+// swcrc is disabled and the parser is set explicitly so that transforming a file
+// pulled in from another package (e.g. via moduleNameMapper) doesn't pick up that
+// package's own .swcrc, whose "env" would clash with the "jsc.target" @swc/jest sets.
+const swcOptions = {
+    swcrc: false,
+    jsc: {
+        parser: {
+            syntax: 'typescript',
+            tsx: true,
+        },
+    },
+};
 const transform = {
-    '^.+\\.(t|j)sx?$': '@swc/jest',
-    '^.+\\.mjs$': '@swc/jest',
+    '^.+\\.(t|j)sx?$': ['@swc/jest', swcOptions],
+    '^.+\\.mjs$': ['@swc/jest', swcOptions],
 };
 
-// npm does not apply the bun patch used elsewhere; allow transforming these packages.
+// Allow transforming ESM packages that Jest's Node environment can't resolve directly.
 const transformIgnorePatterns = [
     'node_modules/(?!(@openpgp|@protontech|openpgp|jsmimeparser)/)',
 ];
@@ -13,7 +25,7 @@ const transformIgnorePatterns = [
 const moduleNameMapper = {
     '^@openpgp/web-stream-tools$':
         '<rootDir>/node_modules/@openpgp/web-stream-tools/lib/index.js',
-    // @protontech/crypto imports openpgp/lightweight; npm does not apply the bun patch used elsewhere
+    // @protontech/crypto imports openpgp/lightweight; alias to full openpgp package
     '^openpgp/lightweight$': 'openpgp',
 };
 

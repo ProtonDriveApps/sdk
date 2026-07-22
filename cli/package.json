@@ -10,8 +10,9 @@
         "generate-metric-schemas": "bun ./scripts/generate-metric-schemas.ts",
         "lint": "eslint src --ext .ts --cache --ignore-pattern '**/api/*-types.ts'",
         "pretty": "prettier --write $(find src -type f -name '*.ts')",
-        "test": "jest src",
-        "test:watch": "jest src --watch --coverage=false"
+        "test": "node node_modules/jest/bin/jest.js src",
+        "test:ci": "node node_modules/jest/bin/jest.js src --runInBand --no-cache",
+        "test:watch": "node node_modules/jest/bin/jest.js src --watch --coverage=false"
     },
     "devDependencies": {
         "@swc/core": "^1.12.3",
