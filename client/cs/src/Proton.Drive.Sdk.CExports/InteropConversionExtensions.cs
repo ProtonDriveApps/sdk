@@ -216,7 +216,7 @@ internal static class InteropConversionExtensions
             if (result.TryGetValueElseError(out var author, out var error))
             {
                 var authorResultValue = new Author();
-                if (authorResultValue.EmailAddress != null)
+                if (author.EmailAddress != null)
                 {
                     authorResultValue.EmailAddress = author.EmailAddress;
                 }
