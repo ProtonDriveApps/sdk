@@ -369,3 +369,41 @@ extension ProtonPhotosClient {
         )
     }
 }
+
+// MARK: - Tags
+
+extension ProtonPhotosClient {
+    /// Adds and/or removes tags on the given photos, returning a per-photo result.
+    public func updatePhotos(_ updates: [PhotoTagsUpdate]) async throws -> [NodeResult] {
+        let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
+        defer {
+            cancellationTokenSource.free()
+        }
+
+        let sdkUpdates: [Proton_Drive_Sdk_PhotoTagsUpdate] = try updates.map { update in
+            var proto = Proton_Drive_Sdk_PhotoTagsUpdate()
+            proto.nodeUid = update.nodeUid.sdkCompatibleIdentifier
+            proto.tagsToAdd = try Self.mapPhotoTags(update.tagsToAdd)
+            proto.tagsToRemove = try Self.mapPhotoTags(update.tagsToRemove)
+            return proto
+        }
+
+        let request = Proton_Drive_Sdk_DrivePhotosClientUpdatePhotosRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.updates = sdkUpdates
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let result: Proton_Drive_Sdk_NodeResultListResponse = try await SDKRequestHandler.send(request, logger: logger)
+        return result.results.compactMap { NodeResult(sdkNodeResult: $0) }
+    }
+
+    private static func mapPhotoTags(_ tags: [PhotoTag]) throws -> [Proton_Drive_Sdk_PhotoTag] {
+        let mappedTags = tags.compactMap { Proton_Drive_Sdk_PhotoTag(rawValue: $0.rawValue) }
+        guard mappedTags.count == tags.count else {
+            let unknownTags = Array(Set(tags.map(\.rawValue)).subtracting(Set(mappedTags.map(\.rawValue))))
+            throw ProtonDriveSDKError(interopError: .containsUnknownPhotoTags(tags: unknownTags))
+        }
+        return mappedTags
+    }
+}

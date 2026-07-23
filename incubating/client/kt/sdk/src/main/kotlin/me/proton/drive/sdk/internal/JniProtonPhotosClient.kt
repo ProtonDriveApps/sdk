@@ -117,6 +117,13 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
             drivePhotosClientTrashNodes = request
         }
 
+    suspend fun updatePhotos(
+        request: ProtonDriveSdk.DrivePhotosClientUpdatePhotosRequest,
+    ): ProtonDriveSdk.NodeResultListResponse =
+        executeOnce("updatePhotos", NodeResultListResponseConverter().asCallback) {
+            drivePhotosClientUpdatePhotos = request
+        }
+
     suspend fun deleteNodes(
         request: ProtonDriveSdk.DrivePhotosClientDeleteNodesRequest,
     ): ProtonDriveSdk.NodeResultListResponse =

@@ -16,6 +16,7 @@ import me.proton.drive.sdk.entity.FileThumbnail
 import me.proton.drive.sdk.entity.Node
 import me.proton.drive.sdk.entity.NodeResultPair
 import me.proton.drive.sdk.entity.NodeUid
+import me.proton.drive.sdk.entity.PhotoTagsUpdate
 import me.proton.drive.sdk.entity.PhotosDownloaderRequest
 import me.proton.drive.sdk.entity.PhotosTimelineItem
 import me.proton.drive.sdk.entity.PhotosUploaderRequest
@@ -32,6 +33,7 @@ import proton.drive.sdk.drivePhotosClientGetNodeRequest
 import proton.drive.sdk.drivePhotosClientLeaveSharedNodeRequest
 import proton.drive.sdk.drivePhotosClientRestoreNodesRequest
 import proton.drive.sdk.drivePhotosClientTrashNodesRequest
+import proton.drive.sdk.drivePhotosClientUpdatePhotosRequest
 
 internal class InteropProtonPhotosClient internal constructor(
     internal val handle: Long,
@@ -123,6 +125,19 @@ internal class InteropProtonPhotosClient internal constructor(
         bridge.restoreNodes(
             drivePhotosClientRestoreNodesRequest {
                 this.nodeUids += nodeUids.map { it.value }
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        ).toEntity()
+    }
+
+    override suspend fun updatePhotos(
+        updates: List<PhotoTagsUpdate>,
+    ): List<NodeResultPair> = cancellationCoroutineScope { source ->
+        log(INFO, "updatePhotos(${updates.size} photos)")
+        bridge.updatePhotos(
+            drivePhotosClientUpdatePhotosRequest {
+                this.updates += updates.map { it.toProto() }
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }

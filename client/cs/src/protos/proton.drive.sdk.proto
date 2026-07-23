@@ -93,6 +93,7 @@ message Request {
         DrivePhotosClientEmptyTrashRequest drive_photos_client_empty_trash = 2018;
         DrivePhotosClientLeaveSharedNodeRequest drive_photos_client_leave_shared_node = 2019;
         DrivePhotosClientEnumerateSharedNodeUidsRequest drive_photos_client_enumerate_shared_node_uids = 2020;
+        DrivePhotosClientUpdatePhotosRequest drive_photos_client_update_photos = 2021;
     };
 }
 
@@ -1013,6 +1014,19 @@ message DrivePhotosClientLeaveSharedNodeRequest {
 message DrivePhotosClientEnumerateSharedNodeUidsRequest {
     int64 client_handle = 1;
     int64 yield_action = 2;
+    int64 cancellation_token_source_handle = 3;
+}
+
+message PhotoTagsUpdate {
+    string node_uid = 1;
+    repeated PhotoTag tags_to_add = 2;
+    repeated PhotoTag tags_to_remove = 3;
+}
+
+// The response message must be of type NodeResultListResponse
+message DrivePhotosClientUpdatePhotosRequest {
+    int64 client_handle = 1;
+    repeated PhotoTagsUpdate updates = 2;
     int64 cancellation_token_source_handle = 3;
 }
 

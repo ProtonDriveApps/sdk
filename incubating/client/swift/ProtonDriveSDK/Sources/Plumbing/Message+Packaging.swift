@@ -316,6 +316,11 @@ extension Message {
                 $0.payload = .drivePhotosClientUploaderFree(request)
             }
 
+        case let request as Proton_Drive_Sdk_DrivePhotosClientUpdatePhotosRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientUpdatePhotos(request)
+            }
+
         // MARK: - Device
 
         case let request as Proton_Drive_Sdk_DriveClientEnumerateDevicesRequest:

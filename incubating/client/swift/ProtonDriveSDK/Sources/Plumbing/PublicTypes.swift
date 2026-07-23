@@ -603,6 +603,20 @@ public struct NodeResult: Sendable {
 
 public typealias TrashNodeResult = NodeResult
 
+/// Describes a tag mutation for a single photo: the tags to add and the tags to remove.
+/// Tags are raw `PhotoTag` values (0-9); unknown values throw `containsUnknownPhotoTags`.
+public struct PhotoTagsUpdate: Sendable {
+    public let nodeUid: SDKNodeUid
+    public let tagsToAdd: [PhotoTag]
+    public let tagsToRemove: [PhotoTag]
+
+    public init(nodeUid: SDKNodeUid, tagsToAdd: [PhotoTag] = [], tagsToRemove: [PhotoTag] = []) {
+        self.nodeUid = nodeUid
+        self.tagsToAdd = tagsToAdd
+        self.tagsToRemove = tagsToRemove
+    }
+}
+
 /// Callback for progress updates
 public typealias ProgressCallback = @Sendable (FileOperationProgress) -> Void
 

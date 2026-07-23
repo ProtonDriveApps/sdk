@@ -1,11 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Proton.Drive.Sdk.Api;
-using Proton.Drive.Sdk.Api.Photos;
 using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Http;
 using Proton.Drive.Sdk.Nodes;
-using Proton.Drive.Sdk.Nodes.Cryptography;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
@@ -20,8 +18,6 @@ namespace Proton.Drive.Sdk;
 
 public sealed class ProtonPhotosClient
 {
-    private const int ActiveLinkState = 1;
-
     public ProtonPhotosClient(
         IHttpClientFactory httpClientFactory,
         IProtonAccountClient accountClient,
@@ -47,14 +43,7 @@ public sealed class ProtonPhotosClient
             telemetry,
             creationParameters?.Uid,
             creationParameters?.DegreeOfBlockTransferParallelismOverride);
-
-        var httpClient = new SdkHttpClientFactoryDecorator(httpClientFactory).CreateClientWithTimeout(
-            creationParameters?.DefaultApiTimeoutSecondsOverride ?? ProtonApiDefaults.DefaultTimeoutSeconds);
-
-        PhotosApi = new PhotosApiClient(httpClient);
     }
-
-    internal IPhotosApiClient PhotosApi { get; }
 
     internal ProtonDriveClient DriveClient { get; }
 
@@ -89,43 +78,12 @@ public sealed class ProtonPhotosClient
         return await GetFileUploaderAsync(draftProvider, photosRoot.Uid, size, metadata, cancellationToken).ConfigureAwait(false);
     }
 
-    public async ValueTask<IReadOnlyList<string>> FindDuplicatesAsync(
+    public ValueTask<IReadOnlyList<string>> FindDuplicatesAsync(
         string name,
         Func<CancellationToken, ValueTask<ReadOnlyMemory<byte>>> computeContentSha1,
         CancellationToken cancellationToken)
     {
-        var photosRoot = await PhotosNodeOperations.GetOrCreatePhotosFolderAsync(DriveClient, cancellationToken).ConfigureAwait(false);
-
-        var operationData = await FolderOperations.GetOperationDataAsync(DriveClient, photosRoot.Uid, knownShareAndKey: null, cancellationToken)
-            .ConfigureAwait(false);
-
-        var hashKey = operationData.HashKey ?? throw new InvalidOperationException("Photos root hash key not available");
-
-        var nameHash = NodeCrypto.HashNodeName(name, hashKey.Span);
-
-        var response = await PhotosApi.FindDuplicatesAsync(photosRoot.Uid.VolumeId, [nameHash], cancellationToken).ConfigureAwait(false);
-
-        var candidates = response.DuplicateHashes
-            .Where(duplicate =>
-                duplicate.LinkId is not null
-                && duplicate.LinkState == ActiveLinkState
-                && !duplicate.Hash.IsEmpty
-                && !duplicate.ContentHash.IsEmpty)
-            .ToList();
-
-        if (candidates.Count == 0)
-        {
-            return [];
-        }
-
-        // Only compute the (potentially expensive) content hash once we know a name already matches.
-        var contentSha1Digest = await computeContentSha1(cancellationToken).ConfigureAwait(false);
-        var contentHash = NodeCrypto.HashContentDigest(contentSha1Digest, hashKey.Span);
-
-        return candidates
-            .Where(duplicate => duplicate.Hash.Span.SequenceEqual(nameHash) && duplicate.ContentHash.Span.SequenceEqual(contentHash))
-            .Select(duplicate => new NodeUid(photosRoot.Uid.VolumeId, duplicate.LinkId!.Value).ToString())
-            .ToList();
+        return PhotoOperations.FindDuplicatesAsync(DriveClient, name, computeContentSha1, cancellationToken);
     }
 
     public ValueTask<Node?> GetNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
@@ -220,6 +178,21 @@ public sealed class ProtonPhotosClient
         }
 
         await VolumeOperations.EmptyTrashAsync(DriveClient, volumeId.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Adds and removes tags (including favorite) on the given photos.</summary>
+    /// <remarks>
+    /// Shared photos are not yet supported. Favoriting a photo that lives outside the user's own photos volume
+    /// requires re-encrypting the photo and its related photos for the target, which is not implemented; such updates
+    /// fail with a <see cref="NotSupportedException"/> in the returned results. Related photos (e.g. Live Photo or burst
+    /// siblings) are likewise not handled yet.
+    /// </remarks>
+    [Experimental("Photos")]
+    public ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> UpdatePhotosAsync(
+        IReadOnlyList<PhotoTagsUpdate> updates,
+        CancellationToken cancellationToken)
+    {
+        return PhotoOperations.UpdatePhotosAsync(DriveClient, updates, cancellationToken);
     }
 
     [Experimental("Photos")]

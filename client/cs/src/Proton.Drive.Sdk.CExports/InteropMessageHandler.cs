@@ -247,6 +247,9 @@ internal static class InteropMessageHandler
                         request.DrivePhotosClientEnumerateSharedNodeUids,
                         bindingsHandle).ConfigureAwait(false),
 
+                Request.PayloadOneofCase.DrivePhotosClientUpdatePhotos
+                    => await InteropProtonPhotosClient.HandleUpdatePhotosAsync(request.DrivePhotosClientUpdatePhotos).ConfigureAwait(false),
+
                 Request.PayloadOneofCase.None or _
                     => throw new ArgumentException($"Unknown request type: {request.PayloadCase}", nameof(requestBytes)),
             };
