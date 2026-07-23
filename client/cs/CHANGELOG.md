@@ -1,5 +1,12 @@
 # Changelog
 
+## cs/v0.21.0 (2026-07-23)
+
+### Features
+- Support listing nodes shared by the user
+- Support moving nodes to another folder
+
+
 ## cs/v0.20.2 (2026-07-21)
 
 * No changes
