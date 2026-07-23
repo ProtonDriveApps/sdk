@@ -85,6 +85,56 @@ internal static class PhotosNodeOperations
         } while (anchorLinkId is not null);
     }
 
+    public static async IAsyncEnumerable<NodeUid> EnumerateAlbumNodeUidsAsync(
+        ProtonDriveClient client,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var volumeId = await VolumeOperations.TryGetPhotosVolumeIdAsync(client, cancellationToken).ConfigureAwait(false);
+
+        if (volumeId is null)
+        {
+            // No photos volume means there are no albums to enumerate
+            yield break;
+        }
+
+        var anchorId = default(LinkId?);
+
+        do
+        {
+            var response = await client.Api.Photos.GetAlbumsAsync(volumeId.Value, anchorId, cancellationToken).ConfigureAwait(false);
+
+            foreach (var album in response.Albums)
+            {
+                yield return new NodeUid(volumeId.Value, album.Id);
+            }
+
+            anchorId = response is { More: true, AnchorId: not null } ? response.AnchorId : null;
+        } while (anchorId is not null);
+    }
+
+    public static async IAsyncEnumerable<AlbumItem> EnumerateAlbumAsync(
+        ProtonDriveClient client,
+        NodeUid albumUid,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var anchorId = default(LinkId?);
+
+        do
+        {
+            var response = await client.Api.Photos
+                .GetAlbumItemsAsync(albumUid.VolumeId, albumUid.LinkId, anchorId, cancellationToken).ConfigureAwait(false);
+
+            foreach (var photo in response.Photos)
+            {
+                var photoUid = new NodeUid(albumUid.VolumeId, photo.Id);
+
+                yield return new AlbumItem(photoUid, photo.CaptureTime);
+            }
+
+            anchorId = response is { More: true, AnchorId: not null } ? response.AnchorId : null;
+        } while (anchorId is not null);
+    }
+
     private static async ValueTask<FolderNode> CreatePhotosFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
     {
         var (_, _, folderNode) = await VolumeOperations.CreatePhotosVolumeAsync(client, cancellationToken).ConfigureAwait(false);

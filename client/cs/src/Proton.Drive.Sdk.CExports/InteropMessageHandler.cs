@@ -250,6 +250,14 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DrivePhotosClientUpdatePhotos
                     => await InteropProtonPhotosClient.HandleUpdatePhotosAsync(request.DrivePhotosClientUpdatePhotos).ConfigureAwait(false),
 
+                Request.PayloadOneofCase.DrivePhotosClientEnumerateAlbumNodeUids
+                    => await InteropProtonPhotosClient.HandleEnumerateAlbumNodeUidsAsync(
+                        request.DrivePhotosClientEnumerateAlbumNodeUids, bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientEnumerateAlbum
+                    => await InteropProtonPhotosClient.HandleEnumerateAlbumAsync(
+                        request.DrivePhotosClientEnumerateAlbum, bindingsHandle).ConfigureAwait(false),
+
                 Request.PayloadOneofCase.None or _
                     => throw new ArgumentException($"Unknown request type: {request.PayloadCase}", nameof(requestBytes)),
             };

@@ -10,7 +10,7 @@ internal sealed class LinkDetailsDto
     public FolderDto? Folder { get; init; }
     public FileDto? File { get; init; }
     public PhotoDto? Photo { get; init; }
-    public FolderDto? Album { get; init; }
+    public AlbumDto? Album { get; init; }
     public LinkSharingDto? Sharing { get; init; }
     public ShareMembershipSummaryDto? Membership { get; init; }
 
@@ -19,7 +19,7 @@ internal sealed class LinkDetailsDto
         out FolderDto? folder,
         out FileDto? file,
         out PhotoDto? photo,
-        out FolderDto? album,
+        out AlbumDto? album,
         out LinkSharingDto? sharing,
         out ShareMembershipSummaryDto? membership)
     {

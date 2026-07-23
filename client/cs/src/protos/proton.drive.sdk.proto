@@ -94,6 +94,8 @@ message Request {
         DrivePhotosClientLeaveSharedNodeRequest drive_photos_client_leave_shared_node = 2019;
         DrivePhotosClientEnumerateSharedNodeUidsRequest drive_photos_client_enumerate_shared_node_uids = 2020;
         DrivePhotosClientUpdatePhotosRequest drive_photos_client_update_photos = 2021;
+        DrivePhotosClientEnumerateAlbumNodeUidsRequest drive_photos_client_enumerate_album_node_uids = 2022;
+        DrivePhotosClientEnumerateAlbumRequest drive_photos_client_enumerate_album = 2023;
     };
 }
 
@@ -707,10 +709,50 @@ message DriveClientDeleteDeviceRequest {
     int64 cancellation_token_source_handle = 3;
 }
 
+message AlbumNode {
+    string uid = 1;
+    string parent_uid = 2; // optional
+    string tree_event_scope_id = 3;
+    StringResult name = 4;
+    google.protobuf.Timestamp creation_time = 5;
+    google.protobuf.Timestamp trash_time = 6; // optional
+    AuthorResult name_author = 7;
+    AuthorResult key_author = 8;
+    OwnedBy owned_by = 9;
+    repeated DriveError errors = 10;
+    bool is_shared = 11;
+    bool is_shared_publicly = 12;
+    int64 photo_count = 13;
+    string cover_photo_node_uid = 14; // optional
+    google.protobuf.Timestamp last_activity_time = 15; // optional
+}
+
+message PhotoNode {
+    string uid = 1;
+    string parent_uid = 2; // optional
+    string tree_event_scope_id = 3;
+    StringResult name = 4;
+    string media_type = 5;
+    google.protobuf.Timestamp creation_time = 6;
+    google.protobuf.Timestamp trash_time = 7; // optional
+    AuthorResult name_author = 8;
+    AuthorResult key_author = 9;
+    FileRevision active_revision = 10;
+    int64 total_storage_size = 11;
+    OwnedBy owned_by = 12;
+    repeated DriveError errors = 13;
+    bool is_shared = 14;
+    bool is_shared_publicly = 15;
+    google.protobuf.Timestamp capture_time = 16;
+    repeated string album_uids = 17;
+}
+
 message Node {
     oneof node {
         FolderNode folder = 1;
         FileNode file = 2;
+        AlbumNode album = 3;
+        PhotoNode photo = 4;
     }
 }
 
@@ -852,6 +894,21 @@ message DrivePhotosClientEnumerateTimelineRequest {
     int64 cancellation_token_source_handle = 3;
 }
 
+// The response must not have a value, yield_action will be called for each album node UID (StringValue).
+message DrivePhotosClientEnumerateAlbumNodeUidsRequest {
+    int64 client_handle = 1;
+    int64 yield_action = 2;
+    int64 cancellation_token_source_handle = 3;
+}
+
+// The response must not have a value, yield_action will be called for each item (AlbumItem).
+message DrivePhotosClientEnumerateAlbumRequest {
+    int64 client_handle = 1;
+    string album_uid = 2;
+    int64 yield_action = 3;
+    int64 cancellation_token_source_handle = 4;
+}
+
 // The response message must be of type Node (nullable).
 message DrivePhotosClientGetNodeRequest {
     int64 client_handle = 1;
@@ -860,6 +917,11 @@ message DrivePhotosClientGetNodeRequest {
 }
 
 message PhotosTimelineItem {
+    string node_uid = 1;
+    google.protobuf.Timestamp capture_time = 2;
+}
+
+message AlbumItem {
     string node_uid = 1;
     google.protobuf.Timestamp capture_time = 2;
 }

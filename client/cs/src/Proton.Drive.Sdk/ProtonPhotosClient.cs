@@ -104,6 +104,18 @@ public sealed class ProtonPhotosClient
         return PhotosNodeOperations.EnumeratePhotosTimelineAsync(DriveClient, cancellationToken);
     }
 
+    [Experimental("Photos")]
+    public IAsyncEnumerable<NodeUid> EnumerateAlbumNodeUidsAsync(CancellationToken cancellationToken)
+    {
+        return PhotosNodeOperations.EnumerateAlbumNodeUidsAsync(DriveClient, cancellationToken);
+    }
+
+    [Experimental("Photos")]
+    public IAsyncEnumerable<AlbumItem> EnumerateAlbumAsync(NodeUid albumUid, CancellationToken cancellationToken)
+    {
+        return PhotosNodeOperations.EnumerateAlbumAsync(DriveClient, albumUid, cancellationToken);
+    }
+
     [Experimental("TryTransferQueuing")]
     public PhotosFileDownloader? TryGetPhotosDownloader(NodeUid photoUid)
     {

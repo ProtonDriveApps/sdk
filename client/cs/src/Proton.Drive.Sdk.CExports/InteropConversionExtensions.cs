@@ -15,6 +15,12 @@ internal static class InteropConversionExtensions
 
             switch (node)
             {
+                case Nodes.AlbumNode albumNode:
+                    result.Album = Nodes.Node.ToInterop(albumNode);
+                    break;
+                case Nodes.PhotoNode photoNode:
+                    result.Photo = Nodes.Node.ToInterop(photoNode);
+                    break;
                 case Nodes.FolderNode folderNode:
                     result.Folder = Nodes.Node.ToInterop(folderNode);
                     break;
@@ -25,6 +31,74 @@ internal static class InteropConversionExtensions
             }
 
             return result;
+        }
+
+        private static AlbumNode ToInterop(Nodes.AlbumNode albumNode)
+        {
+            var albumNodeProto = new AlbumNode
+            {
+                Uid = albumNode.Uid.ToString(),
+                TreeEventScopeId = albumNode.TreeEventScopeId.ToString(),
+                Name = albumNode.Name.ToInterop(),
+                CreationTime = albumNode.CreationTime.ToUniversalTime().ToTimestamp(),
+                TrashTime = albumNode.TrashTime?.ToUniversalTime().ToTimestamp(),
+                NameAuthor = albumNode.NameAuthor.ToInterop(),
+                KeyAuthor = albumNode.KeyAuthor.ToInterop(),
+                OwnedBy = albumNode.OwnedBy.ToInterop(),
+                IsShared = albumNode.IsShared,
+                IsSharedPublicly = albumNode.IsSharedPublicly,
+                PhotoCount = albumNode.PhotoCount,
+            };
+
+            if (albumNode.ParentUid != null)
+            {
+                albumNodeProto.ParentUid = albumNode.ParentUid.ToString();
+            }
+
+            if (albumNode.CoverPhotoUid is { } coverPhotoUid)
+            {
+                albumNodeProto.CoverPhotoNodeUid = coverPhotoUid.ToString();
+            }
+
+            if (albumNode.LastActivityTime is { } lastActivityTime)
+            {
+                albumNodeProto.LastActivityTime = lastActivityTime.ToUniversalTime().ToTimestamp();
+            }
+
+            albumNodeProto.Errors.AddRange(albumNode.Errors.Select(ToInterop));
+
+            return albumNodeProto;
+        }
+
+        private static PhotoNode ToInterop(Nodes.PhotoNode photoNode)
+        {
+            var photoNodeProto = new PhotoNode
+            {
+                Uid = photoNode.Uid.ToString(),
+                TreeEventScopeId = photoNode.TreeEventScopeId.ToString(),
+                Name = photoNode.Name.ToInterop(),
+                MediaType = photoNode.MediaType,
+                CreationTime = photoNode.CreationTime.ToUniversalTime().ToTimestamp(),
+                TrashTime = photoNode.TrashTime?.ToUniversalTime().ToTimestamp(),
+                NameAuthor = photoNode.NameAuthor.ToInterop(),
+                KeyAuthor = photoNode.KeyAuthor.ToInterop(),
+                TotalStorageSize = photoNode.TotalStorageSize,
+                OwnedBy = photoNode.OwnedBy.ToInterop(),
+                IsShared = photoNode.IsShared,
+                IsSharedPublicly = photoNode.IsSharedPublicly,
+                CaptureTime = photoNode.CaptureTime.ToUniversalTime().ToTimestamp(),
+            };
+
+            if (photoNode.ParentUid != null)
+            {
+                photoNodeProto.ParentUid = photoNode.ParentUid.ToString();
+            }
+
+            photoNodeProto.ActiveRevision = photoNode.ActiveRevision.ToInterop();
+            photoNodeProto.AlbumUids.AddRange(photoNode.AlbumUids.Select(albumUid => albumUid.ToString()));
+            photoNodeProto.Errors.AddRange(photoNode.Errors.Select(ToInterop));
+
+            return photoNodeProto;
         }
 
         private static FolderNode ToInterop(Nodes.FolderNode folderNode)

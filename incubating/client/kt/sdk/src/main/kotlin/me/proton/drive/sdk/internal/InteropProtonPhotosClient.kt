@@ -12,6 +12,7 @@ import me.proton.drive.sdk.PhotosUploader
 import me.proton.drive.sdk.ProtonPhotosClient
 import me.proton.drive.sdk.SdkNode
 import me.proton.drive.sdk.Uploader
+import me.proton.drive.sdk.entity.AlbumItem
 import me.proton.drive.sdk.entity.FileThumbnail
 import me.proton.drive.sdk.entity.Node
 import me.proton.drive.sdk.entity.NodeResultPair
@@ -25,6 +26,8 @@ import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toProto
 import proton.drive.sdk.drivePhotosClientDeleteNodesRequest
 import proton.drive.sdk.drivePhotosClientEmptyTrashRequest
+import proton.drive.sdk.drivePhotosClientEnumerateAlbumNodeUidsRequest
+import proton.drive.sdk.drivePhotosClientEnumerateAlbumRequest
 import proton.drive.sdk.drivePhotosClientEnumerateSharedNodeUidsRequest
 import proton.drive.sdk.drivePhotosClientEnumerateThumbnailsRequest
 import proton.drive.sdk.drivePhotosClientEnumerateTimelineRequest
@@ -74,6 +77,41 @@ internal class InteropProtonPhotosClient internal constructor(
                 },
                 yield = { timelineItem ->
                     send(timelineItem.toEntity())
+                }
+            )
+        }
+    }
+
+    override fun enumerateAlbumNodeUids(): Flow<NodeUid> = channelFlow {
+        log(DEBUG, "enumerateAlbumNodeUids")
+        cancellationCoroutineScope { source ->
+            bridge.enumerateAlbumNodeUids(
+                coroutineScope = this@channelFlow,
+                drivePhotosClientEnumerateAlbumNodeUidsRequest {
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { nodeUid ->
+                    send(NodeUid(nodeUid.value))
+                }
+            )
+        }
+    }
+
+    override fun enumerateAlbum(albumUid: NodeUid): Flow<AlbumItem> = channelFlow {
+        log(DEBUG, "enumerateAlbum")
+        cancellationCoroutineScope { source ->
+            bridge.enumerateAlbum(
+                coroutineScope = this@channelFlow,
+                request = drivePhotosClientEnumerateAlbumRequest {
+                    this.albumUid = albumUid.value
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { albumItem ->
+                    send(albumItem.toEntity())
                 }
             )
         }

@@ -14,6 +14,10 @@ internal interface IPhotosApiClient
 
     ValueTask<TimelinePhotoListResponse> GetTimelinePhotosAsync(TimelinePhotoListRequest request, CancellationToken cancellationToken);
 
+    ValueTask<AlbumListResponse> GetAlbumsAsync(VolumeId volumeId, LinkId? anchorId, CancellationToken cancellationToken);
+
+    ValueTask<AlbumItemListResponse> GetAlbumItemsAsync(VolumeId volumeId, LinkId albumLinkId, LinkId? anchorId, CancellationToken cancellationToken);
+
     ValueTask<LinkDetailsResponse> GetDetailsAsync(VolumeId volumeId, IEnumerable<LinkId> linkIds, CancellationToken cancellationToken);
 
     ValueTask<FindDuplicatesResponse> FindDuplicatesAsync(

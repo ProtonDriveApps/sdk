@@ -8,6 +8,8 @@ fun ProtonDriveSdk.Node.toEntity(): Node =
     when (nodeCase) {
         ProtonDriveSdk.Node.NodeCase.FOLDER -> folder.toEntity()
         ProtonDriveSdk.Node.NodeCase.FILE -> file.toEntity()
+        ProtonDriveSdk.Node.NodeCase.ALBUM -> album.toEntity()
+        ProtonDriveSdk.Node.NodeCase.PHOTO -> photo.toEntity()
         ProtonDriveSdk.Node.NodeCase.NODE_NOT_SET, null ->
             error("Invalid Node: node not set")
     }

@@ -1,0 +1,10 @@
+package me.proton.drive.sdk.extension
+
+import me.proton.drive.sdk.entity.AlbumItem
+import me.proton.drive.sdk.entity.NodeUid
+import proton.drive.sdk.ProtonDriveSdk
+
+fun ProtonDriveSdk.AlbumItem.toEntity() = AlbumItem(
+    nodeUid = NodeUid(nodeUid),
+    captureTime = captureTime.toInstant(),
+)

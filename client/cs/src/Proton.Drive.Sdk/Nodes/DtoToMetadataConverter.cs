@@ -86,7 +86,7 @@ internal static class DtoToMetadataConverter
                     cancellationToken).ConfigureAwait(false)),
 
             LinkType.Album => NodeMetadataConversionResult.FromFolder(
-                await ConvertFolderMetadataAsync(
+                await ConvertAlbumMetadataAsync(
                     client.Account,
                     volumeId,
                     linkDetailsDto,
@@ -202,6 +202,33 @@ internal static class DtoToMetadataConverter
             linkDto,
             linkDetailsDto.Sharing,
             membershipDto);
+    }
+
+    private static async ValueTask<FolderMetadataConversionResult> ConvertAlbumMetadataAsync(
+        IProtonAccountClient account,
+        VolumeId volumeId,
+        LinkDetailsDto linkDetailsDto,
+        AlbumDto albumDto,
+        PgpPrivateKey parentKey,
+        CancellationToken cancellationToken)
+    {
+        // Albums decrypt like folders; the album metadata (photo count, cover photo, last activity time)
+        // comes from the link details and is layered onto an AlbumNode.
+        var folderDto = new FolderDto { HashKey = albumDto.HashKey, ExtendedAttributes = albumDto.ExtendedAttributes };
+
+        var folderResult = await ConvertFolderMetadataAsync(account, volumeId, linkDetailsDto, folderDto, parentKey, cancellationToken)
+            .ConfigureAwait(false);
+
+        var coverPhotoUid = albumDto.CoverLinkId is { } coverLinkId ? new NodeUid(volumeId, coverLinkId) : (NodeUid?)null;
+
+        var albumNode = new AlbumNode(folderResult.Metadata.Node)
+        {
+            PhotoCount = albumDto.PhotoCount,
+            CoverPhotoUid = coverPhotoUid,
+            LastActivityTime = albumDto.LastActivityTime,
+        };
+
+        return folderResult with { Metadata = folderResult.Metadata with { Node = albumNode } };
     }
 
     private static FileMetadataConversionResult BuildFileMetadata(

@@ -15,6 +15,28 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
     let recordMetricEventCallback: RecordMetricEventCallback
     let featureFlagProviderCallback: FeatureFlagProviderCallback
 
+    private enum OperationIdentifier: Hashable {
+        case enumerateTimeline(UUID)
+        case findPhotoDuplicates(UUID)
+        case enumerateAlbumNodeUids(UUID)
+        case enumerateAlbum(UUID)
+        case getNode(UUID)
+        case leaveSharedNode(UUID)
+
+        var operationName: String {
+            switch self {
+            case .enumerateTimeline: return "enumerateTimeline"
+            case .findPhotoDuplicates: return "findPhotoDuplicates"
+            case .enumerateAlbumNodeUids: return "enumerateAlbumNodeUids"
+            case .enumerateAlbum: return "enumerateAlbum"
+            case .getNode: return "getNode"
+            case .leaveSharedNode: return "leaveSharedNode"
+            }
+        }
+    }
+
+    private var activeOperations: [OperationIdentifier: CancellationTokenSource] = [:]
+
     public init(
         configuration: ProtonDriveClientConfiguration,
         httpClient: HttpClientProtocol,
@@ -113,43 +135,75 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
             }
         }
     }
+
+    private func cancelOperation(identifier: OperationIdentifier) async throws {
+        guard let cancellationToken = activeOperations[identifier] else {
+            throw ProtonDriveSDKError(interopError: .noCancellationTokenForIdentifier(operation: identifier.operationName))
+        }
+
+        try await cancellationToken.cancel()
+
+        activeOperations[identifier] = nil
+        cancellationToken.free()
+    }
+
+    private func createCancellationTokenSource(_ operationIdentifier: OperationIdentifier, _ logger: Logger) async throws -> CancellationTokenSource {
+        let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
+        activeOperations[operationIdentifier] = cancellationTokenSource
+        return cancellationTokenSource
+    }
+
+    private func freeCancellationTokenSourceIfNeeded(identifier: OperationIdentifier) {
+        guard let cancellationTokenSource = activeOperations[identifier] else { return }
+        activeOperations[identifier] = nil
+        cancellationTokenSource.free()
+    }
 }
 
 extension ProtonPhotosClient {
-    public func enumerateTimeline(in folderUid: SDKNodeUid) async throws -> [PhotoTimelineItem] {
-        let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
+    public func enumerateTimeline(
+        in folderUid: SDKNodeUid,
+        cancellationToken: UUID,
+        onPhotoEnumerated: @escaping PhotoTimelineItemCallback
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.enumerateTimeline(cancellationToken), logger)
         defer {
-            cancellationTokenSource.free()
+            freeCancellationTokenSourceIfNeeded(identifier: .enumerateTimeline(cancellationToken))
         }
 
-        let cancellationHandle = cancellationTokenSource.handle
-        let accumulator = TimelineItemAccumulator()
+        let callbackState = TimelineItemEnumerationCallbackWrapper(callback: onPhotoEnumerated)
 
         let request = Proton_Drive_Sdk_DrivePhotosClientEnumerateTimelineRequest.with {
             $0.clientHandle = Int64(clientHandle)
-            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
-            $0.yieldAction = Int64(ObjectHandle(callback: cTimelineEnumerationCallback))
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+            $0.yieldAction = Int64(ObjectHandle(callback: cTimelineItemEnumerationCallback))
         }
 
         let _: Void = try await SDKRequestHandler.send(
             request,
-            state: WeakReference(value: accumulator),
+            state: WeakReference(value: callbackState),
             scope: .ownerManaged,
-            owner: accumulator,
+            owner: callbackState,
             logger: logger
         )
+    }
 
-        return accumulator.items
+    public func cancelEnumerateTimeline(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .enumerateTimeline(cancellationToken))
     }
 }
 
 // MARK: - Duplicates
 
 extension ProtonPhotosClient {
-    public func findPhotoDuplicates(name: String, sha1: Data) async throws -> [SDKNodeUid] {
-        let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
+    public func findPhotoDuplicates(
+        name: String,
+        sha1: Data,
+        cancellationToken: UUID
+    ) async throws -> [SDKNodeUid] {
+        let cancellationTokenSource = try await createCancellationTokenSource(.findPhotoDuplicates(cancellationToken), logger)
         defer {
-            cancellationTokenSource.free()
+            freeCancellationTokenSourceIfNeeded(identifier: .findPhotoDuplicates(cancellationToken))
         }
 
         let state = FindDuplicatesState(sha1: sha1)
@@ -170,6 +224,106 @@ extension ProtonPhotosClient {
         )
 
         return uidStrings.compactMap { SDKNodeUid(sdkCompatibleIdentifier: $0) }
+    }
+
+    public func cancelFindPhotoDuplicates(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .findPhotoDuplicates(cancellationToken))
+    }
+}
+
+// MARK: - Albums
+extension ProtonPhotosClient {
+    /// Enumerates the UIDs of all albums.
+    ///
+    /// The results are not sorted and the order is not guaranteed.
+    public func enumerateAlbumNodeUids(
+        cancellationToken: UUID,
+        onNodeUidEnumerated: @escaping NodeUidCallback
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.enumerateAlbumNodeUids(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .enumerateAlbumNodeUids(cancellationToken))
+        }
+
+        let callbackState = NodeUidEnumerationCallbackWrapper(callback: onNodeUidEnumerated)
+
+        let request = Proton_Drive_Sdk_DrivePhotosClientEnumerateAlbumNodeUidsRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+            $0.yieldAction = Int64(ObjectHandle(callback: cNodeUidEnumerationCallback))
+        }
+
+        let _: Void = try await SDKRequestHandler.send(
+            request,
+            state: WeakReference(value: callbackState),
+            scope: .ownerManaged,
+            owner: callbackState,
+            logger: logger
+        )
+    }
+
+    public func cancelEnumerateAlbumNodeUids(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .enumerateAlbumNodeUids(cancellationToken))
+    }
+
+    /// Enumerates the photos of an album, most recent first.
+    public func enumerateAlbum(
+        albumUid: SDKNodeUid,
+        cancellationToken: UUID,
+        onAlbumItemEnumerated: @escaping AlbumItemCallback
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.enumerateAlbum(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .enumerateAlbum(cancellationToken))
+        }
+
+        let callbackState = AlbumItemEnumerationCallbackWrapper(callback: onAlbumItemEnumerated)
+
+        let request = Proton_Drive_Sdk_DrivePhotosClientEnumerateAlbumRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.albumUid = albumUid.sdkCompatibleIdentifier
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+            $0.yieldAction = Int64(ObjectHandle(callback: cAlbumItemEnumerationCallback))
+        }
+
+        let _: Void = try await SDKRequestHandler.send(
+            request,
+            state: WeakReference(value: callbackState),
+            scope: .ownerManaged,
+            owner: callbackState,
+            logger: logger
+        )
+    }
+
+    public func cancelEnumerateAlbum(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .enumerateAlbum(cancellationToken))
+    }
+}
+
+// MARK: - Nodes
+extension ProtonPhotosClient {
+    /// Fetches a single node (photo, album, or folder) by its UID.
+    ///
+    /// Album nodes are returned as `DriveNode.album` carrying the album metadata.
+    public func getNode(nodeUid: SDKNodeUid, cancellationToken: UUID) async throws -> DriveNode? {
+        let cancellationTokenSource = try await createCancellationTokenSource(.getNode(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .getNode(cancellationToken))
+        }
+
+        let request = Proton_Drive_Sdk_DrivePhotosClientGetNodeRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.nodeUid = nodeUid.sdkCompatibleIdentifier
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let sdkNode: Proton_Drive_Sdk_Node? = try await SDKRequestHandler.send(request, logger: logger)
+        guard let sdkNode else { return nil }
+        return try DriveNode(sdkNode: sdkNode)
+    }
+
+    public func cancelGetNode(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .getNode(cancellationToken))
     }
 }
 
@@ -329,10 +483,10 @@ extension ProtonPhotosClient {
 // MARK: - Sharing
 extension ProtonPhotosClient {
 
-    public func leaveSharedNode(nodeUid: SDKNodeUid) async throws {
-        let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
+    public func leaveSharedNode(nodeUid: SDKNodeUid, cancellationToken: UUID) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.leaveSharedNode(cancellationToken), logger)
         defer {
-            cancellationTokenSource.free()
+            freeCancellationTokenSourceIfNeeded(identifier: .leaveSharedNode(cancellationToken))
         }
 
         let request = Proton_Drive_Sdk_DrivePhotosClientLeaveSharedNodeRequest.with {
@@ -342,6 +496,10 @@ extension ProtonPhotosClient {
         }
 
         let _: Void = try await SDKRequestHandler.send(request, logger: logger)
+    }
+
+    public func cancelLeaveSharedNode(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .leaveSharedNode(cancellationToken))
     }
 
     /// Enumerates the UIDs of all photo nodes that the current user has shared by them.

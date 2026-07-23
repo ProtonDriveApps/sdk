@@ -257,6 +257,16 @@ extension Message {
                 $0.payload = .drivePhotosClientEnumerateTimeline(request)
             }
 
+        case let request as Proton_Drive_Sdk_DrivePhotosClientEnumerateAlbumNodeUidsRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientEnumerateAlbumNodeUids(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientEnumerateAlbumRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientEnumerateAlbum(request)
+            }
+
         case let request as Proton_Drive_Sdk_DrivePhotosClientLeaveSharedNodeRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .drivePhotosClientLeaveSharedNode(request)
@@ -270,6 +280,11 @@ extension Message {
         case let request as Proton_Drive_Sdk_DrivePhotosClientEnumerateSharedNodeUidsRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .drivePhotosClientEnumerateSharedNodeUids(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientGetNodeRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientGetNode(request)
             }
 
             // MARK: - Photo Downloads

@@ -35,6 +35,28 @@ internal sealed class PhotosApiClient(HttpClient httpClient) : IPhotosApiClient
             .GetAsync($"volumes/{request.VolumeId}/photos{query}", cancellationToken).ConfigureAwait(false);
     }
 
+    public async ValueTask<AlbumListResponse> GetAlbumsAsync(VolumeId volumeId, LinkId? anchorId, CancellationToken cancellationToken)
+    {
+        var query = anchorId is not null ? $"?AnchorID={anchorId}" : string.Empty;
+
+        return await _httpClient
+            .Expecting(PhotosApiSerializerContext.Default.AlbumListResponse)
+            .GetAsync($"photos/volumes/{volumeId}/albums{query}", cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask<AlbumItemListResponse> GetAlbumItemsAsync(
+        VolumeId volumeId,
+        LinkId albumLinkId,
+        LinkId? anchorId,
+        CancellationToken cancellationToken)
+    {
+        var anchor = anchorId is not null ? $"&AnchorID={anchorId}" : string.Empty;
+
+        return await _httpClient
+            .Expecting(PhotosApiSerializerContext.Default.AlbumItemListResponse)
+            .GetAsync($"photos/volumes/{volumeId}/albums/{albumLinkId}/children?Sort=Captured&Desc=1{anchor}", cancellationToken).ConfigureAwait(false);
+    }
+
     public async ValueTask<LinkDetailsResponse> GetDetailsAsync(VolumeId volumeId, IEnumerable<LinkId> linkIds, CancellationToken cancellationToken)
     {
         return await _httpClient

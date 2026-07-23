@@ -213,6 +213,40 @@ internal static class InteropProtonPhotosClient
         return null;
     }
 
+    public static async ValueTask<IMessage?> HandleEnumerateAlbumNodeUidsAsync(DrivePhotosClientEnumerateAlbumNodeUidsRequest request, nint bindingsHandle)
+    {
+        var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        await foreach (var nodeUid in client.EnumerateAlbumNodeUidsAsync(cancellationToken).ConfigureAwait(false))
+        {
+            yieldAction.InvokeWithMessage(bindingsHandle, new StringValue { Value = nodeUid.ToString() });
+        }
+
+        return null;
+    }
+
+    public static async ValueTask<IMessage?> HandleEnumerateAlbumAsync(DrivePhotosClientEnumerateAlbumRequest request, nint bindingsHandle)
+    {
+        var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        var albumUid = NodeUid.Parse(request.AlbumUid);
+
+        await foreach (var x in client.EnumerateAlbumAsync(albumUid, cancellationToken).ConfigureAwait(false))
+        {
+            yieldAction.InvokeWithMessage(bindingsHandle, new AlbumItem
+            {
+                NodeUid = x.Uid.ToString(),
+                CaptureTime = x.CaptureTime.ToUniversalTime().ToTimestamp(),
+            });
+        }
+
+        return null;
+    }
+
     public static async ValueTask<IMessage> HandleGetPhotosDownloaderAsync(DrivePhotosClientGetPhotoDownloaderRequest request)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
