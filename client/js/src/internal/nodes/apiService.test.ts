@@ -407,6 +407,53 @@ describe('nodeAPIService', () => {
             }
         });
 
+        it('should get all recognised nodes before API throws an error', async () => {
+            // @ts-expect-error Mocking for testing purposes
+            apiMock.post = jest.fn(async (url) => {
+                if (url.includes('volumeId1')) {
+                    return { Links: [generateAPIFolderNode({ LinkID: 'nodeId1' })] };
+                }
+                if (url.includes('volumeId3')) {
+                    return { Links: [generateAPIFolderNode({ LinkID: 'nodeId3' })] };
+                }
+                throw new Error(url.split('/')[3]);
+            });
+
+            const generator = api.iterateNodes(
+                [
+                    'volumeId0~nodeId0',
+                    'volumeId1~nodeId1',
+                    'volumeId2~nodeId2',
+                    'volumeId3~nodeId3',
+                    'volumeId4~nodeId4',
+                ],
+                'volumeId1',
+            );
+
+            const node1 = await generator.next();
+            expect(node1.value).toStrictEqual(
+                generateFolderNode({ uid: 'volumeId1~nodeId1', parentUid: 'volumeId1~parentLinkId' }),
+            );
+
+            // Second node is actually third, second is skipped and throwed at the end.
+            const node2 = await generator.next();
+            expect(node2.value).toStrictEqual(
+                generateFolderNode({
+                    uid: 'volumeId3~nodeId3',
+                    parentUid: 'volumeId3~parentLinkId',
+                    directRole: MemberRole.Inherited,
+                }),
+            );
+
+            const node3 = generator.next();
+            await expect(node3).rejects.toThrow();
+            try {
+                await node3;
+            } catch (error: any) {
+                expect(error.cause).toEqual([new Error('volumeId0'), new Error('volumeId2'), new Error('volumeId4')]);
+            }
+        });
+
         it('should get nodes across various volumes', async () => {
             // @ts-expect-error Mocking for testing purposes
             apiMock.post = jest.fn(async (url) =>

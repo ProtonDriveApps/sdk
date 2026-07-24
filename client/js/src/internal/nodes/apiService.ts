@@ -1,6 +1,13 @@
 import { c } from 'ttag';
 
-import { NodeWithSameNameExistsValidationError, ProtonDriveError, ValidationError } from '../../errors';
+import {
+    AbortError,
+    ConnectionError,
+    NodeWithSameNameExistsValidationError,
+    ProtonDriveError,
+    RateLimitedError,
+    ValidationError,
+} from '../../errors';
 import { AnonymousUser, Logger, MemberRole, NodeResult, RevisionState } from '../../interface';
 import {
     DriveAPIService,
@@ -208,7 +215,25 @@ export abstract class NodeAPIServiceBase<
         const errors: unknown[] = [];
 
         for (const nodeIdsBatch of batch(nodeIds, API_NODES_BATCH_SIZE)) {
-            const responseLinks = await this.fetchNodeMetadata(volumeId, nodeIdsBatch, signal);
+            // The API doesn't throw when the specific node does not exist, it
+            // just not returns it. However, when the volume does not exist, or
+            // is locked, the API throws. Therefore, the failure should not
+            // continue to next batches and should return the error quickly.
+            let responseLinks;
+            try {
+                responseLinks = await this.fetchNodeMetadata(volumeId, nodeIdsBatch, signal);
+            } catch (error: unknown) {
+                if (
+                    error instanceof AbortError ||
+                    error instanceof RateLimitedError ||
+                    error instanceof ConnectionError
+                ) {
+                    throw error;
+                }
+                this.logger.error(`Failed to fetch node metadata for volume ${volumeId}`, error);
+                errors.push(error);
+                return errors;
+            }
 
             for (const link of responseLinks) {
                 try {
