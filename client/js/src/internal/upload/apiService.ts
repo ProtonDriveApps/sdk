@@ -289,7 +289,7 @@ export class UploadAPIService {
 
         const code = response.Responses?.[0].Response.Code || 0;
         if (!isCodeOk(code)) {
-            throw new APICodeError(c('Error').t`Unknown error ${code}`, code);
+            throw new APICodeError(c('Error').t`Something went wrong. Please try again.`, code);
         }
     }
 

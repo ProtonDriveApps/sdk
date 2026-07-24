@@ -199,7 +199,7 @@ export class SharingManagement {
         }
 
         if (!currentSharing) {
-            throw new ValidationError(c('Error').t`Failed to get sharing info for node ${nodeUid}`);
+            throw new ValidationError(c('Error').t`Could not load sharing details`);
         }
         if (!contextShareAddress) {
             contextShareAddress = await this.nodesService.getRootNodeEmailKey(nodeUid);
@@ -541,7 +541,7 @@ export class SharingManagement {
         const currentSharing = await this.getInternalSharingInfo(nodeUid);
 
         if (!currentSharing) {
-            throw new ValidationError(c('Error').t`Node is not shared`);
+            throw new ValidationError(c('Error').t`This item is not shared`);
         }
 
         const protonInvite = currentSharing.protonInvitations.find((invitation) => invitation.uid === invitationUid);
@@ -610,7 +610,7 @@ export class SharingManagement {
 
         const node = await this.nodesService.getNode(nodeUid);
         if (node.directRole !== MemberRole.Admin) {
-            throw new ValidationError(c('Error').t`Only admins can convert non-Proton invitations`);
+            throw new ValidationError(c('Error').t`Only admins can convert external invitations`);
         }
 
         const [currentSharing, inviter] = await Promise.all([
@@ -618,7 +618,7 @@ export class SharingManagement {
             this.nodesService.getRootNodeEmailKey(nodeUid),
         ]);
         if (!currentSharing) {
-            throw new ValidationError(c('Error').t`The node is not shared anymore`);
+            throw new ValidationError(c('Error').t`This item is no longer shared`);
         }
 
         const externalInvitation = currentSharing.nonProtonInvitations.find(
@@ -758,7 +758,7 @@ export class SharingManagement {
     ): Promise<PublicLinkWithCreatorEmail> {
         const rootIds = await this.sharesService.getRootIDs();
         if (share.volumeId !== rootIds.volumeId) {
-            throw new ValidationError(c('Error').t`Cannot create public link for volume not owned by the user`);
+            throw new ValidationError(c('Error').t`You can create public links for your own files only`);
         }
 
         const generatedPassword = await this.cryptoService.generatePublicLinkPassword();
@@ -797,7 +797,7 @@ export class SharingManagement {
     ): Promise<PublicLinkWithCreatorEmail> {
         const rootIds = await this.sharesService.getRootIDs();
         if (share.volumeId !== rootIds.volumeId) {
-            throw new ValidationError(c('Error').t`Cannot update public link for volume not owned by the user`);
+            throw new ValidationError(c('Error').t`You can update a public link for your own files only`);
         }
 
         const generatedPassword = publicLink.url.split('#')[1];
@@ -849,7 +849,7 @@ export class SharingManagement {
         // share root carries shareId, so walk up until we find it.
         const rootNode = await this.nodesService.getRootNode(settings.nodeUid);
         if (!rootNode.shareId) {
-            throw new ValidationError(c('Error').t`Node is not accessible via a share`);
+            throw new ValidationError(c('Error').t`You do not have access to this shared item`);
         }
 
         // Fetch and decrypt the share on the spot rather than exposing its

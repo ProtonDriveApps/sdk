@@ -343,7 +343,7 @@ export abstract class NodesAccessBase<
 
         if (errors.length > 0) {
             this.logger.error(`Failed to decrypt ${errors.length} nodes`, errors);
-            throw new ProtonDriveError(c('Error').t`Failed to load some nodes`, { cause: errors });
+            throw new ProtonDriveError(c('Error').t`Some items could not be loaded`, { cause: errors });
         }
 
         const missingNodeUids = nodeUids.filter((nodeUid) => !returnedNodeUids.includes(nodeUid));
@@ -439,7 +439,7 @@ export abstract class NodesAccessBase<
                     // Change the error message to be more specific.
                     // Original error message is referring to node, while here
                     // it referes to as parent to follow the method context.
-                    throw new DecryptionError(c('Error').t`Parent cannot be decrypted`, { cause: error });
+                    throw new DecryptionError(c('Error').t`Could not unlock the parent folder`, { cause: error });
                 }
                 throw error;
             }
@@ -461,7 +461,7 @@ export abstract class NodesAccessBase<
         } catch {
             const { keys } = await this.loadNode(nodeUid);
             if (!keys) {
-                throw new DecryptionError(c('Error').t`Item cannot be decrypted`);
+                throw new DecryptionError(c('Error').t`Could not unlock this item`);
             }
             return keys;
         }
@@ -526,7 +526,7 @@ export abstract class NodesAccessBase<
 
         const rootNode = await this.getRootNode(nodeUid);
         if (!rootNode.shareId) {
-            throw new ProtonDriveError(c('Error').t`Node is not accessible`);
+            throw new ProtonDriveError(c('Error').t`You do not have access to this item`);
         }
         const { nodeId } = splitNodeUid(nodeUid);
         const type = node.type === NodeType.File ? 'file' : 'folder';

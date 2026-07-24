@@ -17,7 +17,7 @@ public sealed class FileContentsDecryptionException : ProtonDriveException
     }
 
     public FileContentsDecryptionException(Exception innerException)
-        : this("Failed to decrypt file contents", innerException)
+        : this("Could not read part of this file", innerException)
     {
     }
 }

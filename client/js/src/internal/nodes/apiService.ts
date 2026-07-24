@@ -143,7 +143,7 @@ export abstract class NodeAPIServiceBase<
         const nodesGenerator = this.iterateNodes([nodeUid], ownVolumeId, undefined, signal);
         const result = await nodesGenerator.next();
         if (!result.value) {
-            throw new ValidationError(c('Error').t`Node not found`);
+            throw new ValidationError(c('Error').t`Item not found`);
         }
         await nodesGenerator.return('finish');
         return result.value;
@@ -194,7 +194,7 @@ export abstract class NodeAPIServiceBase<
 
         if (errors.length) {
             this.logger.warn(`Failed to load ${errors.length} nodes`);
-            throw new ProtonDriveError(c('Error').t`Failed to load some nodes`, { cause: errors });
+            throw new ProtonDriveError(c('Error').t`Some items could not be loaded`, { cause: errors });
         }
     }
 

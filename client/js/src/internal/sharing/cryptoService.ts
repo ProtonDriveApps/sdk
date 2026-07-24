@@ -662,7 +662,7 @@ export class SharingCryptoService {
             } catch (error: unknown) {
                 return resultError({
                     name,
-                    error: error instanceof Error ? error.message : c('Error').t`Unknown error`,
+                    error: error instanceof Error ? error.message : c('Error').t`Something went wrong`,
                 });
             }
 

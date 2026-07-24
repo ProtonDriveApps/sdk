@@ -106,7 +106,7 @@ describe('ThumbnailDownloader', () => {
 
         const results = await Array.fromAsync(downloader.iterateThumbnails(['node1']));
 
-        expect(results).toEqual([{ nodeUid: 'node1', ok: false, error: 'Node not found' }]);
+        expect(results).toEqual([{ nodeUid: 'node1', ok: false, error: 'Item not found' }]);
         expect(apiService.iterateThumbnails).not.toHaveBeenCalled();
     });
 
@@ -117,7 +117,7 @@ describe('ThumbnailDownloader', () => {
 
         const results = await Array.fromAsync(downloader.iterateThumbnails(['node1']));
 
-        expect(results).toEqual([{ nodeUid: 'node1', ok: false, error: 'Node has no thumbnail' }]);
+        expect(results).toEqual([{ nodeUid: 'node1', ok: false, error: 'This item has no image preview' }]);
         expect(apiService.iterateThumbnails).not.toHaveBeenCalled();
     });
 
@@ -128,18 +128,18 @@ describe('ThumbnailDownloader', () => {
 
         const results = await Array.fromAsync(downloader.iterateThumbnails(['node1']));
 
-        expect(results).toEqual([{ nodeUid: 'node1', ok: false, error: 'Node has no thumbnail' }]);
+        expect(results).toEqual([{ nodeUid: 'node1', ok: false, error: 'This item has no image preview' }]);
         expect(apiService.iterateThumbnails).not.toHaveBeenCalled();
     });
 
     it('should handle API failure to provide token for thumbnail', async () => {
         apiService.iterateThumbnails = jest.fn().mockImplementation(async function* () {
-            yield { uid: 'thumb-node1', ok: false, error: 'Failed to fetch token' };
+            yield { uid: 'thumb-node1', ok: false, error: 'Something went wrong' };
         });
 
         const results = await Array.fromAsync(downloader.iterateThumbnails(['node1']));
 
-        expect(results).toEqual([{ nodeUid: 'node1', ok: false, error: 'Failed to fetch token' }]);
+        expect(results).toEqual([{ nodeUid: 'node1', ok: false, error: 'Something went wrong' }]);
         expect(apiService.downloadBlock).not.toHaveBeenCalled();
     });
 
@@ -150,7 +150,7 @@ describe('ThumbnailDownloader', () => {
 
         const results = await Array.fromAsync(downloader.iterateThumbnails(['node1']));
 
-        expect(results).toEqual([{ nodeUid: 'node1', ok: false, error: 'Thumbnail not found' }]);
+        expect(results).toEqual([{ nodeUid: 'node1', ok: false, error: 'Image preview not found' }]);
         expect(apiService.downloadBlock).not.toHaveBeenCalled();
     });
 

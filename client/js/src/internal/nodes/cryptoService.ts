@@ -726,10 +726,12 @@ export class NodesCryptoService {
         nameSignatureEmail: string | AnonymousUser;
     }> {
         if (!parentKeys.hashKey) {
-            throw new ValidationError('Moving item to a non-folder is not allowed');
+            throw new ValidationError(c('Error').t`Moving item to a non-folder is not allowed`);
         }
         if (!nodeName.ok) {
-            throw new ValidationError('Cannot move item without a valid name, please rename the item first');
+            throw new ValidationError(
+                c('Error').t`Cannot move item without a valid name, please rename the item first`,
+            );
         }
 
         const email = signingKeys.type === 'userAddress' ? signingKeys.email : null;

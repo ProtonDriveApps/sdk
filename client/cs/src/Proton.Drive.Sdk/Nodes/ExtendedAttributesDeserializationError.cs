@@ -7,7 +7,7 @@ public sealed class ExtendedAttributesDeserializationError(string? message, Prot
     : ProtonDriveError(message, innerError)
 {
     public ExtendedAttributesDeserializationError(ProtonDriveError? innerError = null)
-        : this("Failed to deserialize extended attributes", innerError)
+        : this("Could not read item's metadata", innerError)
     {
     }
 }

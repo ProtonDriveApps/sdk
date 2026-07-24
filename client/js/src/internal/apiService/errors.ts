@@ -20,7 +20,7 @@ export function apiErrorFactory({
     // In such a case we want to stick to APIHTTPError to be very clear
     // it is not NotFoundAPIError.
     if (response?.status === HTTPErrorCode.NOT_FOUND || !result) {
-        const fallbackMessage = error instanceof Error ? error.message : c('Error').t`Unknown error`;
+        const fallbackMessage = error instanceof Error ? error.message : c('Error').t`Something went wrong`;
         const apiHttpError = new APIHTTPError(response?.statusText || fallbackMessage, response?.status || 500);
         apiHttpError.cause = error;
         return apiHttpError;
@@ -39,7 +39,7 @@ export function apiErrorFactory({
 
     const [code, message, details] = [
         typedResult.Code || 0,
-        typedResult.Error || c('Error').t`Unknown error`,
+        typedResult.Error || c('Error').t`Something went wrong`,
         typedResult.Details,
     ];
 

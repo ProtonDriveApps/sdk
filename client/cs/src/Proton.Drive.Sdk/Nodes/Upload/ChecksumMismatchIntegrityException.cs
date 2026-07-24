@@ -17,7 +17,7 @@ public class ChecksumMismatchIntegrityException : IntegrityException
     }
 
     public ChecksumMismatchIntegrityException(byte[] actualChecksum, byte[] expectedChecksum)
-        : base("Mismatch between uploaded checksum and expected checksum")
+        : base("The uploaded file doesn't match the original. Please try again.")
     {
         ActualChecksum = actualChecksum;
         ExpectedChecksum = expectedChecksum;

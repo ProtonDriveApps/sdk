@@ -49,7 +49,7 @@ internal static class FileOperations
 
                     if (!node.TryGetFileElseFolder(out var fileNode, out _))
                     {
-                        errors.Add(new FileThumbnail(node.Uid, new ProtonDriveError("Node is not a file")));
+                        errors.Add(new FileThumbnail(node.Uid, new ProtonDriveError("This item is not a file")));
                         return null;
                     }
 
@@ -65,8 +65,8 @@ internal static class FileOperations
                     if (thumbnails.All(thumbnail => thumbnail.Type != thumbnailType))
                     {
                         var errorMessage = thumbnails.Count != 0
-                            ? $"Node {fileNodeInfo.Uid} has no thumbnail of type {thumbnailType}"
-                            : $"Node {fileNodeInfo.Uid} has no thumbnails";
+                            ? "This item has no image preview"
+                            : "This item has no image preview available";
 
                         errors.Add(new FileThumbnail(fileNodeInfo.Uid, new ProtonDriveError(errorMessage)));
                     }
@@ -82,7 +82,7 @@ internal static class FileOperations
             errors.AddRange(
                 unprocessedLinkIds
                     .Select(missingLinkId =>
-                        new FileThumbnail(new NodeUid(volumeId, missingLinkId), new ProtonDriveError("Node not found"))));
+                        new FileThumbnail(new NodeUid(volumeId, missingLinkId), new ProtonDriveError("Item not found"))));
 
             foreach (var error in errors)
             {
@@ -140,7 +140,7 @@ internal static class FileOperations
 
                 foreach (var thumbnailId in thumbnailIdBatch.Where(id => !processedThumbnailIds.Contains(id)))
                 {
-                    yield return new FileThumbnail(thumbnailIds[thumbnailId].Uid, new ProtonDriveError("Thumbnail not found"));
+                    yield return new FileThumbnail(thumbnailIds[thumbnailId].Uid, new ProtonDriveError("Image preview not found"));
                 }
             }
         }

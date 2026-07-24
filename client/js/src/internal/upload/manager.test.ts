@@ -317,7 +317,7 @@ describe('UploadManager', () => {
 
             const result = manager.getExistingFileNodeCrypto('fileNodeUid');
 
-            await expect(result).rejects.toThrow('Creating revisions in non-files is not allowed');
+            await expect(result).rejects.toThrow('You can only upload a new version to a file');
         });
 
         it('should throw when nodeKeys has no contentKeyPacketSessionKey', async () => {
@@ -334,7 +334,7 @@ describe('UploadManager', () => {
 
             const result = manager.getExistingFileNodeCrypto('fileNodeUid');
 
-            await expect(result).rejects.toThrow('Creating revisions in non-files is not allowed');
+            await expect(result).rejects.toThrow('You can only upload a new version to a file');
         });
 
         it('should throw when nodeKeys has no contentKeyPacket', async () => {
@@ -351,7 +351,7 @@ describe('UploadManager', () => {
 
             const result = manager.getExistingFileNodeCrypto('fileNodeUid');
 
-            await expect(result).rejects.toThrow('Content key packet is required for small revision upload');
+            await expect(result).rejects.toThrow('This file version could not be uploaded');
         });
 
         it('should return key, contentKeyPacket, contentKeyPacketSessionKey and signingKeys', async () => {

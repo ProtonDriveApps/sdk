@@ -101,7 +101,7 @@ internal static class NodeCrypto
 
         if (!nodeKeyResult.TryGetValueElseError(out var nodeKey, out var error))
         {
-            return new ProtonDriveError("Cannot get node key", error);
+            return new ProtonDriveError("Could not unlock the item", error);
         }
 
         ArraySegment<byte> serializedExtendedAttributes;
@@ -118,7 +118,7 @@ internal static class NodeCrypto
         }
         catch (Exception e)
         {
-            return new DecryptionError("Failed to decrypt extended attributes", e.ToProtonDriveError());
+            return new DecryptionError("Could not unlock item's details", e.ToProtonDriveError());
         }
 
         try
@@ -133,7 +133,7 @@ internal static class NodeCrypto
         }
         catch (Exception e)
         {
-            return new ProtonDriveError("Unknown error while deserializing extended attributes", e.ToProtonDriveError());
+            return new ProtonDriveError("Could not read item's metadata", e.ToProtonDriveError());
         }
     }
 
@@ -184,7 +184,7 @@ internal static class NodeCrypto
         }
         catch (Exception e)
         {
-            return new ProtonDriveError("Failed to decrypt passphrase", e.ToProtonDriveError());
+            return new ProtonDriveError("Could not unlock the item", e.ToProtonDriveError());
         }
     }
 
@@ -194,7 +194,7 @@ internal static class NodeCrypto
     {
         if (!passphraseResult.TryGetValueElseError(out var passphrase, out var error))
         {
-            return new ProtonDriveError("Cannot get passphrase", error);
+            return new ProtonDriveError("Could not unlock the item's key", error);
         }
 
         try
@@ -203,7 +203,7 @@ internal static class NodeCrypto
         }
         catch (Exception e)
         {
-            return new ProtonDriveError("Failed to import and unlock passphrase", e.ToProtonDriveError());
+            return new ProtonDriveError("Could not unlock the item", e.ToProtonDriveError());
         }
     }
 
@@ -239,7 +239,7 @@ internal static class NodeCrypto
     {
         if (!nodeKeyResult.TryGetValueElseError(out var nodeKey, out var error))
         {
-            return new ProtonDriveError("Cannot decrypt hash key without node key", error);
+            return new ProtonDriveError("Could not unlock the folder's key", error);
         }
 
         try
@@ -250,7 +250,7 @@ internal static class NodeCrypto
         }
         catch (Exception e)
         {
-            return new ProtonDriveError("Failed to decrypt hash key", e.ToProtonDriveError());
+            return new ProtonDriveError("Could not unlock the folder", e.ToProtonDriveError());
         }
     }
 
@@ -273,7 +273,7 @@ internal static class NodeCrypto
     {
         if (!nodeKeyResult.TryGetValueElseError(out var nodeKey, out var error))
         {
-            return new ProtonDriveError("Cannot get node key", error);
+            return new ProtonDriveError("Could not unlock the file", error);
         }
 
         PgpSessionKey contentKey;
@@ -283,7 +283,7 @@ internal static class NodeCrypto
         }
         catch (Exception e)
         {
-            return new ProtonDriveError("Cannot decrypt session key", e.ToProtonDriveError());
+            return new ProtonDriveError("Could not unlock the file's content", e.ToProtonDriveError());
         }
 
         var verificationKeyRing = GetContentKeyAndHashKeyVerificationKeyRing(nodeKey, nodeAuthorshipClaim);

@@ -414,7 +414,10 @@ export class PhotosAPIService {
                 } else {
                     errors.set(
                         nodeUid,
-                        new APICodeError(details.Response.Error || c('Error').t`Unknown error`, details.Response.Code),
+                        new APICodeError(
+                            details.Response.Error || c('Error').t`Something went wrong`,
+                            details.Response.Code,
+                        ),
                     );
                 }
             }
@@ -634,7 +637,10 @@ export class PhotosAPIService {
                 } else {
                     errors.set(
                         nodeUid,
-                        new APICodeError(details.Response.Error || c('Error').t`Unknown error`, details.Response.Code),
+                        new APICodeError(
+                            details.Response.Error || c('Error').t`Something went wrong`,
+                            details.Response.Code,
+                        ),
                     );
                 }
             }

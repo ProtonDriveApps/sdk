@@ -135,7 +135,7 @@ export class SharingAccess {
         const share = await this.sharesService.loadEncryptedShare(node.shareId);
         const memberUid = share.membership?.memberUid;
         if (!memberUid) {
-            throw new ValidationError(c('Error').t`You can leave only item that is shared with you`);
+            throw new ValidationError(c('Error').t`You can only leave items that are shared with you`);
         }
 
         await this.apiService.removeMember(memberUid);

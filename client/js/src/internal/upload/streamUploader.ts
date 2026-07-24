@@ -647,25 +647,25 @@ export class StreamUploader {
         if (expectedSize !== null) {
             const expectedBlockCount = Math.ceil(expectedSize / FILE_CHUNK_SIZE) + (thumbnails ? thumbnails?.length : 0);
             if (this.uploadedBlockCount !== expectedBlockCount) {
-                throw new IntegrityError(c('Error').t`Some file parts failed to upload`, {
+                throw new IntegrityError(c('Error').t`Some file parts failed to upload. Please try again.`, {
                     uploadedBlockCount: this.uploadedBlockCount,
                     expectedBlockCount,
                 });
             }
             if (this.uploadedOriginalFileSize !== expectedSize) {
-                throw new IntegrityError(c('Error').t`Some file bytes failed to upload`, {
+                throw new IntegrityError(c('Error').t`Some file data failed to upload. Please try again.`, {
                     uploadedOriginalFileSize: this.uploadedOriginalFileSize,
                     expectedFileSize: expectedSize,
                 });
             }
         } else if (this.uploadedBlockCount === 0) {
-            throw new IntegrityError(c('Error').t`No data to upload received`, {
+            throw new IntegrityError(c('Error').t`No file data was received. Please try again.`, {
                 uploadedBlockCount: this.uploadedBlockCount,
                 expectedBlockCount: undefined,
             });
         }
         if (this.metadata.expectedSha1 && digests.sha1 !== this.metadata.expectedSha1) {
-            throw new IntegrityError(c('Error').t`File hash does not match expected hash`, {
+            throw new IntegrityError(c('Error').t`The uploaded file does not match the original. Please try again.`, {
                 uploadedSha1: digests.sha1,
                 expectedSha1: this.metadata.expectedSha1,
             });

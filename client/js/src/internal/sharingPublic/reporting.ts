@@ -36,7 +36,7 @@ export class SharingPublicReporting {
         const { rootNodeUid } = await this.sharesManager.getRootIDs();
         const rootNode = await this.nodesAccess.getNode(rootNodeUid);
         if (!rootNode.shareId) {
-            throw new ValidationError(c('Error').t`Node is not accessible via a share`);
+            throw new ValidationError(c('Error').t`You do not have access to this shared item`);
         }
 
         let linkId: string | undefined;

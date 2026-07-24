@@ -8,7 +8,7 @@ export function createErrorFromUnknown(error: unknown): Error {
 }
 
 export function getErrorMessage(error: unknown): string {
-    return error instanceof Error ? error.message : c('Error').t`Unknown error`;
+    return error instanceof Error ? error.message : c('Error').t`Something went wrong`;
 }
 
 /**

@@ -76,7 +76,7 @@ export class BatchLoading<ID, ITEM> {
         }
 
         if (this.errors.length > 0) {
-            throw new ProtonDriveError(c('Error').t`Failed to load some items`, { cause: this.errors });
+            throw new ProtonDriveError(c('Error').t`Some items could not be loaded`, { cause: this.errors });
         }
     }
 

@@ -228,7 +228,7 @@ export class UploadCryptoService {
         try {
             await this.driveCrypto.decryptBlock(encryptedData, contentKeyPacketSessionKey);
         } catch (error) {
-            throw new IntegrityError(c('Error').t`Data integrity check of one part failed`, {
+            throw new IntegrityError(c('Error').t`Part of the file appears to be corrupted`, {
                 error,
             });
         }

@@ -13,7 +13,11 @@ internal static class AuthorshipClaimExtensions
         {
             var error = authorshipClaim.KeyRetrievalError ?? verificationFailure.Value.Error;
 
-            return new SignatureVerificationError(authorshipClaim.Author, verificationFailure.Value.Status, "Authorship failure", error);
+            return new SignatureVerificationError(
+                authorshipClaim.Author,
+                verificationFailure.Value.Status,
+                "Could not verify the author of this item",
+                error);
         }
 
         return authorshipClaim.Author;

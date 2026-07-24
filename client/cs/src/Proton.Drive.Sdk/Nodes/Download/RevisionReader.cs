@@ -68,7 +68,7 @@ internal sealed partial class RevisionReader
                 {
                     LogFailedManifestVerification(_state.Uid, manifestVerificationStatus);
 
-                    throw new CompletedDownloadManifestVerificationException("File authenticity check failed");
+                    throw new CompletedDownloadManifestVerificationException("Cannot verify the author uploaded this file");
                 }
 
                 _state.SetIsCompleted();

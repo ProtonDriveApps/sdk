@@ -477,7 +477,7 @@ export abstract class NodesManagementBase<
             return availableHash.name;
         }
 
-        throw new ValidationError(c('Error').t`No available name found`);
+        throw new ValidationError(c('Error').t`Could not find an available name`);
     }
 }
 

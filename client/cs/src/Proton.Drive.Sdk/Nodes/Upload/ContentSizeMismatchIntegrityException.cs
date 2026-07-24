@@ -17,7 +17,7 @@ public class ContentSizeMismatchIntegrityException : IntegrityException
     }
 
     public ContentSizeMismatchIntegrityException(long uploadedSize, long expectedSize)
-        : base("Mismatch between uploaded size and expected size")
+        : base("The uploaded file size doesn't match the original. Please try again.")
     {
         UploadedSize = uploadedSize;
         ExpectedSize = expectedSize;

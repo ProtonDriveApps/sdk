@@ -413,11 +413,11 @@ describe('nodesAccess', () => {
                 const node2 = await generator.next();
                 expect(node2.value).toMatchObject({ uid: 'volumeId~node3' });
                 const node3 = generator.next();
-                await expect(node3).rejects.toThrow('Failed to load some items');
+                await expect(node3).rejects.toThrow('Some items could not be loaded');
                 try {
                     await node3;
                 } catch (error: any) {
-                    expect(error.cause).toEqual([new ProtonDriveError('Failed to load some nodes')]);
+                    expect(error.cause).toEqual([new ProtonDriveError('Some items could not be loaded')]);
                     expect(error.cause[0].cause).toEqual([new DecryptionError('Decryption failed')]);
                 }
             });

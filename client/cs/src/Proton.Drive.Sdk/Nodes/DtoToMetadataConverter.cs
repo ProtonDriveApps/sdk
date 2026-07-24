@@ -382,7 +382,7 @@ internal static class DtoToMetadataConverter
 
         if (modificationTimeResult?.TryGetError(out var modificationTimeError) == true)
         {
-            nodeErrors.Add(new ExtendedAttributesDeserializationError("Failed to deserialize modification time", modificationTimeError));
+            nodeErrors.Add(new ExtendedAttributesDeserializationError("Could not read item's modification time", modificationTimeError));
         }
 
         if (decryptionResult.ExtendedAttributes.TryGetError(out var extendedAttributesError))

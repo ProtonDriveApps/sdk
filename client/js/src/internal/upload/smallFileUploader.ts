@@ -1,3 +1,5 @@
+import { c } from 'ttag';
+
 import { PrivateKey, SessionKey } from '../../crypto';
 import { AbortError, IntegrityError } from '../../errors';
 import { Logger, Thumbnail, ThumbnailType } from '../../interface';
@@ -112,7 +114,7 @@ abstract class SmallUploader {
         const content = await readStreamToUint8Array(stream, this.abortController.signal);
 
         if (content.length !== this.metadata.expectedSize) {
-            throw new IntegrityError(new Error('Stream size does not match expected size').message, {
+            throw new IntegrityError(c('Error').t`Some file data failed to upload. Please try again.`, {
                 actual: content.length,
                 expected: this.metadata.expectedSize,
             });
@@ -123,7 +125,7 @@ abstract class SmallUploader {
         const contentSha1 = digests.digests().sha1;
 
         if (this.metadata.expectedSha1 && contentSha1 !== this.metadata.expectedSha1) {
-            throw new IntegrityError(new Error('File hash does not match expected hash').message, {
+            throw new IntegrityError(c('Error').t`The uploaded file does not match the original. Please try again.`, {
                 uploadedSha1: contentSha1,
                 expectedSha1: this.metadata.expectedSha1,
             });

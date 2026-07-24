@@ -218,7 +218,7 @@ describe('nodeAPIService', () => {
 
             const promise = api.getNode('volumeId~nodeId', 'volumeId');
 
-            await expect(promise).rejects.toThrow('Node not found');
+            await expect(promise).rejects.toThrow('Item not found');
         });
     });
 
@@ -399,7 +399,7 @@ describe('nodeAPIService', () => {
             expect(node2.value).toStrictEqual(generateFileNode());
 
             const node3 = generator.next();
-            await expect(node3).rejects.toThrow('Failed to load some nodes');
+            await expect(node3).rejects.toThrow('Some items could not be loaded');
             try {
                 await node3;
             } catch (error: any) {
@@ -574,7 +574,7 @@ describe('nodeAPIService', () => {
             expect(result).toEqual([
                 { uid: 'volumeId~nodeId1', ok: true },
                 { uid: 'volumeId~nodeId2', ok: false, error: new ValidationError('not enough permissions') },
-                { uid: 'volumeId~nodeId3', ok: false, error: new APICodeError('Unknown error', 123456) },
+                { uid: 'volumeId~nodeId3', ok: false, error: new APICodeError('Something went wrong', 123456) },
             ]);
         });
 

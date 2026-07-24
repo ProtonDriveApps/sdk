@@ -26,7 +26,7 @@ public sealed class SignatureVerificationError(Author claimedAuthor, string? mes
         }
 
         return verificationStatus is not null
-            ? $"Verification resulted in unsuccessful status: {verificationStatus}"
+            ? $"Could not verify the author of this item: {verificationStatus}"
             : "Authorship could not be verified";
     }
 }

@@ -118,7 +118,7 @@ export class PhotosManager {
                         uid: payload.nodeUid,
                         ok: false,
                         error:
-                            error instanceof Error ? error : new Error(c('Error').t`Unknown error`, { cause: error }),
+                            error instanceof Error ? error : new Error(c('Error').t`Something went wrong`, { cause: error }),
                     };
                 }
             }

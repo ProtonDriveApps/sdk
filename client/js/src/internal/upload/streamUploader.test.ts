@@ -195,7 +195,7 @@ describe('StreamUploader', () => {
             expect(telemetry.uploadFailed).toHaveBeenCalledTimes(1);
             expect(telemetry.uploadFailed).toHaveBeenCalledWith(
                 'testVol~testNode~testRev',
-                new Error(error),
+                expect.objectContaining({ message: error }),
                 uploadedBytes === undefined ? expect.anything() : uploadedBytes,
                 expectedSize,
             );
@@ -584,7 +584,7 @@ describe('StreamUploader', () => {
                 );
 
                 await verifyFailure(
-                    'Some file parts failed to upload',
+                    'Some file parts failed to upload. Please try again.',
                     10 * 1024 * 1024 + 1024,
                     1 * 1024 * 1024 + 1024,
                 );
@@ -601,7 +601,7 @@ describe('StreamUploader', () => {
                     hash: 'blockHash',
                 }));
 
-                await verifyFailure('Some file bytes failed to upload', 10 * 1024 * 1024 + 1024);
+                await verifyFailure('Some file data failed to upload. Please try again.', 10 * 1024 * 1024 + 1024);
             });
 
             it('should succeed with matching expectedSha1', async () => {
@@ -639,7 +639,10 @@ describe('StreamUploader', () => {
                     abortController,
                 );
 
-                await verifyFailure('File hash does not match expected hash', 10 * 1024 * 1024 + 1024);
+                await verifyFailure(
+                    'The uploaded file does not match the original. Please try again.',
+                    10 * 1024 * 1024 + 1024,
+                );
             });
 
             it('should derive size and blockSizes from uploaded bytes when expectedSize is null (unknown)', async () => {
@@ -697,7 +700,7 @@ describe('StreamUploader', () => {
                 });
 
                 await expect(uploader.start(emptyStream, [], onProgress)).rejects.toThrow(
-                    'No data to upload received',
+                    'No file data was received. Please try again.',
                 );
             });
         });

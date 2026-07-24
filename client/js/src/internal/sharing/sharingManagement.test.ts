@@ -927,7 +927,7 @@ describe('SharingManagement', () => {
                             role: MemberRole.Viewer,
                         },
                     }),
-                ).rejects.toThrow('Cannot create public link for volume not owned by the user');
+                ).rejects.toThrow('You can create public links for your own files only');
 
                 expect(apiService.createPublicLink).not.toHaveBeenCalled();
             });
@@ -1137,7 +1137,7 @@ describe('SharingManagement', () => {
             nodesService.getNode = jest.fn().mockResolvedValue({ nodeUid, shareId: undefined });
 
             await expect(sharingManagement.resendInvitationEmail(nodeUid, invitation.uid)).rejects.toThrow(
-                'Node is not shared',
+                'This item is not shared',
             );
 
             expect(apiService.resendInvitationEmail).not.toHaveBeenCalled();

@@ -44,7 +44,7 @@ export class DownloadCryptoService {
             );
         } catch (error: unknown) {
             const message = getErrorMessage(error);
-            throw new DecryptionError(c('Error').t`Failed to decrypt block: ${message}`, { cause: error });
+            throw new DecryptionError(c('Error').t`Could not read part of this file: ${message}`, { cause: error });
         }
 
         return decryptedBlock;
@@ -61,7 +61,7 @@ export class DownloadCryptoService {
             decryptedBlock = result.decryptedThumbnail;
         } catch (error: unknown) {
             const message = getErrorMessage(error);
-            throw new DecryptionError(c('Error').t`Failed to decrypt thumbnail: ${message}`, { cause: error });
+            throw new DecryptionError(c('Error').t`Could not load the image preview: ${message}`, { cause: error });
         }
 
         return decryptedBlock;
@@ -72,7 +72,7 @@ export class DownloadCryptoService {
         const expectedHash = new Uint8Array(digest).toBase64();
 
         if (expectedHash !== base64sha256Hash) {
-            throw new IntegrityError(c('Error').t`Data integrity check of one part failed`, {
+            throw new IntegrityError(c('Error').t`Part of the file appears to be corrupted`, {
                 expectedHash,
                 actualHash: base64sha256Hash,
             });
@@ -88,7 +88,7 @@ export class DownloadCryptoService {
         const hash = mergeUint8Arrays(allBlockHashes);
 
         if (!armoredManifestSignature) {
-            throw new IntegrityError(c('Error').t`Missing integrity signature`);
+            throw new IntegrityError(c('Error').t`Cannot verify who uploaded this file`);
         }
 
         let verificationKeys;
@@ -96,7 +96,7 @@ export class DownloadCryptoService {
             verificationKeys = await this.getRevisionVerificationKeys(revision, nodeKey);
         } catch (error: unknown) {
             throw new SignatureVerificationError(
-                c('Error').t`Failed to get verification keys`,
+                c('Error').t`Cannot verify the author of this file`,
                 { revisionUid: revision.uid, contentAuthor: revision.contentAuthor },
                 { cause: error },
             );
@@ -109,7 +109,9 @@ export class DownloadCryptoService {
         );
 
         if (verified !== VERIFICATION_STATUS.SIGNED_AND_VALID) {
-            throw new SignatureVerificationError(c('Error').t`Data integrity check failed`, {
+            throw new SignatureVerificationError(c('Error').t`Cannot verify who uploaded this file`, {
+                revisionUid: revision.uid,
+                contentAuthor: revision.contentAuthor,
                 verificationErrors,
             });
         }

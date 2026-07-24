@@ -104,7 +104,7 @@ internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
             }
             catch (ProtonApiException<RevisionErrorResponse> e) when (e.Code is DriveApiResponseCodes.AlreadyExists)
             {
-                throw new RevisionDraftConflictException("Cannot create revision", e);
+                throw new RevisionDraftConflictException("A new version of this file is already being uploaded", e);
             }
         }
 

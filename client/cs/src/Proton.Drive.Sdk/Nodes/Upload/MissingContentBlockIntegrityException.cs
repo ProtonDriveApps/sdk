@@ -17,7 +17,7 @@ public class MissingContentBlockIntegrityException : IntegrityException
     }
 
     public MissingContentBlockIntegrityException(int blockNumber)
-        : base($"Missing content block #{blockNumber}")
+        : base("Part of the file failed to upload. Please try again.")
     {
         BlockNumber = blockNumber;
     }

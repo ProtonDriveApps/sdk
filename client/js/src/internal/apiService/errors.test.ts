@@ -39,7 +39,7 @@ describe('apiErrorFactory should return', () => {
         const response = new Response('', { status: 404, statusText: '' });
         const error = apiErrorFactory({ response });
         expect(error).toBeInstanceOf(errors.APIHTTPError);
-        expect(error.message).toBe('Unknown error');
+        expect(error.message).toBe('Something went wrong');
         expect((error as errors.APIHTTPError).statusCode).toBe(404);
     });
 
@@ -61,7 +61,7 @@ describe('apiErrorFactory should return', () => {
         const result = {};
         const response = new Response('', { status: 422 });
         const error = apiErrorFactory({ response, result });
-        expectAPICodeError(error, 0, 'Unknown error');
+        expectAPICodeError(error, 0, 'Something went wrong');
     });
 
     it('generic APICodeError when there is body but not specific handle', () => {
