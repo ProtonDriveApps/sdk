@@ -67,7 +67,8 @@ type UploadContext = {
 export class CommandFileSystemUpload implements Command {
     group = 'filesystem';
     name = 'upload';
-    help = 'Uploads files and folders. It prompts for conflict resolution unless a strategy option is set.';
+    help =
+        'Uploads files and folders. It prompts for conflict resolution unless a strategy option is set. Files with the same content are automatically skipped.';
     args = ['localPath...', 'parentPath'];
     options: Options = {
         'conflict-strategy': {
@@ -258,6 +259,14 @@ export class CommandFileSystemUpload implements Command {
                     throw error;
                 }
                 const existingNode = await ctx.sdk.getNode(existingNodeUid);
+
+                // If the existing node is already the same file, automatically skip the upload.
+                const existingSha1 = existingNode.activeRevision?.ok
+                    ? existingNode.activeRevision.value.claimedDigests?.sha1
+                    : undefined;
+                if (existingSha1 === metadata.expectedSha1) {
+                    return false;
+                }
 
                 const choice = await ctx.conflictResolver.resolve(item.baseName, ConflictTargetKind.File);
                 switch (choice) {
