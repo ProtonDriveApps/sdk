@@ -18,6 +18,8 @@ internal interface IPhotosApiClient
 
     ValueTask<AlbumItemListResponse> GetAlbumItemsAsync(VolumeId volumeId, LinkId albumLinkId, LinkId? anchorId, CancellationToken cancellationToken);
 
+    ValueTask<SharedAlbumsResponse> GetSharedAlbumsAsync(LinkId? anchorId, CancellationToken cancellationToken);
+
     ValueTask<LinkDetailsResponse> GetDetailsAsync(VolumeId volumeId, IEnumerable<LinkId> linkIds, CancellationToken cancellationToken);
 
     ValueTask<FindDuplicatesResponse> FindDuplicatesAsync(

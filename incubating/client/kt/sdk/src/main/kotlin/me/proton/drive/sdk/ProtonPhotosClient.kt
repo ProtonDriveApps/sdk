@@ -13,6 +13,7 @@ interface ProtonPhotosClient : ProtonSdkClient {
     fun enumerateTimeline(): Flow<PhotosTimelineItem>
     fun enumerateAlbumNodeUids(): Flow<NodeUid>
     fun enumerateAlbum(albumUid: NodeUid): Flow<AlbumItem>
+    fun enumerateSharedWithMeNodeUids(): Flow<NodeUid>
     suspend fun downloader(request: PhotosDownloaderRequest): Downloader
     suspend fun uploader(request: PhotosUploaderRequest): Uploader
     suspend fun findPhotoDuplicates(name: String, generateSha1: suspend () -> ByteArray): List<NodeUid>

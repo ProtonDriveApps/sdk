@@ -8,10 +8,6 @@ namespace Proton.Drive.Sdk.Shares;
 
 internal static class SharingOperations
 {
-    // The types of shared items exposed by the Drive client. Albums and photos are handled by the Photos client.
-    private static readonly ShareTargetType[] DriveShareTargetTypes =
-        [ShareTargetType.Folder, ShareTargetType.File, ShareTargetType.ProtonVendor];
-
     public static async IAsyncEnumerable<NodeUid> EnumerateSharedNodeUidsAsync(
         ProtonDriveClient client,
         Func<ProtonDriveClient, CancellationToken, ValueTask<VolumeId?>> resolveVolumeId,
@@ -43,6 +39,7 @@ internal static class SharingOperations
 
     public static async IAsyncEnumerable<NodeUid> EnumerateSharedWithMeNodeUidsAsync(
         ProtonDriveClient client,
+        IReadOnlyCollection<ShareTargetType> shareTargetTypes,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var anchorId = default(LinkId?);
@@ -54,7 +51,7 @@ internal static class SharingOperations
 
             foreach (var link in response.Links)
             {
-                if (!DriveShareTargetTypes.Contains(link.ShareTargetType))
+                if (!shareTargetTypes.Contains(link.ShareTargetType))
                 {
                     continue;
                 }

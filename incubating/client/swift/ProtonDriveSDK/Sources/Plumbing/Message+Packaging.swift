@@ -282,6 +282,11 @@ extension Message {
                 $0.payload = .drivePhotosClientEnumerateSharedNodeUids(request)
             }
 
+        case let request as Proton_Drive_Sdk_DrivePhotosClientEnumerateSharedWithMeNodeUidsRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientEnumerateSharedWithMeNodeUids(request)
+            }
+
         case let request as Proton_Drive_Sdk_DrivePhotosClientGetNodeRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .drivePhotosClientGetNode(request)

@@ -29,6 +29,7 @@ import proton.drive.sdk.drivePhotosClientEmptyTrashRequest
 import proton.drive.sdk.drivePhotosClientEnumerateAlbumNodeUidsRequest
 import proton.drive.sdk.drivePhotosClientEnumerateAlbumRequest
 import proton.drive.sdk.drivePhotosClientEnumerateSharedNodeUidsRequest
+import proton.drive.sdk.drivePhotosClientEnumerateSharedWithMeNodeUidsRequest
 import proton.drive.sdk.drivePhotosClientEnumerateThumbnailsRequest
 import proton.drive.sdk.drivePhotosClientEnumerateTimelineRequest
 import proton.drive.sdk.drivePhotosClientEnumerateTrashRequest
@@ -215,6 +216,23 @@ internal class InteropProtonPhotosClient internal constructor(
             bridge.enumerateSharedNodeUids(
                 coroutineScope = this@channelFlow,
                 drivePhotosClientEnumerateSharedNodeUidsRequest {
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { nodeUid ->
+                    send(NodeUid(nodeUid.value))
+                }
+            )
+        }
+    }
+
+    override fun enumerateSharedWithMeNodeUids(): Flow<NodeUid> = channelFlow {
+        log(DEBUG, "enumerateSharedWithMeNodeUids")
+        cancellationCoroutineScope { source ->
+            bridge.enumerateSharedWithMeNodeUids(
+                coroutineScope = this@channelFlow,
+                drivePhotosClientEnumerateSharedWithMeNodeUidsRequest {
                     clientHandle = handle
                     cancellationTokenSourceHandle = source.handle
                     yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()

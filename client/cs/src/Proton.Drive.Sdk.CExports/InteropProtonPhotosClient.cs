@@ -178,6 +178,23 @@ internal static class InteropProtonPhotosClient
         return null;
     }
 
+    public static async ValueTask<IMessage?> HandleEnumerateSharedWithMeNodeUidsAsync(
+        DrivePhotosClientEnumerateSharedWithMeNodeUidsRequest request,
+        nint bindingsHandle)
+    {
+        var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        await foreach (var nodeUid in client.EnumerateSharedWithMeNodeUidsAsync(cancellationToken).ConfigureAwait(false))
+        {
+            yieldAction.InvokeWithMessage(bindingsHandle, new StringValue { Value = nodeUid.ToString() });
+        }
+
+        return null;
+    }
+
     public static IMessage? HandleFree(DrivePhotosClientFreeRequest request)
     {
         Interop.FreeHandle<ProtonPhotosClient>(request.ClientHandle);

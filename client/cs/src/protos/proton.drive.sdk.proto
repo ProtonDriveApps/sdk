@@ -96,6 +96,7 @@ message Request {
         DrivePhotosClientUpdatePhotosRequest drive_photos_client_update_photos = 2021;
         DrivePhotosClientEnumerateAlbumNodeUidsRequest drive_photos_client_enumerate_album_node_uids = 2022;
         DrivePhotosClientEnumerateAlbumRequest drive_photos_client_enumerate_album = 2023;
+        DrivePhotosClientEnumerateSharedWithMeNodeUidsRequest drive_photos_client_enumerate_shared_with_me_node_uids = 2024;
     };
 }
 
@@ -1089,6 +1090,13 @@ message PhotoTagsUpdate {
 message DrivePhotosClientUpdatePhotosRequest {
     int64 client_handle = 1;
     repeated PhotoTagsUpdate updates = 2;
+    int64 cancellation_token_source_handle = 3;
+}
+
+// The response must not have a value, yield_action will be called for each item.
+message DrivePhotosClientEnumerateSharedWithMeNodeUidsRequest {
+    int64 client_handle = 1;
+    int64 yield_action = 2;
     int64 cancellation_token_source_handle = 3;
 }
 

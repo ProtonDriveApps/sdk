@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Photos;
 using Proton.Drive.Sdk.Nodes.Cryptography;
 using Proton.Drive.Sdk.Volumes;
@@ -8,6 +10,27 @@ namespace Proton.Drive.Sdk.Nodes;
 internal static class PhotoOperations
 {
     private const int ActiveLinkState = 1;
+
+    public static async IAsyncEnumerable<NodeUid> EnumerateSharedWithMeAlbumUidsAsync(
+        ProtonDriveClient client,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var anchorId = default(LinkId?);
+        var mustTryMoreResults = true;
+
+        while (mustTryMoreResults)
+        {
+            var response = await client.Api.Photos.GetSharedAlbumsAsync(anchorId, cancellationToken).ConfigureAwait(false);
+
+            foreach (var album in response.Albums)
+            {
+                yield return new NodeUid(album.VolumeId, album.LinkId);
+            }
+
+            anchorId = response.AnchorId;
+            mustTryMoreResults = response.More && anchorId is not null;
+        }
+    }
 
     public static async ValueTask<IReadOnlyList<string>> FindDuplicatesAsync(
         ProtonDriveClient client,

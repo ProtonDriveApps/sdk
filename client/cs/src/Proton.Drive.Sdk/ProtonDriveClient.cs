@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.IO;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api;
+using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Devices;
@@ -26,6 +27,10 @@ public sealed class ProtonDriveClient
 {
     private const int DefaultDegreeOfBlockTransferParallelism = 6;
     private const int MaxDegreeOfThumbnailDownloadParallelism = 8;
+
+    // The types of shared items exposed by the Drive client.
+    private static readonly ShareTargetType[] ShareTargetTypes =
+        [ShareTargetType.Folder, ShareTargetType.File, ShareTargetType.ProtonVendor];
 
     public ProtonDriveClient(
         IHttpClientFactory httpClientFactory,
@@ -251,7 +256,7 @@ public sealed class ProtonDriveClient
 
     public IAsyncEnumerable<NodeUid> EnumerateSharedWithMeNodeUidsAsync(CancellationToken cancellationToken = default)
     {
-        return SharingOperations.EnumerateSharedWithMeNodeUidsAsync(this, cancellationToken);
+        return SharingOperations.EnumerateSharedWithMeNodeUidsAsync(this, ShareTargetTypes, cancellationToken);
     }
 
     public ValueTask LeaveSharedNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)

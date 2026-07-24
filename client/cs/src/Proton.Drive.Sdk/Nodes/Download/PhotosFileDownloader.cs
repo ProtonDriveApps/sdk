@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using Proton.Drive.Sdk.Telemetry;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
 
+[Experimental("Photos")]
 public sealed partial class PhotosFileDownloader : IFileDownloader
 {
     private readonly ProtonPhotosClient _client;

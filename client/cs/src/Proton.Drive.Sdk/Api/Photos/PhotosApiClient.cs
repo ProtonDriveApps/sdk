@@ -57,6 +57,15 @@ internal sealed class PhotosApiClient(HttpClient httpClient) : IPhotosApiClient
             .GetAsync($"photos/volumes/{volumeId}/albums/{albumLinkId}/children?Sort=Captured&Desc=1{anchor}", cancellationToken).ConfigureAwait(false);
     }
 
+    public async ValueTask<SharedAlbumsResponse> GetSharedAlbumsAsync(LinkId? anchorId, CancellationToken cancellationToken)
+    {
+        var queryParameters = anchorId is not null ? $"?AnchorID={anchorId}" : string.Empty;
+
+        return await _httpClient
+            .Expecting(DriveApiSerializerContext.Default.SharedAlbumsResponse)
+            .GetAsync($"photos/albums/shared-with-me{queryParameters}", cancellationToken).ConfigureAwait(false);
+    }
+
     public async ValueTask<LinkDetailsResponse> GetDetailsAsync(VolumeId volumeId, IEnumerable<LinkId> linkIds, CancellationToken cancellationToken)
     {
         return await _httpClient
