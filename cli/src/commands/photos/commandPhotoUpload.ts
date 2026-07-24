@@ -3,6 +3,7 @@ import {
     NodeEntity,
     ValidationError,
 } from '@protontech/drive-sdk';
+import { generateAdditionalPhotoNodeMetadata } from '@protontech/drive-sdk/additionalNodeMetadata';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 
 import { type ActionArgs, type Command, Options } from '../../cli';
@@ -115,7 +116,9 @@ export class CommandPhotoUpload implements Command {
         item: QueueItemFile<{ parentNode: NodeEntity }>,
         mediaType: string,
     ): Promise<number | false> {
-        const { file, metadata, thumbnails } = await getFileMetadata(ctx, item, mediaType);
+        const { file, metadata, thumbnails } = await getFileMetadata(ctx, item, mediaType, (file) =>
+            generateAdditionalPhotoNodeMetadata(file, mediaType, undefined, ctx.logger),
+        );
 
         let name = item.baseName;
 

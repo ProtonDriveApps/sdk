@@ -1,4 +1,5 @@
 import { MemberRole, NodeEntity, NodeType, ThumbnailType, ValidationError } from '@protontech/drive-sdk';
+import { getMockLogger } from '@protontech/drive-sdk/tests/logger';
 
 jest.mock('../../cli', () => ({
     PathType: jest.requireActual('../../cli/paths').PathType,
@@ -38,6 +39,8 @@ function mockFolderNode(name: string, uid: string): NodeEntity {
 
 describe('getFileMetadata', () => {
     const bunFile = jest.fn();
+    const logger = getMockLogger();
+    const noAdditionalMetadata: any = async () => ({});
 
     beforeAll(() => {
         globalThis.Bun = { file: bunFile } as any;
@@ -71,7 +74,12 @@ describe('getFileMetadata', () => {
         getSha1Mock.mockResolvedValue('abc123');
         generateThumbnailsMock.mockResolvedValue([]);
 
-        const result = await getFileMetadata({ skipThumbnails: false }, item, 'text/plain');
+        const result = await getFileMetadata(
+            { skipThumbnails: false, logger },
+            item,
+            'text/plain',
+            noAdditionalMetadata,
+        );
 
         expect(getSha1Mock).toHaveBeenCalledWith(item.localPath);
         expect(bunFile).toHaveBeenCalledWith(item.localPath);
@@ -91,7 +99,12 @@ describe('getFileMetadata', () => {
         getSha1Mock.mockResolvedValue('deadbeef');
         generateThumbnailsMock.mockResolvedValue([]);
 
-        const result = await getFileMetadata({ skipThumbnails: true }, item, 'application/octet-stream');
+        const result = await getFileMetadata(
+            { skipThumbnails: true, logger },
+            item,
+            'application/octet-stream',
+            noAdditionalMetadata,
+        );
 
         expect(result.metadata).toEqual({
             mediaType: 'application/octet-stream',
@@ -105,7 +118,12 @@ describe('getFileMetadata', () => {
         mockBunFile();
         getSha1Mock.mockResolvedValue('abc123');
 
-        const result = await getFileMetadata({ skipThumbnails: true }, item, 'image/jpeg');
+        const result = await getFileMetadata(
+            { skipThumbnails: true, logger },
+            item,
+            'image/jpeg',
+            noAdditionalMetadata,
+        );
 
         expect(generateThumbnailsMock).not.toHaveBeenCalled();
         expect(result.thumbnails).toEqual([]);
@@ -117,7 +135,12 @@ describe('getFileMetadata', () => {
         const thumbnails = [{ type: ThumbnailType.Type1, thumbnail: new Uint8Array([1, 2, 3]) }];
         generateThumbnailsMock.mockResolvedValue(thumbnails);
 
-        const result = await getFileMetadata({ skipThumbnails: false }, item, 'image/jpeg');
+        const result = await getFileMetadata(
+            { skipThumbnails: false, logger },
+            item,
+            'image/jpeg',
+            noAdditionalMetadata,
+        );
 
         expect(result.thumbnails).toBe(thumbnails);
     });
@@ -127,10 +150,12 @@ describe('getFileMetadata', () => {
         getSha1Mock.mockResolvedValue('abc123');
         generateThumbnailsMock.mockRejectedValue(new Error('decode failed'));
 
-        await expect(getFileMetadata({ skipThumbnails: false }, item, 'image/jpeg')).rejects.toThrow(
-            ValidationError,
-        );
-        await expect(getFileMetadata({ skipThumbnails: false }, item, 'image/jpeg')).rejects.toThrow(
+        await expect(
+            getFileMetadata({ skipThumbnails: false, logger }, item, 'image/jpeg', noAdditionalMetadata),
+        ).rejects.toThrow(ValidationError);
+        await expect(
+            getFileMetadata({ skipThumbnails: false, logger }, item, 'image/jpeg', noAdditionalMetadata),
+        ).rejects.toThrow(
             'Failed to generate thumbnails (use --skip-thumbnails to upload without thumbnails): decode failed',
         );
     });
@@ -140,7 +165,9 @@ describe('getFileMetadata', () => {
         getSha1Mock.mockResolvedValue('abc123');
         generateThumbnailsMock.mockRejectedValue('decode failed');
 
-        await expect(getFileMetadata({ skipThumbnails: false }, item, 'image/jpeg')).rejects.toThrow(
+        await expect(
+            getFileMetadata({ skipThumbnails: false, logger }, item, 'image/jpeg', noAdditionalMetadata),
+        ).rejects.toThrow(
             'Failed to generate thumbnails (use --skip-thumbnails to upload without thumbnails): decode failed',
         );
     });

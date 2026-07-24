@@ -6,6 +6,7 @@ import {
     Thumbnail,
     ValidationError,
 } from '@protontech/drive-sdk';
+import { generateAdditionalNodeMetadata } from '@protontech/drive-sdk/additionalNodeMetadata';
 
 import { type ActionArgs, type Command, Options, PathType } from '../../cli';
 import type { CliMetrics } from '../../telemetry';
@@ -292,9 +293,12 @@ export class CommandFileSystemUpload implements Command {
 export async function getFileMetadata(
     ctx: {
         skipThumbnails: boolean;
+        logger: Logger;
     },
     item: QueueItemFile<{ parentNode: NodeEntity }>,
     mediaType: string,
+    additionalMetadataCallback = async (file: Bun.BunFile) =>
+        generateAdditionalNodeMetadata(file, mediaType, undefined, ctx.logger),
 ) {
     const expectedSha1 = await getSha1(item.localPath);
     const file = Bun.file(item.localPath);
@@ -303,7 +307,7 @@ export async function getFileMetadata(
         expectedSize: file.size,
         expectedSha1,
         modificationTime: file.lastModified && file.lastModified !== 0 ? new Date(file.lastModified) : undefined,
-        // additionalMetadata: TODO
+        ...(await additionalMetadataCallback(file)),
     };
 
     let thumbnails: Thumbnail[] = [];
