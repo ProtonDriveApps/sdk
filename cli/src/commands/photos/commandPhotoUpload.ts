@@ -26,10 +26,11 @@ type PhotosUploadContext = {
     metrics?: CliMetrics;
 };
 
-export class CommandPhotosUpload implements Command {
-    group = 'photos';
+export class CommandPhotoUpload implements Command {
+    group = 'photo';
     name = 'upload';
-    help = 'Uploads photos from local files and folders to My Photos. Folder structure is flattened. It prompts for conflict resolution unless a strategy option is set.';
+    help =
+        'Uploads photos from local files and folders to My Photos. Folder structure is flattened. It prompts for conflict resolution unless a strategy option is set.';
     args = ['localPath...'];
     options: Options = {
         'conflict-strategy': {
@@ -39,12 +40,6 @@ export class CommandPhotosUpload implements Command {
             allowedValues: ['keep-both', 'skip'],
             help: 'Conflict strategy applied to duplicate photos.',
         },
-        'skip-thumbnails': {
-            type: 'boolean',
-            short: 't',
-            default: false,
-            help: 'Skip generating thumbnails.',
-        },
     };
 
     async action({
@@ -52,11 +47,7 @@ export class CommandPhotosUpload implements Command {
         photosSdk,
         metrics,
         args: localSources,
-        options: {
-            json,
-            'conflict-strategy': conflictStrategy,
-            'skip-thumbnails': skipThumbnails,
-        },
+        options: { json, 'conflict-strategy': conflictStrategy },
     }: ActionArgs) {
         if (localSources.length === 0) {
             throw new ValidationError('At least one local source path is required');
@@ -98,7 +89,8 @@ export class CommandPhotosUpload implements Command {
             photosSdk,
             volumeRootFolder,
             json,
-            skipThumbnails,
+            // Do not allow skipping thumbnails for photo timeline as the product is not usable without them.
+            skipThumbnails: false,
             progress,
             uploadQueue,
             conflictResolver,

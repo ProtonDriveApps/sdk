@@ -13,7 +13,15 @@ import { CommandFileSystemRename } from './fileSystem/commandFileSystemRename';
 import { CommandFileSystemRestore } from './fileSystem/commandFileSystemRestore';
 import { CommandFileSystemTrash } from './fileSystem/commandFileSystemTrash';
 import { CommandFileSystemUpload } from './fileSystem/commandFileSystemUpload';
-import { CommandPhotosUpload } from './photos/commandPhotosUpload';
+import { CommandAlbumAddPhoto } from './photos/commandAlbumAddPhoto';
+import { CommandAlbumCreate } from './photos/commandAlbumCreate';
+import { CommandAlbumDelete } from './photos/commandAlbumDelete';
+import { CommandAlbumList } from './photos/commandAlbumList';
+import { CommandAlbumPhotos } from './photos/commandAlbumPhotos';
+import { CommandAlbumRemovePhoto } from './photos/commandAlbumRemovePhoto';
+import { CommandAlbumUpdate } from './photos/commandAlbumUpdate';
+import { CommandPhotoTimeline } from './photos/commandPhotoTimeline';
+import { CommandPhotoUpload } from './photos/commandPhotoUpload';
 import { CommandInvitationAccept } from './sharing/commandInvitationAccept';
 import { CommandInvitationList } from './sharing/commandInvitationList';
 import { CommandInvitationReject } from './sharing/commandInvitationReject';
@@ -27,6 +35,8 @@ import { CommandSharingStatus } from './sharing/commandSharingStatus';
 export const COMMANDS = applyDefaultCliOptions([
     new CommandAuthLogin(),
     new CommandAuthLogout(),
+
+    // Regular Drive commands
     new CommandFileSystemList(),
     new CommandFileSystemInfo(),
     new CommandFileSystemCreateFolder(),
@@ -39,7 +49,6 @@ export const COMMANDS = applyDefaultCliOptions([
     new CommandFileSystemRestore(),
     new CommandFileSystemDelete(),
     new CommandFileSystemEmptyTrash(),
-    new CommandPhotosUpload(),
     new CommandSharingStatus(),
     new CommandSharingInvite(),
     new CommandSharingLeave(),
@@ -49,4 +58,15 @@ export const COMMANDS = applyDefaultCliOptions([
     new CommandInvitationList(),
     new CommandInvitationAccept(),
     new CommandInvitationReject(),
+
+    // Photos commands
+    new CommandAlbumList(),
+    new CommandAlbumCreate(),
+    new CommandAlbumUpdate(),
+    new CommandAlbumDelete(),
+    new CommandAlbumPhotos(),
+    new CommandAlbumAddPhoto(),
+    new CommandAlbumRemovePhoto(),
+    new CommandPhotoTimeline(),
+    new CommandPhotoUpload(),
 ]);

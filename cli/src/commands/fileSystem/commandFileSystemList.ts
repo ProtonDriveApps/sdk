@@ -137,7 +137,7 @@ export class CommandFileSystemList implements Command {
         const author = formatAuthor(node.keyAuthor);
         const created = formatDate(node.creationTime, true);
         const claimedSize = getClaimedSize(node);
-        const size = claimedSize ? formatSize(claimedSize) : '-';
+        const size = claimedSize ? formatSize(claimedSize, true) : '-';
         const name = getName(node);
         console.log(sanitizeTerminalText(`${type}${sharedFlag}${permissionFlag} ${author} ${created} ${size} ${name}`));
     }
