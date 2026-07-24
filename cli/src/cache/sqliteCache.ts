@@ -2,11 +2,16 @@ import { Database } from 'bun:sqlite';
 
 import type { EntityResult, ProtonDriveCache } from '@protontech/drive-sdk';
 
+const SQLITE_BUSY_TIMEOUT_MS = 5000;
+
 export class SQLiteCache implements ProtonDriveCache<string> {
     private db: Database;
 
     constructor(cacheFile: string) {
         this.db = new Database(cacheFile, { create: true });
+        this.db.run(`PRAGMA journal_mode = WAL`);
+        this.db.run(`PRAGMA synchronous = NORMAL`);
+        this.db.run(`PRAGMA busy_timeout = ${SQLITE_BUSY_TIMEOUT_MS}`);
         this.db.run('CREATE TABLE IF NOT EXISTS entities (key TEXT PRIMARY KEY, value TEXT)');
         this.db.run('CREATE TABLE IF NOT EXISTS entities_labels (label TEXT, key TEXT, UNIQUE (label, key))');
     }
