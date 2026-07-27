@@ -14,26 +14,32 @@
       "Cannot add photo to album without a valid name": [
         "Geçerli bir ad olmadan fotoğraf albüme eklenemez"
       ],
-      "Cannot create public link for volume not owned by the user": [
-        "Kullanıcıya ait olmayan birimin herkese açık bağlantısı oluşturulamaz"
-      ],
       "Cannot download a folder": [
         "Bir klasör indirilemedi"
       ],
       "Cannot share root folder": [
         "Kök klasör paylaşılamaz"
       ],
-      "Cannot update public link for volume not owned by the user": [
-        "Kullanıcıya ait olmayan birimin herkese açık bağlantısı güncellenemez"
+      "Cannot verify the author of this file": [
+        "Bu dosyanın yazarı doğrulanamıyor"
       ],
-      "Content key packet is required for small revision upload": [
-        "Küçük sürüm yüklemeleri için içerik anahtarı paketi gereklidir"
+      "Cannot verify who uploaded this file": [
+        "Bu dosyayı kimin yüklediğini doğrulanamıyor"
       ],
       "Copy operation aborted": [
         "Kopyalama işlemi iptal edildi"
       ],
       "Copying item to a non-folder is not allowed": [
         "Öge klasör olmayan bir ögeye kopyalanamaz"
+      ],
+      "Could not load sharing details": [
+        "Paylaşım ayrıntıları yüklenemedi"
+      ],
+      "Could not unlock the parent folder": [
+        "Üst klasörün kilidi açılamadı"
+      ],
+      "Could not unlock this item": [
+        "Bu öğenin kilidi açılamadı"
       ],
       "Creating documents in non-folders is not allowed": [
         "Klasör olmayan ögeler içinde belge oluşturulamaz"
@@ -44,15 +50,6 @@
       "Creating folders in non-folders is not allowed": [
         "Klasör olmayan ögeler içinde klasör oluşturulamaz"
       ],
-      "Creating revisions in non-files is not allowed": [
-        "Dosya olmayan ögelerde sürüm oluşturulamaz"
-      ],
-      "Data integrity check failed": [
-        "Veri bütünlüğü denetlenemedi"
-      ],
-      "Data integrity check of one part failed": [
-        "Bir parçanın veri bütünlüğü denetlenemedi"
-      ],
       "Device not found": [
         "Aygıt bulunamadı"
       ],
@@ -61,9 +58,6 @@
       ],
       "Failed to decrypt active revision: ${ message }": [
         "Etkin sürümün şifresi çözülemedi: ${ message }"
-      ],
-      "Failed to decrypt block: ${ message }": [
-        "Blok şifresi çözülemedi: ${ message }"
       ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Yer imi anahtarının şifresi çözülemedi: ${ message }"
@@ -83,23 +77,8 @@
       "Failed to decrypt node key: ${ message }": [
         "Düğüm anahtarının şifresi çözülemedi: ${ message }"
       ],
-      "Failed to decrypt thumbnail: ${ message }": [
-        "Küçük görselin şifresi çözülemedi: ${ message }"
-      ],
       "Failed to get inviter keys": [
         "Davet edenin anahtarları alınamadı"
-      ],
-      "Failed to get sharing info for node ${ nodeUid }": [
-        "${ nodeUid } düğümünün paylaşım bilgileri alınamadı"
-      ],
-      "Failed to get verification keys": [
-        "Doğrulama anahtarları alınamadı"
-      ],
-      "Failed to load some items": [
-        "Bazı ögeler yüklenemedi"
-      ],
-      "Failed to load some nodes": [
-        "Bazı düğümler yüklenemedi"
       ],
       "Failed to verify invitation": [
         "Davet doğrulanamadı"
@@ -107,17 +86,11 @@
       "File download failed due to empty response": [
         "Boş yanıt nedeniyle dosya indirilemedi"
       ],
-      "File has no active revision": [
-        "Dosyanın etkin bir sürümü yok"
-      ],
-      "File has no content key": [
-        "Dosyanın içerik anahtarı yok"
-      ],
       "File has no revision": [
         "Dosyanın sürümü yok"
       ],
-      "File hash does not match expected hash": [
-        "Dosya karma değeri beklenen değerle aynı değil"
+      "Image preview not found": [
+        "Görsel önizlemesi bulunamadı"
       ],
       "Invalid URL": [
         "Adres geçersiz"
@@ -125,14 +98,11 @@
       "Invitation not found": [
         "Davet bulunamadı"
       ],
-      "Item cannot be decrypted": [
-        "Ögenin şifresi çözülemedi"
+      "Item not found": [
+        "Öğe bulunamadı"
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Eski herkese açık bağlantı güncellenemedi. Lütfen yeni bir herkese açık bağlantı oluşturun."
-      ],
-      "Missing integrity signature": [
-        "Bütünlük imzası eksik"
       ],
       "Missing inviter email": [
         "Davet edenin e-posta adresi eksik"
@@ -159,29 +129,8 @@
       "Name must not be empty": [
         "Ad boş olamaz"
       ],
-      "No available name found": [
-        "Kullanılabilecek bir ad bulunamadı"
-      ],
-      "No data to upload received": [
-        "Yüklenebilecek bir veri alınmadı"
-      ],
-      "Node has no thumbnail": [
-        "Düğümün küçük görseli yok"
-      ],
-      "Node is not accessible": [
-        "Düğüme erişilemiyor"
-      ],
-      "Node is not accessible via a share": [
-        "Düğüme paylaşım ile erişilemez"
-      ],
-      "Node is not shared": [
-        "Düğüm paylaşılmamış"
-      ],
-      "Node not found": [
-        "Düğüm bulunamadı"
-      ],
-      "Only admins can convert non-Proton invitations": [
-        "Proton kullanmayanların davetiyelerini yalnızca yöneticiler dönüştürebilir"
+      "No file data was received. Please try again.": [
+        "Herhangi bir dosya verisi alınamadı. Lütfen tekrar deneyin."
       ],
       "Operation aborted": [
         "İşlem iptal edildi"
@@ -189,8 +138,8 @@
       "Operation failed, try again later": [
         "İşlem yapılamadı. Lütfen bir süre sonra yeniden deneyin"
       ],
-      "Parent cannot be decrypted": [
-        "Üst ögenin şifresi çözülemedi"
+      "Part of the file appears to be corrupted": [
+        "Dosyanın bir kısmı bozuk gibi görünüyor"
       ],
       "Photo is already in the target album": [
         "Fotoğraf zaten hedef albümde bulunuyor"
@@ -219,17 +168,17 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "${ signatureType } için imza doğrulanamadı: ${ errorMessage }"
       ],
-      "Some file bytes failed to upload": [
-        "Bazı dosya baytları yüklenemedi"
+      "This file has no version available to download": [
+        "Bu dosyanın indirilebilecek bir sürümü bulunmuyor"
       ],
-      "Some file parts failed to upload": [
-        "Bazı dosya parçaları yüklenemedi"
+      "This item has no image preview": [
+        "Bu öğenin görsel önizlemesi yok"
       ],
-      "The node is not shared anymore": [
-        "Düğüm artık paylaşılmıyor"
+      "This item is no longer shared": [
+        "Bu öğe artık paylaşılmıyor"
       ],
-      "Thumbnail not found": [
-        "Küçük görsel bulunamadı"
+      "This item is not shared": [
+        "Bu öğe paylaşılmamış"
       ],
       "Too many server errors, please try again later": [
         "Çok fazla sayıda sunucu sorunu çıktı. Lütfen bir süre sonra yeniden deneyin."
@@ -240,17 +189,17 @@
       "Unknown error": [
         "Bilinmeyen sorun"
       ],
-      "Unknown error ${ code }": [
-        "Bilinmeyen hata ${ code }"
-      ],
       "Verification keys are not available": [
         "Doğrulama anahtarları kullanılamıyor"
       ],
       "Verification keys for ${ signatureType } are not available": [
         "${ signatureType } için doğrulama anahtarları kullanılamıyor"
       ],
-      "You can leave only item that is shared with you": [
-        "Yalnızca sizinle paylaşılan bir ögeden ayrılabilirsiniz"
+      "You do not have access to this item": [
+        "Bu öğeye erişiminiz yok"
+      ],
+      "You do not have access to this shared item": [
+        "Bu paylaşılan öğeye erişim izniniz yok"
       ]
     },
     "Info": {

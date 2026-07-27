@@ -14,20 +14,11 @@
       "Cannot add photo to album without a valid name": [
         "No se puede añadir una foto a un álbum sin un nombre válido"
       ],
-      "Cannot create public link for volume not owned by the user": [
-        "No puedes crear un enlace público de un volumen que no te pertenece"
-      ],
       "Cannot download a folder": [
         "No se puede descargar una carpeta."
       ],
       "Cannot share root folder": [
         "No se puede compartir la carpeta principal."
-      ],
-      "Cannot update public link for volume not owned by the user": [
-        "No puedes actualizar el enlace público de un volumen que no te pertenece"
-      ],
-      "Content key packet is required for small revision upload": [
-        "Se requiere el paquete de claves de contenido para subir una revisión pequeña"
       ],
       "Copy operation aborted": [
         "Se ha cancelado la copia."
@@ -44,15 +35,6 @@
       "Creating folders in non-folders is not allowed": [
         "No está permitido crear carpetas en elementos que no sean carpetas."
       ],
-      "Creating revisions in non-files is not allowed": [
-        "No está permitido crear revisiones en elementos que no son archivos."
-      ],
-      "Data integrity check failed": [
-        "Error en verificar la integridad de los datos"
-      ],
-      "Data integrity check of one part failed": [
-        "Error en verificar la integridad de los datos de una parte"
-      ],
       "Device not found": [
         "No se ha encontrado el dispositivo."
       ],
@@ -61,9 +43,6 @@
       ],
       "Failed to decrypt active revision: ${ message }": [
         "Error al descifrar revisión activa: ${ message }"
-      ],
-      "Failed to decrypt block: ${ message }": [
-        "Error al descifrar el bloque: ${ message }"
       ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Error al descifrar la clave del marcador: ${ message }"
@@ -83,23 +62,8 @@
       "Failed to decrypt node key: ${ message }": [
         "Error al descifrar la clave del nodo: ${ message }"
       ],
-      "Failed to decrypt thumbnail: ${ message }": [
-        "Error al descifrar la miniatura: ${ message }"
-      ],
       "Failed to get inviter keys": [
         "Fallo al obtener las claves de quien invita"
-      ],
-      "Failed to get sharing info for node ${ nodeUid }": [
-        "No se pudo obtener la información para compartir del nodo ${ nodeUid }"
-      ],
-      "Failed to get verification keys": [
-        "Error al obtener las claves de verificación"
-      ],
-      "Failed to load some items": [
-        "No se han podido cargar algunos elementos"
-      ],
-      "Failed to load some nodes": [
-        "Error al cargar algunos nodos"
       ],
       "Failed to verify invitation": [
         "Fallo al verificar la invitación"
@@ -107,17 +71,8 @@
       "File download failed due to empty response": [
         "Error con la descarga del archivo debido a una respuesta vacía"
       ],
-      "File has no active revision": [
-        "El archivo no tiene una revisión activa."
-      ],
-      "File has no content key": [
-        "El archivo no tiene clave de contenido."
-      ],
       "File has no revision": [
         "El archivo no tiene revisiones"
-      ],
-      "File hash does not match expected hash": [
-        "El hash del archivo no coincide con el valor esperado"
       ],
       "Invalid URL": [
         "La URL no es válida."
@@ -125,14 +80,8 @@
       "Invitation not found": [
         "No se ha encontrado la invitación."
       ],
-      "Item cannot be decrypted": [
-        "No se puede descifrar el elemento."
-      ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "El enlace público de origen no se puede actualizar. Vuelve a crear un nuevo enlace público."
-      ],
-      "Missing integrity signature": [
-        "Falta la firma de integridad."
       ],
       "Missing inviter email": [
         "Falta el correo electrónico de quien invita"
@@ -159,35 +108,11 @@
       "Name must not be empty": [
         "El nombre no debe estar vacío."
       ],
-      "No available name found": [
-        "No se encontró ningún nombre disponible"
-      ],
-      "Node has no thumbnail": [
-        "El nodo no tiene miniatura."
-      ],
-      "Node is not accessible": [
-        "El nodo no es accesible."
-      ],
-      "Node is not accessible via a share": [
-        "No se puede acceder al nodo a través de un elemento compartido"
-      ],
-      "Node is not shared": [
-        "El nodo no está compartido"
-      ],
-      "Node not found": [
-        "Nodo no encontrado"
-      ],
-      "Only admins can convert non-Proton invitations": [
-        "Solo los administradores pueden convertir invitaciones externas a Proton"
-      ],
       "Operation aborted": [
         "Operación cancelada"
       ],
       "Operation failed, try again later": [
         "Operación fallida, inténtalo de nuevo más tarde"
-      ],
-      "Parent cannot be decrypted": [
-        "No se puede descifrar el elemento principal."
       ],
       "Photo is already in the target album": [
         "La foto ya está en el álbum de destino"
@@ -216,18 +141,6 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "Fallo en la verificación de firma para ${ signatureType }: ${ errorMessage }"
       ],
-      "Some file bytes failed to upload": [
-        "Algunos bytes del archivo no se han podido cargar."
-      ],
-      "Some file parts failed to upload": [
-        "Algunas partes del archivo no se han podido cargar."
-      ],
-      "The node is not shared anymore": [
-        "Este elemento ya no está compartido"
-      ],
-      "Thumbnail not found": [
-        "Miniatura no encontrada"
-      ],
       "Too many server errors, please try again later": [
         "Demasiados errores del servidor. Inténtalo de nuevo más tarde."
       ],
@@ -237,17 +150,11 @@
       "Unknown error": [
         "Error desconocido"
       ],
-      "Unknown error ${ code }": [
-        "Error desconocido ${ code }"
-      ],
       "Verification keys are not available": [
         "Las claves de verificación no están disponibles."
       ],
       "Verification keys for ${ signatureType } are not available": [
         "Las claves de verificación para ${ signatureType } no están disponibles."
-      ],
-      "You can leave only item that is shared with you": [
-        "Solo puedes abandonar el elemento que se comparte contigo."
       ]
     },
     "Info": {

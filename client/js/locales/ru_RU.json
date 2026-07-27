@@ -20,15 +20,6 @@
       "Creating folders in non-folders is not allowed": [
         "Создание папок в элементах, не являющихся папками, не допускается"
       ],
-      "Creating revisions in non-files is not allowed": [
-        "Создание версий в элементах, не являющихся файлами, не допускается"
-      ],
-      "Data integrity check failed": [
-        "Проверка целостности данных не пройдена"
-      ],
-      "Data integrity check of one part failed": [
-        "Проверка целостности данных одной из частей не пройдена"
-      ],
       "Device not found": [
         "Устройство не найдено"
       ],
@@ -37,9 +28,6 @@
       ],
       "Failed to decrypt active revision: ${ message }": [
         "Не удалось расшифровать активную версию: ${ message }"
-      ],
-      "Failed to decrypt block: ${ message }": [
-        "Не удалось расшифровать блок: ${ message }"
       ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Не удалось расшифровать ключ закладки: ${ message }"
@@ -59,14 +47,8 @@
       "Failed to decrypt node key: ${ message }": [
         "Не удалось расшифровать ключ узла: ${ message }"
       ],
-      "Failed to decrypt thumbnail: ${ message }": [
-        "Не удалось расшифровать значок: ${ message }"
-      ],
       "Failed to get inviter keys": [
         "Не удалось получить ключи пригласившего"
-      ],
-      "Failed to load some nodes": [
-        "Не удалось загрузить некоторые узлы"
       ],
       "Failed to verify invitation": [
         "Не удалось проверить приглашение"
@@ -74,23 +56,11 @@
       "File download failed due to empty response": [
         "Не удалось скачать файл из-за пустого ответа"
       ],
-      "File has no active revision": [
-        "Файл не имеет активной версии"
-      ],
-      "File has no content key": [
-        "У файла нет ключа содержимого"
-      ],
       "Invitation not found": [
         "Приглашение не найдено"
       ],
-      "Item cannot be decrypted": [
-        "Элемент не может быть расшифрован"
-      ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Устаревшую публичную ссылку невозможно обновить. Создайте новую публичную ссылку."
-      ],
-      "Missing integrity signature": [
-        "Отсутствует подпись целостности"
       ],
       "Missing inviter email": [
         "Отсутствует адрес электронной почты пригласившего"
@@ -119,23 +89,8 @@
       "Name must not be empty": [
         "Название не может быть пустым"
       ],
-      "Node has no thumbnail": [
-        "У узла нет значка"
-      ],
-      "Node is not accessible": [
-        "Узел недоступен"
-      ],
-      "Node is not shared": [
-        "Узел не является общим"
-      ],
-      "Node not found": [
-        "Узел не найден"
-      ],
       "Operation aborted": [
         "Операция прервана"
-      ],
-      "Parent cannot be decrypted": [
-        "Родительский элемент не может быть расшифрован"
       ],
       "Renaming root item is not allowed": [
         "Переименование корневого элемента не допускается"
@@ -155,15 +110,6 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "Проверка подписи для ${ signatureType } не удалась: ${ errorMessage }"
       ],
-      "Some file bytes failed to upload": [
-        "Не удалось загрузить некоторые байты файла"
-      ],
-      "Some file parts failed to upload": [
-        "Не удалось загрузить некоторые части файла"
-      ],
-      "Thumbnail not found": [
-        "Значок не найден"
-      ],
       "Too many server errors, please try again later": [
         "Слишком много ошибок сервера, повторите попытку позже"
       ],
@@ -173,17 +119,11 @@
       "Unknown error": [
         "Неизвестная ошибка"
       ],
-      "Unknown error ${ code }": [
-        "Неизвестная ошибка ${ code }"
-      ],
       "Verification keys are not available": [
         "Ключи проверки недоступны"
       ],
       "Verification keys for ${ signatureType } are not available": [
         "Ключи проверки для ${ signatureType } недоступны"
-      ],
-      "You can leave only item that is shared with you": [
-        "Вы можете покинуть только тот элемент, к которому вам предоставили доступ"
       ]
     },
     "Property": {

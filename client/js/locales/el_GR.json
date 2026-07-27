@@ -14,20 +14,11 @@
       "Cannot add photo to album without a valid name": [
         "Δεν είναι δυνατή η προσθήκη φωτογραφίας στο άλμπουμ χωρίς έγκυρο όνομα"
       ],
-      "Cannot create public link for volume not owned by the user": [
-        "Δεν είναι δυνατή η δημιουργία του δημόσιου συνδέσμου για όγκο που δεν ανήκει στον χρήστη"
-      ],
       "Cannot download a folder": [
         "Δεν είναι δυνατή η λήψη ενός φακέλου"
       ],
       "Cannot share root folder": [
         "Δεν είναι δυνατή η κοινοποίηση του κεντρικού φακέλου"
-      ],
-      "Cannot update public link for volume not owned by the user": [
-        "Δεν είναι δυνατή η ενημέρωση του δημόσιου συνδέσμου για όγκο που δεν ανήκει στον χρήστη"
-      ],
-      "Content key packet is required for small revision upload": [
-        "Το πακέτο κλειδιού περιεχομένου απαιτείται για τη μεταφόρτωση μικρής αναθεώρησης"
       ],
       "Copy operation aborted": [
         "Η αντιγραφή ακυρώθηκε"
@@ -44,15 +35,6 @@
       "Creating folders in non-folders is not allowed": [
         "Δεν επιτρέπεται η δημιουργία φακέλων σε μη-φακέλους."
       ],
-      "Creating revisions in non-files is not allowed": [
-        "Η δημιουργία αναθεωρήσεων σε μη αρχεία δεν επιτρέπεται"
-      ],
-      "Data integrity check failed": [
-        "Ο έλεγχος ακεραιότητας δεδομένων απέτυχε"
-      ],
-      "Data integrity check of one part failed": [
-        "Ο έλεγχος ακεραιότητας δεδομένων ενός μέρους απέτυχε"
-      ],
       "Device not found": [
         "Η συσκευή δεν βρέθηκε"
       ],
@@ -61,9 +43,6 @@
       ],
       "Failed to decrypt active revision: ${ message }": [
         "Αποτυχία αποκρυπτογράφησης ενεργής αναθεώρησης: ${ message }"
-      ],
-      "Failed to decrypt block: ${ message }": [
-        "Αποτυχία αποκρυπτογράφησης μπλοκ: ${ message }"
       ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Αποτυχία αποκρυπτογράφησης κλειδιού σελιδοδείκτη: ${ message }"
@@ -83,23 +62,8 @@
       "Failed to decrypt node key: ${ message }": [
         "Αποτυχία αποκρυπτογράφησης κλειδιού κόμβου: ${ message }"
       ],
-      "Failed to decrypt thumbnail: ${ message }": [
-        "Αποτυχία αποκρυπτογράφησης μικρογραφίας: ${ message }"
-      ],
       "Failed to get inviter keys": [
         "Αποτυχία λήψης κλειδιών προσκαλούντος"
-      ],
-      "Failed to get sharing info for node ${ nodeUid }": [
-        "Δεν ήταν δυνατή η λήψη πληροφοριών κοινοποίησης για τον κόμβο ${ nodeUid }"
-      ],
-      "Failed to get verification keys": [
-        "Αποτυχία λήψης κλειδιών επαλήθευσης"
-      ],
-      "Failed to load some items": [
-        "Αποτυχία φόρτωσης κάποιων στοιχείων"
-      ],
-      "Failed to load some nodes": [
-        "Αποτυχία φόρτωσης κάποιων κόμβων"
       ],
       "Failed to verify invitation": [
         "Αποτυχία επαλήθευσης πρόσκλησης"
@@ -107,17 +71,8 @@
       "File download failed due to empty response": [
         "Η λήψη αρχείου απέτυχε λόγω κενής απόκρισης"
       ],
-      "File has no active revision": [
-        "Το αρχείο δεν έχει ενεργή αναθεώρηση"
-      ],
-      "File has no content key": [
-        "Το αρχείο δεν έχει κλειδί περιεχομένου"
-      ],
       "File has no revision": [
         "Το αρχείο δεν έχει αναθεώρηση"
-      ],
-      "File hash does not match expected hash": [
-        "Το hash του αρχείου δεν ταιριάζει με τον αναμενόμενο hash"
       ],
       "Invalid URL": [
         "Μη έγκυρη διεύθυνση URL"
@@ -125,14 +80,8 @@
       "Invitation not found": [
         "Η πρόσκληση δεν βρέθηκε"
       ],
-      "Item cannot be decrypted": [
-        "Το αντικείμενο δεν μπορεί να αποκρυπτογραφηθεί"
-      ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Ο παλαιού τύπου δημόσιος σύνδεσμος δεν μπορεί να ενημερωθεί. Παρακαλούμε δημιουργήστε εκ νέου έναν νέο δημόσιο σύνδεσμο."
-      ],
-      "Missing integrity signature": [
-        "Λείπει η υπογραφή ακεραιότητας"
       ],
       "Missing inviter email": [
         "Λείπει η ηλεκτρονική διεύθυνση του προσκαλούντος"
@@ -159,38 +108,11 @@
       "Name must not be empty": [
         "Το όνομα δεν πρέπει να είναι κενό"
       ],
-      "No available name found": [
-        "Δεν βρέθηκε διαθέσιμο όνομα"
-      ],
-      "No data to upload received": [
-        "Δεν ελήφθησαν δεδομένα για μεταφόρτωση"
-      ],
-      "Node has no thumbnail": [
-        "Ο κόμβος δεν έχει μικρογραφία"
-      ],
-      "Node is not accessible": [
-        "Ο κόμβος δεν είναι προσβάσιμος"
-      ],
-      "Node is not accessible via a share": [
-        "Ο κόμβος δεν είναι προσβάσιμος μέσω κοινοποίησης"
-      ],
-      "Node is not shared": [
-        "Ο κόμβος δεν έχει κοινοποιηθεί"
-      ],
-      "Node not found": [
-        "Ο κόμβος δεν βρέθηκε"
-      ],
-      "Only admins can convert non-Proton invitations": [
-        "Μόνο οι διαχειριστές μπορούν να μετατρέψουν προσκλήσεις που δεν είναι της Proton"
-      ],
       "Operation aborted": [
         "Η λειτουργία ακυρώθηκε"
       ],
       "Operation failed, try again later": [
         "Η λειτουργία απέτυχε, δοκιμάστε ξανά αργότερα"
-      ],
-      "Parent cannot be decrypted": [
-        "Το γονικό αντικείμενο δεν μπορεί να αποκρυπτογραφηθεί"
       ],
       "Photo is already in the target album": [
         "Η φωτογραφία βρίσκεται ήδη στο άλμπουμ προορισμού"
@@ -219,17 +141,8 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "Αποτυχία επαλήθευσης υπογραφής για ${ signatureType }: ${ errorMessage }"
       ],
-      "Some file bytes failed to upload": [
-        "Κάποια byte αρχείου απέτυχαν να μεταφορτωθούν"
-      ],
-      "Some file parts failed to upload": [
-        "Κάποια μέρη αρχείων απέτυχαν να μεταφορτωθούν"
-      ],
-      "The node is not shared anymore": [
-        "Ο κόμβος δεν είναι πλέον κοινόχρηστος"
-      ],
-      "Thumbnail not found": [
-        "Η μικρογραφία δεν βρέθηκε"
+      "This item is not shared": [
+        "Αυτό το στοιχείο δεν κοινοποιείται"
       ],
       "Too many server errors, please try again later": [
         "Υπερβολικός αριθμός σφαλμάτων διακομιστή, παρακαλούμε δοκιμάστε ξανά αργότερα"
@@ -240,17 +153,11 @@
       "Unknown error": [
         "Άγνωστο σφάλμα"
       ],
-      "Unknown error ${ code }": [
-        "Άγνωστο σφάλμα ${ code }"
-      ],
       "Verification keys are not available": [
         "Τα κλειδιά επαλήθευσης δεν είναι διαθέσιμα"
       ],
       "Verification keys for ${ signatureType } are not available": [
         "Τα κλειδιά επαλήθευσης για ${ signatureType } δεν είναι διαθέσιμα"
-      ],
-      "You can leave only item that is shared with you": [
-        "Μπορείτε να αποχωρήσετε μόνο από το στοιχείο που έχει κοινοποιηθεί σε εσάς."
       ]
     },
     "Info": {

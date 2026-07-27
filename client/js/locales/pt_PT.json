@@ -20,15 +20,6 @@
       "Creating folders in non-folders is not allowed": [
         "Não é permitido criar pastas em itens que não sejam pastas."
       ],
-      "Creating revisions in non-files is not allowed": [
-        "Não é permitido criar revisões em itens que não sejam ficheiros."
-      ],
-      "Data integrity check failed": [
-        "Erro na verificação de integridade dos dados"
-      ],
-      "Data integrity check of one part failed": [
-        "Erro na verificação de integridade dos dados de uma parte"
-      ],
       "Device not found": [
         "O dispositivo não foi encontrado."
       ],
@@ -37,9 +28,6 @@
       ],
       "Failed to decrypt active revision: ${ message }": [
         "Erro ao desencriptar a revisão ativa: ${ message }"
-      ],
-      "Failed to decrypt block: ${ message }": [
-        "Erro ao desencriptar o bloco: ${ message }"
       ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Erro ao desencriptar a chave do marcador: ${ message }"
@@ -59,32 +47,14 @@
       "Failed to decrypt node key: ${ message }": [
         "Erro ao desencriptar chave do nó: ${ message }"
       ],
-      "Failed to decrypt thumbnail: ${ message }": [
-        "Erro ao desencriptar a miniatura: ${ message }"
-      ],
-      "Failed to load some nodes": [
-        "Erro ao carregar alguns nós"
-      ],
       "File download failed due to empty response": [
         "Erro na transferência do ficheiro devido a uma resposta vazia"
-      ],
-      "File has no active revision": [
-        "O ficheiro não tem revisão ativa."
-      ],
-      "File has no content key": [
-        "O ficheiro não tem chave de conteúdo."
       ],
       "Invitation not found": [
         "O convite não foi encontrado."
       ],
-      "Item cannot be decrypted": [
-        "Não é possível desencriptar o item."
-      ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Não é possível atualizar a ligação pública antiga. Cria uma nova ligação pública."
-      ],
-      "Missing integrity signature": [
-        "Assinatura de integridade ausente"
       ],
       "Missing signature": [
         "Assinatura em falta"
@@ -108,23 +78,8 @@
       "Name must not be empty": [
         "O nome não pode estar vazio."
       ],
-      "Node has no thumbnail": [
-        "O nó não tem miniatura."
-      ],
-      "Node is not accessible": [
-        "O nó não está acessível."
-      ],
-      "Node is not shared": [
-        "O nó não é partilhado."
-      ],
-      "Node not found": [
-        "O nó não foi encontrado."
-      ],
       "Operation aborted": [
         "Operação cancelada"
-      ],
-      "Parent cannot be decrypted": [
-        "Não é possível desencriptar o item superior."
       ],
       "Renaming root item is not allowed": [
         "Não é permitido alterar o nome do item principal."
@@ -138,15 +93,6 @@
       "Signature verification for ${ signatureType } failed": [
         "Erro na verificação de assinatura para ${ signatureType }"
       ],
-      "Some file bytes failed to upload": [
-        "Erro ao enviar alguns bytes do ficheiro"
-      ],
-      "Some file parts failed to upload": [
-        "Erro ao enviar algumas partes do ficheiro"
-      ],
-      "Thumbnail not found": [
-        "A miniatura não foi encontrada."
-      ],
       "Too many server errors, please try again later": [
         "Demasiados erros do servidor. Tente novamente mais tarde."
       ],
@@ -156,17 +102,11 @@
       "Unknown error": [
         "Erro desconhecido"
       ],
-      "Unknown error ${ code }": [
-        "Erro desconhecido ${ code }"
-      ],
       "Verification keys are not available": [
         "As chaves de verificação não estão disponíveis."
       ],
       "Verification keys for ${ signatureType } are not available": [
         "As chaves de verificação para ${ signatureType } não estão disponíveis."
-      ],
-      "You can leave only item that is shared with you": [
-        "Só pode deixar o item partilhado consigo."
       ]
     },
     "Property": {

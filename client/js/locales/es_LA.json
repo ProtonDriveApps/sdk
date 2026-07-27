@@ -14,26 +14,44 @@
       "Cannot add photo to album without a valid name": [
         "No se puede añadir una foto a un álbum sin un nombre válido"
       ],
-      "Cannot create public link for volume not owned by the user": [
-        "No se puede crear el enlace público para un volumen que no es propiedad del usuario"
-      ],
       "Cannot download a folder": [
         "No se puede descargar una carpeta."
+      ],
+      "Cannot move item without a valid name, please rename the item first": [
+        "No se puede mover el elemento sin un nombre válido, primero renombre el elemento"
       ],
       "Cannot share root folder": [
         "No se puede compartir la carpeta raíz"
       ],
-      "Cannot update public link for volume not owned by the user": [
-        "No se puede actualizar el enlace público para un volumen que no es propiedad del usuario"
+      "Cannot verify the author of this file": [
+        "No se puede verificar el autor de este archivo"
       ],
-      "Content key packet is required for small revision upload": [
-        "Se requiere el paquete de claves de contenido para cargar una revisión pequeña"
+      "Cannot verify who uploaded this file": [
+        "No se puede verificar quién cargó este archivo"
       ],
       "Copy operation aborted": [
         "Se canceló la operación de copia"
       ],
       "Copying item to a non-folder is not allowed": [
         "No está permitido copiar un elemento a una ubicación que no es una carpeta"
+      ],
+      "Could not find an available name": [
+        "No se pudo encontrar un nombre disponible"
+      ],
+      "Could not load sharing details": [
+        "No se pudieron cargar los detalles de la compartición"
+      ],
+      "Could not load the image preview: ${ message }": [
+        "No se pudo cargar la vista previa de imagen: ${ message }"
+      ],
+      "Could not read part of this file: ${ message }": [
+        "No se pudo leer parte de este archivo: ${ message }"
+      ],
+      "Could not unlock the parent folder": [
+        "No se pudo desbloquear la carpeta principal"
+      ],
+      "Could not unlock this item": [
+        "No se pudo desbloquear este elemento"
       ],
       "Creating documents in non-folders is not allowed": [
         "No está permitido crear documentos en ubicaciones que no son carpetas"
@@ -44,15 +62,6 @@
       "Creating folders in non-folders is not allowed": [
         "No está permitido crear carpetas en ubicaciones que no son carpetas"
       ],
-      "Creating revisions in non-files is not allowed": [
-        "No se permite crear revisiones en elementos que no son archivos"
-      ],
-      "Data integrity check failed": [
-        "Error en verificar la integridad de los datos"
-      ],
-      "Data integrity check of one part failed": [
-        "Error en verificar la integridad de los datos de una parte"
-      ],
       "Device not found": [
         "No se encontró el dispositivo"
       ],
@@ -61,9 +70,6 @@
       ],
       "Failed to decrypt active revision: ${ message }": [
         "No se pudo descifrar la revisión activa: ${ message }"
-      ],
-      "Failed to decrypt block: ${ message }": [
-        "No se pudo descifrar el bloque: ${ message }"
       ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Error al descifrar la clave del marcador: ${ message }"
@@ -83,23 +89,8 @@
       "Failed to decrypt node key: ${ message }": [
         "No se pudo descifrar la clave de nodo: ${ message }"
       ],
-      "Failed to decrypt thumbnail: ${ message }": [
-        "Error al descifrar la miniatura: ${ message }"
-      ],
       "Failed to get inviter keys": [
         "No se pudieron obtener las claves de quien invita"
-      ],
-      "Failed to get sharing info for node ${ nodeUid }": [
-        "Error al obtener la información de compartición para el nodo ${ nodeUid }"
-      ],
-      "Failed to get verification keys": [
-        "Error al obtener las claves de verificación"
-      ],
-      "Failed to load some items": [
-        "Error al cargar algunos elementos"
-      ],
-      "Failed to load some nodes": [
-        "Error al cargar algunos nodos"
       ],
       "Failed to verify invitation": [
         "No se pudo verificar la invitación"
@@ -107,17 +98,11 @@
       "File download failed due to empty response": [
         "Error con la descarga del archivo debido a una respuesta vacía"
       ],
-      "File has no active revision": [
-        "El archivo no tiene ninguna revisión activa"
-      ],
-      "File has no content key": [
-        "El archivo no tiene clave de contenido"
-      ],
       "File has no revision": [
         "El archivo no tiene revisiones"
       ],
-      "File hash does not match expected hash": [
-        "El hash del archivo no coincide con el valor esperado"
+      "Image preview not found": [
+        "No se encontró la vista previa de la imagen"
       ],
       "Invalid URL": [
         "URL inválida"
@@ -125,14 +110,11 @@
       "Invitation not found": [
         "Invitación no encontrada"
       ],
-      "Item cannot be decrypted": [
-        "El elemento no se puede descifrar"
+      "Item not found": [
+        "Elemento no encontrado"
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "El enlace público de origen no se puede actualizar. Vuelva a crear un nuevo enlace público."
-      ],
-      "Missing integrity signature": [
-        "Falta la firma de integridad"
       ],
       "Missing inviter email": [
         "Falta el correo electrónico de quien invita"
@@ -159,29 +141,11 @@
       "Name must not be empty": [
         "El nombre no debe estar vacío"
       ],
-      "No available name found": [
-        "No se encontró ningún nombre disponible"
+      "No file data was received. Please try again.": [
+        "No se recibió ningún dato del archivo. Intente de nuevo."
       ],
-      "No data to upload received": [
-        "No se han recibido datos para cargar"
-      ],
-      "Node has no thumbnail": [
-        "El nodo no tiene miniatura"
-      ],
-      "Node is not accessible": [
-        "El nodo no es accesible"
-      ],
-      "Node is not accessible via a share": [
-        "No se puede acceder al nodo a través de un elemento compartido"
-      ],
-      "Node is not shared": [
-        "El nodo no está compartido"
-      ],
-      "Node not found": [
-        "Nodo no encontrado"
-      ],
-      "Only admins can convert non-Proton invitations": [
-        "Solo administradores pueden convertir invitaciones externas Proton"
+      "Only admins can convert external invitations": [
+        "Solo los administradores pueden convertir invitaciones externas"
       ],
       "Operation aborted": [
         "Operación cancelada"
@@ -189,8 +153,8 @@
       "Operation failed, try again later": [
         "Operación fallida, inténtelo de nuevo más tarde"
       ],
-      "Parent cannot be decrypted": [
-        "No se puede descifrar el elemento principal"
+      "Part of the file appears to be corrupted": [
+        "Parte del archivo parece estar corrupto"
       ],
       "Photo is already in the target album": [
         "La foto ya está en el álbum de destino"
@@ -219,17 +183,41 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "Falló la verificación de la firma para ${ signatureType }: ${ errorMessage }"
       ],
-      "Some file bytes failed to upload": [
-        "Algunos bytes del archivo no se pudieron cargar"
+      "Some file data failed to upload. Please try again.": [
+        "Error al cargar algunos datos del archivo. Intente de nuevo."
       ],
-      "Some file parts failed to upload": [
-        "Algunas partes del archivo no se pudieron cargar"
+      "Some file parts failed to upload. Please try again.": [
+        "Error al cargar algunas partes del archivo. Intente de nuevo."
       ],
-      "The node is not shared anymore": [
-        "El nodo ya no está compartido"
+      "Some items could not be loaded": [
+        "No se pudieron cargar algunos elementos"
       ],
-      "Thumbnail not found": [
-        "No se encontró la miniatura"
+      "Something went wrong": [
+        "Ocurrió un error"
+      ],
+      "Something went wrong. Please try again.": [
+        "Algo salió mal. Intente de nuevo."
+      ],
+      "The uploaded file does not match the original. Please try again.": [
+        "El archivo cargado no coincide con el original. Intente de nuevo."
+      ],
+      "This file has missing crypto material": [
+        "Este archivo tiene material cripto faltante"
+      ],
+      "This file has no version available to download": [
+        "Este archivo no tiene una versión disponible para descargar"
+      ],
+      "This file version could not be uploaded": [
+        "No se pudo cargar esta versión del archivo"
+      ],
+      "This item has no image preview": [
+        "Este elemento no tiene vista previa de imagen"
+      ],
+      "This item is no longer shared": [
+        "Este elemento ya no está siendo compartido"
+      ],
+      "This item is not shared": [
+        "Este elemento no está compartido"
       ],
       "Too many server errors, please try again later": [
         "Demasiados errores del servidor. Inténtelo de nuevo más tarde."
@@ -240,17 +228,29 @@
       "Unknown error": [
         "Error desconocido"
       ],
-      "Unknown error ${ code }": [
-        "Error desconocido ${ code }"
-      ],
       "Verification keys are not available": [
         "Las claves de verificación no están disponibles"
       ],
       "Verification keys for ${ signatureType } are not available": [
         "Las claves de verificación para ${ signatureType } no están disponibles"
       ],
-      "You can leave only item that is shared with you": [
-        "Solo puede abandonar el elemento que se comparte con usted."
+      "You can create public links for your own files only": [
+        "Puede crear un enlace público solo para sus propios archivos"
+      ],
+      "You can only leave items that are shared with you": [
+        "Solo puede abandonar elementos que se comparten con usted"
+      ],
+      "You can only upload a new version to a file": [
+        "Solo puede cargar una versión nueva a un archivo"
+      ],
+      "You can update a public link for your own files only": [
+        "Puede actualizar un enlace público solo para sus propios archivos"
+      ],
+      "You do not have access to this item": [
+        "No tiene acceso a este elemento"
+      ],
+      "You do not have access to this shared item": [
+        "No tiene acceso a este elemento compartido"
       ]
     },
     "Info": {

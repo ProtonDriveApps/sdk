@@ -14,26 +14,44 @@
       "Cannot add photo to album without a valid name": [
         "Nu se poate adăuga o fotografie în album fără un nume valid."
       ],
-      "Cannot create public link for volume not owned by the user": [
-        "Nu se poate crea legătura web publică pentru volumul care nu este deținut de utilizator."
-      ],
       "Cannot download a folder": [
         "Nu se poate descărca un folder."
+      ],
+      "Cannot move item without a valid name, please rename the item first": [
+        "Nu se poate muta articolul fără un nume valid. Redenumiți mai întâi articolul."
       ],
       "Cannot share root folder": [
         "Nu se poate partaja folderul rădăcină."
       ],
-      "Cannot update public link for volume not owned by the user": [
-        "Nu se poate actualiza legătura web publică pentru volumul care nu este deținut de utilizator."
+      "Cannot verify the author of this file": [
+        "Nu se poate verifica autorul acestui fișier."
       ],
-      "Content key packet is required for small revision upload": [
-        "Pentru încărcarea revizuirilor mici este necesar pachetul cheii conținutului."
+      "Cannot verify who uploaded this file": [
+        "Nu s-a putut verifica autorul fișierului încărcat."
       ],
       "Copy operation aborted": [
         "Copierea a fost anulată."
       ],
       "Copying item to a non-folder is not allowed": [
         "Copierea articolului în alt loc decât un folder nu este permisă."
+      ],
+      "Could not find an available name": [
+        "Nu s-a găsit un nume disponibil."
+      ],
+      "Could not load sharing details": [
+        "Nu s-au putut încărca detaliile de partajare."
+      ],
+      "Could not load the image preview: ${ message }": [
+        "Nu s-a putut încărca previzualizarea imaginii: ${ message }"
+      ],
+      "Could not read part of this file: ${ message }": [
+        "Nu s-a putut citi o parte din acest fișier: ${ message }"
+      ],
+      "Could not unlock the parent folder": [
+        "Nu s-a putut debloca folderul părinte."
+      ],
+      "Could not unlock this item": [
+        "Nu s-a putut debloca acest articol."
       ],
       "Creating documents in non-folders is not allowed": [
         "Crearea documentelor în afara folderelor nu este permisă."
@@ -44,15 +62,6 @@
       "Creating folders in non-folders is not allowed": [
         "Crearea folderelor în non-foldere nu este permisă."
       ],
-      "Creating revisions in non-files is not allowed": [
-        "Crearea reviziilor în non-fișiere nu este permisă."
-      ],
-      "Data integrity check failed": [
-        "Verificarea integrității datelor a eșuat."
-      ],
-      "Data integrity check of one part failed": [
-        "Verificarea integrității datelor pentru o parte a eșuat."
-      ],
       "Device not found": [
         "Dispozitivul nu a fost găsit."
       ],
@@ -61,9 +70,6 @@
       ],
       "Failed to decrypt active revision: ${ message }": [
         "Nu s-a reușit decriptarea reviziei active: ${ message }"
-      ],
-      "Failed to decrypt block: ${ message }": [
-        "Nu s-a reușit decriptarea blocului: ${ message }"
       ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Nu s-a reușit decriptarea cheii semnului de carte: ${ message }"
@@ -83,23 +89,8 @@
       "Failed to decrypt node key: ${ message }": [
         "Nu s-a reușit decriptarea cheii nodului: ${ message }"
       ],
-      "Failed to decrypt thumbnail: ${ message }": [
-        "Nu s-a reușit decriptarea miniaturii: ${ message }"
-      ],
       "Failed to get inviter keys": [
         "Preluarea cheilor de invitare a eșuat."
-      ],
-      "Failed to get sharing info for node ${ nodeUid }": [
-        "Nu s-au putut obține informații de partajare pentru nodul ${ nodeUid }."
-      ],
-      "Failed to get verification keys": [
-        "Obținerea cheilor de verificare a eșuat."
-      ],
-      "Failed to load some items": [
-        "Nu s-a reușit încărcarea unor articole."
-      ],
-      "Failed to load some nodes": [
-        "Nu s-a reușit încărcarea unor noduri."
       ],
       "Failed to verify invitation": [
         "Eșuare verificare invitație."
@@ -107,17 +98,11 @@
       "File download failed due to empty response": [
         "Descărcarea fișierului a eșuat din cauza unui răspuns gol."
       ],
-      "File has no active revision": [
-        "Fișierul nu are nicio revizie activă."
-      ],
-      "File has no content key": [
-        "Fișierul nu are nicio cheie de conținut."
-      ],
       "File has no revision": [
         "Fișierul nu are nicio revizie."
       ],
-      "File hash does not match expected hash": [
-        "Codul de verificare al fișierului nu corespunde cu cel așteptat."
+      "Image preview not found": [
+        "Previzualizarea imaginii nu a fost găsită."
       ],
       "Invalid URL": [
         "Adresă URL nevalidă."
@@ -125,14 +110,11 @@
       "Invitation not found": [
         "Invitația nu a fost găsită."
       ],
-      "Item cannot be decrypted": [
-        "Articolul nu poate fi decriptat."
+      "Item not found": [
+        "Articolul nu a fost găsit."
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Vechea legătură web publică nu poate fi actualizată. Recreați o nouă legătură web publică."
-      ],
-      "Missing integrity signature": [
-        "Lipsește semnătura de integritate"
       ],
       "Missing inviter email": [
         "Adresa de e-mail al invitantului lipsește."
@@ -160,29 +142,11 @@
       "Name must not be empty": [
         "Numele nu poate fi gol."
       ],
-      "No available name found": [
-        "Nu a fost găsit niciun nume disponibil."
+      "No file data was received. Please try again.": [
+        "Nu s-au primit date despre fișier. Reîncercați."
       ],
-      "No data to upload received": [
-        "Nu s-au primit date pentru încărcare"
-      ],
-      "Node has no thumbnail": [
-        "Nodul nu are miniatură."
-      ],
-      "Node is not accessible": [
-        "Nodul nu este accesibil."
-      ],
-      "Node is not accessible via a share": [
-        "Nodul nu este accesibil printr-o partajare."
-      ],
-      "Node is not shared": [
-        "Nodul nu este partajat."
-      ],
-      "Node not found": [
-        "Nod negăsit."
-      ],
-      "Only admins can convert non-Proton invitations": [
-        "Doar administratorii pot converti invitațiile non-Proton."
+      "Only admins can convert external invitations": [
+        "Doar administratorii pot converti invitațiile externe."
       ],
       "Operation aborted": [
         "Operație anulată"
@@ -190,8 +154,8 @@
       "Operation failed, try again later": [
         "Operațiunea a eșuat. Reîncercați mai târziu."
       ],
-      "Parent cannot be decrypted": [
-        "Părintele nu poate fi decriptat."
+      "Part of the file appears to be corrupted": [
+        "O parte a fișierului pare a fi coruptă."
       ],
       "Photo is already in the target album": [
         "Fotografia există deja în albumul țintă."
@@ -220,17 +184,41 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "Verificarea semnăturii pentru ${ signatureType } a eșuat: ${ errorMessage }"
       ],
-      "Some file bytes failed to upload": [
-        "Unii octeți ai fișierului nu s-au încărcat."
+      "Some file data failed to upload. Please try again.": [
+        "Unele date de fișier nu au putut fi încărcate. Reîncercați."
       ],
-      "Some file parts failed to upload": [
-        "Unele părți ale fișierului nu s-au încărcat."
+      "Some file parts failed to upload. Please try again.": [
+        "Unele părți ale fișierului nu au putut fi încărcate. Reîncercați."
       ],
-      "The node is not shared anymore": [
-        "Nodul nu mai este partajat."
+      "Some items could not be loaded": [
+        "Unele articole nu au putut fi încărcate."
       ],
-      "Thumbnail not found": [
-        "Miniatură negăsită"
+      "Something went wrong": [
+        "Ceva nu a funcționat corect."
+      ],
+      "Something went wrong. Please try again.": [
+        "Ceva nu a funcționat bine. Reîncercați."
+      ],
+      "The uploaded file does not match the original. Please try again.": [
+        "Fișierul încărcat nu corespunde cu originalul. Reîncercați."
+      ],
+      "This file has missing crypto material": [
+        "Acest fișier are materiale criptografice lipsă."
+      ],
+      "This file has no version available to download": [
+        "Acest fișier nu are nicio versiune disponibilă pentru descărcare."
+      ],
+      "This file version could not be uploaded": [
+        "Această versiune de fișier nu a putut fi încărcată."
+      ],
+      "This item has no image preview": [
+        "Acest articol nu are imagine de examinare."
+      ],
+      "This item is no longer shared": [
+        "Acest articol nu mai este partajat."
+      ],
+      "This item is not shared": [
+        "Acest articol nu este partajat."
       ],
       "Too many server errors, please try again later": [
         "Prea multe erori de server. Reîncercați mai târziu."
@@ -241,17 +229,29 @@
       "Unknown error": [
         "Eroare necunoscută."
       ],
-      "Unknown error ${ code }": [
-        "Eroare necunoscută ${ code }"
-      ],
       "Verification keys are not available": [
         "Cheile de verificare nu sunt disponibile"
       ],
       "Verification keys for ${ signatureType } are not available": [
         "Cheile de verificare pentru ${ signatureType } nu sunt disponibile."
       ],
-      "You can leave only item that is shared with you": [
-        "Puteți părăsi doar articolul care vi s-a partajat."
+      "You can create public links for your own files only": [
+        "Puteți crea legături web publice doar pentru propriile fișiere."
+      ],
+      "You can only leave items that are shared with you": [
+        "Puteți părăsi doar articolele care vi s-au partajat."
+      ],
+      "You can only upload a new version to a file": [
+        "Puteți încărca doar o versiune nouă la un fișier."
+      ],
+      "You can update a public link for your own files only": [
+        "Puteți actualiza o legătură web publică doar pentru propriile fișiere."
+      ],
+      "You do not have access to this item": [
+        "Nu aveți acces la acest articol."
+      ],
+      "You do not have access to this shared item": [
+        "Nu aveți acces la acest articol partajat."
       ]
     },
     "Info": {

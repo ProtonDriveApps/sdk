@@ -29,15 +29,6 @@
       "Creating folders in non-folders is not allowed": [
         "Não é permitido criar pastas em itens que não sejam pastas."
       ],
-      "Creating revisions in non-files is not allowed": [
-        "Não é permitido criar revisões em itens que não sejam arquivos."
-      ],
-      "Data integrity check failed": [
-        "Falha na verificação de integridade dos dados"
-      ],
-      "Data integrity check of one part failed": [
-        "A verificação de integridade dos dados de uma parte falhou"
-      ],
       "Device not found": [
         "Dispositivo não encontrado"
       ],
@@ -46,9 +37,6 @@
       ],
       "Failed to decrypt active revision: ${ message }": [
         "Erro ao descriptografar a revisão ativa: ${ message }"
-      ],
-      "Failed to decrypt block: ${ message }": [
-        "Falha ao descriptografar bloco: ${ message }"
       ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Erro ao descriptografar a chave do favorito: ${ message }"
@@ -68,20 +56,8 @@
       "Failed to decrypt node key: ${ message }": [
         "Falha ao descriptografar a chave do nó: ${ message }"
       ],
-      "Failed to decrypt thumbnail: ${ message }": [
-        "Erro ao descriptografar a miniatura: ${ message }"
-      ],
       "Failed to get inviter keys": [
         "Falha ao obter chaves do convidante"
-      ],
-      "Failed to get verification keys": [
-        "Não foi possível obter a chave de verificação"
-      ],
-      "Failed to load some items": [
-        "Erro ao carregar alguns itens"
-      ],
-      "Failed to load some nodes": [
-        "Erro ao carregar alguns nós"
       ],
       "Failed to verify invitation": [
         "Erro ao verificar o convite"
@@ -89,17 +65,8 @@
       "File download failed due to empty response": [
         "Erro ao baixar o arquivo devido a uma resposta vazia"
       ],
-      "File has no active revision": [
-        "O arquivo não tem revisão ativa"
-      ],
-      "File has no content key": [
-        "O arquivo não tem chave de conteúdo."
-      ],
       "File has no revision": [
         "O arquivo não possui revisão"
-      ],
-      "File hash does not match expected hash": [
-        "O hash do arquivo não corresponde ao hash esperado"
       ],
       "Invalid URL": [
         "O URL não é válido."
@@ -107,14 +74,11 @@
       "Invitation not found": [
         "Convite não encontrado"
       ],
-      "Item cannot be decrypted": [
-        "O item não pode ser descriptografado"
+      "Item not found": [
+        "Item não encontrado"
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "O link público antigo não pode ser atualizado. Crie um novo link público."
-      ],
-      "Missing integrity signature": [
-        "Assinatura de integridade ausente"
       ],
       "Missing inviter email": [
         "E-mail do convidante ausente"
@@ -141,32 +105,14 @@
       "Name must not be empty": [
         "O nome não pode estar vazio"
       ],
-      "No available name found": [
-        "Nenhum nome disponível encontrado"
-      ],
-      "Node has no thumbnail": [
-        "Nó não tem miniatura"
-      ],
-      "Node is not accessible": [
-        "O nó não está acessível"
-      ],
-      "Node is not shared": [
-        "O nó não está compartilhado."
-      ],
-      "Node not found": [
-        "Nó não encontrado"
-      ],
-      "Only admins can convert non-Proton invitations": [
-        "Apenas administradores podem converter convites que não sejam da Proton"
+      "Only admins can convert external invitations": [
+        "Apenas administradores podem converter convites que não sejam externos"
       ],
       "Operation aborted": [
         "Operação abortada"
       ],
       "Operation failed, try again later": [
         "Falha na operação, tente novamente mais tarde"
-      ],
-      "Parent cannot be decrypted": [
-        "O elemento principal não pode ser descriptografado."
       ],
       "Photo is already in the target album": [
         "A foto já está no álbum de destino"
@@ -195,17 +141,8 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "Verificação de assinatura para ${ signatureType } falhou: ${ errorMessage }"
       ],
-      "Some file bytes failed to upload": [
-        "Alguns bytes do arquivo falharam ao enviar"
-      ],
-      "Some file parts failed to upload": [
-        "Algumas partes do arquivo falharam ao enviar"
-      ],
-      "The node is not shared anymore": [
-        "O nó não é mais compartilhado"
-      ],
-      "Thumbnail not found": [
-        "Miniatura não encontrada"
+      "Something went wrong": [
+        "Algo deu errado"
       ],
       "Too many server errors, please try again later": [
         "Muitos erros do servidor. Tente novamente mais tarde."
@@ -216,17 +153,11 @@
       "Unknown error": [
         "Erro desconhecido"
       ],
-      "Unknown error ${ code }": [
-        "Erro desconhecido ${ code }"
-      ],
       "Verification keys are not available": [
         "As chaves de verificação não estão disponíveis"
       ],
       "Verification keys for ${ signatureType } are not available": [
         "As chaves de verificação para ${ signatureType } não estão disponíveis"
-      ],
-      "You can leave only item that is shared with you": [
-        "Você pode sair apenas do item que é compartilhado com você"
       ]
     },
     "Info": {

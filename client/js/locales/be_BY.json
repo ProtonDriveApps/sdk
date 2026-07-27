@@ -14,26 +14,44 @@
       "Cannot add photo to album without a valid name": [
         "Нельга дадаць фатаграфію ў альбом без сапраўднай назвы"
       ],
-      "Cannot create public link for volume not owned by the user": [
-        "Немагчыма стварыць публічную спасылку для тома, які не належыць карыстальніку"
-      ],
       "Cannot download a folder": [
         "Немагчыма спампаваць папку"
+      ],
+      "Cannot move item without a valid name, please rename the item first": [
+        "Немагчыма перамясціць элемент без сапраўднай назвы. Спачатку дайце іншую назву элементу"
       ],
       "Cannot share root folder": [
         "Немагчыма абагуліць каранёвую папку"
       ],
-      "Cannot update public link for volume not owned by the user": [
-        "Немагчыма абнавіць публічную спасылку для тома, які не належыць карыстальніку"
+      "Cannot verify the author of this file": [
+        "Немагчыма спраўдзіць аўтара гэтага файла"
       ],
-      "Content key packet is required for small revision upload": [
-        "Пакет ключа змесціва патрабуецца для запампоўвання невялікіх рэдакцый"
+      "Cannot verify who uploaded this file": [
+        "Немагчыма спраўдзіць хто запампаваў гэты файл"
       ],
       "Copy operation aborted": [
         "Аперацыя капіявання перарвана"
       ],
       "Copying item to a non-folder is not allowed": [
         "Капіяванне элементаў у асяроддзі, якое не належыць папкам забаронена"
+      ],
+      "Could not find an available name": [
+        "Немагчыма знайсці даступную назву"
+      ],
+      "Could not load sharing details": [
+        "Немагчыма загрузіць падрабязнасці абагульвання"
+      ],
+      "Could not load the image preview: ${ message }": [
+        "Немагчыма загрузіць папярэдні прагляд відарыса: ${ message }"
+      ],
+      "Could not read part of this file: ${ message }": [
+        "Немагчыма прачытаць частку гэтага файла: ${ message }"
+      ],
+      "Could not unlock the parent folder": [
+        "Немагчыма разблакіраваць бацькоўскую папку"
+      ],
+      "Could not unlock this item": [
+        "Немагчыма разблакіраваць гэты элемент"
       ],
       "Creating documents in non-folders is not allowed": [
         "Стварэнне дакументаў у асяроддзі, якое не належыць папкам забаронена"
@@ -44,15 +62,6 @@
       "Creating folders in non-folders is not allowed": [
         "Стварэнне папак у асяроддзі, якое не належыць папкам забаронена"
       ],
-      "Creating revisions in non-files is not allowed": [
-        "Забаронена ствараць рэдакцыі ў файлах, якія не з'яўляюцца файламі"
-      ],
-      "Data integrity check failed": [
-        "Збой праверкі цэласнасці даных"
-      ],
-      "Data integrity check of one part failed": [
-        "Збой праверкі цэласнасці даных адной часткі"
-      ],
       "Device not found": [
         "Прылада не знойдзена"
       ],
@@ -61,9 +70,6 @@
       ],
       "Failed to decrypt active revision: ${ message }": [
         "Не ўдалося расшыфраваць актыўную рэдакцыю: ${ message }"
-      ],
-      "Failed to decrypt block: ${ message }": [
-        "Не ўдалося расшыфраваць блок: ${ message }"
       ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Не ўдалося расшыфраваць ключ закладкі: ${ message }"
@@ -83,23 +89,8 @@
       "Failed to decrypt node key: ${ message }": [
         "Не ўдалося расшыфраваць ключ вузла: ${ message }"
       ],
-      "Failed to decrypt thumbnail: ${ message }": [
-        "Не ўдалося расшыфраваць мініяцюру: ${ message }"
-      ],
       "Failed to get inviter keys": [
         "Не ўдалося атрымаць ключы запрашальніка"
-      ],
-      "Failed to get sharing info for node ${ nodeUid }": [
-        "Не ўдалося атрымаць звесткі аб абагульванні для вузла ${ nodeUid }"
-      ],
-      "Failed to get verification keys": [
-        "Не ўдалося атрымаць ключы праверкі"
-      ],
-      "Failed to load some items": [
-        "Не ўдалося загрузіць некаторыя элементы"
-      ],
-      "Failed to load some nodes": [
-        "Не ўдалося загрузіць некаторыя вузлы"
       ],
       "Failed to verify invitation": [
         "Не ўдалося спраўдзіць запрашэнне"
@@ -107,17 +98,11 @@
       "File download failed due to empty response": [
         "Спампоўка файла не атрымалася па прычыне пустога адказу"
       ],
-      "File has no active revision": [
-        "У файла адсутнічае актыўная рэдакцыя"
-      ],
-      "File has no content key": [
-        "Файл не мае ключа змесціва"
-      ],
       "File has no revision": [
         "У файла адсутнічае рэдакцыя"
       ],
-      "File hash does not match expected hash": [
-        "Хэш файла не супадае з чаканым хэшам"
+      "Image preview not found": [
+        "Папярэдні прагляд відарыса не знойдзены"
       ],
       "Invalid URL": [
         "Памылковы URL-адрас"
@@ -125,14 +110,11 @@
       "Invitation not found": [
         "Запрашэнне не знойдзена"
       ],
-      "Item cannot be decrypted": [
-        "Немагчыма расшыфраваць элемент"
+      "Item not found": [
+        "Элемент не знойдзены"
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Немагчыма абнавіць старую публічную спасылку. Стварыце новую публічную спасылку."
-      ],
-      "Missing integrity signature": [
-        "Адсутнічае подпіс цэласнасці"
       ],
       "Missing inviter email": [
         "Адсутнічае адрас электроннай пошты запрашальніка"
@@ -161,38 +143,20 @@
       "Name must not be empty": [
         "Назва не можа быць пустой"
       ],
-      "No available name found": [
-        "Даступная назва не знойдзена"
+      "No file data was received. Please try again.": [
+        "Даныя файла не атрыманы. Паўтарыце спробу пазней."
       ],
-      "No data to upload received": [
-        "Не атрыманы даныя для запампоўвання"
-      ],
-      "Node has no thumbnail": [
-        "У вузла адсутнічае мініяцюра"
-      ],
-      "Node is not accessible": [
-        "Вузел недаступны"
-      ],
-      "Node is not accessible via a share": [
-        "Вузел недаступны праз абагулены рэсурс"
-      ],
-      "Node is not shared": [
-        "Вузел не абагулены"
-      ],
-      "Node not found": [
-        "Вузел не знойдзены"
-      ],
-      "Only admins can convert non-Proton invitations": [
-        "Толькі адміністратары могуць пераўтвараць запрашэнні, якія не належаць Proton"
+      "Only admins can convert external invitations": [
+        "Толькі адміністратары могуць пераўтвараць знешнія запрашэнні"
       ],
       "Operation aborted": [
         "Аперацыя перарвана"
       ],
       "Operation failed, try again later": [
-        "Збой аперацыі. Паспрабуйце яшчэ раз пазней"
+        "Збой аперацыі. Паўтарыце спробу пазней."
       ],
-      "Parent cannot be decrypted": [
-        "Немагчыма расшыфраваць бацькоўскі вузел"
+      "Part of the file appears to be corrupted": [
+        "Здаецца, што частка файла пашкоджана"
       ],
       "Photo is already in the target album": [
         "Фатаграфіі ўжо знаходзяцца ў мэтавым альбоме"
@@ -221,29 +185,50 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "Збой спраўджання подпісу для ${ signatureType }: ${ errorMessage }"
       ],
-      "Some file bytes failed to upload": [
-        "Збой запампоўвання некаторых байтаў файла"
+      "Some file data failed to upload. Please try again.": [
+        "Не ўдалося запампаваць некаторыя даныя файла. Паўтарыце спробу пазней."
       ],
-      "Some file parts failed to upload": [
-        "Збой запампоўвання некаторых частак файла"
+      "Some file parts failed to upload. Please try again.": [
+        "Не ўдалося запампаваць некаторыя часткі файла. Паўтарыце спробу пазней."
       ],
-      "The node is not shared anymore": [
-        "Вузел больш не абагулены"
+      "Some items could not be loaded": [
+        "Некаторыя элементы не могуць быць загружаны"
       ],
-      "Thumbnail not found": [
-        "Мініяцюра не знойдзена"
+      "Something went wrong": [
+        "Нешта пайшло не так"
+      ],
+      "Something went wrong. Please try again.": [
+        "Нешта пайшло не так. Паўтарыце спробу пазней."
+      ],
+      "The uploaded file does not match the original. Please try again.": [
+        "Запампаваны файл не адпавядае арыгінальнаму. Паўтарыце спробу пазней."
+      ],
+      "This file has missing crypto material": [
+        "У файла адсутнічае крыптаматэрыял"
+      ],
+      "This file has no version available to download": [
+        "У гэтага файла адсутнічае даступная версія для спампоўвання"
+      ],
+      "This file version could not be uploaded": [
+        "Гэта версія файла не можа быць запампавана"
+      ],
+      "This item has no image preview": [
+        "У гэтага элемента няма папярэдняга прагляду відарыса"
+      ],
+      "This item is no longer shared": [
+        "Гэты элемент больш абагульваецца"
+      ],
+      "This item is not shared": [
+        "Гэты элемент не абагульваецца"
       ],
       "Too many server errors, please try again later": [
-        "Занадта шмат памылак на серверы. Паўтарыце спробу пазней"
+        "Занадта шмат памылак на серверы. Паўтарыце спробу пазней."
       ],
       "Too many server requests, please try again later": [
-        "Занадта шмат запытаў да сервера. Паўтарыце спробу пазней"
+        "Занадта шмат запытаў да сервера. Паўтарыце спробу пазней."
       ],
       "Unknown error": [
         "Невядомая памылка"
-      ],
-      "Unknown error ${ code }": [
-        "Невядомая памылка ${ code }"
       ],
       "Verification keys are not available": [
         "Ключы спраўджання недаступны"
@@ -251,8 +236,23 @@
       "Verification keys for ${ signatureType } are not available": [
         "Ключы спраўджання для ${ signatureType } недаступны"
       ],
-      "You can leave only item that is shared with you": [
-        "Вы можаце пакінуць толькі элемент, які абагулены з вамі"
+      "You can create public links for your own files only": [
+        "Вы можаце ствараць публічныя спасылкі толькі для свайго ўласнага файла"
+      ],
+      "You can only leave items that are shared with you": [
+        "Вы можаце толькі выходзіць з элементаў, якія абагулены з вамі"
+      ],
+      "You can only upload a new version to a file": [
+        "Вы можаце запампаваць новую версію ў файл"
+      ],
+      "You can update a public link for your own files only": [
+        "Вы можаце абнавіць публічную спасылку толькі для свайго ўласнага файла"
+      ],
+      "You do not have access to this item": [
+        "У вас больш няма доступу да гэтага элемента"
+      ],
+      "You do not have access to this shared item": [
+        "У вас больш няма доступу да гэтага абагуленага элемента"
       ]
     },
     "Info": {
