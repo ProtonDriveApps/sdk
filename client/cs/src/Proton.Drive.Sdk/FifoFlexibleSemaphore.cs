@@ -34,9 +34,14 @@ internal sealed class FifoFlexibleSemaphore
         }
     }
 
-    public async ValueTask EnterAsync(int count, CancellationToken cancellationToken = default)
+    public ValueTask EnterAsync(int count, CancellationToken cancellationToken = default)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(count);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return ValueTask.FromCanceled(cancellationToken);
+        }
 
         TaskCompletionSource tcs;
         lock (_waitingQueue)
@@ -44,25 +49,16 @@ internal sealed class FifoFlexibleSemaphore
             if (CurrentCount > 0)
             {
                 CurrentCount -= count;
-                return;
+                return ValueTask.CompletedTask;
             }
 
             tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             _waitingQueue.Enqueue((count, tcs));
         }
 
-        var cancellationTokenRegistration = cancellationToken.Register(state => ((TaskCompletionSource)state!).TrySetCanceled(), tcs);
+        var cancellationTokenRegistration = cancellationToken.Register(tcsAsState => ((TaskCompletionSource)tcsAsState!).TrySetCanceled(), tcs);
 
-        if (cancellationToken.IsCancellationRequested)
-        {
-            await cancellationTokenRegistration.DisposeAsync().ConfigureAwait(false);
-            return;
-        }
-
-        await using (cancellationTokenRegistration.ConfigureAwait(false))
-        {
-            await tcs.Task.ConfigureAwait(false);
-        }
+        return WaitForEntryAsync(tcs.Task, cancellationTokenRegistration);
     }
 
     public void DecreaseCount(int count)
@@ -88,13 +84,24 @@ internal sealed class FifoFlexibleSemaphore
 
             while (CurrentCount > 0 && _waitingQueue.TryDequeue(out var queuedEntry))
             {
-                var (countToDecrement, taskCompletionSource) = queuedEntry;
+                var (countToSubtract, taskCompletionSource) = queuedEntry;
 
-                if (taskCompletionSource.TrySetResult())
+                if (!taskCompletionSource.TrySetResult())
                 {
-                    CurrentCount -= countToDecrement;
+                    // If the task result cannot be set, then the queuing entry must have been canceled, so ignore it.
+                    continue;
                 }
+
+                CurrentCount -= countToSubtract;
             }
+        }
+    }
+
+    private static async ValueTask WaitForEntryAsync(Task entryTask, CancellationTokenRegistration cancellationTokenRegistration)
+    {
+        await using (cancellationTokenRegistration.ConfigureAwait(false))
+        {
+            await entryTask.ConfigureAwait(false);
         }
     }
 }
