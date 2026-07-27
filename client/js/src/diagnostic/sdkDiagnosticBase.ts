@@ -345,7 +345,7 @@ export class SDKDiagnosticBase {
                 };
             }
             // TODO: We should have better way to check if the thumbnail is not expected.
-            if (!result[0].ok && result[0].error !== 'Node has no thumbnail') {
+            if (!result[0].ok && result[0].error !== 'This item has no image preview') {
                 yield {
                     type: 'thumbnails_error',
                     error: result[0].error,
