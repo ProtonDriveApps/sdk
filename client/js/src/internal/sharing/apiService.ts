@@ -13,11 +13,11 @@ import {
     makeInvitationUid,
     makeMemberUid,
     makeNodeUid,
-    makePublicLinkUid,
+    makeURLAccessUid,
     splitInvitationUid,
     splitMemberUid,
     splitNodeUid,
-    splitPublicLinkUid,
+    splitURLAccessUid,
 } from '../uids';
 import {
     EncryptedBookmark,
@@ -27,8 +27,8 @@ import {
     EncryptedInvitationRequest,
     EncryptedInvitationWithNode,
     EncryptedMember,
-    EncryptedPublicLink,
-    EncryptedPublicLinkCrypto,
+    EncryptedURLAccess,
+    EncryptedURLAccessCrypto,
 } from './interface';
 
 type GetSharedNodesResponse =
@@ -323,7 +323,7 @@ export class SharingAPIService {
                     // is that on the backend photo is file type and there
                     // is no ShareTargetType available.
                     // It is not crucial as only web client supports bookmarks
-                    // and it simply opens the public link. Also, the plan
+                    // and it simply opens the URL access. Also, the plan
                     // is to remove bookmarks in the future in favor of copy
                     // to own volume.
                     type: nodeTypeNumberToNodeType(this.logger, bookmark.Token.LinkType),
@@ -537,7 +537,7 @@ export class SharingAPIService {
         await this.apiService.delete(`drive/v2/shares/${shareId}/members/${memberId}`);
     }
 
-    async getPublicLink(shareId: string): Promise<EncryptedPublicLink | undefined> {
+    async getURLAccess(shareId: string): Promise<EncryptedURLAccess | undefined> {
         const response = await this.apiService.get<GetShareUrlsResponse>(`drive/shares/${shareId}/urls`);
 
         if (!response.ShareURLs || response.ShareURLs.length === 0) {
@@ -549,7 +549,7 @@ export class SharingAPIService {
         const shareUrl = response.ShareURLs[0];
 
         return {
-            uid: makePublicLinkUid(shareUrl.ShareID, shareUrl.ShareURLID),
+            uid: makeURLAccessUid(shareUrl.ShareID, shareUrl.ShareURLID),
             creationTime: new Date(shareUrl.CreateTime * 1000),
             expirationTime: shareUrl.ExpirationTime ? new Date(shareUrl.ExpirationTime * 1000) : undefined,
             role: permissionsToMemberRole(this.logger, shareUrl.Permissions),
@@ -564,22 +564,22 @@ export class SharingAPIService {
         };
     }
 
-    async createPublicLink(
+    async createURLAccess(
         shareId: string,
-        publicLink: {
+        urlAccess: {
             creatorEmail: string;
             role: MemberRole;
             includesCustomPassword: boolean;
             expirationTime?: number;
-            crypto: EncryptedPublicLinkCrypto;
+            crypto: EncryptedURLAccessCrypto;
             srp: SRPVerifier;
         },
     ): Promise<{
         uid: string;
         publicUrl: string;
     }> {
-        if (publicLink.role === MemberRole.Admin) {
-            throw new Error('Cannot set admin role for public link.');
+        if (urlAccess.role === MemberRole.Admin) {
+            throw new Error('Cannot set admin role for URL access.');
         }
 
         const result = await this.apiService.post<
@@ -587,43 +587,43 @@ export class SharingAPIService {
             Omit<PostShareUrlRequest, 'ExpirationDuration' | 'Name'>,
             PostShareUrlResponse
         >(`drive/shares/${shareId}/urls`, {
-            CreatorEmail: publicLink.creatorEmail,
-            ...this.generatePublicLinkRequestPayload(publicLink),
+            CreatorEmail: urlAccess.creatorEmail,
+            ...this.generateURLAccessRequestPayload(urlAccess),
         });
         return {
-            uid: makePublicLinkUid(shareId, result.ShareURL.ShareURLID),
+            uid: makeURLAccessUid(shareId, result.ShareURL.ShareURLID),
             publicUrl: result.ShareURL.PublicUrl,
         };
     }
 
-    async updatePublicLink(
-        publicLinkUid: string,
-        publicLink: {
+    async updateURLAccess(
+        urlAccessUid: string,
+        urlAccess: {
             role: MemberRole;
             includesCustomPassword: boolean;
             expirationTime?: number;
-            crypto: EncryptedPublicLinkCrypto;
+            crypto: EncryptedURLAccessCrypto;
             srp: SRPVerifier;
         },
     ): Promise<void> {
-        if (publicLink.role === MemberRole.Admin) {
-            throw new Error('Cannot set admin role for public link.');
+        if (urlAccess.role === MemberRole.Admin) {
+            throw new Error('Cannot set admin role for URL access.');
         }
 
-        const { shareId, publicLinkId } = splitPublicLinkUid(publicLinkUid);
+        const { shareId, shareUrlId } = splitURLAccessUid(urlAccessUid);
 
         await this.apiService.put<
             // TODO: Backend type wrongly requires ExpirationTime (it should be optional) and Name (it is not used).
             Omit<PutShareUrlRequest, 'ExpirationTime' | 'Name'> & { ExpirationTime: number | null },
             PutShareUrlResponse
-        >(`drive/shares/${shareId}/urls/${publicLinkId}`, this.generatePublicLinkRequestPayload(publicLink));
+        >(`drive/shares/${shareId}/urls/${shareUrlId}`, this.generateURLAccessRequestPayload(urlAccess));
     }
 
-    private generatePublicLinkRequestPayload(publicLink: {
+    private generateURLAccessRequestPayload(urlAccess: {
         role: MemberRole;
         includesCustomPassword: boolean;
         expirationTime?: number;
-        crypto: EncryptedPublicLinkCrypto;
+        crypto: EncryptedURLAccessCrypto;
         srp: SRPVerifier;
     }): Pick<
         PostShareUrlRequest,
@@ -639,32 +639,30 @@ export class SharingAPIService {
         | 'MaxAccesses'
     > {
         return {
-            Permissions: memberRoleToPermission(publicLink.role) as 4 | 6,
-            Flags: publicLink.includesCustomPassword
+            Permissions: memberRoleToPermission(urlAccess.role) as 4 | 6,
+            Flags: urlAccess.includesCustomPassword
                 ? 3 // Random + custom password set.
                 : 2, // Random password set.
-            ExpirationTime: publicLink.expirationTime || null,
+            ExpirationTime: urlAccess.expirationTime || null,
 
-            SharePasswordSalt: publicLink.crypto.base64SharePasswordSalt,
-            SharePassphraseKeyPacket: publicLink.crypto.base64SharePassphraseKeyPacket,
-            Password: publicLink.crypto.armoredPassword,
+            SharePasswordSalt: urlAccess.crypto.base64SharePasswordSalt,
+            SharePassphraseKeyPacket: urlAccess.crypto.base64SharePassphraseKeyPacket,
+            Password: urlAccess.crypto.armoredPassword,
 
-            UrlPasswordSalt: publicLink.srp.salt,
-            SRPVerifier: publicLink.srp.verifier,
-            SRPModulusID: publicLink.srp.modulusId,
+            UrlPasswordSalt: urlAccess.srp.salt,
+            SRPVerifier: urlAccess.srp.verifier,
+            SRPModulusID: urlAccess.srp.modulusId,
 
             MaxAccesses: 0, // We don't support setting limit.
         };
     }
 
-    async removePublicLink(publicLinkUid: string): Promise<void> {
-        const { shareId, publicLinkId } = splitPublicLinkUid(publicLinkUid);
-        await this.apiService.delete(`drive/shares/${shareId}/urls/${publicLinkId}`);
+    async removeURLAccess(urlAccessUid: string): Promise<void> {
+        const { shareId, shareUrlId } = splitURLAccessUid(urlAccessUid);
+        await this.apiService.delete(`drive/shares/${shareId}/urls/${shareUrlId}`);
     }
 
-    async reportAbuse(
-        report: Parameters<ReportAbuseAPIService['reportAbuse']>[0],
-    ): Promise<void> {
+    async reportAbuse(report: Parameters<ReportAbuseAPIService['reportAbuse']>[0]): Promise<void> {
         return this.reportAbuseApi.reportAbuse(report);
     }
 

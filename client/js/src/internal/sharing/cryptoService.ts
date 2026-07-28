@@ -27,17 +27,17 @@ import {
     EncryptedInvitation,
     EncryptedInvitationWithNode,
     EncryptedMember,
-    EncryptedPublicLink,
-    PublicLinkWithCreatorEmail,
+    EncryptedURLAccess,
     SharesService,
+    URLAccessWithCreatorEmail,
 } from './interface';
 
 export const PUBLIC_LINK_GENERATED_PASSWORD_LENGTH = 12;
 
-// We do not support management of legacy public links anymore (that is no
+// We do not support management of legacy URL access anymore (that is no
 // flag or bit 1). But we still need to support to read the legacy public
 // link.
-enum PublicLinkFlags {
+enum URLAccessFlags {
     Legacy = 0,
     CustomPassword = 1,
     GeneratedPasswordIncluded = 2,
@@ -423,7 +423,7 @@ export class SharingCryptoService {
         }
     }
 
-    async encryptPublicLink(
+    async encryptURLAccess(
         creatorEmail: string,
         shareSessionKey: SessionKey,
         password: string,
@@ -463,49 +463,49 @@ export class SharingCryptoService {
         return result;
     }
 
-    async decryptPublicLink(encryptedPublicLink: EncryptedPublicLink): Promise<PublicLinkWithCreatorEmail> {
-        const address = await this.account.getOwnAddress(encryptedPublicLink.creatorEmail);
+    async decryptURLAccess(encryptedURLAccess: EncryptedURLAccess): Promise<URLAccessWithCreatorEmail> {
+        const address = await this.account.getOwnAddress(encryptedURLAccess.creatorEmail);
         const addressKeys = address.keys.map(({ key }) => key);
 
-        const { password, customPassword } = await this.decryptShareUrlPassword(encryptedPublicLink, addressKeys);
+        const { password, customPassword } = await this.decryptShareUrlPassword(encryptedURLAccess, addressKeys);
 
         return {
-            uid: encryptedPublicLink.uid,
-            creationTime: encryptedPublicLink.creationTime,
-            expirationTime: encryptedPublicLink.expirationTime,
-            role: encryptedPublicLink.role,
-            url: `${encryptedPublicLink.publicUrl}#${password}`,
+            uid: encryptedURLAccess.uid,
+            creationTime: encryptedURLAccess.creationTime,
+            expirationTime: encryptedURLAccess.expirationTime,
+            role: encryptedURLAccess.role,
+            url: `${encryptedURLAccess.publicUrl}#${password}`,
             customPassword,
-            creatorEmail: encryptedPublicLink.creatorEmail,
-            numberOfInitializedDownloads: encryptedPublicLink.numberOfInitializedDownloads,
+            creatorEmail: encryptedURLAccess.creatorEmail,
+            numberOfInitializedDownloads: encryptedURLAccess.numberOfInitializedDownloads,
         };
     }
 
     private async decryptShareUrlPassword(
-        encryptedPublicLink: Pick<EncryptedPublicLink, 'armoredUrlPassword' | 'flags'>,
+        encryptedURLAccess: Pick<EncryptedURLAccess, 'armoredUrlPassword' | 'flags'>,
         addressKeys: PrivateKey[],
     ): Promise<{
         password: string;
         customPassword?: string;
     }> {
         const password = await this.driveCrypto.decryptShareUrlPassword(
-            encryptedPublicLink.armoredUrlPassword,
+            encryptedURLAccess.armoredUrlPassword,
             addressKeys,
         );
 
-        switch (encryptedPublicLink.flags) {
+        switch (encryptedURLAccess.flags) {
             // This is legacy that is not supported anymore.
             // Availalbe only for reading.
-            case PublicLinkFlags.Legacy:
-            case PublicLinkFlags.CustomPassword:
+            case URLAccessFlags.Legacy:
+            case URLAccessFlags.CustomPassword:
                 return {
                     password,
                 };
-            case PublicLinkFlags.GeneratedPasswordIncluded:
-            case PublicLinkFlags.GeneratedPasswordWithCustomPassword:
+            case URLAccessFlags.GeneratedPasswordIncluded:
+            case URLAccessFlags.GeneratedPasswordWithCustomPassword:
                 return splitGeneratedAndCustomPassword(password);
             default:
-                throw new Error(`Unsupported public link with flags: ${encryptedPublicLink.flags}`);
+                throw new Error(`Unsupported URL access with flags: ${encryptedURLAccess.flags}`);
         }
     }
 

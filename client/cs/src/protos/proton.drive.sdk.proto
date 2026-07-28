@@ -312,7 +312,7 @@ message FileNode {
     OwnedBy owned_by = 12;
     repeated DriveError errors = 13;
     bool is_shared = 14;
-    bool is_shared_publicly = 15;
+    bool is_shared_by_url = 15;
 }
 
 message FolderNode {
@@ -327,7 +327,7 @@ message FolderNode {
     OwnedBy owned_by = 9;
     repeated DriveError errors = 10;
     bool is_shared = 11;
-    bool is_shared_publicly = 12;
+    bool is_shared_by_url = 12;
 }
 
 message SignatureVerificationError {
@@ -722,7 +722,7 @@ message AlbumNode {
     OwnedBy owned_by = 9;
     repeated DriveError errors = 10;
     bool is_shared = 11;
-    bool is_shared_publicly = 12;
+    bool is_shared_by_url = 12;
     int64 photo_count = 13;
     string cover_photo_node_uid = 14; // optional
     google.protobuf.Timestamp last_activity_time = 15; // optional
@@ -743,7 +743,7 @@ message PhotoNode {
     OwnedBy owned_by = 12;
     repeated DriveError errors = 13;
     bool is_shared = 14;
-    bool is_shared_publicly = 15;
+    bool is_shared_by_url = 15;
     google.protobuf.Timestamp capture_time = 16;
     repeated string album_uids = 17;
 }

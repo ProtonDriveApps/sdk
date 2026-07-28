@@ -844,7 +844,7 @@ describe('parseNode', () => {
         creationTime: new Date('2024-01-01'),
         modificationTime: new Date('2024-01-02'),
         isShared: false,
-        isSharedPublicly: false,
+        isSharedByUrl: false,
         directRole: 'viewer' as any,
         ownedBy: { email: 'owner@example.com' },
         name: resultOk('filename.txt'),

@@ -30,7 +30,7 @@ export enum NonProtonInvitationState {
     UserRegistered = 'userRegistered',
 }
 
-export type PublicLink = {
+export type URLAccess = {
     uid: string;
     creationTime: Date;
     role: MemberRole;
@@ -80,10 +80,10 @@ export type BookmarkOrUid = Bookmark | string;
 
 export type ShareNodeSettings = {
     users?: ShareMembersSettings;
-    publicLink?: SharePublicLinkSettings;
+    urlAccess?: ShareURLAccessSettings;
     emailOptions?: {
-        message?: string;
-        includeNodeName?: boolean;
+        clearTextMessage?: string;
+        clearTextNodeName?: string;
     };
     editorsCanShare?: boolean;
 };
@@ -95,9 +95,9 @@ export type ShareMembersSettings =
           role: MemberRole;
       }[];
 
-export type SharePublicLinkSettings = boolean | SharePublicLinkSettingsObject;
+export type ShareURLAccessSettings = boolean | ShareURLAccessSettingsObject;
 
-export type SharePublicLinkSettingsObject = {
+export type ShareURLAccessSettingsObject = {
     role: MemberRole;
     customPassword?: string | undefined;
     expiration?: Date | undefined;
@@ -107,13 +107,13 @@ export type ShareResult = {
     protonInvitations: ProtonInvitation[];
     nonProtonInvitations: NonProtonInvitation[];
     members: Member[];
-    publicLink?: PublicLink;
+    urlAccess?: URLAccess;
     editorsCanShare: boolean;
 };
 
 export type UnshareNodeSettings = {
     users?: string[];
-    publicLink?: 'remove';
+    urlAccess?: 'remove';
 };
 
 export enum AbuseCategory {
@@ -134,7 +134,7 @@ export type ReportPublicLinkShareAbuseSettings = {
     reporterMessage?: string;
     reporterEmail?: string;
     /**
-     * A specific node within the share to report. Defaults to the root node of the public link.
+     * A specific node within the share to report. Defaults to the root node of the URL access.
      */
     nodeUid?: string;
     /**

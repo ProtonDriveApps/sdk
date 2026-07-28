@@ -113,7 +113,7 @@ export class AlbumsManager {
 
             // Share node metadata
             isShared: false,
-            isSharedPublicly: false,
+            isSharedByUrl: false,
             directRole: MemberRole.Inherited,
             ownedBy: rootNode.ownedBy,
 

@@ -24,7 +24,7 @@ type InternalPartialNode = Pick<
     | 'type'
     | 'mediaType'
     | 'isShared'
-    | 'isSharedPublicly'
+    | 'isSharedByUrl'
     | 'creationTime'
     | 'modificationTime'
     | 'trashTime'
@@ -95,7 +95,7 @@ export function convertInternalNode(node: InternalPartialNode): PublicNode {
         type: node.type,
         mediaType: node.mediaType,
         isShared: node.isShared,
-        isSharedPublicly: node.isSharedPublicly,
+        isSharedByUrl: node.isSharedByUrl,
         creationTime: node.creationTime,
         modificationTime: node.modificationTime,
         trashTime: node.trashTime,

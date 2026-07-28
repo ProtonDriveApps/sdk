@@ -10,7 +10,7 @@ type PostReportShareAbuseResponse =
 /**
  * Provides the API call for reporting a share for abuse.
  *
- * Shared by the direct share (`sharing`) and public link (`sharingPublic`)
+ * Shared by the direct share (`sharing`) and URL access (`sharingPublic`)
  * reporting flows so the endpoint is implemented in one place.
  */
 export class ReportAbuseAPIService {

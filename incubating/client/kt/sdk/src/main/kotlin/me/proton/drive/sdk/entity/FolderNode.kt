@@ -13,6 +13,6 @@ data class FolderNode(
     override val keyAuthor: Result<Author>,
     override val ownedBy: OwnedBy,
     override val isShared: Boolean,
-    override val isSharedPublicly: Boolean,
+    override val isSharedByUrl: Boolean,
     override val errors: List<DriveError>,
 ) : Node

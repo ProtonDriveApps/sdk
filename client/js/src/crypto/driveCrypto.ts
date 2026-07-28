@@ -263,7 +263,7 @@ export class DriveCrypto {
 
     /**
      * It encrypts password with provided address key that can be used to
-     * manage the public link, encrypts share passphrase session key using
+     * manage the URL access, encrypts share passphrase session key using
      * the srp-compatible salted passphrase and generates the corresponding SRP verifier.
      */
     async encryptPublicLinkPasswordAndSessionKey(
@@ -303,7 +303,7 @@ export class DriveCrypto {
      *
      * The function follows the same functionality as `decryptKey` but it uses the password
      * that was used for authentication via SRP protocol to decrypt the passphrase of the key. It is used for saved
-     * public links where user saved the link with password and is not direct
+     * URL access where user saved the link with password and is not direct
      * member of the share.
      */
     async decryptKeyWithSrpPassword(

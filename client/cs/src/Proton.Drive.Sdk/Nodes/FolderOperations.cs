@@ -140,7 +140,7 @@ internal static class FolderOperations
             CreationTime = DateTime.UtcNow,
             OwnedBy = parentOwnedBy,
             IsShared = false,
-            IsSharedPublicly = false,
+            IsSharedByUrl = false,
             Errors = [],
         };
     }

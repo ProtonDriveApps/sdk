@@ -99,10 +99,10 @@ export class ProtonDriveClient {
          */
         getDocsKey: (nodeUid: NodeOrUid) => Promise<SessionKey>;
         /**
-         * Experimental feature to get the info for a public link
-         * required to authenticate the public link.
+         * Experimental feature to get the info for a URL access
+         * required to authenticate the URL access.
          */
-        getPublicLinkInfo: (url: string) => Promise<{
+        getURLAccessInfo: (url: string) => Promise<{
             isCustomPasswordProtected: boolean;
             isLegacy: boolean;
             vendorType: number;
@@ -113,10 +113,10 @@ export class ProtonDriveClient {
             };
         }>;
         /**
-         * Experimental feature to authenticate a public link and
-         * return the client for the public link to access it.
+         * Experimental feature to authenticate a URL access and
+         * return the client for the URL access to access it.
          */
-        authPublicLink: (
+        authURLAccess: (
             url: string,
             customPassword?: string,
             isAnonymousContext?: boolean,
@@ -275,14 +275,14 @@ export class ProtonDriveClient {
                 }
                 return keys.contentKeyPacketSessionKey;
             },
-            getPublicLinkInfo: async (url: string) => {
+            getURLAccessInfo: async (url: string) => {
                 const { token } = getTokenAndPasswordFromUrl(url);
-                this.logger.info(`Getting info for public link token ${token}`);
+                this.logger.info(`Getting info for URL access token ${token}`);
                 return this.publicSessionManager.getInfo(token);
             },
-            authPublicLink: async (url: string, customPassword?: string, isAnonymousContext: boolean = false) => {
+            authURLAccess: async (url: string, customPassword?: string, isAnonymousContext: boolean = false) => {
                 const { token, password: urlPassword } = getTokenAndPasswordFromUrl(url);
-                this.logger.info(`Authenticating public link token ${token}`);
+                this.logger.info(`Authenticating URL access token ${token}`);
 
                 const { httpClient, shareKey, sharePassphrase, shareUrlPassword, rootUid, publicRole, session } =
                     await this.publicSessionManager.auth(token, urlPassword, customPassword);
@@ -862,9 +862,9 @@ export class ProtonDriveClient {
     }
 
     /**
-     * Create a shared bookmark for a public link.
+     * Create a shared bookmark for a URL access.
      *
-     * @param url - The public link url.
+     * @param url - The URL access url.
      * @param customPassword - The optional custom password.
      */
     async createBookmark(url: string, customPassword?: string): Promise<void> {
@@ -887,7 +887,7 @@ export class ProtonDriveClient {
      * Get sharing info of the node.
      *
      * The sharing info contains the list of invitations, members,
-     * public link and permission for each.
+     * URL access and permission for each.
      *
      * The sharing info is not cached and is fetched from the server
      * on each call.

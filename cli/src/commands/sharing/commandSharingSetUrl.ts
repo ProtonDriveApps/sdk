@@ -39,7 +39,7 @@ export class CommandSharingSetUrl implements Command {
         }
 
         const sharingInfo = await nodePath.sdk.shareNode(node, {
-            publicLink: {
+            urlAccess: {
                 role,
                 customPassword: password || undefined,
                 expiration: expiration ? new Date(expiration) : undefined,

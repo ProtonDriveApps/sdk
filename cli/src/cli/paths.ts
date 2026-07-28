@@ -107,14 +107,14 @@ export class Paths {
     }
 
     async authPublicLinkSession(url: string, customPassword: string): Promise<ProtonDrivePublicLinkClient> {
-        const { isCustomPasswordProtected } = await this.sdk.experimental.getPublicLinkInfo(url);
+        const { isCustomPasswordProtected } = await this.sdk.experimental.getURLAccessInfo(url);
 
         if (isCustomPasswordProtected && !customPassword) {
             throw new ValidationError('Custom password is required');
         }
 
         const isAnonymousContext = !this.auth.isLoggedIn();
-        this.publicLinkSdk = await this.sdk.experimental.authPublicLink(url, customPassword, isAnonymousContext);
+        this.publicLinkSdk = await this.sdk.experimental.authURLAccess(url, customPassword, isAnonymousContext);
         return this.publicLinkSdk;
     }
 }

@@ -13,6 +13,6 @@ sealed interface Node {
     val keyAuthor: Result<Author>
     val ownedBy: OwnedBy
     val isShared: Boolean
-    val isSharedPublicly: Boolean
+    val isSharedByUrl: Boolean
     val errors: List<DriveError>
 }

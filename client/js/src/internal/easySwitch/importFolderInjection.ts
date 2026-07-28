@@ -28,7 +28,7 @@ export async function seedImportFolderCryptoCache(args: {
     openPGPCryptoModule: OpenPGPCrypto;
     srpModule: SRPModule;
     telemetry?: ProtonDriveTelemetry;
-    /** Crypto cache to seed; pass the same instance to the public link client. */
+    /** Crypto cache to seed; pass the same instance to the URL access client. */
     cryptoCache: ProtonDriveCryptoCache;
     /** The import folder's node crypto material as received from the import payload. */
     importFolder: {

@@ -59,15 +59,15 @@ export type {
     ProtonInvitation,
     ProtonInvitationOrUid,
     ProtonInvitationWithNode,
-    PublicLink,
     ReportDirectShareAbuseSettings,
     ReportPublicLinkShareAbuseSettings,
     ShareMembersSettings,
     ShareNodeSettings,
-    SharePublicLinkSettings,
-    SharePublicLinkSettingsObject,
     ShareResult,
+    ShareURLAccessSettings,
+    ShareURLAccessSettingsObject,
     UnshareNodeSettings,
+    URLAccess,
 } from './sharing';
 export { AbuseCategory, NonProtonInvitationState } from './sharing';
 export type {

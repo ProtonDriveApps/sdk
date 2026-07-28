@@ -40,7 +40,7 @@ interface BaseNode {
     // Share node metadata
     shareId?: string;
     isShared: boolean;
-    isSharedPublicly: boolean;
+    isSharedByUrl: boolean;
     directRole: MemberRole;
     membership?: {
         role: MemberRole;

@@ -70,13 +70,13 @@ export type NodeEntity = {
     mediaType?: string;
     /**
      * Whether the node is shared. If true, the node is shared with at least
-     * one user, or via public link.
+     * one user, or via URL access.
      */
     isShared: boolean;
     /**
-     * Whether the node is publicly shared. If true, the node is shared via public link.
+     * Whether the node is shared by URL.
      */
-    isSharedPublicly: boolean;
+    isSharedByUrl: boolean;
     /**
      * Provides the ID of the share that the node is shared with.
      *

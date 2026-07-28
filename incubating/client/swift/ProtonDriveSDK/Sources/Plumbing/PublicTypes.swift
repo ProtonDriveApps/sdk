@@ -161,8 +161,8 @@ public struct FolderNode: Sendable {
     public let ownedBy: OwnedBy
     /// Whether the node is shared with at least one user or via public link
     public let isShared: Bool
-    /// Whether the node is shared publicly
-    public let isSharedPublicly: Bool
+    /// Whether the node is shared by URL
+    public let isSharedByUrl: Bool
     public let errors: [ProtonDriveSDKDriveError]
 
     public init(uid: SDKNodeUid,
@@ -174,7 +174,7 @@ public struct FolderNode: Sendable {
                 keyAuthor: Author,
                 ownedBy: OwnedBy,
                 isShared: Bool,
-                isSharedPublicly: Bool,
+                isSharedByUrl: Bool,
                 errors: [ProtonDriveSDKDriveError])
     {
         self.uid = uid
@@ -186,7 +186,7 @@ public struct FolderNode: Sendable {
         self.keyAuthor = keyAuthor
         self.ownedBy = ownedBy
         self.isShared = isShared
-        self.isSharedPublicly = isSharedPublicly
+        self.isSharedByUrl = isSharedByUrl
         self.errors = errors
     }
 
@@ -203,7 +203,7 @@ public struct FolderNode: Sendable {
         self.keyAuthor = Author(result: sdkFolderNode.keyAuthor)
         self.ownedBy = OwnedBy(result: sdkFolderNode.ownedBy)
         self.isShared = sdkFolderNode.isShared
-        self.isSharedPublicly = sdkFolderNode.isSharedPublicly
+        self.isSharedByUrl = sdkFolderNode.isSharedByURL
         self.errors = sdkFolderNode.errors.map { ProtonDriveSDKDriveError(error: $0) }
     }
 }
@@ -223,8 +223,8 @@ public struct AlbumNode: Sendable {
     public let ownedBy: OwnedBy
     /// Whether the node is shared with at least one user or via public link
     public let isShared: Bool
-    /// Whether the node is shared publicly
-    public let isSharedPublicly: Bool
+    /// Whether the node is shared by URL
+    public let isSharedByUrl: Bool
     public let errors: [ProtonDriveSDKDriveError]
     /// Number of photos in the album
     public let photoCount: Int64
@@ -242,7 +242,7 @@ public struct AlbumNode: Sendable {
                 keyAuthor: Author,
                 ownedBy: OwnedBy,
                 isShared: Bool,
-                isSharedPublicly: Bool,
+                isSharedByUrl: Bool,
                 errors: [ProtonDriveSDKDriveError],
                 photoCount: Int64,
                 coverPhotoNodeUid: SDKNodeUid?,
@@ -257,7 +257,7 @@ public struct AlbumNode: Sendable {
         self.keyAuthor = keyAuthor
         self.ownedBy = ownedBy
         self.isShared = isShared
-        self.isSharedPublicly = isSharedPublicly
+        self.isSharedByUrl = isSharedByUrl
         self.errors = errors
         self.photoCount = photoCount
         self.coverPhotoNodeUid = coverPhotoNodeUid
@@ -277,7 +277,7 @@ public struct AlbumNode: Sendable {
         self.keyAuthor = Author(result: sdkAlbumNode.keyAuthor)
         self.ownedBy = OwnedBy(result: sdkAlbumNode.ownedBy)
         self.isShared = sdkAlbumNode.isShared
-        self.isSharedPublicly = sdkAlbumNode.isSharedPublicly
+        self.isSharedByUrl = sdkAlbumNode.isSharedByURL
         self.errors = sdkAlbumNode.errors.map { ProtonDriveSDKDriveError(error: $0) }
         self.photoCount = sdkAlbumNode.photoCount
         self.coverPhotoNodeUid = sdkAlbumNode.hasCoverPhotoNodeUid
@@ -348,8 +348,8 @@ public struct FileNode: Sendable {
     public let activeRevision: FileRevision
     /// Whether the node is shared with at least one user or via public link
     public let isShared: Bool
-    /// Whether the node is shared publicly
-    public let isSharedPublicly: Bool
+    /// Whether the node is shared by URL
+    public let isSharedByUrl: Bool
     public let errors: [ProtonDriveSDKDriveError]
 
     public init(uid: SDKNodeUid,
@@ -364,7 +364,7 @@ public struct FileNode: Sendable {
                 totalStorageSize: Int64,
                 activeRevision: FileRevision,
                 isShared: Bool,
-                isSharedPublicly: Bool,
+                isSharedByUrl: Bool,
                 errors: [ProtonDriveSDKDriveError]) {
         self.uid = uid
         self.parentUid = parentUid
@@ -378,7 +378,7 @@ public struct FileNode: Sendable {
         self.totalStorageSize = totalStorageSize
         self.activeRevision = activeRevision
         self.isShared = isShared
-        self.isSharedPublicly = isSharedPublicly
+        self.isSharedByUrl = isSharedByUrl
         self.errors = errors
     }
 
@@ -398,7 +398,7 @@ public struct FileNode: Sendable {
         self.totalStorageSize = sdkFileNode.totalStorageSize
         self.activeRevision = try FileRevision(sdkFileRevision: sdkFileNode.activeRevision)
         self.isShared = sdkFileNode.isShared
-        self.isSharedPublicly = sdkFileNode.isSharedPublicly
+        self.isSharedByUrl = sdkFileNode.isSharedByURL
         self.errors = sdkFileNode.errors.map { ProtonDriveSDKDriveError(error: $0) }
     }
 }
@@ -421,8 +421,8 @@ public struct PhotoNode: Sendable {
     public let activeRevision: FileRevision
     /// Whether the node is shared with at least one user or via public link
     public let isShared: Bool
-    /// Whether the node is shared publicly
-    public let isSharedPublicly: Bool
+    /// Whether the node is shared by URL
+    public let isSharedByUrl: Bool
     public let errors: [ProtonDriveSDKDriveError]
     /// Time the photo was captured
     public let captureTime: TimeInterval
@@ -441,7 +441,7 @@ public struct PhotoNode: Sendable {
                 totalStorageSize: Int64,
                 activeRevision: FileRevision,
                 isShared: Bool,
-                isSharedPublicly: Bool,
+                isSharedByUrl: Bool,
                 errors: [ProtonDriveSDKDriveError],
                 captureTime: TimeInterval,
                 albumUids: [SDKNodeUid]) {
@@ -457,7 +457,7 @@ public struct PhotoNode: Sendable {
         self.totalStorageSize = totalStorageSize
         self.activeRevision = activeRevision
         self.isShared = isShared
-        self.isSharedPublicly = isSharedPublicly
+        self.isSharedByUrl = isSharedByUrl
         self.errors = errors
         self.captureTime = captureTime
         self.albumUids = albumUids
@@ -479,7 +479,7 @@ public struct PhotoNode: Sendable {
         self.totalStorageSize = sdkPhotoNode.totalStorageSize
         self.activeRevision = try FileRevision(sdkFileRevision: sdkPhotoNode.activeRevision)
         self.isShared = sdkPhotoNode.isShared
-        self.isSharedPublicly = sdkPhotoNode.isSharedPublicly
+        self.isSharedByUrl = sdkPhotoNode.isSharedByURL
         self.errors = sdkPhotoNode.errors.map { ProtonDriveSDKDriveError(error: $0) }
         self.captureTime = sdkPhotoNode.captureTime.timeIntervalSince1970
         self.albumUids = sdkPhotoNode.albumUids.compactMap { SDKNodeUid(sdkCompatibleIdentifier: $0) }

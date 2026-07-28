@@ -26,13 +26,13 @@ export class CommandSharingInvite implements Command {
             type: 'string',
             short: 'm',
             default: '',
-            help: 'Message to be included in the invitation email.',
+            help: 'Message to be included in the invitation email (as clear text).',
         },
         'include-node-name': {
             type: 'boolean',
             short: 'n',
             default: false,
-            help: 'Whether to include the node name in the invitation email.',
+            help: 'Whether to include the node name in the invitation email (as clear text).',
         },
     };
 
@@ -51,8 +51,8 @@ export class CommandSharingInvite implements Command {
         const sharingInfo = await nodePath.sdk.shareNode(node, {
             users: userEmails.map((email: string) => ({ email, role })),
             emailOptions: {
-                message: message || undefined,
-                includeNodeName,
+                clearTextMessage: message || undefined,
+                clearTextNodeName: includeNodeName && node.name.ok ? node.name.value : undefined,
             },
         });
 

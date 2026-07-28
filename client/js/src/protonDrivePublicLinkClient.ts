@@ -42,16 +42,16 @@ import {
 } from './transformers';
 
 /**
- * ProtonDrivePublicLinkClient is the interface for the public link client.
+ * ProtonDrivePublicLinkClient is the interface for the URL access client.
  *
  * The client provides high-level operations for managing nodes, and
  * downloading/uploading files.
  *
  * Do not use this client direclty, use ProtonDriveClient instead.
- * The main client handles public link sessions and provides access to
- * public links.
+ * The main client handles URL access sessions and provides access to
+ * URL access.
  *
- * See `experimental.getPublicLinkInfo` and `experimental.authPublicLink`
+ * See `experimental.getURLAccessInfo` and `experimental.authURLAccess`
  * for more information.
  */
 export class ProtonDrivePublicLinkClient {
@@ -80,7 +80,7 @@ export class ProtonDrivePublicLinkClient {
         /**
          * Experimental feature to get the passphrase for a node.
          *
-         * This is used by public link page to report abuse.
+         * This is used by URL access page to report abuse.
          */
         getNodePassphrase: (nodeUid: NodeOrUid) => Promise<string>;
         /**
@@ -88,11 +88,11 @@ export class ProtonDrivePublicLinkClient {
          */
         scanHashes: (hashes: string[]) => Promise<NodesSecurityScanResult>;
         /**
-         * Experimental feature to create a document (Proton Docs or Proton Sheets) in the public link.
+         * Experimental feature to create a document (Proton Docs or Proton Sheets) in the URL access.
          */
         createDocument: (parentNodeUid: NodeOrUid, documentName: string, documentType: 1 | 2) => Promise<NodeEntity>;
         /**
-         * Experimental feature to get the session info for the public link.
+         * Experimental feature to get the session info for the URL access.
          *
          * This helper is used to set the session for metrics requests.
          * Returns the session UID and access token that were obtained during
@@ -154,7 +154,7 @@ export class ProtonDrivePublicLinkClient {
         this.logger = telemetry.getLogger('publicLink-interface');
         this.session = session;
 
-        // Default to in-memory caches for public links as there are no events
+        // Default to in-memory caches for URL access as there are no events
         // to keep them up to date if persisted. A caller may pass its own cache
         // instances to pre-seed crypto material before using the client.
         const entitiesCacheInstance = entitiesCache ?? new MemoryCache<string>();
@@ -195,7 +195,7 @@ export class ProtonDrivePublicLinkClient {
             this.sharingPublic.shares,
             this.sharingPublic.nodes.access,
             this.sharingPublic.nodes.revisions,
-            // Ignore manifest integrity verifications for public links.
+            // Ignore manifest integrity verifications for URL access.
             // Anonymous user on public page cannot load public keys of other users (yet).
             true,
         );
@@ -207,7 +207,7 @@ export class ProtonDrivePublicLinkClient {
             this.sharingPublic.nodes.access,
             featureFlagProvider,
             fullConfig.clientUid,
-            // Public links do not support small file upload.
+            // URL access does not support small file upload.
             false,
         );
 
@@ -268,7 +268,7 @@ export class ProtonDrivePublicLinkClient {
     }
 
     /**
-     * @returns The root folder to the public link.
+     * @returns The root folder to the URL access.
      */
     async getRootNode(): Promise<NodeEntity> {
         this.logger.info(`Getting root node`);
@@ -432,16 +432,16 @@ export class ProtonDrivePublicLinkClient {
     }
 
     /**
-     * Report the public link share for abuse.
+     * Report the URL access share for abuse.
      *
      * This reports a share (or a specific node and revision within it) that
-     * the caller is accessing via a public link. The `bonaFide` flag must be
+     * the caller is accessing via a URL access. The `bonaFide` flag must be
      * explicitly set to `true` as a legal acknowledgment per DSA requirements.
      *
      * @param settings - Report details including category and optional message.
      */
     async reportAbuse(settings: ReportPublicLinkShareAbuseSettings): Promise<void> {
-        this.logger.info('Reporting abuse for public link share');
+        this.logger.info('Reporting abuse for URL access');
         await this.sharingPublic.reporting.reportAbuse(settings);
     }
 }

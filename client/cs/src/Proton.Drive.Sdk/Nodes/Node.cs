@@ -27,7 +27,7 @@ public abstract record Node
 
     public required bool IsShared { get; init; }
 
-    public required bool IsSharedPublicly { get; init; }
+    public required bool IsSharedByUrl { get; init; }
 
     public required IReadOnlyList<ProtonDriveError> Errors { get; init; }
 }

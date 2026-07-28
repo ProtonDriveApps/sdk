@@ -55,10 +55,7 @@ export class SharingPublicCryptoReporter {
 
         const fromBefore2024 = node.creationTime < new Date('2024-01-01');
 
-        this.logger.error(
-            `Failed to decrypt public link node ${node.uid} (from before 2024: ${fromBefore2024})`,
-            error,
-        );
+        this.logger.error(`Failed to decrypt URL access node ${node.uid} (from before 2024: ${fromBefore2024})`, error);
 
         this.telemetry.recordMetric({
             eventName: 'decryptionError',
@@ -71,7 +68,7 @@ export class SharingPublicCryptoReporter {
     }
 
     reportVerificationError() {
-        // Authors or signatures are not provided on public links.
+        // Authors or signatures are not provided on URL accesses.
         // We do not report any signature verification errors at this moment.
     }
 }

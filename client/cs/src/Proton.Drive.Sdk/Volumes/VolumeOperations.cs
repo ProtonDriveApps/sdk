@@ -44,7 +44,7 @@ internal static class VolumeOperations
             CreationTime = DateTime.UtcNow,
             OwnedBy = new OwnedBy(Email: defaultAddress.EmailAddress),
             IsShared = false,
-            IsSharedPublicly = false,
+            IsSharedByUrl = false,
             Errors = [],
         };
 
@@ -110,7 +110,7 @@ internal static class VolumeOperations
             CreationTime = DateTime.UtcNow,
             OwnedBy = new OwnedBy(Email: defaultAddress.EmailAddress),
             IsShared = false,
-            IsSharedPublicly = false,
+            IsSharedByUrl = false,
             Errors = [],
         };
 

@@ -16,6 +16,6 @@ data class FileNode(
     val activeRevision: FileRevision,
     val totalStorageSize: Long,
     override val isShared: Boolean,
-    override val isSharedPublicly: Boolean,
+    override val isSharedByUrl: Boolean,
     override val errors: List<DriveError>,
 ) : Node

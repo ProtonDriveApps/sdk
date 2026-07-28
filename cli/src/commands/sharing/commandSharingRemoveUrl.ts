@@ -11,7 +11,7 @@ export class CommandSharingRemoveUrl implements Command {
         const node = await nodePath.getNode();
 
         const sharingInfo = await nodePath.sdk.unshareNode(node, {
-            publicLink: 'remove',
+            urlAccess: 'remove',
         });
 
         printObject(sharingInfo, json);

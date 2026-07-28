@@ -30,7 +30,7 @@ function mockFolderNode(name: string, uid: string): NodeEntity {
         directRole: MemberRole.Admin,
         ownedBy: {},
         isShared: false,
-        isSharedPublicly: false,
+        isSharedByUrl: false,
         creationTime: new Date(),
         modificationTime: new Date(),
         treeEventScopeId: 'scope',

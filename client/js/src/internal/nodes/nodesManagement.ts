@@ -425,7 +425,7 @@ export abstract class NodesManagementBase<
 
             // Share node metadata
             isShared: false,
-            isSharedPublicly: false,
+            isSharedByUrl: false,
             directRole: MemberRole.Inherited,
             ownedBy: parentNode.ownedBy,
 

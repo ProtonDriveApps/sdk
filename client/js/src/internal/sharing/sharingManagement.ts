@@ -12,8 +12,8 @@ import {
     ReportDirectShareAbuseSettings,
     resultOk,
     ShareNodeSettings,
-    SharePublicLinkSettingsObject,
     ShareResult,
+    ShareURLAccessSettingsObject,
     UnshareNodeSettings,
 } from '../../interface';
 import { ErrorCode } from '../apiService';
@@ -23,11 +23,10 @@ import { splitInvitationUid, splitNodeRevisionUid, splitNodeUid } from '../uids'
 import { SharingAPIService } from './apiService';
 import { SharingCache } from './cache';
 import { PUBLIC_LINK_GENERATED_PASSWORD_LENGTH, SharingCryptoService } from './cryptoService';
-import { NodesService, PublicLinkWithCreatorEmail, ShareResultWithCreatorEmail, SharesService } from './interface';
+import { NodesService, ShareResultWithCreatorEmail, SharesService, URLAccessWithCreatorEmail } from './interface';
 
 interface InternalShareResult extends ShareResultWithCreatorEmail {
     share: Share;
-    nodeName: string;
 }
 
 interface Share {
@@ -86,18 +85,18 @@ export class SharingManagement {
         ]);
         const { passphraseSessionKey } = await this.cryptoService.decryptShare(encryptedShare, nodeKey);
 
-        const [protonInvitations, nonProtonInvitations, members, publicLink] = await Promise.all([
+        const [protonInvitations, nonProtonInvitations, members, urlAccess] = await Promise.all([
             Array.fromAsync(this.iterateShareInvitations(node.shareId)),
             Array.fromAsync(this.iterateShareExternalInvitations(node.shareId, passphraseSessionKey)),
             Array.fromAsync(this.iterateShareMembers(node.shareId)),
-            this.getPublicLink(node.shareId, volumeId),
+            this.getURLAccess(node.shareId, volumeId),
         ]);
 
         return {
             protonInvitations,
             nonProtonInvitations,
             members,
-            publicLink,
+            urlAccess,
             editorsCanShare: encryptedShare.editorsCanShare,
         };
     }
@@ -126,19 +125,19 @@ export class SharingManagement {
         }
     }
 
-    private async getPublicLink(shareId: string, volumeId: string): Promise<PublicLinkWithCreatorEmail | undefined> {
+    private async getURLAccess(shareId: string, volumeId: string): Promise<URLAccessWithCreatorEmail | undefined> {
         const rootIds = await this.sharesService.getRootIDs();
-        // Public links are encrypted by address key, thus it can work only for the owner for now.
+        // URL accesses are encrypted by address key, thus it can work only for the owner for now.
         if (volumeId !== rootIds.volumeId) {
             return;
         }
 
-        const encryptedPublicLink = await this.apiService.getPublicLink(shareId);
-        if (!encryptedPublicLink) {
+        const encryptedURLAccess = await this.apiService.getURLAccess(shareId);
+        if (!encryptedURLAccess) {
             return;
         }
 
-        return this.cryptoService.decryptPublicLink(encryptedPublicLink);
+        return this.cryptoService.decryptURLAccess(encryptedURLAccess);
     }
 
     async shareNode(nodeUid: string, settings: ShareNodeSettings): Promise<ShareResult> {
@@ -161,9 +160,9 @@ export class SharingManagement {
         // Check if expiration date is in the past before creating share
         // so if this fails, we don't create empty share.
         if (
-            typeof settings.publicLink === 'object' &&
-            settings.publicLink.expiration &&
-            settings.publicLink.expiration < new Date()
+            typeof settings.urlAccess === 'object' &&
+            settings.urlAccess.expiration &&
+            settings.urlAccess.expiration < new Date()
         ) {
             throw new ValidationError(c('Error').t`Expiration date cannot be in the past`);
         }
@@ -171,16 +170,14 @@ export class SharingManagement {
         let contextShareAddress: ContextShareAddress | undefined;
         let currentSharing = await this.getInternalSharingInfo(nodeUid);
         if (!currentSharing) {
-            const node = await this.nodesService.getNode(nodeUid);
             try {
                 const result = await this.createShare(nodeUid);
                 currentSharing = {
                     share: result.share,
-                    nodeName: node.name.ok ? node.name.value : node.name.error.name,
                     protonInvitations: [],
                     nonProtonInvitations: [],
                     members: [],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                     editorsCanShare: result.editorsCanShare,
                 };
                 contextShareAddress = result.contextShareAddress;
@@ -211,8 +208,8 @@ export class SharingManagement {
         }
 
         const emailOptions: EmailOptions = {
-            message: settings.emailOptions?.message,
-            nodeName: settings.emailOptions?.includeNodeName ? currentSharing.nodeName : undefined,
+            message: settings.emailOptions?.clearTextMessage,
+            nodeName: settings.emailOptions?.clearTextNodeName,
         };
 
         for (const user of protonUsers) {
@@ -299,19 +296,19 @@ export class SharingManagement {
             currentSharing.nonProtonInvitations.push(invitation);
         }
 
-        if (settings.publicLink) {
-            const options = settings.publicLink === true ? { role: MemberRole.Viewer } : settings.publicLink;
+        if (settings.urlAccess) {
+            const options = settings.urlAccess === true ? { role: MemberRole.Viewer } : settings.urlAccess;
 
-            if (currentSharing.publicLink) {
-                this.logger.info(`Updating public link with role ${options.role} to node ${nodeUid}`);
-                currentSharing.publicLink = await this.updateSharedLink(
+            if (currentSharing.urlAccess) {
+                this.logger.info(`Updating URL access with role ${options.role} to node ${nodeUid}`);
+                currentSharing.urlAccess = await this.updateSharedLink(
                     currentSharing.share,
-                    currentSharing.publicLink,
+                    currentSharing.urlAccess,
                     options,
                 );
             } else {
-                this.logger.info(`Sharing via public link with role ${options.role} to node ${nodeUid}`);
-                currentSharing.publicLink = await this.shareViaLink(contextShareAddress, currentSharing.share, options);
+                this.logger.info(`Sharing via URL access with role ${options.role} to node ${nodeUid}`);
+                currentSharing.urlAccess = await this.shareViaLink(contextShareAddress, currentSharing.share, options);
             }
         }
 
@@ -319,7 +316,7 @@ export class SharingManagement {
             protonInvitations: currentSharing.protonInvitations,
             nonProtonInvitations: currentSharing.nonProtonInvitations,
             members: currentSharing.members,
-            publicLink: currentSharing.publicLink,
+            urlAccess: currentSharing.urlAccess,
             editorsCanShare: currentSharing.editorsCanShare,
         };
     }
@@ -372,21 +369,21 @@ export class SharingManagement {
             this.logger.info(`User ${userEmail} not found in sharing info for node ${nodeUid}`);
         }
 
-        if (settings.publicLink === 'remove') {
-            if (currentSharing.publicLink) {
-                this.logger.info(`Removing public link to node ${nodeUid}`);
-                await this.removeSharedLink(currentSharing.publicLink.uid);
+        if (settings.urlAccess === 'remove') {
+            if (currentSharing.urlAccess) {
+                this.logger.info(`Removing URL access to node ${nodeUid}`);
+                await this.removeSharedLink(currentSharing.urlAccess.uid);
             } else {
-                this.logger.info(`Public link not found for node ${nodeUid}`);
+                this.logger.info(`URL access not found for node ${nodeUid}`);
             }
-            currentSharing.publicLink = undefined;
+            currentSharing.urlAccess = undefined;
         }
 
         if (
             currentSharing.protonInvitations.length === 0 &&
             currentSharing.nonProtonInvitations.length === 0 &&
             currentSharing.members.length === 0 &&
-            !currentSharing.publicLink
+            !currentSharing.urlAccess
         ) {
             // Technically it is not needed to delete the share explicitly
             // as it will be deleted when the last member is removed by the
@@ -411,7 +408,7 @@ export class SharingManagement {
             protonInvitations: currentSharing.protonInvitations,
             nonProtonInvitations: currentSharing.nonProtonInvitations,
             members: currentSharing.members,
-            publicLink: currentSharing.publicLink,
+            urlAccess: currentSharing.urlAccess,
             editorsCanShare: currentSharing.editorsCanShare,
         };
     }
@@ -439,7 +436,6 @@ export class SharingManagement {
                 creatorEmail: encryptedShare.creatorEmail,
                 passphraseSessionKey: passphraseSessionKey,
             },
-            nodeName: node.name.ok ? node.name.value : node.name.error.name,
         };
     }
 
@@ -754,8 +750,8 @@ export class SharingManagement {
     private async shareViaLink(
         inviter: ContextShareAddress,
         share: Share,
-        options: SharePublicLinkSettingsObject,
-    ): Promise<PublicLinkWithCreatorEmail> {
+        options: ShareURLAccessSettingsObject,
+    ): Promise<URLAccessWithCreatorEmail> {
         const rootIds = await this.sharesService.getRootIDs();
         if (share.volumeId !== rootIds.volumeId) {
             throw new ValidationError(c('Error').t`You can create public links for your own files only`);
@@ -764,12 +760,12 @@ export class SharingManagement {
         const generatedPassword = await this.cryptoService.generatePublicLinkPassword();
         const password = options.customPassword ? `${generatedPassword}${options.customPassword}` : generatedPassword;
 
-        const { crypto, srp } = await this.cryptoService.encryptPublicLink(
+        const { crypto, srp } = await this.cryptoService.encryptURLAccess(
             inviter.email,
             share.passphraseSessionKey,
             password,
         );
-        const publicLink = await this.apiService.createPublicLink(share.shareId, {
+        const urlAccess = await this.apiService.createURLAccess(share.shareId, {
             creatorEmail: inviter.email,
             role: options.role,
             includesCustomPassword: !!options.customPassword,
@@ -779,10 +775,10 @@ export class SharingManagement {
         });
 
         return {
-            uid: publicLink.uid,
+            uid: urlAccess.uid,
             creationTime: new Date(),
             role: options.role,
-            url: `${publicLink.publicUrl}#${generatedPassword}`,
+            url: `${urlAccess.publicUrl}#${generatedPassword}`,
             customPassword: options.customPassword,
             expirationTime: options.expiration,
             numberOfInitializedDownloads: 0,
@@ -792,15 +788,15 @@ export class SharingManagement {
 
     private async updateSharedLink(
         share: Share,
-        publicLink: PublicLinkWithCreatorEmail,
-        options: SharePublicLinkSettingsObject,
-    ): Promise<PublicLinkWithCreatorEmail> {
+        urlAccess: URLAccessWithCreatorEmail,
+        options: ShareURLAccessSettingsObject,
+    ): Promise<URLAccessWithCreatorEmail> {
         const rootIds = await this.sharesService.getRootIDs();
         if (share.volumeId !== rootIds.volumeId) {
             throw new ValidationError(c('Error').t`You can update a public link for your own files only`);
         }
 
-        const generatedPassword = publicLink.url.split('#')[1];
+        const generatedPassword = urlAccess.url.split('#')[1];
         // Legacy public links didn't have generated password or had various lengths.
         if (!generatedPassword || generatedPassword.length !== PUBLIC_LINK_GENERATED_PASSWORD_LENGTH) {
             throw new ValidationError(
@@ -809,12 +805,12 @@ export class SharingManagement {
         }
         const password = options.customPassword ? `${generatedPassword}${options.customPassword}` : generatedPassword;
 
-        const { crypto, srp } = await this.cryptoService.encryptPublicLink(
-            publicLink.creatorEmail,
+        const { crypto, srp } = await this.cryptoService.encryptURLAccess(
+            urlAccess.creatorEmail,
             share.passphraseSessionKey,
             password,
         );
-        await this.apiService.updatePublicLink(publicLink.uid, {
+        await this.apiService.updateURLAccess(urlAccess.uid, {
             role: options.role,
             includesCustomPassword: !!options.customPassword,
             expirationTime: options.expiration ? Math.floor(options.expiration.getTime() / 1000) : undefined,
@@ -823,15 +819,15 @@ export class SharingManagement {
         });
 
         return {
-            ...publicLink,
+            ...urlAccess,
             role: options.role,
             customPassword: options.customPassword,
             expirationTime: options.expiration,
         };
     }
 
-    private async removeSharedLink(publicLinkUid: string): Promise<void> {
-        await this.apiService.removePublicLink(publicLinkUid);
+    private async removeSharedLink(urlAccessUid: string): Promise<void> {
+        await this.apiService.removeURLAccess(urlAccessUid);
     }
 
     async reportAbuse(settings: ReportDirectShareAbuseSettings): Promise<void> {

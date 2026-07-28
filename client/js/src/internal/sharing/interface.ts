@@ -1,5 +1,5 @@
 import { PrivateKey, SessionKey } from '../../crypto';
-import { MemberRole, MissingNode, NodeType, NonProtonInvitationState, PublicLink, ShareResult } from '../../interface';
+import { MemberRole, MissingNode, NodeType, NonProtonInvitationState, ShareResult, URLAccess } from '../../interface';
 import { DecryptedNode } from '../nodes';
 import { EncryptedShare } from '../shares';
 
@@ -109,7 +109,7 @@ export interface EncryptedBookmark {
     };
 }
 
-export interface EncryptedPublicLink {
+export interface EncryptedURLAccess {
     uid: string;
     creationTime: Date;
     expirationTime?: Date;
@@ -124,17 +124,17 @@ export interface EncryptedPublicLink {
     sharePassphraseSalt: string;
 }
 
-export interface EncryptedPublicLinkCrypto {
+export interface EncryptedURLAccessCrypto {
     base64SharePasswordSalt: string;
     base64SharePassphraseKeyPacket: string;
     armoredPassword: string;
 }
 
 export interface ShareResultWithCreatorEmail extends ShareResult {
-    publicLink?: PublicLinkWithCreatorEmail;
+    urlAccess?: URLAccessWithCreatorEmail;
 }
 
-export interface PublicLinkWithCreatorEmail extends PublicLink {
+export interface URLAccessWithCreatorEmail extends URLAccess {
     creatorEmail: string;
 }
 

@@ -284,7 +284,7 @@ internal static class DtoToMetadataConverter
 
         var ownedBy = MapOwnedBy(linkDto.OwnedBy);
         var isShared = linkDetailsDto.Sharing is not null;
-        var isSharedPublicly = linkDetailsDto.Sharing?.ShareUrlId is not null;
+        var isSharedByUrl = linkDetailsDto.Sharing?.ShareUrlId is not null;
 
         var node = linkDetailsDto.Photo is { } photo
             ? new PhotoNode
@@ -306,7 +306,7 @@ internal static class DtoToMetadataConverter
                 ContentHash = photo.ContentHash,
                 OwnedBy = ownedBy,
                 IsShared = isShared,
-                IsSharedPublicly = isSharedPublicly,
+                IsSharedByUrl = isSharedByUrl,
                 Errors = nodeErrors,
             }
             : new FileNode
@@ -323,7 +323,7 @@ internal static class DtoToMetadataConverter
                 TotalStorageSize = fileDto.TotalSizeOnStorage,
                 OwnedBy = ownedBy,
                 IsShared = isShared,
-                IsSharedPublicly = isSharedPublicly,
+                IsSharedByUrl = isSharedByUrl,
                 Errors = nodeErrors,
             };
 
@@ -435,7 +435,7 @@ internal static class DtoToMetadataConverter
             TrashTime = linkDto.TrashTime,
             OwnedBy = MapOwnedBy(linkDto.OwnedBy),
             IsShared = sharing is not null,
-            IsSharedPublicly = sharing?.ShareUrlId is not null,
+            IsSharedByUrl = sharing?.ShareUrlId is not null,
             Errors = nodeErrors,
         };
 

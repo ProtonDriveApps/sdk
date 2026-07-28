@@ -24,7 +24,7 @@ function generateNode(uid: string, parentUid = 'volumeId~root', params: Partial<
         type: NodeType.File,
         mediaType: 'text',
         isShared: false,
-        isSharedPublicly: false,
+        isSharedByUrl: false,
         creationTime: new Date(),
         modificationTime: new Date(),
         trashTime: undefined,

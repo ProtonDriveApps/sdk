@@ -8,8 +8,8 @@ import {
     NonProtonInvitationState,
     ProtonDriveAccount,
     ProtonInvitation,
-    PublicLink,
     resultOk,
+    URLAccess,
 } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
 import { ErrorCode } from '../apiService';
@@ -56,22 +56,26 @@ describe('SharingManagement', () => {
             deleteExternalInvitation: jest.fn(),
             updateMember: jest.fn(),
             removeMember: jest.fn(),
-            getPublicLink: jest.fn().mockResolvedValue(undefined),
-            removePublicLink: jest.fn(),
+            getURLAccess: jest.fn().mockResolvedValue(undefined),
+            removeURLAccess: jest.fn(),
             deleteShare: jest.fn(),
             resendInvitationEmail: jest.fn(),
             resendExternalInvitationEmail: jest.fn(),
-            createPublicLink: jest.fn().mockResolvedValue({
+            createURLAccess: jest.fn().mockResolvedValue({
                 uid: 'publicLinkUid',
                 publicUrl: 'publicLinkUrl',
             }),
-            updatePublicLink: jest.fn(),
+            updateURLAccess: jest.fn(),
             changeShareProperties: jest.fn(),
             getInvitation: jest.fn().mockResolvedValue({
                 uid: `${DEFAULT_SHARE_ID}~invitationId`,
                 inviteeEmail: 'invitee@example.com',
                 base64KeyPacket: 'invitationKeyPacket',
-                share: { armoredKey: 'armoredKey', armoredPassphrase: 'armoredPassphrase', creatorEmail: 'creator@example.com' },
+                share: {
+                    armoredKey: 'armoredKey',
+                    armoredPassphrase: 'armoredPassphrase',
+                    creatorEmail: 'creator@example.com',
+                },
                 node: { uid: 'volumeId~invitedNodeId', type: 'file' },
             }),
         };
@@ -97,11 +101,11 @@ describe('SharingManagement', () => {
                 ...invitation,
                 base64ExternalInvitationSignature: 'external-signature',
             })),
-            decryptPublicLink: jest.fn().mockImplementation((publicLink) => publicLink),
+            decryptURLAccess: jest.fn().mockImplementation((urlAccess) => urlAccess),
             generatePublicLinkPassword: jest.fn().mockResolvedValue('generatedPassword'),
-            encryptPublicLink: jest.fn().mockImplementation(() => ({
-                crypto: 'publicLinkCrypto',
-                srp: 'publicLinkSrp',
+            encryptURLAccess: jest.fn().mockImplementation(() => ({
+                crypto: 'urlAccessCrypto',
+                srp: 'urlAccessSrp',
             })),
             decryptInvitationKey: jest.fn().mockResolvedValue({ passphrase: 'invitationSharePassphrase' }),
         };
@@ -165,7 +169,7 @@ describe('SharingManagement', () => {
                 protonInvitations: [invitation],
                 nonProtonInvitations: [],
                 members: [],
-                publicLink: undefined,
+                urlAccess: undefined,
             });
             expect(cryptoService.decryptInvitation).toHaveBeenCalledWith(invitation);
         });
@@ -180,7 +184,7 @@ describe('SharingManagement', () => {
                 protonInvitations: [],
                 nonProtonInvitations: [externalInvitation],
                 members: [],
-                publicLink: undefined,
+                urlAccess: undefined,
             });
             expect(cryptoService.decryptExternalInvitation).toHaveBeenCalledWith(
                 externalInvitation,
@@ -198,7 +202,7 @@ describe('SharingManagement', () => {
                 protonInvitations: [],
                 nonProtonInvitations: [],
                 members: [member],
-                publicLink: undefined,
+                urlAccess: undefined,
             });
             expect(cryptoService.decryptMember).toHaveBeenCalledWith(member);
         });
@@ -207,7 +211,7 @@ describe('SharingManagement', () => {
             const publicLink = {
                 uid: 'shared~publicLink',
             };
-            apiService.getPublicLink = jest.fn().mockResolvedValue(publicLink);
+            apiService.getURLAccess = jest.fn().mockResolvedValue(publicLink);
 
             const sharingInfo = await sharingManagement.getSharingInfo('volumeId~nodeUid');
 
@@ -215,22 +219,22 @@ describe('SharingManagement', () => {
                 protonInvitations: [],
                 nonProtonInvitations: [],
                 members: [],
-                publicLink: publicLink,
+                urlAccess: publicLink,
             });
-            expect(cryptoService.decryptPublicLink).toHaveBeenCalledWith(publicLink);
+            expect(cryptoService.decryptURLAccess).toHaveBeenCalledWith(publicLink);
         });
 
         it('should NOT return public link when volume ID does not match', async () => {
-            apiService.getPublicLink = jest.fn().mockResolvedValue(null);
+            apiService.getURLAccess = jest.fn().mockResolvedValue(null);
             const sharingInfo = await sharingManagement.getSharingInfo('zolumeId~nodeUid');
             expect(sharingInfo).toEqual({
                 protonInvitations: [],
                 nonProtonInvitations: [],
                 members: [],
-                publicLink: undefined,
+                urlAccess: undefined,
             });
-            expect(apiService.getPublicLink).not.toHaveBeenCalled();
-            expect(cryptoService.decryptPublicLink).not.toHaveBeenCalled();
+            expect(apiService.getURLAccess).not.toHaveBeenCalled();
+            expect(cryptoService.decryptURLAccess).not.toHaveBeenCalled();
         });
     });
 
@@ -258,7 +262,7 @@ describe('SharingManagement', () => {
                 ],
                 nonProtonInvitations: [],
                 members: [],
-                publicLink: undefined,
+                urlAccess: undefined,
                 editorsCanShare: false,
             });
             expect(apiService.updateInvitation).not.toHaveBeenCalled();
@@ -298,7 +302,7 @@ describe('SharingManagement', () => {
                 ],
                 nonProtonInvitations: [],
                 members: [],
-                publicLink: undefined,
+                urlAccess: undefined,
             });
 
             expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith(nodeUid);
@@ -378,7 +382,7 @@ describe('SharingManagement', () => {
                     ],
                     nonProtonInvitations: [externalInvitation],
                     members: [member],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                 });
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).toHaveBeenCalled();
@@ -402,7 +406,7 @@ describe('SharingManagement', () => {
                     ],
                     nonProtonInvitations: [externalInvitation],
                     members: [member],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                 });
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).toHaveBeenCalled();
@@ -423,7 +427,7 @@ describe('SharingManagement', () => {
                     ],
                     nonProtonInvitations: [externalInvitation],
                     members: [member],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                 });
                 expect(apiService.updateInvitation).toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).not.toHaveBeenCalled();
@@ -444,7 +448,7 @@ describe('SharingManagement', () => {
                     ],
                     nonProtonInvitations: [externalInvitation],
                     members: [member],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                     editorsCanShare: true,
                 });
                 expect(apiService.changeShareProperties).toHaveBeenCalledWith(DEFAULT_SHARE_ID, {
@@ -461,7 +465,7 @@ describe('SharingManagement', () => {
                     protonInvitations: [invitation],
                     nonProtonInvitations: [externalInvitation],
                     members: [member],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                 });
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).not.toHaveBeenCalled();
@@ -508,7 +512,7 @@ describe('SharingManagement', () => {
                         },
                     ],
                     members: [member],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                 });
                 expect(apiService.updateExternalInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteExternalUser).toHaveBeenCalled();
@@ -533,7 +537,7 @@ describe('SharingManagement', () => {
                         },
                     ],
                     members: [member],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                 });
                 expect(apiService.updateExternalInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteExternalUser).toHaveBeenCalled();
@@ -554,7 +558,7 @@ describe('SharingManagement', () => {
                         },
                     ],
                     members: [member],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                 });
                 expect(apiService.updateExternalInvitation).toHaveBeenCalled();
                 expect(apiService.inviteExternalUser).not.toHaveBeenCalled();
@@ -570,7 +574,7 @@ describe('SharingManagement', () => {
                     protonInvitations: [invitation],
                     nonProtonInvitations: [externalInvitation],
                     members: [member],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                 });
                 expect(apiService.updateExternalInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteExternalUser).not.toHaveBeenCalled();
@@ -628,7 +632,7 @@ describe('SharingManagement', () => {
                         },
                     ],
                     members: [member],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                 });
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
                 expect(apiService.inviteProtonUser).toHaveBeenCalledWith(
@@ -664,7 +668,7 @@ describe('SharingManagement', () => {
                             role: 'editor',
                         },
                     ],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                 });
                 expect(apiService.updateMember).toHaveBeenCalled();
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
@@ -681,7 +685,7 @@ describe('SharingManagement', () => {
                     protonInvitations: [invitation],
                     nonProtonInvitations: [externalInvitation],
                     members: [member],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                 });
                 expect(apiService.updateMember).not.toHaveBeenCalled();
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
@@ -703,7 +707,7 @@ describe('SharingManagement', () => {
                             role: 'editor',
                         },
                     ],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                 });
                 expect(apiService.updateMember).toHaveBeenCalled();
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
@@ -720,7 +724,7 @@ describe('SharingManagement', () => {
                     protonInvitations: [invitation],
                     nonProtonInvitations: [externalInvitation],
                     members: [member],
-                    publicLink: undefined,
+                    urlAccess: undefined,
                 });
                 expect(apiService.updateMember).not.toHaveBeenCalled();
                 expect(apiService.updateInvitation).not.toHaveBeenCalled();
@@ -735,7 +739,7 @@ describe('SharingManagement', () => {
                 jest.setSystemTime(new Date('2025-01-01'));
 
                 const sharingInfo = await sharingManagement.shareNode(nodeUid, {
-                    publicLink: {
+                    urlAccess: {
                         role: MemberRole.Viewer,
                         customPassword: undefined,
                         expiration: undefined,
@@ -746,7 +750,7 @@ describe('SharingManagement', () => {
                     protonInvitations: [invitation],
                     nonProtonInvitations: [externalInvitation],
                     members: [member],
-                    publicLink: {
+                    urlAccess: {
                         uid: 'publicLinkUid',
                         role: MemberRole.Viewer,
                         url: 'publicLinkUrl#generatedPassword',
@@ -758,19 +762,19 @@ describe('SharingManagement', () => {
                     },
                 });
                 expect(cryptoService.generatePublicLinkPassword).toHaveBeenCalled();
-                expect(cryptoService.encryptPublicLink).toHaveBeenCalledWith(
+                expect(cryptoService.encryptURLAccess).toHaveBeenCalledWith(
                     'volume-email',
                     'sharePassphraseSessionKey',
                     'generatedPassword',
                 );
-                expect(apiService.createPublicLink).toHaveBeenCalledWith(
+                expect(apiService.createURLAccess).toHaveBeenCalledWith(
                     'shareId',
                     expect.objectContaining({
                         role: MemberRole.Viewer,
                         includesCustomPassword: false,
                         expirationTime: undefined,
-                        crypto: 'publicLinkCrypto',
-                        srp: 'publicLinkSrp',
+                        crypto: 'urlAccessCrypto',
+                        srp: 'urlAccessSrp',
                     }),
                 );
                 expect(cache.addSharedByMeNodeUid).not.toHaveBeenCalled();
@@ -781,7 +785,7 @@ describe('SharingManagement', () => {
                 jest.setSystemTime(new Date('2025-01-01'));
 
                 const sharingInfo = await sharingManagement.shareNode(nodeUid, {
-                    publicLink: {
+                    urlAccess: {
                         role: MemberRole.Viewer,
                         customPassword: 'customPassword',
                         expiration: new Date('2025-01-02'),
@@ -792,7 +796,7 @@ describe('SharingManagement', () => {
                     protonInvitations: [invitation],
                     nonProtonInvitations: [externalInvitation],
                     members: [member],
-                    publicLink: {
+                    urlAccess: {
                         uid: 'publicLinkUid',
                         role: MemberRole.Viewer,
                         url: 'publicLinkUrl#generatedPassword',
@@ -804,19 +808,19 @@ describe('SharingManagement', () => {
                     },
                 });
                 expect(cryptoService.generatePublicLinkPassword).toHaveBeenCalled();
-                expect(cryptoService.encryptPublicLink).toHaveBeenCalledWith(
+                expect(cryptoService.encryptURLAccess).toHaveBeenCalledWith(
                     'volume-email',
                     'sharePassphraseSessionKey',
                     'generatedPasswordcustomPassword',
                 );
-                expect(apiService.createPublicLink).toHaveBeenCalledWith(
+                expect(apiService.createURLAccess).toHaveBeenCalledWith(
                     'shareId',
                     expect.objectContaining({
                         role: MemberRole.Viewer,
                         includesCustomPassword: true,
                         expirationTime: 1735776000,
-                        crypto: 'publicLinkCrypto',
-                        srp: 'publicLinkSrp',
+                        crypto: 'urlAccessCrypto',
+                        srp: 'urlAccessSrp',
                     }),
                 );
                 expect(cache.addSharedByMeNodeUid).not.toHaveBeenCalled();
@@ -835,10 +839,10 @@ describe('SharingManagement', () => {
                     expirationTime: undefined,
                     creatorEmail: 'publicLinkCreatorEmail',
                 };
-                apiService.getPublicLink = jest.fn().mockResolvedValue(publicLink);
+                apiService.getURLAccess = jest.fn().mockResolvedValue(publicLink);
 
                 const sharingInfo = await sharingManagement.shareNode(nodeUid, {
-                    publicLink: {
+                    urlAccess: {
                         role: MemberRole.Editor,
                         customPassword: 'customPassword',
                         expiration: new Date('2025-01-02'),
@@ -849,7 +853,7 @@ describe('SharingManagement', () => {
                     protonInvitations: [invitation],
                     nonProtonInvitations: [externalInvitation],
                     members: [member],
-                    publicLink: {
+                    urlAccess: {
                         uid: 'publicLinkUid',
                         role: MemberRole.Editor,
                         url: 'publicLinkUrl#generatedpas',
@@ -859,46 +863,46 @@ describe('SharingManagement', () => {
                         creatorEmail: 'publicLinkCreatorEmail',
                     },
                 });
-                expect(cryptoService.encryptPublicLink).toHaveBeenCalledWith(
+                expect(cryptoService.encryptURLAccess).toHaveBeenCalledWith(
                     'publicLinkCreatorEmail',
                     'sharePassphraseSessionKey',
                     'generatedpascustomPassword',
                 );
-                expect(apiService.updatePublicLink).toHaveBeenCalledWith(
+                expect(apiService.updateURLAccess).toHaveBeenCalledWith(
                     'publicLinkUid',
                     expect.objectContaining({
                         role: MemberRole.Editor,
                         includesCustomPassword: true,
                         expirationTime: 1735776000,
-                        crypto: 'publicLinkCrypto',
-                        srp: 'publicLinkSrp',
+                        crypto: 'urlAccessCrypto',
+                        srp: 'urlAccessSrp',
                     }),
                 );
                 expect(cache.addSharedByMeNodeUid).not.toHaveBeenCalled();
             });
 
             it('should not allow updating legacy public link', async () => {
-                apiService.getPublicLink = jest.fn().mockResolvedValue({
+                apiService.getURLAccess = jest.fn().mockResolvedValue({
                     uid: 'publicLinkUid',
                     url: 'publicLinkUrl#aaa', // Legacy public links doesn't have 12 chars.
                 });
 
                 await expect(
                     sharingManagement.shareNode(nodeUid, {
-                        publicLink: true,
+                        urlAccess: true,
                     }),
                 ).rejects.toThrow('Legacy public link cannot be updated. Please re-create a new public link.');
             });
 
             it('should not allow updating legacy public link without generated password', async () => {
-                apiService.getPublicLink = jest.fn().mockResolvedValue({
+                apiService.getURLAccess = jest.fn().mockResolvedValue({
                     uid: 'publicLinkUid',
                     url: 'publicLinkUrl',
                 });
 
                 await expect(
                     sharingManagement.shareNode(nodeUid, {
-                        publicLink: true,
+                        urlAccess: true,
                     }),
                 ).rejects.toThrow('Legacy public link cannot be updated. Please re-create a new public link.');
             });
@@ -909,27 +913,27 @@ describe('SharingManagement', () => {
 
                 await expect(
                     sharingManagement.shareNode(nodeUid, {
-                        publicLink: {
+                        urlAccess: {
                             role: MemberRole.Viewer,
                             expiration: new Date('2024-01-01'),
                         },
                     }),
                 ).rejects.toThrow('Expiration date cannot be in the past');
                 expect(apiService.createStandardShare).not.toHaveBeenCalled();
-                expect(apiService.createPublicLink).not.toHaveBeenCalled();
+                expect(apiService.createURLAccess).not.toHaveBeenCalled();
             });
 
             it('should not allow creating public link for volume not owned by user', async () => {
                 sharesService.getRootIDs = jest.fn().mockResolvedValue({ volumeId: 'differentVolumeId' });
                 await expect(
                     sharingManagement.shareNode(nodeUid, {
-                        publicLink: {
+                        urlAccess: {
                             role: MemberRole.Viewer,
                         },
                     }),
                 ).rejects.toThrow('You can create public links for your own files only');
 
-                expect(apiService.createPublicLink).not.toHaveBeenCalled();
+                expect(apiService.createURLAccess).not.toHaveBeenCalled();
             });
         });
     });
@@ -940,7 +944,7 @@ describe('SharingManagement', () => {
         let invitation: ProtonInvitation;
         let externalInvitation: NonProtonInvitation;
         let member: Member;
-        let publicLink: PublicLink;
+        let publicLink: URLAccess;
 
         beforeEach(async () => {
             invitation = {
@@ -976,7 +980,7 @@ describe('SharingManagement', () => {
             apiService.getShareInvitations = jest.fn().mockResolvedValue([invitation]);
             apiService.getShareExternalInvitations = jest.fn().mockResolvedValue([externalInvitation]);
             apiService.getShareMembers = jest.fn().mockResolvedValue([member]);
-            apiService.getPublicLink = jest.fn().mockResolvedValue(publicLink);
+            apiService.getURLAccess = jest.fn().mockResolvedValue(publicLink);
         });
 
         it('should delete invitation', async () => {
@@ -986,13 +990,13 @@ describe('SharingManagement', () => {
                 protonInvitations: [],
                 nonProtonInvitations: [externalInvitation],
                 members: [member],
-                publicLink,
+                urlAccess: publicLink,
             });
             expect(apiService.deleteShare).not.toHaveBeenCalled();
             expect(apiService.deleteInvitation).toHaveBeenCalled();
             expect(apiService.deleteExternalInvitation).not.toHaveBeenCalled();
             expect(apiService.removeMember).not.toHaveBeenCalled();
-            expect(apiService.removePublicLink).not.toHaveBeenCalled();
+            expect(apiService.removeURLAccess).not.toHaveBeenCalled();
             expect(cache.removeSharedByMeNodeUid).not.toHaveBeenCalled();
         });
 
@@ -1003,13 +1007,13 @@ describe('SharingManagement', () => {
                 protonInvitations: [invitation],
                 nonProtonInvitations: [],
                 members: [member],
-                publicLink,
+                urlAccess: publicLink,
             });
             expect(apiService.deleteShare).not.toHaveBeenCalled();
             expect(apiService.deleteInvitation).not.toHaveBeenCalled();
             expect(apiService.deleteExternalInvitation).toHaveBeenCalled();
             expect(apiService.removeMember).not.toHaveBeenCalled();
-            expect(apiService.removePublicLink).not.toHaveBeenCalled();
+            expect(apiService.removeURLAccess).not.toHaveBeenCalled();
             expect(cache.removeSharedByMeNodeUid).not.toHaveBeenCalled();
         });
 
@@ -1020,13 +1024,13 @@ describe('SharingManagement', () => {
                 protonInvitations: [invitation],
                 nonProtonInvitations: [externalInvitation],
                 members: [],
-                publicLink,
+                urlAccess: publicLink,
             });
             expect(apiService.deleteShare).not.toHaveBeenCalled();
             expect(apiService.deleteInvitation).not.toHaveBeenCalled();
             expect(apiService.deleteExternalInvitation).not.toHaveBeenCalled();
             expect(apiService.removeMember).toHaveBeenCalled();
-            expect(apiService.removePublicLink).not.toHaveBeenCalled();
+            expect(apiService.removeURLAccess).not.toHaveBeenCalled();
             expect(cache.removeSharedByMeNodeUid).not.toHaveBeenCalled();
         });
 
@@ -1037,30 +1041,30 @@ describe('SharingManagement', () => {
                 protonInvitations: [invitation],
                 nonProtonInvitations: [externalInvitation],
                 members: [member],
-                publicLink,
+                urlAccess: publicLink,
             });
             expect(apiService.deleteShare).not.toHaveBeenCalled();
             expect(apiService.deleteInvitation).not.toHaveBeenCalled();
             expect(apiService.deleteExternalInvitation).not.toHaveBeenCalled();
             expect(apiService.removeMember).not.toHaveBeenCalled();
-            expect(apiService.removePublicLink).not.toHaveBeenCalled();
+            expect(apiService.removeURLAccess).not.toHaveBeenCalled();
             expect(cache.removeSharedByMeNodeUid).not.toHaveBeenCalled();
         });
 
         it('should remove public link', async () => {
-            const sharingInfo = await sharingManagement.unshareNode(nodeUid, { publicLink: 'remove' });
+            const sharingInfo = await sharingManagement.unshareNode(nodeUid, { urlAccess: 'remove' });
 
             expect(sharingInfo).toEqual({
                 protonInvitations: [invitation],
                 nonProtonInvitations: [externalInvitation],
                 members: [member],
-                publicLink: undefined,
+                urlAccess: undefined,
             });
             expect(apiService.deleteShare).not.toHaveBeenCalled();
             expect(apiService.deleteInvitation).not.toHaveBeenCalled();
             expect(apiService.deleteExternalInvitation).not.toHaveBeenCalled();
             expect(apiService.removeMember).not.toHaveBeenCalled();
-            expect(apiService.removePublicLink).toHaveBeenCalled();
+            expect(apiService.removeURLAccess).toHaveBeenCalled();
             expect(cache.removeSharedByMeNodeUid).not.toHaveBeenCalled();
         });
 
@@ -1072,7 +1076,7 @@ describe('SharingManagement', () => {
             expect(apiService.deleteInvitation).not.toHaveBeenCalled();
             expect(apiService.deleteExternalInvitation).not.toHaveBeenCalled();
             expect(apiService.removeMember).not.toHaveBeenCalled();
-            expect(apiService.removePublicLink).not.toHaveBeenCalled();
+            expect(apiService.removeURLAccess).not.toHaveBeenCalled();
             expect(nodesService.notifyNodeChanged).toHaveBeenCalled();
             expect(cache.removeSharedByMeNodeUid).toHaveBeenCalledWith(nodeUid);
         });
@@ -1080,7 +1084,7 @@ describe('SharingManagement', () => {
         it('should remove share if everything is manually removed', async () => {
             const sharingInfo = await sharingManagement.unshareNode(nodeUid, {
                 users: ['internal-email', 'external-email', 'member-email'],
-                publicLink: 'remove',
+                urlAccess: 'remove',
             });
 
             expect(sharingInfo).toEqual(undefined);
@@ -1088,7 +1092,7 @@ describe('SharingManagement', () => {
             expect(apiService.deleteInvitation).toHaveBeenCalled();
             expect(apiService.deleteExternalInvitation).toHaveBeenCalled();
             expect(apiService.removeMember).toHaveBeenCalled();
-            expect(apiService.removePublicLink).toHaveBeenCalled();
+            expect(apiService.removeURLAccess).toHaveBeenCalled();
             expect(cache.removeSharedByMeNodeUid).toHaveBeenCalledWith(nodeUid);
         });
     });
@@ -1116,7 +1120,7 @@ describe('SharingManagement', () => {
             apiService.getShareInvitations = jest.fn().mockResolvedValue([invitation]);
             apiService.getShareExternalInvitations = jest.fn().mockResolvedValue([externalInvitation]);
             apiService.getShareMembers = jest.fn().mockResolvedValue([]);
-            apiService.getPublicLink = jest.fn().mockResolvedValue(undefined);
+            apiService.getURLAccess = jest.fn().mockResolvedValue(undefined);
         });
 
         it('should resend email for proton invitation', async () => {

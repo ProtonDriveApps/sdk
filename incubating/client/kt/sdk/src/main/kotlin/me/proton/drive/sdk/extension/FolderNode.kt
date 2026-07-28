@@ -18,6 +18,6 @@ fun ProtonDriveSdk.FolderNode.toEntity() = FolderNode(
     keyAuthor = keyAuthor.toEntity(),
     ownedBy = ownedBy.toEntity(),
     isShared = isShared,
-    isSharedPublicly = isSharedPublicly,
+    isSharedByUrl = isSharedByUrl,
     errors = errorsList.map { it.toEntity() },
 )

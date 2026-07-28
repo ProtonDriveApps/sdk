@@ -341,7 +341,7 @@ function makeEncryptedNodeFromFolderCrypto(
         creationTime: new Date(),
         modificationTime: new Date(),
         isShared: false,
-        isSharedPublicly: false,
+        isSharedByUrl: false,
         directRole: MemberRole.Admin,
         ownedBy: {
             email: 'test@proton.me',

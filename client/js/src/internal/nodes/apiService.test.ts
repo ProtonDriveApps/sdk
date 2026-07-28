@@ -158,7 +158,7 @@ function generateNode() {
 
         shareId: undefined,
         isShared: false,
-        isSharedPublicly: false,
+        isSharedByUrl: false,
         directRole: MemberRole.Admin,
         membership: undefined,
         ownedBy: {
@@ -279,7 +279,7 @@ describe('nodeAPIService', () => {
                 generateFolderNode(
                     {
                         isShared: true,
-                        isSharedPublicly: false,
+                        isSharedByUrl: false,
                         shareId: 'shareId',
                         directRole: MemberRole.Admin,
                         membership: {
@@ -321,7 +321,7 @@ describe('nodeAPIService', () => {
                 generateFolderNode(
                     {
                         isShared: true,
-                        isSharedPublicly: false,
+                        isSharedByUrl: false,
                         shareId: 'shareId',
                         directRole: MemberRole.Viewer,
                         membership: {
@@ -356,7 +356,7 @@ describe('nodeAPIService', () => {
                 ),
                 generateFolderNode({
                     isShared: true,
-                    isSharedPublicly: true,
+                    isSharedByUrl: true,
                     shareId: 'shareId',
                     directRole: MemberRole.Admin,
                 }),

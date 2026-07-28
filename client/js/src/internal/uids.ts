@@ -56,13 +56,13 @@ export function splitMemberUid(memberUid: string) {
     return { shareId, memberId };
 }
 
-export function makePublicLinkUid(shareId: string, publicLinkId: string) {
-    return makeUid(shareId, publicLinkId);
+export function makeURLAccessUid(shareId: string, shareUrlId: string) {
+    return makeUid(shareId, shareUrlId);
 }
 
-export function splitPublicLinkUid(publicLinkUid: string) {
-    const [shareId, publicLinkId] = splitUid(publicLinkUid, 2, 'public link');
-    return { shareId, publicLinkId };
+export function splitURLAccessUid(urlAccessUid: string) {
+    const [shareId, shareUrlId] = splitUid(urlAccessUid, 2, 'URL access');
+    return { shareId, shareUrlId };
 }
 
 function makeUid(...parts: string[]): string {

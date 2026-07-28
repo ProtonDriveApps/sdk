@@ -172,7 +172,7 @@ describe('PhotosNodesCache', () => {
                 type: NodeType.Photo,
                 directRole: MemberRole.Admin,
                 isShared: false,
-                isSharedPublicly: false,
+                isSharedByUrl: false,
                 creationTime: '2023-11-14T22:13:20.000Z',
                 modificationTime: '2023-11-14T22:13:20.000Z',
                 photo: {
@@ -215,7 +215,7 @@ describe('PhotosNodesCache', () => {
                 type: NodeType.Folder,
                 directRole: MemberRole.Admin,
                 isShared: false,
-                isSharedPublicly: false,
+                isSharedByUrl: false,
                 creationTime: '2023-11-14T22:13:20.000Z',
                 modificationTime: '2023-11-14T22:13:20.000Z',
             });
@@ -358,7 +358,7 @@ describe('PhotosNodesAccess', () => {
                 hash: 'hash123',
                 directRole: MemberRole.Admin,
                 isShared: false,
-                isSharedPublicly: false,
+                isSharedByUrl: false,
                 creationTime: new Date(),
                 modificationTime: new Date(),
                 trashTime: undefined,

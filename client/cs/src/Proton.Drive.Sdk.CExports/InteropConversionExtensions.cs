@@ -46,7 +46,7 @@ internal static class InteropConversionExtensions
                 KeyAuthor = albumNode.KeyAuthor.ToInterop(),
                 OwnedBy = albumNode.OwnedBy.ToInterop(),
                 IsShared = albumNode.IsShared,
-                IsSharedPublicly = albumNode.IsSharedPublicly,
+                IsSharedByUrl = albumNode.IsSharedByUrl,
                 PhotoCount = albumNode.PhotoCount,
             };
 
@@ -85,7 +85,7 @@ internal static class InteropConversionExtensions
                 TotalStorageSize = photoNode.TotalStorageSize,
                 OwnedBy = photoNode.OwnedBy.ToInterop(),
                 IsShared = photoNode.IsShared,
-                IsSharedPublicly = photoNode.IsSharedPublicly,
+                IsSharedByUrl = photoNode.IsSharedByUrl,
                 CaptureTime = photoNode.CaptureTime.ToUniversalTime().ToTimestamp(),
             };
 
@@ -114,7 +114,7 @@ internal static class InteropConversionExtensions
                 KeyAuthor = folderNode.KeyAuthor.ToInterop(),
                 OwnedBy = folderNode.OwnedBy.ToInterop(),
                 IsShared = folderNode.IsShared,
-                IsSharedPublicly = folderNode.IsSharedPublicly,
+                IsSharedByUrl = folderNode.IsSharedByUrl,
             };
 
             if (folderNode.ParentUid != null)
@@ -142,7 +142,7 @@ internal static class InteropConversionExtensions
                 TotalStorageSize = fileNode.TotalStorageSize,
                 OwnedBy = fileNode.OwnedBy.ToInterop(),
                 IsShared = fileNode.IsShared,
-                IsSharedPublicly = fileNode.IsSharedPublicly,
+                IsSharedByUrl = fileNode.IsSharedByUrl,
             };
 
             if (fileNode.ParentUid != null)
