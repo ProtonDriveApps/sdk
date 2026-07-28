@@ -15,6 +15,5 @@ export function getName(node: NodeEntity): string {
 }
 
 export function getClaimedSize(node: NodeEntity): number | undefined {
-    const activeRevision = node.activeRevision?.ok ? node.activeRevision.value : undefined;
-    return activeRevision?.claimedSize;
+    return node.activeRevision?.claimedSize;
 }

@@ -14,13 +14,6 @@ export function getNodeDetails(node: NodeEntity): NodeDetails {
         });
     }
 
-    if (node.activeRevision?.ok === false) {
-        errors.push({
-            field: 'activeRevision',
-            error: node.activeRevision.error,
-        });
-    }
-
     if (node.errors?.length) {
         for (const error of node.errors) {
             if (error instanceof Error) {
@@ -35,13 +28,13 @@ export function getNodeDetails(node: NodeEntity): NodeDetails {
     return {
         safeNodeDetails: {
             nodeUid: node.uid,
-            revisionUid: node.activeRevision?.ok ? node.activeRevision.value.uid : undefined,
+            revisionUid: node.activeRevision?.uid,
             nodeType: node.type,
             mediaType: node.mediaType,
             nodeCreationTime: node.creationTime,
             keyAuthor: node.keyAuthor,
             nameAuthor: node.nameAuthor,
-            contentAuthor: node.activeRevision?.ok ? node.activeRevision.value.contentAuthor : undefined,
+            contentAuthor: node.activeRevision?.contentAuthor,
             errors,
         },
         sensitiveNodeDetails: node,

@@ -261,9 +261,7 @@ export class CommandFileSystemUpload implements Command {
                 const existingNode = await ctx.sdk.getNode(existingNodeUid);
 
                 // If the existing node is already the same file, automatically skip the upload.
-                const existingSha1 = existingNode.activeRevision?.ok
-                    ? existingNode.activeRevision.value.claimedDigests?.sha1
-                    : undefined;
+                const existingSha1 = existingNode.activeRevision?.claimedDigests?.sha1;
                 if (existingSha1 === metadata.expectedSha1) {
                     return false;
                 }

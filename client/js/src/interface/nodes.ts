@@ -99,7 +99,7 @@ export type NodeEntity = {
      * Total size of all revisions, encrypted size on the server.
      */
     totalStorageSize?: number;
-    activeRevision?: Result<Revision, Error>;
+    activeRevision?: Revision;
     folder?: {
         claimedModificationTime?: Date;
         isImported: boolean;
@@ -122,6 +122,10 @@ export type NodeEntity = {
      * On the other hand, if the node has issue decrypting the node key, but
      * the name is still working, this will include the node key error, while
      * the name will be set to the decrypted value.
+     *
+     * Similarly, if extended attributes of the active revision cannot be
+     * decrypted, the error is included here while the revision metadata
+     * (without claimed fields) is still available on `activeRevision`.
      */
     errors?: unknown[];
 };

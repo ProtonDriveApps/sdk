@@ -25,18 +25,16 @@ function createMockPhotoNode(
             albums: [],
         },
         activeRevision: {
-            ok: true,
-            value: {
-                uid: 'rev1',
-                state: 'active' as const,
-                creationTime: new Date(),
-                storageSize: 100,
-                signatureEmail: 'test@example.com',
-                claimedModificationTime: new Date(),
-                claimedSize: 100,
-                claimedDigests: { sha1: 'sha1hash' },
-                claimedBlockSizes: [100],
-            },
+            uid: 'rev1',
+            state: 'active' as const,
+            creationTime: new Date(),
+            storageSize: 100,
+            contentAuthor: { ok: true, value: 'test@example.com' },
+            claimedModificationTime: new Date(),
+            claimedSize: 100,
+            claimedDigests: { sha1: 'sha1hash', sha1Verified: false },
+            claimedBlockSizes: [100],
+            isImported: false,
         },
         keyAuthor: { ok: true, value: 'test@example.com' },
         ...overrides,
@@ -315,7 +313,7 @@ describe('PhotoTransferPayloadBuilder', () => {
             const items = [{ photoNodeUid: 'volume1~photo1' }];
             nodesService.iterateNodes.mockImplementation(async function* (uids: string[]) {
                 const node = createMockPhotoNode(uids[0]);
-                node.activeRevision = { ok: true, value: { ...(node.activeRevision as any).value, claimedDigests: {} } } as any;
+                node.activeRevision = { ...node.activeRevision!, claimedDigests: { sha1Verified: false } };
                 yield node;
             });
 

@@ -1,6 +1,6 @@
 import { PrivateKey, PublicKey, SessionKey } from '../../crypto';
 import { IntegrityError } from '../../errors';
-import { MetricVolumeType, MissingNode, NodeType, Result } from '../../interface';
+import { MetricVolumeType, MissingNode, NodeType } from '../../interface';
 import { DecryptedNode, DecryptedRevision } from '../nodes';
 
 export type BlockMetadata = {
@@ -30,7 +30,7 @@ export interface NodesService {
 export interface NodesServiceNode {
     uid: string;
     type: NodeType;
-    activeRevision?: Result<DecryptedRevision, Error>;
+    activeRevision?: DecryptedRevision;
 }
 
 export interface RevisionsService {

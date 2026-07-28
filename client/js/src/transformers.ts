@@ -100,9 +100,7 @@ export function convertInternalNode(node: InternalPartialNode): PublicNode {
         modificationTime: node.modificationTime,
         trashTime: node.trashTime,
         totalStorageSize: node.totalStorageSize,
-        activeRevision: node.activeRevision?.ok
-            ? { ok: true, value: convertInternalRevision(node.activeRevision.value) }
-            : node.activeRevision,
+        activeRevision: node.activeRevision ? convertInternalRevision(node.activeRevision) : undefined,
         folder: node.folder,
         deprecatedShareId: node.shareId,
         treeEventScopeId: node.treeEventScopeId,

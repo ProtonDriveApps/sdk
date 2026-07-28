@@ -96,10 +96,7 @@ export class ThumbnailDownloader {
                 continue;
             }
 
-            let thumbnail;
-            if (node.activeRevision?.ok) {
-                thumbnail = node.activeRevision.value.thumbnails?.find((t) => t.type === thumbnailType);
-            }
+            const thumbnail = node.activeRevision?.thumbnails?.find((t) => t.type === thumbnailType);
             if (!thumbnail) {
                 yield {
                     nodeUid: node.uid,

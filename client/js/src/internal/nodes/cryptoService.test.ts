@@ -7,6 +7,7 @@ import {
     DecryptedNode,
     DecryptedNodeKeys,
     DecryptedUnparsedNode,
+    DecryptedUnparsedRevision,
     EncryptedNode,
     NodeSigningKeys,
     SharesService,
@@ -608,7 +609,9 @@ describe('nodesCryptoService', () => {
 
         function verifyResult(
             result: { node: DecryptedUnparsedNode; keys?: DecryptedNodeKeys },
-            expectedNode: Partial<DecryptedUnparsedNode> = {},
+            expectedNode: Partial<
+                Omit<DecryptedUnparsedNode, 'activeRevision'> & { activeRevision?: Partial<DecryptedUnparsedRevision> }
+            > = {},
             expectedKeys: Partial<DecryptedNodeKeys> | 'noKeys' = {},
         ) {
             expect(result).toMatchObject({
@@ -618,14 +621,11 @@ describe('nodesCryptoService', () => {
                     nameAuthor: { ok: true, value: 'nameSignatureEmail' },
                     folder: undefined,
                     activeRevision: {
-                        ok: true,
-                        value: {
-                            uid: 'revisionUid',
-                            state: RevisionState.Active,
-                            creationTime: undefined,
-                            extendedAttributes: '{}',
-                            contentAuthor: { ok: true, value: 'revisionSignatureEmail' },
-                        },
+                        uid: 'revisionUid',
+                        state: RevisionState.Active,
+                        creationTime: undefined,
+                        extendedAttributes: '{}',
+                        contentAuthor: { ok: true, value: 'revisionSignatureEmail' },
                     },
                     errors: undefined,
                     ...expectedNode,
@@ -671,15 +671,11 @@ describe('nodesCryptoService', () => {
                     keyAuthor: { ok: true, value: 'signatureEmail' },
                     nameAuthor: { ok: true, value: 'signatureEmail' },
                     activeRevision: {
-                        ok: true,
-                        value: {
-                            uid: 'revisionUid',
-                            state: RevisionState.Active,
-                            // @ts-expect-error Ignore mocked data.
-                            creationTime: undefined,
-                            extendedAttributes: '{}',
-                            contentAuthor: { ok: true, value: 'signatureEmail' },
-                        },
+                        uid: 'revisionUid',
+                        state: RevisionState.Active,
+                        creationTime: undefined,
+                        extendedAttributes: '{}',
+                        contentAuthor: { ok: true, value: 'signatureEmail' },
                     },
                 });
 
@@ -761,19 +757,15 @@ describe('nodesCryptoService', () => {
                 const result = await cryptoService.decryptNode(encryptedNode, parentKey);
                 verifyResult(result, {
                     activeRevision: {
-                        ok: true,
-                        value: {
-                            uid: 'revisionUid',
-                            extendedAttributes: '{}',
-                            state: RevisionState.Active,
-                            // @ts-expect-error Ignore mocked data.
-                            creationTime: undefined,
-                            contentAuthor: {
-                                ok: false,
-                                error: {
-                                    claimedAuthor: 'revisionSignatureEmail',
-                                    error: 'Signature verification for attributes failed: verification error',
-                                },
+                        uid: 'revisionUid',
+                        extendedAttributes: '{}',
+                        state: RevisionState.Active,
+                        creationTime: undefined,
+                        contentAuthor: {
+                            ok: false,
+                            error: {
+                                claimedAuthor: 'revisionSignatureEmail',
+                                error: 'Signature verification for attributes failed: verification error',
                             },
                         },
                     },
@@ -971,7 +963,17 @@ describe('nodesCryptoService', () => {
                                 error: 'Failed to decrypt node key: Decryption error',
                             },
                         },
-                        activeRevision: { ok: false, error: new Error('Failed to decrypt node key: Decryption error') },
+                        activeRevision: {
+                            uid: 'revisionUid',
+                            state: RevisionState.Active,
+                            contentAuthor: {
+                                ok: false,
+                                error: {
+                                    claimedAuthor: 'revisionSignatureEmail',
+                                    error: 'Failed to decrypt node key: Decryption error',
+                                },
+                            },
+                        },
                         errors: [new Error('Decryption error')],
                         folder: undefined,
                     },
@@ -1012,9 +1014,17 @@ describe('nodesCryptoService', () => {
                 const result = await cryptoService.decryptNode(encryptedNode, parentKey);
                 verifyResult(result, {
                     activeRevision: {
-                        ok: false,
-                        error: new Error('Failed to decrypt active revision: Decryption error'),
+                        uid: 'revisionUid',
+                        state: RevisionState.Active,
+                        contentAuthor: {
+                            ok: false,
+                            error: {
+                                claimedAuthor: 'revisionSignatureEmail',
+                                error: 'Failed to decrypt revision metadata',
+                            },
+                        },
                     },
+                    errors: [error],
                 });
                 verifyLogEventDecryptionError({
                     field: 'nodeExtendedAttributes',
@@ -1135,14 +1145,11 @@ describe('nodesCryptoService', () => {
                     nameAuthor: { ok: true, value: 'nameSignatureEmail' },
                     folder: undefined,
                     activeRevision: {
-                        ok: true,
-                        value: {
-                            uid: 'revisionUid',
-                            state: RevisionState.Active,
-                            creationTime: undefined,
-                            extendedAttributes: '{}',
-                            contentAuthor: { ok: true, value: 'revisionSignatureEmail' },
-                        },
+                        uid: 'revisionUid',
+                        state: RevisionState.Active,
+                        creationTime: undefined,
+                        extendedAttributes: '{}',
+                        contentAuthor: { ok: true, value: 'revisionSignatureEmail' },
                     },
                     errors: undefined,
                     ...expectedNode,

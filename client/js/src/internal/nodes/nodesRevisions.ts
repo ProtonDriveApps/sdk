@@ -27,7 +27,7 @@ export class NodesRevisons {
         const { key } = await this.nodesAccess.getNodeKeys(nodeUid);
 
         const encryptedRevision = await this.apiService.getRevision(nodeRevisionUid);
-        const revision = await this.cryptoService.decryptRevision(nodeUid, encryptedRevision, key);
+        const { revision } = await this.cryptoService.decryptRevision(nodeUid, encryptedRevision, key);
         const extendedAttributes = parseFileExtendedAttributes(
             this.logger,
             revision.creationTime,
@@ -48,7 +48,7 @@ export class NodesRevisons {
 
         const encryptedRevisions = await this.apiService.getRevisions(nodeUid, signal);
         for (const encryptedRevision of encryptedRevisions) {
-            const revision = await this.cryptoService.decryptRevision(nodeUid, encryptedRevision, key);
+            const { revision } = await this.cryptoService.decryptRevision(nodeUid, encryptedRevision, key);
             const extendedAttributes = parseFileExtendedAttributes(
                 this.logger,
                 revision.creationTime,

@@ -126,7 +126,7 @@ export class SDKDiagnosticBase {
         yield* this.verifyAuthor(node.keyAuthor, 'key', node, expectedStructure);
         yield* this.verifyAuthor(node.nameAuthor, 'name', node, expectedStructure);
 
-        const activeRevision = node.activeRevision?.ok ? node.activeRevision.value : undefined;
+        const activeRevision = node.activeRevision;
         if (activeRevision) {
             yield* this.verifyAuthor(activeRevision.contentAuthor, 'content', node, expectedStructure);
         }
@@ -194,7 +194,7 @@ export class SDKDiagnosticBase {
         node: NodeEntity,
         expectedStructure?: ExpectedTreeNode,
     ): AsyncGenerator<DiagnosticResult> {
-        const activeRevision = node.activeRevision?.ok ? node.activeRevision.value : undefined;
+        const activeRevision = node.activeRevision;
 
         const isNodeWithContent = this.isNodeWithContent(node);
 
@@ -277,7 +277,7 @@ export class SDKDiagnosticBase {
         if (!this.isNodeWithContent(node)) {
             return;
         }
-        const activeRevision = node.activeRevision?.ok ? node.activeRevision.value : undefined;
+        const activeRevision = node.activeRevision;
         if (!activeRevision) {
             yield {
                 type: 'content_file_missing_revision',

@@ -23,10 +23,7 @@ describe('ThumbnailDownloader', () => {
                         uid: nodeUid,
                         type: 'file',
                         activeRevision: {
-                            ok: true,
-                            value: {
-                                thumbnails: [{ type: 1, uid: `thumb-${nodeUid}` }],
-                            },
+                            thumbnails: [{ type: 1, uid: `thumb-${nodeUid}` }],
                         },
                     };
                 }
@@ -123,7 +120,7 @@ describe('ThumbnailDownloader', () => {
 
     it('should handle node without requested thumbnail', async () => {
         nodesService.iterateNodes = jest.fn().mockImplementation(async function* () {
-            yield { uid: 'node1', type: 'file', activeRevision: { ok: true, value: { thumbnails: [] } } };
+            yield { uid: 'node1', type: 'file', activeRevision: { thumbnails: [] } };
         });
 
         const results = await Array.fromAsync(downloader.iterateThumbnails(['node1']));

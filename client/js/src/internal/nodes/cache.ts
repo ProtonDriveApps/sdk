@@ -1,5 +1,5 @@
 import { EntityResult } from '../../cache';
-import { Logger, ProtonDriveEntitiesCache, Result, resultOk } from '../../interface';
+import { Logger, ProtonDriveEntitiesCache } from '../../interface';
 import { splitNodeUid } from '../uids';
 import { DecryptedNode, DecryptedRevision } from './interface';
 
@@ -311,7 +311,7 @@ export function deserialiseNode(nodeData: string): DecryptedNode {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function deserialiseRevision(revision: any): Result<DecryptedRevision, Error> {
+function deserialiseRevision(revision: any): DecryptedRevision {
     if (
         (typeof revision !== 'object' && revision !== undefined) ||
         (typeof revision?.creationTime !== 'string' && revision?.creationTime !== undefined)
@@ -319,15 +319,22 @@ function deserialiseRevision(revision: any): Result<DecryptedRevision, Error> {
         throw new Error(`Invalid revision data: ${revision}`);
     }
 
+    // Backward compatibility with old format where revision was wrapped in a Result object.
     if (revision.ok) {
-        return resultOk({
+        return {
             ...revision.value,
             creationTime: new Date(revision.value.creationTime),
             claimedModificationTime: revision.value.claimedModificationTime
                 ? new Date(revision.value.claimedModificationTime)
                 : undefined,
-        });
+        };
     }
 
-    return revision;
+    return {
+        ...revision,
+        creationTime: new Date(revision.creationTime),
+        claimedModificationTime: revision.claimedModificationTime
+            ? new Date(revision.claimedModificationTime)
+            : undefined,
+    };
 }

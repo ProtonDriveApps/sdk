@@ -115,7 +115,7 @@ describe('nodesCache', () => {
     });
 
     it('should store and retrieve node with active revision', async () => {
-        const activeRevision: Result<DecryptedRevision, Error> = resultOk({
+        const activeRevision: DecryptedRevision = {
             uid: 'revision1',
             state: RevisionState.Active,
             creationTime: new Date('2021-01-01'),
@@ -132,7 +132,7 @@ describe('nodesCache', () => {
             claimedAdditionalMetadata: {
                 media: { width: 100, height: 100 },
             },
-        });
+        };
         const node = generateNode('node1', '', { activeRevision });
 
         await cache.setNode(node);
@@ -145,7 +145,7 @@ describe('nodesCache', () => {
     });
 
     it('should store and retrieve node with active revision with no claimed data', async () => {
-        const activeRevision: Result<DecryptedRevision, Error> = resultOk({
+        const activeRevision: DecryptedRevision = {
             uid: 'revision1',
             state: RevisionState.Active,
             creationTime: new Date('2021-01-01'),
@@ -153,7 +153,7 @@ describe('nodesCache', () => {
             contentAuthor: resultOk('test@test.com'),
             isImported: false,
             claimedModificationTime: undefined,
-        });
+        };
         const node = generateNode('node1', '', { activeRevision });
 
         await cache.setNode(node);

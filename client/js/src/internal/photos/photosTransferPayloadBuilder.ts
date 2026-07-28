@@ -159,9 +159,7 @@ export class PhotoTransferPayloadBuilder {
     ): Promise<Omit<TransferEncryptedPhotoPayload, 'relatedPhotos'>> {
         const nodeKeys = await this.nodesService.getNodePrivateAndSessionKeys(photoNode.uid);
 
-        const contentSha1 = photoNode.activeRevision?.ok
-            ? photoNode.activeRevision.value.claimedDigests?.sha1
-            : undefined;
+        const contentSha1 = photoNode.activeRevision?.claimedDigests?.sha1;
 
         if (!contentSha1) {
             throw new Error('Cannot build photo payload without a content hash');

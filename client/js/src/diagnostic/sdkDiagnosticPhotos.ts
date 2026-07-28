@@ -93,7 +93,7 @@ export class SDKDiagnosticPhotos extends SDKDiagnosticBase {
             }
             const node = maybeMissingNode;
 
-            const activeRevision = node.activeRevision?.ok ? node.activeRevision.value : undefined;
+            const activeRevision = node.activeRevision;
             const childNode: TreeNode = {
                 uid: node.uid,
                 name: node.name.ok ? node.name.value : 'N/A',

@@ -567,33 +567,33 @@ export function parseNode(logger: Logger, unparsedNode: DecryptedUnparsedNode): 
     const treeEventScopeId = splitNodeUid(unparsedNode.uid).volumeId;
 
     if (unparsedNode.type === NodeType.File) {
-        const extendedAttributes = unparsedNode.activeRevision?.ok
+        const extendedAttributes = unparsedNode.activeRevision
             ? parseFileExtendedAttributes(
                   logger,
-                  unparsedNode.activeRevision.value.creationTime,
-                  unparsedNode.activeRevision.value.extendedAttributes,
+                  unparsedNode.activeRevision.creationTime,
+                  unparsedNode.activeRevision.extendedAttributes,
               )
             : undefined;
 
         return {
             ...unparsedNode,
             isStale: false,
-            activeRevision: !unparsedNode.activeRevision?.ok
-                ? unparsedNode.activeRevision
-                : resultOk({
-                      uid: unparsedNode.activeRevision.value.uid,
-                      state: unparsedNode.activeRevision.value.state,
-                      creationTime: unparsedNode.activeRevision.value.creationTime,
-                      storageSize: unparsedNode.activeRevision.value.storageSize,
-                      contentAuthor: unparsedNode.activeRevision.value.contentAuthor,
-                      thumbnails: unparsedNode.activeRevision.value.thumbnails,
-                      isImported: unparsedNode.activeRevision.value.isImported,
+            activeRevision: unparsedNode.activeRevision
+                ? {
+                      uid: unparsedNode.activeRevision.uid,
+                      state: unparsedNode.activeRevision.state,
+                      creationTime: unparsedNode.activeRevision.creationTime,
+                      storageSize: unparsedNode.activeRevision.storageSize,
+                      contentAuthor: unparsedNode.activeRevision.contentAuthor,
+                      thumbnails: unparsedNode.activeRevision.thumbnails,
+                      isImported: unparsedNode.activeRevision.isImported,
                       ...extendedAttributes,
                       claimedDigests: {
                           ...extendedAttributes?.claimedDigests,
-                          sha1Verified: unparsedNode.activeRevision.value.sha1Verified || false,
+                          sha1Verified: unparsedNode.activeRevision.sha1Verified || false,
                       },
-                  }),
+                  }
+                : undefined,
             folder: undefined,
             treeEventScopeId,
         };

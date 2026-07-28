@@ -119,7 +119,7 @@ export class SDKDiagnosticMain extends SDKDiagnosticBase {
                 treeNode.children.push(childStructure);
             }
         } else if (node.type === NodeType.File) {
-            const activeRevision = node.activeRevision?.ok ? node.activeRevision.value : undefined;
+            const activeRevision = node.activeRevision;
             treeNode.claimedSha1 = activeRevision?.claimedDigests?.sha1;
             treeNode.claimedSizeInBytes = activeRevision?.claimedSize;
         }

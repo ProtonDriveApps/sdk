@@ -152,7 +152,13 @@ export class NodesCryptoService {
                     membership,
                     activeRevision:
                         'file' in node.encryptedCrypto
-                            ? resultError(new Error(errorMessage, { cause: error }))
+                            ? this.buildRevisionFromEncrypted(
+                                  node.encryptedCrypto.activeRevision,
+                                  resultError({
+                                      claimedAuthor: node.encryptedCrypto.activeRevision.signatureEmail,
+                                      error: errorMessage,
+                                  }),
+                              )
                             : undefined,
                     folder: undefined,
                     errors: [error],
@@ -208,7 +214,7 @@ export class NodesCryptoService {
             }
         }
 
-        let activeRevision: Result<DecryptedUnparsedRevision, Error> | undefined;
+        let activeRevision: DecryptedUnparsedRevision | undefined;
         let contentKeyPacketSessionKey;
         let contentKeyPacketAuthor;
         let contentKeyPacket: Uint8Array<ArrayBuffer> | undefined;
@@ -219,13 +225,11 @@ export class NodesCryptoService {
                 this.decryptContentKeyPacket(node, node.encryptedCrypto, key, keyVerificationKeys),
             ];
 
-            try {
-                activeRevision = resultOk(await activeRevisionPromise);
-            } catch (error: unknown) {
-                void this.reporter.reportDecryptionError(node, 'nodeExtendedAttributes', error);
-                const message = getErrorMessage(error);
-                const errorMessage = c('Error').t`Failed to decrypt active revision: ${message}`;
-                activeRevision = resultError(new Error(errorMessage, { cause: error }));
+            const activeRevisionResult = await activeRevisionPromise;
+            activeRevision = activeRevisionResult.revision;
+            if (activeRevisionResult.error) {
+                void this.reporter.reportDecryptionError(node, 'nodeExtendedAttributes', activeRevisionResult.error);
+                errors.push(activeRevisionResult.error);
             }
 
             try {
@@ -488,29 +492,53 @@ export class NodesCryptoService {
         nodeUid: string,
         encryptedRevision: EncryptedRevision,
         nodeKey: PrivateKey,
-    ): Promise<DecryptedUnparsedRevision> {
-        const verificationKeys = encryptedRevision.signatureEmail
-            ? await this.account.getPublicKeys(encryptedRevision.signatureEmail)
-            : [nodeKey];
+    ): Promise<{
+        revision: DecryptedUnparsedRevision;
+        error?: Error;
+    }> {
+        try {
+            const verificationKeys = encryptedRevision.signatureEmail
+                ? await this.account.getPublicKeys(encryptedRevision.signatureEmail)
+                : [nodeKey];
 
-        const { extendedAttributes, author: contentAuthor } = await this.decryptExtendedAttributes(
-            { uid: nodeUid, creationTime: encryptedRevision.creationTime },
-            encryptedRevision.armoredExtendedAttributes,
-            nodeKey,
-            verificationKeys,
-            encryptedRevision.signatureEmail,
-        );
+            const { extendedAttributes, author: contentAuthor } = await this.decryptExtendedAttributes(
+                { uid: nodeUid, creationTime: encryptedRevision.creationTime },
+                encryptedRevision.armoredExtendedAttributes,
+                nodeKey,
+                verificationKeys,
+                encryptedRevision.signatureEmail,
+            );
 
+            return {
+                revision: this.buildRevisionFromEncrypted(encryptedRevision, contentAuthor, extendedAttributes),
+            };
+        } catch (error: unknown) {
+            const contentAuthor: Author = resultError({
+                claimedAuthor: encryptedRevision.signatureEmail,
+                error: c('Error').t`Failed to decrypt revision metadata`,
+            });
+            return {
+                revision: this.buildRevisionFromEncrypted(encryptedRevision, contentAuthor, undefined),
+                error: error instanceof Error ? error : new Error(getErrorMessage(error)),
+            };
+        }
+    }
+
+    private buildRevisionFromEncrypted(
+        encryptedRevision: EncryptedRevision,
+        contentAuthor: Author,
+        extendedAttributes?: string,
+    ): DecryptedUnparsedRevision {
         return {
             uid: encryptedRevision.uid,
             state: encryptedRevision.state,
             creationTime: encryptedRevision.creationTime,
             storageSize: encryptedRevision.storageSize,
-            contentAuthor,
-            extendedAttributes,
             thumbnails: encryptedRevision.thumbnails,
             sha1Verified: encryptedRevision.sha1Verified,
             isImported: encryptedRevision.isImported,
+            contentAuthor,
+            extendedAttributes,
         };
     }
 

@@ -1,5 +1,5 @@
 import { PrivateKey, SessionKey } from '../../crypto';
-import { AnonymousUser, MetricVolumeType, Result, Revision, ThumbnailType, UploadMetadata } from '../../interface';
+import { AnonymousUser, MetricVolumeType, Revision, ThumbnailType, UploadMetadata } from '../../interface';
 import { DecryptedNode } from '../nodes';
 
 /**
@@ -128,13 +128,13 @@ export interface NodesService {
  */
 export interface NodesEvents {
     nodeCreated(node: DecryptedNode): Promise<void>;
-    nodeUpdated(partialNode: { uid: string; activeRevision: Result<Revision, Error> }): Promise<void>;
+    nodeUpdated(partialNode: { uid: string; activeRevision: Revision }): Promise<void>;
 }
 
 export interface NodesServiceNode {
     uid: string;
     parentUid?: string;
-    activeRevision?: Result<Revision, Error>;
+    activeRevision?: Revision;
 }
 
 export type NodeSigningKeys =

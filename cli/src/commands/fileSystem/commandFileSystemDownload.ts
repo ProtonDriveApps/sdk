@@ -233,9 +233,7 @@ export class CommandFileSystemDownload implements Command {
                 }
             }
 
-            const claimedDigests = item.remoteNode.activeRevision?.ok
-                ? item.remoteNode.activeRevision.value.claimedDigests
-                : undefined;
+            const claimedDigests = item.remoteNode.activeRevision?.claimedDigests;
             const verification = {
                 expectedSha1: claimedDigests?.sha1,
                 sha1Verified: !!claimedDigests?.sha1Verified,

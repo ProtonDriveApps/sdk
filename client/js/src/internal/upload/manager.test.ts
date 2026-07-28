@@ -312,7 +312,7 @@ describe('UploadManager', () => {
             nodesService.getNode = jest.fn().mockResolvedValue({
                 uid: 'fileNodeUid',
                 parentUid: 'parentUid',
-                activeRevision: { ok: false, error: new Error('No revision') },
+                activeRevision: undefined,
             });
 
             const result = manager.getExistingFileNodeCrypto('fileNodeUid');
@@ -324,7 +324,7 @@ describe('UploadManager', () => {
             nodesService.getNode = jest.fn().mockResolvedValue({
                 uid: 'fileNodeUid',
                 parentUid: 'parentUid',
-                activeRevision: { ok: true, value: { uid: 'revisionUid' } },
+                activeRevision: { uid: 'revisionUid' },
             });
             nodesService.getNodeKeys = jest.fn().mockResolvedValue({
                 key: 'nodeKey',
@@ -341,7 +341,7 @@ describe('UploadManager', () => {
             nodesService.getNode = jest.fn().mockResolvedValue({
                 uid: 'fileNodeUid',
                 parentUid: 'parentUid',
-                activeRevision: { ok: true, value: { uid: 'revisionUid' } },
+                activeRevision: { uid: 'revisionUid' },
             });
             nodesService.getNodeKeys = jest.fn().mockResolvedValue({
                 key: 'nodeKey',
@@ -359,7 +359,7 @@ describe('UploadManager', () => {
             nodesService.getNode = jest.fn().mockResolvedValue({
                 uid: 'fileNodeUid',
                 parentUid: 'parentUid',
-                activeRevision: { ok: true, value: { uid: 'revisionUid' } },
+                activeRevision: { uid: 'revisionUid' },
             });
             nodesService.getNodeKeys = jest.fn().mockResolvedValue({
                 key: 'nodeKey',
@@ -541,7 +541,7 @@ describe('UploadManager', () => {
             nodesService.getNode = jest.fn().mockResolvedValue({
                 uid: 'fileNodeUid',
                 parentUid: 'parentUid',
-                activeRevision: { ok: false, error: new Error('No revision') },
+                activeRevision: undefined,
             });
 
             const result = manager.uploadSmallRevision(
@@ -560,7 +560,7 @@ describe('UploadManager', () => {
             nodesService.getNode = jest.fn().mockResolvedValue({
                 uid: 'fileNodeUid',
                 parentUid: 'parentUid',
-                activeRevision: { ok: true, value: { uid: 'currentRevisionUid' } },
+                activeRevision: { uid: 'currentRevisionUid' },
             });
 
             const result = await manager.uploadSmallRevision(
@@ -596,7 +596,7 @@ describe('UploadManager', () => {
             nodesService.getNode = jest.fn().mockResolvedValue({
                 uid: 'fileNodeUid',
                 parentUid: 'parentUid',
-                activeRevision: { ok: true, value: { uid: 'currentRevisionUid' } },
+                activeRevision: { uid: 'currentRevisionUid' },
             });
 
             const result = await manager.uploadSmallRevision(

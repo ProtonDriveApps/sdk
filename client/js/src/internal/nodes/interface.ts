@@ -128,7 +128,7 @@ export interface DecryptedUnparsedNode extends Omit<BaseNode, 'membership'> {
         sharedBy: Author;
     };
     name: Result<string, Error>;
-    activeRevision?: Result<DecryptedUnparsedRevision, Error>;
+    activeRevision?: DecryptedUnparsedRevision;
     folder?: {
         extendedAttributes?: string;
         isImported: boolean;
@@ -146,7 +146,7 @@ export interface DecryptedNode
     isStale: boolean;
     name: Result<string, Error | InvalidNameError>;
 
-    activeRevision?: Result<DecryptedRevision, Error>;
+    activeRevision?: DecryptedRevision;
     folder?: {
         claimedModificationTime?: Date;
         isImported: boolean;
