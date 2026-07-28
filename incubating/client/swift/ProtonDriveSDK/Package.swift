@@ -37,7 +37,6 @@ let package = Package(
             dependencies: [
                 "CProtonDriveSDK",
                 .product(name: "SwiftProtobuf", package: "swift-protobuf"),
-                .product(name: "GoLibsCryptoPatchedGo", package: "protoncore_ios"),
                 .product(name: "ProtonCoreDataModel", package: "protoncore_ios"),
             ],
             path: "Sources",
