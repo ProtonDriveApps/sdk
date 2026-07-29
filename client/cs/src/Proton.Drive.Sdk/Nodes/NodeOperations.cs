@@ -136,6 +136,11 @@ internal static class NodeOperations
         string? newName,
         CancellationToken cancellationToken)
     {
+        if (newName is not null)
+        {
+            ValidateNodeName(newName);
+        }
+
         // FIXME: try to get the information from cache first
         var membershipAddress = await GetMembershipAddressAsync(client, newParentUid, cancellationToken).ConfigureAwait(false);
 
@@ -168,7 +173,7 @@ internal static class NodeOperations
             ?? throw new InvalidOperationException($"Passphrase session key not available for {uid}");
 
         GetNameParameters(
-            newName ?? originName, // FIXME: validate name
+            newName ?? originName,
             destinationKey,
             destinationHashKey.Span,
             originNameSessionKey,
@@ -210,6 +215,11 @@ internal static class NodeOperations
         string? newName,
         CancellationToken cancellationToken)
     {
+        if (newName is not null)
+        {
+            ValidateNodeName(newName);
+        }
+
         // FIXME: try to get the information from cache first
         var membershipAddress = await GetMembershipAddressAsync(client, newParentUid, cancellationToken).ConfigureAwait(false);
 
@@ -240,7 +250,7 @@ internal static class NodeOperations
                 ?? throw new InvalidOperationException($"Passphrase session key not available for {uid}");
 
             GetNameParameters(
-                newName ?? originName, // FIXME: validate name
+                newName ?? originName,
                 destinationKey,
                 destinationHashKey.Span,
                 originNameSessionKey,
@@ -282,6 +292,8 @@ internal static class NodeOperations
         string? newMediaType,
         CancellationToken cancellationToken)
     {
+        ValidateNodeName(newName);
+
         // This incurs a round-trip, but this is a temporary implementation until the rename function is replaced by an all-purpose move function.
         var nodeMetadata = await GetNodeMetadataAsync(client, uid, knownShareAndKey: null, cancellationToken).ConfigureAwait(false);
 
@@ -304,7 +316,7 @@ internal static class NodeOperations
             .ConfigureAwait(false);
 
         GetNameParameters(
-            newName, // FIXME: validate name
+            newName,
             parentKey,
             parentHashKey.Span,
             nameSessionKey,
@@ -513,6 +525,25 @@ internal static class NodeOperations
         return await client.Account.GetAddressAsync(share.MembershipAddressId, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Validates a caller-supplied node name before it is used to create, rename or move a node.
+    /// Mirrors the JavaScript SDK's <c>validateNodeName</c>.
+    /// </summary>
+    /// <param name="name">The name provided by the caller.</param>
+    /// <exception cref="ValidationException">Thrown when the name is empty or longer than <see cref="MaxNodeNameLength"/> characters.</exception>
+    public static void ValidateNodeName(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+        {
+            throw new ValidationException("Name must not be empty");
+        }
+
+        if (name.Length > MaxNodeNameLength)
+        {
+            throw new ValidationException($"Name must be {MaxNodeNameLength} characters long at most");
+        }
+    }
+
     public static bool ValidateName(
         Result<PhasedDecryptionOutput<string>, ProtonDriveError> decryptionResult,
         [NotNullWhen(true)] out PhasedDecryptionOutput<string>? nameOutput,
@@ -532,15 +563,15 @@ internal static class NodeOperations
 
         var name = nameOutputValue.Data;
 
-        if (string.IsNullOrEmpty(name))
+        // A name coming from the server must not fail the whole conversion: validate with the same
+        // rules as caller-supplied names, but capture any violation as a per-node error instead of throwing.
+        try
         {
-            nameResult = new InvalidNameError(name, "Name must not be empty");
-            return false;
+            ValidateNodeName(name);
         }
-
-        if (name.Length > MaxNodeNameLength)
+        catch (ValidationException e)
         {
-            nameResult = new InvalidNameError(name, $"Name must be {MaxNodeNameLength} characters long at most");
+            nameResult = new InvalidNameError(name, e.Message);
             return false;
         }
 

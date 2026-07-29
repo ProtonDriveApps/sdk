@@ -57,6 +57,8 @@ internal static class FolderOperations
         DateTimeOffset? lastModificationTime,
         CancellationToken cancellationToken)
     {
+        NodeOperations.ValidateNodeName(name);
+
         var parentResult = await client.GetNodeAsync(parentUid, cancellationToken).ConfigureAwait(false);
         if (parentResult is null)
         {
