@@ -1,5 +1,19 @@
 # Changelog
 
+## js/v0.20.0 (2026-07-29)
+
+### Features
+- Expose active revision directly instead of wrapping it in result object
+- Rename public link to URL access
+- Add optional module for generating and parsing additional node metadata
+- Make error messages user friendly
+- Add logging when commit fails
+
+### Bug Fixes
+- Handle listing nodes from locked volumes
+- Stop flagging files without previews as errors
+
+
 ## js/v0.19.2 (2026-07-13)
 
 ### Features
