@@ -1,5 +1,20 @@
 # Changelog
 
+## cs/v0.22.0 (2026-07-28)
+
+### Features
+- Throw immediately when attempting to resume upload after disposal
+- Rename public link to URL access
+- Enumerate shared-with-me photos and albums
+- Make error messages user friendly
+- Add album read operations and album/photo node metadata
+- Implement photo tag updates
+
+### Bug Fixes
+- Prevent crash when cancelling queued uploads
+- Copy author email address in interop conversion
+
+
 ## cs/v0.21.0 (2026-07-23)
 
 ### Features
