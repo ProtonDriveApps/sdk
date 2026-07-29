@@ -291,6 +291,11 @@ public sealed class ProtonApiSession
         }
     }
 
+    public ValueTask SetAccountKeyPassphraseAsync(string keyId, ReadOnlyMemory<byte> passphrase, CancellationToken cancellationToken)
+    {
+        return SessionSecretCache.SetAccountKeyPassphraseAsync(keyId, passphrase, cancellationToken);
+    }
+
     public async Task RefreshScopesAsync(CancellationToken cancellationToken)
     {
         var scopesResponse = await AuthenticationApi.GetScopesAsync(cancellationToken).ConfigureAwait(false);
