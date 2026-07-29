@@ -26,7 +26,7 @@ export type QueueItemFile<RemoteDataType> = QueueItemBase<RemoteDataType> & {
 
 export type QueueItem<RemoteDataType> = QueueItemDirectory<RemoteDataType> | QueueItemFile<RemoteDataType>;
 
-type TransferQueueHandlers<RemoteDataType> = {
+export type TransferQueueHandlers<RemoteDataType> = {
     /**
      * Handler for directory items. Returns:
      * * `true` if the directory should be reported as processed successfully,
@@ -42,7 +42,7 @@ type TransferQueueHandlers<RemoteDataType> = {
     startFile: (item: QueueItemFile<RemoteDataType>) => Promise<number | false>;
 };
 
-class TransferQueue<RemoteDataType> {
+export class TransferQueue<RemoteDataType> {
     private queue: QueueItem<RemoteDataType>[] = [];
     private ongoingItems = new Set<Promise<void>>();
 
