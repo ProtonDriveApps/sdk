@@ -458,9 +458,9 @@
 
     "@openpgp/web-stream-tools": ["@openpgp/web-stream-tools@0.1.3", "", { "peerDependencies": { "typescript": ">=4.2" } }, "sha512-mT/ds43cH6c+AO5RFpxs+LkACr7KjC3/dZWHrP6KPrWJu4uJ/XJ+p7telaoYiqUfdjiiIvdNSOfhezW9fkmboQ=="],
 
-    "@protontech/crypto": ["@protontech/crypto@2.0.0", "https://gitlab.protontech.ch/api/v4/projects/4357/packages/npm/@protontech/crypto/-/crypto-2.0.0.tgz", { "dependencies": { "@noble/hashes": "^2.0.1", "@openpgp/web-stream-tools": "~0.1.3", "bcryptjs": "^3.0.3", "comlink": "^4.4.2", "core-js": "^3.49.0", "jsmimeparser": "npm:@protontech/jsmimeparser@^3.0.2", "openpgp": "npm:@protontech/openpgp@~6.3.1-0" } }, "sha512-D3M023jLq/aMNCSr5p1KVlLV0grAeVXpUh8WyN2HITCIX83KLJo5BReNbVT1mXMvodPf/qYIxUoYXyaEW3pfOQ=="],
+    "@protontech/crypto": ["@protontech/crypto@2.0.0", "", { "dependencies": { "@noble/hashes": "^2.0.1", "@openpgp/web-stream-tools": "~0.1.3", "bcryptjs": "^3.0.3", "comlink": "^4.4.2", "core-js": "^3.49.0", "jsmimeparser": "npm:@protontech/jsmimeparser@^3.0.2", "openpgp": "npm:@protontech/openpgp@~6.3.1-0" } }, "sha512-D3M023jLq/aMNCSr5p1KVlLV0grAeVXpUh8WyN2HITCIX83KLJo5BReNbVT1mXMvodPf/qYIxUoYXyaEW3pfOQ=="],
 
-    "@protontech/global-types": ["@protontech/global-types@1.1.0", "https://gitlab.protontech.ch/api/v4/projects/4357/packages/npm/@protontech/global-types/-/global-types-1.1.0.tgz", {}, "sha512-gMqOI4Vpr57wI5Th66D6okSDdNu93dvCc3tXnLQYN4BdZy/nc6mS/ih8yiLaw7L6anSDtoBEiQiadUNNVJVH6g=="],
+    "@protontech/global-types": ["@protontech/global-types@1.1.0", "", {}, "sha512-gMqOI4Vpr57wI5Th66D6okSDdNu93dvCc3tXnLQYN4BdZy/nc6mS/ih8yiLaw7L6anSDtoBEiQiadUNNVJVH6g=="],
 
     "@redocly/ajv": ["@redocly/ajv@8.11.2", "", { "dependencies": { "fast-deep-equal": "^3.1.1", "json-schema-traverse": "^1.0.0", "require-from-string": "^2.0.2", "uri-js-replace": "^1.0.1" } }, "sha512-io1JpnwtIcvojV7QKDUSIuMN/ikdOUd1ReEnUnMKGfDVridQZ31J0MmIuqwuRjWDZfmvr+Q0MqCcfHM2gTivOg=="],
 
@@ -1140,7 +1140,7 @@
 
     "jsesc": ["jsesc@3.1.0", "", { "bin": "bin/jsesc" }, "sha512-/sM3dO2FOzXjKQhJuo0Q173wf2KOo8t4I8vHy6lF9poUp7bKT0/NHE8fPX23PwfhnykfqnC2xRxOnVw5XuGIaA=="],
 
-    "jsmimeparser": ["@protontech/jsmimeparser@3.0.2", "https://gitlab.protontech.ch/api/v4/projects/4357/packages/npm/@protontech/jsmimeparser/-/jsmimeparser-3.0.2.tgz", {}, "sha512-PConkdRdY8xc1A8+oEmQ2pGC7nnJPqWwkUb/+odjFPbof2w3zpIws77D9J9assvZg8OdB8dRe/cZdBU+BCijgA=="],
+    "jsmimeparser": ["@protontech/jsmimeparser@3.0.2", "", {}, "sha512-PConkdRdY8xc1A8+oEmQ2pGC7nnJPqWwkUb/+odjFPbof2w3zpIws77D9J9assvZg8OdB8dRe/cZdBU+BCijgA=="],
 
     "json-buffer": ["json-buffer@3.0.1", "", {}, "sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ=="],
 
@@ -1270,7 +1270,7 @@
 
     "openapi-typescript": ["openapi-typescript@7.6.1", "", { "dependencies": { "@redocly/openapi-core": "^1.28.0", "ansi-colors": "^4.1.3", "change-case": "^5.4.4", "parse-json": "^8.1.0", "supports-color": "^9.4.0", "yargs-parser": "^21.1.1" }, "peerDependencies": { "typescript": "^5.x" }, "bin": "bin/cli.js" }, "sha512-F7RXEeo/heF3O9lOXo2bNjCOtfp7u+D6W3a3VNEH2xE6v+fxLtn5nq0uvUcA1F5aT+CMhNeC5Uqtg5tlXFX/ag=="],
 
-    "openpgp": ["@protontech/openpgp@6.3.1-0", "https://gitlab.protontech.ch/api/v4/projects/4357/packages/npm/@protontech/openpgp/-/openpgp-6.3.1-0.tgz", {}, "sha512-TA4wAE86bxYKxrULnnv8Uepu9hKi0e0M/zn4cwiDdgVhEzsqhaKnn3uRSY8Ba9wNcD6gSVALMlUDXdd94k85rA=="],
+    "openpgp": ["@protontech/openpgp@6.3.1-0", "", {}, "sha512-TA4wAE86bxYKxrULnnv8Uepu9hKi0e0M/zn4cwiDdgVhEzsqhaKnn3uRSY8Ba9wNcD6gSVALMlUDXdd94k85rA=="],
 
     "optionator": ["optionator@0.9.4", "", { "dependencies": { "deep-is": "^0.1.3", "fast-levenshtein": "^2.0.6", "levn": "^0.4.1", "prelude-ls": "^1.2.1", "type-check": "^0.4.0", "word-wrap": "^1.2.5" } }, "sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g=="],
 
