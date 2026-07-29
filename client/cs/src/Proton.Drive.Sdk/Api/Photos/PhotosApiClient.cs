@@ -132,4 +132,20 @@ internal sealed class PhotosApiClient(HttpClient httpClient) : IPhotosApiClient
             .PostAsync($"photos/volumes/{volumeId}/links/{linkId}/favorite", cancellationToken)
             .ConfigureAwait(false);
     }
+
+    public async ValueTask<ApiResponse> SetPhotoFavoriteAsync(
+        VolumeId volumeId,
+        LinkId linkId,
+        FavoritePhotoRequest request,
+        CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting<ApiResponse>(DriveApiSerializerContext.Default.ApiResponse)
+            .PostAsync(
+                $"photos/volumes/{volumeId}/links/{linkId}/favorite",
+                request,
+                PhotosApiSerializerContext.Default.FavoritePhotoRequest,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
 }

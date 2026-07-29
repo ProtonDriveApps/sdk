@@ -202,10 +202,8 @@ public sealed class ProtonPhotosClient
 
     /// <summary>Adds and removes tags (including favorite) on the given photos.</summary>
     /// <remarks>
-    /// Shared photos are not yet supported. Favoriting a photo that lives outside the user's own photos volume
-    /// requires re-encrypting the photo and its related photos for the target, which is not implemented; such updates
-    /// fail with a <see cref="NotSupportedException"/> in the returned results. Related photos (e.g. Live Photo or burst
-    /// siblings) are likewise not handled yet.
+    /// Favoriting a photo not yet in the user's timeline (in an album, or shared from another volume) re-encrypts it
+    /// and its related photos for the timeline root, so the server attaches it to the timeline while favoriting it.
     /// </remarks>
     public ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> UpdatePhotosAsync(
         IReadOnlyList<PhotoTagsUpdate> updates,

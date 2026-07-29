@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Photos;
 using Proton.Drive.Sdk.Nodes.Cryptography;
@@ -10,6 +11,8 @@ namespace Proton.Drive.Sdk.Nodes;
 internal static class PhotoOperations
 {
     private const int ActiveLinkState = 1;
+
+    private const int FavoritePayloadBatchSize = 20;
 
     public static async IAsyncEnumerable<NodeUid> EnumerateSharedWithMeAlbumUidsAsync(
         ProtonDriveClient client,
@@ -70,16 +73,19 @@ internal static class PhotoOperations
     {
         var results = new Dictionary<NodeUid, Result<Exception>>(updates.Count);
 
-        // Favoriting a photo that does not live in the user's own photos volume (i.e. a shared photo)
-        // requires re-encrypting the photo and its related photos for the target and sending that payload,
-        // which is not yet supported. Resolve the user's photos volume once so we can reject those updates.
-        var photosVolumeId = await VolumeOperations.TryGetPhotosVolumeIdAsync(client, cancellationToken).ConfigureAwait(false);
-
-        foreach (var update in updates)
+        await foreach (var preparation in EnumerateNodeUidsWithFavoritePayloadsAsync(client, updates, cancellationToken).ConfigureAwait(false))
         {
+            var update = preparation.Update;
+
+            if (preparation.Error is { } error)
+            {
+                results[update.NodeUid] = error;
+                continue;
+            }
+
             try
             {
-                await ApplyTagUpdateAsync(client, update, photosVolumeId, cancellationToken).ConfigureAwait(false);
+                await ApplyTagUpdateAsync(client, update, preparation.FavoriteRequest, cancellationToken).ConfigureAwait(false);
 
                 results[update.NodeUid] = Result<Exception>.Success;
             }
@@ -113,10 +119,95 @@ internal static class PhotoOperations
             .ToList();
     }
 
+    /// <summary>
+    /// Yields one preparation per update, non-favorites pass through;
+    /// favorites carry a payload re-encrypted for the timeline root (or none when already there),
+    /// with per-photo failures reported rather than thrown.
+    /// Mirrors the JS <c>iterateNodeUidsWithFavoritePayloads</c>.
+    /// </summary>
+    private static async IAsyncEnumerable<FavoritePreparation> EnumerateNodeUidsWithFavoritePayloadsAsync(
+        ProtonDriveClient client,
+        IReadOnlyList<PhotoTagsUpdate> updates,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        // Non-favorite updates don't need the timeline root, so pass them through first.
+        foreach (var update in updates.Where(update => !update.TagsToAdd.Contains(PhotoTag.Favorite)))
+        {
+            yield return new FavoritePreparation(update, FavoriteRequest: null, Error: null);
+        }
+
+        var favoriteUpdates = updates.Where(update => update.TagsToAdd.Contains(PhotoTag.Favorite)).ToList();
+        if (favoriteUpdates.Count == 0)
+        {
+            yield break;
+        }
+
+        // Favoriting re-encrypts each photo for the user's timeline root; resolve that target and its keys once.
+        FavoriteTarget target = default;
+        Exception? resolutionError = null;
+        try
+        {
+            target = await ResolveFavoriteTargetAsync(client, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            resolutionError = exception;
+        }
+
+        if (resolutionError is not null)
+        {
+            foreach (var update in favoriteUpdates)
+            {
+                yield return new FavoritePreparation(update, FavoriteRequest: null, resolutionError);
+            }
+
+            yield break;
+        }
+
+        // Signing key is owned and disposed here; the target key is borrowed and must not be disposed.
+        using (target.SigningKey)
+        {
+            // Batch favorites so payloads stream through rather than all being built up front.
+            foreach (var batch in favoriteUpdates.Chunk(FavoritePayloadBatchSize))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var (payloads, errors) = await PhotoTransferPayloadBuilder.BuildPayloadsAsync(
+                    client,
+                    batch.Select(update => new PhotoTransferPayloadBuilder.PhotoPayloadItem(update.NodeUid, [])).ToList(),
+                    target.NodeUid,
+                    target.Key,
+                    target.HashKey,
+                    target.SigningKey,
+                    target.EmailAddress,
+                    cancellationToken).ConfigureAwait(false);
+
+                var requestsByUid = payloads.ToDictionary(
+                    payload => payload.NodeUid,
+                    payload => new FavoritePhotoRequest { PhotoData = ToFavoritePhotoData(payload) });
+
+                foreach (var update in batch)
+                {
+                    // A build error other than "already in the timeline root" fails just that favorite.
+                    if (errors.TryGetValue(update.NodeUid, out var buildError) && buildError is not PhotoAlreadyInTargetException)
+                    {
+                        yield return new FavoritePreparation(update, FavoriteRequest: null, buildError);
+                        continue;
+                    }
+
+                    // Already in the timeline root → no payload, bodyless favorite.
+                    requestsByUid.TryGetValue(update.NodeUid, out var favoriteRequest);
+
+                    yield return new FavoritePreparation(update, favoriteRequest, Error: null);
+                }
+            }
+        }
+    }
+
     private static async ValueTask ApplyTagUpdateAsync(
         ProtonDriveClient client,
         PhotoTagsUpdate update,
-        VolumeId? photosVolumeId,
+        FavoritePhotoRequest? favoriteRequest,
         CancellationToken cancellationToken)
     {
         var volumeId = update.NodeUid.VolumeId;
@@ -124,15 +215,15 @@ internal static class PhotoOperations
 
         if (update.TagsToAdd.Contains(PhotoTag.Favorite))
         {
-            // The bodyless favorite request only works for photos already in the user's own timeline. A photo on
-            // another volume is a shared photo whose favorite must carry a re-encrypted payload for the photo and its
-            // related photos, which is not yet implemented.
-            if (photosVolumeId is { } ownVolumeId && volumeId != ownVolumeId)
+            // No payload (already in the timeline root) → bodyless favorite.
+            if (favoriteRequest is { } request)
             {
-                throw new NotSupportedException("Favoriting shared photos is not yet supported.");
+                await client.Api.Photos.SetPhotoFavoriteAsync(volumeId, linkId, request, cancellationToken).ConfigureAwait(false);
             }
-
-            await client.Api.Photos.SetPhotoFavoriteAsync(volumeId, linkId, cancellationToken).ConfigureAwait(false);
+            else
+            {
+                await client.Api.Photos.SetPhotoFavoriteAsync(volumeId, linkId, cancellationToken).ConfigureAwait(false);
+            }
         }
 
         var tagsToAdd = update.TagsToAdd.Where(tag => tag != PhotoTag.Favorite).Select(tag => (int)tag).ToList();
@@ -147,4 +238,59 @@ internal static class PhotoOperations
             await client.Api.Photos.RemovePhotoTagsAsync(volumeId, linkId, tagsToRemove, cancellationToken).ConfigureAwait(false);
         }
     }
+
+    private static async ValueTask<FavoriteTarget> ResolveFavoriteTargetAsync(ProtonDriveClient client, CancellationToken cancellationToken)
+    {
+        var timelineRoot = await PhotosNodeOperations.GetOrCreatePhotosFolderAsync(client, cancellationToken).ConfigureAwait(false);
+
+        // Target key is borrowed (do not dispose); the signing key is owned by the caller.
+        var (targetKey, targetHashKey) = await FolderOperations.GetKeyAndHashKeyAsync(client, timelineRoot.Uid, cancellationToken).ConfigureAwait(false);
+
+        var membershipAddress = await NodeOperations.GetMembershipAddressAsync(client, timelineRoot.Uid, cancellationToken).ConfigureAwait(false);
+
+        var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
+
+        return new FavoriteTarget(timelineRoot.Uid, targetKey, targetHashKey, signingKey, membershipAddress.EmailAddress);
+    }
+
+    private static FavoritePhotoData ToFavoritePhotoData(TransferEncryptedPhotoPayload payload)
+    {
+        return new FavoritePhotoData
+        {
+            NameHashDigest = payload.NameHashDigest,
+            Name = payload.Name,
+            NameSignatureEmailAddress = payload.NameSignatureEmailAddress,
+            Passphrase = payload.Passphrase,
+            ContentHash = payload.ContentHash,
+            PassphraseSignature = payload.PassphraseSignature,
+            SignatureEmailAddress = payload.SignatureEmailAddress,
+            RelatedPhotos = payload.RelatedPhotos.Select(ToFavoriteRelatedPhotoItem).ToList(),
+        };
+    }
+
+    private static FavoriteRelatedPhotoItem ToFavoriteRelatedPhotoItem(TransferEncryptedPhotoPayload payload)
+    {
+        return new FavoriteRelatedPhotoItem
+        {
+            LinkId = payload.NodeUid.LinkId,
+            NameHashDigest = payload.NameHashDigest,
+            Name = payload.Name,
+            NameSignatureEmailAddress = payload.NameSignatureEmailAddress,
+            Passphrase = payload.Passphrase,
+            ContentHash = payload.ContentHash,
+            PassphraseSignature = payload.PassphraseSignature,
+            SignatureEmailAddress = payload.SignatureEmailAddress,
+        };
+    }
+
+    /// <summary>An update ready to apply: null <see cref="FavoriteRequest"/> = non-favorite or bodyless favorite; non-null <see cref="Error"/> = favorite preparation failed.</summary>
+    private readonly record struct FavoritePreparation(PhotoTagsUpdate Update, FavoritePhotoRequest? FavoriteRequest, Exception? Error);
+
+    /// <summary>The timeline root and keys favorited photos are re-encrypted for; <see cref="SigningKey"/> is owned, <see cref="Key"/> borrowed.</summary>
+    private readonly record struct FavoriteTarget(
+        NodeUid NodeUid,
+        PgpPrivateKey Key,
+        ReadOnlyMemory<byte> HashKey,
+        PgpPrivateKey SigningKey,
+        string EmailAddress);
 }

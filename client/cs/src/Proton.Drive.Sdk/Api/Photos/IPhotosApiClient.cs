@@ -32,4 +32,6 @@ internal interface IPhotosApiClient
     ValueTask<ApiResponse> RemovePhotoTagsAsync(VolumeId volumeId, LinkId linkId, IReadOnlyList<int> tags, CancellationToken cancellationToken);
 
     ValueTask<ApiResponse> SetPhotoFavoriteAsync(VolumeId volumeId, LinkId linkId, CancellationToken cancellationToken);
+
+    ValueTask<ApiResponse> SetPhotoFavoriteAsync(VolumeId volumeId, LinkId linkId, FavoritePhotoRequest request, CancellationToken cancellationToken);
 }

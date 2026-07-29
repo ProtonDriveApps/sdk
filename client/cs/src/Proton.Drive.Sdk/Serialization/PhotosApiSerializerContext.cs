@@ -27,6 +27,7 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(FindDuplicatesRequest))]
 [JsonSerializable(typeof(FindDuplicatesResponse))]
 [JsonSerializable(typeof(PhotoTagsRequest))]
+[JsonSerializable(typeof(FavoritePhotoRequest))]
 [JsonSerializable(typeof(AlbumListResponse))]
 [JsonSerializable(typeof(AlbumItemListResponse))]
 internal sealed partial class PhotosApiSerializerContext : JsonSerializerContext;
