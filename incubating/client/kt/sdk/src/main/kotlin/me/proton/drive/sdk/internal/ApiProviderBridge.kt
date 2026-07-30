@@ -15,6 +15,7 @@ import proton.drive.sdk.ProtonDriveSdk.HttpResponse
 import proton.drive.sdk.httpHeader
 import proton.drive.sdk.httpResponse
 import retrofit2.Response
+import java.io.InputStream
 import java.nio.channels.Channels
 
 internal class ApiProviderBridge(
@@ -49,11 +50,8 @@ internal class ApiProviderBridge(
                             values.addAll(responseHeaders.values(name))
                         }
                     }
-                    response.body?.byteStream()?.let { inputStream ->
-                        bindingsContentHandle = httpStream.write(
-                            coroutineScope = coroutineScope,
-                            channel = Channels.newChannel(inputStream),
-                        )
+                    httpStream.createBindingsContentHandle(response.body?.byteStream())?.let {
+                        bindingsContentHandle = it
                     }
                 }
             }
@@ -70,11 +68,8 @@ internal class ApiProviderBridge(
                     values.addAll(responseHeaders.values(name))
                 }
             }
-            response.body()?.byteStream()?.let { inputStream ->
-                bindingsContentHandle = httpStream.write(
-                    coroutineScope = coroutineScope,
-                    channel = Channels.newChannel(inputStream),
-                )
+            httpStream.createBindingsContentHandle(response.body()?.byteStream())?.let {
+                bindingsContentHandle = it
             }
         }
     }
@@ -84,16 +79,32 @@ internal class ApiProviderBridge(
         val httpStream = HttpStream(
             bridge = jniHttpStream
         )
-        jniHttpStream.onBodyRead = {
-            mutex.withLock {
-                httpStreams -= httpStream
-                httpStream.close()
-            }
-        }
         mutex.withLock {
             httpStreams += httpStream
         }
         return httpStream
+    }
+
+    private suspend fun HttpStream.createBindingsContentHandle(
+        inputStream: InputStream?,
+    ): Long? {
+        if (inputStream == null) {
+            releaseHttpStream(this)
+            return null
+        }
+
+        return write(
+            coroutineScope = coroutineScope,
+            channel = Channels.newChannel(inputStream),
+            onDispose = { releaseHttpStream(this) }
+        )
+    }
+
+    private suspend fun releaseHttpStream(httpStream: HttpStream) {
+        mutex.withLock {
+            httpStreams -= httpStream
+            httpStream.close()
+        }
     }
 
     private suspend fun HttpSdkApi.execute(
@@ -138,4 +149,3 @@ internal class ApiProviderBridge(
 
     fun logger(message: String) = JniBase.globalSdkLogger(DEBUG, "network", message)
 }
-

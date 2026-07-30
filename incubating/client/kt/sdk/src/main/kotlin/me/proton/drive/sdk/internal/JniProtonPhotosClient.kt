@@ -54,6 +54,7 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
                 httpClient = httpClient {
                     requestFunction = ProtonDriveSdkNativeClient.getHttpClientRequestPointer()
                     responseContentReadAction = httpResponseReadPointer
+                    responseContentDisposeAction = ProtonDriveSdkNativeClient.getDisposePointer()
                     cancellationAction = JniJob.getCancelPointer()
                 }
                 accountRequestAction = ProtonDriveSdkNativeClient.getAccountRequestPointer()

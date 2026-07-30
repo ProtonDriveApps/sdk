@@ -38,6 +38,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
     val read: suspend (ByteBuffer) -> Int = { error("read not configured for $name") },
     val write: suspend (ByteBuffer) -> Unit = { error("write not configured for $name") },
     val seek: (suspend (Long, Int) -> Long)? = null,
+    val dispose: (suspend () -> Unit) = { error("dispose not configured for $name") },
     val httpClientRequest: suspend (HttpRequest) -> HttpResponse = { error("httpClientRequest not configured for $name") },
     val readHttpBody: suspend (ByteBuffer) -> Int = { error("readHttpBody not configured for $name") },
     val accountRequest: suspend (ProtonDriveSdk.AccountRequest) -> Any = { error("accountRequest not configured for $name") },
@@ -244,6 +245,14 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
         }
     }
 
+    @Suppress("unused") // Called by JNI
+    fun onDispose() {
+        logger(VERBOSE, "dispose for $name")
+        runBlocking(Dispatchers.Unconfined) {
+            dispose()
+        }
+    }
+
     private fun <R> onFunction(
         operation: String,
         block: suspend () -> R
@@ -440,6 +449,9 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
 
         @JvmStatic
         external fun getSha1Pointer(): Long
+
+        @JvmStatic
+        external fun getDisposePointer(): Long
 
         @JvmStatic
         external fun getCallbackPointer(): Long

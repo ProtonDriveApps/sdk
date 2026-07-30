@@ -389,7 +389,8 @@ message HttpClient {
     // a race condition where the cancellation is still called after the request is completed, so this must be accounted for.
     int64 request_function = 1;
     int64 response_content_read_action = 2; // C signature: void handle_http_response_read(intptr_t bindings_handle, ByteArray buffer, intptr_t sdk_handle);
-    int64 cancellation_action = 3; // C signature: void handle_http_cancellation(intptr_t bindings_operation_handle);
+    int64 response_content_dispose_action = 3; // C signature: void on_stream_dispose(intptr_t bindings_handle); Signals the bindings to dispose or clean up their response content stream.
+    int64 cancellation_action = 4; // C signature: void handle_http_cancellation(intptr_t bindings_operation_handle);
 }
 
 message ProtonDriveClientOptions {

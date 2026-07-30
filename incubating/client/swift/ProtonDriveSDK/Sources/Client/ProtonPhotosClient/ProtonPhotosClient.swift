@@ -61,6 +61,7 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
             $0.httpClient = Proton_Drive_Sdk_HttpClient.with { httpClient in
                 httpClient.requestFunction = Int64(ObjectHandle(callback: HttpClientRequestProcessor.cCompatibleHttpRequest))
                 httpClient.responseContentReadAction = Int64(ObjectHandle(callback: HttpClientResponseProcessor.cCompatibleHttpResponseRead))
+                httpClient.responseContentDisposeAction = Int64(ObjectHandle(callback: HttpClientResponseProcessor.cCompatibleHttpResponseDispose))
                 httpClient.cancellationAction = Int64(ObjectHandle(callback: HttpClientRequestProcessor.cCompatibleHttpCancellationAction))
             }
             $0.accountRequestAction = Int64(ObjectHandle(callback: cCompatibleAccountClientRequest))

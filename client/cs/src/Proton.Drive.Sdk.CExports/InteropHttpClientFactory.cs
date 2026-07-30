@@ -15,18 +15,21 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
         string? bindingsLanguage,
         InteropFunction<nint, InteropArray<byte>, nint, nint> requestFunction,
         InteropFunction<nint, InteropArray<byte>, nint, nint> responseContentReadFunction,
+        InteropAction<nint> responseContentDisposeAction,
         InteropAction<nint> cancellationAction)
     {
         _baseUrl = baseUrl;
         BindingsHandle = bindingsHandle;
         RequestFunction = requestFunction;
         ResponseContentReadFunction = responseContentReadFunction;
+        ResponseContentDisposeAction = responseContentDisposeAction;
         CancellationAction = cancellationAction;
     }
 
     private nint BindingsHandle { get; }
     private InteropFunction<nint, InteropArray<byte>, nint, nint> RequestFunction { get; }
     private InteropFunction<nint, InteropArray<byte>, nint, nint> ResponseContentReadFunction { get; }
+    private InteropAction<nint> ResponseContentDisposeAction { get; }
     private InteropAction<nint> CancellationAction { get; }
 
     public System.Net.Http.HttpClient CreateClient(string name)
@@ -108,7 +111,11 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
             if (interopHttpResponse.HasBindingsContentHandle)
             {
                 response.Content = new StreamContent(
-                    new InteropStream(null, (nint)interopHttpResponse.BindingsContentHandle, _owner.ResponseContentReadFunction));
+                    new InteropStream(
+                        null,
+                        (nint)interopHttpResponse.BindingsContentHandle,
+                        _owner.ResponseContentReadFunction,
+                        disposeAction: _owner.ResponseContentDisposeAction));
             }
 
             foreach (var interopHttpResponseHeader in interopHttpResponse.Headers)

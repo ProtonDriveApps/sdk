@@ -28,8 +28,11 @@ class HttpStream internal constructor(
         throw IOException("Failed to read from SDK stream", error)
     }
 
-    fun write(coroutineScope: CoroutineScope, channel: ReadableByteChannel): Long =
-        bridge.write(coroutineScope, channel)
+    fun write(
+        coroutineScope: CoroutineScope,
+        channel: ReadableByteChannel,
+        onDispose: suspend () -> Unit,
+    ): Long = bridge.write(coroutineScope, channel, onDispose)
 
     override fun close() {
         bridge.release()

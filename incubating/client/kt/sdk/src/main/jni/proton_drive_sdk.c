@@ -128,6 +128,12 @@ void onSha1(
     pushDataToVoidMethod(bindings_handle, output, "onSha1");
 }
 
+void onDispose(
+        intptr_t bindings_handle
+) {
+    pushToVoidMethod(bindings_handle, "onDispose");
+}
+
 jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getCallbackPointer(
         JNIEnv *env,
         jclass clazz
@@ -210,4 +216,11 @@ jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getSha1Pointe
         jclass clazz
 ) {
     return (jlong) (intptr_t) &onSha1;
+}
+
+jlong Java_me_proton_drive_sdk_internal_ProtonDriveSdkNativeClient_getDisposePointer(
+        JNIEnv *env,
+        jclass clazz
+) {
+    return (jlong) (intptr_t) &onDispose;
 }

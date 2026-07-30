@@ -35,32 +35,30 @@ enum HttpClientResponseProcessor {
                     boxedRawBuffer: boxedRawBuffer,
                     buffer: buffer,
                     bufferSize: bufferSize,
-                    callbackPointer: callbackPointer,
-                    releaseBox: {
-                        CallbackHandleRegistry.shared.remove(statePointer)
-                    }
+                    callbackPointer: callbackPointer
                 )
             case let .download(boxedDownloadStream):
                 await HttpClientResponseProcessor.passStream(
                     boxedDownloadStream: boxedDownloadStream,
                     buffer: buffer,
                     bufferSize: bufferSize,
-                    callbackPointer: callbackPointer,
-                    releaseBox: {
-                        CallbackHandleRegistry.shared.remove(statePointer)
-                    }
+                    callbackPointer: callbackPointer
                 )
             }
         }
     }
 
+    /// C-compatible callback for disposing HTTP response content on the bindings side.
+    /// The SDK calls this with the bindings handle when the response InteropStream is disposed.
+    static let cCompatibleHttpResponseDispose: CCallbackWithoutByteArray = { bindingsHandle in
+        CallbackHandleRegistry.shared.remove(bindingsHandle)
+    }
     
     fileprivate static func passStream(
         boxedDownloadStream: BoxedDownloadStream,
         buffer: sending UnsafeMutablePointer<UInt8>,
         bufferSize: Int,
-        callbackPointer: Int,
-        releaseBox: () -> Void
+        callbackPointer: Int
     ) async {
         do {
             let (data, receivedBytes) = try await boxedDownloadStream.read(upTo: bufferSize)
@@ -69,9 +67,6 @@ enum HttpClientResponseProcessor {
                 $0.value = Int32(receivedBytes)
             }
             SDKResponseHandler.send(callbackPointer: callbackPointer, message: message)
-            if bufferSize > receivedBytes {
-                releaseBox()
-            }
         } catch {
             SDKResponseHandler.sendErrorToSDK(error, callbackPointer: callbackPointer)
         }
@@ -81,8 +76,7 @@ enum HttpClientResponseProcessor {
         boxedRawBuffer: BoxedRawBuffer,
         buffer: sending UnsafeMutablePointer<UInt8>,
         bufferSize: Int,
-        callbackPointer: Int,
-        releaseBox: () -> Void
+        callbackPointer: Int
     ) async {
         let copiedBytesCount = boxedRawBuffer.copyBytes(to: buffer, count: bufferSize)
 
@@ -90,8 +84,5 @@ enum HttpClientResponseProcessor {
             $0.value = Int32(copiedBytesCount)
         }
         SDKResponseHandler.send(callbackPointer: callbackPointer, message: message)
-        if copiedBytesCount == 0 {
-            releaseBox()
-        }
     }
 }

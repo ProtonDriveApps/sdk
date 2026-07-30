@@ -11,29 +11,34 @@ internal sealed class InteropStream : Stream
     private readonly InteropFunction<nint, InteropArray<byte>, nint, nint>? _writeFunction;
     private readonly InteropAction<nint, InteropArray<byte>, nint>? _seekAction;
     private readonly InteropAction<nint>? _cancelAction;
+    private readonly InteropAction<nint>? _disposeAction;
 
     private long _position;
     private long? _length;
     private nint _operationHandle;
+    private bool _disposed;
 
     public InteropStream(
         long? length,
         nint bindingsHandle,
         InteropFunction<nint, InteropArray<byte>, nint, nint>? readFunction,
-        InteropAction<nint>? cancelAction = null)
+        InteropAction<nint>? cancelAction = null,
+        InteropAction<nint>? disposeAction = null)
     {
         _length = length;
         _bindingsHandle = bindingsHandle;
         _readFunction = readFunction;
         _writeFunction = null;
         _cancelAction = cancelAction;
+        _disposeAction = disposeAction;
     }
 
     public InteropStream(
         nint bindingsHandle,
         InteropFunction<nint, InteropArray<byte>, nint, nint>? writeFunction,
         InteropAction<nint, InteropArray<byte>, nint>? seekAction = null,
-        InteropAction<nint>? cancelAction = null)
+        InteropAction<nint>? cancelAction = null,
+        InteropAction<nint>? disposeAction = null)
     {
         _length = 0;
         _bindingsHandle = bindingsHandle;
@@ -41,6 +46,7 @@ internal sealed class InteropStream : Stream
         _writeFunction = writeFunction;
         _seekAction = seekAction;
         _cancelAction = cancelAction;
+        _disposeAction = disposeAction;
     }
 
     public override bool CanRead => _readFunction != null;
@@ -170,6 +176,17 @@ internal sealed class InteropStream : Stream
 
         _position += buffer.Length;
         _length = Math.Max(_length ?? 0, _position);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && !_disposed)
+        {
+            _disposed = true;
+            _disposeAction?.Invoke(_bindingsHandle);
+        }
+
+        base.Dispose(disposing);
     }
 
     private sealed unsafe class UnmanagedMemoryManager<T>(nint pointer, int length) : MemoryManager<T>
