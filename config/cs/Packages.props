@@ -1,8 +1,8 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <GoCryptoVersion>0.29.4</GoCryptoVersion>
-    <RustCryptoVersion>0.29.4-rust.2</RustCryptoVersion>
+    <GoCryptoVersion>0.30.0</GoCryptoVersion>
+    <RustCryptoVersion>0.30.0-rust.1</RustCryptoVersion>
     <!-- Default to Go crypto backend -->
     <CryptoBackend Condition="'$(CryptoBackend)' == ''">go</CryptoBackend>
     <ProtonCryptographyVersion Condition="'$(CryptoBackend)' == 'go'">$(GoCryptoVersion)</ProtonCryptographyVersion>
