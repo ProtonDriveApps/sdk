@@ -1,5 +1,19 @@
 # Changelog
 
+## cli/v0.7.0 (2026-07-30)
+
+### Features
+- Add photo download command
+- Expose active revision directly instead of wrapping it in result object
+- Rename public link to URL access
+- Automatically skip nodes with identical content
+- Allow sqlite parallel reads
+- Add optional module for generating and parsing additional node metadata
+- Add albums commands
+- Upload photos to timeline
+- Log CLI & SDK version when starting
+
+
 ## cli/v0.6.0 (2026-07-17)
 
 ### Features
