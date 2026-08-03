@@ -3,9 +3,10 @@ import { init } from '../init';
 import { captureException, flushSentry } from '../telemetry';
 import { AuthRequiredError, ExitError, isRecoverableReplError } from './errors';
 import { formatReadableJson } from './formatters';
-import { printCommandUsage } from './help';
+import { printCommandUsage, printUsage } from './help';
 import { Command } from './interface';
 import { getCommand, getCommandArguments } from './registryCore';
+import { printVersions } from './version';
 
 export type CliSession = Awaited<ReturnType<typeof init>>;
 
@@ -35,7 +36,11 @@ export async function runCommand(
     initOptions: InitConfig,
     session?: CliSession,
 ): Promise<void> {
-    const { command, options, args } = parseCliInvocation(commands, argv, initOptions);
+    const result = await parseCliInvocation(commands, argv, initOptions);
+    if (!result) {
+        return;
+    }
+    const { command, options, args } = result;
 
     if (options['help']) {
         printCommandUsage(command);
@@ -58,10 +63,21 @@ export async function runCommand(
     }
 }
 
-function parseCliInvocation(commands: Command[], argv: string[], initOptions: InitConfig) {
+async function parseCliInvocation(commands: Command[], argv: string[], initOptions: InitConfig) {
     const groupName = argv[2]!;
     const commandName = argv[3]!;
-    const command = getCommand(commands, groupName, commandName, initOptions);
+
+    if (groupName === 'help' || groupName === '--help' || groupName === '-h') {
+        printUsage(commands);
+        return;
+    }
+
+    if (groupName === 'version' || groupName === '--version' || groupName === '-v') {
+        await printVersions(initOptions);
+        return;
+    }
+
+    const command = getCommand(commands, groupName, commandName);
     const { options, args } = getCommandArguments(command, argv);
     return { command, options, args };
 }

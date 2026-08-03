@@ -29,9 +29,14 @@ export function printUsage(commands: Command[]) {
 
     console.log('');
     console.log('General options:');
-    console.log(`${ROW_INDENT}-h|--help: Show extended help for a command`);
+    console.log(`${ROW_INDENT}-h|--help: Show extended help for a command (example fs upload --help)`);
     console.log(`${ROW_INDENT}-j|--json: Output in JSON format`);
     console.log(`${ROW_INDENT}-v|--verbose: Enable verbose output`);
+
+    console.log('');
+    console.log('Any short names are supported (as long as they are unique):');
+    console.log(`${ROW_INDENT}filesystem upload -> fs up`);
+    console.log(`${ROW_INDENT}sharing invite -> s inv`);
 }
 
 /**
