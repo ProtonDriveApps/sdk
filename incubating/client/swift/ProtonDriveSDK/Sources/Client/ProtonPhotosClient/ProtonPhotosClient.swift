@@ -23,6 +23,11 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
         case getNode(UUID)
         case leaveSharedNode(UUID)
         case enumerateSharedWithMeNodeUids(UUID)
+        case trashNode(UUID)
+        case deleteNode(UUID)
+        case restoreNode(UUID)
+        case emptyTrash(UUID)
+        case enumerateTrash(UUID)
 
         var operationName: String {
             switch self {
@@ -33,6 +38,11 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
             case .getNode: return "getNode"
             case .leaveSharedNode: return "leaveSharedNode"
             case .enumerateSharedWithMeNodeUids: return "enumerateSharedWithMeNodeUids"
+            case .trashNode: return "trashNode"
+            case .deleteNode: return "deleteNode"
+            case .restoreNode: return "restoreNode"
+            case .emptyTrash: return "emptyTrash"
+            case .enumerateTrash: return "enumerateTrash"
             }
         }
     }
@@ -598,5 +608,112 @@ extension ProtonPhotosClient {
             throw ProtonDriveSDKError(interopError: .containsUnknownPhotoTags(tags: unknownTags))
         }
         return mappedTags
+    }
+}
+
+// MARK: Trash operations
+extension ProtonPhotosClient {
+    public func trash(nodes: [SDKNodeUid], cancellationToken: UUID) async throws -> [NodeResult] {
+        let cancellationTokenSource = try await createCancellationTokenSource(.trashNode(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .trashNode(cancellationToken))
+        }
+        let trashRequest = Proton_Drive_Sdk_DrivePhotosClientTrashNodesRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.nodeUids = nodes.map(\.sdkCompatibleIdentifier)
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+        let result: Proton_Drive_Sdk_NodeResultListResponse = try await SDKRequestHandler.send(trashRequest, logger: logger)
+        return result.results.compactMap { TrashNodeResult(sdkNodeResult: $0) }
+    }
+
+    public func cancelTrash(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .trashNode(cancellationToken))
+    }
+
+    public func delete(nodes: [SDKNodeUid], cancellationToken: UUID) async throws -> [NodeResult] {
+        let cancellationTokenSource = try await createCancellationTokenSource(.deleteNode(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .deleteNode(cancellationToken))
+        }
+        let deleteRequest = Proton_Drive_Sdk_DrivePhotosClientDeleteNodesRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.nodeUids = nodes.map { $0.sdkCompatibleIdentifier }
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let result: Proton_Drive_Sdk_NodeResultListResponse = try await SDKRequestHandler.send(deleteRequest, logger: logger)
+        return result.results.compactMap { NodeResult(sdkNodeResult: $0) }
+    }
+
+    public func cancelDelete(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .deleteNode(cancellationToken))
+    }
+
+    public func restore(nodes: [SDKNodeUid], cancellationToken: UUID) async throws -> [NodeResult] {
+        let cancellationTokenSource = try await createCancellationTokenSource(.restoreNode(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .restoreNode(cancellationToken))
+        }
+
+        let restoreRequest = Proton_Drive_Sdk_DrivePhotosClientRestoreNodesRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.nodeUids = nodes.map { $0.sdkCompatibleIdentifier }
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let result: Proton_Drive_Sdk_NodeResultListResponse = try await SDKRequestHandler.send(restoreRequest, logger: logger)
+        return result.results.compactMap { NodeResult(sdkNodeResult: $0) }
+    }
+
+    public func cancelRestore(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .restoreNode(cancellationToken))
+    }
+
+    public func emptyTrash(cancellationToken: UUID) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.emptyTrash(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .emptyTrash(cancellationToken))
+        }
+
+        let emptyTrashRequest = Proton_Drive_Sdk_DrivePhotosClientEmptyTrashRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let _: Void = try await SDKRequestHandler.send(emptyTrashRequest, logger: logger)
+    }
+
+    public func cancelEmptyTrash(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .emptyTrash(cancellationToken))
+    }
+
+    public func enumerateTrashNodeUids(
+        cancellationToken: UUID,
+        onNodeUidEnumerated: @escaping NodeUidCallback
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.enumerateTrash(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .enumerateTrash(cancellationToken))
+        }
+
+        let callbackState = NodeUidEnumerationCallbackWrapper(callback: onNodeUidEnumerated)
+        let request = Proton_Drive_Sdk_DrivePhotosClientEnumerateTrashRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.yieldAction = Int64(ObjectHandle(callback: cNodeUidEnumerationCallback))
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let _: Void = try await SDKRequestHandler.send(
+            request,
+            state: WeakReference(value: callbackState),
+            scope: .ownerManaged,
+            owner: callbackState,
+            logger: logger
+        )
+    }
+
+    public func cancelEnumerateTrash(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .enumerateTrash(cancellationToken))
     }
 }

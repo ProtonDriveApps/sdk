@@ -292,6 +292,31 @@ extension Message {
                 $0.payload = .drivePhotosClientGetNode(request)
             }
 
+        case let request as Proton_Drive_Sdk_DrivePhotosClientTrashNodesRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientTrashNodes(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientDeleteNodesRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientDeleteNodes(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientRestoreNodesRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientRestoreNodes(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientEmptyTrashRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientEmptyTrash(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientEnumerateTrashRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientEnumerateTrash(request)
+            }
+
             // MARK: - Photo Downloads
 
         case let request as Proton_Drive_Sdk_DrivePhotosClientGetPhotoDownloaderRequest:
