@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { NodeEntity, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
+import { NodeEntity, NodeType, ProtonDriveClient, ValidationError } from '@protontech/drive-sdk';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 import { ProtonDrivePublicLinkClient } from '@protontech/drive-sdk/protonDrivePublicLinkClient';
 
@@ -304,12 +304,33 @@ export class Path {
     }
 
     private async getNodeByName(parentNode: NodeEntity, name: string) {
+        // Albums are not folders, so they cannot be traversed with the Drive SDK.
+        // Resolve their children through the Photos SDK instead.
+        if (parentNode.type === NodeType.Album) {
+            return this.getAlbumChildByName(parentNode, name);
+        }
         for await (const maybeChild of this.driveSdk.iterateFolderChildren(parentNode)) {
             if (getName(maybeChild) === name) {
                 return maybeChild;
             }
         }
         throw new ValidationError(`Node not found: ${name}`);
+    }
+
+    private async getAlbumChildByName(albumNode: NodeEntity, name: string): Promise<NodeEntity> {
+        const photoNodeUids = await Array.fromAsync(
+            this.photosSdk.iterateAlbum(albumNode.uid),
+            (item) => item.nodeUid,
+        );
+        for await (const maybeMissingNode of this.photosSdk.iterateNodes(photoNodeUids)) {
+            if ('missingUid' in maybeMissingNode) {
+                continue;
+            }
+            if (getName(maybeMissingNode) === name) {
+                return maybeMissingNode;
+            }
+        }
+        throw new ValidationError(`Photo not found: ${name}`);
     }
 
     private async getPhotoNodeByPath(pathString: string): Promise<NodeEntity> {
