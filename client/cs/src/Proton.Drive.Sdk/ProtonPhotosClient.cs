@@ -205,7 +205,7 @@ public sealed class ProtonPhotosClient
     /// Favoriting a photo not yet in the user's timeline (in an album, or shared from another volume) re-encrypts it
     /// and its related photos for the timeline root, so the server attaches it to the timeline while favoriting it.
     /// </remarks>
-    public ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> UpdatePhotosAsync(
+    public IAsyncEnumerable<PhotoUpdateResult> UpdatePhotosAsync(
         IReadOnlyList<PhotoTagsUpdate> updates,
         CancellationToken cancellationToken)
     {

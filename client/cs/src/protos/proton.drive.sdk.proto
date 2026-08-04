@@ -1087,11 +1087,12 @@ message PhotoTagsUpdate {
     repeated PhotoTag tags_to_remove = 3;
 }
 
-// The response message must be of type NodeResultListResponse
+// The response must not have a value, yield_action will be called with a NodeResultPair for each item.
 message DrivePhotosClientUpdatePhotosRequest {
     int64 client_handle = 1;
     repeated PhotoTagsUpdate updates = 2;
     int64 cancellation_token_source_handle = 3;
+    int64 yield_action = 4;
 }
 
 // The response must not have a value, yield_action will be called for each item.

@@ -248,7 +248,7 @@ internal static class InteropMessageHandler
                         bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DrivePhotosClientUpdatePhotos
-                    => await InteropProtonPhotosClient.HandleUpdatePhotosAsync(request.DrivePhotosClientUpdatePhotos).ConfigureAwait(false),
+                    => await InteropProtonPhotosClient.HandleUpdatePhotosAsync(request.DrivePhotosClientUpdatePhotos, bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DrivePhotosClientEnumerateSharedWithMeNodeUids
                     => await InteropProtonPhotosClient.HandleEnumerateSharedWithMeNodeUidsAsync(

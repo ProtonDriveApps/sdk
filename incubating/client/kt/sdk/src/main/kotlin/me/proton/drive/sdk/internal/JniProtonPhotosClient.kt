@@ -147,9 +147,16 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
         }
 
     suspend fun updatePhotos(
+        coroutineScope: ProducerScope<me.proton.drive.sdk.entity.NodeResultPair>,
         request: ProtonDriveSdk.DrivePhotosClientUpdatePhotosRequest,
-    ): ProtonDriveSdk.NodeResultListResponse =
-        executeOnce("updatePhotos", NodeResultListResponseConverter().asCallback) {
+        yield: suspend (ProtonDriveSdk.NodeResultPair) -> Unit,
+    ): Unit = executeEnumerate(
+            name = "updatePhotos",
+            callback = UnitResponseCallback,
+            yield = yield,
+            parser = ProtonDriveSdk.NodeResultPair::parseFrom,
+            coroutineScopeProvider = { coroutineScope }
+        ) {
             drivePhotosClientUpdatePhotos = request
         }
 

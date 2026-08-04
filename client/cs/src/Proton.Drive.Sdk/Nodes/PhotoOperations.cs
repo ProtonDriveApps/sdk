@@ -66,36 +66,35 @@ internal static class PhotoOperations
         return MatchDuplicates(candidates, photosRoot.Uid.VolumeId, nameHash, contentHash);
     }
 
-    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> UpdatePhotosAsync(
+    public static async IAsyncEnumerable<PhotoUpdateResult> UpdatePhotosAsync(
         ProtonDriveClient client,
         IReadOnlyList<PhotoTagsUpdate> updates,
-        CancellationToken cancellationToken)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var results = new Dictionary<NodeUid, Result<Exception>>(updates.Count);
-
         await foreach (var preparation in EnumerateNodeUidsWithFavoritePayloadsAsync(client, updates, cancellationToken).ConfigureAwait(false))
         {
             var update = preparation.Update;
 
             if (preparation.Error is { } error)
             {
-                results[update.NodeUid] = error;
+                yield return new PhotoUpdateResult(update.NodeUid, error);
                 continue;
             }
 
+            Result<Exception> result;
             try
             {
                 await ApplyTagUpdateAsync(client, update, preparation.FavoriteRequest, cancellationToken).ConfigureAwait(false);
 
-                results[update.NodeUid] = Result<Exception>.Success;
+                result = Result<Exception>.Success;
             }
             catch (Exception exception)
             {
-                results[update.NodeUid] = exception;
+                result = exception;
             }
-        }
 
-        return results;
+            yield return new PhotoUpdateResult(update.NodeUid, result);
+        }
     }
 
     internal static IReadOnlyList<FoundDuplicateDto> SelectActiveCandidates(IReadOnlyList<FoundDuplicateDto> duplicates)

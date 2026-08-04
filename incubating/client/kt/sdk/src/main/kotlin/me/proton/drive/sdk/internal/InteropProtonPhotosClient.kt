@@ -170,17 +170,24 @@ internal class InteropProtonPhotosClient internal constructor(
         ).toEntity()
     }
 
-    override suspend fun updatePhotos(
+    override fun updatePhotos(
         updates: List<PhotoTagsUpdate>,
-    ): List<NodeResultPair> = cancellationCoroutineScope { source ->
+    ): Flow<NodeResultPair> = channelFlow {
         log(INFO, "updatePhotos(${updates.size} photos)")
-        bridge.updatePhotos(
-            drivePhotosClientUpdatePhotosRequest {
-                this.updates += updates.map { it.toProto() }
-                clientHandle = handle
-                cancellationTokenSourceHandle = source.handle
-            }
-        ).toEntity()
+        cancellationCoroutineScope { source ->
+            bridge.updatePhotos(
+                coroutineScope = this@channelFlow,
+                drivePhotosClientUpdatePhotosRequest {
+                    this.updates += updates.map { it.toProto() }
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { pair ->
+                    send(pair.toEntity())
+                }
+            )
+        }
     }
 
     override fun enumerateTrashNodeUids(): Flow<NodeUid> = channelFlow {

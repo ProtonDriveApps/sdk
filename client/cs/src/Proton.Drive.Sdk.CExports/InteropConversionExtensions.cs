@@ -207,24 +207,16 @@ internal static class InteropConversionExtensions
         {
             return new NodeResultListResponse
             {
-                Results =
-                {
-                    results.Select(pair =>
-                    {
-                        var result = new NodeResultPair
-                        {
-                            NodeUid = pair.Key.ToString(),
-                        };
-
-                        if (pair.Value.TryGetError(out var exception))
-                        {
-                            result.Error = exception.ToProtoError(InteropDriveErrorConverter.SetDomainAndCodes);
-                        }
-
-                        return result;
-                    }),
-                },
+                Results = { results.Select(pair => ToNodeResultPair(pair.Key, pair.Value)) },
             };
+        }
+    }
+
+    extension(PhotoUpdateResult result)
+    {
+        public NodeResultPair ToInterop()
+        {
+            return ToNodeResultPair(result.NodeUid, result.Result);
         }
     }
 
@@ -361,5 +353,20 @@ internal static class InteropConversionExtensions
 
             return stringResult;
         }
+    }
+
+    private static NodeResultPair ToNodeResultPair(NodeUid nodeUid, Result<Exception> result)
+    {
+        var pair = new NodeResultPair
+        {
+            NodeUid = nodeUid.ToString(),
+        };
+
+        if (result.TryGetError(out var exception))
+        {
+            pair.Error = exception.ToProtoError(InteropDriveErrorConverter.SetDomainAndCodes);
+        }
+
+        return pair;
     }
 }

@@ -576,8 +576,8 @@ extension ProtonPhotosClient {
 // MARK: - Tags
 
 extension ProtonPhotosClient {
-    /// Adds and/or removes tags on the given photos, returning a per-photo result.
-    public func updatePhotos(_ updates: [PhotoTagsUpdate]) async throws -> [NodeResult] {
+    /// Adds and/or removes tags on the given photos, streaming a per-photo result as each update completes.
+    public func updatePhotos(_ updates: [PhotoTagsUpdate], onNodeResult: @escaping NodeResultCallback) async throws {
         let cancellationTokenSource = try await CancellationTokenSource(logger: logger)
         defer {
             cancellationTokenSource.free()
@@ -591,14 +591,21 @@ extension ProtonPhotosClient {
             return proto
         }
 
+        let callbackState = NodeResultEnumerationCallbackWrapper(callback: onNodeResult)
         let request = Proton_Drive_Sdk_DrivePhotosClientUpdatePhotosRequest.with {
             $0.clientHandle = Int64(clientHandle)
             $0.updates = sdkUpdates
             $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+            $0.yieldAction = Int64(ObjectHandle(callback: cNodeResultEnumerationCallback))
         }
 
-        let result: Proton_Drive_Sdk_NodeResultListResponse = try await SDKRequestHandler.send(request, logger: logger)
-        return result.results.compactMap { NodeResult(sdkNodeResult: $0) }
+        let _: Void = try await SDKRequestHandler.send(
+            request,
+            state: WeakReference(value: callbackState),
+            scope: .ownerManaged,
+            owner: callbackState,
+            logger: logger
+        )
     }
 
     private static func mapPhotoTags(_ tags: [PhotoTag]) throws -> [Proton_Drive_Sdk_PhotoTag] {
