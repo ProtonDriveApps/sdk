@@ -271,17 +271,21 @@ internal static class InteropProtonDriveClient
         return null;
     }
 
-    public static async ValueTask<IMessage> HandleTrashNodesAsync(DriveClientTrashNodesRequest request)
+    public static async ValueTask<IMessage?> HandleTrashNodesAsync(DriveClientTrashNodesRequest request, nint bindingsHandle)
     {
+        var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
 
-        var results = await client.TrashNodesAsync(
-            request.NodeUids.Select(NodeUid.Parse),
-            cancellationToken).ConfigureAwait(false);
+        var results = client.TrashNodesAsync(request.NodeUids.Select(NodeUid.Parse), cancellationToken);
 
-        return results.ToInterop();
+        await foreach (var result in results.ConfigureAwait(false))
+        {
+            yieldAction.InvokeWithMessage(bindingsHandle, result.ToInterop());
+        }
+
+        return null;
     }
 
     public static async ValueTask<IMessage> HandleMoveNodesAsync(DriveClientMoveNodesRequest request)
@@ -298,30 +302,38 @@ internal static class InteropProtonDriveClient
         return results.ToInterop();
     }
 
-    public static async ValueTask<IMessage> HandleDeleteNodesAsync(DriveClientDeleteNodesRequest request)
+    public static async ValueTask<IMessage?> HandleDeleteNodesAsync(DriveClientDeleteNodesRequest request, nint bindingsHandle)
     {
+        var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
 
-        var results = await client.DeleteNodesAsync(
-            request.NodeUids.Select(NodeUid.Parse),
-            cancellationToken).ConfigureAwait(false);
+        var results = client.DeleteNodesAsync(request.NodeUids.Select(NodeUid.Parse), cancellationToken);
 
-        return results.ToInterop();
+        await foreach (var result in results.ConfigureAwait(false))
+        {
+            yieldAction.InvokeWithMessage(bindingsHandle, result.ToInterop());
+        }
+
+        return null;
     }
 
-    public static async ValueTask<IMessage> HandleRestoreNodesAsync(DriveClientRestoreNodesRequest request)
+    public static async ValueTask<IMessage?> HandleRestoreNodesAsync(DriveClientRestoreNodesRequest request, nint bindingsHandle)
     {
+        var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
 
-        var results = await client.RestoreNodesAsync(
-            request.NodeUids.Select(NodeUid.Parse),
-            cancellationToken).ConfigureAwait(false);
+        var results = client.RestoreNodesAsync(request.NodeUids.Select(NodeUid.Parse), cancellationToken);
 
-        return results.ToInterop();
+        await foreach (var result in results.ConfigureAwait(false))
+        {
+            yieldAction.InvokeWithMessage(bindingsHandle, result.ToInterop());
+        }
+
+        return null;
     }
 
     public static async ValueTask<IMessage?> HandleEnumerateTrashAsync(DriveClientEnumerateTrashRequest request, nint bindingsHandle)

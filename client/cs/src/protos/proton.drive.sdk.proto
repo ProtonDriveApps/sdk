@@ -558,11 +558,12 @@ message DriveClientCreateFolderRequest {
     int64 cancellation_token_source_handle = 5;
 }
 
-// The response message must be of type NodeResultListResponse
+// The response must not have a value, yield_action will be called with a NodeResultPair for each item.
 message DriveClientTrashNodesRequest {
     int64 client_handle = 1;
     repeated string node_uids = 2;
     int64 cancellation_token_source_handle = 3;
+    int64 yield_action = 4;
 }
 
 // The response message must be of type NodeResultListResponse
@@ -582,18 +583,20 @@ message NodeResultListResponse {
   repeated NodeResultPair results = 1;
 }
 
-// The response message must be of type NodeResultListResponse
+// The response must not have a value, yield_action will be called with a NodeResultPair for each item.
 message DriveClientDeleteNodesRequest {
     int64 client_handle = 1;
     repeated string node_uids = 2;
     int64 cancellation_token_source_handle = 3;
+    int64 yield_action = 4;
 }
 
-// The response message must be of type NodeResultListResponse
+// The response must not have a value, yield_action will be called with a NodeResultPair for each item.
 message DriveClientRestoreNodesRequest {
     int64 client_handle = 1;
     repeated string node_uids = 2;
     int64 cancellation_token_source_handle = 3;
+    int64 yield_action = 4;
 }
 
 // The response must not have a value, yield_action will be called for each item.
@@ -1033,25 +1036,28 @@ message DrivePhotosClientUploaderFreeRequest {
     int64 file_uploader_handle = 1;
 }
 
-// The response message must be of type NodeResultListResponse
+// The response must not have a value, yield_action will be called with a NodeResultPair for each item.
 message DrivePhotosClientTrashNodesRequest {
     int64 client_handle = 1;
     repeated string node_uids = 2;
     int64 cancellation_token_source_handle = 3;
+    int64 yield_action = 4;
 }
 
-// The response message must be of type NodeResultListResponse
+// The response must not have a value, yield_action will be called with a NodeResultPair for each item.
 message DrivePhotosClientDeleteNodesRequest {
     int64 client_handle = 1;
     repeated string node_uids = 2;
     int64 cancellation_token_source_handle = 3;
+    int64 yield_action = 4;
 }
 
-// The response message must be of type NodeResultListResponse
+// The response must not have a value, yield_action will be called with a NodeResultPair for each item.
 message DrivePhotosClientRestoreNodesRequest {
     int64 client_handle = 1;
     repeated string node_uids = 2;
     int64 cancellation_token_source_handle = 3;
+    int64 yield_action = 4;
 }
 
 // The response must not have a value, yield_action will be called for each item.

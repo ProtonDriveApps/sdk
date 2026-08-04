@@ -140,11 +140,18 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
         }
 
     suspend fun trashNodes(
+        coroutineScope: ProducerScope<me.proton.drive.sdk.entity.NodeResultPair>,
         request: ProtonDriveSdk.DrivePhotosClientTrashNodesRequest,
-    ): ProtonDriveSdk.NodeResultListResponse =
-        executeOnce("trashNodes", NodeResultListResponseConverter().asCallback) {
-            drivePhotosClientTrashNodes = request
-        }
+        yield: suspend (ProtonDriveSdk.NodeResultPair) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "trashNodes",
+        callback = UnitResponseCallback,
+        yield = yield,
+        parser = ProtonDriveSdk.NodeResultPair::parseFrom,
+        coroutineScopeProvider = { coroutineScope },
+    ) {
+        drivePhotosClientTrashNodes = request
+    }
 
     suspend fun updatePhotos(
         coroutineScope: ProducerScope<me.proton.drive.sdk.entity.NodeResultPair>,
@@ -161,18 +168,32 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
         }
 
     suspend fun deleteNodes(
+        coroutineScope: ProducerScope<me.proton.drive.sdk.entity.NodeResultPair>,
         request: ProtonDriveSdk.DrivePhotosClientDeleteNodesRequest,
-    ): ProtonDriveSdk.NodeResultListResponse =
-        executeOnce("deleteNodes", NodeResultListResponseConverter().asCallback) {
-            drivePhotosClientDeleteNodes = request
-        }
+        yield: suspend (ProtonDriveSdk.NodeResultPair) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "deleteNodes",
+        callback = UnitResponseCallback,
+        yield = yield,
+        parser = ProtonDriveSdk.NodeResultPair::parseFrom,
+        coroutineScopeProvider = { coroutineScope },
+    ) {
+        drivePhotosClientDeleteNodes = request
+    }
 
     suspend fun restoreNodes(
+        coroutineScope: ProducerScope<me.proton.drive.sdk.entity.NodeResultPair>,
         request: ProtonDriveSdk.DrivePhotosClientRestoreNodesRequest,
-    ): ProtonDriveSdk.NodeResultListResponse =
-        executeOnce("restoreNodes", NodeResultListResponseConverter().asCallback) {
-            drivePhotosClientRestoreNodes = request
-        }
+        yield: suspend (ProtonDriveSdk.NodeResultPair) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "restoreNodes",
+        callback = UnitResponseCallback,
+        yield = yield,
+        parser = ProtonDriveSdk.NodeResultPair::parseFrom,
+        coroutineScopeProvider = { coroutineScope },
+    ) {
+        drivePhotosClientRestoreNodes = request
+    }
 
     suspend fun enumerateTrashNodeUids(
         coroutineScope: ProducerScope<NodeUid>,

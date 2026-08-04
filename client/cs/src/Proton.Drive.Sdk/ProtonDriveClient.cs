@@ -264,17 +264,17 @@ public sealed class ProtonDriveClient
         return SharingOperations.LeaveSharedNodeAsync(this, nodeUid, cancellationToken);
     }
 
-    public ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> TrashNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
+    public IAsyncEnumerable<NodeActionResult> TrashNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
     {
         return NodeOperations.TrashAsync(this, uids, cancellationToken);
     }
 
-    public ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> DeleteNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
+    public IAsyncEnumerable<NodeActionResult> DeleteNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
     {
         return NodeOperations.DeleteFromTrashAsync(this, uids, cancellationToken);
     }
 
-    public ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> RestoreNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
+    public IAsyncEnumerable<NodeActionResult> RestoreNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
     {
         return NodeOperations.RestoreFromTrashAsync(this, uids, cancellationToken);
     }

@@ -61,16 +61,16 @@ internal static class InteropMessageHandler
                     => await InteropProtonDriveClient.HandleGetAvailableNameAsync(request.DriveClientGetAvailableName).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DriveClientTrashNodes
-                    => await InteropProtonDriveClient.HandleTrashNodesAsync(request.DriveClientTrashNodes).ConfigureAwait(false),
+                    => await InteropProtonDriveClient.HandleTrashNodesAsync(request.DriveClientTrashNodes, bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DriveClientMoveNodes
                     => await InteropProtonDriveClient.HandleMoveNodesAsync(request.DriveClientMoveNodes).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DriveClientDeleteNodes
-                    => await InteropProtonDriveClient.HandleDeleteNodesAsync(request.DriveClientDeleteNodes).ConfigureAwait(false),
+                    => await InteropProtonDriveClient.HandleDeleteNodesAsync(request.DriveClientDeleteNodes, bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DriveClientRestoreNodes
-                    => await InteropProtonDriveClient.HandleRestoreNodesAsync(request.DriveClientRestoreNodes).ConfigureAwait(false),
+                    => await InteropProtonDriveClient.HandleRestoreNodesAsync(request.DriveClientRestoreNodes, bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DriveClientEnumerateTrash
                     => await InteropProtonDriveClient.HandleEnumerateTrashAsync(request.DriveClientEnumerateTrash, bindingsHandle).ConfigureAwait(false),
@@ -225,13 +225,13 @@ internal static class InteropMessageHandler
                     => InteropPhotosUploader.HandleFree(request.DrivePhotosClientUploaderFree),
 
                 Request.PayloadOneofCase.DrivePhotosClientTrashNodes
-                    => await InteropProtonPhotosClient.HandleTrashNodesAsync(request.DrivePhotosClientTrashNodes).ConfigureAwait(false),
+                    => await InteropProtonPhotosClient.HandleTrashNodesAsync(request.DrivePhotosClientTrashNodes, bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DrivePhotosClientDeleteNodes
-                    => await InteropProtonPhotosClient.HandleDeleteNodesAsync(request.DrivePhotosClientDeleteNodes).ConfigureAwait(false),
+                    => await InteropProtonPhotosClient.HandleDeleteNodesAsync(request.DrivePhotosClientDeleteNodes, bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DrivePhotosClientRestoreNodes
-                    => await InteropProtonPhotosClient.HandleRestoreNodesAsync(request.DrivePhotosClientRestoreNodes).ConfigureAwait(false),
+                    => await InteropProtonPhotosClient.HandleRestoreNodesAsync(request.DrivePhotosClientRestoreNodes, bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DrivePhotosClientEnumerateTrash
                     => await InteropProtonPhotosClient.HandleEnumerateTrashAsync(request.DrivePhotosClientEnumerateTrash, bindingsHandle).ConfigureAwait(false),

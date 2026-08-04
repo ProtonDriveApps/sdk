@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using Proton.Cryptography.Pgp;
@@ -369,16 +370,12 @@ internal static class NodeOperations
         return results;
     }
 
-    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> TrashAsync(
+    public static async IAsyncEnumerable<NodeActionResult> TrashAsync(
         ProtonDriveClient client,
         IEnumerable<NodeUid> uids,
-        CancellationToken cancellationToken)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var uidsByVolumeId = uids.GroupBy(x => x.VolumeId);
-
-        var results = new ConcurrentDictionary<NodeUid, Result<Exception>>();
-
-        var tasks = uidsByVolumeId.Select(async uidGroup =>
+        foreach (var uidGroup in uids.GroupBy(x => x.VolumeId))
         {
             foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchCount))
             {
@@ -392,26 +389,18 @@ internal static class NodeOperations
 
                     var result = response.IsSuccess ? Result<Exception>.Success : new ProtonApiException(response);
 
-                    results.TryAdd(uid, result);
+                    yield return new NodeActionResult(uid, result);
                 }
             }
-        });
-
-        await Task.WhenAll(tasks).ConfigureAwait(false);
-
-        return results;
+        }
     }
 
-    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> DeleteFromTrashAsync(
+    public static async IAsyncEnumerable<NodeActionResult> DeleteFromTrashAsync(
         ProtonDriveClient client,
         IEnumerable<NodeUid> uids,
-        CancellationToken cancellationToken)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var uidsByVolumeId = uids.GroupBy(x => x.VolumeId);
-
-        var results = new ConcurrentDictionary<NodeUid, Result<Exception>>();
-
-        var tasks = uidsByVolumeId.Select(async uidGroup =>
+        foreach (var uidGroup in uids.GroupBy(x => x.VolumeId))
         {
             foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchCount))
             {
@@ -425,26 +414,18 @@ internal static class NodeOperations
 
                     var result = response.IsSuccess ? Result<Exception>.Success : new ProtonApiException(response);
 
-                    results.TryAdd(uid, result);
+                    yield return new NodeActionResult(uid, result);
                 }
             }
-        });
-
-        await Task.WhenAll(tasks).ConfigureAwait(false);
-
-        return results;
+        }
     }
 
-    public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> RestoreFromTrashAsync(
+    public static async IAsyncEnumerable<NodeActionResult> RestoreFromTrashAsync(
         ProtonDriveClient client,
         IEnumerable<NodeUid> uids,
-        CancellationToken cancellationToken)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var uidsByVolumeId = uids.GroupBy(x => x.VolumeId);
-
-        var results = new ConcurrentDictionary<NodeUid, Result<Exception>>();
-
-        var tasks = uidsByVolumeId.Select(async uidGroup =>
+        foreach (var uidGroup in uids.GroupBy(x => x.VolumeId))
         {
             foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchCount))
             {
@@ -458,15 +439,11 @@ internal static class NodeOperations
 
                     var result = response.IsSuccess ? Result<Exception>.Success : new ProtonApiException(response);
 
-                    results.TryAdd(uid, result);
+                    // FIXME: update local state after restore
+                    yield return new NodeActionResult(uid, result);
                 }
             }
-        });
-
-        await Task.WhenAll(tasks).ConfigureAwait(false);
-
-        // FIXME: update local state after restore
-        return results;
+        }
     }
 
     public static async ValueTask<string> GetAvailableNameAsync(ProtonDriveClient client, NodeUid parentUid, string name, CancellationToken cancellationToken)

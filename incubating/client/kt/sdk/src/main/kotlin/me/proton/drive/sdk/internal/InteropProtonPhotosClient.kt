@@ -131,43 +131,64 @@ internal class InteropProtonPhotosClient internal constructor(
         )?.toEntity()
     }
 
-    override suspend fun trashNodes(
+    override fun trashNodes(
         nodeUids: List<NodeUid>,
-    ): List<NodeResultPair> = cancellationCoroutineScope { source ->
+    ): Flow<NodeResultPair> = channelFlow {
         log(INFO, "trashNodes(${nodeUids.size} nodes)")
-        bridge.trashNodes(
-            drivePhotosClientTrashNodesRequest {
-                this.nodeUids += nodeUids.map { it.value }
-                clientHandle = handle
-                cancellationTokenSourceHandle = source.handle
-            }
-        ).toEntity()
+        cancellationCoroutineScope { source ->
+            bridge.trashNodes(
+                coroutineScope = this@channelFlow,
+                drivePhotosClientTrashNodesRequest {
+                    this.nodeUids += nodeUids.map { it.value }
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { pair ->
+                    send(pair.toEntity())
+                }
+            )
+        }
     }
 
-    override suspend fun deleteNodes(
+    override fun deleteNodes(
         nodeUids: List<NodeUid>,
-    ): List<NodeResultPair> = cancellationCoroutineScope { source ->
+    ): Flow<NodeResultPair> = channelFlow {
         log(INFO, "deleteNodes(${nodeUids.size} nodes)")
-        bridge.deleteNodes(
-            drivePhotosClientDeleteNodesRequest {
-                this.nodeUids += nodeUids.map { it.value }
-                clientHandle = handle
-                cancellationTokenSourceHandle = source.handle
-            }
-        ).toEntity()
+        cancellationCoroutineScope { source ->
+            bridge.deleteNodes(
+                coroutineScope = this@channelFlow,
+                drivePhotosClientDeleteNodesRequest {
+                    this.nodeUids += nodeUids.map { it.value }
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { pair ->
+                    send(pair.toEntity())
+                }
+            )
+        }
     }
 
-    override suspend fun restoreNodes(
+    override fun restoreNodes(
         nodeUids: List<NodeUid>,
-    ): List<NodeResultPair> = cancellationCoroutineScope { source ->
+    ): Flow<NodeResultPair> = channelFlow {
         log(INFO, "restoreNodes(${nodeUids.size} nodes)")
-        bridge.restoreNodes(
-            drivePhotosClientRestoreNodesRequest {
-                this.nodeUids += nodeUids.map { it.value }
-                clientHandle = handle
-                cancellationTokenSourceHandle = source.handle
-            }
-        ).toEntity()
+        cancellationCoroutineScope { source ->
+            bridge.restoreNodes(
+                coroutineScope = this@channelFlow,
+                drivePhotosClientRestoreNodesRequest {
+                    this.nodeUids += nodeUids.map { it.value }
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { pair ->
+                    send(pair.toEntity())
+                }
+            )
+        }
     }
 
     override fun updatePhotos(

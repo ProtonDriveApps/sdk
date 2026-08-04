@@ -10,9 +10,9 @@ import me.proton.drive.sdk.entity.ThumbnailType
 interface ProtonSdkClient : AutoCloseable {
     fun enumerateThumbnails(nodeUids: List<NodeUid>, type: ThumbnailType): Flow<FileThumbnail>
     suspend fun getNode(nodeUid: NodeUid): Node?
-    suspend fun trashNodes(nodeUids: List<NodeUid>): List<NodeResultPair>
-    suspend fun deleteNodes(nodeUids: List<NodeUid>): List<NodeResultPair>
-    suspend fun restoreNodes(nodeUids: List<NodeUid>): List<NodeResultPair>
+    fun trashNodes(nodeUids: List<NodeUid>): Flow<NodeResultPair>
+    fun deleteNodes(nodeUids: List<NodeUid>): Flow<NodeResultPair>
+    fun restoreNodes(nodeUids: List<NodeUid>): Flow<NodeResultPair>
     fun enumerateTrashNodeUids(): Flow<NodeUid>
     suspend fun emptyTrash()
     fun enumerateSharedNodeUids(): Flow<NodeUid>

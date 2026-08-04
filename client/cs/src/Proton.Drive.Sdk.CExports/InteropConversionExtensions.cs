@@ -220,6 +220,14 @@ internal static class InteropConversionExtensions
         }
     }
 
+    extension(NodeActionResult result)
+    {
+        public NodeResultPair ToInterop()
+        {
+            return ToNodeResultPair(result.NodeUid, result.Result);
+        }
+    }
+
     extension(Revision revision)
     {
         public FileRevision ToInterop()
