@@ -211,6 +211,18 @@ public sealed class ProtonPhotosClient
         return PhotoOperations.UpdatePhotosAsync(DriveClient, updates, cancellationToken);
     }
 
+    /// <summary>Copies the given photos into the user's own timeline, keeping them even if the originals stop being shared.</summary>
+    /// <remarks>
+    /// Same-volume photos are moved into the timeline root; cross-volume photos (e.g. from a shared-with-me album) are
+    /// copied. A photo already in the timeline is reported as a per-node error.
+    /// </remarks>
+    public IAsyncEnumerable<NodeActionResult> SavePhotosToTimelineAsync(
+        IReadOnlyList<NodeUid> photoUids,
+        CancellationToken cancellationToken)
+    {
+        return PhotoOperations.SavePhotosToTimelineAsync(DriveClient, photoUids, cancellationToken);
+    }
+
     internal ValueTask<FolderNode> GetPhotosRootAsync(CancellationToken cancellationToken)
     {
         return PhotosNodeOperations.GetOrCreatePhotosFolderAsync(DriveClient, cancellationToken);

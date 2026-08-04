@@ -90,6 +90,25 @@ internal static class InteropProtonPhotosClient
         return null;
     }
 
+    public static async ValueTask<IMessage?> HandleSavePhotosToTimelineAsync(
+        DrivePhotosClientSavePhotosToTimelineRequest request,
+        nint bindingsHandle)
+    {
+        var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        await foreach (var result in client.SavePhotosToTimelineAsync(
+            request.PhotoUids.Select(NodeUid.Parse).ToList(),
+            cancellationToken).ConfigureAwait(false))
+        {
+            yieldAction.InvokeWithMessage(bindingsHandle, result.ToInterop());
+        }
+
+        return null;
+    }
+
     public static async ValueTask<IMessage?> HandleTrashNodesAsync(DrivePhotosClientTrashNodesRequest request, nint bindingsHandle)
     {
         var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);

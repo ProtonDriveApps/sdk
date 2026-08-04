@@ -250,6 +250,11 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DrivePhotosClientUpdatePhotos
                     => await InteropProtonPhotosClient.HandleUpdatePhotosAsync(request.DrivePhotosClientUpdatePhotos, bindingsHandle).ConfigureAwait(false),
 
+                Request.PayloadOneofCase.DrivePhotosClientSavePhotosToTimeline
+                    => await InteropProtonPhotosClient.HandleSavePhotosToTimelineAsync(
+                        request.DrivePhotosClientSavePhotosToTimeline,
+                        bindingsHandle).ConfigureAwait(false),
+
                 Request.PayloadOneofCase.DrivePhotosClientEnumerateSharedWithMeNodeUids
                     => await InteropProtonPhotosClient.HandleEnumerateSharedWithMeNodeUidsAsync(
                         request.DrivePhotosClientEnumerateSharedWithMeNodeUids,

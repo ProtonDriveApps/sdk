@@ -97,6 +97,7 @@ message Request {
         DrivePhotosClientEnumerateAlbumNodeUidsRequest drive_photos_client_enumerate_album_node_uids = 2022;
         DrivePhotosClientEnumerateAlbumRequest drive_photos_client_enumerate_album = 2023;
         DrivePhotosClientEnumerateSharedWithMeNodeUidsRequest drive_photos_client_enumerate_shared_with_me_node_uids = 2024;
+        DrivePhotosClientSavePhotosToTimelineRequest drive_photos_client_save_photos_to_timeline = 2025;
     };
 }
 
@@ -1103,6 +1104,14 @@ message DrivePhotosClientUpdatePhotosRequest {
     repeated PhotoTagsUpdate updates = 2;
     int64 cancellation_token_source_handle = 3;
     int64 yield_action = 4;
+}
+
+// The response must not have a value, yield_action will be called for each item (NodeResultPair).
+message DrivePhotosClientSavePhotosToTimelineRequest {
+    int64 client_handle = 1;
+    repeated string photo_uids = 2;
+    int64 yield_action = 3;
+    int64 cancellation_token_source_handle = 4;
 }
 
 // The response must not have a value, yield_action will be called for each item.

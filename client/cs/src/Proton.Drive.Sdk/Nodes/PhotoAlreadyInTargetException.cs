@@ -1,6 +1,6 @@
 namespace Proton.Drive.Sdk.Nodes;
 
-public sealed class PhotoAlreadyInTargetException : Exception
+public sealed class PhotoAlreadyInTargetException : ProtonDriveException
 {
     public PhotoAlreadyInTargetException()
     {

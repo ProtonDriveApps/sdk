@@ -34,4 +34,15 @@ internal interface IPhotosApiClient
     ValueTask<ApiResponse> SetPhotoFavoriteAsync(VolumeId volumeId, LinkId linkId, CancellationToken cancellationToken);
 
     ValueTask<ApiResponse> SetPhotoFavoriteAsync(VolumeId volumeId, LinkId linkId, FavoritePhotoRequest request, CancellationToken cancellationToken);
+
+    ValueTask<AggregateApiResponse<TransferPhotoResponsePair>> TransferPhotosAsync(
+        VolumeId volumeId,
+        TransferPhotosRequest request,
+        CancellationToken cancellationToken);
+
+    ValueTask<CopyPhotoResponse> CopyPhotoAsync(
+        VolumeId sourceVolumeId,
+        LinkId sourceLinkId,
+        CopyPhotoRequest request,
+        CancellationToken cancellationToken);
 }

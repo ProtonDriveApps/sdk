@@ -148,4 +148,35 @@ internal sealed class PhotosApiClient(HttpClient httpClient) : IPhotosApiClient
                 cancellationToken)
             .ConfigureAwait(false);
     }
+
+    public async ValueTask<AggregateApiResponse<TransferPhotoResponsePair>> TransferPhotosAsync(
+        VolumeId volumeId,
+        TransferPhotosRequest request,
+        CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(PhotosApiSerializerContext.Default.AggregateApiResponseTransferPhotoResponsePair)
+            .PutAsync(
+                $"photos/volumes/{volumeId}/links/transfer-multiple",
+                request,
+                PhotosApiSerializerContext.Default.TransferPhotosRequest,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async ValueTask<CopyPhotoResponse> CopyPhotoAsync(
+        VolumeId sourceVolumeId,
+        LinkId sourceLinkId,
+        CopyPhotoRequest request,
+        CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(PhotosApiSerializerContext.Default.CopyPhotoResponse, PhotosApiSerializerContext.Default.CopyPhotoFailureResponse)
+            .PostAsync(
+                $"volumes/{sourceVolumeId}/links/{sourceLinkId}/copy",
+                request,
+                PhotosApiSerializerContext.Default.CopyPhotoRequest,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
 }

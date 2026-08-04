@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Proton.Drive.Sdk.Api;
 using Proton.Drive.Sdk.Api.Photos;
 using Proton.Sdk.Cryptography;
 using Proton.Sdk.Serialization;
@@ -28,6 +29,11 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(FindDuplicatesResponse))]
 [JsonSerializable(typeof(PhotoTagsRequest))]
 [JsonSerializable(typeof(FavoritePhotoRequest))]
+[JsonSerializable(typeof(TransferPhotosRequest))]
+[JsonSerializable(typeof(AggregateApiResponse<TransferPhotoResponsePair>))]
+[JsonSerializable(typeof(CopyPhotoRequest))]
+[JsonSerializable(typeof(CopyPhotoResponse))]
+[JsonSerializable(typeof(CopyPhotoFailureResponse))]
 [JsonSerializable(typeof(AlbumListResponse))]
 [JsonSerializable(typeof(AlbumItemListResponse))]
 internal sealed partial class PhotosApiSerializerContext : JsonSerializerContext;
