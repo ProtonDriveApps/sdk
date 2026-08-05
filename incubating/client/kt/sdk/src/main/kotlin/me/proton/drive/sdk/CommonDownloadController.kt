@@ -13,14 +13,12 @@ import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.internal.CoroutineScopeConsumer
 import me.proton.drive.sdk.internal.JniDownloadController
 import me.proton.drive.sdk.internal.toLogId
-import java.nio.channels.Channel
 import kotlin.time.Duration.Companion.milliseconds
 
 class CommonDownloadController internal constructor(
     downloader: SdkNode,
     internal val handle: Long,
     private val bridge: JniDownloadController,
-    private val channel: Channel,
     private val coroutineScopeConsumer: CoroutineScopeConsumer,
     override val cancellationTokenSource: CancellationTokenSource,
 ) : SdkNode(downloader), DownloadController {
@@ -86,7 +84,6 @@ class CommonDownloadController internal constructor(
 
     override fun close() {
         log(DEBUG, "close")
-        channel.close()
         bridge.free(handle)
         super.close()
     }

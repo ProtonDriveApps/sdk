@@ -88,6 +88,7 @@ actor DownloadsManager {
             $0.progressAction = Int64(ObjectHandle(callback: cStreamProgressCallback))
             $0.seekAction = Int64(ObjectHandle(callback: cStreamSeekCallback))
             $0.cancelAction = Int64(ObjectHandle(callback: cStreamCancelCallback))
+            $0.disposeAction = Int64(ObjectHandle(callback: cStreamDisposeCallback))
             $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
         }
 

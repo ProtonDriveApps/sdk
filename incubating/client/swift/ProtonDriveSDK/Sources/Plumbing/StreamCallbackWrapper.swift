@@ -43,6 +43,10 @@ final class StreamDownloadState: @unchecked Sendable {
         lock.unlock()
         progressCallback(progress)
     }
+
+    func dispose() {
+        try? outputStream.close()
+    }
 }
 
 /// C-compatible callback for writing data to the output stream.
@@ -160,4 +164,18 @@ let cStreamProgressCallback: CCallback = { statePointer, byteArray in
 /// The SDK calls this with the operation handle returned from write/seek callbacks.
 let cStreamCancelCallback: CCallbackWithoutByteArray = { callbackHandle in
     CallbackHandleRegistry.shared.cancel(callbackHandle)
+}
+
+/// C-compatible callback for disposing the stream on the bindings side.
+/// The SDK calls this with the bindings handle when the InteropStream is disposed.
+let cStreamDisposeCallback: CCallbackWithoutByteArray = { bindingsHandle in
+    typealias BoxType = BoxedCompletionBlock<Int, WeakReference<StreamDownloadState>>
+
+    guard let stateRawPointer = UnsafeRawPointer(bitPattern: bindingsHandle) else {
+        return
+    }
+
+    let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
+    let weakWrapper: WeakReference<StreamDownloadState> = stateTypedPointer.takeUnretainedValue().state
+    weakWrapper.value?.dispose()
 }

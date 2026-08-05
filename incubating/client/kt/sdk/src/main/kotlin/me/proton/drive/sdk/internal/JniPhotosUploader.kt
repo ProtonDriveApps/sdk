@@ -33,6 +33,7 @@ class JniPhotosUploader internal constructor() : JniBaseProtonDriveSdk() {
         cancellationTokenSourceHandle: Long,
         thumbnails: Map<ThumbnailType, ByteArray>,
         onRead: (ByteBuffer) -> Int,
+        onDispose: suspend () -> Unit,
         onProgress: suspend (ProtonDriveSdk.ProgressUpdate) -> Unit,
         sha1Provider: (() -> ByteArray)?,
         coroutineScopeProvider: CoroutineScopeProvider,
@@ -42,6 +43,7 @@ class JniPhotosUploader internal constructor() : JniBaseProtonDriveSdk() {
                 name = method("uploadFromStream"),
                 response = continuation.toLongResponse().asClientResponseCallback(),
                 read = onRead,
+                dispose = onDispose,
                 progress = onProgress,
                 sha1Provider = sha1Provider ?: { error("sha1Provider not configured for uploadFromStream") },
                 logger = internalLogger,
@@ -55,6 +57,7 @@ class JniPhotosUploader internal constructor() : JniBaseProtonDriveSdk() {
                     this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
                     readAction = ProtonDriveSdkNativeClient.getReadPointer()
                     progressAction = ProtonDriveSdkNativeClient.getProgressPointer()
+                    disposeAction = ProtonDriveSdkNativeClient.getDisposePointer()
                     if (sha1Provider != null) {
                         sha1Function = ProtonDriveSdkNativeClient.getSha1Pointer()
                     }

@@ -14,14 +14,12 @@ import me.proton.drive.sdk.entity.UploadResult
 import me.proton.drive.sdk.internal.CoroutineScopeConsumer
 import me.proton.drive.sdk.internal.JniUploadController
 import me.proton.drive.sdk.internal.toLogId
-import java.nio.channels.Channel
 import kotlin.time.Duration.Companion.milliseconds
 
 class CommonUploadController internal constructor(
     uploader: SdkNode,
     internal val handle: Long,
     private val bridge: JniUploadController,
-    private val channel: Channel,
     private val coroutineScopeConsumer: CoroutineScopeConsumer,
     override val cancellationTokenSource: CancellationTokenSource,
 ) : SdkNode(uploader), UploadController {
@@ -84,7 +82,6 @@ class CommonUploadController internal constructor(
 
     override fun close() {
         log(DEBUG, "close")
-        channel.close()
         bridge.free(handle)
         super.close()
     }

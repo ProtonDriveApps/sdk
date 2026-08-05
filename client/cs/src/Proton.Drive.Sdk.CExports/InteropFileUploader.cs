@@ -15,7 +15,8 @@ internal static class InteropFileUploader
 
         var readFunction = new InteropFunction<nint, InteropArray<byte>, nint, nint>(request.ReadAction);
         var cancelAction = request.CancelAction != 0 ? new InteropAction<nint>(request.CancelAction) : (InteropAction<nint>?)null;
-        var stream = new InteropStream(uploader.FileSize, bindingsHandle, readFunction, cancelAction);
+        var disposeAction = request.DisposeAction != 0 ? new InteropAction<nint>(request.DisposeAction) : (InteropAction<nint>?)null;
+        var stream = new InteropStream(uploader.FileSize, bindingsHandle, readFunction, cancelAction, disposeAction);
 
         var thumbnails = request.Thumbnails.Select(t =>
         {

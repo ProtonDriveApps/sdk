@@ -19,7 +19,8 @@ internal static class InteropFileDownloader
             : (InteropAction<nint, InteropArray<byte>, nint>?)null;
 
         var cancelAction = request.CancelAction != 0 ? new InteropAction<nint>(request.CancelAction) : (InteropAction<nint>?)null;
-        var stream = new InteropStream(bindingsHandle, writeFunction, seekAction, cancelAction);
+        var disposeAction = request.DisposeAction != 0 ? new InteropAction<nint>(request.DisposeAction) : (InteropAction<nint>?)null;
+        var stream = new InteropStream(bindingsHandle, writeFunction, seekAction, cancelAction, disposeAction);
 
         var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
 

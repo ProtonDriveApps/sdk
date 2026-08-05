@@ -23,6 +23,7 @@ class JniPhotosDownloader internal constructor() : JniBaseProtonDriveSdk() {
         handle: Long,
         cancellationTokenSourceHandle: Long,
         onWrite: suspend (ByteBuffer) -> Unit,
+        onDispose: suspend () -> Unit,
         onSeek: ((Long, Int) -> Long)? = null,
         onProgress: suspend (ProtonDriveSdk.ProgressUpdate) -> Unit,
         coroutineScopeProvider: CoroutineScopeProvider,
@@ -33,6 +34,7 @@ class JniPhotosDownloader internal constructor() : JniBaseProtonDriveSdk() {
                 response = continuation.toLongResponse().asClientResponseCallback(),
                 write = onWrite,
                 seek = onSeek,
+                dispose = onDispose,
                 progress = onProgress,
                 logger = internalLogger,
                 coroutineScopeProvider = coroutineScopeProvider,
@@ -46,6 +48,7 @@ class JniPhotosDownloader internal constructor() : JniBaseProtonDriveSdk() {
                     writeAction = ProtonDriveSdkNativeClient.getWritePointer()
                     progressAction = ProtonDriveSdkNativeClient.getProgressPointer()
                     cancelAction = JniJob.getCancelPointer()
+                    disposeAction = ProtonDriveSdkNativeClient.getDisposePointer()
                     if (onSeek != null) {
                         seekAction = ProtonDriveSdkNativeClient.getSeekPointer()
                     }

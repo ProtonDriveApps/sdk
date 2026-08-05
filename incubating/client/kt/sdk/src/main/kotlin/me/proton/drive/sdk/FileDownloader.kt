@@ -32,6 +32,7 @@ class FileDownloader internal constructor(
             handle = handle,
             cancellationTokenSourceHandle = source.handle,
             onWrite = channel::write,
+            onDispose = channel::close,
             onSeek = if (channel is SeekableByteChannel) {
                 channel::seek
             } else {
@@ -49,7 +50,6 @@ class FileDownloader internal constructor(
             downloader = this@FileDownloader,
             handle = handle,
             bridge = JniDownloadController(),
-            channel = channel,
             coroutineScopeConsumer = coroutineScopeReference::set,
             cancellationTokenSource = source,
         ).also(controllerReference::set)

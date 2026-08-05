@@ -34,6 +34,7 @@ class FileUploader internal constructor(
             cancellationTokenSourceHandle = source.handle,
             thumbnails = thumbnails,
             onRead = channel::read,
+            onDispose = channel::close,
             onProgress = { progressUpdate ->
                 with(progressUpdate) {
                     log(DEBUG, "progress: ${progressUpdate.toPercentageString()}")
@@ -48,7 +49,6 @@ class FileUploader internal constructor(
             handle = handle,
             bridge = JniUploadController(),
             cancellationTokenSource = source,
-            channel = channel,
             coroutineScopeConsumer = coroutineScopeReference::set,
         ).also(controllerReference::set)
     }
