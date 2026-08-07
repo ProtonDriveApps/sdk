@@ -141,3 +141,6 @@ dotnet_diagnostic.S1134.severity = suggestion
 
 # S1135: Complete the task associated to this 'TODO' comment
 dotnet_diagnostic.S1135.severity = suggestion
+
+# S6640: Unsafe code blocks should not be used
+dotnet_diagnostic.S6640.severity = none

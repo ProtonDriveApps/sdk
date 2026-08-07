@@ -5,25 +5,28 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal readonly struct NodeMetadata
 {
-    private readonly (FileNode Node, FileOperationData Secrets)? _fileAndSecrets;
-    private readonly (FolderNode Node, FolderOperationData Secrets)? _folderAndSecrets;
+    private readonly Either<(FileNode Node, FileOperationData OperationData), (FolderNode Node, FolderOperationData OperationData)> _nodeAndOperationData;
 
     public NodeMetadata(FileNode node, FileOperationData operationData, ShareId? membershipShareId, ReadOnlyMemory<byte> nameHashDigest)
     {
-        _fileAndSecrets = (node, operationData);
+        _nodeAndOperationData = (node, operationData);
         MembershipShareId = membershipShareId;
         NameHashDigest = nameHashDigest;
     }
 
     public NodeMetadata(FolderNode node, FolderOperationData operationData, ShareId? membershipShareId, ReadOnlyMemory<byte> nameHashDigest)
     {
-        _folderAndSecrets = (node, operationData);
+        _nodeAndOperationData = (node, operationData);
         MembershipShareId = membershipShareId;
         NameHashDigest = nameHashDigest;
     }
 
-    public Node Node => _fileAndSecrets?.Node ?? (Node)_folderAndSecrets!.Value.Node;
-    public NodeOperationData OperationData => _fileAndSecrets?.Secrets ?? (NodeOperationData)_folderAndSecrets!.Value.Secrets;
+    public Node Node
+        => _nodeAndOperationData.TryGetFirstElseSecond(out var file, out var folder) ? file.Node : folder.Node;
+
+    public NodeOperationData OperationData
+        => _nodeAndOperationData.TryGetFirstElseSecond(out var file, out var folder) ? file.OperationData : folder.OperationData;
+
     public ShareId? MembershipShareId { get; }
     public ReadOnlyMemory<byte> NameHashDigest { get; }
 
@@ -36,15 +39,15 @@ internal readonly struct NodeMetadata
         [MaybeNullWhen(true)] out FolderNode folderNode,
         [MaybeNullWhen(true)] out FolderOperationData folderOperationData)
     {
-        if (_fileAndSecrets is null)
+        if (!_nodeAndOperationData.TryGetFirstElseSecond(out var file, out var folder))
         {
-            (folderNode, folderOperationData) = _folderAndSecrets!.Value;
+            (folderNode, folderOperationData) = folder;
             fileNode = null;
             fileOperationData = null;
             return false;
         }
 
-        (fileNode, fileOperationData) = _fileAndSecrets.Value;
+        (fileNode, fileOperationData) = file;
         folderNode = null;
         folderOperationData = null;
         return true;

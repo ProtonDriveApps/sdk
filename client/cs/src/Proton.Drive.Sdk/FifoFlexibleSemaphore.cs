@@ -56,7 +56,7 @@ internal sealed class FifoFlexibleSemaphore
             _waitingQueue.Enqueue((count, tcs));
         }
 
-        var cancellationTokenRegistration = cancellationToken.Register(tcsAsState => ((TaskCompletionSource)tcsAsState!).TrySetCanceled(), tcs);
+        var cancellationTokenRegistration = cancellationToken.Register(static (tcsAsState, ct) => ((TaskCompletionSource)tcsAsState!).TrySetCanceled(ct), tcs);
 
         return WaitForEntryAsync(tcs.Task, cancellationTokenRegistration);
     }

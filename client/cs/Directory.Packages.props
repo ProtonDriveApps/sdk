@@ -3,14 +3,12 @@
   <ItemGroup>
     <PackageVersion Include="CommunityToolkit.HighPerformance" Version="8.4.2" />
     <PackageVersion Include="MetadataExtractor" Version="2.9.2" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
     <PackageVersion Include="morelinq" Version="4.4.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="XmpCore" Version="6.1.10.1" />
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageVersion Include="SkiaSharp" Version="3.119.2" />
-    <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="3.119.2" />
     <PackageVersion Include="Spectre.Console.Analyzer" Version="1.0.0" />
     <PackageVersion Include="Spectre.Console" Version="0.54.0" />
     <PackageVersion Include="System.CommandLine" Version="2.0.5" />

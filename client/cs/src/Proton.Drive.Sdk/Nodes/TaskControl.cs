@@ -74,7 +74,7 @@ internal sealed class TaskControl(CancellationToken cancellationToken) : ITaskCo
             _resumeSignalSource = null;
         }
 
-        resumeSignalSource?.TrySetCanceled();
+        resumeSignalSource?.TrySetCanceled(CancellationToken.None);
     }
 
     public void Dispose()
@@ -84,7 +84,7 @@ internal sealed class TaskControl(CancellationToken cancellationToken) : ITaskCo
             return;
         }
 
-        _resumeSignalSource?.TrySetCanceled();
+        _resumeSignalSource?.TrySetCanceled(CancellationToken.None);
 
         _pauseCancellationTokenSource.Dispose();
 

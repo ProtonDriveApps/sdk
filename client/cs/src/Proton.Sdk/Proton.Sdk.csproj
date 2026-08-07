@@ -18,7 +18,7 @@
 
   <ItemGroup Condition="!$(RuntimeIdentifier.StartsWith('ios')) And !$(RuntimeIdentifier.StartsWith('osx'))">
     <PackageReference Include="SQLitePCLRaw.config.e_sqlite3" />
-    <PackageReference Include="SourceGear.sqlite3" />
+    <PackageReference Include="SQLite" />
   </ItemGroup>
 
   <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('ios')) Or $(RuntimeIdentifier.StartsWith('osx'))">

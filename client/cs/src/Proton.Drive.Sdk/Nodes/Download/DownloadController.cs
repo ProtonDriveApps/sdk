@@ -154,7 +154,7 @@ public sealed class DownloadController : IAsyncDisposable
     {
         if (_outputStreamToDispose is not null)
         {
-            await _outputStreamToDispose.FlushAsync().ConfigureAwait(false);
+            await _outputStreamToDispose.FlushAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         var onSucceededHandler = _onSucceededAsync;
