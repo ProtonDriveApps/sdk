@@ -97,6 +97,63 @@ describe('asyncIteratorMap', () => {
         expect(results).toEqual([2, 4]);
     });
 
+    test('defers input error until in-flight mappers finish', async () => {
+        const inputGenerator = async function* (): AsyncGenerator<number> {
+            yield 1;
+            yield 2;
+            throw new Error('End');
+        };
+
+        const delayedMapper = async (input: number): Promise<number> => {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+            return input * 2;
+        };
+
+        const mappedGenerator = asyncIteratorMap(inputGenerator(), delayedMapper, 2);
+
+        const results: number[] = [];
+        let caughtError: Error | null = null;
+
+        try {
+            for await (const item of mappedGenerator) {
+                results.push(item);
+            }
+        } catch (error) {
+            caughtError = error as Error;
+        }
+
+        expect(caughtError?.message).toBe('End');
+        expect(results.sort()).toEqual([2, 4]);
+    });
+
+    test('defers input falsey error until in-flight mappers finish', async () => {
+        const inputGenerator = async function* (): AsyncGenerator<number> {
+            yield 1;
+            throw 0;
+        };
+
+        const delayedMapper = async (input: number): Promise<number> => {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+            return input * 2;
+        };
+
+        const mappedGenerator = asyncIteratorMap(inputGenerator(), delayedMapper, 2);
+
+        const results: number[] = [];
+        let caughtError: Error | null = null;
+
+        try {
+            for await (const item of mappedGenerator) {
+                results.push(item);
+            }
+        } catch (error) {
+            caughtError = error as Error;
+        }
+
+        expect(caughtError).toBe(0);
+        expect(results).toEqual([2]);
+    });
+
     test('handles errors from mapper properly', async () => {
         const inputGen = createAsyncGenerator([1, 2, 3, 4, 5]);
 

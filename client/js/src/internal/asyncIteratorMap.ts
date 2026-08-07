@@ -11,7 +11,8 @@ const DEFAULT_CONCURRENCY = 10;
  * same as the order of the items in the input iterator.
  *
  * Any error from the input iterator or the mapper function is propagated
- * to the output iterator.
+ * to the output iterator. Input errors are deferred until all in-flight
+ * mapper calls have finished and their results have been yielded.
  *
  * @param inputIterator - The input async iterator.
  * @param mapper - The mapper function that maps the input values to output values.
@@ -25,6 +26,8 @@ export async function* asyncIteratorMap<I, O>(
     signal?: AbortSignal,
 ): AsyncGenerator<O> {
     let done = false;
+    let hasInputError = false;
+    let inputError: unknown | undefined;
 
     const executing = new Set<Promise<void>>();
     const results: Array<Promise<O>> = [];
@@ -34,7 +37,9 @@ export async function* asyncIteratorMap<I, O>(
         try {
             next = await inputIterator.next();
         } catch (error) {
-            results.push(Promise.reject(error));
+            hasInputError = true;
+            inputError = error;
+            done = true;
             return;
         }
 
@@ -68,5 +73,9 @@ export async function* asyncIteratorMap<I, O>(
             // Wait for at least one task to complete
             await Promise.race(Array.from(executing));
         }
+    }
+
+    if (hasInputError) {
+        throw inputError;
     }
 }
