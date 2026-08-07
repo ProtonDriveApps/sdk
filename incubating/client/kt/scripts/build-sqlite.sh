@@ -10,9 +10,9 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/native-libs-common.sh"
 
 # Version and the digest of the exact archive it resolves to; bump together.
-SQLITE_YEAR=2025
-SQLITE_AMALGAMATION=sqlite-amalgamation-3490100
-SQLITE_SHA256=6cebd1d8403fc58c30e93939b246f3e6e58d0765a5cd50546f16c00fd805d2c3
+SQLITE_YEAR=2026
+SQLITE_AMALGAMATION=sqlite-amalgamation-3530400
+SQLITE_SHA256=1e71ddf93849c6a6ecf58b827c0692073d2dd7ee40196158068f7b29f422e87d
 
 # SQLitePCLRaw "e_sqlite3" option set (the bundle the C# SDK links against).
 SQLITE_FLAGS=(

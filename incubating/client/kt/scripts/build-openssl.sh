@@ -10,8 +10,9 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/native-libs-common.sh"
 
 # Version and the digest of the exact archive it resolves to; bump together.
-OPENSSL_VERSION=3.0.21
-OPENSSL_SHA256=617e29af8e421f46649484a4937e48c685e47f46488167c982f88bc4ec1d522f
+# 3.5 is the current LTS (to 2030-04-08); 3.0 went end-of-life on 2026-09-07.
+OPENSSL_VERSION=3.5.7
+OPENSSL_SHA256=a8c0d28a529ca480f9f36cf5792e2cd21984552a3c8e4aa11a24aa31aeac98e8
 
 require_tools curl tar make perl
 work_init
@@ -37,9 +38,12 @@ for abi in "${ABIS[@]}"; do
   (
     cd "$WORK/openssl-src"
     # no-comp/no-engine match the jni-libs these replaced (~270 KB per ABI);
-    # no-autoload-config drops the init-time openssl.cnf read Android never has.
+    # no-autoload-config drops the init-time openssl.cnf read Android never has;
+    # no-quic and the PQC algorithms are 3.5 additions nothing here uses (~1.5 MB).
     quiet "OpenSSL Configure ($abi)" ./Configure "$target" shared no-tests \
-      no-comp no-engine no-autoload-config "-D__ANDROID_API__=${ANDROID_API}"
+      no-comp no-engine no-autoload-config \
+      no-quic no-ml-dsa no-ml-kem no-slh-dsa no-sm2-precomp \
+      "-D__ANDROID_API__=${ANDROID_API}"
     quiet "OpenSSL build ($abi)" make -j"$(ncpu)" build_libs
   )
   dest="$OUTPUT_DIR/$abi"

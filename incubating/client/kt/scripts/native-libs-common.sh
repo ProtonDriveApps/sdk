@@ -10,7 +10,7 @@
 #   OUTPUT_DIR         destination directory (receives <abi>/lib*.so)
 #
 # Optional env:
-#   ANDROID_API        min Android API level (default 21; matches the kt minSdk)
+#   ANDROID_API        min Android API level (default 29; keep <= the kt minSdk)
 #   ABIS               space-separated subset to build (default: all)
 #
 # Sets: ABIS, ANDROID_API, TOOLCHAIN, READELF, and PATH (NDK toolchain first).
@@ -21,7 +21,7 @@ die() { printf '\033[1;31merror:\033[0m %s\n' "$*" >&2; exit 1; }
 : "${ANDROID_NDK_ROOT:?ANDROID_NDK_ROOT must be set}"
 : "${NDK_HOST_TAG:?NDK_HOST_TAG must be set}"
 : "${OUTPUT_DIR:?OUTPUT_DIR must be set}"
-ANDROID_API="${ANDROID_API:-21}"
+ANDROID_API="${ANDROID_API:-29}"
 
 # ABI:OpenSSL-Configure-target:NDK-clang-triple. A plain indexed array + string
 # parsing (rather than an associative array) so this runs on the bash 3.2 that

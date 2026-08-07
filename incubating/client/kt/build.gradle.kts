@@ -57,7 +57,7 @@ subprojects {
         extensions.configure<LibraryExtension> {
             compileSdk = 35
             defaultConfig {
-                minSdk = 26
+                minSdk = 29
                 compileOptions {
                     sourceCompatibility = JavaVersion.VERSION_17
                     targetCompatibility = JavaVersion.VERSION_17
