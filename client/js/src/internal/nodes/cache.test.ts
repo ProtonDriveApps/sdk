@@ -278,6 +278,31 @@ describe('nodesCache', () => {
         expect(await cache.isFolderChildrenLoaded('volumeId~:node1')).toBe(false);
     });
 
+    it('should reset the parent children loaded state when a child is removed', async () => {
+        await generateTreeStructure(cache);
+        await cache.setFolderChildrenLoaded('volumeId~:node1');
+
+        await cache.removeNodes(['volumeId~:node1a']);
+
+        // The parent listing is now incomplete, so it must not keep claiming
+        // to be fully loaded -- otherwise iterateFolderChildren serves the
+        // short list from cache and never re-fetches the removed child.
+        expect(await cache.isFolderChildrenLoaded('volumeId~:node1')).toBe(false);
+    });
+
+    it('should not leave a stale children loaded state on a removed folder', async () => {
+        await generateTreeStructure(cache);
+        // node1c is a folder with its own cached children.
+        await cache.setFolderChildrenLoaded('volumeId~:node1c');
+
+        await cache.removeNodes(['volumeId~:node1c']);
+
+        // removeNodes() also removes the node's descendants. If the flag
+        // outlives them, re-fetching the folder later finds it marked loaded
+        // with none of its children present.
+        expect(await cache.isFolderChildrenLoaded('volumeId~:node1c')).toBe(false);
+    });
+
     it('should set nodes from the volume as stale', async () => {
         await generateTreeStructure(cache);
         await cache.setNodesStaleFromVolume('volumeId');

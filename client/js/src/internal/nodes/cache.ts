@@ -124,6 +124,20 @@ export abstract class NodesCacheBase<T extends DecryptedNode = DecryptedNode> {
     }
 
     async removeNodes(nodeUids: string[]): Promise<void> {
+        // Capture the parents before anything is deleted. Once the entries are
+        // gone there is no way to learn which listings contained them, and
+        // those listings must stop claiming to be complete -- otherwise
+        // iterateFolderChildren keeps serving the short list from cache and
+        // never re-fetches, which presents a node that still exists on the
+        // server as missing.
+        const parentUids = new Set<string>();
+        for (const nodeUid of nodeUids) {
+            const parentUid = await this.getCachedParentUid(nodeUid);
+            if (parentUid) {
+                parentUids.add(parentUid);
+            }
+        }
+
         const cacheUids = nodeUids.map(getCacheUid);
         await this.driveCache.removeEntities(cacheUids);
         for (const nodeUid of nodeUids) {
@@ -134,9 +148,34 @@ export abstract class NodesCacheBase<T extends DecryptedNode = DecryptedNode> {
                 // if removing nodes fails.
                 childrenCacheUids.reverse();
                 await this.driveCache.removeEntities(childrenCacheUids);
+                // Those descendants had their own listing flags; drop them too,
+                // or a re-fetched folder is marked loaded with no children.
+                await this.driveCache.removeEntities(
+                    childrenCacheUids.map((cacheUid) => getChildrenCacheUid(getNodeUid(cacheUid))),
+                );
             } catch (error: unknown) {
                 this.logger.error(`Failed to remove children from the cache`, error);
             }
+        }
+        await this.driveCache.removeEntities(nodeUids.map(getChildrenCacheUid));
+
+        for (const parentUid of parentUids) {
+            await this.resetFolderChildrenLoaded(parentUid);
+        }
+    }
+
+    /**
+     * Read a cached node's parent without the corrupted-node handling of
+     * getNode(), which would recurse back into removeNodes(). Returns
+     * undefined when the node is absent or unreadable; there is simply
+     * nothing to learn in that case.
+     */
+    private async getCachedParentUid(nodeUid: string): Promise<string | undefined> {
+        try {
+            const nodeData = await this.driveCache.getEntity(getCacheUid(nodeUid));
+            return this.deserialiseNode(nodeData).parentUid;
+        } catch {
+            return undefined;
         }
     }
 
@@ -221,16 +260,16 @@ export abstract class NodesCacheBase<T extends DecryptedNode = DecryptedNode> {
 
     async setFolderChildrenLoaded(nodeUid: string): Promise<void> {
         const { volumeId } = splitNodeUid(nodeUid);
-        await this.driveCache.setEntity(`node-children-${nodeUid}`, 'loaded', [`children-volume:${volumeId}`]);
+        await this.driveCache.setEntity(getChildrenCacheUid(nodeUid), 'loaded', [`children-volume:${volumeId}`]);
     }
 
     async resetFolderChildrenLoaded(nodeUid: string): Promise<void> {
-        await this.driveCache.removeEntities([`node-children-${nodeUid}`]);
+        await this.driveCache.removeEntities([getChildrenCacheUid(nodeUid)]);
     }
 
     async isFolderChildrenLoaded(nodeUid: string): Promise<boolean> {
         try {
-            await this.driveCache.getEntity(`node-children-${nodeUid}`);
+            await this.driveCache.getEntity(getChildrenCacheUid(nodeUid));
             return true;
         } catch {
             return false;
@@ -250,6 +289,10 @@ export class NodesCache extends NodesCacheBase<DecryptedNode> {
 
 function getCacheUid(nodeUid: string) {
     return `node-${nodeUid}`;
+}
+
+function getChildrenCacheUid(nodeUid: string) {
+    return `node-children-${nodeUid}`;
 }
 
 function getNodeUid(cacheUid: string) {
