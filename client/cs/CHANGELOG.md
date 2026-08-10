@@ -1,5 +1,15 @@
 # Changelog
 
+## cs/v0.23.0 (2026-07-31)
+
+### Features
+- Support favoriting photos, including shared ones
+- Reject empty or overly long names when creating and renaming
+
+### Bug Fixes
+- Dispose HTTP response streams explicitly through interop instead of relying on EOF detection
+
+
 ## cs/v0.22.0 (2026-07-28)
 
 ### Features
