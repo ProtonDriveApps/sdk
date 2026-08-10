@@ -1,5 +1,13 @@
 # Changelog
 
+## cs/v0.24.0 (2026-08-10)
+
+### Features
+- Report node trash/restore/delete results one at a time as they finish
+- Report photo tag updates one at a time as they finish
+- Expose photo trash actions
+
+
 ## cs/v0.23.0 (2026-07-31)
 
 ### Features
